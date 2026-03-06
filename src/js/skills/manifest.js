@@ -3,11 +3,16 @@
         targetToSkillId: {
             TREE: 'woodcutting',
             ROCK: 'mining',
-            FISHING_SPOT: 'fishing'
+            WATER: 'fishing',
+            FIRE: 'cooking',
+            ALTAR_CANDIDATE: 'runecrafting'
         },
         actionToSkillId: {
-            FIREMAKING: 'firemaking'
+            FIREMAKING: 'firemaking',
+            COOKING: 'cooking'
         },
-        orderedSkillIds: ['mining', 'woodcutting', 'fishing', 'firemaking']
+        orderedSkillIds: ['mining', 'woodcutting', 'fishing', 'firemaking', 'cooking', 'runecrafting']
     };
 })();
+
+

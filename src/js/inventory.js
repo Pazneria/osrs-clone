@@ -1,19 +1,16 @@
-﻿// --- Bank & Drag/Drop Logic ---
+// --- Bank & Drag/Drop Logic ---
 
         function openBank() {
             isBankOpen = true;
-            document.getElementById('bank-interface').classList.remove('hidden');
-            document.getElementById('tab-inv').click(); 
-            document.getElementById('main-ui-container').style.zIndex = '250'; 
+            setInterfaceOpenState('bank-interface', true);
             renderBank();
-            renderInventory(); 
+            renderInventory();
         }
 
         function closeBank() {
             isBankOpen = false;
-            document.getElementById('bank-interface').classList.add('hidden');
-            document.getElementById('main-ui-container').style.zIndex = 'auto';
-            renderInventory(); 
+            setInterfaceOpenState('bank-interface', false);
+            renderInventory();
         }
 
         function formatStackSize(num) {
@@ -28,6 +25,34 @@
                 colorClass = 'amt-white';
             }
             return `<span class="item-amt ${colorClass}">${text}</span>`;
+        }
+
+        function setInterfaceOpenState(interfaceId, isOpen) {
+            const interfaceEl = document.getElementById(interfaceId);
+            if (!interfaceEl) return;
+            interfaceEl.classList.toggle('hidden', !isOpen);
+            document.getElementById('main-ui-container').style.zIndex = isOpen ? '250' : 'auto';
+            if (isOpen) document.getElementById('tab-inv').click();
+        }
+
+        function collectMatchingInventorySlots(itemId, preferredIndex, maxCount) {
+            const matched = [];
+            if (!itemId || maxCount <= 0) return matched;
+
+            const pushIndex = (idx) => {
+                if (idx < 0 || idx >= inventory.length) return;
+                if (matched.length >= maxCount) return;
+                const slot = inventory[idx];
+                if (slot && slot.itemData && slot.itemData.id === itemId) matched.push(idx);
+            };
+
+            pushIndex(preferredIndex);
+            for (let i = 0; i < inventory.length && matched.length < maxCount; i++) {
+                if (i === preferredIndex) continue;
+                pushIndex(i);
+            }
+
+            return matched;
         }
 
         function renderBank() {
@@ -113,20 +138,20 @@
                 inventory[invIndex].amount -= amountToDeposit;
                 if (inventory[invIndex].amount <= 0) inventory[invIndex] = null;
             } else {
-                for (let i = 0; i < 28 && amountToDeposit < targetAmount; i++) {
-                    let checkIdx = i === 0 ? invIndex : (i === invIndex ? 0 : i); 
-                    if (inventory[checkIdx] && inventory[checkIdx].itemData.id === itemData.id) {
-                        let bIndex = bankItems.findIndex(b => b !== null && b.itemData.id === itemData.id);
-                        let slot = bIndex !== -1 ? bIndex : (targetBankIndex !== -1 && bankItems[targetBankIndex] === null ? targetBankIndex : bankItems.indexOf(null));
-                        
-                        if (slot !== -1) {
-                            if (bankItems[slot]) bankItems[slot].amount += 1;
-                            else bankItems[slot] = { itemData: itemData, amount: 1 };
-                            inventory[checkIdx] = null;
-                            amountToDeposit++;
-                        } else {
-                            console.log("Bank is full!"); break;
-                        }
+                const sourceSlots = collectMatchingInventorySlots(itemData.id, invIndex, targetAmount);
+                for (let i = 0; i < sourceSlots.length && amountToDeposit < targetAmount; i++) {
+                    const checkIdx = sourceSlots[i];
+                    let bIndex = bankItems.findIndex(b => b !== null && b.itemData.id === itemData.id);
+                    let slot = bIndex !== -1 ? bIndex : (targetBankIndex !== -1 && bankItems[targetBankIndex] === null ? targetBankIndex : bankItems.indexOf(null));
+
+                    if (slot !== -1) {
+                        if (bankItems[slot]) bankItems[slot].amount += 1;
+                        else bankItems[slot] = { itemData: itemData, amount: 1 };
+                        inventory[checkIdx] = null;
+                        amountToDeposit++;
+                    } else {
+                        console.log("Bank is full!");
+                        break;
                     }
                 }
             }
@@ -175,18 +200,15 @@
 
         function openShop() {
             isShopOpen = true;
-            document.getElementById('shop-interface').classList.remove('hidden');
-            document.getElementById('tab-inv').click(); 
-            document.getElementById('main-ui-container').style.zIndex = '250'; 
+            setInterfaceOpenState('shop-interface', true);
             renderShop();
-            renderInventory(); 
+            renderInventory();
         }
 
         function closeShop() {
             isShopOpen = false;
-            document.getElementById('shop-interface').classList.add('hidden');
-            document.getElementById('main-ui-container').style.zIndex = 'auto';
-            renderInventory(); 
+            setInterfaceOpenState('shop-interface', false);
+            renderInventory();
         }
 
         function renderShop() {
@@ -262,12 +284,10 @@
                 inventory[invIdx].amount -= amountSold;
                 if (inventory[invIdx].amount <= 0) inventory[invIdx] = null;
             } else {
-                for (let i = 0; i < 28 && amountSold < targetAmount; i++) {
-                    let checkIdx = i === 0 ? invIdx : (i === invIdx ? 0 : i); 
-                    if (inventory[checkIdx] && inventory[checkIdx].itemData.id === itemData.id) {
-                        inventory[checkIdx] = null;
-                        amountSold++;
-                    }
+                const sourceSlots = collectMatchingInventorySlots(itemData.id, invIdx, targetAmount);
+                for (let i = 0; i < sourceSlots.length && amountSold < targetAmount; i++) {
+                    inventory[sourceSlots[i]] = null;
+                    amountSold++;
                 }
             }
 
@@ -344,22 +364,14 @@
                             showContextMenuAt(e.clientX, e.clientY);
                         };
                     } else {
-                        const defaultAction = userItemPrefs[item.id] || item.defaultAction;
+                        const defaultAction = resolveDefaultItemAction(item);
+                        const orderedActions = getOrderedItemActions(item);
                         slot.title = `${defaultAction} ${item.name}`; 
-                        slot.onclick = () => handleInventorySlotClick(i, defaultAction); 
+                        slot.onclick = () => handleInventorySlotClick(i); 
                         slot.oncontextmenu = (e) => {
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
-                            item.actions.forEach(action => { addContextMenuOption(`${action} ${item.name}`, () => handleItemAction(i, action)); });
-                            const swapHeader = document.createElement('div');
-                            swapHeader.className = 'px-2 py-1 mt-1 text-gray-400 text-[10px] font-bold border-b border-[#4a4136] uppercase tracking-wider bg-[#3e3529] pointer-events-none';
-                            swapHeader.innerText = 'Configure Left-Click:';
-                            contextOptionsListEl.appendChild(swapHeader);
-                            item.actions.forEach(action => {
-                                if (action !== defaultAction) {
-                                    addContextMenuOption(`Set to <span class="text-white">${action}</span>`, () => { userItemPrefs[item.id] = action; renderInventory(); });
-                                }
-                            });
+                            orderedActions.forEach(action => { addContextMenuOption(`${action} ${item.name}`, () => handleItemAction(i, action)); });
                             const exHeader = document.createElement('div'); exHeader.className = 'mt-1 border-t border-[#4a4136] pointer-events-none'; contextOptionsListEl.appendChild(exHeader);
                             addContextMenuOption(`Examine ${item.name}`, () => console.log(`EXAMINING: ${item.name}.`));
                             showContextMenuAt(e.clientX, e.clientY);
@@ -477,6 +489,13 @@
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
+
+
+
+
+
+
+
 
 
 

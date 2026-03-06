@@ -1,10 +1,9 @@
 # OSRS Tick Engine Prototype (Refactored)
 
-This project was converted from a single `legacy-osrs.html` file into a multi-file structure.
+This project uses a multi-file structure.
 
 ## Structure
 
-- `legacy-osrs.html`: original one-file version (preserved)
 - `index.html`: active app entrypoint
 - `src/styles/main.css`: extracted styles
 - `src/js/core.js`: constants, global state, bootstrap (`window.onload`)
@@ -63,4 +62,5 @@ One-command item creation:
 npm.cmd run tool:item:create -- -Id logs -Name "Logs" -Image .\assets\input\logs.png -Type resource -Value 4
 npm.cmd run tool:items:validate
 ```
+
 

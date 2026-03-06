@@ -13,6 +13,8 @@ param(
 
     [double]$Value = 1,
 
+    [string[]]$Actions = @(),
+
     [int]$CellSize = 6,
 
     [int]$PaletteColors = 24,
@@ -43,6 +45,23 @@ if ($Name -eq "") {
 if ($Value -lt 0) {
     throw "Value must be >= 0"
 }
+
+$resolvedActions = @()
+if ($Actions -and $Actions.Count -gt 0) {
+    foreach ($action in $Actions) {
+        if ([string]::IsNullOrWhiteSpace($action)) { continue }
+        $resolvedActions += $action.Trim()
+    }
+}
+
+if ($resolvedActions.Count -eq 0) {
+    if ($Type -eq "weapon") { $resolvedActions += "Equip" }
+    if ($Type -eq "food") { $resolvedActions += "Eat" }
+    $resolvedActions += "Use"
+    $resolvedActions += "Drop"
+}
+
+$resolvedActions = @($resolvedActions | Group-Object { $_.ToLowerInvariant() } | ForEach-Object { $_.Group[0] })
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $imageFull = (Resolve-Path -Path $Image -ErrorAction Stop).Path
@@ -87,6 +106,7 @@ $itemData = [ordered]@{
     type = $Type
     stackable = $Stackable
     value = $Value
+    actions = $resolvedActions
     equipSlot = $null
     assets = [ordered]@{
         icon = "assets/pixel/$Id-pixel.png"
@@ -103,4 +123,3 @@ Write-Host "- Source copy: $sourceCopy"
 Write-Host "- Icon: $iconPath"
 Write-Host "- Model: $modelPath"
 Write-Host "- Ground model: $groundModelPath"
-

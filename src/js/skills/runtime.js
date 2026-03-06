@@ -3,7 +3,7 @@
     const targetToSkillId = manifest.targetToSkillId || {
         TREE: 'woodcutting',
         ROCK: 'mining',
-        FISHING_SPOT: 'fishing'
+        WATER: 'fishing'
     };
 
     const actionToSkillId = manifest.actionToSkillId || {
@@ -24,22 +24,50 @@
         return actionToSkillId[actionKey] || resolveSkillIdFromTarget(actionKey);
     }
 
+    function getToolPower(itemData) {
+        if (!itemData) return -Infinity;
+        if (Number.isFinite(itemData.toolTier)) return itemData.toolTier;
+        if (itemData.stats && Number.isFinite(itemData.stats.atk)) return itemData.stats.atk;
+        return 0;
+    }
+
+    function getBestToolByClass(toolClass) {
+        if (!toolClass) return null;
+        const candidates = [];
+
+        const equipped = equipment && equipment.weapon;
+        if (equipped && equipped.weaponClass === toolClass) candidates.push(equipped);
+
+        for (let i = 0; i < inventory.length; i++) {
+            const slot = inventory[i];
+            if (!slot || !slot.itemData) continue;
+            const item = slot.itemData;
+            if (item.weaponClass === toolClass) candidates.push(item);
+        }
+
+        if (candidates.length === 0) return null;
+
+        let best = candidates[0];
+        let bestPower = getToolPower(best);
+        for (let i = 1; i < candidates.length; i++) {
+            const candidate = candidates[i];
+            const power = getToolPower(candidate);
+            if (power > bestPower) {
+                best = candidate;
+                bestPower = power;
+            }
+        }
+
+        return best;
+    }
+
     function hasToolClass(toolClass) {
-        if (typeof hasWeaponClassAvailable === 'function') return hasWeaponClassAvailable(toolClass);
-
-        if (toolClass === 'axe') {
-            return !!((equipment.weapon && equipment.weapon.id === 'iron_axe') || inventory.some(i => i && i.itemData.id === 'iron_axe'));
-        }
-
-        if (toolClass === 'pickaxe') {
-            return !!((equipment.weapon && equipment.weapon.weaponClass === 'pickaxe') || inventory.some(i => i && i.itemData && i.itemData.weaponClass === 'pickaxe'));
-        }
-
-        return false;
+        return !!getBestToolByClass(toolClass);
     }
 
     function autoEquipToolClass(toolClass) {
-        if (typeof autoEquipWeaponClass === 'function') autoEquipWeaponClass(toolClass);
+        // Kept for backward compatibility with older modules, now intentionally no-op.
+        return hasToolClass(toolClass);
     }
 
     function giveItemById(itemId, amount = 1) {
@@ -77,14 +105,21 @@
             setShoulderPivot: overrides.setShoulderPivot || null,
             shoulderPivot: overrides.shoulderPivot || null,
             applyRockMiningPose: overrides.applyRockMiningPose || null,
+            sourceInvIndex: Number.isInteger(overrides.sourceInvIndex) ? overrides.sourceInvIndex : null,
+            sourceItemId: (typeof overrides.sourceItemId === 'string' ? overrides.sourceItemId : null),
             isTargetTile: (tileId) => {
                 return logicalMap[targetZ] && logicalMap[targetZ][targetY] && logicalMap[targetZ][targetY][targetX] === tileId;
             },
             hasToolClass,
+            getBestToolByClass,
             autoEquipToolClass,
+            setToolVisualById: (itemId) => {
+                if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) setPlayerRigToolVisual(overrides.playerRig, itemId);
+            },
             hasItem,
             getInventoryCount: (itemId) => (typeof getInventoryCount === 'function' ? getInventoryCount(itemId) : 0),
             removeOneItemById: (itemId) => (typeof removeOneItemById === 'function' ? removeOneItemById(itemId) : false),
+            removeItemsById: (itemId, amount) => (typeof removeItemsById === 'function' ? removeItemsById(itemId, amount) : 0),
             lightFireAtCurrentTile: () => (typeof lightFireAtCurrentTile === 'function' ? lightFireAtCurrentTile() : false),
             renderInventory: () => { if (typeof renderInventory === 'function') renderInventory(); },
             giveItemById,
@@ -97,6 +132,7 @@
                 if (overrides.hitData && overrides.hitData.point) spawnClickMarker(overrides.hitData.point, isRed);
             },
             chopDownTree: (x, y, z) => { if (typeof chopDownTree === 'function') chopDownTree(x, y, z); },
+            getRockNodeAt: (x, y, z) => (typeof getRockNodeAt === 'function' ? getRockNodeAt(x, y, z) : null),
             depleteRockNode: (x, y, z, respawnTicks) => {
                 if (typeof depleteRockNode === 'function') depleteRockNode(x, y, z, respawnTicks);
             },
@@ -201,3 +237,7 @@
         handleSkillAnimation
     };
 })();
+
+
+
+

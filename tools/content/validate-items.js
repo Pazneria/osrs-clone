@@ -57,7 +57,7 @@ function main() {
       continue;
     }
 
-    const requiredFields = ["id", "name", "type", "stackable", "value", "assets"];
+    const requiredFields = ["id", "name", "type", "stackable", "value", "actions", "assets"];
     for (const field of requiredFields) {
       if (!(field in item)) {
         errors.push(`${file}: missing required field '${field}'`);
@@ -89,6 +89,22 @@ function main() {
 
     if (typeof item.value !== "number" || !Number.isFinite(item.value) || item.value < 0) {
       errors.push(`${file}: value must be a number >= 0`);
+    }
+
+    if (!Array.isArray(item.actions) || item.actions.length === 0) {
+      errors.push(`${file}: actions must be a non-empty array`);
+    } else {
+      const normalizedActions = item.actions
+        .filter((action) => isString(action))
+        .map((action) => action.trim().toLowerCase());
+
+      if (normalizedActions.length !== item.actions.length) {
+        errors.push(`${file}: actions must only contain non-empty strings`);
+      }
+
+      if (!normalizedActions.includes("use")) {
+        errors.push(`${file}: actions must include 'Use'`);
+      }
     }
 
     if (!item.assets || typeof item.assets !== "object") {

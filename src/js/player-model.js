@@ -632,3 +632,29 @@ function rebuildPlayerRigsFromAppearance() {
 
 
 
+
+function setPlayerRigToolVisual(rigRoot, itemId) {
+    if (!rigRoot || !rigRoot.userData || !rigRoot.userData.rig || !rigRoot.userData.rig.axe) return;
+    const axeNode = rigRoot.userData.rig.axe;
+    const desiredId = itemId || null;
+
+    if (rigRoot.userData.skillingToolVisualId === desiredId) return;
+
+    while (axeNode.children.length > 0) {
+        axeNode.remove(axeNode.children[axeNode.children.length - 1]);
+    }
+
+    rigRoot.userData.skillingToolVisualId = desiredId;
+    if (!desiredId) return;
+
+    const itemDef = PLAYER_ITEM_DEFS[desiredId] || PLAYER_ITEM_DEFS.pickaxe_base_reference;
+    if (!itemDef || !Array.isArray(itemDef.fragments)) return;
+
+    const axeFragments = itemDef.fragments.filter((fragment) => fragment && fragment.target === 'axe');
+    if (axeFragments.length === 0) return;
+
+    const bodyColors = Array.isArray(playerAppearanceState.colors) ? playerAppearanceState.colors : [0, 0, 0, 0, 0];
+    addFragmentsToRig(rigRoot, axeFragments, bodyColors, itemDef.recolors || []);
+}
+
+window.setPlayerRigToolVisual = setPlayerRigToolVisual;

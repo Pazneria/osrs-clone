@@ -4,6 +4,7 @@
   "type": "resource",
   "stackable": false,
   "value": 1,
+  "actions": ["Use", "Drop"],
   "equipSlot": null,
   "assets": {
     "icon": "assets/pixel/item_id_here-pixel.png",

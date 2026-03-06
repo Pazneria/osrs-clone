@@ -11,28 +11,25 @@
 
         onStart(context) {
             if (!this.canStart(context)) return false;
-            context.autoEquipToolClass('axe');
             context.startSkillingAction();
             return true;
         },
 
         onTick(context) {
-            if (!context.isTargetTile(1)) {
-                context.stopAction();
-                return;
-            }
-
-            if (!(window.SkillSharedUtils && SkillSharedUtils.rollChance(CHOP_CHANCE, context.random))) return;
-
-            if (context.giveItemById('logs', 1) > 0) {
-                context.addSkillXp(SKILL_ID, CHOP_XP);
-                if (window.SkillSharedUtils && SkillSharedUtils.rollChance(STUMP_CHANCE, context.random)) {
-                    context.chopDownTree(context.targetX, context.targetY, context.targetZ);
-                    context.stopAction();
+            if (!window.SkillSharedUtils || typeof SkillSharedUtils.runGatherTick !== 'function') return;
+            SkillSharedUtils.runGatherTick(context, {
+                targetTileId: 1,
+                successChance: CHOP_CHANCE,
+                skillId: SKILL_ID,
+                xp: CHOP_XP,
+                reward: 'logs',
+                onReward: (ctx) => {
+                    if (SkillSharedUtils.rollChance(STUMP_CHANCE, ctx.random)) {
+                        ctx.chopDownTree(ctx.targetX, ctx.targetY, ctx.targetZ);
+                        ctx.stopAction();
+                    }
                 }
-            } else {
-                context.stopAction();
-            }
+            });
         },
 
         onAnimate(context) {
@@ -40,17 +37,10 @@
             const rig = context.rig;
             const playerRig = context.playerRig;
             const pivot = context.shoulderPivot;
+            const bestAxe = typeof context.getBestToolByClass === 'function' ? context.getBestToolByClass('axe') : null;
+            if (bestAxe && typeof context.setToolVisualById === 'function') context.setToolVisualById(bestAxe.id);
 
-            if (!context.playerState.actionVisualReady) {
-                rig.axe.visible = true;
-                context.setShoulderPivot(rig);
-                rig.leftArm.rotation.set(0, 0, 0); rig.rightArm.rotation.set(0, 0, 0);
-                rig.leftLowerArm.rotation.set(0, 0, 0); rig.rightLowerArm.rotation.set(0, 0, 0);
-                rig.torso.rotation.set(0, 0, 0); rig.head.rotation.set(0, 0, 0);
-                rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0;
-                if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0;
-                if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0;
-                playerRig.position.y = context.baseVisualY;
+            if (window.SkillSharedUtils && SkillSharedUtils.applyReadyStateOrContinue(context, { showTool: true })) {
                 return;
             }
 
@@ -94,7 +84,8 @@
             rig.leftLowerArm.rotation.z = 0;
 
             rig.axe.rotation.set(0, 0, 0);
-            rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0;
+            rig.leftLeg.rotation.x = 0;
+            rig.rightLeg.rotation.x = 0;
             if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0;
             if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0;
             playerRig.position.y = context.baseVisualY;
@@ -130,3 +121,7 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = woodcuttingModule;
 })();
+
+
+
+
