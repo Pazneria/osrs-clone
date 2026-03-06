@@ -219,6 +219,10 @@
         function buyItem(shopIdx, amount) {
             const sItem = shopInventory[shopIdx];
             if (!sItem || sItem.amount <= 0) return;
+            if (sItem.itemData.id === 'coins') {
+                console.log("You cannot buy coins.");
+                return;
+            }
             let cost = sItem.itemData.value;
             let canBuyAmount = Math.min(amount, sItem.amount);
             let coinSlotIdx = inventory.findIndex(s => s && s.itemData.id === 'coins');
@@ -245,6 +249,10 @@
             const invSlot = inventory[invIdx];
             if (!invSlot) return;
             const itemData = invSlot.itemData;
+            if (itemData.id === 'coins') {
+                console.log("You cannot sell coins.");
+                return;
+            }
             let sellValue = Math.floor(itemData.value * 0.4); 
             let amountSold = 0;
             let targetAmount = amount === -1 ? (itemData.stackable ? invSlot.amount : 28) : amount;
