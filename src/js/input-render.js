@@ -358,29 +358,19 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (selected) {
                 let used = false;
                 const selectedSlot = inventory[selectedUse.invIndex];
-                if (hitData.type === 'ALTAR_CANDIDATE' && selectedSlot && selectedSlot.itemData && selectedSlot.itemData.id === 'rune_essence') {
-                    queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ALTAR_CANDIDATE', hitData);
-                    spawnClickMarker(hitData.point, true);
-                    used = true;
-                } else {
-                    used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
-                    if (!used && hitData.type === 'GROUND' && selectedSlot && selectedSlot.itemData
-                        && selectedSlot.itemData.cookResultId && selectedSlot.itemData.burnResultId) {
-                        const hasFire = Array.isArray(activeFires)
-                            && activeFires.some((f) => f.x === hitData.gridX && f.y === hitData.gridY && f.z === playerState.z);
-                        if (hasFire && window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function') {
-                            used = SkillRuntime.tryStartSkillById('cooking', {
-                                skillId: 'cooking',
-                                targetObj: 'FIRE',
-                                targetX: hitData.gridX,
-                                targetY: hitData.gridY,
-                                targetZ: playerState.z,
-                                sourceInvIndex: selectedUse.invIndex,
-                                sourceItemId: selectedSlot.itemData.id
-                            });
-                        }
-                    }
+
+                if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
+                    used = SkillRuntime.tryUseItemOnTarget({
+                        hitData,
+                        sourceInvIndex: selectedUse.invIndex,
+                        sourceItemId: selectedSlot && selectedSlot.itemData ? selectedSlot.itemData.id : null
+                    });
                 }
+
+                if (!used) {
+                    used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
+                }
+
                 if (used && hitData.point) spawnClickMarker(hitData.point, true);
                 clearSelectedUse();
                 // Use-click should consume this click: either valid use, or cancel selection.
@@ -829,7 +819,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'DUMMY') actionText = '<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">Training Dummy</span>';
                     else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
-                    else if (hitData.type === 'ALTAR_CANDIDATE') actionText = '<span class="text-gray-300">Craft-rune</span> <span class="text-orange-300">Ember Altar</span>';
                     else if (hitData.type === 'NPC') {
                         if (hitData.name === 'Shopkeeper') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;

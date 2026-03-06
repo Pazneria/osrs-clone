@@ -44,23 +44,10 @@
         return false;
     }
 
-    function applyFishingAnimation(context) {
-        const fishing = window.SkillModules && window.SkillModules.fishing;
-        if (fishing && typeof fishing.onAnimate === 'function') {
-            fishing.onAnimate(context);
-            return;
+    function applyCookingAnimation(context) {
+        if (window.SkillSharedAnimations && typeof SkillSharedAnimations.applyFishingStylePose === 'function') {
+            SkillSharedAnimations.applyFishingStylePose(context);
         }
-
-        // Fallback if fishing module is unavailable.
-        if (!context.rig || !context.playerRig || typeof context.setShoulderPivot !== 'function') return;
-        const rig = context.rig;
-        context.setShoulderPivot(rig);
-        rig.axe.visible = false;
-        context.playerRig.rotation.x = 0;
-        rig.leftArm.rotation.set(-0.55, 0.1, 0.08);
-        rig.rightArm.rotation.set(-0.65, -0.1, -0.08);
-        rig.leftLowerArm.rotation.set(-0.45, 0, 0);
-        rig.rightLowerArm.rotation.set(-0.45, 0, 0);
     }
 
     const cookingModule = {
@@ -77,6 +64,30 @@
                 context.addChatMessage('[cook-debug] canStart failed: no recipe for ' + (context.sourceItemId || 'null'), 'info');
             }
             return !!recipe;
+        },
+
+        onUseItem(context) {
+            const recipe = getRecipeFromItemId(context.sourceItemId);
+            if (!recipe) return false;
+
+            if (!(context.targetObj === 'GROUND' || context.targetObj === 'FIRE')) return false;
+
+            const fireTarget = typeof context.resolveFireTargetFromHit === 'function'
+                ? context.resolveFireTargetFromHit(context.hitData)
+                : null;
+            if (!fireTarget) {
+                context.addChatMessage('You need an active fire to cook that.', 'warn');
+                return true;
+            }
+
+            return !!context.startSkillById(SKILL_ID, {
+                targetObj: 'FIRE',
+                targetX: fireTarget.x,
+                targetY: fireTarget.y,
+                targetZ: fireTarget.z,
+                sourceInvIndex: context.sourceInvIndex,
+                sourceItemId: recipe.sourceItemId
+            });
         },
 
         onStart(context) {
@@ -142,7 +153,7 @@
         },
 
         onAnimate(context) {
-            applyFishingAnimation(context);
+            applyCookingAnimation(context);
         },
 
         getTooltip() {
@@ -154,7 +165,3 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = cookingModule;
 })();
-
-
-
-

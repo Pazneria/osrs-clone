@@ -136,7 +136,11 @@
             depleteRockNode: (x, y, z, respawnTicks) => {
                 if (typeof depleteRockNode === 'function') depleteRockNode(x, y, z, respawnTicks);
             },
-            tryStepAfterFire: () => (typeof tryStepAfterFire === 'function' ? tryStepAfterFire() : false)
+            tryStepAfterFire: () => (typeof tryStepAfterFire === 'function' ? tryStepAfterFire() : false),
+            resolveFireTargetFromHit: (hit) => (typeof resolveFireTargetFromHit === 'function' ? resolveFireTargetFromHit(hit) : null),
+            startSkillById: (nextSkillId, nextOverrides = {}) => {
+                return tryStartSkillById(nextSkillId, Object.assign({}, nextOverrides, { skillId: nextSkillId }));
+            }
         };
     }
 
@@ -206,6 +210,44 @@
         return tryStartSkillById(skillId);
     }
 
+    function tryUseItemOnTarget(overrides = {}) {
+        const hitData = overrides.hitData || null;
+        const targetObj = overrides.targetObj || (hitData ? hitData.type : null);
+        const targetX = Number.isInteger(overrides.targetX) ? overrides.targetX : (hitData ? hitData.gridX : null);
+        const targetY = Number.isInteger(overrides.targetY) ? overrides.targetY : (hitData ? hitData.gridY : null);
+        const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : playerState.z;
+
+        const orderedSkillIds = [];
+        const preferredSkillId = resolveSkillIdFromTarget(targetObj);
+        if (preferredSkillId) orderedSkillIds.push(preferredSkillId);
+
+        const manifestOrdered = Array.isArray(manifest.orderedSkillIds) ? manifest.orderedSkillIds : Object.keys(skillRegistry);
+        for (let i = 0; i < manifestOrdered.length; i++) {
+            const skillId = manifestOrdered[i];
+            if (!skillId || orderedSkillIds.includes(skillId)) continue;
+            orderedSkillIds.push(skillId);
+        }
+
+        for (let i = 0; i < orderedSkillIds.length; i++) {
+            const skillId = orderedSkillIds[i];
+            const module = skillRegistry[skillId];
+            if (!module || typeof module.onUseItem !== 'function') continue;
+
+            const context = createSkillContext(Object.assign({}, overrides, {
+                skillId,
+                targetObj,
+                targetX,
+                targetY,
+                targetZ,
+                hitData
+            }));
+
+            if (module.onUseItem(context)) return true;
+        }
+
+        return false;
+    }
+
     function handleSkillTick() {
         const skillId = resolveSkillIdFromAction(playerState.action);
         const module = skillId ? skillRegistry[skillId] : null;
@@ -233,11 +275,8 @@
         getSkillTooltip,
         tryStartSkillById,
         tryStartFromPlayerTarget,
+        tryUseItemOnTarget,
         handleSkillTick,
         handleSkillAnimation
     };
 })();
-
-
-
-

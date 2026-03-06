@@ -2,20 +2,34 @@
     const SKILL_ID = 'runecrafting';
     const XP_PER_ESSENCE = 8;
 
+    const domain = window.RunecraftingDomain || {};
+    const ITEM_IDS = domain.ITEM_IDS || { RUNE_ESSENCE: 'rune_essence', EMBER_RUNE: 'ember_rune' };
+    const TARGETS = domain.TARGETS || { ALTAR_CANDIDATE: 'ALTAR_CANDIDATE' };
+    const isEmberAltarHit = typeof domain.isEmberAltar === 'function'
+        ? domain.isEmberAltar
+        : (hitData => !hitData || hitData.name === 'Ember Altar');
+
     function isEmberAltar(context) {
-        if (!context || context.targetObj !== 'ALTAR_CANDIDATE') return false;
-        if (!context.hitData) return true;
-        return context.hitData.name === 'Ember Altar';
+        if (!context || context.targetObj !== TARGETS.ALTAR_CANDIDATE) return false;
+        return isEmberAltarHit(context.hitData);
     }
 
     const runecraftingModule = {
         canStart(context) {
-            return isEmberAltar(context) && context.getInventoryCount('rune_essence') > 0;
+            return isEmberAltar(context) && context.getInventoryCount(ITEM_IDS.RUNE_ESSENCE) > 0;
+        },
+
+        onUseItem(context) {
+            if (!isEmberAltar(context)) return false;
+            if (context.sourceItemId !== ITEM_IDS.RUNE_ESSENCE) return false;
+            context.queueInteract();
+            context.spawnClickMarker(true);
+            return true;
         },
 
         onStart(context) {
             if (!isEmberAltar(context)) return false;
-            if (context.getInventoryCount('rune_essence') <= 0) {
+            if (context.getInventoryCount(ITEM_IDS.RUNE_ESSENCE) <= 0) {
                 context.addChatMessage('You need rune essence to craft runes.', 'warn');
                 return false;
             }
@@ -30,20 +44,20 @@
                 return;
             }
 
-            const essenceCount = context.getInventoryCount('rune_essence');
+            const essenceCount = context.getInventoryCount(ITEM_IDS.RUNE_ESSENCE);
             if (essenceCount <= 0) {
                 context.addChatMessage('You need rune essence to craft runes.', 'warn');
                 context.stopAction();
                 return;
             }
 
-            const removed = context.removeItemsById('rune_essence', essenceCount);
+            const removed = context.removeItemsById(ITEM_IDS.RUNE_ESSENCE, essenceCount);
             if (removed <= 0) {
                 context.stopAction();
                 return;
             }
 
-            const crafted = context.giveItemById('ember_rune', removed);
+            const crafted = context.giveItemById(ITEM_IDS.EMBER_RUNE, removed);
             if (crafted <= 0) {
                 context.addChatMessage('You cannot craft runes right now.', 'warn');
                 context.stopAction();

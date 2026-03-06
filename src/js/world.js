@@ -966,55 +966,12 @@
             return false;
         }
 
-                        function tryUseItemOnWorld(sourceInvIndex, hitData) {
+        function tryUseItemOnWorld(sourceInvIndex, hitData) {
             const source = inventory[sourceInvIndex];
-            if (!source) {
-                debugCookingUse('no source item in selected slot');
-                return false;
-            }
+            if (!source || !hitData) return false;
 
-            if ((source.itemData.id === 'tinderbox' || source.itemData.id === 'logs') && hitData.type === 'GROUND') {
-                return startFiremaking();
-            }
-
-            const isCookable = source.itemData && source.itemData.cookResultId && source.itemData.burnResultId;
-            const isGroundOrFire = hitData && (hitData.type === 'GROUND' || hitData.type === 'FIRE');
-            if (isCookable) {
-                const gx = (hitData && Number.isInteger(hitData.gridX)) ? hitData.gridX : 'n/a';
-                const gy = (hitData && Number.isInteger(hitData.gridY)) ? hitData.gridY : 'n/a';
-                const ht = (hitData && hitData.type) ? hitData.type : 'none';
-                debugCookingUse('attempt item=' + source.itemData.id + ' hit=' + ht + ' gx=' + gx + ' gy=' + gy);
-            }
-
-            if (isGroundOrFire && isCookable) {
-                const fireTarget = resolveFireTargetFromHit(hitData);
-                if (!fireTarget) {
-                    debugCookingUse('no active fire resolved from cursor hit');
-                    addChatMessage('You need an active fire to cook that.', 'warn');
-                    return false;
-                }
-
-                if (!(window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function')) {
-                    debugCookingUse('SkillRuntime.tryStartSkillById missing');
-                    return false;
-                }
-
-                const started = SkillRuntime.tryStartSkillById('cooking', {
-                    skillId: 'cooking',
-                    targetObj: 'FIRE',
-                    targetX: fireTarget.x,
-                    targetY: fireTarget.y,
-                    targetZ: fireTarget.z,
-                    sourceInvIndex,
-                    sourceItemId: source.itemData.id
-                });
-
-                if (started) debugCookingUse('start ok target=' + fireTarget.x + ',' + fireTarget.y + ',' + fireTarget.z);
-                else debugCookingUse('start failed target=' + fireTarget.x + ',' + fireTarget.y + ',' + fireTarget.z);
-                return started;
-            }
-
-            if (isCookable) debugCookingUse('hit type was not GROUND/FIRE for cookable item');
+            // Non-skill use-on-world interactions can be added here.
+            // Skill item interactions are routed through SkillRuntime.tryUseItemOnTarget.
             return false;
         }
 

@@ -2,9 +2,19 @@
     const SKILL_ID = 'firemaking';
     const FIREMAKING_XP = 40;
 
+    function isValidFiremakingUse(context) {
+        if (!context || context.targetObj !== 'GROUND') return false;
+        return context.sourceItemId === 'logs' || context.sourceItemId === 'tinderbox';
+    }
+
     const firemakingModule = {
         canStart(context) {
             return context.getInventoryCount('tinderbox') > 0 && context.getInventoryCount('logs') > 0;
+        },
+
+        onUseItem(context) {
+            if (!isValidFiremakingUse(context)) return false;
+            return this.onStart(context);
         },
 
         onStart(context) {

@@ -195,7 +195,9 @@ O445411111OOOOO.
                 small_net: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="3" width="2" height="10" fill="#6b4a2a"/><rect x="4" y="2" width="5" height="1" fill="#9ca2ab"/><rect x="3" y="3" width="1" height="4" fill="#9ca2ab"/><rect x="4" y="7" width="5" height="1" fill="#9ca2ab"/><rect x="8" y="3" width="1" height="4" fill="#9ca2ab"/></svg>`,
                 raw_shrimp: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="7" height="4" fill="#e09ca0"/><rect x="10" y="7" width="2" height="2" fill="#cf7c83"/><rect x="3" y="7" width="1" height="2" fill="#cf7c83"/><rect x="6" y="5" width="3" height="1" fill="#f3bbc0"/></svg>`,
                 copper_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#7b848d"/><rect x="5" y="5" width="2" height="2" fill="#c47b43"/><rect x="8" y="6" width="2" height="2" fill="#b56b3a"/><rect x="6" y="9" width="2" height="2" fill="#cf8a54"/></svg>`,
-                tin_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#6f7883"/><rect x="5" y="5" width="2" height="2" fill="#e4eaef"/><rect x="8" y="6" width="2" height="2" fill="#cfd6dd"/><rect x="6" y="9" width="2" height="2" fill="#f0f4f8"/></svg>`
+                tin_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#6f7883"/><rect x="5" y="5" width="2" height="2" fill="#e4eaef"/><rect x="8" y="6" width="2" height="2" fill="#cfd6dd"/><rect x="6" y="9" width="2" height="2" fill="#f0f4f8"/></svg>`,
+                rune_essence: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#7b8088"/><rect x="5" y="5" width="2" height="2" fill="#9aa0aa"/><rect x="8" y="6" width="2" height="2" fill="#b5bbc6"/><rect x="6" y="9" width="3" height="2" fill="#8e94a0"/></svg>`,
+                ember_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="1" fill="#ffd38a"/><rect x="5" y="3" width="6" height="2" fill="#ff9a3c"/><rect x="4" y="5" width="8" height="3" fill="#ff6a2a"/><rect x="5" y="8" width="6" height="3" fill="#c73a1c"/><rect x="6" y="11" width="4" height="2" fill="#7a1e17"/></svg>`
             };
             return `<span class="pointer-events-none drop-shadow-md">${sprites[id] || ""}</span>`;
         }
@@ -300,6 +302,14 @@ O445411111OOOOO.
             'tin_ore': {
                 id: 'tin_ore', name: 'Tin ore', icon: makeIconSprite('tin_ore'), type: 'resource',
                 actions: ['Drop'], defaultAction: 'Drop', value: 8, stackable: false
+            },
+            'rune_essence': {
+                id: 'rune_essence', name: 'Rune essence', icon: makeIconSprite('rune_essence'), type: 'resource',
+                actions: ['Drop'], defaultAction: 'Drop', value: 12, stackable: false
+            },
+            'ember_rune': {
+                id: 'ember_rune', name: 'Ember rune', icon: makeIconSprite('ember_rune'), type: 'resource',
+                actions: ['Drop'], defaultAction: 'Drop', value: 18, stackable: true
             }
         }; 
         let inventory = Array(28).fill(null);
@@ -321,7 +331,8 @@ O445411111OOOOO.
             woodcutting: { xp: 0, level: 1 },
             firemaking: { xp: 0, level: 1 },
             fishing: { xp: 0, level: 1 },
-            cooking: { xp: 0, level: 1 }
+            cooking: { xp: 0, level: 1 },
+            runecrafting: { xp: 0, level: 1 }
         };
         let groundItems = [];
         let activeFires = [];
@@ -571,6 +582,7 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
 
 
 

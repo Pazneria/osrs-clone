@@ -5,6 +5,10 @@
     const DEPLETION_CHANCE = 0.2;
     const RUNE_ESSENCE_XP = 8;
 
+    const domain = window.RunecraftingDomain || {};
+    const ITEM_IDS = domain.ITEM_IDS || { RUNE_ESSENCE: 'rune_essence' };
+    const ORE_TYPES = domain.ORE_TYPES || { RUNE_ESSENCE: 'rune_essence' };
+
     function getMiningNode(context) {
         if (!context || typeof context.getRockNodeAt !== 'function') return null;
         return context.getRockNodeAt(context.targetX, context.targetY, context.targetZ);
@@ -12,7 +16,7 @@
 
     function isRuneEssenceNode(context) {
         const node = getMiningNode(context);
-        return !!(node && node.oreType === 'rune_essence');
+        return !!(node && node.oreType === ORE_TYPES.RUNE_ESSENCE);
     }
 
     const miningModule = {
@@ -32,7 +36,7 @@
                     context.stopAction();
                     return;
                 }
-                if (context.giveItemById('rune_essence', 1) > 0) {
+                if (context.giveItemById(ITEM_IDS.RUNE_ESSENCE, 1) > 0) {
                     context.addSkillXp(SKILL_ID, RUNE_ESSENCE_XP);
                 } else {
                     context.stopAction();
@@ -109,5 +113,3 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = miningModule;
 })();
-
-
