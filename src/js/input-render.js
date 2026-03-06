@@ -71,13 +71,25 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             event.preventDefault(); closeContextMenu();
             const hitData = getRaycastHit(event.clientX, event.clientY); if (!hitData) return;
             contextOptionsListEl.innerHTML = '';
+            let usedSkillOptions = false;
+            const skillOptions = (window.SkillRuntime && typeof SkillRuntime.getSkillContextMenuOptions === 'function')
+                ? SkillRuntime.getSkillContextMenuOptions(hitData)
+                : null;
+            if (Array.isArray(skillOptions) && skillOptions.length > 0) {
+                usedSkillOptions = true;
+                for (let i = 0; i < skillOptions.length; i++) {
+                    const option = skillOptions[i];
+                    if (!option || typeof option.text !== 'string' || typeof option.onSelect !== 'function') continue;
+                    addContextMenuOption(option.text, option.onSelect);
+                }
+            }
             
-            if (hitData.type === 'TREE') {
+            if (!usedSkillOptions && hitData.type === 'TREE') {
                 if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) {
                     addContextMenuOption('Chop down Tree', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'TREE'); spawnClickMarker(hitData.point, true); });
                     addContextMenuOption('Examine Tree', () => console.log('EXAMINING: A fully grown tree.'));
                 } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 4) addContextMenuOption('Examine Stump', () => console.log('EXAMINING: A sad looking stump.'));
-            } else if (hitData.type === 'ROCK') {
+            } else if (!usedSkillOptions && hitData.type === 'ROCK') {
                 addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
                 addContextMenuOption('Examine Rock', () => console.log('EXAMINING: A solid chunk of rock.'));
             } else if (hitData.type === 'BANK_BOOTH') {
@@ -88,7 +100,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => console.log('EXAMINING: A dummy to practice your swings on.'));
                         } else if (hitData.type === 'SHOP_COUNTER') {
                 addContextMenuOption('Examine Shop Counter', () => console.log('EXAMINING: A wooden counter with a glass display.'));
-            } else if (hitData.type === 'FISHING_SPOT') {
+            } else if (!usedSkillOptions && hitData.type === 'FISHING_SPOT') {
                 addContextMenuOption('Net <span class="text-cyan-400">Fishing spot</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'FISHING_SPOT'); spawnClickMarker(hitData.point, true); });
                 addContextMenuOption('Examine <span class="text-cyan-400">Fishing spot</span>', () => console.log('EXAMINING: A good place to catch fish.'));
             } else if (hitData.type === 'DOOR') {
@@ -564,18 +576,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
                                 openBank();
                             } else {
-                                let canInteract = true; if (playerState.targetObj === 'TREE' && !(typeof hasWeaponClassAvailable === 'function' ? hasWeaponClassAvailable('axe') : ((equipment.weapon && equipment.weapon.id === 'iron_axe') || inventory.some(i => i && i.itemData.id === 'iron_axe')))) canInteract = false;
-                                if (playerState.targetObj === 'ROCK' && !(typeof hasWeaponClassAvailable === 'function' ? hasWeaponClassAvailable('pickaxe') : ((equipment.weapon && equipment.weapon.weaponClass === 'pickaxe') || inventory.some(i => i && i.itemData && i.itemData.weaponClass === 'pickaxe')))) canInteract = false;
-                                if (playerState.targetObj === 'FISHING_SPOT' && !inventory.some(i => i && i.itemData.id === 'small_net')) canInteract = false;
-                                if (canInteract) {
-                                    if (playerState.targetObj === 'TREE' && logicalMap[playerState.z][playerState.targetY][playerState.targetX] !== 1) playerState.action = 'IDLE';
-                                    else if (playerState.targetObj === 'ROCK' && logicalMap[playerState.z][playerState.targetY][playerState.targetX] !== 2) playerState.action = 'IDLE';
-                                    else if (playerState.targetObj === 'FISHING_SPOT' && logicalMap[playerState.z][playerState.targetY][playerState.targetX] !== 22) playerState.action = 'IDLE';
-                                    else {
-                                        if (playerState.targetObj === 'TREE' && typeof autoEquipWeaponClass === 'function') autoEquipWeaponClass('axe');
-                                        if (playerState.targetObj === 'ROCK' && typeof autoEquipWeaponClass === 'function') autoEquipWeaponClass('pickaxe');
-                                        startFacingAction(`SKILLING: ${playerState.targetObj}`, true);
-                                    }
+                                if (window.SkillRuntime && SkillRuntime.canHandleTarget(playerState.targetObj)) {
+                                    if (!SkillRuntime.tryStartFromPlayerTarget()) playerState.action = 'IDLE';
                                 } else playerState.action = 'IDLE';
                             }
                         } else {
@@ -591,52 +593,14 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 playerState.pendingActionAfterTurn = null;
             }
             
-            if (playerState.action === 'SKILLING: FIREMAKING') {
-                if (currentTick >= playerState.actionUntilTick) {
-                    const fireTarget = playerState.firemakingTarget;
-                    if (fireTarget && fireTarget.z === playerState.z) {
-                        const stepped = tryStepAfterFire();
-                        if (stepped) {
-                            const faceDx = fireTarget.x - playerState.x;
-                            const faceDy = fireTarget.y - playerState.y;
-                            if (faceDx !== 0 || faceDy !== 0) {
-                                playerState.targetRotation = Math.atan2(faceDx, faceDy);
-                                playerState.turnLock = true;
-                                playerState.actionVisualReady = true;
-                            }
-                        } else {
-                            addChatMessage('You stay put because the way forward is blocked.', 'info');
-                        }
+            if (!(window.SkillRuntime && SkillRuntime.handleSkillTick())) {
+                if (playerState.action === 'COMBAT: DUMMY') {
+                    if (currentTick % 4 === 0) {
+                        playerRig.userData.rig.attackTrigger = Date.now();
+                        const damage = Math.floor(Math.random() * 3); 
+                        spawnHitsplat(damage, playerState.targetX, playerState.targetY);
+                        if (damage > 0) addSkillXp('strength', damage * 4);
                     }
-                    playerState.firemakingTarget = null;
-                    playerState.action = 'IDLE';
-                }
-            } else if (playerState.action === 'SKILLING: ROCK') {
-                if (logicalMap[playerState.z][playerState.targetY][playerState.targetX] !== 2) playerState.action = 'IDLE';
-                else if (Math.random() < 0.25) {
-                    const oreId = Math.random() < 0.5 ? 'copper_ore' : 'tin_ore';
-                    if (giveItem(ITEM_DB[oreId]) > 0) addSkillXp('mining', 25);
-                    else playerState.action = 'IDLE';
-                }
-            } else if (playerState.action === 'SKILLING: TREE') {
-                if (logicalMap[playerState.z][playerState.targetY][playerState.targetX] !== 1) playerState.action = 'IDLE';
-                else if (Math.random() < 0.25) { if (giveItem(ITEM_DB['logs']) > 0) { addSkillXp('woodcutting', 25); if (Math.random() < 0.20) { chopDownTree(playerState.targetX, playerState.targetY, playerState.z); playerState.action = 'IDLE'; } } else playerState.action = 'IDLE'; }
-            } else if (playerState.action === 'SKILLING: FISHING') {
-                if (logicalMap[playerState.z][playerState.targetY][playerState.targetX] !== 22) playerState.action = 'IDLE';
-                else if (Math.random() < 0.28) {
-                    if (giveItem(ITEM_DB['raw_shrimp']) > 0) {
-                        addSkillXp('fishing', 20);
-                    } else {
-                        addChatMessage('You have no inventory space for fish.', 'warn');
-                        playerState.action = 'IDLE';
-                    }
-                }
-            } else if (playerState.action === 'COMBAT: DUMMY') {
-                if (currentTick % 4 === 0) {
-                    playerRig.userData.rig.attackTrigger = Date.now();
-                    const damage = Math.floor(Math.random() * 3); 
-                    spawnHitsplat(damage, playerState.targetX, playerState.targetY);
-                    if (damage > 0) addSkillXp('strength', damage * 4);
                 }
             }
         }
@@ -769,7 +733,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             const hitData = getRaycastHit(currentMouseX, currentMouseY);
             if (hitData) {
-                let actionText = '';
+                let actionText = (window.SkillRuntime && typeof SkillRuntime.getSkillTooltip === 'function')
+                    ? SkillRuntime.getSkillTooltip(hitData)
+                    : '';
+                if (!actionText) {
                 if (hitData.type === 'TREE') {
                     if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
                 } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
@@ -787,6 +754,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
                 }
 
+                }
                 if (actionText) {
                     tooltip.innerHTML = actionText;
                     tooltip.classList.remove('hidden');
@@ -1297,112 +1265,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     const walkStep = sinWalk; rig.leftLeg.rotation.x = -walkStep * MOTION_TUNING.walkLegSwing; rig.rightLeg.rotation.x = walkStep * MOTION_TUNING.walkLegSwing; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = Math.max(0, walkStep) * MOTION_TUNING.walkKneeLift; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = Math.max(0, -walkStep) * MOTION_TUNING.walkKneeLift;
                     playerRig.position.y = baseVisualY + (absSinWalk * MOTION_TUNING.walkBounce); rig.torso.rotation.x = -0.1; rig.head.rotation.x = -0.1; playerRig.rotation.x = 0;
                 }
-                                    } else if (playerState.action === 'SKILLING: FIREMAKING') {
-                rig.axe.visible = false;
-                playerRig.rotation.x = 0;
-                setPlayerRigShoulderPivot(rig);
-
-                const phase = ((frameNow % 700) / 700) * Math.PI * 2;
-                const s = Math.sin(phase);
-
-                rig.torso.rotation.set(0, 0.08 * s, 0);
-                rig.head.rotation.set(0, 0.05 * s, 0);
-
-                rig.rightArm.rotation.set(-0.9 + (s * 0.25), -0.2, -0.15);
-                rig.rightLowerArm.rotation.set(-0.6 + (s * 0.35), -0.1, 0);
-
-                rig.leftArm.rotation.set(-0.4, 0.15, 0.2);
-                rig.leftLowerArm.rotation.set(-0.8, -0.2, 0);
-
-                rig.leftLeg.rotation.x = 0;
-            } else if (playerState.action === 'SKILLING: ROCK') {
-                const isPickaxeEquipped = !!(equipment.weapon && equipment.weapon.weaponClass === 'pickaxe');
-                applyRockMiningPose(rig, frameNow, baseVisualY, isPickaxeEquipped);
-            } else if (playerState.action === 'SKILLING: TREE') {
-                if (!playerState.actionVisualReady) {
-                    rig.axe.visible = true;
-                    setPlayerRigShoulderPivot(rig);
-                    rig.leftArm.rotation.set(0, 0, 0); rig.rightArm.rotation.set(0, 0, 0);
-                    rig.leftLowerArm.rotation.set(0, 0, 0); rig.rightLowerArm.rotation.set(0, 0, 0);
-                    rig.torso.rotation.set(0, 0, 0); rig.head.rotation.set(0, 0, 0);
-                    rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0; playerRig.position.y = baseVisualY;
-                } else {
-                rig.axe.visible = true; playerRig.rotation.x = 0; rig.torso.rotation.x = 0; rig.head.rotation.x = 0;
-                setPlayerRigShoulderPivot(rig);
-
-                const playerT = frameNow % 1200; let pSwingFactor = 0;
-                if (playerT < 200) pSwingFactor = 0;
-                else if (playerT < 900) pSwingFactor = (Math.cos(((playerT - 200) / 700) * Math.PI - Math.PI) + 1) / 2;
-                else pSwingFactor = (Math.cos(((playerT - 900) / 300) * Math.PI) + 1) / 2;
-
-                const deg = Math.PI / 180;
-                const pCurrentInwardAngle = (35 * deg) - pSwingFactor * (0.6 + (35 * deg));
-                const torsoTwist = pSwingFactor * -30 * deg;
-
-                rig.torso.rotation.y = torsoTwist;
-                rig.head.rotation.y = torsoTwist * 0.4;
-
-                // Shoulder anchors orbit around torso center in top-down view.
-                const leftShoulderBase = { x: PLAYER_SHOULDER_PIVOT.x, z: PLAYER_SHOULDER_PIVOT.z };
-                const rightShoulderBase = { x: -PLAYER_SHOULDER_PIVOT.x, z: PLAYER_SHOULDER_PIVOT.z };
-                const cosTwist = Math.cos(torsoTwist);
-                const sinTwist = Math.sin(torsoTwist);
-                rig.leftArm.position.set(
-                    leftShoulderBase.x * cosTwist + leftShoulderBase.z * sinTwist,
-                    PLAYER_SHOULDER_PIVOT.y,
-                    -leftShoulderBase.x * sinTwist + leftShoulderBase.z * cosTwist
-                );
-                rig.rightArm.position.set(
-                    rightShoulderBase.x * cosTwist + rightShoulderBase.z * sinTwist,
-                    PLAYER_SHOULDER_PIVOT.y,
-                    -rightShoulderBase.x * sinTwist + rightShoulderBase.z * cosTwist
-                );
-
-                // Keep the old swing feel, but bind arm/shoulder rotations to torso arc.
-                rig.rightArm.rotation.x = -55 * deg;
-                rig.rightArm.rotation.y = torsoTwist * 0.9 - (10 * deg * pSwingFactor);
-                rig.rightArm.rotation.z = pCurrentInwardAngle;
-                rig.rightLowerArm.rotation.x = -45 * deg;
-                rig.rightLowerArm.rotation.y = ((1 - pSwingFactor) * (-65 * deg)) + (torsoTwist * 0.5);
-
-                rig.leftArm.rotation.x = -8 * deg;
-                rig.leftArm.rotation.y = torsoTwist * 0.9 + (-15 * deg * pSwingFactor);
-                rig.leftArm.rotation.z = 12 * deg;
-                rig.leftLowerArm.rotation.x = -75 * deg;
-                rig.leftLowerArm.rotation.y = (-45 * deg) + (torsoTwist * 0.35);
-                rig.leftLowerArm.rotation.z = 0;
-
-                rig.axe.rotation.set(0, 0, 0);
-                rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0; playerRig.position.y = baseVisualY;
-                }
-            } else if (playerState.action === 'SKILLING: FISHING') {
-                if (!playerState.actionVisualReady) {
-                    rig.axe.visible = false;
-                    setPlayerRigShoulderPivot(rig);
-                    rig.leftArm.rotation.set(0, 0, 0); rig.rightArm.rotation.set(0, 0, 0);
-                    rig.leftLowerArm.rotation.set(0, 0, 0); rig.rightLowerArm.rotation.set(0, 0, 0);
-                    rig.torso.rotation.set(0, 0, 0); rig.head.rotation.set(0, 0, 0);
-                    rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0; playerRig.position.y = baseVisualY;
-                } else {
-                    rig.axe.visible = false;
-                    playerRig.rotation.x = 0;
-
-                    const fishPhase = (frameNow % 900) / 900 * Math.PI * 2;
-                    const rodPull = Math.sin(fishPhase);
-                    const torsoTwist = rodPull * 0.16;
-                    const bob = Math.max(0, Math.sin(fishPhase + Math.PI * 0.25)) * 0.04;
-
-                    rig.torso.rotation.set(-0.08, torsoTwist, 0);
-                    rig.head.rotation.set(0, torsoTwist * 0.45, 0);
-                    setPlayerRigShoulderPivot(rig);
-                    rig.leftArm.rotation.set(-0.35 + (rodPull * -0.15), torsoTwist * 0.55, 0.2);
-                    rig.rightArm.rotation.set(-0.7 + (rodPull * 0.25), torsoTwist * 0.85, -0.18);
-                    rig.leftLowerArm.rotation.set(-0.55, 0.08 + (rodPull * -0.14), 0);
-                    rig.rightLowerArm.rotation.set(-0.95 + (rodPull * 0.12), -0.12, 0);
-                    rig.leftLeg.rotation.x = 0.05;
-                    rig.rightLeg.rotation.x = -0.05;
-                    playerRig.position.y = baseVisualY + bob;
-                }
+                                    } else if (window.SkillRuntime && SkillRuntime.handleSkillAnimation({
+                rig,
+                frameNow,
+                baseVisualY,
+                playerRig,
+                equipment,
+                setShoulderPivot: setPlayerRigShoulderPivot,
+                shoulderPivot: PLAYER_SHOULDER_PIVOT,
+                applyRockMiningPose
+            })) {
+                // Skill module handled pose.
             } else if (playerState.action === 'COMBAT: DUMMY') {
                 if (!playerState.actionVisualReady) {
                     rig.axe.visible = true;

@@ -864,28 +864,8 @@
         }
 
         function startFiremaking() {
-            if (getInventoryCount('tinderbox') <= 0 || getInventoryCount('logs') <= 0) {
-                addChatMessage('You need logs and a tinderbox.', 'warn');
-                return false;
-            }
-
-            const fireX = playerState.x;
-            const fireY = playerState.y;
-            const fireZ = playerState.z;
-
-            if (!lightFireAtCurrentTile()) return false;
-
-            removeOneItemById('logs');
-            addSkillXp('firemaking', 40);
-            addChatMessage('You light the logs.', 'game');
-
-            playerState.action = 'SKILLING: FIREMAKING';
-            playerState.actionUntilTick = currentTick + 3;
-            playerState.firemakingTarget = { x: fireX, y: fireY, z: fireZ };
-            playerState.turnLock = false;
-            playerState.actionVisualReady = true;
-            renderInventory();
-            return true;
+            if (!(window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function')) return false;
+            return SkillRuntime.tryStartSkillById('firemaking', { skillId: 'firemaking' });
         }
 
         function tryUseItemOnInventory(sourceInvIndex, targetInvIndex) {
@@ -1173,6 +1153,7 @@
             ];
             fishingSpotsToRender = [];
             directionalSignsToRender = [];
+            altarCandidatesToRender = [];
             const inTownCore = (x, y) => {
                 const inCastle = (x >= 190 && x <= 220 && y >= 190 && y <= 215);
                 const inStore = (x >= 177 && x <= 185 && y >= 232 && y <= 240);
@@ -1437,9 +1418,9 @@
             
             // Stamp the General Store at the requested coordinates
             stampBlueprint(177, 232, 0, generalStoreBlueprint);
+            // Locked-in Ember altar.
+            altarCandidatesToRender.push({ x: 216, y: 236, z: 0, variant: 4, label: 'Ember Altar' });
 
-            // Cardinal sign just south of the castle entrance for build callouts.
-            directionalSignsToRender.push({ x: 205, y: 221, z: 0 });
 
             // --- USER TEST: Dual Castle Stairs ---
             // Left Staircase (194, 214 -> 191, 214)
@@ -1864,8 +1845,91 @@
                     }
                 });
 
-                
+                altarCandidatesToRender.forEach(ac => {
+                    if (ac.x >= startX && ac.x < endX && ac.y >= startY && ac.y < endY && ac.z === z) {
+                        const altarGroup = new THREE.Group();
+                        const baseY = heightMap[z][ac.y][ac.x] + Z_OFFSET;
+                        altarGroup.position.set(ac.x, baseY, ac.y);
+
+                        // Upscale target: ~4x footprint area (2x width/depth) and ~2x height.
+                        const footprintScale = 2.0;
+                        const heightScale = 2.0;
+                        const stoneMat = new THREE.MeshLambertMaterial({ color: 0x5e5449, flatShading: true });
+                        const coalMat = new THREE.MeshLambertMaterial({ color: 0x2d2320, flatShading: true });
+                        const emberMat = new THREE.MeshLambertMaterial({ color: 0xff7a1a, emissive: 0x8a2f00 });
+                        const coreMat = new THREE.MeshLambertMaterial({ color: 0xffc04d, emissive: 0x8a4d00 });
+
+                        const plinth = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.52 * footprintScale, 0.64 * footprintScale, 0.28 * heightScale, 10),
+                            stoneMat
+                        );
+                        plinth.position.y = 0.14 * heightScale;
+                        plinth.castShadow = true;
+                        plinth.receiveShadow = true;
+                        altarGroup.add(plinth);
+
+                        if (ac.variant === 1) {
+                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * footprintScale, 0.42 * footprintScale, 0.2 * heightScale, 10), coalMat);
+                            bowl.position.y = 0.52 * heightScale;
+                            const flame1 = new THREE.Mesh(new THREE.ConeGeometry(0.12 * footprintScale, 0.36 * heightScale, 10), emberMat);
+                            flame1.position.y = 0.82 * heightScale;
+                            const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.08 * footprintScale, 0.24 * heightScale, 10), coreMat);
+                            flame2.position.y = 0.9 * heightScale;
+                            altarGroup.add(bowl, flame1, flame2);
+                        } else if (ac.variant === 2) {
+                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * footprintScale, 0.4 * footprintScale, 0.22 * heightScale, 10), coalMat);
+                            bowl.position.y = 0.5 * heightScale;
+                            const flameL = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
+                            flameL.position.set(-0.12 * footprintScale, 0.82 * heightScale, 0.04 * footprintScale);
+                            flameL.rotation.z = 0.12;
+                            const flameR = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
+                            flameR.position.set(0.12 * footprintScale, 0.8 * heightScale, -0.03 * footprintScale);
+                            flameR.rotation.z = -0.1;
+                            const emberCore = new THREE.Mesh(new THREE.SphereGeometry(0.07 * footprintScale, 10, 10), coreMat);
+                            emberCore.position.y = 0.74 * heightScale;
+                            altarGroup.add(bowl, flameL, flameR, emberCore);
+                        } else if (ac.variant === 3) {
+                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.36 * footprintScale, 0.44 * footprintScale, 0.22 * heightScale, 10), coalMat);
+                            bowl.position.y = 0.52 * heightScale;
+                            const spireBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * footprintScale, 0.12 * footprintScale, 0.28 * heightScale, 8), coreMat);
+                            spireBase.position.y = 0.78 * heightScale;
+                            const spireTop = new THREE.Mesh(new THREE.ConeGeometry(0.1 * footprintScale, 0.34 * heightScale, 8), emberMat);
+                            spireTop.position.y = 1.05 * heightScale;
+                            altarGroup.add(bowl, spireBase, spireTop);
+                        } else {
+                            // Mk IV remix: Mk II top with two ember rings (base + taper point).
+                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * footprintScale, 0.4 * footprintScale, 0.22 * heightScale, 10), coalMat);
+                            bowl.position.y = 0.5 * heightScale;
+
+                            const flameL = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
+                            flameL.position.set(-0.12 * footprintScale, 0.82 * heightScale, 0.04 * footprintScale);
+                            flameL.rotation.z = 0.12;
+                            const flameR = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
+                            flameR.position.set(0.12 * footprintScale, 0.8 * heightScale, -0.03 * footprintScale);
+                            flameR.rotation.z = -0.1;
+                            const emberCore = new THREE.Mesh(new THREE.SphereGeometry(0.07 * footprintScale, 10, 10), coreMat);
+                            emberCore.position.y = 0.74 * heightScale;
+
+                            const baseRing = new THREE.Mesh(new THREE.TorusGeometry(0.31 * footprintScale, 0.045 * footprintScale, 10, 22), emberMat);
+                            baseRing.position.y = 0.58 * heightScale;
+                            baseRing.rotation.x = Math.PI / 2;
+                            const midPlinthRing = new THREE.Mesh(new THREE.TorusGeometry(0.46 * footprintScale, 0.03 * footprintScale, 10, 22), emberMat);
+                            midPlinthRing.position.y = 0.28 * heightScale;
+                            midPlinthRing.rotation.x = Math.PI / 2;
+
+                            altarGroup.add(bowl, flameL, flameR, emberCore, baseRing, midPlinthRing);
+                        }
+
+                        altarGroup.children.forEach((child) => {
+                            child.userData = { type: 'ALTAR_CANDIDATE', gridX: ac.x, gridY: ac.y, z: z, name: ac.label, variant: ac.variant };
+                            environmentMeshes.push(child);
+                        });
+                        planeGroup.add(altarGroup);
+                    }
+                });
+
                 fishingSpotsToRender.forEach(fs => {
+
                     if (fs.x >= startX && fs.x < endX && fs.y >= startY && fs.y < endY && fs.z === z) {
                         const spotGroup = new THREE.Group();
                         const waterHeight = heightMap[z][fs.y][fs.x] + Z_OFFSET;
@@ -1946,6 +2010,8 @@
                         
                         if (npc.name === 'Shopkeeper') {
                             dummy.rotation.y = Math.PI / 2; // Face East towards entrance
+                        } else if (npc.name === 'Banker') {
+                            dummy.rotation.y = 0; // Face south toward players
                         } else {
                             dummy.rotation.y = Math.PI; // Face outwards
                         }

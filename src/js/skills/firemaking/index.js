@@ -1,0 +1,83 @@
+(function () {
+    const SKILL_ID = 'firemaking';
+    const FIREMAKING_XP = 40;
+
+    const firemakingModule = {
+        canStart(context) {
+            return context.getInventoryCount('tinderbox') > 0 && context.getInventoryCount('logs') > 0;
+        },
+
+        onStart(context) {
+            if (!this.canStart(context)) {
+                context.addChatMessage('You need logs and a tinderbox.', 'warn');
+                return false;
+            }
+
+            const fireX = context.playerState.x;
+            const fireY = context.playerState.y;
+            const fireZ = context.playerState.z;
+
+            if (!context.lightFireAtCurrentTile()) return false;
+
+            context.removeOneItemById('logs');
+            context.addSkillXp(SKILL_ID, FIREMAKING_XP);
+            context.addChatMessage('You light the logs.', 'game');
+
+            context.playerState.action = 'SKILLING: FIREMAKING';
+            context.playerState.actionUntilTick = context.currentTick + 3;
+            context.playerState.firemakingTarget = { x: fireX, y: fireY, z: fireZ };
+            context.playerState.turnLock = false;
+            context.playerState.actionVisualReady = true;
+            context.renderInventory();
+            return true;
+        },
+
+        onTick(context) {
+            if (context.playerState.action !== 'SKILLING: FIREMAKING') return;
+            if (context.currentTick < context.playerState.actionUntilTick) return;
+
+            const fireTarget = context.playerState.firemakingTarget;
+            if (fireTarget && fireTarget.z === context.playerState.z) {
+                const stepped = context.tryStepAfterFire();
+                if (stepped) {
+                    const faceDx = fireTarget.x - context.playerState.x;
+                    const faceDy = fireTarget.y - context.playerState.y;
+                    if (faceDx !== 0 || faceDy !== 0) {
+                        context.playerState.targetRotation = Math.atan2(faceDx, faceDy);
+                        context.playerState.turnLock = true;
+                        context.playerState.actionVisualReady = true;
+                    }
+                } else {
+                    context.addChatMessage('You stay put because the way forward is blocked.', 'info');
+                }
+            }
+
+            context.playerState.firemakingTarget = null;
+            context.stopAction();
+        },
+
+        onAnimate(context) {
+            if (!context.rig || !context.playerRig || typeof context.setShoulderPivot !== 'function') return;
+            const rig = context.rig;
+            const playerRig = context.playerRig;
+
+            rig.axe.visible = false;
+            playerRig.rotation.x = 0;
+            context.setShoulderPivot(rig);
+
+            const phase = ((context.frameNow % 700) / 700) * Math.PI * 2;
+            const s = Math.sin(phase);
+
+            rig.torso.rotation.set(0, 0.08 * s, 0);
+            rig.head.rotation.set(0, 0.05 * s, 0);
+            rig.rightArm.rotation.set(-0.9 + (s * 0.25), -0.2, -0.15);
+            rig.rightLowerArm.rotation.set(-0.6 + (s * 0.35), -0.1, 0);
+            rig.leftArm.rotation.set(-0.4, 0.15, 0.2);
+            rig.leftLowerArm.rotation.set(-0.8, -0.2, 0);
+            rig.leftLeg.rotation.x = 0;
+        }
+    };
+
+    window.SkillModules = window.SkillModules || {};
+    window.SkillModules[SKILL_ID] = firemakingModule;
+})();
