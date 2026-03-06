@@ -62,8 +62,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             event.preventDefault(); 
             cameraDist += Math.sign(event.deltaY) * 1.5; 
             cameraDist = Math.max(5, Math.min(30, cameraDist)); 
-            scene.fog.near = cameraDist + 30;
-            scene.fog.far = cameraDist + 70;
+
         }
 
         function onContextMenu(event) {
@@ -98,11 +97,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             } else if (hitData.type === 'DUMMY') {
                 addContextMenuOption('Attack <span class="text-white">Training Dummy</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DUMMY'); spawnClickMarker(hitData.point, true); });
                 addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => console.log('EXAMINING: A dummy to practice your swings on.'));
-                        } else if (hitData.type === 'SHOP_COUNTER') {
+            } else if (hitData.type === 'SHOP_COUNTER') {
                 addContextMenuOption('Examine Shop Counter', () => console.log('EXAMINING: A wooden counter with a glass display.'));
-            } else if (!usedSkillOptions && hitData.type === 'FISHING_SPOT') {
-                addContextMenuOption('Net <span class="text-cyan-400">Fishing spot</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'FISHING_SPOT'); spawnClickMarker(hitData.point, true); });
-                addContextMenuOption('Examine <span class="text-cyan-400">Fishing spot</span>', () => console.log('EXAMINING: A good place to catch fish.'));
             } else if (hitData.type === 'DOOR') {
                 const action = hitData.doorObj.isOpen ? 'Close' : 'Open';
                 addContextMenuOption(`${action} <span class="text-white">Door</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DOOR', hitData.doorObj); spawnClickMarker(hitData.point, true); });
@@ -202,6 +198,47 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return best;
         }
 
+
+        function findNearestFishableWaterEdgeTile(targetX, targetY) {
+            const z = playerState.z;
+            let best = null;
+            let bestDist = Infinity;
+
+            const hasAdjacentStandable = (x, y) => {
+                const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
+                for (let i = 0; i < dirs.length; i++) {
+                    const nx = x + dirs[i].x;
+                    const ny = y + dirs[i].y;
+                    if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
+                    if (isStandableTile(nx, ny, z)) return true;
+                }
+                return false;
+            };
+
+            for (let r = 0; r <= 20; r++) {
+                const minX = Math.max(0, targetX - r);
+                const maxX = Math.min(MAP_SIZE - 1, targetX + r);
+                const minY = Math.max(0, targetY - r);
+                const maxY = Math.min(MAP_SIZE - 1, targetY + r);
+
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        const tile = logicalMap[z][y][x];
+                        if (tile !== 21 && tile !== 22) continue;
+                        if (!hasAdjacentStandable(x, y)) continue;
+
+                        const d = Math.hypot(x - targetX, y - targetY);
+                        if (d < bestDist) {
+                            bestDist = d;
+                            best = { x, y };
+                        }
+                    }
+                }
+                if (best) break;
+            }
+
+            return best;
+        }
         function isStandableTile(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
             const tile = logicalMap[z][y][x];
@@ -319,27 +356,42 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             const selected = getSelectedUseItem();
             if (selected) {
-                const used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
+                let used = false;
+                const selectedSlot = inventory[selectedUse.invIndex];
+                if (hitData.type === 'ALTAR_CANDIDATE' && selectedSlot && selectedSlot.itemData && selectedSlot.itemData.id === 'rune_essence') {
+                    queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ALTAR_CANDIDATE', hitData);
+                    spawnClickMarker(hitData.point, true);
+                    used = true;
+                } else {
+                    used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
+                    if (!used && hitData.type === 'GROUND' && selectedSlot && selectedSlot.itemData
+                        && selectedSlot.itemData.cookResultId && selectedSlot.itemData.burnResultId) {
+                        const hasFire = Array.isArray(activeFires)
+                            && activeFires.some((f) => f.x === hitData.gridX && f.y === hitData.gridY && f.z === playerState.z);
+                        if (hasFire && window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function') {
+                            used = SkillRuntime.tryStartSkillById('cooking', {
+                                skillId: 'cooking',
+                                targetObj: 'FIRE',
+                                targetX: hitData.gridX,
+                                targetY: hitData.gridY,
+                                targetZ: playerState.z,
+                                sourceInvIndex: selectedUse.invIndex,
+                                sourceItemId: selectedSlot.itemData.id
+                            });
+                        }
+                    }
+                }
+                if (used && hitData.point) spawnClickMarker(hitData.point, true);
                 clearSelectedUse();
-                if (used) return;
+                // Use-click should consume this click: either valid use, or cancel selection.
+                return;
             }
 
                         // Treating walls and towers strictly as move obstacles, not interactables!
             if (hitData.type === 'WATER') {
-                // Use cursor world point, not overlapping water mesh tile id, to avoid stopping one tile too far.
-                const wx = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(hitData.point.x + 0.5)));
-                const wy = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(hitData.point.z + 0.5)));
-                const bankTile = findNearestRiverBankTile(wx, wy);
-                if (bankTile) {
-                    queueAction('WALK', bankTile.x, bankTile.y, null);
-                    const z = playerState.z;
-                    const markerPos = new THREE.Vector3(bankTile.x + 0.5, heightMap[z][bankTile.y][bankTile.x] + z * 3.0, bankTile.y + 0.5);
-                    spawnClickMarker(markerPos, false);
-                } else {
-                    queueAction('WALK', hitData.gridX, hitData.gridY, null);
-                    spawnClickMarker(hitData.point, false);
-                }
-            } else if (hitData.type === 'GROUND' || hitData.type === 'WALL' || hitData.type === 'TOWER') {
+                queueAction('INTERACT', hitData.gridX, hitData.gridY, 'WATER');
+                spawnClickMarker(hitData.point, true);
+            } else if (hitData.type === 'GROUND' || hitData.type === 'WALL' || hitData.type === 'TOWER' || hitData.type === 'FIRE') {
                 queueAction('WALK', hitData.gridX, hitData.gridY, null);
                 spawnClickMarker(hitData.point, false);
             }
@@ -475,9 +527,20 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             for (let i = respawningTrees.length - 1; i >= 0; i--) { if (currentTick >= respawningTrees[i].respawnTick) { respawnTree(respawningTrees[i].x, respawningTrees[i].y, respawningTrees[i].z); respawningTrees.splice(i, 1); } }
             if (typeof tickRockNodes === 'function') tickRockNodes();
             if (pendingAction) {
-                playerState.targetX = pendingAction.x; playerState.targetY = pendingAction.y;
+                let actionX = pendingAction.x;
+                let actionY = pendingAction.y;
+
+                if (pendingAction.type === 'INTERACT' && pendingAction.obj === 'WATER') {
+                    const edgeWater = findNearestFishableWaterEdgeTile(pendingAction.x, pendingAction.y);
+                    if (edgeWater) {
+                        actionX = edgeWater.x;
+                        actionY = edgeWater.y;
+                    }
+                }
+
+                playerState.targetX = actionX; playerState.targetY = actionY;
                 if (pendingAction.type === 'WALK') {
-                    playerState.path = findPath(playerState.x, playerState.y, pendingAction.x, pendingAction.y, false);
+                    playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, false);
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
@@ -485,7 +548,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 } else if (pendingAction.type === 'INTERACT') {
                     // Force standing adjacent to interactables (unless picking up a ground item)
                     const forceAdjacent = pendingAction.obj !== 'GROUND_ITEM';
-                    playerState.path = findPath(playerState.x, playerState.y, pendingAction.x, pendingAction.y, forceAdjacent);
+                    playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, forceAdjacent);
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
@@ -733,28 +796,46 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             const hitData = getRaycastHit(currentMouseX, currentMouseY);
             if (hitData) {
-                let actionText = (window.SkillRuntime && typeof SkillRuntime.getSkillTooltip === 'function')
-                    ? SkillRuntime.getSkillTooltip(hitData)
-                    : '';
+                                const selectedSlot = getSelectedUseItem();
+                const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
+                const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
+                const fireUnderCursor = selectedCookable && Array.isArray(activeFires) && activeFires.some((f) => {
+                    if (!f || f.z !== playerState.z) return false;
+                    if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY) && f.x === hitData.gridX && f.y === hitData.gridY) return true;
+                    if (!hitData.point) return false;
+                    return Math.hypot((f.x + 0.5) - hitData.point.x, (f.y + 0.5) - hitData.point.z) <= 1.35;
+                });
+
+                let actionText = '';
+                if (selectedCookable && (hitData.type === 'GROUND' || hitData.type === 'FIRE') && fireUnderCursor) {
+                    actionText = `<span class="text-gray-300">Use</span> <span class="text-[#ff981f]">${selectedItem.name}</span> <span class="text-gray-300">-></span> <span class="text-orange-300">Fire</span>`;
+                }
+
                 if (!actionText) {
-                if (hitData.type === 'TREE') {
-                    if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
-                } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
-                else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${hitData.name}</span>`;
-                else if (hitData.type === 'BANK_BOOTH') actionText = '<span class="text-gray-300">Bank</span> <span class="text-cyan-400">Bank Booth</span>';
-                                else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
-                else if (hitData.type === 'FISHING_SPOT') actionText = '<span class="text-gray-300">Net</span> <span class="text-cyan-400">Fishing spot</span>';
-                else if (hitData.type === 'DOOR') actionText = `<span class="text-gray-300">${hitData.doorObj.isOpen ? 'Close' : 'Open'}</span> <span class="text-cyan-400">Door</span>`;
-                else if (hitData.type === 'DUMMY') actionText = '<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">Training Dummy</span>';
-                else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
-                else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
-
-                else if (hitData.type === 'NPC') {
-                    if (hitData.name === 'Shopkeeper') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
-                    else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
+                    actionText = (window.SkillRuntime && typeof SkillRuntime.getSkillTooltip === 'function')
+                        ? SkillRuntime.getSkillTooltip(hitData)
+                        : '';
                 }
 
+                if (!actionText) {
+                    if (hitData.type === 'TREE') {
+                        if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
+                    } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
+                    else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${hitData.name}</span>`;
+                    else if (hitData.type === 'BANK_BOOTH') actionText = '<span class="text-gray-300">Bank</span> <span class="text-cyan-400">Bank Booth</span>';
+                    else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
+                    else if (hitData.type === 'WATER') actionText = '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
+                    else if (hitData.type === 'DOOR') actionText = `<span class="text-gray-300">${hitData.doorObj.isOpen ? 'Close' : 'Open'}</span> <span class="text-cyan-400">Door</span>`;
+                    else if (hitData.type === 'DUMMY') actionText = '<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">Training Dummy</span>';
+                    else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
+                    else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
+                    else if (hitData.type === 'ALTAR_CANDIDATE') actionText = '<span class="text-gray-300">Craft-rune</span> <span class="text-orange-300">Ember Altar</span>';
+                    else if (hitData.type === 'NPC') {
+                        if (hitData.name === 'Shopkeeper') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
+                        else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
+                    }
                 }
+
                 if (actionText) {
                     tooltip.innerHTML = actionText;
                     tooltip.classList.remove('hidden');
@@ -1247,7 +1328,27 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             
             rig.leftArm.scale.set(1, 1, 1);
             rig.rightArm.scale.set(1, 1, 1);
+            rig.leftLowerArm.scale.set(1, 1, 1);
+            rig.rightLowerArm.scale.set(1, 1, 1);
+            if (rig.torso) rig.torso.scale.set(1, 1, 1);
+            if (rig.head) rig.head.scale.set(1, 1, 1);
+            if (rig.leftLeg) rig.leftLeg.scale.set(1, 1, 1);
+            if (rig.rightLeg) rig.rightLeg.scale.set(1, 1, 1);
+            if (rig.leftLowerLeg) rig.leftLowerLeg.scale.set(1, 1, 1);
+            if (rig.rightLowerLeg) rig.rightLowerLeg.scale.set(1, 1, 1);
             rig.leftLeg.position.set(0.14, 0.7, 0); rig.rightLeg.position.set(-0.14, 0.7, 0);
+            if (rig.torso) {
+                if (!rig.torso.userData) rig.torso.userData = {};
+                if (!rig.torso.userData.defaultPos) rig.torso.userData.defaultPos = rig.torso.position.clone();
+                rig.torso.position.copy(rig.torso.userData.defaultPos);
+            }
+            if (rig.head) {
+                if (!rig.head.userData) rig.head.userData = {};
+                if (!rig.head.userData.defaultPos) rig.head.userData.defaultPos = rig.head.position.clone();
+                rig.head.position.copy(rig.head.userData.defaultPos);
+            }
+            if (rig.leftLowerLeg) rig.leftLowerLeg.position.set(0, -0.35, 0);
+            if (rig.rightLowerLeg) rig.rightLowerLeg.position.set(0, -0.35, 0);
             if (isMoving) {
                 rig.axe.visible = !!equipment.weapon; rig.axe.rotation.set(0, 0, 0); 
                 setPlayerRigShoulderPivot(rig);
@@ -1464,3 +1565,21 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -46,6 +46,7 @@
             firemakingTarget: null
         };
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
+        let RUNE_ESSENCE_ROCKS = [];
 
         // Shared shoulder pivot for player rig/animations.
         // X is width-aware: torso half-width (0.54/2) + upper-arm half-width (0.20/2) + small gap.
@@ -204,6 +205,52 @@ O445411111OOOOO.
         }
 
         const ASSET_VERSION_TAG = "20260305a";
+        const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
+
+        function inferItemActions(item) {
+            if (!item || !item.type) return [];
+            const type = String(item.type).toLowerCase();
+            if (type === 'weapon') return ['Equip'];
+            if (type === 'food') return ['Eat'];
+            return [];
+        }
+
+        function getItemActionRank(actionName) {
+            const normalized = String(actionName || '').toLowerCase();
+            const idx = ITEM_ACTION_PRIORITY.indexOf(normalized);
+            return idx === -1 ? ITEM_ACTION_PRIORITY.length : idx;
+        }
+
+        function getOrderedItemActions(item) {
+            if (!item) return ['Use'];
+            const merged = [];
+            const seen = new Set();
+            const addAction = (actionName) => {
+                if (!actionName || typeof actionName !== 'string') return;
+                const normalized = actionName.trim();
+                if (!normalized) return;
+                const key = normalized.toLowerCase();
+                if (seen.has(key)) return;
+                seen.add(key);
+                merged.push(normalized);
+            };
+
+            (Array.isArray(item.actions) ? item.actions : []).forEach(addAction);
+            inferItemActions(item).forEach(addAction);
+            addAction('Use');
+            addAction('Drop');
+
+            return merged.sort((a, b) => {
+                const rankDiff = getItemActionRank(a) - getItemActionRank(b);
+                if (rankDiff !== 0) return rankDiff;
+                return a.localeCompare(b);
+            });
+        }
+
+        function resolveDefaultItemAction(item) {
+            const actions = getOrderedItemActions(item);
+            return actions.length > 0 ? actions[0] : 'Use';
+        }
 
         // Item & Inventory State
         const ITEM_DB = {
@@ -233,10 +280,18 @@ O445411111OOOOO.
             },            'small_net': {
                 id: 'small_net', name: 'Small Net', icon: makeIconSprite('small_net'), type: 'tool',
                 actions: ['Use', 'Drop'], defaultAction: 'Use', value: 25, stackable: false
-            },
-            'raw_shrimp': {
+            },            'raw_shrimp': {
                 id: 'raw_shrimp', name: 'Raw Shrimp', icon: makeIconSprite('raw_shrimp'), type: 'resource',
-                actions: ['Drop'], defaultAction: 'Drop', value: 3, stackable: false
+                cookResultId: 'cooked_shrimp', burnResultId: 'burnt_shrimp', burnChance: 0.28,
+                actions: ['Use', 'Drop'], defaultAction: 'Use', value: 3, stackable: false
+            },
+            'cooked_shrimp': {
+                id: 'cooked_shrimp', name: 'Cooked Shrimp', icon: makeIconSprite('raw_shrimp'), type: 'food',
+                actions: ['Eat', 'Drop'], defaultAction: 'Eat', value: 8, stackable: false
+            },
+            'burnt_shrimp': {
+                id: 'burnt_shrimp', name: 'Burnt Shrimp', icon: makeIconSprite('raw_shrimp'), type: 'resource',
+                actions: ['Drop'], defaultAction: 'Drop', value: 1, stackable: false
             },
             'copper_ore': {
                 id: 'copper_ore', name: 'Copper ore', icon: makeIconSprite('copper_ore'), type: 'resource',
@@ -265,12 +320,16 @@ O445411111OOOOO.
             defense: { xp: 0, level: 1 },
             woodcutting: { xp: 0, level: 1 },
             firemaking: { xp: 0, level: 1 },
-            fishing: { xp: 0, level: 1 }
+            fishing: { xp: 0, level: 1 },
+            cooking: { xp: 0, level: 1 }
         };
         let groundItems = [];
         let activeFires = [];
         let fishingSpotsToRender = [];
         let selectedUse = { invIndex: null, itemId: null }; 
+
+        // Temporary interaction diagnostics for cooking-use flow.
+        if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false; 
 
         // UI Elements
         const contextMenuEl = document.getElementById('context-menu');
@@ -512,6 +571,8 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
 
 
 

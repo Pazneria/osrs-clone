@@ -18,6 +18,7 @@
             sharedGeometries.rockCopper = new THREE.IcosahedronGeometry(0.48, 0).scale(1.08, 0.8, 0.95).translate(0, 0.34, 0);
             sharedGeometries.rockTin = new THREE.DodecahedronGeometry(0.46, 0).scale(1.0, 0.74, 0.92).translate(0, 0.32, 0);
             sharedGeometries.rockDepleted = new THREE.IcosahedronGeometry(0.42, 0).scale(0.95, 0.66, 0.9).translate(0, 0.28, 0);
+            sharedGeometries.rockRuneEssence = new THREE.IcosahedronGeometry(0.9, 1).scale(1.35, 0.95, 1.35).translate(0, 0.78, 0);
 
             // Castle Geometries (Taller and anchors are centered for grounded effect)
             sharedGeometries.castleWall = new THREE.BoxGeometry(1, 3, 1).translate(0, 1.5, 0);
@@ -32,6 +33,7 @@
             sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0x8f6b58, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x8e99a4, flatShading: true });
             sharedMaterials.rockDepleted = new THREE.MeshLambertMaterial({ color: 0x5a5f68, flatShading: true });
+            sharedMaterials.rockRuneEssence = new THREE.MeshLambertMaterial({ color: 0x7e848c, flatShading: true });
             sharedMaterials.trunk = new THREE.MeshLambertMaterial({ color: 0x6a452a, flatShading: true });
             sharedMaterials.leaves = new THREE.MeshLambertMaterial({ color: 0x2f7f3a, flatShading: true });
             sharedMaterials.rock = new THREE.MeshLambertMaterial({ color: 0x80858f, flatShading: true });
@@ -562,8 +564,9 @@
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 45, 85); 
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 120);
+            // Keep fog only at the far render horizon so nearby space stays clear.
+            scene.fog = new THREE.Fog(0x87CEEB, 140, 240); 
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 260);
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -676,6 +679,7 @@
 
         const MAX_SKILL_LEVEL = 99;
         const FIRE_STEP_DIR = { x: 0, y: 1 };
+        const FIRE_LIFETIME_TICKS = 50;
 
         function getXpForLevel(level) {
             const clamped = Math.max(1, Math.min(MAX_SKILL_LEVEL, level));
@@ -708,7 +712,9 @@
                 defense: 'def',
                 woodcutting: 'wc',
                 firemaking: 'fm',
-                fishing: 'fish'
+                fishing: 'fish',
+                cooking: 'cook',
+                runecrafting: 'rc'
             };
             const key = keyBySkill[skillName];
             if (!key || !playerSkills[skillName]) return;
@@ -781,6 +787,26 @@
             return false;
         }
 
+        function removeItemsById(itemId, amount) {
+            if (!itemId || amount <= 0) return 0;
+            let removed = 0;
+
+            for (let i = 0; i < inventory.length && removed < amount; i++) {
+                const slot = inventory[i];
+                if (!slot || slot.itemData.id !== itemId) continue;
+
+                const take = Math.min(slot.amount, amount - removed);
+                slot.amount -= take;
+                removed += take;
+
+                if (slot.amount <= 0) inventory[i] = null;
+                if (selectedUse.invIndex === i && (!inventory[i] || inventory[i].itemData.id !== selectedUse.itemId)) {
+                    clearSelectedUse(false);
+                }
+            }
+
+            return removed;
+        }
         function lightFireAtCurrentTile() {
             const x = playerState.x;
             const y = playerState.y;
@@ -807,6 +833,9 @@
             );
             flame.position.set(0, 0.35, 0);
             flame.userData.flame = true;
+            logA.userData = { type: 'FIRE', gridX: x, gridY: y, z };
+            logB.userData = { type: 'FIRE', gridX: x, gridY: y, z };
+            flame.userData = Object.assign({}, flame.userData, { type: 'FIRE', gridX: x, gridY: y, z });
 
             group.add(logA, logB, flame);
 
@@ -817,7 +846,13 @@
                 if (pGroup) pGroup.add(group); else scene.add(group);
             } else scene.add(group);
 
-            activeFires.push({ x, y, z, mesh: group, flame, expiresTick: currentTick + 20, phase: Math.random() * Math.PI * 2 });
+            environmentMeshes.push(logA, logB, flame);
+            activeFires.push({
+                x, y, z, mesh: group, flame,
+                hitMeshes: [logA, logB, flame],
+                expiresTick: currentTick + FIRE_LIFETIME_TICKS,
+                phase: Math.random() * Math.PI * 2
+            });
             return true;
         }
 
@@ -828,6 +863,12 @@
                 if (currentTick >= fire.expiresTick) {
                     if (fire.mesh.parent) fire.mesh.parent.remove(fire.mesh);
                     else scene.remove(fire.mesh);
+                    if (Array.isArray(fire.hitMeshes)) {
+                        for (let j = 0; j < fire.hitMeshes.length; j++) {
+                            const idx = environmentMeshes.indexOf(fire.hitMeshes[j]);
+                            if (idx !== -1) environmentMeshes.splice(idx, 1);
+                        }
+                    }
                     activeFires.splice(i, 1);
                     continue;
                 }
@@ -863,9 +904,51 @@
             return true;
         }
 
-        function startFiremaking() {
+                function startFiremaking() {
             if (!(window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function')) return false;
             return SkillRuntime.tryStartSkillById('firemaking', { skillId: 'firemaking' });
+        }
+
+        function resolveFireTargetFromHit(hitData) {
+            if (!hitData || !Array.isArray(activeFires) || activeFires.length === 0) return null;
+
+            const z = playerState.z;
+            let x = Number.isInteger(hitData.gridX) ? hitData.gridX : null;
+            let y = Number.isInteger(hitData.gridY) ? hitData.gridY : null;
+
+            if ((x === null || y === null) && hitData.point) {
+                x = Math.floor(hitData.point.x + 0.5);
+                y = Math.floor(hitData.point.z + 0.5);
+            }
+
+            if (x !== null && y !== null) {
+                const direct = activeFires.find((f) => f.x === x && f.y === y && f.z === z) || null;
+                if (direct) return { x: direct.x, y: direct.y, z: direct.z };
+            }
+
+            if (!hitData.point) return null;
+
+            let nearest = null;
+            let nearestDist = Infinity;
+            for (let i = 0; i < activeFires.length; i++) {
+                const fire = activeFires[i];
+                if (!fire || fire.z !== z) continue;
+                const d = Math.hypot((fire.x + 0.5) - hitData.point.x, (fire.y + 0.5) - hitData.point.z);
+                if (d < nearestDist) {
+                    nearestDist = d;
+                    nearest = fire;
+                }
+            }
+
+            if (!nearest || nearestDist > 1.35) return null;
+            return { x: nearest.x, y: nearest.y, z: nearest.z };
+        }
+
+        function debugCookingUse(message) {
+            if (!window.DEBUG_COOKING_USE) return;
+            const text = `[cook-debug] ${message}`;
+            try { console.log(text); } catch (_) {}
+            if (typeof addChatMessage === 'function') addChatMessage(text, 'info');
         }
 
         function tryUseItemOnInventory(sourceInvIndex, targetInvIndex) {
@@ -883,28 +966,85 @@
             return false;
         }
 
-        function tryUseItemOnWorld(sourceInvIndex, hitData) {
+                        function tryUseItemOnWorld(sourceInvIndex, hitData) {
             const source = inventory[sourceInvIndex];
-            if (!source) return false;
+            if (!source) {
+                debugCookingUse('no source item in selected slot');
+                return false;
+            }
 
             if ((source.itemData.id === 'tinderbox' || source.itemData.id === 'logs') && hitData.type === 'GROUND') {
                 return startFiremaking();
             }
 
+            const isCookable = source.itemData && source.itemData.cookResultId && source.itemData.burnResultId;
+            const isGroundOrFire = hitData && (hitData.type === 'GROUND' || hitData.type === 'FIRE');
+            if (isCookable) {
+                const gx = (hitData && Number.isInteger(hitData.gridX)) ? hitData.gridX : 'n/a';
+                const gy = (hitData && Number.isInteger(hitData.gridY)) ? hitData.gridY : 'n/a';
+                const ht = (hitData && hitData.type) ? hitData.type : 'none';
+                debugCookingUse('attempt item=' + source.itemData.id + ' hit=' + ht + ' gx=' + gx + ' gy=' + gy);
+            }
+
+            if (isGroundOrFire && isCookable) {
+                const fireTarget = resolveFireTargetFromHit(hitData);
+                if (!fireTarget) {
+                    debugCookingUse('no active fire resolved from cursor hit');
+                    addChatMessage('You need an active fire to cook that.', 'warn');
+                    return false;
+                }
+
+                if (!(window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function')) {
+                    debugCookingUse('SkillRuntime.tryStartSkillById missing');
+                    return false;
+                }
+
+                const started = SkillRuntime.tryStartSkillById('cooking', {
+                    skillId: 'cooking',
+                    targetObj: 'FIRE',
+                    targetX: fireTarget.x,
+                    targetY: fireTarget.y,
+                    targetZ: fireTarget.z,
+                    sourceInvIndex,
+                    sourceItemId: source.itemData.id
+                });
+
+                if (started) debugCookingUse('start ok target=' + fireTarget.x + ',' + fireTarget.y + ',' + fireTarget.z);
+                else debugCookingUse('start failed target=' + fireTarget.x + ',' + fireTarget.y + ',' + fireTarget.z);
+                return started;
+            }
+
+            if (isCookable) debugCookingUse('hit type was not GROUND/FIRE for cookable item');
             return false;
         }
 
-        function handleInventorySlotClick(invIndex, defaultAction) {
+        function handleInventorySlotClick(invIndex) {
             const selected = getSelectedUseItem();
 
-            if (selected && selectedUse.invIndex !== invIndex) {
-                if (tryUseItemOnInventory(selectedUse.invIndex, invIndex)) {
+            if (selected) {
+                if (selectedUse.invIndex !== invIndex && tryUseItemOnInventory(selectedUse.invIndex, invIndex)) {
                     clearSelectedUse();
+                    return;
                 }
+                // A selected Use should always consume the next click.
+                clearSelectedUse();
                 return;
             }
 
-            handleItemAction(invIndex, defaultAction);
+            const slot = inventory[invIndex];
+            if (!slot) return;
+            handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData));
+        }
+        function eatItem(invIndex) {
+            const invSlot = inventory[invIndex];
+            if (!invSlot) return;
+
+            const item = invSlot.itemData;
+            invSlot.amount -= 1;
+            if (invSlot.amount <= 0) inventory[invIndex] = null;
+            if (selectedUse.invIndex === invIndex) clearSelectedUse(false);
+            addChatMessage(`You eat the ${item.name}.`, 'game');
+            renderInventory();
         }
 
         function handleItemAction(invIndex, actionName) {
@@ -921,7 +1061,11 @@
                 equipment[slotName] = item; inventory[invIndex] = oldItem ? { itemData: oldItem, amount: 1 } : null;
                 clearSelectedUse(false);
                 updateStats(); renderInventory(); renderEquipment(); updatePlayerModel();
-            } else if (actionName === 'Drop') dropItem(invIndex);
+            } else if (actionName === 'Eat') {
+                eatItem(invIndex);
+            } else if (actionName === 'Drop') {
+                dropItem(invIndex);
+            }
         }
 
         function hasWeaponClassAvailable(weaponClass) {
@@ -1052,13 +1196,15 @@
 
         function rockNodeKey(x, y, z = 0) { return z + ':' + x + ',' + y; }
 
-        function oreTypeForTile(x, y, z = 0) {
-            const hash = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
-            return (hash & 1) === 0 ? 'copper' : 'tin';
+        function isRuneEssenceRockCoordinate(x, y, z = 0) {
+            if (!Array.isArray(RUNE_ESSENCE_ROCKS)) return false;
+            return RUNE_ESSENCE_ROCKS.some((rock) => rock && rock.x === x && rock.y === y && rock.z === z);
         }
 
-        function isInfiniteMiningTestRock(x, y, z = 0) {
-            return !!(TEST_MINING_ROCK && x === TEST_MINING_ROCK.x && y === TEST_MINING_ROCK.y && z === TEST_MINING_ROCK.z);
+        function oreTypeForTile(x, y, z = 0) {
+            if (isRuneEssenceRockCoordinate(x, y, z)) return 'rune_essence';
+            const hash = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
+            return (hash & 1) === 0 ? 'copper' : 'tin';
         }
 
         function rebuildRockNodes() {
@@ -1236,6 +1382,16 @@
                     }
                 }
             });
+            // Add a guaranteed pond in front of the castle (clearing area).
+            const castleFrontPond = { cx: 205, cy: 233, rx: 13, ry: 9 };
+            for (let y = Math.max(1, Math.floor(castleFrontPond.cy - castleFrontPond.ry - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(castleFrontPond.cy + castleFrontPond.ry + 1)); y++) {
+                for (let x = Math.max(1, Math.floor(castleFrontPond.cx - castleFrontPond.rx - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(castleFrontPond.cx + castleFrontPond.rx + 1)); x++) {
+                    const nx = (x - castleFrontPond.cx) / castleFrontPond.rx;
+                    const ny = (y - castleFrontPond.cy) / castleFrontPond.ry;
+                    const d = Math.sqrt(nx * nx + ny * ny);
+                    if (d <= 1.0) carveWaterTile(x, y, 1.0 - d);
+                }
+            }
             rebuildRockNodes();
 
             // Soften natural terrain transitions so adjacent tiles visually blend.
@@ -1265,22 +1421,6 @@
                     }
                 }
                 heightMap[0] = smoothed;
-            }
-
-            for (let y = 2; y < MAP_SIZE - 2; y++) {
-                for (let x = 2; x < MAP_SIZE - 2; x++) {
-                    if (logicalMap[0][y][x] !== 22) continue;
-                    let walkAdj = false;
-                    const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-                    for (let d = 0; d < dirs.length; d++) {
-                        const nx = x + dirs[d].x;
-                        const ny = y + dirs[d].y;
-                        if (WALKABLE_TILES.includes(logicalMap[0][ny][nx])) { walkAdj = true; break; }
-                    }
-                    if (walkAdj && Math.random() < 0.02) {
-                        fishingSpotsToRender.push({ x, y, z: 0, name: 'Fishing spot' });
-                    }
-                }
             }
 
             // --- THE 3D ASCII BLUEPRINT ENGINE ---
@@ -1418,8 +1558,6 @@
             
             // Stamp the General Store at the requested coordinates
             stampBlueprint(177, 232, 0, generalStoreBlueprint);
-            // Locked-in Ember altar.
-            altarCandidatesToRender.push({ x: 216, y: 236, z: 0, variant: 4, label: 'Ember Altar' });
 
 
             // --- USER TEST: Dual Castle Stairs ---
@@ -1458,10 +1596,60 @@
                 targetRotation: 0 
             });
 
-            // Always place a non-depleting mining test rock directly in front of spawn.
-            if (TEST_MINING_ROCK) {
-                logicalMap[TEST_MINING_ROCK.z][TEST_MINING_ROCK.y][TEST_MINING_ROCK.x] = 2;
-                heightMap[TEST_MINING_ROCK.z][TEST_MINING_ROCK.y][TEST_MINING_ROCK.x] = heightMap[playerState.z][playerState.y][playerState.x];
+            const isWorldFeatureSpawnTile = (x, y) => {
+                if (x <= 2 || y <= 2 || x >= MAP_SIZE - 3 || y >= MAP_SIZE - 3) return false;
+                if (inTownCore(x, y)) return false;
+                const tile = logicalMap[0][y][x];
+                return tile === 0;
+            };
+
+            const randomizeArrayInPlace = (arr) => {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    const tmp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = tmp;
+                }
+            };
+
+            const allFeatureCandidates = [];
+            for (let y = 3; y < MAP_SIZE - 3; y++) {
+                for (let x = 3; x < MAP_SIZE - 3; x++) {
+                    if (isWorldFeatureSpawnTile(x, y)) allFeatureCandidates.push({ x, y, z: 0 });
+                }
+            }
+            randomizeArrayInPlace(allFeatureCandidates);
+
+            // Randomize rune essence rocks around the world (no fixed castle cluster).
+            const runeEssenceTargetCount = 8;
+            RUNE_ESSENCE_ROCKS = [];
+            let candidateIdx = 0;
+            while (RUNE_ESSENCE_ROCKS.length < runeEssenceTargetCount && candidateIdx < allFeatureCandidates.length) {
+                const candidate = allFeatureCandidates[candidateIdx++];
+                if (!candidate) continue;
+
+                const tooCloseToExisting = RUNE_ESSENCE_ROCKS.some((rock) => Math.hypot(rock.x - candidate.x, rock.y - candidate.y) < 24);
+                if (tooCloseToExisting) continue;
+
+                RUNE_ESSENCE_ROCKS.push(candidate);
+                logicalMap[candidate.z][candidate.y][candidate.x] = 2;
+            }
+
+            // Place a single Ember altar at a random world tile, away from rune essence rocks.
+            let emberAltarTile = null;
+            while (candidateIdx < allFeatureCandidates.length) {
+                const candidate = allFeatureCandidates[candidateIdx++];
+                if (!candidate) continue;
+                const nearRuneEssence = RUNE_ESSENCE_ROCKS.some((rock) => Math.hypot(rock.x - candidate.x, rock.y - candidate.y) < 20);
+                if (nearRuneEssence) continue;
+                emberAltarTile = candidate;
+                break;
+            }
+
+            altarCandidatesToRender = [];
+            if (emberAltarTile) {
+                altarCandidatesToRender.push({ x: emberAltarTile.x, y: emberAltarTile.y, z: emberAltarTile.z, variant: 4, label: 'Ember Altar' });
+                logicalMap[emberAltarTile.z][emberAltarTile.y][emberAltarTile.x] = 5;
             }
         }
 
@@ -1520,7 +1708,7 @@
                     environmentMeshes.push(terrainMesh);
                 }
 
-                let tCount = 0, rCopperCount = 0, rTinCount = 0, rDepletedCount = 0, wCount = 0, cCount = 0;
+                let tCount = 0, rCopperCount = 0, rTinCount = 0, rDepletedCount = 0, rRuneEssenceCount = 0, wCount = 0, cCount = 0;
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         let tile = logicalMap[z][y][x];
@@ -1528,6 +1716,7 @@
                         else if (tile === 2) {
                             const rockNode = getRockNodeAt(x, y, z);
                             if (rockNode && rockNode.depletedUntilTick > currentTick) rDepletedCount++;
+                            else if (rockNode && rockNode.oreType === 'rune_essence') rRuneEssenceCount++;
                             else if (rockNode && rockNode.oreType === 'tin') rTinCount++;
                             else rCopperCount++;
                         }
@@ -1549,7 +1738,7 @@
                         planeGroup.add(mesh); environmentMeshes.push(mesh);
                     });
                 }
-                let rData = { rockCopperMap: [], rockTinMap: [], rockDepletedMap: [], iRockCopper: null, iRockTin: null, iRockDepleted: null };
+                let rData = { rockCopperMap: [], rockTinMap: [], rockDepletedMap: [], rockRuneEssenceMap: [], iRockCopper: null, iRockTin: null, iRockDepleted: null, iRockRuneEssence: null };
                 if (rCopperCount > 0) {
                     rData.iRockCopper = new THREE.InstancedMesh(sharedGeometries.rockCopper, sharedMaterials.rockCopper, rCopperCount);
                     rData.iRockCopper.castShadow = false; rData.iRockCopper.matrixAutoUpdate = false;
@@ -1568,6 +1757,12 @@
                     rData.iRockDepleted.userData = { instanceMap: rData.rockDepletedMap };
                     planeGroup.add(rData.iRockDepleted); environmentMeshes.push(rData.iRockDepleted);
                 }
+                if (rRuneEssenceCount > 0) {
+                    rData.iRockRuneEssence = new THREE.InstancedMesh(sharedGeometries.rockRuneEssence, sharedMaterials.rockRuneEssence, rRuneEssenceCount);
+                    rData.iRockRuneEssence.castShadow = false; rData.iRockRuneEssence.matrixAutoUpdate = false;
+                    rData.iRockRuneEssence.userData = { instanceMap: rData.rockRuneEssenceMap };
+                    planeGroup.add(rData.iRockRuneEssence); environmentMeshes.push(rData.iRockRuneEssence);
+                }
 
                 let castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };
                 if (wCount > 0) {
@@ -1584,7 +1779,7 @@
                 }
 
                 const dummyTransform = new THREE.Object3D();
-                let tIdx = 0, rCopperIdx = 0, rTinIdx = 0, rDepletedIdx = 0, wIdx = 0, cIdx = 0;
+                let tIdx = 0, rCopperIdx = 0, rTinIdx = 0, rDepletedIdx = 0, rRuneEssenceIdx = 0, wIdx = 0, cIdx = 0;
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
@@ -1616,6 +1811,12 @@
                                     rData.iRockDepleted.setMatrixAt(rDepletedIdx, dummyTransform.matrix);
                                     rData.rockDepletedMap[rDepletedIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z };
                                     rDepletedIdx++;
+                                }
+                            } else if (rockNode && rockNode.oreType === 'rune_essence') {
+                                if (rData.iRockRuneEssence) {
+                                    rData.iRockRuneEssence.setMatrixAt(rRuneEssenceIdx, dummyTransform.matrix);
+                                    rData.rockRuneEssenceMap[rRuneEssenceIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z };
+                                    rRuneEssenceIdx++;
                                 }
                             } else if (rockNode && rockNode.oreType === 'tin') {
                                 if (rData.iRockTin) {
@@ -1927,37 +2128,6 @@
                         planeGroup.add(altarGroup);
                     }
                 });
-
-                fishingSpotsToRender.forEach(fs => {
-
-                    if (fs.x >= startX && fs.x < endX && fs.y >= startY && fs.y < endY && fs.z === z) {
-                        const spotGroup = new THREE.Group();
-                        const waterHeight = heightMap[z][fs.y][fs.x] + Z_OFFSET;
-                        spotGroup.position.set(fs.x, waterHeight + 0.09, fs.y);
-
-                        const bobber = new THREE.Mesh(sharedGeometries.fishingSpotMarker, sharedMaterials.fishingSpot);
-                        bobber.position.y = 0.12;
-                        bobber.castShadow = false;
-                        bobber.receiveShadow = false;
-
-                        const ripple = new THREE.Mesh(
-                            new THREE.RingGeometry(0.18, 0.28, 16),
-                            new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
-                        );
-                        ripple.rotation.x = -Math.PI / 2;
-                        ripple.position.y = 0.01;
-
-                        spotGroup.add(bobber, ripple);
-                        spotGroup.userData = { bobber, ripple, phase: Math.random() * Math.PI * 2 };
-
-                        spotGroup.children.forEach((child) => {
-                            child.userData = { type: 'FISHING_SPOT', gridX: fs.x, gridY: fs.y, z: z, name: fs.name || 'Fishing spot' };
-                            environmentMeshes.push(child);
-                        });
-
-                        planeGroup.add(spotGroup);
-                    }
-                });
                 doorsToRender.forEach(d => {
                     if (d.x >= startX && d.x < endX && d.y >= startY && d.y < endY && d.z === z) {
                         const doorGroup = new THREE.Group();
@@ -2134,6 +2304,11 @@
                 const mouseX = (e.clientX - rect.left) * scaleX; const mouseY = (e.clientY - rect.top) * scaleY;
                 if (e.button === 2) { isMinimapDragging = true; minimapDragStart = { x: mouseX, y: mouseY }; minimapDragEnd = { x: mouseX, y: mouseY }; } 
                 else if (e.button === 0) { 
+                    const selected = getSelectedUseItem();
+                    if (selected) {
+                        clearSelectedUse();
+                        return;
+                    }
                     const canvasCenter = minimapCanvas.width / 2; const ppt = (minimapCanvas.width / 100) * minimapZoom; 
                     const gridX = Math.floor(minimapTargetX + 0.5 + (mouseX - canvasCenter) / ppt); const gridY = Math.floor(minimapTargetY + 0.5 + (mouseY - canvasCenter) / ppt);
                     if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
@@ -2173,8 +2348,6 @@
             clickMarkers.forEach(m => { if (Math.abs(m.mesh.position.y - (playerState.z * 3.0)) < 2.0) ctx.fillRect(m.mesh.position.x, m.mesh.position.z, 1, 1); });
             ctx.fillStyle = '#ff00aa'; 
             groundItems.forEach(gi => { if (gi.z === playerState.z) ctx.fillRect(gi.x, gi.y, 1, 1); });
-            ctx.fillStyle = '#7fe7ff';
-            fishingSpotsToRender.forEach(fs => { if (fs.z === playerState.z) ctx.fillRect(fs.x, fs.y, 1, 1); });
             
             ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(playerRig.position.x + 0.5, playerRig.position.z + 0.5, 3 / ppt, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2 / ppt; ctx.beginPath(); ctx.moveTo(playerRig.position.x + 0.5, playerRig.position.z + 0.5); ctx.lineTo(playerRig.position.x + 0.5 + Math.sin(playerRig.rotation.y) * (8 / ppt), playerRig.position.z + 0.5 + Math.cos(playerRig.rotation.y) * (8 / ppt)); ctx.stroke(); ctx.restore();
@@ -2241,5 +2414,31 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
