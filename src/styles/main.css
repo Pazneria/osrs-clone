@@ -1,0 +1,93 @@
+body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #000; font-family: monospace; user-select: none; }
+        #canvas-container { width: 100%; height: 100%; display: block; }
+        
+        /* UI Overlay */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+        .ui-box { pointer-events: auto; background: rgba(31, 41, 55, 0.85); border: 2px solid #374151; border-radius: 0.5rem; backdrop-filter: blur(4px); }
+        .tick-bar { transition: width 0.6s linear; }
+        #chat-log .chat-line {
+            color: #d5d0c7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        #chat-log .chat-prefix {
+            color: #c8aa6e;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        #chat-log .chat-line.info .chat-prefix { color: #7ec8ff; }
+        #chat-log .chat-line.warn .chat-prefix { color: #ffcf66; }
+        .item-slot-selected {
+            background: #2a3138 !important;
+            border-color: #c8aa6e !important;
+            box-shadow: inset 0 0 0 1px #f8e7b1, 0 0 8px rgba(200, 170, 110, 0.45);
+        }
+        .skill-tile-active {
+            border-color: #c8aa6e !important;
+            box-shadow: inset 0 0 0 1px #f8e7b1;
+            background: #1d2329 !important;
+        }
+
+        /* Classic OSRS Context Menu Styles */
+        #context-menu {
+            position: absolute;
+            background-color: #5d5447;
+            border: 2px solid #3e3529;
+            color: #e5d8c5;
+            font-family: monospace;
+            z-index: 1000;
+            user-select: none;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            min-width: 140px;
+        }
+        .context-option {
+            padding: 4px 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #4a4136;
+        }
+        .context-option:hover { background-color: #706658; color: #ffffff; }
+        .context-cancel { padding: 4px 8px; cursor: pointer; }
+        .context-cancel:hover { background-color: #706658; color: #ffffff; }
+        
+        /* Custom Scrollbar for UI panels */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111418; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c8aa6e; border-radius: 3px; }
+
+        /* Item Amount Styling */
+        .item-amt {
+            position: absolute; top: 1px; left: 2px;
+            font-size: 11px; font-weight: bold; font-family: sans-serif;
+            text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+            pointer-events: none; z-index: 10;
+        }
+        .amt-yellow { color: #ffff00; }
+        .amt-white { color: #ffffff; }
+        .amt-green { color: #00ff00; }
+
+        /* XP Drop Animation */
+        @keyframes floatUpFade {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+        .xp-drop {
+            animation: floatUpFade 2s ease-out forwards;
+            text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 1px 1px 0px #000;
+        }
+
+        /* 2D Hitsplat Overlay */
+        .hitsplat {
+            position: absolute;
+            width: 28px; height: 28px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            color: white; font-weight: bold; font-family: Arial, sans-serif;
+            text-align: center; line-height: 28px;
+            pointer-events: none; z-index: 500;
+            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+        }
+
+
+
+

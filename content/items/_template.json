@@ -1,0 +1,14 @@
+{
+  "id": "item_id_here",
+  "name": "Item Name",
+  "type": "resource",
+  "stackable": false,
+  "value": 1,
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/item_id_here-pixel.png",
+    "model": "assets/models/item_id_here.obj",
+    "groundModel": "assets/models/item_id_here-ground.obj"
+  },
+  "notes": "Copy this template and rename to content/items/<id>.json"
+}

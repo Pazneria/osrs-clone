@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D OSRS Tick Engine Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+
+    <!-- Game Viewport -->
+    <div id="canvas-container"></div>
+
+    <!-- Mouse Hover Tooltip -->
+    <div id="hover-tooltip" class="hidden absolute pointer-events-none bg-[#1e2328]/95 text-white text-[11px] px-2 py-1 rounded border border-[#3a444c] shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-[1000] whitespace-nowrap font-sans font-bold tracking-wide" style="transform: translate(14px, 14px);"></div>
+    <div id="player-overhead-text" class="hidden absolute pointer-events-none bg-black/75 border border-[#c8aa6e] text-white text-[11px] px-2 py-1 rounded z-[1001] whitespace-nowrap font-sans font-bold"></div>
+
+    <!-- UI Overlay Layer -->
+    <div id="ui-layer" class="p-4 w-full h-full absolute top-0 left-0 pointer-events-none z-[100]">
+        
+        <!-- Position Indicator -->
+        <div id="pos-indicator" class="absolute top-4 left-4 bg-[#1e2328]/90 border border-[#c8aa6e] text-[#c8aa6e] text-xs font-mono p-2 rounded pointer-events-none shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
+            Loc: <span id="pos-x" class="text-white">0</span>, <span id="pos-y" class="text-white">0</span> <span class="text-gray-500">|</span> Plane: <span id="pos-z" class="text-white">0</span>
+        </div>
+        <div id="fps-indicator" class="absolute top-16 left-4 bg-[#1e2328]/85 border border-[#3a444c] text-gray-200 text-[11px] font-mono px-2 py-1 rounded pointer-events-none shadow-[0_4px_10px_rgba(0,0,0,0.7)]">
+            FPS: <span id="fps-value" class="text-white">0</span> <span class="text-gray-500">(cap 50)</span>
+        </div>
+
+        <div id="runtime-crash-overlay" class="hidden pointer-events-auto absolute inset-0 bg-black/85 z-[1200] p-6">
+            <div class="max-w-3xl mx-auto mt-12 bg-[#1b1f24] border border-red-500/80 rounded shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+                <div class="px-4 py-2 border-b border-red-500/60 text-red-300 font-bold">Runtime Error</div>
+                <pre id="runtime-crash-text" class="p-4 text-xs text-red-100 whitespace-pre-wrap break-words"></pre>
+            </div>
+        </div>
+
+        <div id="motion-debug-panel" class="absolute top-24 left-4 pointer-events-auto z-[210] bg-[#111418]/95 border border-[#3a444c] rounded p-2 w-52 text-[10px] text-gray-200 hidden">
+            <div class="font-bold text-[#c8aa6e] mb-1">Motion Tuning</div>
+            <label class="block mb-1">Step Swing <input id="motion-step-swing" type="range" min="0.2" max="1.2" step="0.01" class="w-full"></label>
+            <label class="block mb-1">Knee Lift <input id="motion-knee-lift" type="range" min="0.2" max="1.4" step="0.01" class="w-full"></label>
+            <label class="block mb-1">Bounce <input id="motion-bounce" type="range" min="0" max="0.25" step="0.005" class="w-full"></label>
+            <label class="block mb-1">Cam Follow Y <input id="motion-cam-follow" type="range" min="0" max="1" step="0.01" class="w-full"></label>
+            <div class="text-gray-400 mt-1">Press <span class="text-white">F7</span> to toggle</div>
+        </div>
+        <!-- XP Drops Container -->
+        <div id="xp-drop-container" class="absolute top-[25%] left-1/2 transform -translate-x-1/2 pointer-events-none flex flex-col items-center gap-1 z-[100]"></div>
+
+        <!-- Minimap & Toggles Container -->
+        <div class="pointer-events-auto absolute top-4 right-4 z-50 flex flex-col items-end gap-2">
+            <div class="relative z-50">
+                <div class="w-48 h-48 bg-black rounded-full border-[6px] border-[#5d5447] overflow-hidden shadow-2xl cursor-crosshair">
+                    <div class="absolute top-1 w-full text-center text-red-500 font-bold text-sm z-10 select-none pointer-events-none drop-shadow-md">N</div>
+                    <canvas id="minimap" width="192" height="192" class="w-full h-full block"></canvas>
+                </div>
+                <button id="runToggleBtn" class="absolute -bottom-2 -left-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] text-xl flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-300" title="Run Mode: OFF">
+                    RUN
+                </button>
+            </div>
+            
+            <!-- Free Cam Toggle -->
+            <button id="freeCamBtn" class="bg-gray-700 border-2 border-[#5d5447] text-white text-[10px] font-bold py-1.5 px-3 rounded shadow-md hover:bg-gray-600 transition-colors z-40 uppercase tracking-wider">
+                CAM Free Cam: OFF
+            </button>
+        </div>
+
+        <!-- Free Cam Info Overlay -->
+        <div id="freeCamInfo" class="hidden absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-[rgba(0,0,0,0.8)] border border-[#5d5447] text-[#c8aa6e] text-xs p-3 rounded pointer-events-none z-50 text-center shadow-2xl">
+            <b class="text-white text-sm">CAM FREE CAM ACTIVE</b><br><br>
+            <span class="text-white">[W/A/S/D]</span> Fly horizontally<br>
+            <span class="text-white">[Q/E]</span> Fly Up / Down<br>
+            <span class="text-white">[Middle-Click + Drag]</span> Rotate Camera<br><br>
+            <i class="text-gray-400">Run toggle affects flight speed</i>
+        </div>
+
+        <!-- Bank Interface Overlay -->
+        <div id="bank-interface" class="hidden pointer-events-auto absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#4a4136] border-[3px] border-[#3e3529] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[200] flex flex-col w-[440px]">
+            <!-- Header -->
+            <div class="flex justify-between items-center bg-[#3e3529] px-3 py-1 border-b-2 border-[#2b251d]">
+                <span class="text-[#ff981f] font-bold text-lg drop-shadow-md">Bank of Gielinor</span>
+                <button onclick="closeBank()" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
+            </div>
+            
+            <!-- Bank Grid -->
+            <div class="p-2 h-[540px]">
+                <div id="bank-grid" class="grid grid-cols-10 gap-1 overflow-y-auto custom-scrollbar h-full bg-[#3e3529] p-1 content-start shadow-inner border border-[#2b251d]">
+                    <!-- Bank Slots Generated by JS -->
+                </div>
+            </div>
+            
+            <!-- Footer Stats / Info -->
+            <div class="bg-[#3e3529] px-3 py-1 border-t-2 border-[#2b251d] text-center text-xs text-[#ff981f]">
+                <span id="bank-capacity">0 / 200</span>
+                <span class="ml-4 text-gray-400">Drag to move, left-click to withdraw</span>
+            </div>
+        </div>
+
+        <!-- Shop Interface Overlay -->
+        <div id="shop-interface" class="hidden pointer-events-auto absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#4a4136] border-[3px] border-[#3e3529] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[200] flex flex-col w-[440px]">
+            <div class="flex justify-between items-center bg-[#3e3529] px-3 py-1 border-b-2 border-[#2b251d]">
+                <span class="text-[#ff981f] font-bold text-lg drop-shadow-md">General Store</span>
+                <button onclick="closeShop()" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
+            </div>
+            <div class="p-2 h-[540px]">
+                <div id="shop-grid" class="grid grid-cols-10 gap-1 overflow-y-auto custom-scrollbar h-full bg-[#3e3529] p-1 content-start shadow-inner border border-[#2b251d]">
+                    <!-- Shop Slots Generated by JS -->
+                </div>
+            </div>
+            <div class="bg-[#3e3529] px-3 py-1 border-t-2 border-[#2b251d] text-center text-xs text-[#ff981f]">
+                <span class="text-gray-400">Right-click items to buy/sell</span>
+            </div>
+        </div>
+
+        <!-- Bottom Right Container (Tabbed Inventory / Equipment) -->
+        <div id="main-ui-container" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
+            <!-- Tabs -->
+            <div class="flex border-b-2 border-[#c8aa6e]">
+                <button id="tab-inv" class="flex-1 py-1.5 text-xs font-bold text-[#c8aa6e] bg-[#2a3138] hover:bg-[#3a444c] transition-colors">Inventory</button>
+                <button id="tab-equip" class="flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors">Equipment</button>
+                <button id="tab-stats" class="flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors">Stats</button>
+                <button id="btn-expand" class="px-2 bg-[#111418] text-[#c8aa6e] hover:bg-[#1a1f24] transition-colors text-sm font-bold border-l border-[#c8aa6e]" title="Toggle UI Size">?</button>
+            </div>
+
+            <!-- Views Container -->
+            <div class="p-3 overflow-y-auto h-[292px] custom-scrollbar">
+                
+                <!-- View: Inventory -->
+                <div id="view-inv" class="grid grid-cols-4 gap-1 place-items-center content-start h-full"></div>
+                
+                <!-- View: Equipment -->
+                <div id="view-equip" class="hidden flex-col h-full w-full justify-between">
+                    <div class="flex justify-between w-full mt-1 mb-2 h-full">
+                        <div class="flex flex-col gap-1">
+                            <div class="equip-slot" id="eq-head"></div>
+                            <div class="equip-slot" id="eq-cape"></div>
+                            <div class="equip-slot" id="eq-neck"></div>
+                            <div class="equip-slot" id="eq-weapon"></div>
+                            <div class="equip-slot" id="eq-body"></div>
+                        </div>
+                        
+                        <div class="flex-1 flex flex-col mx-2 gap-2 h-full justify-between">
+                            <div id="player-preview-box" class="flex-1 flex flex-col items-center justify-center border border-solid border-[#3a444c] bg-[#0a0c0e] shadow-inner select-none overflow-hidden cursor-ew-resize min-h-[140px]" title="Middle-click and drag to rotate">
+                            </div>
+                            <div class="bg-[#090b0c] p-2 text-[10px] text-gray-400 border border-[#1e2328] font-sans shadow-inner select-none mt-auto">
+                                <div class="flex justify-between"><span>Atk:</span><span id="stat-atk" class="text-white font-bold">10</span></div>
+                                <div class="flex justify-between"><span>Def:</span><span id="stat-def" class="text-white font-bold">10</span></div>
+                                <div class="flex justify-between"><span>Str:</span><span id="stat-str" class="text-white font-bold">10</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col gap-1">
+                            <div class="equip-slot" id="eq-shield"></div>
+                            <div class="equip-slot" id="eq-legs"></div>
+                            <div class="equip-slot" id="eq-hands"></div>
+                            <div class="equip-slot" id="eq-feet"></div>
+                            <div class="equip-slot" id="eq-ring"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: Stats -->
+                <div id="view-stats" class="hidden grid-cols-3 gap-1 place-items-center w-full content-start h-full">
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="attack" data-skill-name="Attack" data-skill-icon="ATK">
+                        <span class="text-sm">ATK</span><br><span id="stat-atk-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="hitpoints" data-skill-name="Hitpoints" data-skill-icon="HP">
+                        <span class="text-sm">HP</span><br><span id="stat-hp-level">10</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="mining" data-skill-name="Mining" data-skill-icon="MIN">
+                        <span class="text-sm">MIN</span><br><span id="stat-min-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="strength" data-skill-name="Strength" data-skill-icon="STR">
+                        <span class="text-sm">STR</span><br><span id="stat-str-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="defense" data-skill-name="Defense" data-skill-icon="DEF">
+                        <span class="text-sm">DEF</span><br><span id="stat-def-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="woodcutting" data-skill-name="Woodcutting" data-skill-icon="WC" title="Woodcutting">
+                        <span class="text-sm">WC</span><br><span id="stat-wc-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="firemaking" data-skill-name="Firemaking" data-skill-icon="FM">
+                        <span class="text-sm">FM</span><br><span id="stat-fm-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="fishing" data-skill-name="Fishing" data-skill-icon="FIS">
+                        <span class="text-sm">FIS</span><br><span id="stat-fish-level">1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Chat Box -->
+        <div id="chat-box" class="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 w-[560px] max-w-[calc(100vw-2rem)] bg-[#1a1511]/95 border-2 border-[#5d5447] rounded shadow-[0_10px_30px_rgba(0,0,0,0.8)] overflow-hidden">
+            <div id="chat-log" class="h-28 px-2 py-1.5 overflow-y-auto custom-scrollbar text-[12px] leading-5"></div>
+            <div class="border-t border-[#3e3529] bg-[#14100d] px-2 py-1 flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">All</span>
+                <input id="chat-input" type="text" class="flex-1 bg-[#0e0b09] border border-[#3e3529] text-gray-400 text-xs px-2 py-1 outline-none" placeholder="Press Enter to chat">
+            </div>
+        </div>
+        <div id="skill-panel" class="hidden pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] max-w-[calc(100vw-2rem)] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[260]">
+            <div class="flex items-center justify-between px-3 py-1 bg-[#2c241c] border-b border-[#3e3529]">
+                <div class="text-[#ff981f] font-bold text-sm"><span id="skill-panel-icon">*</span> <span id="skill-panel-title">Skill</span></div>
+                <button id="skill-panel-close" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
+            </div>
+            <div class="p-3 text-xs text-gray-200 space-y-2">
+                <div class="flex justify-between"><span class="text-[#c8aa6e]">Level</span><span id="skill-panel-level" class="font-bold text-white">1</span></div>
+                <div class="flex justify-between"><span class="text-[#c8aa6e]">XP</span><span id="skill-panel-xp" class="font-bold text-white">0</span></div>
+                <div class="flex justify-between"><span class="text-[#c8aa6e]">Next level</span><span id="skill-panel-next" class="font-bold text-white">83</span></div>
+                <div class="h-3 bg-[#0e0b09] border border-[#3e3529] mt-2">
+                    <div id="skill-panel-progress" class="h-full bg-[#c8aa6e]" style="width: 0%;"></div>
+                </div>
+                <div id="skill-panel-percent" class="text-center text-[11px] text-gray-300">0%</div>
+            </div>
+        </div>
+        <!-- Right-Click Context Menu -->
+    <div id="context-menu" class="hidden pointer-events-auto">
+        <div id="context-options-list"></div>
+        <div class="context-cancel" onclick="closeContextMenu()">Cancel</div>
+    </div>
+
+    <!-- Amount Prompt Modal -->
+    <div id="amount-modal" class="hidden absolute top-0 left-0 w-full h-full bg-black/50 z-[1000] flex items-center justify-center pointer-events-auto">
+        <div class="bg-[#4a4136] border-[3px] border-[#3e3529] p-4 text-center shadow-2xl rounded w-64">
+            <div class="text-[#ff981f] font-bold mb-3">Enter amount:</div>
+            <input type="number" id="amount-input" class="bg-[#111418] border border-[#c8aa6e] text-white px-2 py-1 w-full outline-none text-center mb-4" min="1">
+            <div class="flex justify-center gap-4">
+                <button id="amount-ok" class="bg-[#2a3138] hover:bg-[#3a444c] text-white px-4 py-1 border border-[#c8aa6e] rounded text-sm font-bold transition-colors">OK</button>
+                <button id="amount-cancel" class="bg-[#2a3138] hover:bg-[#3a444c] text-white px-4 py-1 border border-[#c8aa6e] rounded text-sm font-bold transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+        <script src="./src/js/core.js"></script>
+        <script src="./src/js/player-model.js"></script>
+    <script src="./src/js/inventory.js"></script>
+    <script src="./src/js/world.js"></script>
+    <script src="./src/js/input-render.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

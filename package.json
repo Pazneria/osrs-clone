@@ -1,0 +1,20 @@
+{
+  "name": "osrs-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "3D OSRS tick engine prototype",
+  "scripts": {
+    "dev": "run.bat",
+    "check": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js",
+    "test": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js",
+    "tool:check": "powershell -ExecutionPolicy Bypass -File ./tools/check-prereqs.ps1",
+    "tool:pixelize": "powershell -ExecutionPolicy Bypass -File ./tools/pixel/pixelize.ps1",
+    "tool:pixelize:batch": "powershell -ExecutionPolicy Bypass -File ./tools/pixel/batch-pixelize.ps1",
+    "tool:sim:loot": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/sim/loot-sim.js",
+    "tool:sim:combat": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/sim/combat-sim.js",
+    "tool:model:from-image": "powershell -ExecutionPolicy Bypass -File ./tools/model/image-to-obj.ps1",
+    "tool:model:render-icon": "powershell -ExecutionPolicy Bypass -File ./tools/model/render-icon.ps1",
+    "tool:item:create": "powershell -ExecutionPolicy Bypass -File ./tools/content/create-item-from-image.ps1",
+    "tool:items:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-items.js"
+  }
+}
