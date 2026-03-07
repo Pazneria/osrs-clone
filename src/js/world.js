@@ -990,7 +990,10 @@
 
             const slot = inventory[invIndex];
             if (!slot) return;
-            handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData));
+            const prefKey = (typeof getItemMenuPreferenceKey === 'function')
+                ? getItemMenuPreferenceKey('inventory', slot.itemData.id)
+                : null;
+            handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData, prefKey));
         }
         function eatItem(invIndex) {
             const invSlot = inventory[invIndex];
@@ -2371,6 +2374,7 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
 
 
 

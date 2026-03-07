@@ -68,55 +68,60 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function onContextMenu(event) {
             if (isFreeCam) return; if (event.target.id === 'minimap' || event.target.id === 'runToggleBtn') return;
             event.preventDefault(); closeContextMenu();
-            const hitData = getRaycastHit(event.clientX, event.clientY); if (!hitData) return;
+            const hitResults = getRaycastHits(event.clientX, event.clientY);
+            if (!hitResults || hitResults.length === 0) return;
             contextOptionsListEl.innerHTML = '';
-            let usedSkillOptions = false;
-            const skillOptions = (window.SkillRuntime && typeof SkillRuntime.getSkillContextMenuOptions === 'function')
-                ? SkillRuntime.getSkillContextMenuOptions(hitData)
-                : null;
-            if (Array.isArray(skillOptions) && skillOptions.length > 0) {
-                usedSkillOptions = true;
-                for (let i = 0; i < skillOptions.length; i++) {
-                    const option = skillOptions[i];
-                    if (!option || typeof option.text !== 'string' || typeof option.onSelect !== 'function') continue;
-                    addContextMenuOption(option.text, option.onSelect);
+            for (let i = 0; i < hitResults.length; i++) {
+                const hitData = hitResults[i];
+                let usedSkillOptions = false;
+                const skillOptions = (window.SkillRuntime && typeof SkillRuntime.getSkillContextMenuOptions === 'function')
+                    ? SkillRuntime.getSkillContextMenuOptions(hitData)
+                    : null;
+                if (Array.isArray(skillOptions) && skillOptions.length > 0) {
+                    usedSkillOptions = true;
+                    for (let j = 0; j < skillOptions.length; j++) {
+                        const option = skillOptions[j];
+                        if (!option || typeof option.text !== 'string' || typeof option.onSelect !== 'function') continue;
+                        addContextMenuOption(option.text, option.onSelect);
+                    }
+                }
+                
+                if (!usedSkillOptions && hitData.type === 'TREE') {
+                    if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) {
+                        addContextMenuOption('Chop down Tree', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'TREE'); spawnClickMarker(hitData.point, true); });
+                        addContextMenuOption('Examine Tree', () => console.log('EXAMINING: A fully grown tree.'));
+                    } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 4) addContextMenuOption('Examine Stump', () => console.log('EXAMINING: A sad looking stump.'));
+                } else if (!usedSkillOptions && hitData.type === 'ROCK') {
+                    addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
+                    addContextMenuOption('Examine Rock', () => console.log('EXAMINING: A solid chunk of rock.'));
+                } else if (hitData.type === 'BANK_BOOTH') {
+                    addContextMenuOption('Bank <span class="text-cyan-400">Bank Booth</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'BANK_BOOTH'); spawnClickMarker(hitData.point, true); });
+                    addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => console.log('EXAMINING: A sturdy wooden booth for storing your items.'));
+                } else if (hitData.type === 'DUMMY') {
+                    addContextMenuOption('Attack <span class="text-white">Training Dummy</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DUMMY'); spawnClickMarker(hitData.point, true); });
+                    addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => console.log('EXAMINING: A dummy to practice your swings on.'));
+                } else if (hitData.type === 'SHOP_COUNTER') {
+                    addContextMenuOption('Examine Shop Counter', () => console.log('EXAMINING: A wooden counter with a glass display.'));
+                } else if (hitData.type === 'DOOR') {
+                    const action = hitData.doorObj.isOpen ? 'Close' : 'Open';
+                    addContextMenuOption(`${action} <span class="text-white">Door</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DOOR', hitData.doorObj); spawnClickMarker(hitData.point, true); });
+                    addContextMenuOption('Examine <span class="text-white">Door</span>', () => console.log('EXAMINING: A sturdy wooden door.'));
+                } else if (hitData.type === 'STAIRS_UP') {
+                    addContextMenuOption('Climb-up <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_UP'); spawnClickMarker(hitData.point, true); });
+                } else if (hitData.type === 'STAIRS_DOWN') {
+                    addContextMenuOption('Climb-down <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_DOWN'); spawnClickMarker(hitData.point, true); });
+                } else if (hitData.type === 'NPC') {
+                    if (hitData.name === 'Shopkeeper') {
+                        addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade' }); spawnClickMarker(hitData.point, true); });
+                    } else {
+                        addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC'); spawnClickMarker(hitData.point, true); });
+                    }
+                    addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => console.log(`EXAMINING: ${hitData.name}.`));
                 }
             }
-            
-            if (!usedSkillOptions && hitData.type === 'TREE') {
-                if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) {
-                    addContextMenuOption('Chop down Tree', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'TREE'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine Tree', () => console.log('EXAMINING: A fully grown tree.'));
-                } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 4) addContextMenuOption('Examine Stump', () => console.log('EXAMINING: A sad looking stump.'));
-            } else if (!usedSkillOptions && hitData.type === 'ROCK') {
-                addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
-                addContextMenuOption('Examine Rock', () => console.log('EXAMINING: A solid chunk of rock.'));
-            } else if (hitData.type === 'BANK_BOOTH') {
-                addContextMenuOption('Bank <span class="text-cyan-400">Bank Booth</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'BANK_BOOTH'); spawnClickMarker(hitData.point, true); });
-                addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => console.log('EXAMINING: A sturdy wooden booth for storing your items.'));
-            } else if (hitData.type === 'DUMMY') {
-                addContextMenuOption('Attack <span class="text-white">Training Dummy</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DUMMY'); spawnClickMarker(hitData.point, true); });
-                addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => console.log('EXAMINING: A dummy to practice your swings on.'));
-            } else if (hitData.type === 'SHOP_COUNTER') {
-                addContextMenuOption('Examine Shop Counter', () => console.log('EXAMINING: A wooden counter with a glass display.'));
-            } else if (hitData.type === 'DOOR') {
-                const action = hitData.doorObj.isOpen ? 'Close' : 'Open';
-                addContextMenuOption(`${action} <span class="text-white">Door</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DOOR', hitData.doorObj); spawnClickMarker(hitData.point, true); });
-                addContextMenuOption('Examine <span class="text-white">Door</span>', () => console.log('EXAMINING: A sturdy wooden door.'));
-            } else if (hitData.type === 'STAIRS_UP') {
-                addContextMenuOption('Climb-up <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_UP'); spawnClickMarker(hitData.point, true); });
-            } else if (hitData.type === 'STAIRS_DOWN') {
-                addContextMenuOption('Climb-down <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_DOWN'); spawnClickMarker(hitData.point, true); });
-            } else if (hitData.type === 'NPC') {
-                if (hitData.name === 'Shopkeeper') {
-                    addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade' }); spawnClickMarker(hitData.point, true); });
-                } else {
-                    addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC'); spawnClickMarker(hitData.point, true); });
-                }
-                addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => console.log(`EXAMINING: ${hitData.name}.`));
-            }
-            
-            addContextMenuOption('Walk here', () => { queueAction('WALK', hitData.gridX, hitData.gridY, null); spawnClickMarker(hitData.point, false); });
+
+            const walkHit = hitResults[hitResults.length - 1];
+            addContextMenuOption('Walk here', () => { queueAction('WALK', walkHit.gridX, walkHit.gridY, null); spawnClickMarker(walkHit.point, false); });
             showContextMenuAt(event.clientX, event.clientY);
         }
 
@@ -130,30 +135,62 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             contextOptionsListEl.appendChild(div);
         }
 
-        function closeContextMenu() { contextMenuEl.classList.add('hidden'); }
-        function getRaycastHit(clientX, clientY) {
+        function closeContextMenu() {
+            contextMenuEl.classList.add('hidden');
+            if (typeof window.clearItemSwapLeftClickUI === 'function') window.clearItemSwapLeftClickUI();
+        }
+
+        function normalizeRaycastHit(hit) {
+            let data = hit.object.userData;
+            if (hit.instanceId !== undefined && hit.object.userData.instanceMap) {
+                data = hit.object.userData.instanceMap[hit.instanceId];
+            }
+            if (!data || data.z !== playerState.z) return null;
+
+            if (data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER') {
+                let gridX = Math.floor(hit.point.x + 0.5);
+                let gridY = Math.floor(hit.point.z + 0.5);
+                if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
+                    return { type: data.type, gridX, gridY, point: hit.point };
+                }
+                return null;
+            }
+            if (data.type === 'DOOR') {
+                return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, doorObj: data.doorObj };
+            }
+            return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, name: data.name, uid: data.uid };
+        }
+
+        function getRaycastHitKey(hitData) {
+            if (!hitData) return null;
+            if (hitData.uid !== undefined && hitData.uid !== null) return `${hitData.type}:uid:${hitData.uid}`;
+            if (hitData.type === 'DOOR' && hitData.doorObj) return `${hitData.type}:door:${hitData.gridX},${hitData.gridY}`;
+            if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY)) {
+                return `${hitData.type}:${hitData.gridX},${hitData.gridY}:${hitData.name || ''}`;
+            }
+            return `${hitData.type}:${hitData.name || ''}`;
+        }
+
+        function getRaycastHits(clientX, clientY, maxHits = 16) {
             mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(environmentMeshes);
+            const hits = [];
+            const seen = new Set();
             for (let i = 0; i < intersects.length; i++) {
-                const hit = intersects[i];
-                let data = hit.object.userData;
-                if (hit.instanceId !== undefined && hit.object.userData.instanceMap) {
-                    data = hit.object.userData.instanceMap[hit.instanceId];
-                }
-                if (!data) continue;
-                
-                if (data.z === playerState.z) {
-                    if (data.type === 'GROUND_ITEM') return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, uid: data.uid, name: data.name };
-                    if (data.type === 'DOOR') return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, doorObj: data.doorObj };
-                    if (data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER') {
-                        let gridX = Math.floor(hit.point.x + 0.5); let gridY = Math.floor(hit.point.z + 0.5);
-                        if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) return { type: data.type, gridX, gridY, point: hit.point };
-                    } else {
-                        return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, name: data.name, uid: data.uid };
-                    }
-                }
+                const hitData = normalizeRaycastHit(intersects[i]);
+                if (!hitData) continue;
+                const key = getRaycastHitKey(hitData);
+                if (key && seen.has(key)) continue;
+                if (key) seen.add(key);
+                hits.push(hitData);
+                if (hits.length >= maxHits) break;
             }
-            return null;
+            return hits;
+        }
+
+        function getRaycastHit(clientX, clientY) {
+            const hits = getRaycastHits(clientX, clientY, 1);
+            return hits.length > 0 ? hits[0] : null;
         }
 
         
@@ -853,6 +890,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             return z * 3.0;
         }
+
+        function getGroundHeightAtWorldPos(worldX, worldZ, z = playerState.z) {
+            const gx = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(worldX + 0.5)));
+            const gy = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(worldZ + 0.5)));
+            return getVisualHeight(gx, gy, z);
+        }
         function updatePlayerOverheadText() {
             const bubble = document.getElementById('player-overhead-text');
             if (!bubble || !playerRig) return;
@@ -1462,9 +1505,21 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (keys.w) freeCamTarget.addScaledVector(forward, speed); if (keys.s) freeCamTarget.addScaledVector(forward, -speed);
                 if (keys.a) freeCamTarget.addScaledVector(right, -speed); if (keys.d) freeCamTarget.addScaledVector(right, speed);
                 if (keys.e) freeCamTarget.y += speed; if (keys.q) freeCamTarget.y -= speed;
-                camera.position.x = freeCamTarget.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
-                camera.position.y = freeCamTarget.y + cameraDist * Math.cos(cameraPitch);
-                camera.position.z = freeCamTarget.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);
+
+                const targetGround = getGroundHeightAtWorldPos(freeCamTarget.x, freeCamTarget.z);
+                freeCamTarget.y = Math.max(freeCamTarget.y, targetGround + 0.7);
+
+                const nextCamX = freeCamTarget.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
+                const nextCamZ = freeCamTarget.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);
+                const nextCamGround = getGroundHeightAtWorldPos(nextCamX, nextCamZ);
+                const nextCamY = Math.max(
+                    freeCamTarget.y + cameraDist * Math.cos(cameraPitch),
+                    nextCamGround + 0.3
+                );
+
+                camera.position.x = nextCamX;
+                camera.position.y = nextCamY;
+                camera.position.z = nextCamZ;
                 camera.lookAt(freeCamTarget);
             } else {
                 const camBobOffset = playerRig.position.y - baseVisualY;
@@ -1472,6 +1527,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 camera.position.x = playerRig.position.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
                 camera.position.y = cameraFollowY + 1.0 + cameraDist * Math.cos(cameraPitch);
                 camera.position.z = playerRig.position.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);
+                const followCamGround = getGroundHeightAtWorldPos(camera.position.x, camera.position.z, playerState.z);
+                camera.position.y = Math.max(camera.position.y, followCamGround + 0.3);
                 const lookTarget = new THREE.Vector3(playerRig.position.x, cameraFollowY + 1.0, playerRig.position.z);
                 camera.lookAt(lookTarget);
             }
@@ -1554,6 +1611,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

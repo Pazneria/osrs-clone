@@ -35,6 +35,101 @@
             if (isOpen) document.getElementById('tab-inv').click();
         }
 
+        function getItemMenuPreferenceKey(scope, itemId) {
+            return `${scope || 'inventory'}:${itemId || ''}`;
+        }
+
+        function getPreferredMenuAction(prefKey, actions) {
+            if (!Array.isArray(actions) || actions.length === 0) return null;
+            const preferred = (prefKey && userItemPrefs && typeof userItemPrefs[prefKey] === 'string')
+                ? userItemPrefs[prefKey]
+                : null;
+            return (preferred && actions.includes(preferred)) ? preferred : actions[0];
+        }
+
+        function setPreferredMenuAction(prefKey, actionName) {
+            if (!prefKey || !actionName) return;
+            userItemPrefs[prefKey] = actionName;
+        }
+
+        function clearItemSwapLeftClickUI() {
+            const trigger = document.getElementById('context-swap-left-click-trigger');
+            if (trigger && trigger.parentNode) trigger.parentNode.removeChild(trigger);
+            const submenu = document.getElementById('context-swap-left-click-submenu');
+            if (submenu && submenu.parentNode) submenu.parentNode.removeChild(submenu);
+        }
+
+        function appendSwapLeftClickControl(prefKey, actions, onSelect, currentLabel = null) {
+            if (!prefKey || !Array.isArray(actions) || actions.length === 0) return;
+            clearItemSwapLeftClickUI();
+
+            const cancelRow = contextMenuEl.querySelector('.context-cancel');
+            if (!cancelRow) return;
+
+            const trigger = document.createElement('div');
+            trigger.id = 'context-swap-left-click-trigger';
+            trigger.className = 'context-swap-trigger';
+            trigger.innerHTML = `<span>Swap left click</span><span class="context-swap-caret">&#9654;</span>`;
+            cancelRow.insertAdjacentElement('afterend', trigger);
+
+            const submenu = document.createElement('div');
+            submenu.id = 'context-swap-left-click-submenu';
+            submenu.className = 'context-submenu hidden';
+
+            const selectedAction = currentLabel || getPreferredMenuAction(prefKey, actions);
+            actions.forEach((actionName) => {
+                const option = document.createElement('div');
+                option.className = 'context-option';
+                option.textContent = actionName;
+                if (actionName === selectedAction) option.classList.add('context-option-selected');
+                option.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPreferredMenuAction(prefKey, actionName);
+                    if (typeof onSelect === 'function') onSelect(actionName);
+                    closeContextMenu();
+                };
+                submenu.appendChild(option);
+            });
+
+            document.body.appendChild(submenu);
+
+            const positionSubmenu = () => {
+                submenu.classList.remove('hidden');
+                submenu.style.left = '0px';
+                submenu.style.top = '0px';
+                const triggerRect = trigger.getBoundingClientRect();
+                const menuW = submenu.offsetWidth || 160;
+                const menuH = submenu.offsetHeight || 120;
+                const pad = 8;
+                let x = triggerRect.right + 4;
+                if (x + menuW > window.innerWidth - pad) x = triggerRect.left - menuW - 4;
+                let y = triggerRect.top;
+                if (y + menuH > window.innerHeight - pad) y = window.innerHeight - menuH - pad;
+                if (y < pad) y = pad;
+                submenu.style.left = `${x}px`;
+                submenu.style.top = `${y}px`;
+            };
+
+            trigger.addEventListener('mouseenter', positionSubmenu);
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                positionSubmenu();
+            });
+
+            submenu.addEventListener('mouseleave', (e) => {
+                const related = e.relatedTarget;
+                if (related && related.closest && (related.closest('#context-menu') || related.closest('.context-submenu'))) return;
+                closeContextMenu();
+            });
+        }
+
+        window.clearItemSwapLeftClickUI = clearItemSwapLeftClickUI;
+        window.getItemMenuPreferenceKey = getItemMenuPreferenceKey;
+
+        let rememberedDepositXAmount = null;
+
         function collectMatchingInventorySlots(itemId, preferredIndex, maxCount) {
             const matched = [];
             if (!itemId || maxCount <= 0) return matched;
@@ -71,8 +166,7 @@
                     const data = JSON.parse(e.dataTransfer.getData('application/json'));
                     handleDragDrop(data.source, data.index, 'bank', i);
                 });
-
-                if (bItem) {
+                    if (bItem) {
                     usedSlots++;
                     slot.innerHTML = `${bItem.itemData.icon}${formatStackSize(bItem.amount)}`;
                     slot.title = `${bItem.itemData.name} x ${bItem.amount.toLocaleString()}`;
@@ -84,18 +178,31 @@
                         slot.style.opacity = '0.4';
                     });
                     slot.addEventListener('dragend', () => { slot.style.opacity = '1'; });
-                    
-                    slot.onclick = () => withdrawBankItem(i, 1);
-                    
+                    const bankActionPrefKey = getItemMenuPreferenceKey('bank', bItem.itemData.id);
+                    const bankActions = ['Withdraw-1', 'Withdraw-5', 'Withdraw-10', 'Withdraw-All', 'Withdraw-X'];
+                    const runBankAction = (actionName) => {
+                        if (actionName === 'Withdraw-1') withdrawBankItem(i, 1);
+                        else if (actionName === 'Withdraw-5') withdrawBankItem(i, 5);
+                        else if (actionName === 'Withdraw-10') withdrawBankItem(i, 10);
+                        else if (actionName === 'Withdraw-All') withdrawBankItem(i, bItem.amount);
+                        else if (actionName === 'Withdraw-X') promptAmount((amt) => withdrawBankItem(i, amt));
+                    };
+
+                    slot.onclick = () => {
+                        const defaultAction = getPreferredMenuAction(bankActionPrefKey, bankActions);
+                    if (defaultAction) runBankAction(defaultAction);
+                    };
+
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
                         contextOptionsListEl.innerHTML = '';
-                        addContextMenuOption(`Withdraw-1 <span class="text-white">${bItem.itemData.name}</span>`, () => withdrawBankItem(i, 1));
-                        addContextMenuOption(`Withdraw-5 <span class="text-white">${bItem.itemData.name}</span>`, () => withdrawBankItem(i, 5));
-                        addContextMenuOption(`Withdraw-10 <span class="text-white">${bItem.itemData.name}</span>`, () => withdrawBankItem(i, 10));
-                        addContextMenuOption(`Withdraw-All <span class="text-white">${bItem.itemData.name}</span>`, () => withdrawBankItem(i, bItem.amount));
-                        addContextMenuOption(`Withdraw-X <span class="text-white">${bItem.itemData.name}</span>`, () => promptAmount((amt) => withdrawBankItem(i, amt)));
+                        addContextMenuOption(`Withdraw-1 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-1'));
+                        addContextMenuOption(`Withdraw-5 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-5'));
+                        addContextMenuOption(`Withdraw-10 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-10'));
+                        addContextMenuOption(`Withdraw-All <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-All'));
+                        addContextMenuOption(`Withdraw-X <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-X'));
                         showContextMenuAt(e.clientX, e.clientY);
+                        appendSwapLeftClickControl(bankActionPrefKey, bankActions, () => { renderBank(); renderInventory(); });
                     };
                 } else {
                     slot.oncontextmenu = (e) => e.preventDefault();
@@ -143,7 +250,6 @@
                     const checkIdx = sourceSlots[i];
                     let bIndex = bankItems.findIndex(b => b !== null && b.itemData.id === itemData.id);
                     let slot = bIndex !== -1 ? bIndex : (targetBankIndex !== -1 && bankItems[targetBankIndex] === null ? targetBankIndex : bankItems.indexOf(null));
-
                     if (slot !== -1) {
                         if (bankItems[slot]) bankItems[slot].amount += 1;
                         else bankItems[slot] = { itemData: itemData, amount: 1 };
@@ -165,8 +271,7 @@
             const bItem = bankItems[bankIndex];
             if (!bItem) return;
             let actualAmount = Math.min(bItem.amount, amountToWithdraw);
-            
-            if (bItem.itemData.stackable) {
+                    if (bItem.itemData.stackable) {
                 let existingInvIdx = inventory.findIndex(s => s && s.itemData.id === bItem.itemData.id);
                 if (existingInvIdx !== -1) {
                     inventory[existingInvIdx].amount += actualAmount;
@@ -221,17 +326,31 @@
                 if (sItem && sItem.amount > 0) {
                     slot.innerHTML = `${sItem.itemData.icon}${formatStackSize(sItem.amount)}`;
                     slot.title = `${sItem.itemData.name} - ${sItem.itemData.value} coins`;
-                    slot.onclick = () => buyItem(i, 1);
+                    const shopActionPrefKey = getItemMenuPreferenceKey('shop', sItem.itemData.id);
+                    const shopActions = ['Buy-1', 'Buy-5', 'Buy-10', 'Buy-50', 'Buy-X'];
+                    const runShopAction = (actionName) => {
+                        if (actionName === 'Buy-1') buyItem(i, 1);
+                        else if (actionName === 'Buy-5') buyItem(i, 5);
+                        else if (actionName === 'Buy-10') buyItem(i, 10);
+                        else if (actionName === 'Buy-50') buyItem(i, 50);
+                        else if (actionName === 'Buy-X') promptAmount((amt) => buyItem(i, amt));
+                    };
+
+                    slot.onclick = () => {
+                        const defaultAction = getPreferredMenuAction(shopActionPrefKey, shopActions);
+                    if (defaultAction) runShopAction(defaultAction);
+                    };
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
                         contextOptionsListEl.innerHTML = '';
                         addContextMenuOption(`Value <span class="text-white">${sItem.itemData.name}</span>`, () => console.log(`${sItem.itemData.name} costs ${sItem.itemData.value} coins.`));
-                        addContextMenuOption(`Buy-1 <span class="text-white">${sItem.itemData.name}</span>`, () => buyItem(i, 1));
-                        addContextMenuOption(`Buy-5 <span class="text-white">${sItem.itemData.name}</span>`, () => buyItem(i, 5));
-                        addContextMenuOption(`Buy-10 <span class="text-white">${sItem.itemData.name}</span>`, () => buyItem(i, 10));
-                        addContextMenuOption(`Buy-50 <span class="text-white">${sItem.itemData.name}</span>`, () => buyItem(i, 50));
-                        addContextMenuOption(`Buy-X <span class="text-white">${sItem.itemData.name}</span>`, () => promptAmount((amt) => buyItem(i, amt)));
+                        addContextMenuOption(`Buy-1 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-1'));
+                        addContextMenuOption(`Buy-5 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-5'));
+                        addContextMenuOption(`Buy-10 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-10'));
+                        addContextMenuOption(`Buy-50 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-50'));
+                        addContextMenuOption(`Buy-X <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-X'));
                         showContextMenuAt(e.clientX, e.clientY);
+                        appendSwapLeftClickControl(shopActionPrefKey, shopActions, () => { renderShop(); renderInventory(); });
                     };
                 } else slot.oncontextmenu = (e) => e.preventDefault();
                 container.appendChild(slot);
@@ -255,8 +374,7 @@
                 canBuyAmount = Math.min(canBuyAmount, affordAmount);
                 
                 let amountGiven = giveItem(sItem.itemData, canBuyAmount);
-                
-                if (amountGiven > 0) {
+                    if (amountGiven > 0) {
                     let totalCost = cost * amountGiven;
                     sItem.amount -= amountGiven;
                     coinSlotIdx = inventory.findIndex(s => s && s.itemData.id === 'coins');
@@ -335,39 +453,74 @@
                         slot.style.opacity = '0.4';
                     });
                     slot.addEventListener('dragend', () => { slot.style.opacity = '1'; });
-
                     if (isBankOpen) {
+                        const depositActionPrefKey = getItemMenuPreferenceKey('deposit', item.id);
+                        const depositActions = ['Deposit-1', 'Deposit-5', 'Deposit-10', 'Deposit-All', 'Deposit-X'];
+                        const runDepositAction = (actionName, fromContextMenu = false) => {
+                            if (actionName === 'Deposit-1') depositInvItem(i, 1);
+                            else if (actionName === 'Deposit-5') depositInvItem(i, 5);
+                            else if (actionName === 'Deposit-10') depositInvItem(i, 10);
+                            else if (actionName === 'Deposit-All') depositInvItem(i, -1);
+                            else if (actionName === 'Deposit-X') {
+                                if (fromContextMenu || !Number.isInteger(rememberedDepositXAmount) || rememberedDepositXAmount <= 0) {
+                                    promptAmount((amt) => {
+                                        rememberedDepositXAmount = amt;
+                                        depositInvItem(i, amt);
+                                    });
+                                } else {
+                                    depositInvItem(i, rememberedDepositXAmount);
+                                }
+                            }
+                        };
                         slot.title = `Deposit ${item.name}`;
-                        slot.onclick = () => depositInvItem(i, 1);
+                        slot.onclick = () => {
+                            const defaultAction = getPreferredMenuAction(depositActionPrefKey, depositActions);
+                    if (defaultAction) runDepositAction(defaultAction);
+                        };
                         slot.oncontextmenu = (e) => {
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
-                            addContextMenuOption(`Deposit-1 <span class="text-white">${item.name}</span>`, () => depositInvItem(i, 1));
-                            addContextMenuOption(`Deposit-5 <span class="text-white">${item.name}</span>`, () => depositInvItem(i, 5));
-                            addContextMenuOption(`Deposit-10 <span class="text-white">${item.name}</span>`, () => depositInvItem(i, 10));
-                            addContextMenuOption(`Deposit-All <span class="text-white">${item.name}</span>`, () => depositInvItem(i, -1));
-                            addContextMenuOption(`Deposit-X <span class="text-white">${item.name}</span>`, () => promptAmount((amt) => depositInvItem(i, amt)));
+                            addContextMenuOption(`Deposit-1 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-1'));
+                            addContextMenuOption(`Deposit-5 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-5'));
+                            addContextMenuOption(`Deposit-10 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-10'));
+                            addContextMenuOption(`Deposit-All <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-All'));
+                            addContextMenuOption(`Deposit-X <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-X', true));
                             showContextMenuAt(e.clientX, e.clientY);
+                            appendSwapLeftClickControl(depositActionPrefKey, depositActions, () => { renderInventory(); if (isBankOpen) renderBank(); });
                         };
                     } else if (typeof isShopOpen !== 'undefined' && isShopOpen) {
+                        const sellActionPrefKey = getItemMenuPreferenceKey('sell', item.id);
+                        const sellActions = ['Sell-1', 'Sell-5', 'Sell-10', 'Sell-50', 'Sell-X'];
+                        const runSellAction = (actionName) => {
+                            if (actionName === 'Sell-1') sellItem(i, 1);
+                            else if (actionName === 'Sell-5') sellItem(i, 5);
+                            else if (actionName === 'Sell-10') sellItem(i, 10);
+                            else if (actionName === 'Sell-50') sellItem(i, 50);
+                            else if (actionName === 'Sell-X') promptAmount((amt) => sellItem(i, amt));
+                        };
                         slot.title = `Sell ${item.name}`;
-                        slot.onclick = () => sellItem(i, 1);
+                        slot.onclick = () => {
+                            const defaultAction = getPreferredMenuAction(sellActionPrefKey, sellActions);
+                    if (defaultAction) runSellAction(defaultAction);
+                        };
                         slot.oncontextmenu = (e) => {
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
                             addContextMenuOption(`Value <span class="text-white">${item.name}</span>`, () => console.log(`${item.name} sells for ${Math.floor(item.value * 0.4)} coins.`));
-                            addContextMenuOption(`Sell-1 <span class="text-white">${item.name}</span>`, () => sellItem(i, 1));
-                            addContextMenuOption(`Sell-5 <span class="text-white">${item.name}</span>`, () => sellItem(i, 5));
-                            addContextMenuOption(`Sell-10 <span class="text-white">${item.name}</span>`, () => sellItem(i, 10));
-                            addContextMenuOption(`Sell-50 <span class="text-white">${item.name}</span>`, () => sellItem(i, 50));
-                            addContextMenuOption(`Sell-X <span class="text-white">${item.name}</span>`, () => promptAmount((amt) => sellItem(i, amt)));
+                            addContextMenuOption(`Sell-1 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-1'));
+                            addContextMenuOption(`Sell-5 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-5'));
+                            addContextMenuOption(`Sell-10 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-10'));
+                            addContextMenuOption(`Sell-50 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-50'));
+                            addContextMenuOption(`Sell-X <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-X'));
                             showContextMenuAt(e.clientX, e.clientY);
+                            appendSwapLeftClickControl(sellActionPrefKey, sellActions, () => { renderInventory(); if (isShopOpen) renderShop(); });
                         };
                     } else {
-                        const defaultAction = resolveDefaultItemAction(item);
+                        const invActionPrefKey = getItemMenuPreferenceKey('inventory', item.id);
+                        const defaultAction = resolveDefaultItemAction(item, invActionPrefKey);
                         const orderedActions = getOrderedItemActions(item);
-                        slot.title = `${defaultAction} ${item.name}`; 
-                        slot.onclick = () => handleInventorySlotClick(i); 
+                    slot.title = `${defaultAction} ${item.name}`;
+                        slot.onclick = () => handleInventorySlotClick(i);
                         slot.oncontextmenu = (e) => {
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
@@ -375,6 +528,7 @@
                             const exHeader = document.createElement('div'); exHeader.className = 'mt-1 border-t border-[#4a4136] pointer-events-none'; contextOptionsListEl.appendChild(exHeader);
                             addContextMenuOption(`Examine ${item.name}`, () => console.log(`EXAMINING: ${item.name}.`));
                             showContextMenuAt(e.clientX, e.clientY);
+                            appendSwapLeftClickControl(invActionPrefKey, orderedActions, () => renderInventory(), defaultAction);
                         };
                     }
                 } else slot.oncontextmenu = (e) => e.preventDefault();
@@ -456,7 +610,7 @@
                 btn.onclick = () => {
                     tabs.forEach(other => {
                         const isTarget = other === t; const view = document.getElementById(`view-${other}`); const btnOther = document.getElementById(`tab-${other}`);
-                        if (isTarget) {
+                    if (isTarget) {
                             view.classList.remove('hidden'); if(other === 'equip') view.classList.add('flex'); else view.classList.add('grid');
                             btnOther.classList.replace('text-gray-500', 'text-[#c8aa6e]'); btnOther.classList.replace('bg-[#1e2328]', 'bg-[#2a3138]');
                         } else {
@@ -489,6 +643,22 @@
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -48,6 +48,30 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
         .context-option:hover { background-color: #706658; color: #ffffff; }
         .context-cancel { padding: 4px 8px; cursor: pointer; }
         .context-cancel:hover { background-color: #706658; color: #ffffff; }
+        .context-swap-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-top: 1px solid #4a4136;
+        }
+        .context-swap-trigger:hover { background-color: #706658; color: #ffffff; }
+        .context-swap-caret { margin-left: 10px; opacity: 0.85; }
+        .context-submenu {
+            position: absolute;
+            background-color: #5d5447;
+            border: 2px solid #3e3529;
+            color: #e5d8c5;
+            font-family: monospace;
+            z-index: 1001;
+            user-select: none;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            min-width: 140px;
+        }
+        .context-submenu .context-option { border-bottom: 1px solid #4a4136; }
+        .context-submenu .context-option:last-child { border-bottom: none; }
+        .context-option-selected { color: #ffffff; background-color: #6c6254; }
         
         /* Custom Scrollbar for UI panels */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -87,6 +111,7 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
             pointer-events: none; z-index: 500;
             text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
         }
+
 
 
 

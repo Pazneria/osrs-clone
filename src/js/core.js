@@ -249,9 +249,16 @@ O445411111OOOOO.
             });
         }
 
-        function resolveDefaultItemAction(item) {
+        function resolveDefaultItemAction(item, preferenceKey = null) {
             const actions = getOrderedItemActions(item);
-            return actions.length > 0 ? actions[0] : 'Use';
+            if (actions.length === 0) return 'Use';
+
+            const prefKey = preferenceKey || (item && item.id ? item.id : null);
+            const preferred = (prefKey && userItemPrefs && typeof userItemPrefs[prefKey] === 'string')
+                ? userItemPrefs[prefKey]
+                : null;
+            if (preferred && actions.includes(preferred)) return preferred;
+            return actions[0];
         }
 
         // Item & Inventory State
@@ -346,7 +353,11 @@ O445411111OOOOO.
         const contextMenuEl = document.getElementById('context-menu');
         const contextOptionsListEl = document.getElementById('context-options-list');
 
-        contextMenuEl.addEventListener('mouseleave', () => { closeContextMenu(); });
+        contextMenuEl.addEventListener('mouseleave', (e) => {
+            const related = e ? e.relatedTarget : null;
+            if (related && related.closest && related.closest('.context-submenu')) return;
+            closeContextMenu();
+        });
 
         function showContextMenuAt(clientX, clientY) {
             contextMenuEl.classList.remove('hidden');
@@ -508,7 +519,6 @@ O445411111OOOOO.
             if (typeof window.initLogicalMap === 'function') window.initLogicalMap();
             if (typeof window.initThreeJS === 'function') window.initThreeJS();
             if (typeof window.build3DEnvironment === 'function') window.build3DEnvironment();
-            if (typeof window.spawnMiningPoseReferences === 'function') window.spawnMiningPoseReferences();
             if (typeof window.initMinimap === 'function') window.initMinimap();
             if (typeof window.initUIPreview === 'function') window.initUIPreview(); 
             initInventoryUI(); 
@@ -564,8 +574,8 @@ O445411111OOOOO.
                 // Only close menus if it's a left-click (ignore middle-click/camera drag or right-click)
                 if (e.button !== 0) return;
 
-                // Let context menu handle its own clicks
-                if (e.target.closest('#context-menu')) return; 
+                // Let context menu and swap submenu handle their own clicks
+                if (e.target.closest('#context-menu') || e.target.closest('.context-submenu') || e.target.closest('#amount-modal')) return; 
                 
                 // If an interface is open and we click OUTSIDE of it and OUTSIDE our inventory, close it
                 if (isBankOpen && !e.target.closest('#bank-interface') && !e.target.closest('#main-ui-container')) {
@@ -582,6 +592,13 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
+
+
+
+
+
 
 
 
