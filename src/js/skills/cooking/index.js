@@ -45,8 +45,8 @@
     }
 
     function applyCookingAnimation(context) {
-        if (window.SkillSharedAnimations && typeof SkillSharedAnimations.applyFishingStylePose === 'function') {
-            SkillSharedAnimations.applyFishingStylePose(context);
+        if (window.SkillSharedAnimations && typeof SkillSharedAnimations.applyCookingStylePose === 'function') {
+            SkillSharedAnimations.applyCookingStylePose(context);
         }
     }
 
@@ -80,14 +80,23 @@
                 return true;
             }
 
-            return !!context.startSkillById(SKILL_ID, {
+            context.playerState.pendingSkillStart = {
+                skillId: SKILL_ID,
                 targetObj: 'FIRE',
                 targetX: fireTarget.x,
                 targetY: fireTarget.y,
                 targetZ: fireTarget.z,
                 sourceInvIndex: context.sourceInvIndex,
                 sourceItemId: recipe.sourceItemId
-            });
+            };
+
+            if (typeof context.queueInteractAt === 'function') {
+                context.queueInteractAt('FIRE', fireTarget.x, fireTarget.y, null);
+            } else {
+                context.queueInteract();
+            }
+
+            return true;
         },
 
         onStart(context) {
@@ -102,8 +111,16 @@
                 return false;
             }
 
+            const target = { x: context.targetX, y: context.targetY, z: context.targetZ };
+            const dx = Math.abs(target.x - context.playerState.x);
+            const dy = Math.abs(target.y - context.playerState.y);
+            const samePlane = target.z === context.playerState.z;
+            if (!samePlane || dx > 1 || dy > 1) {
+                return false;
+            }
+
             context.playerState.cookingSourceItemId = recipe.sourceItemId;
-            context.playerState.cookingTarget = { x: context.targetX, y: context.targetY, z: context.targetZ };
+            context.playerState.cookingTarget = target;
             context.startSkillingAction();
             context.playerState.actionUntilTick = context.currentTick + 1;
             return true;

@@ -14,7 +14,15 @@
 
         onUseItem(context) {
             if (!isValidFiremakingUse(context)) return false;
-            return this.onStart(context);
+
+            if (typeof context.haltMovement === 'function') context.haltMovement();
+
+            return !!context.startSkillById(SKILL_ID, {
+                skillId: SKILL_ID,
+                targetObj: 'GROUND',
+                sourceInvIndex: context.sourceInvIndex,
+                sourceItemId: context.sourceItemId
+            });
         },
 
         onStart(context) {
@@ -27,7 +35,22 @@
             const fireY = context.playerState.y;
             const fireZ = context.playerState.z;
 
-            if (!context.lightFireAtCurrentTile()) return false;
+            // Hard-stop movement here as a safety net for any entry path.
+            context.playerState.path = [];
+            context.playerState.midX = null;
+            context.playerState.midY = null;
+            context.playerState.pendingActionAfterTurn = null;
+            context.playerState.turnLock = false;
+            context.playerState.actionVisualReady = true;
+            context.playerState.action = 'IDLE';
+            context.playerState.targetX = context.playerState.x;
+            context.playerState.targetY = context.playerState.y;
+            context.playerState.prevX = context.playerState.x;
+            context.playerState.prevY = context.playerState.y;
+
+            if (!context.lightFireAtCurrentTile(fireX, fireY, fireZ)) {
+                return false;
+            }
 
             context.removeOneItemById('logs');
             context.addSkillXp(SKILL_ID, FIREMAKING_XP);

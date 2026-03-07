@@ -113,50 +113,6 @@
         const shinLocalPitch = segmentAngleRad;
         return { thighWorldPitch, shinLocalPitch };
     }
-    function mergeBounds(target, source) {
-        if (!target || !source) return;
-        target.expandByPoint(new THREE.Vector3(source.min.x, source.min.y, source.min.z));
-        target.expandByPoint(new THREE.Vector3(source.max.x, source.max.y, source.max.z));
-    }
-
-    function collectBoundsInSpace(root, spaceNode, excludeSubtree) {
-        if (!window.THREE || !root || !spaceNode) return null;
-        root.updateWorldMatrix(true, true);
-        spaceNode.updateWorldMatrix(true, true);
-
-        const worldToSpace = new THREE.Matrix4().copy(spaceNode.matrixWorld).invert();
-        const bounds = new THREE.Box3();
-        let hasPoint = false;
-
-        root.traverse((node) => {
-            if (!node || !node.isMesh || !node.geometry) return;
-            if (excludeSubtree && isDescendant(node, excludeSubtree)) return;
-
-            if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
-            const bb = node.geometry.boundingBox;
-            if (!bb) return;
-
-            const corners = [
-                new THREE.Vector3(bb.min.x, bb.min.y, bb.min.z),
-                new THREE.Vector3(bb.min.x, bb.min.y, bb.max.z),
-                new THREE.Vector3(bb.min.x, bb.max.y, bb.min.z),
-                new THREE.Vector3(bb.min.x, bb.max.y, bb.max.z),
-                new THREE.Vector3(bb.max.x, bb.min.y, bb.min.z),
-                new THREE.Vector3(bb.max.x, bb.min.y, bb.max.z),
-                new THREE.Vector3(bb.max.x, bb.max.y, bb.min.z),
-                new THREE.Vector3(bb.max.x, bb.max.y, bb.max.z)
-            ];
-
-            for (let i = 0; i < corners.length; i++) {
-                const p = corners[i].clone().applyMatrix4(node.matrixWorld).applyMatrix4(worldToSpace);
-                bounds.expandByPoint(p);
-                hasPoint = true;
-            }
-        });
-
-        return hasPoint ? bounds : null;
-    }
-
     function transformPointToSpace(node, localPoint, spaceNode) {
         if (!window.THREE || !node || !localPoint) return null;
         node.updateWorldMatrix(true, true);
@@ -351,7 +307,6 @@
             const cycle = 1250;
             const phase = (context.frameNow % cycle) / cycle;
             const sway = Math.sin(phase * Math.PI * 2);
-            const rock = Math.sin((phase * Math.PI * 2) + (Math.PI / 3));
 
             const torsoPitch = (0.72 + ((15 * Math.PI) / 180)) + (sway * 0.05);
             const torsoYaw = sway * 0.04;
@@ -414,6 +369,7 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = fishingModule;
 })();
+
 
 
 

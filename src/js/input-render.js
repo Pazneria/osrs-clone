@@ -567,6 +567,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
                 playerState.targetX = actionX; playerState.targetY = actionY;
                 if (pendingAction.type === 'WALK') {
+                    playerState.pendingSkillStart = null;
                     playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, false);
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
@@ -1611,6 +1612,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
 
 
 

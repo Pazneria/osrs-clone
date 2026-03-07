@@ -43,7 +43,8 @@
             turnLock: false,
             actionVisualReady: true,
             actionUntilTick: 0,
-            firemakingTarget: null
+            firemakingTarget: null,
+            pendingSkillStart: null
         };
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
         let RUNE_ESSENCE_ROCKS = [];
@@ -325,6 +326,12 @@ O445411111OOOOO.
         inventory[2] = { itemData: ITEM_DB['coins'], amount: 1000 };
         inventory[3] = { itemData: ITEM_DB['small_net'], amount: 1 };
         inventory[4] = { itemData: ITEM_DB['iron_pickaxe'], amount: 1 };
+        inventory[5] = { itemData: ITEM_DB['tinderbox'], amount: 1 };
+        inventory[6] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
+        inventory[7] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
+        inventory[8] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
+        inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
+        inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         
         let equipment = { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
         let baseStats = { atk: 10, def: 10, str: 10 };
@@ -592,6 +599,10 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
+
+
 
 
 

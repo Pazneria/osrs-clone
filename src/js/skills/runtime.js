@@ -120,7 +120,7 @@
             getInventoryCount: (itemId) => (typeof getInventoryCount === 'function' ? getInventoryCount(itemId) : 0),
             removeOneItemById: (itemId) => (typeof removeOneItemById === 'function' ? removeOneItemById(itemId) : false),
             removeItemsById: (itemId, amount) => (typeof removeItemsById === 'function' ? removeItemsById(itemId, amount) : 0),
-            lightFireAtCurrentTile: () => (typeof lightFireAtCurrentTile === 'function' ? lightFireAtCurrentTile() : false),
+            lightFireAtCurrentTile: (x, y, z) => (typeof lightFireAtCurrentTile === 'function' ? lightFireAtCurrentTile(x, y, z) : false),
             renderInventory: () => { if (typeof renderInventory === 'function') renderInventory(); },
             giveItemById,
             addSkillXp: (skillId, amount) => addSkillXp(skillId, amount),
@@ -128,6 +128,21 @@
             stopAction: () => { playerState.action = 'IDLE'; },
             startSkillingAction: () => startFacingAction(`SKILLING: ${targetObj}`, true),
             queueInteract: () => queueAction('INTERACT', targetX, targetY, targetObj),
+            queueInteractAt: (obj, x, y, targetUid = null) => queueAction('INTERACT', x, y, obj, targetUid),
+            haltMovement: () => {
+                playerState.path = [];
+                playerState.midX = null;
+                playerState.midY = null;
+                playerState.pendingActionAfterTurn = null;
+                playerState.turnLock = false;
+                playerState.actionVisualReady = true;
+                playerState.action = 'IDLE';
+                playerState.targetX = playerState.x;
+                playerState.targetY = playerState.y;
+                playerState.prevX = playerState.x;
+                playerState.prevY = playerState.y;
+                if (typeof pendingAction !== 'undefined') pendingAction = null;
+            },
             spawnClickMarker: (isRed = true) => {
                 if (overrides.hitData && overrides.hitData.point) spawnClickMarker(overrides.hitData.point, isRed);
             },
@@ -205,6 +220,20 @@
     }
 
     function tryStartFromPlayerTarget() {
+        const pending = playerState.pendingSkillStart;
+        if (pending && pending.skillId) {
+            const pendingZ = Number.isInteger(pending.targetZ) ? pending.targetZ : playerState.z;
+            const matchesTarget = pending.targetObj === playerState.targetObj
+                && pending.targetX === playerState.targetX
+                && pending.targetY === playerState.targetY
+                && pendingZ === playerState.z;
+
+            playerState.pendingSkillStart = null;
+            if (matchesTarget) {
+                return tryStartSkillById(pending.skillId, pending);
+            }
+        }
+
         const skillId = resolveSkillIdFromTarget(playerState.targetObj);
         if (!skillId) return false;
         return tryStartSkillById(skillId);
@@ -280,3 +309,6 @@
         handleSkillAnimation
     };
 })();
+
+
+
