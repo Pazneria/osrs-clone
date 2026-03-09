@@ -1,19 +1,21 @@
 # Smithing Status
 
 ## Done
-- [ ] No completed smithing implementation milestones yet.
+- [x] SMITHING-001: Core smithing progression, tier bands, and recipe families documented in the roadmap.
+- [x] SMITHING-002: Baseline smithing mechanics and station requirements defined with fixed 3-tick deterministic actions.
+- [x] SMITHING-003: Economy role, merchant/NPC structure, dependencies, and canonical item/component lists consolidated.
 
 ## Now
-- [ ] SMITH-001: Smelting loop (ore -> bar) with level gating.
-- [ ] SMITH-002: Basic smithing outputs (bronze/iron tools and gear).
-- [ ] SMITH-003: Hammer requirement enforcement.
+- [ ] SMITHING-004: Data model pass for smelting, forging, and jewelry-base recipes (inputs, outputs, level, XP, station, tool/mould requirements).
+- [ ] SMITHING-005: Runtime smithing action loop for queued 3-tick station actions with requirement re-validation each cycle.
+- [ ] SMITHING-006: Core output wiring for bars, metal equipment, and smithing-made component items used by crafting/fletching.
 
 ## Next
-- [ ] SMITH-004: Mid-tier bars and outputs (steel/mithril/adamant).
-- [ ] SMITH-005: Jewelry base recipes with mould requirements.
-- [ ] SMITH-006: Smithing merchant economy integration.
+- [ ] SMITHING-007: Cross-skill integration pass for held-item assembly chain (smithing parts + fletching handles + crafting final assembly).
+- [ ] SMITHING-008: Jewelry base production integration with crafting-owned mould unlock progression and downstream gem attachment flow.
+- [ ] SMITHING-009: Merchant stock/value alignment pass for Borin, Thrain, Elira, and general-store fallback rules.
 
 ## Later
-- [ ] SMITH-007: Rune progression quest gate.
-- [ ] SMITH-008: Specialized advanced/rune forge flow.
-- [ ] SMITH-009: Full profitability and progression balancing pass.
+- [ ] SMITHING-010: Quest gate integration for rune-material access and advanced forge progression path.
+- [ ] SMITHING-011: Advanced station UX pass for quantity selection, queue interruption rules, and failure-state messaging.
+- [ ] SMITHING-012: Balance and polish pass using output-per-tick, XP-per-tick, and tier-economy target tuning.
