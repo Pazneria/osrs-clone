@@ -4,6 +4,7 @@
 - [x] FISHING-001: Core fishing loop and XP leveling baseline documented.
 - [x] FISHING-002: Early fish progression and tool unlock path (net/rod/harpoon) defined.
 - [x] FISHING-003: Roadmap expanded with full fishing design spec (progression, formulas, runtime, economy, NPCs).
+- [x] FISHING-QA-001: Inventory-capacity behavior aligned and validated (cannot start when full, immediate stop on the catch tick that fills the last slot).
 
 ## Now
 - [ ] FISHING-004: Data model pass for fish, water-type, and tool tables (levels/xp/weights/requirements/values).
@@ -19,3 +20,4 @@
 - [ ] FISHING-010: Fishing teacher quest and rune harpoon reward/replacement flow integration.
 - [ ] FISHING-011: Training location and world placement pass across standard/deep-water bands.
 - [ ] FISHING-012: Balance pass using expected fish/xp/gold per tick targets by method and level band.
+

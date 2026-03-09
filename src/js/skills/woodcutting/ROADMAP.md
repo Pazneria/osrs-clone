@@ -116,6 +116,14 @@ These active output values measure woodcutting performance while the player is a
 | Maple Tree  | 0.6415                  | 26.9430              | 20.5280                |
 | Yew Tree    | 0.5574                  | 36.2310              | 40.1328                |
 
+## Inventory Capacity Rules
+
+| Rule | Description |
+| ---- | ----------- |
+| Start requires capacity | Woodcutting can begin only if at least one inventory slot can accept the target log output. |
+| Full inventory start block | If inventory is already full for the target output, woodcutting does not begin. |
+| Immediate full stop | If a successful chop fills the last free slot, woodcutting stops immediately after that success tick. |
+| No overfill attempts | Woodcutting does not continue into an extra attempt tick once no further output can fit. |
 ## Depletion Model
 
 ### Core Depletion Rules
@@ -177,8 +185,8 @@ These active output values measure woodcutting performance while the player is a
 
 | Rule             | Description                                                                                                                                |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Session Creation | When the player first attempts to chop an available tree, create a tree session with Successful Logs = 0                                |
-| Session Update   | Update Last Interaction Tick on each chopping attempt                                                                                      |
+| Session Creation | When the player first attempts to chop an available tree and has at least one free inventory slot for the output logs, create a tree session with Successful Logs = 0                                |
+| Session Update   | Update Last Interaction Tick on each chopping attempt while output capacity remains available                                                                                      |
 | Session Expiry   | If Current Tick - Last Interaction Tick >= 50 and the tree is not depleted, remove the tree session and discard partial depletion progress |
 | Tree Depletion   | When the tree depletes, remove the tree session, set Tree State to Depleted, and set Respawn At Tick = Current Tick + Respawn Ticks       |
 | Tree Respawn     | When Current Tick >= Respawn At Tick, set Tree State to Available                                                                          |
@@ -314,6 +322,7 @@ The general store buys everything at half price.
 | Willow Logs  | Resource | 20             | 36        | 14         | Mid-tier logs               |
 | Maple Logs   | Resource | 30             | 80        | 32         | Higher-tier balanced logs   |
 | Yew Logs     | Resource | 40             | 180       | 72         | High-value late-band logs   |
+
 
 
 

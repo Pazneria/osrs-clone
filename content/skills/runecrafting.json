@@ -1,0 +1,15 @@
+{
+  "skillId": "runecrafting",
+  "timing": { "actionTicks": 1 },
+  "recipeSet": {
+    "ember_altar": {
+      "targetObj": "ALTAR_CANDIDATE",
+      "essenceItemId": "rune_essence",
+      "outputItemId": "ember_rune",
+      "xpPerEssence": 8,
+      "scalingStartLevel": 1,
+      "requiresSecondaryRune": false
+    }
+  },
+  "economy": { "primaryResource": "ember_rune" }
+}

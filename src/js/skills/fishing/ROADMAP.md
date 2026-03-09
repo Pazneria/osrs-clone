@@ -164,14 +164,14 @@ These active output values measure fishing performance while the player is activ
 
 | Rule                    | Description                                                                                    |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| Start fishing           | When the player clicks valid water with the correct tool, fishing begins                       |
+| Start fishing           | When the player clicks valid water with the correct tool and has at least one free inventory slot, fishing begins                       |
 | Water requirement       | Most fishing can occur in standard water, but deep-water fishing unlocks at level 40 and is required for swordfish |
 | Deep-water tool split   | In deep water, a normal harpoon catches a tuna and swordfish mix, while a rune harpoon catches only swordfish |
 | Rod bait requirement    | Rod fishing requires bait, while net and harpoon fishing do not                                |
 | Continue fishing        | The player rolls once per tick to determine whether the current water yields a catch           |
 | Water-based success     | Fishing success is based on the current fishing method and water type, not tool power or speed |
 | Mixed fish resolution   | If a catch succeeds in a mixed table, the fish is chosen from the eligible weighted table      |
-| Stop on full inventory  | Fishing stops immediately when the player's inventory becomes full                             |
+| Stop on full inventory  | Fishing stops immediately when the player's inventory becomes full, including the tick where the last free slot is consumed by a catch                             |
 | Stop on cancel          | Fishing stops immediately if the player clicks away, moves, or cancels                         |
 | Stop on invalid state   | Fishing stops if the player no longer has the required tool, bait, or valid target water             |
 | Water remains available | Water does not deplete from repeated catches under this model                                  |
@@ -197,13 +197,13 @@ These active output values measure fishing performance while the player is activ
 | ---- | ------------------------------------------------------------------------------------------------------------------ |
 | 1    | Check that the fishing action is active and the target water is still valid                                        |
 | 2    | Check that the player still has the required tool, any extra requirement such as bait, and the required water type |
-| 3    | Check that the player has at least one free inventory slot                                                         |
+| 3    | Check that the player has at least one free inventory slot before rolling this tick                                                         |
 | 4    | Calculate the current Water-Type Catch Chance using the fishing method and water-type formula                      |
 | 5    | Roll once to determine whether the current water yields a catch on this tick                                       |
 | 6    | If the catch succeeds, choose the fish from the eligible weighted fish table                                       |
 | 7    | Add one fish to inventory and award XP for that fish                                                               |
 | 8    | If bait is required and a fish was caught, consume one bait                                                        |
-| 9    | If inventory is full or action is cancelled, end the fishing action                                                |
+| 9    | If inventory has no free slot after catch resolution or action is cancelled, end the fishing action immediately                                                |
 
 ## Fishing Runtime State
 
@@ -234,13 +234,13 @@ These active output values measure fishing performance while the player is activ
 
 | Rule             | Description                                                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Action Creation  | When the player clicks valid water, create a fishing action with Fishing State = Fishing                                                |
+| Action Creation  | When the player clicks valid water and has at least one free inventory slot, create a fishing action with Fishing State = Fishing                                                |
 | Action Update    | On each tick, update Last Attempt Tick and recalculate the current water-type catch chance and eligible fish table based on water type and tool |
 | Deep-Water Split | In deep water at level 40+, the eligible fish table depends on whether the player is using a Harpoon or Rune Harpoon |
 | Action Success   | On a successful catch, choose one eligible fish, add it to inventory, and award XP                                                      |
 | Bait Consumption | If bait is required, consume one bait only when a fish is successfully caught                                                           |
 | Action Cancel    | If the player moves, clicks elsewhere, loses the needed tool, lacks bait, or no longer targets valid water, set Fishing State = Stopped |
-| Inventory Stop   | If the inventory becomes full, set Fishing State = Stopped                                                                              |
+| Inventory Stop   | If the inventory has no free slot at action start or becomes full during fishing, set Fishing State = Stopped immediately                                                                              |
 | Action Removal   | When Fishing State = Stopped, remove the fishing action                                                                                 |
 
 ## Economy Role
@@ -366,6 +366,7 @@ Fishing is the canonical owner of raw-fish merchant stock unlock and resale beha
 
 | Rule                                                           | Value |
 | -------------------------------------------------------------- | ----- |
+| Fishing cannot start without at least one free inventory slot  | True  |
 | Fishing continues until inventory is full or cancelled         | True  |
 | Fishing rolls once per tick while active                       | True  |
 | Fishing method catch chance starts at 15% when unlocked        | True  |
@@ -398,6 +399,8 @@ Fishing is the canonical owner of raw-fish merchant stock unlock and resale beha
 | Raw Salmon | Resource | 20 | 48 | 16 | Mid-tier rod-caught fish                            |
 | Raw Tuna | Resource | 30 | 84 | 28 | Higher-value harpoon catch                          |
 | Raw Swordfish | Resource | 40 | 144 | 48 | High-value late-band catch                          |
+
+
 
 
 

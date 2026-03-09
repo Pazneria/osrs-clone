@@ -1,0 +1,14 @@
+{
+  "skillId": "firemaking",
+  "timing": { "ignitionAttemptTicks": 1, "postSuccessLockTicks": 3 },
+  "recipeSet": {
+    "logs": {
+      "sourceItemId": "logs",
+      "requiredLevel": 1,
+      "ignitionDifficulty": 15,
+      "xpPerSuccess": 40,
+      "fireLifetimeTicks": 90
+    }
+  },
+  "economy": { "primaryResource": "logs", "supportResource": "tinderbox" }
+}

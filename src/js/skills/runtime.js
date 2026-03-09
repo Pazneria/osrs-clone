@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const manifest = window.SkillManifest || {};
     const targetToSkillId = manifest.targetToSkillId || {
         TREE: 'woodcutting',
@@ -78,6 +78,26 @@
     function hasItem(itemId) {
         return inventory.some(i => i && i.itemData && i.itemData.id === itemId);
     }
+    function canAcceptItemById(itemId, amount = 1) {
+        if (!itemId || !ITEM_DB || !ITEM_DB[itemId]) return false;
+        const item = ITEM_DB[itemId];
+        if (item.stackable) {
+            if (inventory.some((slot) => slot && slot.itemData && slot.itemData.id === itemId)) return true;
+            return inventory.indexOf(null) !== -1;
+        }
+
+        let emptySlots = 0;
+        for (let i = 0; i < inventory.length; i++) {
+            if (!inventory[i]) emptySlots++;
+        }
+        return emptySlots >= Math.max(1, amount);
+    }
+
+    function getSkillLevel(skillId) {
+        if (!skillId || !playerSkills || !playerSkills[skillId]) return 1;
+        const level = playerSkills[skillId].level;
+        return Number.isFinite(level) ? level : 1;
+    }
 
     function createSkillContext(overrides = {}) {
         const targetObj = overrides.targetObj || playerState.targetObj;
@@ -97,6 +117,11 @@
             playerState,
             logicalMap,
             heightMap,
+            getSkillSpec: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getSkillSpec === 'function' ? SkillSpecRegistry.getSkillSpec(id) : null),
+            getRecipeSet: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getRecipeSet === 'function' ? SkillSpecRegistry.getRecipeSet(id) : null),
+            getNodeTable: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getNodeTable === 'function' ? SkillSpecRegistry.getNodeTable(id) : null),
+            getEconomyTable: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getEconomyTable === 'function' ? SkillSpecRegistry.getEconomyTable(id) : null),
+            getSkillLevel,
             frameNow: overrides.frameNow,
             baseVisualY: overrides.baseVisualY,
             rig: overrides.rig || null,
@@ -117,10 +142,12 @@
                 if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) setPlayerRigToolVisual(overrides.playerRig, itemId);
             },
             hasItem,
+            canAcceptItemById,
             getInventoryCount: (itemId) => (typeof getInventoryCount === 'function' ? getInventoryCount(itemId) : 0),
             removeOneItemById: (itemId) => (typeof removeOneItemById === 'function' ? removeOneItemById(itemId) : false),
             removeItemsById: (itemId, amount) => (typeof removeItemsById === 'function' ? removeItemsById(itemId, amount) : 0),
             lightFireAtCurrentTile: (x, y, z) => (typeof lightFireAtCurrentTile === 'function' ? lightFireAtCurrentTile(x, y, z) : false),
+            hasActiveFireAt: (x, y, z) => (Array.isArray(activeFires) ? activeFires.some((f) => f.x === x && f.y === y && f.z === z) : false),
             renderInventory: () => { if (typeof renderInventory === 'function') renderInventory(); },
             giveItemById,
             addSkillXp: (skillId, amount) => addSkillXp(skillId, amount),
@@ -309,6 +336,10 @@
         handleSkillAnimation
     };
 })();
+
+
+
+
 
 
 

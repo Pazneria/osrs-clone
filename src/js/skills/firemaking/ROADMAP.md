@@ -29,8 +29,8 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Rule | Description |
 | ---- | ----------- |
 | Valid Action Requirements | A firemaking action can begin only if the player meets the level requirement, has a tinderbox, has the correct logs, and is standing on a tile that does not already contain a lit fire. |
-| Attempt-Based Action Time | Firemaking uses ignition attempts instead of a fixed action time. Each attempt occurs once per tick, and the action ends immediately on success or failure. |
-| Success Logic | Each ignition attempt has a success chance based on the player's firemaking level and the log's ignition difficulty. The action succeeds when one attempt passes the success check. If an attempt fails, the action ends with no fire created, no log consumed, and no XP awarded. |
+| Attempt-Based Action Time | Firemaking uses ignition attempts instead of a fixed action time. Each attempt occurs once per tick, and the action stays active until ignition succeeds or the player cancels/invalidates the action. |
+| Success Logic | Each ignition attempt has a success chance based on the player's firemaking level and the log's ignition difficulty. The action succeeds when one attempt passes the success check. If an attempt fails, no fire is created, no log is consumed, no XP is awarded, and the action continues into the next tick attempt unless cancelled or invalidated. |
 | Input Consumption | When a firemaking action succeeds, exactly 1 log is consumed. |
 | Fire Creation | When a firemaking action succeeds, 1 temporary fire is created on the target tile. |
 | XP Award | When a firemaking action succeeds, the player gains the XP listed for that log type. |
@@ -169,7 +169,7 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 
 - Firemaking is available at level 1 with a tinderbox.
 - Firemaking uses ignition attempts rather than a fixed action time.
-- If an ignition attempt fails, the action ends with no fire created, no log consumed, and no XP awarded.
+- If an ignition attempt fails, no fire is created, no log is consumed, no XP is awarded, and the next attempt occurs on the next tick while the action remains active.
 - Firemaking always consumes exactly one log per successful action.
 - Fires are temporary world objects rather than inventory items.
 - When a fire expires, it leaves exactly 1 lootable ashes item on the tile.
@@ -201,6 +201,7 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 | Maple Logs  | Resource | 30             | 80        | 32         | Used to create maple fires |
 | Yew Logs    | Resource | 40             | 180       | 72         | Used to create yew fires |
 | Ashes       | Resource | 1              | 4         | 1          | Stackable; created when fires expire |
+
 
 
 

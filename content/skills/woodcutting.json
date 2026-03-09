@@ -1,0 +1,16 @@
+{
+  "skillId": "woodcutting",
+  "timing": { "baseAttemptTicks": 4, "minimumAttemptTicks": 1 },
+  "nodeTable": {
+    "normal_tree": {
+      "tileId": 1,
+      "requiredLevel": 1,
+      "difficulty": 18,
+      "xpPerSuccess": 25,
+      "rewardItemId": "logs",
+      "depletionChance": 0.2,
+      "respawnTicks": 18
+    }
+  },
+  "economy": { "primaryResource": "logs", "defaultSellValue": 5 }
+}

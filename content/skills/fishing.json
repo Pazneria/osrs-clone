@@ -1,0 +1,17 @@
+{
+  "skillId": "fishing",
+  "timing": { "baseAttemptTicks": 3, "minimumAttemptTicks": 1 },
+  "nodeTable": {
+    "shallow_water": {
+      "tileIds": [21, 22],
+      "unlockLevel": 1,
+      "maxCatchChance": 0.62,
+      "baseCatchChance": 0.28,
+      "levelScaling": 0.008,
+      "fish": [
+        { "itemId": "raw_shrimp", "requiredLevel": 1, "weight": 100, "xp": 20 }
+      ]
+    }
+  },
+  "economy": { "primaryResource": "raw_shrimp", "defaultSellValue": 3 }
+}

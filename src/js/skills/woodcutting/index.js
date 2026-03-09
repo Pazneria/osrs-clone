@@ -1,35 +1,97 @@
-(function () {
+﻿(function () {
     const SKILL_ID = 'woodcutting';
-    const CHOP_CHANCE = 0.25;
-    const CHOP_XP = 25;
-    const STUMP_CHANCE = 0.2;
+    const NODE_ID = 'normal_tree';
+
+    function getNodeSpec(context) {
+        const table = typeof context.getNodeTable === 'function' ? context.getNodeTable(SKILL_ID) : null;
+        return table ? table[NODE_ID] : null;
+    }
+
+    function resolveAttemptConfig(context, nodeSpec) {
+        const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
+        const bestAxe = typeof context.getBestToolByClass === 'function' ? context.getBestToolByClass('axe') : null;
+        const toolPower = bestAxe ? (Number.isFinite(bestAxe.toolTier) ? bestAxe.toolTier : (bestAxe.stats && Number.isFinite(bestAxe.stats.atk) ? bestAxe.stats.atk : 0)) : 0;
+        const speedBonus = bestAxe && Number.isFinite(bestAxe.speedBonusTicks) ? bestAxe.speedBonusTicks : 0;
+        const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+
+        const successChance = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeGatherSuccessChance === 'function')
+            ? SkillSpecRegistry.computeGatherSuccessChance(level, toolPower, nodeSpec.difficulty)
+            : 0.25;
+
+        const intervalTicks = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeIntervalTicks === 'function')
+            ? SkillSpecRegistry.computeIntervalTicks(skillSpec && skillSpec.timing ? skillSpec.timing.baseAttemptTicks : 4, skillSpec && skillSpec.timing ? skillSpec.timing.minimumAttemptTicks : 1, speedBonus)
+            : 1;
+
+        return { successChance, intervalTicks };
+    }
 
     const woodcuttingModule = {
         canStart(context) {
-            return context.hasToolClass('axe') && context.isTargetTile(1);
+            const nodeSpec = getNodeSpec(context);
+            if (!nodeSpec) return false;
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            const hasCapacity = typeof context.canAcceptItemById !== 'function' || context.canAcceptItemById(nodeSpec.rewardItemId, 1);
+            return context.hasToolClass('axe')
+                && context.isTargetTile(nodeSpec.tileId)
+                && level >= (nodeSpec.requiredLevel || 1)
+                && hasCapacity;
         },
 
         onStart(context) {
+            const nodeSpec = getNodeSpec(context);
+            if (!nodeSpec) return false;
+            if (typeof context.canAcceptItemById === 'function' && !context.canAcceptItemById(nodeSpec.rewardItemId, 1)) {
+                context.addChatMessage('You have no inventory space for logs.', 'warn');
+                return false;
+            }
             if (!this.canStart(context)) return false;
+            const attempt = resolveAttemptConfig(context, nodeSpec);
+            if (window.SkillActionResolution && typeof SkillActionResolution.startGatherSession === 'function') {
+                SkillActionResolution.startGatherSession(context, SKILL_ID, attempt.intervalTicks);
+            }
             context.startSkillingAction();
             return true;
         },
 
         onTick(context) {
-            if (!window.SkillSharedUtils || typeof SkillSharedUtils.runGatherTick !== 'function') return;
-            SkillSharedUtils.runGatherTick(context, {
-                targetTileId: 1,
-                successChance: CHOP_CHANCE,
-                skillId: SKILL_ID,
-                xp: CHOP_XP,
-                reward: 'logs',
-                onReward: (ctx) => {
-                    if (SkillSharedUtils.rollChance(STUMP_CHANCE, ctx.random)) {
+            const nodeSpec = getNodeSpec(context);
+            if (!nodeSpec || !window.SkillActionResolution || typeof SkillActionResolution.runGatherAttempt !== 'function') {
+                context.stopAction();
+                return;
+            }
+
+            if (typeof context.canAcceptItemById === 'function' && !context.canAcceptItemById(nodeSpec.rewardItemId, 1)) {
+                if (window.SkillActionResolution && typeof SkillActionResolution.stopSkill === 'function') {
+                    SkillActionResolution.stopSkill(context, SKILL_ID, 'INVENTORY_FULL');
+                } else {
+                    context.stopAction();
+                }
+                context.addChatMessage('You have no inventory space for logs.', 'warn');
+                return;
+            }
+
+            const attempt = resolveAttemptConfig(context, nodeSpec);
+            const resolution = SkillActionResolution.runGatherAttempt(context, SKILL_ID, {
+                targetTileId: nodeSpec.tileId,
+                successChance: attempt.successChance,
+                rewardItemId: nodeSpec.rewardItemId,
+                xpPerSuccess: nodeSpec.xpPerSuccess,
+                onSuccess: (ctx) => {
+                    if (!window.SkillSharedUtils || typeof SkillSharedUtils.rollChance !== 'function') return;
+                    if (SkillSharedUtils.rollChance(nodeSpec.depletionChance, ctx.random)) {
                         ctx.chopDownTree(ctx.targetX, ctx.targetY, ctx.targetZ);
-                        ctx.stopAction();
+                        if (window.SkillActionResolution && typeof SkillActionResolution.stopSkill === 'function') {
+                            SkillActionResolution.stopSkill(ctx, SKILL_ID, 'NODE_DEPLETED');
+                        } else {
+                            ctx.stopAction();
+                        }
                     }
                 }
             });
+
+            if (resolution.status === 'stopped' && (resolution.reasonCode === 'INVENTORY_FULL' || resolution.reasonCode === 'INVENTORY_FULL_AFTER_GAIN')) {
+                context.addChatMessage('You have no inventory space for logs.', 'warn');
+            }
         },
 
         onAnimate(context) {
@@ -92,12 +154,14 @@
         },
 
         getTooltip(context) {
-            if (!context.isTargetTile(1)) return '';
+            const nodeSpec = getNodeSpec(context);
+            if (!nodeSpec || !context.isTargetTile(nodeSpec.tileId)) return '';
             return '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
         },
 
         getContextMenu(context) {
-            if (context.isTargetTile(1)) {
+            const nodeSpec = getNodeSpec(context);
+            if (nodeSpec && context.isTargetTile(nodeSpec.tileId)) {
                 return [
                     {
                         text: 'Chop down Tree',
@@ -121,7 +185,5 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = woodcuttingModule;
 })();
-
-
 
 

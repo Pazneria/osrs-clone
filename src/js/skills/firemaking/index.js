@@ -1,15 +1,48 @@
-(function () {
+﻿(function () {
     const SKILL_ID = 'firemaking';
-    const FIREMAKING_XP = 40;
+
+    function getLogRecipe(context) {
+        const recipes = typeof context.getRecipeSet === 'function' ? context.getRecipeSet(SKILL_ID) : null;
+        return recipes ? recipes.logs : null;
+    }
 
     function isValidFiremakingUse(context) {
         if (!context || context.targetObj !== 'GROUND') return false;
         return context.sourceItemId === 'logs' || context.sourceItemId === 'tinderbox';
     }
 
+    function getAttemptInterval(recipe, skillSpec) {
+        if (recipe && Number.isFinite(recipe.ignitionAttemptTicks)) return Math.max(1, recipe.ignitionAttemptTicks);
+        if (skillSpec && skillSpec.timing && Number.isFinite(skillSpec.timing.ignitionAttemptTicks)) return Math.max(1, skillSpec.timing.ignitionAttemptTicks);
+        return 1;
+    }
+
+    function startContinuousFiremaking(context, recipe) {
+        const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
+        const attemptInterval = getAttemptInterval(recipe, skillSpec);
+
+        context.playerState.firemakingSession = {
+            phase: 'attempting',
+            target: { x: context.playerState.x, y: context.playerState.y, z: context.playerState.z },
+            sourceItemId: recipe.sourceItemId,
+            attemptInterval,
+            nextAttemptTick: context.currentTick
+        };
+
+        context.playerState.action = 'SKILLING: FIREMAKING';
+        context.playerState.turnLock = false;
+        context.playerState.actionVisualReady = true;
+        return true;
+    }
+
     const firemakingModule = {
         canStart(context) {
-            return context.getInventoryCount('tinderbox') > 0 && context.getInventoryCount('logs') > 0;
+            const recipe = getLogRecipe(context);
+            if (!recipe) return false;
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            return level >= (recipe.requiredLevel || 1)
+                && context.getInventoryCount('tinderbox') > 0
+                && context.getInventoryCount(recipe.sourceItemId) > 0;
         },
 
         onUseItem(context) {
@@ -26,67 +59,113 @@
         },
 
         onStart(context) {
-            if (!this.canStart(context)) {
+            const recipe = getLogRecipe(context);
+            if (!recipe || !this.canStart(context)) {
                 context.addChatMessage('You need logs and a tinderbox.', 'warn');
                 return false;
             }
 
-            const fireX = context.playerState.x;
-            const fireY = context.playerState.y;
-            const fireZ = context.playerState.z;
+            context.haltMovement();
 
-            // Hard-stop movement here as a safety net for any entry path.
-            context.playerState.path = [];
-            context.playerState.midX = null;
-            context.playerState.midY = null;
-            context.playerState.pendingActionAfterTurn = null;
-            context.playerState.turnLock = false;
-            context.playerState.actionVisualReady = true;
-            context.playerState.action = 'IDLE';
-            context.playerState.targetX = context.playerState.x;
-            context.playerState.targetY = context.playerState.y;
-            context.playerState.prevX = context.playerState.x;
-            context.playerState.prevY = context.playerState.y;
-
-            if (!context.lightFireAtCurrentTile(fireX, fireY, fireZ)) {
+            const target = { x: context.playerState.x, y: context.playerState.y, z: context.playerState.z };
+            if (context.hasActiveFireAt(target.x, target.y, target.z)) {
+                context.addChatMessage('There is already a fire here.', 'warn');
                 return false;
             }
 
-            context.removeOneItemById('logs');
-            context.addSkillXp(SKILL_ID, FIREMAKING_XP);
-            context.addChatMessage('You light the logs.', 'game');
-
-            context.playerState.action = 'SKILLING: FIREMAKING';
-            context.playerState.actionUntilTick = context.currentTick + 3;
-            context.playerState.firemakingTarget = { x: fireX, y: fireY, z: fireZ };
-            context.playerState.turnLock = false;
-            context.playerState.actionVisualReady = true;
-            context.renderInventory();
-            return true;
+            context.addChatMessage('You begin trying to light the logs.', 'info');
+            return startContinuousFiremaking(context, recipe);
         },
 
         onTick(context) {
             if (context.playerState.action !== 'SKILLING: FIREMAKING') return;
-            if (context.currentTick < context.playerState.actionUntilTick) return;
-
-            const fireTarget = context.playerState.firemakingTarget;
-            if (fireTarget && fireTarget.z === context.playerState.z) {
-                const stepped = context.tryStepAfterFire();
-                if (stepped) {
-                    const faceDx = fireTarget.x - context.playerState.x;
-                    const faceDy = fireTarget.y - context.playerState.y;
-                    if (faceDx !== 0 || faceDy !== 0) {
-                        context.playerState.targetRotation = Math.atan2(faceDx, faceDy);
-                        context.playerState.turnLock = true;
-                        context.playerState.actionVisualReady = true;
-                    }
-                } else {
-                    context.addChatMessage('You stay put because the way forward is blocked.', 'info');
-                }
+            const recipe = getLogRecipe(context);
+            const session = context.playerState.firemakingSession;
+            if (!recipe || !session) {
+                context.stopAction();
+                context.playerState.firemakingSession = null;
+                return;
             }
 
-            context.playerState.firemakingTarget = null;
-            context.stopAction();
+            if (session.phase === 'post_success') {
+                if (context.currentTick < (session.finishTick || 0)) return;
+                const fireTarget = session.target;
+                if (fireTarget && fireTarget.z === context.playerState.z) {
+                    const stepped = context.tryStepAfterFire();
+                    if (stepped) {
+                        const faceDx = fireTarget.x - context.playerState.x;
+                        const faceDy = fireTarget.y - context.playerState.y;
+                        if (faceDx !== 0 || faceDy !== 0) {
+                            context.playerState.targetRotation = Math.atan2(faceDx, faceDy);
+                            context.playerState.turnLock = true;
+                            context.playerState.actionVisualReady = true;
+                        }
+                    } else {
+                        context.addChatMessage('You stay put because the way forward is blocked.', 'info');
+                    }
+                }
+
+                context.playerState.firemakingSession = null;
+                context.stopAction();
+                return;
+            }
+
+            if (context.currentTick < (session.nextAttemptTick || 0)) return;
+
+            if (context.getInventoryCount('tinderbox') <= 0 || context.getInventoryCount(recipe.sourceItemId) <= 0) {
+                context.addChatMessage('You need logs and a tinderbox.', 'warn');
+                context.playerState.firemakingSession = null;
+                context.stopAction();
+                return;
+            }
+
+            const target = session.target;
+            if (!target || context.playerState.x !== target.x || context.playerState.y !== target.y || context.playerState.z !== target.z) {
+                context.playerState.firemakingSession = null;
+                context.stopAction();
+                return;
+            }
+
+            if (context.hasActiveFireAt(target.x, target.y, target.z)) {
+                context.addChatMessage('There is already a fire here.', 'warn');
+                context.playerState.firemakingSession = null;
+                context.stopAction();
+                return;
+            }
+
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            const successChance = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeSuccessChanceFromDifficulty === 'function')
+                ? SkillSpecRegistry.computeSuccessChanceFromDifficulty(level, recipe.ignitionDifficulty)
+                : 0.7;
+
+            const rollChance = window.SkillSharedUtils && typeof SkillSharedUtils.rollChance === 'function'
+                ? SkillSharedUtils.rollChance
+                : ((chance, rng) => (typeof rng === 'function' ? rng() : Math.random()) < chance);
+
+            session.nextAttemptTick = context.currentTick + Math.max(1, session.attemptInterval || 1);
+
+            if (!rollChance(successChance, context.random)) {
+                return;
+            }
+
+            if (!context.lightFireAtCurrentTile(target.x, target.y, target.z)) {
+                context.playerState.firemakingSession = null;
+                context.stopAction();
+                return;
+            }
+
+            if (!context.removeOneItemById(recipe.sourceItemId)) {
+                context.playerState.firemakingSession = null;
+                context.stopAction();
+                return;
+            }
+
+            context.addSkillXp(SKILL_ID, recipe.xpPerSuccess || 0);
+            context.addChatMessage('You light the logs.', 'game');
+            context.renderInventory();
+
+            session.phase = 'post_success';
+            session.finishTick = context.currentTick + 3;
         },
 
         onAnimate(context) {

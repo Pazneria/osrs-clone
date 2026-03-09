@@ -1,47 +1,54 @@
-(function () {
+﻿(function () {
     const SKILL_ID = 'cooking';
-    const COOKING_XP = 30;
 
-    function getRecipeFromItemId(itemId) {
+    function getRecipeFromItemId(context, itemId) {
         if (!itemId) return null;
+        const recipes = typeof context.getRecipeSet === 'function' ? context.getRecipeSet(SKILL_ID) : null;
+        if (!recipes) return null;
+        return recipes[itemId] || null;
+    }
 
-        const db = (typeof ITEM_DB !== 'undefined' && ITEM_DB)
-            ? ITEM_DB
-            : (typeof window !== 'undefined' ? window.ITEM_DB : null);
-        if (!db) return null;
-
-        const item = db[itemId];
-        if (!item || !item.cookResultId || !item.burnResultId) return null;
-        return {
-            sourceItemId: itemId,
-            cookedItemId: item.cookResultId,
-            burntItemId: item.burnResultId,
-            burnChance: Number.isFinite(item.burnChance) ? item.burnChance : 0.3
-        };
+    function computeBurnChance(context, recipe) {
+        const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+        const successChance = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeSuccessChanceFromDifficulty === 'function')
+            ? SkillSpecRegistry.computeSuccessChanceFromDifficulty(level, recipe.burnDifficulty)
+            : Math.max(0, 1 - (Number.isFinite(recipe.burnChance) ? recipe.burnChance : 0.3));
+        return Math.max(0, Math.min(1, 1 - successChance));
     }
 
     function cookOne(context, recipe) {
-        if (!context.removeOneItemById(recipe.sourceItemId)) return false;
+        if (!context.removeOneItemById(recipe.sourceItemId)) {
+            return window.SkillActionResolution.createActionResolution('blocked', 'MISSING_INPUT');
+        }
 
         const rollChance = window.SkillSharedUtils && typeof SkillSharedUtils.rollChance === 'function'
             ? SkillSharedUtils.rollChance
             : ((chance, rng) => (typeof rng === 'function' ? rng() : Math.random()) < chance);
 
-        const burned = rollChance(recipe.burnChance, context.random);
+        const burnChance = computeBurnChance(context, recipe);
+        const burned = rollChance(burnChance, context.random);
         if (burned) {
             context.giveItemById(recipe.burntItemId, 1);
             context.addChatMessage('You accidentally burn the food.', 'warn');
-            return true;
+            return window.SkillActionResolution.createActionResolution('success', 'COOK_BURNED', {
+                consumed: [{ itemId: recipe.sourceItemId, amount: 1 }],
+                produced: [{ itemId: recipe.burntItemId, amount: 1 }],
+                xpGained: 0
+            });
         }
 
         if (context.giveItemById(recipe.cookedItemId, 1) > 0) {
-            context.addSkillXp(SKILL_ID, COOKING_XP);
+            context.addSkillXp(SKILL_ID, recipe.xpPerSuccess || 0);
             context.addChatMessage('You cook the food.', 'game');
-            return true;
+            return window.SkillActionResolution.createActionResolution('success', 'COOK_SUCCESS', {
+                consumed: [{ itemId: recipe.sourceItemId, amount: 1 }],
+                produced: [{ itemId: recipe.cookedItemId, amount: 1 }],
+                xpGained: recipe.xpPerSuccess || 0
+            });
         }
 
         context.addChatMessage('You have no inventory space for the cooked food.', 'warn');
-        return false;
+        return window.SkillActionResolution.createActionResolution('stopped', 'INVENTORY_FULL');
     }
 
     function applyCookingAnimation(context) {
@@ -52,22 +59,12 @@
 
     const cookingModule = {
         canStart(context) {
-            if (!context || context.targetObj !== 'FIRE') {
-                if (window.DEBUG_COOKING_USE && context && typeof context.addChatMessage === 'function') {
-                    context.addChatMessage('[cook-debug] canStart failed: target is not FIRE', 'info');
-                }
-                return false;
-            }
-
-            const recipe = getRecipeFromItemId(context.sourceItemId);
-            if (!recipe && window.DEBUG_COOKING_USE && context && typeof context.addChatMessage === 'function') {
-                context.addChatMessage('[cook-debug] canStart failed: no recipe for ' + (context.sourceItemId || 'null'), 'info');
-            }
-            return !!recipe;
+            if (!context || context.targetObj !== 'FIRE') return false;
+            return !!getRecipeFromItemId(context, context.sourceItemId);
         },
 
         onUseItem(context) {
-            const recipe = getRecipeFromItemId(context.sourceItemId);
+            const recipe = getRecipeFromItemId(context, context.sourceItemId);
             if (!recipe) return false;
 
             if (!(context.targetObj === 'GROUND' || context.targetObj === 'FIRE')) return false;
@@ -100,7 +97,7 @@
         },
 
         onStart(context) {
-            const recipe = getRecipeFromItemId(context.sourceItemId);
+            const recipe = getRecipeFromItemId(context, context.sourceItemId);
             if (!recipe) {
                 context.addChatMessage('You cannot cook that.', 'warn');
                 return false;
@@ -119,54 +116,63 @@
                 return false;
             }
 
-            context.playerState.cookingSourceItemId = recipe.sourceItemId;
-            context.playerState.cookingTarget = target;
+            if (!window.SkillActionResolution || typeof SkillActionResolution.startProcessingSession !== 'function') return false;
+
+            const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
+            const actionTicks = skillSpec && skillSpec.timing && Number.isFinite(skillSpec.timing.actionTicks)
+                ? skillSpec.timing.actionTicks
+                : 1;
+
+            SkillActionResolution.startProcessingSession(context, SKILL_ID, {
+                recipeId: recipe.sourceItemId,
+                target,
+                intervalTicks: actionTicks,
+                nextTick: context.currentTick + actionTicks
+            });
+
             context.startSkillingAction();
-            context.playerState.actionUntilTick = context.currentTick + 1;
             return true;
         },
 
         onTick(context) {
             if (context.playerState.action !== 'SKILLING: FIRE') return;
-            const sourceItemId = context.playerState.cookingSourceItemId;
-            const recipe = getRecipeFromItemId(sourceItemId);
-            if (!recipe) {
-                context.playerState.cookingSourceItemId = null;
-                context.playerState.cookingTarget = null;
+            if (!window.SkillActionResolution || typeof SkillActionResolution.tickProcessingSession !== 'function') {
                 context.stopAction();
                 return;
             }
 
-            if (context.currentTick < context.playerState.actionUntilTick) return;
+            SkillActionResolution.tickProcessingSession(context, SKILL_ID, (session) => {
+                const recipe = getRecipeFromItemId(context, session.recipeId);
+                if (!recipe) {
+                    return SkillActionResolution.stopSkill(context, SKILL_ID, 'RECIPE_MISSING');
+                }
 
-            const target = context.playerState.cookingTarget || { x: context.targetX, y: context.targetY, z: context.targetZ };
-            const hasFire = Array.isArray(activeFires) && activeFires.some((f) => f.x === target.x && f.y === target.y && f.z === target.z);
-            if (!hasFire) {
-                context.addChatMessage('The fire has gone out.', 'warn');
-                context.playerState.cookingSourceItemId = null;
-                context.playerState.cookingTarget = null;
-                context.stopAction();
+                const target = session.target || { x: context.targetX, y: context.targetY, z: context.targetZ };
+                if (!context.hasActiveFireAt(target.x, target.y, target.z)) {
+                    context.addChatMessage('The fire has gone out.', 'warn');
+                    context.renderInventory();
+                    return SkillActionResolution.stopSkill(context, SKILL_ID, 'FIRE_GONE');
+                }
+
+                if (context.getInventoryCount(recipe.sourceItemId) <= 0) {
+                    context.renderInventory();
+                    return SkillActionResolution.stopSkill(context, SKILL_ID, 'INPUT_EMPTY');
+                }
+
+                const resolution = cookOne(context, recipe);
                 context.renderInventory();
-                return;
-            }
 
-            if (context.getInventoryCount(recipe.sourceItemId) <= 0) {
-                context.playerState.cookingSourceItemId = null;
-                context.playerState.cookingTarget = null;
-                context.stopAction();
-                context.renderInventory();
-                return;
-            }
+                if (resolution.status !== 'success') {
+                    return SkillActionResolution.stopSkill(context, SKILL_ID, resolution.reasonCode || 'FAILED');
+                }
 
-            cookOne(context, recipe);
-            context.playerState.actionUntilTick = context.currentTick + 1;
-            context.renderInventory();
+                if (context.getInventoryCount(recipe.sourceItemId) <= 0) {
+                    return SkillActionResolution.stopSkill(context, SKILL_ID, 'INPUT_EMPTY');
+                }
 
-            if (context.getInventoryCount(recipe.sourceItemId) <= 0) {
-                context.playerState.cookingSourceItemId = null;
-                context.playerState.cookingTarget = null;
-                context.stopAction();
-            }
+                session.nextTick = context.currentTick + (session.intervalTicks || 1);
+                return resolution;
+            });
         },
 
         onAnimate(context) {
@@ -174,7 +180,6 @@
         },
 
         getTooltip() {
-            // Cooking should be item-driven (Use item -> Fire), not a passive fire hover action.
             return '';
         }
     };

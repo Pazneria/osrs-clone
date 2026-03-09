@@ -1,4 +1,4 @@
-// Engine Constants & Chunk Architecture
+﻿// Engine Constants & Chunk Architecture
         const TICK_RATE_MS = 600;
         const CHUNK_SIZE = 81;
         const WORLD_CHUNKS_X = 5;
@@ -263,63 +263,11 @@ O445411111OOOOO.
         }
 
         // Item & Inventory State
-        const ITEM_DB = {
-            'iron_axe': { 
-                id: 'iron_axe', name: 'Iron Axe', icon: makeIconSprite('iron_axe'), type: 'weapon', weaponClass: 'axe', stats: { atk: 15, def: 0, str: 12 },
-                actions: ['Equip', 'Use', 'Drop'], defaultAction: 'Equip', value: 20, stackable: false
-            },
-            'logs': { 
-                id: 'logs', name: 'Logs', icon: makeIconFromImage('./assets/pixel/logs-pixel.png?v=' + ASSET_VERSION_TAG), type: 'resource',
-                actions: ['Use', 'Drop'], defaultAction: 'Use', value: 5, stackable: false
-            },
-            'coins': {
-                id: 'coins', name: 'Coins', icon: makeIconSprite('coins'), type: 'currency',
-                actions: ['Drop'], defaultAction: 'Drop', value: 1, stackable: true
-            },
-            'tinderbox': {
-                id: 'tinderbox', name: 'Tinderbox', icon: makeIconSprite('tinderbox'), type: 'tool',
-                actions: ['Use', 'Drop'], defaultAction: 'Use', value: 50, stackable: false
-            },
-            'knife': {
-                id: 'knife', name: 'Knife', icon: makeIconSprite('knife'), type: 'tool',
-                actions: ['Use', 'Drop'], defaultAction: 'Use', value: 10, stackable: false
-            },
-            'iron_pickaxe': {
-                id: 'iron_pickaxe', name: 'Iron Pickaxe', icon: makeIconSprite('pickaxe'), type: 'weapon', weaponClass: 'pickaxe', stats: { atk: 8, def: 0, str: 10 },
-                actions: ['Equip', 'Use', 'Drop'], defaultAction: 'Equip', value: 150, stackable: false
-            },            'small_net': {
-                id: 'small_net', name: 'Small Net', icon: makeIconSprite('small_net'), type: 'tool',
-                actions: ['Use', 'Drop'], defaultAction: 'Use', value: 25, stackable: false
-            },            'raw_shrimp': {
-                id: 'raw_shrimp', name: 'Raw Shrimp', icon: makeIconSprite('raw_shrimp'), type: 'resource',
-                cookResultId: 'cooked_shrimp', burnResultId: 'burnt_shrimp', burnChance: 0.28,
-                actions: ['Use', 'Drop'], defaultAction: 'Use', value: 3, stackable: false
-            },
-            'cooked_shrimp': {
-                id: 'cooked_shrimp', name: 'Cooked Shrimp', icon: makeIconSprite('raw_shrimp'), type: 'food',
-                actions: ['Eat', 'Drop'], defaultAction: 'Eat', value: 8, stackable: false
-            },
-            'burnt_shrimp': {
-                id: 'burnt_shrimp', name: 'Burnt Shrimp', icon: makeIconSprite('raw_shrimp'), type: 'resource',
-                actions: ['Drop'], defaultAction: 'Drop', value: 1, stackable: false
-            },
-            'copper_ore': {
-                id: 'copper_ore', name: 'Copper ore', icon: makeIconSprite('copper_ore'), type: 'resource',
-                actions: ['Drop'], defaultAction: 'Drop', value: 8, stackable: false
-            },
-            'tin_ore': {
-                id: 'tin_ore', name: 'Tin ore', icon: makeIconSprite('tin_ore'), type: 'resource',
-                actions: ['Drop'], defaultAction: 'Drop', value: 8, stackable: false
-            },
-            'rune_essence': {
-                id: 'rune_essence', name: 'Rune essence', icon: makeIconSprite('rune_essence'), type: 'resource',
-                actions: ['Drop'], defaultAction: 'Drop', value: 12, stackable: false
-            },
-            'ember_rune': {
-                id: 'ember_rune', name: 'Ember rune', icon: makeIconSprite('ember_rune'), type: 'resource',
-                actions: ['Drop'], defaultAction: 'Drop', value: 18, stackable: true
-            }
-        }; 
+        const ITEM_DB = (window.ItemCatalog && typeof window.ItemCatalog.buildItemDb === 'function')
+            ? window.ItemCatalog.buildItemDb(makeIconSprite, makeIconFromImage, ASSET_VERSION_TAG)
+            : {};
+        window.ITEM_DB = ITEM_DB;
+
         let inventory = Array(28).fill(null);
         inventory[0] = { itemData: ITEM_DB['iron_axe'], amount: 1 }; 
         inventory[1] = { itemData: ITEM_DB['logs'], amount: 1 }; 
@@ -332,7 +280,76 @@ O445411111OOOOO.
         inventory[8] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
-        
+
+        function setInventorySlots(slotDefs) {
+            inventory = Array(28).fill(null);
+            const defs = Array.isArray(slotDefs) ? slotDefs : [];
+            for (let i = 0; i < defs.length && i < 28; i++) {
+                const def = defs[i];
+                if (!def || !def.itemId || !ITEM_DB[def.itemId]) continue;
+                const amount = Number.isFinite(def.amount) && def.amount > 0 ? Math.floor(def.amount) : 1;
+                inventory[i] = { itemData: ITEM_DB[def.itemId], amount };
+            }
+            if (typeof clearSelectedUse === 'function') clearSelectedUse(false);
+            if (typeof renderInventory === 'function') renderInventory();
+        }
+
+        function makeFilledSlots(baseSlots, fillerItemId) {
+            const slots = Array.isArray(baseSlots) ? baseSlots.slice() : [];
+            const fallbackItem = ITEM_DB[fillerItemId] ? fillerItemId : 'logs';
+            while (slots.length < 28) {
+                slots.push({ itemId: fallbackItem, amount: 1 });
+            }
+            return slots;
+        }
+
+        function getQaToolSlots() {
+            return [
+                { itemId: 'iron_axe', amount: 1 },
+                { itemId: 'iron_pickaxe', amount: 1 },
+                { itemId: 'small_net', amount: 1 },
+                { itemId: 'tinderbox', amount: 1 },
+                { itemId: 'knife', amount: 1 }
+            ];
+        }
+
+        function applyQaInventoryPreset(presetName) {
+            const name = String(presetName || '').trim().toLowerCase();
+            const tools = getQaToolSlots();
+            let slots = null;
+
+            if (name === 'fish_full') {
+                slots = makeFilledSlots(tools, 'raw_shrimp');
+            } else if (name === 'wc_full') {
+                slots = makeFilledSlots(tools, 'logs');
+            } else if (name === 'fm_full') {
+                slots = makeFilledSlots(tools, 'logs');
+            } else if (name === 'default') {
+                slots = [
+                    { itemId: 'iron_axe', amount: 1 },
+                    { itemId: 'logs', amount: 1 },
+                    { itemId: 'coins', amount: 1000 },
+                    { itemId: 'small_net', amount: 1 },
+                    { itemId: 'iron_pickaxe', amount: 1 },
+                    { itemId: 'tinderbox', amount: 1 },
+                    { itemId: 'knife', amount: 1 },
+                    { itemId: 'raw_shrimp', amount: 1 },
+                    { itemId: 'raw_shrimp', amount: 1 },
+                    { itemId: 'raw_shrimp', amount: 1 },
+                    { itemId: 'raw_shrimp', amount: 1 },
+                    { itemId: 'raw_shrimp', amount: 1 }
+                ];
+            } else {
+                return false;
+            }
+
+            setInventorySlots(slots);
+            addChatMessage(`QA preset applied: ${name}`, 'info');
+            return true;
+        }
+
+        window.applyQaInventoryPreset = applyQaInventoryPreset;
+
         let equipment = { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
         let baseStats = { atk: 10, def: 10, str: 10 };
         let userItemPrefs = {};
@@ -448,6 +465,19 @@ O445411111OOOOO.
             const text = (rawText || '').trim();
             if (!text) return;
 
+            if (text.toLowerCase().startsWith('/qa ')) {
+                const args = text.slice(4).trim();
+                if (args.toLowerCase() === 'help') {
+                    addChatMessage('QA presets: /qa fish_full, /qa wc_full, /qa fm_full, /qa default', 'info');
+                    return;
+                }
+                const applied = applyQaInventoryPreset(args);
+                if (!applied) {
+                    addChatMessage(`Unknown QA preset: ${args}. Use /qa help`, 'warn');
+                }
+                return;
+            }
+
             addChatMessage(text, 'game');
             showPlayerOverheadText(text);
         }
@@ -463,6 +493,36 @@ O445411111OOOOO.
                     input.value = '';
                 } else if (e.key === 'Escape') {
                     input.blur();
+                }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (!input) return;
+                if (e.target && e.target.id === 'chat-input') return;
+                if (e.defaultPrevented) return;
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+                if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+                if (e.target && e.target.isContentEditable) return;
+
+                if (typeof isFreeCam !== 'undefined' && isFreeCam) {
+                    const k = String(e.key || '').toLowerCase();
+                    if (k === 'w' || k === 'a' || k === 's' || k === 'd' || k === 'q' || k === 'e' || k === 'arrowup' || k === 'arrowdown' || k === 'arrowleft' || k === 'arrowright') {
+                        return;
+                    }
+                }
+
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.focus();
+                    return;
+                }
+
+                if (typeof e.key === 'string' && e.key.length === 1) {
+                    e.preventDefault();
+                    input.focus();
+                    input.value += e.key;
                 }
             });
         }
@@ -531,6 +591,7 @@ O445411111OOOOO.
             initInventoryUI(); 
             addChatMessage('Welcome to the prototype.', 'game');
             addChatMessage('Tip: Left-click to move. Right-click for actions.', 'info');
+            addChatMessage('QA loadouts: type /qa help in chat.', 'info');
             initChatInput();
             if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
             if (typeof initPoseEditor === 'function') initPoseEditor();
@@ -599,6 +660,13 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,20 @@
+{
+  "skillId": "cooking",
+  "timing": { "actionTicks": 1 },
+  "recipeSet": {
+    "raw_shrimp": {
+      "sourceItemId": "raw_shrimp",
+      "cookedItemId": "cooked_shrimp",
+      "burntItemId": "burnt_shrimp",
+      "requiredLevel": 1,
+      "burnDifficulty": 4,
+      "xpPerSuccess": 30,
+      "sourceTarget": "FIRE"
+    }
+  },
+  "economy": {
+    "primaryResource": "raw_shrimp",
+    "cookedResource": "cooked_shrimp",
+    "burntResource": "burnt_shrimp"
+  }
+}
