@@ -1058,7 +1058,11 @@
             }
 
             if (actionName === 'Equip') {
-                const slotName = item.type; const oldItem = equipment[slotName];
+                const slotName = (item && item.type && Object.prototype.hasOwnProperty.call(equipment, item.type))
+                    ? item.type
+                    : ((item && item.weaponClass && Object.prototype.hasOwnProperty.call(equipment, 'weapon')) ? 'weapon' : null);
+                if (!slotName) return;
+                const oldItem = equipment[slotName];
                 equipment[slotName] = item; inventory[invIndex] = oldItem ? { itemData: oldItem, amount: 1 } : null;
                 clearSelectedUse(false);
                 updateStats(); renderInventory(); renderEquipment(); updatePlayerModel();
@@ -1392,6 +1396,37 @@
                     const d = Math.sqrt(nx * nx + ny * ny);
                     if (d <= 1.0) carveWaterTile(x, y, 1.0 - d);
                 }
+            }
+
+            // Ensure a stable deep-water center so dockside fishing can target dark water.
+            for (let y = castleFrontPond.cy - 1; y <= castleFrontPond.cy + 1; y++) {
+                for (let x = castleFrontPond.cx - 1; x <= castleFrontPond.cx + 1; x++) {
+                    if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
+                    logicalMap[0][y][x] = 22;
+                    heightMap[0][y][x] = -0.18;
+                }
+            }
+
+            // Add a wooden pier from the castle-facing bank toward the deep center.
+            // The tip stops one tile short of water so the player stands on the pier and fishes adjacent dark water.
+            const pierXMin = castleFrontPond.cx - 1;
+            const pierXMax = castleFrontPond.cx + 1;
+            const pierYStart = castleFrontPond.cy - 9;
+            const pierYEnd = castleFrontPond.cy - 2;
+            for (let y = pierYStart; y <= pierYEnd; y++) {
+                for (let x = pierXMin; x <= pierXMax; x++) {
+                    if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
+                    logicalMap[0][y][x] = 6;
+                    heightMap[0][y][x] = -0.03;
+                }
+            }
+
+            // Shoreline anchor tile so the pier always has a clean walkable entry from land.
+            const pierEntryY = pierYStart - 1;
+            for (let x = pierXMin; x <= pierXMax; x++) {
+                if (x <= 1 || pierEntryY <= 1 || x >= MAP_SIZE - 2 || pierEntryY >= MAP_SIZE - 2) continue;
+                logicalMap[0][pierEntryY][x] = 20;
+                heightMap[0][pierEntryY][x] = -0.01;
             }
             rebuildRockNodes();
 

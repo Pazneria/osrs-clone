@@ -41,6 +41,25 @@ function run() {
   const fishChance = SkillSpecRegistry.computeLinearCatchChance(10, 1, 0.28, 0.008, 0.62);
   assert(approxEq(fishChance, 0.352), "fishing catch formula mismatch");
 
+  const fishSpec = SkillSpecRegistry.getSkillSpec("fishing");
+  assert(!!fishSpec && !!fishSpec.nodeTable, "fishing node table missing");
+  assert(!!fishSpec.nodeTable.shallow_water, "shallow water spec missing");
+  assert(!!fishSpec.nodeTable.deep_water, "deep water spec missing");
+
+  const rodMethod = fishSpec.nodeTable.shallow_water.methods && fishSpec.nodeTable.shallow_water.methods.rod;
+  assert(!!rodMethod, "rod method spec missing");
+  assert(Array.isArray(rodMethod.toolIds) && rodMethod.toolIds.includes("fishing_rod"), "rod tool requirement missing");
+  assert(!!rodMethod.extraRequirement && rodMethod.extraRequirement.itemId === "bait", "rod bait requirement missing");
+  assert(rodMethod.extraRequirement.consumeOn === "success", "rod bait consumption rule mismatch");
+
+  const deepMixed = fishSpec.nodeTable.deep_water.methods && fishSpec.nodeTable.deep_water.methods.deep_harpoon_mixed;
+  const deepRune = fishSpec.nodeTable.deep_water.methods && fishSpec.nodeTable.deep_water.methods.deep_rune_harpoon;
+  assert(!!deepMixed && !!deepRune, "deep water method split missing");
+  const mixedFish = deepMixed.fishByLevel && deepMixed.fishByLevel[0] ? deepMixed.fishByLevel[0].fish : [];
+  assert(Array.isArray(mixedFish) && mixedFish.some((f) => f.itemId === "raw_tuna") && mixedFish.some((f) => f.itemId === "raw_swordfish"), "mixed deep-water table mismatch");
+  const runeFish = deepRune.fishByLevel && deepRune.fishByLevel[0] ? deepRune.fishByLevel[0].fish : [];
+  assert(Array.isArray(runeFish) && runeFish.length === 1 && runeFish[0].itemId === "raw_swordfish", "rune deep-water table mismatch");
+
   const cookSuccess = SkillSpecRegistry.computeSuccessChanceFromDifficulty(1, 4);
   assert(approxEq(cookSuccess, 1 / 5), "cooking success formula mismatch");
 
@@ -77,6 +96,11 @@ function run() {
   assert(itemDefs.air_rune.value === 80, "item catalog air value mismatch");
   assert(itemDefs.steam_rune.value === 160, "item catalog combo value mismatch");
   assert(itemDefs.small_pouch.value === 500, "item catalog pouch value mismatch");
+  assert(itemDefs.bait.value === 2, "item catalog bait value mismatch");
+  assert(itemDefs.fishing_rod.value === 45, "item catalog fishing rod missing");
+  assert(itemDefs.harpoon.value === 110, "item catalog harpoon missing");
+  assert(itemDefs.rune_harpoon.value === 2500, "item catalog rune harpoon missing");
+  assert(itemDefs.raw_swordfish.value === 40, "item catalog swordfish missing");
 
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");

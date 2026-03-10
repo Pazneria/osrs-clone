@@ -36,6 +36,21 @@ Notes:
 - `check` and `test` currently run JavaScript syntax checks across `src/js/*.js`.
 - `dev` runs `run.bat` (local static server + opens browser).
 
+## QA Commands
+
+In chat, run `/qa help` to list available presets and tools.
+
+Fishing-focused QA helpers:
+- `/qa fishspots`: Lists canonical fishing QA spots.
+- `/qa gotofish <pond|pier|deep>`: Teleports to a fishing QA spot.
+- `/qa diag fishing`: Prints current fishing diagnostics (level, bait, nearby water, active method/water).
+- `/qa setlevel fishing <1-99>`: Sets both Fishing level and the exact XP floor for that level (prevents level snapping back after the next XP gain).
+
+Current fishing interaction behavior:
+- Left-click water auto-selects the highest-priority eligible method you have tools/requirements for.
+- Right-click shallow water exposes method actions: Net Water, Rod Water, Harpoon Water.
+- Deep water keeps a generic fish action and resolves method by equipped/available harpoon path (normal harpoon = mixed tuna/swordfish, rune harpoon = swordfish-only).
+
 ## Toolkit Commands
 
 A lightweight toolkit now exists under `tools/` for asset prep and balancing simulations.

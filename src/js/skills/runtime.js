@@ -140,6 +140,7 @@
             targetX,
             targetY,
             targetZ,
+            targetUid: (overrides.targetUid !== undefined ? overrides.targetUid : playerState.targetUid),
             hitData: overrides.hitData || null,
             random: Math.random,
             currentTick,
@@ -301,16 +302,23 @@
 
     function tryStartFromPlayerTarget() {
         const pending = playerState.pendingSkillStart;
-        if (pending && pending.skillId) {
+        if (pending) {
+            const pendingTargetObj = pending.targetObj || playerState.targetObj;
+            const pendingTargetX = Number.isInteger(pending.targetX) ? pending.targetX : playerState.targetX;
+            const pendingTargetY = Number.isInteger(pending.targetY) ? pending.targetY : playerState.targetY;
             const pendingZ = Number.isInteger(pending.targetZ) ? pending.targetZ : playerState.z;
-            const matchesTarget = pending.targetObj === playerState.targetObj
-                && pending.targetX === playerState.targetX
-                && pending.targetY === playerState.targetY
+            const pendingSkillId = (typeof pending.skillId === 'string' && pending.skillId)
+                ? pending.skillId
+                : resolveSkillIdFromTarget(pendingTargetObj);
+
+            const matchesTarget = pendingTargetObj === playerState.targetObj
+                && pendingTargetX === playerState.targetX
+                && pendingTargetY === playerState.targetY
                 && pendingZ === playerState.z;
 
             playerState.pendingSkillStart = null;
-            if (matchesTarget) {
-                return tryStartSkillById(pending.skillId, pending);
+            if (matchesTarget && pendingSkillId) {
+                return tryStartSkillById(pendingSkillId, Object.assign({}, pending, { skillId: pendingSkillId }));
             }
         }
 

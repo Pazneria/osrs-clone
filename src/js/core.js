@@ -350,7 +350,28 @@ O445411111OOOOO.
             let slots = null;
 
             if (name === 'fish_full') {
-                slots = makeFilledSlots(tools, 'raw_shrimp');
+                slots = makeFilledSlots(tools.concat([
+                    { itemId: 'fishing_rod', amount: 1 },
+                    { itemId: 'harpoon', amount: 1 },
+                    { itemId: 'rune_harpoon', amount: 1 },
+                    { itemId: 'bait', amount: 200 }
+                ]), 'raw_shrimp');
+            } else if (name === 'fish_rod') {
+                slots = tools.concat([
+                    { itemId: 'fishing_rod', amount: 1 },
+                    { itemId: 'bait', amount: 500 },
+                    { itemId: 'coins', amount: 1000 }
+                ]);
+            } else if (name === 'fish_harpoon') {
+                slots = tools.concat([
+                    { itemId: 'harpoon', amount: 1 },
+                    { itemId: 'coins', amount: 1000 }
+                ]);
+            } else if (name === 'fish_rune') {
+                slots = tools.concat([
+                    { itemId: 'rune_harpoon', amount: 1 },
+                    { itemId: 'coins', amount: 1000 }
+                ]);
             } else if (name === 'wc_full') {
                 slots = makeFilledSlots(tools, 'logs');
             } else if (name === 'mining_full') {
@@ -399,15 +420,29 @@ O445411111OOOOO.
         }
 
         window.applyQaInventoryPreset = applyQaInventoryPreset;
+
+        function getQaXpForLevel(levelValue) {
+            const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
+            if (typeof getXpForLevel === 'function') return getXpForLevel(lvl);
+
+            let points = 0;
+            for (let level = 1; level < lvl; level++) {
+                points += Math.floor(level + 300 * Math.pow(2, level / 7));
+            }
+            return Math.floor(points / 4);
+        }
+
         function setQaSkillLevel(skillId, levelValue) {
             if (!playerSkills || !playerSkills[skillId]) return false;
             const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
             if (!Number.isFinite(lvl)) return false;
+
+            playerSkills[skillId].xp = getQaXpForLevel(lvl);
             playerSkills[skillId].level = lvl;
+
             if (typeof refreshSkillUi === 'function') refreshSkillUi(skillId);
             return true;
         }
-
         function setQaUnlockFlag(flagId, enabled) {
             if (!flagId) return false;
             if (!playerState.unlockFlags || typeof playerState.unlockFlags !== 'object') {
@@ -434,6 +469,22 @@ O445411111OOOOO.
             }
         }
 
+        function qaTeleportTo(x, y, z, label) {
+            if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) return false;
+            playerState.x = x;
+            playerState.y = y;
+            playerState.z = z;
+            playerState.prevX = playerState.x;
+            playerState.prevY = playerState.y;
+            playerState.targetX = playerState.x;
+            playerState.targetY = playerState.y;
+            playerState.path = [];
+            playerState.action = 'IDLE';
+            if (typeof updateCameraNow === 'function') updateCameraNow();
+            addChatMessage(`Teleported to ${label || 'target'}.`, 'info');
+            return true;
+        }
+
         function qaGotoAltar(labelLike) {
             const needle = String(labelLike || '').trim().toLowerCase();
             if (!needle) return false;
@@ -449,19 +500,46 @@ O445411111OOOOO.
             }
             if (!match) return false;
 
-            playerState.x = match.x;
             // Keep QA teleports outside the altar's 4x4 collision footprint.
-            playerState.y = Math.max(0, match.y - 3);
-            playerState.z = match.z;
-            playerState.prevX = playerState.x;
-            playerState.prevY = playerState.y;
-            playerState.targetX = playerState.x;
-            playerState.targetY = playerState.y;
-            playerState.path = [];
-            playerState.action = 'IDLE';
-            if (typeof updateCameraNow === 'function') updateCameraNow();
-            addChatMessage(`Teleported near ${match.label}.`, 'info');
-            return true;
+            return qaTeleportTo(match.x, Math.max(0, match.y - 3), match.z, `near ${match.label}`);
+        }
+
+        function getQaFishingSpots() {
+            return {
+                pond: { x: 205, y: 223, z: 0, label: 'castle pond bank' },
+                pier: { x: 205, y: 230, z: 0, label: 'castle pond pier' },
+                deep: { x: 205, y: 231, z: 0, label: 'castle pond deep-water edge' }
+            };
+        }
+
+        function qaListFishingSpots() {
+            const spots = getQaFishingSpots();
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                const spot = spots[id];
+                addChatMessage(`[QA fish] ${id} @ (${spot.x},${spot.y},${spot.z})`, 'info');
+            }
+        }
+
+        function qaGotoFishingSpot(nameLike) {
+            const key = String(nameLike || '').trim().toLowerCase();
+            if (!key) return false;
+            const spots = getQaFishingSpots();
+            if (spots[key]) {
+                const exact = spots[key];
+                return qaTeleportTo(exact.x, exact.y, exact.z, exact.label);
+            }
+
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                if (!id.includes(key)) continue;
+                const spot = spots[id];
+                return qaTeleportTo(spot.x, spot.y, spot.z, spot.label);
+            }
+
+            return false;
         }
 
         function getQaBestToolByClass(toolClass) {
@@ -532,6 +610,38 @@ O445411111OOOOO.
             const comboUnlocked = !!(playerState.unlockFlags && playerState.unlockFlags.runecraftingComboUnlocked);
             addChatMessage(`[QA rc] lvl=${level}, emberStart=${recipe.scalingStartLevel}, emberPerEss=${outputPerEssence}, comboUnlocked=${comboUnlocked}, comboRecipes=${comboCount}, comboPerEss@40=${comboOutputPerEssence}`, 'info');
         }
+
+        function qaDiagFishing() {
+            const registry = window.SkillSpecRegistry;
+            const spec = registry && typeof registry.getSkillSpec === 'function' ? registry.getSkillSpec('fishing') : null;
+            if (!spec || !spec.nodeTable) {
+                addChatMessage('QA fishing diag unavailable: missing fishing spec.', 'warn');
+                return;
+            }
+
+            const level = playerSkills && playerSkills.fishing ? playerSkills.fishing.level : 1;
+            const baitCount = inventory.reduce((sum, slot) => {
+                if (!slot || !slot.itemData || slot.itemData.id !== 'bait') return sum;
+                return sum + slot.amount;
+            }, 0);
+
+            const nearbyTiles = [];
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const tx = playerState.x + dx;
+                    const ty = playerState.y + dy;
+                    if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) continue;
+                    nearbyTiles.push(logicalMap[playerState.z][ty][tx]);
+                }
+            }
+            const shallowAdj = nearbyTiles.filter((t) => t === 21).length;
+            const deepAdj = nearbyTiles.filter((t) => t === 22).length;
+            const equipped = equipment && equipment.weapon ? equipment.weapon.id : 'none';
+
+            addChatMessage(`[QA fishing] lvl=${level}, equipped=${equipped}, bait=${baitCount}, tile=${logicalMap[playerState.z][playerState.y][playerState.x]}, adjShallow=${shallowAdj}, adjDeep=${deepAdj}, action=${playerState.action}, activeMethod=${playerState.fishingActiveMethodId || 'none'}, activeWater=${playerState.fishingActiveWaterId || 'none'}`, 'info');
+        }
+
 
 
 
@@ -656,8 +766,8 @@ O445411111OOOOO.
                 const cmd = (parts[0] || '').toLowerCase();
 
                 if (cmd === 'help' || !cmd) {
-                    addChatMessage('QA presets: /qa fish_full, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <mining|runecrafting> <1-99>, /qa diag mining, /qa diag rc, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa default', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting> <1-99>, /qa diag <fishing|mining|rc>, /qa fishspots, /qa gotofish <pond|pier|deep>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -665,12 +775,12 @@ O445411111OOOOO.
                     const skill = String(parts[1] || '').toLowerCase();
                     const lvl = parseInt(parts[2], 10);
                     if (!Number.isFinite(lvl)) {
-                        addChatMessage('Usage: /qa setlevel <mining|runecrafting> <1-99>', 'warn');
+                        addChatMessage('Usage: /qa setlevel <fishing|mining|runecrafting> <1-99>', 'warn');
                         return;
                     }
                     const ok = setQaSkillLevel(skill, lvl);
                     if (!ok) {
-                        addChatMessage('Unknown skill for /qa setlevel. Use mining or runecrafting.', 'warn');
+                        addChatMessage('Unknown skill for /qa setlevel. Use fishing, mining, or runecrafting.', 'warn');
                         return;
                     }
                     addChatMessage(`QA set level: ${skill}=${Math.max(1, Math.min(99, Math.floor(lvl)))}`, 'info');
@@ -697,6 +807,18 @@ O445411111OOOOO.
                     qaListAltars();
                     return;
                 }
+                if (cmd === 'fishspots') {
+                    qaListFishingSpots();
+                    return;
+                }
+
+                if (cmd === 'gotofish' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoFishingSpot(target);
+                    if (!ok) addChatMessage('Usage: /qa gotofish <pond|pier|deep>', 'warn');
+                    return;
+                }
+
 
                 if (cmd === 'gotoaltar' && parts.length >= 2) {
                     const target = String(parts[1] || '').toLowerCase();
@@ -718,6 +840,10 @@ O445411111OOOOO.
 
                 if (cmd === 'diag' && parts.length >= 2) {
                     const subject = String(parts[1] || '').toLowerCase();
+                    if (subject === 'fishing' || subject === 'fish') {
+                        qaDiagFishing();
+                        return;
+                    }
                     if (subject === 'mining') {
                         qaDiagMining();
                         return;
@@ -726,7 +852,7 @@ O445411111OOOOO.
                         qaDiagRunecrafting();
                         return;
                     }
-                    addChatMessage('Usage: /qa diag <mining|rc>', 'warn');
+                    addChatMessage('Usage: /qa diag <fishing|mining|rc>', 'warn');
                     return;
                 }
 

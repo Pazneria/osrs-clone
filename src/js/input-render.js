@@ -592,6 +592,23 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
+
+                    let pendingSkillStart = null;
+                    if (window.SkillRuntime
+                        && typeof SkillRuntime.canHandleTarget === 'function'
+                        && SkillRuntime.canHandleTarget(pendingAction.obj)
+                        && pendingAction.targetUid
+                        && typeof pendingAction.targetUid === 'object'
+                        && typeof pendingAction.targetUid.skillId === 'string') {
+                        pendingSkillStart = Object.assign({}, pendingAction.targetUid, {
+                            targetObj: pendingAction.obj,
+                            targetX: actionX,
+                            targetY: actionY,
+                            targetZ: playerState.z
+                        });
+                    }
+                    playerState.pendingSkillStart = pendingSkillStart;
+
                     playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
                 }
                 pendingAction = null;

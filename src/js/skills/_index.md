@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- |
 | Mining | In Progress | Node-table expansion + economy alignment | Training placement and quest gating | Quest content |
 | Woodcutting | In Progress | Economy alignment + world placement | Cross-skill demand balancing | None |
-| Fishing | In Progress | Bait/method wiring + deep-water split | Merchant unlock economy + location pass | None |
+| Fishing | In Progress | Merchant unlock economy + value alignment | Training placement and quest/reward integration | None |
 | Firemaking | In Progress | Ashes behavior + economy alignment | Training routes and demand balancing | None |
 | Cooking | In Progress | Eating runtime + economy alignment | Location pass and cross-skill stock flow | None |
 | Runecrafting | In Progress | Merchant runtime alignment | Route placement and cross-skill loop integration | Quest/dependency design |

@@ -1,5 +1,5 @@
 (function () {
-    const SPEC_VERSION = '2026.03.m2';
+    const SPEC_VERSION = '2026.03.m3';
 
     const SKILL_SPECS = {
         woodcutting: {
@@ -42,14 +42,114 @@
             },
             nodeTable: {
                 shallow_water: {
-                    tileIds: [21, 22],
+                    tileIds: [21],
                     unlockLevel: 1,
                     maxCatchChance: 0.62,
                     baseCatchChance: 0.28,
                     levelScaling: 0.008,
-                    fish: [
-                        { itemId: 'raw_shrimp', requiredLevel: 1, weight: 100, xp: 20 }
-                    ]
+                    methods: {
+                        net: {
+                            methodId: 'net',
+                            toolIds: ['small_net'],
+                            priority: 10,
+                            unlockLevel: 1,
+                            fishByLevel: [
+                                {
+                                    minLevel: 1,
+                                    fish: [
+                                        { itemId: 'raw_shrimp', requiredLevel: 1, weight: 100, xp: 20 }
+                                    ]
+                                }
+                            ]
+                        },
+                        rod: {
+                            methodId: 'rod',
+                            toolIds: ['fishing_rod'],
+                            priority: 20,
+                            unlockLevel: 10,
+                            extraRequirement: {
+                                itemId: 'bait',
+                                consumeOn: 'success',
+                                amount: 1
+                            },
+                            fishByLevel: [
+                                {
+                                    minLevel: 10,
+                                    maxLevel: 19,
+                                    fish: [
+                                        { itemId: 'raw_trout', requiredLevel: 10, weight: 100, xp: 50 }
+                                    ]
+                                },
+                                {
+                                    minLevel: 20,
+                                    maxLevel: 29,
+                                    fish: [
+                                        { itemId: 'raw_trout', requiredLevel: 10, weight: 75, xp: 50 },
+                                        { itemId: 'raw_salmon', requiredLevel: 20, weight: 25, xp: 70 }
+                                    ]
+                                },
+                                {
+                                    minLevel: 30,
+                                    fish: [
+                                        { itemId: 'raw_trout', requiredLevel: 10, weight: 60, xp: 50 },
+                                        { itemId: 'raw_salmon', requiredLevel: 20, weight: 40, xp: 70 }
+                                    ]
+                                }
+                            ]
+                        },
+                        harpoon: {
+                            methodId: 'harpoon',
+                            toolIds: ['harpoon', 'rune_harpoon'],
+                            priority: 30,
+                            unlockLevel: 30,
+                            fishByLevel: [
+                                {
+                                    minLevel: 30,
+                                    fish: [
+                                        { itemId: 'raw_tuna', requiredLevel: 30, weight: 100, xp: 80 }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                deep_water: {
+                    tileIds: [22],
+                    unlockLevel: 40,
+                    maxCatchChance: 0.62,
+                    baseCatchChance: 0.28,
+                    levelScaling: 0.008,
+                    methods: {
+                        deep_harpoon_mixed: {
+                            methodId: 'deep_harpoon_mixed',
+                            toolIds: ['harpoon'],
+                            priority: 40,
+                            unlockLevel: 40,
+                            fishByLevel: [
+                                {
+                                    minLevel: 40,
+                                    fish: [
+                                        { itemId: 'raw_tuna', requiredLevel: 30, weight: 70, xp: 80 },
+                                        { itemId: 'raw_swordfish', requiredLevel: 40, weight: 30, xp: 100 }
+                                    ]
+                                }
+                            ]
+                        },
+                        deep_rune_harpoon: {
+                            methodId: 'deep_rune_harpoon',
+                            toolIds: ['rune_harpoon'],
+                            priority: 50,
+                            unlockLevel: 40,
+                            fishByLevel: [
+                                {
+                                    minLevel: 40,
+                                    fish: [
+                                        { itemId: 'raw_swordfish', requiredLevel: 40, weight: 100, xp: 100 }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
                 }
             },
             economy: {
@@ -194,5 +294,7 @@
         skills: SKILL_SPECS
     };
 })();
+
+
 
 

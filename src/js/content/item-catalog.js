@@ -71,6 +71,82 @@
             defaultAction: 'Use',
             icon: { kind: 'sprite', key: 'small_net' }
         },
+        fishing_rod: {
+            name: 'Fishing Rod',
+            type: 'tool',
+            value: 45,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'small_net' }
+        },
+        harpoon: {
+            name: 'Harpoon',
+            type: 'weapon',
+            weaponClass: 'harpoon',
+            stats: { atk: 18, def: 0, str: 10 },
+            value: 110,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'pickaxe' }
+        },
+        rune_harpoon: {
+            name: 'Rune Harpoon',
+            type: 'weapon',
+            weaponClass: 'harpoon',
+            stats: { atk: 32, def: 0, str: 20 },
+            value: 2500,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'pickaxe' }
+        },
+        bait: {
+            name: 'Bait',
+            type: 'resource',
+            value: 2,
+            stackable: true,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        raw_trout: {
+            name: 'Raw Trout',
+            type: 'resource',
+            value: 18,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        raw_salmon: {
+            name: 'Raw Salmon',
+            type: 'resource',
+            value: 24,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        raw_tuna: {
+            name: 'Raw Tuna',
+            type: 'resource',
+            value: 28,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        raw_swordfish: {
+            name: 'Raw Swordfish',
+            type: 'resource',
+            value: 40,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
         raw_shrimp: {
             name: 'Raw Shrimp',
             type: 'resource',
