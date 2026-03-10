@@ -102,9 +102,50 @@ function run() {
   assert(itemDefs.rune_harpoon.value === 2500, "item catalog rune harpoon missing");
   assert(itemDefs.raw_swordfish.value === 40, "item catalog swordfish missing");
 
+  global.playerState = { merchantProgress: {} };
+  loadBrowserScript(root, "src/js/shop-economy.js");
+  const shopEconomy = window.ShopEconomy;
+  assert(!!shopEconomy, "shop economy API missing");
+
+  assert(shopEconomy.resolveBuyPrice("raw_shrimp", "fishing_supplier") === 3, "fishing buy price mismatch");
+  assert(shopEconomy.resolveSellPrice("raw_shrimp", "fishing_supplier") === 1, "fishing sell price mismatch");
+  assert(shopEconomy.resolveSellPrice("cooked_shrimp", "fishing_supplier") === 4, "general-store fallback half-price mismatch");
+
+  assert(!shopEconomy.canMerchantSellItem("raw_shrimp", "fishing_supplier"), "fish should be locked before threshold");
+  const unlockA = shopEconomy.recordMerchantPurchaseFromPlayer("raw_shrimp", "fishing_supplier", 49);
+  assert(!unlockA.unlocked, "fish should remain locked below threshold");
+  const unlockB = shopEconomy.recordMerchantPurchaseFromPlayer("raw_shrimp", "fishing_supplier", 1);
+  assert(unlockB.unlockedNow, "fish should unlock exactly at threshold");
+  assert(shopEconomy.canMerchantSellItem("raw_shrimp", "fishing_supplier"), "fish should be sellable after unlock");
+
+  const perMerchantLock = shopEconomy.canMerchantSellItem("raw_shrimp", "fishing_teacher");
+  assert(!perMerchantLock, "unlock should remain merchant-specific");
+
+  const fishEconomy = fishSpec.economy;
+  assert(!!fishEconomy && !!fishEconomy.valueTable && !!fishEconomy.merchantTable, "fishing economy tables missing");
+  const alignedValueIds = ["small_net", "fishing_rod", "harpoon", "rune_harpoon", "bait", "raw_shrimp", "raw_trout", "raw_salmon", "raw_tuna", "raw_swordfish"];
+  alignedValueIds.forEach((itemId) => {
+    const specRow = fishEconomy.valueTable[itemId];
+    const item = itemDefs[itemId];
+    assert(!!specRow && !!item, `missing economy or item row for ${itemId}`);
+    assert(specRow.buy === item.value, `buy value mismatch for ${itemId}`);
+    assert(specRow.sell === Math.max(1, Math.floor(item.value * 0.4)), `sell value mismatch for ${itemId}`);
+  });
+
+  assert(shopEconomy.canMerchantSellItem("small_net", "fishing_supplier"), "supplier should sell small net by default");
+  assert(shopEconomy.canMerchantSellItem("fishing_rod", "fishing_supplier"), "supplier should sell fishing rod by default");
+  assert(shopEconomy.canMerchantSellItem("harpoon", "fishing_supplier"), "supplier should sell harpoon by default");
+  assert(shopEconomy.canMerchantSellItem("bait", "fishing_supplier"), "supplier should sell bait by default");
+  assert(!shopEconomy.canMerchantSellItem("small_net", "fishing_teacher"), "teacher should not sell small net by default");
+  assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should not sell rune harpoon by default");
+
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
   assert(worldScript.includes("for (let by = placed.y - 1; by <= placed.y + 2; by++)"), "runecrafting altar collision footprint regression");
+  assert(worldScript.includes("Fishing Teacher"), "fishing teacher world placement missing");
+  assert(worldScript.includes("Fishing Supplier"), "fishing supplier world placement missing");
+  assert(worldScript.includes("merchantId: 'fishing_supplier'"), "fishing supplier merchant wiring missing");
+  assert(worldScript.includes("merchantId: 'fishing_teacher'"), "fishing teacher merchant wiring missing");
 
   const rcRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runecrafting/index.js"), "utf8");
   assert(rcRuntimeScript.includes("function tryFillPouchFromInventory"), "runecrafting pouch fill handler missing");
@@ -162,6 +203,7 @@ try {
   console.error(error.message);
   process.exit(1);
 }
+
 
 
 

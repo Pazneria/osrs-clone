@@ -18,12 +18,15 @@
 - [x] FISHING-ANIM-001: Fishing animation split finalized (net baseline is net-only; distinct basic rod and harpoon animations; no fly-fishing-rod item path remains).
 
 ## Now
-- [ ] FISHING-010: Merchant fish-stock unlock system (per-fish, per-merchant 50-sell thresholds).
-- [ ] FISHING-011: Economy and item-value alignment across fish, bait, and fishing tools.
+- [x] FISHING-010: Merchant fish-stock unlock system (per-fish, per-merchant 50-sell thresholds).
+- [x] FISHING-011: Economy and item-value alignment across fish, bait, and fishing tools.
 
 ## Next
-- [ ] FISHING-012: Training-location and world-placement pass across standard/deep-water bands.
+- [x] FISHING-012: Training-location and world-placement pass across standard/deep-water bands.
 
 ## Later
 - [ ] FISHING-013: Fishing-teacher quest and rune-harpoon reward/replacement flow integration.
 - [ ] FISHING-014: Balance pass using expected fish/xp/gold-per-tick targets by method and level band.
+
+
+

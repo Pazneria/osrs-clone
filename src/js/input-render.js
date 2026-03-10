@@ -111,10 +111,19 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 } else if (hitData.type === 'STAIRS_DOWN') {
                     addContextMenuOption('Climb-down <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_DOWN'); spawnClickMarker(hitData.point, true); });
                 } else if (hitData.type === 'NPC') {
-                    if (hitData.name === 'Shopkeeper') {
-                        addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade' }); spawnClickMarker(hitData.point, true); });
+                    const npcUid = (hitData.uid && typeof hitData.uid === 'object') ? hitData.uid : null;
+                    const npcAction = (npcUid && typeof npcUid.action === 'string') ? npcUid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
+                    if (npcAction === 'Trade') {
+                        if (hitData.name === 'Shopkeeper' && !(npcUid && npcUid.merchantId)) {
+                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span> (Fishing Supplier)`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade', merchantId: 'fishing_supplier' }); spawnClickMarker(hitData.point, true); });
+                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span> (Fishing Teacher)`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade', merchantId: 'fishing_teacher' }); spawnClickMarker(hitData.point, true); });
+                        } else {
+                            const tradeTarget = npcUid ? Object.assign({}, npcUid) : { name: hitData.name, action: 'Trade' };
+                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', tradeTarget); spawnClickMarker(hitData.point, true); });
+                        }
                     } else {
-                        addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC'); spawnClickMarker(hitData.point, true); });
+                        const talkTarget = npcUid ? Object.assign({}, npcUid) : { name: hitData.name, action: 'Talk-to' };
+                        addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', talkTarget); spawnClickMarker(hitData.point, true); });
                     }
                     addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => console.log(`EXAMINING: ${hitData.name}.`));
                 }
@@ -426,8 +435,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 let targetData = hitData.uid;
                 if (hitData.type === 'DOOR') targetData = hitData.doorObj;
 
-                else if (hitData.type === 'NPC') {
-                    if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade' };
+                                else if (hitData.type === 'NPC') {
+                    if (hitData.uid && typeof hitData.uid === 'object') targetData = Object.assign({}, hitData.uid);
+                    else if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade', merchantId: 'fishing_supplier' };
                     else targetData = { name: hitData.name, action: 'Talk-to' };
                 }
                 queueAction('INTERACT', hitData.gridX, hitData.gridY, hitData.type, targetData); 
@@ -691,8 +701,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 const faceDx = playerState.targetX - playerState.x; const faceDy = playerState.targetY - playerState.y; 
                                 if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
                                 
-                                if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade' && playerState.targetUid.name === 'Shopkeeper') {
-                                    openShop();
+                                if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade') {
+                                    openShop(playerState.targetUid.merchantId || 'fishing_supplier');
                                 }
                             } else if (playerState.targetObj === 'BANK_BOOTH') {
                                 playerState.action = 'IDLE';
@@ -894,9 +904,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'NPC') {
-                        if (hitData.name === 'Shopkeeper') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
+                        const npcAction = (hitData.uid && hitData.uid.action) ? hitData.uid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
+                        if (npcAction === 'Trade') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
-                    }
+                }
                 }
 
                 if (actionText) {
@@ -1648,6 +1659,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
+
+
 
 
 

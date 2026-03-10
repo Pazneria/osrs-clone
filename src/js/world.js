@@ -1428,6 +1428,30 @@
                 logicalMap[0][pierEntryY][x] = 20;
                 heightMap[0][pierEntryY][x] = -0.01;
             }
+
+            // Fishing-012 world placement: dedicated fishing merchants near the training water.
+            const fishingMerchantSpots = [
+                { name: 'Fishing Teacher', merchantId: 'fishing_teacher', type: 3, x: castleFrontPond.cx - 4, y: pierEntryY },
+                { name: 'Fishing Supplier', merchantId: 'fishing_supplier', type: 2, x: castleFrontPond.cx + 4, y: pierYEnd - 1 }
+            ];
+            for (let i = 0; i < fishingMerchantSpots.length; i++) {
+                const spot = fishingMerchantSpots[i];
+                if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
+
+                // Force a shallow shoreline anchor so these merchants are always reachable beside fishing routes.
+                logicalMap[0][spot.y][spot.x] = 16;
+                heightMap[0][spot.y][spot.x] = -0.01;
+                npcsToRender.push({
+                    type: spot.type,
+                    x: spot.x,
+                    y: spot.y,
+                    z: 0,
+                    name: spot.name,
+                    merchantId: spot.merchantId,
+                    action: 'Trade'
+                });
+            }
+
             rebuildRockNodes();
 
             // Soften natural terrain transitions so adjacent tiles visually blend.
@@ -2279,7 +2303,9 @@
                         // Add interactive hitbox to NPCs
                         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshBasicMaterial({visible: false}));
                         hitbox.position.y = 1.0;
-                        hitbox.userData = { type: 'NPC', gridX: npc.x, gridY: npc.y, z: z, name: npc.name };
+                        const npcUid = { name: npc.name, action: npc.action || (npc.name === 'Shopkeeper' ? 'Trade' : 'Talk-to') };
+                        if (npc.merchantId) npcUid.merchantId = npc.merchantId;
+                        hitbox.userData = { type: 'NPC', gridX: npc.x, gridY: npc.y, z: z, name: npc.name, uid: npcUid };
                         dummy.add(hitbox);
                         environmentMeshes.push(hitbox);
 
@@ -2504,6 +2530,8 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
+
 
 
 

@@ -1,4 +1,4 @@
-﻿# Fishing Roadmap
+# Fishing Roadmap
 
 ## Purpose
 
@@ -20,10 +20,10 @@ The player catches raw fish items that feed into other systems, especially cooki
 
 | Tool         | Required Level | Buy Value | Sell Value | Extra Requirement |
 | ------------ | -------------- | --------- | ---------- | ----------------- |
-| Small Net    | 1              | 40        | 10         | None              |
-| Fishing Rod  | 10             | 120       | 35         | Bait              |
-| Harpoon      | 30             | 350       | 110        | None              |
-| Rune Harpoon | 40             | null      | 2500       | None              |
+| Small Net    | 1              | 25        | 10         | None              |
+| Fishing Rod  | 10             | 45        | 18         | Bait              |
+| Harpoon      | 30             | 110       | 44         | None              |
+| Rune Harpoon | 40             | null      | 1000       | None              |
 
 ## Mechanics
 
@@ -70,11 +70,11 @@ The player catches raw fish items that feed into other systems, especially cooki
 
 | Fish      | Required Level | XP per Catch | Tool Needed  | Extra Requirement | Water Requirement | Sell Value |
 | --------- | -------------- | ------------ | ------------ | ----------------- | ----------------- | ---------- |
-| Raw Shrimp | 1 | 10 | Small Net | None | Standard Water | 3 |
-| Raw Trout | 10 | 20 | Fishing Rod | Bait | Standard Water | 8 |
-| Raw Salmon | 20 | 32 | Fishing Rod | Bait | Standard Water | 16 |
-| Raw Tuna | 30 | 46 | Harpoon | None | Standard Water | 28 |
-| Raw Swordfish | 40 | 65 | Harpoon or Rune Harpoon | None | Deep Water | 48 |
+| Raw Shrimp | 1 | 10 | Small Net | None | Standard Water | 1 |
+| Raw Trout | 10 | 20 | Fishing Rod | Bait | Standard Water | 7 |
+| Raw Salmon | 20 | 32 | Fishing Rod | Bait | Standard Water | 9 |
+| Raw Tuna | 30 | 46 | Harpoon | None | Standard Water | 11 |
+| Raw Swordfish | 40 | 65 | Harpoon or Rune Harpoon | None | Deep Water | 16 |
 
 ### Water-Type Stats
 
@@ -256,21 +256,21 @@ Fishing creates value by supplying raw fish.
 
 | Item      | Category | Buy Value | Sell Value |
 | --------- | -------- | --------- | ---------- |
-| Raw Shrimp | Resource | 9 | 3 |
-| Raw Trout | Resource | 24 | 8 |
-| Raw Salmon | Resource | 48 | 16 |
-| Raw Tuna | Resource | 84 | 28 |
-| Raw Swordfish | Resource | 144 | 48 |
+| Raw Shrimp | Resource | 3 | 1 |
+| Raw Trout | Resource | 18 | 7 |
+| Raw Salmon | Resource | 24 | 9 |
+| Raw Tuna | Resource | 28 | 11 |
+| Raw Swordfish | Resource | 40 | 16 |
 | Bait      | Supply   | 2         | 1          |
 
 ### Tool Values
 
 | Tool         | Buy Value | Sell Value |
 | ------------ | --------- | ---------- |
-| Small Net    | 40        | 10         |
-| Fishing Rod  | 120       | 35         |
-| Harpoon      | 350       | 110        |
-| Rune Harpoon | null      | 2500       |
+| Small Net    | 25        | 10         |
+| Fishing Rod  | 45        | 18         |
+| Harpoon      | 110       | 44         |
+| Rune Harpoon | null      | 1000       |
 
 ## Merchant / NPC Structure
 
@@ -284,10 +284,10 @@ The fishing teacher introduces the basics of fishing. This NPC helps new players
 
 | Item        | Buys | Sells |
 | ----------- | ---- | ----- |
-| Small Net   | 10   | 40    |
-| Fishing Rod | 35   | 120   |
+| Small Net   | 10   | 25    |
+| Fishing Rod | 18   | 45   |
 | Bait        | 1    | 2     |
-| Rune Harpoon | 2500 | 2500 if replacement is needed |
+| Rune Harpoon | 1000 | 2500 if replacement is needed |
 
 ### Dock Supplier
 
@@ -299,9 +299,9 @@ The dock supplier supports harpoon progression and the higher-tier raw-fish trad
 
 | Item      | Buys | Sells |
 | --------- | ---- | ----- |
-| Harpoon   | 110  | 350   |
-| Raw Tuna | 28   | See Fish Sales Note |
-| Raw Swordfish | 48   | See Fish Sales Note |
+| Harpoon   | 44  | 110   |
+| Raw Tuna | 11   | See Fish Sales Note |
+| Raw Swordfish | 16   | See Fish Sales Note |
 
 ### Fishmonger / Cook
 
@@ -315,8 +315,8 @@ Any raw fish this merchant unlocks through the fishing sell-threshold rule becom
 
 | Item      | Buys | Sells |
 | --------- | ---- | ----- |
-| Raw Tuna | 28   | See Fish Sales Note |
-| Raw Swordfish | 48   | See Fish Sales Note |
+| Raw Tuna | 11   | See Fish Sales Note |
+| Raw Swordfish | 16   | See Fish Sales Note |
 
 ### General Store
 
@@ -343,6 +343,12 @@ This is not limited to temporary sold-back inventory. The unlock adds that raw f
 This unlock is tracked separately for each raw fish type and each merchant.
 
 Fishing is the canonical owner of raw-fish merchant stock unlock and resale behavior. Cooking may reference raw fish as inputs, but it does not define or override raw-fish merchant stock rules.
+
+### Implementation Note (World Placement)
+
+Merchant stock rules are not complete on their own. We must place the relevant shopkeepers/counters in the playable world and wire interaction targets to the correct merchant IDs (for example fishing supplier vs fishing teacher) so these economy rules are actually reachable in normal gameplay.
+
+Current world pass anchors these merchants around the castle pond training route (teacher near pond bank, supplier near the pier/deep-water edge) and routes trade interactions to `fishing_teacher` and `fishing_supplier`.
 
 ## Training Location Structure
 
@@ -389,16 +395,22 @@ Fishing is the canonical owner of raw-fish merchant stock unlock and resale beha
 
 | Item         | Category | Required Level | Buy Value | Sell Value | Notes                                               |
 | ------------ | -------- | -------------- | --------- | ---------- | --------------------------------------------------- |
-| Small Net    | Tool     | 1              | 40        | 10         | Entry-level fishing tool                            |
-| Fishing Rod  | Tool     | 10             | 120       | 35         | Used for trout and salmon                           |
-| Harpoon      | Tool     | 30             | 350       | 110        | Used for tuna fishing and mixed deep-water fishing  |
-| Rune Harpoon | Tool     | 40             | null      | 2500       | First obtained from the fishing teacher quest; not sold by shops by default; if sold or lost, replacement copies are sold only by the fishing teacher for normal buy value; used for swordfish-only deep-water fishing |
+| Small Net    | Tool     | 1              | 25        | 10         | Entry-level fishing tool                            |
+| Fishing Rod  | Tool     | 10             | 45        | 18         | Used for trout and salmon                           |
+| Harpoon      | Tool     | 30             | 110       | 44         | Used for tuna fishing and mixed deep-water fishing  |
+| Rune Harpoon | Tool     | 40             | null      | 1000       | First obtained from the fishing teacher quest; not sold by shops by default; if sold or lost, replacement copies are sold only by the fishing teacher for normal buy value; used for swordfish-only deep-water fishing |
 | Bait         | Supply   | null           | 2         | 1          | Required for rod fishing                            |
-| Raw Shrimp | Resource | 1 | 9 | 3 | Entry-level fish                                    |
-| Raw Trout | Resource | 10 | 24 | 8 | Early rod-caught fish                               |
-| Raw Salmon | Resource | 20 | 48 | 16 | Mid-tier rod-caught fish                            |
-| Raw Tuna | Resource | 30 | 84 | 28 | Higher-value harpoon catch                          |
-| Raw Swordfish | Resource | 40 | 144 | 48 | High-value late-band catch                          |
+| Raw Shrimp | Resource | 1 | 3 | 1 | Entry-level fish                                    |
+| Raw Trout | Resource | 10 | 18 | 7 | Early rod-caught fish                               |
+| Raw Salmon | Resource | 20 | 24 | 9 | Mid-tier rod-caught fish                            |
+| Raw Tuna | Resource | 30 | 28 | 11 | Higher-value harpoon catch                          |
+| Raw Swordfish | Resource | 40 | 40 | 16 | High-value late-band catch                          |
+
+
+
+
+
+
 
 
 

@@ -154,7 +154,36 @@
             },
             economy: {
                 primaryResource: 'raw_shrimp',
-                defaultSellValue: 3
+                valueTable: {
+                    small_net: { buy: 25, sell: 10 },
+                    fishing_rod: { buy: 45, sell: 18 },
+                    harpoon: { buy: 110, sell: 44 },
+                    rune_harpoon: { buy: 2500, sell: 1000 },
+                    bait: { buy: 2, sell: 1 },
+                    raw_shrimp: { buy: 3, sell: 1 },
+                    raw_trout: { buy: 18, sell: 7 },
+                    raw_salmon: { buy: 24, sell: 9 },
+                    raw_tuna: { buy: 28, sell: 11 },
+                    raw_swordfish: { buy: 40, sell: 16 }
+                },
+                merchantTable: {
+                    fishing_supplier: {
+                        buys: ['small_net', 'fishing_rod', 'harpoon', 'bait', 'raw_shrimp', 'raw_trout', 'raw_salmon', 'raw_tuna', 'raw_swordfish'],
+                        sells: ['small_net', 'fishing_rod', 'harpoon', 'bait'],
+                        unlocks: {
+                            itemIds: ['raw_shrimp', 'raw_trout', 'raw_salmon', 'raw_tuna', 'raw_swordfish'],
+                            threshold: 50,
+                            stockAmount: 20
+                        }
+                    },
+                    fishing_teacher: {
+                        buys: ['small_net', 'fishing_rod', 'harpoon', 'rune_harpoon'],
+                        sells: []
+                    }
+                },
+                generalStoreFallback: {
+                    buyPolicy: 'half_price_floor'
+                }
             }
         },
         firemaking: {
@@ -294,7 +323,4 @@
         skills: SKILL_SPECS
     };
 })();
-
-
-
 

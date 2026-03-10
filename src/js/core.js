@@ -47,7 +47,8 @@
             pendingSkillStart: null,
             unlockFlags: {
                 runecraftingComboUnlocked: false
-            }
+            },
+            merchantProgress: {}
         };
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
         let RUNE_ESSENCE_ROCKS = [];
@@ -542,6 +543,43 @@ O445411111OOOOO.
             return false;
         }
 
+        function getQaFishingMerchants() {
+            return {
+                teacher: { x: 201, y: 223, z: 0, label: 'fishing teacher' },
+                supplier: { x: 209, y: 230, z: 0, label: 'fishing supplier' }
+            };
+        }
+
+        function qaListFishingMerchants() {
+            const spots = getQaFishingMerchants();
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                const spot = spots[id];
+                addChatMessage('[QA fishshop] ' + id + ' @ (' + spot.x + ',' + spot.y + ',' + spot.z + ')', 'info');
+            }
+        }
+
+        function qaGotoFishingMerchant(nameLike) {
+            const key = String(nameLike || '').trim().toLowerCase();
+            if (!key) return false;
+            const spots = getQaFishingMerchants();
+            if (spots[key]) {
+                const exact = spots[key];
+                return qaTeleportTo(exact.x, exact.y, exact.z, exact.label);
+            }
+
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                if (!id.includes(key)) continue;
+                const spot = spots[id];
+                return qaTeleportTo(spot.x, spot.y, spot.z, spot.label);
+            }
+
+            return false;
+        }
+
         function getQaBestToolByClass(toolClass) {
             const candidates = [];
             if (equipment && equipment.weapon && equipment.weapon.weaponClass === toolClass) {
@@ -767,7 +805,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting> <1-99>, /qa diag <fishing|mining|rc>, /qa fishspots, /qa gotofish <pond|pier|deep>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <fishing_supplier|fishing_teacher>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -811,11 +849,21 @@ O445411111OOOOO.
                     qaListFishingSpots();
                     return;
                 }
+                if (cmd === 'fishshops') {
+                    qaListFishingMerchants();
+                    return;
+                }
 
                 if (cmd === 'gotofish' && parts.length >= 2) {
                     const target = String(parts[1] || '').toLowerCase();
                     const ok = qaGotoFishingSpot(target);
                     if (!ok) addChatMessage('Usage: /qa gotofish <pond|pier|deep>', 'warn');
+                    return;
+                }
+                if (cmd === 'gotofishshop' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoFishingMerchant(target);
+                    if (!ok) addChatMessage('Usage: /qa gotofishshop <teacher|supplier>', 'warn');
                     return;
                 }
 
@@ -837,6 +885,39 @@ O445411111OOOOO.
                     addChatMessage(`QA rcdebug: ${value}`, 'info');
                     return;
                 }
+                if (cmd === 'shopdiag') {
+                    const merchantId = String(parts[1] || (typeof window.getActiveShopMerchantId === 'function' ? window.getActiveShopMerchantId() : 'fishing_supplier')).toLowerCase();
+                    if (!window.ShopEconomy || typeof window.ShopEconomy.getFishUnlockSummary !== 'function') {
+                        addChatMessage('QA shop diag unavailable: missing shop economy module.', 'warn');
+                        return;
+                    }
+                    const rows = window.ShopEconomy.getFishUnlockSummary(merchantId);
+                    addChatMessage('[QA shop] merchant=' + merchantId, 'info');
+                    if (!rows || rows.length === 0) {
+                        addChatMessage('[QA shop] no fish unlock rules for this merchant.', 'info');
+                        return;
+                    }
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        addChatMessage('[QA shop] ' + row.itemId + ': sold=' + row.sold + '/' + row.threshold + ', unlocked=' + (row.unlocked ? 'yes' : 'no'), 'info');
+                    }
+                    return;
+                }
+
+                if (cmd === 'openshop') {
+                    const merchantId = String(parts[1] || '').toLowerCase();
+                    if (merchantId !== 'fishing_supplier' && merchantId !== 'fishing_teacher') {
+                        addChatMessage('Usage: /qa openshop <fishing_supplier|fishing_teacher>', 'warn');
+                        return;
+                    }
+                    if (typeof window.openShopForMerchant !== 'function') {
+                        addChatMessage('QA openshop unavailable: merchant shop handler missing.', 'warn');
+                        return;
+                    }
+                    window.openShopForMerchant(merchantId);
+                    addChatMessage('QA opened shop for merchant=' + merchantId, 'info');
+                    return;
+                }
 
                 if (cmd === 'diag' && parts.length >= 2) {
                     const subject = String(parts[1] || '').toLowerCase();
@@ -852,7 +933,25 @@ O445411111OOOOO.
                         qaDiagRunecrafting();
                         return;
                     }
-                    addChatMessage('Usage: /qa diag <fishing|mining|rc>', 'warn');
+                    if (subject === 'shop') {
+                        const merchantId = (typeof window.getActiveShopMerchantId === 'function') ? window.getActiveShopMerchantId() : 'fishing_supplier';
+                        if (!window.ShopEconomy || typeof window.ShopEconomy.getFishUnlockSummary !== 'function') {
+                            addChatMessage('QA shop diag unavailable: missing shop economy module.', 'warn');
+                            return;
+                        }
+                        const rows = window.ShopEconomy.getFishUnlockSummary(merchantId);
+                        addChatMessage('[QA shop] merchant=' + merchantId, 'info');
+                        if (!rows || rows.length === 0) {
+                            addChatMessage('[QA shop] no fish unlock rules for this merchant.', 'info');
+                            return;
+                        }
+                        for (let i = 0; i < rows.length; i++) {
+                            const row = rows[i];
+                            addChatMessage('[QA shop] ' + row.itemId + ': sold=' + row.sold + '/' + row.threshold + ', unlocked=' + (row.unlocked ? 'yes' : 'no'), 'info');
+                        }
+                        return;
+                    }
+                    addChatMessage('Usage: /qa diag <fishing|mining|rc|shop>', 'warn');
                     return;
                 }
 
@@ -1045,79 +1144,6 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

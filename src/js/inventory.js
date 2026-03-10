@@ -297,13 +297,90 @@
 
         // --- Shop Interface System ---
         let isShopOpen = false;
+        let activeShopMerchantId = 'fishing_supplier';
+        const shopInventoriesByMerchant = {};
         let shopInventory = Array(100).fill(null);
-        shopInventory[0] = { itemData: ITEM_DB['iron_axe'], amount: 5 };
-        shopInventory[1] = { itemData: ITEM_DB['tinderbox'], amount: 10 };
-        shopInventory[2] = { itemData: ITEM_DB['knife'], amount: 10 };
-        shopInventory[3] = { itemData: ITEM_DB['iron_pickaxe'], amount: 5 };
 
-        function openShop() {
+        function getShopEconomy() {
+            return (window.ShopEconomy && typeof window.ShopEconomy.resolveBuyPrice === 'function') ? window.ShopEconomy : null;
+        }
+
+        function resolveMerchantBuyPrice(itemId) {
+            const economy = getShopEconomy();
+            if (economy) return economy.resolveBuyPrice(itemId, activeShopMerchantId);
+            return ITEM_DB[itemId] && Number.isFinite(ITEM_DB[itemId].value) ? ITEM_DB[itemId].value : 0;
+        }
+
+        function resolveMerchantSellPrice(itemId) {
+            const economy = getShopEconomy();
+            if (economy) return economy.resolveSellPrice(itemId, activeShopMerchantId);
+            const base = ITEM_DB[itemId] && Number.isFinite(ITEM_DB[itemId].value) ? ITEM_DB[itemId].value : 0;
+            return Math.floor(base * 0.4);
+        }
+
+        function seedShopInventorySlot(inventoryArray, itemId, amount, normalStock = true) {
+            if (!ITEM_DB[itemId] || !Number.isFinite(amount) || amount <= 0) return false;
+            const idx = inventoryArray.indexOf(null);
+            if (idx === -1) return false;
+            inventoryArray[idx] = { itemData: ITEM_DB[itemId], amount: Math.floor(amount), normalStock: !!normalStock };
+            return true;
+        }
+
+        function createShopInventoryForMerchant(merchantId) {
+            const inventoryArray = Array(100).fill(null);
+            const economy = getShopEconomy();
+            const defaults = economy && typeof economy.getMerchantDefaultSellItemIds === 'function'
+                ? economy.getMerchantDefaultSellItemIds(merchantId)
+                : [];
+
+            if (defaults.length > 0) {
+                for (let i = 0; i < defaults.length; i++) {
+                    seedShopInventorySlot(inventoryArray, defaults[i], 20, true);
+                }
+                return inventoryArray;
+            }
+
+            seedShopInventorySlot(inventoryArray, 'iron_axe', 5, true);
+            seedShopInventorySlot(inventoryArray, 'tinderbox', 10, true);
+            seedShopInventorySlot(inventoryArray, 'knife', 10, true);
+            seedShopInventorySlot(inventoryArray, 'iron_pickaxe', 5, true);
+            return inventoryArray;
+        }
+
+        function ensureUnlockedMerchantStock(merchantId) {
+            const economy = getShopEconomy();
+            if (!economy || typeof economy.getMerchantDefaultSellItemIds !== 'function') return;
+            const defaults = economy.getMerchantDefaultSellItemIds(merchantId);
+            for (let i = 0; i < defaults.length; i++) {
+                const itemId = defaults[i];
+                const itemData = ITEM_DB[itemId];
+                if (!itemData) continue;
+
+                const desiredStock = typeof economy.getUnlockedStockAmount === 'function'
+                    ? Math.max(1, economy.getUnlockedStockAmount(itemId, merchantId) || 20)
+                    : 20;
+                const existing = shopInventory.find((slot) => slot && slot.itemData && slot.itemData.id === itemId);
+                if (existing) {
+                    existing.normalStock = true;
+                    if (existing.amount < desiredStock) existing.amount = desiredStock;
+                    continue;
+                }
+                seedShopInventorySlot(shopInventory, itemId, desiredStock, true);
+            }
+        }
+
+        function ensureMerchantShopInventory(merchantId) {
+            const id = merchantId || 'fishing_supplier';
+            if (!shopInventoriesByMerchant[id]) {
+                shopInventoriesByMerchant[id] = createShopInventoryForMerchant(id);
+            }
+            activeShopMerchantId = id;
+            shopInventory = shopInventoriesByMerchant[id];
+            ensureUnlockedMerchantStock(id);
+        }
+
+        function openShop(merchantId = 'fishing_supplier') {
+            ensureMerchantShopInventory(merchantId);
             isShopOpen = true;
             setInterfaceOpenState('shop-interface', true);
             renderShop();
@@ -316,6 +393,9 @@
             renderInventory();
         }
 
+        window.openShopForMerchant = openShop;
+        window.getActiveShopMerchantId = () => activeShopMerchantId;
+
         function renderShop() {
             const container = document.getElementById('shop-grid');
             container.innerHTML = '';
@@ -325,7 +405,8 @@
                 const sItem = shopInventory[i];
                 if (sItem && sItem.amount > 0) {
                     slot.innerHTML = `${sItem.itemData.icon}${formatStackSize(sItem.amount)}`;
-                    slot.title = `${sItem.itemData.name} - ${sItem.itemData.value} coins`;
+                    const buyPrice = resolveMerchantBuyPrice(sItem.itemData.id);
+                    slot.title = sItem.itemData.name + ' - ' + buyPrice + ' coins';
                     const shopActionPrefKey = getItemMenuPreferenceKey('shop', sItem.itemData.id);
                     const shopActions = ['Buy-1', 'Buy-5', 'Buy-10', 'Buy-50', 'Buy-X'];
                     const runShopAction = (actionName) => {
@@ -343,7 +424,7 @@
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
                         contextOptionsListEl.innerHTML = '';
-                        addContextMenuOption(`Value <span class="text-white">${sItem.itemData.name}</span>`, () => console.log(`${sItem.itemData.name} costs ${sItem.itemData.value} coins.`));
+                        addContextMenuOption(`Value <span class="text-white">${sItem.itemData.name}</span>`, () => console.log(`${sItem.itemData.name} costs ${resolveMerchantBuyPrice(sItem.itemData.id)} coins.`));
                         addContextMenuOption(`Buy-1 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-1'));
                         addContextMenuOption(`Buy-5 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-5'));
                         addContextMenuOption(`Buy-10 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-10'));
@@ -364,7 +445,7 @@
                 console.log("You cannot buy coins.");
                 return;
             }
-            let cost = sItem.itemData.value;
+            let cost = resolveMerchantBuyPrice(sItem.itemData.id);
             let canBuyAmount = Math.min(amount, sItem.amount);
             let coinSlotIdx = inventory.findIndex(s => s && s.itemData.id === 'coins');
             let playerCoins = coinSlotIdx !== -1 ? inventory[coinSlotIdx].amount : 0;
@@ -393,7 +474,7 @@
                 console.log("You cannot sell coins.");
                 return;
             }
-            let sellValue = Math.floor(itemData.value * 0.4); 
+            let sellValue = resolveMerchantSellPrice(itemData.id); 
             let amountSold = 0;
             let targetAmount = amount === -1 ? (itemData.stackable ? invSlot.amount : 28) : amount;
 
@@ -410,13 +491,30 @@
             }
 
             if (amountSold > 0) {
-                let shopIdx = shopInventory.findIndex(s => s && s.itemData.id === itemData.id);
-                if (shopIdx === -1) {
-                    shopIdx = shopInventory.indexOf(null);
-                    if (shopIdx !== -1) shopInventory[shopIdx] = { itemData: itemData, amount: 0 };
+                const economy = getShopEconomy();
+                const unlockResult = (economy && typeof economy.recordMerchantPurchaseFromPlayer === 'function')
+                    ? economy.recordMerchantPurchaseFromPlayer(itemData.id, activeShopMerchantId, amountSold)
+                    : null;
+                const canBeNormalStock = (economy && typeof economy.canMerchantSellItem === 'function')
+                    ? economy.canMerchantSellItem(itemData.id, activeShopMerchantId)
+                    : true;
+
+                if (canBeNormalStock) {
+                    let shopIdx = shopInventory.findIndex(s => s && s.itemData.id === itemData.id);
+                    if (shopIdx === -1) {
+                        shopIdx = shopInventory.indexOf(null);
+                        if (shopIdx !== -1) shopInventory[shopIdx] = { itemData: itemData, amount: 0, normalStock: false };
+                    }
+                    if (shopIdx !== -1) shopInventory[shopIdx].amount += amountSold;
                 }
-                if (shopIdx !== -1) shopInventory[shopIdx].amount += amountSold;
-                
+
+                if (unlockResult && unlockResult.unlockedNow) {
+                    ensureUnlockedMerchantStock(activeShopMerchantId);
+                    if (typeof addChatMessage === 'function') {
+                        addChatMessage(itemData.name + ' is now unlocked as permanent stock at this merchant.', 'info');
+                    }
+                }
+
                 giveItem(ITEM_DB['coins'], amountSold * sellValue);
             }
             renderShop(); renderInventory();
@@ -506,7 +604,7 @@
                         slot.oncontextmenu = (e) => {
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
-                            addContextMenuOption(`Value <span class="text-white">${item.name}</span>`, () => console.log(`${item.name} sells for ${Math.floor(item.value * 0.4)} coins.`));
+                            addContextMenuOption(`Value <span class="text-white">${item.name}</span>`, () => console.log(`${item.name} sells for ${resolveMerchantSellPrice(item.id)} coins.`));
                             addContextMenuOption(`Sell-1 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-1'));
                             addContextMenuOption(`Sell-5 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-5'));
                             addContextMenuOption(`Sell-10 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-10'));
@@ -651,38 +749,4 @@
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
