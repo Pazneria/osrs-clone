@@ -1,4 +1,4 @@
-﻿# Firemaking Roadmap
+# Firemaking Roadmap
 
 ## Purpose
 
@@ -36,7 +36,7 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | XP Award | When a firemaking action succeeds, the player gains the XP listed for that log type. |
 | Tile Occupancy | A lit fire blocks additional firemaking on the same tile until it expires. |
 | Cooking Support | A lit fire counts as a valid cooking source for any cooking recipes that allow fire-based cooking. |
-| Repeated Firemaking | After successfully lighting a fire, the player automatically steps in a globally fixed eastward direction as part of the same firemaking flow. If that direction is blocked, the player instead steps west. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
+| Repeated Firemaking Flow | After successfully lighting a fire, the player automatically steps in a globally fixed eastward direction as part of the same firemaking flow. If that direction is blocked, the player instead steps west. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
 
 ### Global Constants
 
@@ -116,7 +116,7 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Fire Movement / Standing | Lit fires do not block movement or standing. Players can move onto and stand on lit fire tiles normally. |
 | Fire Hazard | Lit fires do not deal damage and are not treated as hazards. |
 | Cooking Check   | Cooking actions that allow a fire may target any currently lit fire, regardless of who created it |
-| Fire Chain Movement | During repeated firemaking, the player automatically attempts to step in a globally fixed eastward direction after each successful fire. If normal pathfinding fails for that direction because the tile is not walkable, the player steps west instead. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
+| Fire Follow-up Movement | During repeated firemaking, the player automatically attempts to step in a globally fixed eastward direction after each successful fire. If normal pathfinding fails for that direction because the tile is not walkable, the player steps west instead. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
 
 ## Economy Role
 
@@ -148,16 +148,6 @@ No firemaking-specific NPCs or quests are required under the base model.
 The general store buys everything at half price.
 
 Ashes are not normally stocked by shops, but if a player sells ashes to a shop, they can be bought back through the normal shop interface.
-
-## Training Location Structure
-
-| Location Type                     | Purpose                                |
-| --------------------------------- | -------------------------------------- |
-| Starter camp area                 | Entry-level normal log firemaking      |
-| Forest edge clearing              | Early oak training space               |
-| Riverbank or village-side clearing | Mid-band willow training               |
-| Woodland campsite                 | Higher-tier maple training             |
-| Restricted forest camp            | Valuable yew training and utility area |
 
 ## Dependencies
 

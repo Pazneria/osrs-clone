@@ -16,11 +16,20 @@
         logs: {
             name: 'Logs',
             type: 'resource',
-            value: 5,
+            value: 6,
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
             icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+        },
+        ashes: {
+            name: 'Ashes',
+            type: 'resource',
+            value: 4,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'ashes' }
         },
         coins: {
             name: 'Coins',
@@ -34,7 +43,7 @@
         tinderbox: {
             name: 'Tinderbox',
             type: 'tool',
-            value: 50,
+            value: 8,
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',

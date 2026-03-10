@@ -35,6 +35,32 @@
         return true;
     }
 
+    function stopFiremaking(context, message, tone = 'info') {
+        context.playerState.firemakingSession = null;
+        context.stopAction();
+        if (message) context.addChatMessage(message, tone);
+    }
+
+    function normalizeStepResult(result) {
+        if (result && typeof result === 'object' && Object.prototype.hasOwnProperty.call(result, 'stepped')) {
+            return {
+                stepped: !!result.stepped,
+                reason: typeof result.reason === 'string' ? result.reason : null
+            };
+        }
+        return {
+            stepped: !!result,
+            reason: result ? null : 'blocked_tile'
+        };
+    }
+
+    function getBlockedStepMessage(reason) {
+        if (reason === 'fire_occupied') return 'You stay put because another fire is in the way.';
+        if (reason === 'height_mismatch') return 'You stay put because the terrain is too uneven.';
+        if (reason === 'out_of_bounds') return 'You stay put because there is no room to move.';
+        return 'You stay put because the way forward is blocked.';
+    }
+
     const firemakingModule = {
         canStart(context) {
             const recipe = getLogRecipe(context);
@@ -98,8 +124,8 @@
                 if (context.currentTick < (session.finishTick || 0)) return;
                 const fireTarget = session.target;
                 if (fireTarget && fireTarget.z === context.playerState.z) {
-                    const stepped = context.tryStepAfterFire();
-                    if (stepped) {
+                    const stepResult = normalizeStepResult(context.tryStepAfterFire());
+                    if (stepResult.stepped) {
                         const faceDx = fireTarget.x - context.playerState.x;
                         const faceDy = fireTarget.y - context.playerState.y;
                         if (faceDx !== 0 || faceDy !== 0) {
@@ -108,7 +134,7 @@
                             context.playerState.actionVisualReady = true;
                         }
                     } else {
-                        context.addChatMessage('You stay put because the way forward is blocked.', 'info');
+                        context.addChatMessage(getBlockedStepMessage(stepResult.reason), 'info');
                     }
                 }
 
@@ -128,8 +154,7 @@
 
             const target = session.target;
             if (!target || context.playerState.x !== target.x || context.playerState.y !== target.y || context.playerState.z !== target.z) {
-                context.playerState.firemakingSession = null;
-                context.stopAction();
+                stopFiremaking(context, 'You stop lighting the logs.', 'info');
                 return;
             }
 
@@ -156,14 +181,12 @@
             }
 
             if (!context.lightFireAtCurrentTile(target.x, target.y, target.z)) {
-                context.playerState.firemakingSession = null;
-                context.stopAction();
+                stopFiremaking(context, 'You cannot light a fire here right now.', 'warn');
                 return;
             }
 
             if (!context.removeOneItemById(recipe.sourceItemId)) {
-                context.playerState.firemakingSession = null;
-                context.stopAction();
+                stopFiremaking(context, 'You have run out of logs.', 'warn');
                 return;
             }
 
@@ -203,4 +226,3 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = firemakingModule;
 })();
-

@@ -146,6 +146,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', talkTarget); spawnClickMarker(hitData.point, true); });
                     }
                     addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => console.log(`EXAMINING: ${hitData.name}.`));
+                } else if (hitData.type === 'GROUND_ITEM') {
+                    const groundName = hitData.name || 'item';
+                    addContextMenuOption(`Take <span class="text-[#ff981f]">${groundName}</span>`, () => {
+                        queueAction('INTERACT', hitData.gridX, hitData.gridY, 'GROUND_ITEM', hitData.uid);
+                        spawnClickMarker(hitData.point, true);
+                    });
+                    addContextMenuOption(`Examine <span class="text-[#ff981f]">${groundName}</span>`, () => console.log(`EXAMINING: ${groundName}.`));
                 }
             }
 
@@ -474,7 +481,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
         }
 
-        function queueAction(type, gridX, gridY, obj, targetUid = null) { pendingAction = { type, x: gridX, y: gridY, obj, targetUid }; }
+        function cancelManualFiremakingChain() {
+            if (playerState.action !== 'SKILLING: FIREMAKING') return;
+            playerState.firemakingSession = null;
+            playerState.pendingSkillStart = null;
+            playerState.path = [];
+            playerState.pendingActionAfterTurn = null;
+            playerState.turnLock = false;
+            playerState.actionVisualReady = true;
+            playerState.action = 'IDLE';
+            if (typeof addChatMessage === 'function') addChatMessage('You stop lighting the logs.', 'info');
+        }
+
+        function queueAction(type, gridX, gridY, obj, targetUid = null) {
+            cancelManualFiremakingChain();
+            pendingAction = { type, x: gridX, y: gridY, obj, targetUid };
+        }
 
         function findPath(startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null) {
             let validTargets = new Set(); 
@@ -604,6 +626,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             playerState.prevX = playerState.x; playerState.prevY = playerState.y; playerState.midX = null; playerState.midY = null;
             for (let i = respawningTrees.length - 1; i >= 0; i--) { if (currentTick >= respawningTrees[i].respawnTick) { respawnTree(respawningTrees[i].x, respawningTrees[i].y, respawningTrees[i].z); respawningTrees.splice(i, 1); } }
             if (typeof tickRockNodes === 'function') tickRockNodes();
+            if (typeof window.updateGroundItems === 'function') window.updateGroundItems();
             if (pendingAction) {
                 let actionX = pendingAction.x;
                 let actionY = pendingAction.y;
@@ -908,16 +931,20 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 const selectedSlot = getSelectedUseItem();
                 const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
                 const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
-                const fireUnderCursor = selectedCookable && Array.isArray(activeFires) && activeFires.some((f) => {
+                const fireUnderCursor = Array.isArray(activeFires) && activeFires.some((f) => {
                     if (!f || f.z !== playerState.z) return false;
                     if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY) && f.x === hitData.gridX && f.y === hitData.gridY) return true;
                     if (!hitData.point) return false;
-                    return Math.hypot((f.x + 0.5) - hitData.point.x, (f.y + 0.5) - hitData.point.z) <= 1.35;
+                    return Math.hypot((f.x + 0.5) - hitData.point.x, (f.y + 0.5) - hitData.point.z) <= 1.9;
                 });
 
+                const isAshesGroundItem = hitData.type === 'GROUND_ITEM' && /^Ashes(?:\s|\(|$)/i.test(hitData.name || '');
+
                 let actionText = '';
-                if (selectedCookable && (hitData.type === 'GROUND' || hitData.type === 'FIRE') && fireUnderCursor) {
+                if (selectedCookable && (hitData.type === 'GROUND' || hitData.type === 'FIRE' || isAshesGroundItem) && fireUnderCursor) {
                     actionText = `<span class="text-gray-300">Use</span> <span class="text-[#ff981f]">${selectedItem.name}</span> <span class="text-gray-300">-></span> <span class="text-orange-300">Fire</span>`;
+                } else if (isAshesGroundItem && fireUnderCursor) {
+                    actionText = '<span class="text-gray-300">Use</span> <span class="text-orange-300">Fire</span>';
                 }
 
                 if (!actionText) {
@@ -930,6 +957,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     if (hitData.type === 'TREE') {
                         if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
                     } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
+                    else if (hitData.type === 'FIRE') actionText = '<span class="text-gray-300">Use</span> <span class="text-orange-300">Fire</span>';
                     else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${hitData.name}</span>`;
                     else if (hitData.type === 'BANK_BOOTH') actionText = '<span class="text-gray-300">Bank</span> <span class="text-cyan-400">Bank Booth</span>';
                     else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
@@ -1694,6 +1722,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
 
 
 

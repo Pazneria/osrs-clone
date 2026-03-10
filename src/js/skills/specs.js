@@ -207,7 +207,15 @@
             },
             economy: {
                 primaryResource: 'logs',
-                supportResource: 'tinderbox'
+                supportResource: 'tinderbox',
+                valueTable: {
+                    logs: { buy: 6, sell: 2 },
+                    tinderbox: { buy: 8, sell: 2 },
+                    ashes: { buy: 4, sell: 1 }
+                },
+                generalStoreFallback: {
+                    buyPolicy: 'half_price_floor'
+                }
             }
         },
         cooking: {

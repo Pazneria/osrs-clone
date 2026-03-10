@@ -680,6 +680,7 @@
         const MAX_SKILL_LEVEL = 99;
         const FIRE_STEP_DIR = { x: 0, y: 1 };
         const FIRE_LIFETIME_TICKS = 50;
+        const ASHES_DESPAWN_TICKS = 100;
 
         function getXpForLevel(level) {
             const clamped = Math.max(1, Math.min(MAX_SKILL_LEVEL, level));
@@ -879,6 +880,14 @@
                             if (idx !== -1) environmentMeshes.splice(idx, 1);
                         }
                     }
+
+                    const ashesItem = ITEM_DB && ITEM_DB.ashes ? ITEM_DB.ashes : null;
+                    if (ashesItem) {
+                        spawnGroundItem(ashesItem, fire.x, fire.y, fire.z, 1, {
+                            despawnTicks: ASHES_DESPAWN_TICKS
+                        });
+                    }
+
                     activeFires.splice(i, 1);
                     continue;
                 }
@@ -891,27 +900,80 @@
             }
         }
 
-        function tryStepAfterFire() {
-            const nx = playerState.x + FIRE_STEP_DIR.x;
-            const ny = playerState.y + FIRE_STEP_DIR.y;
-            const z = playerState.z;
+        function removeGroundItemEntryAt(index) {
+            const entry = groundItems[index];
+            if (!entry) return false;
 
-            if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) return false;
-            if (!WALKABLE_TILES.includes(logicalMap[z][ny][nx])) return false;
+            if (entry.mesh && entry.mesh.parent) entry.mesh.parent.remove(entry.mesh);
+            else if (entry.mesh) scene.remove(entry.mesh);
 
-            const currentH = heightMap[z][playerState.y][playerState.x];
-            const nextH = heightMap[z][ny][nx];
-            const tileIsRamp = logicalMap[z][playerState.y][playerState.x] === 15 || logicalMap[z][ny][nx] === 15;
-            if (Math.abs(nextH - currentH) > 0.3 && !tileIsRamp) return false;
+            if (entry.mesh && Array.isArray(entry.mesh.children)) {
+                environmentMeshes = environmentMeshes.filter((m) => !entry.mesh.children.includes(m));
+            }
 
-            if (activeFires.some(f => f.x === nx && f.y === ny && f.z === z)) return false;
-
-            playerState.prevX = playerState.x;
-            playerState.prevY = playerState.y;
-            playerState.x = nx;
-            playerState.y = ny;
-            playerState.path = [];
+            groundItems.splice(index, 1);
             return true;
+        }
+
+        function updateGroundItems() {
+            for (let i = groundItems.length - 1; i >= 0; i--) {
+                const entry = groundItems[i];
+                if (!entry || !Number.isFinite(entry.despawnTick)) continue;
+                if (currentTick < entry.despawnTick) continue;
+                removeGroundItemEntryAt(i);
+            }
+        }
+
+        function tryStepAfterFire() {
+            const z = playerState.z;
+            const currentH = heightMap[z][playerState.y][playerState.x];
+            const candidates = [
+                { direction: 'east', x: playerState.x + FIRE_STEP_DIR.x, y: playerState.y + FIRE_STEP_DIR.y },
+                { direction: 'west', x: playerState.x - FIRE_STEP_DIR.x, y: playerState.y - FIRE_STEP_DIR.y }
+            ];
+            const failureReasons = [];
+
+            for (let i = 0; i < candidates.length; i++) {
+                const candidate = candidates[i];
+                const nx = candidate.x;
+                const ny = candidate.y;
+
+                if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) {
+                    failureReasons.push('out_of_bounds');
+                    continue;
+                }
+                if (!WALKABLE_TILES.includes(logicalMap[z][ny][nx])) {
+                    failureReasons.push('blocked_tile');
+                    continue;
+                }
+
+                const nextH = heightMap[z][ny][nx];
+                const tileIsRamp = logicalMap[z][playerState.y][playerState.x] === 15 || logicalMap[z][ny][nx] === 15;
+                if (Math.abs(nextH - currentH) > 0.3 && !tileIsRamp) {
+                    failureReasons.push('height_mismatch');
+                    continue;
+                }
+
+                if (activeFires.some((f) => f.x === nx && f.y === ny && f.z === z)) {
+                    failureReasons.push('fire_occupied');
+                    continue;
+                }
+
+                playerState.prevX = playerState.x;
+                playerState.prevY = playerState.y;
+                playerState.x = nx;
+                playerState.y = ny;
+                playerState.path = [];
+
+                return { stepped: true, direction: candidate.direction, x: nx, y: ny };
+            }
+
+            let reason = 'blocked_tile';
+            if (failureReasons.includes('fire_occupied')) reason = 'fire_occupied';
+            else if (failureReasons.includes('height_mismatch')) reason = 'height_mismatch';
+            else if (failureReasons.includes('out_of_bounds')) reason = 'out_of_bounds';
+
+            return { stepped: false, reason };
         }
 
                 function startFiremaking() {
@@ -1139,12 +1201,21 @@
             renderInventory();
         }
 
-        function spawnGroundItem(itemData, x, y, z, amount = 1) {
+        function spawnGroundItem(itemData, x, y, z, amount = 1, options = {}) {
+            const despawnTick = Number.isFinite(options.despawnTick)
+                ? options.despawnTick
+                : (Number.isFinite(options.despawnTicks) ? currentTick + Math.max(0, Math.floor(options.despawnTicks)) : null);
+
             let existing = groundItems.find(gi => gi.x === x && gi.y === y && gi.z === z && gi.itemData.id === itemData.id);
             if (existing && itemData.stackable) {
                 existing.amount += amount;
+                if (Number.isFinite(despawnTick)) {
+                    existing.despawnTick = Number.isFinite(existing.despawnTick)
+                        ? Math.max(existing.despawnTick, despawnTick)
+                        : despawnTick;
+                }
                 existing.mesh.children.forEach(c => { c.userData.name = `${itemData.name} (${existing.amount})`; });
-                return; 
+                return;
             }
             const group = new THREE.Group();
             const terrainHeight = heightMap[z][y][x] + (z * 3.0);
@@ -1169,6 +1240,13 @@
                 const coinMat = new THREE.MeshLambertMaterial({color: 0xffcc00});
                 const coinMesh = new THREE.Mesh(coinGeo, coinMat); coinMesh.position.set(0, 0, 0);
                 group.add(coinMesh);
+            } else if (itemData.id === 'ashes') {
+                const ashesPile = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.17, 0.22, 0.05, 10),
+                    new THREE.MeshLambertMaterial({ color: 0x7a7a7a })
+                );
+                ashesPile.position.set(0, -0.03, 0);
+                group.add(ashesPile);
             } else if (itemData.id === 'copper_ore' || itemData.id === 'tin_ore') {
                 const oreColor = itemData.id === 'copper_ore' ? 0xb56b3a : 0xcfd6dd;
                 const oreMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), new THREE.MeshLambertMaterial({color: 0x7c838c}));
@@ -1194,7 +1272,7 @@
                 if (pGroup) pGroup.add(group); else scene.add(group);
             } else scene.add(group);
             
-            groundItems.push({ itemData, x, y, z, mesh: group, uid, amount: amount });
+            groundItems.push({ itemData, x, y, z, mesh: group, uid, amount: amount, despawnTick });
         }
 
         // --- THE MULTI-PLANE ENGINE REWRITE ---
@@ -2582,6 +2660,7 @@
         window.initUIPreview = initUIPreview;
         window.manageChunks = manageChunks;
         window.updateFires = updateFires;
+        window.updateGroundItems = updateGroundItems;
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
