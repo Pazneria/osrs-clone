@@ -1,23 +1,23 @@
-﻿# Mining Status
+# Mining Status
 
 ## Done
 - [x] MINING-001: Core mining loop and XP leveling.
-- [x] MINING-002: Early ore mining (copper/tin/iron baseline).
+- [x] MINING-002: Baseline rock outputs wired for copper, tin, and rune essence.
 - [x] MINING-003: Roadmap expanded with full mining design spec (progression, formulas, depletion, economy, NPCs).
+- [x] MINING-004: Canonical mining node/timing data wired in `SkillSpecs` for runtime lookup.
+- [x] MINING-005: Runtime rock gather session flow wired (attempt timing, success resolution, stop conditions).
+- [x] MINING-006: Rune essence persistent-rock behavior wired (no depletion path).
+- [x] MINING-007: Pickaxe tool power and speed-bonus attempt-interval wiring implemented.
 - [x] MINING-QA-001: Runtime/spec alignment validated for capacity gating and immediate full-inventory stop behavior (no extra overfill attempt tick).
 
 ## Now
-- [ ] MINING-004: Data model pass for rock stats (difficulty/xp/min-max yields/depletion/respawn).
-- [ ] MINING-005: Runtime rock session state (available/depleted/session expiry/respawn tick).
-- [ ] MINING-006: Rune essence rock behavior (persistent, no depletion).
+- [ ] MINING-008: Expand node tables for full 1-40 ore/gem progression coverage (including iron/coal/gem bands).
+- [ ] MINING-009: Merchant/value-table alignment pass for ores/gems (including uncut-gem naming consistency and off-band item handling).
 
 ## Next
-- [ ] MINING-007: Pickaxe tool power + speed bonus wiring into attempt interval.
-- [ ] MINING-008: Merchant and item value tables alignment (including uncut gem naming + off-band items).
-- [ ] MINING-009: Training location placement pass for all mining bands.
+- [ ] MINING-010: Training-location placement pass across mining progression bands.
+- [ ] MINING-011: Gem Mine Quest gate and Elira quest-flow integration.
 
 ## Later
-- [ ] MINING-010: Gem Mine Quest gate and Elira quest flow integration.
-- [ ] MINING-011: Thrain late-ore off-band progression integration.
-- [ ] MINING-012: Balance pass using expected yield/xp/gold per tick targets.
-
+- [ ] MINING-012: Thrain late-ore off-band progression integration.
+- [ ] MINING-013: Balance pass using expected yield/xp/gold-per-tick targets.
