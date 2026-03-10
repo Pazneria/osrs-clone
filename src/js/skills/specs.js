@@ -358,6 +358,122 @@
                 generalStoreFallback: {
                     buyPolicy: 'half_price_floor'
                 }
+            }        },
+        smithing: {
+            skillId: 'smithing',
+            levelBands: [1, 10, 20, 30, 40],
+            formulas: {
+                output: 'fixed_per_action',
+                interval: 'fixed_action_ticks'
+            },
+            timing: {
+                actionTicks: 3
+            },
+            recipeSet: (function () {
+                const recipes = {};
+                const smeltDefs = [
+                    { tier: 'bronze', level: 1, xp: 6, inputs: [{ itemId: 'copper_ore', amount: 1 }, { itemId: 'tin_ore', amount: 1 }] },
+                    { tier: 'iron', level: 1, xp: 8, inputs: [{ itemId: 'iron_ore', amount: 1 }] },
+                    { tier: 'steel', level: 10, xp: 12, inputs: [{ itemId: 'iron_ore', amount: 1 }, { itemId: 'coal', amount: 2 }] },
+                    { tier: 'mithril', level: 20, xp: 18, inputs: [{ itemId: 'mithril_ore', amount: 1 }, { itemId: 'coal', amount: 4 }] },
+                    { tier: 'silver', level: 30, xp: 14, inputs: [{ itemId: 'silver_ore', amount: 1 }] },
+                    { tier: 'adamant', level: 30, xp: 24, inputs: [{ itemId: 'adamant_ore', amount: 1 }, { itemId: 'coal', amount: 6 }] },
+                    { tier: 'gold', level: 40, xp: 22, inputs: [{ itemId: 'gold_ore', amount: 1 }] },
+                    { tier: 'rune', level: 40, xp: 32, inputs: [{ itemId: 'rune_ore', amount: 1 }, { itemId: 'coal', amount: 8 }] }
+                ];
+
+                for (let i = 0; i < smeltDefs.length; i++) {
+                    const def = smeltDefs[i];
+                    recipes[`smelt_${def.tier}_bar`] = {
+                        stationType: 'FURNACE',
+                        requiredLevel: def.level,
+                        inputs: def.inputs,
+                        output: { itemId: `${def.tier}_bar`, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 3
+                    };
+                }
+
+                const forgeTiers = [
+                    { tier: 'bronze', level: 1 },
+                    { tier: 'iron', level: 1 },
+                    { tier: 'steel', level: 10 },
+                    { tier: 'mithril', level: 20 },
+                    { tier: 'adamant', level: 30 },
+                    { tier: 'rune', level: 40 }
+                ];
+
+                const forgeDefs = [
+                    { outputSuffix: 'sword_blade', bars: 2, xpByTier: [8, 10, 14, 20, 28, 40] },
+                    { outputSuffix: 'axe_head', bars: 2, xpByTier: [8, 10, 14, 20, 28, 40] },
+                    { outputSuffix: 'pickaxe_head', bars: 2, xpByTier: [8, 10, 14, 20, 28, 40] },
+                    { outputSuffix: 'boots', bars: 2, xpByTier: [8, 10, 14, 20, 28, 40] },
+                    { outputSuffix: 'helmet', bars: 5, xpByTier: [20, 25, 35, 50, 70, 100] },
+                    { outputSuffix: 'shield', bars: 6, xpByTier: [24, 30, 42, 60, 84, 120] },
+                    { outputSuffix: 'platelegs', bars: 7, xpByTier: [28, 35, 49, 70, 98, 140] },
+                    { outputSuffix: 'platebody', bars: 9, xpByTier: [36, 45, 63, 90, 126, 180] },
+                    { outputSuffix: 'arrowheads', bars: 1, xpByTier: [4, 5, 7, 10, 14, 20] }
+                ];
+
+                for (let t = 0; t < forgeTiers.length; t++) {
+                    const tier = forgeTiers[t];
+                    for (let f = 0; f < forgeDefs.length; f++) {
+                        const def = forgeDefs[f];
+                        recipes[`forge_${tier.tier}_${def.outputSuffix}`] = {
+                            stationType: 'ANVIL',
+                            requiredLevel: tier.level,
+                            requiredToolIds: ['hammer'],
+                            inputs: [{ itemId: `${tier.tier}_bar`, amount: def.bars }],
+                            output: { itemId: `${tier.tier}_${def.outputSuffix}`, amount: 1 },
+                            xpPerAction: def.xpByTier[t],
+                            actionTicks: 3
+                        };
+                    }
+                }
+
+                const jewelryDefs = [
+                    { id: 'silver_ring', level: 10, inputBar: 'silver_bar', mould: 'ring_mould', xp: 14 },
+                    { id: 'silver_tiara', level: 10, inputBar: 'silver_bar', mould: 'tiara_mould', xp: 14 },
+                    { id: 'silver_amulet', level: 10, inputBar: 'silver_bar', mould: 'amulet_mould', xp: 14 },
+                    { id: 'gold_ring', level: 40, inputBar: 'gold_bar', mould: 'ring_mould', xp: 22 },
+                    { id: 'gold_tiara', level: 40, inputBar: 'gold_bar', mould: 'tiara_mould', xp: 22 },
+                    { id: 'gold_amulet', level: 40, inputBar: 'gold_bar', mould: 'amulet_mould', xp: 22 }
+                ];
+
+                for (let i = 0; i < jewelryDefs.length; i++) {
+                    const def = jewelryDefs[i];
+                    recipes[`forge_${def.id}`] = {
+                        stationType: 'FURNACE',
+                        requiredLevel: def.level,
+                        requiredMouldIds: [def.mould],
+                        inputs: [{ itemId: def.inputBar, amount: 1 }],
+                        output: { itemId: def.id, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 3
+                    };
+                }
+
+                return recipes;
+            })(),
+            economy: {
+                primaryResource: 'bronze_bar',
+                valueTable: {
+                    hammer: { buy: 8, sell: 2 },
+                    bronze_bar: { buy: null, sell: 8 },
+                    iron_bar: { buy: null, sell: 16 },
+                    steel_bar: { buy: null, sell: 32 },
+                    mithril_bar: { buy: null, sell: 64 },
+                    silver_bar: { buy: null, sell: 45 },
+                    adamant_bar: { buy: null, sell: 128 },
+                    gold_bar: { buy: null, sell: 70 },
+                    rune_bar: { buy: null, sell: 256 },
+                    ring_mould: { buy: null, sell: null },
+                    amulet_mould: { buy: null, sell: null },
+                    tiara_mould: { buy: null, sell: null }
+                },
+                generalStoreFallback: {
+                    buyPolicy: 'half_price_floor'
+                }
             }
         }
     };
@@ -367,4 +483,5 @@
         skills: SKILL_SPECS
     };
 })();
+
 

@@ -715,7 +715,8 @@
                 firemaking: 'fm',
                 fishing: 'fish',
                 cooking: 'cook',
-                runecrafting: 'rc'
+                runecrafting: 'rc',
+                smithing: 'smith'
             };
             const key = keyBySkill[skillName];
             if (!key || !playerSkills[skillName]) return;
@@ -1383,10 +1384,14 @@
             fishingSpotsToRender = [];
             directionalSignsToRender = [];
             altarCandidatesToRender = [];
+            furnacesToRender = [];
+            anvilsToRender = [];
             const inTownCore = (x, y) => {
                 const inCastle = (x >= 190 && x <= 220 && y >= 190 && y <= 215);
                 const inStore = (x >= 177 && x <= 185 && y >= 232 && y <= 240);
-                return inCastle || inStore;
+                // Keep a clean spawn-safe apron around the open smithing hall footprint.
+                const inSmithyApron = (x >= 217 && x <= 233 && y >= 224 && y <= 244);
+                return inCastle || inStore || inSmithyApron;
             };
             const terrainNoise = (x, y) => {
                 const n1 = Math.sin(x * 0.045) * 0.08;
@@ -1508,6 +1513,17 @@
             }
 
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
+            const smithingStations = [
+                { type: 'FURNACE', x: 226, y: 232 },
+                { type: 'ANVIL', x: 226, y: 236 }
+            ];
+            for (let i = 0; i < smithingStations.length; i++) {
+                const station = smithingStations[i];
+                if (!station || station.x <= 1 || station.y <= 1 || station.x >= MAP_SIZE - 2 || station.y >= MAP_SIZE - 2) continue;
+                if (station.type === 'FURNACE') furnacesToRender.push({ x: station.x, y: station.y, z: 0 });
+                if (station.type === 'ANVIL') anvilsToRender.push({ x: station.x, y: station.y, z: 0 });
+            }
+
             const fishingMerchantSpots = [
                 { name: 'Fishing Teacher', merchantId: 'fishing_teacher', type: 3, x: castleFrontPond.cx - 4, y: pierEntryY },
                 { name: 'Fishing Supplier', merchantId: 'fishing_supplier', type: 2, x: castleFrontPond.cx + 4, y: pierYEnd - 1 }
@@ -1638,6 +1654,23 @@
                 "CWWWWWWWC"  
             ];
 
+            // Open-front smithing hall (13x9): three-walled rectangle, west side open to pond.
+            const smithingHallBlueprint = [
+                "CWWWWWWWC",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "FFFFFFFFW",
+                "CWWWWWWWC"
+            ];
+
             function stampBlueprint(startX, startY, z, blueprint) {
                 for (let y = 0; y < blueprint.length; y++) {
                     const row = blueprint[y];
@@ -1697,6 +1730,9 @@
             // Stamp the General Store at the requested coordinates
             stampBlueprint(177, 232, 0, generalStoreBlueprint);
 
+            // Smithing hall opposite the pond from the shop (east bank): longer rectangle, shop-width.
+            stampBlueprint(221, 228, 0, smithingHallBlueprint);
+
 
             // --- USER TEST: Dual Castle Stairs ---
             // Left Staircase (194, 214 -> 191, 214)
@@ -1719,6 +1755,12 @@
             // Ground Floor (Plane 0) - East wall of the General Store
             logicalMap[0][236][186] = 15; heightMap[0][236][186] = 0.25; // Normal Seamless Stairs (Tier 1, climbs 0 to 0.5)
             logicalMap[0][236][185] = 18; heightMap[0][236][185] = 0.5;  // Closed Door overriding the wall segment
+
+            // Smithing hall approach stairs from pond side (west/open side).
+            for (let sy = 233; sy <= 235; sy++) {
+                logicalMap[0][sy][219] = 20; heightMap[0][sy][219] = -0.01;
+                logicalMap[0][sy][220] = 15; heightMap[0][sy][220] = 0.25;
+            }
             
             doorsToRender.push({ 
                 x: 185, y: 236, z: 0, 
@@ -2262,6 +2304,52 @@
                     }
                 });
 
+                furnacesToRender.forEach((furnace) => {
+                    if (furnace.x >= startX && furnace.x < endX && furnace.y >= startY && furnace.y < endY && furnace.z === z) {
+                        const furnaceGroup = new THREE.Group();
+                        furnaceGroup.position.set(furnace.x, heightMap[z][furnace.y][furnace.x] + Z_OFFSET, furnace.y);
+                        const base = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 1.1), sharedMaterials.floor8);
+                        base.position.set(0, 0.35, 0);
+                        base.castShadow = true;
+                        base.receiveShadow = true;
+                        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 0.2), sharedMaterials.floor7);
+                        mouth.position.set(0, 0.45, 0.52);
+                        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), sharedMaterials.floor7);
+                        chimney.position.set(0.3, 1.05, -0.25);
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.1, 1.4), new THREE.MeshBasicMaterial({ visible: false }));
+                        hitbox.position.set(0, 1.05, 0);
+                        hitbox.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
+                        furnaceGroup.add(base, mouth, chimney, hitbox);
+                        base.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
+                        mouth.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
+                        chimney.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
+                        environmentMeshes.push(base, mouth, chimney, hitbox);
+                        planeGroup.add(furnaceGroup);
+                    }
+                });
+
+                anvilsToRender.forEach((anvil) => {
+                    if (anvil.x >= startX && anvil.x < endX && anvil.y >= startY && anvil.y < endY && anvil.z === z) {
+                        const anvilGroup = new THREE.Group();
+                        anvilGroup.position.set(anvil.x, heightMap[z][anvil.y][anvil.x] + Z_OFFSET, anvil.y);
+                        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.35), sharedMaterials.boothWood);
+                        stand.position.set(0, 0.275, 0);
+                        const top = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.45), sharedMaterials.floor7);
+                        top.position.set(0, 0.62, 0);
+                        const horn = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.2), sharedMaterials.floor7);
+                        horn.position.set(0.5, 0.6, 0);
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.8, 1.3), new THREE.MeshBasicMaterial({ visible: false }));
+                        hitbox.position.set(0, 0.9, 0);
+                        hitbox.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
+                        anvilGroup.add(stand, top, horn, hitbox);
+                        stand.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
+                        top.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
+                        horn.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
+                        environmentMeshes.push(stand, top, horn, hitbox);
+                        planeGroup.add(anvilGroup);
+                    }
+                });
+
                 directionalSignsToRender.forEach(ds => {
                     if (ds.x >= startX && ds.x < endX && ds.y >= startY && ds.y < endY && ds.z === z) {
                         const signGroup = new THREE.Group();
@@ -2665,6 +2753,7 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
 
 
 

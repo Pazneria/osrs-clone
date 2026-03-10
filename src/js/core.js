@@ -22,6 +22,8 @@
         let pendingAction = null;
         let npcsToRender = []; 
         let bankBoothsToRender = []; 
+        let furnacesToRender = [];
+        let anvilsToRender = []; 
         let doorsToRender = []; 
         let directionalSignsToRender = []; 
         let activeHitsplats = []; 
@@ -397,6 +399,65 @@ O445411111OOOOO.
                 ]);
             } else if (name === 'fm_full') {
                 slots = makeFilledSlots(tools, 'logs');
+            } else if (name === 'smith_smelt') {
+                slots = [
+                    { itemId: 'hammer', amount: 1 },
+                    { itemId: 'ring_mould', amount: 1 },
+                    { itemId: 'amulet_mould', amount: 1 },
+                    { itemId: 'tiara_mould', amount: 1 },
+                    { itemId: 'copper_ore', amount: 8 },
+                    { itemId: 'tin_ore', amount: 8 },
+                    { itemId: 'iron_ore', amount: 6 },
+                    { itemId: 'coal', amount: 10 },
+                    { itemId: 'silver_ore', amount: 4 },
+                    { itemId: 'gold_ore', amount: 4 },
+                    { itemId: 'mithril_ore', amount: 4 },
+                    { itemId: 'adamant_ore', amount: 2 },
+                    { itemId: 'rune_ore', amount: 1 }
+                ];
+            } else if (name === 'smith_forge') {
+                slots = [
+                    { itemId: 'hammer', amount: 1 },
+                    { itemId: 'bronze_bar', amount: 8 },
+                    { itemId: 'iron_bar', amount: 6 },
+                    { itemId: 'steel_bar', amount: 5 },
+                    { itemId: 'mithril_bar', amount: 4 },
+                    { itemId: 'adamant_bar', amount: 3 },
+                    { itemId: 'rune_bar', amount: 1 }
+                ];
+            } else if (name === 'smith_jewelry') {
+                slots = [
+                    { itemId: 'hammer', amount: 1 },
+                    { itemId: 'ring_mould', amount: 1 },
+                    { itemId: 'amulet_mould', amount: 1 },
+                    { itemId: 'tiara_mould', amount: 1 },
+                    { itemId: 'silver_bar', amount: 10 },
+                    { itemId: 'gold_bar', amount: 10 }
+                ];
+            } else if (name === 'smith_full') {
+                slots = [
+                    { itemId: 'hammer', amount: 1 },
+                    { itemId: 'ring_mould', amount: 1 },
+                    { itemId: 'amulet_mould', amount: 1 },
+                    { itemId: 'tiara_mould', amount: 1 },
+                    { itemId: 'copper_ore', amount: 3 },
+                    { itemId: 'tin_ore', amount: 3 },
+                    { itemId: 'iron_ore', amount: 2 },
+                    { itemId: 'coal', amount: 4 },
+                    { itemId: 'silver_ore', amount: 2 },
+                    { itemId: 'gold_ore', amount: 2 },
+                    { itemId: 'mithril_ore', amount: 2 },
+                    { itemId: 'adamant_ore', amount: 1 },
+                    { itemId: 'rune_ore', amount: 1 },
+                    { itemId: 'bronze_bar', amount: 1 },
+                    { itemId: 'iron_bar', amount: 1 },
+                    { itemId: 'steel_bar', amount: 1 }
+                ];
+            } else if (name === 'smith_fullinv') {
+                slots = makeFilledSlots(tools.concat([
+                    { itemId: 'hammer', amount: 1 },
+                    { itemId: 'bronze_bar', amount: 1 }
+                ]), 'logs');
             } else if (name === 'default') {
                 slots = [
                     { itemId: 'iron_axe', amount: 1 },
@@ -743,7 +804,8 @@ O445411111OOOOO.
             firemaking: { xp: 0, level: 1 },
             fishing: { xp: 0, level: 1 },
             cooking: { xp: 0, level: 1 },
-            runecrafting: { xp: 0, level: 1 }
+            runecrafting: { xp: 0, level: 1 },
+            smithing: { xp: 0, level: 1 }
         };
         let groundItems = [];
         let activeFires = [];
@@ -851,8 +913,8 @@ O445411111OOOOO.
                 const cmd = (parts[0] || '').toLowerCase();
 
                 if (cmd === 'help' || !cmd) {
-                    addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <fishing_supplier|fishing_teacher|rune_tutor|combination_sage>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <fishing_supplier|fishing_teacher|rune_tutor|combination_sage>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -860,12 +922,12 @@ O445411111OOOOO.
                     const skill = String(parts[1] || '').toLowerCase();
                     const lvl = parseInt(parts[2], 10);
                     if (!Number.isFinite(lvl)) {
-                        addChatMessage('Usage: /qa setlevel <fishing|mining|runecrafting> <1-99>', 'warn');
+                        addChatMessage('Usage: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>', 'warn');
                         return;
                     }
                     const ok = setQaSkillLevel(skill, lvl);
                     if (!ok) {
-                        addChatMessage('Unknown skill for /qa setlevel. Use fishing, mining, or runecrafting.', 'warn');
+                        addChatMessage('Unknown skill for /qa setlevel. Use fishing, mining, runecrafting, or smithing.', 'warn');
                         return;
                     }
                     addChatMessage(`QA set level: ${skill}=${Math.max(1, Math.min(99, Math.floor(lvl)))}`, 'info');
@@ -1202,6 +1264,8 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
 
 
 

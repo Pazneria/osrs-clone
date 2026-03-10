@@ -139,6 +139,21 @@ function run() {
   assert(!shopEconomy.canMerchantSellItem("small_net", "fishing_teacher"), "teacher should not sell small net by default");
   assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should not sell rune harpoon by default");
 
+  const smithSpec = SkillSpecRegistry.getSkillSpec("smithing");
+  assert(!!smithSpec && !!smithSpec.recipeSet, "smithing recipe set missing");
+  assert(!!smithSpec.timing && smithSpec.timing.actionTicks === 3, "smithing action tick mismatch");
+  assert(!!smithSpec.recipeSet.smelt_bronze_bar, "smithing bronze smelt recipe missing");
+  assert(!!smithSpec.recipeSet.forge_bronze_sword_blade, "smithing bronze blade recipe missing");
+  assert(!!smithSpec.recipeSet.forge_rune_platebody, "smithing rune platebody recipe missing");
+  assert(!!smithSpec.recipeSet.forge_gold_ring, "smithing gold jewelry recipe missing");
+  assert(smithSpec.recipeSet.forge_bronze_sword_blade.stationType === "ANVIL", "smithing forge station mismatch");
+  assert(smithSpec.recipeSet.smelt_bronze_bar.stationType === "FURNACE", "smithing smelt station mismatch");
+  assert(!!itemDefs.hammer, "item catalog hammer missing");
+  assert(!!itemDefs.bronze_bar && itemDefs.bronze_bar.value === 8, "item catalog bronze bar mismatch");
+  assert(!!itemDefs.rune_platebody, "item catalog rune platebody missing");
+  assert(!!itemDefs.bronze_sword_blade, "item catalog bronze sword blade missing");
+  assert(!!itemDefs.gold_ring, "item catalog gold ring missing");
+
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
   assert(worldScript.includes("for (let by = placed.y - 1; by <= placed.y + 2; by++)"), "runecrafting altar collision footprint regression");
@@ -146,6 +161,12 @@ function run() {
   assert(worldScript.includes("Fishing Supplier"), "fishing supplier world placement missing");
   assert(worldScript.includes("merchantId: 'fishing_supplier'"), "fishing supplier merchant wiring missing");
   assert(worldScript.includes("merchantId: 'fishing_teacher'"), "fishing teacher merchant wiring missing");
+
+  const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
+  assert(worldScript.includes("type: 'FURNACE'"), "furnace world placement missing");
+  assert(worldScript.includes("type: 'ANVIL'"), "anvil world placement missing");
+  assert(smithRuntimeScript.includes("const SKILL_ID = 'smithing'"), "smithing runtime module missing skill id");
+  assert(smithRuntimeScript.includes("stationType"), "smithing runtime station validation missing");
 
   const rcRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runecrafting/index.js"), "utf8");
   assert(rcRuntimeScript.includes("function tryFillPouchFromInventory"), "runecrafting pouch fill handler missing");

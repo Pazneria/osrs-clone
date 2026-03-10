@@ -114,6 +114,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         });
                     }
                     addContextMenuOption('Examine <span class="text-orange-300">Fire</span>', () => console.log('EXAMINING: A hot campfire.'));
+                } else if (!usedSkillOptions && hitData.type === 'FURNACE') {
+                    addContextMenuOption('Smelt <span class="text-orange-300">Furnace</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'FURNACE', { skillId: 'smithing', stationType: 'FURNACE' }); spawnClickMarker(hitData.point, true); });
+                    addContextMenuOption('Examine <span class="text-orange-300">Furnace</span>', () => console.log('EXAMINING: A roaring smithing furnace.'));
+                } else if (!usedSkillOptions && hitData.type === 'ANVIL') {
+                    addContextMenuOption('Forge <span class="text-slate-300">Anvil</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ANVIL', { skillId: 'smithing', stationType: 'ANVIL' }); spawnClickMarker(hitData.point, true); });
+                    addContextMenuOption('Examine <span class="text-slate-300">Anvil</span>', () => console.log('EXAMINING: A solid anvil for forging metal.'));
                 } else if (hitData.type === 'BANK_BOOTH') {
                     addContextMenuOption('Bank <span class="text-cyan-400">Bank Booth</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'BANK_BOOTH'); spawnClickMarker(hitData.point, true); });
                     addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => console.log('EXAMINING: A sturdy wooden booth for storing your items.'));

@@ -411,6 +411,327 @@
             icon: { kind: 'sprite', key: 'large_pouch' }
         }
     };
+    function createSmithingItemDefs() {
+        const defs = {
+            hammer: {
+                name: 'Hammer',
+                type: 'tool',
+                value: 8,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            },
+            ring_mould: {
+                name: 'Ring mould',
+                type: 'tool',
+                value: 0,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'small_pouch' }
+            },
+            amulet_mould: {
+                name: 'Amulet mould',
+                type: 'tool',
+                value: 0,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'small_pouch' }
+            },
+            tiara_mould: {
+                name: 'Tiara mould',
+                type: 'tool',
+                value: 0,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'small_pouch' }
+            },
+            iron_ore: {
+                name: 'Iron ore',
+                type: 'resource',
+                value: 18,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'copper_ore' }
+            },
+            coal: {
+                name: 'Coal',
+                type: 'resource',
+                value: 30,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            mithril_ore: {
+                name: 'Mithril ore',
+                type: 'resource',
+                value: 120,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            silver_ore: {
+                name: 'Silver ore',
+                type: 'resource',
+                value: 45,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            adamant_ore: {
+                name: 'Adamant ore',
+                type: 'resource',
+                value: 300,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            gold_ore: {
+                name: 'Gold ore',
+                type: 'resource',
+                value: 70,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            rune_ore: {
+                name: 'Rune ore',
+                type: 'resource',
+                value: 1200,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            silver_ring: {
+                name: 'Silver Ring',
+                type: 'component',
+                value: 40,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            },
+            silver_amulet: {
+                name: 'Silver Amulet',
+                type: 'component',
+                value: 40,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            },
+            silver_tiara: {
+                name: 'Silver Tiara',
+                type: 'component',
+                value: 40,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            },
+            gold_ring: {
+                name: 'Gold Ring',
+                type: 'component',
+                value: 100,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            },
+            gold_amulet: {
+                name: 'Gold Amulet',
+                type: 'component',
+                value: 100,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            },
+            gold_tiara: {
+                name: 'Gold Tiara',
+                type: 'component',
+                value: 100,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            }
+        };
+
+        const tiers = [
+            {
+                id: 'bronze',
+                name: 'Bronze',
+                barValue: 8,
+                gearValue: 40,
+                defStats: { boots: 1, helmet: 3, shield: 4, platelegs: 5, platebody: 7 }
+            },
+            {
+                id: 'iron',
+                name: 'Iron',
+                barValue: 16,
+                gearValue: 120,
+                defStats: { boots: 2, helmet: 5, shield: 6, platelegs: 8, platebody: 10 }
+            },
+            {
+                id: 'steel',
+                name: 'Steel',
+                barValue: 32,
+                gearValue: 350,
+                defStats: { boots: 3, helmet: 8, shield: 10, platelegs: 12, platebody: 15 }
+            },
+            {
+                id: 'mithril',
+                name: 'Mithril',
+                barValue: 64,
+                gearValue: 900,
+                defStats: { boots: 5, helmet: 12, shield: 15, platelegs: 18, platebody: 22 }
+            },
+            {
+                id: 'adamant',
+                name: 'Adamant',
+                barValue: 128,
+                gearValue: 2200,
+                defStats: { boots: 7, helmet: 17, shield: 21, platelegs: 25, platebody: 30 }
+            },
+            {
+                id: 'rune',
+                name: 'Rune',
+                barValue: 256,
+                gearValue: 0,
+                defStats: { boots: 10, helmet: 24, shield: 28, platelegs: 34, platebody: 40 }
+            }
+        ];
+
+        const barNames = {
+            bronze: 'Bronze Bar',
+            iron: 'Iron Bar',
+            steel: 'Steel Bar',
+            mithril: 'Mithril Bar',
+            silver: 'Silver Bar',
+            adamant: 'Adamant Bar',
+            gold: 'Gold Bar',
+            rune: 'Rune Bar'
+        };
+        const barValues = { bronze: 8, iron: 16, steel: 32, mithril: 64, silver: 45, adamant: 128, gold: 70, rune: 256 };
+
+        Object.keys(barNames).forEach((barTier) => {
+            defs[`${barTier}_bar`] = {
+                name: barNames[barTier],
+                type: 'resource',
+                value: barValues[barTier],
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            };
+        });
+
+        for (let i = 0; i < tiers.length; i++) {
+            const tier = tiers[i];
+            defs[`${tier.id}_sword_blade`] = {
+                name: `${tier.name} Sword Blade`,
+                type: 'component',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.3)),
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            };
+            defs[`${tier.id}_axe_head`] = {
+                name: `${tier.name} Axe Head`,
+                type: 'component',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.3)),
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            };
+            defs[`${tier.id}_pickaxe_head`] = {
+                name: `${tier.name} Pickaxe Head`,
+                type: 'component',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.3)),
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            };
+            defs[`${tier.id}_arrowheads`] = {
+                name: `${tier.name} Arrowheads`,
+                type: 'component',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.2)),
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            };
+
+            defs[`${tier.id}_boots`] = {
+                name: `${tier.name} Boots`,
+                type: 'feet',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.4)),
+                stackable: false,
+                actions: ['Equip', 'Drop'],
+                defaultAction: 'Equip',
+                stats: { atk: 0, def: tier.defStats.boots, str: 0 },
+                icon: { kind: 'sprite', key: 'iron_axe' }
+            };
+            defs[`${tier.id}_helmet`] = {
+                name: `${tier.name} Helmet`,
+                type: 'head',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.5)),
+                stackable: false,
+                actions: ['Equip', 'Drop'],
+                defaultAction: 'Equip',
+                stats: { atk: 0, def: tier.defStats.helmet, str: 0 },
+                icon: { kind: 'sprite', key: 'iron_axe' }
+            };
+            defs[`${tier.id}_shield`] = {
+                name: `${tier.name} Shield`,
+                type: 'shield',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.55)),
+                stackable: false,
+                actions: ['Equip', 'Drop'],
+                defaultAction: 'Equip',
+                stats: { atk: 0, def: tier.defStats.shield, str: 0 },
+                icon: { kind: 'sprite', key: 'iron_axe' }
+            };
+            defs[`${tier.id}_platelegs`] = {
+                name: `${tier.name} Platelegs`,
+                type: 'legs',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.65)),
+                stackable: false,
+                actions: ['Equip', 'Drop'],
+                defaultAction: 'Equip',
+                stats: { atk: 0, def: tier.defStats.platelegs, str: 0 },
+                icon: { kind: 'sprite', key: 'iron_axe' }
+            };
+            defs[`${tier.id}_platebody`] = {
+                name: `${tier.name} Platebody`,
+                type: 'body',
+                value: Math.max(1, Math.floor(tier.gearValue * 0.8)),
+                stackable: false,
+                actions: ['Equip', 'Drop'],
+                defaultAction: 'Equip',
+                stats: { atk: 0, def: tier.defStats.platebody, str: 0 },
+                icon: { kind: 'sprite', key: 'iron_axe' }
+            };
+        }
+
+        return defs;
+    }
+
+    Object.assign(ITEM_DEFS, createSmithingItemDefs());
 
     function resolveIcon(def, makeIconSprite, makeIconFromImage, assetVersionTag) {
         if (!def || !def.icon) return '';
@@ -456,4 +777,5 @@
         buildItemDb
     };
 })();
+
 

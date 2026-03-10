@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "osrs-prototype",
   "version": "0.1.0",
   "private": true,
@@ -19,3 +19,4 @@
     "tool:skills:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-skills.js"
   }
 }
+

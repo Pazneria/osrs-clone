@@ -100,6 +100,28 @@
         return emptySlots >= Math.max(1, amount);
     }
 
+    function getItemDataById(itemId) {
+        if (!itemId || !ITEM_DB) return null;
+        return ITEM_DB[itemId] || null;
+    }
+
+    function getInventorySlotsSnapshot() {
+        const slots = [];
+        for (let i = 0; i < inventory.length; i++) {
+            const slot = inventory[i];
+            if (!slot || !slot.itemData) {
+                slots.push(null);
+                continue;
+            }
+            slots.push({
+                itemId: slot.itemData.id,
+                amount: Number.isFinite(slot.amount) ? Math.max(0, Math.floor(slot.amount)) : 0,
+                stackable: !!slot.itemData.stackable
+            });
+        }
+        return slots;
+    }
+
     function getSkillLevel(skillId) {
         if (!skillId || !playerSkills || !playerSkills[skillId]) return 1;
         const level = playerSkills[skillId].level;
@@ -140,6 +162,7 @@
         const targetX = Number.isInteger(overrides.targetX) ? overrides.targetX : playerState.targetX;
         const targetY = Number.isInteger(overrides.targetY) ? overrides.targetY : playerState.targetY;
         const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : playerState.z;
+        const targetUid = (overrides.targetUid !== undefined ? overrides.targetUid : playerState.targetUid);
 
         return {
             skillId: overrides.skillId || resolveSkillIdFromTarget(targetObj),
@@ -147,7 +170,7 @@
             targetX,
             targetY,
             targetZ,
-            targetUid: (overrides.targetUid !== undefined ? overrides.targetUid : playerState.targetUid),
+            targetUid,
             hitData: overrides.hitData || null,
             random: Math.random,
             currentTick,
@@ -191,6 +214,9 @@
             applyRockMiningPose: overrides.applyRockMiningPose || null,
             sourceInvIndex: Number.isInteger(overrides.sourceInvIndex) ? overrides.sourceInvIndex : null,
             sourceItemId: (typeof overrides.sourceItemId === 'string' ? overrides.sourceItemId : null),
+            recipeId: (typeof overrides.recipeId === 'string' ? overrides.recipeId : (targetUid && typeof targetUid.recipeId === 'string' ? targetUid.recipeId : null)),
+            quantityMode: (typeof overrides.quantityMode === 'string' ? overrides.quantityMode : (targetUid && typeof targetUid.quantityMode === 'string' ? targetUid.quantityMode : null)),
+            quantityCount: (Number.isFinite(overrides.quantityCount) ? Math.max(1, Math.floor(overrides.quantityCount)) : (targetUid && Number.isFinite(targetUid.quantityCount) ? Math.max(1, Math.floor(targetUid.quantityCount)) : null)),
             isTargetTile: (tileId) => {
                 return logicalMap[targetZ] && logicalMap[targetZ][targetY] && logicalMap[targetZ][targetY][targetX] === tileId;
             },
@@ -202,6 +228,8 @@
             },
             hasItem,
             canAcceptItemById,
+            getItemDataById,
+            getInventorySlotsSnapshot,
             getInventoryCount: (itemId) => (typeof getInventoryCount === 'function' ? getInventoryCount(itemId) : 0),
             getFirstInventorySlotByItemId: (itemId) => (typeof getFirstInventorySlotByItemId === 'function' ? getFirstInventorySlotByItemId(itemId) : -1),
             removeOneItemById: (itemId) => (typeof removeOneItemById === 'function' ? removeOneItemById(itemId) : false),
@@ -216,6 +244,13 @@
             startSkillingAction: () => startFacingAction(`SKILLING: ${targetObj}`, true),
             queueInteract: () => queueAction('INTERACT', targetX, targetY, targetObj),
             queueInteractAt: (obj, x, y, targetUid = null) => queueAction('INTERACT', x, y, obj, targetUid),
+            promptAmount: (callback) => {
+                if (typeof promptAmount === 'function') {
+                    promptAmount(callback);
+                    return true;
+                }
+                return false;
+            },
             haltMovement: () => {
                 playerState.path = [];
                 playerState.midX = null;
@@ -380,6 +415,12 @@
         return false;
     }
 
+    function queuePendingSkillStart(pending) {
+        if (!pending || typeof pending !== 'object') return false;
+        playerState.pendingSkillStart = Object.assign({}, pending);
+        return true;
+    }
+
     function handleSkillTick() {
         const skillId = resolveSkillIdFromAction(playerState.action);
         const module = skillId ? skillRegistry[skillId] : null;
@@ -408,6 +449,7 @@
         tryStartSkillById,
         tryStartFromPlayerTarget,
         tryUseItemOnTarget,
+        queuePendingSkillStart,
         handleSkillTick,
         handleSkillAnimation
     };
