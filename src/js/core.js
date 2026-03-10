@@ -580,6 +580,52 @@ O445411111OOOOO.
             return false;
         }
 
+        function getQaMerchantAliasMap() {
+            return {
+                teacher: 'fishing_teacher',
+                supplier: 'fishing_supplier',
+                tutor: 'rune_tutor',
+                sage: 'combination_sage',
+                fish_teacher: 'fishing_teacher',
+                fish_supplier: 'fishing_supplier',
+                rc_tutor: 'rune_tutor',
+                combo_sage: 'combination_sage'
+            };
+        }
+
+        function qaGotoMerchant(targetLike) {
+            const raw = String(targetLike || '').trim().toLowerCase();
+            if (!raw) return false;
+
+            const aliases = getQaMerchantAliasMap();
+            const merchantId = aliases[raw] || raw;
+
+            const matches = [];
+            for (let i = 0; i < npcsToRender.length; i++) {
+                const npc = npcsToRender[i];
+                if (!npc || !npc.merchantId) continue;
+                const id = String(npc.merchantId).toLowerCase();
+                const name = String(npc.name || '').toLowerCase();
+                if (id === merchantId || id.includes(merchantId) || name.includes(raw)) {
+                    matches.push(npc);
+                }
+            }
+            if (matches.length === 0) return false;
+
+            let best = matches[0];
+            let bestDist = Math.abs(best.x - playerState.x) + Math.abs(best.y - playerState.y) + (best.z === playerState.z ? 0 : 1000);
+            for (let i = 1; i < matches.length; i++) {
+                const npc = matches[i];
+                const dist = Math.abs(npc.x - playerState.x) + Math.abs(npc.y - playerState.y) + (npc.z === playerState.z ? 0 : 1000);
+                if (dist < bestDist) {
+                    best = npc;
+                    bestDist = dist;
+                }
+            }
+
+            const label = (best.merchantId || best.name || 'merchant').toString();
+            return qaTeleportTo(best.x, best.y, best.z, label);
+        }
         function getQaBestToolByClass(toolClass) {
             const candidates = [];
             if (equipment && equipment.weapon && equipment.weapon.weaponClass === toolClass) {
@@ -805,7 +851,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <fishing_supplier|fishing_teacher>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <fishing_supplier|fishing_teacher|rune_tutor|combination_sage>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -854,16 +900,26 @@ O445411111OOOOO.
                     return;
                 }
 
+                
                 if (cmd === 'gotofish' && parts.length >= 2) {
                     const target = String(parts[1] || '').toLowerCase();
                     const ok = qaGotoFishingSpot(target);
                     if (!ok) addChatMessage('Usage: /qa gotofish <pond|pier|deep>', 'warn');
                     return;
                 }
+
                 if (cmd === 'gotofishshop' && parts.length >= 2) {
                     const target = String(parts[1] || '').toLowerCase();
                     const ok = qaGotoFishingMerchant(target);
                     if (!ok) addChatMessage('Usage: /qa gotofishshop <teacher|supplier>', 'warn');
+                    return;
+                }
+                
+
+                if (cmd === 'gotomerchant' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoMerchant(target);
+                    if (!ok) addChatMessage('Usage: /qa gotomerchant <merchantId|alias>', 'warn');
                     return;
                 }
 
@@ -906,8 +962,9 @@ O445411111OOOOO.
 
                 if (cmd === 'openshop') {
                     const merchantId = String(parts[1] || '').toLowerCase();
-                    if (merchantId !== 'fishing_supplier' && merchantId !== 'fishing_teacher') {
-                        addChatMessage('Usage: /qa openshop <fishing_supplier|fishing_teacher>', 'warn');
+                    const qaOpenableMerchants = ['fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage'];
+                    if (!qaOpenableMerchants.includes(merchantId)) {
+                        addChatMessage('Usage: /qa openshop <fishing_supplier|fishing_teacher|rune_tutor|combination_sage>', 'warn');
                         return;
                     }
                     if (typeof window.openShopForMerchant !== 'function') {
@@ -1144,6 +1201,8 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
 
 
 

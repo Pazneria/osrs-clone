@@ -1735,6 +1735,62 @@
                 }
             }
 
+            // Place runecrafting merchants near altar routes so rune trading and pouch progression are reachable in-world.
+            function isRunecraftingMerchantWalkable(x, y, z) {
+                if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return false;
+                const row = logicalMap[z] && logicalMap[z][y];
+                if (!row) return false;
+                const tile = row[x];
+                return tile === 0 || tile === 20 || tile === 6 || tile === 7 || tile === 8 || tile === 15 || tile === 19;
+            }
+
+            function findMerchantSpotNearAltar(anchor) {
+                if (!anchor) return null;
+                const maxRadius = 10;
+                for (let radius = 2; radius <= maxRadius; radius++) {
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        for (let dx = -radius; dx <= radius; dx++) {
+                            if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+                            const x = anchor.x + dx;
+                            const y = anchor.y + dy;
+                            if (!isRunecraftingMerchantWalkable(x, y, anchor.z)) continue;
+                            const occupied = npcsToRender.some((npc) => npc && npc.z === anchor.z && npc.x === x && npc.y === y);
+                            if (occupied) continue;
+                            return { x, y, z: anchor.z };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            const emberAltar = altarCandidatesToRender.find((altar) => altar && altar.label === 'Ember Altar') || altarCandidatesToRender[0] || null;
+            const airAltar = altarCandidatesToRender.find((altar) => altar && altar.label === 'Air Altar')
+                || altarCandidatesToRender[altarCandidatesToRender.length - 1]
+                || null;
+
+            const runecraftingMerchantSpots = [
+                { name: 'Rune Tutor', merchantId: 'rune_tutor', type: 3, anchor: emberAltar },
+                { name: 'Combination Sage', merchantId: 'combination_sage', type: 6, anchor: airAltar }
+            ];
+
+            for (let i = 0; i < runecraftingMerchantSpots.length; i++) {
+                const spotSpec = runecraftingMerchantSpots[i];
+                if (!spotSpec || !spotSpec.anchor) continue;
+
+                const spot = findMerchantSpotNearAltar(spotSpec.anchor);
+                if (!spot) continue;
+
+                logicalMap[spot.z][spot.y][spot.x] = 16;
+                npcsToRender.push({
+                    type: spotSpec.type,
+                    x: spot.x,
+                    y: spot.y,
+                    z: spot.z,
+                    name: spotSpec.name,
+                    merchantId: spotSpec.merchantId,
+                    action: 'Trade'
+                });
+            }
             window.getRunecraftingAltarLocations = function getRunecraftingAltarLocations() {
                 if (!Array.isArray(altarCandidatesToRender)) return [];
                 return altarCandidatesToRender.map((altar) => ({
@@ -2530,6 +2586,9 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
+
+
 
 
 

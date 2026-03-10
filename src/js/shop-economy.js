@@ -67,6 +67,14 @@
         return null;
     }
 
+    function getSkillLevel(skillId) {
+        if (!skillId) return 1;
+        if (typeof playerSkills === 'object' && playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level)) {
+            return Math.max(1, Math.floor(playerSkills[skillId].level));
+        }
+        return 1;
+    }
+
     function getUnlockConfig(merchantConfig, itemId) {
         if (!merchantConfig || !merchantConfig.unlocks || !itemId) return null;
         const unlocks = merchantConfig.unlocks;
@@ -108,12 +116,21 @@
         if (!itemId) return false;
         const meta = getMerchantEconomyMeta(merchantId);
         if (!meta) return true;
+
         const merchantConfig = meta.merchantConfig || {};
         const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells : [];
         const unlockConfig = getUnlockConfig(merchantConfig, itemId);
+        const pouchUnlocks = merchantConfig.pouchUnlocks && typeof merchantConfig.pouchUnlocks === 'object'
+            ? merchantConfig.pouchUnlocks
+            : null;
+        const pouchRequiredLevel = pouchUnlocks && Number.isFinite(pouchUnlocks[itemId])
+            ? Math.max(1, Math.floor(pouchUnlocks[itemId]))
+            : null;
 
         if (unlockConfig) return isItemUnlockedForMerchant(itemId, merchantId);
-        return sells.includes(itemId);
+        if (!sells.includes(itemId)) return false;
+        if (pouchRequiredLevel === null) return true;
+        return getSkillLevel(meta.skillId) >= pouchRequiredLevel;
     }
 
     function resolveBuyPrice(itemId, merchantId) {
@@ -129,6 +146,8 @@
 
     function resolveSellPrice(itemId, merchantId) {
         const baseValue = getBaseItemValue(itemId);
+        if ((merchantId || 'general_store') === 'general_store') return Math.floor(baseValue * 0.5);
+
         const meta = getMerchantEconomyMeta(merchantId);
         if (!meta || !meta.economy) return Math.floor(baseValue * FALLBACK_SELL_RATIO);
 
@@ -170,6 +189,7 @@
     function getMerchantDefaultSellItemIds(merchantId) {
         const meta = getMerchantEconomyMeta(merchantId);
         if (!meta || !meta.merchantConfig) return [];
+
         const merchantConfig = meta.merchantConfig;
         const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells.slice() : [];
         const unlocks = merchantConfig.unlocks;
@@ -178,7 +198,14 @@
             const itemId = unlockItems[i];
             if (isItemUnlockedForMerchant(itemId, merchantId)) sells.push(itemId);
         }
-        return Array.from(new Set(sells));
+
+        const unique = Array.from(new Set(sells));
+        const eligible = [];
+        for (let i = 0; i < unique.length; i++) {
+            const itemId = unique[i];
+            if (canMerchantSellItem(itemId, merchantId)) eligible.push(itemId);
+        }
+        return eligible;
     }
 
     function getUnlockedStockAmount(itemId, merchantId) {
@@ -199,4 +226,3 @@
         isItemUnlockedForMerchant
     };
 })();
-
