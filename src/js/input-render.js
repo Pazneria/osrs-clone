@@ -437,7 +437,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         function queueAction(type, gridX, gridY, obj, targetUid = null) { pendingAction = { type, x: gridX, y: gridY, obj, targetUid }; }
 
-        function findPath(startX, startY, targetX, targetY, forceAdjacent = false) {
+        function findPath(startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null) {
             let validTargets = new Set(); 
             let targetTileType = logicalMap[playerState.z][targetY][targetX];
             let isInteract = forceAdjacent || !isStandableTile(targetX, targetY, playerState.z);
@@ -452,22 +452,34 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 } else {
                     for (let dy = -2; dy <= 2; dy++) {
                         for (let dx = -2; dx <= 2; dx++) {
-                            if (dx === 0 && dy === 0) continue; 
+                            if (dx === 0 && dy === 0) continue;
                             let nx = targetX + dx, ny = targetY + dy;
-                            
+
                             if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
                                 // Normal adjacent interaction check
                                 if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
                                     if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) validTargets.add(`${nx},${ny}`);
                                 }
-                            } else if (targetTileType === 16) { // Allow reaching NPCs over counters
+                                continue;
+                            }
+
+                            const maxAxis = Math.max(Math.abs(dx), Math.abs(dy));
+                            const isAltarRingTile = interactionObj === 'ALTAR_CANDIDATE' && maxAxis === 2;
+                            if (isAltarRingTile) {
+                                if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
+                                    if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) validTargets.add(`${nx},${ny}`);
+                                }
+                                continue;
+                            }
+
+                            if (targetTileType === 16) { // Allow reaching NPCs over counters
                                 if (Math.abs(dx) === 2 && dy === 0) {
-                                    let midX = targetX + dx/2;
+                                    let midX = targetX + dx / 2;
                                     if (logicalMap[playerState.z][targetY][midX] === 17) {
                                         if (nx >= 0 && nx < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(`${nx},${ny}`);
                                     }
                                 } else if (Math.abs(dy) === 2 && dx === 0) {
-                                    let midY = targetY + dy/2;
+                                    let midY = targetY + dy / 2;
                                     if (logicalMap[playerState.z][midY][targetX] === 17) {
                                         if (ny >= 0 && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(`${nx},${ny}`);
                                     }
@@ -576,7 +588,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 } else if (pendingAction.type === 'INTERACT') {
                     // Force standing adjacent to interactables (unless picking up a ground item)
                     const forceAdjacent = pendingAction.obj !== 'GROUND_ITEM';
-                    playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, forceAdjacent);
+                    playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, forceAdjacent, pendingAction.obj);
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
@@ -642,6 +654,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         playerState.action = 'IDLE';
                     } else {
                         let isAdjacent = (distX <= 1 && distY <= 1);
+                        if (playerState.targetObj === 'ALTAR_CANDIDATE') {
+                            // Altars are interacted from one tile farther than default.
+                            isAdjacent = (distX <= 2 && distY <= 2 && (distX > 1 || distY > 1));
+                        }
                         let isAcrossCounter = false;
                         if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
                             if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === 17) isAcrossCounter = true;
@@ -672,6 +688,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 } else playerState.action = 'IDLE';
                             }
                         } else {
+                            if (playerState.targetObj === 'ALTAR_CANDIDATE' && window.QA_RC_DEBUG && typeof addChatMessage === 'function') {
+                                addChatMessage(`[QA rcdbg] interact blocked: dist=(${distX},${distY}) target=(${playerState.targetX},${playerState.targetY}) player=(${playerState.x},${playerState.y})`, 'info');
+                            }
                             playerState.action = 'IDLE';
                         }
                     }
@@ -1612,6 +1631,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
+
+
+
+
+
+
 
 
 

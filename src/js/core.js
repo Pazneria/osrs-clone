@@ -1,4 +1,4 @@
-﻿// Engine Constants & Chunk Architecture
+// Engine Constants & Chunk Architecture
         const TICK_RATE_MS = 600;
         const CHUNK_SIZE = 81;
         const WORLD_CHUNKS_X = 5;
@@ -44,7 +44,10 @@
             actionVisualReady: true,
             actionUntilTick: 0,
             firemakingTarget: null,
-            pendingSkillStart: null
+            pendingSkillStart: null,
+            unlockFlags: {
+                runecraftingComboUnlocked: false
+            }
         };
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
         let RUNE_ESSENCE_ROCKS = [];
@@ -186,7 +189,7 @@ O445411111OOOOO.
 .O4111OOOO......
 .OOOOO..........`.trim();
 
-        function makeIconSprite(id) {
+                function makeIconSprite(id) {
             const sprites = {
                 iron_axe: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="2" width="2" height="12" fill="#6b4a2a"/><rect x="5" y="2" width="6" height="4" fill="#b7bcc5"/><rect x="6" y="3" width="1" height="2" fill="#8e949d"/></svg>`,
                 coins: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="9" width="8" height="3" fill="#d7a520"/><rect x="3" y="7" width="8" height="3" fill="#f1c94a"/><rect x="5" y="5" width="8" height="3" fill="#ffd95e"/></svg>`,
@@ -198,9 +201,24 @@ O445411111OOOOO.
                 copper_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#7b848d"/><rect x="5" y="5" width="2" height="2" fill="#c47b43"/><rect x="8" y="6" width="2" height="2" fill="#b56b3a"/><rect x="6" y="9" width="2" height="2" fill="#cf8a54"/></svg>`,
                 tin_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#6f7883"/><rect x="5" y="5" width="2" height="2" fill="#e4eaef"/><rect x="8" y="6" width="2" height="2" fill="#cfd6dd"/><rect x="6" y="9" width="2" height="2" fill="#f0f4f8"/></svg>`,
                 rune_essence: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#7b8088"/><rect x="5" y="5" width="2" height="2" fill="#9aa0aa"/><rect x="8" y="6" width="2" height="2" fill="#b5bbc6"/><rect x="6" y="9" width="3" height="2" fill="#8e94a0"/></svg>`,
-                ember_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="1" fill="#ffd38a"/><rect x="5" y="3" width="6" height="2" fill="#ff9a3c"/><rect x="4" y="5" width="8" height="3" fill="#ff6a2a"/><rect x="5" y="8" width="6" height="3" fill="#c73a1c"/><rect x="6" y="11" width="4" height="2" fill="#7a1e17"/></svg>`
+                ember_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="1" fill="#ffd38a"/><rect x="5" y="3" width="6" height="2" fill="#ff9a3c"/><rect x="4" y="5" width="8" height="3" fill="#ff6a2a"/><rect x="5" y="8" width="6" height="3" fill="#c73a1c"/><rect x="6" y="11" width="4" height="2" fill="#7a1e17"/></svg>`,
+                air_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="2" fill="#e9f2ff"/><rect x="5" y="4" width="6" height="2" fill="#cde0ff"/><rect x="4" y="6" width="8" height="3" fill="#9fc2ff"/><rect x="5" y="9" width="6" height="3" fill="#6a9cf0"/><rect x="6" y="12" width="4" height="1" fill="#4778cc"/></svg>`,
+                smoke_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="1" fill="#efe7dd"/><rect x="5" y="3" width="6" height="2" fill="#b8a8a0"/><rect x="4" y="5" width="8" height="3" fill="#8d7f79"/><rect x="5" y="8" width="6" height="3" fill="#5f5350"/><rect x="6" y="11" width="4" height="2" fill="#3e3533"/></svg>`,
+                small_pouch: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="9" fill="#7a5a3a"/><rect x="5" y="5" width="6" height="7" fill="#9b744b"/><rect x="5" y="3" width="6" height="1" fill="#5d422a"/></svg>`,
+                medium_pouch: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="10" height="10" fill="#6f5234"/><rect x="4" y="4" width="8" height="8" fill="#936b44"/><rect x="4" y="2" width="8" height="1" fill="#573d27"/></svg>`,
+                large_pouch: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="12" height="11" fill="#63482d"/><rect x="3" y="3" width="10" height="9" fill="#855f3d"/><rect x="3" y="1" width="10" height="1" fill="#4f3723"/></svg>`
             };
-            return `<span class="pointer-events-none drop-shadow-md">${sprites[id] || ""}</span>`;
+            const fallbackSpriteId = {
+                water_rune: 'air_rune',
+                earth_rune: 'smoke_rune',
+                steam_rune: 'air_rune',
+                lava_rune: 'ember_rune',
+                mud_rune: 'smoke_rune',
+                mist_rune: 'air_rune',
+                dust_rune: 'smoke_rune'
+            };
+            const spriteMarkup = sprites[id] || sprites[fallbackSpriteId[id]] || "";
+            return `<span class="pointer-events-none drop-shadow-md">${spriteMarkup}</span>`;
         }
 
         function makeIconFromImage(path) {
@@ -281,15 +299,28 @@ O445411111OOOOO.
         inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
 
-        function setInventorySlots(slotDefs) {
+                        function setInventorySlots(slotDefs) {
             inventory = Array(28).fill(null);
             const defs = Array.isArray(slotDefs) ? slotDefs : [];
-            for (let i = 0; i < defs.length && i < 28; i++) {
+            let writeIndex = 0;
+
+            for (let i = 0; i < defs.length && writeIndex < 28; i++) {
                 const def = defs[i];
                 if (!def || !def.itemId || !ITEM_DB[def.itemId]) continue;
-                const amount = Number.isFinite(def.amount) && def.amount > 0 ? Math.floor(def.amount) : 1;
-                inventory[i] = { itemData: ITEM_DB[def.itemId], amount };
+
+                const itemData = ITEM_DB[def.itemId];
+                const requestedAmount = Number.isFinite(def.amount) && def.amount > 0 ? Math.floor(def.amount) : 1;
+
+                if (itemData.stackable) {
+                    inventory[writeIndex++] = { itemData, amount: requestedAmount };
+                    continue;
+                }
+
+                for (let count = 0; count < requestedAmount && writeIndex < 28; count++) {
+                    inventory[writeIndex++] = { itemData, amount: 1 };
+                }
             }
+
             if (typeof clearSelectedUse === 'function') clearSelectedUse(false);
             if (typeof renderInventory === 'function') renderInventory();
         }
@@ -322,6 +353,25 @@ O445411111OOOOO.
                 slots = makeFilledSlots(tools, 'raw_shrimp');
             } else if (name === 'wc_full') {
                 slots = makeFilledSlots(tools, 'logs');
+            } else if (name === 'mining_full') {
+                slots = makeFilledSlots(tools, 'copper_ore');
+            } else if (name === 'rc_full') {
+                slots = makeFilledSlots(tools, 'rune_essence');
+            } else if (name === 'rc_combo') {
+                slots = tools.concat([
+                    { itemId: 'rune_essence', amount: 12 },
+                    { itemId: 'air_rune', amount: 120 },
+                    { itemId: 'small_pouch', amount: 1 }
+                ]);
+            } else if (name === 'rc_routes') {
+                slots = tools.concat([
+                    { itemId: 'rune_essence', amount: 12 },
+                    { itemId: 'ember_rune', amount: 120 },
+                    { itemId: 'water_rune', amount: 120 },
+                    { itemId: 'earth_rune', amount: 120 },
+                    { itemId: 'air_rune', amount: 120 },
+                    { itemId: 'small_pouch', amount: 1 }
+                ]);
             } else if (name === 'fm_full') {
                 slots = makeFilledSlots(tools, 'logs');
             } else if (name === 'default') {
@@ -349,6 +399,141 @@ O445411111OOOOO.
         }
 
         window.applyQaInventoryPreset = applyQaInventoryPreset;
+        function setQaSkillLevel(skillId, levelValue) {
+            if (!playerSkills || !playerSkills[skillId]) return false;
+            const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
+            if (!Number.isFinite(lvl)) return false;
+            playerSkills[skillId].level = lvl;
+            if (typeof refreshSkillUi === 'function') refreshSkillUi(skillId);
+            return true;
+        }
+
+        function setQaUnlockFlag(flagId, enabled) {
+            if (!flagId) return false;
+            if (!playerState.unlockFlags || typeof playerState.unlockFlags !== 'object') {
+                playerState.unlockFlags = {};
+            }
+            playerState.unlockFlags[flagId] = !!enabled;
+            return true;
+        }
+        function getQaAltarLocations() {
+            if (typeof getRunecraftingAltarLocations !== 'function') return [];
+            const locations = getRunecraftingAltarLocations();
+            return Array.isArray(locations) ? locations : [];
+        }
+
+        function qaListAltars() {
+            const altars = getQaAltarLocations();
+            if (!altars.length) {
+                addChatMessage('No runecrafting altars currently placed.', 'warn');
+                return;
+            }
+            for (let i = 0; i < altars.length; i++) {
+                const altar = altars[i];
+                addChatMessage(`[QA altar] ${altar.label} @ (${altar.x},${altar.y},${altar.z})`, 'info');
+            }
+        }
+
+        function qaGotoAltar(labelLike) {
+            const needle = String(labelLike || '').trim().toLowerCase();
+            if (!needle) return false;
+            const altars = getQaAltarLocations();
+            let match = null;
+            for (let i = 0; i < altars.length; i++) {
+                const altar = altars[i];
+                if (!altar || !altar.label) continue;
+                if (altar.label.toLowerCase().includes(needle)) {
+                    match = altar;
+                    break;
+                }
+            }
+            if (!match) return false;
+
+            playerState.x = match.x;
+            // Keep QA teleports outside the altar's 4x4 collision footprint.
+            playerState.y = Math.max(0, match.y - 3);
+            playerState.z = match.z;
+            playerState.prevX = playerState.x;
+            playerState.prevY = playerState.y;
+            playerState.targetX = playerState.x;
+            playerState.targetY = playerState.y;
+            playerState.path = [];
+            playerState.action = 'IDLE';
+            if (typeof updateCameraNow === 'function') updateCameraNow();
+            addChatMessage(`Teleported near ${match.label}.`, 'info');
+            return true;
+        }
+
+        function getQaBestToolByClass(toolClass) {
+            const candidates = [];
+            if (equipment && equipment.weapon && equipment.weapon.weaponClass === toolClass) {
+                candidates.push(equipment.weapon);
+            }
+            for (let i = 0; i < inventory.length; i++) {
+                const slot = inventory[i];
+                if (!slot || !slot.itemData) continue;
+                if (slot.itemData.weaponClass === toolClass) candidates.push(slot.itemData);
+            }
+            if (candidates.length === 0) return null;
+
+            let best = candidates[0];
+            let bestPower = Number.isFinite(best.toolTier) ? best.toolTier : 0;
+            for (let i = 1; i < candidates.length; i++) {
+                const item = candidates[i];
+                const power = Number.isFinite(item.toolTier) ? item.toolTier : 0;
+                if (power > bestPower) {
+                    best = item;
+                    bestPower = power;
+                }
+            }
+            return best;
+        }
+
+        function qaDiagMining() {
+            const registry = window.SkillSpecRegistry;
+            const spec = registry && typeof registry.getSkillSpec === 'function' ? registry.getSkillSpec('mining') : null;
+            if (!spec || !spec.nodeTable || !spec.nodeTable.copper_rock) {
+                addChatMessage('QA mining diag unavailable: missing mining spec.', 'warn');
+                return;
+            }
+
+            const level = playerSkills && playerSkills.mining ? playerSkills.mining.level : 1;
+            const node = spec.nodeTable.copper_rock;
+            const best = getQaBestToolByClass('pickaxe');
+            const toolPower = best && Number.isFinite(best.toolTier) ? best.toolTier : 0;
+            const speedBonus = best && Number.isFinite(best.speedBonusTicks) ? best.speedBonusTicks : 0;
+            const success = registry && typeof registry.computeGatherSuccessChance === 'function'
+                ? registry.computeGatherSuccessChance(level, toolPower, node.difficulty)
+                : 0;
+            const interval = registry && typeof registry.computeIntervalTicks === 'function'
+                ? registry.computeIntervalTicks(spec.timing.baseAttemptTicks, spec.timing.minimumAttemptTicks, speedBonus)
+                : 0;
+
+            addChatMessage(`[QA mining] lvl=${level}, tool=${best ? best.id : 'none'}, power=${toolPower}, speedBonus=${speedBonus}, chance=${(success * 100).toFixed(2)}%, interval=${interval}t`, 'info');
+        }
+
+                        function qaDiagRunecrafting() {
+            const registry = window.SkillSpecRegistry;
+            const spec = registry && typeof registry.getSkillSpec === 'function' ? registry.getSkillSpec('runecrafting') : null;
+            const recipes = spec && spec.recipeSet ? spec.recipeSet : null;
+            const recipe = recipes ? recipes.ember_altar : null;
+            if (!recipe) {
+                addChatMessage('QA rc diag unavailable: missing runecrafting recipe.', 'warn');
+                return;
+            }
+            const level = playerSkills && playerSkills.runecrafting ? playerSkills.runecrafting.level : 1;
+            const outputPerEssence = registry && typeof registry.computeRuneOutputPerEssence === 'function'
+                ? registry.computeRuneOutputPerEssence(level, recipe.scalingStartLevel)
+                : 1;
+            const comboOutputPerEssence = registry && typeof registry.computeRuneOutputPerEssence === 'function'
+                ? registry.computeRuneOutputPerEssence(level, 40)
+                : 1;
+            const comboCount = recipes ? Object.keys(recipes).filter((id) => recipes[id] && recipes[id].requiresSecondaryRune).length : 0;
+            const comboUnlocked = !!(playerState.unlockFlags && playerState.unlockFlags.runecraftingComboUnlocked);
+            addChatMessage(`[QA rc] lvl=${level}, emberStart=${recipe.scalingStartLevel}, emberPerEss=${outputPerEssence}, comboUnlocked=${comboUnlocked}, comboRecipes=${comboCount}, comboPerEss@40=${comboOutputPerEssence}`, 'info');
+        }
+
+
 
         let equipment = { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
         let baseStats = { atk: 10, def: 10, str: 10 };
@@ -467,13 +652,87 @@ O445411111OOOOO.
 
             if (text.toLowerCase().startsWith('/qa ')) {
                 const args = text.slice(4).trim();
-                if (args.toLowerCase() === 'help') {
-                    addChatMessage('QA presets: /qa fish_full, /qa wc_full, /qa fm_full, /qa default', 'info');
+                const parts = args.split(/\s+/).filter(Boolean);
+                const cmd = (parts[0] || '').toLowerCase();
+
+                if (cmd === 'help' || !cmd) {
+                    addChatMessage('QA presets: /qa fish_full, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa default', 'info');
+                    addChatMessage('QA tools: /qa setlevel <mining|runecrafting> <1-99>, /qa diag mining, /qa diag rc, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
+
+                if (cmd === 'setlevel' && parts.length >= 3) {
+                    const skill = String(parts[1] || '').toLowerCase();
+                    const lvl = parseInt(parts[2], 10);
+                    if (!Number.isFinite(lvl)) {
+                        addChatMessage('Usage: /qa setlevel <mining|runecrafting> <1-99>', 'warn');
+                        return;
+                    }
+                    const ok = setQaSkillLevel(skill, lvl);
+                    if (!ok) {
+                        addChatMessage('Unknown skill for /qa setlevel. Use mining or runecrafting.', 'warn');
+                        return;
+                    }
+                    addChatMessage(`QA set level: ${skill}=${Math.max(1, Math.min(99, Math.floor(lvl)))}`, 'info');
+                    return;
+                }
+
+                if (cmd === 'unlock' && parts.length >= 3) {
+                    const subject = String(parts[1] || '').toLowerCase();
+                    const value = String(parts[2] || '').toLowerCase();
+                    if (subject !== 'combo') {
+                        addChatMessage('Usage: /qa unlock combo <on|off>', 'warn');
+                        return;
+                    }
+                    if (value !== 'on' && value !== 'off') {
+                        addChatMessage('Usage: /qa unlock combo <on|off>', 'warn');
+                        return;
+                    }
+                    setQaUnlockFlag('runecraftingComboUnlocked', value === 'on');
+                    addChatMessage(`QA combo unlock: ${value}`, 'info');
+                    return;
+                }
+
+                if (cmd === 'altars') {
+                    qaListAltars();
+                    return;
+                }
+
+                if (cmd === 'gotoaltar' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoAltar(target);
+                    if (!ok) addChatMessage('Usage: /qa gotoaltar <ember|water|earth|air>', 'warn');
+                    return;
+                }
+
+                if (cmd === 'rcdebug' && parts.length >= 2) {
+                    const value = String(parts[1] || '').toLowerCase();
+                    if (value !== 'on' && value !== 'off') {
+                        addChatMessage('Usage: /qa rcdebug <on|off>', 'warn');
+                        return;
+                    }
+                    window.QA_RC_DEBUG = (value === 'on');
+                    addChatMessage(`QA rcdebug: ${value}`, 'info');
+                    return;
+                }
+
+                if (cmd === 'diag' && parts.length >= 2) {
+                    const subject = String(parts[1] || '').toLowerCase();
+                    if (subject === 'mining') {
+                        qaDiagMining();
+                        return;
+                    }
+                    if (subject === 'rc' || subject === 'runecrafting') {
+                        qaDiagRunecrafting();
+                        return;
+                    }
+                    addChatMessage('Usage: /qa diag <mining|rc>', 'warn');
+                    return;
+                }
+
                 const applied = applyQaInventoryPreset(args);
                 if (!applied) {
-                    addChatMessage(`Unknown QA preset: ${args}. Use /qa help`, 'warn');
+                    addChatMessage(`Unknown QA preset/command: ${args}. Use /qa help`, 'warn');
                 }
                 return;
             }
@@ -660,6 +919,36 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

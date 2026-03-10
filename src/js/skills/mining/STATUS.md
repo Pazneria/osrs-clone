@@ -1,9 +1,10 @@
-# Mining Status
+﻿# Mining Status
 
 ## Done
 - [x] MINING-001: Core mining loop and XP leveling.
 - [x] MINING-002: Early ore mining (copper/tin/iron baseline).
 - [x] MINING-003: Roadmap expanded with full mining design spec (progression, formulas, depletion, economy, NPCs).
+- [x] MINING-QA-001: Runtime/spec alignment validated for capacity gating and immediate full-inventory stop behavior (no extra overfill attempt tick).
 
 ## Now
 - [ ] MINING-004: Data model pass for rock stats (difficulty/xp/min-max yields/depletion/respawn).
@@ -19,3 +20,4 @@
 - [ ] MINING-010: Gem Mine Quest gate and Elira quest flow integration.
 - [ ] MINING-011: Thrain late-ore off-band progression integration.
 - [ ] MINING-012: Balance pass using expected yield/xp/gold per tick targets.
+

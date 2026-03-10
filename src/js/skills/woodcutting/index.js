@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const SKILL_ID = 'woodcutting';
     const NODE_ID = 'normal_tree';
 
@@ -44,6 +44,7 @@
                 context.addChatMessage('You have no inventory space for logs.', 'warn');
                 return false;
             }
+            if (typeof context.requireSkillLevel === 'function' && !context.requireSkillLevel(nodeSpec.requiredLevel || 1, { skillId: SKILL_ID, action: 'chop this tree' })) return false;
             if (!this.canStart(context)) return false;
             const attempt = resolveAttemptConfig(context, nodeSpec);
             if (window.SkillActionResolution && typeof SkillActionResolution.startGatherSession === 'function') {
@@ -185,5 +186,6 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = woodcuttingModule;
 })();
+
 
 

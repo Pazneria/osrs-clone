@@ -1,4 +1,4 @@
-# Mining Roadmap
+﻿# Mining Roadmap
 
 ## Purpose
 
@@ -139,6 +139,16 @@ These active output values measure mining performance while the player is active
 | Sapphire Rock | 0.6182                  | 32.1464              | 27.8190                |
 | Gold Rock     | 0.5763                  | 34.5780              | 16.1364                |
 | Emerald Rock  | 0.5484                  | 39.4848              | 46.6140                |
+
+
+## Inventory Capacity Rules
+
+| Rule | Description |
+| ---- | ----------- |
+| Start requires capacity | Mining can begin only if at least one inventory slot can accept the target output item. |
+| Full inventory start block | If inventory is already full for the target output, mining does not begin. |
+| Immediate full stop | If a successful mine fills the last free slot, mining stops immediately after that success tick. |
+| No overfill attempts | Mining does not continue into an extra attempt tick once no further output can fit. |
 
 ## Depletion Model
 
@@ -381,5 +391,6 @@ This item list includes both current main-band mining outputs and valid off-band
 | Mithril Ore     | Resource | null           | 120       | 60         | Outside normal 1-40 mining band     |
 | Adamant Ore     | Resource | null           | 300       | 150        | Outside normal 1-40 mining band     |
 | Rune Ore        | Resource | null           | 1200      | 600        | Outside normal 1-40 mining band     |
+
 
 

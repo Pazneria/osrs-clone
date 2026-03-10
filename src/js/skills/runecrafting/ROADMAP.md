@@ -1,4 +1,4 @@
-﻿# Runecrafting Roadmap
+# Runecrafting Roadmap
 
 ## Purpose
 
@@ -64,7 +64,7 @@ No special altar-access system is used.
 
 Runecrafting gains +1 rune per essence every 10 levels from the rune's scaling start level.
 
-Fire Runes increment at levels 10, 20, 30, and so on.
+Ember Runes (the currently implemented starter rune tier) increment at levels 10, 20, 30, and so on.
 
 This applies to both normal and combination runes.
 
@@ -74,9 +74,27 @@ If the player does not have enough secondary runes to use all available essence,
 
 Examples:
 
-- Fire Runes require level 1, but scale from level 0, so they produce 1 rune per essence from levels 1-9, 2 per essence from levels 10-19, 3 per essence from levels 20-29, and so on.
+- Ember Runes require level 1, but scale from level 0, so they produce 1 rune per essence from levels 1-9, 2 per essence from levels 10-19, 3 per essence from levels 20-29, and so on.
 - Water Runes require level 10 and scale from level 10, so they produce 1 rune per essence from levels 10-19, 2 per essence from levels 20-29, 3 per essence from levels 30-39, and so on.
 - Smoke Runes require level 40 and scale from level 40, so they produce 1 rune per essence from levels 40-49 and consume 1 secondary rune per essence used, 2 per essence from levels 50-59 and consume 2 secondary runes per essence used, 3 per essence from levels 60-69 and consume 3 secondary runes per essence used, and so on.
+
+
+### Implemented Starter Rune Note
+
+The current runtime implementation uses Ember Rune as the starter altar output tier.
+
+Ember uses scaling start level 0 specifically so level-10 breakpoints land cleanly:
+- Levels 1-9: 1 rune per essence
+- Levels 10-19: 2 runes per essence
+- Levels 20-29: 3 runes per essence
+- and so on every +10 levels.
+
+### Implemented Combination Slice Note
+
+Phase A currently includes one combination reference path at Ember Altar:
+- Smoke combo recipe is active when the player carries Air runes and meets level/unlock requirements.
+- Secondary rune consumption equals total smoke rune output.
+- If secondary runes are insufficient for all essence, crafting consumes only the essence supported by available secondary runes and leaves remaining essence in inventory.
 
 ### Pouch Mechanics
 
@@ -317,6 +335,9 @@ The general store buys everything at half price.
 | Small Pouch  | Utility  | 10             | 500       | 200        | Carries 6 essence |
 | Medium Pouch | Utility  | 20             | 2000      | 800        | Carries 13 essence |
 | Large Pouch  | Utility  | 30             | 8000      | 3200       | Carries 26 essence |
+
+
+
 
 
 

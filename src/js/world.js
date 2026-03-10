@@ -771,6 +771,16 @@
             }, 0);
         }
 
+        function getFirstInventorySlotByItemId(itemId) {
+            if (!itemId) return -1;
+            for (let i = 0; i < inventory.length; i++) {
+                const slot = inventory[i];
+                if (!slot || !slot.itemData) continue;
+                if (slot.itemData.id === itemId && slot.amount > 0) return i;
+            }
+            return -1;
+        }
+
         function removeOneItemById(itemId) {
             for (let i = 0; i < inventory.length; i++) {
                 const slot = inventory[i];
@@ -951,6 +961,21 @@
             if (typeof addChatMessage === 'function') addChatMessage(text, 'info');
         }
 
+                function createRunecraftingPouchContext() {
+            return {
+                playerState,
+                getSkillLevel: (skillId) => (playerSkills && playerSkills[skillId] ? playerSkills[skillId].level : 1),
+                getInventoryCount,
+                removeItemsById,
+                giveItemById: (itemId, amount) => {
+                    if (!ITEM_DB[itemId]) return 0;
+                    return giveItem(ITEM_DB[itemId], amount);
+                },
+                addChatMessage,
+                renderInventory
+            };
+        }
+
         function tryUseItemOnInventory(sourceInvIndex, targetInvIndex) {
             const source = inventory[sourceInvIndex];
             const target = inventory[targetInvIndex];
@@ -958,6 +983,11 @@
 
             const a = source.itemData.id;
             const b = target.itemData.id;
+
+            if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUseItemOnInventory === 'function') {
+                const pouchUsed = window.RunecraftingPouchRuntime.tryUseItemOnInventory(createRunecraftingPouchContext(), a, b);
+                if (pouchUsed) return true;
+            }
 
             if ((a === 'tinderbox' && b === 'logs') || (a === 'logs' && b === 'tinderbox')) {
                 return startFiremaking();
@@ -1012,8 +1042,19 @@
             if (!invSlot) return;
             const item = invSlot.itemData;
             if (actionName === 'Use') {
+                if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUsePouch === 'function') {
+                    const pouchUsed = window.RunecraftingPouchRuntime.tryUsePouch(createRunecraftingPouchContext(), item.id);
+                    if (pouchUsed) return;
+                }
                 selectUseItem(invIndex);
                 return;
+            }
+
+            if (typeof actionName === 'string' && actionName.startsWith('Empty')) {
+                if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUsePouch === 'function') {
+                    const pouchUsed = window.RunecraftingPouchRuntime.tryUsePouch(createRunecraftingPouchContext(), item.id, { forceEmpty: true });
+                    if (pouchUsed) return;
+                }
             }
 
             if (actionName === 'Equip') {
@@ -1595,22 +1636,65 @@
                 logicalMap[candidate.z][candidate.y][candidate.x] = 2;
             }
 
-            // Place a single Ember altar at a random world tile, away from rune essence rocks.
-            let emberAltarTile = null;
-            while (candidateIdx < allFeatureCandidates.length) {
-                const candidate = allFeatureCandidates[candidateIdx++];
-                if (!candidate) continue;
-                const nearRuneEssence = RUNE_ESSENCE_ROCKS.some((rock) => Math.hypot(rock.x - candidate.x, rock.y - candidate.y) < 20);
-                if (nearRuneEssence) continue;
-                emberAltarTile = candidate;
-                break;
-            }
+                        // Place elemental altars at random world tiles, away from rune essence rocks.
+            const altarDefs = [
+                { label: 'Ember Altar', variant: 4 },
+                { label: 'Water Altar', variant: 4 },
+                { label: 'Earth Altar', variant: 4 },
+                { label: 'Air Altar', variant: 4 }
+            ];
 
             altarCandidatesToRender = [];
-            if (emberAltarTile) {
-                altarCandidatesToRender.push({ x: emberAltarTile.x, y: emberAltarTile.y, z: emberAltarTile.z, variant: 4, label: 'Ember Altar' });
-                logicalMap[emberAltarTile.z][emberAltarTile.y][emberAltarTile.x] = 5;
+            for (let i = 0; i < altarDefs.length && candidateIdx < allFeatureCandidates.length; i++) {
+                const def = altarDefs[i];
+                let placed = null;
+
+                while (candidateIdx < allFeatureCandidates.length) {
+                    const candidate = allFeatureCandidates[candidateIdx++];
+                    if (!candidate) continue;
+
+                    const nearRuneEssence = RUNE_ESSENCE_ROCKS.some((rock) => Math.hypot(rock.x - candidate.x, rock.y - candidate.y) < 20);
+                    if (nearRuneEssence) continue;
+
+                    const nearOtherAltar = altarCandidatesToRender.some((altar) => Math.hypot(altar.x - candidate.x, altar.y - candidate.y) < 28);
+                    if (nearOtherAltar) continue;
+
+                    placed = candidate;
+                    break;
+                }
+
+                if (!placed) continue;
+
+                altarCandidatesToRender.push({ x: placed.x, y: placed.y, z: placed.z, variant: def.variant, label: def.label });
+                // Altar collision footprint is 4x4 tiles.
+                for (let by = placed.y - 1; by <= placed.y + 2; by++) {
+                    if (by < 0 || by >= MAP_SIZE) continue;
+                    for (let bx = placed.x - 1; bx <= placed.x + 2; bx++) {
+                        if (bx < 0 || bx >= MAP_SIZE) continue;
+                        logicalMap[placed.z][by][bx] = 5;
+                    }
+                }
             }
+
+            window.getRunecraftingAltarLocations = function getRunecraftingAltarLocations() {
+                if (!Array.isArray(altarCandidatesToRender)) return [];
+                return altarCandidatesToRender.map((altar) => ({
+                    label: altar.label,
+                    x: altar.x,
+                    y: altar.y,
+                    z: altar.z
+                }));
+            };
+
+            window.getRunecraftingAltarNameAt = function getRunecraftingAltarNameAt(x, y, z) {
+                if (!Array.isArray(altarCandidatesToRender)) return null;
+                for (let i = 0; i < altarCandidatesToRender.length; i++) {
+                    const altar = altarCandidatesToRender[i];
+                    if (!altar) continue;
+                    if (altar.x === x && altar.y === y && altar.z === z) return altar.label || null;
+                }
+                return null;
+            };
         }
 
         function loadChunk(cx, cy) {
@@ -2081,10 +2165,21 @@
                             altarGroup.add(bowl, flameL, flameR, emberCore, baseRing, midPlinthRing);
                         }
 
-                        altarGroup.children.forEach((child) => {
+                                                altarGroup.children.forEach((child) => {
                             child.userData = { type: 'ALTAR_CANDIDATE', gridX: ac.x, gridY: ac.y, z: z, name: ac.label, variant: ac.variant };
                             environmentMeshes.push(child);
                         });
+
+                        // Keep visuals unchanged; click/hover footprint is 3x3.
+                        const altarHitbox = new THREE.Mesh(
+                            new THREE.BoxGeometry(3, 2.6, 3),
+                            new THREE.MeshBasicMaterial({ visible: false })
+                        );
+                        altarHitbox.position.set(0, 1.3, 0);
+                        altarHitbox.userData = { type: 'ALTAR_CANDIDATE', gridX: ac.x, gridY: ac.y, z: z, name: ac.label, variant: ac.variant };
+                        altarGroup.add(altarHitbox);
+                        environmentMeshes.push(altarHitbox);
+
                         planeGroup.add(altarGroup);
                     }
                 });
@@ -2374,6 +2469,22 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

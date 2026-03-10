@@ -1,27 +1,34 @@
 {
   "skillId": "mining",
-  "timing": { "baseAttemptTicks": 4, "minimumAttemptTicks": 1 },
+  "timing": { "baseAttemptTicks": 6, "minimumAttemptTicks": 1 },
+  "formulas": {
+    "success": "level_plus_tool_over_plus_difficulty",
+    "interval": "max(min_ticks, base_ticks - speed_bonus)"
+  },
   "nodeTable": {
     "copper_rock": {
       "tileId": 2,
+      "oreType": "copper",
       "requiredLevel": 1,
-      "difficulty": 18,
-      "xpPerSuccess": 25,
+      "difficulty": 8,
+      "xpPerSuccess": 10,
       "rewardItemId": "copper_ore",
-      "depletionChance": 0.2,
-      "respawnTicks": 12
+      "depletionChance": 1.0,
+      "respawnTicks": 13
     },
     "tin_rock": {
       "tileId": 2,
+      "oreType": "tin",
       "requiredLevel": 1,
-      "difficulty": 18,
-      "xpPerSuccess": 25,
+      "difficulty": 8,
+      "xpPerSuccess": 10,
       "rewardItemId": "tin_ore",
-      "depletionChance": 0.2,
-      "respawnTicks": 12
+      "depletionChance": 1.0,
+      "respawnTicks": 13
     },
     "rune_essence": {
       "tileId": 2,
+      "oreType": "rune_essence",
       "requiredLevel": 1,
       "difficulty": 1,
       "xpPerSuccess": 8,

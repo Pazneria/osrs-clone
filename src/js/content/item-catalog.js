@@ -1,9 +1,11 @@
-﻿(function () {
+(function () {
     const ITEM_DEFS = {
         iron_axe: {
             name: 'Iron Axe',
             type: 'weapon',
             weaponClass: 'axe',
+            toolTier: 6,
+            speedBonusTicks: 1,
             stats: { atk: 15, def: 0, str: 12 },
             value: 20,
             stackable: false,
@@ -51,6 +53,8 @@
             name: 'Iron Pickaxe',
             type: 'weapon',
             weaponClass: 'pickaxe',
+            toolTier: 6,
+            speedBonusTicks: 1,
             stats: { atk: 8, def: 0, str: 10 },
             value: 150,
             stackable: false,
@@ -127,11 +131,119 @@
         ember_rune: {
             name: 'Ember rune',
             type: 'resource',
-            value: 18,
+            value: 10,
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
             icon: { kind: 'sprite', key: 'ember_rune' }
+        },
+        water_rune: {
+            name: 'Water rune',
+            type: 'resource',
+            value: 20,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'water_rune' }
+        },
+        earth_rune: {
+            name: 'Earth rune',
+            type: 'resource',
+            value: 40,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'earth_rune' }
+        },
+        air_rune: {
+            name: 'Air rune',
+            type: 'resource',
+            value: 80,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'air_rune' }
+        },
+        steam_rune: {
+            name: 'Steam rune',
+            type: 'resource',
+            value: 160,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'steam_rune' }
+        },
+        smoke_rune: {
+            name: 'Smoke rune',
+            type: 'resource',
+            value: 160,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'smoke_rune' }
+        },
+        lava_rune: {
+            name: 'Lava rune',
+            type: 'resource',
+            value: 160,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'lava_rune' }
+        },
+        mud_rune: {
+            name: 'Mud rune',
+            type: 'resource',
+            value: 160,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'mud_rune' }
+        },
+        mist_rune: {
+            name: 'Mist rune',
+            type: 'resource',
+            value: 160,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'mist_rune' }
+        },
+        dust_rune: {
+            name: 'Dust rune',
+            type: 'resource',
+            value: 160,
+            stackable: true,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'dust_rune' }
+        },
+        small_pouch: {
+            name: 'Small pouch',
+            type: 'tool',
+            value: 500,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'small_pouch' }
+        },
+        medium_pouch: {
+            name: 'Medium pouch',
+            type: 'tool',
+            value: 2000,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'medium_pouch' }
+        },
+        large_pouch: {
+            name: 'Large pouch',
+            type: 'tool',
+            value: 8000,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'large_pouch' }
         }
     };
 
@@ -163,6 +275,8 @@
             };
 
             if (def.weaponClass) db[id].weaponClass = def.weaponClass;
+            if (Number.isFinite(def.toolTier)) db[id].toolTier = def.toolTier;
+            if (Number.isFinite(def.speedBonusTicks)) db[id].speedBonusTicks = def.speedBonusTicks;
             if (def.stats) db[id].stats = Object.assign({}, def.stats);
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;
             if (def.burnResultId) db[id].burnResultId = def.burnResultId;

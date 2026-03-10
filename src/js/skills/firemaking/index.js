@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const SKILL_ID = 'firemaking';
 
     function getLogRecipe(context) {
@@ -60,7 +60,14 @@
 
         onStart(context) {
             const recipe = getLogRecipe(context);
-            if (!recipe || !this.canStart(context)) {
+            if (!recipe) {
+                context.addChatMessage('You need logs and a tinderbox.', 'warn');
+                return false;
+            }
+            if (typeof context.requireSkillLevel === 'function' && !context.requireSkillLevel(recipe.requiredLevel || 1, { skillId: SKILL_ID, action: 'light these logs' })) {
+                return false;
+            }
+            if (context.getInventoryCount('tinderbox') <= 0 || context.getInventoryCount(recipe.sourceItemId) <= 0) {
                 context.addChatMessage('You need logs and a tinderbox.', 'warn');
                 return false;
             }
@@ -193,3 +200,4 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = firemakingModule;
 })();
+

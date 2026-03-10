@@ -525,6 +525,14 @@
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
                             orderedActions.forEach(action => { addContextMenuOption(`${action} ${item.name}`, () => handleItemAction(i, action)); });
+                            if (window.RunecraftingPouchRuntime
+                                && typeof window.RunecraftingPouchRuntime.getPouchStoredEssence === 'function'
+                                && typeof createRunecraftingPouchContext === 'function') {
+                                const storedEssence = window.RunecraftingPouchRuntime.getPouchStoredEssence(createRunecraftingPouchContext(), item.id);
+                                if (storedEssence > 0) {
+                                    addContextMenuOption(`Empty (${storedEssence}) ${item.name}`, () => handleItemAction(i, `Empty (${storedEssence})`));
+                                }
+                            }
                             const exHeader = document.createElement('div'); exHeader.className = 'mt-1 border-t border-[#4a4136] pointer-events-none'; contextOptionsListEl.appendChild(exHeader);
                             addContextMenuOption(`Examine ${item.name}`, () => console.log(`EXAMINING: ${item.name}.`));
                             showContextMenuAt(e.clientX, e.clientY);
@@ -643,6 +651,8 @@
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
+
+
 
 
 

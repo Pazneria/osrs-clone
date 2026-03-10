@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const manifest = window.SkillManifest || {};
     const targetToSkillId = manifest.targetToSkillId || {
         TREE: 'woodcutting',
@@ -99,6 +99,35 @@
         return Number.isFinite(level) ? level : 1;
     }
 
+    function normalizeRequiredLevel(requiredLevel) {
+        return Number.isFinite(requiredLevel) ? Math.max(1, Math.floor(requiredLevel)) : 1;
+    }
+
+    function formatSkillName(skillId) {
+        if (!skillId || typeof skillId !== 'string') return 'that skill';
+        return skillId.charAt(0).toUpperCase() + skillId.slice(1);
+    }
+
+    function ensureUnlockFlags() {
+        if (!playerState.unlockFlags || typeof playerState.unlockFlags !== 'object') {
+            playerState.unlockFlags = {};
+        }
+        return playerState.unlockFlags;
+    }
+
+    function hasUnlockFlag(flagId) {
+        if (!flagId) return false;
+        const flags = ensureUnlockFlags();
+        return !!flags[flagId];
+    }
+
+    function setUnlockFlag(flagId, enabled) {
+        if (!flagId) return false;
+        const flags = ensureUnlockFlags();
+        flags[flagId] = !!enabled;
+        return true;
+    }
+
     function createSkillContext(overrides = {}) {
         const targetObj = overrides.targetObj || playerState.targetObj;
         const targetX = Number.isInteger(overrides.targetX) ? overrides.targetX : playerState.targetX;
@@ -122,6 +151,28 @@
             getNodeTable: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getNodeTable === 'function' ? SkillSpecRegistry.getNodeTable(id) : null),
             getEconomyTable: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getEconomyTable === 'function' ? SkillSpecRegistry.getEconomyTable(id) : null),
             getSkillLevel,
+            requireSkillLevel: (requiredLevel, options = {}) => {
+                const resolvedSkillId = (typeof options.skillId === 'string' && options.skillId)
+                    ? options.skillId
+                    : ((typeof overrides.skillId === 'string' && overrides.skillId)
+                        ? overrides.skillId
+                        : resolveSkillIdFromTarget(targetObj));
+                const needed = normalizeRequiredLevel(requiredLevel);
+                const currentLevel = getSkillLevel(resolvedSkillId);
+                if (currentLevel >= needed) return true;
+                if (options && options.silent) return false;
+
+                const action = (typeof options.action === 'string' && options.action.trim())
+                    ? options.action.trim()
+                    : 'do that';
+                const message = (typeof options.message === 'string' && options.message.trim())
+                    ? options.message.trim()
+                    : `You need ${formatSkillName(resolvedSkillId)} level ${needed} to ${action}.`;
+                addChatMessage(message, options && options.tone ? options.tone : 'warn');
+                return false;
+            },
+            hasUnlockFlag,
+            setUnlockFlag,
             frameNow: overrides.frameNow,
             baseVisualY: overrides.baseVisualY,
             rig: overrides.rig || null,
@@ -144,6 +195,7 @@
             hasItem,
             canAcceptItemById,
             getInventoryCount: (itemId) => (typeof getInventoryCount === 'function' ? getInventoryCount(itemId) : 0),
+            getFirstInventorySlotByItemId: (itemId) => (typeof getFirstInventorySlotByItemId === 'function' ? getFirstInventorySlotByItemId(itemId) : -1),
             removeOneItemById: (itemId) => (typeof removeOneItemById === 'function' ? removeOneItemById(itemId) : false),
             removeItemsById: (itemId, amount) => (typeof removeItemsById === 'function' ? removeItemsById(itemId, amount) : 0),
             lightFireAtCurrentTile: (x, y, z) => (typeof lightFireAtCurrentTile === 'function' ? lightFireAtCurrentTile(x, y, z) : false),
@@ -175,6 +227,7 @@
             },
             chopDownTree: (x, y, z) => { if (typeof chopDownTree === 'function') chopDownTree(x, y, z); },
             getRockNodeAt: (x, y, z) => (typeof getRockNodeAt === 'function' ? getRockNodeAt(x, y, z) : null),
+            getAltarNameAt: (x, y, z) => (typeof window.getRunecraftingAltarNameAt === 'function' ? window.getRunecraftingAltarNameAt(x, y, z) : null),
             depleteRockNode: (x, y, z, respawnTicks) => {
                 if (typeof depleteRockNode === 'function') depleteRockNode(x, y, z, respawnTicks);
             },

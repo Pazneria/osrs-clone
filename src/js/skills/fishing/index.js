@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const SKILL_ID = 'fishing';
     const WATER_ID = 'shallow_water';
     const FISHING_TOOL_IDS = ['small_net', 'fishing_rod', 'fly_fishing_rod', 'harpoon'];
@@ -275,6 +275,7 @@
             return hasFishingTool(context)
                 && isFishingWaterTile(context)
                 && level >= (waterSpec.unlockLevel || 1)
+                && fishTable.length > 0
                 && canAcceptAnyFish(context, fishTable);
         },
 
@@ -286,11 +287,25 @@
                 return false;
             }
             if (!isFishingWaterTile(context)) return false;
+            if (typeof context.requireSkillLevel === 'function' && !context.requireSkillLevel(waterSpec.unlockLevel || 1, { skillId: SKILL_ID, action: 'fish here' })) {
+                return false;
+            }
 
             const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
             const fishTable = Array.isArray(waterSpec.fish)
                 ? waterSpec.fish.filter((f) => level >= (f.requiredLevel || 1))
                 : [];
+            if (fishTable.length === 0) {
+                const minRequiredFishLevel = Array.isArray(waterSpec.fish) && waterSpec.fish.length > 0
+                    ? waterSpec.fish.reduce((minLevel, fish) => Math.min(minLevel, fish && Number.isFinite(fish.requiredLevel) ? fish.requiredLevel : 1), Infinity)
+                    : (waterSpec.unlockLevel || 1);
+                if (typeof context.requireSkillLevel === 'function') {
+                    context.requireSkillLevel(minRequiredFishLevel, { skillId: SKILL_ID, action: 'catch fish here' });
+                } else {
+                    context.addChatMessage('You cannot catch anything here yet.', 'warn');
+                }
+                return false;
+            }
             if (!canAcceptAnyFish(context, fishTable)) {
                 context.addChatMessage('You have no inventory space for fish.', 'warn');
                 return false;
@@ -452,6 +467,8 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = fishingModule;
 })();
+
+
 
 
 
