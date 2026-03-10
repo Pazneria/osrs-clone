@@ -12,6 +12,13 @@
 
     const skillRegistry = {};
 
+    function debugCookingUse(message) {
+        if (!window.DEBUG_COOKING_USE) return;
+        const text = `[cook-debug] ${message}`;
+        try { console.log(text); } catch (_) {}
+        if (typeof addChatMessage === 'function') addChatMessage(text, 'info');
+    }
+
     function resolveSkillIdFromTarget(targetObj) {
         if (!targetObj) return null;
         return targetToSkillId[targetObj] || null;
@@ -334,6 +341,10 @@
         const targetY = Number.isInteger(overrides.targetY) ? overrides.targetY : (hitData ? hitData.gridY : null);
         const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : playerState.z;
 
+        if (window.DEBUG_COOKING_USE) {
+            debugCookingUse(`runtime.tryUseItemOnTarget item=${overrides.sourceItemId || 'none'} target=${targetObj || 'none'} @ (${targetX},${targetY},${targetZ})`);
+        }
+
         const orderedSkillIds = [];
         const preferredSkillId = resolveSkillIdFromTarget(targetObj);
         if (preferredSkillId) orderedSkillIds.push(preferredSkillId);
@@ -359,7 +370,11 @@
                 hitData
             }));
 
-            if (module.onUseItem(context)) return true;
+            const handled = !!module.onUseItem(context);
+            if (window.DEBUG_COOKING_USE) {
+                debugCookingUse(`runtime.tryUseItemOnTarget module=${skillId} handled=${handled ? 'yes' : 'no'}`);
+            }
+            if (handled) return true;
         }
 
         return false;
@@ -397,6 +412,7 @@
         handleSkillAnimation
     };
 })();
+
 
 
 

@@ -73,6 +73,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             contextOptionsListEl.innerHTML = '';
             for (let i = 0; i < hitResults.length; i++) {
                 const hitData = hitResults[i];
+                const selectedSlot = getSelectedUseItem();
+                const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
+                const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
                 let usedSkillOptions = false;
                 const skillOptions = (window.SkillRuntime && typeof SkillRuntime.getSkillContextMenuOptions === 'function')
                     ? SkillRuntime.getSkillContextMenuOptions(hitData)
@@ -94,6 +97,23 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 } else if (!usedSkillOptions && hitData.type === 'ROCK') {
                     addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
                     addContextMenuOption('Examine Rock', () => console.log('EXAMINING: A solid chunk of rock.'));
+                } else if (!usedSkillOptions && hitData.type === 'FIRE') {
+                    if (selectedCookable) {
+                        addContextMenuOption(`Use <span class="text-[#ff981f]">${selectedItem.name}</span> -> <span class="text-orange-300">Fire</span>`, () => {
+                            let used = false;
+                            if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
+                                used = SkillRuntime.tryUseItemOnTarget({
+                                    hitData,
+                                    sourceInvIndex: selectedUse.invIndex,
+                                    sourceItemId: selectedItem.id
+                                });
+                            }
+                            if (!used) used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
+                            if (used && hitData.point) spawnClickMarker(hitData.point, true);
+                            clearSelectedUse();
+                        });
+                    }
+                    addContextMenuOption('Examine <span class="text-orange-300">Fire</span>', () => console.log('EXAMINING: A hot campfire.'));
                 } else if (hitData.type === 'BANK_BOOTH') {
                     addContextMenuOption('Bank <span class="text-cyan-400">Bank Booth</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'BANK_BOOTH'); spawnClickMarker(hitData.point, true); });
                     addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => console.log('EXAMINING: A sturdy wooden booth for storing your items.'));
@@ -404,17 +424,26 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (selected) {
                 let used = false;
                 const selectedSlot = inventory[selectedUse.invIndex];
+                const selectedItemId = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData.id : null;
+
+                if (window.DEBUG_COOKING_USE && typeof addChatMessage === 'function') {
+                    addChatMessage(`[cook-debug] use-click item=${selectedItemId || 'none'} target=${hitData.type} @ (${hitData.gridX},${hitData.gridY},${playerState.z})`, 'info');
+                }
 
                 if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
                     used = SkillRuntime.tryUseItemOnTarget({
                         hitData,
                         sourceInvIndex: selectedUse.invIndex,
-                        sourceItemId: selectedSlot && selectedSlot.itemData ? selectedSlot.itemData.id : null
+                        sourceItemId: selectedItemId
                     });
                 }
 
                 if (!used) {
                     used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
+                }
+
+                if (window.DEBUG_COOKING_USE && typeof addChatMessage === 'function') {
+                    addChatMessage(`[cook-debug] use-click result handled=${used ? 'yes' : 'no'}`, 'info');
                 }
 
                 if (used && hitData.point) spawnClickMarker(hitData.point, true);
@@ -603,7 +632,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
 
-                    let pendingSkillStart = null;
+                    let pendingSkillStart = playerState.pendingSkillStart || null;
                     if (window.SkillRuntime
                         && typeof SkillRuntime.canHandleTarget === 'function'
                         && SkillRuntime.canHandleTarget(pendingAction.obj)
@@ -612,6 +641,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         && typeof pendingAction.targetUid.skillId === 'string') {
                         pendingSkillStart = Object.assign({}, pendingAction.targetUid, {
                             targetObj: pendingAction.obj,
+                            targetX: actionX,
+                            targetY: actionY,
+                            targetZ: playerState.z
+                        });
+                    } else if (pendingSkillStart && pendingSkillStart.targetObj === pendingAction.obj) {
+                        pendingSkillStart = Object.assign({}, pendingSkillStart, {
                             targetX: actionX,
                             targetY: actionY,
                             targetZ: playerState.z
@@ -1659,6 +1694,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
 
 
 

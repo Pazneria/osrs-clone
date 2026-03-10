@@ -193,7 +193,10 @@
             rig.rightLowerArm.rotation.set(-0.6 + (s * 0.35), -0.1, 0);
             rig.leftArm.rotation.set(-0.4, 0.15, 0.2);
             rig.leftLowerArm.rotation.set(-0.8, -0.2, 0);
-            rig.leftLeg.rotation.x = 0;
+            rig.leftLeg.rotation.set(0, 0, 0);
+            rig.rightLeg.rotation.set(0, 0, 0);
+            if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.set(0, 0, 0);
+            if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.set(0, 0, 0);
         }
     };
 

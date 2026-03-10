@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const SKILL_ID = 'cooking';
 
     function getRecipeFromItemId(context, itemId) {
@@ -57,6 +57,13 @@
         }
     }
 
+    function debugCooking(context, message) {
+        if (!window.DEBUG_COOKING_USE) return;
+        const text = `[cook-debug] ${message}`;
+        try { console.log(text); } catch (_) {}
+        if (context && typeof context.addChatMessage === 'function') context.addChatMessage(text, 'info');
+    }
+
     const cookingModule = {
         canStart(context) {
             if (!context || context.targetObj !== 'FIRE') return false;
@@ -65,14 +72,21 @@
 
         onUseItem(context) {
             const recipe = getRecipeFromItemId(context, context.sourceItemId);
-            if (!recipe) return false;
+            if (!recipe) {
+                debugCooking(context, `onUseItem rejected: no recipe for sourceItemId=${context.sourceItemId || 'none'}`);
+                return false;
+            }
 
-            if (!(context.targetObj === 'GROUND' || context.targetObj === 'FIRE')) return false;
+            if (!(context.targetObj === 'GROUND' || context.targetObj === 'FIRE')) {
+                debugCooking(context, `onUseItem rejected: unsupported targetObj=${context.targetObj || 'none'}`);
+                return false;
+            }
 
             const fireTarget = typeof context.resolveFireTargetFromHit === 'function'
                 ? context.resolveFireTargetFromHit(context.hitData)
                 : null;
             if (!fireTarget) {
+                debugCooking(context, 'onUseItem blocked: no active fire target resolved from click.');
                 context.addChatMessage('You need an active fire to cook that.', 'warn');
                 return true;
             }
@@ -86,6 +100,7 @@
                 sourceInvIndex: context.sourceInvIndex,
                 sourceItemId: recipe.sourceItemId
             };
+            debugCooking(context, `onUseItem queued: source=${recipe.sourceItemId}, fire=(${fireTarget.x},${fireTarget.y},${fireTarget.z})`);
 
             if (typeof context.queueInteractAt === 'function') {
                 context.queueInteractAt('FIRE', fireTarget.x, fireTarget.y, null);
@@ -99,6 +114,7 @@
         onStart(context) {
             const recipe = getRecipeFromItemId(context, context.sourceItemId);
             if (!recipe) {
+                debugCooking(context, `onStart failed: recipe missing for sourceItemId=${context.sourceItemId || 'none'}`);
                 context.addChatMessage('You cannot cook that.', 'warn');
                 return false;
             }
@@ -113,6 +129,7 @@
             const dy = Math.abs(target.y - context.playerState.y);
             const samePlane = target.z === context.playerState.z;
             if (!samePlane || dx > 1 || dy > 1) {
+                debugCooking(context, `onStart blocked: not adjacent/same plane (player=${context.playerState.x},${context.playerState.y},${context.playerState.z} target=${target.x},${target.y},${target.z})`);
                 return false;
             }
 
@@ -130,6 +147,7 @@
                 nextTick: context.currentTick + actionTicks
             });
 
+            debugCooking(context, `onStart success: recipe=${recipe.sourceItemId}, intervalTicks=${actionTicks}`);
             context.startSkillingAction();
             return true;
         },
@@ -149,6 +167,7 @@
 
                 const target = session.target || { x: context.targetX, y: context.targetY, z: context.targetZ };
                 if (!context.hasActiveFireAt(target.x, target.y, target.z)) {
+                    debugCooking(context, `onTick stop: fire missing at (${target.x},${target.y},${target.z})`);
                     context.addChatMessage('The fire has gone out.', 'warn');
                     context.renderInventory();
                     return SkillActionResolution.stopSkill(context, SKILL_ID, 'FIRE_GONE');
@@ -163,6 +182,7 @@
                 context.renderInventory();
 
                 if (resolution.status !== 'success') {
+                    debugCooking(context, `onTick stop: resolution=${resolution.status} reason=${resolution.reasonCode || 'FAILED'}`);
                     return SkillActionResolution.stopSkill(context, SKILL_ID, resolution.reasonCode || 'FAILED');
                 }
 
@@ -187,3 +207,5 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = cookingModule;
 })();
+
+

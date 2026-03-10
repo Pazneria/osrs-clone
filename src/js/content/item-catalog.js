@@ -118,6 +118,8 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
+            cookResultId: 'cooked_trout',
+            burnResultId: 'burnt_trout',
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         raw_salmon: {
@@ -127,6 +129,8 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
+            cookResultId: 'cooked_salmon',
+            burnResultId: 'burnt_salmon',
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         raw_tuna: {
@@ -136,6 +140,8 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
+            cookResultId: 'cooked_tuna',
+            burnResultId: 'burnt_tuna',
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         raw_swordfish: {
@@ -145,6 +151,8 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
+            cookResultId: 'cooked_swordfish',
+            burnResultId: 'burnt_swordfish',
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         raw_shrimp: {
@@ -170,6 +178,78 @@
         },
         burnt_shrimp: {
             name: 'Burnt Shrimp',
+            type: 'resource',
+            value: 1,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        cooked_trout: {
+            name: 'Cooked Trout',
+            type: 'food',
+            value: 24,
+            stackable: false,
+            actions: ['Eat', 'Drop'],
+            defaultAction: 'Eat',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        burnt_trout: {
+            name: 'Burnt Trout',
+            type: 'resource',
+            value: 1,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        cooked_salmon: {
+            name: 'Cooked Salmon',
+            type: 'food',
+            value: 32,
+            stackable: false,
+            actions: ['Eat', 'Drop'],
+            defaultAction: 'Eat',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        burnt_salmon: {
+            name: 'Burnt Salmon',
+            type: 'resource',
+            value: 1,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        cooked_tuna: {
+            name: 'Cooked Tuna',
+            type: 'food',
+            value: 40,
+            stackable: false,
+            actions: ['Eat', 'Drop'],
+            defaultAction: 'Eat',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        burnt_tuna: {
+            name: 'Burnt Tuna',
+            type: 'resource',
+            value: 1,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        cooked_swordfish: {
+            name: 'Cooked Swordfish',
+            type: 'food',
+            value: 56,
+            stackable: false,
+            actions: ['Eat', 'Drop'],
+            defaultAction: 'Eat',
+            icon: { kind: 'sprite', key: 'raw_shrimp' }
+        },
+        burnt_swordfish: {
+            name: 'Burnt Swordfish',
             type: 'resource',
             value: 1,
             stackable: false,
@@ -367,3 +447,4 @@
         buildItemDb
     };
 })();
+

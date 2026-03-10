@@ -226,8 +226,44 @@
                     cookedItemId: 'cooked_shrimp',
                     burntItemId: 'burnt_shrimp',
                     requiredLevel: 1,
-                    burnDifficulty: 4,
+                    burnDifficulty: 9,
                     xpPerSuccess: 30,
+                    sourceTarget: 'FIRE'
+                },
+                raw_trout: {
+                    sourceItemId: 'raw_trout',
+                    cookedItemId: 'cooked_trout',
+                    burntItemId: 'burnt_trout',
+                    requiredLevel: 10,
+                    burnDifficulty: 24,
+                    xpPerSuccess: 70,
+                    sourceTarget: 'FIRE'
+                },
+                raw_salmon: {
+                    sourceItemId: 'raw_salmon',
+                    cookedItemId: 'cooked_salmon',
+                    burntItemId: 'burnt_salmon',
+                    requiredLevel: 20,
+                    burnDifficulty: 48,
+                    xpPerSuccess: 90,
+                    sourceTarget: 'FIRE'
+                },
+                raw_tuna: {
+                    sourceItemId: 'raw_tuna',
+                    cookedItemId: 'cooked_tuna',
+                    burntItemId: 'burnt_tuna',
+                    requiredLevel: 30,
+                    burnDifficulty: 84,
+                    xpPerSuccess: 120,
+                    sourceTarget: 'FIRE'
+                },
+                raw_swordfish: {
+                    sourceItemId: 'raw_swordfish',
+                    cookedItemId: 'cooked_swordfish',
+                    burntItemId: 'burnt_swordfish',
+                    requiredLevel: 40,
+                    burnDifficulty: 144,
+                    xpPerSuccess: 140,
                     sourceTarget: 'FIRE'
                 }
             },
