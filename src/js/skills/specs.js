@@ -1,5 +1,5 @@
 (function () {
-    const SPEC_VERSION = '2026.03.m3';
+    const SPEC_VERSION = '2026.03.m4';
 
     const SKILL_SPECS = {
         woodcutting: {
@@ -433,7 +433,282 @@
                 generalStoreFallback: {
                     buyPolicy: 'half_price_floor'
                 }
-            }        },
+            }
+        },
+        fletching: {
+            skillId: 'fletching',
+            levelBands: [1, 10, 20, 30, 40],
+            formulas: {
+                output: 'fixed_per_action',
+                interval: 'fixed_action_ticks'
+            },
+            timing: {
+                actionTicks: 3
+            },
+            recipeSet: (function () {
+                const recipes = {};
+
+                const logTierDefs = [
+                    {
+                        tierId: 'wooden',
+                        logItemId: 'logs',
+                        handleItemId: 'wooden_handle',
+                        handleLevel: 1,
+                        handleXp: 6,
+                        staffItemId: 'plain_staff_wood',
+                        staffLevel: 1,
+                        staffXp: 6,
+                        shaftsItemId: 'wooden_shafts',
+                        shaftsLevel: 1,
+                        shaftsXp: 4,
+                        shortbowUnstrungItemId: 'normal_shortbow_u',
+                        shortbowUnstrungLevel: 5,
+                        shortbowUnstrungXp: 5,
+                        longbowUnstrungItemId: 'normal_longbow_u',
+                        longbowUnstrungLevel: 1,
+                        longbowUnstrungXp: 5,
+                        shortbowItemId: 'normal_shortbow',
+                        shortbowLevel: 5,
+                        shortbowXp: 3,
+                        longbowItemId: 'normal_longbow',
+                        longbowLevel: 1,
+                        longbowXp: 3
+                    },
+                    {
+                        tierId: 'oak',
+                        logItemId: 'oak_logs',
+                        handleItemId: 'oak_handle',
+                        handleLevel: 10,
+                        handleXp: 10,
+                        staffItemId: 'plain_staff_oak',
+                        staffLevel: 10,
+                        staffXp: 12,
+                        shaftsItemId: 'oak_shafts',
+                        shaftsLevel: 10,
+                        shaftsXp: 6,
+                        shortbowUnstrungItemId: 'oak_shortbow_u',
+                        shortbowUnstrungLevel: 15,
+                        shortbowUnstrungXp: 9,
+                        longbowUnstrungItemId: 'oak_longbow_u',
+                        longbowUnstrungLevel: 10,
+                        longbowUnstrungXp: 9,
+                        shortbowItemId: 'oak_shortbow',
+                        shortbowLevel: 15,
+                        shortbowXp: 5,
+                        longbowItemId: 'oak_longbow',
+                        longbowLevel: 10,
+                        longbowXp: 5
+                    },
+                    {
+                        tierId: 'willow',
+                        logItemId: 'willow_logs',
+                        handleItemId: 'willow_handle',
+                        handleLevel: 20,
+                        handleXp: 14,
+                        staffItemId: 'plain_staff_willow',
+                        staffLevel: 20,
+                        staffXp: 18,
+                        shaftsItemId: 'willow_shafts',
+                        shaftsLevel: 20,
+                        shaftsXp: 9,
+                        shortbowUnstrungItemId: 'willow_shortbow_u',
+                        shortbowUnstrungLevel: 25,
+                        shortbowUnstrungXp: 14,
+                        longbowUnstrungItemId: 'willow_longbow_u',
+                        longbowUnstrungLevel: 20,
+                        longbowUnstrungXp: 14,
+                        shortbowItemId: 'willow_shortbow',
+                        shortbowLevel: 25,
+                        shortbowXp: 8,
+                        longbowItemId: 'willow_longbow',
+                        longbowLevel: 20,
+                        longbowXp: 8
+                    },
+                    {
+                        tierId: 'maple',
+                        logItemId: 'maple_logs',
+                        handleItemId: 'maple_handle',
+                        handleLevel: 30,
+                        handleXp: 20,
+                        staffItemId: 'plain_staff_maple',
+                        staffLevel: 30,
+                        staffXp: 26,
+                        shaftsItemId: 'maple_shafts',
+                        shaftsLevel: 30,
+                        shaftsXp: 13,
+                        shortbowUnstrungItemId: 'maple_shortbow_u',
+                        shortbowUnstrungLevel: 35,
+                        shortbowUnstrungXp: 20,
+                        longbowUnstrungItemId: 'maple_longbow_u',
+                        longbowUnstrungLevel: 30,
+                        longbowUnstrungXp: 20,
+                        shortbowItemId: 'maple_shortbow',
+                        shortbowLevel: 35,
+                        shortbowXp: 12,
+                        longbowItemId: 'maple_longbow',
+                        longbowLevel: 30,
+                        longbowXp: 12
+                    },
+                    {
+                        tierId: 'yew',
+                        logItemId: 'yew_logs',
+                        handleItemId: 'yew_handle',
+                        handleLevel: 40,
+                        handleXp: 28,
+                        staffItemId: 'plain_staff_yew',
+                        staffLevel: 40,
+                        staffXp: 36,
+                        shaftsItemId: 'yew_shafts',
+                        shaftsLevel: 40,
+                        shaftsXp: 18,
+                        shortbowUnstrungItemId: 'yew_shortbow_u',
+                        shortbowUnstrungLevel: 45,
+                        shortbowUnstrungXp: 28,
+                        longbowUnstrungItemId: 'yew_longbow_u',
+                        longbowUnstrungLevel: 40,
+                        longbowUnstrungXp: 28,
+                        shortbowItemId: 'yew_shortbow',
+                        shortbowLevel: 45,
+                        shortbowXp: 18,
+                        longbowItemId: 'yew_longbow',
+                        longbowLevel: 40,
+                        longbowXp: 18
+                    }
+                ];
+
+                for (let i = 0; i < logTierDefs.length; i++) {
+                    const def = logTierDefs[i];
+
+                    recipes[`fletch_${def.handleItemId}`] = {
+                        recipeFamily: 'handle',
+                        requiredLevel: def.handleLevel,
+                        requiredToolIds: ['knife'],
+                        sourceLogItemId: def.logItemId,
+                        inputs: [{ itemId: def.logItemId, amount: 1 }],
+                        output: { itemId: def.handleItemId, amount: 1 },
+                        xpPerAction: def.handleXp,
+                        actionTicks: 3
+                    };
+
+                    recipes[`fletch_${def.staffItemId}`] = {
+                        recipeFamily: 'staff',
+                        requiredLevel: def.staffLevel,
+                        requiredToolIds: ['knife'],
+                        sourceLogItemId: def.logItemId,
+                        inputs: [{ itemId: def.logItemId, amount: 1 }],
+                        output: { itemId: def.staffItemId, amount: 1 },
+                        xpPerAction: def.staffXp,
+                        actionTicks: 3
+                    };
+
+                    recipes[`fletch_${def.shaftsItemId}`] = {
+                        recipeFamily: 'shafts',
+                        requiredLevel: def.shaftsLevel,
+                        requiredToolIds: ['knife'],
+                        sourceLogItemId: def.logItemId,
+                        inputs: [{ itemId: def.logItemId, amount: 1 }],
+                        output: { itemId: def.shaftsItemId, amount: 1 },
+                        xpPerAction: def.shaftsXp,
+                        actionTicks: 3
+                    };
+
+                    recipes[`fletch_${def.shortbowUnstrungItemId}`] = {
+                        recipeFamily: 'bow_unstrung',
+                        requiredLevel: def.shortbowUnstrungLevel,
+                        requiredToolIds: ['knife'],
+                        sourceLogItemId: def.logItemId,
+                        inputs: [{ itemId: def.logItemId, amount: 1 }],
+                        output: { itemId: def.shortbowUnstrungItemId, amount: 1 },
+                        xpPerAction: def.shortbowUnstrungXp,
+                        actionTicks: 3
+                    };
+
+                    recipes[`fletch_${def.longbowUnstrungItemId}`] = {
+                        recipeFamily: 'bow_unstrung',
+                        requiredLevel: def.longbowUnstrungLevel,
+                        requiredToolIds: ['knife'],
+                        sourceLogItemId: def.logItemId,
+                        inputs: [{ itemId: def.logItemId, amount: 1 }],
+                        output: { itemId: def.longbowUnstrungItemId, amount: 1 },
+                        xpPerAction: def.longbowUnstrungXp,
+                        actionTicks: 3
+                    };
+
+                    recipes[`fletch_${def.shortbowItemId}`] = {
+                        recipeFamily: 'bow_strung',
+                        requiredLevel: def.shortbowLevel,
+                        inputs: [
+                            { itemId: def.shortbowUnstrungItemId, amount: 1 },
+                            { itemId: 'bow_string', amount: 1 }
+                        ],
+                        output: { itemId: def.shortbowItemId, amount: 1 },
+                        xpPerAction: def.shortbowXp,
+                        actionTicks: 3
+                    };
+
+                    recipes[`fletch_${def.longbowItemId}`] = {
+                        recipeFamily: 'bow_strung',
+                        requiredLevel: def.longbowLevel,
+                        inputs: [
+                            { itemId: def.longbowUnstrungItemId, amount: 1 },
+                            { itemId: 'bow_string', amount: 1 }
+                        ],
+                        output: { itemId: def.longbowItemId, amount: 1 },
+                        xpPerAction: def.longbowXp,
+                        actionTicks: 3
+                    };
+                }
+
+                const arrowTierDefs = [
+                    { tierId: 'wooden', shaftsItemId: 'wooden_shafts', headlessItemId: 'wooden_headless_arrows', requiredLevel: 1, headlessXp: 4 },
+                    { tierId: 'oak', shaftsItemId: 'oak_shafts', headlessItemId: 'oak_headless_arrows', requiredLevel: 10, headlessXp: 6 },
+                    { tierId: 'willow', shaftsItemId: 'willow_shafts', headlessItemId: 'willow_headless_arrows', requiredLevel: 20, headlessXp: 9 },
+                    { tierId: 'maple', shaftsItemId: 'maple_shafts', headlessItemId: 'maple_headless_arrows', requiredLevel: 30, headlessXp: 13 },
+                    { tierId: 'yew', shaftsItemId: 'yew_shafts', headlessItemId: 'yew_headless_arrows', requiredLevel: 40, headlessXp: 18 }
+                ];
+
+                for (let i = 0; i < arrowTierDefs.length; i++) {
+                    const def = arrowTierDefs[i];
+                    recipes[`fletch_${def.headlessItemId}`] = {
+                        recipeFamily: 'headless_arrows',
+                        requiredLevel: def.requiredLevel,
+                        inputs: [
+                            { itemId: def.shaftsItemId, amount: 1 },
+                            { itemId: 'feathers_bundle', amount: 1 }
+                        ],
+                        output: { itemId: def.headlessItemId, amount: 1 },
+                        xpPerAction: def.headlessXp,
+                        actionTicks: 3
+                    };
+                }
+
+                const finishedArrowDefs = [
+                    { arrowItemId: 'bronze_arrows', headlessItemId: 'wooden_headless_arrows', arrowheadsItemId: 'bronze_arrowheads', requiredLevel: 1, xp: 2 },
+                    { arrowItemId: 'iron_arrows', headlessItemId: 'wooden_headless_arrows', arrowheadsItemId: 'iron_arrowheads', requiredLevel: 1, xp: 3 },
+                    { arrowItemId: 'steel_arrows', headlessItemId: 'oak_headless_arrows', arrowheadsItemId: 'steel_arrowheads', requiredLevel: 10, xp: 5 },
+                    { arrowItemId: 'mithril_arrows', headlessItemId: 'willow_headless_arrows', arrowheadsItemId: 'mithril_arrowheads', requiredLevel: 20, xp: 7 },
+                    { arrowItemId: 'adamant_arrows', headlessItemId: 'maple_headless_arrows', arrowheadsItemId: 'adamant_arrowheads', requiredLevel: 30, xp: 10 },
+                    { arrowItemId: 'rune_arrows', headlessItemId: 'yew_headless_arrows', arrowheadsItemId: 'rune_arrowheads', requiredLevel: 40, xp: 14 }
+                ];
+
+                for (let i = 0; i < finishedArrowDefs.length; i++) {
+                    const def = finishedArrowDefs[i];
+                    recipes[`fletch_${def.arrowItemId}`] = {
+                        recipeFamily: 'finished_arrows',
+                        requiredLevel: def.requiredLevel,
+                        inputs: [
+                            { itemId: def.arrowheadsItemId, amount: 1 },
+                            { itemId: def.headlessItemId, amount: 1 }
+                        ],
+                        output: { itemId: def.arrowItemId, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 3
+                    };
+                }
+
+                return recipes;
+            })()
+        },
         smithing: {
             skillId: 'smithing',
             levelBands: [1, 10, 20, 30, 40],

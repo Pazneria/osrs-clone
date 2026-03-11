@@ -583,6 +583,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (typeof addChatMessage === 'function') addChatMessage('You stop lighting the logs.', 'info');
         }
 
+        function hasActiveFletchingProcessingSession() {
+            if (!(window.SkillActionResolution && typeof SkillActionResolution.getSkillSession === 'function')) return false;
+            const session = SkillActionResolution.getSkillSession(playerState, 'fletching');
+            return !!(session && session.kind === 'processing');
+        }
         function queueAction(type, gridX, gridY, obj, targetUid = null) {
             cancelManualFiremakingChain();
             pendingAction = { type, x: gridX, y: gridY, obj, targetUid };
@@ -744,7 +749,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
-                    playerState.action = playerState.path.length > 0 ? 'WALKING' : 'IDLE';
+                    const keepFletchingAction = playerState.action === 'SKILLING: FLETCHING' && hasActiveFletchingProcessingSession();
+                    if (keepFletchingAction) {
+                        playerState.action = 'SKILLING: FLETCHING';
+                    } else {
+                        playerState.action = playerState.path.length > 0 ? 'WALKING' : 'IDLE';
+                    }
                 } else if (pendingAction.type === 'INTERACT') {
                     // Force standing adjacent to interactables (unless picking up a ground item)
                     const forceAdjacent = pendingAction.obj !== 'GROUND_ITEM';
@@ -1850,6 +1860,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
+
 
 
 

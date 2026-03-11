@@ -1105,6 +1105,21 @@
                 if (pouchUsed) return true;
             }
 
+            if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
+                const skillUsed = SkillRuntime.tryUseItemOnTarget({
+                    targetObj: 'INVENTORY',
+                    targetUid: {
+                        sourceInvIndex,
+                        targetInvIndex,
+                        sourceItemId: a,
+                        targetItemId: b
+                    },
+                    sourceInvIndex,
+                    sourceItemId: a
+                });
+                if (skillUsed) return true;
+            }
+
             if ((a === 'tinderbox' && b === 'logs') || (a === 'logs' && b === 'tinderbox')) {
                 return startFiremaking();
             }

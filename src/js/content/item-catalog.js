@@ -153,7 +153,7 @@
         knife: {
             name: 'Knife',
             type: 'tool',
-            value: 10,
+            value: 8,
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
@@ -539,6 +539,279 @@
             icon: { kind: 'sprite', key: 'large_pouch' }
         }
     };
+    function createFletchingItemDefs() {
+        const defs = {
+            feathers_bundle: {
+                name: 'Feathers x15',
+                type: 'resource',
+                value: 8,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            bow_string: {
+                name: 'Bow String',
+                type: 'resource',
+                value: 12,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            }
+        };
+
+        const tierDefs = [
+            {
+                key: 'wooden',
+                logName: 'Normal',
+                handleName: 'Wooden Handle',
+                handleValue: 6,
+                handleItemId: 'wooden_handle',
+                staffName: 'Plain Staff (Wood)',
+                staffValue: 6,
+                staffItemId: 'plain_staff_wood',
+                shaftsName: 'Wooden Shafts x15',
+                shaftsValue: 4,
+                shaftsItemId: 'wooden_shafts',
+                headlessName: 'Wooden Headless Arrows x15',
+                headlessValue: 6,
+                headlessItemId: 'wooden_headless_arrows',
+                shortbowUName: 'Normal Shortbow (u)',
+                shortbowUValue: 7,
+                shortbowUItemId: 'normal_shortbow_u',
+                longbowUName: 'Normal Longbow (u)',
+                longbowUValue: 6,
+                longbowUItemId: 'normal_longbow_u',
+                shortbowName: 'Normal Shortbow',
+                shortbowValue: 12,
+                shortbowItemId: 'normal_shortbow',
+                longbowName: 'Normal Longbow',
+                longbowValue: 10,
+                longbowItemId: 'normal_longbow'
+            },
+            {
+                key: 'oak',
+                logName: 'Oak',
+                handleName: 'Oak Handle',
+                handleValue: 12,
+                handleItemId: 'oak_handle',
+                staffName: 'Plain Staff (Oak)',
+                staffValue: 12,
+                staffItemId: 'plain_staff_oak',
+                shaftsName: 'Oak Shafts x15',
+                shaftsValue: 6,
+                shaftsItemId: 'oak_shafts',
+                headlessName: 'Oak Headless Arrows x15',
+                headlessValue: 10,
+                headlessItemId: 'oak_headless_arrows',
+                shortbowUName: 'Oak Shortbow (u)',
+                shortbowUValue: 15,
+                shortbowUItemId: 'oak_shortbow_u',
+                longbowUName: 'Oak Longbow (u)',
+                longbowUValue: 14,
+                longbowUItemId: 'oak_longbow_u',
+                shortbowName: 'Oak Shortbow',
+                shortbowValue: 22,
+                shortbowItemId: 'oak_shortbow',
+                longbowName: 'Oak Longbow',
+                longbowValue: 20,
+                longbowItemId: 'oak_longbow'
+            },
+            {
+                key: 'willow',
+                logName: 'Willow',
+                handleName: 'Willow Handle',
+                handleValue: 20,
+                handleItemId: 'willow_handle',
+                staffName: 'Plain Staff (Willow)',
+                staffValue: 20,
+                staffItemId: 'plain_staff_willow',
+                shaftsName: 'Willow Shafts x15',
+                shaftsValue: 10,
+                shaftsItemId: 'willow_shafts',
+                headlessName: 'Willow Headless Arrows x15',
+                headlessValue: 16,
+                headlessItemId: 'willow_headless_arrows',
+                shortbowUName: 'Willow Shortbow (u)',
+                shortbowUValue: 28,
+                shortbowUItemId: 'willow_shortbow_u',
+                longbowUName: 'Willow Longbow (u)',
+                longbowUValue: 26,
+                longbowUItemId: 'willow_longbow_u',
+                shortbowName: 'Willow Shortbow',
+                shortbowValue: 40,
+                shortbowItemId: 'willow_shortbow',
+                longbowName: 'Willow Longbow',
+                longbowValue: 36,
+                longbowItemId: 'willow_longbow'
+            },
+            {
+                key: 'maple',
+                logName: 'Maple',
+                handleName: 'Maple Handle',
+                handleValue: 32,
+                handleItemId: 'maple_handle',
+                staffName: 'Plain Staff (Maple)',
+                staffValue: 32,
+                staffItemId: 'plain_staff_maple',
+                shaftsName: 'Maple Shafts x15',
+                shaftsValue: 16,
+                shaftsItemId: 'maple_shafts',
+                headlessName: 'Maple Headless Arrows x15',
+                headlessValue: 24,
+                headlessItemId: 'maple_headless_arrows',
+                shortbowUName: 'Maple Shortbow (u)',
+                shortbowUValue: 46,
+                shortbowUItemId: 'maple_shortbow_u',
+                longbowUName: 'Maple Longbow (u)',
+                longbowUValue: 44,
+                longbowUItemId: 'maple_longbow_u',
+                shortbowName: 'Maple Shortbow',
+                shortbowValue: 68,
+                shortbowItemId: 'maple_shortbow',
+                longbowName: 'Maple Longbow',
+                longbowValue: 62,
+                longbowItemId: 'maple_longbow'
+            },
+            {
+                key: 'yew',
+                logName: 'Yew',
+                handleName: 'Yew Handle',
+                handleValue: 50,
+                handleItemId: 'yew_handle',
+                staffName: 'Plain Staff (Yew)',
+                staffValue: 50,
+                staffItemId: 'plain_staff_yew',
+                shaftsName: 'Yew Shafts x15',
+                shaftsValue: 24,
+                shaftsItemId: 'yew_shafts',
+                headlessName: 'Yew Headless Arrows x15',
+                headlessValue: 36,
+                headlessItemId: 'yew_headless_arrows',
+                shortbowUName: 'Yew Shortbow (u)',
+                shortbowUValue: 72,
+                shortbowUItemId: 'yew_shortbow_u',
+                longbowUName: 'Yew Longbow (u)',
+                longbowUValue: 70,
+                longbowUItemId: 'yew_longbow_u',
+                shortbowName: 'Yew Shortbow',
+                shortbowValue: 110,
+                shortbowItemId: 'yew_shortbow',
+                longbowName: 'Yew Longbow',
+                longbowValue: 100,
+                longbowItemId: 'yew_longbow'
+            }
+        ];
+
+        for (let i = 0; i < tierDefs.length; i++) {
+            const def = tierDefs[i];
+
+            defs[def.handleItemId] = {
+                name: def.handleName,
+                type: 'component',
+                value: def.handleValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            };
+
+            defs[def.staffItemId] = {
+                name: def.staffName,
+                type: 'component',
+                value: def.staffValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            };
+
+            defs[def.shaftsItemId] = {
+                name: def.shaftsName,
+                type: 'component',
+                value: def.shaftsValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            };
+
+            defs[def.headlessItemId] = {
+                name: def.headlessName,
+                type: 'component',
+                value: def.headlessValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            };
+
+            defs[def.shortbowUItemId] = {
+                name: def.shortbowUName,
+                type: 'component',
+                value: def.shortbowUValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            };
+
+            defs[def.longbowUItemId] = {
+                name: def.longbowUName,
+                type: 'component',
+                value: def.longbowUValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            };
+
+            defs[def.shortbowItemId] = {
+                name: def.shortbowName,
+                type: 'component',
+                value: def.shortbowValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            };
+
+            defs[def.longbowItemId] = {
+                name: def.longbowName,
+                type: 'component',
+                value: def.longbowValue,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            };
+        }
+
+        const finishedArrowDefs = [
+            { itemId: 'bronze_arrows', name: 'Bronze Arrows x15', value: 8 },
+            { itemId: 'iron_arrows', name: 'Iron Arrows x15', value: 12 },
+            { itemId: 'steel_arrows', name: 'Steel Arrows x15', value: 20 },
+            { itemId: 'mithril_arrows', name: 'Mithril Arrows x15', value: 32 },
+            { itemId: 'adamant_arrows', name: 'Adamant Arrows x15', value: 50 },
+            { itemId: 'rune_arrows', name: 'Rune Arrows x15', value: 80 }
+        ];
+
+        for (let i = 0; i < finishedArrowDefs.length; i++) {
+            const def = finishedArrowDefs[i];
+            defs[def.itemId] = {
+                name: def.name,
+                type: 'component',
+                value: def.value,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            };
+        }
+
+        return defs;
+    }
     function createSmithingItemDefs() {
         const defs = {
             hammer: {
@@ -859,6 +1132,7 @@
         return defs;
     }
 
+    Object.assign(ITEM_DEFS, createFletchingItemDefs());
     Object.assign(ITEM_DEFS, createSmithingItemDefs());
 
     function resolveIcon(def, makeIconSprite, makeIconFromImage, assetVersionTag) {

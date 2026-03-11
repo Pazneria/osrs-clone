@@ -850,6 +850,7 @@ O445411111OOOOO.
             firemaking: { xp: 0, level: 1 },
             fishing: { xp: 0, level: 1 },
             cooking: { xp: 0, level: 1 },
+            fletching: { xp: 0, level: 1 },
             runecrafting: { xp: 0, level: 1 },
             smithing: { xp: 0, level: 1 }
         };

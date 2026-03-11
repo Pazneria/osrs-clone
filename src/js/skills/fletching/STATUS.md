@@ -6,12 +6,12 @@
 - [x] FLETCHING-003: Roadmap expanded with full fletching design spec (recipes, queueing, economy, merchants, dependencies).
 
 ## Now
-- [ ] FLETCHING-004: Data model pass for recipe catalog (handles, staffs, shafts, headless arrows, bows) with tier/input/output mappings.
-- [ ] FLETCHING-005: Runtime queue implementation for inventory-anywhere fletching (menu selection, quantity actions, 3-tick repeats).
-- [ ] FLETCHING-006: Core item-on-item resolution for bow stringing, shaft+feather headless arrows, and headless+arrowhead finishing with matching-tier validation.
+- [x] FLETCHING-004: Data model pass for recipe catalog (handles, staffs, shafts, headless arrows, bows) with tier/input/output mappings.
+- [x] FLETCHING-005: Runtime queue implementation for inventory-anywhere fletching (menu selection, quantity actions, 3-tick repeats).
+- [x] FLETCHING-006: Core item-on-item resolution for bow stringing, shaft+feather headless arrows, and headless+arrowhead finishing with matching-tier validation.
 
 ## Next
-- [ ] FLETCHING-007: UI interaction pass for knife-on-log product grid, lit/unlit options, and missing-requirement feedback.
+- [x] FLETCHING-007: UI interaction pass for knife-on-log product grid, lit/unlit options, and missing-requirement feedback.
 - [ ] FLETCHING-008: Cross-skill integration pass for crafting handle consumers and smithing arrowhead dependencies.
 - [ ] FLETCHING-009: Merchant/value-table alignment for suppliers, advanced-fletcher buy lists, and general-store half-price behavior.
 

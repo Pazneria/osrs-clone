@@ -11,9 +11,10 @@
         },
         actionToSkillId: {
             FIREMAKING: 'firemaking',
-            COOKING: 'cooking'
+            COOKING: 'cooking',
+            FLETCHING: 'fletching'
         },
-        orderedSkillIds: ['mining', 'woodcutting', 'fishing', 'firemaking', 'cooking', 'runecrafting', 'smithing']
+        orderedSkillIds: ['mining', 'woodcutting', 'fishing', 'firemaking', 'cooking', 'fletching', 'runecrafting', 'smithing']
     };
 })();
 
