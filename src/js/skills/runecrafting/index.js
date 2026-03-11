@@ -485,7 +485,7 @@
                 },
                 {
                     text: `Examine <span class="text-orange-300">${altarName}</span>`,
-                    onSelect: () => console.log('EXAMINING: An elemental altar humming with energy.')
+                    onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ALTAR_CANDIDATE', { name: altarName }, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('An elemental altar humming with energy.', 'game'))
                 }
             ];
         }

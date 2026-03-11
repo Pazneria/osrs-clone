@@ -776,7 +776,7 @@
                             openSmithingUi(context, STATION_FURNACE);
                         }
                     },
-                    { text: 'Examine Furnace', onSelect: () => console.log('EXAMINING: A roaring smithing furnace.') }
+                    { text: 'Examine Furnace', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('FURNACE', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A roaring smithing furnace.', 'game')) }
                 ];
             }
 
@@ -788,7 +788,7 @@
                             openSmithingUi(context, STATION_ANVIL);
                         }
                     },
-                    { text: 'Examine Anvil', onSelect: () => console.log('EXAMINING: A solid anvil for forging metal.') }
+                    { text: 'Examine Anvil', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ANVIL', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A solid anvil for forging metal.', 'game')) }
                 ];
             }
 

@@ -835,7 +835,7 @@
 
             options.push({
                 text: 'Examine <span class="text-cyan-400">Water</span>',
-                onSelect: () => console.log('EXAMINING: The water looks fishable.')
+                onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('WATER', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('The water looks fishable.', 'game'))
             });
 
             return options;

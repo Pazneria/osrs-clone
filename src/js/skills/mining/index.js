@@ -146,7 +146,7 @@
         getContextMenu(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec || !context.isTargetTile(nodeSpec.tileId)) {
-                return [{ text: 'Examine Rock', onSelect: () => console.log('EXAMINING: A solid chunk of rock.') }];
+                return [{ text: 'Examine Rock', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A solid chunk of rock.', 'game')) }];
             }
 
             if (nodeSpec.rewardItemId === 'rune_essence') {
@@ -158,7 +158,7 @@
                             context.spawnClickMarker(true);
                         }
                     },
-                    { text: 'Examine Rune essence', onSelect: () => console.log('EXAMINING: Pure rune essence.') }
+                    { text: 'Examine Rune essence', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK', { oreType: 'rune_essence' }, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('Pure essence sleeps inside this rock.', 'game')) }
                 ];
             }
 
@@ -170,7 +170,7 @@
                         context.spawnClickMarker(true);
                     }
                 },
-                { text: 'Examine Rock', onSelect: () => console.log('EXAMINING: A solid chunk of rock.') }
+                { text: 'Examine Rock', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A solid chunk of rock.', 'game')) }
             ];
         }
     };

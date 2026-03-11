@@ -171,12 +171,12 @@
                             context.spawnClickMarker(true);
                         }
                     },
-                    { text: 'Examine Tree', onSelect: () => console.log('EXAMINING: A fully grown tree.') }
+                    { text: 'Examine Tree', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('TREE', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A fully grown tree.', 'game')) }
                 ];
             }
 
             if (context.isTargetTile(4)) {
-                return [{ text: 'Examine Stump', onSelect: () => console.log('EXAMINING: A sad looking stump.') }];
+                return [{ text: 'Examine Stump', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('STUMP', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A sad reminder of a tree.', 'game')) }];
             }
 
             return null;

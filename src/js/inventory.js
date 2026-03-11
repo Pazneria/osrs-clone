@@ -646,7 +646,7 @@
                                 }
                             }
                             const exHeader = document.createElement('div'); exHeader.className = 'mt-1 border-t border-[#4a4136] pointer-events-none'; contextOptionsListEl.appendChild(exHeader);
-                            addContextMenuOption(`Examine ${item.name}`, () => console.log(`EXAMINING: ${item.name}.`));
+                            addContextMenuOption(`Examine ${item.name}`, () => { if (window.ExamineCatalog) window.ExamineCatalog.examineItem(item.id, item.name); else if (typeof addChatMessage === 'function') addChatMessage('Looks useful.', 'game'); else console.log(`EXAMINING: ${item.name}.`); });
                             showContextMenuAt(e.clientX, e.clientY);
                             appendSwapLeftClickControl(invActionPrefKey, orderedActions, () => renderInventory(), defaultAction);
                         };

@@ -92,11 +92,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (!usedSkillOptions && hitData.type === 'TREE') {
                     if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) {
                         addContextMenuOption('Chop down Tree', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'TREE'); spawnClickMarker(hitData.point, true); });
-                        addContextMenuOption('Examine Tree', () => console.log('EXAMINING: A fully grown tree.'));
-                    } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 4) addContextMenuOption('Examine Stump', () => console.log('EXAMINING: A sad looking stump.'));
+                        addContextMenuOption('Examine Tree', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('TREE') : (typeof addChatMessage === 'function' ? addChatMessage('A fully grown tree.', 'game') : console.log('EXAMINING: A fully grown tree.'))));
+                    } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 4) addContextMenuOption('Examine Stump', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('STUMP') : (typeof addChatMessage === 'function' ? addChatMessage('A sad reminder of a tree.', 'game') : console.log('EXAMINING: A sad reminder of a tree.'))));
                 } else if (!usedSkillOptions && hitData.type === 'ROCK') {
                     addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine Rock', () => console.log('EXAMINING: A solid chunk of rock.'));
+                    addContextMenuOption('Examine Rock', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK') : (typeof addChatMessage === 'function' ? addChatMessage('A solid chunk of rock.', 'game') : console.log('EXAMINING: A solid chunk of rock.'))));
                 } else if (!usedSkillOptions && hitData.type === 'FIRE') {
                     if (selectedCookable) {
                         addContextMenuOption(`Use <span class="text-[#ff981f]">${selectedItem.name}</span> -> <span class="text-orange-300">Fire</span>`, () => {
@@ -113,25 +113,25 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             clearSelectedUse();
                         });
                     }
-                    addContextMenuOption('Examine <span class="text-orange-300">Fire</span>', () => console.log('EXAMINING: A hot campfire.'));
+                    addContextMenuOption('Examine <span class="text-orange-300">Fire</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('FIRE') : (typeof addChatMessage === 'function' ? addChatMessage('A hot campfire.', 'game') : console.log('EXAMINING: A hot campfire.'))));
                 } else if (!usedSkillOptions && hitData.type === 'FURNACE') {
                     addContextMenuOption('Smelt <span class="text-orange-300">Furnace</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'FURNACE', { skillId: 'smithing', stationType: 'FURNACE' }); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-orange-300">Furnace</span>', () => console.log('EXAMINING: A roaring smithing furnace.'));
+                    addContextMenuOption('Examine <span class="text-orange-300">Furnace</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('FURNACE') : (typeof addChatMessage === 'function' ? addChatMessage('A roaring smithing furnace.', 'game') : console.log('EXAMINING: A roaring smithing furnace.'))));
                 } else if (!usedSkillOptions && hitData.type === 'ANVIL') {
                     addContextMenuOption('Forge <span class="text-slate-300">Anvil</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ANVIL', { skillId: 'smithing', stationType: 'ANVIL' }); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-slate-300">Anvil</span>', () => console.log('EXAMINING: A solid anvil for forging metal.'));
+                    addContextMenuOption('Examine <span class="text-slate-300">Anvil</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ANVIL') : (typeof addChatMessage === 'function' ? addChatMessage('A solid anvil for forging metal.', 'game') : console.log('EXAMINING: A solid anvil for forging metal.'))));
                 } else if (hitData.type === 'BANK_BOOTH') {
                     addContextMenuOption('Bank <span class="text-cyan-400">Bank Booth</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'BANK_BOOTH'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => console.log('EXAMINING: A sturdy wooden booth for storing your items.'));
+                    addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('BANK_BOOTH') : (typeof addChatMessage === 'function' ? addChatMessage('A safe place for your valuables.', 'game') : console.log('EXAMINING: A safe place for your valuables.'))));
                 } else if (hitData.type === 'DUMMY') {
                     addContextMenuOption('Attack <span class="text-white">Training Dummy</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DUMMY'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => console.log('EXAMINING: A dummy to practice your swings on.'));
+                    addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('DUMMY') : (typeof addChatMessage === 'function' ? addChatMessage('It never complains about your form.', 'game') : console.log('EXAMINING: It never complains about your form.'))));
                 } else if (hitData.type === 'SHOP_COUNTER') {
-                    addContextMenuOption('Examine Shop Counter', () => console.log('EXAMINING: A wooden counter with a glass display.'));
+                    addContextMenuOption('Examine Shop Counter', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('SHOP_COUNTER') : (typeof addChatMessage === 'function' ? addChatMessage('A counter built for haggling.', 'game') : console.log('EXAMINING: A counter built for haggling.'))));
                 } else if (hitData.type === 'DOOR') {
                     const action = hitData.doorObj.isOpen ? 'Close' : 'Open';
                     addContextMenuOption(`${action} <span class="text-white">Door</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DOOR', hitData.doorObj); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-white">Door</span>', () => console.log('EXAMINING: A sturdy wooden door.'));
+                    addContextMenuOption('Examine <span class="text-white">Door</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('DOOR') : (typeof addChatMessage === 'function' ? addChatMessage('A sturdy wooden door.', 'game') : console.log('EXAMINING: A sturdy wooden door.'))));
                 } else if (hitData.type === 'STAIRS_UP') {
                     addContextMenuOption('Climb-up <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_UP'); spawnClickMarker(hitData.point, true); });
                 } else if (hitData.type === 'STAIRS_DOWN') {
@@ -150,14 +150,14 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         const talkTarget = npcUid ? Object.assign({}, npcUid) : { name: hitData.name, action: 'Talk-to' };
                         addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', talkTarget); spawnClickMarker(hitData.point, true); });
                     }
-                    addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => console.log(`EXAMINING: ${hitData.name}.`));
+                    addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => (window.ExamineCatalog ? window.ExamineCatalog.examineNpc(hitData.name) : (typeof addChatMessage === 'function' ? addChatMessage('Nothing unusual.', 'game') : console.log(`EXAMINING: ${hitData.name}.`))));
                 } else if (hitData.type === 'GROUND_ITEM') {
                     const groundName = hitData.name || 'item';
                     addContextMenuOption(`Take <span class="text-[#ff981f]">${groundName}</span>`, () => {
                         queueAction('INTERACT', hitData.gridX, hitData.gridY, 'GROUND_ITEM', hitData.uid);
                         spawnClickMarker(hitData.point, true);
                     });
-                    addContextMenuOption(`Examine <span class="text-[#ff981f]">${groundName}</span>`, () => console.log(`EXAMINING: ${groundName}.`));
+                    addContextMenuOption(`Examine <span class="text-[#ff981f]">${groundName}</span>`, () => { const groundEntry = Array.isArray(groundItems) ? groundItems.find((gi) => gi && gi.uid === hitData.uid) : null; const groundItemId = groundEntry && groundEntry.itemData ? groundEntry.itemData.id : null; if (window.ExamineCatalog) window.ExamineCatalog.examineItem(groundItemId, groundName); else if (typeof addChatMessage === 'function') addChatMessage('Looks useful.', 'game'); else console.log(`EXAMINING: ${groundName}.`); });
                 }
             }
 
