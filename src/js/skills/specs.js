@@ -459,6 +459,15 @@
                 primaryResource: 'bronze_bar',
                 valueTable: {
                     hammer: { buy: 8, sell: 2 },
+                    copper_ore: { buy: 8, sell: 3 },
+                    tin_ore: { buy: 8, sell: 3 },
+                    iron_ore: { buy: 18, sell: 7 },
+                    coal: { buy: 30, sell: 12 },
+                    mithril_ore: { buy: 120, sell: 48 },
+                    silver_ore: { buy: 45, sell: 18 },
+                    adamant_ore: { buy: 300, sell: 120 },
+                    gold_ore: { buy: 70, sell: 28 },
+                    rune_ore: { buy: 1200, sell: 480 },
                     bronze_bar: { buy: null, sell: 8 },
                     iron_bar: { buy: null, sell: 16 },
                     steel_bar: { buy: null, sell: 32 },
@@ -470,6 +479,23 @@
                     ring_mould: { buy: null, sell: null },
                     amulet_mould: { buy: null, sell: null },
                     tiara_mould: { buy: null, sell: null }
+                },
+                merchantTable: {
+                    borin_ironvein: {
+                        strictBuys: true,
+                        buys: ['hammer', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore', 'bronze_bar', 'iron_bar', 'steel_bar', 'mithril_bar'],
+                        sells: ['hammer', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore']
+                    },
+                    thrain_deepforge: {
+                        strictBuys: true,
+                        buys: ['adamant_ore', 'rune_ore', 'adamant_bar', 'rune_bar'],
+                        sells: ['adamant_ore', 'rune_ore']
+                    },
+                    elira_gemhand: {
+                        strictBuys: true,
+                        buys: ['silver_ore', 'gold_ore', 'silver_bar', 'gold_bar', 'silver_ring', 'silver_amulet', 'silver_tiara', 'gold_ring', 'gold_amulet', 'gold_tiara'],
+                        sells: ['silver_ore', 'gold_ore']
+                    }
                 },
                 generalStoreFallback: {
                     buyPolicy: 'half_price_floor'

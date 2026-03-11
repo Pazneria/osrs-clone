@@ -153,6 +153,21 @@ function run() {
   assert(!!itemDefs.rune_platebody, "item catalog rune platebody missing");
   assert(!!itemDefs.bronze_sword_blade, "item catalog bronze sword blade missing");
   assert(!!itemDefs.gold_ring, "item catalog gold ring missing");
+  const smithEconomy = smithSpec.economy;
+  assert(!!smithEconomy && !!smithEconomy.valueTable && !!smithEconomy.merchantTable, "smithing economy tables missing");
+  assert(!!smithEconomy.merchantTable.borin_ironvein, "borin smithing merchant config missing");
+  assert(!!smithEconomy.merchantTable.thrain_deepforge, "thrain smithing merchant config missing");
+  assert(!!smithEconomy.merchantTable.elira_gemhand, "elira smithing merchant config missing");
+  assert(shopEconomy.resolveBuyPrice("iron_ore", "borin_ironvein") === itemDefs.iron_ore.value, "borin iron ore buy price mismatch");
+  assert(shopEconomy.resolveSellPrice("iron_ore", "borin_ironvein") === Math.max(1, Math.floor(itemDefs.iron_ore.value * 0.4)), "borin iron ore sell price mismatch");
+  assert(shopEconomy.resolveBuyPrice("rune_ore", "thrain_deepforge") === itemDefs.rune_ore.value, "thrain rune ore buy price mismatch");
+  assert(shopEconomy.resolveSellPrice("rune_ore", "thrain_deepforge") === Math.max(1, Math.floor(itemDefs.rune_ore.value * 0.4)), "thrain rune ore sell price mismatch");
+  assert(shopEconomy.resolveBuyPrice("silver_ore", "elira_gemhand") === itemDefs.silver_ore.value, "elira silver ore buy price mismatch");
+  assert(shopEconomy.resolveSellPrice("silver_ore", "elira_gemhand") === Math.max(1, Math.floor(itemDefs.silver_ore.value * 0.4)), "elira silver ore sell price mismatch");
+  assert(shopEconomy.canMerchantSellItem("iron_ore", "borin_ironvein"), "borin should sell iron ore");
+  assert(!shopEconomy.canMerchantSellItem("rune_ore", "borin_ironvein"), "borin should not sell rune ore");
+  assert(shopEconomy.canMerchantBuyItem("rune_ore", "thrain_deepforge"), "thrain should buy rune ore");
+  assert(!shopEconomy.canMerchantBuyItem("ring_mould", "elira_gemhand"), "elira should not buy ring mould");
 
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
@@ -161,6 +176,12 @@ function run() {
   assert(worldScript.includes("Fishing Supplier"), "fishing supplier world placement missing");
   assert(worldScript.includes("merchantId: 'fishing_supplier'"), "fishing supplier merchant wiring missing");
   assert(worldScript.includes("merchantId: 'fishing_teacher'"), "fishing teacher merchant wiring missing");
+  assert(worldScript.includes("Borin Ironvein"), "borin world placement missing");
+  assert(worldScript.includes("Thrain Deepforge"), "thrain world placement missing");
+  assert(worldScript.includes("Elira Gemhand"), "elira world placement missing");
+  assert(worldScript.includes("merchantId: 'borin_ironvein'"), "borin merchant wiring missing");
+  assert(worldScript.includes("merchantId: 'thrain_deepforge'"), "thrain merchant wiring missing");
+  assert(worldScript.includes("merchantId: 'elira_gemhand'"), "elira merchant wiring missing");
 
   const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
   assert(worldScript.includes("type: 'FURNACE'"), "furnace world placement missing");
@@ -168,6 +189,11 @@ function run() {
   assert(smithRuntimeScript.includes("const SKILL_ID = 'smithing'"), "smithing runtime module missing skill id");
   assert(smithRuntimeScript.includes("stationType"), "smithing runtime station validation missing");
 
+  const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
+  assert(coreScript.includes("borin_ironvein"), "core QA smithing merchant alias missing");
+  assert(coreScript.includes("thrain_deepforge"), "core QA smithing merchant alias missing");
+  assert(coreScript.includes("elira_gemhand"), "core QA smithing merchant alias missing");
+  assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing smithing merchants");
   const rcRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runecrafting/index.js"), "utf8");
   assert(rcRuntimeScript.includes("function tryFillPouchFromInventory"), "runecrafting pouch fill handler missing");
   assert(rcRuntimeScript.includes("function tryEmptyPouchToInventory"), "runecrafting pouch empty handler missing");

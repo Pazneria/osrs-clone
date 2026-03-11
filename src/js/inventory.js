@@ -297,7 +297,7 @@
 
         // --- Shop Interface System ---
         let isShopOpen = false;
-        let activeShopMerchantId = 'fishing_supplier';
+        let activeShopMerchantId = 'general_store';
         const shopInventoriesByMerchant = {};
         let shopInventory = Array(100).fill(null);
 
@@ -370,7 +370,7 @@
         }
 
         function ensureMerchantShopInventory(merchantId) {
-            const id = merchantId || 'fishing_supplier';
+            const id = merchantId || 'general_store';
             if (!shopInventoriesByMerchant[id]) {
                 shopInventoriesByMerchant[id] = createShopInventoryForMerchant(id);
             }
@@ -379,7 +379,7 @@
             ensureUnlockedMerchantStock(id);
         }
 
-        function openShop(merchantId = 'fishing_supplier') {
+        function openShop(merchantId = 'general_store') {
             ensureMerchantShopInventory(merchantId);
             isShopOpen = true;
             setInterfaceOpenState('shop-interface', true);
@@ -474,7 +474,22 @@
                 console.log("You cannot sell coins.");
                 return;
             }
-            let sellValue = resolveMerchantSellPrice(itemData.id); 
+
+            const economy = getShopEconomy();
+            const merchantCanBuy = (economy && typeof economy.canMerchantBuyItem === 'function')
+                ? economy.canMerchantBuyItem(itemData.id, activeShopMerchantId)
+                : true;
+            if (!merchantCanBuy) {
+                if (typeof addChatMessage === 'function') addChatMessage(itemData.name + ' cannot be sold to this merchant.', 'warn');
+                return;
+            }
+
+            let sellValue = resolveMerchantSellPrice(itemData.id);
+            if (!Number.isFinite(sellValue) || sellValue <= 0) {
+                if (typeof addChatMessage === 'function') addChatMessage(itemData.name + ' has no sell value at this merchant.', 'warn');
+                return;
+            }
+
             let amountSold = 0;
             let targetAmount = amount === -1 ? (itemData.stackable ? invSlot.amount : 28) : amount;
 
@@ -491,7 +506,6 @@
             }
 
             if (amountSold > 0) {
-                const economy = getShopEconomy();
                 const unlockResult = (economy && typeof economy.recordMerchantPurchaseFromPlayer === 'function')
                     ? economy.recordMerchantPurchaseFromPlayer(itemData.id, activeShopMerchantId, amountSold)
                     : null;

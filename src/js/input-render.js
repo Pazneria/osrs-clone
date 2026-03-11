@@ -141,8 +141,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     const npcAction = (npcUid && typeof npcUid.action === 'string') ? npcUid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
                     if (npcAction === 'Trade') {
                         if (hitData.name === 'Shopkeeper' && !(npcUid && npcUid.merchantId)) {
-                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span> (Fishing Supplier)`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade', merchantId: 'fishing_supplier' }); spawnClickMarker(hitData.point, true); });
-                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span> (Fishing Teacher)`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade', merchantId: 'fishing_teacher' }); spawnClickMarker(hitData.point, true); });
+                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span> (General Store)`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade', merchantId: 'general_store' }); spawnClickMarker(hitData.point, true); });
                         } else {
                             const tradeTarget = npcUid ? Object.assign({}, npcUid) : { name: hitData.name, action: 'Trade' };
                             addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', tradeTarget); spawnClickMarker(hitData.point, true); });
@@ -336,7 +335,92 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             return false;
         }
+        function getStationFootprint(targetObj, tx, ty, z = playerState.z) {
+            if (targetObj !== 'FURNACE') return { w: 1, d: 1 };
+            if (!Array.isArray(furnacesToRender)) return { w: 1, d: 1 };
 
+            for (let i = 0; i < furnacesToRender.length; i++) {
+                const station = furnacesToRender[i];
+                if (!station || station.x !== tx || station.y !== ty || station.z !== z) continue;
+                const w = Number.isFinite(station.footprintW) ? Math.max(1, Math.round(station.footprintW)) : 1;
+                const d = Number.isFinite(station.footprintD) ? Math.max(1, Math.round(station.footprintD)) : 1;
+                return { w, d };
+            }
+            return { w: 1, d: 1 };
+        }
+        function getStationFacingYaw(targetObj, tx, ty, z = playerState.z) {
+            const stations = targetObj === 'FURNACE'
+                ? furnacesToRender
+                : (targetObj === 'ANVIL' ? anvilsToRender : null);
+            if (!Array.isArray(stations)) return 0;
+
+            for (let i = 0; i < stations.length; i++) {
+                const station = stations[i];
+                if (!station || station.x !== tx || station.y !== ty || station.z !== z) continue;
+                if (Number.isFinite(station.facingYaw)) return station.facingYaw;
+                break;
+            }
+            return 0;
+        }
+
+        function resolveCardinalStepFromYaw(yaw) {
+            const y = Number.isFinite(yaw) ? yaw : 0;
+            const sx = Math.sin(y);
+            const sy = Math.cos(y);
+            let dx = Math.round(sx);
+            let dy = Math.round(sy);
+
+            // Clamp any borderline diagonal rounding back to a cardinal step.
+            if (Math.abs(dx) === Math.abs(dy)) {
+                if (Math.abs(sx) >= Math.abs(sy)) dy = 0;
+                else dx = 0;
+            }
+            if (dx === 0 && dy === 0) dy = 1;
+
+            return { dx, dy };
+        }
+
+        function getStationApproachPositions(targetObj, tx, ty, z = playerState.z) {
+            if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return [];
+
+            const front = resolveCardinalStepFromYaw(getStationFacingYaw(targetObj, tx, ty, z));
+            if (targetObj === 'FURNACE') {
+                const footprint = getStationFootprint(targetObj, tx, ty, z);
+                if (footprint.w === 1 && footprint.d === 1) {
+                    return [{ x: tx + front.dx, y: ty + front.dy }];
+                }
+                if (front.dx !== 0) {
+                    const fx = front.dx > 0 ? (tx + footprint.w) : (tx - 1);
+                    const centerY = ty + Math.floor((footprint.d - 1) / 2);
+                    return [{ x: fx, y: centerY }];
+                }
+                const fy = front.dy > 0 ? (ty + footprint.d) : (ty - 1);
+                const centerX = tx + Math.floor((footprint.w - 1) / 2);
+                return [{ x: centerX, y: fy }];
+            }
+
+            // Anvil approach uses the opposite pair of sides (other two).
+            const long = { dx: front.dx, dy: front.dy };
+            return [
+                { x: tx + long.dx, y: ty + long.dy },
+                { x: tx - long.dx, y: ty - long.dy }
+            ];
+        }
+
+        function validateStationApproach(targetObj, tx, ty, px, py, z = playerState.z) {
+            if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return { ok: true, message: '' };
+
+            const allowed = getStationApproachPositions(targetObj, tx, ty, z);
+            for (let i = 0; i < allowed.length; i++) {
+                const pos = allowed[i];
+                if (pos.x === px && pos.y === py) return { ok: true, message: '' };
+            }
+
+            if (targetObj === 'FURNACE') {
+                return { ok: false, message: 'You need to stand at the front of the furnace to use it.' };
+            }
+            return { ok: false, message: 'You need to stand on the long side of the anvil to use it.' };
+        }
         function setPlayerRigShoulderPivot(rig) {
             if (!rig) return;
             rig.leftArm.position.set(PLAYER_SHOULDER_PIVOT.x, PLAYER_SHOULDER_PIVOT.y, PLAYER_SHOULDER_PIVOT.z);
@@ -479,7 +563,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
                                 else if (hitData.type === 'NPC') {
                     if (hitData.uid && typeof hitData.uid === 'object') targetData = Object.assign({}, hitData.uid);
-                    else if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade', merchantId: 'fishing_supplier' };
+                    else if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade', merchantId: 'general_store' };
                     else targetData = { name: hitData.name, action: 'Talk-to' };
                 }
                 queueAction('INTERACT', hitData.gridX, hitData.gridY, hitData.type, targetData); 
@@ -507,6 +591,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function findPath(startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null) {
             let validTargets = new Set(); 
             let targetTileType = logicalMap[playerState.z][targetY][targetX];
+            const stationApproachKeys = new Set(
+                getStationApproachPositions(interactionObj, targetX, targetY, playerState.z)
+                    .map((p) => `${p.x},${p.y}`)
+            );
             let isInteract = forceAdjacent || !isStandableTile(targetX, targetY, playerState.z);
 
             if (isInteract) {
@@ -525,7 +613,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
                                 // Normal adjacent interaction check
                                 if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
-                                    if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) validTargets.add(`${nx},${ny}`);
+                                    if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) {
+                                        const neighborKey = `${nx},${ny}`;
+                                        if (stationApproachKeys.size === 0 || stationApproachKeys.has(neighborKey)) validTargets.add(neighborKey);
+                                    }
                                 }
                                 continue;
                             }
@@ -633,6 +724,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             for (let i = respawningTrees.length - 1; i >= 0; i--) { if (currentTick >= respawningTrees[i].respawnTick) { respawnTree(respawningTrees[i].x, respawningTrees[i].y, respawningTrees[i].z); respawningTrees.splice(i, 1); } }
             if (typeof tickRockNodes === 'function') tickRockNodes();
             if (typeof window.updateGroundItems === 'function') window.updateGroundItems();
+
             if (pendingAction) {
                 let actionX = pendingAction.x;
                 let actionY = pendingAction.y;
@@ -686,6 +778,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
                 }
                 pendingAction = null;
+
             }
             
             if (playerState.path.length > 0) {
@@ -756,6 +849,19 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         }
 
                         if (isAdjacent || isAcrossCounter) {
+                            const stationApproach = validateStationApproach(
+                                playerState.targetObj,
+                                playerState.targetX,
+                                playerState.targetY,
+                                playerState.x,
+                                playerState.y
+                            );
+                            if (!stationApproach.ok) {
+                                if (typeof addChatMessage === 'function' && stationApproach.message) addChatMessage(stationApproach.message, 'warn');
+                                playerState.action = 'IDLE';
+                                return;
+                            }
+
                             if (Math.abs(playerH - targetH) > 0.3 && !isAcrossCounter) {
                                 playerState.action = 'IDLE';
                             } else if (playerState.targetObj === 'DUMMY') {
@@ -766,7 +872,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
                                 
                                 if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade') {
-                                    openShop(playerState.targetUid.merchantId || 'fishing_supplier');
+                                    openShop(playerState.targetUid.merchantId || 'general_store');
                                 }
                             } else if (playerState.targetObj === 'BANK_BOOTH') {
                                 playerState.action = 'IDLE';
@@ -774,6 +880,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
                                 openBank();
                             } else {
+                                if (playerState.targetObj === 'FURNACE' || playerState.targetObj === 'ANVIL') {
+                                    // Force straight cardinal facing toward station.
+                                    let faceDx = playerState.targetX - playerState.x;
+                                    let faceDy = playerState.targetY - playerState.y;
+                                    if (Math.abs(faceDx) >= Math.abs(faceDy)) {
+                                        faceDx = Math.sign(faceDx);
+                                        faceDy = 0;
+                                    } else {
+                                        faceDy = Math.sign(faceDy);
+                                        faceDx = 0;
+                                    }
+                                    if (faceDx !== 0 || faceDy !== 0) {
+                                        playerState.targetRotation = Math.atan2(faceDx, faceDy);
+                                        if (playerRig) playerRig.rotation.y = playerState.targetRotation;
+                                    }
+                                }
                                 if (window.SkillRuntime && SkillRuntime.canHandleTarget(playerState.targetObj)) {
                                     if (!SkillRuntime.tryStartFromPlayerTarget()) playerState.action = 'IDLE';
                                 } else playerState.action = 'IDLE';

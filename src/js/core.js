@@ -355,14 +355,16 @@ O445411111OOOOO.
 
             if (name === 'fish_full') {
                 slots = makeFilledSlots(tools.concat([
-                    { itemId: 'fishing_rod', amount: 1 },
+                    { itemId: 'fishing_rod', amount: 1 },
+
                     { itemId: 'harpoon', amount: 1 },
                     { itemId: 'rune_harpoon', amount: 1 },
                     { itemId: 'bait', amount: 200 }
                 ]), 'raw_shrimp');
             } else if (name === 'fish_rod') {
                 slots = tools.concat([
-                    { itemId: 'fishing_rod', amount: 1 },
+                    { itemId: 'fishing_rod', amount: 1 },
+
                     { itemId: 'bait', amount: 500 },
                     { itemId: 'coins', amount: 1000 }
                 ]);
@@ -642,6 +644,7 @@ O445411111OOOOO.
             return false;
         }
 
+
         function getQaMerchantAliasMap() {
             return {
                 teacher: 'fishing_teacher',
@@ -651,10 +654,15 @@ O445411111OOOOO.
                 fish_teacher: 'fishing_teacher',
                 fish_supplier: 'fishing_supplier',
                 rc_tutor: 'rune_tutor',
-                combo_sage: 'combination_sage'
+                combo_sage: 'combination_sage',
+                borin: 'borin_ironvein',
+                thrain: 'thrain_deepforge',
+                elira: 'elira_gemhand',
+                borin_ironvein: 'borin_ironvein',
+                thrain_deepforge: 'thrain_deepforge',
+                elira_gemhand: 'elira_gemhand'
             };
         }
-
         function qaGotoMerchant(targetLike) {
             const raw = String(targetLike || '').trim().toLowerCase();
             if (!raw) return false;
@@ -791,6 +799,37 @@ O445411111OOOOO.
 
 
 
+
+        function qaDiagShop(merchantIdInput) {
+            const merchantId = String(merchantIdInput || (typeof window.getActiveShopMerchantId === 'function' ? window.getActiveShopMerchantId() : 'general_store')).toLowerCase();
+            if (!window.ShopEconomy || typeof window.ShopEconomy.getMerchantDiagnosticSummary !== 'function') {
+                addChatMessage('QA shop diag unavailable: missing shop economy module.', 'warn');
+                return;
+            }
+
+            const rows = window.ShopEconomy.getMerchantDiagnosticSummary(merchantId);
+            addChatMessage('[QA shop] merchant=' + merchantId, 'info');
+            if (!rows || rows.length === 0) {
+                addChatMessage('[QA shop] no merchant economy rules found for this merchant.', 'info');
+                return;
+            }
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const unlockText = Number.isFinite(row.threshold)
+                    ? (' unlock=' + row.sold + '/' + row.threshold + ' (' + (row.unlocked ? 'yes' : 'no') + ')')
+                    : '';
+                addChatMessage('[QA shop] ' + row.itemId + ': buyFromPlayer=' + (row.canBuyFromPlayer ? 'yes' : 'no') + ' (' + row.sellPrice + '), sellToPlayer=' + (row.canSellToPlayer ? 'yes' : 'no') + ' (' + row.buyPrice + ')' + unlockText, 'info');
+            }
+
+            if (typeof window.ShopEconomy.getFishUnlockSummary === 'function') {
+                const fishRows = window.ShopEconomy.getFishUnlockSummary(merchantId);
+                for (let i = 0; i < fishRows.length; i++) {
+                    const row = fishRows[i];
+                    addChatMessage('[QA fish-unlock] ' + row.itemId + ': sold=' + row.sold + '/' + row.threshold + ', unlocked=' + (row.unlocked ? 'yes' : 'no'), 'info');
+                }
+            }
+        }
         let equipment = { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
         let baseStats = { atk: 10, def: 10, str: 10 };
         let userItemPrefs = {};
@@ -914,7 +953,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <fishing_supplier|fishing_teacher|rune_tutor|combination_sage>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -1005,29 +1044,15 @@ O445411111OOOOO.
                     return;
                 }
                 if (cmd === 'shopdiag') {
-                    const merchantId = String(parts[1] || (typeof window.getActiveShopMerchantId === 'function' ? window.getActiveShopMerchantId() : 'fishing_supplier')).toLowerCase();
-                    if (!window.ShopEconomy || typeof window.ShopEconomy.getFishUnlockSummary !== 'function') {
-                        addChatMessage('QA shop diag unavailable: missing shop economy module.', 'warn');
-                        return;
-                    }
-                    const rows = window.ShopEconomy.getFishUnlockSummary(merchantId);
-                    addChatMessage('[QA shop] merchant=' + merchantId, 'info');
-                    if (!rows || rows.length === 0) {
-                        addChatMessage('[QA shop] no fish unlock rules for this merchant.', 'info');
-                        return;
-                    }
-                    for (let i = 0; i < rows.length; i++) {
-                        const row = rows[i];
-                        addChatMessage('[QA shop] ' + row.itemId + ': sold=' + row.sold + '/' + row.threshold + ', unlocked=' + (row.unlocked ? 'yes' : 'no'), 'info');
-                    }
+                    qaDiagShop(parts[1]);
                     return;
                 }
 
                 if (cmd === 'openshop') {
                     const merchantId = String(parts[1] || '').toLowerCase();
-                    const qaOpenableMerchants = ['fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage'];
+                    const qaOpenableMerchants = ['general_store', 'fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage', 'borin_ironvein', 'thrain_deepforge', 'elira_gemhand'];
                     if (!qaOpenableMerchants.includes(merchantId)) {
-                        addChatMessage('Usage: /qa openshop <fishing_supplier|fishing_teacher|rune_tutor|combination_sage>', 'warn');
+                        addChatMessage('Usage: /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|borin_ironvein|thrain_deepforge|elira_gemhand>', 'warn');
                         return;
                     }
                     if (typeof window.openShopForMerchant !== 'function') {
@@ -1038,7 +1063,6 @@ O445411111OOOOO.
                     addChatMessage('QA opened shop for merchant=' + merchantId, 'info');
                     return;
                 }
-
                 if (cmd === 'diag' && parts.length >= 2) {
                     const subject = String(parts[1] || '').toLowerCase();
                     if (subject === 'fishing' || subject === 'fish') {
@@ -1054,21 +1078,7 @@ O445411111OOOOO.
                         return;
                     }
                     if (subject === 'shop') {
-                        const merchantId = (typeof window.getActiveShopMerchantId === 'function') ? window.getActiveShopMerchantId() : 'fishing_supplier';
-                        if (!window.ShopEconomy || typeof window.ShopEconomy.getFishUnlockSummary !== 'function') {
-                            addChatMessage('QA shop diag unavailable: missing shop economy module.', 'warn');
-                            return;
-                        }
-                        const rows = window.ShopEconomy.getFishUnlockSummary(merchantId);
-                        addChatMessage('[QA shop] merchant=' + merchantId, 'info');
-                        if (!rows || rows.length === 0) {
-                            addChatMessage('[QA shop] no fish unlock rules for this merchant.', 'info');
-                            return;
-                        }
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            addChatMessage('[QA shop] ' + row.itemId + ': sold=' + row.sold + '/' + row.threshold + ', unlocked=' + (row.unlocked ? 'yes' : 'no'), 'info');
-                        }
+                        qaDiagShop(parts[2]);
                         return;
                     }
                     addChatMessage('Usage: /qa diag <fishing|mining|rc|shop>', 'warn');

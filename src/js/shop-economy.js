@@ -1,4 +1,5 @@
 (function () {
+    const GENERAL_STORE_ID = 'general_store';
     const FALLBACK_SELL_RATIO = 0.4;
     const FISH_UNLOCK_DEFAULT_THRESHOLD = 50;
 
@@ -35,7 +36,7 @@
 
     function ensureMerchantProgress(merchantId) {
         const root = ensureMerchantProgressRoot();
-        const id = merchantId || 'general_store';
+        const id = merchantId || GENERAL_STORE_ID;
         if (!root[id] || typeof root[id] !== 'object') {
             root[id] = { soldCounts: {}, unlockedItems: {} };
         }
@@ -49,7 +50,7 @@
     }
 
     function getMerchantEconomyMeta(merchantId) {
-        const id = merchantId || 'general_store';
+        const id = merchantId || GENERAL_STORE_ID;
         const skills = getSkillSpecs();
         const skillIds = Object.keys(skills);
         for (let i = 0; i < skillIds.length; i++) {
@@ -112,9 +113,26 @@
         return rows;
     }
 
+    function canMerchantBuyItem(itemId, merchantId) {
+        if (!itemId) return false;
+        const id = merchantId || GENERAL_STORE_ID;
+        if (id === GENERAL_STORE_ID) return true;
+
+        const meta = getMerchantEconomyMeta(id);
+        if (!meta) return true;
+
+        const merchantConfig = meta.merchantConfig || {};
+        const buys = Array.isArray(merchantConfig.buys) ? merchantConfig.buys : [];
+        if (!merchantConfig.strictBuys) return true;
+        return buys.includes(itemId);
+    }
+
     function canMerchantSellItem(itemId, merchantId) {
         if (!itemId) return false;
-        const meta = getMerchantEconomyMeta(merchantId);
+        const id = merchantId || GENERAL_STORE_ID;
+        if (id === GENERAL_STORE_ID) return true;
+
+        const meta = getMerchantEconomyMeta(id);
         if (!meta) return true;
 
         const merchantConfig = meta.merchantConfig || {};
@@ -127,7 +145,7 @@
             ? Math.max(1, Math.floor(pouchUnlocks[itemId]))
             : null;
 
-        if (unlockConfig) return isItemUnlockedForMerchant(itemId, merchantId);
+        if (unlockConfig) return isItemUnlockedForMerchant(itemId, id);
         if (!sells.includes(itemId)) return false;
         if (pouchRequiredLevel === null) return true;
         return getSkillLevel(meta.skillId) >= pouchRequiredLevel;
@@ -146,10 +164,12 @@
 
     function resolveSellPrice(itemId, merchantId) {
         const baseValue = getBaseItemValue(itemId);
-        if ((merchantId || 'general_store') === 'general_store') return Math.floor(baseValue * 0.5);
+        const id = merchantId || GENERAL_STORE_ID;
+        if (id === GENERAL_STORE_ID) return Math.floor(baseValue * 0.5);
 
-        const meta = getMerchantEconomyMeta(merchantId);
+        const meta = getMerchantEconomyMeta(id);
         if (!meta || !meta.economy) return Math.floor(baseValue * FALLBACK_SELL_RATIO);
+        if (!canMerchantBuyItem(itemId, id)) return 0;
 
         const valueTable = meta.economy.valueTable || {};
         const entry = valueTable[itemId];
@@ -187,7 +207,10 @@
     }
 
     function getMerchantDefaultSellItemIds(merchantId) {
-        const meta = getMerchantEconomyMeta(merchantId);
+        const id = merchantId || GENERAL_STORE_ID;
+        if (id === GENERAL_STORE_ID) return [];
+
+        const meta = getMerchantEconomyMeta(id);
         if (!meta || !meta.merchantConfig) return [];
 
         const merchantConfig = meta.merchantConfig;
@@ -196,14 +219,14 @@
         const unlockItems = Array.isArray(unlocks && unlocks.itemIds) ? unlocks.itemIds : [];
         for (let i = 0; i < unlockItems.length; i++) {
             const itemId = unlockItems[i];
-            if (isItemUnlockedForMerchant(itemId, merchantId)) sells.push(itemId);
+            if (isItemUnlockedForMerchant(itemId, id)) sells.push(itemId);
         }
 
         const unique = Array.from(new Set(sells));
         const eligible = [];
         for (let i = 0; i < unique.length; i++) {
             const itemId = unique[i];
-            if (canMerchantSellItem(itemId, merchantId)) eligible.push(itemId);
+            if (canMerchantSellItem(itemId, id)) eligible.push(itemId);
         }
         return eligible;
     }
@@ -215,14 +238,48 @@
         return unlockConfig.stockAmount;
     }
 
+    function getMerchantDiagnosticSummary(merchantId) {
+        const id = merchantId || GENERAL_STORE_ID;
+        const meta = getMerchantEconomyMeta(id);
+        if (!meta) return [];
+
+        const merchantConfig = meta.merchantConfig || {};
+        const progress = ensureMerchantProgress(id);
+        const buys = Array.isArray(merchantConfig.buys) ? merchantConfig.buys : [];
+        const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells : [];
+        const unlocks = merchantConfig.unlocks;
+        const unlockItems = Array.isArray(unlocks && unlocks.itemIds) ? unlocks.itemIds : [];
+        const known = Array.from(new Set([].concat(buys, sells, unlockItems))).sort();
+
+        const rows = [];
+        for (let i = 0; i < known.length; i++) {
+            const itemId = known[i];
+            const unlockCfg = getUnlockConfig(merchantConfig, itemId);
+            rows.push({
+                itemId,
+                canBuyFromPlayer: canMerchantBuyItem(itemId, id),
+                canSellToPlayer: canMerchantSellItem(itemId, id),
+                buyPrice: resolveBuyPrice(itemId, id),
+                sellPrice: resolveSellPrice(itemId, id),
+                sold: Number(progress.soldCounts[itemId]) || 0,
+                threshold: unlockCfg ? unlockCfg.threshold : null,
+                unlocked: unlockCfg ? !!progress.unlockedItems[itemId] : null
+            });
+        }
+
+        return rows;
+    }
+
     window.ShopEconomy = {
         resolveBuyPrice,
         resolveSellPrice,
+        canMerchantBuyItem,
         canMerchantSellItem,
         recordMerchantPurchaseFromPlayer,
         getMerchantDefaultSellItemIds,
         getUnlockedStockAmount,
         getFishUnlockSummary,
+        getMerchantDiagnosticSummary,
         isItemUnlockedForMerchant
     };
 })();

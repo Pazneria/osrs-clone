@@ -1514,14 +1514,17 @@
 
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
             const smithingStations = [
-                { type: 'FURNACE', x: 226, y: 232 },
+                { type: 'FURNACE', x: 226, y: 232, facingYaw: -Math.PI / 2, footprintW: 2, footprintD: 3 },
                 { type: 'ANVIL', x: 226, y: 236 }
             ];
             for (let i = 0; i < smithingStations.length; i++) {
                 const station = smithingStations[i];
                 if (!station || station.x <= 1 || station.y <= 1 || station.x >= MAP_SIZE - 2 || station.y >= MAP_SIZE - 2) continue;
-                if (station.type === 'FURNACE') furnacesToRender.push({ x: station.x, y: station.y, z: 0 });
-                if (station.type === 'ANVIL') anvilsToRender.push({ x: station.x, y: station.y, z: 0 });
+                if (station.type === 'FURNACE') furnacesToRender.push({
+                    x: station.x, y: station.y, z: 0, facingYaw: station.facingYaw,
+                    footprintW: station.footprintW, footprintD: station.footprintD
+                });
+                if (station.type === 'ANVIL') anvilsToRender.push({ x: station.x, y: station.y, z: 0, facingYaw: station.facingYaw });
             }
 
             const fishingMerchantSpots = [
@@ -1542,6 +1545,7 @@
                     z: 0,
                     name: spot.name,
                     merchantId: spot.merchantId,
+                    facingYaw: spot.facingYaw,
                     action: 'Trade'
                 });
             }
@@ -1732,6 +1736,46 @@
 
             // Smithing hall opposite the pond from the shop (east bank): longer rectangle, shop-width.
             stampBlueprint(221, 228, 0, smithingHallBlueprint);
+            // Re-assert smithing station collision after blueprint stamping.
+            for (let i = 0; i < smithingStations.length; i++) {
+                const station = smithingStations[i];
+                if (!station || station.x <= 1 || station.y <= 1 || station.x >= MAP_SIZE - 2 || station.y >= MAP_SIZE - 2) continue;
+                if (station.type === 'FURNACE') {
+                    const w = Number.isFinite(station.footprintW) ? station.footprintW : 2;
+                    const d = Number.isFinite(station.footprintD) ? station.footprintD : 2;
+                    for (let oy = 0; oy < d; oy++) {
+                        for (let ox = 0; ox < w; ox++) {
+                            const sx = station.x + ox;
+                            const sy = station.y + oy;
+                            if (sx <= 1 || sy <= 1 || sx >= MAP_SIZE - 2 || sy >= MAP_SIZE - 2) continue;
+                            logicalMap[0][sy][sx] = 16;
+                        }
+                    }
+                } else {
+                    logicalMap[0][station.y][station.x] = 16;
+                }
+            }
+            const smithingMerchantSpots = [
+                { name: 'Borin Ironvein', merchantId: 'borin_ironvein', type: 2, x: 224, y: 230, facingYaw: -Math.PI / 2 },
+                { name: 'Thrain Deepforge', merchantId: 'thrain_deepforge', type: 6, x: 228, y: 236 },
+                { name: 'Elira Gemhand', merchantId: 'elira_gemhand', type: 3, x: 228, y: 231 }
+            ];
+            for (let i = 0; i < smithingMerchantSpots.length; i++) {
+                const spot = smithingMerchantSpots[i];
+                if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
+                logicalMap[0][spot.y][spot.x] = 16;
+                heightMap[0][spot.y][spot.x] = 0.5;
+                npcsToRender.push({
+                    type: spot.type,
+                    x: spot.x,
+                    y: spot.y,
+                    z: 0,
+                    name: spot.name,
+                    merchantId: spot.merchantId,
+                    facingYaw: spot.facingYaw,
+                    action: 'Trade'
+                });
+            }
 
 
             // --- USER TEST: Dual Castle Stairs ---
@@ -2307,17 +2351,25 @@
                 furnacesToRender.forEach((furnace) => {
                     if (furnace.x >= startX && furnace.x < endX && furnace.y >= startY && furnace.y < endY && furnace.z === z) {
                         const furnaceGroup = new THREE.Group();
-                        furnaceGroup.position.set(furnace.x, heightMap[z][furnace.y][furnace.x] + Z_OFFSET, furnace.y);
-                        const base = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 1.1), sharedMaterials.floor8);
-                        base.position.set(0, 0.35, 0);
+                        const fw = Number.isFinite(furnace.footprintW) ? furnace.footprintW : 3;
+                        const fd = Number.isFinite(furnace.footprintD) ? furnace.footprintD : 2;
+                        const yaw = Number.isFinite(furnace.facingYaw) ? furnace.facingYaw : 0;
+                        const quarterTurn = Math.abs(Math.round(Math.sin(yaw))) === 1 && Math.abs(Math.round(Math.cos(yaw))) === 0;
+                        const bodyLocalW = quarterTurn ? fd : fw;
+                        const bodyLocalD = quarterTurn ? fw : fd;
+                        furnaceGroup.position.set(furnace.x + ((fw - 1) * 0.5), heightMap[z][furnace.y][furnace.x] + Z_OFFSET, furnace.y + ((fd - 1) * 0.5));
+                        if (Number.isFinite(furnace.facingYaw)) furnaceGroup.rotation.y = furnace.facingYaw;
+                        const base = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.floor8);
+                        base.position.set(0, 0.8, 0);
                         base.castShadow = true;
                         base.receiveShadow = true;
-                        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 0.2), sharedMaterials.floor7);
-                        mouth.position.set(0, 0.45, 0.52);
-                        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), sharedMaterials.floor7);
-                        chimney.position.set(0.3, 1.05, -0.25);
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.1, 1.4), new THREE.MeshBasicMaterial({ visible: false }));
-                        hitbox.position.set(0, 1.05, 0);
+                        const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.6, 0.3), sharedMaterials.floor7);
+                        mouth.position.set(0, 0.95, (bodyLocalD * 0.5) - 0.02);
+                        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 0.45), sharedMaterials.floor7);
+                        chimney.position.set(0.55, 1.9, -((bodyLocalD * 0.5) - 0.45));
+                        // Tooltip/click hitbox should match rectangular furnace body only (exclude chimney).
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), new THREE.MeshBasicMaterial({ visible: false }));
+                        hitbox.position.set(0, 0.8, 0);
                         hitbox.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
                         furnaceGroup.add(base, mouth, chimney, hitbox);
                         base.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
@@ -2332,14 +2384,16 @@
                     if (anvil.x >= startX && anvil.x < endX && anvil.y >= startY && anvil.y < endY && anvil.z === z) {
                         const anvilGroup = new THREE.Group();
                         anvilGroup.position.set(anvil.x, heightMap[z][anvil.y][anvil.x] + Z_OFFSET, anvil.y);
+                        if (Number.isFinite(anvil.facingYaw)) anvilGroup.rotation.y = anvil.facingYaw;
                         const stand = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.35), sharedMaterials.boothWood);
                         stand.position.set(0, 0.275, 0);
                         const top = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.45), sharedMaterials.floor7);
                         top.position.set(0, 0.62, 0);
                         const horn = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.2), sharedMaterials.floor7);
                         horn.position.set(0.5, 0.6, 0);
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.8, 1.3), new THREE.MeshBasicMaterial({ visible: false }));
-                        hitbox.position.set(0, 0.9, 0);
+                        // Keep click volume aligned with the physical anvil silhouette.
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.3), new THREE.MeshBasicMaterial({ visible: false }));
+                        hitbox.position.set(0, 0.4, 0);
                         hitbox.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
                         anvilGroup.add(stand, top, horn, hitbox);
                         stand.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
@@ -2514,7 +2568,9 @@
                         let dummy = createHumanoidModel(npc.type); 
                         dummy.position.set(npc.x, heightMap[z][npc.y][npc.x] + Z_OFFSET, npc.y);
                         
-                        if (npc.name === 'Shopkeeper') {
+                        if (Number.isFinite(npc.facingYaw)) {
+                            dummy.rotation.y = npc.facingYaw;
+                        } else if (npc.name === 'Shopkeeper') {
                             dummy.rotation.y = Math.PI / 2; // Face East towards entrance
                         } else if (npc.name === 'Banker') {
                             dummy.rotation.y = 0; // Face south toward players
