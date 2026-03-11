@@ -293,9 +293,16 @@
                 minimumAttemptTicks: 1
             },
             nodeTable: {
-                copper_rock: { tileId: 2, oreType: 'copper', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'copper_ore', depletionChance: 1.0, respawnTicks: 13 },
-                tin_rock: { tileId: 2, oreType: 'tin', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'tin_ore', depletionChance: 1.0, respawnTicks: 13 },
-                rune_essence: { tileId: 2, oreType: 'rune_essence', requiredLevel: 1, difficulty: 1, xpPerSuccess: 8, rewardItemId: 'rune_essence', persistent: true }
+                clay_rock: { tileId: 2, oreType: 'clay', requiredLevel: 1, difficulty: 6, xpPerSuccess: 8, rewardItemId: 'clay', depletionChance: 1.0, respawnTicks: 5 },
+                copper_rock: { tileId: 2, oreType: 'copper', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'copper_ore', depletionChance: 1.0, respawnTicks: 6 },
+                tin_rock: { tileId: 2, oreType: 'tin', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'tin_ore', depletionChance: 1.0, respawnTicks: 6 },
+                rune_essence: { tileId: 2, oreType: 'rune_essence', requiredLevel: 1, difficulty: 6, xpPerSuccess: 2, rewardItemId: 'rune_essence', persistent: true },
+                iron_rock: { tileId: 2, oreType: 'iron', requiredLevel: 10, difficulty: 16, xpPerSuccess: 18, rewardItemId: 'iron_ore', depletionChance: 0.5, respawnTicks: 9 },
+                coal_rock: { tileId: 2, oreType: 'coal', requiredLevel: 20, difficulty: 26, xpPerSuccess: 28, rewardItemId: 'coal', depletionChance: 0.35, respawnTicks: 12 },
+                silver_rock: { tileId: 2, oreType: 'silver', requiredLevel: 30, difficulty: 36, xpPerSuccess: 40, rewardItemId: 'silver_ore', depletionChance: 0.3, respawnTicks: 15 },
+                sapphire_rock: { tileId: 2, oreType: 'sapphire', requiredLevel: 30, difficulty: 42, xpPerSuccess: 52, rewardItemId: 'uncut_sapphire', depletionChance: 0.35, respawnTicks: 36 },
+                gold_rock: { tileId: 2, oreType: 'gold', requiredLevel: 40, difficulty: 50, xpPerSuccess: 60, rewardItemId: 'gold_ore', depletionChance: 0.25, respawnTicks: 21 },
+                emerald_rock: { tileId: 2, oreType: 'emerald', requiredLevel: 40, difficulty: 56, xpPerSuccess: 72, rewardItemId: 'uncut_emerald', depletionChance: 0.3, respawnTicks: 48 }
             },
             economy: { primaryResource: 'copper_ore' }
         },

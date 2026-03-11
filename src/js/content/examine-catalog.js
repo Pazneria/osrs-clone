@@ -92,6 +92,20 @@
         WATER: 'The water looks fishable.'
     };
 
+    const EXAMINE_TEXT_BY_ROCK_ORE_TYPE = {
+        clay: 'A soft clay-bearing rock.',
+        copper: 'A copper-veined rock.',
+        tin: 'A tin-bearing rock.',
+        iron: 'A dense iron-bearing rock.',
+        coal: 'A coal seam runs through it.',
+        silver: 'A silver-bearing rock with a pale sheen.',
+        sapphire: 'Sapphire glints in the stone.',
+        gold: 'A gold-bearing rock with bright flecks.',
+        emerald: 'Emerald traces shimmer in the rock.',
+        depleted: 'This rock has been mined out for now.',
+        rune_essence: 'Pure essence sleeps inside this rock.'
+    };
+
     const EXAMINE_TEXT_BY_ALTAR_NAME = {
         'ember altar': 'An altar humming with heat.',
         'water altar': 'An altar flowing with power.',
@@ -188,7 +202,11 @@
             if (altarKey && EXAMINE_TEXT_BY_ALTAR_NAME[altarKey]) return EXAMINE_TEXT_BY_ALTAR_NAME[altarKey];
             return 'An elemental altar humming with energy.';
         }
-        if (type === 'ROCK' && options.oreType === 'rune_essence') return EXAMINE_TEXT_BY_TARGET.ROCK_RUNE_ESSENCE;
+        if (type === 'ROCK') {
+            const oreKey = String(options.oreType || '').toLowerCase();
+            if (oreKey && EXAMINE_TEXT_BY_ROCK_ORE_TYPE[oreKey]) return EXAMINE_TEXT_BY_ROCK_ORE_TYPE[oreKey];
+            if (options.oreType === 'rune_essence') return EXAMINE_TEXT_BY_TARGET.ROCK_RUNE_ESSENCE;
+        }
         if (type && EXAMINE_TEXT_BY_TARGET[type]) return EXAMINE_TEXT_BY_TARGET[type];
         return DEFAULT_TARGET_EXAMINE;
     }

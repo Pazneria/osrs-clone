@@ -1,8 +1,44 @@
 (function () {
     const SKILL_ID = 'mining';
 
-    const domain = window.RunecraftingDomain || {};
-    const ORE_TYPES = domain.ORE_TYPES || { RUNE_ESSENCE: 'rune_essence' };
+    const ORE_TYPE_TO_NODE_KEY = {
+        clay: 'clay_rock',
+        copper: 'copper_rock',
+        tin: 'tin_rock',
+        rune_essence: 'rune_essence',
+        iron: 'iron_rock',
+        coal: 'coal_rock',
+        silver: 'silver_rock',
+        sapphire: 'sapphire_rock',
+        gold: 'gold_rock',
+        emerald: 'emerald_rock'
+    };
+
+    const ORE_TYPE_TO_LABEL = {
+        clay: 'Clay rock',
+        copper: 'Copper rock',
+        tin: 'Tin rock',
+        rune_essence: 'Rune essence',
+        iron: 'Iron rock',
+        coal: 'Coal rock',
+        silver: 'Silver rock',
+        sapphire: 'Sapphire rock',
+        gold: 'Gold rock',
+        emerald: 'Emerald rock'
+    };
+
+    const ORE_TYPE_TO_HIGHLIGHT = {
+        clay: 'text-amber-300',
+        copper: 'text-orange-300',
+        tin: 'text-slate-300',
+        rune_essence: 'text-purple-300',
+        iron: 'text-zinc-300',
+        coal: 'text-gray-300',
+        silver: 'text-neutral-200',
+        sapphire: 'text-blue-300',
+        gold: 'text-yellow-300',
+        emerald: 'text-emerald-300'
+    };
 
     function getMiningNode(context) {
         if (!context || typeof context.getRockNodeAt !== 'function') return null;
@@ -12,11 +48,21 @@
     function getNodeSpec(context) {
         const node = getMiningNode(context);
         const table = typeof context.getNodeTable === 'function' ? context.getNodeTable(SKILL_ID) : null;
-        if (!node || !table) return null;
+        if (!node || !table || !node.oreType) return null;
 
-        if (node.oreType === ORE_TYPES.RUNE_ESSENCE) return table.rune_essence || null;
-        if (node.oreType === 'tin') return table.tin_rock || null;
-        return table.copper_rock || null;
+        const nodeKey = ORE_TYPE_TO_NODE_KEY[node.oreType] || null;
+        if (!nodeKey) return null;
+        return table[nodeKey] || null;
+    }
+
+    function getNodeLabel(nodeSpec) {
+        if (!nodeSpec || !nodeSpec.oreType) return 'Rock';
+        return ORE_TYPE_TO_LABEL[nodeSpec.oreType] || 'Rock';
+    }
+
+    function getNodeHighlightClass(nodeSpec) {
+        if (!nodeSpec || !nodeSpec.oreType) return 'text-cyan-400';
+        return ORE_TYPE_TO_HIGHLIGHT[nodeSpec.oreType] || 'text-cyan-400';
     }
 
     function getPickaxeContext(context) {
@@ -55,12 +101,8 @@
         canStart(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec) return false;
-            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
-            const hasCapacity = typeof context.canAcceptItemById !== 'function' || context.canAcceptItemById(nodeSpec.rewardItemId, 1);
             return context.hasToolClass('pickaxe')
-                && context.isTargetTile(nodeSpec.tileId)
-                && level >= (nodeSpec.requiredLevel || 1)
-                && hasCapacity;
+                && context.isTargetTile(nodeSpec.tileId);
         },
 
         onStart(context) {
@@ -68,11 +110,16 @@
             if (!nodeSpec) return false;
 
             if (typeof context.canAcceptItemById === 'function' && !context.canAcceptItemById(nodeSpec.rewardItemId, 1)) {
-                context.addChatMessage('You have no inventory space for ore.', 'warn');
+                context.addChatMessage('You have no inventory space for mined items.', 'warn');
                 return false;
             }
 
-            if (typeof context.requireSkillLevel === 'function' && !context.requireSkillLevel(nodeSpec.requiredLevel || 1, { skillId: SKILL_ID, action: 'mine this rock' })) return false;
+            const requiredLevel = Number.isFinite(nodeSpec.requiredLevel) ? Math.max(1, Math.floor(nodeSpec.requiredLevel)) : 1;
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            if (level < requiredLevel) {
+                context.addChatMessage(`You must be level ${requiredLevel} Mining to mine this rock.`, 'warn');
+                return false;
+            }
 
             if (!this.canStart(context)) return false;
 
@@ -98,7 +145,7 @@
                 } else {
                     context.stopAction();
                 }
-                context.addChatMessage('You have no inventory space for ore.', 'warn');
+                context.addChatMessage('You have no inventory space for mined items.', 'warn');
                 return;
             }
 
@@ -123,7 +170,7 @@
             });
 
             if (resolution.status === 'stopped' && (resolution.reasonCode === 'INVENTORY_FULL' || resolution.reasonCode === 'INVENTORY_FULL_AFTER_GAIN')) {
-                context.addChatMessage('You have no inventory space for ore.', 'warn');
+                context.addChatMessage('You have no inventory space for mined items.', 'warn');
             }
         },
 
@@ -137,10 +184,15 @@
         getTooltip(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec || !context.isTargetTile(nodeSpec.tileId)) return '';
-            if (nodeSpec.rewardItemId === 'rune_essence') {
-                return '<span class="text-gray-300">Mine</span> <span class="text-purple-300">Rune essence</span>';
+
+            const label = getNodeLabel(nodeSpec);
+            const highlight = getNodeHighlightClass(nodeSpec);
+            const requiredLevel = Number.isFinite(nodeSpec.requiredLevel) ? Math.max(1, Math.floor(nodeSpec.requiredLevel)) : 1;
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            if (level < requiredLevel) {
+                return `<span class="text-gray-300">Mine</span> <span class="${highlight}">${label}</span> <span class="text-red-300">(You must be level ${requiredLevel})</span>`;
             }
-            return '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
+            return `<span class="text-gray-300">Mine</span> <span class="${highlight}">${label}</span>`;
         },
 
         getContextMenu(context) {
@@ -149,28 +201,27 @@
                 return [{ text: 'Examine Rock', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A solid chunk of rock.', 'game')) }];
             }
 
-            if (nodeSpec.rewardItemId === 'rune_essence') {
-                return [
-                    {
-                        text: 'Mine Rune essence',
-                        onSelect: () => {
-                            context.queueInteract();
-                            context.spawnClickMarker(true);
-                        }
-                    },
-                    { text: 'Examine Rune essence', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK', { oreType: 'rune_essence' }, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('Pure essence sleeps inside this rock.', 'game')) }
-                ];
-            }
+            const label = getNodeLabel(nodeSpec);
+            const requiredLevel = Number.isFinite(nodeSpec.requiredLevel) ? Math.max(1, Math.floor(nodeSpec.requiredLevel)) : 1;
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            const mineText = level < requiredLevel
+                ? `Mine ${label} (Level ${requiredLevel})`
+                : `Mine ${label}`;
 
             return [
                 {
-                    text: 'Mine Rock',
+                    text: mineText,
                     onSelect: () => {
                         context.queueInteract();
                         context.spawnClickMarker(true);
                     }
                 },
-                { text: 'Examine Rock', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A solid chunk of rock.', 'game')) }
+                {
+                    text: `Examine ${label}`,
+                    onSelect: () => (window.ExamineCatalog
+                        ? window.ExamineCatalog.examineTarget('ROCK', { oreType: nodeSpec.oreType }, (message, tone) => context.addChatMessage(message, tone))
+                        : context.addChatMessage('A solid chunk of rock.', 'game'))
+                }
             ];
         }
     };

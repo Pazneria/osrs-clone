@@ -8,10 +8,10 @@
 - [x] MINING-005: Runtime rock gather session flow wired (attempt timing, success resolution, stop conditions).
 - [x] MINING-006: Rune essence persistent-rock behavior wired (no depletion path).
 - [x] MINING-007: Pickaxe tool power and speed-bonus attempt-interval wiring implemented.
+- [x] MINING-008: Expand node tables for full 1-40 ore/gem progression coverage (including iron/coal/gem bands).
 - [x] MINING-QA-001: Runtime/spec alignment validated for capacity gating and immediate full-inventory stop behavior (no extra overfill attempt tick).
 
 ## Now
-- [ ] MINING-008: Expand node tables for full 1-40 ore/gem progression coverage (including iron/coal/gem bands).
 - [ ] MINING-009: Merchant/value-table alignment pass for ores/gems (including uncut-gem naming consistency and off-band item handling).
 
 ## Next

@@ -284,6 +284,33 @@
             defaultAction: 'Drop',
             icon: { kind: 'sprite', key: 'tin_ore' }
         },
+        clay: {
+            name: 'Clay',
+            type: 'resource',
+            value: 4,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'tin_ore' }
+        },
+        uncut_sapphire: {
+            name: 'Uncut sapphire',
+            type: 'resource',
+            value: 50,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'rune_essence' }
+        },
+        uncut_emerald: {
+            name: 'Uncut emerald',
+            type: 'resource',
+            value: 90,
+            stackable: false,
+            actions: ['Drop'],
+            defaultAction: 'Drop',
+            icon: { kind: 'sprite', key: 'rune_essence' }
+        },
         rune_essence: {
             name: 'Rune essence',
             type: 'resource',

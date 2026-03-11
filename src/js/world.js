@@ -30,8 +30,8 @@
             sharedMaterials.waterShallow = new THREE.MeshLambertMaterial({ color: 0x2b6fa3, transparent: true, opacity: 0.78 });
             sharedMaterials.waterDeep = new THREE.MeshLambertMaterial({ color: 0x174d7a, transparent: true, opacity: 0.85 });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0x7fd8ff });
-            sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0x8f6b58, flatShading: true });
-            sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x8e99a4, flatShading: true });
+            sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
+            sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x9aa5ae, flatShading: true });
             sharedMaterials.rockDepleted = new THREE.MeshLambertMaterial({ color: 0x5a5f68, flatShading: true });
             sharedMaterials.rockRuneEssence = new THREE.MeshLambertMaterial({ color: 0x7e848c, flatShading: true });
             sharedMaterials.trunk = new THREE.MeshLambertMaterial({ color: 0x6a452a, flatShading: true });
@@ -1288,7 +1288,40 @@
         function oreTypeForTile(x, y, z = 0) {
             if (isRuneEssenceRockCoordinate(x, y, z)) return 'rune_essence';
             const hash = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
-            return (hash & 1) === 0 ? 'copper' : 'tin';
+            const weightedTypes = ['clay', 'copper', 'tin', 'iron', 'coal', 'silver', 'sapphire', 'gold', 'emerald'];
+            return weightedTypes[hash % weightedTypes.length];
+        }
+
+        function getRockDisplayName(oreType) {
+            const names = {
+                clay: 'Clay rock',
+                copper: 'Copper rock',
+                tin: 'Tin rock',
+                iron: 'Iron rock',
+                coal: 'Coal rock',
+                silver: 'Silver rock',
+                sapphire: 'Sapphire rock',
+                gold: 'Gold rock',
+                emerald: 'Emerald rock',
+                rune_essence: 'Rune essence'
+            };
+            return names[oreType] || 'Rock';
+        }
+
+        function getRockColorHex(oreType) {
+            const colors = {
+                clay: 0xa78668,
+                copper: 0xb06a4c,
+                tin: 0x9aa5ae,
+                iron: 0x6f7985,
+                coal: 0x3f444c,
+                silver: 0xc8ced6,
+                sapphire: 0x3d6ed8,
+                gold: 0xd4a829,
+                emerald: 0x2aa66f,
+                rune_essence: 0x7e848c
+            };
+            return colors[oreType] || 0x8f6b58;
         }
 
         function rebuildRockNodes() {
@@ -2132,25 +2165,27 @@
                             if (depleted) {
                                 if (rData.iRockDepleted) {
                                     rData.iRockDepleted.setMatrixAt(rDepletedIdx, dummyTransform.matrix);
-                                    rData.rockDepletedMap[rDepletedIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z };
+                                    rData.rockDepletedMap[rDepletedIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: 'depleted', name: 'Depleted rock' };
                                     rDepletedIdx++;
                                 }
                             } else if (rockNode && rockNode.oreType === 'rune_essence') {
                                 if (rData.iRockRuneEssence) {
                                     rData.iRockRuneEssence.setMatrixAt(rRuneEssenceIdx, dummyTransform.matrix);
-                                    rData.rockRuneEssenceMap[rRuneEssenceIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z };
+                                    rData.rockRuneEssenceMap[rRuneEssenceIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: 'rune_essence', name: getRockDisplayName('rune_essence') };
                                     rRuneEssenceIdx++;
                                 }
                             } else if (rockNode && rockNode.oreType === 'tin') {
                                 if (rData.iRockTin) {
                                     rData.iRockTin.setMatrixAt(rTinIdx, dummyTransform.matrix);
-                                    rData.rockTinMap[rTinIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z };
+                                    rData.rockTinMap[rTinIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: 'tin', name: getRockDisplayName('tin') };
                                     rTinIdx++;
                                 }
                             } else {
                                 if (rData.iRockCopper) {
+                                    const oreType = (rockNode && rockNode.oreType) ? rockNode.oreType : 'copper';
                                     rData.iRockCopper.setMatrixAt(rCopperIdx, dummyTransform.matrix);
-                                    rData.rockCopperMap[rCopperIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z };
+                                    rData.iRockCopper.setColorAt(rCopperIdx, new THREE.Color(getRockColorHex(oreType)));
+                                    rData.rockCopperMap[rCopperIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: oreType, name: getRockDisplayName(oreType) };
                                     rCopperIdx++;
                                 }
                             }
@@ -2325,9 +2360,10 @@
                 }
                 
                 if (tCount > 0) { tData.iTrunk.instanceMatrix.needsUpdate = true; tData.iLeaf1.instanceMatrix.needsUpdate = true; tData.iLeaf2.instanceMatrix.needsUpdate = true; tData.iLeaf3.instanceMatrix.needsUpdate = true; tData.iLeaf4.instanceMatrix.needsUpdate = true; }
-                if (rCopperCount > 0 && rData.iRockCopper) rData.iRockCopper.instanceMatrix.needsUpdate = true;
+                if (rCopperCount > 0 && rData.iRockCopper) { rData.iRockCopper.instanceMatrix.needsUpdate = true; if (rData.iRockCopper.instanceColor) rData.iRockCopper.instanceColor.needsUpdate = true; }
                 if (rTinCount > 0 && rData.iRockTin) rData.iRockTin.instanceMatrix.needsUpdate = true;
                 if (rDepletedCount > 0 && rData.iRockDepleted) rData.iRockDepleted.instanceMatrix.needsUpdate = true;
+                if (rRuneEssenceCount > 0 && rData.iRockRuneEssence) rData.iRockRuneEssence.instanceMatrix.needsUpdate = true;
                 if (wCount > 0) castleData.iWall.instanceMatrix.needsUpdate = true;
                 if (cCount > 0) castleData.iTower.instanceMatrix.needsUpdate = true;
 
