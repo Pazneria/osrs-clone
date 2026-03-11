@@ -9,14 +9,15 @@
 - [x] WOODCUTTING-006: Chop-attempt resolution wiring implemented with axe tool power and speed-bonus intervals.
 - [x] WOODCUTTING-007: Random depletion and stump transition behavior wired into on-success resolution.
 - [x] WOODCUTTING-QA-001: Inventory-capacity behavior aligned and validated (cannot start when full, immediate stop on the success tick that fills the last slot, no overfill attempt tick).
+- [x] WOODCUTTING-008: Merchant and item-value alignment for logs/axes, including rune-axe non-shop rule handling.
+- [x] WOODCUTTING-009: Training-location placement pass for normal-through-yew bands with area-gating hooks.
+- [x] WOODCUTTING-011: World-content polish complete for structured forest routing, starter-pond showcase tree lineup, and per-tree visual differentiation baseline (textured oak silhouette pass).
 
 ## Now
-- [ ] WOODCUTTING-008: Merchant and item-value alignment for logs/axes, including rune-axe non-shop rule handling.
-- [ ] WOODCUTTING-009: Training-location placement pass for normal-through-yew bands with area-gating hooks.
+- [ ] WOODCUTTING-010: Cross-skill integration pass for downstream firemaking/fletching log-demand balancing.
 
 ## Next
-- [ ] WOODCUTTING-010: Cross-skill integration pass for downstream firemaking/fletching log-demand balancing.
-- [ ] WOODCUTTING-011: World-content polish for advanced woodsman progression and higher-tier forest routing.
+- [ ] WOODCUTTING-014: Continue per-tree silhouette polish for willow/maple/yew using the starter-pond showcase row.
 
 ## Later
 - [ ] WOODCUTTING-012: Balance pass using expected logs/xp/gold-per-tick targets across tree tiers.

@@ -16,17 +16,14 @@
 - [x] FISHING-QA-002: Fishing QA tooling added (`/qa fishspots`, `/qa gotofish <pond|pier|deep>`, `/qa diag fishing`).
 - [x] FISHING-QA-003: `/qa setlevel` now sets both skill level and exact XP floor for that level (prevents snap-back on next XP gain).
 - [x] FISHING-ANIM-001: Fishing animation split finalized (net baseline is net-only; distinct basic rod and harpoon animations; no fly-fishing-rod item path remains).
-
-## Now
 - [x] FISHING-010: Merchant fish-stock unlock system (per-fish, per-merchant 50-sell thresholds).
 - [x] FISHING-011: Economy and item-value alignment across fish, bait, and fishing tools.
+- [x] FISHING-012: Training-location and world-placement pass across standard/deep-water bands.
+
+## Now
 
 ## Next
-- [x] FISHING-012: Training-location and world-placement pass across standard/deep-water bands.
 
 ## Later
 - [ ] FISHING-013: Fishing-teacher quest and rune-harpoon reward/replacement flow integration.
 - [ ] FISHING-014: Balance pass using expected fish/xp/gold-per-tick targets by method and level band.
-
-
-

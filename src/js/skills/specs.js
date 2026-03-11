@@ -22,11 +22,79 @@
                     rewardItemId: 'logs',
                     depletionChance: 0.2,
                     respawnTicks: 18
+                },
+                oak_tree: {
+                    tileId: 1,
+                    requiredLevel: 10,
+                    difficulty: 28,
+                    xpPerSuccess: 38,
+                    rewardItemId: 'oak_logs',
+                    depletionChance: 0.22,
+                    respawnTicks: 24
+                },
+                willow_tree: {
+                    tileId: 1,
+                    requiredLevel: 20,
+                    difficulty: 38,
+                    xpPerSuccess: 68,
+                    rewardItemId: 'willow_logs',
+                    depletionChance: 0.24,
+                    respawnTicks: 32
+                },
+                maple_tree: {
+                    tileId: 1,
+                    requiredLevel: 30,
+                    difficulty: 50,
+                    xpPerSuccess: 100,
+                    rewardItemId: 'maple_logs',
+                    depletionChance: 0.27,
+                    respawnTicks: 44
+                },
+                yew_tree: {
+                    tileId: 1,
+                    requiredLevel: 40,
+                    difficulty: 64,
+                    xpPerSuccess: 150,
+                    rewardItemId: 'yew_logs',
+                    depletionChance: 0.3,
+                    respawnTicks: 60
                 }
             },
             economy: {
                 primaryResource: 'logs',
-                defaultSellValue: 5
+                valueTable: {
+                    logs: { buy: 6, sell: 2 },
+                    oak_logs: { buy: 16, sell: 6 },
+                    willow_logs: { buy: 36, sell: 14 },
+                    maple_logs: { buy: 80, sell: 32 },
+                    yew_logs: { buy: 180, sell: 72 },
+                    bronze_axe: { buy: 40, sell: 10 },
+                    iron_axe: { buy: 120, sell: 35 },
+                    steel_axe: { buy: 350, sell: 110 },
+                    mithril_axe: { buy: 900, sell: 300 },
+                    adamant_axe: { buy: 2200, sell: 750 },
+                    rune_axe: { buy: null, sell: 2500 }
+                },
+                merchantTable: {
+                    forester_teacher: {
+                        strictBuys: true,
+                        buys: ['bronze_axe', 'iron_axe', 'steel_axe', 'logs', 'oak_logs'],
+                        sells: ['bronze_axe', 'iron_axe', 'steel_axe', 'logs', 'oak_logs']
+                    },
+                    advanced_woodsman: {
+                        strictBuys: true,
+                        buys: ['mithril_axe', 'adamant_axe', 'rune_axe', 'willow_logs', 'maple_logs', 'yew_logs'],
+                        sells: ['mithril_axe', 'adamant_axe', 'willow_logs', 'maple_logs', 'yew_logs']
+                    },
+                    fletching_supplier: {
+                        strictBuys: true,
+                        buys: ['logs', 'oak_logs', 'willow_logs', 'maple_logs', 'yew_logs'],
+                        sells: ['logs', 'oak_logs', 'willow_logs', 'maple_logs', 'yew_logs']
+                    }
+                },
+                generalStoreFallback: {
+                    buyPolicy: 'half_price_floor'
+                }
             }
         },
         fishing: {
@@ -516,5 +584,6 @@
         skills: SKILL_SPECS
     };
 })();
+
 
 

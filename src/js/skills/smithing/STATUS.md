@@ -4,11 +4,11 @@
 - [x] SMITHING-001: Core smithing progression, tier bands, and recipe families documented in the roadmap.
 - [x] SMITHING-002: Baseline smithing mechanics and station requirements defined with fixed 3-tick deterministic actions.
 - [x] SMITHING-003: Economy role, merchant/NPC structure, dependencies, and canonical item/component lists consolidated.
-
-## Now
 - [x] SMITHING-004: Data model pass for smelting, forging, and jewelry-base recipes (inputs, outputs, levels, XP, station, tool/mould requirements).
 - [x] SMITHING-005: Runtime smithing action loop for queued 3-tick station actions with requirement re-validation each cycle.
 - [x] SMITHING-006: Core output wiring for bars, metal equipment, and smithing-made component items used by crafting/fletching.
+
+## Now
 
 ## Next
 - [ ] SMITHING-007: Cross-skill integration pass for held-item assembly chain (smithing parts + fletching handles + crafting final assembly).

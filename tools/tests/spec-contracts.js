@@ -121,6 +121,29 @@ function run() {
   const perMerchantLock = shopEconomy.canMerchantSellItem("raw_shrimp", "fishing_teacher");
   assert(!perMerchantLock, "unlock should remain merchant-specific");
 
+  const woodSpec = SkillSpecRegistry.getSkillSpec("woodcutting");
+  assert(!!woodSpec && !!woodSpec.economy && !!woodSpec.economy.valueTable && !!woodSpec.economy.merchantTable, "woodcutting economy tables missing");
+  assert(!!woodSpec.nodeTable, "woodcutting node table missing");
+  ["normal_tree", "oak_tree", "willow_tree", "maple_tree", "yew_tree"].forEach((nodeId) => {
+    assert(!!woodSpec.nodeTable[nodeId], "woodcutting node missing " + nodeId);
+  });
+  assert(woodSpec.economy.valueTable.logs.buy === itemDefs.logs.value, "woodcutting logs buy value mismatch");
+  assert(woodSpec.economy.valueTable.oak_logs.buy === itemDefs.oak_logs.value, "woodcutting oak logs buy value mismatch");
+  assert(woodSpec.economy.valueTable.willow_logs.buy === itemDefs.willow_logs.value, "woodcutting willow logs buy value mismatch");
+  assert(woodSpec.economy.valueTable.maple_logs.buy === itemDefs.maple_logs.value, "woodcutting maple logs buy value mismatch");
+  assert(woodSpec.economy.valueTable.yew_logs.buy === itemDefs.yew_logs.value, "woodcutting yew logs buy value mismatch");
+  assert(woodSpec.economy.valueTable.bronze_axe.buy === itemDefs.bronze_axe.value, "woodcutting bronze axe buy value mismatch");
+  assert(woodSpec.economy.valueTable.iron_axe.buy === itemDefs.iron_axe.value, "woodcutting iron axe buy value mismatch");
+  assert(woodSpec.economy.valueTable.steel_axe.buy === itemDefs.steel_axe.value, "woodcutting steel axe buy value mismatch");
+  assert(woodSpec.economy.valueTable.mithril_axe.buy === itemDefs.mithril_axe.value, "woodcutting mithril axe buy value mismatch");
+  assert(woodSpec.economy.valueTable.adamant_axe.buy === itemDefs.adamant_axe.value, "woodcutting adamant axe buy value mismatch");
+  assert(woodSpec.economy.valueTable.rune_axe.buy === null, "woodcutting rune axe should not have shop buy price");
+  assert(shopEconomy.canMerchantSellItem("bronze_axe", "forester_teacher"), "forester teacher should sell bronze axe");
+  assert(!shopEconomy.canMerchantSellItem("rune_axe", "advanced_woodsman"), "advanced woodsman should not sell rune axe");
+  assert(shopEconomy.canMerchantBuyItem("rune_axe", "advanced_woodsman"), "advanced woodsman should buy rune axe");
+  assert(shopEconomy.resolveSellPrice("rune_axe", "advanced_woodsman") === 2500, "rune axe sell price mismatch at advanced woodsman");
+  assert(shopEconomy.canMerchantSellItem("yew_logs", "fletching_supplier"), "fletching supplier should sell yew logs");
+  assert(shopEconomy.resolveBuyPrice("yew_logs", "fletching_supplier") === itemDefs.yew_logs.value, "fletching supplier yew buy price mismatch");
   const fishEconomy = fishSpec.economy;
   assert(!!fishEconomy && !!fishEconomy.valueTable && !!fishEconomy.merchantTable, "fishing economy tables missing");
   const alignedValueIds = ["small_net", "fishing_rod", "harpoon", "rune_harpoon", "bait", "raw_shrimp", "raw_trout", "raw_salmon", "raw_tuna", "raw_swordfish"];
@@ -172,6 +195,13 @@ function run() {
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
   assert(worldScript.includes("for (let by = placed.y - 1; by <= placed.y + 2; by++)"), "runecrafting altar collision footprint regression");
+  assert(worldScript.includes("const runecraftingAltarBandSpecs = ["), "runecrafting structured altar bands missing");
+  assert(worldScript.includes("const castleRouteAnchor = { x: 205, y: 205 };"), "runecrafting castle route anchor missing");
+  assert(worldScript.includes("const runecraftingAltarOrder = ['Ember Altar', 'Water Altar', 'Earth Altar', 'Air Altar'];"), "runecrafting altar order missing");
+  assert(worldScript.includes("const emberAltar = altarCandidatesToRender.find((altar) => altar && altar.label === 'Ember Altar') || null;"), "rune tutor anchor should target ember altar");
+  assert(worldScript.includes("const airAltar = altarCandidatesToRender.find((altar) => altar && altar.label === 'Air Altar') || null;"), "combination sage anchor should target air altar");
+  assert(worldScript.includes("{ name: 'Rune Tutor', merchantId: 'rune_tutor', type: 3, anchor: emberAltar }"), "rune tutor merchant role wiring missing");
+  assert(worldScript.includes("{ name: 'Combination Sage', merchantId: 'combination_sage', type: 6, anchor: airAltar }"), "combination sage merchant role wiring missing");
   assert(worldScript.includes("Fishing Teacher"), "fishing teacher world placement missing");
   assert(worldScript.includes("Fishing Supplier"), "fishing supplier world placement missing");
   assert(worldScript.includes("merchantId: 'fishing_supplier'"), "fishing supplier merchant wiring missing");
@@ -182,6 +212,12 @@ function run() {
   assert(worldScript.includes("merchantId: 'borin_ironvein'"), "borin merchant wiring missing");
   assert(worldScript.includes("merchantId: 'thrain_deepforge'"), "thrain merchant wiring missing");
   assert(worldScript.includes("merchantId: 'elira_gemhand'"), "elira merchant wiring missing");
+  assert(worldScript.includes("const woodcuttingRouteAnchor = { x: 205, y: 205 };"), "woodcutting route anchor missing");
+  assert(worldScript.includes("const woodcuttingZoneSpecs = ["), "woodcutting zone specs missing");
+  assert(worldScript.includes("setTreeNode(candidate.x, candidate.y, candidate.z, zoneSpec.nodeId"), "woodcutting tree-node placement wiring missing");
+  assert(worldScript.includes("function getTreeNodeAt(x, y, z = playerState.z)"), "world tree node lookup missing");
+  assert(worldScript.includes("function resolveTreeRespawnTicks(gridX, gridY, z)"), "woodcutting respawn scaling helper missing");
+  assert(worldScript.includes("const TREE_VISUAL_PROFILES = {"), "tree visual profile table missing");
 
   const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
   assert(worldScript.includes("type: 'FURNACE'"), "furnace world placement missing");
@@ -193,7 +229,14 @@ function run() {
   assert(coreScript.includes("borin_ironvein"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("thrain_deepforge"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("elira_gemhand"), "core QA smithing merchant alias missing");
-  assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing smithing merchants");
+  assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing merchant list entries");
+  const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
+  assert(skillRuntimeScript.includes("requireAreaAccess"), "skill runtime area-access hook missing");
+  assert(skillRuntimeScript.includes("getTreeNodeAt"), "skill runtime tree-node hook missing");
+  const woodcutRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/woodcutting/index.js"), "utf8");
+  assert(woodcutRuntimeScript.includes("const TREE_NODE_NAMES ="), "woodcutting runtime tree naming table missing");
+  assert(woodcutRuntimeScript.includes("context.getTreeNodeAt"), "woodcutting runtime tree-node resolver missing");
+  assert(woodcutRuntimeScript.includes("you must be level ${requiredLevel} woodcutting to chop this tree"), "woodcutting level warning message missing");
   const rcRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runecrafting/index.js"), "utf8");
   assert(rcRuntimeScript.includes("function tryFillPouchFromInventory"), "runecrafting pouch fill handler missing");
   assert(rcRuntimeScript.includes("function tryEmptyPouchToInventory"), "runecrafting pouch empty handler missing");
@@ -250,6 +293,17 @@ try {
   console.error(error.message);
   process.exit(1);
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

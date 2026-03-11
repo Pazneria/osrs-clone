@@ -11,10 +11,10 @@
 - [x] RUNECRAFTING-008: Pouch interaction flow implementation (fill/empty rules, inventory transfer limits, non-direct crafting usage).
 - [x] RUNECRAFTING-009: Canonical runecrafting economy/value and merchant/pouch-unlock tables wired in skill specs.
 - [x] RUNECRAFTING-QA-001: Runtime/spec alignment validated for Ember starter-rune output scaling breakpoints (level 10 => 2x, then +1x every 10 levels).
+- [x] RUNECRAFTING-010: Merchant runtime behavior alignment for rune trading, pouch unlock availability, and general-store fallback behavior.
+- [x] RUNECRAFTING-011: Altar route/training-location placement pass across elemental progression bands.
 
 ## Now
-- [x] RUNECRAFTING-010: Merchant runtime behavior alignment for rune trading, pouch unlock availability, and general-store fallback behavior.
-- [ ] RUNECRAFTING-011: Altar route/training-location placement pass across elemental progression bands.
 
 ## Next
 - [ ] RUNECRAFTING-012: Cross-skill integration pass for magic rune demand and mining essence supply loops.

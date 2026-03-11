@@ -10,10 +10,10 @@
 - [x] FIREMAKING-007: Ashes ground-item behavior integration (stacking, pickup, despawn timing, non-blocking tile interaction).
 - [x] FIREMAKING-008: Lit-fire compatibility wired for cooking target validation through shared active-fire checks.
 - [x] FIREMAKING-QA-001: Ignition attempt loop behavior aligned and validated (continuous per-tick attempts until success or manual/invalid stop; consume-on-success only).
+- [x] FIREMAKING-009: Merchant and item-value alignment for logs, tinderbox, and ashes with general-store half-price rules.
 - [x] FIREMAKING-010: Interaction polish pass for repeated firemaking flow and usability.
 
 ## Now
-- [x] FIREMAKING-009: Merchant and item-value alignment for logs, tinderbox, and ashes with general-store half-price rules.
 
 ## Next
 - [ ] FIREMAKING-011: Cross-skill balance pass for log-supply pressure against woodcutting and cooking demand.

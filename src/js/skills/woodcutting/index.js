@@ -1,10 +1,57 @@
 (function () {
     const SKILL_ID = 'woodcutting';
-    const NODE_ID = 'normal_tree';
+    const DEFAULT_NODE_ID = 'normal_tree';
+    const TREE_NODE_NAMES = {
+        normal_tree: 'Tree',
+        oak_tree: 'Oak tree',
+        willow_tree: 'Willow tree',
+        maple_tree: 'Maple tree',
+        yew_tree: 'Yew tree'
+    };
+
+    function getNodeTable(context) {
+        return typeof context.getNodeTable === 'function' ? context.getNodeTable(SKILL_ID) : null;
+    }
+
+    function getTreeNodeMeta(context) {
+        if (typeof context.getTreeNodeAt === 'function') {
+            const node = context.getTreeNodeAt(context.targetX, context.targetY, context.targetZ);
+            if (node && typeof node === 'object') return node;
+        }
+        return { nodeId: DEFAULT_NODE_ID };
+    }
 
     function getNodeSpec(context) {
-        const table = typeof context.getNodeTable === 'function' ? context.getNodeTable(SKILL_ID) : null;
-        return table ? table[NODE_ID] : null;
+        const table = getNodeTable(context);
+        if (!table) return null;
+        const nodeMeta = getTreeNodeMeta(context);
+        const nodeId = (nodeMeta && typeof nodeMeta.nodeId === 'string' && table[nodeMeta.nodeId])
+            ? nodeMeta.nodeId
+            : DEFAULT_NODE_ID;
+        return table[nodeId] || null;
+    }
+
+    function getNodeDisplayName(context) {
+        const nodeMeta = getTreeNodeMeta(context);
+        const nodeId = nodeMeta && typeof nodeMeta.nodeId === 'string' ? nodeMeta.nodeId : DEFAULT_NODE_ID;
+        return TREE_NODE_NAMES[nodeId] || 'Tree';
+    }
+
+    function getRewardName(context, nodeSpec) {
+        if (!nodeSpec || !nodeSpec.rewardItemId || typeof context.getItemDataById !== 'function') return 'logs';
+        const item = context.getItemDataById(nodeSpec.rewardItemId);
+        if (!item || typeof item.name !== 'string' || !item.name.trim()) return 'logs';
+        return item.name.toLowerCase();
+    }
+
+    function ensureAreaAccess(context, nodeMeta, silent) {
+        if (!nodeMeta || !nodeMeta.areaGateFlag || typeof context.requireAreaAccess !== 'function') return true;
+        return context.requireAreaAccess({
+            flagId: nodeMeta.areaGateFlag,
+            areaName: nodeMeta.areaName || 'this grove',
+            message: nodeMeta.areaGateMessage || null,
+            silent: !!silent
+        });
     }
 
     function resolveAttemptConfig(context, nodeSpec) {
@@ -29,22 +76,27 @@
         canStart(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec) return false;
-            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
-            const hasCapacity = typeof context.canAcceptItemById !== 'function' || context.canAcceptItemById(nodeSpec.rewardItemId, 1);
-            return context.hasToolClass('axe')
-                && context.isTargetTile(nodeSpec.tileId)
-                && level >= (nodeSpec.requiredLevel || 1)
-                && hasCapacity;
+            return context.hasToolClass('axe') && context.isTargetTile(nodeSpec.tileId);
         },
 
         onStart(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec) return false;
+            const nodeMeta = getTreeNodeMeta(context);
+            const rewardName = getRewardName(context, nodeSpec);
             if (typeof context.canAcceptItemById === 'function' && !context.canAcceptItemById(nodeSpec.rewardItemId, 1)) {
-                context.addChatMessage('You have no inventory space for logs.', 'warn');
+                context.addChatMessage(`You have no inventory space for ${rewardName}.`, 'warn');
                 return false;
             }
-            if (typeof context.requireSkillLevel === 'function' && !context.requireSkillLevel(nodeSpec.requiredLevel || 1, { skillId: SKILL_ID, action: 'chop this tree' })) return false;
+            if (!ensureAreaAccess(context, nodeMeta, false)) return false;
+
+            const requiredLevel = nodeSpec.requiredLevel || 1;
+            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+            if (level < requiredLevel) {
+                context.addChatMessage(`you must be level ${requiredLevel} woodcutting to chop this tree`, 'warn');
+                return false;
+            }
+
             if (!this.canStart(context)) return false;
             const attempt = resolveAttemptConfig(context, nodeSpec);
             if (window.SkillActionResolution && typeof SkillActionResolution.startGatherSession === 'function') {
@@ -61,13 +113,14 @@
                 return;
             }
 
+            const rewardName = getRewardName(context, nodeSpec);
             if (typeof context.canAcceptItemById === 'function' && !context.canAcceptItemById(nodeSpec.rewardItemId, 1)) {
                 if (window.SkillActionResolution && typeof SkillActionResolution.stopSkill === 'function') {
                     SkillActionResolution.stopSkill(context, SKILL_ID, 'INVENTORY_FULL');
                 } else {
                     context.stopAction();
                 }
-                context.addChatMessage('You have no inventory space for logs.', 'warn');
+                context.addChatMessage(`You have no inventory space for ${rewardName}.`, 'warn');
                 return;
             }
 
@@ -91,7 +144,7 @@
             });
 
             if (resolution.status === 'stopped' && (resolution.reasonCode === 'INVENTORY_FULL' || resolution.reasonCode === 'INVENTORY_FULL_AFTER_GAIN')) {
-                context.addChatMessage('You have no inventory space for logs.', 'warn');
+                context.addChatMessage(`You have no inventory space for ${rewardName}.`, 'warn');
             }
         },
 
@@ -157,21 +210,23 @@
         getTooltip(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec || !context.isTargetTile(nodeSpec.tileId)) return '';
-            return '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
+            const nodeName = getNodeDisplayName(context);
+            return `<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">${nodeName}</span>`;
         },
 
         getContextMenu(context) {
             const nodeSpec = getNodeSpec(context);
+            const nodeName = getNodeDisplayName(context);
             if (nodeSpec && context.isTargetTile(nodeSpec.tileId)) {
                 return [
                     {
-                        text: 'Chop down Tree',
+                        text: `Chop down ${nodeName}`,
                         onSelect: () => {
                             context.queueInteract();
                             context.spawnClickMarker(true);
                         }
                     },
-                    { text: 'Examine Tree', onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('TREE', {}, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A fully grown tree.', 'game')) }
+                    { text: `Examine ${nodeName}`, onSelect: () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('TREE', { nodeId: getTreeNodeMeta(context).nodeId }, (message, tone) => context.addChatMessage(message, tone)) : context.addChatMessage('A fully grown tree.', 'game')) }
                 ];
             }
 
@@ -186,6 +241,3 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = woodcuttingModule;
 })();
-
-
-

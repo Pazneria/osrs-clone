@@ -1,5 +1,18 @@
 (function () {
     const ITEM_DEFS = {
+        bronze_axe: {
+            name: 'Bronze Axe',
+            type: 'weapon',
+            weaponClass: 'axe',
+            toolTier: 4,
+            speedBonusTicks: 0,
+            stats: { atk: 10, def: 0, str: 8 },
+            value: 40,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'iron_axe' }
+        },
         iron_axe: {
             name: 'Iron Axe',
             type: 'weapon',
@@ -7,7 +20,59 @@
             toolTier: 6,
             speedBonusTicks: 1,
             stats: { atk: 15, def: 0, str: 12 },
-            value: 20,
+            value: 120,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'iron_axe' }
+        },
+        steel_axe: {
+            name: 'Steel Axe',
+            type: 'weapon',
+            weaponClass: 'axe',
+            toolTier: 10,
+            speedBonusTicks: 2,
+            stats: { atk: 22, def: 0, str: 18 },
+            value: 350,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'iron_axe' }
+        },
+        mithril_axe: {
+            name: 'Mithril Axe',
+            type: 'weapon',
+            weaponClass: 'axe',
+            toolTier: 15,
+            speedBonusTicks: 3,
+            stats: { atk: 30, def: 0, str: 24 },
+            value: 900,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'iron_axe' }
+        },
+        adamant_axe: {
+            name: 'Adamant Axe',
+            type: 'weapon',
+            weaponClass: 'axe',
+            toolTier: 21,
+            speedBonusTicks: 4,
+            stats: { atk: 40, def: 0, str: 32 },
+            value: 2200,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'sprite', key: 'iron_axe' }
+        },
+        rune_axe: {
+            name: 'Rune Axe',
+            type: 'weapon',
+            weaponClass: 'axe',
+            toolTier: 28,
+            speedBonusTicks: 5,
+            stats: { atk: 54, def: 0, str: 44 },
+            value: 2500,
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
@@ -17,6 +82,42 @@
             name: 'Logs',
             type: 'resource',
             value: 6,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+        },
+        oak_logs: {
+            name: 'Oak Logs',
+            type: 'resource',
+            value: 16,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+        },
+        willow_logs: {
+            name: 'Willow Logs',
+            type: 'resource',
+            value: 36,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'image', path: './assets/pixel/willow_logs-pixel.png' }
+        },
+        maple_logs: {
+            name: 'Maple Logs',
+            type: 'resource',
+            value: 80,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+        },
+        yew_logs: {
+            name: 'Yew Logs',
+            type: 'resource',
+            value: 180,
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',

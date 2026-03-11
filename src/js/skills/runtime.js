@@ -202,6 +202,20 @@
                 addChatMessage(message, options && options.tone ? options.tone : 'warn');
                 return false;
             },
+            requireAreaAccess: (options = {}) => {
+                const flagId = (typeof options.flagId === 'string' ? options.flagId.trim() : '');
+                if (!flagId) return true;
+                if (hasUnlockFlag(flagId)) return true;
+                if (options && options.silent) return false;
+                const areaName = (typeof options.areaName === 'string' && options.areaName.trim())
+                    ? options.areaName.trim()
+                    : 'that area';
+                const message = (typeof options.message === 'string' && options.message.trim())
+                    ? options.message.trim()
+                    : `You need access to ${areaName} first.`;
+                addChatMessage(message, options && options.tone ? options.tone : 'warn');
+                return false;
+            },
             hasUnlockFlag,
             setUnlockFlag,
             frameNow: overrides.frameNow,
@@ -270,6 +284,7 @@
             },
             chopDownTree: (x, y, z) => { if (typeof chopDownTree === 'function') chopDownTree(x, y, z); },
             getRockNodeAt: (x, y, z) => (typeof getRockNodeAt === 'function' ? getRockNodeAt(x, y, z) : null),
+            getTreeNodeAt: (x, y, z) => (typeof getTreeNodeAt === 'function' ? getTreeNodeAt(x, y, z) : null),
             getAltarNameAt: (x, y, z) => (typeof window.getRunecraftingAltarNameAt === 'function' ? window.getRunecraftingAltarNameAt(x, y, z) : null),
             depleteRockNode: (x, y, z, respawnTicks) => {
                 if (typeof depleteRockNode === 'function') depleteRockNode(x, y, z, respawnTicks);
@@ -454,6 +469,11 @@
         handleSkillAnimation
     };
 })();
+
+
+
+
+
 
 
 
