@@ -68,6 +68,12 @@
         return null;
     }
 
+    function hasMerchantConfig(merchantId) {
+        const id = merchantId || GENERAL_STORE_ID;
+        if (id === GENERAL_STORE_ID) return false;
+        return !!getMerchantEconomyMeta(id);
+    }
+
     function getSkillLevel(skillId) {
         if (!skillId) return 1;
         if (typeof playerSkills === 'object' && playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level)) {
@@ -275,6 +281,7 @@
         resolveSellPrice,
         canMerchantBuyItem,
         canMerchantSellItem,
+        hasMerchantConfig,
         recordMerchantPurchaseFromPlayer,
         getMerchantDefaultSellItemIds,
         getUnlockedStockAmount,

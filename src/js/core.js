@@ -665,6 +665,7 @@ O445411111OOOOO.
                 forester_teacher: 'forester_teacher',
                 advanced_woodsman: 'advanced_woodsman',
                 fletching_supplier: 'fletching_supplier',
+                advanced_fletcher: 'advanced_fletcher',
                 borin_ironvein: 'borin_ironvein',
                 thrain_deepforge: 'thrain_deepforge',
                 elira_gemhand: 'elira_gemhand'
@@ -850,6 +851,7 @@ O445411111OOOOO.
             firemaking: { xp: 0, level: 1 },
             fishing: { xp: 0, level: 1 },
             cooking: { xp: 0, level: 1 },
+            crafting: { xp: 0, level: 1 },
             fletching: { xp: 0, level: 1 },
             runecrafting: { xp: 0, level: 1 },
             smithing: { xp: 0, level: 1 }
@@ -961,7 +963,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -1058,9 +1060,9 @@ O445411111OOOOO.
 
                 if (cmd === 'openshop') {
                     const merchantId = String(parts[1] || '').toLowerCase();
-                    const qaOpenableMerchants = ['general_store', 'fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage', 'forester_teacher', 'advanced_woodsman', 'fletching_supplier', 'borin_ironvein', 'thrain_deepforge', 'elira_gemhand'];
+                    const qaOpenableMerchants = ['general_store', 'fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage', 'forester_teacher', 'advanced_woodsman', 'fletching_supplier', 'advanced_fletcher', 'borin_ironvein', 'thrain_deepforge', 'elira_gemhand'];
                     if (!qaOpenableMerchants.includes(merchantId)) {
-                        addChatMessage('Usage: /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|borin_ironvein|thrain_deepforge|elira_gemhand>', 'warn');
+                        addChatMessage('Usage: /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>', 'warn');
                         return;
                     }
                     if (typeof window.openShopForMerchant !== 'function') {
@@ -1282,14 +1284,3 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
-
-
-
-
-
-
-
-
-
-
-

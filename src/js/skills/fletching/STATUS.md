@@ -12,8 +12,8 @@
 
 ## Next
 - [x] FLETCHING-007: UI interaction pass for knife-on-log product grid, lit/unlit options, and missing-requirement feedback.
-- [ ] FLETCHING-008: Cross-skill integration pass for crafting handle consumers and smithing arrowhead dependencies.
-- [ ] FLETCHING-009: Merchant/value-table alignment for suppliers, advanced-fletcher buy lists, and general-store half-price behavior.
+- [x] FLETCHING-008: Cross-skill integration pass for crafting handle consumers and smithing arrowhead dependencies.
+- [x] FLETCHING-009: Merchant/value-table alignment for suppliers, advanced-fletcher buy lists, and general-store half-price behavior.
 
 ## Later
 - [ ] FLETCHING-010: Progression balancing for XP/value throughput across logs, arrows, and bow branches.

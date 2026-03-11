@@ -1,5 +1,5 @@
 (function () {
-    const SPEC_VERSION = '2026.03.m4';
+    const SPEC_VERSION = '2026.03.m5';
 
     const SKILL_SPECS = {
         woodcutting: {
@@ -85,11 +85,6 @@
                         strictBuys: true,
                         buys: ['mithril_axe', 'adamant_axe', 'rune_axe', 'willow_logs', 'maple_logs', 'yew_logs'],
                         sells: ['mithril_axe', 'adamant_axe', 'willow_logs', 'maple_logs', 'yew_logs']
-                    },
-                    fletching_supplier: {
-                        strictBuys: true,
-                        buys: ['logs', 'oak_logs', 'willow_logs', 'maple_logs', 'yew_logs'],
-                        sells: ['logs', 'oak_logs', 'willow_logs', 'maple_logs', 'yew_logs']
                     }
                 },
                 generalStoreFallback: {
@@ -435,6 +430,53 @@
                 }
             }
         },
+        crafting: {
+            skillId: 'crafting',
+            levelBands: [1, 10, 20, 30, 40],
+            formulas: {
+                output: 'fixed_per_action',
+                interval: 'immediate_item_on_item'
+            },
+            timing: {
+                actionTicks: 1
+            },
+            recipeSet: (function () {
+                const recipes = {};
+                const tierDefs = [
+                    { tierId: 'bronze', requiredLevel: 1, handleItemId: 'wooden_handle', xp: 4 },
+                    { tierId: 'iron', requiredLevel: 1, handleItemId: 'wooden_handle', xp: 5 },
+                    { tierId: 'steel', requiredLevel: 10, handleItemId: 'oak_handle', xp: 8 },
+                    { tierId: 'mithril', requiredLevel: 20, handleItemId: 'willow_handle', xp: 14 },
+                    { tierId: 'adamant', requiredLevel: 30, handleItemId: 'maple_handle', xp: 22 },
+                    { tierId: 'rune', requiredLevel: 40, handleItemId: 'yew_handle', xp: 32 }
+                ];
+                const assemblyDefs = [
+                    { outputSuffix: 'sword', componentSuffix: 'sword_blade' },
+                    { outputSuffix: 'axe', componentSuffix: 'axe_head' },
+                    { outputSuffix: 'pickaxe', componentSuffix: 'pickaxe_head' }
+                ];
+
+                for (let i = 0; i < tierDefs.length; i++) {
+                    const tier = tierDefs[i];
+                    for (let j = 0; j < assemblyDefs.length; j++) {
+                        const assembly = assemblyDefs[j];
+                        recipes[`assemble_${tier.tierId}_${assembly.outputSuffix}`] = {
+                            recipeFamily: 'tool_weapon_assembly',
+                            requiredLevel: tier.requiredLevel,
+                            inputs: [
+                                { itemId: `${tier.tierId}_${assembly.componentSuffix}`, amount: 1 },
+                                { itemId: tier.handleItemId, amount: 1 }
+                            ],
+                            output: { itemId: `${tier.tierId}_${assembly.outputSuffix}`, amount: 1 },
+                            xpPerAction: tier.xp,
+                            actionTicks: 1
+                        };
+                    }
+                }
+
+                return recipes;
+            })()
+        },
         fletching: {
             skillId: 'fletching',
             levelBands: [1, 10, 20, 30, 40],
@@ -707,7 +749,87 @@
                 }
 
                 return recipes;
-            })()
+            })(),
+            economy: {
+                primaryResource: 'wooden_handle',
+                valueTable: {
+                    knife: { buy: 8, sell: 2 },
+                    feathers_bundle: { buy: 8, sell: 2 },
+                    bow_string: { buy: 12, sell: 3 },
+                    wooden_handle: { buy: null, sell: 6 },
+                    oak_handle: { buy: null, sell: 12 },
+                    willow_handle: { buy: null, sell: 20 },
+                    maple_handle: { buy: null, sell: 32 },
+                    yew_handle: { buy: null, sell: 50 },
+                    wooden_shafts: { buy: null, sell: 4 },
+                    oak_shafts: { buy: null, sell: 6 },
+                    willow_shafts: { buy: null, sell: 10 },
+                    maple_shafts: { buy: null, sell: 16 },
+                    yew_shafts: { buy: null, sell: 24 },
+                    wooden_headless_arrows: { buy: null, sell: 6 },
+                    oak_headless_arrows: { buy: null, sell: 10 },
+                    willow_headless_arrows: { buy: null, sell: 16 },
+                    maple_headless_arrows: { buy: null, sell: 24 },
+                    yew_headless_arrows: { buy: null, sell: 36 },
+                    bronze_arrows: { buy: null, sell: 8 },
+                    iron_arrows: { buy: null, sell: 12 },
+                    steel_arrows: { buy: null, sell: 20 },
+                    mithril_arrows: { buy: null, sell: 32 },
+                    adamant_arrows: { buy: null, sell: 50 },
+                    rune_arrows: { buy: null, sell: 80 },
+                    normal_shortbow_u: { buy: null, sell: 7 },
+                    normal_longbow_u: { buy: null, sell: 6 },
+                    oak_shortbow_u: { buy: null, sell: 15 },
+                    oak_longbow_u: { buy: null, sell: 14 },
+                    willow_shortbow_u: { buy: null, sell: 28 },
+                    willow_longbow_u: { buy: null, sell: 26 },
+                    maple_shortbow_u: { buy: null, sell: 46 },
+                    maple_longbow_u: { buy: null, sell: 44 },
+                    yew_shortbow_u: { buy: null, sell: 72 },
+                    yew_longbow_u: { buy: null, sell: 70 },
+                    normal_shortbow: { buy: null, sell: 12 },
+                    normal_longbow: { buy: null, sell: 10 },
+                    oak_shortbow: { buy: null, sell: 22 },
+                    oak_longbow: { buy: null, sell: 20 },
+                    willow_shortbow: { buy: null, sell: 40 },
+                    willow_longbow: { buy: null, sell: 36 },
+                    maple_shortbow: { buy: null, sell: 68 },
+                    maple_longbow: { buy: null, sell: 62 },
+                    yew_shortbow: { buy: null, sell: 110 },
+                    yew_longbow: { buy: null, sell: 100 }
+                },
+                merchantTable: {
+                    fletching_supplier: {
+                        strictBuys: true,
+                        buys: ['knife', 'feathers_bundle', 'bow_string'],
+                        sells: ['knife', 'feathers_bundle', 'bow_string']
+                    },
+                    advanced_fletcher: {
+                        strictBuys: true,
+                        buys: [
+                            'wooden_handle', 'oak_handle', 'willow_handle', 'maple_handle', 'yew_handle',
+                            'plain_staff_wood', 'plain_staff_oak', 'plain_staff_willow', 'plain_staff_maple', 'plain_staff_yew',
+                            'wooden_shafts', 'oak_shafts', 'willow_shafts', 'maple_shafts', 'yew_shafts',
+                            'wooden_headless_arrows', 'oak_headless_arrows', 'willow_headless_arrows', 'maple_headless_arrows', 'yew_headless_arrows',
+                            'bronze_arrows', 'iron_arrows', 'steel_arrows', 'mithril_arrows', 'adamant_arrows', 'rune_arrows',
+                            'normal_shortbow_u', 'normal_longbow_u',
+                            'oak_shortbow_u', 'oak_longbow_u',
+                            'willow_shortbow_u', 'willow_longbow_u',
+                            'maple_shortbow_u', 'maple_longbow_u',
+                            'yew_shortbow_u', 'yew_longbow_u',
+                            'normal_shortbow', 'normal_longbow',
+                            'oak_shortbow', 'oak_longbow',
+                            'willow_shortbow', 'willow_longbow',
+                            'maple_shortbow', 'maple_longbow',
+                            'yew_shortbow', 'yew_longbow'
+                        ],
+                        sells: []
+                    }
+                },
+                generalStoreFallback: {
+                    buyPolicy: 'half_price_floor'
+                }
+            }
         },
         smithing: {
             skillId: 'smithing',
@@ -853,12 +975,99 @@
             }
         }
     };
+    function gatherRecipeRows(recipeSet) {
+        if (!recipeSet || typeof recipeSet !== 'object') return [];
+        const recipeIds = Object.keys(recipeSet);
+        const rows = [];
+        for (let i = 0; i < recipeIds.length; i++) {
+            const recipeId = recipeIds[i];
+            const recipe = recipeSet[recipeId];
+            if (!recipe || typeof recipe !== 'object') continue;
+            rows.push({ recipeId, recipe });
+        }
+        return rows;
+    }
+
+    function validateCrossSkillIntegration(skillSpecs) {
+        const errors = [];
+        const fletchingRecipes = skillSpecs && skillSpecs.fletching ? skillSpecs.fletching.recipeSet : null;
+        const smithingRecipes = skillSpecs && skillSpecs.smithing ? skillSpecs.smithing.recipeSet : null;
+        const craftingRecipes = skillSpecs && skillSpecs.crafting ? skillSpecs.crafting.recipeSet : null;
+
+        const fletchedHandleIds = new Set();
+        const fletchingRows = gatherRecipeRows(fletchingRecipes);
+        for (let i = 0; i < fletchingRows.length; i++) {
+            const row = fletchingRows[i];
+            if (row.recipe.recipeFamily !== 'handle') continue;
+            const outputId = row.recipe.output && row.recipe.output.itemId;
+            if (typeof outputId === 'string' && outputId) fletchedHandleIds.add(outputId);
+        }
+
+        const craftingRows = gatherRecipeRows(craftingRecipes);
+        let craftingAssemblyCount = 0;
+        for (let i = 0; i < craftingRows.length; i++) {
+            const row = craftingRows[i];
+            if (row.recipe.recipeFamily !== 'tool_weapon_assembly') continue;
+            craftingAssemblyCount++;
+
+            const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+            const handleInputs = inputs.filter((input) => /_handle$/.test(String(input && input.itemId || '')));
+            if (handleInputs.length !== 1) {
+                errors.push(`crafting:${row.recipeId} must include exactly one fletched handle input`);
+                continue;
+            }
+
+            const handleId = String(handleInputs[0].itemId || '');
+            if (!fletchedHandleIds.has(handleId)) {
+                errors.push(`crafting:${row.recipeId} references non-fletching handle ${handleId}`);
+            }
+
+            for (let j = 0; j < inputs.length; j++) {
+                const inputId = String(inputs[j] && inputs[j].itemId || '');
+                if (inputId === 'logs' || /_logs$/.test(inputId)) {
+                    errors.push(`crafting:${row.recipeId} should not consume logs directly`);
+                }
+            }
+        }
+        if (craftingAssemblyCount === 0) {
+            errors.push('crafting: missing tool/weapon assembly recipes');
+        }
+
+        const smithingArrowheadOutputs = new Set();
+        const smithingRows = gatherRecipeRows(smithingRecipes);
+        for (let i = 0; i < smithingRows.length; i++) {
+            const outputId = smithingRows[i].recipe.output && smithingRows[i].recipe.output.itemId;
+            if (/_arrowheads$/.test(String(outputId || ''))) {
+                smithingArrowheadOutputs.add(String(outputId));
+            }
+        }
+
+        const finishedArrowRows = fletchingRows.filter((row) => row.recipe.recipeFamily === 'finished_arrows');
+        for (let i = 0; i < finishedArrowRows.length; i++) {
+            const row = finishedArrowRows[i];
+            const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+            const arrowheadInput = inputs.find((input) => /_arrowheads$/.test(String(input && input.itemId || '')));
+            const arrowheadId = arrowheadInput ? String(arrowheadInput.itemId || '') : '';
+            if (!arrowheadId) {
+                errors.push(`fletching:${row.recipeId} missing arrowhead input`);
+                continue;
+            }
+            if (!smithingArrowheadOutputs.has(arrowheadId)) {
+                errors.push(`fletching:${row.recipeId} references smithing-missing arrowheads ${arrowheadId}`);
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error(`Cross-skill integration mismatch:\n- ${errors.join('\n- ')}`);
+        }
+    }
+
+    validateCrossSkillIntegration(SKILL_SPECS);
 
     window.SkillSpecs = {
         version: SPEC_VERSION,
         skills: SKILL_SPECS
     };
 })();
-
 
 

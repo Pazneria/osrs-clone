@@ -1131,9 +1131,55 @@
 
         return defs;
     }
+    function createCraftingAssemblyItemDefs() {
+        const defs = {};
+        const tierDefs = [
+            { id: 'bronze', name: 'Bronze', value: 40, swordStats: { atk: 10, def: 0, str: 8 }, pickaxeStats: { atk: 5, def: 0, str: 7 }, toolTier: 4, speedBonusTicks: 0 },
+            { id: 'iron', name: 'Iron', value: 120, swordStats: { atk: 15, def: 0, str: 12 }, pickaxeStats: { atk: 8, def: 0, str: 10 }, toolTier: 6, speedBonusTicks: 1 },
+            { id: 'steel', name: 'Steel', value: 350, swordStats: { atk: 22, def: 0, str: 18 }, pickaxeStats: { atk: 12, def: 0, str: 15 }, toolTier: 10, speedBonusTicks: 2 },
+            { id: 'mithril', name: 'Mithril', value: 900, swordStats: { atk: 30, def: 0, str: 24 }, pickaxeStats: { atk: 18, def: 0, str: 22 }, toolTier: 15, speedBonusTicks: 3 },
+            { id: 'adamant', name: 'Adamant', value: 2200, swordStats: { atk: 40, def: 0, str: 32 }, pickaxeStats: { atk: 24, def: 0, str: 30 }, toolTier: 21, speedBonusTicks: 4 },
+            { id: 'rune', name: 'Rune', value: 2500, swordStats: { atk: 54, def: 0, str: 44 }, pickaxeStats: { atk: 32, def: 0, str: 40 }, toolTier: 28, speedBonusTicks: 5 }
+        ];
 
+        for (let i = 0; i < tierDefs.length; i++) {
+            const tier = tierDefs[i];
+
+            defs[`${tier.id}_sword`] = {
+                name: `${tier.name} Sword`,
+                type: 'weapon',
+                weaponClass: 'sword',
+                value: tier.value,
+                stackable: false,
+                actions: ['Equip', 'Use', 'Drop'],
+                defaultAction: 'Equip',
+                stats: Object.assign({}, tier.swordStats),
+                icon: { kind: 'sprite', key: 'iron_axe' }
+            };
+
+            const pickaxeId = `${tier.id}_pickaxe`;
+            if (!ITEM_DEFS[pickaxeId]) {
+                defs[pickaxeId] = {
+                    name: `${tier.name} Pickaxe`,
+                    type: 'weapon',
+                    weaponClass: 'pickaxe',
+                    toolTier: tier.toolTier,
+                    speedBonusTicks: tier.speedBonusTicks,
+                    value: tier.value,
+                    stackable: false,
+                    actions: ['Equip', 'Use', 'Drop'],
+                    defaultAction: 'Equip',
+                    stats: Object.assign({}, tier.pickaxeStats),
+                    icon: { kind: 'sprite', key: 'pickaxe' }
+                };
+            }
+        }
+
+        return defs;
+    }
     Object.assign(ITEM_DEFS, createFletchingItemDefs());
     Object.assign(ITEM_DEFS, createSmithingItemDefs());
+    Object.assign(ITEM_DEFS, createCraftingAssemblyItemDefs());
 
     function resolveIcon(def, makeIconSprite, makeIconFromImage, assetVersionTag) {
         if (!def || !def.icon) return '';
@@ -1179,5 +1225,3 @@
         buildItemDb
     };
 })();
-
-

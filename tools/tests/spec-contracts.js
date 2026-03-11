@@ -142,8 +142,23 @@ function run() {
   assert(!shopEconomy.canMerchantSellItem("rune_axe", "advanced_woodsman"), "advanced woodsman should not sell rune axe");
   assert(shopEconomy.canMerchantBuyItem("rune_axe", "advanced_woodsman"), "advanced woodsman should buy rune axe");
   assert(shopEconomy.resolveSellPrice("rune_axe", "advanced_woodsman") === 2500, "rune axe sell price mismatch at advanced woodsman");
-  assert(shopEconomy.canMerchantSellItem("yew_logs", "fletching_supplier"), "fletching supplier should sell yew logs");
-  assert(shopEconomy.resolveBuyPrice("yew_logs", "fletching_supplier") === itemDefs.yew_logs.value, "fletching supplier yew buy price mismatch");
+  const fletchEconomySpec = SkillSpecRegistry.getSkillSpec("fletching");
+  assert(!!fletchEconomySpec && !!fletchEconomySpec.economy && !!fletchEconomySpec.economy.valueTable && !!fletchEconomySpec.economy.merchantTable, "fletching economy tables missing");
+  assert(typeof shopEconomy.hasMerchantConfig === "function", "shop economy hasMerchantConfig API missing");
+  assert(shopEconomy.hasMerchantConfig("fletching_supplier"), "fletching supplier merchant config missing");
+  assert(shopEconomy.hasMerchantConfig("advanced_fletcher"), "advanced fletcher merchant config missing");
+  assert(shopEconomy.canMerchantSellItem("knife", "fletching_supplier"), "fletching supplier should sell knife");
+  assert(shopEconomy.canMerchantSellItem("feathers_bundle", "fletching_supplier"), "fletching supplier should sell feathers bundle");
+  assert(shopEconomy.canMerchantSellItem("bow_string", "fletching_supplier"), "fletching supplier should sell bow string");
+  assert(!shopEconomy.canMerchantSellItem("yew_logs", "fletching_supplier"), "fletching supplier should not sell logs");
+  assert(!shopEconomy.canMerchantBuyItem("yew_logs", "fletching_supplier"), "fletching supplier should not buy logs");
+  assert(shopEconomy.resolveBuyPrice("knife", "fletching_supplier") === itemDefs.knife.value, "fletching supplier knife buy price mismatch");
+  assert(shopEconomy.resolveSellPrice("knife", "fletching_supplier") === 2, "fletching supplier knife sell price mismatch");
+  assert(shopEconomy.canMerchantBuyItem("yew_longbow", "advanced_fletcher"), "advanced fletcher should buy yew longbow");
+  assert(shopEconomy.canMerchantBuyItem("plain_staff_oak", "advanced_fletcher"), "advanced fletcher should buy plain oak staff");
+  assert(!shopEconomy.canMerchantSellItem("yew_longbow", "advanced_fletcher"), "advanced fletcher should not sell stock");
+  assert(shopEconomy.resolveSellPrice("yew_longbow", "advanced_fletcher") === 100, "advanced fletcher yew longbow sell price mismatch");
+  assert(shopEconomy.resolveSellPrice("plain_staff_oak", "advanced_fletcher") === Math.floor(itemDefs.plain_staff_oak.value * 0.5), "advanced fletcher plain staff fallback price mismatch");
   const fishEconomy = fishSpec.economy;
   assert(!!fishEconomy && !!fishEconomy.valueTable && !!fishEconomy.merchantTable, "fishing economy tables missing");
   const alignedValueIds = ["small_net", "fishing_rod", "harpoon", "rune_harpoon", "bait", "raw_shrimp", "raw_trout", "raw_salmon", "raw_tuna", "raw_swordfish"];
@@ -191,6 +206,128 @@ function run() {
   assert(!shopEconomy.canMerchantSellItem("rune_ore", "borin_ironvein"), "borin should not sell rune ore");
   assert(shopEconomy.canMerchantBuyItem("rune_ore", "thrain_deepforge"), "thrain should buy rune ore");
   assert(!shopEconomy.canMerchantBuyItem("ring_mould", "elira_gemhand"), "elira should not buy ring mould");
+  const fletchSpec = SkillSpecRegistry.getSkillSpec("fletching");
+  const craftingSpec = SkillSpecRegistry.getSkillSpec("crafting");
+  assert(!!fletchSpec && !!fletchSpec.recipeSet, "fletching recipe set missing");
+  assert(!!craftingSpec && !!craftingSpec.recipeSet, "crafting recipe set missing");
+
+  const fletchRows = Object.keys(fletchSpec.recipeSet).map((id) => ({ recipeId: id, recipe: fletchSpec.recipeSet[id] }));
+  const smithRows = Object.keys(smithSpec.recipeSet).map((id) => ({ recipeId: id, recipe: smithSpec.recipeSet[id] }));
+  const craftingRows = Object.keys(craftingSpec.recipeSet).map((id) => ({ recipeId: id, recipe: craftingSpec.recipeSet[id] }));
+
+  const smithArrowheadOutputIds = new Set(
+    smithRows
+      .map((row) => row.recipe && row.recipe.output ? row.recipe.output.itemId : null)
+      .filter((itemId) => typeof itemId === "string" && /_arrowheads$/.test(itemId))
+  );
+  const finishedArrowRows = fletchRows.filter((row) => row.recipe && row.recipe.recipeFamily === "finished_arrows");
+  assert(finishedArrowRows.length >= 6, "expected full finished-arrow fletching chain");
+  finishedArrowRows.forEach((row) => {
+    const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+    const arrowheadInput = inputs.find((input) => input && typeof input.itemId === "string" && /_arrowheads$/.test(input.itemId));
+    assert(!!arrowheadInput, `fletching finished-arrow recipe missing arrowhead input: ${row.recipeId}`);
+    assert(smithArrowheadOutputIds.has(arrowheadInput.itemId), `fletching arrowhead dependency missing in smithing outputs: ${arrowheadInput.itemId}`);
+  });
+
+  const fletchedHandleIds = new Set(
+    fletchRows
+      .filter((row) => row.recipe && row.recipe.recipeFamily === "handle")
+      .map((row) => row.recipe.output && row.recipe.output.itemId)
+      .filter((itemId) => typeof itemId === "string" && itemId.length > 0)
+  );
+  const assemblyRows = craftingRows.filter((row) => row.recipe && row.recipe.recipeFamily === "tool_weapon_assembly");
+  assert(assemblyRows.length === 18, "expected 18 crafting assembly recipes (6 tiers x 3 outputs)");
+  assemblyRows.forEach((row) => {
+    const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+    const handleInputs = inputs.filter((input) => input && typeof input.itemId === "string" && /_handle$/.test(input.itemId));
+    assert(handleInputs.length === 1, `crafting assembly must have exactly one handle input: ${row.recipeId}`);
+    assert(fletchedHandleIds.has(handleInputs[0].itemId), `crafting assembly handle must come from fletching: ${row.recipeId}`);
+    inputs.forEach((input) => {
+      const inputId = input && input.itemId;
+      assert(typeof inputId === "string" && !/_logs$/.test(inputId) && inputId !== "logs", `crafting assembly should not accept log shortcuts: ${row.recipeId}`);
+      assert(!!itemDefs[inputId], `crafting assembly input item missing in catalog: ${inputId}`);
+    });
+    const outputId = row.recipe.output && row.recipe.output.itemId;
+    assert(!!itemDefs[outputId], `crafting assembly output item missing in catalog: ${outputId}`);
+  });
+
+  ["bronze_sword", "iron_sword", "steel_sword", "mithril_sword", "adamant_sword", "rune_sword", "bronze_pickaxe", "steel_pickaxe", "mithril_pickaxe", "adamant_pickaxe", "rune_pickaxe"].forEach((itemId) => {
+    assert(!!itemDefs[itemId], `item catalog crafting output missing: ${itemId}`);
+  });
+
+  loadBrowserScript(root, "src/js/skills/fletching/index.js");
+  loadBrowserScript(root, "src/js/skills/crafting/index.js");
+  const skillModules = window.SkillModules || {};
+  assert(!!skillModules.fletching && typeof skillModules.fletching.onUseItem === "function", "fletching runtime module missing onUseItem");
+  assert(!!skillModules.crafting && typeof skillModules.crafting.onUseItem === "function", "crafting runtime module missing onUseItem");
+
+  function makeInventoryContext(sourceItemId, targetItemId, counts, messages, startedPayloads) {
+    const inventoryCounts = Object.assign({}, counts);
+    return {
+      targetObj: "INVENTORY",
+      playerState: { x: 0, y: 0, z: 0 },
+      sourceItemId,
+      targetUid: { sourceItemId, targetItemId },
+      getRecipeSet: (skillId) => SkillSpecRegistry.getRecipeSet(skillId),
+      getInventoryCount: (itemId) => (inventoryCounts[itemId] || 0),
+      removeItemsById: (itemId, amount) => {
+        const available = inventoryCounts[itemId] || 0;
+        const remove = Math.min(available, amount);
+        inventoryCounts[itemId] = available - remove;
+        return remove;
+      },
+      giveItemById: (itemId, amount) => {
+        inventoryCounts[itemId] = (inventoryCounts[itemId] || 0) + amount;
+        return amount;
+      },
+      canAcceptItemById: () => true,
+      getItemDataById: (itemId) => itemDefs[itemId] || null,
+      requireSkillLevel: () => true,
+      addSkillXp: () => {},
+      renderInventory: () => {},
+      addChatMessage: (message, tone) => messages.push({ message, tone }),
+      _counts: inventoryCounts,
+      _startedPayloads: startedPayloads
+    };
+  }
+
+  const originalSkillRuntime = window.SkillRuntime;
+  const startedPayloads = [];
+  window.SkillRuntime = {
+    tryStartSkillById: (_skillId, payload) => {
+      startedPayloads.push(payload);
+      return true;
+    }
+  };
+
+  const fletchMessagesA = [];
+  const fletchCtxA = makeInventoryContext("bronze_arrowheads", "wooden_headless_arrows", { bronze_arrowheads: 1, wooden_headless_arrows: 1 }, fletchMessagesA, startedPayloads);
+  const usedA = skillModules.fletching.onUseItem(fletchCtxA);
+  assert(usedA, "matching arrowhead+headless pair should be handled by fletching");
+  assert(startedPayloads.some((payload) => payload && payload.recipeId === "fletch_bronze_arrows"), "matching arrow pair should queue bronze arrow fletching recipe");
+
+  const fletchMessagesMismatch = [];
+  const fletchCtxMismatch = makeInventoryContext("bronze_arrowheads", "oak_headless_arrows", { bronze_arrowheads: 1, oak_headless_arrows: 1 }, fletchMessagesMismatch, startedPayloads);
+  const usedMismatch = skillModules.fletching.onUseItem(fletchCtxMismatch);
+  assert(usedMismatch, "mismatched arrowhead+headless pair should still be recognized");
+  assert(fletchMessagesMismatch.some((entry) => entry.message === "These don't match."), "fletching mismatch message should be preserved for non-matching tiers");
+
+  const craftMessagesBlocked = [];
+  const craftingCtxBlocked = makeInventoryContext("bronze_axe_head", "logs", { bronze_axe_head: 1, logs: 1 }, craftMessagesBlocked, startedPayloads);
+  const blockedHandled = skillModules.crafting.onUseItem(craftingCtxBlocked);
+  assert(blockedHandled, "crafting should handle blocked metal-part+log shortcut");
+  assert(!craftingCtxBlocked._counts.bronze_axe, "crafting should not produce output from metal-part+log shortcut");
+  assert(craftMessagesBlocked.some((entry) => entry.message === "You need a fletched handle for that."), "crafting should explain handle dependency when logs are used");
+
+  const craftMessagesSuccess = [];
+  const craftingCtxSuccess = makeInventoryContext("bronze_axe_head", "wooden_handle", { bronze_axe_head: 1, wooden_handle: 1 }, craftMessagesSuccess, startedPayloads);
+  const successHandled = skillModules.crafting.onUseItem(craftingCtxSuccess);
+  assert(successHandled, "crafting should handle valid metal-part+handle assembly");
+  assert((craftingCtxSuccess._counts.bronze_axe || 0) === 1, "crafting should produce assembled bronze axe");
+  assert((craftingCtxSuccess._counts.bronze_axe_head || 0) === 0, "crafting should consume bronze axe head");
+  assert((craftingCtxSuccess._counts.wooden_handle || 0) === 0, "crafting should consume wooden handle");
+
+  window.SkillRuntime = originalSkillRuntime;
 
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
@@ -229,7 +366,11 @@ function run() {
   assert(coreScript.includes("borin_ironvein"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("thrain_deepforge"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("elira_gemhand"), "core QA smithing merchant alias missing");
-  assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing merchant list entries");
+  assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing merchant list entries");
+  const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
+  assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
+  const indexHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  assert(indexHtml.includes("./src/js/skills/crafting/index.js"), "index missing crafting runtime script include");
   const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
   assert(skillRuntimeScript.includes("requireAreaAccess"), "skill runtime area-access hook missing");
   assert(skillRuntimeScript.includes("getTreeNodeAt"), "skill runtime tree-node hook missing");
@@ -293,18 +434,3 @@ try {
   console.error(error.message);
   process.exit(1);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

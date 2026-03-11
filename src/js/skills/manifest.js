@@ -14,9 +14,6 @@
             COOKING: 'cooking',
             FLETCHING: 'fletching'
         },
-        orderedSkillIds: ['mining', 'woodcutting', 'fishing', 'firemaking', 'cooking', 'fletching', 'runecrafting', 'smithing']
+        orderedSkillIds: ['mining', 'woodcutting', 'fishing', 'firemaking', 'cooking', 'crafting', 'fletching', 'runecrafting', 'smithing']
     };
 })();
-
-
-

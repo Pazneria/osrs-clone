@@ -332,11 +332,19 @@
             const defaults = economy && typeof economy.getMerchantDefaultSellItemIds === 'function'
                 ? economy.getMerchantDefaultSellItemIds(merchantId)
                 : [];
+            const hasExplicitMerchantConfig = economy && typeof economy.hasMerchantConfig === 'function'
+                ? economy.hasMerchantConfig(merchantId)
+                : false;
 
             if (defaults.length > 0) {
                 for (let i = 0; i < defaults.length; i++) {
                     seedShopInventorySlot(inventoryArray, defaults[i], 20, true);
                 }
+                return inventoryArray;
+            }
+
+            // Keep explicitly configured merchants with empty default stock (buys-only) truly empty.
+            if (hasExplicitMerchantConfig) {
                 return inventoryArray;
             }
 
