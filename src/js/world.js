@@ -1573,6 +1573,9 @@
         }
 
         function oreTypeForTile(x, y, z = 0) {
+            const overrideKey = rockNodeKey(x, y, z);
+            const overrideOreType = rockOreOverrides && rockOreOverrides[overrideKey];
+            if (overrideOreType) return overrideOreType;
             if (isRuneEssenceRockCoordinate(x, y, z)) return 'rune_essence';
             const hash = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
             if (isGemHotspotCoordinate(x, y, z)) {
@@ -1691,6 +1694,7 @@
         }
         function initLogicalMap() {
             rockNodes = {};
+            rockOreOverrides = {};
             treeNodes = {};
             // Re-initialize as 3D Arrays! [z][y][x]
             logicalMap = Array(PLANES).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0)));
@@ -2152,6 +2156,15 @@
                 targetRotation: 0 
             });
 
+            // Replace broad random interior rock spread with structured mining training zones.
+            for (let y = 3; y < MAP_SIZE - 3; y++) {
+                for (let x = 3; x < MAP_SIZE - 3; x++) {
+                    if (logicalMap[0][y][x] !== 2) continue;
+                    logicalMap[0][y][x] = 0;
+                    heightMap[0][y][x] = Math.max(0, heightMap[0][y][x]);
+                }
+            }
+
             const isWorldFeatureSpawnTile = (x, y) => {
                 if (x <= 2 || y <= 2 || x >= MAP_SIZE - 3 || y >= MAP_SIZE - 3) return false;
                 if (inTownCore(x, y)) return false;
@@ -2177,20 +2190,225 @@
             randomizeArrayInPlace(allFeatureCandidates);
             const deterministicFeatureCandidates = allFeatureCandidates.slice();
 
-            // Randomize rune essence rocks around the world (no fixed castle cluster).
-            const runeEssenceTargetCount = 8;
+            // Place deterministic mining training routes across progression bands.
+            const miningZoneSpecs = [
+                {
+                    zoneId: 'starter_mine',
+                    label: 'Starter Mine',
+                    centerX: 236,
+                    centerY: 248,
+                    minRadius: 8,
+                    maxRadius: 42,
+                    radiusStep: 6,
+                    targetCount: 30,
+                    minSpacing: 2.0,
+                    oreWeights: [
+                        { oreType: 'clay', weight: 3 },
+                        { oreType: 'copper', weight: 4 },
+                        { oreType: 'tin', weight: 4 }
+                    ]
+                },
+                {
+                    zoneId: 'iron_mine',
+                    label: 'Early Iron Mine',
+                    centerX: 286,
+                    centerY: 248,
+                    minRadius: 8,
+                    maxRadius: 46,
+                    radiusStep: 6,
+                    targetCount: 24,
+                    minSpacing: 2.1,
+                    oreWeights: [
+                        { oreType: 'iron', weight: 10 },
+                        { oreType: 'copper', weight: 1 },
+                        { oreType: 'tin', weight: 1 }
+                    ]
+                },
+                {
+                    zoneId: 'coal_mine',
+                    label: 'Deep Coal Mine',
+                    centerX: 324,
+                    centerY: 286,
+                    minRadius: 10,
+                    maxRadius: 48,
+                    radiusStep: 6,
+                    targetCount: 20,
+                    minSpacing: 2.2,
+                    oreWeights: [
+                        { oreType: 'coal', weight: 8 },
+                        { oreType: 'iron', weight: 2 }
+                    ]
+                },
+                {
+                    zoneId: 'precious_mine',
+                    label: 'Silver and Gold Mine',
+                    centerX: 344,
+                    centerY: 334,
+                    minRadius: 10,
+                    maxRadius: 52,
+                    radiusStep: 6,
+                    targetCount: 16,
+                    minSpacing: 2.4,
+                    oreWeights: [
+                        { oreType: 'silver', weight: 5 },
+                        { oreType: 'gold', weight: 4 }
+                    ]
+                },
+                {
+                    zoneId: 'gem_mine',
+                    label: 'Gem Mine',
+                    centerX: 204,
+                    centerY: 364,
+                    minRadius: 8,
+                    maxRadius: 46,
+                    radiusStep: 6,
+                    targetCount: 14,
+                    minSpacing: 2.5,
+                    oreWeights: [
+                        { oreType: 'sapphire', weight: 6 },
+                        { oreType: 'emerald', weight: 4 }
+                    ]
+                },
+                {
+                    zoneId: 'rune_essence_mine',
+                    label: 'Rune Essence Mine',
+                    centerX: 74,
+                    centerY: 74,
+                    minRadius: 10,
+                    maxRadius: 50,
+                    radiusStep: 6,
+                    targetCount: 10,
+                    minSpacing: 2.6,
+                    oreWeights: [
+                        { oreType: 'rune_essence', weight: 1 }
+                    ]
+                }
+            ];
+            const miningTrainingLocations = [];
+            const placedMiningRocks = [];
             RUNE_ESSENCE_ROCKS = [];
-            let candidateIdx = 0;
-            while (RUNE_ESSENCE_ROCKS.length < runeEssenceTargetCount && candidateIdx < allFeatureCandidates.length) {
-                const candidate = allFeatureCandidates[candidateIdx++];
-                if (!candidate) continue;
 
-                const tooCloseToExisting = RUNE_ESSENCE_ROCKS.some((rock) => Math.hypot(rock.x - candidate.x, rock.y - candidate.y) < 24);
-                if (tooCloseToExisting) continue;
-
-                RUNE_ESSENCE_ROCKS.push(candidate);
-                logicalMap[candidate.z][candidate.y][candidate.x] = 2;
+            function isValidMiningCandidate(x, y, z = 0) {
+                if (x <= 2 || y <= 2 || x >= MAP_SIZE - 3 || y >= MAP_SIZE - 3) return false;
+                if (inTownCore(x, y)) return false;
+                const row = logicalMap[z] && logicalMap[z][y];
+                if (!row) return false;
+                const tile = row[x];
+                return tile === 0 || tile === 1 || tile === 2 || tile === 4;
             }
+
+            function isFarEnoughFromPlacedMiningRocks(candidate, minSpacing) {
+                for (let i = 0; i < placedMiningRocks.length; i++) {
+                    const placed = placedMiningRocks[i];
+                    if (!placed) continue;
+                    if (Math.hypot(placed.x - candidate.x, placed.y - candidate.y) < minSpacing) return false;
+                }
+                return true;
+            }
+
+            function getWeightedOreType(weights, x, y) {
+                if (!Array.isArray(weights) || weights.length === 0) return null;
+                let totalWeight = 0;
+                for (let i = 0; i < weights.length; i++) {
+                    const row = weights[i];
+                    if (!row || !row.oreType || !Number.isFinite(row.weight) || row.weight <= 0) continue;
+                    totalWeight += Math.floor(row.weight);
+                }
+                if (totalWeight <= 0) return null;
+
+                const hash = ((x * 73856093) ^ (y * 19349663) ^ (totalWeight * 83492791)) >>> 0;
+                let roll = hash % totalWeight;
+                for (let i = 0; i < weights.length; i++) {
+                    const row = weights[i];
+                    if (!row || !row.oreType || !Number.isFinite(row.weight) || row.weight <= 0) continue;
+                    roll -= Math.floor(row.weight);
+                    if (roll < 0) return row.oreType;
+                }
+                return weights[weights.length - 1].oreType;
+            }
+
+            function setMiningRockAt(x, y, z, oreType) {
+                if (!oreType) return false;
+                logicalMap[z][y][x] = 2;
+                const key = rockNodeKey(x, y, z);
+                rockOreOverrides[key] = oreType;
+                if (oreType === 'rune_essence') {
+                    RUNE_ESSENCE_ROCKS.push({ x, y, z });
+                }
+                return true;
+            }
+
+            function collectZoneCandidates(zoneSpec, radius) {
+                const candidates = [];
+                const minX = Math.max(3, Math.floor(zoneSpec.centerX - radius));
+                const maxX = Math.min(MAP_SIZE - 4, Math.ceil(zoneSpec.centerX + radius));
+                const minY = Math.max(3, Math.floor(zoneSpec.centerY - radius));
+                const maxY = Math.min(MAP_SIZE - 4, Math.ceil(zoneSpec.centerY + radius));
+
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        const dist = Math.hypot(x - zoneSpec.centerX, y - zoneSpec.centerY);
+                        if (dist > radius) continue;
+                        if (!isValidMiningCandidate(x, y, 0)) continue;
+                        candidates.push({ x, y, z: 0, dist });
+                    }
+                }
+
+                candidates.sort((a, b) => {
+                    if (a.dist !== b.dist) return a.dist - b.dist;
+                    if (a.y !== b.y) return a.y - b.y;
+                    return a.x - b.x;
+                });
+                return candidates;
+            }
+
+            function placeMiningZone(zoneSpec) {
+                if (!zoneSpec) return;
+                const targetCount = Number.isFinite(zoneSpec.targetCount) ? Math.max(1, Math.floor(zoneSpec.targetCount)) : 1;
+                const minSpacing = Number.isFinite(zoneSpec.minSpacing) ? Math.max(1.6, zoneSpec.minSpacing) : 2.0;
+                const radiusStep = Number.isFinite(zoneSpec.radiusStep) ? Math.max(2, Math.floor(zoneSpec.radiusStep)) : 6;
+                let placedCount = 0;
+                const zonePlacements = [];
+
+                for (let radius = zoneSpec.minRadius; radius <= zoneSpec.maxRadius && placedCount < targetCount; radius += radiusStep) {
+                    const candidates = collectZoneCandidates(zoneSpec, radius);
+                    for (let i = 0; i < candidates.length && placedCount < targetCount; i++) {
+                        const candidate = candidates[i];
+                        const key = rockNodeKey(candidate.x, candidate.y, candidate.z);
+                        if (rockOreOverrides[key]) continue;
+                        if (!isFarEnoughFromPlacedMiningRocks(candidate, minSpacing)) continue;
+
+                        const oreType = getWeightedOreType(zoneSpec.oreWeights, candidate.x, candidate.y);
+                        if (!oreType) continue;
+                        if (!setMiningRockAt(candidate.x, candidate.y, candidate.z, oreType)) continue;
+
+                        placedMiningRocks.push({ x: candidate.x, y: candidate.y, z: candidate.z });
+                        zonePlacements.push({ x: candidate.x, y: candidate.y, z: candidate.z });
+                        placedCount++;
+                    }
+                }
+
+                if (zonePlacements.length > 0) {
+                    const anchor = zonePlacements[Math.floor(zonePlacements.length / 2)];
+                    miningTrainingLocations.push({
+                        zoneId: zoneSpec.zoneId,
+                        label: zoneSpec.label,
+                        x: anchor.x,
+                        y: anchor.y,
+                        z: anchor.z,
+                        count: zonePlacements.length
+                    });
+                }
+            }
+
+            for (let i = 0; i < miningZoneSpecs.length; i++) {
+                placeMiningZone(miningZoneSpecs[i]);
+            }
+
+            rebuildRockNodes();
+            window.getMiningTrainingLocations = function getMiningTrainingLocations() {
+                return miningTrainingLocations.slice();
+            };
 
             // Place elemental altars in deterministic progression bands, anchored around the castle route.
             const runecraftingAltarOrder = ['Ember Altar', 'Water Altar', 'Earth Altar', 'Air Altar'];

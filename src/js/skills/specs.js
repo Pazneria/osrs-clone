@@ -1034,15 +1034,25 @@
                 primaryResource: 'bronze_bar',
                 valueTable: {
                     hammer: { buy: 8, sell: 2 },
+                    bronze_pickaxe: { buy: 40, sell: 10 },
+                    iron_pickaxe: { buy: 120, sell: 35 },
+                    steel_pickaxe: { buy: 350, sell: 110 },
+                    mithril_pickaxe: { buy: 900, sell: 300 },
+                    adamant_pickaxe: { buy: 2200, sell: 750 },
+                    rune_pickaxe: { buy: null, sell: 2500 },
                     copper_ore: { buy: 8, sell: 3 },
                     tin_ore: { buy: 8, sell: 3 },
                     iron_ore: { buy: 18, sell: 7 },
                     coal: { buy: 30, sell: 12 },
-                    mithril_ore: { buy: 120, sell: 48 },
+                    mithril_ore: { buy: 120, sell: 60 },
                     silver_ore: { buy: 45, sell: 18 },
-                    adamant_ore: { buy: 300, sell: 120 },
+                    uncut_sapphire: { buy: 50, sell: 16 },
                     gold_ore: { buy: 70, sell: 28 },
-                    rune_ore: { buy: 1200, sell: 480 },
+                    uncut_emerald: { buy: 90, sell: 30 },
+                    adamant_ore: { buy: 300, sell: 150 },
+                    uncut_ruby: { buy: 20, sell: 6 },
+                    rune_ore: { buy: 1200, sell: 600 },
+                    uncut_diamond: { buy: 150, sell: 50 },
                     bronze_bar: { buy: null, sell: 8 },
                     iron_bar: { buy: null, sell: 16 },
                     steel_bar: { buy: null, sell: 32 },
@@ -1058,18 +1068,18 @@
                 merchantTable: {
                     borin_ironvein: {
                         strictBuys: true,
-                        buys: ['hammer', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore', 'bronze_bar', 'iron_bar', 'steel_bar', 'mithril_bar'],
-                        sells: ['hammer', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore']
+                        buys: ['hammer', 'bronze_pickaxe', 'iron_pickaxe', 'steel_pickaxe', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore', 'bronze_bar', 'iron_bar', 'steel_bar', 'mithril_bar'],
+                        sells: ['hammer', 'bronze_pickaxe', 'iron_pickaxe', 'steel_pickaxe', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore']
                     },
                     thrain_deepforge: {
                         strictBuys: true,
-                        buys: ['adamant_ore', 'rune_ore', 'adamant_bar', 'rune_bar'],
-                        sells: ['adamant_ore', 'rune_ore']
+                        buys: ['mithril_pickaxe', 'adamant_pickaxe', 'adamant_ore', 'rune_ore', 'adamant_bar', 'rune_bar'],
+                        sells: ['mithril_pickaxe', 'adamant_pickaxe', 'adamant_ore', 'rune_ore']
                     },
                     elira_gemhand: {
                         strictBuys: true,
-                        buys: ['silver_ore', 'gold_ore', 'silver_bar', 'gold_bar', 'silver_ring', 'silver_amulet', 'silver_tiara', 'gold_ring', 'gold_amulet', 'gold_tiara'],
-                        sells: ['silver_ore', 'gold_ore']
+                        buys: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond', 'silver_bar', 'gold_bar', 'silver_ring', 'silver_amulet', 'silver_tiara', 'gold_ring', 'gold_amulet', 'gold_tiara'],
+                        sells: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond']
                     }
                 },
                 generalStoreFallback: {
@@ -1273,3 +1283,4 @@
         skills: SKILL_SPECS
     };
 })();
+

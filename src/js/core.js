@@ -83,6 +83,7 @@
 
         let respawningTrees = []; 
         let rockNodes = {};
+        let rockOreOverrides = {};
         let treeNodes = {};
         let isDraggingCamera = false;
         let previousMousePosition = { x: 0, y: 0 };
@@ -1284,3 +1285,6 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
+

@@ -7,6 +7,9 @@
       "borin_ironvein": {
         "buys": [
           "hammer",
+          "bronze_pickaxe",
+          "iron_pickaxe",
+          "steel_pickaxe",
           "copper_ore",
           "tin_ore",
           "iron_ore",
@@ -19,6 +22,9 @@
         ],
         "sells": [
           "hammer",
+          "bronze_pickaxe",
+          "iron_pickaxe",
+          "steel_pickaxe",
           "copper_ore",
           "tin_ore",
           "iron_ore",
@@ -31,6 +37,10 @@
         "buys": [
           "silver_ore",
           "gold_ore",
+          "uncut_sapphire",
+          "uncut_emerald",
+          "uncut_ruby",
+          "uncut_diamond",
           "silver_bar",
           "gold_bar",
           "silver_ring",
@@ -42,18 +52,26 @@
         ],
         "sells": [
           "silver_ore",
-          "gold_ore"
+          "gold_ore",
+          "uncut_sapphire",
+          "uncut_emerald",
+          "uncut_ruby",
+          "uncut_diamond"
         ],
         "strictBuys": true
       },
       "thrain_deepforge": {
         "buys": [
+          "mithril_pickaxe",
+          "adamant_pickaxe",
           "adamant_ore",
           "rune_ore",
           "adamant_bar",
           "rune_bar"
         ],
         "sells": [
+          "mithril_pickaxe",
+          "adamant_pickaxe",
           "adamant_ore",
           "rune_ore"
         ],
@@ -68,7 +86,11 @@
       },
       "adamant_ore": {
         "buy": 300,
-        "sell": 120
+        "sell": 150
+      },
+      "adamant_pickaxe": {
+        "buy": 2200,
+        "sell": 750
       },
       "amulet_mould": {
         "buy": null,
@@ -77,6 +99,10 @@
       "bronze_bar": {
         "buy": null,
         "sell": 8
+      },
+      "bronze_pickaxe": {
+        "buy": 40,
+        "sell": 10
       },
       "coal": {
         "buy": 30,
@@ -106,13 +132,21 @@
         "buy": 18,
         "sell": 7
       },
+      "iron_pickaxe": {
+        "buy": 120,
+        "sell": 35
+      },
       "mithril_bar": {
         "buy": null,
         "sell": 64
       },
       "mithril_ore": {
         "buy": 120,
-        "sell": 48
+        "sell": 60
+      },
+      "mithril_pickaxe": {
+        "buy": 900,
+        "sell": 300
       },
       "ring_mould": {
         "buy": null,
@@ -124,7 +158,11 @@
       },
       "rune_ore": {
         "buy": 1200,
-        "sell": 480
+        "sell": 600
+      },
+      "rune_pickaxe": {
+        "buy": null,
+        "sell": 2500
       },
       "silver_bar": {
         "buy": null,
@@ -138,6 +176,10 @@
         "buy": null,
         "sell": 32
       },
+      "steel_pickaxe": {
+        "buy": 350,
+        "sell": 110
+      },
       "tiara_mould": {
         "buy": null,
         "sell": null
@@ -145,6 +187,22 @@
       "tin_ore": {
         "buy": 8,
         "sell": 3
+      },
+      "uncut_diamond": {
+        "buy": 150,
+        "sell": 50
+      },
+      "uncut_emerald": {
+        "buy": 90,
+        "sell": 30
+      },
+      "uncut_ruby": {
+        "buy": 20,
+        "sell": 6
+      },
+      "uncut_sapphire": {
+        "buy": 50,
+        "sell": 16
       }
     }
   },
