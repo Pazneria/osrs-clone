@@ -2,14 +2,12 @@
 
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
-| Mining | In Progress | Gem Mine quest gate and Elira integration | Thrain late-ore off-band progression integration | Quest content |
-| Woodcutting | In Progress | Economy alignment + world placement | Cross-skill demand balancing | None |
-| Fishing | In Progress | Merchant unlock economy + value alignment | Training placement and quest/reward integration | None |
-| Firemaking | In Progress | Ashes behavior + economy alignment | Demand balancing and interaction polish | None |
-| Cooking | In Progress | Eating runtime + economy alignment | Location pass and cross-skill stock flow | None |
-| Runecrafting | In Progress | Merchant runtime alignment | Route placement and cross-skill loop integration | Quest/dependency design |
-| Smithing | In Progress | Runtime smithing loop + full 1-40 recipe/output wiring | Cross-skill assembly and jewelry-base integration | Merchant/value alignment and quest gating |
-| Crafting | In Progress | Jewelry/staff integration and upstream input wiring | Mould unlock and jewelry-family restriction wiring | None |
-| Fletching | Planned | Recipe data model + runtime queue | UI interaction and cross-skill dependency integration | Core implementation not started |
-
-
+| Mining | In Progress | Thrain late-ore off-band progression integration | Yield/xp/gold-per-tick balance pass | Quest content |
+| Woodcutting | In Progress | Cross-skill log-demand balancing + visual silhouette polish | Logs/xp/gold-per-tick balance pass | None |
+| Fishing | In Progress | Teacher quest + rune-harpoon reward/replacement flow | Method/level economic balance pass | Quest content |
+| Firemaking | In Progress | Cross-skill log-demand balancing with woodcutting/cooking | Failure/interruption polish + expansion | None |
+| Cooking | In Progress | UX polish for interruption/switching and animation consistency | 1-40 food-band economy/XP balance | None |
+| Runecrafting | In Progress | Cross-skill magic demand + mining essence loop integration | Buy/sell parity and route pacing balance | Quest/dependency design |
+| Smithing | In Progress | Merchant/value alignment follow-up after assembly+mould integration | Rune-material quest gating + advanced forge progression | Quest gating |
+| Crafting | In Progress | Merchant/value alignment follow-up after jewelry+mould integration | Elira mould-making quest flow integration | Quest gating |
+| Fletching | In Progress | XP/value throughput balance across logs/arrows/bows | World/training-flow polish + late-tier gating | None |

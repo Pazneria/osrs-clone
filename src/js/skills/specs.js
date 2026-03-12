@@ -488,24 +488,24 @@
                     { recipeId: 'craft_air_staff', requiredLevel: 40, staffItemId: 'plain_staff_yew', gemItemId: 'cut_diamond', outputItemId: 'air_staff', xp: 22 }
                 ];
                 const jewelryAttachDefs = [
-                    { recipeId: 'craft_ruby_silver_ring', requiredLevel: 10, baseItemId: 'silver_ring', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_ring', xp: 4 },
-                    { recipeId: 'craft_ruby_silver_amulet', requiredLevel: 10, baseItemId: 'silver_amulet', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_amulet', xp: 4 },
-                    { recipeId: 'craft_ruby_silver_tiara', requiredLevel: 10, baseItemId: 'silver_tiara', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_tiara', xp: 4 },
-                    { recipeId: 'craft_sapphire_silver_ring', requiredLevel: 20, baseItemId: 'silver_ring', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_ring', xp: 8 },
-                    { recipeId: 'craft_sapphire_silver_amulet', requiredLevel: 20, baseItemId: 'silver_amulet', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_amulet', xp: 8 },
-                    { recipeId: 'craft_sapphire_silver_tiara', requiredLevel: 20, baseItemId: 'silver_tiara', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_tiara', xp: 8 },
-                    { recipeId: 'craft_ruby_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_ring', xp: 4 },
-                    { recipeId: 'craft_ruby_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_amulet', xp: 4 },
-                    { recipeId: 'craft_ruby_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_tiara', xp: 4 },
-                    { recipeId: 'craft_sapphire_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_ring', xp: 8 },
-                    { recipeId: 'craft_sapphire_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_amulet', xp: 8 },
-                    { recipeId: 'craft_sapphire_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_tiara', xp: 8 },
-                    { recipeId: 'craft_emerald_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_ring', xp: 14 },
-                    { recipeId: 'craft_emerald_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_amulet', xp: 14 },
-                    { recipeId: 'craft_emerald_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_tiara', xp: 14 },
-                    { recipeId: 'craft_diamond_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_ring', xp: 22 },
-                    { recipeId: 'craft_diamond_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_amulet', xp: 22 },
-                    { recipeId: 'craft_diamond_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_tiara', xp: 22 }
+                    { recipeId: 'craft_ruby_silver_ring', requiredLevel: 10, baseItemId: 'silver_ring', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_ring', xp: 4, mouldUnlockFlag: 'ringMouldUnlocked' },
+                    { recipeId: 'craft_ruby_silver_amulet', requiredLevel: 10, baseItemId: 'silver_amulet', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_amulet', xp: 4, mouldUnlockFlag: 'amuletMouldUnlocked' },
+                    { recipeId: 'craft_ruby_silver_tiara', requiredLevel: 10, baseItemId: 'silver_tiara', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_tiara', xp: 4, mouldUnlockFlag: 'tiaraMouldUnlocked' },
+                    { recipeId: 'craft_sapphire_silver_ring', requiredLevel: 20, baseItemId: 'silver_ring', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_ring', xp: 8, mouldUnlockFlag: 'ringMouldUnlocked' },
+                    { recipeId: 'craft_sapphire_silver_amulet', requiredLevel: 20, baseItemId: 'silver_amulet', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_amulet', xp: 8, mouldUnlockFlag: 'amuletMouldUnlocked' },
+                    { recipeId: 'craft_sapphire_silver_tiara', requiredLevel: 20, baseItemId: 'silver_tiara', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_tiara', xp: 8, mouldUnlockFlag: 'tiaraMouldUnlocked' },
+                    { recipeId: 'craft_ruby_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_ring', xp: 4, mouldUnlockFlag: 'ringMouldUnlocked' },
+                    { recipeId: 'craft_ruby_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_amulet', xp: 4, mouldUnlockFlag: 'amuletMouldUnlocked' },
+                    { recipeId: 'craft_ruby_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_tiara', xp: 4, mouldUnlockFlag: 'tiaraMouldUnlocked' },
+                    { recipeId: 'craft_sapphire_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_ring', xp: 8, mouldUnlockFlag: 'ringMouldUnlocked' },
+                    { recipeId: 'craft_sapphire_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_amulet', xp: 8, mouldUnlockFlag: 'amuletMouldUnlocked' },
+                    { recipeId: 'craft_sapphire_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_tiara', xp: 8, mouldUnlockFlag: 'tiaraMouldUnlocked' },
+                    { recipeId: 'craft_emerald_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_ring', xp: 14, mouldUnlockFlag: 'ringMouldUnlocked' },
+                    { recipeId: 'craft_emerald_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_amulet', xp: 14, mouldUnlockFlag: 'amuletMouldUnlocked' },
+                    { recipeId: 'craft_emerald_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_tiara', xp: 14, mouldUnlockFlag: 'tiaraMouldUnlocked' },
+                    { recipeId: 'craft_diamond_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_ring', xp: 22, mouldUnlockFlag: 'ringMouldUnlocked' },
+                    { recipeId: 'craft_diamond_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_amulet', xp: 22, mouldUnlockFlag: 'amuletMouldUnlocked' },
+                    { recipeId: 'craft_diamond_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_tiara', xp: 22, mouldUnlockFlag: 'tiaraMouldUnlocked' }
                 ];
 
                 for (let i = 0; i < strappedHandleDefs.length; i++) {
@@ -585,6 +585,7 @@
                         output: { itemId: def.outputItemId, amount: 1 },
                         xpPerAction: def.xp,
                         actionTicks: 3,
+                        requiredUnlockFlag: def.mouldUnlockFlag,
                         stationType: 'INVENTORY'
                     };
                 }
@@ -1019,12 +1020,12 @@
                 }
 
                 const jewelryDefs = [
-                    { id: 'silver_ring', level: 10, inputBar: 'silver_bar', mould: 'ring_mould', xp: 14 },
-                    { id: 'silver_tiara', level: 10, inputBar: 'silver_bar', mould: 'tiara_mould', xp: 14 },
-                    { id: 'silver_amulet', level: 10, inputBar: 'silver_bar', mould: 'amulet_mould', xp: 14 },
-                    { id: 'gold_ring', level: 40, inputBar: 'gold_bar', mould: 'ring_mould', xp: 22 },
-                    { id: 'gold_tiara', level: 40, inputBar: 'gold_bar', mould: 'tiara_mould', xp: 22 },
-                    { id: 'gold_amulet', level: 40, inputBar: 'gold_bar', mould: 'amulet_mould', xp: 22 }
+                    { id: 'silver_ring', level: 10, inputBar: 'silver_bar', mould: 'ring_mould', unlockFlag: 'ringMouldUnlocked', xp: 14 },
+                    { id: 'silver_tiara', level: 10, inputBar: 'silver_bar', mould: 'tiara_mould', unlockFlag: 'tiaraMouldUnlocked', xp: 14 },
+                    { id: 'silver_amulet', level: 10, inputBar: 'silver_bar', mould: 'amulet_mould', unlockFlag: 'amuletMouldUnlocked', xp: 14 },
+                    { id: 'gold_ring', level: 40, inputBar: 'gold_bar', mould: 'ring_mould', unlockFlag: 'ringMouldUnlocked', xp: 22 },
+                    { id: 'gold_tiara', level: 40, inputBar: 'gold_bar', mould: 'tiara_mould', unlockFlag: 'tiaraMouldUnlocked', xp: 22 },
+                    { id: 'gold_amulet', level: 40, inputBar: 'gold_bar', mould: 'amulet_mould', unlockFlag: 'amuletMouldUnlocked', xp: 22 }
                 ];
 
                 for (let i = 0; i < jewelryDefs.length; i++) {
@@ -1033,6 +1034,7 @@
                         stationType: 'FURNACE',
                         requiredLevel: def.level,
                         requiredMouldIds: [def.mould],
+                        requiredUnlockFlag: def.unlockFlag,
                         inputs: [{ itemId: def.inputBar, amount: 1 }],
                         output: { itemId: def.id, amount: 1 },
                         xpPerAction: def.xp,
@@ -1090,7 +1092,7 @@
                     },
                     elira_gemhand: {
                         strictBuys: true,
-                        buys: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond', 'silver_bar', 'gold_bar', 'silver_ring', 'silver_amulet', 'silver_tiara', 'gold_ring', 'gold_amulet', 'gold_tiara'],
+                        buys: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond', 'cut_ruby', 'cut_sapphire', 'cut_emerald', 'cut_diamond', 'silver_bar', 'gold_bar', 'silver_ring', 'silver_amulet', 'silver_tiara', 'gold_ring', 'gold_amulet', 'gold_tiara', 'ruby_silver_ring', 'ruby_silver_amulet', 'ruby_silver_tiara', 'sapphire_silver_ring', 'sapphire_silver_amulet', 'sapphire_silver_tiara', 'ruby_gold_ring', 'ruby_gold_amulet', 'ruby_gold_tiara', 'sapphire_gold_ring', 'sapphire_gold_amulet', 'sapphire_gold_tiara', 'emerald_gold_ring', 'emerald_gold_amulet', 'emerald_gold_tiara', 'diamond_gold_ring', 'diamond_gold_amulet', 'diamond_gold_tiara'],
                         sells: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond']
                     }
                 },
@@ -1200,6 +1202,85 @@
                 }
             }
         }
+        const smithingRows = gatherRecipeRows(smithingRecipes);
+        const smithingAssemblyPartOutputs = new Set();
+        const smithingJewelryBaseOutputs = new Set();
+        const mouldUnlockBySuffix = {
+            ring: 'ringMouldUnlocked',
+            amulet: 'amuletMouldUnlocked',
+            tiara: 'tiaraMouldUnlocked'
+        };
+
+        for (let i = 0; i < smithingRows.length; i++) {
+            const row = smithingRows[i];
+            const recipe = row && row.recipe;
+            const recipeId = row && row.recipeId ? row.recipeId : '(unknown)';
+            const outputId = String(recipe && recipe.output && recipe.output.itemId || '');
+            if (!outputId) continue;
+
+            if (/_(sword_blade|axe_head|pickaxe_head)$/.test(outputId)) {
+                smithingAssemblyPartOutputs.add(outputId);
+            }
+
+            if (/^(silver|gold)_(ring|amulet|tiara)$/.test(outputId)) {
+                smithingJewelryBaseOutputs.add(outputId);
+                const requiredMouldIds = Array.isArray(recipe && recipe.requiredMouldIds) ? recipe.requiredMouldIds : [];
+                if (requiredMouldIds.length !== 1) {
+                    errors.push('smithing:' + recipeId + ' jewelry base recipe must define exactly one required mould');
+                }
+
+                const match = outputId.match(/_(ring|amulet|tiara)$/);
+                const suffix = match ? match[1] : '';
+                const expectedMould = suffix ? suffix + '_mould' : '';
+                const expectedUnlock = suffix ? mouldUnlockBySuffix[suffix] : '';
+                if (expectedMould && !requiredMouldIds.includes(expectedMould)) {
+                    errors.push('smithing:' + recipeId + ' jewelry base recipe must require ' + expectedMould);
+                }
+                const requiredUnlockFlag = typeof (recipe && recipe.requiredUnlockFlag) === 'string' ? recipe.requiredUnlockFlag : '';
+                if (!requiredUnlockFlag) {
+                    errors.push('smithing:' + recipeId + ' jewelry base recipe is missing requiredUnlockFlag');
+                } else if (expectedUnlock && requiredUnlockFlag !== expectedUnlock) {
+                    errors.push('smithing:' + recipeId + ' jewelry base recipe should use unlock flag ' + expectedUnlock);
+                }
+            }
+        }
+
+        for (let i = 0; i < craftingRows.length; i++) {
+            const row = craftingRows[i];
+            if (row.recipe.recipeFamily !== 'jewelry_gem_attachment') continue;
+
+            const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+            const baseInput = inputs.find((input) => /^(silver|gold)_(ring|amulet|tiara)$/.test(String(input && input.itemId || '')));
+            const gemInput = inputs.find((input) => /^cut_(ruby|sapphire|emerald|diamond)$/.test(String(input && input.itemId || '')));
+            const baseId = String(baseInput && baseInput.itemId || '');
+            const gemId = String(gemInput && gemInput.itemId || '');
+
+            if (!baseId || !gemId) {
+                errors.push('crafting:' + row.recipeId + ' jewelry attachment must use one jewelry base and one cut gem input');
+                continue;
+            }
+
+            if (!smithingJewelryBaseOutputs.has(baseId)) {
+                errors.push('crafting:' + row.recipeId + ' references non-smithing jewelry base ' + baseId);
+            }
+
+            if (/^silver_/.test(baseId) && !['cut_ruby', 'cut_sapphire'].includes(gemId)) {
+                errors.push('crafting:' + row.recipeId + ' silver jewelry may only attach ruby/sapphire gems');
+            }
+            if (/^gold_/.test(baseId) && !['cut_ruby', 'cut_sapphire', 'cut_emerald', 'cut_diamond'].includes(gemId)) {
+                errors.push('crafting:' + row.recipeId + ' gold jewelry may only attach ruby/sapphire/emerald/diamond gems');
+            }
+
+            const suffixMatch = baseId.match(/_(ring|amulet|tiara)$/);
+            const suffix = suffixMatch ? suffixMatch[1] : '';
+            const expectedUnlock = suffix ? mouldUnlockBySuffix[suffix] : '';
+            const requiredUnlockFlag = typeof row.recipe.requiredUnlockFlag === 'string' ? row.recipe.requiredUnlockFlag : '';
+            if (!requiredUnlockFlag) {
+                errors.push('crafting:' + row.recipeId + ' jewelry attachment is missing requiredUnlockFlag');
+            } else if (expectedUnlock && requiredUnlockFlag !== expectedUnlock) {
+                errors.push('crafting:' + row.recipeId + ' jewelry attachment should use unlock flag ' + expectedUnlock);
+            }
+        }
         const strappedHandleOutputIds = new Set();
         for (let i = 0; i < craftingRows.length; i++) {
             const row = craftingRows[i];
@@ -1231,6 +1312,7 @@
         }
 
         let craftingAssemblyCount = 0;
+        const assembledSmithingPartInputs = new Set();
         for (let i = 0; i < craftingRows.length; i++) {
             const row = craftingRows[i];
             if (row.recipe.recipeFamily !== 'tool_weapon_assembly') continue;
@@ -1248,6 +1330,17 @@
                 errors.push('crafting:' + row.recipeId + ' references non-crafting strapped handle ' + handleId);
             }
 
+            const partInput = inputs.find((input) => /_(sword_blade|axe_head|pickaxe_head)$/.test(String(input && input.itemId || '')));
+            const partItemId = String(partInput && partInput.itemId || '');
+            if (!partItemId) {
+                errors.push('crafting:' + row.recipeId + ' must include one smithing metal-part input');
+            } else {
+                assembledSmithingPartInputs.add(partItemId);
+                if (!smithingAssemblyPartOutputs.has(partItemId)) {
+                    errors.push('crafting:' + row.recipeId + ' references non-smithing assembly part ' + partItemId);
+                }
+            }
+
             for (let j = 0; j < inputs.length; j++) {
                 const inputId = String(inputs[j] && inputs[j].itemId || '');
                 if (inputId === 'logs' || /_logs$/.test(inputId)) {
@@ -1258,9 +1351,13 @@
         if (craftingAssemblyCount === 0) {
             errors.push('crafting: missing tool/weapon assembly recipes');
         }
+        for (const smithPartId of smithingAssemblyPartOutputs) {
+            if (!assembledSmithingPartInputs.has(smithPartId)) {
+                errors.push('crafting: missing assembly path for smithing part ' + smithPartId);
+            }
+        }
 
         const smithingArrowheadOutputs = new Set();
-        const smithingRows = gatherRecipeRows(smithingRecipes);
         for (let i = 0; i < smithingRows.length; i++) {
             const outputId = smithingRows[i].recipe.output && smithingRows[i].recipe.output.itemId;
             if (/_arrowheads$/.test(String(outputId || ''))) {
@@ -1295,4 +1392,9 @@
         skills: SKILL_SPECS
     };
 })();
+
+
+
+
+
 

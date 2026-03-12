@@ -77,6 +77,13 @@
         return true;
     }
 
+
+    function hasUnlockRequirement(context, recipe) {
+        const unlockFlag = typeof (recipe && recipe.requiredUnlockFlag) === 'string' ? recipe.requiredUnlockFlag : '';
+        if (!unlockFlag) return true;
+        if (typeof context.hasUnlockFlag !== 'function') return true;
+        return context.hasUnlockFlag(unlockFlag);
+    }
     function restoreMaterials(context, consumed) {
         if (!Array.isArray(consumed) || typeof context.giveItemById !== 'function') return;
         for (let i = 0; i < consumed.length; i++) {
@@ -365,6 +372,11 @@
             return false;
         }
 
+        if (!hasUnlockRequirement(context, recipe)) {
+            context.addChatMessage('You have not unlocked that mould yet.', 'warn');
+            return false;
+        }
+
         if (!hasMaterials(context, recipe)) {
             context.addChatMessage('You do not have the required materials.', 'warn');
             return false;
@@ -394,6 +406,11 @@
             return false;
         }
 
+        if (!hasUnlockRequirement(context, recipe)) {
+            context.addChatMessage('You have not unlocked that mould yet.', 'warn');
+            return false;
+        }
+
         if (!hasMaterials(context, recipe)) {
             context.addChatMessage('You do not have the required materials.', 'warn');
             return false;
@@ -418,6 +435,10 @@
 
         if (!hasToolRequirements(context, recipe)) {
             return { ok: false, reasonCode: 'MISSING_TOOL', message: 'You need the required crafting tool.' };
+        }
+
+        if (!hasUnlockRequirement(context, recipe)) {
+            return { ok: false, reasonCode: 'MISSING_UNLOCK', message: 'You have not unlocked that mould yet.' };
         }
 
         if (!hasMaterials(context, recipe)) {
@@ -634,3 +655,5 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = craftingModule;
 })();
+
+

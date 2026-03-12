@@ -8,15 +8,15 @@
 - [x] SMITHING-004: Data model pass for smelting, forging, and jewelry-base recipes (inputs, outputs, levels, XP, station, tool/mould requirements).
 - [x] SMITHING-005: Runtime smithing action loop for queued 3-tick station actions with requirement re-validation each cycle.
 - [x] SMITHING-006: Core output wiring for bars, metal equipment, and smithing-made component items used by crafting/fletching.
+- [x] SMITHING-007: Cross-skill integration pass for held-item assembly chain (smithing parts + fletching handles + crafting final assembly).
+- [x] SMITHING-008: Jewelry-base production integration with crafting-owned mould unlock progression and downstream gem-attachment flow.
 
 ## Now
-
-## Next
-- [ ] SMITHING-007: Cross-skill integration pass for held-item assembly chain (smithing parts + fletching handles + crafting final assembly).
-- [ ] SMITHING-008: Jewelry-base production integration with crafting-owned mould unlock progression and downstream gem-attachment flow.
 - [ ] SMITHING-009: Merchant stock/value alignment pass for Borin, Thrain, Elira, and general-store fallback rules.
 
-## Later
+## Next
 - [ ] SMITHING-010: Quest-gate integration for rune-material access and advanced-forge progression paths.
+
+## Later
 - [ ] SMITHING-011: Advanced station UX pass for quantity selection, queue interruption rules, and failure-state messaging.
 - [ ] SMITHING-012: Balance and polish pass using output-per-tick, XP-per-tick, and tier-economy target tuning.

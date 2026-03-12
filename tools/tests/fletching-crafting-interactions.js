@@ -187,6 +187,9 @@ function createSkillContext(options = {}) {
       sourceItemId: options.sourceItemId || null,
       targetItemId: options.targetItemId || null
     },
+    targetX: Number.isFinite(options.targetX) ? options.targetX : (Number.isFinite(options.x) ? options.x : 0),
+    targetY: Number.isFinite(options.targetY) ? options.targetY : (Number.isFinite(options.y) ? options.y : 0),
+    targetZ: Number.isFinite(options.targetZ) ? options.targetZ : (Number.isFinite(options.z) ? options.z : 0),
     recipeId: options.recipeId || null,
     quantityMode: options.quantityMode || null,
     quantityCount: Number.isFinite(options.quantityCount) ? options.quantityCount : null,
@@ -217,6 +220,10 @@ function createSkillContext(options = {}) {
     canAcceptItemById: (itemId, amount) => canAccept(itemId, amount),
     getItemDataById: (itemId) => (window.ItemCatalog && window.ItemCatalog.ITEM_DEFS ? window.ItemCatalog.ITEM_DEFS[itemId] : null),
     hasItem: (itemId) => (counts[itemId] || 0) > 0,
+    hasUnlockFlag: (flagId) => {
+      const unlockFlags = options.unlockFlags || {};
+      return !!unlockFlags[flagId];
+    },
     requireSkillLevel: (required, meta) => {
       const skillId = meta && meta.skillId ? meta.skillId : "";
       const levels = options.levels || {};
@@ -237,6 +244,9 @@ function createSkillContext(options = {}) {
     stopAction: () => {
       context.stopActionCount += 1;
       context.playerState.action = null;
+    },
+    startSkillingAction: () => {
+      context.playerState.action = context.targetObj === "FURNACE" ? "SKILLING: FURNACE" : (context.targetObj === "ANVIL" ? "SKILLING: ANVIL" : "SKILLING: UNKNOWN");
     },
     promptAmount: () => false,
     _counts: counts,
@@ -268,11 +278,14 @@ function run() {
   global.SkillActionResolution = window.SkillActionResolution;
   loadBrowserScript(root, "src/js/skills/fletching/index.js");
   loadBrowserScript(root, "src/js/skills/crafting/index.js");
+  loadBrowserScript(root, "src/js/skills/smithing/index.js");
 
   const fletching = window.SkillModules && window.SkillModules.fletching;
+  const smithing = window.SkillModules && window.SkillModules.smithing;
   const crafting = window.SkillModules && window.SkillModules.crafting;
   assert(!!fletching, "fletching module missing");
   assert(!!crafting, "crafting module missing");
+  assert(!!smithing, "smithing module missing");
 
   const tests = [];
   function test(name, fn) {
@@ -712,6 +725,156 @@ function run() {
     expectMessage(ctx, "You need the required crafting tool.", "crafting tool disappeared");
   });
 
+  test("Crafting supports full smithing-part assembly matrix across tiers", () => {
+    const tiers = [
+      { tier: "bronze", handle: "wooden_handle_strapped", level: 1 },
+      { tier: "iron", handle: "wooden_handle_strapped", level: 1 },
+      { tier: "steel", handle: "oak_handle_strapped", level: 10 },
+      { tier: "mithril", handle: "willow_handle_strapped", level: 20 },
+      { tier: "adamant", handle: "maple_handle_strapped", level: 30 },
+      { tier: "rune", handle: "yew_handle_strapped", level: 40 }
+    ];
+    const families = [
+      { partSuffix: "sword_blade", outputSuffix: "sword" },
+      { partSuffix: "axe_head", outputSuffix: "axe" },
+      { partSuffix: "pickaxe_head", outputSuffix: "pickaxe" }
+    ];
+
+    for (let i = 0; i < tiers.length; i++) {
+      const tier = tiers[i];
+      for (let j = 0; j < families.length; j++) {
+        const family = families[j];
+        const partId = tier.tier + "_" + family.partSuffix;
+        const outputId = tier.tier + "_" + family.outputSuffix;
+        const ctx = createSkillContext({
+          sourceItemId: partId,
+          targetItemId: tier.handle,
+          counts: { [partId]: 1, [tier.handle]: 1 },
+          levels: { crafting: tier.level }
+        });
+
+        const used = crafting.onUseItem(ctx);
+        assert(used, "expected crafting to handle assembly pair for " + outputId);
+        assert((ctx._counts[outputId] || 0) === 1, "expected assembled output for " + outputId);
+        assert((ctx._counts[partId] || 0) === 0, "expected metal part consumed for " + outputId);
+        assert((ctx._counts[tier.handle] || 0) === 0, "expected strapped handle consumed for " + outputId);
+      }
+    }
+  });
+
+  test("Crafting jewelry attachments enforce family restrictions and mould unlocks", () => {
+    const starts = [];
+    window.SkillRuntime = {
+      tryStartSkillById: (skillId, payload) => {
+        starts.push({ skillId, payload });
+        return true;
+      }
+    };
+
+    const silverAllowed = createSkillContext({
+      sourceItemId: "silver_ring",
+      targetItemId: "cut_sapphire",
+      counts: { silver_ring: 1, cut_sapphire: 1 },
+      unlockFlags: { ringMouldUnlocked: true }
+    });
+    assert(crafting.onUseItem(silverAllowed), "expected silver+sapphire jewelry pair to be handled");
+    assert(starts.some((entry) => entry.payload && entry.payload.recipeId === "craft_sapphire_silver_ring"), "expected sapphire silver ring recipe queue");
+
+    const silverBlockedGem = createSkillContext({
+      sourceItemId: "silver_ring",
+      targetItemId: "cut_emerald",
+      counts: { silver_ring: 1, cut_emerald: 1 },
+      unlockFlags: { ringMouldUnlocked: true }
+    });
+    assert(crafting.onUseItem(silverBlockedGem), "expected silver+emerald pair to be recognized as invalid");
+    expectMessage(silverBlockedGem, "These don't match.", "silver gem family block");
+
+    const goldAllowed = createSkillContext({
+      sourceItemId: "gold_ring",
+      targetItemId: "cut_diamond",
+      counts: { gold_ring: 1, cut_diamond: 1 },
+      unlockFlags: { ringMouldUnlocked: true }
+    });
+    assert(crafting.onUseItem(goldAllowed), "expected gold+diamond jewelry pair to be handled");
+    assert(starts.some((entry) => entry.payload && entry.payload.recipeId === "craft_diamond_gold_ring"), "expected diamond gold ring recipe queue");
+
+    const locked = createSkillContext({
+      sourceItemId: "silver_ring",
+      targetItemId: "cut_ruby",
+      counts: { silver_ring: 1, cut_ruby: 1 },
+      unlockFlags: { ringMouldUnlocked: false }
+    });
+    assert(crafting.onUseItem(locked), "expected locked jewelry pair to be handled by crafting");
+    expectMessage(locked, "You have not unlocked that mould yet.", "jewelry unlock block");
+  });
+
+  test("Smithing jewelry base requires mould unlock flag", () => {
+    const locked = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "forge_silver_ring",
+      counts: { silver_bar: 1, ring_mould: 1 },
+      unlockFlags: { ringMouldUnlocked: false },
+      currentTick: 100,
+      action: null,
+      levels: { smithing: 10 }
+    });
+    assert(!smithing.onStart(locked), "expected smithing jewelry start to fail when mould unlock is missing");
+    expectMessage(locked, "You have not unlocked that mould yet.", "smithing mould unlock");
+  });
+
+  test("Smithing jewelry base crafts when unlock is present", () => {
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "forge_silver_ring",
+      counts: { silver_bar: 1, ring_mould: 1 },
+      unlockFlags: { ringMouldUnlocked: true },
+      currentTick: 200,
+      levels: { smithing: 20 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing jewelry start to succeed");
+    ctx.currentTick = 203;
+    smithing.onTick(ctx);
+    assert((ctx._counts.silver_ring || 0) === 1, "expected forged silver ring output");
+    assert((ctx._counts.silver_bar || 0) === 0, "expected silver bar consumed");
+  });
+
+  test("Smithing restores materials when output grant fails", () => {
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "forge_silver_ring",
+      counts: { silver_bar: 1, ring_mould: 1 },
+      unlockFlags: { ringMouldUnlocked: true },
+      currentTick: 300,
+      levels: { smithing: 20 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0,
+      giveItemById: (itemId, amount, counts) => {
+        if (itemId === "silver_ring") return 0;
+        counts[itemId] = (counts[itemId] || 0) + amount;
+        return amount;
+      }
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing jewelry start before output failure");
+    ctx.currentTick = 303;
+    smithing.onTick(ctx);
+    assert((ctx._counts.silver_ring || 0) === 0, "expected no retained ring output when give fails");
+    assert((ctx._counts.silver_bar || 0) === 1, "expected silver bar restored on failed output grant");
+    assert(ctx.playerState.action === null, "expected smithing action to stop on output failure");
+    expectMessage(ctx, "You have no inventory space for that output.", "smithing rollback");
+  });
+
   test("Crafting returns false for unrelated inventory pairs", () => {
     const ctx = createSkillContext({
       sourceItemId: "logs",
@@ -775,4 +938,7 @@ try {
   console.error(error && error.message ? error.message : error);
   process.exit(1);
 }
+
+
+
 

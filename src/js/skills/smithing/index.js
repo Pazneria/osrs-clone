@@ -35,21 +35,37 @@
         return true;
     }
 
+    function restoreMaterials(context, consumed) {
+        if (!Array.isArray(consumed) || typeof context.giveItemById !== 'function') return;
+        for (let i = 0; i < consumed.length; i++) {
+            const entry = consumed[i];
+            if (!entry || !entry.itemId || !Number.isFinite(entry.amount) || entry.amount <= 0) continue;
+            context.giveItemById(entry.itemId, entry.amount);
+        }
+    }
+
     function removeMaterials(context, recipe) {
         const inputs = Array.isArray(recipe && recipe.inputs) ? recipe.inputs : [];
         for (let i = 0; i < inputs.length; i++) {
             const input = inputs[i];
             const needed = Number.isFinite(input.amount) ? Math.max(1, Math.floor(input.amount)) : 1;
-            if ((context.getInventoryCount(input.itemId) || 0) < needed) return false;
+            if ((context.getInventoryCount(input.itemId) || 0) < needed) return null;
         }
 
+        const consumed = [];
         for (let i = 0; i < inputs.length; i++) {
             const input = inputs[i];
             const needed = Number.isFinite(input.amount) ? Math.max(1, Math.floor(input.amount)) : 1;
             const removed = context.removeItemsById(input.itemId, needed);
-            if (removed < needed) return false;
+            if (removed < needed) {
+                if (removed > 0) consumed.push({ itemId: input.itemId, amount: removed });
+                restoreMaterials(context, consumed);
+                return null;
+            }
+            consumed.push({ itemId: input.itemId, amount: needed });
         }
-        return true;
+
+        return consumed;
     }
 
     function hasToolRequirements(context, recipe) {
@@ -68,6 +84,13 @@
         return true;
     }
 
+
+    function hasUnlockRequirement(context, recipe) {
+        const unlockFlag = typeof (recipe && recipe.requiredUnlockFlag) === 'string' ? recipe.requiredUnlockFlag : '';
+        if (!unlockFlag) return true;
+        if (typeof context.hasUnlockFlag !== 'function') return true;
+        return context.hasUnlockFlag(unlockFlag);
+    }
     function cloneInventorySlots(context) {
         if (!context || typeof context.getInventorySlotsSnapshot !== 'function') return null;
         const slots = context.getInventorySlotsSnapshot();
@@ -160,6 +183,7 @@
             return level >= required
                 && hasToolRequirements(context, recipe)
                 && hasMouldRequirements(context, recipe)
+                && hasUnlockRequirement(context, recipe)
                 && hasMaterials(context, recipe)
                 && hasOutputCapacity(context, recipe);
         });
@@ -188,6 +212,7 @@
             if (!recipe.inputs.some((input) => input && input.itemId === sourceItemId)) return false;
             return hasToolRequirements(context, recipe)
                 && hasMouldRequirements(context, recipe)
+                && hasUnlockRequirement(context, recipe)
                 && hasMaterials(context, recipe)
                 && hasOutputCapacity(context, recipe);
         });
@@ -245,6 +270,7 @@
 
         if (!hasToolRequirements(context, recipe)) issues.push('Missing required tool');
         if (!hasMouldRequirements(context, recipe)) issues.push('Missing required mould');
+        if (!hasUnlockRequirement(context, recipe)) issues.push('Mould not unlocked');
         if (!hasMaterials(context, recipe)) issues.push('Missing materials');
         if (!hasOutputCapacity(context, recipe)) issues.push('No output space');
         return issues;
@@ -562,6 +588,11 @@
             return false;
         }
 
+        if (!hasUnlockRequirement(context, recipe)) {
+            context.addChatMessage('You have not unlocked that mould yet.', 'warn');
+            return false;
+        }
+
         if (!hasMaterials(context, recipe)) {
             context.addChatMessage('You do not have the required materials.', 'warn');
             return false;
@@ -600,6 +631,10 @@
             return { ok: false, reasonCode: 'MISSING_MOULD', message: 'You need the required mould to continue.' };
         }
 
+        if (!hasUnlockRequirement(context, recipe)) {
+            return { ok: false, reasonCode: 'MISSING_UNLOCK', message: 'You have not unlocked that mould yet.' };
+        }
+
         if (!hasMaterials(context, recipe)) {
             return { ok: false, reasonCode: 'INPUT_EMPTY', message: 'You run out of smithing materials.' };
         }
@@ -612,16 +647,24 @@
     }
 
     function craftOne(context, recipe) {
-        if (!removeMaterials(context, recipe)) {
+        const consumed = removeMaterials(context, recipe);
+        if (!consumed) {
             return SkillActionResolution.createActionResolution('stopped', 'INPUT_EMPTY');
         }
 
         const outAmount = Number.isFinite(recipe.output && recipe.output.amount) ? Math.max(1, Math.floor(recipe.output.amount)) : 1;
         const outItemId = recipe.output && recipe.output.itemId ? recipe.output.itemId : null;
-        if (!outItemId) return SkillActionResolution.createActionResolution('stopped', 'OUTPUT_MISSING');
+        if (!outItemId) {
+            restoreMaterials(context, consumed);
+            return SkillActionResolution.createActionResolution('stopped', 'OUTPUT_MISSING');
+        }
 
         const given = context.giveItemById(outItemId, outAmount);
         if (given < outAmount) {
+            if (given > 0 && typeof context.removeItemsById === 'function') {
+                context.removeItemsById(outItemId, given);
+            }
+            restoreMaterials(context, consumed);
             return SkillActionResolution.createActionResolution('stopped', 'INVENTORY_FULL');
         }
 
@@ -630,7 +673,7 @@
         if (typeof context.renderInventory === 'function') context.renderInventory();
 
         return SkillActionResolution.createActionResolution('success', 'SMITH_SUCCESS', {
-            consumed: Array.isArray(recipe.inputs) ? recipe.inputs.map((input) => ({ itemId: input.itemId, amount: input.amount })) : [],
+            consumed,
             produced: [{ itemId: outItemId, amount: outAmount }],
             xpGained: xp
         });
@@ -799,3 +842,10 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = smithingModule;
 })();
+
+
+
+
+
+
+

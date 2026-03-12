@@ -41,6 +41,10 @@
           "uncut_emerald",
           "uncut_ruby",
           "uncut_diamond",
+          "cut_ruby",
+          "cut_sapphire",
+          "cut_emerald",
+          "cut_diamond",
           "silver_bar",
           "gold_bar",
           "silver_ring",
@@ -48,7 +52,25 @@
           "silver_tiara",
           "gold_ring",
           "gold_amulet",
-          "gold_tiara"
+          "gold_tiara",
+          "ruby_silver_ring",
+          "ruby_silver_amulet",
+          "ruby_silver_tiara",
+          "sapphire_silver_ring",
+          "sapphire_silver_amulet",
+          "sapphire_silver_tiara",
+          "ruby_gold_ring",
+          "ruby_gold_amulet",
+          "ruby_gold_tiara",
+          "sapphire_gold_ring",
+          "sapphire_gold_amulet",
+          "sapphire_gold_tiara",
+          "emerald_gold_ring",
+          "emerald_gold_amulet",
+          "emerald_gold_tiara",
+          "diamond_gold_ring",
+          "diamond_gold_amulet",
+          "diamond_gold_tiara"
         ],
         "sells": [
           "silver_ore",
@@ -576,6 +598,7 @@
       "requiredMouldIds": [
         "amulet_mould"
       ],
+      "requiredUnlockFlag": "amuletMouldUnlocked",
       "stationType": "FURNACE",
       "xpPerAction": 22
     },
@@ -595,6 +618,7 @@
       "requiredMouldIds": [
         "ring_mould"
       ],
+      "requiredUnlockFlag": "ringMouldUnlocked",
       "stationType": "FURNACE",
       "xpPerAction": 22
     },
@@ -614,6 +638,7 @@
       "requiredMouldIds": [
         "tiara_mould"
       ],
+      "requiredUnlockFlag": "tiaraMouldUnlocked",
       "stationType": "FURNACE",
       "xpPerAction": 22
     },
@@ -1146,6 +1171,7 @@
       "requiredMouldIds": [
         "amulet_mould"
       ],
+      "requiredUnlockFlag": "amuletMouldUnlocked",
       "stationType": "FURNACE",
       "xpPerAction": 14
     },
@@ -1165,6 +1191,7 @@
       "requiredMouldIds": [
         "ring_mould"
       ],
+      "requiredUnlockFlag": "ringMouldUnlocked",
       "stationType": "FURNACE",
       "xpPerAction": 14
     },
@@ -1184,6 +1211,7 @@
       "requiredMouldIds": [
         "tiara_mould"
       ],
+      "requiredUnlockFlag": "tiaraMouldUnlocked",
       "stationType": "FURNACE",
       "xpPerAction": 14
     },

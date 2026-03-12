@@ -197,6 +197,9 @@ function run() {
   assert(!!smithSpec.recipeSet.forge_bronze_sword_blade, "smithing bronze blade recipe missing");
   assert(!!smithSpec.recipeSet.forge_rune_platebody, "smithing rune platebody recipe missing");
   assert(!!smithSpec.recipeSet.forge_gold_ring, "smithing gold jewelry recipe missing");
+  assert(smithSpec.recipeSet.forge_silver_ring.requiredUnlockFlag === "ringMouldUnlocked", "smithing silver ring unlock flag mismatch");
+  assert(smithSpec.recipeSet.forge_silver_amulet.requiredUnlockFlag === "amuletMouldUnlocked", "smithing silver amulet unlock flag mismatch");
+  assert(smithSpec.recipeSet.forge_silver_tiara.requiredUnlockFlag === "tiaraMouldUnlocked", "smithing silver tiara unlock flag mismatch");
   assert(smithSpec.recipeSet.forge_bronze_sword_blade.stationType === "ANVIL", "smithing forge station mismatch");
   assert(smithSpec.recipeSet.smelt_bronze_bar.stationType === "FURNACE", "smithing smelt station mismatch");
   assert(!!itemDefs.hammer, "item catalog hammer missing");
@@ -559,7 +562,10 @@ function run() {
   assert(coreScript.includes("/qa cookspots"), "core QA cookspots command help missing");
   assert(coreScript.includes("/qa gotocook <camp|river|dock|deep>"), "core QA gotocook command help missing");
   assert(coreScript.includes("gemMineUnlocked: false"), "core player unlock flags missing gem mine default");
-  assert(coreScript.includes("/qa unlock <combo|gemmine> <on|off>"), "core QA unlock help missing gem mine toggle");
+  assert(coreScript.includes("ringMouldUnlocked: false"), "core player unlock flags missing ring mould default");
+  assert(coreScript.includes("amuletMouldUnlocked: false"), "core player unlock flags missing amulet mould default");
+  assert(coreScript.includes("tiaraMouldUnlocked: false"), "core player unlock flags missing tiara mould default");
+  assert(coreScript.includes("/qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>"), "core QA unlock help missing mould toggle options");
   assert(coreScript.includes("setQaUnlockFlag('gemMineUnlocked', value === 'on');"), "core QA gem mine unlock handler missing");
   const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
