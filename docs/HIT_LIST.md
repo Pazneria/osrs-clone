@@ -327,32 +327,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Regression checks passed
   - [ ] Notes/logs/docs updated
 
-### HIT-012 - Menu input behavior (middle-click outside)
-- Status: Backlog
-- Severity: S2
-- Area: WORLD
-- Source: Manual
-- Links:
-- Repro:
-  1. Open menu.
-  2. Click scroll wheel/middle mouse outside menu.
-- Expected: Menu remains open on middle-click outside.
-- Actual: Menu closes unexpectedly.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Audit menu dismissal handlers.
-  2. Exclude middle-click outside from close events.
-  3. Regression test left/right/middle behavior.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-013 - Shoreline terrain clipping cleanup
 - Status: Backlog
 - Severity: S2
@@ -503,31 +477,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Regression checks passed
   - [ ] Notes/logs/docs updated
 
-### HIT-019 - Smithing menu remove "no output space" message
-- Status: Backlog
-- Severity: S3
-- Area: SMI
-- Source: Manual
-- Links:
-- Repro:
-  1. Open smithing menu with constrained inventory.
-- Expected: Message is removed from smithing menus.
-- Actual: "no output space" message is shown.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Locate smithing menu message source.
-  2. Remove/hide message in smithing context.
-  3. Ensure blocked craft state remains understandable.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-020 - Smithing item level requirement rebalance
 - Status: Backlog
 - Severity: S2
@@ -581,131 +530,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
-
-### HIT-022 - HUD running button overlap with minimap
-- Status: Backlog
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links:
-- Repro:
-  1. Open HUD at default and small viewport sizes.
-- Expected: Running button does not overlap minimap.
-- Actual: Overlap occurs.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Audit HUD layout constraints.
-  2. Reposition/resize controls to prevent overlap.
-  3. Validate desktop + mobile breakpoints.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
-### HIT-023 - Run button icon pass (replace RUN text)
-- Status: Backlog
-- Severity: S3
-- Area: HUD
-- Source: Manual
-- Links:
-- Repro:
-  1. Inspect run toggle button UI.
-- Expected: Stylized running-figure icon instead of `RUN` text label.
-- Actual: Text label shown.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Design/select running icon asset.
-  2. Swap button label rendering to icon.
-  3. Verify legibility and active/inactive states.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
-### HIT-024 - HUD map button for full world map
-- Status: Backlog
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links:
-- Repro:
-  1. Inspect HUD navigation actions.
-- Expected: Map button opens full world map.
-- Actual: No full-map button/action in HUD.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Add map button control to HUD.
-  2. Implement full map panel/modal.
-  3. Wire open/close and navigation interactions.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
-### HIT-025 - Tooltip gating by walking distance
-- Status: Backlog
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links:
-- Repro:
-  1. Hover interactable object outside walking distance.
-- Expected: Object tooltips do not show when object is out of walking distance.
-- Actual: Tooltip still appears.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Add distance gate to tooltip display condition.
-  2. Reuse interaction reachability checks if available.
-  3. Validate near/far edge cases and performance.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
-### HIT-026 - Skills menu completeness (all skills present)
-- Status: Backlog
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links:
-- Repro:
-  1. Open skills menu.
-- Expected: All skills are present in skills menu.
-- Actual: Skills menu is incomplete.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Compare skills menu entries against skill manifest.
-  2. Add missing skills/icons.
-  3. Verify menu layout and interactions.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
 
 ### HIT-027 - Skills menu icon opens dedicated progression view
 - Status: Backlog
@@ -845,6 +669,200 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
+
+### HIT-012 - Menu input behavior (middle-click outside)
+- Status: Fixed
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/inventory.js`, `src/js/skills/smithing/index.js`, `src/js/skills/fletching/index.js`
+- Repro:
+  1. Open menu.
+  2. Click scroll wheel/middle mouse outside menu.
+- Expected: Menu remains open on middle-click outside.
+- Actual: Menu closed unexpectedly on non-left clicks.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Audit menu dismissal handlers.
+  2. Exclude middle-click outside from close events.
+  3. Regression test left/right/middle behavior.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Outside-close handlers for skill panel, smithing UI, and fletching UI now ignore non-left clicks.
+  - Escape-key and explicit close buttons remain unchanged.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-019 - Smithing menu remove "no output space" message
+- Status: Fixed
+- Severity: S3
+- Area: SMI
+- Source: Manual
+- Links: `src/js/skills/smithing/index.js`
+- Repro:
+  1. Open smithing menu with constrained inventory.
+- Expected: Message is removed from smithing menus.
+- Actual: `No output space` row issue text was shown in smithing menu.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Locate smithing menu message source.
+  2. Remove/hide message in smithing context.
+  3. Ensure blocked craft state remains understandable.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Removed `No output space` from smithing menu issue generation only.
+  - Start/runtime output-capacity gating and warning chat remain in place.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-026 - Skills menu completeness (all skills present)
+- Status: Fixed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/world.js`
+- Repro:
+  1. Open skills menu.
+- Expected: All skills are present in skills menu.
+- Actual: Crafting and fletching were missing from skills menu.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Compare skills menu entries against skill manifest.
+  2. Add missing skills/icons.
+  3. Verify menu layout and interactions.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added Crafting and Fletching skill tiles to the stats/skills menu.
+  - Extended `refreshSkillUi` key mapping so both tiles receive live level updates.
+  - Existing tile-click progression panel behavior is reused without additional routing changes.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-022 - HUD running button overlap with minimap
+- Status: Fixed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`
+- Repro:
+  1. Open HUD at default and small viewport sizes.
+- Expected: Running button does not overlap minimap.
+- Actual: Run button overlapped minimap edge in the prior anchored layout.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Audit HUD layout constraints.
+  2. Reposition/resize controls to prevent overlap.
+  3. Validate desktop + mobile breakpoints.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Repositioned `#runToggleBtn` to sit outside the inventory panel on its bottom-left edge, eliminating minimap overlap.
+  - Anchored the button to `#main-ui-container` so it follows panel transform/state changes (including UI expand and tab/window context changes).
+  - Preserved existing run-toggle behavior and event wiring.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-023 - Run button icon pass (replace RUN text)
+- Status: Fixed
+- Severity: S3
+- Area: HUD
+- Source: Manual
+- Links: `index.html`
+- Repro:
+  1. Inspect run toggle button UI.
+- Expected: Stylized running-figure icon instead of `RUN` text label.
+- Actual: Text label was shown.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Design/select running icon asset.
+  2. Swap button label rendering to icon.
+  3. Verify legibility and active/inactive states.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Replaced `RUN` text with a refined inline running-figure SVG icon for clearer silhouette readability.
+  - Kept `title`/`aria-label` semantics and existing active/inactive color state behavior.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-024 - HUD map button for full world map
+- Status: Fixed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/core.js`, `src/js/world.js`
+- Repro:
+  1. Inspect HUD navigation actions.
+- Expected: Map button opens full world map.
+- Actual: No full-map button/action was available in HUD.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Add map button control to HUD.
+  2. Implement full map panel/modal.
+  3. Wire open/close and navigation interactions.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added circular world-map HUD button with pictogram at the minimap's lower-left anchor position.
+  - Implemented centered full-map overlay panel with close button, backdrop close, and Escape-to-close handling.
+  - Added full-map canvas rendering from the world offscreen map plus player heading/marker overlays.
+  - Implemented world-map interaction as view-only navigation controls: mouse-wheel zoom and left-click drag panning when zoomed in.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-025 - Tooltip gating by walking distance
+- Status: Fixed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `src/js/input-render.js`
+- Repro:
+  1. Hover interactable object outside walking distance.
+- Expected: Object tooltips do not show when object is out of walking distance.
+- Actual: Tooltip previously appeared regardless of target distance.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Add distance gate to tooltip display condition.
+  2. Reuse interaction reachability checks if available.
+  3. Validate near/far edge cases and performance.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added tooltip distance gating helper that resolves an actionable target tile (including fishable water edge handling).
+  - Tooltips are now suppressed when hovered targets are beyond a 16-tile walking-distance band from the player.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->

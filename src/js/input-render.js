@@ -18,6 +18,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             modeSelect: null,
             axisSelect: null
         };
+        const PATHFIND_MAX_ITERATIONS = 25000;
+        // In open terrain, BFS iteration budget approximates a Chebyshev radius. Keep tooltip range slightly under that.
+        const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
+        const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
 
         function onPointerDown(event) {
             if (event.button === 0 && poseEditor.enabled) {
@@ -666,7 +670,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             let foundTargetKey = null;
 
             while (queue.length > 0) {
-                if (iterations++ > 25000) break; 
+                if (iterations++ > PATHFIND_MAX_ITERATIONS) break; 
                 
                 let current = queue.shift(); let currentHeight = heightMap[playerState.z][current.y][current.x];
                 
@@ -1060,7 +1064,24 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return group;
         }
 
-                function updateHoverTooltip() {
+        function resolveTooltipTargetTile(hitData) {
+            if (!hitData || !Number.isInteger(hitData.gridX) || !Number.isInteger(hitData.gridY)) return null;
+            if (hitData.type === 'WATER') {
+                const edge = findNearestFishableWaterEdgeTile(hitData.gridX, hitData.gridY);
+                return edge || { x: hitData.gridX, y: hitData.gridY };
+            }
+            return { x: hitData.gridX, y: hitData.gridY };
+        }
+
+        function isHitWithinTooltipWalkDistance(hitData) {
+            const target = resolveTooltipTargetTile(hitData);
+            if (!target) return true;
+            const dx = Math.abs(target.x - playerState.x);
+            const dy = Math.abs(target.y - playerState.y);
+            return Math.max(dx, dy) <= MAX_TOOLTIP_WALK_DISTANCE_TILES;
+        }
+
+        function updateHoverTooltip() {
             const tooltip = document.getElementById('hover-tooltip');
             if (isDraggingCamera || isFreeCam || isBankOpen || currentMouseX === 0) { tooltip.classList.add('hidden'); return; }
             const hoveredElement = document.elementFromPoint(currentMouseX, currentMouseY);
@@ -1068,6 +1089,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             const hitData = getRaycastHit(currentMouseX, currentMouseY);
             if (hitData) {
+                if (!isHitWithinTooltipWalkDistance(hitData)) {
+                    tooltip.classList.add('hidden');
+                    return;
+                }
                                 const selectedSlot = getSelectedUseItem();
                 const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
                 const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);

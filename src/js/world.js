@@ -846,7 +846,9 @@
                 fishing: 'fish',
                 cooking: 'cook',
                 runecrafting: 'rc',
-                smithing: 'smith'
+                smithing: 'smith',
+                crafting: 'craft',
+                fletching: 'fletch'
             };
             const key = keyBySkill[skillName];
             if (!key || !playerSkills[skillName]) return;
@@ -3735,8 +3737,274 @@
             }
         }
 
+        const worldMapState = {
+            zoom: 1,
+            minZoom: 1,
+            maxZoom: 6,
+            centerX: null,
+            centerY: null,
+            isDragging: false,
+            dragStartMouseX: 0,
+            dragStartMouseY: 0,
+            dragStartCenterX: 0,
+            dragStartCenterY: 0,
+            dragStartSourceSize: MAP_SIZE
+        };
+
+        function resolveWorldMapViewport(canvas) {
+            const pad = 8;
+            const size = Math.max(1, Math.min(canvas.width, canvas.height) - (pad * 2));
+            const x = Math.floor((canvas.width - size) / 2);
+            const y = Math.floor((canvas.height - size) / 2);
+            return { x, y, size };
+        }
+
+        function pointInWorldMapViewport(mouseX, mouseY, viewport) {
+            if (!viewport) return false;
+            return mouseX >= viewport.x
+                && mouseY >= viewport.y
+                && mouseX <= (viewport.x + viewport.size)
+                && mouseY <= (viewport.y + viewport.size);
+        }
+
+        function clampWorldMapCenter(center, sourceSize) {
+            if (!Number.isFinite(center)) return MAP_SIZE / 2;
+            if (!Number.isFinite(sourceSize) || sourceSize >= MAP_SIZE) return MAP_SIZE / 2;
+            const half = sourceSize / 2;
+            return Math.max(half, Math.min(MAP_SIZE - half, center));
+        }
+
+        function ensureWorldMapCenter() {
+            if (!Number.isFinite(worldMapState.centerX) || !Number.isFinite(worldMapState.centerY)) {
+                const px = (playerRig && playerRig.position && Number.isFinite(playerRig.position.x))
+                    ? (playerRig.position.x + 0.5)
+                    : (playerState.x + 0.5);
+                const py = (playerRig && playerRig.position && Number.isFinite(playerRig.position.z))
+                    ? (playerRig.position.z + 0.5)
+                    : (playerState.y + 0.5);
+                worldMapState.centerX = Math.max(0, Math.min(MAP_SIZE, px));
+                worldMapState.centerY = Math.max(0, Math.min(MAP_SIZE, py));
+            }
+        }
+
+        function getWorldMapSourceRect() {
+            const safeZoom = Number.isFinite(worldMapState.zoom)
+                ? Math.max(worldMapState.minZoom, Math.min(worldMapState.maxZoom, worldMapState.zoom))
+                : worldMapState.minZoom;
+            worldMapState.zoom = safeZoom;
+            ensureWorldMapCenter();
+
+            const sourceSize = MAP_SIZE / safeZoom;
+            worldMapState.centerX = clampWorldMapCenter(worldMapState.centerX, sourceSize);
+            worldMapState.centerY = clampWorldMapCenter(worldMapState.centerY, sourceSize);
+            const sourceX = worldMapState.centerX - (sourceSize / 2);
+            const sourceY = worldMapState.centerY - (sourceSize / 2);
+            return { sourceX, sourceY, sourceSize, centerX: worldMapState.centerX, centerY: worldMapState.centerY };
+        }
+
+        function screenToWorldMap(mouseX, mouseY, viewport, sourceRect) {
+            const ratioX = (mouseX - viewport.x) / viewport.size;
+            const ratioY = (mouseY - viewport.y) / viewport.size;
+            return {
+                ratioX,
+                ratioY,
+                worldX: sourceRect.sourceX + (ratioX * sourceRect.sourceSize),
+                worldY: sourceRect.sourceY + (ratioY * sourceRect.sourceSize)
+            };
+        }
+
+        function setWorldMapZoom(nextZoom, anchor = null) {
+            const oldRect = getWorldMapSourceRect();
+            const resolvedZoom = Math.max(worldMapState.minZoom, Math.min(worldMapState.maxZoom, nextZoom));
+            if (!Number.isFinite(resolvedZoom) || Math.abs(resolvedZoom - worldMapState.zoom) < 0.0001) return;
+
+            if (anchor && pointInWorldMapViewport(anchor.mouseX, anchor.mouseY, anchor.viewport)) {
+                const mapped = screenToWorldMap(anchor.mouseX, anchor.mouseY, anchor.viewport, oldRect);
+                worldMapState.zoom = resolvedZoom;
+                const newSourceSize = MAP_SIZE / resolvedZoom;
+                const sourceX = mapped.worldX - (mapped.ratioX * newSourceSize);
+                const sourceY = mapped.worldY - (mapped.ratioY * newSourceSize);
+                worldMapState.centerX = sourceX + (newSourceSize / 2);
+                worldMapState.centerY = sourceY + (newSourceSize / 2);
+            } else {
+                worldMapState.zoom = resolvedZoom;
+            }
+
+            getWorldMapSourceRect();
+        }
+
+        function updateWorldMapCursor(worldMapCanvas) {
+            if (!worldMapCanvas) return;
+            if (worldMapState.isDragging) {
+                worldMapCanvas.style.cursor = 'grabbing';
+            } else if (worldMapState.zoom > (worldMapState.minZoom + 0.001)) {
+                worldMapCanvas.style.cursor = 'grab';
+            } else {
+                worldMapCanvas.style.cursor = 'default';
+            }
+        }
+
+        function initWorldMapPanel() {
+            const worldMapCanvas = document.getElementById('world-map-canvas');
+            if (!worldMapCanvas || worldMapCanvas.dataset.bound === '1') return;
+            worldMapCanvas.dataset.bound = '1';
+            updateWorldMapCursor(worldMapCanvas);
+
+            worldMapCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            worldMapCanvas.addEventListener('wheel', (e) => {
+                const rect = worldMapCanvas.getBoundingClientRect();
+                const scaleX = worldMapCanvas.width / rect.width;
+                const scaleY = worldMapCanvas.height / rect.height;
+                const mouseX = (e.clientX - rect.left) * scaleX;
+                const mouseY = (e.clientY - rect.top) * scaleY;
+                const viewport = resolveWorldMapViewport(worldMapCanvas);
+                if (!pointInWorldMapViewport(mouseX, mouseY, viewport)) return;
+                e.preventDefault();
+
+                const factor = e.deltaY < 0 ? 1.2 : (1 / 1.2);
+                setWorldMapZoom(worldMapState.zoom * factor, { mouseX, mouseY, viewport });
+                updateWorldMapCursor(worldMapCanvas);
+            });
+            worldMapCanvas.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                if (worldMapState.zoom <= (worldMapState.minZoom + 0.001)) return;
+
+                const rect = worldMapCanvas.getBoundingClientRect();
+                const scaleX = worldMapCanvas.width / rect.width;
+                const scaleY = worldMapCanvas.height / rect.height;
+                const mouseX = (e.clientX - rect.left) * scaleX;
+                const mouseY = (e.clientY - rect.top) * scaleY;
+                const viewport = resolveWorldMapViewport(worldMapCanvas);
+                if (!pointInWorldMapViewport(mouseX, mouseY, viewport)) return;
+
+                const sourceRect = getWorldMapSourceRect();
+                worldMapState.isDragging = true;
+                worldMapState.dragStartMouseX = mouseX;
+                worldMapState.dragStartMouseY = mouseY;
+                worldMapState.dragStartCenterX = sourceRect.centerX;
+                worldMapState.dragStartCenterY = sourceRect.centerY;
+                worldMapState.dragStartSourceSize = sourceRect.sourceSize;
+                updateWorldMapCursor(worldMapCanvas);
+                e.preventDefault();
+            });
+            worldMapCanvas.addEventListener('mousemove', (e) => {
+                if (!worldMapState.isDragging) return;
+
+                const rect = worldMapCanvas.getBoundingClientRect();
+                const scaleX = worldMapCanvas.width / rect.width;
+                const scaleY = worldMapCanvas.height / rect.height;
+                const mouseX = (e.clientX - rect.left) * scaleX;
+                const mouseY = (e.clientY - rect.top) * scaleY;
+                const viewport = resolveWorldMapViewport(worldMapCanvas);
+                const tilesPerPixel = worldMapState.dragStartSourceSize / Math.max(1, viewport.size);
+                worldMapState.centerX = worldMapState.dragStartCenterX - ((mouseX - worldMapState.dragStartMouseX) * tilesPerPixel);
+                worldMapState.centerY = worldMapState.dragStartCenterY - ((mouseY - worldMapState.dragStartMouseY) * tilesPerPixel);
+                getWorldMapSourceRect();
+            });
+
+            const stopDrag = () => {
+                if (!worldMapState.isDragging) return;
+                worldMapState.isDragging = false;
+                updateWorldMapCursor(worldMapCanvas);
+            };
+            worldMapCanvas.addEventListener('mouseup', (e) => {
+                if (e.button === 0) stopDrag();
+            });
+            worldMapCanvas.addEventListener('mouseleave', stopDrag);
+        }
+
+        function updateWorldMapPanel() {
+            const panel = document.getElementById('world-map-panel');
+            if (!panel || panel.classList.contains('hidden')) {
+                worldMapState.isDragging = false;
+                return;
+            }
+            const worldMapCanvas = document.getElementById('world-map-canvas');
+            if (!worldMapCanvas) return;
+            if (!offscreenMapCanvas) updateMinimapCanvas();
+
+            const ctx = worldMapCanvas.getContext('2d');
+            const viewport = resolveWorldMapViewport(worldMapCanvas);
+            const sourceRect = getWorldMapSourceRect();
+            const pxPerTile = viewport.size / sourceRect.sourceSize;
+            const playerX = (playerRig && playerRig.position) ? playerRig.position.x : playerState.x;
+            const playerY = (playerRig && playerRig.position) ? playerRig.position.z : playerState.y;
+            const facingYaw = (playerRig && Number.isFinite(playerRig.rotation && playerRig.rotation.y))
+                ? playerRig.rotation.y
+                : (Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0);
+
+            const worldToCanvas = (wx, wy) => ({
+                x: viewport.x + (((wx - sourceRect.sourceX) / sourceRect.sourceSize) * viewport.size),
+                y: viewport.y + (((wy - sourceRect.sourceY) / sourceRect.sourceSize) * viewport.size)
+            });
+
+            ctx.imageSmoothingEnabled = false;
+            ctx.fillStyle = '#090b0d';
+            ctx.fillRect(0, 0, worldMapCanvas.width, worldMapCanvas.height);
+            ctx.drawImage(
+                offscreenMapCanvas,
+                sourceRect.sourceX,
+                sourceRect.sourceY,
+                sourceRect.sourceSize,
+                sourceRect.sourceSize,
+                viewport.x,
+                viewport.y,
+                viewport.size,
+                viewport.size
+            );
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(viewport.x + 0.5, viewport.y + 0.5, viewport.size - 1, viewport.size - 1);
+
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+            clickMarkers.forEach((m) => {
+                if (Math.abs(m.mesh.position.y - (playerState.z * 3.0)) >= 2.0) return;
+                if (m.mesh.position.x < sourceRect.sourceX || m.mesh.position.x > (sourceRect.sourceX + sourceRect.sourceSize)) return;
+                if (m.mesh.position.z < sourceRect.sourceY || m.mesh.position.z > (sourceRect.sourceY + sourceRect.sourceSize)) return;
+                const mapped = worldToCanvas(m.mesh.position.x, m.mesh.position.z);
+                const markerSize = Math.max(2, pxPerTile * 0.9);
+                ctx.fillRect(mapped.x - (markerSize / 2), mapped.y - (markerSize / 2), markerSize, markerSize);
+            });
+
+            ctx.fillStyle = '#ff00aa';
+            groundItems.forEach((gi) => {
+                if (gi.z !== playerState.z) return;
+                const wx = gi.x + 0.5;
+                const wy = gi.y + 0.5;
+                if (wx < sourceRect.sourceX || wx > (sourceRect.sourceX + sourceRect.sourceSize)) return;
+                if (wy < sourceRect.sourceY || wy > (sourceRect.sourceY + sourceRect.sourceSize)) return;
+                const mapped = worldToCanvas(wx, wy);
+                const itemSize = Math.max(2, pxPerTile);
+                ctx.fillRect(mapped.x - (itemSize / 2), mapped.y - (itemSize / 2), itemSize, itemSize);
+            });
+
+            const playerMapped = worldToCanvas(playerX + 0.5, playerY + 0.5);
+            const playerRadius = Math.max(2.5, pxPerTile * 1.8);
+            const facingLen = Math.max(7, pxPerTile * 8);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(playerMapped.x, playerMapped.y, playerRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#ff2f2f';
+            ctx.lineWidth = Math.max(1.5, pxPerTile * 0.8);
+            ctx.beginPath();
+            ctx.moveTo(playerMapped.x, playerMapped.y);
+            ctx.lineTo(playerMapped.x + (Math.sin(facingYaw) * facingLen), playerMapped.y + (Math.cos(facingYaw) * facingLen));
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(255, 230, 176, 0.95)';
+            ctx.font = 'bold 12px monospace';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`Zoom x${worldMapState.zoom.toFixed(2)}`, viewport.x + 6, viewport.y + 6);
+            updateWorldMapCursor(worldMapCanvas);
+        }
+
         function initMinimap() {
             updateMinimapCanvas();
+            initWorldMapPanel();
             const minimapCanvas = document.getElementById('minimap');
             minimapCanvas.addEventListener('contextmenu', e => e.preventDefault());
             minimapCanvas.addEventListener('wheel', (e) => { e.preventDefault(); minimapZoom += Math.sign(e.deltaY) * -0.2; minimapZoom = Math.max(1.0, Math.min(20.0, minimapZoom)); });
@@ -3798,6 +4066,7 @@
                 const x = Math.min(minimapDragStart.x, minimapDragEnd.x); const y = Math.min(minimapDragStart.y, minimapDragEnd.y); const w = Math.abs(minimapDragEnd.x - minimapDragStart.x); const h = Math.abs(minimapDragEnd.y - minimapDragStart.y);
                 ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
             }
+            updateWorldMapPanel();
         }
 
         function resolveTreeRespawnTicks(gridX, gridY, z) {
@@ -3879,5 +4148,6 @@
         window.updateGroundItems = updateGroundItems;
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateMinimap = updateMinimap;
+        window.updateWorldMapPanel = updateWorldMapPanel;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;

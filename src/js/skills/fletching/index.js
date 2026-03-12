@@ -350,6 +350,7 @@
             });
             document.addEventListener('mousedown', (event) => {
                 if (!fletchingUiState.open || !fletchingUiState.panel) return;
+                if (event.button !== 0) return;
                 if (event.target.closest('#fletching-interface')) return;
                 closeFletchingUi();
             });

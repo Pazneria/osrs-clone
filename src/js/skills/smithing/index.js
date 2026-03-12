@@ -272,7 +272,6 @@
         if (!hasMouldRequirements(context, recipe)) issues.push('Missing required mould');
         if (!hasUnlockRequirement(context, recipe)) issues.push('Mould not unlocked');
         if (!hasMaterials(context, recipe)) issues.push('Missing materials');
-        if (!hasOutputCapacity(context, recipe)) issues.push('No output space');
         return issues;
     }
 
@@ -347,6 +346,7 @@
             });
             document.addEventListener('mousedown', (event) => {
                 if (!smithingUiState.open || !smithingUiState.panel) return;
+                if (event.button !== 0) return;
                 if (event.target.closest('#smithing-interface')) return;
                 closeSmithingUi();
             });

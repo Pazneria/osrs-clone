@@ -53,8 +53,12 @@
                     <div class="absolute top-1 w-full text-center text-red-500 font-bold text-sm z-10 select-none pointer-events-none drop-shadow-md">N</div>
                     <canvas id="minimap" width="192" height="192" class="w-full h-full block"></canvas>
                 </div>
-                <button id="runToggleBtn" class="absolute -bottom-2 -left-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] text-xl flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-300" title="Run Mode: OFF">
-                    RUN
+                <button id="mapToggleBtn" class="absolute -bottom-2 -left-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-200" title="World Map" aria-label="World map">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3.5 6.2 8.8 4l6.2 2.1L20.5 4v13.8L15 20l-6.2-2.1L3.5 20V6.2z"></path>
+                        <path d="M8.8 4v13.9"></path>
+                        <path d="M15 6.1V20"></path>
+                    </svg>
                 </button>
             </div>
             
@@ -113,6 +117,17 @@
 
         <!-- Bottom Right Container (Tabbed Inventory / Equipment) -->
         <div id="main-ui-container" data-active-tab="inv" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
+            <button id="runToggleBtn" class="absolute -left-16 bottom-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-50 text-gray-200" title="Run Mode: OFF" aria-label="Run toggle">
+                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="16.5" cy="4.8" r="1.7" fill="currentColor" stroke="none"></circle>
+                    <path d="M14 8.3 11.7 12.1l3.3 2.1 1.6 4.6"></path>
+                    <path d="m11.7 12.1-4 2.4"></path>
+                    <path d="m13.9 9.2 3.8 1"></path>
+                    <path d="m14.8 16.1-4.3 2.9"></path>
+                    <path d="M4.5 10h2.3"></path>
+                    <path d="M3.8 12.5h2.6"></path>
+                </svg>
+            </button>
             <!-- Tabs -->
             <div class="flex border-b-2 border-[#c8aa6e]">
                 <button id="tab-inv" title="Inventory" aria-label="Inventory" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-[#c8aa6e] bg-[#2a3138] hover:bg-[#3a444c] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="1"></rect><path d="M6 5V3.5h4V5"></path><path d="M6 8h4"></path></svg></button>
@@ -194,6 +209,12 @@
                     <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="smithing" data-skill-name="Smithing" data-skill-icon="SMI">
                         <span class="text-sm">SMI</span><br><span id="stat-smith-level">1</span>
                     </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="crafting" data-skill-name="Crafting" data-skill-icon="CRFT">
+                        <span class="text-sm">CRFT</span><br><span id="stat-craft-level">1</span>
+                    </div>
+                    <div class="skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none" data-skill="fletching" data-skill-name="Fletching" data-skill-icon="FLT">
+                        <span class="text-sm">FLT</span><br><span id="stat-fletch-level">1</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -218,6 +239,20 @@
                     <div id="skill-panel-progress" class="h-full bg-[#c8aa6e]" style="width: 0%;"></div>
                 </div>
                 <div id="skill-panel-percent" class="text-center text-[11px] text-gray-300">0%</div>
+            </div>
+        </div>
+        <div id="world-map-panel" class="hidden pointer-events-auto absolute inset-0 bg-black/55 z-[280] flex items-center justify-center">
+            <div class="w-[720px] max-w-[92vw] h-[78vh] max-h-[720px] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex flex-col">
+                <div class="flex items-center justify-between px-3 py-2 bg-[#2c241c] border-b border-[#3e3529]">
+                    <div class="text-[#ff981f] font-bold text-sm uppercase tracking-wide">World Map</div>
+                    <button id="world-map-close" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
+                </div>
+                <div class="flex-1 p-3">
+                    <canvas id="world-map-canvas" width="640" height="640" class="w-full h-full bg-[#0f1215] border border-[#3a444c]"></canvas>
+                </div>
+                <div class="px-3 py-2 text-[11px] text-[#c8aa6e] border-t border-[#3e3529]">
+                    Mouse wheel to zoom. Left-drag to pan when zoomed in. Press Escape to close.
+                </div>
             </div>
         </div>
         <!-- Right-Click Context Menu -->

@@ -1349,11 +1349,41 @@ O445411111OOOOO.
             initChatInput();
             if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
             if (typeof initPoseEditor === 'function') initPoseEditor();
+
+            const worldMapPanel = document.getElementById('world-map-panel');
+            const worldMapToggleBtn = document.getElementById('mapToggleBtn');
+            const worldMapCloseBtn = document.getElementById('world-map-close');
+            const setWorldMapOpen = (open) => {
+                if (!worldMapPanel) return;
+                if (open) {
+                    worldMapPanel.classList.remove('hidden');
+                    if (typeof window.updateWorldMapPanel === 'function') window.updateWorldMapPanel(true);
+                } else {
+                    worldMapPanel.classList.add('hidden');
+                }
+            };
+            if (worldMapToggleBtn) {
+                worldMapToggleBtn.addEventListener('click', () => {
+                    const shouldOpen = !worldMapPanel || worldMapPanel.classList.contains('hidden');
+                    setWorldMapOpen(shouldOpen);
+                });
+            }
+            if (worldMapCloseBtn) {
+                worldMapCloseBtn.addEventListener('click', () => setWorldMapOpen(false));
+            }
+            if (worldMapPanel) {
+                worldMapPanel.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    if (e.target === worldMapPanel) setWorldMapOpen(false);
+                });
+            }
+
             // Input Listeners
             window.addEventListener('keydown', (e) => {
                 if (e.target && e.target.id === 'chat-input') return;
                 const k = e.key.toLowerCase();
                 if (keys.hasOwnProperty(k)) keys[k] = true;
+                if (e.key === 'Escape' && worldMapPanel && !worldMapPanel.classList.contains('hidden')) setWorldMapOpen(false);
                 if (e.key === 'Escape' && isBankOpen) closeBank();
             });
             window.addEventListener('keyup', (e) => {

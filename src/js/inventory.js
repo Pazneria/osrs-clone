@@ -765,6 +765,7 @@
             window.addEventListener('mousedown', (e) => {
                 const panel = document.getElementById('skill-panel');
                 if (!panel || panel.classList.contains('hidden')) return;
+                if (e.button !== 0) return;
                 if (e.target.closest('#skill-panel') || e.target.closest('.skill-tile')) return;
                 closeSkillProgressPanel();
             });
