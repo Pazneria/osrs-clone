@@ -347,9 +347,11 @@ function run() {
 
   loadBrowserScript(root, "src/js/skills/fletching/index.js");
   loadBrowserScript(root, "src/js/skills/crafting/index.js");
+  loadBrowserScript(root, "src/js/skills/mining/index.js");
   const skillModules = window.SkillModules || {};
   assert(!!skillModules.fletching && typeof skillModules.fletching.onUseItem === "function", "fletching runtime module missing onUseItem");
   assert(!!skillModules.crafting && typeof skillModules.crafting.onUseItem === "function", "crafting runtime module missing onUseItem");
+  assert(!!skillModules.mining && typeof skillModules.mining.onStart === "function", "mining runtime module missing onStart");
 
   function makeInventoryContext(sourceItemId, targetItemId, counts, messages, startedPayloads) {
     const inventoryCounts = Object.assign({}, counts);
@@ -426,7 +428,76 @@ function run() {
   assert((craftingCtxSuccess._counts.wooden_handle_strapped || 0) === 0, "crafting should consume strapped handle input");
 
   window.SkillRuntime = originalSkillRuntime;
+  function makeMiningContext(unlocked) {
+    const messages = [];
+    let started = false;
+    let unlockedState = !!unlocked;
 
+    const context = {
+      targetObj: "ROCK",
+      targetX: 120,
+      targetY: 220,
+      targetZ: 0,
+      currentTick: 0,
+      random: () => 0.5,
+      playerState: { action: "IDLE" },
+      getRockNodeAt: () => ({
+        oreType: "sapphire",
+        areaGateFlag: "gemMineUnlocked",
+        areaName: "the gem mine",
+        areaGateMessage: "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      }),
+      getNodeTable: (skillId) => SkillSpecRegistry.getNodeTable(skillId),
+      getSkillSpec: (skillId) => SkillSpecRegistry.getSkillSpec(skillId),
+      getSkillLevel: () => 40,
+      getBestToolByClass: () => ({ id: "rune_pickaxe", toolTier: 28, speedBonusTicks: 5 }),
+      hasToolClass: (toolClass) => toolClass === "pickaxe",
+      isTargetTile: (tileId) => tileId === 2,
+      canAcceptItemById: () => true,
+      addChatMessage: (message, tone) => messages.push({ message, tone }),
+      startSkillingAction: () => {
+        context.playerState.action = "SKILLING: ROCK";
+        started = true;
+      },
+      stopAction: () => {
+        context.playerState.action = "IDLE";
+      },
+      requireAreaAccess: ({ flagId, areaName, message, silent }) => {
+        if (flagId !== "gemMineUnlocked") return true;
+        if (unlockedState) return true;
+        if (!silent) {
+          context.addChatMessage(message || ("You need access to " + (areaName || "that mining area") + " first."), "warn");
+        }
+        return false;
+      }
+    };
+
+    return {
+      context,
+      messages,
+      wasStarted: () => started,
+      setUnlocked: (value) => {
+        unlockedState = !!value;
+      }
+    };
+  }
+
+  const miningLocked = makeMiningContext(false);
+  const miningStartLocked = skillModules.mining.onStart(miningLocked.context);
+  assert(!miningStartLocked, "mining should block gem-mine start when unlock is missing");
+  assert(!miningLocked.wasStarted(), "mining should not start while gem mine is locked");
+  assert(miningLocked.messages.some((entry) => /gem mine is locked/i.test(entry.message)), "mining lock message should be shown when blocked");
+
+  const miningUnlocked = makeMiningContext(true);
+  const miningStartUnlocked = skillModules.mining.onStart(miningUnlocked.context);
+  assert(miningStartUnlocked, "mining should start once gem mine is unlocked");
+  assert(miningUnlocked.wasStarted(), "mining should enter skilling state when unlocked");
+
+  miningUnlocked.messages.length = 0;
+  miningUnlocked.setUnlocked(false);
+  skillModules.mining.onTick(miningUnlocked.context);
+  assert(miningUnlocked.messages.some((entry) => /gem mine is locked/i.test(entry.message)), "mining should re-check gem-mine gate during active ticks");
+  assert(miningUnlocked.context.playerState.action === "IDLE", "mining should stop if gem-mine access is lost mid-session");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
   assert(worldScript.includes("for (let by = placed.y - 1; by <= placed.y + 2; by++)"), "runecrafting altar collision footprint regression");
@@ -460,6 +531,10 @@ function run() {
   assert(worldScript.includes("merchantId: 'elira_gemhand'"), "elira merchant wiring missing");
   assert(worldScript.includes("const miningZoneSpecs = ["), "mining zone specs missing");
   assert(worldScript.includes("zoneId: 'starter_mine'"), "starter mining zone missing");
+  assert(worldScript.includes("areaGateFlag: 'gemMineUnlocked'"), "gem mine zone gate flag missing");
+  assert(worldScript.includes("areaGateMessage: 'The gem mine is locked. Speak with Elira Gemhand to gain access.'"), "gem mine zone gate message missing");
+  assert(worldScript.includes("function setMiningRockAt(x, y, z, oreType, options = {})"), "mining rock placement should accept area-gate options");
+  assert(worldScript.includes("areaGateFlag: zoneSpec.areaGateFlag || null"), "mining zone area-gate metadata should flow into rock placement");
   assert(worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "mining training location getter missing");
   assert(worldScript.includes("const woodcuttingRouteAnchor = { x: 205, y: 205 };"), "woodcutting route anchor missing");
   assert(worldScript.includes("const woodcuttingZoneSpecs = ["), "woodcutting zone specs missing");
@@ -483,6 +558,9 @@ function run() {
   assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing merchant list entries");
   assert(coreScript.includes("/qa cookspots"), "core QA cookspots command help missing");
   assert(coreScript.includes("/qa gotocook <camp|river|dock|deep>"), "core QA gotocook command help missing");
+  assert(coreScript.includes("gemMineUnlocked: false"), "core player unlock flags missing gem mine default");
+  assert(coreScript.includes("/qa unlock <combo|gemmine> <on|off>"), "core QA unlock help missing gem mine toggle");
+  assert(coreScript.includes("setQaUnlockFlag('gemMineUnlocked', value === 'on');"), "core QA gem mine unlock handler missing");
   const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
   assert(manifestScript.includes("CRAFTING: 'crafting'"), "skill manifest missing crafting action mapping");

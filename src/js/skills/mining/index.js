@@ -65,6 +65,21 @@
         return ORE_TYPE_TO_HIGHLIGHT[nodeSpec.oreType] || 'text-cyan-400';
     }
 
+    function getNodeMeta(context) {
+        const node = getMiningNode(context);
+        return node && typeof node === 'object' ? node : null;
+    }
+
+    function ensureAreaAccess(context, nodeMeta, silent) {
+        if (!nodeMeta || !nodeMeta.areaGateFlag || typeof context.requireAreaAccess !== 'function') return true;
+        return context.requireAreaAccess({
+            flagId: nodeMeta.areaGateFlag,
+            areaName: nodeMeta.areaName || 'that mining area',
+            message: nodeMeta.areaGateMessage || null,
+            silent: !!silent
+        });
+    }
+
     function getPickaxeContext(context) {
         const pickaxe = typeof context.getBestToolByClass === 'function' ? context.getBestToolByClass('pickaxe') : null;
         const toolPower = pickaxe
@@ -101,6 +116,8 @@
         canStart(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec) return false;
+            const nodeMeta = getNodeMeta(context);
+            if (!ensureAreaAccess(context, nodeMeta, true)) return false;
             return context.hasToolClass('pickaxe')
                 && context.isTargetTile(nodeSpec.tileId);
         },
@@ -108,6 +125,9 @@
         onStart(context) {
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec) return false;
+            const nodeMeta = getNodeMeta(context);
+
+            if (!ensureAreaAccess(context, nodeMeta, false)) return false;
 
             if (typeof context.canAcceptItemById === 'function' && !context.canAcceptItemById(nodeSpec.rewardItemId, 1)) {
                 context.addChatMessage('You have no inventory space for mined items.', 'warn');
@@ -136,6 +156,20 @@
             const nodeSpec = getNodeSpec(context);
             if (!nodeSpec || !window.SkillActionResolution || typeof SkillActionResolution.runGatherAttempt !== 'function') {
                 context.stopAction();
+                return;
+            }
+
+            const nodeMeta = getNodeMeta(context);
+            if (!ensureAreaAccess(context, nodeMeta, true)) {
+                const lockMessage = nodeMeta && nodeMeta.areaGateMessage
+                    ? nodeMeta.areaGateMessage
+                    : `You need access to ${nodeMeta && nodeMeta.areaName ? nodeMeta.areaName : 'that mining area'} first.`;
+                if (typeof SkillActionResolution.stopSkill === 'function') {
+                    SkillActionResolution.stopSkill(context, SKILL_ID, 'AREA_LOCKED');
+                } else {
+                    context.stopAction();
+                }
+                context.addChatMessage(lockMessage, 'warn');
                 return;
             }
 
@@ -187,6 +221,11 @@
 
             const label = getNodeLabel(nodeSpec);
             const highlight = getNodeHighlightClass(nodeSpec);
+            const nodeMeta = getNodeMeta(context);
+            if (!ensureAreaAccess(context, nodeMeta, true)) {
+                return `<span class="text-gray-300">Mine</span> <span class="${highlight}">${label}</span> <span class="text-red-300">(Locked)</span>`;
+            }
+
             const requiredLevel = Number.isFinite(nodeSpec.requiredLevel) ? Math.max(1, Math.floor(nodeSpec.requiredLevel)) : 1;
             const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
             if (level < requiredLevel) {
@@ -202,16 +241,21 @@
             }
 
             const label = getNodeLabel(nodeSpec);
+            const nodeMeta = getNodeMeta(context);
+            const isLocked = !ensureAreaAccess(context, nodeMeta, true);
             const requiredLevel = Number.isFinite(nodeSpec.requiredLevel) ? Math.max(1, Math.floor(nodeSpec.requiredLevel)) : 1;
             const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
-            const mineText = level < requiredLevel
-                ? `Mine ${label} (Level ${requiredLevel})`
-                : `Mine ${label}`;
+            const mineText = isLocked
+                ? `Mine ${label} (Locked)`
+                : (level < requiredLevel
+                    ? `Mine ${label} (Level ${requiredLevel})`
+                    : `Mine ${label}`);
 
             return [
                 {
                     text: mineText,
                     onSelect: () => {
+                        if (!ensureAreaAccess(context, nodeMeta, false)) return;
                         context.queueInteract();
                         context.spawnClickMarker(true);
                     }
@@ -229,4 +273,3 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = miningModule;
 })();
-

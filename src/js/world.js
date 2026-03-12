@@ -1808,9 +1808,13 @@
                         if (logicalMap[z][y][x] === 2) {
                             const key = rockNodeKey(x, y, z);
                             const prev = rockNodes[key];
+                            const gateOverride = rockAreaGateOverrides && rockAreaGateOverrides[key] ? rockAreaGateOverrides[key] : null;
                             rebuilt[key] = {
                                 oreType: prev && prev.oreType ? prev.oreType : oreTypeForTile(x, y, z),
-                                depletedUntilTick: prev && prev.depletedUntilTick ? prev.depletedUntilTick : 0
+                                depletedUntilTick: prev && prev.depletedUntilTick ? prev.depletedUntilTick : 0,
+                                areaGateFlag: prev && prev.areaGateFlag ? prev.areaGateFlag : (gateOverride && gateOverride.areaGateFlag ? gateOverride.areaGateFlag : null),
+                                areaName: prev && prev.areaName ? prev.areaName : (gateOverride && gateOverride.areaName ? gateOverride.areaName : null),
+                                areaGateMessage: prev && prev.areaGateMessage ? prev.areaGateMessage : (gateOverride && gateOverride.areaGateMessage ? gateOverride.areaGateMessage : null)
                             };
                         }
                     }
@@ -1824,7 +1828,14 @@
             if (logicalMap[z][y][x] !== 2) return null;
             const key = rockNodeKey(x, y, z);
             if (!rockNodes[key]) {
-                rockNodes[key] = { oreType: oreTypeForTile(x, y, z), depletedUntilTick: 0 };
+                const gateOverride = rockAreaGateOverrides && rockAreaGateOverrides[key] ? rockAreaGateOverrides[key] : null;
+                rockNodes[key] = {
+                    oreType: oreTypeForTile(x, y, z),
+                    depletedUntilTick: 0,
+                    areaGateFlag: gateOverride && gateOverride.areaGateFlag ? gateOverride.areaGateFlag : null,
+                    areaName: gateOverride && gateOverride.areaName ? gateOverride.areaName : null,
+                    areaGateMessage: gateOverride && gateOverride.areaGateMessage ? gateOverride.areaGateMessage : null
+                };
             }
             return rockNodes[key];
         }
@@ -1877,6 +1888,7 @@
         function initLogicalMap() {
             rockNodes = {};
             rockOreOverrides = {};
+            rockAreaGateOverrides = {};
             treeNodes = {};
             // Re-initialize as 3D Arrays! [z][y][x]
             logicalMap = Array(PLANES).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0)));
@@ -2537,6 +2549,9 @@
                     radiusStep: 6,
                     targetCount: 14,
                     minSpacing: 2.5,
+                    areaGateFlag: 'gemMineUnlocked',
+                    areaName: 'the gem mine',
+                    areaGateMessage: 'The gem mine is locked. Speak with Elira Gemhand to gain access.',
                     oreWeights: [
                         { oreType: 'sapphire', weight: 6 },
                         { oreType: 'emerald', weight: 4 }
@@ -2600,11 +2615,26 @@
                 return weights[weights.length - 1].oreType;
             }
 
-            function setMiningRockAt(x, y, z, oreType) {
+            function setMiningRockAt(x, y, z, oreType, options = {}) {
                 if (!oreType) return false;
                 logicalMap[z][y][x] = 2;
                 const key = rockNodeKey(x, y, z);
                 rockOreOverrides[key] = oreType;
+
+                const hasAreaGate = options
+                    && ((typeof options.areaGateFlag === 'string' && options.areaGateFlag)
+                        || (typeof options.areaName === 'string' && options.areaName)
+                        || (typeof options.areaGateMessage === 'string' && options.areaGateMessage));
+                if (hasAreaGate) {
+                    rockAreaGateOverrides[key] = {
+                        areaGateFlag: (typeof options.areaGateFlag === 'string' && options.areaGateFlag) ? options.areaGateFlag : null,
+                        areaName: (typeof options.areaName === 'string' && options.areaName) ? options.areaName : null,
+                        areaGateMessage: (typeof options.areaGateMessage === 'string' && options.areaGateMessage) ? options.areaGateMessage : null
+                    };
+                } else if (rockAreaGateOverrides && rockAreaGateOverrides[key]) {
+                    delete rockAreaGateOverrides[key];
+                }
+
                 if (oreType === 'rune_essence') {
                     RUNE_ESSENCE_ROCKS.push({ x, y, z });
                 }
@@ -2653,7 +2683,11 @@
 
                         const oreType = getWeightedOreType(zoneSpec.oreWeights, candidate.x, candidate.y);
                         if (!oreType) continue;
-                        if (!setMiningRockAt(candidate.x, candidate.y, candidate.z, oreType)) continue;
+                        if (!setMiningRockAt(candidate.x, candidate.y, candidate.z, oreType, {
+                            areaGateFlag: zoneSpec.areaGateFlag || null,
+                            areaName: zoneSpec.areaName || null,
+                            areaGateMessage: zoneSpec.areaGateMessage || null
+                        })) continue;
 
                         placedMiningRocks.push({ x: candidate.x, y: candidate.y, z: candidate.z });
                         zonePlacements.push({ x: candidate.x, y: candidate.y, z: candidate.z });
@@ -3846,70 +3880,3 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

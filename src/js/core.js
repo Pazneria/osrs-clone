@@ -52,7 +52,8 @@
             firemakingTarget: null,
             pendingSkillStart: null,
             unlockFlags: {
-                runecraftingComboUnlocked: false
+                runecraftingComboUnlocked: false,
+                gemMineUnlocked: false
             },
             merchantProgress: {}
         };
@@ -88,6 +89,7 @@
         let respawningTrees = []; 
         let rockNodes = {};
         let rockOreOverrides = {};
+        let rockAreaGateOverrides = {};
         let treeNodes = {};
         let isDraggingCamera = false;
         let previousMousePosition = { x: 0, y: 0 };
@@ -1046,7 +1048,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -1069,16 +1071,21 @@ O445411111OOOOO.
                 if (cmd === 'unlock' && parts.length >= 3) {
                     const subject = String(parts[1] || '').toLowerCase();
                     const value = String(parts[2] || '').toLowerCase();
-                    if (subject !== 'combo') {
-                        addChatMessage('Usage: /qa unlock combo <on|off>', 'warn');
+                    if (subject !== 'combo' && subject !== 'gemmine' && subject !== 'gem_mine') {
+                        addChatMessage('Usage: /qa unlock <combo|gemmine> <on|off>', 'warn');
                         return;
                     }
                     if (value !== 'on' && value !== 'off') {
-                        addChatMessage('Usage: /qa unlock combo <on|off>', 'warn');
+                        addChatMessage('Usage: /qa unlock <combo|gemmine> <on|off>', 'warn');
                         return;
                     }
-                    setQaUnlockFlag('runecraftingComboUnlocked', value === 'on');
-                    addChatMessage(`QA combo unlock: ${value}`, 'info');
+                    if (subject === 'combo') {
+                        setQaUnlockFlag('runecraftingComboUnlocked', value === 'on');
+                        addChatMessage(`QA combo unlock: ${value}`, 'info');
+                        return;
+                    }
+                    setQaUnlockFlag('gemMineUnlocked', value === 'on');
+                    addChatMessage(`QA gem mine unlock: ${value}`, 'info');
                     return;
                 }
 
@@ -1377,8 +1384,3 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
-
-
-
-
-
