@@ -655,11 +655,37 @@ O445411111OOOOO.
         }
 
         function getQaFishingSpots() {
-            return {
+            const fallback = {
                 pond: { x: 205, y: 223, z: 0, label: 'castle pond bank' },
                 pier: { x: 205, y: 230, z: 0, label: 'castle pond pier' },
                 deep: { x: 205, y: 231, z: 0, label: 'castle pond deep-water edge' }
             };
+
+            if (typeof window.getFishingTrainingLocations !== 'function') return fallback;
+            const routes = window.getFishingTrainingLocations();
+            if (!Array.isArray(routes) || routes.length === 0) return fallback;
+
+            const routeToKey = {
+                castle_pond_bank: 'pond',
+                castle_pond_pier: 'pier',
+                castle_pond_deep_edge: 'deep'
+            };
+            const merged = Object.assign({}, fallback);
+            for (let i = 0; i < routes.length; i++) {
+                const route = routes[i];
+                if (!route || typeof route.routeId !== 'string') continue;
+                const routeId = route.routeId.toLowerCase();
+                const explicitAlias = typeof route.alias === 'string' ? route.alias.trim().toLowerCase() : '';
+                const key = routeToKey[routeId] || (explicitAlias && merged[explicitAlias] ? explicitAlias : null);
+                if (!key || !merged[key]) continue;
+                merged[key] = {
+                    x: Number.isFinite(route.x) ? route.x : merged[key].x,
+                    y: Number.isFinite(route.y) ? route.y : merged[key].y,
+                    z: Number.isFinite(route.z) ? route.z : merged[key].z,
+                    label: route.label || merged[key].label
+                };
+            }
+            return merged;
         }
 
         function qaListFishingSpots() {
@@ -768,11 +794,50 @@ O445411111OOOOO.
             return false;
         }
 
+        function getQaDiscoveredMerchants() {
+            const byId = {};
+            for (let i = 0; i < npcsToRender.length; i++) {
+                const npc = npcsToRender[i];
+                if (!npc || !npc.merchantId) continue;
+                const merchantId = String(npc.merchantId || '').trim().toLowerCase();
+                if (!merchantId) continue;
+                if (byId[merchantId]) continue;
+                byId[merchantId] = {
+                    merchantId,
+                    name: String(npc.name || merchantId),
+                    x: Number.isFinite(npc.x) ? npc.x : 0,
+                    y: Number.isFinite(npc.y) ? npc.y : 0,
+                    z: Number.isFinite(npc.z) ? npc.z : 0
+                };
+            }
+            const orderedIds = Object.keys(byId).sort();
+            return orderedIds.map((merchantId) => byId[merchantId]);
+        }
+
         function getQaFishingMerchants() {
-            return {
+            const fallback = {
                 teacher: { x: 201, y: 223, z: 0, label: 'fishing teacher' },
                 supplier: { x: 209, y: 230, z: 0, label: 'fishing supplier' }
             };
+
+            const merged = Object.assign({}, fallback);
+            const keyByMerchantId = {
+                fishing_teacher: 'teacher',
+                fishing_supplier: 'supplier'
+            };
+            const discovered = getQaDiscoveredMerchants();
+            for (let i = 0; i < discovered.length; i++) {
+                const merchant = discovered[i];
+                const key = keyByMerchantId[merchant.merchantId];
+                if (!key || !merged[key]) continue;
+                merged[key] = {
+                    x: merchant.x,
+                    y: merchant.y,
+                    z: merchant.z,
+                    label: merchant.name || merged[key].label
+                };
+            }
+            return merged;
         }
 
         function qaListFishingMerchants() {
@@ -806,8 +871,59 @@ O445411111OOOOO.
         }
 
 
+        function getQaOpenableMerchantIds() {
+            const ids = new Set(['general_store']);
+            const economy = window.ShopEconomy;
+            const hasStockPolicy = economy && typeof economy.hasStockPolicy === 'function'
+                ? (merchantId) => economy.hasStockPolicy(merchantId)
+                : null;
+            const addCandidate = (merchantId) => {
+                const id = String(merchantId || '').trim().toLowerCase();
+                if (!id) return;
+                if (hasStockPolicy && !hasStockPolicy(id)) return;
+                ids.add(id);
+            };
+
+            if (economy && typeof economy.getConfiguredMerchantIds === 'function') {
+                const configured = economy.getConfiguredMerchantIds();
+                if (Array.isArray(configured)) {
+                    for (let i = 0; i < configured.length; i++) {
+                        addCandidate(configured[i]);
+                    }
+                }
+            }
+
+            const discovered = getQaDiscoveredMerchants();
+            for (let i = 0; i < discovered.length; i++) {
+                addCandidate(discovered[i].merchantId);
+            }
+
+            const ordered = Array.from(ids).sort();
+            const generalStoreIndex = ordered.indexOf('general_store');
+            if (generalStoreIndex > 0) {
+                ordered.splice(generalStoreIndex, 1);
+                ordered.unshift('general_store');
+            }
+            return ordered;
+        }
+
+        function formatQaOpenShopUsage() {
+            const merchantIds = getQaOpenableMerchantIds();
+            if (merchantIds.length === 0) return 'Usage: /qa openshop <merchantId>';
+            return 'Usage: /qa openshop <' + merchantIds.join('|') + '>';
+        }
+
         function getQaMerchantAliasMap() {
-            return {
+            const aliases = {};
+            const setAlias = (alias, merchantId, overwrite = false) => {
+                const aliasKey = String(alias || '').trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_');
+                const merchantKey = String(merchantId || '').trim().toLowerCase();
+                if (!aliasKey || !merchantKey) return;
+                if (!overwrite && aliases[aliasKey]) return;
+                aliases[aliasKey] = merchantKey;
+            };
+
+            const aliasSeed = {
                 teacher: 'fishing_teacher',
                 supplier: 'fishing_supplier',
                 tutor: 'rune_tutor',
@@ -822,17 +938,47 @@ O445411111OOOOO.
                 forester: 'forester_teacher',
                 woodsman: 'advanced_woodsman',
                 fletcher: 'fletching_supplier',
-                crafting_teacher: 'crafting_teacher',
                 tanner: 'tanner_rusk',
-                tanner_rusk: 'tanner_rusk',
-                forester_teacher: 'forester_teacher',
-                advanced_woodsman: 'advanced_woodsman',
-                fletching_supplier: 'fletching_supplier',
-                advanced_fletcher: 'advanced_fletcher',
-                borin_ironvein: 'borin_ironvein',
-                thrain_deepforge: 'thrain_deepforge',
-                elira_gemhand: 'elira_gemhand'
+                shop: 'general_store',
+                store: 'general_store',
+                general: 'general_store'
             };
+            const aliasKeys = Object.keys(aliasSeed);
+            for (let i = 0; i < aliasKeys.length; i++) {
+                const aliasKey = aliasKeys[i];
+                setAlias(aliasKey, aliasSeed[aliasKey], true);
+            }
+
+            const openableMerchantIds = getQaOpenableMerchantIds();
+            for (let i = 0; i < openableMerchantIds.length; i++) {
+                const merchantId = openableMerchantIds[i];
+                setAlias(merchantId, merchantId, true);
+                setAlias(merchantId.replace(/_/g, ''), merchantId);
+            }
+
+            const discovered = getQaDiscoveredMerchants();
+            for (let i = 0; i < discovered.length; i++) {
+                const merchant = discovered[i];
+                const merchantId = merchant.merchantId;
+                if (!merchantId) continue;
+                setAlias(merchantId, merchantId, true);
+
+                const segments = merchantId.split('_').filter(Boolean);
+                if (segments.length > 0) {
+                    setAlias(segments[segments.length - 1], merchantId);
+                }
+
+                const nameToken = String(merchant.name || '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '');
+                if (nameToken) {
+                    setAlias(nameToken, merchantId);
+                    setAlias(nameToken.replace(/_/g, ''), merchantId);
+                }
+            }
+
+            return aliases;
         }
         function qaGotoMerchant(targetLike) {
             const raw = String(targetLike || '').trim().toLowerCase();
@@ -1143,7 +1289,8 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand|crafting_teacher|tanner_rusk>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage(formatQaOpenShopUsage(), 'info');
                     return;
                 }
 
@@ -1278,9 +1425,9 @@ O445411111OOOOO.
 
                 if (cmd === 'openshop') {
                     const merchantId = String(parts[1] || '').toLowerCase();
-                    const qaOpenableMerchants = ['general_store', 'fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage', 'forester_teacher', 'advanced_woodsman', 'fletching_supplier', 'advanced_fletcher', 'borin_ironvein', 'thrain_deepforge', 'elira_gemhand', 'crafting_teacher', 'tanner_rusk'];
+                    const qaOpenableMerchants = getQaOpenableMerchantIds();
                     if (!qaOpenableMerchants.includes(merchantId)) {
-                        addChatMessage('Usage: /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand|crafting_teacher|tanner_rusk>', 'warn');
+                        addChatMessage(formatQaOpenShopUsage(), 'warn');
                         return;
                     }
                     if (typeof window.openShopForMerchant !== 'function') {

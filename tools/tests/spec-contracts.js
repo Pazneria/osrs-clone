@@ -155,6 +155,19 @@ function run() {
   assert(typeof shopEconomy.getMerchantSeedStockRows === "function", "shop economy seed-stock resolver missing");
   assert(typeof shopEconomy.hasFallbackStockPolicy === "function", "shop economy fallback-policy resolver missing");
   assert(typeof shopEconomy.hasStockPolicy === "function", "shop economy stock-policy validator missing");
+  assert(typeof shopEconomy.getConfiguredMerchantIds === "function", "shop economy configured-merchant discovery API missing");
+  assert(typeof shopEconomy.isKnownMerchantId === "function", "shop economy merchant-id lookup API missing");
+
+  const configuredMerchantIds = shopEconomy.getConfiguredMerchantIds();
+  assert(Array.isArray(configuredMerchantIds), "shop economy configured-merchant IDs should be an array");
+  assert(configuredMerchantIds.includes("general_store"), "shop economy configured-merchant IDs should include general store");
+  assert(configuredMerchantIds.includes("fishing_supplier"), "shop economy configured-merchant IDs should include fishing supplier");
+  assert(configuredMerchantIds.includes("fishing_teacher"), "shop economy configured-merchant IDs should include fishing teacher");
+  assert(configuredMerchantIds.includes("rune_tutor"), "shop economy configured-merchant IDs should include rune tutor");
+  assert(configuredMerchantIds.includes("crafting_teacher"), "shop economy configured-merchant IDs should include crafting teacher");
+  assert(shopEconomy.isKnownMerchantId("general_store"), "shop economy should recognize general_store merchant id");
+  assert(shopEconomy.isKnownMerchantId("fishing_supplier"), "shop economy should recognize configured merchant ids");
+  assert(!shopEconomy.isKnownMerchantId("unknown_merchant"), "shop economy should reject unknown merchant ids");
 
   const generalStoreSeedRows = shopEconomy.getMerchantSeedStockRows("general_store");
   const generalStoreSeedById = {};
@@ -672,6 +685,7 @@ function run() {
   assert(worldScript.includes("routeId: 'riverbank_fire_line'"), "riverbank cooking route missing");
   assert(worldScript.includes("routeId: 'dockside_fire_line'"), "dockside cooking route missing");
   assert(worldScript.includes("routeId: 'deep_water_dock_fire_line'"), "deep-water cooking route missing");
+  assert(worldScript.includes("window.getFishingTrainingLocations = function getFishingTrainingLocations()"), "fishing training location getter missing");
   assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
   assert(!worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should not seed on renderer init");
   assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");
@@ -711,12 +725,12 @@ function run() {
   const inputRenderScript = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
-  assert(coreScript.includes("borin_ironvein"), "core QA smithing merchant alias missing");
-  assert(coreScript.includes("thrain_deepforge"), "core QA smithing merchant alias missing");
-  assert(coreScript.includes("elira_gemhand"), "core QA smithing merchant alias missing");
-  assert(coreScript.includes("crafting_teacher"), "core QA crafting merchant alias missing");
-  assert(coreScript.includes("tanner_rusk"), "core QA tanner merchant alias missing");
-  assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand|crafting_teacher|tanner_rusk>"), "core QA openshop help missing merchant list entries");
+  assert(coreScript.includes("function getQaDiscoveredMerchants()"), "core QA merchant discovery helper missing");
+  assert(coreScript.includes("window.getFishingTrainingLocations"), "core QA fishing-spot discovery should read world getter");
+  assert(coreScript.includes("function getQaOpenableMerchantIds()"), "core QA openable-merchant resolver missing");
+  assert(coreScript.includes("getConfiguredMerchantIds === 'function'"), "core QA openable-merchant resolver should read ShopEconomy merchant config");
+  assert(coreScript.includes("function formatQaOpenShopUsage()"), "core QA openshop usage formatter missing");
+  assert(!coreScript.includes("const qaOpenableMerchants = ['general_store'"), "core QA openshop should not hard-code merchant id list");
   assert(coreScript.includes("/qa cookspots"), "core QA cookspots command help missing");
   assert(coreScript.includes("/qa gotocook <camp|river|dock|deep>"), "core QA gotocook command help missing");
   assert(coreScript.includes("gemMineUnlocked: false"), "core player unlock flags missing gem mine default");

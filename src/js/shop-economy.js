@@ -117,6 +117,36 @@
         return hasMerchantConfig(id) || hasFallbackStockPolicy(id);
     }
 
+    function getConfiguredMerchantIds() {
+        const ids = new Set([GENERAL_STORE_ID]);
+        const skills = getSkillSpecs();
+        const skillIds = Object.keys(skills);
+        for (let i = 0; i < skillIds.length; i++) {
+            const spec = skills[skillIds[i]];
+            const merchantTable = spec && spec.economy && spec.economy.merchantTable;
+            if (!merchantTable || typeof merchantTable !== 'object') continue;
+            const merchantIds = Object.keys(merchantTable);
+            for (let j = 0; j < merchantIds.length; j++) {
+                const id = String(merchantIds[j] || '').trim().toLowerCase();
+                if (!id) continue;
+                ids.add(id);
+            }
+        }
+        const ordered = Array.from(ids).sort();
+        const generalStoreIndex = ordered.indexOf(GENERAL_STORE_ID);
+        if (generalStoreIndex > 0) {
+            ordered.splice(generalStoreIndex, 1);
+            ordered.unshift(GENERAL_STORE_ID);
+        }
+        return ordered;
+    }
+
+    function isKnownMerchantId(merchantId) {
+        const id = String(merchantId || '').trim().toLowerCase();
+        if (!id) return false;
+        return getConfiguredMerchantIds().includes(id);
+    }
+
     function getSkillLevel(skillId) {
         if (!skillId) return 1;
         if (typeof playerSkills === 'object' && playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level)) {
@@ -343,6 +373,8 @@
         hasMerchantConfig,
         hasFallbackStockPolicy,
         hasStockPolicy,
+        getConfiguredMerchantIds,
+        isKnownMerchantId,
         recordMerchantPurchaseFromPlayer,
         getMerchantDefaultSellItemIds,
         getMerchantSeedStockRows,

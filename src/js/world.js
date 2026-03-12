@@ -2053,6 +2053,15 @@
                 heightMap[0][pierEntryY][x] = -0.01;
             }
 
+            const fishingTrainingLocations = [
+                { routeId: 'castle_pond_bank', alias: 'pond', label: 'Castle Pond Bank', x: castleFrontPond.cx, y: pierEntryY, z: 0 },
+                { routeId: 'castle_pond_pier', alias: 'pier', label: 'Castle Pond Pier', x: castleFrontPond.cx, y: pierYEnd - 1, z: 0 },
+                { routeId: 'castle_pond_deep_edge', alias: 'deep', label: 'Castle Pond Deep-Water Edge', x: castleFrontPond.cx, y: pierYEnd, z: 0 }
+            ];
+            window.getFishingTrainingLocations = function getFishingTrainingLocations() {
+                return fishingTrainingLocations.slice();
+            };
+
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
             const smithingStations = [
                 { type: 'FURNACE', x: 226, y: 232, facingYaw: -Math.PI / 2, footprintW: 2, footprintD: 3 },

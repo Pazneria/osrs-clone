@@ -770,7 +770,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-038 - QA location aliases and openable merchant list are manually duplicated
-- Status: Backlog
+- Status: Fixed
 - Severity: S3
 - Area: Other
 - Source: Manual
@@ -787,14 +787,18 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Build a QA discovery layer over runtime world entities and merchant config.
   2. Replace hard-coded merchant ID and coordinate lists with generated maps.
   3. Keep alias support but generate defaults from canonical merchant/world registries.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added runtime fishing QA location discovery via `window.getFishingTrainingLocations()` in `src/js/world.js` and updated `getQaFishingSpots()` in `src/js/core.js` to use it with fallback safety.
+  - Added `ShopEconomy.getConfiguredMerchantIds()` + `ShopEconomy.isKnownMerchantId()` in `src/js/shop-economy.js`, then switched `/qa openshop` usage/validation to generated merchant IDs (`getQaOpenableMerchantIds()` + `formatQaOpenShopUsage()`).
+  - Replaced manual QA merchant coordinate and alias tables with discovery helpers in `src/js/core.js` (`getQaDiscoveredMerchants()`, generated alias map seeded with stable shorthand aliases, and fishing-merchant discovery from live NPC merchant placements).
+  - Extended spec contract guards in `tools/tests/spec-contracts.js` to enforce the new discovery APIs and prevent regression back to hard-coded QA merchant lists.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-039 - Shop fallback stock is hard-coded in UI inventory module
 - Status: Fixed
