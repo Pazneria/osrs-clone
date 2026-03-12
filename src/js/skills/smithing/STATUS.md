@@ -10,9 +10,10 @@
 - [x] SMITHING-006: Core output wiring for bars, metal equipment, and smithing-made component items used by crafting/fletching.
 - [x] SMITHING-007: Cross-skill integration pass for held-item assembly chain (smithing parts + fletching handles + crafting final assembly).
 - [x] SMITHING-008: Jewelry-base production integration with crafting-owned mould unlock progression and downstream gem-attachment flow.
+- [x] SMITHING-009: Merchant stock/value alignment pass for Borin, Thrain, Elira, and general-store fallback rules.
 
 ## Now
-- [ ] SMITHING-009: Merchant stock/value alignment pass for Borin, Thrain, Elira, and general-store fallback rules.
+(empty)
 
 ## Next
 - [ ] SMITHING-010: Quest-gate integration for rune-material access and advanced-forge progression paths.

@@ -2379,7 +2379,9 @@
             const smithingMerchantSpots = [
                 { name: 'Borin Ironvein', merchantId: 'borin_ironvein', type: 2, x: 224, y: 230, facingYaw: -Math.PI / 2 },
                 { name: 'Thrain Deepforge', merchantId: 'thrain_deepforge', type: 6, x: 228, y: 236 },
-                { name: 'Elira Gemhand', merchantId: 'elira_gemhand', type: 3, x: 228, y: 231 }
+                { name: 'Elira Gemhand', merchantId: 'elira_gemhand', type: 3, x: 228, y: 231 },
+                { name: 'Crafting Teacher', merchantId: 'crafting_teacher', type: 2, x: 223, y: 236, facingYaw: Math.PI / 2 },
+                { name: 'Tanner Rusk', merchantId: 'tanner_rusk', type: 6, x: 225, y: 236 }
             ];
             for (let i = 0; i < smithingMerchantSpots.length; i++) {
                 const spot = smithingMerchantSpots[i];

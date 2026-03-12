@@ -591,7 +591,124 @@
                 }
 
                 return recipes;
-            })()
+            })(),
+            economy: {
+                primaryResource: 'normal_leather',
+                valueTable: {
+                    chisel: { buy: 4, sell: 1 },
+                    needle: { buy: 4, sell: 1 },
+                    thread: { buy: 2, sell: 1 },
+                    ring_mould: { buy: null, sell: null },
+                    amulet_mould: { buy: null, sell: null },
+                    tiara_mould: { buy: null, sell: null },
+                    silver_ore: { buy: 45, sell: 18 },
+                    gold_ore: { buy: 70, sell: 28 },
+                    uncut_ruby: { buy: 20, sell: 6 },
+                    cut_ruby: { buy: 40, sell: 12 },
+                    uncut_sapphire: { buy: 50, sell: 16 },
+                    cut_sapphire: { buy: 100, sell: 32 },
+                    uncut_emerald: { buy: 90, sell: 30 },
+                    cut_emerald: { buy: 180, sell: 60 },
+                    uncut_diamond: { buy: 150, sell: 50 },
+                    cut_diamond: { buy: 300, sell: 100 },
+                    silver_ring: { buy: null, sell: 20 },
+                    silver_amulet: { buy: null, sell: 20 },
+                    silver_tiara: { buy: null, sell: 20 },
+                    gold_ring: { buy: null, sell: 32 },
+                    gold_amulet: { buy: null, sell: 32 },
+                    gold_tiara: { buy: null, sell: 32 },
+                    ruby_silver_ring: { buy: null, sell: 32 },
+                    ruby_silver_amulet: { buy: null, sell: 32 },
+                    ruby_silver_tiara: { buy: null, sell: 32 },
+                    sapphire_silver_ring: { buy: null, sell: 64 },
+                    sapphire_silver_amulet: { buy: null, sell: 64 },
+                    sapphire_silver_tiara: { buy: null, sell: 64 },
+                    ruby_gold_ring: { buy: null, sell: 80 },
+                    ruby_gold_amulet: { buy: null, sell: 80 },
+                    ruby_gold_tiara: { buy: null, sell: 80 },
+                    sapphire_gold_ring: { buy: null, sell: 128 },
+                    sapphire_gold_amulet: { buy: null, sell: 128 },
+                    sapphire_gold_tiara: { buy: null, sell: 128 },
+                    emerald_gold_ring: { buy: null, sell: 212 },
+                    emerald_gold_amulet: { buy: null, sell: 212 },
+                    emerald_gold_tiara: { buy: null, sell: 212 },
+                    diamond_gold_ring: { buy: null, sell: 332 },
+                    diamond_gold_amulet: { buy: null, sell: 332 },
+                    diamond_gold_tiara: { buy: null, sell: 332 },
+                    normal_leather: { buy: 8, sell: 2 },
+                    wolf_leather: { buy: 24, sell: 8 },
+                    bear_leather: { buy: 60, sell: 20 },
+                    wooden_handle: { buy: null, sell: 6 },
+                    oak_handle: { buy: null, sell: 12 },
+                    willow_handle: { buy: null, sell: 20 },
+                    maple_handle: { buy: null, sell: 32 },
+                    yew_handle: { buy: null, sell: 50 },
+                    wooden_handle_strapped: { buy: 30, sell: 10 },
+                    oak_handle_strapped: { buy: 50, sell: 16 },
+                    willow_handle_strapped: { buy: 100, sell: 32 },
+                    maple_handle_strapped: { buy: 150, sell: 44 },
+                    yew_handle_strapped: { buy: 280, sell: 76 },
+                    bronze_sword: { buy: 40, sell: 10 },
+                    iron_sword: { buy: 120, sell: 35 },
+                    steel_sword: { buy: 350, sell: 110 },
+                    mithril_sword: { buy: 900, sell: 300 },
+                    adamant_sword: { buy: 2200, sell: 750 },
+                    rune_sword: { buy: null, sell: 2500 },
+                    bronze_axe: { buy: 40, sell: 10 },
+                    iron_axe: { buy: 120, sell: 35 },
+                    steel_axe: { buy: 350, sell: 110 },
+                    mithril_axe: { buy: 900, sell: 300 },
+                    adamant_axe: { buy: 2200, sell: 750 },
+                    rune_axe: { buy: null, sell: 2500 },
+                    bronze_pickaxe: { buy: 40, sell: 10 },
+                    iron_pickaxe: { buy: 120, sell: 35 },
+                    steel_pickaxe: { buy: 350, sell: 110 },
+                    mithril_pickaxe: { buy: 900, sell: 300 },
+                    adamant_pickaxe: { buy: 2200, sell: 750 },
+                    rune_pickaxe: { buy: null, sell: 2500 }
+                },
+                merchantTable: {
+                    crafting_teacher: {
+                        strictBuys: true,
+                        buys: ['chisel', 'needle', 'thread'],
+                        sells: ['chisel', 'needle', 'thread']
+                    },
+                    tanner_rusk: {
+                        strictBuys: true,
+                        buys: [
+                            'normal_leather', 'wolf_leather', 'bear_leather',
+                            'wooden_handle_strapped', 'oak_handle_strapped', 'willow_handle_strapped', 'maple_handle_strapped', 'yew_handle_strapped',
+                            'wooden_handle', 'oak_handle', 'willow_handle', 'maple_handle', 'yew_handle',
+                            'bronze_sword', 'iron_sword', 'steel_sword', 'mithril_sword', 'adamant_sword', 'rune_sword',
+                            'bronze_axe', 'iron_axe', 'steel_axe', 'mithril_axe', 'adamant_axe', 'rune_axe',
+                            'bronze_pickaxe', 'iron_pickaxe', 'steel_pickaxe', 'mithril_pickaxe', 'adamant_pickaxe', 'rune_pickaxe'
+                        ],
+                        sells: ['normal_leather', 'wolf_leather', 'bear_leather']
+                    },
+                    elira_gemhand: {
+                        strictBuys: true,
+                        buys: [
+                            'silver_ore', 'gold_ore',
+                            'uncut_ruby', 'cut_ruby',
+                            'uncut_sapphire', 'cut_sapphire',
+                            'uncut_emerald', 'cut_emerald',
+                            'uncut_diamond', 'cut_diamond',
+                            'silver_ring', 'silver_amulet', 'silver_tiara',
+                            'gold_ring', 'gold_amulet', 'gold_tiara',
+                            'ruby_silver_ring', 'ruby_silver_amulet', 'ruby_silver_tiara',
+                            'sapphire_silver_ring', 'sapphire_silver_amulet', 'sapphire_silver_tiara',
+                            'ruby_gold_ring', 'ruby_gold_amulet', 'ruby_gold_tiara',
+                            'sapphire_gold_ring', 'sapphire_gold_amulet', 'sapphire_gold_tiara',
+                            'emerald_gold_ring', 'emerald_gold_amulet', 'emerald_gold_tiara',
+                            'diamond_gold_ring', 'diamond_gold_amulet', 'diamond_gold_tiara'
+                        ],
+                        sells: ['silver_ore', 'gold_ore', 'uncut_ruby', 'uncut_sapphire', 'uncut_emerald', 'uncut_diamond']
+                    }
+                },
+                generalStoreFallback: {
+                    buyPolicy: 'half_price_floor'
+                }
+            }
         },
         fletching: {
             skillId: 'fletching',
@@ -1082,18 +1199,13 @@
                 merchantTable: {
                     borin_ironvein: {
                         strictBuys: true,
-                        buys: ['hammer', 'bronze_pickaxe', 'iron_pickaxe', 'steel_pickaxe', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore', 'bronze_bar', 'iron_bar', 'steel_bar', 'mithril_bar'],
-                        sells: ['hammer', 'bronze_pickaxe', 'iron_pickaxe', 'steel_pickaxe', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore']
+                        buys: ['hammer', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore'],
+                        sells: ['hammer', 'copper_ore', 'tin_ore', 'iron_ore', 'coal', 'mithril_ore']
                     },
                     thrain_deepforge: {
                         strictBuys: true,
-                        buys: ['mithril_pickaxe', 'adamant_pickaxe', 'adamant_ore', 'rune_ore', 'adamant_bar', 'rune_bar'],
-                        sells: ['mithril_pickaxe', 'adamant_pickaxe', 'adamant_ore', 'rune_ore']
-                    },
-                    elira_gemhand: {
-                        strictBuys: true,
-                        buys: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond', 'cut_ruby', 'cut_sapphire', 'cut_emerald', 'cut_diamond', 'silver_bar', 'gold_bar', 'silver_ring', 'silver_amulet', 'silver_tiara', 'gold_ring', 'gold_amulet', 'gold_tiara', 'ruby_silver_ring', 'ruby_silver_amulet', 'ruby_silver_tiara', 'sapphire_silver_ring', 'sapphire_silver_amulet', 'sapphire_silver_tiara', 'ruby_gold_ring', 'ruby_gold_amulet', 'ruby_gold_tiara', 'sapphire_gold_ring', 'sapphire_gold_amulet', 'sapphire_gold_tiara', 'emerald_gold_ring', 'emerald_gold_amulet', 'emerald_gold_tiara', 'diamond_gold_ring', 'diamond_gold_amulet', 'diamond_gold_tiara'],
-                        sells: ['silver_ore', 'gold_ore', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond']
+                        buys: ['adamant_ore', 'rune_ore'],
+                        sells: ['adamant_ore', 'rune_ore']
                     }
                 },
                 generalStoreFallback: {

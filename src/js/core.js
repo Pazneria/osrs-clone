@@ -749,6 +749,9 @@ O445411111OOOOO.
                 forester: 'forester_teacher',
                 woodsman: 'advanced_woodsman',
                 fletcher: 'fletching_supplier',
+                crafting_teacher: 'crafting_teacher',
+                tanner: 'tanner_rusk',
+                tanner_rusk: 'tanner_rusk',
                 forester_teacher: 'forester_teacher',
                 advanced_woodsman: 'advanced_woodsman',
                 fletching_supplier: 'fletching_supplier',
@@ -1051,7 +1054,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand|crafting_teacher|tanner_rusk>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -1186,9 +1189,9 @@ O445411111OOOOO.
 
                 if (cmd === 'openshop') {
                     const merchantId = String(parts[1] || '').toLowerCase();
-                    const qaOpenableMerchants = ['general_store', 'fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage', 'forester_teacher', 'advanced_woodsman', 'fletching_supplier', 'advanced_fletcher', 'borin_ironvein', 'thrain_deepforge', 'elira_gemhand'];
+                    const qaOpenableMerchants = ['general_store', 'fishing_supplier', 'fishing_teacher', 'rune_tutor', 'combination_sage', 'forester_teacher', 'advanced_woodsman', 'fletching_supplier', 'advanced_fletcher', 'borin_ironvein', 'thrain_deepforge', 'elira_gemhand', 'crafting_teacher', 'tanner_rusk'];
                     if (!qaOpenableMerchants.includes(merchantId)) {
-                        addChatMessage('Usage: /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>', 'warn');
+                        addChatMessage('Usage: /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand|crafting_teacher|tanner_rusk>', 'warn');
                         return;
                     }
                     if (typeof window.openShopForMerchant !== 'function') {
