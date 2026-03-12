@@ -3,7 +3,8 @@ const path = require("path");
 const {
   isObject,
   sortKeysDeep,
-  loadRuntimeItemCatalog
+  loadRuntimeItemCatalog,
+  loadIconSpriteCatalog
 } = require("./runtime-item-catalog");
 
 function readJson(filePath) {
@@ -21,6 +22,7 @@ function main() {
 
   const errors = [];
   const warnings = [];
+  const infos = [];
   const runtimeMirrorFilename = "runtime-item-catalog.json";
 
   const requiredDirs = [
@@ -53,12 +55,26 @@ function main() {
 
   const seenIds = new Map();
   let runtimeItemDefs = {};
+  let spriteMarkupByKey = {};
+  let fallbackSpriteKeyByKey = {};
 
   try {
     const runtime = loadRuntimeItemCatalog(projectRoot);
     runtimeItemDefs = isObject(runtime && runtime.itemDefs) ? runtime.itemDefs : {};
   } catch (error) {
     errors.push(`failed to load runtime item catalog: ${error.message}`);
+  }
+
+  try {
+    const spriteCatalog = loadIconSpriteCatalog(projectRoot);
+    spriteMarkupByKey = isObject(spriteCatalog && spriteCatalog.spriteMarkupByKey)
+      ? spriteCatalog.spriteMarkupByKey
+      : {};
+    fallbackSpriteKeyByKey = isObject(spriteCatalog && spriteCatalog.fallbackSpriteKeyByKey)
+      ? spriteCatalog.fallbackSpriteKeyByKey
+      : {};
+  } catch (error) {
+    errors.push(`failed to load icon sprite catalog: ${error.message}`);
   }
 
   for (const file of files) {
@@ -145,6 +161,47 @@ function main() {
     }
   }
 
+  const fallbackUsageByRequestedKey = {};
+  const runtimeItemIds = Object.keys(runtimeItemDefs);
+  for (const itemId of runtimeItemIds) {
+    const itemDef = runtimeItemDefs[itemId];
+    const icon = itemDef && itemDef.icon;
+    if (!isObject(icon) || icon.kind !== "sprite") {
+      continue;
+    }
+
+    const requestedKey = isString(icon.key) ? icon.key.trim() : "";
+    if (!requestedKey) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: sprite icon key must be a non-empty string`);
+      continue;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(spriteMarkupByKey, requestedKey)) {
+      continue;
+    }
+
+    const fallbackKey = isString(fallbackSpriteKeyByKey[requestedKey])
+      ? fallbackSpriteKeyByKey[requestedKey].trim()
+      : "";
+    if (fallbackKey && Object.prototype.hasOwnProperty.call(spriteMarkupByKey, fallbackKey)) {
+      fallbackUsageByRequestedKey[requestedKey] = (fallbackUsageByRequestedKey[requestedKey] || 0) + 1;
+      continue;
+    }
+
+    errors.push(
+      `runtime ITEM_DEFS.${itemId}: missing sprite '${requestedKey}' in icon catalog and no valid fallback`
+    );
+  }
+
+  const fallbackUsageKeys = Object.keys(fallbackUsageByRequestedKey).sort();
+  if (fallbackUsageKeys.length > 0) {
+    const usageSummary = fallbackUsageKeys
+      .map((key) => `${key}(${fallbackUsageByRequestedKey[key]})`)
+      .join(", ");
+    infos.push(`Sprite fallback usage detected: ${usageSummary}`);
+    infos.push(`Icon fallback usage count: ${fallbackUsageKeys.reduce((sum, key) => sum + fallbackUsageByRequestedKey[key], 0)}`);
+  }
+
   const runtimeMirrorPath = path.join(itemsDir, runtimeMirrorFilename);
   if (!fs.existsSync(runtimeMirrorPath)) {
     errors.push(`missing runtime mirror '${runtimeMirrorFilename}' (run 'npm.cmd run tool:items:sync')`);
@@ -174,6 +231,10 @@ function main() {
 
   if (warnings.length > 0) {
     for (const w of warnings) console.warn(`WARN: ${w}`);
+  }
+
+  if (infos.length > 0) {
+    for (const info of infos) console.log(`INFO: ${info}`);
   }
 
   if (errors.length > 0) {

@@ -628,11 +628,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-033 - Inline icon sprite registry bypasses asset pipeline
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: Other
 - Source: Manual
-- Links: `docs/ASSET_PIPELINE.md`, `src/js/core.js`, `src/js/content/item-catalog.js`
+- Links: `docs/ASSET_PIPELINE.md`, `index.html`, `src/js/core.js`, `src/js/content/icon-sprite-catalog.js`, `tools/content/validate-items.js`, `tools/tests/icon-sprite-catalog-guard.js`
 - Repro:
   1. Inspect `makeIconSprite` in `src/js/core.js`.
   2. Observe dozens of inline SVG literals and hard-coded rune fallback sprite mappings.
@@ -647,10 +647,10 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Add validation for missing icon references and fallback usage counts.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - Added a versioned progress save schema in `src/js/core.js` (`osrsClone.progress.v1`) with migration fallback, payload validation, and defensive sanitization for item slots, skills, unlock flags, merchant progress, and menu prefs.
-  - Implemented load-on-startup before world initialization plus autosave every 10 seconds and final save flushes on `beforeunload` and `pagehide`.
-  - Included run-mode, inventory, bank, equipment, position, skills, unlocks, and merchant progress in persisted state so session progress survives refresh/restart.
-  - Added a persistence regression guard (`tools/tests/progress-persistence-guard.js`) and wired it into `npm test`.
+  - Added `src/js/content/icon-sprite-catalog.js` as the canonical runtime sprite icon registry and fallback map, moving sprite key resolution out of `core.js`.
+  - Updated `makeIconSprite` in `src/js/core.js` to resolve markup through `window.IconSpriteCatalog` and keep only a minimal generic placeholder fallback for unresolved sprite keys.
+  - Added sprite-key coverage checks in `tools/content/validate-items.js` (via new `loadIconSpriteCatalog(...)` helper) so missing sprite references fail validation and fallback usage counts are reported.
+  - Added regression guard `tools/tests/icon-sprite-catalog-guard.js` and wired it into `npm test` to prevent re-introducing inline sprite maps in `core.js`.
 - Plan vNext (if revised):
   1.
 - Verification:

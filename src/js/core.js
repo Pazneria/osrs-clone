@@ -242,76 +242,17 @@
             showRuntimeCrashOverlay(event.reason);
         });
 
-        // --- Pixel Art Generator ---
-        const logPalette = {
-            'O': '#21160d', '1': '#3b2513', '2': '#54361e', '3': '#6e492b', 
-            '4': '#b59265', '5': '#8f6c44', 'M': '#3d4c28', '.': 'transparent'
-        };
-
-        function generatePixelArt(asciiGrid, palette) {
-            const rows = asciiGrid.trim().split('\n');
-            const h = rows.length;
-            const w = Math.max(...rows.map(r => r.trim().length));
-            let svg = `<svg viewBox="0 0 ${w} ${h}" class="w-[80%] h-[80%] drop-shadow-md pointer-events-none" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">`;
-            rows.forEach((row, y) => {
-                for(let x=0; x<row.trim().length; x++) {
-                    const char = row[x];
-                    if(palette[char] && char !== '.') {
-                        svg += `<rect x="${x}" y="${y}" width="1.1" height="1.1" fill="${palette[char]}"/>`;
-                    }
-                }
-            });
-            svg += `</svg>`;
-            return svg;
+        function makeMissingIconSprite() {
+            return '<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="12" height="12" fill="#2f3439"/><rect x="3" y="3" width="10" height="10" fill="#4a525a"/><rect x="5" y="4" width="6" height="1" fill="#9ba7b3"/><rect x="5" y="11" width="6" height="1" fill="#9ba7b3"/><rect x="4" y="5" width="1" height="6" fill="#9ba7b3"/><rect x="11" y="5" width="1" height="6" fill="#9ba7b3"/></svg>';
         }
 
-        const spriteLogs = `
-......OOOOOOO...
-....OO1122231O..
-...O4451122211O.
-..O45554122211OO
-..O45554112211OO
-..O445411111OOO.
-...O4111OOOO231O
-.OO12231OO22211O
-O445112221O42211O
-O455541222O41211O
-O455541122O4111O
-O445411111OOOOO.
-.O4111OOOO......
-.OOOOO..........`.trim();
-
-                function makeIconSprite(id) {
-            const sprites = {
-                iron_axe: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="2" width="2" height="12" fill="#6b4a2a"/><rect x="5" y="2" width="6" height="4" fill="#b7bcc5"/><rect x="6" y="3" width="1" height="2" fill="#8e949d"/></svg>`,
-                coins: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="9" width="8" height="3" fill="#d7a520"/><rect x="3" y="7" width="8" height="3" fill="#f1c94a"/><rect x="5" y="5" width="8" height="3" fill="#ffd95e"/></svg>`,
-                ashes: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="9" width="6" height="3" fill="#7e7e7e"/><rect x="4" y="8" width="2" height="2" fill="#9b9b9b"/><rect x="10" y="8" width="2" height="2" fill="#9b9b9b"/><rect x="7" y="7" width="2" height="1" fill="#b3b3b3"/></svg>`,
-                tinderbox: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="10" height="7" fill="#8a5a32"/><rect x="4" y="6" width="8" height="5" fill="#b87a45"/><rect x="6" y="3" width="4" height="2" fill="#5d5d5d"/></svg>`,
-                knife: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="10" width="5" height="2" fill="#6b4a2a"/><rect x="8" y="8" width="5" height="2" fill="#bfc4cc"/><rect x="11" y="6" width="2" height="2" fill="#d5dae2"/></svg>`,
-                pickaxe: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="7" y="3" width="2" height="10" fill="#6b4a2a"/><rect x="4" y="3" width="8" height="2" fill="#9ca2ab"/><rect x="3" y="4" width="2" height="1" fill="#9ca2ab"/><rect x="11" y="4" width="2" height="1" fill="#9ca2ab"/></svg>`,
-                small_net: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="3" width="2" height="10" fill="#6b4a2a"/><rect x="4" y="2" width="5" height="1" fill="#9ca2ab"/><rect x="3" y="3" width="1" height="4" fill="#9ca2ab"/><rect x="4" y="7" width="5" height="1" fill="#9ca2ab"/><rect x="8" y="3" width="1" height="4" fill="#9ca2ab"/></svg>`,
-                raw_shrimp: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="7" height="4" fill="#e09ca0"/><rect x="10" y="7" width="2" height="2" fill="#cf7c83"/><rect x="3" y="7" width="1" height="2" fill="#cf7c83"/><rect x="6" y="5" width="3" height="1" fill="#f3bbc0"/></svg>`,
-                copper_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#7b848d"/><rect x="5" y="5" width="2" height="2" fill="#c47b43"/><rect x="8" y="6" width="2" height="2" fill="#b56b3a"/><rect x="6" y="9" width="2" height="2" fill="#cf8a54"/></svg>`,
-                tin_ore: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#6f7883"/><rect x="5" y="5" width="2" height="2" fill="#e4eaef"/><rect x="8" y="6" width="2" height="2" fill="#cfd6dd"/><rect x="6" y="9" width="2" height="2" fill="#f0f4f8"/></svg>`,
-                rune_essence: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" fill="#7b8088"/><rect x="5" y="5" width="2" height="2" fill="#9aa0aa"/><rect x="8" y="6" width="2" height="2" fill="#b5bbc6"/><rect x="6" y="9" width="3" height="2" fill="#8e94a0"/></svg>`,
-                ember_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="1" fill="#ffd38a"/><rect x="5" y="3" width="6" height="2" fill="#ff9a3c"/><rect x="4" y="5" width="8" height="3" fill="#ff6a2a"/><rect x="5" y="8" width="6" height="3" fill="#c73a1c"/><rect x="6" y="11" width="4" height="2" fill="#7a1e17"/></svg>`,
-                air_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="2" fill="#e9f2ff"/><rect x="5" y="4" width="6" height="2" fill="#cde0ff"/><rect x="4" y="6" width="8" height="3" fill="#9fc2ff"/><rect x="5" y="9" width="6" height="3" fill="#6a9cf0"/><rect x="6" y="12" width="4" height="1" fill="#4778cc"/></svg>`,
-                smoke_rune: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2" width="4" height="1" fill="#efe7dd"/><rect x="5" y="3" width="6" height="2" fill="#b8a8a0"/><rect x="4" y="5" width="8" height="3" fill="#8d7f79"/><rect x="5" y="8" width="6" height="3" fill="#5f5350"/><rect x="6" y="11" width="4" height="2" fill="#3e3533"/></svg>`,
-                small_pouch: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="9" fill="#7a5a3a"/><rect x="5" y="5" width="6" height="7" fill="#9b744b"/><rect x="5" y="3" width="6" height="1" fill="#5d422a"/></svg>`,
-                medium_pouch: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="10" height="10" fill="#6f5234"/><rect x="4" y="4" width="8" height="8" fill="#936b44"/><rect x="4" y="2" width="8" height="1" fill="#573d27"/></svg>`,
-                large_pouch: `<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="12" height="11" fill="#63482d"/><rect x="3" y="3" width="10" height="9" fill="#855f3d"/><rect x="3" y="1" width="10" height="1" fill="#4f3723"/></svg>`
-            };
-            const fallbackSpriteId = {
-                water_rune: 'air_rune',
-                earth_rune: 'smoke_rune',
-                steam_rune: 'air_rune',
-                lava_rune: 'ember_rune',
-                mud_rune: 'smoke_rune',
-                mist_rune: 'air_rune',
-                dust_rune: 'smoke_rune'
-            };
-            const spriteMarkup = sprites[id] || sprites[fallbackSpriteId[id]] || "";
-            return `<span class="pointer-events-none drop-shadow-md">${spriteMarkup}</span>`;
+        function makeIconSprite(id) {
+            const iconCatalog = window.IconSpriteCatalog;
+            const resolved = (iconCatalog && typeof iconCatalog.resolveSpriteMarkup === 'function')
+                ? iconCatalog.resolveSpriteMarkup(id)
+                : null;
+            const spriteMarkup = resolved && typeof resolved.markup === 'string' ? resolved.markup : '';
+            return `<span class="pointer-events-none drop-shadow-md">${spriteMarkup || makeMissingIconSprite()}</span>`;
         }
 
         function makeIconFromImage(path) {

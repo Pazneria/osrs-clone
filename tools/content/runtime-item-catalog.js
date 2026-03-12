@@ -33,9 +33,36 @@ function loadRuntimeItemCatalog(projectRoot) {
   };
 }
 
+function loadIconSpriteCatalog(projectRoot) {
+  const catalogPath = path.join(projectRoot, "src", "js", "content", "icon-sprite-catalog.js");
+  const code = fs.readFileSync(catalogPath, "utf8");
+  const sandbox = { window: {} };
+
+  vm.runInNewContext(code, sandbox, { filename: catalogPath });
+
+  const root = sandbox.window && sandbox.window.IconSpriteCatalog;
+  if (!isObject(root)) {
+    throw new Error("Failed to load window.IconSpriteCatalog from src/js/content/icon-sprite-catalog.js");
+  }
+
+  const spriteMarkupByKey = root.spriteMarkupByKey;
+  const fallbackSpriteKeyByKey = root.fallbackSpriteKeyByKey;
+  if (!isObject(spriteMarkupByKey)) {
+    throw new Error("Icon sprite catalog missing spriteMarkupByKey object");
+  }
+  if (fallbackSpriteKeyByKey != null && !isObject(fallbackSpriteKeyByKey)) {
+    throw new Error("Icon sprite catalog fallbackSpriteKeyByKey should be an object");
+  }
+
+  return {
+    spriteMarkupByKey,
+    fallbackSpriteKeyByKey: isObject(fallbackSpriteKeyByKey) ? fallbackSpriteKeyByKey : {}
+  };
+}
+
 module.exports = {
   isObject,
   sortKeysDeep,
-  loadRuntimeItemCatalog
+  loadRuntimeItemCatalog,
+  loadIconSpriteCatalog
 };
-

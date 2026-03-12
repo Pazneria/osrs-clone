@@ -87,10 +87,14 @@ They can still follow this pipeline because it is codified in:
 ## Catalog Source Of Truth
 
 - Canonical runtime item definitions: `src/js/content/item-catalog.js`.
+- Canonical runtime sprite icon registry + fallback map: `src/js/content/icon-sprite-catalog.js`.
 - Generated runtime mirror: `content/items/runtime-item-catalog.json`.
 - Keep the runtime mirror in sync with:
 
 ```bat
 npm.cmd run tool:items:sync
 ```
+
+`npm.cmd run tool:items:validate` now also validates runtime sprite icon key coverage
+against the icon sprite catalog and reports fallback usage counts.
 

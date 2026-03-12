@@ -11,6 +11,7 @@ When adding or updating item content, use the local tooling before hand-writing 
 ## Asset Sources of Truth
 
 - Runtime item definitions: `src/js/content/item-catalog.js`
+- Runtime icon sprite registry/fallbacks: `src/js/content/icon-sprite-catalog.js`
 - Generated runtime mirror: `content/items/runtime-item-catalog.json`
 - Draft item metadata files: `content/items/*.json` (non-underscore files, excluding the runtime mirror)
 - Icon assets: `assets/pixel/*`
