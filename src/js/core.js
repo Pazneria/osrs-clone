@@ -7,6 +7,17 @@
         
         // NEW: Max Planes (Z-Levels)
         const PLANES = 2; // Floor 0 (Ground), Floor 1 (Second Floor)
+        const DEFAULT_UNLOCK_FLAGS = Object.freeze({
+            runecraftingComboUnlocked: false,
+            gemMineUnlocked: false,
+            ringMouldUnlocked: false,
+            amuletMouldUnlocked: false,
+            tiaraMouldUnlocked: false
+        });
+        const PROGRESS_SAVE_KEY = 'osrsClone.progress.v1';
+        const PROGRESS_SAVE_VERSION = 1;
+        const PROGRESS_AUTOSAVE_INTERVAL_MS = 10000;
+        const PROGRESS_MAX_SKILL_LEVEL = 99;
 
         // --- Game State (Logical & Terrain) ---
         let currentTick = 0;
@@ -122,13 +133,7 @@
             lastCastTick: -1,
             firemakingTarget: null,
             pendingSkillStart: null,
-            unlockFlags: {
-                runecraftingComboUnlocked: false,
-                gemMineUnlocked: false,
-                ringMouldUnlocked: false,
-                amuletMouldUnlocked: false,
-                tiaraMouldUnlocked: false
-            },
+            unlockFlags: { ...DEFAULT_UNLOCK_FLAGS },
             merchantProgress: {}
         };
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
@@ -1170,6 +1175,328 @@ O445411111OOOOO.
         let fishingSpotsToRender = [];
         let cookingFireSpotsToRender = [];
         let selectedUse = { invIndex: null, itemId: null }; 
+        let progressAutosaveHandle = null;
+
+        function canUseProgressStorage() {
+            try {
+                return typeof window !== 'undefined' && !!window.localStorage;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function sanitizeItemId(value) {
+            if (typeof value !== 'string') return '';
+            return value.trim().toLowerCase();
+        }
+
+        function serializeInventorySlot(slot) {
+            if (!slot || !slot.itemData || typeof slot.itemData.id !== 'string') return null;
+            const itemId = sanitizeItemId(slot.itemData.id);
+            if (!itemId || !ITEM_DB[itemId]) return null;
+            const rawAmount = Number(slot.amount);
+            const amount = Number.isFinite(rawAmount) ? Math.max(1, Math.floor(rawAmount)) : 1;
+            return { itemId, amount };
+        }
+
+        function deserializeInventorySlot(serializedSlot) {
+            if (!serializedSlot || typeof serializedSlot !== 'object') return null;
+            const itemId = sanitizeItemId(serializedSlot.itemId);
+            if (!itemId || !ITEM_DB[itemId]) return null;
+            const itemData = ITEM_DB[itemId];
+            const rawAmount = Number(serializedSlot.amount);
+            const amount = itemData.stackable
+                ? (Number.isFinite(rawAmount) ? Math.max(1, Math.floor(rawAmount)) : 1)
+                : 1;
+            return { itemData, amount };
+        }
+
+        function serializeItemArray(slots) {
+            if (!Array.isArray(slots)) return [];
+            return slots.map((slot) => serializeInventorySlot(slot));
+        }
+
+        function deserializeItemArray(savedSlots, size) {
+            const restored = Array(size).fill(null);
+            if (!Array.isArray(savedSlots)) return restored;
+            const max = Math.min(size, savedSlots.length);
+            for (let i = 0; i < max; i++) {
+                restored[i] = deserializeInventorySlot(savedSlots[i]);
+            }
+            return restored;
+        }
+
+        function serializeEquipmentState() {
+            const out = {};
+            const slotNames = Object.keys(equipment || {});
+            for (let i = 0; i < slotNames.length; i++) {
+                const slotName = slotNames[i];
+                const equippedItem = equipment[slotName];
+                out[slotName] = equippedItem && typeof equippedItem.id === 'string'
+                    ? sanitizeItemId(equippedItem.id)
+                    : null;
+            }
+            return out;
+        }
+
+        function deserializeEquipmentState(savedEquipment) {
+            const restored = {};
+            const slotNames = Object.keys(equipment || {});
+            for (let i = 0; i < slotNames.length; i++) {
+                const slotName = slotNames[i];
+                const itemId = savedEquipment && typeof savedEquipment === 'object'
+                    ? sanitizeItemId(savedEquipment[slotName])
+                    : '';
+                restored[slotName] = itemId && ITEM_DB[itemId] ? ITEM_DB[itemId] : null;
+            }
+            return restored;
+        }
+
+        function sanitizeUserItemPrefs(savedPrefs) {
+            const restored = {};
+            if (!savedPrefs || typeof savedPrefs !== 'object') return restored;
+            const keys = Object.keys(savedPrefs);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                if (!key || typeof savedPrefs[key] !== 'string') continue;
+                restored[key] = savedPrefs[key];
+            }
+            return restored;
+        }
+
+        function sanitizeSkillState(savedSkills) {
+            const defaults = playerSkills;
+            const skillIds = Object.keys(defaults);
+            const restored = {};
+            for (let i = 0; i < skillIds.length; i++) {
+                const skillId = skillIds[i];
+                const defaultEntry = defaults[skillId] || { xp: 0, level: 1 };
+                const savedEntry = savedSkills && typeof savedSkills === 'object' ? savedSkills[skillId] : null;
+                const xpRaw = savedEntry && Number.isFinite(savedEntry.xp) ? savedEntry.xp : defaultEntry.xp;
+                const xp = Math.max(0, Math.floor(xpRaw));
+
+                let level = defaultEntry.level;
+                if (savedEntry && Number.isFinite(savedEntry.level)) {
+                    level = Math.max(1, Math.min(PROGRESS_MAX_SKILL_LEVEL, Math.floor(savedEntry.level)));
+                }
+                if (typeof getLevelForXp === 'function') {
+                    level = Math.max(1, Math.min(PROGRESS_MAX_SKILL_LEVEL, getLevelForXp(xp)));
+                }
+
+                restored[skillId] = { xp, level };
+            }
+            return restored;
+        }
+
+        function sanitizeUnlockFlags(savedFlags) {
+            const restored = { ...DEFAULT_UNLOCK_FLAGS };
+            if (!savedFlags || typeof savedFlags !== 'object') return restored;
+            const keys = Object.keys(DEFAULT_UNLOCK_FLAGS);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                if (savedFlags[key] === undefined) continue;
+                restored[key] = !!savedFlags[key];
+            }
+            return restored;
+        }
+
+        function sanitizeMerchantProgress(savedProgress) {
+            const restored = {};
+            if (!savedProgress || typeof savedProgress !== 'object') return restored;
+
+            const merchantIds = Object.keys(savedProgress);
+            for (let i = 0; i < merchantIds.length; i++) {
+                const merchantId = merchantIds[i];
+                const row = savedProgress[merchantId];
+                if (!row || typeof row !== 'object') continue;
+
+                const soldCounts = {};
+                const unlockedItems = {};
+
+                const sold = row.soldCounts;
+                if (sold && typeof sold === 'object') {
+                    const soldKeys = Object.keys(sold);
+                    for (let j = 0; j < soldKeys.length; j++) {
+                        const itemId = sanitizeItemId(soldKeys[j]);
+                        if (!itemId) continue;
+                        const value = Number(sold[soldKeys[j]]);
+                        if (!Number.isFinite(value) || value <= 0) continue;
+                        soldCounts[itemId] = Math.floor(value);
+                    }
+                }
+
+                const unlocked = row.unlockedItems;
+                if (unlocked && typeof unlocked === 'object') {
+                    const unlockedKeys = Object.keys(unlocked);
+                    for (let j = 0; j < unlockedKeys.length; j++) {
+                        const itemId = sanitizeItemId(unlockedKeys[j]);
+                        if (!itemId) continue;
+                        if (unlocked[unlockedKeys[j]]) unlockedItems[itemId] = true;
+                    }
+                }
+
+                restored[merchantId] = { soldCounts, unlockedItems };
+            }
+
+            return restored;
+        }
+
+        function sanitizeAppearanceState(savedAppearance) {
+            if (!window.playerAppearanceState || typeof window.playerAppearanceState !== 'object') return null;
+            if (!savedAppearance || typeof savedAppearance !== 'object') return null;
+
+            const gender = savedAppearance.gender === 1 ? 1 : 0;
+            const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];
+            const colors = [0, 0, 0, 0, 0];
+            for (let i = 0; i < colors.length; i++) {
+                const raw = Number(colorsIn[i]);
+                colors[i] = Number.isFinite(raw) ? Math.floor(raw) : 0;
+            }
+            return { gender, colors };
+        }
+
+        function buildProgressPayload(reason = 'manual') {
+            return {
+                version: PROGRESS_SAVE_VERSION,
+                savedAt: Date.now(),
+                reason,
+                state: {
+                    playerState: {
+                        x: playerState.x,
+                        y: playerState.y,
+                        z: playerState.z,
+                        targetRotation: Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0,
+                        currentHitpoints: Number.isFinite(playerState.currentHitpoints) ? Math.floor(playerState.currentHitpoints) : 10,
+                        eatingCooldownEndTick: Number.isFinite(playerState.eatingCooldownEndTick) ? Math.floor(playerState.eatingCooldownEndTick) : 0,
+                        unlockFlags: sanitizeUnlockFlags(playerState.unlockFlags),
+                        merchantProgress: sanitizeMerchantProgress(playerState.merchantProgress)
+                    },
+                    playerSkills: sanitizeSkillState(playerSkills),
+                    inventory: serializeItemArray(inventory),
+                    bankItems: serializeItemArray(bankItems),
+                    equipment: serializeEquipmentState(),
+                    userItemPrefs: sanitizeUserItemPrefs(userItemPrefs),
+                    runMode: !!isRunning,
+                    appearance: window.playerAppearanceState
+                        ? {
+                            gender: window.playerAppearanceState.gender === 1 ? 1 : 0,
+                            colors: Array.isArray(window.playerAppearanceState.colors)
+                                ? window.playerAppearanceState.colors.slice(0, 5)
+                                : [0, 0, 0, 0, 0]
+                        }
+                        : null
+                }
+            };
+        }
+
+        function migrateProgressPayload(payload) {
+            if (!payload || typeof payload !== 'object') return null;
+            if (payload.version === PROGRESS_SAVE_VERSION) return payload;
+            const legacyState = payload.state || payload;
+            if (legacyState && typeof legacyState === 'object') {
+                return {
+                    version: PROGRESS_SAVE_VERSION,
+                    savedAt: Number.isFinite(payload.savedAt) ? payload.savedAt : Date.now(),
+                    reason: payload.reason || 'migrated',
+                    state: legacyState
+                };
+            }
+            return null;
+        }
+
+        function saveProgressToStorage(reason = 'manual') {
+            if (!canUseProgressStorage()) return { ok: false, reason: 'storage_unavailable' };
+            try {
+                const payload = buildProgressPayload(reason);
+                localStorage.setItem(PROGRESS_SAVE_KEY, JSON.stringify(payload));
+                return { ok: true };
+            } catch (error) {
+                console.warn('Progress save failed', error);
+                return { ok: false, reason: 'save_failed', error };
+            }
+        }
+
+        function loadProgressFromStorage() {
+            if (!canUseProgressStorage()) return { loaded: false, reason: 'storage_unavailable' };
+            let raw = null;
+            try {
+                raw = localStorage.getItem(PROGRESS_SAVE_KEY);
+            } catch (error) {
+                console.warn('Progress load failed', error);
+                return { loaded: false, reason: 'load_failed', error };
+            }
+            if (!raw) return { loaded: false, reason: 'no_save' };
+
+            let parsed = null;
+            try {
+                parsed = JSON.parse(raw);
+            } catch (error) {
+                console.warn('Progress load parse failed', error);
+                return { loaded: false, reason: 'parse_failed', error };
+            }
+
+            const migrated = migrateProgressPayload(parsed);
+            if (!migrated || !migrated.state || typeof migrated.state !== 'object') {
+                return { loaded: false, reason: 'invalid_payload' };
+            }
+
+            const state = migrated.state;
+            const savedPlayerState = state.playerState && typeof state.playerState === 'object' ? state.playerState : {};
+
+            const safeX = Number.isFinite(savedPlayerState.x) ? Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(savedPlayerState.x))) : playerState.x;
+            const safeY = Number.isFinite(savedPlayerState.y) ? Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(savedPlayerState.y))) : playerState.y;
+            const safeZ = Number.isFinite(savedPlayerState.z) ? Math.max(0, Math.min(PLANES - 1, Math.floor(savedPlayerState.z))) : playerState.z;
+
+            playerState.x = safeX;
+            playerState.y = safeY;
+            playerState.z = safeZ;
+            playerState.prevX = safeX;
+            playerState.prevY = safeY;
+            playerState.targetX = safeX;
+            playerState.targetY = safeY;
+            playerState.path = [];
+            playerState.pendingSkillStart = null;
+            playerState.pendingActionAfterTurn = null;
+            playerState.turnLock = false;
+            playerState.actionVisualReady = true;
+            playerState.action = 'IDLE';
+            playerState.targetObj = null;
+            playerState.targetRotation = Number.isFinite(savedPlayerState.targetRotation)
+                ? savedPlayerState.targetRotation
+                : playerState.targetRotation;
+            playerState.currentHitpoints = Number.isFinite(savedPlayerState.currentHitpoints)
+                ? Math.max(1, Math.floor(savedPlayerState.currentHitpoints))
+                : playerState.currentHitpoints;
+            playerState.eatingCooldownEndTick = Number.isFinite(savedPlayerState.eatingCooldownEndTick)
+                ? Math.max(0, Math.floor(savedPlayerState.eatingCooldownEndTick))
+                : 0;
+            playerState.unlockFlags = sanitizeUnlockFlags(savedPlayerState.unlockFlags);
+            playerState.merchantProgress = sanitizeMerchantProgress(savedPlayerState.merchantProgress);
+
+            playerSkills = sanitizeSkillState(state.playerSkills);
+            inventory = deserializeItemArray(state.inventory, 28);
+            bankItems = deserializeItemArray(state.bankItems, 200);
+            equipment = deserializeEquipmentState(state.equipment);
+            userItemPrefs = sanitizeUserItemPrefs(state.userItemPrefs);
+            isRunning = !!state.runMode;
+            selectedUse.invIndex = null;
+            selectedUse.itemId = null;
+
+            const appearance = sanitizeAppearanceState(state.appearance);
+            if (appearance && window.playerAppearanceState) {
+                window.playerAppearanceState.gender = appearance.gender;
+                window.playerAppearanceState.colors = appearance.colors.slice();
+            }
+
+            return { loaded: true, savedAt: migrated.savedAt };
+        }
+
+        function startProgressAutosave() {
+            if (progressAutosaveHandle) clearInterval(progressAutosaveHandle);
+            progressAutosaveHandle = setInterval(() => {
+                saveProgressToStorage('autosave');
+            }, PROGRESS_AUTOSAVE_INTERVAL_MS);
+        }
 
         // Temporary interaction diagnostics for cooking-use flow.
         if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false; 
@@ -1572,6 +1899,7 @@ O445411111OOOOO.
         }
 
         window.onload = function() {
+            const loadProgressResult = loadProgressFromStorage();
             if (typeof window.initLogicalMap === 'function') window.initLogicalMap();
             if (typeof window.initThreeJS === 'function') window.initThreeJS();
             if (typeof window.build3DEnvironment === 'function') window.build3DEnvironment();
@@ -1581,9 +1909,17 @@ O445411111OOOOO.
             addChatMessage('Welcome to the prototype.', 'game');
             addChatMessage('Tip: Left-click to move. Right-click for actions.', 'info');
             addChatMessage('QA loadouts: type /qa help in chat.', 'info');
+            if (loadProgressResult && loadProgressResult.loaded) {
+                addChatMessage('Loaded saved progress from your previous session.', 'info');
+            } else if (loadProgressResult && (loadProgressResult.reason === 'parse_failed' || loadProgressResult.reason === 'invalid_payload')) {
+                addChatMessage('Save data was invalid and has been ignored; starting with defaults.', 'warn');
+            }
             initChatInput();
             if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
             if (typeof initPoseEditor === 'function') initPoseEditor();
+            startProgressAutosave();
+            window.addEventListener('beforeunload', () => saveProgressToStorage('beforeunload'));
+            window.addEventListener('pagehide', () => saveProgressToStorage('pagehide'));
 
             const worldMapPanel = document.getElementById('world-map-panel');
             const worldMapToggleBtn = document.getElementById('mapToggleBtn');
@@ -1628,13 +1964,17 @@ O445411111OOOOO.
             });
             
             const runBtn = document.getElementById('runToggleBtn');
-            runBtn.addEventListener('click', () => {
-                isRunning = !isRunning;
+            const syncRunToggleButton = () => {
                 if (isRunning) {
                     runBtn.title = 'Run Mode: ON'; runBtn.classList.replace('bg-gray-700', 'bg-green-600'); runBtn.classList.replace('hover:bg-gray-600', 'hover:bg-green-500');
                 } else {
                     runBtn.title = 'Run Mode: OFF'; runBtn.classList.replace('bg-green-600', 'bg-gray-700'); runBtn.classList.replace('hover:bg-green-500', 'hover:bg-gray-600');
                 }
+            };
+            syncRunToggleButton();
+            runBtn.addEventListener('click', () => {
+                isRunning = !isRunning;
+                syncRunToggleButton();
             });
 
             const freeCamBtn = document.getElementById('freeCamBtn');

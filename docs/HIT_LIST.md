@@ -252,11 +252,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-009 - Account/progress persistence across logins
-- Status: Backlog
+- Status: Fixed
 - Severity: S1
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `src/js/core.js`, `tools/tests/progress-persistence-guard.js`, `package.json`
 - Repro:
   1. Play, gain progress, restart/login.
 - Expected: Player progress auto-saves and persists across multiple logins.
@@ -645,14 +645,18 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Move icon mapping responsibility into item metadata (or generated catalog metadata).
   2. Keep a small generic fallback path only for missing assets.
   3. Add validation for missing icon references and fallback usage counts.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added a versioned progress save schema in `src/js/core.js` (`osrsClone.progress.v1`) with migration fallback, payload validation, and defensive sanitization for item slots, skills, unlock flags, merchant progress, and menu prefs.
+  - Implemented load-on-startup before world initialization plus autosave every 10 seconds and final save flushes on `beforeunload` and `pagehide`.
+  - Included run-mode, inventory, bank, equipment, position, skills, unlocks, and merchant progress in persisted state so session progress survives refresh/restart.
+  - Added a persistence regression guard (`tools/tests/progress-persistence-guard.js`) and wired it into `npm test`.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-034 - World layout and service placement are embedded in `initLogicalMap`
 - Status: Backlog
@@ -863,11 +867,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-041 - Player appearance/model definitions are hard-coded in runtime
-- Status: Backlog
+- Status: Fixed
 - Severity: S3
 - Area: Other
 - Source: Manual
-- Links: `src/js/player-model.js`
+- Links: `src/js/content/player-appearance-catalog.js`, `src/js/player-model.js`, `index.html`, `tools/tests/player-appearance-catalog-guard.js`
 - Repro:
   1. Inspect `src/js/player-model.js`.
   2. Observe large inline tables for body palettes, default kits, kit fragments, and equipment fragment geometry/offsets.
@@ -880,14 +884,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Define appearance schema for palettes, kits, and fragment definitions.
   2. Move static appearance tables out of runtime code into content data.
   3. Keep runtime loader/validator to preserve existing visuals while enabling easier content updates.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added a dedicated appearance content catalog at `src/js/content/player-appearance-catalog.js` that now owns slot order, body palettes, default kits, kit fragments, and item fragment definitions.
+  - Refactored `src/js/player-model.js` to load appearance/model definitions from `window.PlayerAppearanceCatalog` and fail fast if the catalog script is missing or malformed.
+  - Wired the new catalog into `index.html` load order and added `tools/tests/player-appearance-catalog-guard.js` (included in `npm test`) to prevent regression back to inline appearance tables.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->
