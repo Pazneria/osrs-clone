@@ -10,7 +10,7 @@ For each item (example: `logs`) we generate:
 - UI icon (pixel style): `assets/pixel/logs-pixel.png`
 - Held model: `assets/models/logs.obj`
 - Ground model: `assets/models/logs-ground.obj`
-- Item metadata: `content/items/logs.json`
+- Draft item metadata file: `content/items/logs.json`
 
 ## One-command workflow (recommended)
 
@@ -24,6 +24,7 @@ npm.cmd run tool:item:create -- -Id logs -Name "Logs" -Image .\assets\input\logs
 3. Validate content:
 
 ```bat
+npm.cmd run tool:items:sync
 npm.cmd run tool:items:validate
 ```
 
@@ -49,10 +50,11 @@ npm.cmd run tool:model:from-image -- -InputPath .\assets\pixel\logs-pixel.png -O
 copy .\assets\models\logs.obj .\assets\models\logs-ground.obj
 ```
 
-4. Create `content/items/logs.json` from `_template.json`.
-5. Validate:
+4. Create `content/items/logs.json` from `_template.json` (draft metadata only).
+5. Sync + validate:
 
 ```bat
+npm.cmd run tool:items:sync
 npm.cmd run tool:items:validate
 ```
 
@@ -81,4 +83,14 @@ They can still follow this pipeline because it is codified in:
 - `content/items/_template.json`
 - `package.json` scripts
 - `tools/content/*` and `tools/model/*`
+
+## Catalog Source Of Truth
+
+- Canonical runtime item definitions: `src/js/content/item-catalog.js`.
+- Generated runtime mirror: `content/items/runtime-item-catalog.json`.
+- Keep the runtime mirror in sync with:
+
+```bat
+npm.cmd run tool:items:sync
+```
 

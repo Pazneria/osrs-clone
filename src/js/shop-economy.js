@@ -74,6 +74,49 @@
         return !!getMerchantEconomyMeta(id);
     }
 
+    function normalizeStockAmount(value, fallback = 20) {
+        if (!Number.isFinite(value)) return Math.max(1, Math.floor(fallback));
+        return Math.max(1, Math.floor(value));
+    }
+
+    function getGeneralStoreFallbackStockRows() {
+        const skills = getSkillSpecs();
+        const byItemId = {};
+        const skillIds = Object.keys(skills);
+        for (let i = 0; i < skillIds.length; i++) {
+            const spec = skills[skillIds[i]];
+            const economy = spec && spec.economy;
+            const fallback = economy && economy.generalStoreFallback;
+            const rows = Array.isArray(fallback && fallback.defaultStock) ? fallback.defaultStock : [];
+            for (let j = 0; j < rows.length; j++) {
+                const row = rows[j] || {};
+                const itemId = typeof row.itemId === 'string' ? row.itemId : '';
+                if (!itemId) continue;
+                const stockAmount = normalizeStockAmount(row.stockAmount, 20);
+                if (!Number.isFinite(byItemId[itemId]) || stockAmount > byItemId[itemId]) {
+                    byItemId[itemId] = stockAmount;
+                }
+            }
+        }
+        const itemIds = Object.keys(byItemId).sort();
+        return itemIds.map((itemId) => ({ itemId, stockAmount: byItemId[itemId] }));
+    }
+
+    function getMerchantFallbackStockRows(merchantId) {
+        const id = merchantId || GENERAL_STORE_ID;
+        if (id !== GENERAL_STORE_ID) return [];
+        return getGeneralStoreFallbackStockRows();
+    }
+
+    function hasFallbackStockPolicy(merchantId) {
+        return getMerchantFallbackStockRows(merchantId).length > 0;
+    }
+
+    function hasStockPolicy(merchantId) {
+        const id = merchantId || GENERAL_STORE_ID;
+        return hasMerchantConfig(id) || hasFallbackStockPolicy(id);
+    }
+
     function getSkillLevel(skillId) {
         if (!skillId) return 1;
         if (typeof playerSkills === 'object' && playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level)) {
@@ -89,7 +132,7 @@
         if (!itemIds.includes(itemId)) return null;
         return {
             threshold: Number.isFinite(unlocks.threshold) ? Math.max(1, Math.floor(unlocks.threshold)) : FISH_UNLOCK_DEFAULT_THRESHOLD,
-            stockAmount: Number.isFinite(unlocks.stockAmount) ? Math.max(1, Math.floor(unlocks.stockAmount)) : 20
+            stockAmount: normalizeStockAmount(unlocks.stockAmount, 20)
         };
     }
 
@@ -244,6 +287,22 @@
         return unlockConfig.stockAmount;
     }
 
+    function getMerchantSeedStockRows(merchantId) {
+        const id = merchantId || GENERAL_STORE_ID;
+        const sells = getMerchantDefaultSellItemIds(id);
+        if (sells.length > 0) {
+            return sells.map((itemId) => {
+                const unlockedStock = getUnlockedStockAmount(itemId, id);
+                return {
+                    itemId,
+                    stockAmount: normalizeStockAmount(unlockedStock > 0 ? unlockedStock : 20, 20)
+                };
+            });
+        }
+        if (hasMerchantConfig(id)) return [];
+        return getMerchantFallbackStockRows(id);
+    }
+
     function getMerchantDiagnosticSummary(merchantId) {
         const id = merchantId || GENERAL_STORE_ID;
         const meta = getMerchantEconomyMeta(id);
@@ -282,8 +341,11 @@
         canMerchantBuyItem,
         canMerchantSellItem,
         hasMerchantConfig,
+        hasFallbackStockPolicy,
+        hasStockPolicy,
         recordMerchantPurchaseFromPlayer,
         getMerchantDefaultSellItemIds,
+        getMerchantSeedStockRows,
         getUnlockedStockAmount,
         getFishUnlockSummary,
         getMerchantDiagnosticSummary,

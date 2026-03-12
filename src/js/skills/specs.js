@@ -88,7 +88,10 @@
                     }
                 },
                 generalStoreFallback: {
-                    buyPolicy: 'half_price_floor'
+                    buyPolicy: 'half_price_floor',
+                    defaultStock: [
+                        { itemId: 'iron_axe', stockAmount: 5 }
+                    ]
                 }
             }
         },
@@ -289,7 +292,10 @@
                     ashes: { buy: 4, sell: 1 }
                 },
                 generalStoreFallback: {
-                    buyPolicy: 'half_price_floor'
+                    buyPolicy: 'half_price_floor',
+                    defaultStock: [
+                        { itemId: 'tinderbox', stockAmount: 10 }
+                    ]
                 }
             }
         },
@@ -706,7 +712,10 @@
                     }
                 },
                 generalStoreFallback: {
-                    buyPolicy: 'half_price_floor'
+                    buyPolicy: 'half_price_floor',
+                    defaultStock: [
+                        { itemId: 'knife', stockAmount: 10 }
+                    ]
                 }
             }
         },
@@ -1186,7 +1195,10 @@
                     }
                 },
                 generalStoreFallback: {
-                    buyPolicy: 'half_price_floor'
+                    buyPolicy: 'half_price_floor',
+                    defaultStock: [
+                        { itemId: 'iron_pickaxe', stockAmount: 5 }
+                    ]
                 }
             }
         }

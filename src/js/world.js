@@ -834,7 +834,14 @@
             playerSkills[skillName].level = getLevelForXp(playerSkills[skillName].xp);
         });
 
-        function refreshSkillUi(skillName) {
+        function getSkillUiLevelKey(skillName) {
+            if (!skillName) return null;
+            const manifest = window.SkillManifest;
+            if (manifest && manifest.skillTileBySkillId && manifest.skillTileBySkillId[skillName]) {
+                const levelKey = manifest.skillTileBySkillId[skillName].levelKey;
+                if (typeof levelKey === 'string' && levelKey) return levelKey;
+            }
+
             const keyBySkill = {
                 attack: 'atk',
                 hitpoints: 'hp',
@@ -850,7 +857,11 @@
                 crafting: 'craft',
                 fletching: 'fletch'
             };
-            const key = keyBySkill[skillName];
+            return keyBySkill[skillName] || null;
+        }
+
+        function refreshSkillUi(skillName) {
+            const key = getSkillUiLevelKey(skillName);
             if (!key || !playerSkills[skillName]) return;
 
             const uiEl = document.getElementById(`stat-${key}-level`);

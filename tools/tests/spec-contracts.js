@@ -10,6 +10,18 @@ function approxEq(actual, expected, epsilon = 1e-9) {
   return Math.abs(actual - expected) <= epsilon;
 }
 
+function sortKeysDeep(value) {
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  if (!value || typeof value !== "object") return value;
+  const out = {};
+  const keys = Object.keys(value).sort();
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    out[key] = sortKeysDeep(value[key]);
+  }
+  return out;
+}
+
 function loadBrowserScript(root, relPath) {
   const abs = path.join(root, relPath);
   const code = fs.readFileSync(abs, "utf8");
@@ -117,6 +129,13 @@ function run() {
   loadBrowserScript(root, "src/js/content/item-catalog.js");
   const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS;
   assert(!!itemDefs, "item catalog missing");
+  const runtimeMirrorPath = path.join(root, "content", "items", "runtime-item-catalog.json");
+  assert(fs.existsSync(runtimeMirrorPath), "runtime item-catalog mirror missing");
+  const runtimeMirror = JSON.parse(fs.readFileSync(runtimeMirrorPath, "utf8"));
+  assert(!!runtimeMirror && !!runtimeMirror.itemDefs, "runtime item-catalog mirror missing itemDefs");
+  const runtimeSorted = JSON.stringify(sortKeysDeep(itemDefs));
+  const mirrorSorted = JSON.stringify(sortKeysDeep(runtimeMirror.itemDefs));
+  assert(runtimeSorted === mirrorSorted, "runtime item-catalog mirror mismatch (run tool:items:sync)");
   assert(itemDefs.ember_rune.value === 10, "item catalog ember value mismatch");
   assert(itemDefs.water_rune.value === 20, "item catalog water value mismatch");
   assert(itemDefs.earth_rune.value === 40, "item catalog earth value mismatch");
@@ -133,6 +152,25 @@ function run() {
   loadBrowserScript(root, "src/js/shop-economy.js");
   const shopEconomy = window.ShopEconomy;
   assert(!!shopEconomy, "shop economy API missing");
+  assert(typeof shopEconomy.getMerchantSeedStockRows === "function", "shop economy seed-stock resolver missing");
+  assert(typeof shopEconomy.hasFallbackStockPolicy === "function", "shop economy fallback-policy resolver missing");
+  assert(typeof shopEconomy.hasStockPolicy === "function", "shop economy stock-policy validator missing");
+
+  const generalStoreSeedRows = shopEconomy.getMerchantSeedStockRows("general_store");
+  const generalStoreSeedById = {};
+  for (let i = 0; i < generalStoreSeedRows.length; i++) {
+    const row = generalStoreSeedRows[i] || {};
+    if (!row.itemId) continue;
+    generalStoreSeedById[row.itemId] = row.stockAmount;
+  }
+  assert(generalStoreSeedById.iron_axe === 5, "general store fallback stock should include iron axe");
+  assert(generalStoreSeedById.tinderbox === 10, "general store fallback stock should include tinderbox");
+  assert(generalStoreSeedById.knife === 10, "general store fallback stock should include knife");
+  assert(generalStoreSeedById.iron_pickaxe === 5, "general store fallback stock should include iron pickaxe");
+  assert(shopEconomy.hasFallbackStockPolicy("general_store"), "general store should have fallback stock policy");
+  assert(shopEconomy.hasStockPolicy("general_store"), "general store should pass stock-policy validation");
+  assert(shopEconomy.hasStockPolicy("fishing_supplier"), "configured merchants should pass stock-policy validation");
+  assert(!shopEconomy.hasStockPolicy("unknown_merchant"), "unknown merchants should fail stock-policy validation");
 
   assert(shopEconomy.resolveBuyPrice("raw_shrimp", "fishing_supplier") === 3, "fishing buy price mismatch");
   assert(shopEconomy.resolveSellPrice("raw_shrimp", "fishing_supplier") === 1, "fishing sell price mismatch");
@@ -690,8 +728,12 @@ function run() {
   const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
   assert(manifestScript.includes("CRAFTING: 'crafting'"), "skill manifest missing crafting action mapping");
+  assert(manifestScript.includes("skillTiles"), "skill manifest missing skill tile metadata");
+  assert(manifestScript.includes("levelKey"), "skill manifest skill-tile level key metadata missing");
   const indexHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(indexHtml.includes("./src/js/skills/crafting/index.js"), "index missing crafting runtime script include");
+  assert(!indexHtml.includes('data-skill="attack"'), "stats view should not hard-code attack tile markup");
+  assert(!indexHtml.includes('id="stat-atk-level"'), "stats view should not hard-code skill level ids");
   const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
   assert(skillRuntimeScript.includes("requireAreaAccess"), "skill runtime area-access hook missing");
   assert(skillRuntimeScript.includes("getTreeNodeAt"), "skill runtime tree-node hook missing");

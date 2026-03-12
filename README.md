@@ -75,7 +75,12 @@ One-command item creation:
 
 ```bat
 npm.cmd run tool:item:create -- -Id logs -Name "Logs" -Image .\assets\input\logs.png -Type resource -Value 4
+npm.cmd run tool:items:sync
 npm.cmd run tool:items:validate
 ```
+
+Item catalog source of truth:
+- Runtime canonical definitions: `src/js/content/item-catalog.js`
+- Generated mirror for parity checks: `content/items/runtime-item-catalog.json`
 
 

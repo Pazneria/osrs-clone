@@ -1,5 +1,10 @@
 const fs = require("fs");
 const path = require("path");
+const {
+  isObject,
+  sortKeysDeep,
+  loadRuntimeItemCatalog
+} = require("./runtime-item-catalog");
 
 function readJson(filePath) {
   const raw = fs.readFileSync(filePath, "utf8");
@@ -16,6 +21,7 @@ function main() {
 
   const errors = [];
   const warnings = [];
+  const runtimeMirrorFilename = "runtime-item-catalog.json";
 
   const requiredDirs = [
     path.join(projectRoot, "assets", "input"),
@@ -38,13 +44,22 @@ function main() {
   const files = fs
     .readdirSync(itemsDir)
     .filter((name) => name.toLowerCase().endsWith(".json"))
-    .filter((name) => !name.startsWith("_"));
+    .filter((name) => !name.startsWith("_"))
+    .filter((name) => name !== runtimeMirrorFilename);
 
   if (files.length === 0) {
     warnings.push("No item JSON files found in content/items (excluding templates).");
   }
 
   const seenIds = new Map();
+  let runtimeItemDefs = {};
+
+  try {
+    const runtime = loadRuntimeItemCatalog(projectRoot);
+    runtimeItemDefs = isObject(runtime && runtime.itemDefs) ? runtime.itemDefs : {};
+  } catch (error) {
+    errors.push(`failed to load runtime item catalog: ${error.message}`);
+  }
 
   for (const file of files) {
     const fullPath = path.join(itemsDir, file);
@@ -73,6 +88,9 @@ function main() {
         errors.push(`${file}: duplicate id '${item.id}' (already in ${seenIds.get(item.id)})`);
       }
       seenIds.set(item.id, file);
+      if (!runtimeItemDefs[item.id]) {
+        warnings.push(`${file}: id '${item.id}' is not currently present in runtime catalog ITEM_DEFS`);
+      }
     }
 
     if (!isString(item.name)) {
@@ -127,6 +145,29 @@ function main() {
     }
   }
 
+  const runtimeMirrorPath = path.join(itemsDir, runtimeMirrorFilename);
+  if (!fs.existsSync(runtimeMirrorPath)) {
+    errors.push(`missing runtime mirror '${runtimeMirrorFilename}' (run 'npm.cmd run tool:items:sync')`);
+  } else {
+    try {
+      const runtimeMirror = readJson(runtimeMirrorPath);
+      const mirrorDefs = runtimeMirror && runtimeMirror.itemDefs;
+      if (!isObject(mirrorDefs)) {
+        errors.push(`${runtimeMirrorFilename}: missing object field 'itemDefs'`);
+      } else {
+        const runtimeSorted = sortKeysDeep(runtimeItemDefs);
+        const mirrorSorted = sortKeysDeep(mirrorDefs);
+        if (JSON.stringify(runtimeSorted) !== JSON.stringify(mirrorSorted)) {
+          errors.push(
+            `${runtimeMirrorFilename}: runtime mirror is out of sync with src/js/content/item-catalog.js (run 'npm.cmd run tool:items:sync')`
+          );
+        }
+      }
+    } catch (error) {
+      errors.push(`${runtimeMirrorFilename}: invalid JSON (${error.message})`);
+    }
+  }
+
   if (errors.length > 0) {
     for (const e of errors) console.error(`ERROR: ${e}`);
   }
@@ -139,7 +180,8 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`Validated ${files.length} item file(s).`);
+  const runtimeCount = Object.keys(runtimeItemDefs).length;
+  console.log(`Validated ${files.length} authored item file(s) and runtime mirror (${runtimeCount} runtime item definitions).`);
   if (warnings.length > 0) {
     console.log(`Validation passed with ${warnings.length} warning(s).`);
   } else {

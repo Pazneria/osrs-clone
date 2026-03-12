@@ -597,7 +597,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-032 - Item source-of-truth split (runtime catalog vs content files)
-- Status: Backlog
+- Status: Fixed
 - Severity: S1
 - Area: Other
 - Source: Manual
@@ -614,14 +614,18 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Pick canonical source (`content/items` or generated runtime artifact) and document it.
   2. Add/adjust build tooling so runtime item DB is generated from canonical source.
   3. Add parity validation to fail CI when runtime and content diverge.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Chose `src/js/content/item-catalog.js` as the canonical runtime item-definition source and documented that decision in project docs (`docs/ASSET_PIPELINE.md`, `content/items/README.txt`, `README.md`, `AGENTS.md`).
+  - Added item-catalog tooling: `tool:items:sync` now generates `content/items/runtime-item-catalog.json` from runtime `ITEM_DEFS`.
+  - Added parity guards so drift fails automation: `tool:items:validate` now checks mirror parity against runtime, and spec-contract tests assert mirror/runtime equality.
+  - Updated `npm test` to run item validation, ensuring CI/regression runs catch runtime-content drift immediately.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-033 - Inline icon sprite registry bypasses asset pipeline
 - Status: Backlog
@@ -786,7 +790,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-039 - Shop fallback stock is hard-coded in UI inventory module
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: Other
 - Source: Manual
@@ -803,17 +807,21 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Move fallback stock policy into economy config (for example `general_store` baseline).
   2. Keep inventory module read-only against resolved economy stock.
   3. Add validation for merchants missing both explicit config and fallback policy.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added `generalStoreFallback.defaultStock` economy rows in skill specs for `iron_axe`, `tinderbox`, `knife`, and `iron_pickaxe` so default `general_store` stock is data-driven.
+  - Added `ShopEconomy.getMerchantSeedStockRows(...)` and wired `inventory.js` to consume those rows; removed hard-coded fallback stock items from `createShopInventoryForMerchant`.
+  - Added `ShopEconomy.hasStockPolicy(...)` validation and inventory-side warning when a merchant has neither explicit stock config nor fallback stock policy.
+  - Extended spec contract tests to assert general-store fallback seed rows and stock-policy validation behavior.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-040 - Skills panel tiles are hard-coded in HTML instead of manifest-driven
-- Status: Backlog
+- Status: Fixed
 - Severity: S3
 - Area: HUD
 - Source: Manual
@@ -830,14 +838,18 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Expand skill manifest to include icon/label/UI metadata.
   2. Generate skill tiles at runtime from manifest order.
   3. Keep DOM IDs/data attributes deterministic for existing hooks/tests.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Expanded `SkillManifest` with canonical `skillTiles` UI metadata (`skillId`, `displayName`, `icon`, `levelKey`) and a generated `skillTileBySkillId` lookup map.
+  - Removed hand-authored skill tiles from `index.html`; `inventory.js` now renders `#view-stats` tiles from manifest data at runtime.
+  - Preserved deterministic IDs and hook compatibility by generating `stat-${levelKey}-level` IDs and the existing `.skill-tile` `data-*` attributes used by skill panel interactions.
+  - Updated `refreshSkillUi` in `world.js` to resolve stat level keys from manifest metadata, with a legacy fallback map for resilience.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-041 - Player appearance/model definitions are hard-coded in runtime
 - Status: Backlog

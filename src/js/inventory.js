@@ -415,16 +415,20 @@
         function createShopInventoryForMerchant(merchantId) {
             const inventoryArray = Array(100).fill(null);
             const economy = getShopEconomy();
-            const defaults = economy && typeof economy.getMerchantDefaultSellItemIds === 'function'
-                ? economy.getMerchantDefaultSellItemIds(merchantId)
+            const seedRows = economy && typeof economy.getMerchantSeedStockRows === 'function'
+                ? economy.getMerchantSeedStockRows(merchantId)
                 : [];
             const hasExplicitMerchantConfig = economy && typeof economy.hasMerchantConfig === 'function'
                 ? economy.hasMerchantConfig(merchantId)
                 : false;
 
-            if (defaults.length > 0) {
-                for (let i = 0; i < defaults.length; i++) {
-                    seedShopInventorySlot(inventoryArray, defaults[i], 20, true);
+            if (seedRows.length > 0) {
+                for (let i = 0; i < seedRows.length; i++) {
+                    const row = seedRows[i] || {};
+                    const itemId = typeof row.itemId === 'string' ? row.itemId : '';
+                    if (!itemId) continue;
+                    const stockAmount = Number.isFinite(row.stockAmount) ? Math.max(1, Math.floor(row.stockAmount)) : 20;
+                    seedShopInventorySlot(inventoryArray, itemId, stockAmount, true);
                 }
                 return inventoryArray;
             }
@@ -434,10 +438,13 @@
                 return inventoryArray;
             }
 
-            seedShopInventorySlot(inventoryArray, 'iron_axe', 5, true);
-            seedShopInventorySlot(inventoryArray, 'tinderbox', 10, true);
-            seedShopInventorySlot(inventoryArray, 'knife', 10, true);
-            seedShopInventorySlot(inventoryArray, 'iron_pickaxe', 5, true);
+            const hasStockPolicy = economy && typeof economy.hasStockPolicy === 'function'
+                ? economy.hasStockPolicy(merchantId)
+                : false;
+            if (!hasStockPolicy) {
+                const id = merchantId || 'general_store';
+                console.warn(`[Shop] Merchant '${id}' has no explicit stock config and no fallback stock policy.`);
+            }
             return inventoryArray;
         }
 
@@ -1424,6 +1431,85 @@
             }
         }
 
+        const DEFAULT_SKILL_TILE_DEFS = [
+            { skillId: 'attack', displayName: 'Attack', icon: 'ATK', levelKey: 'atk' },
+            { skillId: 'hitpoints', displayName: 'Hitpoints', icon: 'HP', levelKey: 'hp' },
+            { skillId: 'mining', displayName: 'Mining', icon: 'MIN', levelKey: 'min' },
+            { skillId: 'strength', displayName: 'Strength', icon: 'STR', levelKey: 'str' },
+            { skillId: 'defense', displayName: 'Defense', icon: 'DEF', levelKey: 'def' },
+            { skillId: 'woodcutting', displayName: 'Woodcutting', icon: 'WC', levelKey: 'wc' },
+            { skillId: 'firemaking', displayName: 'Firemaking', icon: 'FM', levelKey: 'fm' },
+            { skillId: 'fishing', displayName: 'Fishing', icon: 'FIS', levelKey: 'fish' },
+            { skillId: 'runecrafting', displayName: 'Runecrafting', icon: 'RC', levelKey: 'rc' },
+            { skillId: 'cooking', displayName: 'Cooking', icon: 'COOK', levelKey: 'cook' },
+            { skillId: 'smithing', displayName: 'Smithing', icon: 'SMI', levelKey: 'smith' },
+            { skillId: 'crafting', displayName: 'Crafting', icon: 'CRFT', levelKey: 'craft' },
+            { skillId: 'fletching', displayName: 'Fletching', icon: 'FLT', levelKey: 'fletch' }
+        ];
+
+        function getSkillTileDefinitions() {
+            const manifest = window.SkillManifest;
+            if (manifest && Array.isArray(manifest.skillTiles) && manifest.skillTiles.length > 0) {
+                return manifest.skillTiles;
+            }
+            return DEFAULT_SKILL_TILE_DEFS;
+        }
+
+        function getSkillTileMeta(skillName) {
+            if (!skillName) return null;
+            const manifest = window.SkillManifest;
+            if (manifest && manifest.skillTileBySkillId && manifest.skillTileBySkillId[skillName]) {
+                return manifest.skillTileBySkillId[skillName];
+            }
+            const defs = getSkillTileDefinitions();
+            for (let i = 0; i < defs.length; i++) {
+                if (defs[i] && defs[i].skillId === skillName) return defs[i];
+            }
+            return null;
+        }
+
+        function renderSkillTilesFromManifest() {
+            const container = document.getElementById('view-stats');
+            if (!container) return;
+            const defs = getSkillTileDefinitions();
+            container.innerHTML = '';
+
+            for (let i = 0; i < defs.length; i++) {
+                const def = defs[i] || {};
+                const skillId = typeof def.skillId === 'string' ? def.skillId : '';
+                const levelKey = typeof def.levelKey === 'string' ? def.levelKey : '';
+                if (!skillId || !levelKey) continue;
+
+                const icon = (typeof def.icon === 'string' && def.icon.trim()) ? def.icon.trim() : skillId.slice(0, 3).toUpperCase();
+                const displayName = (typeof def.displayName === 'string' && def.displayName.trim()) ? def.displayName.trim() : skillId;
+                const initialLevel = (playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level))
+                    ? Math.max(1, Math.floor(playerSkills[skillId].level))
+                    : 1;
+
+                const tile = document.createElement('div');
+                tile.className = 'skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none';
+                tile.dataset.skill = skillId;
+                tile.dataset.skillName = displayName;
+                tile.dataset.skillIcon = icon;
+                tile.title = displayName;
+
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'text-sm';
+                iconSpan.innerText = icon;
+
+                const breakEl = document.createElement('br');
+
+                const levelSpan = document.createElement('span');
+                levelSpan.id = `stat-${levelKey}-level`;
+                levelSpan.innerText = String(initialLevel);
+
+                tile.appendChild(iconSpan);
+                tile.appendChild(breakEl);
+                tile.appendChild(levelSpan);
+                container.appendChild(tile);
+            }
+        }
+
         function closeSkillProgressPanel() {
             const panel = document.getElementById('skill-panel');
             if (!panel) return;
@@ -1444,6 +1530,7 @@
             if (!panel) return;
 
             const tile = document.querySelector(`.skill-tile[data-skill="${skillName}"]`);
+            const tileMeta = getSkillTileMeta(skillName) || {};
             const skill = playerSkills[skillName];
             const level = skill.level;
             const xp = skill.xp;
@@ -1454,8 +1541,8 @@
             const gained = Math.max(0, xp - levelXp);
             const pct = level >= MAX_SKILL_LEVEL ? 100 : Math.max(0, Math.min(100, (gained / span) * 100));
 
-            const icon = tile ? tile.dataset.skillIcon : '?';
-            const name = tile ? tile.dataset.skillName : skillName;
+            const icon = tile ? tile.dataset.skillIcon : (tileMeta.icon || '?');
+            const name = tile ? tile.dataset.skillName : (tileMeta.displayName || skillName);
 
             document.getElementById('skill-panel-icon').innerText = icon;
             document.getElementById('skill-panel-title').innerText = name;
@@ -1503,6 +1590,7 @@
             });
             let isExpanded = false;
             document.getElementById('btn-expand').onclick = () => { isExpanded = !isExpanded; mainContainer.style.transform = isExpanded ? 'scale(1.5)' : 'scale(1)'; };
+            renderSkillTilesFromManifest();
             const skillTiles = Array.from(document.querySelectorAll('.skill-tile'));
             skillTiles.forEach(tile => {
                 tile.onclick = () => openSkillProgressPanel(tile.dataset.skill, tile);

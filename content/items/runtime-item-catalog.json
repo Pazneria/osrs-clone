@@ -1,0 +1,3821 @@
+{
+  "generatedFrom": "src/js/content/item-catalog.js",
+  "generatedAt": "2026-03-12T20:54:21.333Z",
+  "itemDefs": {
+    "adamant_arrowheads": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Adamant Arrowheads",
+      "stackable": false,
+      "type": "component",
+      "value": 440
+    },
+    "adamant_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Adamant Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 50
+    },
+    "adamant_axe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Axe",
+      "speedBonusTicks": 4,
+      "stackable": false,
+      "stats": {
+        "atk": 40,
+        "def": 0,
+        "str": 32
+      },
+      "toolTier": 21,
+      "type": "weapon",
+      "value": 2200,
+      "weaponClass": "axe"
+    },
+    "adamant_axe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Axe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 660
+    },
+    "adamant_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Adamant Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 128
+    },
+    "adamant_boots": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Boots",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 7,
+        "str": 0
+      },
+      "type": "feet",
+      "value": 880
+    },
+    "adamant_helmet": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Helmet",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 17,
+        "str": 0
+      },
+      "type": "head",
+      "value": 1100
+    },
+    "adamant_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Adamant ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 300
+    },
+    "adamant_pickaxe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Pickaxe",
+      "speedBonusTicks": 4,
+      "stackable": false,
+      "stats": {
+        "atk": 24,
+        "def": 0,
+        "str": 30
+      },
+      "toolTier": 21,
+      "type": "weapon",
+      "value": 2200,
+      "weaponClass": "pickaxe"
+    },
+    "adamant_pickaxe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Pickaxe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 660
+    },
+    "adamant_platebody": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Platebody",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 30,
+        "str": 0
+      },
+      "type": "body",
+      "value": 1760
+    },
+    "adamant_platelegs": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Platelegs",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 25,
+        "str": 0
+      },
+      "type": "legs",
+      "value": 1430
+    },
+    "adamant_shield": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Shield",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 21,
+        "str": 0
+      },
+      "type": "shield",
+      "value": 1210
+    },
+    "adamant_sword": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Sword",
+      "stackable": false,
+      "stats": {
+        "atk": 40,
+        "def": 0,
+        "str": 32
+      },
+      "type": "weapon",
+      "value": 2200,
+      "weaponClass": "sword"
+    },
+    "adamant_sword_blade": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Adamant Sword Blade",
+      "stackable": false,
+      "type": "component",
+      "value": 660
+    },
+    "air_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "air_rune",
+        "kind": "sprite"
+      },
+      "name": "Air rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 80
+    },
+    "air_staff": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Air Staff",
+      "stackable": false,
+      "type": "component",
+      "value": 550
+    },
+    "amulet_mould": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "small_pouch",
+        "kind": "sprite"
+      },
+      "name": "Amulet mould",
+      "stackable": false,
+      "type": "tool",
+      "value": 0
+    },
+    "ashes": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "ashes",
+        "kind": "sprite"
+      },
+      "name": "Ashes",
+      "stackable": true,
+      "type": "resource",
+      "value": 4
+    },
+    "bait": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Bait",
+      "stackable": true,
+      "type": "resource",
+      "value": 2
+    },
+    "bear_leather": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Bear Leather",
+      "stackable": false,
+      "type": "resource",
+      "value": 60
+    },
+    "bow_string": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Bow String",
+      "stackable": false,
+      "type": "resource",
+      "value": 12
+    },
+    "bronze_arrowheads": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Bronze Arrowheads",
+      "stackable": false,
+      "type": "component",
+      "value": 8
+    },
+    "bronze_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Bronze Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 8
+    },
+    "bronze_axe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Axe",
+      "speedBonusTicks": 0,
+      "stackable": false,
+      "stats": {
+        "atk": 10,
+        "def": 0,
+        "str": 8
+      },
+      "toolTier": 4,
+      "type": "weapon",
+      "value": 40,
+      "weaponClass": "axe"
+    },
+    "bronze_axe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Axe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "bronze_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Bronze Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
+    },
+    "bronze_boots": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Boots",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 1,
+        "str": 0
+      },
+      "type": "feet",
+      "value": 16
+    },
+    "bronze_helmet": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Helmet",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 3,
+        "str": 0
+      },
+      "type": "head",
+      "value": 20
+    },
+    "bronze_pickaxe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Pickaxe",
+      "speedBonusTicks": 0,
+      "stackable": false,
+      "stats": {
+        "atk": 5,
+        "def": 0,
+        "str": 7
+      },
+      "toolTier": 4,
+      "type": "weapon",
+      "value": 40,
+      "weaponClass": "pickaxe"
+    },
+    "bronze_pickaxe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Pickaxe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "bronze_platebody": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Platebody",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 7,
+        "str": 0
+      },
+      "type": "body",
+      "value": 32
+    },
+    "bronze_platelegs": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Platelegs",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 5,
+        "str": 0
+      },
+      "type": "legs",
+      "value": 26
+    },
+    "bronze_shield": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Shield",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 4,
+        "str": 0
+      },
+      "type": "shield",
+      "value": 22
+    },
+    "bronze_sword": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Sword",
+      "stackable": false,
+      "stats": {
+        "atk": 10,
+        "def": 0,
+        "str": 8
+      },
+      "type": "weapon",
+      "value": 40,
+      "weaponClass": "sword"
+    },
+    "bronze_sword_blade": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Bronze Sword Blade",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "burnt_salmon": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Burnt Salmon",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "burnt_shrimp": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Burnt Shrimp",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "burnt_swordfish": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Burnt Swordfish",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "burnt_trout": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Burnt Trout",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "burnt_tuna": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Burnt Tuna",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "chisel": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Chisel",
+      "stackable": false,
+      "type": "tool",
+      "value": 4
+    },
+    "clay": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Clay",
+      "stackable": false,
+      "type": "resource",
+      "value": 4
+    },
+    "coal": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Coal",
+      "stackable": false,
+      "type": "resource",
+      "value": 30
+    },
+    "coins": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Coins",
+      "stackable": true,
+      "type": "currency",
+      "value": 1
+    },
+    "cooked_salmon": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 7,
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Cooked Salmon",
+      "stackable": false,
+      "type": "food",
+      "value": 32
+    },
+    "cooked_shrimp": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 3,
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Cooked Shrimp",
+      "stackable": false,
+      "type": "food",
+      "value": 8
+    },
+    "cooked_swordfish": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 12,
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Cooked Swordfish",
+      "stackable": false,
+      "type": "food",
+      "value": 56
+    },
+    "cooked_trout": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 5,
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Cooked Trout",
+      "stackable": false,
+      "type": "food",
+      "value": 24
+    },
+    "cooked_tuna": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 9,
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Cooked Tuna",
+      "stackable": false,
+      "type": "food",
+      "value": 40
+    },
+    "copper_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "copper_ore",
+        "kind": "sprite"
+      },
+      "name": "Copper ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
+    },
+    "cut_diamond": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Cut diamond",
+      "stackable": false,
+      "type": "resource",
+      "value": 300
+    },
+    "cut_emerald": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Cut emerald",
+      "stackable": false,
+      "type": "resource",
+      "value": 180
+    },
+    "cut_ruby": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Cut ruby",
+      "stackable": false,
+      "type": "resource",
+      "value": 40
+    },
+    "cut_sapphire": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Cut sapphire",
+      "stackable": false,
+      "type": "resource",
+      "value": 100
+    },
+    "diamond_gold_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Diamond Gold Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 400
+    },
+    "diamond_gold_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Diamond Gold Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 400
+    },
+    "diamond_gold_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Diamond Gold Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 400
+    },
+    "dust_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "dust_rune",
+        "kind": "sprite"
+      },
+      "name": "Dust rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 160
+    },
+    "earth_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "earth_rune",
+        "kind": "sprite"
+      },
+      "name": "Earth rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 40
+    },
+    "earth_staff": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Earth Staff",
+      "stackable": false,
+      "type": "component",
+      "value": 320
+    },
+    "ember_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "ember_rune",
+        "kind": "sprite"
+      },
+      "name": "Ember rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 10
+    },
+    "emerald_gold_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Emerald Gold Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 280
+    },
+    "emerald_gold_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Emerald Gold Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 280
+    },
+    "emerald_gold_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Emerald Gold Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 280
+    },
+    "feathers_bundle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Feathers x15",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
+    },
+    "fire_staff": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Fire Staff",
+      "stackable": false,
+      "type": "component",
+      "value": 80
+    },
+    "fishing_rod": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "small_net",
+        "kind": "sprite"
+      },
+      "name": "Fishing Rod",
+      "stackable": false,
+      "type": "tool",
+      "value": 45
+    },
+    "gold_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Gold Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 100
+    },
+    "gold_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Gold Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 70
+    },
+    "gold_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Gold ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 70
+    },
+    "gold_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Gold Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 100
+    },
+    "gold_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Gold Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 100
+    },
+    "hammer": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Hammer",
+      "stackable": false,
+      "type": "tool",
+      "value": 8
+    },
+    "harpoon": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Harpoon",
+      "stackable": false,
+      "stats": {
+        "atk": 18,
+        "def": 0,
+        "str": 10
+      },
+      "type": "weapon",
+      "value": 110,
+      "weaponClass": "harpoon"
+    },
+    "iron_arrowheads": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Iron Arrowheads",
+      "stackable": false,
+      "type": "component",
+      "value": 24
+    },
+    "iron_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Iron Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "iron_axe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Axe",
+      "speedBonusTicks": 1,
+      "stackable": false,
+      "stats": {
+        "atk": 15,
+        "def": 0,
+        "str": 12
+      },
+      "toolTier": 6,
+      "type": "weapon",
+      "value": 120,
+      "weaponClass": "axe"
+    },
+    "iron_axe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Iron Axe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 36
+    },
+    "iron_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Iron Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 16
+    },
+    "iron_boots": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Boots",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 2,
+        "str": 0
+      },
+      "type": "feet",
+      "value": 48
+    },
+    "iron_helmet": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Helmet",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 5,
+        "str": 0
+      },
+      "type": "head",
+      "value": 60
+    },
+    "iron_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "copper_ore",
+        "kind": "sprite"
+      },
+      "name": "Iron ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 18
+    },
+    "iron_pickaxe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Iron Pickaxe",
+      "speedBonusTicks": 1,
+      "stackable": false,
+      "stats": {
+        "atk": 8,
+        "def": 0,
+        "str": 10
+      },
+      "toolTier": 6,
+      "type": "weapon",
+      "value": 150,
+      "weaponClass": "pickaxe"
+    },
+    "iron_pickaxe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Iron Pickaxe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 36
+    },
+    "iron_platebody": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Platebody",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 10,
+        "str": 0
+      },
+      "type": "body",
+      "value": 96
+    },
+    "iron_platelegs": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Platelegs",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 8,
+        "str": 0
+      },
+      "type": "legs",
+      "value": 78
+    },
+    "iron_shield": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Shield",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 6,
+        "str": 0
+      },
+      "type": "shield",
+      "value": 66
+    },
+    "iron_sword": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Iron Sword",
+      "stackable": false,
+      "stats": {
+        "atk": 15,
+        "def": 0,
+        "str": 12
+      },
+      "type": "weapon",
+      "value": 120,
+      "weaponClass": "sword"
+    },
+    "iron_sword_blade": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Iron Sword Blade",
+      "stackable": false,
+      "type": "component",
+      "value": 36
+    },
+    "knife": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Knife",
+      "stackable": false,
+      "type": "tool",
+      "value": 8
+    },
+    "large_pouch": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "large_pouch",
+        "kind": "sprite"
+      },
+      "name": "Large pouch",
+      "stackable": false,
+      "type": "tool",
+      "value": 8000
+    },
+    "lava_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "lava_rune",
+        "kind": "sprite"
+      },
+      "name": "Lava rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 160
+    },
+    "logs": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "kind": "image",
+        "path": "./assets/pixel/logs-pixel.png"
+      },
+      "name": "Logs",
+      "stackable": false,
+      "type": "resource",
+      "value": 6
+    },
+    "maple_handle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Maple Handle",
+      "stackable": false,
+      "type": "component",
+      "value": 32
+    },
+    "maple_handle_strapped": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Maple Handle w/ Strap",
+      "stackable": false,
+      "type": "component",
+      "value": 150
+    },
+    "maple_headless_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Maple Headless Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 24
+    },
+    "maple_logs": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "kind": "image",
+        "path": "./assets/pixel/logs-pixel.png"
+      },
+      "name": "Maple Logs",
+      "stackable": false,
+      "type": "resource",
+      "value": 80
+    },
+    "maple_longbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Maple Longbow",
+      "stackable": false,
+      "type": "component",
+      "value": 62
+    },
+    "maple_longbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Maple Longbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 44
+    },
+    "maple_shafts": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Maple Shafts x15",
+      "stackable": false,
+      "type": "component",
+      "value": 16
+    },
+    "maple_shortbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Maple Shortbow",
+      "stackable": false,
+      "type": "component",
+      "value": 68
+    },
+    "maple_shortbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Maple Shortbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 46
+    },
+    "medium_pouch": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "medium_pouch",
+        "kind": "sprite"
+      },
+      "name": "Medium pouch",
+      "stackable": false,
+      "type": "tool",
+      "value": 2000
+    },
+    "mist_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "mist_rune",
+        "kind": "sprite"
+      },
+      "name": "Mist rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 160
+    },
+    "mithril_arrowheads": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Mithril Arrowheads",
+      "stackable": false,
+      "type": "component",
+      "value": 180
+    },
+    "mithril_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Mithril Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 32
+    },
+    "mithril_axe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Axe",
+      "speedBonusTicks": 3,
+      "stackable": false,
+      "stats": {
+        "atk": 30,
+        "def": 0,
+        "str": 24
+      },
+      "toolTier": 15,
+      "type": "weapon",
+      "value": 900,
+      "weaponClass": "axe"
+    },
+    "mithril_axe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Axe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 270
+    },
+    "mithril_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Mithril Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 64
+    },
+    "mithril_boots": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Boots",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 5,
+        "str": 0
+      },
+      "type": "feet",
+      "value": 360
+    },
+    "mithril_helmet": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Helmet",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 12,
+        "str": 0
+      },
+      "type": "head",
+      "value": 450
+    },
+    "mithril_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Mithril ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 120
+    },
+    "mithril_pickaxe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Pickaxe",
+      "speedBonusTicks": 3,
+      "stackable": false,
+      "stats": {
+        "atk": 18,
+        "def": 0,
+        "str": 22
+      },
+      "toolTier": 15,
+      "type": "weapon",
+      "value": 900,
+      "weaponClass": "pickaxe"
+    },
+    "mithril_pickaxe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Pickaxe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 270
+    },
+    "mithril_platebody": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Platebody",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 22,
+        "str": 0
+      },
+      "type": "body",
+      "value": 720
+    },
+    "mithril_platelegs": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Platelegs",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 18,
+        "str": 0
+      },
+      "type": "legs",
+      "value": 585
+    },
+    "mithril_shield": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Shield",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 15,
+        "str": 0
+      },
+      "type": "shield",
+      "value": 495
+    },
+    "mithril_sword": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Sword",
+      "stackable": false,
+      "stats": {
+        "atk": 30,
+        "def": 0,
+        "str": 24
+      },
+      "type": "weapon",
+      "value": 900,
+      "weaponClass": "sword"
+    },
+    "mithril_sword_blade": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Mithril Sword Blade",
+      "stackable": false,
+      "type": "component",
+      "value": 270
+    },
+    "mud_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "mud_rune",
+        "kind": "sprite"
+      },
+      "name": "Mud rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 160
+    },
+    "needle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Needle",
+      "stackable": false,
+      "type": "tool",
+      "value": 4
+    },
+    "normal_leather": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Normal Leather",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
+    },
+    "normal_longbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Normal Longbow",
+      "stackable": false,
+      "type": "component",
+      "value": 10
+    },
+    "normal_longbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Normal Longbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 6
+    },
+    "normal_shortbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Normal Shortbow",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "normal_shortbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Normal Shortbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 7
+    },
+    "oak_handle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Oak Handle",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "oak_handle_strapped": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Oak Handle w/ Strap",
+      "stackable": false,
+      "type": "component",
+      "value": 50
+    },
+    "oak_headless_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Oak Headless Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 10
+    },
+    "oak_logs": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "kind": "image",
+        "path": "./assets/pixel/logs-pixel.png"
+      },
+      "name": "Oak Logs",
+      "stackable": false,
+      "type": "resource",
+      "value": 16
+    },
+    "oak_longbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Oak Longbow",
+      "stackable": false,
+      "type": "component",
+      "value": 20
+    },
+    "oak_longbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Oak Longbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 14
+    },
+    "oak_shafts": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Oak Shafts x15",
+      "stackable": false,
+      "type": "component",
+      "value": 6
+    },
+    "oak_shortbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Oak Shortbow",
+      "stackable": false,
+      "type": "component",
+      "value": 22
+    },
+    "oak_shortbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Oak Shortbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 15
+    },
+    "owie": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "ashes",
+        "kind": "sprite"
+      },
+      "name": "Owie",
+      "stackable": false,
+      "type": "tool",
+      "value": 1
+    },
+    "plain_staff_maple": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Plain Staff (Maple)",
+      "stackable": false,
+      "type": "component",
+      "value": 32
+    },
+    "plain_staff_oak": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Plain Staff (Oak)",
+      "stackable": false,
+      "type": "component",
+      "value": 12
+    },
+    "plain_staff_willow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Plain Staff (Willow)",
+      "stackable": false,
+      "type": "component",
+      "value": 20
+    },
+    "plain_staff_wood": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Plain Staff (Wood)",
+      "stackable": false,
+      "type": "component",
+      "value": 6
+    },
+    "plain_staff_yew": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Plain Staff (Yew)",
+      "stackable": false,
+      "type": "component",
+      "value": 50
+    },
+    "raw_salmon": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "burnResultId": "burnt_salmon",
+      "cookResultId": "cooked_salmon",
+      "defaultAction": "Use",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Raw Salmon",
+      "stackable": false,
+      "type": "resource",
+      "value": 24
+    },
+    "raw_shrimp": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "burnChance": 0.28,
+      "burnResultId": "burnt_shrimp",
+      "cookResultId": "cooked_shrimp",
+      "defaultAction": "Use",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Raw Shrimp",
+      "stackable": false,
+      "type": "resource",
+      "value": 3
+    },
+    "raw_swordfish": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "burnResultId": "burnt_swordfish",
+      "cookResultId": "cooked_swordfish",
+      "defaultAction": "Use",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Raw Swordfish",
+      "stackable": false,
+      "type": "resource",
+      "value": 40
+    },
+    "raw_trout": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "burnResultId": "burnt_trout",
+      "cookResultId": "cooked_trout",
+      "defaultAction": "Use",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Raw Trout",
+      "stackable": false,
+      "type": "resource",
+      "value": 18
+    },
+    "raw_tuna": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "burnResultId": "burnt_tuna",
+      "cookResultId": "cooked_tuna",
+      "defaultAction": "Use",
+      "icon": {
+        "key": "raw_shrimp",
+        "kind": "sprite"
+      },
+      "name": "Raw Tuna",
+      "stackable": false,
+      "type": "resource",
+      "value": 28
+    },
+    "ring_mould": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "small_pouch",
+        "kind": "sprite"
+      },
+      "name": "Ring mould",
+      "stackable": false,
+      "type": "tool",
+      "value": 0
+    },
+    "ruby_gold_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Ruby Gold Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 140
+    },
+    "ruby_gold_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Ruby Gold Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 140
+    },
+    "ruby_gold_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Ruby Gold Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 140
+    },
+    "ruby_silver_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Ruby Silver Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 80
+    },
+    "ruby_silver_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Ruby Silver Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 80
+    },
+    "ruby_silver_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Ruby Silver Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 80
+    },
+    "rune_arrowheads": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Rune Arrowheads",
+      "stackable": false,
+      "type": "component",
+      "value": 1
+    },
+    "rune_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Rune Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 80
+    },
+    "rune_axe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Axe",
+      "speedBonusTicks": 5,
+      "stackable": false,
+      "stats": {
+        "atk": 54,
+        "def": 0,
+        "str": 44
+      },
+      "toolTier": 28,
+      "type": "weapon",
+      "value": 2500,
+      "weaponClass": "axe"
+    },
+    "rune_axe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Rune Axe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 1
+    },
+    "rune_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Rune Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 256
+    },
+    "rune_boots": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Boots",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 10,
+        "str": 0
+      },
+      "type": "feet",
+      "value": 1
+    },
+    "rune_essence": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Rune essence",
+      "stackable": false,
+      "type": "resource",
+      "value": 12
+    },
+    "rune_harpoon": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Rune Harpoon",
+      "stackable": false,
+      "stats": {
+        "atk": 32,
+        "def": 0,
+        "str": 20
+      },
+      "type": "weapon",
+      "value": 2500,
+      "weaponClass": "harpoon"
+    },
+    "rune_helmet": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Helmet",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 24,
+        "str": 0
+      },
+      "type": "head",
+      "value": 1
+    },
+    "rune_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Rune ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 1200
+    },
+    "rune_pickaxe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Rune Pickaxe",
+      "speedBonusTicks": 5,
+      "stackable": false,
+      "stats": {
+        "atk": 32,
+        "def": 0,
+        "str": 40
+      },
+      "toolTier": 28,
+      "type": "weapon",
+      "value": 2500,
+      "weaponClass": "pickaxe"
+    },
+    "rune_pickaxe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Rune Pickaxe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 1
+    },
+    "rune_platebody": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Platebody",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 40,
+        "str": 0
+      },
+      "type": "body",
+      "value": 1
+    },
+    "rune_platelegs": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Platelegs",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 34,
+        "str": 0
+      },
+      "type": "legs",
+      "value": 1
+    },
+    "rune_shield": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Shield",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 28,
+        "str": 0
+      },
+      "type": "shield",
+      "value": 1
+    },
+    "rune_sword": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Rune Sword",
+      "stackable": false,
+      "stats": {
+        "atk": 54,
+        "def": 0,
+        "str": 44
+      },
+      "type": "weapon",
+      "value": 2500,
+      "weaponClass": "sword"
+    },
+    "rune_sword_blade": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Rune Sword Blade",
+      "stackable": false,
+      "type": "component",
+      "value": 1
+    },
+    "sapphire_gold_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Sapphire Gold Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 200
+    },
+    "sapphire_gold_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Sapphire Gold Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 200
+    },
+    "sapphire_gold_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Sapphire Gold Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 200
+    },
+    "sapphire_silver_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Sapphire Silver Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 140
+    },
+    "sapphire_silver_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Sapphire Silver Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 140
+    },
+    "sapphire_silver_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Sapphire Silver Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 140
+    },
+    "silver_amulet": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Silver Amulet",
+      "stackable": false,
+      "type": "component",
+      "value": 40
+    },
+    "silver_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Silver Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 45
+    },
+    "silver_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Silver ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 45
+    },
+    "silver_ring": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Silver Ring",
+      "stackable": false,
+      "type": "component",
+      "value": 40
+    },
+    "silver_tiara": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "coins",
+        "kind": "sprite"
+      },
+      "name": "Silver Tiara",
+      "stackable": false,
+      "type": "component",
+      "value": 40
+    },
+    "small_net": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "small_net",
+        "kind": "sprite"
+      },
+      "name": "Small Net",
+      "stackable": false,
+      "type": "tool",
+      "value": 25
+    },
+    "small_pouch": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "small_pouch",
+        "kind": "sprite"
+      },
+      "name": "Small pouch",
+      "stackable": false,
+      "type": "tool",
+      "value": 500
+    },
+    "smoke_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "smoke_rune",
+        "kind": "sprite"
+      },
+      "name": "Smoke rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 160
+    },
+    "soft_clay": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Soft Clay",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "steam_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "steam_rune",
+        "kind": "sprite"
+      },
+      "name": "Steam rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 160
+    },
+    "steel_arrowheads": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Steel Arrowheads",
+      "stackable": false,
+      "type": "component",
+      "value": 70
+    },
+    "steel_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Steel Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 20
+    },
+    "steel_axe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Axe",
+      "speedBonusTicks": 2,
+      "stackable": false,
+      "stats": {
+        "atk": 22,
+        "def": 0,
+        "str": 18
+      },
+      "toolTier": 10,
+      "type": "weapon",
+      "value": 350,
+      "weaponClass": "axe"
+    },
+    "steel_axe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Steel Axe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 105
+    },
+    "steel_bar": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Steel Bar",
+      "stackable": false,
+      "type": "resource",
+      "value": 32
+    },
+    "steel_boots": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Boots",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 3,
+        "str": 0
+      },
+      "type": "feet",
+      "value": 140
+    },
+    "steel_helmet": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Helmet",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 8,
+        "str": 0
+      },
+      "type": "head",
+      "value": 175
+    },
+    "steel_pickaxe": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Steel Pickaxe",
+      "speedBonusTicks": 2,
+      "stackable": false,
+      "stats": {
+        "atk": 12,
+        "def": 0,
+        "str": 15
+      },
+      "toolTier": 10,
+      "type": "weapon",
+      "value": 350,
+      "weaponClass": "pickaxe"
+    },
+    "steel_pickaxe_head": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Steel Pickaxe Head",
+      "stackable": false,
+      "type": "component",
+      "value": 105
+    },
+    "steel_platebody": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Platebody",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 15,
+        "str": 0
+      },
+      "type": "body",
+      "value": 280
+    },
+    "steel_platelegs": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Platelegs",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 12,
+        "str": 0
+      },
+      "type": "legs",
+      "value": 227
+    },
+    "steel_shield": {
+      "actions": [
+        "Equip",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Shield",
+      "stackable": false,
+      "stats": {
+        "atk": 0,
+        "def": 10,
+        "str": 0
+      },
+      "type": "shield",
+      "value": 192
+    },
+    "steel_sword": {
+      "actions": [
+        "Equip",
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Equip",
+      "icon": {
+        "key": "iron_axe",
+        "kind": "sprite"
+      },
+      "name": "Steel Sword",
+      "stackable": false,
+      "stats": {
+        "atk": 22,
+        "def": 0,
+        "str": 18
+      },
+      "type": "weapon",
+      "value": 350,
+      "weaponClass": "sword"
+    },
+    "steel_sword_blade": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Steel Sword Blade",
+      "stackable": false,
+      "type": "component",
+      "value": 105
+    },
+    "thread": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Thread",
+      "stackable": false,
+      "type": "resource",
+      "value": 2
+    },
+    "tiara_mould": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "small_pouch",
+        "kind": "sprite"
+      },
+      "name": "Tiara mould",
+      "stackable": false,
+      "type": "tool",
+      "value": 0
+    },
+    "tin_ore": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Tin ore",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
+    },
+    "tinderbox": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tinderbox",
+        "kind": "sprite"
+      },
+      "name": "Tinderbox",
+      "stackable": false,
+      "type": "tool",
+      "value": 8
+    },
+    "uncut_diamond": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Uncut diamond",
+      "stackable": false,
+      "type": "resource",
+      "value": 150
+    },
+    "uncut_emerald": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Uncut emerald",
+      "stackable": false,
+      "type": "resource",
+      "value": 90
+    },
+    "uncut_ruby": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Uncut ruby",
+      "stackable": false,
+      "type": "resource",
+      "value": 20
+    },
+    "uncut_sapphire": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "rune_essence",
+        "kind": "sprite"
+      },
+      "name": "Uncut sapphire",
+      "stackable": false,
+      "type": "resource",
+      "value": 50
+    },
+    "water_rune": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "key": "water_rune",
+        "kind": "sprite"
+      },
+      "name": "Water rune",
+      "stackable": true,
+      "type": "resource",
+      "value": 20
+    },
+    "water_staff": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Water Staff",
+      "stackable": false,
+      "type": "component",
+      "value": 180
+    },
+    "willow_handle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Willow Handle",
+      "stackable": false,
+      "type": "component",
+      "value": 20
+    },
+    "willow_handle_strapped": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Willow Handle w/ Strap",
+      "stackable": false,
+      "type": "component",
+      "value": 100
+    },
+    "willow_headless_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Willow Headless Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 16
+    },
+    "willow_logs": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "kind": "image",
+        "path": "./assets/pixel/willow_logs-pixel.png"
+      },
+      "name": "Willow Logs",
+      "stackable": false,
+      "type": "resource",
+      "value": 36
+    },
+    "willow_longbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Willow Longbow",
+      "stackable": false,
+      "type": "component",
+      "value": 36
+    },
+    "willow_longbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Willow Longbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 26
+    },
+    "willow_shafts": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Willow Shafts x15",
+      "stackable": false,
+      "type": "component",
+      "value": 10
+    },
+    "willow_shortbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Willow Shortbow",
+      "stackable": false,
+      "type": "component",
+      "value": 40
+    },
+    "willow_shortbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Willow Shortbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 28
+    },
+    "wolf_leather": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Wolf Leather",
+      "stackable": false,
+      "type": "resource",
+      "value": 24
+    },
+    "wooden_handle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Wooden Handle",
+      "stackable": false,
+      "type": "component",
+      "value": 6
+    },
+    "wooden_handle_strapped": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Wooden Handle w/ Strap",
+      "stackable": false,
+      "type": "component",
+      "value": 30
+    },
+    "wooden_headless_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Wooden Headless Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 6
+    },
+    "wooden_shafts": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Wooden Shafts x15",
+      "stackable": false,
+      "type": "component",
+      "value": 4
+    },
+    "yew_handle": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Yew Handle",
+      "stackable": false,
+      "type": "component",
+      "value": 50
+    },
+    "yew_handle_strapped": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Yew Handle w/ Strap",
+      "stackable": false,
+      "type": "component",
+      "value": 280
+    },
+    "yew_headless_arrows": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "tin_ore",
+        "kind": "sprite"
+      },
+      "name": "Yew Headless Arrows x15",
+      "stackable": false,
+      "type": "component",
+      "value": 36
+    },
+    "yew_logs": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "kind": "image",
+        "path": "./assets/pixel/logs-pixel.png"
+      },
+      "name": "Yew Logs",
+      "stackable": false,
+      "type": "resource",
+      "value": 180
+    },
+    "yew_longbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Yew Longbow",
+      "stackable": false,
+      "type": "component",
+      "value": 100
+    },
+    "yew_longbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Yew Longbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 70
+    },
+    "yew_shafts": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Yew Shafts x15",
+      "stackable": false,
+      "type": "component",
+      "value": 24
+    },
+    "yew_shortbow": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "pickaxe",
+        "kind": "sprite"
+      },
+      "name": "Yew Shortbow",
+      "stackable": false,
+      "type": "component",
+      "value": 110
+    },
+    "yew_shortbow_u": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "key": "knife",
+        "kind": "sprite"
+      },
+      "name": "Yew Shortbow (u)",
+      "stackable": false,
+      "type": "component",
+      "value": 72
+    }
+  }
+}

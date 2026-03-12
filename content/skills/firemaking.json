@@ -1,7 +1,13 @@
 {
   "economy": {
     "generalStoreFallback": {
-      "buyPolicy": "half_price_floor"
+      "buyPolicy": "half_price_floor",
+      "defaultStock": [
+        {
+          "itemId": "tinderbox",
+          "stockAmount": 10
+        }
+      ]
     },
     "primaryResource": "logs",
     "supportResource": "tinderbox",
