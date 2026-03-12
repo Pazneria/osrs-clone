@@ -643,7 +643,6 @@
             window.addEventListener('mouseup', onPointerUp, false);
             renderer.domElement.addEventListener('wheel', onMouseWheel, { passive: false });
             renderer.domElement.addEventListener('contextmenu', onContextMenu, false);
-            seedCookingTrainingFires();
         }
 
         function initUIPreview() {

@@ -635,7 +635,7 @@ function run() {
   assert(worldScript.includes("routeId: 'dockside_fire_line'"), "dockside cooking route missing");
   assert(worldScript.includes("routeId: 'deep_water_dock_fire_line'"), "deep-water cooking route missing");
   assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
-  assert(worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should seed on renderer init");
+  assert(!worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should not seed on renderer init");
   assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");
   assert(worldScript.includes("SkillSpecRegistry.getRecipeSet('firemaking')"), "fire lifetime resolver should read firemaking recipe data");
   assert(worldScript.includes("function tickFireLifecycle()"), "fire lifecycle tick helper missing");

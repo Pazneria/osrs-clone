@@ -554,7 +554,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-021 - Fire spawn bug after tab inactivity
-- Status: Backlog
+- Status: Fixed
 - Severity: S1
 - Area: BUG
 - Source: Manual
@@ -570,14 +570,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Reproduce with visibility/tab pause conditions.
   2. Trace fire spawn/tick catch-up logic on tab resume.
   3. Clamp or gate deferred ticks and verify fix.
-- Plan Outcome: Pending
+- Plan Outcome: Completed
 - Fix Notes:
+  - Root cause was deterministic startup seeding, not tab-resume catch-up.
+  - `initThreeJS()` no longer calls `seedCookingTrainingFires()`, so fresh launches do not begin with pre-seeded route fires.
+  - Contract test updated to enforce no init-time fire seeding while preserving cooking route metadata/QA location hooks.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-022 - HUD running button overlap with minimap
 - Status: Backlog

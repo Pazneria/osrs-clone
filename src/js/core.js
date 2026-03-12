@@ -101,9 +101,10 @@
         let currentMouseX = 0;
         let currentMouseY = 0;
 
-        let cameraYaw = Math.PI / 4;
-        let cameraPitch = Math.PI / 4;
-        let cameraDist = 15;
+        // Start in a conventional third-person angle: above and behind the player.
+        let cameraYaw = (Math.PI * 1.5) - playerState.targetRotation;
+        let cameraPitch = Math.PI / 3.1;
+        let cameraDist = 16;
 
         // UI & Bank State
         let uiScene, uiCamera, uiRenderer, uiPlayerRig;
