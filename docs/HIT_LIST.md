@@ -484,11 +484,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-027 - Skills menu icon opens dedicated progression view
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: HUD
 - Source: Manual
-- Links:
+- Links: `index.html`, `src/js/inventory.js`
 - Repro:
   1. Click skill icons in skills menu.
 - Expected: Each icon opens its skill's dedicated progression menu/view.
@@ -499,14 +499,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Define per-skill view routing contract.
   2. Wire skill icon click handlers to dedicated views.
   3. Verify back navigation and state persistence.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Expanded the skills popup into a dedicated progression panel with per-skill focus text and an unlock timeline section.
+  - Added spec-driven milestone extraction from each skill's runtime spec (`nodeTable`, `recipeSet`, `pouchTable`) so each skill tile now resolves to unique progression content.
+  - Hardened panel refresh behavior so only the actively viewed skill updates the panel, preventing cross-skill overwrite noise.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-029 - Fletching cancel-on-click behavior
 - Status: Fixed
