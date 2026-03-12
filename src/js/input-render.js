@@ -69,99 +69,128 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         }
 
+        function normalizeContextMenuOptions(options) {
+            if (!Array.isArray(options) || options.length === 0) return [];
+            const normalized = [];
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (!option || typeof option.text !== 'string' || typeof option.onSelect !== 'function') continue;
+                normalized.push(option);
+            }
+            return normalized;
+        }
+
+        function resolveSkillContextMenuOptions(hitData) {
+            if (!window.SkillRuntime || typeof SkillRuntime.getSkillContextMenuOptions !== 'function') return [];
+            return normalizeContextMenuOptions(SkillRuntime.getSkillContextMenuOptions(hitData));
+        }
+
+        function getSelectedUseInvIndex() {
+            if (typeof selectedUse === 'undefined' || !selectedUse) return null;
+            return Number.isInteger(selectedUse.invIndex) ? selectedUse.invIndex : null;
+        }
+
+        function tryUseSelectedInventoryItemOnTarget(hitData, selectedItem, selectedUseInvIndex) {
+            if (!hitData || !selectedItem || !Number.isInteger(selectedUseInvIndex)) return false;
+
+            let used = false;
+            if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
+                used = SkillRuntime.tryUseItemOnTarget({
+                    hitData,
+                    sourceInvIndex: selectedUseInvIndex,
+                    sourceItemId: selectedItem.id
+                });
+            }
+            if (!used) used = tryUseItemOnWorld(selectedUseInvIndex, hitData);
+            return used;
+        }
+
+        function emitExamineFallback(text) {
+            const line = String(text || 'Nothing unusual.').trim() || 'Nothing unusual.';
+            if (typeof addChatMessage === 'function') {
+                addChatMessage(line, 'game');
+                return;
+            }
+            console.log(`EXAMINING: ${line}`);
+        }
+
+        function resolveTargetInteractionOptions(hitData, selectedSlot, selectedItem, selectedCookable, selectedUseInvIndex) {
+            if (!window.TargetInteractionRegistry || typeof window.TargetInteractionRegistry.resolveOptions !== 'function') return [];
+
+            const resolved = window.TargetInteractionRegistry.resolveOptions(hitData, {
+                selectedSlot,
+                selectedItem,
+                selectedCookable,
+                selectedUseInvIndex,
+                clearSelectedUse,
+                spawnActionMarker: () => {
+                    if (hitData && hitData.point) spawnClickMarker(hitData.point, true);
+                },
+                tryUseSelectedItemOnHit: () => tryUseSelectedInventoryItemOnTarget(hitData, selectedItem, selectedUseInvIndex),
+                queueInteract: (targetType, targetData = null) => {
+                    queueAction('INTERACT', hitData.gridX, hitData.gridY, targetType, targetData);
+                    if (hitData.point) spawnClickMarker(hitData.point, true);
+                },
+                examineTarget: (targetType, fallbackText, options = {}) => {
+                    if (window.ExamineCatalog && typeof window.ExamineCatalog.examineTarget === 'function') {
+                        window.ExamineCatalog.examineTarget(targetType, options);
+                        return;
+                    }
+                    emitExamineFallback(fallbackText);
+                },
+                examineNpc: (npcName, fallbackText) => {
+                    if (window.ExamineCatalog && typeof window.ExamineCatalog.examineNpc === 'function') {
+                        window.ExamineCatalog.examineNpc(npcName);
+                        return;
+                    }
+                    emitExamineFallback(fallbackText);
+                },
+                examineItem: (itemId, itemName, fallbackText) => {
+                    if (window.ExamineCatalog && typeof window.ExamineCatalog.examineItem === 'function') {
+                        window.ExamineCatalog.examineItem(itemId, itemName);
+                        return;
+                    }
+                    emitExamineFallback(fallbackText);
+                },
+                formatGroundItemDisplayName,
+                getGroundItemByUid: (uid) => {
+                    if (!Array.isArray(groundItems)) return null;
+                    return groundItems.find((entry) => entry && entry.uid === uid) || null;
+                },
+                getTileIdAtHit: () => {
+                    if (!hitData || !logicalMap[playerState.z] || !logicalMap[playerState.z][hitData.gridY]) return null;
+                    return logicalMap[playerState.z][hitData.gridY][hitData.gridX];
+                },
+                tileIds: {
+                    TREE: TileId.TREE,
+                    STUMP: TileId.STUMP
+                }
+            });
+
+            return normalizeContextMenuOptions(resolved);
+        }
+
         function onContextMenu(event) {
             if (isFreeCam) return; if (event.target.id === 'minimap' || event.target.id === 'runToggleBtn') return;
             event.preventDefault(); closeContextMenu();
             const hitResults = getRaycastHits(event.clientX, event.clientY);
             if (!hitResults || hitResults.length === 0) return;
             contextOptionsListEl.innerHTML = '';
+            const selectedSlot = getSelectedUseItem();
+            const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
+            const selectedUseInvIndex = getSelectedUseInvIndex();
+            const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
+
             for (let i = 0; i < hitResults.length; i++) {
                 const hitData = hitResults[i];
-                const selectedSlot = getSelectedUseItem();
-                const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
-                const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
-                let usedSkillOptions = false;
-                const skillOptions = (window.SkillRuntime && typeof SkillRuntime.getSkillContextMenuOptions === 'function')
-                    ? SkillRuntime.getSkillContextMenuOptions(hitData)
-                    : null;
-                if (Array.isArray(skillOptions) && skillOptions.length > 0) {
-                    usedSkillOptions = true;
-                    for (let j = 0; j < skillOptions.length; j++) {
-                        const option = skillOptions[j];
-                        if (!option || typeof option.text !== 'string' || typeof option.onSelect !== 'function') continue;
-                        addContextMenuOption(option.text, option.onSelect);
-                    }
-                }
-                
-                if (!usedSkillOptions && hitData.type === 'TREE') {
-                    if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.TREE) {
-                        addContextMenuOption('Chop down Tree', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'TREE'); spawnClickMarker(hitData.point, true); });
-                        addContextMenuOption('Examine Tree', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('TREE') : (typeof addChatMessage === 'function' ? addChatMessage('A fully grown tree.', 'game') : console.log('EXAMINING: A fully grown tree.'))));
-                    } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.STUMP) addContextMenuOption('Examine Stump', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('STUMP') : (typeof addChatMessage === 'function' ? addChatMessage('A sad reminder of a tree.', 'game') : console.log('EXAMINING: A sad reminder of a tree.'))));
-                } else if (!usedSkillOptions && hitData.type === 'ROCK') {
-                    addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine Rock', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK') : (typeof addChatMessage === 'function' ? addChatMessage('A solid chunk of rock.', 'game') : console.log('EXAMINING: A solid chunk of rock.'))));
-                } else if (!usedSkillOptions && hitData.type === 'FIRE') {
-                    if (selectedCookable) {
-                        addContextMenuOption(`Use <span class="text-[#ff981f]">${selectedItem.name}</span> -> <span class="text-orange-300">Fire</span>`, () => {
-                            let used = false;
-                            if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
-                                used = SkillRuntime.tryUseItemOnTarget({
-                                    hitData,
-                                    sourceInvIndex: selectedUse.invIndex,
-                                    sourceItemId: selectedItem.id
-                                });
-                            }
-                            if (!used) used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
-                            if (used && hitData.point) spawnClickMarker(hitData.point, true);
-                            clearSelectedUse();
-                        });
-                    }
-                    addContextMenuOption('Examine <span class="text-orange-300">Fire</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('FIRE') : (typeof addChatMessage === 'function' ? addChatMessage('A hot campfire.', 'game') : console.log('EXAMINING: A hot campfire.'))));
-                } else if (!usedSkillOptions && hitData.type === 'FURNACE') {
-                    addContextMenuOption('Smelt <span class="text-orange-300">Furnace</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'FURNACE', { skillId: 'smithing', stationType: 'FURNACE' }); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-orange-300">Furnace</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('FURNACE') : (typeof addChatMessage === 'function' ? addChatMessage('A roaring smithing furnace.', 'game') : console.log('EXAMINING: A roaring smithing furnace.'))));
-                } else if (!usedSkillOptions && hitData.type === 'ANVIL') {
-                    addContextMenuOption('Forge <span class="text-slate-300">Anvil</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ANVIL', { skillId: 'smithing', stationType: 'ANVIL' }); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-slate-300">Anvil</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ANVIL') : (typeof addChatMessage === 'function' ? addChatMessage('A solid anvil for forging metal.', 'game') : console.log('EXAMINING: A solid anvil for forging metal.'))));
-                } else if (hitData.type === 'BANK_BOOTH') {
-                    addContextMenuOption('Bank <span class="text-cyan-400">Bank Booth</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'BANK_BOOTH'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-cyan-400">Bank Booth</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('BANK_BOOTH') : (typeof addChatMessage === 'function' ? addChatMessage('A safe place for your valuables.', 'game') : console.log('EXAMINING: A safe place for your valuables.'))));
-                } else if (hitData.type === 'DUMMY') {
-                    addContextMenuOption('Attack <span class="text-white">Training Dummy</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DUMMY'); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-white">Training Dummy</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('DUMMY') : (typeof addChatMessage === 'function' ? addChatMessage('It never complains about your form.', 'game') : console.log('EXAMINING: It never complains about your form.'))));
-                } else if (hitData.type === 'SHOP_COUNTER') {
-                    addContextMenuOption('Examine Shop Counter', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('SHOP_COUNTER') : (typeof addChatMessage === 'function' ? addChatMessage('A counter built for haggling.', 'game') : console.log('EXAMINING: A counter built for haggling.'))));
-                } else if (hitData.type === 'DOOR') {
-                    const action = hitData.doorObj.isOpen ? 'Close' : 'Open';
-                    addContextMenuOption(`${action} <span class="text-white">Door</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'DOOR', hitData.doorObj); spawnClickMarker(hitData.point, true); });
-                    addContextMenuOption('Examine <span class="text-white">Door</span>', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('DOOR') : (typeof addChatMessage === 'function' ? addChatMessage('A sturdy wooden door.', 'game') : console.log('EXAMINING: A sturdy wooden door.'))));
-                } else if (hitData.type === 'STAIRS_UP') {
-                    addContextMenuOption('Climb-up <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_UP'); spawnClickMarker(hitData.point, true); });
-                } else if (hitData.type === 'STAIRS_DOWN') {
-                    addContextMenuOption('Climb-down <span class="text-cyan-400">Stairs</span>', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'STAIRS_DOWN'); spawnClickMarker(hitData.point, true); });
-                } else if (hitData.type === 'NPC') {
-                    const npcUid = (hitData.uid && typeof hitData.uid === 'object') ? hitData.uid : null;
-                    const npcAction = (npcUid && typeof npcUid.action === 'string') ? npcUid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
-                    if (npcAction === 'Trade') {
-                        if (hitData.name === 'Shopkeeper' && !(npcUid && npcUid.merchantId)) {
-                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span> (General Store)`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', { name: hitData.name, action: 'Trade', merchantId: 'general_store' }); spawnClickMarker(hitData.point, true); });
-                        } else {
-                            const tradeTarget = npcUid ? Object.assign({}, npcUid) : { name: hitData.name, action: 'Trade' };
-                            addContextMenuOption(`Trade <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', tradeTarget); spawnClickMarker(hitData.point, true); });
-                        }
-                    } else {
-                        const talkTarget = npcUid ? Object.assign({}, npcUid) : { name: hitData.name, action: 'Talk-to' };
-                        addContextMenuOption(`Talk-to <span class="text-yellow-400">${hitData.name}</span>`, () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'NPC', talkTarget); spawnClickMarker(hitData.point, true); });
-                    }
-                    addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => (window.ExamineCatalog ? window.ExamineCatalog.examineNpc(hitData.name) : (typeof addChatMessage === 'function' ? addChatMessage('Nothing unusual.', 'game') : console.log(`EXAMINING: ${hitData.name}.`))));
-                } else if (hitData.type === 'GROUND_ITEM') {
-                    const groundName = formatGroundItemDisplayName(hitData);
-                    addContextMenuOption(`Take <span class="text-[#ff981f]">${groundName}</span>`, () => {
-                        queueAction('INTERACT', hitData.gridX, hitData.gridY, 'GROUND_ITEM', hitData.uid);
-                        spawnClickMarker(hitData.point, true);
-                    });
-                    addContextMenuOption(`Examine <span class="text-[#ff981f]">${groundName}</span>`, () => { const groundEntry = Array.isArray(groundItems) ? groundItems.find((gi) => gi && gi.uid === hitData.uid) : null; const groundItemId = groundEntry && groundEntry.itemData ? groundEntry.itemData.id : null; if (window.ExamineCatalog) window.ExamineCatalog.examineItem(groundItemId, groundName); else if (typeof addChatMessage === 'function') addChatMessage('Looks useful.', 'game'); else console.log(`EXAMINING: ${groundName}.`); });
+                const skillOptions = resolveSkillContextMenuOptions(hitData);
+                const targetOptions = skillOptions.length > 0
+                    ? skillOptions
+                    : resolveTargetInteractionOptions(hitData, selectedSlot, selectedItem, selectedCookable, selectedUseInvIndex);
+
+                for (let j = 0; j < targetOptions.length; j++) {
+                    const option = targetOptions[j];
+                    addContextMenuOption(option.text, option.onSelect);
                 }
             }
 

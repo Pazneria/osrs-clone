@@ -709,11 +709,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-036 - Context menu behavior is a monolithic hard-coded branch
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: HUD
 - Source: Manual
-- Links: `src/js/input-render.js`, `src/js/skills/runtime.js`, `src/js/skills/manifest.js`
+- Links: `src/js/input-render.js`, `src/js/interactions/target-interaction-registry.js`, `src/js/skills/runtime.js`, `index.html`, `tools/tests/context-menu-registry-guard.js`, `package.json`
 - Repro:
   1. Inspect `onContextMenu` in `src/js/input-render.js`.
   2. Observe a long `if/else` chain keyed on `hitData.type` with embedded action labels/messages.
@@ -726,14 +726,18 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Define a target interaction registry contract (`actions`, `examine`, `priority`, `guards`).
   2. Migrate existing target handlers into per-domain modules.
   3. Keep `onContextMenu` as a generic renderer over resolved actions.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added a dedicated target interaction registry module (`src/js/interactions/target-interaction-registry.js`) with per-target specs using the `actions`/`examine`/`priority`/`guards` contract and a registration API for new target types.
+  - Refactored `onContextMenu` in `src/js/input-render.js` to stay skill-first (`SkillRuntime.getSkillContextMenuOptions`) and then resolve non-skill world interactions through `TargetInteractionRegistry.resolveOptions(...)`.
+  - Moved hard-coded target interaction behavior (tree, rock, fire, smithing stations, NPCs, doors, ground items, etc.) out of the UI branch chain and into registry-owned handlers while preserving existing option labels/behavior.
+  - Added a context-menu regression guard test (`tools/tests/context-menu-registry-guard.js`) and wired it into `npm test`.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-037 - Tile semantics rely on magic numbers across runtime
 - Status: Fixed
