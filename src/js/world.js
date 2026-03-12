@@ -1149,13 +1149,13 @@
                     failureReasons.push('out_of_bounds');
                     continue;
                 }
-                if (!WALKABLE_TILES.includes(logicalMap[z][ny][nx])) {
+                if (!isWalkableTileId(logicalMap[z][ny][nx])) {
                     failureReasons.push('blocked_tile');
                     continue;
                 }
 
                 const nextH = heightMap[z][ny][nx];
-                const tileIsRamp = logicalMap[z][playerState.y][playerState.x] === 15 || logicalMap[z][ny][nx] === 15;
+                const tileIsRamp = logicalMap[z][playerState.y][playerState.x] === TileId.STAIRS_RAMP || logicalMap[z][ny][nx] === TileId.STAIRS_RAMP;
                 if (Math.abs(nextH - currentH) > 0.3 && !tileIsRamp) {
                     failureReasons.push('height_mismatch');
                     continue;
@@ -1546,7 +1546,7 @@
         function setTreeNode(x, y, z = 0, nodeId = 'normal_tree', options = {}) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
             const tile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
-            if (tile !== 1 && tile !== 4) return false;
+            if (!isTreeTileId(tile)) return false;
             const key = treeNodeKey(x, y, z);
             treeNodes[key] = {
                 nodeId: (typeof nodeId === 'string' && nodeId) ? nodeId : 'normal_tree',
@@ -1560,7 +1560,7 @@
         function getTreeNodeAt(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
             const tile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
-            if (tile !== 1 && tile !== 4) return null;
+            if (!isTreeTileId(tile)) return null;
             const key = treeNodeKey(x, y, z);
             if (!treeNodes[key]) treeNodes[key] = { nodeId: 'normal_tree', areaGateFlag: null, areaName: null, areaGateMessage: null };
             return treeNodes[key];
@@ -1572,7 +1572,7 @@
                 for (let y = 0; y < MAP_SIZE; y++) {
                     for (let x = 0; x < MAP_SIZE; x++) {
                         const tile = logicalMap[z][y][x];
-                        if (tile === 1 || tile === 4) {
+                        if (isTreeTileId(tile)) {
                             const key = treeNodeKey(x, y, z);
                             const prev = treeNodes[key];
                             rebuilt[key] = {
@@ -1817,7 +1817,7 @@
             for (let z = 0; z < PLANES; z++) {
                 for (let y = 0; y < MAP_SIZE; y++) {
                     for (let x = 0; x < MAP_SIZE; x++) {
-                        if (logicalMap[z][y][x] === 2) {
+                        if (logicalMap[z][y][x] === TileId.ROCK) {
                             const key = rockNodeKey(x, y, z);
                             const prev = rockNodes[key];
                             const gateOverride = rockAreaGateOverrides && rockAreaGateOverrides[key] ? rockAreaGateOverrides[key] : null;
@@ -1837,7 +1837,7 @@
 
         function getRockNodeAt(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
-            if (logicalMap[z][y][x] !== 2) return null;
+            if (logicalMap[z][y][x] !== TileId.ROCK) return null;
             const key = rockNodeKey(x, y, z);
             if (!rockNodes[key]) {
                 const gateOverride = rockAreaGateOverrides && rockAreaGateOverrides[key] ? rockAreaGateOverrides[key] : null;
@@ -2135,11 +2135,18 @@
                 const row = logicalMap[z] && logicalMap[z][y];
                 if (!row) return false;
                 const tile = row[x];
-                const validBase = tile === 0 || tile === 6 || tile === 7 || tile === 8 || tile === 15 || tile === 19 || tile === 20 || tile === 21 || tile === 22;
+                const validBase = tile === TileId.GRASS
+                    || tile === TileId.FLOOR_WOOD
+                    || tile === TileId.FLOOR_STONE
+                    || tile === TileId.FLOOR_BRICK
+                    || tile === TileId.STAIRS_RAMP
+                    || tile === TileId.DOOR_OPEN
+                    || tile === TileId.SHORE
+                    || isWaterTileId(tile);
                 if (!validBase) return false;
 
-                if (tile === 21 || tile === 22) {
-                    logicalMap[z][y][x] = 20;
+                if (isWaterTileId(tile)) {
+                    logicalMap[z][y][x] = TileId.SHORE;
                     heightMap[z][y][x] = Math.max(-0.01, heightMap[z][y][x]);
                 }
                 return true;
@@ -2191,7 +2198,8 @@
                 for (let y = 1; y < MAP_SIZE - 1; y++) {
                     for (let x = 1; x < MAP_SIZE - 1; x++) {
                         const tile = logicalMap[0][y][x];
-                        if (!(tile === 0 || tile === 1 || tile === 2 || tile === 4)) continue;
+                        const isBlendableNaturalTile = isNaturalTileId(tile) && !isWaterTileId(tile) && tile !== TileId.SHORE;
+                        if (!isBlendableNaturalTile) continue;
                         if (inTownCore(x, y)) continue;
 
                         let sum = 0;
@@ -2199,7 +2207,8 @@
                         for (let oy = -1; oy <= 1; oy++) {
                             for (let ox = -1; ox <= 1; ox++) {
                                 const nt = logicalMap[0][y + oy][x + ox];
-                                if (nt === 0 || nt === 1 || nt === 2 || nt === 4) {
+                                const neighborIsBlendable = isNaturalTileId(nt) && !isWaterTileId(nt) && nt !== TileId.SHORE;
+                                if (neighborIsBlendable) {
                                     sum += heightMap[0][y + oy][x + ox];
                                     count++;
                                 }
@@ -2458,8 +2467,8 @@
             // Replace broad random interior rock spread with structured mining training zones.
             for (let y = 3; y < MAP_SIZE - 3; y++) {
                 for (let x = 3; x < MAP_SIZE - 3; x++) {
-                    if (logicalMap[0][y][x] !== 2) continue;
-                    logicalMap[0][y][x] = 0;
+                    if (logicalMap[0][y][x] !== TileId.ROCK) continue;
+                    logicalMap[0][y][x] = TileId.GRASS;
                     heightMap[0][y][x] = Math.max(0, heightMap[0][y][x]);
                 }
             }
@@ -2468,7 +2477,7 @@
                 if (x <= 2 || y <= 2 || x >= MAP_SIZE - 3 || y >= MAP_SIZE - 3) return false;
                 if (inTownCore(x, y)) return false;
                 const tile = logicalMap[0][y][x];
-                return tile === 0;
+                return tile === TileId.GRASS;
             };
 
             const randomizeArrayInPlace = (arr) => {
@@ -2596,7 +2605,7 @@
                 const row = logicalMap[z] && logicalMap[z][y];
                 if (!row) return false;
                 const tile = row[x];
-                return tile === 0 || tile === 1 || tile === 2 || tile === 4;
+                return tile === TileId.GRASS || tile === TileId.ROCK || isTreeTileId(tile);
             }
 
             function isFarEnoughFromPlacedMiningRocks(candidate, minSpacing) {
@@ -2631,7 +2640,7 @@
 
             function setMiningRockAt(x, y, z, oreType, options = {}) {
                 if (!oreType) return false;
-                logicalMap[z][y][x] = 2;
+                logicalMap[z][y][x] = TileId.ROCK;
                 const key = rockNodeKey(x, y, z);
                 rockOreOverrides[key] = oreType;
 
@@ -2752,7 +2761,7 @@
 
             function canPlaceAltarCandidate(candidate) {
                 if (!candidate) return false;
-                if (logicalMap[candidate.z][candidate.y][candidate.x] !== 0) return false;
+                if (logicalMap[candidate.z][candidate.y][candidate.x] !== TileId.GRASS) return false;
                 if (isCandidateNearRuneEssence(candidate)) return false;
                 if (isCandidateNearExistingAltars(candidate)) return false;
                 return true;
@@ -2819,7 +2828,13 @@
                 const row = logicalMap[z] && logicalMap[z][y];
                 if (!row) return false;
                 const tile = row[x];
-                return tile === 0 || tile === 20 || tile === 6 || tile === 7 || tile === 8 || tile === 15 || tile === 19;
+                return tile === TileId.GRASS
+                    || tile === TileId.SHORE
+                    || tile === TileId.FLOOR_WOOD
+                    || tile === TileId.FLOOR_STONE
+                    || tile === TileId.FLOOR_BRICK
+                    || tile === TileId.STAIRS_RAMP
+                    || tile === TileId.DOOR_OPEN;
             }
 
             function findMerchantSpotNearAltar(anchor) {
@@ -2915,7 +2930,7 @@
                 if (candidate.x <= 2 || candidate.y <= 2 || candidate.x >= MAP_SIZE - 3 || candidate.y >= MAP_SIZE - 3) return false;
                 if (inTownCore(candidate.x, candidate.y)) return false;
                 const tile = logicalMap[candidate.z] && logicalMap[candidate.z][candidate.y] ? logicalMap[candidate.z][candidate.y][candidate.x] : null;
-                if (tile !== 0 && tile !== 1) return false;
+                if (tile !== TileId.GRASS && tile !== TileId.TREE) return false;
                 if (isCandidateNearRuneEssence(candidate)) return false;
                 if (isCandidateNearExistingAltars(candidate)) return false;
                 return true;
@@ -3002,8 +3017,8 @@
                     for (let x = centerX - radius; x <= centerX + radius; x++) {
                         if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
                         const tile = logicalMap[0][y][x];
-                        if (tile === 0 || tile === 1 || tile === 2 || tile === 4 || tile === 20 || tile === 21 || tile === 22) {
-                            logicalMap[0][y][x] = 0;
+                        if (isNaturalTileId(tile)) {
+                            logicalMap[0][y][x] = TileId.GRASS;
                             heightMap[0][y][x] = Math.max(0, heightMap[0][y][x]);
                         }
                     }
@@ -3015,7 +3030,7 @@
                 if (!tree) continue;
                 clearShowcaseNaturalArea(tree.x, tree.y, 5);
                 if (tree.x <= 1 || tree.y <= 1 || tree.x >= MAP_SIZE - 2 || tree.y >= MAP_SIZE - 2) continue;
-                logicalMap[0][tree.y][tree.x] = 1;
+                logicalMap[0][tree.y][tree.x] = TileId.TREE;
                 setTreeNode(tree.x, tree.y, 0, tree.nodeId);
             }
 
@@ -3037,7 +3052,7 @@
                     const terrainGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
                     terrainGeo.rotateX(-Math.PI / 2);
 
-                    const isNaturalTile = (tileType) => tileType === 0 || tileType === 1 || tileType === 2 || tileType === 4 || tileType === 20 || tileType === 21 || tileType === 22;
+                    const isNaturalTile = (tileType) => isNaturalTileId(tileType);
                     const sampleTileHeight = (tx, ty) => {
                         if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return 0;
                         const tt = logicalMap[0][ty][tx];
@@ -3081,16 +3096,16 @@
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         let tile = logicalMap[z][y][x];
-                        if (tile === 1 || tile === 4) tCount++;
-                        else if (tile === 2) {
+                        if (isTreeTileId(tile)) tCount++;
+                        else if (tile === TileId.ROCK) {
                             const rockNode = getRockNodeAt(x, y, z);
                             if (rockNode && rockNode.depletedUntilTick > currentTick) rDepletedCount++;
                             else if (rockNode && rockNode.oreType === 'rune_essence') rRuneEssenceCount++;
                             else if (rockNode && rockNode.oreType === 'tin') rTinCount++;
                             else rCopperCount++;
                         }
-                        else if (tile === 11) wCount++;
-                        else if (tile === 12) cCount++;
+                        else if (tile === TileId.WALL) wCount++;
+                        else if (tile === TileId.TOWER) cCount++;
                     }
                 }
 
@@ -3166,7 +3181,7 @@
                         const tile = logicalMap[z][y][x];
                         const h = heightMap[z][y][x] + Z_OFFSET; 
 
-                        if (tile === 1 || tile === 4) {
+                        if (isTreeTileId(tile)) {
                             const treeNode = getTreeNodeAt(x, y, z);
                             const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';
                             dummyTransform.position.set(x, h, y);
@@ -3175,12 +3190,12 @@
                                 nodeId: treeNodeId,
                                 position: dummyTransform.position.clone(),
                                 quaternion: dummyTransform.quaternion.clone(),
-                                isStump: tile === 4
+                                isStump: tile === TileId.STUMP
                             });
 
                             tData.treeMap[tIdx] = { type: 'TREE', gridX: x, gridY: y, z: z, nodeId: treeNodeId };
                             tIdx++;
-                        } else if (tile === 2) {
+                        } else if (tile === TileId.ROCK) {
                             const rockNode = getRockNodeAt(x, y, z);
                             const depleted = !!(rockNode && rockNode.depletedUntilTick > currentTick);
                             dummyTransform.position.set(x, h, y);
@@ -3214,11 +3229,11 @@
                                     rCopperIdx++;
                                 }
                             }
-                        } else if (tile === 11) { // Wall (Anchored to base)
+                        } else if (tile === TileId.WALL) { // Wall (Anchored to base)
                             const isCastleTile = (tx, ty) => {
                                 if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return false;
                                 const neighborTile = logicalMap[z][ty][tx];
-                                return neighborTile === 11 || neighborTile === 12;
+                                return neighborTile === TileId.WALL || neighborTile === TileId.TOWER;
                             };
                             const hasNorth = isCastleTile(x, y - 1);
                             const hasSouth = isCastleTile(x, y + 1);
@@ -3237,15 +3252,15 @@
                             dummyTransform.updateMatrix();
                             castleData.iWall.setMatrixAt(wIdx, dummyTransform.matrix);
                             castleData.wallMap[wIdx] = { type: 'WALL', gridX: x, gridY: y, z: z }; wIdx++;
-                        } else if (tile === 12) { // Tower (Anchored to base)
+                        } else if (tile === TileId.TOWER) { // Tower (Anchored to base)
                             dummyTransform.position.set(x, Z_OFFSET, y);
                             dummyTransform.rotation.set(0, 0, 0); dummyTransform.scale.set(1, 1, 1); dummyTransform.updateMatrix();
                             castleData.iTower.setMatrixAt(cIdx, dummyTransform.matrix);
                             castleData.towerMap[cIdx] = { type: 'TOWER', gridX: x, gridY: y, z: z }; cIdx++;
-                                                } else if (tile === 21 || tile === 22) {
+                                                } else if (isWaterTileId(tile)) {
                             // Keep a stable water surface so deep beds do not expose grass through the center channel.
                             const waterSurfaceH = Z_OFFSET + Math.max(-0.08, heightMap[z][y][x] + 0.01);
-                            const water = new THREE.Mesh(sharedGeometries.waterPlane, tile === 22 ? sharedMaterials.waterDeep : sharedMaterials.waterShallow);
+                            const water = new THREE.Mesh(sharedGeometries.waterPlane, tile === TileId.WATER_DEEP ? sharedMaterials.waterDeep : sharedMaterials.waterShallow);
                             water.position.set(x, waterSurfaceH, y);
                             water.scale.set(1.08, 1, 1.08);
                             water.rotation.y = (((x * 33391) + (y * 12763)) % 4) * (Math.PI / 2);
@@ -3259,7 +3274,7 @@
                             const isLand = (tx, ty) => {
                                 if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return true;
                                 const t = logicalMap[z][ty][tx];
-                                return !(t === 21 || t === 22);
+                                return !isWaterTileId(t);
                             };
                             const dirs = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
                             for (let di = 0; di < dirs.length; di++) {
@@ -3275,7 +3290,7 @@
                                 planeGroup.add(rim);
 
                             }
-                        } else if (tile === 10) { // Dummy
+                        } else if (tile === TileId.DUMMY) { // Dummy
                             const dummyGroup = new THREE.Group(); dummyGroup.position.set(x, h, y);
                             const dummyPost = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), new THREE.MeshLambertMaterial({color: 0x5c4033})); dummyPost.position.y = 0.5; dummyPost.castShadow = true;
                             const dummyBody = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), new THREE.MeshLambertMaterial({color: 0xddddaa})); dummyBody.position.y = 1.0; dummyBody.castShadow = true;
@@ -3293,11 +3308,11 @@
                                 floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
                                 planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                             }
-                        } else if (tile === 17) { // Shop Counter
+                        } else if (tile === TileId.SHOP_COUNTER) { // Shop Counter
                             const counterGroup = new THREE.Group(); counterGroup.position.set(x, h, y);
                             
                             let rotY = 0;
-                            if ((y > 0 && logicalMap[z][y-1][x] === 17) || (y < MAP_SIZE - 1 && logicalMap[z][y+1][x] === 17)) {
+                            if ((y > 0 && logicalMap[z][y-1][x] === TileId.SHOP_COUNTER) || (y < MAP_SIZE - 1 && logicalMap[z][y+1][x] === TileId.SHOP_COUNTER)) {
                                 rotY = Math.PI / 2;
                             }
                             counterGroup.rotation.y = rotY;
@@ -3321,10 +3336,10 @@
                                 floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
                                 planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                             }
-                        } else if (tile === 7 || tile === 6 || tile === 8 || tile === 9 || tile === 16) { // Floors (Now includes Bank & Solid NPCs bases)
+                        } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || tile === TileId.SOLID_NPC) { // Floors (Now includes Bank & Solid NPCs bases)
                             let floorMat = sharedMaterials.floor7; // default to stone
-                            if (tile === 6) floorMat = sharedMaterials.floor6;
-                            if (tile === 8) floorMat = sharedMaterials.floor8;
+                            if (tile === TileId.FLOOR_WOOD) floorMat = sharedMaterials.floor6;
+                            if (tile === TileId.FLOOR_BRICK) floorMat = sharedMaterials.floor8;
                             
                             const floorHeight = heightMap[z][y][x];
                             if (floorHeight > 0) {
@@ -3334,15 +3349,15 @@
                                 floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
                                 planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                             }
-                        } else if (tile === 13 || tile === 14) { // Stairs Up/Down
-                            const isUp = tile === 13;
+                        } else if (tile === TileId.STAIRS_UP || tile === TileId.STAIRS_DOWN) { // Stairs Up/Down
+                            const isUp = tile === TileId.STAIRS_UP;
                             const floorHeight = heightMap[z][y][x] || 0.5;
                             const stairMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), isUp ? sharedMaterials.stairsUp : sharedMaterials.stairsDown);
                             stairMesh.position.set(x, Z_OFFSET + (floorHeight / 2), y);
                             stairMesh.castShadow = true; stairMesh.receiveShadow = true;
                             stairMesh.userData = { type: isUp ? 'STAIRS_UP' : 'STAIRS_DOWN', gridX: x, gridY: y, z: z };
                             planeGroup.add(stairMesh); environmentMeshes.push(stairMesh);
-                        } else if (tile === 15) { // Seamless Walkable Stairs
+                        } else if (tile === TileId.STAIRS_RAMP) { // Seamless Walkable Stairs
                             const stairGroup = new THREE.Group();
                             stairGroup.position.set(x, Z_OFFSET, y);
                             
@@ -3723,25 +3738,25 @@
                     for (let x = 0; x < MAP_SIZE; x++) {
                         const tile = logicalMap[layer][y][x];
                         
-                        if (tile === 0 && layer > 0) continue; 
+                        if (tile === TileId.GRASS && layer > 0) continue; 
                         
-                        if (tile === 0 && layer === 0) offscreenMapCtx.fillStyle = '#2d4a22'; 
-                        else if (tile === 1 || tile === 4) offscreenMapCtx.fillStyle = '#1e752d'; 
-                        else if (tile === 2) offscreenMapCtx.fillStyle = '#6b7280'; 
-                        else if (tile === 6 || tile === 17) offscreenMapCtx.fillStyle = '#654321'; 
-                        else if (tile === 7 || tile === 15 || tile === 16) offscreenMapCtx.fillStyle = '#666666'; 
-                        else if (tile === 8) offscreenMapCtx.fillStyle = '#800000'; 
-                        else if (tile === 9) offscreenMapCtx.fillStyle = '#d4af37'; 
-                        else if (tile === 10) offscreenMapCtx.fillStyle = '#ff0000'; 
-                        else if (tile === 11 || tile === 12) offscreenMapCtx.fillStyle = '#4b5563'; 
-                        else if (tile === 13) offscreenMapCtx.fillStyle = '#aaaaaa'; 
-                        else if (tile === 14) offscreenMapCtx.fillStyle = '#444444'; 
-                        else if (tile === 20) offscreenMapCtx.fillStyle = '#9b8a5f'; // Shore
-                        else if (tile === 21) offscreenMapCtx.fillStyle = '#2c75a8'; // Shallow Water
-                        else if (tile === 22) offscreenMapCtx.fillStyle = '#184b78'; // Deep Water
-                        else if (tile === 18 || tile === 19) offscreenMapCtx.fillStyle = '#8b5a2b'; // Door
+                        if (tile === TileId.GRASS && layer === 0) offscreenMapCtx.fillStyle = '#2d4a22'; 
+                        else if (isTreeTileId(tile)) offscreenMapCtx.fillStyle = '#1e752d'; 
+                        else if (tile === TileId.ROCK) offscreenMapCtx.fillStyle = '#6b7280'; 
+                        else if (tile === TileId.FLOOR_WOOD || tile === TileId.SHOP_COUNTER) offscreenMapCtx.fillStyle = '#654321'; 
+                        else if (tile === TileId.FLOOR_STONE || tile === TileId.STAIRS_RAMP || tile === TileId.SOLID_NPC) offscreenMapCtx.fillStyle = '#666666'; 
+                        else if (tile === TileId.FLOOR_BRICK) offscreenMapCtx.fillStyle = '#800000'; 
+                        else if (tile === TileId.BANK_BOOTH) offscreenMapCtx.fillStyle = '#d4af37'; 
+                        else if (tile === TileId.DUMMY) offscreenMapCtx.fillStyle = '#ff0000'; 
+                        else if (tile === TileId.WALL || tile === TileId.TOWER) offscreenMapCtx.fillStyle = '#4b5563'; 
+                        else if (tile === TileId.STAIRS_UP) offscreenMapCtx.fillStyle = '#aaaaaa'; 
+                        else if (tile === TileId.STAIRS_DOWN) offscreenMapCtx.fillStyle = '#444444'; 
+                        else if (tile === TileId.SHORE) offscreenMapCtx.fillStyle = '#9b8a5f'; // Shore
+                        else if (tile === TileId.WATER_SHALLOW) offscreenMapCtx.fillStyle = '#2c75a8'; // Shallow Water
+                        else if (tile === TileId.WATER_DEEP) offscreenMapCtx.fillStyle = '#184b78'; // Deep Water
+                        else if (isDoorTileId(tile)) offscreenMapCtx.fillStyle = '#8b5a2b'; // Door
                         
-                        if (tile !== 5 && tile !== 0) offscreenMapCtx.fillRect(x, y, 1, 1);
+                        if (tile !== TileId.OBSTACLE && tile !== TileId.GRASS) offscreenMapCtx.fillRect(x, y, 1, 1);
                         else if (layer === 0) offscreenMapCtx.fillRect(x, y, 1, 1);
                     }
                 }
@@ -4071,7 +4086,7 @@
                     const gridX = Math.floor(minimapTargetX + 0.5 + (mouseX - canvasCenter) / ppt); const gridY = Math.floor(minimapTargetY + 0.5 + (mouseY - canvasCenter) / ppt);
                     if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
                         // Ensure we check walkability on the PLAYER'S CURRENT PLANE
-                        if (WALKABLE_TILES.includes(logicalMap[playerState.z][gridY][gridX])) { queueAction('WALK', gridX, gridY, null); }
+                        if (isWalkableTileId(logicalMap[playerState.z][gridY][gridX])) { queueAction('WALK', gridX, gridY, null); }
                     }
                 }
             });

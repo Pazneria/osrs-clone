@@ -94,10 +94,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 }
                 
                 if (!usedSkillOptions && hitData.type === 'TREE') {
-                    if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) {
+                    if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.TREE) {
                         addContextMenuOption('Chop down Tree', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'TREE'); spawnClickMarker(hitData.point, true); });
                         addContextMenuOption('Examine Tree', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('TREE') : (typeof addChatMessage === 'function' ? addChatMessage('A fully grown tree.', 'game') : console.log('EXAMINING: A fully grown tree.'))));
-                    } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 4) addContextMenuOption('Examine Stump', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('STUMP') : (typeof addChatMessage === 'function' ? addChatMessage('A sad reminder of a tree.', 'game') : console.log('EXAMINING: A sad reminder of a tree.'))));
+                    } else if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.STUMP) addContextMenuOption('Examine Stump', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('STUMP') : (typeof addChatMessage === 'function' ? addChatMessage('A sad reminder of a tree.', 'game') : console.log('EXAMINING: A sad reminder of a tree.'))));
                 } else if (!usedSkillOptions && hitData.type === 'ROCK') {
                     addContextMenuOption('Mine Rock', () => { queueAction('INTERACT', hitData.gridX, hitData.gridY, 'ROCK'); spawnClickMarker(hitData.point, true); });
                     addContextMenuOption('Examine Rock', () => (window.ExamineCatalog ? window.ExamineCatalog.examineTarget('ROCK') : (typeof addChatMessage === 'function' ? addChatMessage('A solid chunk of rock.', 'game') : console.log('EXAMINING: A solid chunk of rock.'))));
@@ -252,7 +252,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     const ny = y + dirs[i].y;
                     if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
                     const t = logicalMap[z][ny][nx];
-                    if (t === 21 || t === 22) return true;
+                    if (isWaterTileId(t)) return true;
                 }
                 return false;
             };
@@ -307,7 +307,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 for (let y = minY; y <= maxY; y++) {
                     for (let x = minX; x <= maxX; x++) {
                         const tile = logicalMap[z][y][x];
-                        if (tile !== 21 && tile !== 22) continue;
+                        if (!isWaterTileId(tile)) continue;
                         if (!hasAdjacentStandable(x, y)) continue;
 
                         const d = Math.hypot(x - targetX, y - targetY);
@@ -325,17 +325,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function isStandableTile(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
             const tile = logicalMap[z][y][x];
-            if (WALKABLE_TILES.includes(tile)) return true;
+            if (isWalkableTileId(tile)) return true;
 
             // Edge shallow-water tiles are standable; deeper water is not.
-            if (tile === 21) {
+            if (tile === TileId.WATER_SHALLOW) {
                 const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
                 for (let i = 0; i < dirs.length; i++) {
                     const nx = x + dirs[i].x;
                     const ny = y + dirs[i].y;
                     if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
                     const nt = logicalMap[z][ny][nx];
-                    if (nt !== 21 && nt !== 22) return true;
+                    if (!isWaterTileId(nt)) return true;
                 }
             }
             return false;
@@ -649,7 +649,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             if (isInteract) {
                 let targetH = heightMap[playerState.z][targetY][targetX];
-                if (targetTileType === 9) { // BANK BOOTH
+                if (targetTileType === TileId.BANK_BOOTH) { // BANK BOOTH
                     let nx = targetX, ny = targetY + 1;
                     if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
                         if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) < 0.1) validTargets.add(`${nx},${ny}`);
@@ -680,15 +680,15 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 continue;
                             }
 
-                            if (targetTileType === 16) { // Allow reaching NPCs over counters
+                            if (targetTileType === TileId.SOLID_NPC) { // Allow reaching NPCs over counters
                                 if (Math.abs(dx) === 2 && dy === 0) {
                                     let midX = targetX + dx / 2;
-                                    if (logicalMap[playerState.z][targetY][midX] === 17) {
+                                    if (logicalMap[playerState.z][targetY][midX] === TileId.SHOP_COUNTER) {
                                         if (nx >= 0 && nx < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(`${nx},${ny}`);
                                     }
                                 } else if (Math.abs(dy) === 2 && dx === 0) {
                                     let midY = targetY + dy / 2;
-                                    if (logicalMap[playerState.z][midY][targetX] === 17) {
+                                    if (logicalMap[playerState.z][midY][targetX] === TileId.SHOP_COUNTER) {
                                         if (ny >= 0 && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(`${nx},${ny}`);
                                     }
                                 }
@@ -719,7 +719,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     let nx = current.x + dir.x; let ny = current.y + dir.y; let key = `${nx},${ny}`;
                     if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && !visited.has(key) && isStandableTile(nx, ny, playerState.z)) {
                         let nextHeight = heightMap[playerState.z][ny][nx]; 
-                        let isStairTransition = (logicalMap[playerState.z][ny][nx] === 15 || logicalMap[playerState.z][current.y][current.x] === 15) && Math.abs(currentHeight - nextHeight) <= 0.6;
+                        let isStairTransition = (logicalMap[playerState.z][ny][nx] === TileId.STAIRS_RAMP || logicalMap[playerState.z][current.y][current.x] === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
                         if (Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition) continue;
                         
                         if (Math.abs(dir.x) === 1 && Math.abs(dir.y) === 1) {
@@ -882,8 +882,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     }
                     let isAcrossCounter = false;
                     if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
-                        if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === 17) isAcrossCounter = true;
-                        if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === 17) isAcrossCounter = true;
+                        if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === TileId.SHOP_COUNTER) isAcrossCounter = true;
+                        if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === TileId.SHOP_COUNTER) isAcrossCounter = true;
                     }
 
                     if (isAdjacent || isAcrossCounter) {
@@ -923,7 +923,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 const dirs = [{x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1}];
                                 for (let d of dirs) {
                                     let nx = playerState.x + d.x, ny = playerState.y + d.y;
-                                    if (isStandableTile(nx, ny, playerState.z) && logicalMap[playerState.z][ny][nx] !== 19) {
+                                    if (isStandableTile(nx, ny, playerState.z) && logicalMap[playerState.z][ny][nx] !== TileId.DOOR_OPEN) {
                                         playerState.x = nx; playerState.y = ny;
                                         playerState.prevX = nx; playerState.prevY = ny;
                                         break;
@@ -933,7 +933,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             
                             door.isOpen = !door.isOpen;
                             door.targetRotation = door.isOpen ? door.openRot : door.closedRot;
-                            logicalMap[door.z][door.y][door.x] = door.isOpen ? 19 : 18;
+                            logicalMap[door.z][door.y][door.x] = door.isOpen ? TileId.DOOR_OPEN : TileId.DOOR_CLOSED;
                             updateMinimapCanvas(); // Redraw map to show Walkable state change
                         }
                         playerState.action = 'IDLE';
@@ -945,8 +945,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         }
                         let isAcrossCounter = false;
                         if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
-                            if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === 17) isAcrossCounter = true;
-                            if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === 17) isAcrossCounter = true;
+                            if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === TileId.SHOP_COUNTER) isAcrossCounter = true;
+                            if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === TileId.SHOP_COUNTER) isAcrossCounter = true;
                         }
 
                         if (isAdjacent || isAcrossCounter) {
@@ -1224,7 +1224,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
                 if (!actionText) {
                     if (hitData.type === 'TREE') {
-                        if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
+                        if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.TREE) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
                     } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
                     else if (hitData.type === 'FIRE') actionText = '<span class="text-gray-300">Use</span> <span class="text-orange-300">Fire</span>';
                     else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${groundDisplayName}</span>`;

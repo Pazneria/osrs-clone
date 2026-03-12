@@ -11,10 +11,82 @@
         // --- Game State (Logical & Terrain) ---
         let currentTick = 0;
         
+        const TileId = Object.freeze({
+            GRASS: 0,
+            TREE: 1,
+            ROCK: 2,
+            STUMP: 4,
+            OBSTACLE: 5,
+            FLOOR_WOOD: 6,
+            FLOOR_STONE: 7,
+            FLOOR_BRICK: 8,
+            BANK_BOOTH: 9,
+            DUMMY: 10,
+            WALL: 11,
+            TOWER: 12,
+            STAIRS_UP: 13,
+            STAIRS_DOWN: 14,
+            STAIRS_RAMP: 15,
+            SOLID_NPC: 16,
+            SHOP_COUNTER: 17,
+            DOOR_CLOSED: 18,
+            DOOR_OPEN: 19,
+            SHORE: 20,
+            WATER_SHALLOW: 21,
+            WATER_DEEP: 22
+        });
+        const WALKABLE_TILES = [
+            TileId.GRASS,
+            TileId.FLOOR_WOOD,
+            TileId.FLOOR_STONE,
+            TileId.FLOOR_BRICK,
+            TileId.STAIRS_UP,
+            TileId.STAIRS_DOWN,
+            TileId.STAIRS_RAMP,
+            TileId.DOOR_OPEN,
+            TileId.SHORE
+        ];
+        const WATER_TILE_SET = new Set([TileId.WATER_SHALLOW, TileId.WATER_DEEP]);
+        const NATURAL_TILE_SET = new Set([
+            TileId.GRASS,
+            TileId.TREE,
+            TileId.ROCK,
+            TileId.STUMP,
+            TileId.SHORE,
+            TileId.WATER_SHALLOW,
+            TileId.WATER_DEEP
+        ]);
+        const TREE_TILE_SET = new Set([TileId.TREE, TileId.STUMP]);
+        const WALKABLE_TILE_SET = new Set(WALKABLE_TILES);
+
+        function isWaterTileId(tileId) {
+            return WATER_TILE_SET.has(tileId);
+        }
+
+        function isNaturalTileId(tileId) {
+            return NATURAL_TILE_SET.has(tileId);
+        }
+
+        function isTreeTileId(tileId) {
+            return TREE_TILE_SET.has(tileId);
+        }
+
+        function isWalkableTileId(tileId) {
+            return WALKABLE_TILE_SET.has(tileId);
+        }
+
+        function isDoorTileId(tileId) {
+            return tileId === TileId.DOOR_CLOSED || tileId === TileId.DOOR_OPEN;
+        }
+
+        window.TileId = TileId;
+        window.isWaterTileId = isWaterTileId;
+        window.isNaturalTileId = isNaturalTileId;
+        window.isTreeTileId = isTreeTileId;
+        window.isWalkableTileId = isWalkableTileId;
+        window.isDoorTileId = isDoorTileId;
+
         // 3D Array Logic: logicalMap[z][y][x]
-        // 0=grass, 1=tree, 2=rock, 4=stump, 5=obstacle, 6=woodFloor, 7=stoneFloor, 8=brickFloor, 9=bankBooth, 10=Dummy
-        // 11=Wall, 12=Tower, 13=Stairs Up, 14=Stairs Down, 15=Seamless Walkable Stairs, 16=Solid NPC, 17=Shop Counter
-        // 18=Closed Door, 19=Open Door, 20=Shoreline, 21=Shallow Water, 22=Deep Water
         let logicalMap = []; 
         let heightMap = [];  
         
@@ -28,8 +100,7 @@
         let directionalSignsToRender = []; 
         let activeHitsplats = []; 
         
-        // Pathfinder Walkability Registry (Added 19 for Open Doors)
-        const WALKABLE_TILES = [0, 6, 7, 8, 13, 14, 15, 19, 20]; 
+        // Pathfinder Walkability Registry (Added DOOR_OPEN for open doors)
 
         // Player Logical State (Spawn adjusted for chunk map center)
         let playerState = {
@@ -889,8 +960,8 @@ O445411111OOOOO.
                     nearbyTiles.push(logicalMap[playerState.z][ty][tx]);
                 }
             }
-            const shallowAdj = nearbyTiles.filter((t) => t === 21).length;
-            const deepAdj = nearbyTiles.filter((t) => t === 22).length;
+            const shallowAdj = nearbyTiles.filter((t) => t === TileId.WATER_SHALLOW).length;
+            const deepAdj = nearbyTiles.filter((t) => t === TileId.WATER_DEEP).length;
             const equipped = equipment && equipment.weapon ? equipment.weapon.id : 'none';
 
             addChatMessage(`[QA fishing] lvl=${level}, equipped=${equipped}, bait=${baitCount}, tile=${logicalMap[playerState.z][playerState.y][playerState.x]}, adjShallow=${shallowAdj}, adjDeep=${deepAdj}, action=${playerState.action}, activeMethod=${playerState.fishingActiveMethodId || 'none'}, activeWater=${playerState.fishingActiveWaterId || 'none'}`, 'info');

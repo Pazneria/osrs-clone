@@ -736,11 +736,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-037 - Tile semantics rely on magic numbers across runtime
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/core.js`, `src/js/world.js`, `src/js/input-render.js`
+- Links: `src/js/core.js`, `src/js/world.js`, `src/js/input-render.js`, `tools/tests/tile-semantics-guard.js`, `package.json`
 - Repro:
   1. Inspect tile ID comments and `WALKABLE_TILES` in `src/js/core.js`.
   2. Search for direct numeric checks (`tile === 21`, `tile === 22`, etc.) in world/input systems.
@@ -753,14 +753,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Introduce `TileId` constants and shared helpers (`isWater`, `isWalkable`, `isNatural`).
   2. Replace numeric comparisons across world/input/render code.
   3. Add a quick lint/test guard for direct literal tile comparisons.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added a canonical `TileId` enum in `src/js/core.js` with shared semantic helpers (`isWaterTileId`, `isNaturalTileId`, `isTreeTileId`, `isWalkableTileId`, `isDoorTileId`) and exported them to runtime globals.
+  - Replaced direct numeric tile comparisons across `src/js/world.js` and `src/js/input-render.js` with `TileId` constants and semantic helper predicates.
+  - Added `tools/tests/tile-semantics-guard.js` and wired it into `npm test` so future direct numeric tile comparisons in `core/world/input-render` fail fast.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-038 - QA location aliases and openable merchant list are manually duplicated
 - Status: Backlog
