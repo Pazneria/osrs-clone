@@ -816,7 +816,7 @@ function run() {
       unlockFlags: { ringMouldUnlocked: false },
       currentTick: 100,
       action: null,
-      levels: { smithing: 10 }
+      levels: { smithing: 30 }
     });
     assert(!smithing.onStart(locked), "expected smithing jewelry start to fail when mould unlock is missing");
     expectMessage(locked, "You have not unlocked that mould yet.", "smithing mould unlock");
@@ -829,7 +829,7 @@ function run() {
       counts: { silver_bar: 1, ring_mould: 1 },
       unlockFlags: { ringMouldUnlocked: true },
       currentTick: 200,
-      levels: { smithing: 20 },
+      levels: { smithing: 30 },
       x: 10,
       y: 10,
       z: 0,
@@ -852,7 +852,7 @@ function run() {
       counts: { silver_bar: 1, ring_mould: 1 },
       unlockFlags: { ringMouldUnlocked: true },
       currentTick: 300,
-      levels: { smithing: 20 },
+      levels: { smithing: 30 },
       x: 10,
       y: 10,
       z: 0,

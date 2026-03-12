@@ -427,11 +427,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-020 - Smithing item level requirement rebalance
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: SMI
 - Source: Manual
-- Links:
+- Links: `src/js/skills/specs.js`, `content/skills/smithing.json`, `tools/tests/fletching-crafting-interactions.js`
 - Repro:
   1. Review smithing item level table by tier.
 - Expected: Requirements range from base tier unlock up to two levels below next tier unlock.
@@ -442,14 +442,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Define target requirement bands by tier.
   2. Update smithing requirement data.
   3. Validate progression curve and XP pacing.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Rebalanced smithing forge recipe level requirements using per-item offsets inside each tier band, capped to `next tier unlock - 2`.
+  - Corrected jewelry-base requirement mismatches by moving silver jewelry to the silver band and spreading gold jewelry inside the gold band.
+  - Updated smithing jewelry interaction tests to use the new silver requirement floor.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-021 - Fire spawn bug after tab inactivity
 - Status: Fixed
@@ -506,11 +509,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-029 - Fletching cancel-on-click behavior
-- Status: Backlog
+- Status: Fixed
 - Severity: S1
 - Area: FLT
 - Source: Manual
-- Links:
+- Links: `src/js/input-render.js`
 - Repro:
   1. Start active fletching.
   2. Click red-X destination.
@@ -522,21 +525,24 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Split click intent from action execution.
   2. Defer fletching cancel until movement complete + action starts.
   3. Verify interruptions with blocked paths and alternate targets.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added deferred interact handling for active fletching sessions so interact clicks no longer cancel on click intent alone.
+  - While pathing to the clicked target, fletching remains active; cancellation now occurs only once the destination is reached and interact execution begins.
+  - Unreachable/blocked targets clear the deferred interact and keep fletching active instead of dropping the action.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-030 - Fletching XP progression pass (log-tier multiples)
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: FLT
 - Source: Manual
-- Links:
+- Links: `src/js/skills/specs.js`, `content/skills/fletching.json`
 - Repro:
   1. Review fletching XP values by recipe/log tier.
 - Expected: Fletching XP scales as multiples of parent log woodcutting XP.
@@ -547,21 +553,24 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Define XP multiplier table by output type.
   2. Recalculate recipe XP from parent log XP.
   3. Validate leveling speed and economic balance.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added explicit fletching XP multipliers by output family and bound finished-arrow multipliers by metal tier.
+  - Recomputed fletching recipe XP from canonical parent-log woodcutting XP values (`logs`, `oak_logs`, `willow_logs`, `maple_logs`, `yew_logs`).
+  - Kept multiplier logic centralized in fletching recipe generation so future tier tuning is table-driven.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-031 - Fletching item level requirement rebalance
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: FLT
 - Source: Manual
-- Links:
+- Links: `src/js/skills/specs.js`, `content/skills/fletching.json`
 - Repro:
   1. Review fletching item level table by tier.
 - Expected: Requirements range from base tier unlock up to two levels below next tier unlock.
@@ -572,14 +581,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Define target requirement bands per tier.
   2. Update fletching requirement data.
   3. Validate progression pacing and cross-skill parity.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Replaced scattered fletching level constants with per-tier offset rules and a band cap helper.
+  - All fletching requirement values now resolve within band bounds from base-tier unlock to `next tier unlock - 2` (final tier capped at 48).
+  - Applied the same banded requirement logic to log-cut, bow-stringing, headless-arrow, and finished-arrow recipes.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->

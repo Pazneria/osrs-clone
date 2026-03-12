@@ -593,6 +593,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const session = SkillActionResolution.getSkillSession(playerState, 'fletching');
             return !!(session && session.kind === 'processing');
         }
+        function stopActiveFletchingProcessingSession() {
+            if (!(window.SkillActionResolution
+                && typeof SkillActionResolution.getSkillSession === 'function'
+                && typeof SkillActionResolution.clearSkillSession === 'function')) return false;
+            const session = SkillActionResolution.getSkillSession(playerState, 'fletching');
+            if (!(session && session.kind === 'processing')) return false;
+            SkillActionResolution.clearSkillSession(playerState, 'fletching');
+            if (typeof addChatMessage === 'function') addChatMessage('You stop fletching.', 'info');
+            return true;
+        }
         function setMinimapDestination(gridX, gridY, z = playerState.z) {
             if (!Number.isInteger(gridX) || !Number.isInteger(gridY) || !Number.isInteger(z)) {
                 minimapDestination = null;
@@ -781,6 +791,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 playerState.targetX = actionX; playerState.targetY = actionY;
                 if (pendingAction.type === 'WALK') {
                     playerState.pendingSkillStart = null;
+                    playerState.pendingInteractAfterFletchingWalk = null;
                     playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, false);
                     if (playerState.path.length === 0) clearMinimapDestination();
                     playerState.pendingActionAfterTurn = null;
@@ -799,6 +810,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
+                    const keepFletchingAction = playerState.action === 'SKILLING: FLETCHING' && hasActiveFletchingProcessingSession();
 
                     let pendingSkillStart = playerState.pendingSkillStart || null;
                     if (window.SkillRuntime
@@ -820,9 +832,23 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             targetZ: playerState.z
                         });
                     }
-                    playerState.pendingSkillStart = pendingSkillStart;
-
-                    playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
+                    if (keepFletchingAction) {
+                        playerState.pendingInteractAfterFletchingWalk = {
+                            targetObj: pendingAction.obj,
+                            targetUid: pendingAction.targetUid,
+                            targetX: actionX,
+                            targetY: actionY,
+                            targetZ: playerState.z
+                        };
+                        playerState.pendingSkillStart = pendingSkillStart;
+                        playerState.action = 'SKILLING: FLETCHING';
+                        playerState.targetObj = pendingAction.obj;
+                        playerState.targetUid = pendingAction.targetUid;
+                    } else {
+                        playerState.pendingInteractAfterFletchingWalk = null;
+                        playerState.pendingSkillStart = pendingSkillStart;
+                        playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
+                    }
                 }
                 pendingAction = null;
 
@@ -840,6 +866,34 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             
             if (playerState.path.length === 0) {
+                if (playerState.action === 'SKILLING: FLETCHING' && playerState.pendingInteractAfterFletchingWalk) {
+                    if (movedThisTick) return;
+                    const deferred = playerState.pendingInteractAfterFletchingWalk;
+                    if (Number.isInteger(deferred.targetX)) playerState.targetX = deferred.targetX;
+                    if (Number.isInteger(deferred.targetY)) playerState.targetY = deferred.targetY;
+                    if (typeof deferred.targetObj === 'string' && deferred.targetObj) playerState.targetObj = deferred.targetObj;
+                    if (deferred.targetUid !== undefined) playerState.targetUid = deferred.targetUid;
+
+                    const distX = Math.abs(playerState.targetX - playerState.x);
+                    const distY = Math.abs(playerState.targetY - playerState.y);
+                    let isAdjacent = (distX <= 1 && distY <= 1);
+                    if (playerState.targetObj === 'ALTAR_CANDIDATE') {
+                        isAdjacent = (distX <= 2 && distY <= 2 && (distX > 1 || distY > 1));
+                    }
+                    let isAcrossCounter = false;
+                    if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
+                        if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === 17) isAcrossCounter = true;
+                        if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === 17) isAcrossCounter = true;
+                    }
+
+                    if (isAdjacent || isAcrossCounter) {
+                        stopActiveFletchingProcessingSession();
+                        playerState.pendingInteractAfterFletchingWalk = null;
+                        playerState.action = 'WALKING_TO_INTERACT';
+                    } else {
+                        playerState.pendingInteractAfterFletchingWalk = null;
+                    }
+                }
                 if (playerState.action === 'WALKING_TO_INTERACT') {
                     if (movedThisTick) return;
                     const distX = Math.abs(playerState.targetX - playerState.x); 

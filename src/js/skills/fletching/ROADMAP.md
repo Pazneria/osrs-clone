@@ -78,9 +78,9 @@ These recipes support multi-skill item assembly and are the required source of w
 | Output | Required Level | Inputs | Tool Requirement | XP per Action | Notes |
 | ------ | -------------- | ------ | ---------------- | ------------- | ----- |
 | Wooden Handle | 1 | 1 Normal Log | Knife | 6 | Used in crafting for normal-log tool and weapon assembly |
-| Oak Handle | 10 | 1 Oak Log | Knife | 12 | Used in crafting for oak-tier tool and weapon assembly |
-| Willow Handle | 20 | 1 Willow Log | Knife | 18 | Used in crafting for willow-tier tool and weapon assembly |
-| Maple Handle | 30 | 1 Maple Log | Knife | 26 | Used in crafting for maple-tier tool and weapon assembly |
+| Oak Handle | 10 | 1 Oak Log | Knife | 9 | Used in crafting for oak-tier tool and weapon assembly |
+| Willow Handle | 20 | 1 Willow Log | Knife | 16 | Used in crafting for willow-tier tool and weapon assembly |
+| Maple Handle | 30 | 1 Maple Log | Knife | 24 | Used in crafting for maple-tier tool and weapon assembly |
 | Yew Handle | 40 | 1 Yew Log | Knife | 36 | Used in crafting for yew-tier tool and weapon assembly |
 
 ### Staff Recipes
@@ -89,11 +89,11 @@ These recipes establish the plain staff progression used for later magic-equipme
 
 | Output | Required Level | Inputs | Tool Requirement | XP per Action | Notes |
 | ------ | -------------- | ------ | ---------------- | ------------- | ----- |
-| Plain Staff (Wood) | 1 | 1 Normal Log | Knife | 6 | Plain-only staff; cannot have a gem attached |
-| Plain Staff (Oak) | 10 | 1 Oak Log | Knife | 12 | Used later for fire staff creation |
-| Plain Staff (Willow) | 20 | 1 Willow Log | Knife | 18 | Used later for water staff creation |
-| Plain Staff (Maple) | 30 | 1 Maple Log | Knife | 26 | Used later for earth staff creation |
-| Plain Staff (Yew) | 40 | 1 Yew Log | Knife | 36 | Used later for air staff creation |
+| Plain Staff (Wood) | 2 | 1 Normal Log | Knife | 6 | Plain-only staff; cannot have a gem attached |
+| Plain Staff (Oak) | 11 | 1 Oak Log | Knife | 9 | Used later for fire staff creation |
+| Plain Staff (Willow) | 21 | 1 Willow Log | Knife | 16 | Used later for water staff creation |
+| Plain Staff (Maple) | 31 | 1 Maple Log | Knife | 24 | Used later for earth staff creation |
+| Plain Staff (Yew) | 41 | 1 Yew Log | Knife | 36 | Used later for air staff creation |
 
 ### Ammunition Part Recipes
 
@@ -101,22 +101,22 @@ Arrow-making uses a two-step process: first the player combines wood-tier arrow 
 
 | Output | Required Level | Inputs | Tool Requirement | XP per Action | Notes |
 | ------ | -------------- | ------ | ---------------- | ------------- | ----- |
-| Wooden Shafts x15 | 1 | 1 Normal Log | Knife | 4 | Shaft component for bronze and iron arrows |
-| Oak Shafts x15 | 10 | 1 Oak Log | Knife | 6 | Shaft component for steel arrows |
-| Willow Shafts x15 | 20 | 1 Willow Log | Knife | 9 | Shaft component for mithril arrows |
-| Maple Shafts x15 | 30 | 1 Maple Log | Knife | 13 | Shaft component for adamant arrows |
-| Yew Shafts x15 | 40 | 1 Yew Log | Knife | 18 | Shaft component for rune arrows |
-| Wooden Headless Arrows x15 | 1 | 1 Wooden Shafts x15 + 1 Feathers x15 | None | 4 | Intermediate step for bronze and iron arrows |
-| Oak Headless Arrows x15 | 10 | 1 Oak Shafts x15 + 1 Feathers x15 | None | 6 | Intermediate step for steel arrows |
-| Willow Headless Arrows x15 | 20 | 1 Willow Shafts x15 + 1 Feathers x15 | None | 9 | Intermediate step for mithril arrows |
-| Maple Headless Arrows x15 | 30 | 1 Maple Shafts x15 + 1 Feathers x15 | None | 13 | Intermediate step for adamant arrows |
-| Yew Headless Arrows x15 | 40 | 1 Yew Shafts x15 + 1 Feathers x15 | None | 18 | Intermediate step for rune arrows |
+| Wooden Shafts x15 | 2 | 1 Normal Log | Knife | 4 | Shaft component for bronze and iron arrows |
+| Oak Shafts x15 | 11 | 1 Oak Log | Knife | 6 | Shaft component for steel arrows |
+| Willow Shafts x15 | 21 | 1 Willow Log | Knife | 11 | Shaft component for mithril arrows |
+| Maple Shafts x15 | 31 | 1 Maple Log | Knife | 16 | Shaft component for adamant arrows |
+| Yew Shafts x15 | 41 | 1 Yew Log | Knife | 24 | Shaft component for rune arrows |
+| Wooden Headless Arrows x15 | 3 | 1 Wooden Shafts x15 + 1 Feathers x15 | None | 4 | Intermediate step for bronze and iron arrows |
+| Oak Headless Arrows x15 | 12 | 1 Oak Shafts x15 + 1 Feathers x15 | None | 6 | Intermediate step for steel arrows |
+| Willow Headless Arrows x15 | 22 | 1 Willow Shafts x15 + 1 Feathers x15 | None | 11 | Intermediate step for mithril arrows |
+| Maple Headless Arrows x15 | 32 | 1 Maple Shafts x15 + 1 Feathers x15 | None | 16 | Intermediate step for adamant arrows |
+| Yew Headless Arrows x15 | 42 | 1 Yew Shafts x15 + 1 Feathers x15 | None | 24 | Intermediate step for rune arrows |
 | Bronze Arrows x15 | 1 | 1 Bronze Arrowheads + 1 Wooden Headless Arrows x15 | None | 2 | Finished ammunition |
-| Iron Arrows x15 | 1 | 1 Iron Arrowheads + 1 Wooden Headless Arrows x15 | None | 3 | Finished ammunition |
-| Steel Arrows x15 | 10 | 1 Steel Arrowheads + 1 Oak Headless Arrows x15 | None | 5 | Finished ammunition |
-| Mithril Arrows x15 | 20 | 1 Mithril Arrowheads + 1 Willow Headless Arrows x15 | None | 7 | Finished ammunition |
-| Adamant Arrows x15 | 30 | 1 Adamant Arrowheads + 1 Maple Headless Arrows x15 | None | 10 | Finished ammunition |
-| Rune Arrows x15 | 40 | 1 Rune Arrowheads + 1 Yew Headless Arrows x15 | None | 14 | Finished ammunition |
+| Iron Arrows x15 | 5 | 1 Iron Arrowheads + 1 Wooden Headless Arrows x15 | None | 3 | Finished ammunition |
+| Steel Arrows x15 | 12 | 1 Steel Arrowheads + 1 Oak Headless Arrows x15 | None | 5 | Finished ammunition |
+| Mithril Arrows x15 | 23 | 1 Mithril Arrowheads + 1 Willow Headless Arrows x15 | None | 10 | Finished ammunition |
+| Adamant Arrows x15 | 34 | 1 Adamant Arrowheads + 1 Maple Headless Arrows x15 | None | 15 | Finished ammunition |
+| Rune Arrows x15 | 45 | 1 Rune Arrowheads + 1 Yew Headless Arrows x15 | None | 23 | Finished ammunition |
 
 ### Bow Recipes
 
@@ -125,25 +125,25 @@ Bows use a two-step process: first the player cuts an unstrung bow from a log wi
 | Output | Required Level | Inputs | Tool Requirement | XP per Action | Notes |
 | ------ | -------------- | ------ | ---------------- | ------------- | ----- |
 | Normal Shortbow (u) | 5 | 1 Normal Log | Knife | 5 | Entry-level unstrung shortbow |
-| Normal Longbow (u) | 1 | 1 Normal Log | Knife | 5 | Entry-level unstrung longbow |
-| Oak Shortbow (u) | 15 | 1 Oak Log | Knife | 9 | Early upgrade unstrung shortbow |
-| Willow Shortbow (u) | 25 | 1 Willow Log | Knife | 14 | Mid-band unstrung shortbow |
-| Maple Shortbow (u) | 35 | 1 Maple Log | Knife | 20 | Higher-tier unstrung shortbow |
-| Yew Shortbow (u) | 45 | 1 Yew Log | Knife | 28 | Top-band unstrung shortbow |
-| Oak Longbow (u) | 10 | 1 Oak Log | Knife | 9 | Early upgrade unstrung longbow |
-| Willow Longbow (u) | 20 | 1 Willow Log | Knife | 14 | Mid-band unstrung longbow |
-| Maple Longbow (u) | 30 | 1 Maple Log | Knife | 20 | Higher-tier unstrung longbow |
-| Yew Longbow (u) | 40 | 1 Yew Log | Knife | 28 | Top-band unstrung longbow |
-| Normal Shortbow | 5 | 1 Normal Shortbow (u) + 1 Bow String | None | 3 | Entry-level bow |
-| Normal Longbow | 1 | 1 Normal Longbow (u) + 1 Bow String | None | 3 | Entry-level longbow |
-| Oak Shortbow | 15 | 1 Oak Shortbow (u) + 1 Bow String | None | 5 | Early upgrade bow |
-| Willow Shortbow | 25 | 1 Willow Shortbow (u) + 1 Bow String | None | 8 | Mid-band bow |
-| Maple Shortbow | 35 | 1 Maple Shortbow (u) + 1 Bow String | None | 12 | Higher-tier bow |
-| Yew Shortbow | 45 | 1 Yew Shortbow (u) + 1 Bow String | None | 18 | Top-band bow |
-| Oak Longbow | 10 | 1 Oak Longbow (u) + 1 Bow String | None | 5 | Slower, stronger bow option |
-| Willow Longbow | 20 | 1 Willow Longbow (u) + 1 Bow String | None | 8 | Mid-band longbow |
-| Maple Longbow | 30 | 1 Maple Longbow (u) + 1 Bow String | None | 12 | Higher-tier longbow |
-| Yew Longbow | 40 | 1 Yew Longbow (u) + 1 Bow String | None | 18 | Top-band longbow |
+| Normal Longbow (u) | 3 | 1 Normal Log | Knife | 5 | Entry-level unstrung longbow |
+| Oak Shortbow (u) | 14 | 1 Oak Log | Knife | 10 | Early upgrade unstrung shortbow |
+| Willow Shortbow (u) | 24 | 1 Willow Log | Knife | 18 | Mid-band unstrung shortbow |
+| Maple Shortbow (u) | 34 | 1 Maple Log | Knife | 26 | Higher-tier unstrung shortbow |
+| Yew Shortbow (u) | 44 | 1 Yew Log | Knife | 39 | Top-band unstrung shortbow |
+| Oak Longbow (u) | 12 | 1 Oak Log | Knife | 8 | Early upgrade unstrung longbow |
+| Willow Longbow (u) | 22 | 1 Willow Log | Knife | 14 | Mid-band unstrung longbow |
+| Maple Longbow (u) | 32 | 1 Maple Log | Knife | 20 | Higher-tier unstrung longbow |
+| Yew Longbow (u) | 42 | 1 Yew Log | Knife | 30 | Top-band unstrung longbow |
+| Normal Shortbow | 5 | 1 Normal Shortbow (u) + 1 Bow String | None | 4 | Entry-level bow |
+| Normal Longbow | 3 | 1 Normal Longbow (u) + 1 Bow String | None | 3 | Entry-level longbow |
+| Oak Shortbow | 14 | 1 Oak Shortbow (u) + 1 Bow String | None | 6 | Early upgrade bow |
+| Willow Shortbow | 24 | 1 Willow Shortbow (u) + 1 Bow String | None | 11 | Mid-band bow |
+| Maple Shortbow | 34 | 1 Maple Shortbow (u) + 1 Bow String | None | 16 | Higher-tier bow |
+| Yew Shortbow | 44 | 1 Yew Shortbow (u) + 1 Bow String | None | 24 | Top-band bow |
+| Oak Longbow | 12 | 1 Oak Longbow (u) + 1 Bow String | None | 5 | Slower, stronger bow option |
+| Willow Longbow | 22 | 1 Willow Longbow (u) + 1 Bow String | None | 8 | Mid-band longbow |
+| Maple Longbow | 32 | 1 Maple Longbow (u) + 1 Bow String | None | 12 | Higher-tier longbow |
+| Yew Longbow | 42 | 1 Yew Longbow (u) + 1 Bow String | None | 18 | Top-band longbow |
 
 ### Recipe Rules
 
@@ -390,47 +390,47 @@ The general store buys everything at half price.
 | Willow Handle | Component | 20 | null | 20 | Uses 1 willow log; used in crafting assembly |
 | Maple Handle | Component | 30 | null | 32 | Uses 1 maple log; used in crafting assembly |
 | Yew Handle | Component | 40 | null | 50 | Uses 1 yew log; used in crafting assembly |
-| Plain Staff (Wood) | Magic Equipment | 1 | See crafting | See crafting | Made from 1 normal log; plain-only staff |
-| Plain Staff (Oak) | Magic Equipment | 10 | See crafting | See crafting | Made from 1 oak log; later used for fire staff creation |
-| Plain Staff (Willow) | Magic Equipment | 20 | See crafting | See crafting | Made from 1 willow log; later used for water staff creation |
-| Plain Staff (Maple) | Magic Equipment | 30 | See crafting | See crafting | Made from 1 maple log; later used for earth staff creation |
-| Plain Staff (Yew) | Magic Equipment | 40 | See crafting | See crafting | Made from 1 yew log; later used for air staff creation |
-| Wooden Shafts x15 | Component | 1 | null | 4 | Made from 1 normal log; used for bronze and iron arrows |
-| Oak Shafts x15 | Component | 10 | null | 6 | Made from 1 oak log; used for steel arrows |
-| Willow Shafts x15 | Component | 20 | null | 10 | Made from 1 willow log; used for mithril arrows |
-| Maple Shafts x15 | Component | 30 | null | 16 | Made from 1 maple log; used for adamant arrows |
-| Yew Shafts x15 | Component | 40 | null | 24 | Made from 1 yew log; used for rune arrows |
-| Wooden Headless Arrows x15 | Component | 1 | null | 6 | Made from wooden shafts and feathers |
-| Oak Headless Arrows x15 | Component | 10 | null | 10 | Made from oak shafts and feathers |
-| Willow Headless Arrows x15 | Component | 20 | null | 16 | Made from willow shafts and feathers |
-| Maple Headless Arrows x15 | Component | 30 | null | 24 | Made from maple shafts and feathers |
-| Yew Headless Arrows x15 | Component | 40 | null | 36 | Made from yew shafts and feathers |
+| Plain Staff (Wood) | Magic Equipment | 2 | See crafting | See crafting | Made from 1 normal log; plain-only staff |
+| Plain Staff (Oak) | Magic Equipment | 11 | See crafting | See crafting | Made from 1 oak log; later used for fire staff creation |
+| Plain Staff (Willow) | Magic Equipment | 21 | See crafting | See crafting | Made from 1 willow log; later used for water staff creation |
+| Plain Staff (Maple) | Magic Equipment | 31 | See crafting | See crafting | Made from 1 maple log; later used for earth staff creation |
+| Plain Staff (Yew) | Magic Equipment | 41 | See crafting | See crafting | Made from 1 yew log; later used for air staff creation |
+| Wooden Shafts x15 | Component | 2 | null | 4 | Made from 1 normal log; used for bronze and iron arrows |
+| Oak Shafts x15 | Component | 11 | null | 6 | Made from 1 oak log; used for steel arrows |
+| Willow Shafts x15 | Component | 21 | null | 10 | Made from 1 willow log; used for mithril arrows |
+| Maple Shafts x15 | Component | 31 | null | 16 | Made from 1 maple log; used for adamant arrows |
+| Yew Shafts x15 | Component | 41 | null | 24 | Made from 1 yew log; used for rune arrows |
+| Wooden Headless Arrows x15 | Component | 3 | null | 6 | Made from wooden shafts and feathers |
+| Oak Headless Arrows x15 | Component | 12 | null | 10 | Made from oak shafts and feathers |
+| Willow Headless Arrows x15 | Component | 22 | null | 16 | Made from willow shafts and feathers |
+| Maple Headless Arrows x15 | Component | 32 | null | 24 | Made from maple shafts and feathers |
+| Yew Headless Arrows x15 | Component | 42 | null | 36 | Made from yew shafts and feathers |
 | Bronze Arrows x15 | Ammunition | 1 | null | 8 | Made from bronze arrowheads and wooden headless arrows |
-| Iron Arrows x15 | Ammunition | 1 | null | 12 | Made from iron arrowheads and wooden headless arrows |
-| Steel Arrows x15 | Ammunition | 10 | null | 20 | Made from steel arrowheads and oak headless arrows |
-| Mithril Arrows x15 | Ammunition | 20 | null | 32 | Made from mithril arrowheads and willow headless arrows |
-| Adamant Arrows x15 | Ammunition | 30 | null | 50 | Made from adamant arrowheads and maple headless arrows |
-| Rune Arrows x15 | Ammunition | 40 | null | 80 | Made from rune arrowheads and yew headless arrows |
+| Iron Arrows x15 | Ammunition | 5 | null | 12 | Made from iron arrowheads and wooden headless arrows |
+| Steel Arrows x15 | Ammunition | 12 | null | 20 | Made from steel arrowheads and oak headless arrows |
+| Mithril Arrows x15 | Ammunition | 23 | null | 32 | Made from mithril arrowheads and willow headless arrows |
+| Adamant Arrows x15 | Ammunition | 34 | null | 50 | Made from adamant arrowheads and maple headless arrows |
+| Rune Arrows x15 | Ammunition | 45 | null | 80 | Made from rune arrowheads and yew headless arrows |
 | Normal Shortbow (u) | Unstrung Bow | 5 | null | 7 | Cut from 1 normal log |
-| Normal Longbow (u) | Unstrung Bow | 1 | null | 6 | Cut from 1 normal log |
-| Oak Shortbow (u) | Unstrung Bow | 15 | null | 15 | Cut from 1 oak log |
-| Willow Shortbow (u) | Unstrung Bow | 25 | null | 28 | Cut from 1 willow log |
-| Maple Shortbow (u) | Unstrung Bow | 35 | null | 46 | Cut from 1 maple log |
-| Yew Shortbow (u) | Unstrung Bow | 45 | null | 72 | Cut from 1 yew log |
-| Oak Longbow (u) | Unstrung Bow | 10 | null | 14 | Cut from 1 oak log |
-| Willow Longbow (u) | Unstrung Bow | 20 | null | 26 | Cut from 1 willow log |
-| Maple Longbow (u) | Unstrung Bow | 30 | null | 44 | Cut from 1 maple log |
-| Yew Longbow (u) | Unstrung Bow | 40 | null | 70 | Cut from 1 yew log |
+| Normal Longbow (u) | Unstrung Bow | 3 | null | 6 | Cut from 1 normal log |
+| Oak Shortbow (u) | Unstrung Bow | 14 | null | 15 | Cut from 1 oak log |
+| Willow Shortbow (u) | Unstrung Bow | 24 | null | 28 | Cut from 1 willow log |
+| Maple Shortbow (u) | Unstrung Bow | 34 | null | 46 | Cut from 1 maple log |
+| Yew Shortbow (u) | Unstrung Bow | 44 | null | 72 | Cut from 1 yew log |
+| Oak Longbow (u) | Unstrung Bow | 12 | null | 14 | Cut from 1 oak log |
+| Willow Longbow (u) | Unstrung Bow | 22 | null | 26 | Cut from 1 willow log |
+| Maple Longbow (u) | Unstrung Bow | 32 | null | 44 | Cut from 1 maple log |
+| Yew Longbow (u) | Unstrung Bow | 42 | null | 70 | Cut from 1 yew log |
 | Normal Shortbow | Bow | 5 | null | 12 | Strung from normal shortbow (u); can use bronze and iron arrows |
-| Normal Longbow | Bow | 1 | null | 10 | Strung from normal longbow (u); can use bronze and iron arrows |
-| Oak Shortbow | Bow | 15 | null | 22 | Strung from oak shortbow (u); can use bronze, iron, and steel arrows |
-| Willow Shortbow | Bow | 25 | null | 40 | Strung from willow shortbow (u); can use bronze through mithril arrows |
-| Maple Shortbow | Bow | 35 | null | 68 | Strung from maple shortbow (u); can use bronze through adamant arrows |
-| Yew Shortbow | Bow | 45 | null | 110 | Strung from yew shortbow (u); can use any arrows |
-| Oak Longbow | Bow | 10 | null | 20 | Strung from oak longbow (u); can use bronze, iron, and steel arrows |
-| Willow Longbow | Bow | 20 | null | 36 | Strung from willow longbow (u); can use bronze through mithril arrows |
-| Maple Longbow | Bow | 30 | null | 62 | Strung from maple longbow (u); can use bronze through adamant arrows |
-| Yew Longbow | Bow | 40 | null | 100 | Strung from yew longbow (u); can use any arrows |
+| Normal Longbow | Bow | 3 | null | 10 | Strung from normal longbow (u); can use bronze and iron arrows |
+| Oak Shortbow | Bow | 14 | null | 22 | Strung from oak shortbow (u); can use bronze, iron, and steel arrows |
+| Willow Shortbow | Bow | 24 | null | 40 | Strung from willow shortbow (u); can use bronze through mithril arrows |
+| Maple Shortbow | Bow | 34 | null | 68 | Strung from maple shortbow (u); can use bronze through adamant arrows |
+| Yew Shortbow | Bow | 44 | null | 110 | Strung from yew shortbow (u); can use any arrows |
+| Oak Longbow | Bow | 12 | null | 20 | Strung from oak longbow (u); can use bronze, iron, and steel arrows |
+| Willow Longbow | Bow | 22 | null | 36 | Strung from willow longbow (u); can use bronze through mithril arrows |
+| Maple Longbow | Bow | 32 | null | 62 | Strung from maple longbow (u); can use bronze through adamant arrows |
+| Yew Longbow | Bow | 42 | null | 100 | Strung from yew longbow (u); can use any arrows |
 
 
 

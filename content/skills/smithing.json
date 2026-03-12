@@ -206,7 +206,7 @@
         "amount": 1,
         "itemId": "adamant_axe_head"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 31,
       "requiredToolIds": [
         "hammer"
       ],
@@ -225,7 +225,7 @@
         "amount": 1,
         "itemId": "adamant_boots"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 31,
       "requiredToolIds": [
         "hammer"
       ],
@@ -244,7 +244,7 @@
         "amount": 1,
         "itemId": "adamant_helmet"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 33,
       "requiredToolIds": [
         "hammer"
       ],
@@ -263,7 +263,7 @@
         "amount": 1,
         "itemId": "adamant_pickaxe_head"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 31,
       "requiredToolIds": [
         "hammer"
       ],
@@ -282,7 +282,7 @@
         "amount": 1,
         "itemId": "adamant_platebody"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 37,
       "requiredToolIds": [
         "hammer"
       ],
@@ -301,7 +301,7 @@
         "amount": 1,
         "itemId": "adamant_platelegs"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 35,
       "requiredToolIds": [
         "hammer"
       ],
@@ -320,7 +320,7 @@
         "amount": 1,
         "itemId": "adamant_shield"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 34,
       "requiredToolIds": [
         "hammer"
       ],
@@ -339,7 +339,7 @@
         "amount": 1,
         "itemId": "adamant_sword_blade"
       },
-      "requiredLevel": 30,
+      "requiredLevel": 31,
       "requiredToolIds": [
         "hammer"
       ],
@@ -529,7 +529,7 @@
         "amount": 1,
         "itemId": "gold_amulet"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 44,
       "requiredMouldIds": [
         "amulet_mould"
       ],
@@ -569,7 +569,7 @@
         "amount": 1,
         "itemId": "gold_tiara"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 42,
       "requiredMouldIds": [
         "tiara_mould"
       ],
@@ -608,7 +608,7 @@
         "amount": 1,
         "itemId": "iron_axe_head"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 2,
       "requiredToolIds": [
         "hammer"
       ],
@@ -627,7 +627,7 @@
         "amount": 1,
         "itemId": "iron_boots"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 2,
       "requiredToolIds": [
         "hammer"
       ],
@@ -646,7 +646,7 @@
         "amount": 1,
         "itemId": "iron_helmet"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 4,
       "requiredToolIds": [
         "hammer"
       ],
@@ -665,7 +665,7 @@
         "amount": 1,
         "itemId": "iron_pickaxe_head"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 2,
       "requiredToolIds": [
         "hammer"
       ],
@@ -684,7 +684,7 @@
         "amount": 1,
         "itemId": "iron_platebody"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 8,
       "requiredToolIds": [
         "hammer"
       ],
@@ -703,7 +703,7 @@
         "amount": 1,
         "itemId": "iron_platelegs"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 6,
       "requiredToolIds": [
         "hammer"
       ],
@@ -722,7 +722,7 @@
         "amount": 1,
         "itemId": "iron_shield"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 5,
       "requiredToolIds": [
         "hammer"
       ],
@@ -741,7 +741,7 @@
         "amount": 1,
         "itemId": "iron_sword_blade"
       },
-      "requiredLevel": 1,
+      "requiredLevel": 2,
       "requiredToolIds": [
         "hammer"
       ],
@@ -779,7 +779,7 @@
         "amount": 1,
         "itemId": "mithril_axe_head"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 21,
       "requiredToolIds": [
         "hammer"
       ],
@@ -798,7 +798,7 @@
         "amount": 1,
         "itemId": "mithril_boots"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 21,
       "requiredToolIds": [
         "hammer"
       ],
@@ -817,7 +817,7 @@
         "amount": 1,
         "itemId": "mithril_helmet"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 23,
       "requiredToolIds": [
         "hammer"
       ],
@@ -836,7 +836,7 @@
         "amount": 1,
         "itemId": "mithril_pickaxe_head"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 21,
       "requiredToolIds": [
         "hammer"
       ],
@@ -855,7 +855,7 @@
         "amount": 1,
         "itemId": "mithril_platebody"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 27,
       "requiredToolIds": [
         "hammer"
       ],
@@ -874,7 +874,7 @@
         "amount": 1,
         "itemId": "mithril_platelegs"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 25,
       "requiredToolIds": [
         "hammer"
       ],
@@ -893,7 +893,7 @@
         "amount": 1,
         "itemId": "mithril_shield"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 24,
       "requiredToolIds": [
         "hammer"
       ],
@@ -912,7 +912,7 @@
         "amount": 1,
         "itemId": "mithril_sword_blade"
       },
-      "requiredLevel": 20,
+      "requiredLevel": 21,
       "requiredToolIds": [
         "hammer"
       ],
@@ -950,7 +950,7 @@
         "amount": 1,
         "itemId": "rune_axe_head"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 41,
       "requiredToolIds": [
         "hammer"
       ],
@@ -969,7 +969,7 @@
         "amount": 1,
         "itemId": "rune_boots"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 41,
       "requiredToolIds": [
         "hammer"
       ],
@@ -988,7 +988,7 @@
         "amount": 1,
         "itemId": "rune_helmet"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 43,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1007,7 +1007,7 @@
         "amount": 1,
         "itemId": "rune_pickaxe_head"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 41,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1026,7 +1026,7 @@
         "amount": 1,
         "itemId": "rune_platebody"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 47,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1045,7 +1045,7 @@
         "amount": 1,
         "itemId": "rune_platelegs"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 45,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1064,7 +1064,7 @@
         "amount": 1,
         "itemId": "rune_shield"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 44,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1083,7 +1083,7 @@
         "amount": 1,
         "itemId": "rune_sword_blade"
       },
-      "requiredLevel": 40,
+      "requiredLevel": 41,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1102,7 +1102,7 @@
         "amount": 1,
         "itemId": "silver_amulet"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 34,
       "requiredMouldIds": [
         "amulet_mould"
       ],
@@ -1122,7 +1122,7 @@
         "amount": 1,
         "itemId": "silver_ring"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 30,
       "requiredMouldIds": [
         "ring_mould"
       ],
@@ -1142,7 +1142,7 @@
         "amount": 1,
         "itemId": "silver_tiara"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 32,
       "requiredMouldIds": [
         "tiara_mould"
       ],
@@ -1181,7 +1181,7 @@
         "amount": 1,
         "itemId": "steel_axe_head"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 11,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1200,7 +1200,7 @@
         "amount": 1,
         "itemId": "steel_boots"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 11,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1219,7 +1219,7 @@
         "amount": 1,
         "itemId": "steel_helmet"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 13,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1238,7 +1238,7 @@
         "amount": 1,
         "itemId": "steel_pickaxe_head"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 11,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1257,7 +1257,7 @@
         "amount": 1,
         "itemId": "steel_platebody"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 17,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1276,7 +1276,7 @@
         "amount": 1,
         "itemId": "steel_platelegs"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 15,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1295,7 +1295,7 @@
         "amount": 1,
         "itemId": "steel_shield"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 14,
       "requiredToolIds": [
         "hammer"
       ],
@@ -1314,7 +1314,7 @@
         "amount": 1,
         "itemId": "steel_sword_blade"
       },
-      "requiredLevel": 10,
+      "requiredLevel": 11,
       "requiredToolIds": [
         "hammer"
       ],
