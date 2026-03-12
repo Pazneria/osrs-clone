@@ -1565,10 +1565,21 @@
             return RUNE_ESSENCE_ROCKS.some((rock) => rock && rock.x === x && rock.y === y && rock.z === z);
         }
 
+        const GEM_HOTSPOT = { x: 200, y: 370, radius: 20 };
+
+        function isGemHotspotCoordinate(x, y, z = 0) {
+            if (z !== 0) return false;
+            return Math.hypot(x - GEM_HOTSPOT.x, y - GEM_HOTSPOT.y) <= GEM_HOTSPOT.radius;
+        }
+
         function oreTypeForTile(x, y, z = 0) {
             if (isRuneEssenceRockCoordinate(x, y, z)) return 'rune_essence';
             const hash = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
-            const weightedTypes = ['clay', 'copper', 'tin', 'iron', 'coal', 'silver', 'sapphire', 'gold', 'emerald'];
+            if (isGemHotspotCoordinate(x, y, z)) {
+                const gemTypes = ['sapphire', 'emerald'];
+                return gemTypes[hash % gemTypes.length];
+            }
+            const weightedTypes = ['clay', 'copper', 'tin', 'iron', 'coal', 'silver', 'gold'];
             return weightedTypes[hash % weightedTypes.length];
         }
 
@@ -1695,6 +1706,12 @@
                 {x: 30, y: 30}, {x: 370, y: 370}, {x: 30, y: 370}, {x: 370, y: 30},
                 {x: 200, y: 30}, {x: 30, y: 200}, {x: 370, y: 200}, {x: 200, y: 370}
             ];
+            const treeSpawnBaseChance = 0.0005;
+            const rockSpawnBaseChance = 0.0005;
+            const forestClusterRadius = 34;
+            const forestClusterPeakChance = 0.015;
+            const mineClusterRadius = 18;
+            const mineClusterPeakChance = 0.075;
             fishingSpotsToRender = [];
             directionalSignsToRender = [];
             altarCandidatesToRender = [];
@@ -1725,9 +1742,9 @@
                         heightMap[0][y][x] = 0;
                     }
                     else {
-                        let treeChance = 0.002; let rockChance = 0.001;
-                        forestCenters.forEach(c => { let d = Math.hypot(x - c.x, y - c.y); if (d < 25) treeChance += 0.12 * (1 - d / 25); });
-                        mineCenters.forEach(c => { let d = Math.hypot(x - c.x, y - c.y); if (d < 18) rockChance += 0.15 * (1 - d / 18); });
+                        let treeChance = treeSpawnBaseChance; let rockChance = rockSpawnBaseChance;
+                        forestCenters.forEach(c => { let d = Math.hypot(x - c.x, y - c.y); if (d < forestClusterRadius) treeChance += forestClusterPeakChance * (1 - d / forestClusterRadius); });
+                        mineCenters.forEach(c => { let d = Math.hypot(x - c.x, y - c.y); if (d < mineClusterRadius) rockChance += mineClusterPeakChance * (1 - d / mineClusterRadius); });
                         heightMap[0][y][x] = terrainNoise(x, y);
                         if (Math.random() < treeChance) logicalMap[0][y][x] = 1;
                         else if (Math.random() < rockChance) logicalMap[0][y][x] = 2;
