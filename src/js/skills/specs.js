@@ -1,5 +1,5 @@
 (function () {
-    const SPEC_VERSION = '2026.03.m5';
+    const SPEC_VERSION = '2026.03.m6';
 
     const SKILL_SPECS = {
         woodcutting: {
@@ -435,10 +435,10 @@
             levelBands: [1, 10, 20, 30, 40],
             formulas: {
                 output: 'fixed_per_action',
-                interval: 'immediate_item_on_item'
+                interval: 'recipe_action_ticks'
             },
             timing: {
-                actionTicks: 1
+                actionTicks: 3
             },
             recipeSet: (function () {
                 const recipes = {};
@@ -463,6 +463,38 @@
                     { recipeId: 'craft_maple_handle_strapped', outputItemId: 'maple_handle_strapped', requiredLevel: 30, handleItemId: 'maple_handle', leatherItemId: 'wolf_leather', xp: 12 },
                     { recipeId: 'craft_yew_handle_strapped', outputItemId: 'yew_handle_strapped', requiredLevel: 40, handleItemId: 'yew_handle', leatherItemId: 'bear_leather', xp: 18 }
                 ];
+                const gemCutDefs = [
+                    { recipeId: 'cut_ruby', requiredLevel: 10, inputItemId: 'uncut_ruby', outputItemId: 'cut_ruby', xp: 4 },
+                    { recipeId: 'cut_sapphire', requiredLevel: 20, inputItemId: 'uncut_sapphire', outputItemId: 'cut_sapphire', xp: 8 },
+                    { recipeId: 'cut_emerald', requiredLevel: 30, inputItemId: 'uncut_emerald', outputItemId: 'cut_emerald', xp: 14 },
+                    { recipeId: 'cut_diamond', requiredLevel: 40, inputItemId: 'uncut_diamond', outputItemId: 'cut_diamond', xp: 22 }
+                ];
+                const staffAttachDefs = [
+                    { recipeId: 'craft_fire_staff', requiredLevel: 10, staffItemId: 'plain_staff_oak', gemItemId: 'cut_ruby', outputItemId: 'fire_staff', xp: 4 },
+                    { recipeId: 'craft_water_staff', requiredLevel: 20, staffItemId: 'plain_staff_willow', gemItemId: 'cut_sapphire', outputItemId: 'water_staff', xp: 8 },
+                    { recipeId: 'craft_earth_staff', requiredLevel: 30, staffItemId: 'plain_staff_maple', gemItemId: 'cut_emerald', outputItemId: 'earth_staff', xp: 14 },
+                    { recipeId: 'craft_air_staff', requiredLevel: 40, staffItemId: 'plain_staff_yew', gemItemId: 'cut_diamond', outputItemId: 'air_staff', xp: 22 }
+                ];
+                const jewelryAttachDefs = [
+                    { recipeId: 'craft_ruby_silver_ring', requiredLevel: 10, baseItemId: 'silver_ring', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_ring', xp: 4 },
+                    { recipeId: 'craft_ruby_silver_amulet', requiredLevel: 10, baseItemId: 'silver_amulet', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_amulet', xp: 4 },
+                    { recipeId: 'craft_ruby_silver_tiara', requiredLevel: 10, baseItemId: 'silver_tiara', gemItemId: 'cut_ruby', outputItemId: 'ruby_silver_tiara', xp: 4 },
+                    { recipeId: 'craft_sapphire_silver_ring', requiredLevel: 20, baseItemId: 'silver_ring', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_ring', xp: 8 },
+                    { recipeId: 'craft_sapphire_silver_amulet', requiredLevel: 20, baseItemId: 'silver_amulet', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_amulet', xp: 8 },
+                    { recipeId: 'craft_sapphire_silver_tiara', requiredLevel: 20, baseItemId: 'silver_tiara', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_silver_tiara', xp: 8 },
+                    { recipeId: 'craft_ruby_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_ring', xp: 4 },
+                    { recipeId: 'craft_ruby_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_amulet', xp: 4 },
+                    { recipeId: 'craft_ruby_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_ruby', outputItemId: 'ruby_gold_tiara', xp: 4 },
+                    { recipeId: 'craft_sapphire_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_ring', xp: 8 },
+                    { recipeId: 'craft_sapphire_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_amulet', xp: 8 },
+                    { recipeId: 'craft_sapphire_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_sapphire', outputItemId: 'sapphire_gold_tiara', xp: 8 },
+                    { recipeId: 'craft_emerald_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_ring', xp: 14 },
+                    { recipeId: 'craft_emerald_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_amulet', xp: 14 },
+                    { recipeId: 'craft_emerald_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_emerald', outputItemId: 'emerald_gold_tiara', xp: 14 },
+                    { recipeId: 'craft_diamond_gold_ring', requiredLevel: 40, baseItemId: 'gold_ring', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_ring', xp: 22 },
+                    { recipeId: 'craft_diamond_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_amulet', xp: 22 },
+                    { recipeId: 'craft_diamond_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_tiara', xp: 22 }
+                ];
 
                 for (let i = 0; i < strappedHandleDefs.length; i++) {
                     const def = strappedHandleDefs[i];
@@ -475,7 +507,8 @@
                         ],
                         output: { itemId: def.outputItemId, amount: 1 },
                         xpPerAction: def.xp,
-                        actionTicks: 1
+                        actionTicks: 1,
+                        stationType: 'INVENTORY'
                     };
                 }
 
@@ -492,9 +525,56 @@
                             ],
                             output: { itemId: `${tier.tierId}_${assembly.outputSuffix}`, amount: 1 },
                             xpPerAction: tier.assemblyXp,
-                            actionTicks: 1
+                            actionTicks: 1,
+                            stationType: 'INVENTORY'
                         };
                     }
+                }
+
+                for (let i = 0; i < gemCutDefs.length; i++) {
+                    const def = gemCutDefs[i];
+                    recipes[def.recipeId] = {
+                        recipeFamily: 'gem_cutting',
+                        requiredLevel: def.requiredLevel,
+                        inputs: [{ itemId: def.inputItemId, amount: 1 }],
+                        output: { itemId: def.outputItemId, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 3,
+                        requiredToolIds: ['chisel'],
+                        stationType: 'INVENTORY'
+                    };
+                }
+
+                for (let i = 0; i < staffAttachDefs.length; i++) {
+                    const def = staffAttachDefs[i];
+                    recipes[def.recipeId] = {
+                        recipeFamily: 'staff_attachment',
+                        requiredLevel: def.requiredLevel,
+                        inputs: [
+                            { itemId: def.staffItemId, amount: 1 },
+                            { itemId: def.gemItemId, amount: 1 }
+                        ],
+                        output: { itemId: def.outputItemId, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 3,
+                        stationType: 'INVENTORY'
+                    };
+                }
+
+                for (let i = 0; i < jewelryAttachDefs.length; i++) {
+                    const def = jewelryAttachDefs[i];
+                    recipes[def.recipeId] = {
+                        recipeFamily: 'jewelry_gem_attachment',
+                        requiredLevel: def.requiredLevel,
+                        inputs: [
+                            { itemId: def.baseItemId, amount: 1 },
+                            { itemId: def.gemItemId, amount: 1 }
+                        ],
+                        output: { itemId: def.outputItemId, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 3,
+                        stationType: 'INVENTORY'
+                    };
                 }
 
                 return recipes;
@@ -1027,6 +1107,77 @@
         }
 
         const craftingRows = gatherRecipeRows(craftingRecipes);
+        const standardCraftingFamilies = new Set(['gem_cutting', 'staff_attachment', 'jewelry_gem_attachment']);
+        const immediateCraftingFamilies = new Set(['strapped_handle', 'tool_weapon_assembly']);
+        for (let i = 0; i < craftingRows.length; i++) {
+            const row = craftingRows[i];
+            const recipe = row && row.recipe;
+            const recipeId = row && row.recipeId ? row.recipeId : '(unknown)';
+
+            const recipeFamily = recipe && typeof recipe.recipeFamily === 'string' ? recipe.recipeFamily : '';
+            if (!recipeFamily) errors.push('crafting:' + recipeId + ' is missing recipeFamily');
+
+            const requiredLevel = recipe && recipe.requiredLevel;
+            if (!Number.isFinite(requiredLevel) || requiredLevel < 1) {
+                errors.push('crafting:' + recipeId + ' must define a valid requiredLevel >= 1');
+            }
+
+            const inputs = Array.isArray(recipe && recipe.inputs) ? recipe.inputs : null;
+            if (!inputs || inputs.length === 0) {
+                errors.push('crafting:' + recipeId + ' must define one or more inputs');
+            } else {
+                for (let j = 0; j < inputs.length; j++) {
+                    const input = inputs[j];
+                    const itemId = input && typeof input.itemId === 'string' ? input.itemId : '';
+                    const amount = input && input.amount;
+                    if (!itemId) errors.push('crafting:' + recipeId + ' input[' + j + '] is missing itemId');
+                    if (!Number.isFinite(amount) || amount < 1) {
+                        errors.push('crafting:' + recipeId + ' input[' + j + '] must define amount >= 1');
+                    }
+                }
+            }
+
+            const outputItemId = recipe && recipe.output && typeof recipe.output.itemId === 'string' ? recipe.output.itemId : '';
+            const outputAmount = recipe && recipe.output ? recipe.output.amount : null;
+            if (!outputItemId) errors.push('crafting:' + recipeId + ' is missing output.itemId');
+            if (!Number.isFinite(outputAmount) || outputAmount < 1) {
+                errors.push('crafting:' + recipeId + ' must define output.amount >= 1');
+            }
+
+            const xpPerAction = recipe && recipe.xpPerAction;
+            if (!Number.isFinite(xpPerAction) || xpPerAction < 0) {
+                errors.push('crafting:' + recipeId + ' must define xpPerAction >= 0');
+            }
+
+            const actionTicks = recipe && recipe.actionTicks;
+            if (!Number.isFinite(actionTicks) || actionTicks < 1) {
+                errors.push('crafting:' + recipeId + ' must define actionTicks >= 1');
+            }
+
+            if (immediateCraftingFamilies.has(recipeFamily) && actionTicks !== 1) {
+                errors.push('crafting:' + recipeId + ' immediate recipe family must use actionTicks=1');
+            }
+            if (standardCraftingFamilies.has(recipeFamily) && actionTicks !== 3) {
+                errors.push('crafting:' + recipeId + ' standard recipe family must use actionTicks=3');
+            }
+
+            if (Array.isArray(recipe && recipe.requiredToolIds)) {
+                const toolIds = recipe.requiredToolIds;
+                for (let j = 0; j < toolIds.length; j++) {
+                    if (typeof toolIds[j] !== 'string' || !toolIds[j]) {
+                        errors.push('crafting:' + recipeId + ' requiredToolIds must contain non-empty string ids');
+                        break;
+                    }
+                }
+            }
+
+            if (recipe && Object.prototype.hasOwnProperty.call(recipe, 'stationType')) {
+                const stationType = recipe.stationType;
+                if (typeof stationType !== 'string' || !stationType) {
+                    errors.push('crafting:' + recipeId + ' stationType must be a non-empty string when provided');
+                }
+            }
+        }
         const strappedHandleOutputIds = new Set();
         for (let i = 0; i < craftingRows.length; i++) {
             const row = craftingRows[i];
@@ -1122,5 +1273,3 @@
         skills: SKILL_SPECS
     };
 })();
-
-

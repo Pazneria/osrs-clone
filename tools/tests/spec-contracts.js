@@ -215,6 +215,55 @@ function run() {
   const smithRows = Object.keys(smithSpec.recipeSet).map((id) => ({ recipeId: id, recipe: smithSpec.recipeSet[id] }));
   const craftingRows = Object.keys(craftingSpec.recipeSet).map((id) => ({ recipeId: id, recipe: craftingSpec.recipeSet[id] }));
 
+  const standardCraftingFamilies = new Set(["gem_cutting", "staff_attachment", "jewelry_gem_attachment"]);
+  const immediateCraftingFamilies = new Set(["strapped_handle", "tool_weapon_assembly"]);
+
+  craftingRows.forEach((row) => {
+    const recipe = row.recipe;
+    assert(!!recipe && typeof recipe === "object", "crafting recipe row must be an object: " + row.recipeId);
+    assert(typeof recipe.recipeFamily === "string" && recipe.recipeFamily.length > 0, "crafting recipe missing recipeFamily: " + row.recipeId);
+    assert(Number.isFinite(recipe.requiredLevel) && recipe.requiredLevel >= 1, "crafting recipe missing valid requiredLevel: " + row.recipeId);
+    assert(Array.isArray(recipe.inputs) && recipe.inputs.length > 0, "crafting recipe missing inputs: " + row.recipeId);
+
+    recipe.inputs.forEach((input, index) => {
+      assert(!!input && typeof input.itemId === "string" && input.itemId.length > 0, `crafting input itemId missing at ${row.recipeId}[${index}]`);
+      assert(Number.isFinite(input.amount) && input.amount >= 1, `crafting input amount invalid at ${row.recipeId}[${index}]`);
+      assert(!!itemDefs[input.itemId], `crafting input item missing in catalog: ${input.itemId} (${row.recipeId})`);
+    });
+
+    assert(!!recipe.output && typeof recipe.output.itemId === "string" && recipe.output.itemId.length > 0, "crafting recipe missing output.itemId: " + row.recipeId);
+    assert(Number.isFinite(recipe.output.amount) && recipe.output.amount >= 1, "crafting recipe missing valid output.amount: " + row.recipeId);
+    assert(!!itemDefs[recipe.output.itemId], `crafting output item missing in catalog: ${recipe.output.itemId} (${row.recipeId})`);
+
+    assert(Number.isFinite(recipe.xpPerAction) && recipe.xpPerAction >= 0, "crafting recipe missing valid xpPerAction: " + row.recipeId);
+    assert(Number.isFinite(recipe.actionTicks) && recipe.actionTicks >= 1, "crafting recipe missing valid actionTicks: " + row.recipeId);
+
+    if (Object.prototype.hasOwnProperty.call(recipe, "requiredToolIds")) {
+      assert(Array.isArray(recipe.requiredToolIds), "crafting requiredToolIds must be array when provided: " + row.recipeId);
+      recipe.requiredToolIds.forEach((toolId) => {
+        assert(typeof toolId === "string" && toolId.length > 0, "crafting requiredToolIds entry must be string: " + row.recipeId);
+        assert(!!itemDefs[toolId], `crafting required tool missing in catalog: ${toolId} (${row.recipeId})`);
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(recipe, "stationType")) {
+      assert(typeof recipe.stationType === "string" && recipe.stationType.length > 0, "crafting stationType must be non-empty string: " + row.recipeId);
+    }
+
+    if (immediateCraftingFamilies.has(recipe.recipeFamily)) {
+      assert(recipe.actionTicks === 1, "immediate crafting family must use actionTicks=1: " + row.recipeId);
+    }
+
+    if (standardCraftingFamilies.has(recipe.recipeFamily)) {
+      assert(recipe.actionTicks === 3, "standard crafting family must use actionTicks=3: " + row.recipeId);
+    }
+  });
+
+  ["gem_cutting", "staff_attachment", "jewelry_gem_attachment"].forEach((family) => {
+    const familyRows = craftingRows.filter((row) => row.recipe && row.recipe.recipeFamily === family);
+    assert(familyRows.length > 0, "expected crafting data-model rows for family: " + family);
+  });
+
   const smithArrowheadOutputIds = new Set(
     smithRows
       .map((row) => row.recipe && row.recipe.output ? row.recipe.output.itemId : null)
@@ -398,6 +447,7 @@ function run() {
   assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing merchant list entries");
   const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
+  assert(manifestScript.includes("CRAFTING: 'crafting'"), "skill manifest missing crafting action mapping");
   const indexHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(indexHtml.includes("./src/js/skills/crafting/index.js"), "index missing crafting runtime script include");
   const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
@@ -463,3 +513,4 @@ try {
   console.error(error.message);
   process.exit(1);
 }
+

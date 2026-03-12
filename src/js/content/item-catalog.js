@@ -1159,6 +1159,132 @@
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
                 icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            chisel: {
+                name: 'Chisel',
+                type: 'tool',
+                value: 4,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            },
+            needle: {
+                name: 'Needle',
+                type: 'tool',
+                value: 4,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            },
+            thread: {
+                name: 'Thread',
+                type: 'resource',
+                value: 2,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            soft_clay: {
+                name: 'Soft Clay',
+                type: 'resource',
+                value: 1,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            uncut_ruby: {
+                name: 'Uncut ruby',
+                type: 'resource',
+                value: 20,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            cut_ruby: {
+                name: 'Cut ruby',
+                type: 'resource',
+                value: 40,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            cut_sapphire: {
+                name: 'Cut sapphire',
+                type: 'resource',
+                value: 100,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            cut_emerald: {
+                name: 'Cut emerald',
+                type: 'resource',
+                value: 180,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            uncut_diamond: {
+                name: 'Uncut diamond',
+                type: 'resource',
+                value: 150,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            cut_diamond: {
+                name: 'Cut diamond',
+                type: 'resource',
+                value: 300,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'rune_essence' }
+            },
+            fire_staff: {
+                name: 'Fire Staff',
+                type: 'component',
+                value: 80,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            },
+            water_staff: {
+                name: 'Water Staff',
+                type: 'component',
+                value: 180,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            },
+            earth_staff: {
+                name: 'Earth Staff',
+                type: 'component',
+                value: 320,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
+            },
+            air_staff: {
+                name: 'Air Staff',
+                type: 'component',
+                value: 550,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'pickaxe' }
             }
         };
         const tierDefs = [
@@ -1176,6 +1302,26 @@
             { itemId: 'willow_handle_strapped', name: 'Willow Handle w/ Strap', value: 100 },
             { itemId: 'maple_handle_strapped', name: 'Maple Handle w/ Strap', value: 150 },
             { itemId: 'yew_handle_strapped', name: 'Yew Handle w/ Strap', value: 280 }
+        ];
+        const gemmedJewelryDefs = [
+            { itemId: 'ruby_silver_ring', name: 'Ruby Silver Ring', value: 80 },
+            { itemId: 'ruby_silver_amulet', name: 'Ruby Silver Amulet', value: 80 },
+            { itemId: 'ruby_silver_tiara', name: 'Ruby Silver Tiara', value: 80 },
+            { itemId: 'sapphire_silver_ring', name: 'Sapphire Silver Ring', value: 140 },
+            { itemId: 'sapphire_silver_amulet', name: 'Sapphire Silver Amulet', value: 140 },
+            { itemId: 'sapphire_silver_tiara', name: 'Sapphire Silver Tiara', value: 140 },
+            { itemId: 'ruby_gold_ring', name: 'Ruby Gold Ring', value: 140 },
+            { itemId: 'ruby_gold_amulet', name: 'Ruby Gold Amulet', value: 140 },
+            { itemId: 'ruby_gold_tiara', name: 'Ruby Gold Tiara', value: 140 },
+            { itemId: 'sapphire_gold_ring', name: 'Sapphire Gold Ring', value: 200 },
+            { itemId: 'sapphire_gold_amulet', name: 'Sapphire Gold Amulet', value: 200 },
+            { itemId: 'sapphire_gold_tiara', name: 'Sapphire Gold Tiara', value: 200 },
+            { itemId: 'emerald_gold_ring', name: 'Emerald Gold Ring', value: 280 },
+            { itemId: 'emerald_gold_amulet', name: 'Emerald Gold Amulet', value: 280 },
+            { itemId: 'emerald_gold_tiara', name: 'Emerald Gold Tiara', value: 280 },
+            { itemId: 'diamond_gold_ring', name: 'Diamond Gold Ring', value: 400 },
+            { itemId: 'diamond_gold_amulet', name: 'Diamond Gold Amulet', value: 400 },
+            { itemId: 'diamond_gold_tiara', name: 'Diamond Gold Tiara', value: 400 }
         ];
 
         for (let i = 0; i < strappedHandleDefs.length; i++) {
@@ -1222,6 +1368,19 @@
                     icon: { kind: 'sprite', key: 'pickaxe' }
                 };
             }
+        }
+
+        for (let i = 0; i < gemmedJewelryDefs.length; i++) {
+            const def = gemmedJewelryDefs[i];
+            defs[def.itemId] = {
+                name: def.name,
+                type: 'component',
+                value: def.value,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'coins' }
+            };
         }
 
         return defs;

@@ -178,6 +178,7 @@ function createSkillContext(options = {}) {
   const canAccept = typeof options.canAcceptItemById === "function"
     ? options.canAcceptItemById
     : () => (options.canAccept !== false);
+  const customGive = typeof options.giveItemById === "function" ? options.giveItemById : null;
 
   const context = {
     targetObj: options.targetObj || "INVENTORY",
@@ -208,6 +209,7 @@ function createSkillContext(options = {}) {
       return removed;
     },
     giveItemById: (itemId, amount) => {
+      if (customGive) return customGive(itemId, amount, counts);
       if (!canAccept(itemId, amount)) return 0;
       counts[itemId] = (counts[itemId] || 0) + amount;
       return amount;
@@ -509,7 +511,30 @@ function run() {
     const used = crafting.onUseItem(ctx);
     assert(used, "expected recognized interaction despite output block");
     assert((ctx._counts.bronze_axe || 0) === 0, "should not craft without output capacity");
+    assert((ctx._counts.bronze_axe_head || 0) === 1, "materials should remain when output capacity pre-check fails");
+    assert((ctx._counts.wooden_handle_strapped || 0) === 1, "handle should remain when output capacity pre-check fails");
     expectMessage(ctx, "You have no inventory space for that crafted output.", "output block");
+  });
+
+  test("Crafting immediate craft restores inputs when output grant fails", () => {
+    const ctx = createSkillContext({
+      sourceItemId: "bronze_axe_head",
+      targetItemId: "wooden_handle_strapped",
+      counts: { bronze_axe_head: 1, wooden_handle_strapped: 1 },
+      canAccept: true,
+      giveItemById: (itemId, amount, counts) => {
+        if (itemId === "bronze_axe") return 0;
+        counts[itemId] = (counts[itemId] || 0) + amount;
+        return amount;
+      }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected recognized interaction even when output grant fails");
+    assert((ctx._counts.bronze_axe || 0) === 0, "should not retain crafted output when grant fails");
+    assert((ctx._counts.bronze_axe_head || 0) === 1, "metal part should be restored after failed output grant");
+    assert((ctx._counts.wooden_handle_strapped || 0) === 1, "strapped handle should be restored after failed output grant");
+    expectMessage(ctx, "You have no inventory space for that crafted output.", "immediate rollback");
   });
 
   test("Crafting respects level requirement on immediate assembly", () => {
@@ -524,6 +549,167 @@ function run() {
     assert(used, "expected recognized interaction");
     assert((ctx._counts.rune_axe || 0) === 0, "should not craft when level requirement fails");
     assert((ctx._xpBySkill.crafting || 0) === 0, "should not grant xp on blocked craft");
+  });
+
+  test("Crafting queues gem cutting on chisel+uncut pair", () => {
+    const starts = [];
+    window.SkillRuntime = {
+      tryStartSkillById: (skillId, payload) => {
+        starts.push({ skillId, payload });
+        return true;
+      }
+    };
+
+    const ctx = createSkillContext({
+      sourceItemId: "chisel",
+      targetItemId: "uncut_sapphire",
+      counts: { chisel: 1, uncut_sapphire: 2 }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected crafting to handle chisel+uncut gem pair");
+    assert(starts.length === 1, "expected queued crafting start for gem cutting");
+    assert(starts[0].skillId === "crafting", "expected crafting skill queue target");
+    assert(starts[0].payload.recipeId === "cut_sapphire", "expected cut_sapphire recipe");
+    assert(starts[0].payload.quantityMode === "all", "expected default all quantity mode");
+  });
+
+  test("Crafting queues staff attachment on matching staff+gem pair", () => {
+    const starts = [];
+    window.SkillRuntime = {
+      tryStartSkillById: (skillId, payload) => {
+        starts.push({ skillId, payload });
+        return true;
+      }
+    };
+
+    const ctx = createSkillContext({
+      sourceItemId: "plain_staff_willow",
+      targetItemId: "cut_sapphire",
+      counts: { plain_staff_willow: 1, cut_sapphire: 1 }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected crafting to handle staff+gem pair");
+    assert(starts.length === 1, "expected queued crafting start for staff attachment");
+    assert(starts[0].payload.recipeId === "craft_water_staff", "expected water staff attachment recipe");
+  });
+
+  test("Crafting blocks plain wood staff gem attempts", () => {
+    const ctx = createSkillContext({
+      sourceItemId: "plain_staff_wood",
+      targetItemId: "cut_ruby",
+      counts: { plain_staff_wood: 1, cut_ruby: 1 }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected wood staff + gem pair to be recognized as invalid crafting");
+    assert((ctx._counts.plain_staff_wood || 0) === 1, "plain wood staff should remain on invalid pair");
+    assert((ctx._counts.cut_ruby || 0) === 1, "gem should remain on invalid pair");
+    expectMessage(ctx, "These don't match.", "wood staff mismatch");
+  });
+
+  test("Crafting onStart/onTick count mode crafts exact quantity", () => {
+    const ctx = createSkillContext({
+      recipeId: "cut_sapphire",
+      quantityMode: "count",
+      quantityCount: 2,
+      counts: { chisel: 1, uncut_sapphire: 2 },
+      currentTick: 400
+    });
+
+    const started = crafting.onStart(ctx);
+    assert(started, "expected crafting onStart to succeed");
+    assert(ctx.playerState.action === "SKILLING: CRAFTING", "expected crafting action state");
+
+    crafting.onTick(ctx);
+    assert((ctx._counts.cut_sapphire || 0) === 0, "should not craft before next tick");
+
+    ctx.currentTick = 403;
+    crafting.onTick(ctx);
+    assert((ctx._counts.cut_sapphire || 0) === 1, "expected first gem cut at tick 403");
+    assert(ctx.playerState.action === "SKILLING: CRAFTING", "expected action to continue after first craft");
+
+    ctx.currentTick = 406;
+    crafting.onTick(ctx);
+    assert((ctx._counts.cut_sapphire || 0) === 2, "expected second gem cut at tick 406");
+    assert((ctx._counts.uncut_sapphire || 0) === 0, "expected uncut gem inputs consumed");
+    assert((ctx._counts.chisel || 0) === 1, "expected chisel tool to persist");
+    assert((ctx._xpBySkill.crafting || 0) === 16, "expected 8 XP per cut_sapphire craft");
+    assert(ctx.playerState.action === null, "expected action to stop after requested quantity");
+  });
+
+  test("Crafting all-mode stops when inputs are exhausted", () => {
+    const ctx = createSkillContext({
+      recipeId: "craft_water_staff",
+      quantityMode: "all",
+      counts: { plain_staff_willow: 1, cut_sapphire: 1 },
+      currentTick: 500
+    });
+
+    assert(crafting.onStart(ctx), "expected crafting onStart success");
+    ctx.currentTick = 503;
+    crafting.onTick(ctx);
+
+    assert((ctx._counts.water_staff || 0) === 1, "expected crafted water staff output");
+    assert((ctx._counts.plain_staff_willow || 0) === 0, "expected staff input consumed");
+    assert((ctx._counts.cut_sapphire || 0) === 0, "expected gem input consumed");
+    assert(ctx.playerState.action === null, "expected action to stop after materials are exhausted");
+  });
+
+  test("Crafting queued craft restores inputs when output grant fails", () => {
+    const ctx = createSkillContext({
+      recipeId: "cut_sapphire",
+      quantityMode: "all",
+      counts: { chisel: 1, uncut_sapphire: 1 },
+      canAccept: true,
+      giveItemById: (itemId, amount, counts) => {
+        if (itemId === "cut_sapphire") return 0;
+        counts[itemId] = (counts[itemId] || 0) + amount;
+        return amount;
+      },
+      currentTick: 540
+    });
+
+    assert(crafting.onStart(ctx), "expected onStart success before simulated output failure");
+    ctx.currentTick = 543;
+    crafting.onTick(ctx);
+
+    assert((ctx._counts.cut_sapphire || 0) === 0, "should not keep crafted output when grant fails");
+    assert((ctx._counts.uncut_sapphire || 0) === 1, "input should be restored after failed queued output grant");
+    assert((ctx._counts.chisel || 0) === 1, "tool should remain after failed queued output grant");
+    assert(ctx.playerState.action === null, "queued crafting should stop after output grant failure");
+    expectMessage(ctx, "You have no inventory space for that crafted output.", "queued rollback");
+  });
+
+  test("Crafting onStart blocks when required tool is missing", () => {
+    const ctx = createSkillContext({
+      recipeId: "cut_emerald",
+      quantityMode: "all",
+      counts: { uncut_emerald: 1 },
+      currentTick: 550
+    });
+
+    const started = crafting.onStart(ctx);
+    assert(!started, "expected onStart failure without required crafting tool");
+    expectMessage(ctx, "You need the required crafting tool.", "crafting missing tool");
+  });
+
+  test("Crafting session stops when required tool disappears", () => {
+    const ctx = createSkillContext({
+      recipeId: "cut_sapphire",
+      quantityMode: "all",
+      counts: { chisel: 1, uncut_sapphire: 2 },
+      currentTick: 600
+    });
+
+    assert(crafting.onStart(ctx), "expected onStart success with chisel");
+    ctx._counts.chisel = 0;
+    ctx.currentTick = 603;
+    crafting.onTick(ctx);
+
+    assert(ctx.playerState.action === null, "expected crafting action stop when tool disappears");
+    expectMessage(ctx, "You need the required crafting tool.", "crafting tool disappeared");
   });
 
   test("Crafting returns false for unrelated inventory pairs", () => {
@@ -589,3 +775,4 @@ try {
   console.error(error && error.message ? error.message : error);
   process.exit(1);
 }
+
