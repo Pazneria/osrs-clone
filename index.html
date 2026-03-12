@@ -112,20 +112,21 @@
         </div>
 
         <!-- Bottom Right Container (Tabbed Inventory / Equipment) -->
-        <div id="main-ui-container" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
+        <div id="main-ui-container" data-active-tab="inv" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
             <!-- Tabs -->
             <div class="flex border-b-2 border-[#c8aa6e]">
-                <button id="tab-inv" class="flex-1 py-1.5 text-xs font-bold text-[#c8aa6e] bg-[#2a3138] hover:bg-[#3a444c] transition-colors">Inventory</button>
-                <button id="tab-equip" class="flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors">Equipment</button>
-                <button id="tab-stats" class="flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors">Stats</button>
+                <button id="tab-inv" title="Inventory" aria-label="Inventory" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-[#c8aa6e] bg-[#2a3138] hover:bg-[#3a444c] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="1"></rect><path d="M6 5V3.5h4V5"></path><path d="M6 8h4"></path></svg></button>
+                <button id="tab-equip" title="Equipment" aria-label="Equipment" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M5 4L8 2l3 2 2 1v3l-2 1v5H5V9L3 8V5l2-1z"></path></svg></button>
+                <button id="tab-stats" title="Stats" aria-label="Stats" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true"><path d="M2 13.5h12"></path><rect x="3" y="9" width="2.2" height="4"></rect><rect x="6.8" y="7" width="2.2" height="6"></rect><rect x="10.6" y="4" width="2.2" height="9"></rect></svg></button>
                 <button id="btn-expand" class="px-2 bg-[#111418] text-[#c8aa6e] hover:bg-[#1a1f24] transition-colors text-sm font-bold border-l border-[#c8aa6e]" title="Toggle UI Size">?</button>
             </div>
 
+
             <!-- Views Container -->
-            <div class="p-3 overflow-y-auto h-[292px] custom-scrollbar">
+            <div id="tab-views-shell" class="tab-views-shell p-3 overflow-y-auto h-[292px] custom-scrollbar">
                 
                 <!-- View: Inventory -->
-                <div id="view-inv" class="grid grid-cols-4 gap-1 place-items-center content-start h-full"></div>
+                <div id="view-inv" class="grid"></div>
                 
                 <!-- View: Equipment -->
                 <div id="view-equip" class="hidden flex-col h-full w-full justify-between">

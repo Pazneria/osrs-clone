@@ -13,7 +13,7 @@
             renderInventory();
         }
 
-        function formatStackSize(num) {
+        function formatStackSize(num, placementClass = '') {
             if (num <= 1) return '';
             let text = num.toString();
             let colorClass = 'amt-yellow';
@@ -24,7 +24,9 @@
                 text = Math.floor(num / 1000) + 'K';
                 colorClass = 'amt-white';
             }
-            return `<span class="item-amt ${colorClass}">${text}</span>`;
+            const classes = ['item-amt', colorClass];
+            if (placementClass) classes.push(placementClass);
+            return `<span class="${classes.join(' ')}">${text}</span>`;
         }
 
         function setInterfaceOpenState(interfaceId, isOpen) {
@@ -549,7 +551,7 @@
             container.innerHTML = '';
             for (let i = 0; i < 28; i++) {
                 const slot = document.createElement('div');
-                slot.className = 'w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl cursor-pointer hover:bg-[#1a1f24] select-none relative group';
+                slot.className = 'inventory-slot';
                 
                 slot.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
                 slot.addEventListener('drop', (e) => {
@@ -565,7 +567,7 @@
                 }
                 if (itemDataSlot) {
                     const item = itemDataSlot.itemData;
-                    slot.innerHTML = `${item.icon}${formatStackSize(itemDataSlot.amount)}`; 
+                    slot.innerHTML = `<span class="inv-item-icon">${item.icon}</span>${formatStackSize(itemDataSlot.amount, 'item-amt-inv')}`;
                     slot.draggable = true;
                     slot.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('application/json', JSON.stringify({ source: 'inv', index: i }));
@@ -730,15 +732,17 @@
             const panel = document.getElementById('skill-panel');
             if (panel) panel.classList.remove('hidden');
         }
-
         function initInventoryUI() {
             const tabs = ['inv', 'equip', 'stats'];
+            const mainContainer = document.getElementById('main-ui-container');
+            if (mainContainer) mainContainer.dataset.activeTab = 'inv';
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 btn.onclick = () => {
                     tabs.forEach(other => {
                         const isTarget = other === t; const view = document.getElementById(`view-${other}`); const btnOther = document.getElementById(`tab-${other}`);
                     if (isTarget) {
+                            if (mainContainer) mainContainer.dataset.activeTab = other;
                             view.classList.remove('hidden'); if(other === 'equip') view.classList.add('flex'); else view.classList.add('grid');
                             btnOther.classList.replace('text-gray-500', 'text-[#c8aa6e]'); btnOther.classList.replace('bg-[#1e2328]', 'bg-[#2a3138]');
                         } else {
@@ -749,7 +753,6 @@
                 };
             });
             let isExpanded = false;
-            const mainContainer = document.getElementById('main-ui-container');
             document.getElementById('btn-expand').onclick = () => { isExpanded = !isExpanded; mainContainer.style.transform = isExpanded ? 'scale(1.5)' : 'scale(1)'; };
             const skillTiles = Array.from(document.querySelectorAll('.skill-tile'));
             skillTiles.forEach(tile => {
@@ -771,4 +774,3 @@
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
-
