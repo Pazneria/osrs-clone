@@ -126,12 +126,15 @@
         return { sourceItemId, targetItemId };
     }
 
-    function getAssemblyRecipes(context) {
+    function getImmediatePairRecipes(context) {
         const recipes = getAllRecipes(context);
         return recipes.filter((recipe) => {
-            if (!recipe || recipe.recipeFamily !== 'tool_weapon_assembly') return false;
+            if (!recipe) return false;
+            if (!(recipe.recipeFamily === 'tool_weapon_assembly' || recipe.recipeFamily === 'strapped_handle')) return false;
             const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
-            return inputs.length === 2;
+            if (inputs.length !== 2) return false;
+            const actionTicks = Number.isFinite(recipe.actionTicks) ? recipe.actionTicks : 1;
+            return actionTicks <= 1;
         });
     }
 
@@ -147,8 +150,16 @@
         return /_(sword_blade|axe_head|pickaxe_head)$/.test(String(itemId || ''));
     }
 
-    function isHandleItemId(itemId) {
-        return /_handle$/.test(String(itemId || ''));
+    function isBaseHandleItemId(itemId) {
+        return /_handle$/.test(String(itemId || '')) && !/_handle_strapped$/.test(String(itemId || ''));
+    }
+
+    function isStrappedHandleItemId(itemId) {
+        return /_handle_strapped$/.test(String(itemId || ''));
+    }
+
+    function isLeatherItemId(itemId) {
+        return /_leather$/.test(String(itemId || ''));
     }
 
     function isLogItemId(itemId) {
@@ -162,7 +173,7 @@
         const targetItemId = useData.targetItemId;
         if (!sourceItemId || !targetItemId) return null;
 
-        const recipes = getAssemblyRecipes(context);
+        const recipes = getImmediatePairRecipes(context);
         for (let i = 0; i < recipes.length; i++) {
             const recipe = recipes[i];
             if (matchesInputPair(recipe, sourceItemId, targetItemId)) {
@@ -170,16 +181,28 @@
             }
         }
 
-        const metalAndHandle = (isMetalAssemblyPartItemId(sourceItemId) && isHandleItemId(targetItemId))
-            || (isMetalAssemblyPartItemId(targetItemId) && isHandleItemId(sourceItemId));
-        if (metalAndHandle) {
+        const handleAndLeather = (isBaseHandleItemId(sourceItemId) && isLeatherItemId(targetItemId))
+            || (isBaseHandleItemId(targetItemId) && isLeatherItemId(sourceItemId));
+        if (handleAndLeather) {
             return { recipe: null, recognized: true, message: "These don't match." };
+        }
+
+        const metalAndBaseHandle = (isMetalAssemblyPartItemId(sourceItemId) && isBaseHandleItemId(targetItemId))
+            || (isMetalAssemblyPartItemId(targetItemId) && isBaseHandleItemId(sourceItemId));
+        if (metalAndBaseHandle) {
+            return { recipe: null, recognized: true, message: 'You need a strapped handle for that.' };
         }
 
         const metalAndLog = (isMetalAssemblyPartItemId(sourceItemId) && isLogItemId(targetItemId))
             || (isMetalAssemblyPartItemId(targetItemId) && isLogItemId(sourceItemId));
         if (metalAndLog) {
-            return { recipe: null, recognized: true, message: 'You need a fletched handle for that.' };
+            return { recipe: null, recognized: true, message: 'You need a strapped handle for that.' };
+        }
+
+        const metalAndStrappedHandle = (isMetalAssemblyPartItemId(sourceItemId) && isStrappedHandleItemId(targetItemId))
+            || (isMetalAssemblyPartItemId(targetItemId) && isStrappedHandleItemId(sourceItemId));
+        if (metalAndStrappedHandle) {
+            return { recipe: null, recognized: true, message: "These don't match." };
         }
 
         return null;

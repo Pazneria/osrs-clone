@@ -1132,7 +1132,35 @@
         return defs;
     }
     function createCraftingAssemblyItemDefs() {
-        const defs = {};
+        const defs = {
+            normal_leather: {
+                name: 'Normal Leather',
+                type: 'resource',
+                value: 8,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            wolf_leather: {
+                name: 'Wolf Leather',
+                type: 'resource',
+                value: 24,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            },
+            bear_leather: {
+                name: 'Bear Leather',
+                type: 'resource',
+                value: 60,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'tin_ore' }
+            }
+        };
         const tierDefs = [
             { id: 'bronze', name: 'Bronze', value: 40, swordStats: { atk: 10, def: 0, str: 8 }, pickaxeStats: { atk: 5, def: 0, str: 7 }, toolTier: 4, speedBonusTicks: 0 },
             { id: 'iron', name: 'Iron', value: 120, swordStats: { atk: 15, def: 0, str: 12 }, pickaxeStats: { atk: 8, def: 0, str: 10 }, toolTier: 6, speedBonusTicks: 1 },
@@ -1141,6 +1169,27 @@
             { id: 'adamant', name: 'Adamant', value: 2200, swordStats: { atk: 40, def: 0, str: 32 }, pickaxeStats: { atk: 24, def: 0, str: 30 }, toolTier: 21, speedBonusTicks: 4 },
             { id: 'rune', name: 'Rune', value: 2500, swordStats: { atk: 54, def: 0, str: 44 }, pickaxeStats: { atk: 32, def: 0, str: 40 }, toolTier: 28, speedBonusTicks: 5 }
         ];
+
+        const strappedHandleDefs = [
+            { itemId: 'wooden_handle_strapped', name: 'Wooden Handle w/ Strap', value: 30 },
+            { itemId: 'oak_handle_strapped', name: 'Oak Handle w/ Strap', value: 50 },
+            { itemId: 'willow_handle_strapped', name: 'Willow Handle w/ Strap', value: 100 },
+            { itemId: 'maple_handle_strapped', name: 'Maple Handle w/ Strap', value: 150 },
+            { itemId: 'yew_handle_strapped', name: 'Yew Handle w/ Strap', value: 280 }
+        ];
+
+        for (let i = 0; i < strappedHandleDefs.length; i++) {
+            const def = strappedHandleDefs[i];
+            defs[def.itemId] = {
+                name: def.name,
+                type: 'component',
+                value: def.value,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'sprite', key: 'knife' }
+            };
+        }
 
         for (let i = 0; i < tierDefs.length; i++) {
             const tier = tierDefs[i];

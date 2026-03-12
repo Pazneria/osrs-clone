@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "run.bat",
     "check": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js",
-    "test": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" ./tools/tests/spec-contracts.js",
+    "test": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" ./tools/tests/spec-contracts.js && \"%NODE%\" ./tools/tests/fletching-crafting-interactions.js",
     "tool:check": "powershell -ExecutionPolicy Bypass -File ./tools/check-prereqs.ps1",
     "tool:pixelize": "powershell -ExecutionPolicy Bypass -File ./tools/pixel/pixelize.ps1",
     "tool:pixelize:batch": "powershell -ExecutionPolicy Bypass -File ./tools/pixel/batch-pixelize.ps1",
@@ -16,7 +16,7 @@
     "tool:model:render-icon": "powershell -ExecutionPolicy Bypass -File ./tools/model/render-icon.ps1",
     "tool:item:create": "powershell -ExecutionPolicy Bypass -File ./tools/content/create-item-from-image.ps1",
     "tool:items:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-items.js",
-    "tool:skills:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-skills.js"
+    "tool:skills:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-skills.js",
+    "test:qa:interactions": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/fletching-crafting-interactions.js"
   }
 }
-

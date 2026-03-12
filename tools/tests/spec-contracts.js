@@ -235,20 +235,41 @@ function run() {
       .map((row) => row.recipe.output && row.recipe.output.itemId)
       .filter((itemId) => typeof itemId === "string" && itemId.length > 0)
   );
+
+  const strappedHandleRows = craftingRows.filter((row) => row.recipe && row.recipe.recipeFamily === "strapped_handle");
+  assert(strappedHandleRows.length === 5, "expected 5 strapped-handle crafting recipes");
+  const strappedHandleOutputIds = new Set();
+  strappedHandleRows.forEach((row) => {
+    const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+    const baseHandleInputs = inputs.filter((input) => input && typeof input.itemId === "string" && /_handle$/.test(input.itemId) && !/_handle_strapped$/.test(input.itemId));
+    assert(baseHandleInputs.length === 1, "strapped-handle recipe must include exactly one base handle: " + row.recipeId);
+    assert(fletchedHandleIds.has(baseHandleInputs[0].itemId), "strapped-handle base handle must come from fletching: " + row.recipeId);
+    const leatherInputs = inputs.filter((input) => input && typeof input.itemId === "string" && /_leather$/.test(input.itemId));
+    assert(leatherInputs.length === 1, "strapped-handle recipe must include exactly one leather input: " + row.recipeId);
+    const outputId = row.recipe.output && row.recipe.output.itemId;
+    assert(typeof outputId === "string" && /_handle_strapped$/.test(outputId), "strapped-handle recipe output mismatch: " + row.recipeId);
+    assert(!!itemDefs[outputId], "strapped-handle output item missing in catalog: " + outputId);
+    strappedHandleOutputIds.add(outputId);
+  });
+
+  ["normal_leather", "wolf_leather", "bear_leather"].forEach((itemId) => {
+    assert(!!itemDefs[itemId], "leather item missing in catalog: " + itemId);
+  });
+
   const assemblyRows = craftingRows.filter((row) => row.recipe && row.recipe.recipeFamily === "tool_weapon_assembly");
   assert(assemblyRows.length === 18, "expected 18 crafting assembly recipes (6 tiers x 3 outputs)");
   assemblyRows.forEach((row) => {
     const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
-    const handleInputs = inputs.filter((input) => input && typeof input.itemId === "string" && /_handle$/.test(input.itemId));
-    assert(handleInputs.length === 1, `crafting assembly must have exactly one handle input: ${row.recipeId}`);
-    assert(fletchedHandleIds.has(handleInputs[0].itemId), `crafting assembly handle must come from fletching: ${row.recipeId}`);
+    const handleInputs = inputs.filter((input) => input && typeof input.itemId === "string" && /_handle_strapped$/.test(input.itemId));
+    assert(handleInputs.length === 1, "crafting assembly must have exactly one strapped-handle input: " + row.recipeId);
+    assert(strappedHandleOutputIds.has(handleInputs[0].itemId), "crafting assembly handle must come from crafting strapped-handle outputs: " + row.recipeId);
     inputs.forEach((input) => {
       const inputId = input && input.itemId;
-      assert(typeof inputId === "string" && !/_logs$/.test(inputId) && inputId !== "logs", `crafting assembly should not accept log shortcuts: ${row.recipeId}`);
-      assert(!!itemDefs[inputId], `crafting assembly input item missing in catalog: ${inputId}`);
+      assert(typeof inputId === "string" && !/_logs$/.test(inputId) && inputId !== "logs", "crafting assembly should not accept log shortcuts: " + row.recipeId);
+      assert(!!itemDefs[inputId], "crafting assembly input item missing in catalog: " + inputId);
     });
     const outputId = row.recipe.output && row.recipe.output.itemId;
-    assert(!!itemDefs[outputId], `crafting assembly output item missing in catalog: ${outputId}`);
+    assert(!!itemDefs[outputId], "crafting assembly output item missing in catalog: " + outputId);
   });
 
   ["bronze_sword", "iron_sword", "steel_sword", "mithril_sword", "adamant_sword", "rune_sword", "bronze_pickaxe", "steel_pickaxe", "mithril_pickaxe", "adamant_pickaxe", "rune_pickaxe"].forEach((itemId) => {
@@ -312,20 +333,28 @@ function run() {
   assert(usedMismatch, "mismatched arrowhead+headless pair should still be recognized");
   assert(fletchMessagesMismatch.some((entry) => entry.message === "These don't match."), "fletching mismatch message should be preserved for non-matching tiers");
 
+  const craftMessagesStrapped = [];
+  const craftingCtxStrapped = makeInventoryContext("wooden_handle", "normal_leather", { wooden_handle: 1, normal_leather: 1 }, craftMessagesStrapped, startedPayloads);
+  const strappedHandled = skillModules.crafting.onUseItem(craftingCtxStrapped);
+  assert(strappedHandled, "crafting should handle valid handle+leather strapped-handle recipe");
+  assert((craftingCtxStrapped._counts.wooden_handle_strapped || 0) === 1, "crafting should produce strapped handle output");
+  assert((craftingCtxStrapped._counts.wooden_handle || 0) === 0, "crafting should consume base handle input");
+  assert((craftingCtxStrapped._counts.normal_leather || 0) === 0, "crafting should consume leather input");
+
   const craftMessagesBlocked = [];
-  const craftingCtxBlocked = makeInventoryContext("bronze_axe_head", "logs", { bronze_axe_head: 1, logs: 1 }, craftMessagesBlocked, startedPayloads);
+  const craftingCtxBlocked = makeInventoryContext("bronze_axe_head", "wooden_handle", { bronze_axe_head: 1, wooden_handle: 1 }, craftMessagesBlocked, startedPayloads);
   const blockedHandled = skillModules.crafting.onUseItem(craftingCtxBlocked);
-  assert(blockedHandled, "crafting should handle blocked metal-part+log shortcut");
-  assert(!craftingCtxBlocked._counts.bronze_axe, "crafting should not produce output from metal-part+log shortcut");
-  assert(craftMessagesBlocked.some((entry) => entry.message === "You need a fletched handle for that."), "crafting should explain handle dependency when logs are used");
+  assert(blockedHandled, "crafting should handle blocked metal-part+base-handle pair");
+  assert(!craftingCtxBlocked._counts.bronze_axe, "crafting should not produce output from metal-part+base-handle pair");
+  assert(craftMessagesBlocked.some((entry) => entry.message === "You need a strapped handle for that."), "crafting should explain strapped-handle dependency when base handles are used directly");
 
   const craftMessagesSuccess = [];
-  const craftingCtxSuccess = makeInventoryContext("bronze_axe_head", "wooden_handle", { bronze_axe_head: 1, wooden_handle: 1 }, craftMessagesSuccess, startedPayloads);
+  const craftingCtxSuccess = makeInventoryContext("bronze_axe_head", "wooden_handle_strapped", { bronze_axe_head: 1, wooden_handle_strapped: 1 }, craftMessagesSuccess, startedPayloads);
   const successHandled = skillModules.crafting.onUseItem(craftingCtxSuccess);
-  assert(successHandled, "crafting should handle valid metal-part+handle assembly");
+  assert(successHandled, "crafting should handle valid metal-part+strapped-handle assembly");
   assert((craftingCtxSuccess._counts.bronze_axe || 0) === 1, "crafting should produce assembled bronze axe");
   assert((craftingCtxSuccess._counts.bronze_axe_head || 0) === 0, "crafting should consume bronze axe head");
-  assert((craftingCtxSuccess._counts.wooden_handle || 0) === 0, "crafting should consume wooden handle");
+  assert((craftingCtxSuccess._counts.wooden_handle_strapped || 0) === 0, "crafting should consume strapped handle input");
 
   window.SkillRuntime = originalSkillRuntime;
 

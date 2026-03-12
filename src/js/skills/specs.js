@@ -443,18 +443,41 @@
             recipeSet: (function () {
                 const recipes = {};
                 const tierDefs = [
-                    { tierId: 'bronze', requiredLevel: 1, handleItemId: 'wooden_handle', xp: 4 },
-                    { tierId: 'iron', requiredLevel: 1, handleItemId: 'wooden_handle', xp: 5 },
-                    { tierId: 'steel', requiredLevel: 10, handleItemId: 'oak_handle', xp: 8 },
-                    { tierId: 'mithril', requiredLevel: 20, handleItemId: 'willow_handle', xp: 14 },
-                    { tierId: 'adamant', requiredLevel: 30, handleItemId: 'maple_handle', xp: 22 },
-                    { tierId: 'rune', requiredLevel: 40, handleItemId: 'yew_handle', xp: 32 }
+                    { tierId: 'bronze', requiredLevel: 1, strappedHandleItemId: 'wooden_handle_strapped', assemblyXp: 4 },
+                    { tierId: 'iron', requiredLevel: 1, strappedHandleItemId: 'wooden_handle_strapped', assemblyXp: 5 },
+                    { tierId: 'steel', requiredLevel: 10, strappedHandleItemId: 'oak_handle_strapped', assemblyXp: 8 },
+                    { tierId: 'mithril', requiredLevel: 20, strappedHandleItemId: 'willow_handle_strapped', assemblyXp: 14 },
+                    { tierId: 'adamant', requiredLevel: 30, strappedHandleItemId: 'maple_handle_strapped', assemblyXp: 22 },
+                    { tierId: 'rune', requiredLevel: 40, strappedHandleItemId: 'yew_handle_strapped', assemblyXp: 32 }
                 ];
                 const assemblyDefs = [
                     { outputSuffix: 'sword', componentSuffix: 'sword_blade' },
                     { outputSuffix: 'axe', componentSuffix: 'axe_head' },
                     { outputSuffix: 'pickaxe', componentSuffix: 'pickaxe_head' }
                 ];
+
+                const strappedHandleDefs = [
+                    { recipeId: 'craft_wooden_handle_strapped', outputItemId: 'wooden_handle_strapped', requiredLevel: 1, handleItemId: 'wooden_handle', leatherItemId: 'normal_leather', xp: 2 },
+                    { recipeId: 'craft_oak_handle_strapped', outputItemId: 'oak_handle_strapped', requiredLevel: 10, handleItemId: 'oak_handle', leatherItemId: 'normal_leather', xp: 4 },
+                    { recipeId: 'craft_willow_handle_strapped', outputItemId: 'willow_handle_strapped', requiredLevel: 20, handleItemId: 'willow_handle', leatherItemId: 'wolf_leather', xp: 8 },
+                    { recipeId: 'craft_maple_handle_strapped', outputItemId: 'maple_handle_strapped', requiredLevel: 30, handleItemId: 'maple_handle', leatherItemId: 'wolf_leather', xp: 12 },
+                    { recipeId: 'craft_yew_handle_strapped', outputItemId: 'yew_handle_strapped', requiredLevel: 40, handleItemId: 'yew_handle', leatherItemId: 'bear_leather', xp: 18 }
+                ];
+
+                for (let i = 0; i < strappedHandleDefs.length; i++) {
+                    const def = strappedHandleDefs[i];
+                    recipes[def.recipeId] = {
+                        recipeFamily: 'strapped_handle',
+                        requiredLevel: def.requiredLevel,
+                        inputs: [
+                            { itemId: def.handleItemId, amount: 1 },
+                            { itemId: def.leatherItemId, amount: 1 }
+                        ],
+                        output: { itemId: def.outputItemId, amount: 1 },
+                        xpPerAction: def.xp,
+                        actionTicks: 1
+                    };
+                }
 
                 for (let i = 0; i < tierDefs.length; i++) {
                     const tier = tierDefs[i];
@@ -465,10 +488,10 @@
                             requiredLevel: tier.requiredLevel,
                             inputs: [
                                 { itemId: `${tier.tierId}_${assembly.componentSuffix}`, amount: 1 },
-                                { itemId: tier.handleItemId, amount: 1 }
+                                { itemId: tier.strappedHandleItemId, amount: 1 }
                             ],
                             output: { itemId: `${tier.tierId}_${assembly.outputSuffix}`, amount: 1 },
-                            xpPerAction: tier.xp,
+                            xpPerAction: tier.assemblyXp,
                             actionTicks: 1
                         };
                     }
@@ -1004,6 +1027,36 @@
         }
 
         const craftingRows = gatherRecipeRows(craftingRecipes);
+        const strappedHandleOutputIds = new Set();
+        for (let i = 0; i < craftingRows.length; i++) {
+            const row = craftingRows[i];
+            if (row.recipe.recipeFamily !== 'strapped_handle') continue;
+
+            const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
+            const baseHandleInputs = inputs.filter((input) => /_handle$/.test(String(input && input.itemId || '')) && !/_handle_strapped$/.test(String(input && input.itemId || '')));
+            if (baseHandleInputs.length !== 1) {
+                errors.push('crafting:' + row.recipeId + ' must include exactly one base fletched handle input');
+                continue;
+            }
+
+            const baseHandleId = String(baseHandleInputs[0].itemId || '');
+            if (!fletchedHandleIds.has(baseHandleId)) {
+                errors.push('crafting:' + row.recipeId + ' references non-fletching handle ' + baseHandleId);
+            }
+
+            const leatherInputs = inputs.filter((input) => /_leather$/.test(String(input && input.itemId || '')));
+            if (leatherInputs.length !== 1) {
+                errors.push('crafting:' + row.recipeId + ' must include exactly one leather input');
+            }
+
+            const outputId = String(row.recipe.output && row.recipe.output.itemId || '');
+            if (!/_handle_strapped$/.test(outputId)) {
+                errors.push('crafting:' + row.recipeId + ' must output a strapped handle');
+                continue;
+            }
+            strappedHandleOutputIds.add(outputId);
+        }
+
         let craftingAssemblyCount = 0;
         for (let i = 0; i < craftingRows.length; i++) {
             const row = craftingRows[i];
@@ -1011,21 +1064,21 @@
             craftingAssemblyCount++;
 
             const inputs = Array.isArray(row.recipe.inputs) ? row.recipe.inputs : [];
-            const handleInputs = inputs.filter((input) => /_handle$/.test(String(input && input.itemId || '')));
+            const handleInputs = inputs.filter((input) => /_handle_strapped$/.test(String(input && input.itemId || '')));
             if (handleInputs.length !== 1) {
-                errors.push(`crafting:${row.recipeId} must include exactly one fletched handle input`);
+                errors.push('crafting:' + row.recipeId + ' must include exactly one strapped handle input');
                 continue;
             }
 
             const handleId = String(handleInputs[0].itemId || '');
-            if (!fletchedHandleIds.has(handleId)) {
-                errors.push(`crafting:${row.recipeId} references non-fletching handle ${handleId}`);
+            if (!strappedHandleOutputIds.has(handleId)) {
+                errors.push('crafting:' + row.recipeId + ' references non-crafting strapped handle ' + handleId);
             }
 
             for (let j = 0; j < inputs.length; j++) {
                 const inputId = String(inputs[j] && inputs[j].itemId || '');
                 if (inputId === 'logs' || /_logs$/.test(inputId)) {
-                    errors.push(`crafting:${row.recipeId} should not consume logs directly`);
+                    errors.push('crafting:' + row.recipeId + ' should not consume logs directly');
                 }
             }
         }
@@ -1049,16 +1102,16 @@
             const arrowheadInput = inputs.find((input) => /_arrowheads$/.test(String(input && input.itemId || '')));
             const arrowheadId = arrowheadInput ? String(arrowheadInput.itemId || '') : '';
             if (!arrowheadId) {
-                errors.push(`fletching:${row.recipeId} missing arrowhead input`);
+                errors.push('fletching:' + row.recipeId + ' missing arrowhead input');
                 continue;
             }
             if (!smithingArrowheadOutputs.has(arrowheadId)) {
-                errors.push(`fletching:${row.recipeId} references smithing-missing arrowheads ${arrowheadId}`);
+                errors.push('fletching:' + row.recipeId + ' references smithing-missing arrowheads ' + arrowheadId);
             }
         }
 
         if (errors.length > 0) {
-            throw new Error(`Cross-skill integration mismatch:\n- ${errors.join('\n- ')}`);
+            throw new Error('Cross-skill integration mismatch\n- ' + errors.join('\n- '));
         }
     }
 
