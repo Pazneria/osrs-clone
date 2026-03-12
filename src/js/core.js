@@ -45,6 +45,10 @@
             turnLock: false,
             actionVisualReady: true,
             actionUntilTick: 0,
+            currentHitpoints: 10,
+            eatingCooldownEndTick: 0,
+            lastAttackTick: -1,
+            lastCastTick: -1,
             firemakingTarget: null,
             pendingSkillStart: null,
             unlockFlags: {
@@ -304,6 +308,7 @@ O445411111OOOOO.
         inventory[8] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
+        inventory[11] = { itemData: ITEM_DB['owie'], amount: 1 };
 
                         function setInventorySlots(slotDefs) {
             inventory = Array(28).fill(null);
@@ -1285,6 +1290,8 @@ O445411111OOOOO.
             fpsSampleLast = performance.now();
             animate();
         };
+
+
 
 
 

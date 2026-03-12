@@ -929,6 +929,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (!(window.SkillRuntime && SkillRuntime.handleSkillTick())) {
                 if (playerState.action === 'COMBAT: DUMMY') {
                     if (currentTick % 4 === 0) {
+                        playerState.lastAttackTick = currentTick;
                         playerRig.userData.rig.attackTrigger = Date.now();
                         const damage = Math.floor(Math.random() * 3); 
                         spawnHitsplat(damage, playerState.targetX, playerState.targetY);
@@ -1860,6 +1861,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
 
         window.initPoseEditor = initPoseEditor;
+
 
 
 

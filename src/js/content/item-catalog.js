@@ -141,6 +141,15 @@
             defaultAction: 'Drop',
             icon: { kind: 'sprite', key: 'coins' }
         },
+        owie: {
+            name: 'Owie',
+            type: 'tool',
+            value: 1,
+            stackable: false,
+            actions: ['Use', 'Drop'],
+            defaultAction: 'Use',
+            icon: { kind: 'sprite', key: 'ashes' }
+        },
         tinderbox: {
             name: 'Tinderbox',
             type: 'tool',
@@ -284,6 +293,8 @@
             stackable: false,
             actions: ['Eat', 'Drop'],
             defaultAction: 'Eat',
+            healAmount: 3,
+            eatDelayTicks: 4,
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         burnt_shrimp: {
@@ -302,6 +313,8 @@
             stackable: false,
             actions: ['Eat', 'Drop'],
             defaultAction: 'Eat',
+            healAmount: 5,
+            eatDelayTicks: 4,
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         burnt_trout: {
@@ -320,6 +333,8 @@
             stackable: false,
             actions: ['Eat', 'Drop'],
             defaultAction: 'Eat',
+            healAmount: 7,
+            eatDelayTicks: 4,
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         burnt_salmon: {
@@ -338,6 +353,8 @@
             stackable: false,
             actions: ['Eat', 'Drop'],
             defaultAction: 'Eat',
+            healAmount: 9,
+            eatDelayTicks: 4,
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         burnt_tuna: {
@@ -356,6 +373,8 @@
             stackable: false,
             actions: ['Eat', 'Drop'],
             defaultAction: 'Eat',
+            healAmount: 12,
+            eatDelayTicks: 4,
             icon: { kind: 'sprite', key: 'raw_shrimp' }
         },
         burnt_swordfish: {
@@ -1423,6 +1442,8 @@
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;
             if (def.burnResultId) db[id].burnResultId = def.burnResultId;
             if (Number.isFinite(def.burnChance)) db[id].burnChance = def.burnChance;
+            if (Number.isFinite(def.healAmount)) db[id].healAmount = def.healAmount;
+            if (Number.isFinite(def.eatDelayTicks)) db[id].eatDelayTicks = def.eatDelayTicks;
         }
 
         return db;

@@ -8,9 +8,9 @@
 - [x] COOKING-004: Canonical cooking recipe/timing data wired in `SkillSpecs` for runtime lookup.
 - [x] COOKING-005: Runtime cooking processing-session flow implemented (use-item routing, per-tick attempts, stop conditions).
 - [x] COOKING-006: Success/burn resolution wiring implemented (raw consumption, cooked/burnt output, XP-on-success, fire validation).
+- [x] COOKING-007: Eating runtime integration completed (immediate heal, per-food eat cooldown ticks, same-tick attack/cast restrictions).
 
 ## Now
-- [ ] COOKING-007: Eating runtime integration (immediate heal, per-food eat cooldown ticks, combat action restrictions).
 - [ ] COOKING-008: Merchant/economy alignment for raw-cooked-burnt sell behavior and general-store fallback handling.
 
 ## Next

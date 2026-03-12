@@ -1,10 +1,11 @@
-﻿(function () {
+(function () {
     const EXAMINE_TEXT_BY_ITEM_ID = {
         iron_axe: 'Reliable and slightly blunt.',
         logs: 'Good for a fire, not for sitting.',
         willow_logs: 'Light wood that burns quickly.',
         ashes: 'All that\'s left of a warm idea.',
         coins: 'Money talks. Usually about prices.',
+        owie: 'Poke at your own risk.',
         tinderbox: 'Small box, big fire ambitions.',
         knife: 'Sharp enough for basic work.',
         iron_pickaxe: 'Solid mining gear for rough rock.',
@@ -252,3 +253,4 @@
         examineNpc
     };
 })();
+

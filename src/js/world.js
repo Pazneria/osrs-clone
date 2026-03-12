@@ -730,6 +730,63 @@
             document.getElementById('stat-str').innerText = totalStr;
         }
 
+        function getMaxHitpoints() {
+            const hpLevel = playerSkills && playerSkills.hitpoints && Number.isFinite(playerSkills.hitpoints.level)
+                ? Math.floor(playerSkills.hitpoints.level)
+                : 10;
+            return Math.max(1, hpLevel);
+        }
+
+        function getCurrentHitpoints() {
+            const maxHitpoints = getMaxHitpoints();
+            if (!Number.isFinite(playerState.currentHitpoints)) playerState.currentHitpoints = maxHitpoints;
+            playerState.currentHitpoints = Math.max(0, Math.min(maxHitpoints, Math.floor(playerState.currentHitpoints)));
+            return playerState.currentHitpoints;
+        }
+
+        function applyHitpointHealing(healAmount) {
+            const maxHitpoints = getMaxHitpoints();
+            const currentHitpoints = getCurrentHitpoints();
+            const requestedHeal = Number.isFinite(healAmount) ? Math.max(0, Math.floor(healAmount)) : 0;
+            const healed = Math.min(requestedHeal, Math.max(0, maxHitpoints - currentHitpoints));
+            playerState.currentHitpoints = currentHitpoints + healed;
+            return healed;
+        }
+
+        function applyHitpointDamage(damageAmount, minHitpoints = 0) {
+            const maxHitpoints = getMaxHitpoints();
+            const currentHitpoints = getCurrentHitpoints();
+            const requestedDamage = Number.isFinite(damageAmount) ? Math.max(0, Math.floor(damageAmount)) : 0;
+            const minimum = Number.isFinite(minHitpoints)
+                ? Math.max(0, Math.min(maxHitpoints, Math.floor(minHitpoints)))
+                : 0;
+            const maxDamage = Math.max(0, currentHitpoints - minimum);
+            const dealt = Math.min(requestedDamage, maxDamage);
+            playerState.currentHitpoints = currentHitpoints - dealt;
+            return dealt;
+        }
+
+        function didAttackOrCastThisTick() {
+            const attackedThisTick = (
+                Number.isFinite(playerState.lastAttackTick) && playerState.lastAttackTick === currentTick
+            ) || (
+                playerState.action === 'COMBAT: DUMMY' && currentTick % 4 === 0
+            );
+
+            const actionName = typeof playerState.action === 'string' ? playerState.action.toUpperCase() : '';
+            const castedThisTick = (
+                Number.isFinite(playerState.lastCastTick) && playerState.lastCastTick === currentTick
+            ) || actionName.startsWith('CAST:') || actionName.startsWith('CASTING:');
+
+            return attackedThisTick || castedThisTick;
+        }
+
+        function markPlayerCastTick(tick = currentTick) {
+            const resolvedTick = Number.isFinite(tick) ? Math.floor(tick) : currentTick;
+            playerState.lastCastTick = resolvedTick;
+        }
+        window.markPlayerCastTick = markPlayerCastTick;
+
         const MAX_SKILL_LEVEL = 99;
         const FIRE_STEP_DIR = { x: 0, y: 1 };
         const FIRE_LIFETIME_TICKS = 50;
@@ -1156,15 +1213,52 @@
                 : null;
             handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData, prefKey));
         }
+        function useOwie() {
+            const currentHitpoints = getCurrentHitpoints();
+            if (currentHitpoints <= 1) {
+                addChatMessage('Owie refuses to hurt you below 1 HP.', 'warn');
+                return;
+            }
+
+            const damageDealt = applyHitpointDamage(1, 1);
+            addChatMessage(`Owie! You take ${damageDealt} damage. (${playerState.currentHitpoints} HP)`, 'warn');
+        }
+
         function eatItem(invIndex) {
             const invSlot = inventory[invIndex];
-            if (!invSlot) return;
+            if (!invSlot || !invSlot.itemData) return;
 
             const item = invSlot.itemData;
+            const healAmount = Number.isFinite(item.healAmount) ? Math.max(0, Math.floor(item.healAmount)) : 0;
+            const eatDelayTicks = Number.isFinite(item.eatDelayTicks) ? Math.max(1, Math.floor(item.eatDelayTicks)) : 0;
+            if (item.type !== 'food' || healAmount <= 0 || eatDelayTicks <= 0) {
+                addChatMessage("You can't eat that.", 'warn');
+                return;
+            }
+
+            const cooldownEndTick = Number.isFinite(playerState.eatingCooldownEndTick)
+                ? Math.floor(playerState.eatingCooldownEndTick)
+                : 0;
+            if (currentTick < cooldownEndTick) {
+                const remainingTicks = cooldownEndTick - currentTick;
+                addChatMessage(`You need to wait ${remainingTicks} tick${remainingTicks === 1 ? '' : 's'} before eating again.`, 'warn');
+                return;
+            }
+
+            if (didAttackOrCastThisTick()) {
+                addChatMessage('You cannot eat on the same tick as attacking or casting.', 'warn');
+                return;
+            }
+
             invSlot.amount -= 1;
             if (invSlot.amount <= 0) inventory[invIndex] = null;
             if (selectedUse.invIndex === invIndex) clearSelectedUse(false);
-            addChatMessage(`You eat the ${item.name}.`, 'game');
+
+            const healed = applyHitpointHealing(healAmount);
+            playerState.eatingCooldownEndTick = currentTick + eatDelayTicks;
+
+            if (healed > 0) addChatMessage(`You eat the ${item.name}. (+${healed} HP)`, 'game');
+            else addChatMessage(`You eat the ${item.name}.`, 'game');
             renderInventory();
         }
 
@@ -1173,6 +1267,10 @@
             if (!invSlot) return;
             const item = invSlot.itemData;
             if (actionName === 'Use') {
+                if (item.id === 'owie') {
+                    useOwie();
+                    return;
+                }
                 if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUsePouch === 'function') {
                     const pouchUsed = window.RunecraftingPouchRuntime.tryUsePouch(createRunecraftingPouchContext(), item.id);
                     if (pouchUsed) return;
@@ -3572,6 +3670,7 @@
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
 
 
 
