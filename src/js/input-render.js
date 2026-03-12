@@ -156,7 +156,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     }
                     addContextMenuOption(`Examine <span class="text-yellow-400">${hitData.name}</span>`, () => (window.ExamineCatalog ? window.ExamineCatalog.examineNpc(hitData.name) : (typeof addChatMessage === 'function' ? addChatMessage('Nothing unusual.', 'game') : console.log(`EXAMINING: ${hitData.name}.`))));
                 } else if (hitData.type === 'GROUND_ITEM') {
-                    const groundName = hitData.name || 'item';
+                    const groundName = formatGroundItemDisplayName(hitData);
                     addContextMenuOption(`Take <span class="text-[#ff981f]">${groundName}</span>`, () => {
                         queueAction('INTERACT', hitData.gridX, hitData.gridY, 'GROUND_ITEM', hitData.uid);
                         spawnClickMarker(hitData.point, true);
@@ -183,6 +183,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function closeContextMenu() {
             contextMenuEl.classList.add('hidden');
             if (typeof window.clearItemSwapLeftClickUI === 'function') window.clearItemSwapLeftClickUI();
+            if (typeof window.hideInventoryHoverTooltip === 'function') window.hideInventoryHoverTooltip();
         }
 
         function normalizeRaycastHit(hit) {
@@ -592,8 +593,38 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const session = SkillActionResolution.getSkillSession(playerState, 'fletching');
             return !!(session && session.kind === 'processing');
         }
+        function setMinimapDestination(gridX, gridY, z = playerState.z) {
+            if (!Number.isInteger(gridX) || !Number.isInteger(gridY) || !Number.isInteger(z)) {
+                minimapDestination = null;
+                return;
+            }
+            minimapDestination = { x: gridX, y: gridY, z };
+        }
+        function clearMinimapDestination() {
+            minimapDestination = null;
+        }
+        function getGroundTileStackCount(gridX, gridY, z = playerState.z) {
+            if (!Array.isArray(groundItems) || !Number.isInteger(gridX) || !Number.isInteger(gridY)) return 1;
+            let count = 0;
+            for (let i = 0; i < groundItems.length; i++) {
+                const entry = groundItems[i];
+                if (!entry) continue;
+                if (entry.x === gridX && entry.y === gridY && entry.z === z) count++;
+            }
+            return Math.max(1, count);
+        }
+        function formatGroundItemDisplayName(hitData) {
+            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+                ? hitData.name
+                : 'item';
+            if (!hitData || hitData.type !== 'GROUND_ITEM') return baseName;
+            const tileStackCount = getGroundTileStackCount(hitData.gridX, hitData.gridY);
+            return tileStackCount > 1 ? `${baseName} (${tileStackCount})` : baseName;
+        }
         function queueAction(type, gridX, gridY, obj, targetUid = null) {
             cancelManualFiremakingChain();
+            if (type === 'WALK') setMinimapDestination(gridX, gridY, playerState.z);
+            else clearMinimapDestination();
             pendingAction = { type, x: gridX, y: gridY, obj, targetUid };
         }
 
@@ -751,6 +782,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (pendingAction.type === 'WALK') {
                     playerState.pendingSkillStart = null;
                     playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, false);
+                    if (playerState.path.length === 0) clearMinimapDestination();
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
                     playerState.actionVisualReady = true;
@@ -922,7 +954,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             playerState.action = 'IDLE';
                         }
                     }
-                } else if (playerState.action === 'WALKING') playerState.action = 'IDLE';
+                } else if (playerState.action === 'WALKING') {
+                    playerState.action = 'IDLE';
+                    if (minimapDestination
+                        && minimapDestination.z === playerState.z
+                        && minimapDestination.x === playerState.x
+                        && minimapDestination.y === playerState.y) {
+                        clearMinimapDestination();
+                    }
+                }
+            }
+
+            if (minimapDestination
+                && minimapDestination.z === playerState.z
+                && minimapDestination.x === playerState.x
+                && minimapDestination.y === playerState.y) {
+                clearMinimapDestination();
             }
 
             if (playerState.action === 'IDLE' || playerState.action === 'WALKING' || playerState.action === 'WALKING_TO_INTERACT') {
@@ -1104,6 +1151,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 });
 
                 const isAshesGroundItem = hitData.type === 'GROUND_ITEM' && /^Ashes(?:\s|\(|$)/i.test(hitData.name || '');
+                const groundDisplayName = hitData.type === 'GROUND_ITEM'
+                    ? formatGroundItemDisplayName(hitData)
+                    : (hitData.name || '');
 
                 let actionText = '';
                 if (selectedCookable && (hitData.type === 'GROUND' || hitData.type === 'FIRE' || isAshesGroundItem) && fireUnderCursor) {
@@ -1123,7 +1173,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === 1) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
                     } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
                     else if (hitData.type === 'FIRE') actionText = '<span class="text-gray-300">Use</span> <span class="text-orange-300">Fire</span>';
-                    else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${hitData.name}</span>`;
+                    else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${groundDisplayName}</span>`;
                     else if (hitData.type === 'BANK_BOOTH') actionText = '<span class="text-gray-300">Bank</span> <span class="text-cyan-400">Bank Booth</span>';
                     else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
                     else if (hitData.type === 'WATER') actionText = '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
@@ -1562,7 +1612,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const sinWalkRaw = Math.sin(walkPhase);
             const sinWalk = Math.sign(sinWalkRaw) * Math.pow(Math.abs(sinWalkRaw), 0.65);
             const absSinWalk = Math.abs(sinWalkRaw);
-            const idlePhase = (frameNow % (TICK_RATE_MS * 2)) / (TICK_RATE_MS * 2) * Math.PI * 2;
+            const idlePhase = (frameNow % (TICK_RATE_MS * 3)) / (TICK_RATE_MS * 3) * Math.PI * 2;
             const idlePulse = Math.sin(idlePhase);
             let progress = Math.min((frameNow - lastTickTime) / TICK_RATE_MS, 1.0);
             

@@ -4060,7 +4060,7 @@
                     const gridX = Math.floor(minimapTargetX + 0.5 + (mouseX - canvasCenter) / ppt); const gridY = Math.floor(minimapTargetY + 0.5 + (mouseY - canvasCenter) / ppt);
                     if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
                         // Ensure we check walkability on the PLAYER'S CURRENT PLANE
-                        if (WALKABLE_TILES.includes(logicalMap[playerState.z][gridY][gridX])) { queueAction('WALK', gridX, gridY, null); spawnClickMarker(new THREE.Vector3(gridX + 0.5, heightMap[playerState.z][gridY][gridX] + playerState.z * 3.0, gridY + 0.5), false); }
+                        if (WALKABLE_TILES.includes(logicalMap[playerState.z][gridY][gridX])) { queueAction('WALK', gridX, gridY, null); }
                     }
                 }
             });
@@ -4095,7 +4095,35 @@
             clickMarkers.forEach(m => { if (Math.abs(m.mesh.position.y - (playerState.z * 3.0)) < 2.0) ctx.fillRect(m.mesh.position.x, m.mesh.position.z, 1, 1); });
             ctx.fillStyle = '#ff00aa'; 
             groundItems.forEach(gi => { if (gi.z === playerState.z) ctx.fillRect(gi.x, gi.y, 1, 1); });
-            
+
+            if (minimapDestination
+                && minimapDestination.z === playerState.z
+                && Number.isFinite(minimapDestination.x)
+                && Number.isFinite(minimapDestination.y)) {
+                const flagX = minimapDestination.x + 0.5;
+                const flagY = minimapDestination.y + 0.5;
+                const poleHeight = 10 / ppt;
+                const poleBottomY = flagY + (2 / ppt);
+                const poleTopY = poleBottomY - poleHeight;
+                const flagWidth = 7 / ppt;
+                const flagHeight = 4.5 / ppt;
+
+                ctx.strokeStyle = '#3a2a1b';
+                ctx.lineWidth = Math.max(2 / ppt, 0.28);
+                ctx.beginPath();
+                ctx.moveTo(flagX, poleBottomY);
+                ctx.lineTo(flagX, poleTopY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#ff4b4b';
+                ctx.beginPath();
+                ctx.moveTo(flagX, poleTopY);
+                ctx.lineTo(flagX + flagWidth, poleTopY + (flagHeight * 0.5));
+                ctx.lineTo(flagX, poleTopY + flagHeight);
+                ctx.closePath();
+                ctx.fill();
+            }
+             
             ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(playerRig.position.x + 0.5, playerRig.position.z + 0.5, 3 / ppt, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2 / ppt; ctx.beginPath(); ctx.moveTo(playerRig.position.x + 0.5, playerRig.position.z + 0.5); ctx.lineTo(playerRig.position.x + 0.5 + Math.sin(playerRig.rotation.y) * (8 / ppt), playerRig.position.z + 0.5 + Math.cos(playerRig.rotation.y) * (8 / ppt)); ctx.stroke(); ctx.restore();
             if (isMinimapDragging) {

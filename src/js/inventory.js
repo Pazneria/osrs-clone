@@ -29,6 +29,89 @@
             return `<span class="${classes.join(' ')}">${text}</span>`;
         }
 
+        function getInventoryHoverTooltipEl() {
+            return document.getElementById('inventory-hover-tooltip');
+        }
+
+        function hideInventoryHoverTooltip() {
+            const tooltip = getInventoryHoverTooltipEl();
+            if (!tooltip) return;
+            tooltip.classList.add('hidden');
+        }
+
+        function rectanglesOverlap(x, y, width, height, rect) {
+            if (!rect) return false;
+            return !(x + width <= rect.left || x >= rect.right || y + height <= rect.top || y >= rect.bottom);
+        }
+
+        function positionInventoryHoverTooltip(tooltip, clientX, clientY) {
+            const pad = 8;
+            const xOffset = 14;
+            const yOffset = 14;
+            const w = tooltip.offsetWidth || 140;
+            const h = tooltip.offsetHeight || 24;
+
+            let x = clientX + xOffset;
+            let y = clientY + yOffset;
+
+            if (x + w > window.innerWidth - pad) x = clientX - w - xOffset;
+            if (y + h > window.innerHeight - pad) y = clientY - h - (yOffset + 2);
+            if (x < pad) x = pad;
+            if (y < pad) y = pad;
+
+            const avoidRects = [];
+            if (contextMenuEl && !contextMenuEl.classList.contains('hidden')) avoidRects.push(contextMenuEl.getBoundingClientRect());
+            const swapSubmenu = document.getElementById('context-swap-left-click-submenu');
+            if (swapSubmenu && !swapSubmenu.classList.contains('hidden')) avoidRects.push(swapSubmenu.getBoundingClientRect());
+
+            for (let i = 0; i < avoidRects.length; i++) {
+                const rect = avoidRects[i];
+                if (!rectanglesOverlap(x, y, w, h, rect)) continue;
+
+                const aboveY = rect.top - h - 10;
+                if (aboveY >= pad) {
+                    y = aboveY;
+                } else {
+                    const leftX = rect.left - w - 10;
+                    const rightX = rect.right + 10;
+                    if (leftX >= pad) x = leftX;
+                    else if (rightX + w <= window.innerWidth - pad) x = rightX;
+                    else y = Math.max(pad, rect.bottom + 10);
+                }
+            }
+
+            if (x + w > window.innerWidth - pad) x = window.innerWidth - w - pad;
+            if (y + h > window.innerHeight - pad) y = window.innerHeight - h - pad;
+            if (x < pad) x = pad;
+            if (y < pad) y = pad;
+
+            tooltip.style.left = `${x}px`;
+            tooltip.style.top = `${y}px`;
+        }
+
+        function showInventoryHoverTooltip(text, clientX, clientY) {
+            const tooltip = getInventoryHoverTooltipEl();
+            const tooltipText = (typeof text === 'string') ? text.trim() : '';
+            if (!tooltip || !tooltipText) {
+                hideInventoryHoverTooltip();
+                return;
+            }
+
+            tooltip.textContent = tooltipText;
+            tooltip.classList.remove('hidden');
+            positionInventoryHoverTooltip(tooltip, clientX, clientY);
+        }
+
+        function bindInventorySlotTooltip(slot, text) {
+            const tooltipText = (typeof text === 'string') ? text.trim() : '';
+            slot.title = '';
+            if (!tooltipText) return;
+            slot.setAttribute('aria-label', tooltipText);
+            slot.addEventListener('mouseenter', (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY));
+            slot.addEventListener('mousemove', (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY));
+            slot.addEventListener('mouseleave', hideInventoryHoverTooltip);
+        }
+
         function setInterfaceOpenState(interfaceId, isOpen) {
             const interfaceEl = document.getElementById(interfaceId);
             if (!interfaceEl) return;
@@ -104,8 +187,8 @@
                 const menuW = submenu.offsetWidth || 160;
                 const menuH = submenu.offsetHeight || 120;
                 const pad = 8;
-                let x = triggerRect.right + 4;
-                if (x + menuW > window.innerWidth - pad) x = triggerRect.left - menuW - 4;
+                let x = triggerRect.right;
+                if (x + menuW > window.innerWidth - pad) x = triggerRect.left - menuW;
                 let y = triggerRect.top;
                 if (y + menuH > window.innerHeight - pad) y = window.innerHeight - menuH - pad;
                 if (y < pad) y = pad;
@@ -129,6 +212,7 @@
 
         window.clearItemSwapLeftClickUI = clearItemSwapLeftClickUI;
         window.getItemMenuPreferenceKey = getItemMenuPreferenceKey;
+        window.hideInventoryHoverTooltip = hideInventoryHoverTooltip;
 
         let rememberedDepositXAmount = null;
 
@@ -594,12 +678,13 @@
                                 }
                             }
                         };
-                        slot.title = `Deposit ${item.name}`;
+                        bindInventorySlotTooltip(slot, `Deposit ${item.name}`);
                         slot.onclick = () => {
                             const defaultAction = getPreferredMenuAction(depositActionPrefKey, depositActions);
                     if (defaultAction) runDepositAction(defaultAction);
                         };
                         slot.oncontextmenu = (e) => {
+                            hideInventoryHoverTooltip();
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
                             addContextMenuOption(`Deposit-1 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-1'));
@@ -620,12 +705,13 @@
                             else if (actionName === 'Sell-50') sellItem(i, 50);
                             else if (actionName === 'Sell-X') promptAmount((amt) => sellItem(i, amt));
                         };
-                        slot.title = `Sell ${item.name}`;
+                        bindInventorySlotTooltip(slot, `Sell ${item.name}`);
                         slot.onclick = () => {
                             const defaultAction = getPreferredMenuAction(sellActionPrefKey, sellActions);
                     if (defaultAction) runSellAction(defaultAction);
                         };
                         slot.oncontextmenu = (e) => {
+                            hideInventoryHoverTooltip();
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
                             addContextMenuOption(`Value <span class="text-white">${item.name}</span>`, () => console.log(`${item.name} sells for ${resolveMerchantSellPrice(item.id)} coins.`));
@@ -641,9 +727,10 @@
                         const invActionPrefKey = getItemMenuPreferenceKey('inventory', item.id);
                         const defaultAction = resolveDefaultItemAction(item, invActionPrefKey);
                         const orderedActions = getOrderedItemActions(item);
-                    slot.title = `${defaultAction} ${item.name}`;
+                    bindInventorySlotTooltip(slot, `${defaultAction} ${item.name}`);
                         slot.onclick = () => handleInventorySlotClick(i);
                         slot.oncontextmenu = (e) => {
+                            hideInventoryHoverTooltip();
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
                             contextOptionsListEl.innerHTML = '';
                             orderedActions.forEach(action => { addContextMenuOption(`${action} ${item.name}`, () => handleItemAction(i, action)); });

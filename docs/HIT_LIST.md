@@ -276,57 +276,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Regression checks passed
   - [ ] Notes/logs/docs updated
 
-### HIT-010 - Minimap destination flag persistence
-- Status: Backlog
-- Severity: S2
-- Area: WORLD
-- Source: Manual
-- Links:
-- Repro:
-  1. Click minimap destination.
-  2. Observe marker lifecycle.
-- Expected: Destination flag remains persistent/visible on minimap.
-- Actual: Destination flag visibility is inconsistent/transient.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Locate minimap marker state lifecycle.
-  2. Persist destination marker until arrival/cancel.
-  3. Validate across camera/movement updates.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
-### HIT-011 - Ground item stack count indicator (n)
-- Status: Backlog
-- Severity: S2
-- Area: WORLD
-- Source: Manual
-- Links:
-- Repro:
-  1. Drop multiple items on same tile.
-- Expected: Tile/item indicator shows quantity as `(n)`.
-- Actual: Quantity indicator missing/insufficient.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Aggregate ground stack counts by tile.
-  2. Render count overlay/label.
-  3. Confirm updates on add/remove/pickup events.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-013 - Shoreline terrain clipping cleanup
 - Status: Backlog
 - Severity: S2
@@ -556,32 +505,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Regression checks passed
   - [ ] Notes/logs/docs updated
 
-### HIT-028 - Inventory tooltip positioning (avoid swap-left-click block)
-- Status: Backlog
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links:
-- Repro:
-  1. Trigger item tooltip at bottom of screen.
-  2. Attempt to use `swap left click` menu.
-- Expected: Tooltip is raised so it does not block `swap left click` menu access.
-- Actual: Tooltip blocks menu interaction.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Adjust tooltip anchor/offset near screen bottom.
-  2. Add collision avoidance with context menu bounds.
-  3. Validate on multiple resolutions/scales.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-029 - Fletching cancel-on-click behavior
 - Status: Backlog
 - Severity: S1
@@ -669,6 +592,63 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
+
+### HIT-010 - Minimap destination flag persistence
+- Status: Fixed
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/core.js`, `src/js/input-render.js`, `src/js/world.js`
+- Repro:
+  1. Click minimap destination.
+  2. Observe marker lifecycle.
+- Expected: Destination flag remains persistent/visible on minimap.
+- Actual: Destination flag visibility is inconsistent/transient.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Locate minimap marker state lifecycle.
+  2. Persist destination marker until arrival/cancel.
+  3. Validate across camera/movement updates.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added persistent `minimapDestination` state for walk targets, independent from short-lived click markers.
+  - Destination state is now cleared only on arrival, cancellation by non-walk action, or immediate unreachable/no-path outcomes.
+  - Minimap rendering now draws a dedicated flag glyph at the destination tile and keeps it visible across zoom/drag/camera updates.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-011 - Ground item stack count indicator (n)
+- Status: Fixed
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/input-render.js`
+- Repro:
+  1. Drop multiple items on same tile.
+- Expected: Tile/item indicator shows quantity as `(n)`.
+- Actual: Quantity indicator missing/insufficient.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Aggregate ground stack counts by tile.
+  2. Render count overlay/label.
+  3. Confirm updates on add/remove/pickup events.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added tile-level ground stack aggregation (`getGroundTileStackCount`) and label formatting (`formatGroundItemDisplayName`) helpers.
+  - Ground-item context menu and hover tooltip labels now append ` (n)` when multiple stacks share the same tile.
+  - Stack counts are computed live from `groundItems`, so indicators update automatically on drop/add/pickup changes.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-012 - Menu input behavior (middle-click outside)
 - Status: Fixed
@@ -857,6 +837,35 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Fix Notes:
   - Added tooltip distance gating helper that resolves an actionable target tile (including fishable water edge handling).
   - Tooltips are now suppressed when hovered targets are beyond a 16-tile walking-distance band from the player.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-028 - Inventory tooltip positioning (avoid swap-left-click block)
+- Status: Fixed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/inventory.js`, `src/js/input-render.js`
+- Repro:
+  1. Trigger item tooltip at bottom of screen.
+  2. Attempt to use `swap left click` menu.
+- Expected: Tooltip is raised so it does not block `swap left click` menu access.
+- Actual: Tooltip blocks menu interaction.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Adjust tooltip anchor/offset near screen bottom.
+  2. Add collision avoidance with context menu bounds.
+  3. Validate on multiple resolutions/scales.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Replaced inventory slot native `title` tooltips with a custom in-app inventory tooltip layer to avoid browser-tooltip overlap behavior.
+  - Tooltip positioning now raises near screen-bottom collisions and performs explicit overlap avoidance against both the context menu and `swap left click` submenu bounds.
+  - Context-menu open/close paths now explicitly hide the inventory tooltip so menu interaction remains unobstructed.
 - Plan vNext (if revised):
   1.
 - Verification:

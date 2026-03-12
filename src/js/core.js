@@ -120,6 +120,7 @@
         let isMinimapDragging = false;
         let minimapDragStart = { x: 0, y: 0 };
         let minimapDragEnd = { x: 0, y: 0 };
+        let minimapDestination = null;
         let playerOverheadText = { text: '', expiresAt: 0 };
         const TARGET_FPS = 50;
         const FRAME_INTERVAL_MS = 1000 / TARGET_FPS;
@@ -136,7 +137,7 @@
             walkKneeLift: 0.85,
             runBounce: 0.12,
             walkBounce: 0.1,
-            idleBounce: 0.025,
+            idleBounce: 0.0125,
             cameraFollowY: 0.2
         };
 
@@ -975,10 +976,26 @@ O445411111OOOOO.
             const menuH = contextMenuEl.offsetHeight || 120;
             const pad = 8;
 
+            // Cap context-menu depth so it never drops below the midpoint of the lowest visible inventory row.
+            // This keeps bottom-row inventory interactions clear for swap-left-click submenu usage.
+            const getLowestAllowedTop = () => {
+                const invSlots = Array.from(document.querySelectorAll('#view-inv .inventory-slot'));
+                let lowestMidY = null;
+                for (let i = 0; i < invSlots.length; i++) {
+                    const rect = invSlots[i].getBoundingClientRect();
+                    if (!rect || rect.width <= 0 || rect.height <= 0) continue;
+                    const midY = rect.top + (rect.height * 0.5);
+                    if (lowestMidY === null || midY > lowestMidY) lowestMidY = midY;
+                }
+                if (lowestMidY === null) return window.innerHeight - menuH - pad;
+                return Math.max(pad, Math.floor(lowestMidY - menuH));
+            };
+
             let x = clientX;
             let y = clientY;
             if (x + menuW > window.innerWidth - pad) x = window.innerWidth - menuW - pad;
             if (y + menuH > window.innerHeight - pad) y = window.innerHeight - menuH - pad;
+            y = Math.min(y, getLowestAllowedTop());
             if (x < pad) x = pad;
             if (y < pad) y = pad;
 
