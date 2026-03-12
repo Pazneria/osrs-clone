@@ -53,14 +53,14 @@
                     <div class="absolute top-1 w-full text-center text-red-500 font-bold text-sm z-10 select-none pointer-events-none drop-shadow-md">N</div>
                     <canvas id="minimap" width="192" height="192" class="w-full h-full block"></canvas>
                 </div>
-                <button id="mapToggleBtn" class="absolute -bottom-2 -left-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-200" title="World Map" aria-label="World map">
-                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3.5 6.2 8.8 4l6.2 2.1L20.5 4v13.8L15 20l-6.2-2.1L3.5 20V6.2z"></path>
-                        <path d="M8.8 4v13.9"></path>
-                        <path d="M15 6.1V20"></path>
-                    </svg>
-                </button>
             </div>
+            <button id="mapToggleBtn" class="w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-200" title="World Map" aria-label="World map">
+                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3.5 6.2 8.8 4l6.2 2.1L20.5 4v13.8L15 20l-6.2-2.1L3.5 20V6.2z"></path>
+                    <path d="M8.8 4v13.9"></path>
+                    <path d="M15 6.1V20"></path>
+                </svg>
+            </button>
             
             <!-- Free Cam Toggle -->
             <button id="freeCamBtn" class="bg-gray-700 border-2 border-[#5d5447] text-white text-[10px] font-bold py-1.5 px-3 rounded shadow-md hover:bg-gray-600 transition-colors z-40 uppercase tracking-wider">
@@ -241,17 +241,19 @@
                 <div id="skill-panel-percent" class="text-center text-[11px] text-gray-300">0%</div>
             </div>
         </div>
-        <div id="world-map-panel" class="hidden pointer-events-auto absolute inset-0 bg-black/55 z-[280] flex items-center justify-center">
-            <div class="w-[720px] max-w-[92vw] h-[78vh] max-h-[720px] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex flex-col">
+        <div id="world-map-panel" class="hidden pointer-events-auto absolute inset-0 bg-black/55 z-[280] flex items-center justify-center p-3">
+            <div class="w-[780px] max-w-[96vw] h-[84vh] max-h-[820px] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex flex-col">
                 <div class="flex items-center justify-between px-3 py-2 bg-[#2c241c] border-b border-[#3e3529]">
                     <div class="text-[#ff981f] font-bold text-sm uppercase tracking-wide">World Map</div>
                     <button id="world-map-close" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
                 </div>
-                <div class="flex-1 p-3">
-                    <canvas id="world-map-canvas" width="640" height="640" class="w-full h-full bg-[#0f1215] border border-[#3a444c]"></canvas>
+                <div class="flex-1 min-h-0 p-2">
+                    <div class="w-full h-full flex items-center justify-center">
+                        <canvas id="world-map-canvas" width="768" height="768" class="w-full h-full max-w-full max-h-full aspect-square bg-[#0f1215] border border-[#3a444c]"></canvas>
+                    </div>
                 </div>
                 <div class="px-3 py-2 text-[11px] text-[#c8aa6e] border-t border-[#3e3529]">
-                    Mouse wheel to zoom. Left-drag to pan when zoomed in. Press Escape to close.
+                    Mouse wheel to zoom. Left-drag to pan. Press Escape to close.
                 </div>
             </div>
         </div>

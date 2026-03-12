@@ -1,9 +1,9 @@
 // Engine Constants & Chunk Architecture
         const TICK_RATE_MS = 600;
         const CHUNK_SIZE = 81;
-        const WORLD_CHUNKS_X = 5;
-        const WORLD_CHUNKS_Y = 5;
-        const MAP_SIZE = CHUNK_SIZE * WORLD_CHUNKS_X; // 405
+        const WORLD_CHUNKS_X = 6;
+        const WORLD_CHUNKS_Y = 6;
+        const MAP_SIZE = CHUNK_SIZE * WORLD_CHUNKS_X; // 486
         
         // NEW: Max Planes (Z-Levels)
         const PLANES = 2; // Floor 0 (Ground), Floor 1 (Second Floor)
