@@ -13,13 +13,13 @@
 - [x] WOODCUTTING-008: Merchant and item-value alignment for logs/axes, including rune-axe non-shop rule handling.
 - [x] WOODCUTTING-009: Training-location placement pass for normal-through-yew bands with area-gating hooks.
 - [x] WOODCUTTING-011: World-content polish complete for structured forest routing, starter-pond showcase tree lineup, and per-tree visual differentiation baseline (textured oak silhouette pass).
+- [x] WOODCUTTING-010: Cross-skill integration pass for downstream firemaking/fletching log-demand balancing (runtime guardrails + demand diagnostics via SkillSpecRegistry summary helper).
 
 ## Now
-- [ ] WOODCUTTING-010: Cross-skill integration pass for downstream firemaking/fletching log-demand balancing.
-
-## Next
 - [ ] WOODCUTTING-014: Continue per-tree silhouette polish for willow/maple/yew using the starter-pond showcase row.
 
-## Later
+## Next
 - [ ] WOODCUTTING-012: Balance pass using expected logs/xp/gold-per-tick targets across tree tiers.
+
+## Later
 - [ ] WOODCUTTING-013: Progression expansion pass for additional tree tiers and gating content.

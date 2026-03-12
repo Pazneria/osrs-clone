@@ -16,6 +16,33 @@ function loadBrowserScript(root, relPath) {
   vm.runInThisContext(code, { filename: abs });
 }
 
+function replaceOnce(source, from, to, label) {
+  const next = source.replace(from, to);
+  assert(next !== source, "test setup failed (" + label + ")");
+  return next;
+}
+
+
+function expectMutatedSpecsFailure(root, mutate, expectedMessageRegex, label) {
+  const abs = path.join(root, "src/js/skills/specs.js");
+  const original = fs.readFileSync(abs, "utf8");
+  const mutated = mutate(original);
+  const sandbox = { window: {} };
+
+  let failed = null;
+  try {
+    vm.runInNewContext(mutated, sandbox, { filename: abs });
+  } catch (error) {
+    failed = error;
+  }
+
+  assert(!!failed, label + ": expected mutated specs load to fail");
+  if (expectedMessageRegex) {
+    const msg = String(failed && failed.message ? failed.message : failed);
+    assert(expectedMessageRegex.test(msg), label + ": unexpected error message: " + msg);
+  }
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
 
@@ -134,6 +161,67 @@ function run() {
   ["normal_tree", "oak_tree", "willow_tree", "maple_tree", "yew_tree"].forEach((nodeId) => {
     assert(!!woodSpec.nodeTable[nodeId], "woodcutting node missing " + nodeId);
   });
+
+  assert(typeof SkillSpecRegistry.getWoodcuttingDemandSummary === "function", "woodcutting demand summary helper missing");
+  const woodcuttingDemand = SkillSpecRegistry.getWoodcuttingDemandSummary();
+  assert(!!woodcuttingDemand && Array.isArray(woodcuttingDemand.canonicalLogItemIds), "woodcutting demand summary missing canonical logs");
+  assert(Array.isArray(woodcuttingDemand.rows), "woodcutting demand summary rows missing");
+
+  const canonicalLogs = ["logs", "oak_logs", "willow_logs", "maple_logs", "yew_logs"];
+  assert(woodcuttingDemand.canonicalLogItemIds.length === canonicalLogs.length, "woodcutting canonical log count mismatch");
+  canonicalLogs.forEach((logId, index) => {
+    assert(woodcuttingDemand.canonicalLogItemIds[index] === logId, "woodcutting canonical log order mismatch for " + logId);
+    const row = woodcuttingDemand.rows.find((entry) => entry && entry.logItemId === logId);
+    assert(!!row, "woodcutting demand row missing for " + logId);
+    assert(Array.isArray(row.nodeIds) && row.nodeIds.length >= 1, "woodcutting demand row missing node coverage for " + logId);
+    assert(!!row.consumers && Array.isArray(row.consumers.fletching), "woodcutting demand row missing fletching consumers for " + logId);
+    assert(row.consumers.fletching.length >= 1, "woodcutting demand row missing fletching recipes for " + logId);
+  });
+
+  const logsRow = woodcuttingDemand.rows.find((entry) => entry && entry.logItemId === "logs");
+  assert(!!logsRow, "woodcutting demand row missing base logs");
+  assert(Array.isArray(logsRow.consumers.firemaking) && logsRow.consumers.firemaking.includes("logs"), "firemaking logs consumer missing from demand summary");
+
+  const nonLogsRows = woodcuttingDemand.rows.filter((entry) => entry && entry.logItemId !== "logs");
+  nonLogsRows.forEach((row) => {
+    assert(Array.isArray(row.consumers.firemaking) && row.consumers.firemaking.length === 0, "firemaking should remain single-tier for " + row.logItemId);
+  });
+
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "sourceItemId: 'logs',",
+      "sourceItemId: 'oak_logs',",
+      "firemaking-tier-regression"
+    ),
+    /must remain single-tier and consume only logs/i,
+    "firemaking-tier-regression"
+  );
+
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "logItemId: 'yew_logs',",
+      "logItemId: 'maple_logs',",
+      "missing-yew-fletching-consumer"
+    ),
+    /has no fletching consumer recipes/i,
+    "missing-yew-fletching-consumer"
+  );
+
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "sourceItemId: 'raw_shrimp',",
+      "sourceItemId: 'logs',",
+      "cooking-log-leak"
+    ),
+    /should not consume logs directly/i,
+    "cooking-log-leak"
+  );
   assert(woodSpec.economy.valueTable.logs.buy === itemDefs.logs.value, "woodcutting logs buy value mismatch");
   assert(woodSpec.economy.valueTable.oak_logs.buy === itemDefs.oak_logs.value, "woodcutting oak logs buy value mismatch");
   assert(woodSpec.economy.valueTable.willow_logs.buy === itemDefs.willow_logs.value, "woodcutting willow logs buy value mismatch");

@@ -3,7 +3,7 @@
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
 | Mining | In Progress | Thrain late-ore off-band progression integration | Yield/xp/gold-per-tick balance pass | Quest content |
-| Woodcutting | In Progress | Cross-skill log-demand balancing + visual silhouette polish | Logs/xp/gold-per-tick balance pass | None |
+| Woodcutting | In Progress | Per-tree silhouette polish for willow/maple/yew showcase row | Logs/xp/gold-per-tick balance pass | None |
 | Fishing | In Progress | Teacher quest + rune-harpoon reward/replacement flow | Method/level economic balance pass | Quest content |
 | Firemaking | In Progress | Cross-skill log-demand balancing with woodcutting/cooking | Failure/interruption polish + expansion | None |
 | Cooking | In Progress | UX polish for interruption/switching and animation consistency | 1-40 food-band economy/XP balance | None |

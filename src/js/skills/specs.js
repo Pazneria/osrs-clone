@@ -1385,7 +1385,192 @@
         }
     }
 
+    function validateWoodcuttingLogDemandIntegration(skillSpecs) {
+        const errors = [];
+        const woodcuttingSpec = skillSpecs && skillSpecs.woodcutting ? skillSpecs.woodcutting : null;
+        const firemakingSpec = skillSpecs && skillSpecs.firemaking ? skillSpecs.firemaking : null;
+        const fletchingSpec = skillSpecs && skillSpecs.fletching ? skillSpecs.fletching : null;
+        const cookingSpec = skillSpecs && skillSpecs.cooking ? skillSpecs.cooking : null;
+
+        if (!woodcuttingSpec || !woodcuttingSpec.nodeTable) {
+            throw new Error('Woodcutting log-demand integration mismatch\n- missing woodcutting node table');
+        }
+
+        const expectedCanonicalLogs = ['logs', 'oak_logs', 'willow_logs', 'maple_logs', 'yew_logs'];
+        const woodcutNodeRows = Object.entries(woodcuttingSpec.nodeTable || {});
+        const canonicalSet = new Set();
+        for (let i = 0; i < woodcutNodeRows.length; i++) {
+            const nodeId = woodcutNodeRows[i][0];
+            const node = woodcutNodeRows[i][1];
+            const rewardItemId = String(node && node.rewardItemId || '');
+            if (!rewardItemId) {
+                errors.push('woodcutting:' + nodeId + ' is missing rewardItemId');
+                continue;
+            }
+            canonicalSet.add(rewardItemId);
+        }
+
+        for (let i = 0; i < expectedCanonicalLogs.length; i++) {
+            const logItemId = expectedCanonicalLogs[i];
+            if (!canonicalSet.has(logItemId)) {
+                errors.push('woodcutting node rewards are missing canonical log tier ' + logItemId);
+            }
+        }
+
+        for (const foundLogId of canonicalSet) {
+            if (!expectedCanonicalLogs.includes(foundLogId)) {
+                errors.push('woodcutting node rewards include unexpected log tier ' + foundLogId);
+            }
+        }
+
+        const canonicalLogs = expectedCanonicalLogs.filter((logId) => canonicalSet.has(logId));
+        const fletchingRecipes = fletchingSpec && fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
+            ? fletchingSpec.recipeSet
+            : null;
+        if (!fletchingRecipes) {
+            errors.push('fletching recipe set is missing for woodcutting demand integration');
+        }
+
+        const fletchingConsumersByLog = {};
+        for (let i = 0; i < canonicalLogs.length; i++) {
+            fletchingConsumersByLog[canonicalLogs[i]] = [];
+        }
+
+        if (fletchingRecipes) {
+            const fletchingRows = Object.entries(fletchingRecipes);
+            for (let i = 0; i < fletchingRows.length; i++) {
+                const recipeId = fletchingRows[i][0];
+                const recipe = fletchingRows[i][1] || {};
+                const sourceLogItemId = typeof recipe.sourceLogItemId === 'string' ? recipe.sourceLogItemId : '';
+                if (!sourceLogItemId) continue;
+
+                if (!canonicalSet.has(sourceLogItemId)) {
+                    errors.push('fletching:' + recipeId + ' uses non-canonical sourceLogItemId ' + sourceLogItemId);
+                    continue;
+                }
+
+                const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
+                const matchingLogInputs = inputs.filter((input) => input && input.itemId === sourceLogItemId && Number.isFinite(input.amount) && input.amount >= 1);
+                if (matchingLogInputs.length !== 1) {
+                    errors.push('fletching:' + recipeId + ' must include exactly one matching log input for sourceLogItemId ' + sourceLogItemId);
+                    continue;
+                }
+
+                if (fletchingConsumersByLog[sourceLogItemId]) {
+                    fletchingConsumersByLog[sourceLogItemId].push(recipeId);
+                }
+            }
+        }
+
+        for (let i = 0; i < canonicalLogs.length; i++) {
+            const logItemId = canonicalLogs[i];
+            const consumers = fletchingConsumersByLog[logItemId] || [];
+            if (consumers.length === 0) {
+                errors.push('woodcutting canonical log ' + logItemId + ' has no fletching consumer recipes');
+            }
+        }
+
+        const firemakingRecipes = firemakingSpec && firemakingSpec.recipeSet && typeof firemakingSpec.recipeSet === 'object'
+            ? firemakingSpec.recipeSet
+            : null;
+        if (!firemakingRecipes || Object.keys(firemakingRecipes).length === 0) {
+            errors.push('firemaking recipe set is missing for woodcutting demand integration');
+        } else {
+            const fireRows = Object.entries(firemakingRecipes);
+            let hasBaseLogsConsumer = false;
+            for (let i = 0; i < fireRows.length; i++) {
+                const recipeId = fireRows[i][0];
+                const recipe = fireRows[i][1] || {};
+                const sourceItemId = typeof recipe.sourceItemId === 'string' ? recipe.sourceItemId : '';
+                if (sourceItemId !== 'logs') {
+                    errors.push('firemaking:' + recipeId + ' must remain single-tier and consume only logs (found ' + (sourceItemId || 'missing') + ')');
+                }
+                if (sourceItemId === 'logs') hasBaseLogsConsumer = true;
+            }
+            if (!hasBaseLogsConsumer) {
+                errors.push('firemaking is missing a base logs consumer recipe');
+            }
+        }
+
+        const cookingRecipes = cookingSpec && cookingSpec.recipeSet && typeof cookingSpec.recipeSet === 'object'
+            ? cookingSpec.recipeSet
+            : null;
+        if (!cookingRecipes || Object.keys(cookingRecipes).length === 0) {
+            errors.push('cooking recipe set is missing for woodcutting demand integration');
+        } else {
+            const cookingRows = Object.entries(cookingRecipes);
+            for (let i = 0; i < cookingRows.length; i++) {
+                const recipeId = cookingRows[i][0];
+                const recipe = cookingRows[i][1] || {};
+                const sourceItemId = typeof recipe.sourceItemId === 'string' ? recipe.sourceItemId : '';
+                if (sourceItemId && (sourceItemId === 'logs' || /_logs$/.test(sourceItemId))) {
+                    errors.push('cooking:' + recipeId + ' should not consume logs directly');
+                }
+                if (recipe.sourceTarget !== 'FIRE') {
+                    errors.push('cooking:' + recipeId + ' should remain fire-source based (sourceTarget=FIRE)');
+                }
+            }
+        }
+
+        const woodcuttingMerchants = woodcuttingSpec && woodcuttingSpec.economy && woodcuttingSpec.economy.merchantTable && typeof woodcuttingSpec.economy.merchantTable === 'object'
+            ? woodcuttingSpec.economy.merchantTable
+            : null;
+        if (!woodcuttingMerchants) {
+            errors.push('woodcutting merchant table missing for log-demand integration');
+        } else {
+            const coverage = {};
+            for (let i = 0; i < canonicalLogs.length; i++) coverage[canonicalLogs[i]] = false;
+
+            const merchantRows = Object.entries(woodcuttingMerchants);
+            for (let i = 0; i < merchantRows.length; i++) {
+                const merchantConfig = merchantRows[i][1] || {};
+                const buys = Array.isArray(merchantConfig.buys) ? merchantConfig.buys : [];
+                const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells : [];
+                const listed = new Set([].concat(buys, sells));
+                for (let j = 0; j < canonicalLogs.length; j++) {
+                    const logItemId = canonicalLogs[j];
+                    if (listed.has(logItemId)) coverage[logItemId] = true;
+                }
+            }
+
+            for (let i = 0; i < canonicalLogs.length; i++) {
+                const logItemId = canonicalLogs[i];
+                if (!coverage[logItemId]) {
+                    errors.push('woodcutting merchant coverage missing for canonical log ' + logItemId);
+                }
+            }
+        }
+
+        const fletchingMerchants = fletchingSpec && fletchingSpec.economy && fletchingSpec.economy.merchantTable && typeof fletchingSpec.economy.merchantTable === 'object'
+            ? fletchingSpec.economy.merchantTable
+            : null;
+        if (!fletchingMerchants) {
+            errors.push('fletching merchant table missing for log-demand integration');
+        } else {
+            const merchantIds = ['fletching_supplier', 'advanced_fletcher'];
+            for (let i = 0; i < merchantIds.length; i++) {
+                const merchantId = merchantIds[i];
+                const merchantConfig = fletchingMerchants[merchantId];
+                if (!merchantConfig || typeof merchantConfig !== 'object') {
+                    errors.push('fletching merchant config missing for ' + merchantId);
+                    continue;
+                }
+                const buys = Array.isArray(merchantConfig.buys) ? merchantConfig.buys : [];
+                const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells : [];
+                const badBuy = buys.find((itemId) => itemId === 'logs' || /_logs$/.test(itemId));
+                const badSell = sells.find((itemId) => itemId === 'logs' || /_logs$/.test(itemId));
+                if (badBuy) errors.push('fletching merchant ' + merchantId + ' should not buy raw logs (' + badBuy + ')');
+                if (badSell) errors.push('fletching merchant ' + merchantId + ' should not sell raw logs (' + badSell + ')');
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Woodcutting log-demand integration mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     validateCrossSkillIntegration(SKILL_SPECS);
+    validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
 
     window.SkillSpecs = {
         version: SPEC_VERSION,

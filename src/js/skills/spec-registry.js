@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const FALLBACK = { version: 'missing', skills: {} };
 
     function getRoot() {
@@ -24,6 +24,96 @@
     function getEconomyTable(skillId) {
         const spec = getSkillSpec(skillId);
         return spec && spec.economy ? spec.economy : null;
+    }
+
+    function getWoodcuttingDemandSummary() {
+        const woodcuttingSpec = getSkillSpec('woodcutting') || {};
+        const firemakingSpec = getSkillSpec('firemaking') || {};
+        const fletchingSpec = getSkillSpec('fletching') || {};
+
+        const nodeTable = woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const canonicalEntries = [];
+        const nodeIds = Object.keys(nodeTable);
+        for (let i = 0; i < nodeIds.length; i++) {
+            const nodeId = nodeIds[i];
+            const row = nodeTable[nodeId];
+            if (!row || typeof row !== 'object') continue;
+            const rewardItemId = typeof row.rewardItemId === 'string' ? row.rewardItemId : '';
+            if (!rewardItemId) continue;
+            const requiredLevel = Number.isFinite(row.requiredLevel) ? row.requiredLevel : Number.MAX_SAFE_INTEGER;
+            canonicalEntries.push({ nodeId, logItemId: rewardItemId, requiredLevel });
+        }
+
+        canonicalEntries.sort((a, b) => {
+            if (a.requiredLevel !== b.requiredLevel) return a.requiredLevel - b.requiredLevel;
+            return a.nodeId.localeCompare(b.nodeId);
+        });
+
+        const canonicalLogItemIds = [];
+        for (let i = 0; i < canonicalEntries.length; i++) {
+            const logItemId = canonicalEntries[i].logItemId;
+            if (!canonicalLogItemIds.includes(logItemId)) canonicalLogItemIds.push(logItemId);
+        }
+
+        const rowsByLogId = {};
+        for (let i = 0; i < canonicalLogItemIds.length; i++) {
+            const logItemId = canonicalLogItemIds[i];
+            rowsByLogId[logItemId] = {
+                logItemId,
+                nodeIds: [],
+                consumers: {
+                    firemaking: [],
+                    fletching: []
+                }
+            };
+        }
+
+        for (let i = 0; i < canonicalEntries.length; i++) {
+            const entry = canonicalEntries[i];
+            const row = rowsByLogId[entry.logItemId];
+            if (!row) continue;
+            row.nodeIds.push(entry.nodeId);
+        }
+
+        const firemakingRecipes = firemakingSpec.recipeSet && typeof firemakingSpec.recipeSet === 'object'
+            ? firemakingSpec.recipeSet
+            : {};
+        const fireRecipeIds = Object.keys(firemakingRecipes);
+        for (let i = 0; i < fireRecipeIds.length; i++) {
+            const recipeId = fireRecipeIds[i];
+            const recipe = firemakingRecipes[recipeId];
+            if (!recipe || typeof recipe !== 'object') continue;
+            const sourceItemId = typeof recipe.sourceItemId === 'string' ? recipe.sourceItemId : '';
+            const row = rowsByLogId[sourceItemId];
+            if (!row) continue;
+            row.consumers.firemaking.push(recipeId);
+        }
+
+        const fletchingRecipes = fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
+            ? fletchingSpec.recipeSet
+            : {};
+        const fletchingRecipeIds = Object.keys(fletchingRecipes);
+        for (let i = 0; i < fletchingRecipeIds.length; i++) {
+            const recipeId = fletchingRecipeIds[i];
+            const recipe = fletchingRecipes[recipeId];
+            if (!recipe || typeof recipe !== 'object') continue;
+            const sourceLogItemId = typeof recipe.sourceLogItemId === 'string' ? recipe.sourceLogItemId : '';
+            if (!sourceLogItemId) continue;
+            const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
+            const hasMatchingLogInput = inputs.some((input) => input && input.itemId === sourceLogItemId && Number.isFinite(input.amount) && input.amount >= 1);
+            if (!hasMatchingLogInput) continue;
+            const row = rowsByLogId[sourceLogItemId];
+            if (!row) continue;
+            row.consumers.fletching.push(recipeId);
+        }
+
+        const rows = canonicalLogItemIds.map((logItemId) => rowsByLogId[logItemId]);
+        return {
+            canonicalLogItemIds,
+            rows
+        };
     }
 
     function computeGatherSuccessChance(level, toolPower, difficulty) {
@@ -90,6 +180,7 @@
         getRecipeSet,
         getNodeTable,
         getEconomyTable,
+        getWoodcuttingDemandSummary,
         computeGatherSuccessChance,
         computeIntervalTicks,
         computeLinearCatchChance,
