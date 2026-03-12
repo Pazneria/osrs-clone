@@ -302,11 +302,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-014 - Tree spacing pass by tiered reserved areas
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WC
 - Source: Manual
-- Links:
+- Links: `src/js/world.js`, `src/js/skills/woodcutting/STATUS.md`
 - Repro:
   1. Survey tree distribution by type.
 - Expected: Spacing targets: regular 3x3, oak/willow 4x4, maple 5x5, yew 6x6.
@@ -317,14 +317,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Encode spacing rules by tree tier.
   2. Re-seed/reposition trees with constraints.
   3. Verify pathing and harvest density.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Cleared broad procedural tree noise before woodcutting tier placement so spacing is governed by deterministic zone rules instead of legacy random spawn leftovers.
+  - Added tiered reserved-area sizing for tree placement (`normal=3x3`, `oak/willow=4x4`, `maple=5x5`, `yew=6x6`) and enforced non-overlap checks between candidate and already placed trees.
+  - Updated zone spacing targets to align with reserved-area footprints and kept deterministic band placement + fallback expansion behavior intact.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-015 - Unique tree models per type
 - Status: Backlog
@@ -352,11 +355,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-016 - Tree habitat placement rules
-- Status: Backlog
+- Status: Fixed
 - Severity: S3
 - Area: WC
 - Source: Manual
-- Links:
+- Links: `src/js/world.js`, `src/js/skills/woodcutting/STATUS.md`
 - Repro:
   1. Inspect willow/maple/yew biome placement.
 - Expected: Willows near water; maples away from water; yews near NPC-populated areas.
@@ -367,14 +370,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Encode habitat constraints by tree type.
   2. Reposition existing trees to satisfy constraints.
   3. Validate world readability and gatherer routes.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added explicit habitat rules to deterministic woodcutting zone specs: willow near shoreline water, maple away from water, and yew near NPC population anchors.
+  - Added runtime habitat anchor discovery and nearest-distance checks (`water` shoreline anchors + NPC spawn anchors) with coordinate-level distance caching.
+  - Integrated habitat validation into candidate filtering so placement constraints are applied before spacing/reserved-area checks during deterministic tree band placement.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-017 - Unique rock/gem models
 - Status: Backlog
@@ -898,6 +904,31 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->
+
+### HIT-042 - Tree silhouette refinement follow-up (willow/maple/yew)
+- Status: Ready
+- Severity: S3
+- Area: WC
+- Source: Manual
+- Links: `src/js/world.js`, `src/js/skills/woodcutting/STATUS.md`
+- Repro:
+  1. Inspect starter-pond showcase row and distributed willow/maple/yew placements.
+- Expected: Willow/maple/yew silhouettes remain immediately distinguishable at gameplay camera distance and at multiple zoom levels.
+- Actual: Baseline silhouette pass landed, but additional iterative tuning is desired for shape readability and type clarity.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Run a focused visual review at gameplay zoom bands (near/mid/far).
+  2. Tune per-type canopy/branch/drape profiles with small targeted adjustments.
+  3. Re-validate readability in showcase row and in-world mixed stands.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
 
 ## In Progress
 <!-- Actively being worked -->

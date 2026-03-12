@@ -14,9 +14,12 @@
 - [x] WOODCUTTING-009: Training-location placement pass for normal-through-yew bands with area-gating hooks.
 - [x] WOODCUTTING-011: World-content polish complete for structured forest routing, starter-pond showcase tree lineup, and per-tree visual differentiation baseline (textured oak silhouette pass).
 - [x] WOODCUTTING-010: Cross-skill integration pass for downstream firemaking/fletching log-demand balancing (runtime guardrails + demand diagnostics via SkillSpecRegistry summary helper).
+- [x] WOODCUTTING-015: Tiered tree-spacing pass completed with reserved-area footprints (normal 3x3, oak/willow 4x4, maple 5x5, yew 6x6) and deterministic re-seeding.
+- [x] WOODCUTTING-016: Habitat placement constraints enforced (willow near water, maple away from water, yew near NPC-populated anchors) in deterministic zone assignment.
+- [x] WOODCUTTING-014: Per-tree silhouette polish pass completed for willow/maple/yew in the starter-pond showcase row using stronger shape/branch/drape differentiation.
 
 ## Now
-- [ ] WOODCUTTING-014: Continue per-tree silhouette polish for willow/maple/yew using the starter-pond showcase row.
+- [ ] WOODCUTTING-017: Continue iterative willow/maple/yew silhouette readability tuning at gameplay zoom bands.
 
 ## Next
 - [ ] WOODCUTTING-012: Balance pass using expected logs/xp/gold-per-tick targets across tree tiers.

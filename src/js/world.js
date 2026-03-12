@@ -1603,29 +1603,63 @@
                 stumpScale: [1.56, 0.2, 1.56]
             },
             willow_tree: {
-                trunkScale: [0.88, 1.72, 0.88],
-                canopyScales: [[1.58, 1.24, 1.58], [1.38, 1.14, 1.36], [1.32, 1.1, 1.32], [1.18, 1.06, 1.18]],
-                canopyYOffset: 0.58,
-                canopyOffsets: [[0.0, 0.4, 0.0], [0.48, 0.32, 0.36], [-0.46, 0.3, -0.34], [0.04, 0.62, -0.08]],
-                canopyYRotations: [0.0, 0.16, -0.18, 0.08],
-                canopyJitter: 0.025,
-                branchScale: [1.18, 1.08, 1.18],
-                branchOffset: [-0.08, 0.28, 0.08],
-                branchYaw: 0.46,
-                branch2Scale: [1.12, 1.14, 1.12],
-                branch2Offset: [0.04, 0.46, -0.12],
-                branch2Yaw: -0.54,
-                branch3Scale: [1.04, 1.18, 1.04],
-                branch3Offset: [0.16, 0.58, 0.18],
-                branch3Yaw: 0.22,
-                drapeScales: [[1.02, 1.0, 1.02], [0.98, 0.96, 0.98], [1.0, 1.04, 1.0], [1.06, 1.1, 1.06], [0.94, 0.92, 0.94], [0.96, 0.94, 0.96], [1.0, 1.02, 1.0], [1.04, 1.06, 1.04]],
-                drapeOffsets: [[0.06, 0.34, 0.02], [-0.06, 0.34, -0.02], [0.02, 0.3, 0.03], [-0.02, 0.3, -0.03], [0.0, 0.4, 0.05], [0.0, 0.4, -0.05], [-0.03, 0.28, 0.0], [0.03, 0.28, 0.0]],
-                drapeYRotations: [0.32, -0.3, 0.46, -0.42, 0.18, -0.16, 0.62, -0.58],
-                drapeJitter: 0.03,
-                stumpScale: [1.02, 0.16, 1.02]
+                trunkScale: [0.82, 1.92, 0.82],
+                canopyScales: [[1.44, 1.12, 1.48], [1.26, 1.04, 1.3], [1.2, 0.98, 1.22], [1.08, 0.92, 1.1]],
+                canopyYOffset: 0.72,
+                canopyOffsets: [[0.0, 0.3, 0.0], [0.4, 0.22, 0.3], [-0.38, 0.2, -0.28], [0.02, 0.5, -0.06]],
+                canopyYRotations: [0.0, 0.22, -0.24, 0.1],
+                canopyJitter: 0.02,
+                branchScale: [0.98, 0.94, 0.98],
+                branchOffset: [-0.12, 0.36, 0.08],
+                branchYaw: 0.58,
+                branch2Scale: [0.94, 0.98, 0.94],
+                branch2Offset: [0.08, 0.58, -0.16],
+                branch2Yaw: -0.66,
+                branch3Scale: [0.9, 1.02, 0.9],
+                branch3Offset: [0.2, 0.72, 0.2],
+                branch3Yaw: 0.28,
+                drapeScales: [[1.08, 1.16, 1.08], [1.04, 1.12, 1.04], [1.06, 1.2, 1.06], [1.12, 1.26, 1.12], [0.98, 1.06, 0.98], [1.0, 1.08, 1.0], [1.04, 1.18, 1.04], [1.1, 1.24, 1.1]],
+                drapeOffsets: [[0.08, 0.22, 0.04], [-0.08, 0.22, -0.04], [0.04, 0.18, 0.06], [-0.04, 0.18, -0.06], [0.02, 0.28, 0.08], [-0.02, 0.28, -0.08], [-0.06, 0.14, 0.02], [0.06, 0.14, -0.02]],
+                drapeYRotations: [0.36, -0.34, 0.52, -0.48, 0.22, -0.2, 0.68, -0.64],
+                drapeJitter: 0.045,
+                stumpScale: [0.98, 0.16, 0.98]
             },
-            maple_tree: { trunkScale: [1.08, 1.52, 1.08], canopyScales: [[1.34, 1.16, 1.34], [1.24, 1.12, 1.24], [1.2, 1.1, 1.2], [1.12, 1.04, 1.12]], canopyYOffset: 0.18, canopyJitter: 0.04, branchScale: [0, 0, 0], stumpScale: [1.26, 0.2, 1.26] },
-            yew_tree: { trunkScale: [1.32, 1.78, 1.32], canopyScales: [[1.06, 0.94, 1.06], [0.98, 0.9, 0.98], [0.94, 0.88, 0.94], [0.88, 0.84, 0.88]], canopyYOffset: 0.34, canopyJitter: 0.04, branchScale: [0, 0, 0], stumpScale: [1.38, 0.24, 1.38] }
+            maple_tree: {
+                trunkScale: [1.16, 1.46, 1.16],
+                canopyScales: [[1.72, 1.34, 1.72], [1.5, 1.2, 1.48], [1.42, 1.14, 1.4], [1.26, 1.02, 1.24]],
+                canopyYOffset: 0.38,
+                canopyOffsets: [[0.0, 0.2, 0.0], [0.56, 0.08, 0.36], [-0.58, 0.08, -0.34], [0.04, 0.72, -0.12]],
+                canopyYRotations: [0.0, 0.18, -0.22, 0.1],
+                canopyJitter: 0.06,
+                branchScale: [1.16, 1.16, 1.16],
+                branchOffset: [-0.1, 0.24, 0.1],
+                branchYaw: 0.42,
+                branch2Scale: [1.1, 1.12, 1.1],
+                branch2Offset: [0.06, 0.46, -0.14],
+                branch2Yaw: -0.5,
+                branch3Scale: [1.04, 1.08, 1.04],
+                branch3Offset: [0.14, 0.6, 0.18],
+                branch3Yaw: 0.2,
+                stumpScale: [1.32, 0.2, 1.32]
+            },
+            yew_tree: {
+                trunkScale: [1.12, 1.96, 1.12],
+                canopyScales: [[1.24, 0.98, 1.24], [1.04, 0.84, 1.04], [0.86, 0.72, 0.86], [0.68, 0.58, 0.68]],
+                canopyYOffset: 0.56,
+                canopyOffsets: [[0.0, 0.18, 0.0], [0.08, 0.54, -0.04], [-0.06, 0.86, 0.05], [0.02, 1.14, -0.02]],
+                canopyYRotations: [0.0, 0.12, -0.1, 0.04],
+                canopyJitter: 0.02,
+                branchScale: [0.62, 0.76, 0.62],
+                branchOffset: [-0.04, 0.52, 0.04],
+                branchYaw: 0.3,
+                branch2Scale: [0.56, 0.72, 0.56],
+                branch2Offset: [0.06, 0.84, -0.08],
+                branch2Yaw: -0.34,
+                branch3Scale: [0.48, 0.62, 0.48],
+                branch3Offset: [0.02, 1.08, 0.04],
+                branch3Yaw: 0.16,
+                stumpScale: [1.26, 0.24, 1.26]
+            }
         };
 
         function getTreeVisualProfile(nodeId) {
@@ -2918,30 +2952,163 @@
                 return null;
             };
 
+            // Clear broad procedural tree noise before deterministic tier placement.
+            for (let y = 3; y < MAP_SIZE - 3; y++) {
+                for (let x = 3; x < MAP_SIZE - 3; x++) {
+                    const tile = logicalMap[0][y][x];
+                    if (!isTreeTileId(tile)) continue;
+                    logicalMap[0][y][x] = TileId.GRASS;
+                    heightMap[0][y][x] = Math.max(0, heightMap[0][y][x]);
+                }
+            }
+
             // Place deterministic woodcutting training routes for normal->yew progression.
             const woodcuttingRouteAnchor = { x: 205, y: 205 };
             const woodcuttingZoneSpecs = [
-                { nodeId: 'normal_tree', label: 'Starter Grove', minDistance: 18, maxDistance: 64, targetCount: 26, minSpacing: 2.0, areaGateFlag: null, areaName: 'the starter grove', areaGateMessage: null },
-                { nodeId: 'oak_tree', label: 'Oak Path', minDistance: 74, maxDistance: 116, targetCount: 20, minSpacing: 2.2, areaGateFlag: null, areaName: 'the oak path', areaGateMessage: null },
-                { nodeId: 'willow_tree', label: 'Willow Bend', minDistance: 124, maxDistance: 168, targetCount: 16, minSpacing: 2.4, areaGateFlag: null, areaName: 'the willow bend', areaGateMessage: null },
-                { nodeId: 'maple_tree', label: 'Maple Ridge', minDistance: 176, maxDistance: 218, targetCount: 12, minSpacing: 2.6, areaGateFlag: null, areaName: 'the maple ridge', areaGateMessage: null },
-                { nodeId: 'yew_tree', label: 'Yew Frontier', minDistance: 224, maxDistance: 272, targetCount: 8, minSpacing: 3.0, areaGateFlag: null, areaName: 'the yew frontier', areaGateMessage: null }
+                { nodeId: 'normal_tree', label: 'Starter Grove', minDistance: 18, maxDistance: 64, targetCount: 26, minSpacing: 3.0, areaGateFlag: null, areaName: 'the starter grove', areaGateMessage: null },
+                { nodeId: 'oak_tree', label: 'Oak Path', minDistance: 74, maxDistance: 116, targetCount: 20, minSpacing: 4.0, areaGateFlag: null, areaName: 'the oak path', areaGateMessage: null },
+                { nodeId: 'willow_tree', label: 'Willow Bend', minDistance: 124, maxDistance: 168, targetCount: 16, minSpacing: 4.0, areaGateFlag: null, areaName: 'the willow bend', areaGateMessage: null, habitatRule: { type: 'near_water', maxDistance: 28 } },
+                { nodeId: 'maple_tree', label: 'Maple Ridge', minDistance: 176, maxDistance: 218, targetCount: 12, minSpacing: 5.0, areaGateFlag: null, areaName: 'the maple ridge', areaGateMessage: null, habitatRule: { type: 'away_from_water', minDistance: 18 } },
+                { nodeId: 'yew_tree', label: 'Yew Frontier', minDistance: 224, maxDistance: 272, targetCount: 8, minSpacing: 6.0, areaGateFlag: null, areaName: 'the yew frontier', areaGateMessage: null, habitatRule: { type: 'near_npc', maxDistance: 52 } }
             ];
             const woodcuttingFallbackBandExpansion = 30;
             const placedWoodcuttingTrees = [];
+            const treeReservedAreaByNodeId = {
+                normal_tree: 3,
+                oak_tree: 4,
+                willow_tree: 4,
+                maple_tree: 5,
+                yew_tree: 6
+            };
+            const nearestWaterDistanceCache = new Map();
+            const nearestNpcDistanceCache = new Map();
+
+            function resolveTreeReservedArea(nodeId) {
+                if (nodeId && Number.isFinite(treeReservedAreaByNodeId[nodeId])) {
+                    return Math.max(3, Math.floor(treeReservedAreaByNodeId[nodeId]));
+                }
+                return 3;
+            }
+
+            function getTreeReservedHalfExtents(nodeId) {
+                const area = resolveTreeReservedArea(nodeId);
+                const minOffset = Math.floor((area - 1) / 2);
+                const maxOffset = Math.ceil((area - 1) / 2);
+                return { minOffset, maxOffset };
+            }
+
+            function getTreeReservedBounds(x, y, nodeId) {
+                const extents = getTreeReservedHalfExtents(nodeId);
+                return {
+                    minX: x - extents.minOffset,
+                    maxX: x + extents.maxOffset,
+                    minY: y - extents.minOffset,
+                    maxY: y + extents.maxOffset
+                };
+            }
+
+            function treeReservedBoundsOverlap(a, b) {
+                if (!a || !b) return false;
+                if (a.maxX < b.minX || b.maxX < a.minX) return false;
+                if (a.maxY < b.minY || b.maxY < a.minY) return false;
+                return true;
+            }
+
+            function collectWaterHabitatAnchors() {
+                const anchors = [];
+                for (let y = 2; y < MAP_SIZE - 2; y++) {
+                    for (let x = 2; x < MAP_SIZE - 2; x++) {
+                        if (!isWaterTileId(logicalMap[0][y][x])) continue;
+                        const isShorelineWater = !isWaterTileId(logicalMap[0][y - 1][x])
+                            || !isWaterTileId(logicalMap[0][y + 1][x])
+                            || !isWaterTileId(logicalMap[0][y][x - 1])
+                            || !isWaterTileId(logicalMap[0][y][x + 1]);
+                        if (!isShorelineWater) continue;
+                        anchors.push({ x, y });
+                    }
+                }
+                return anchors;
+            }
+
+            const waterHabitatAnchors = collectWaterHabitatAnchors();
+            const npcHabitatAnchors = npcsToRender
+                .filter((npc) => npc && npc.z === 0 && Number.isFinite(npc.x) && Number.isFinite(npc.y))
+                .map((npc) => ({ x: npc.x, y: npc.y }));
+
+            function candidateDistanceCacheKey(candidate) {
+                return `${candidate.x},${candidate.y}`;
+            }
+
+            function computeNearestAnchorDistance(candidate, anchors) {
+                if (!candidate || !Array.isArray(anchors) || anchors.length === 0) return Infinity;
+                let bestDistSq = Infinity;
+                for (let i = 0; i < anchors.length; i++) {
+                    const anchor = anchors[i];
+                    if (!anchor) continue;
+                    const dx = anchor.x - candidate.x;
+                    const dy = anchor.y - candidate.y;
+                    const distSq = (dx * dx) + (dy * dy);
+                    if (distSq < bestDistSq) bestDistSq = distSq;
+                }
+                return Number.isFinite(bestDistSq) ? Math.sqrt(bestDistSq) : Infinity;
+            }
+
+            function getNearestWaterDistance(candidate) {
+                if (!candidate) return Infinity;
+                const key = candidateDistanceCacheKey(candidate);
+                if (nearestWaterDistanceCache.has(key)) return nearestWaterDistanceCache.get(key);
+                const distance = computeNearestAnchorDistance(candidate, waterHabitatAnchors);
+                nearestWaterDistanceCache.set(key, distance);
+                return distance;
+            }
+
+            function getNearestNpcDistance(candidate) {
+                if (!candidate) return Infinity;
+                const key = candidateDistanceCacheKey(candidate);
+                if (nearestNpcDistanceCache.has(key)) return nearestNpcDistanceCache.get(key);
+                const distance = computeNearestAnchorDistance(candidate, npcHabitatAnchors);
+                nearestNpcDistanceCache.set(key, distance);
+                return distance;
+            }
+
+            function satisfiesWoodcuttingHabitatRule(candidate, zoneSpec) {
+                const habitat = zoneSpec && zoneSpec.habitatRule ? zoneSpec.habitatRule : null;
+                if (!habitat || typeof habitat.type !== 'string') return true;
+
+                if (habitat.type === 'near_water') {
+                    if (waterHabitatAnchors.length === 0) return true;
+                    const maxDistance = Number.isFinite(habitat.maxDistance) ? Math.max(1, habitat.maxDistance) : Infinity;
+                    return getNearestWaterDistance(candidate) <= maxDistance;
+                }
+
+                if (habitat.type === 'away_from_water') {
+                    if (waterHabitatAnchors.length === 0) return true;
+                    const minDistance = Number.isFinite(habitat.minDistance) ? Math.max(0, habitat.minDistance) : 0;
+                    return getNearestWaterDistance(candidate) >= minDistance;
+                }
+
+                if (habitat.type === 'near_npc') {
+                    if (npcHabitatAnchors.length === 0) return true;
+                    const maxDistance = Number.isFinite(habitat.maxDistance) ? Math.max(1, habitat.maxDistance) : Infinity;
+                    return getNearestNpcDistance(candidate) <= maxDistance;
+                }
+
+                return true;
+            }
 
             function distanceFromWoodcuttingAnchor(candidate) {
                 return Math.hypot(candidate.x - woodcuttingRouteAnchor.x, candidate.y - woodcuttingRouteAnchor.y);
             }
 
-            function canPlaceWoodcuttingTreeCandidate(candidate) {
+            function canPlaceWoodcuttingTreeCandidate(candidate, zoneSpec) {
                 if (!candidate) return false;
                 if (candidate.x <= 2 || candidate.y <= 2 || candidate.x >= MAP_SIZE - 3 || candidate.y >= MAP_SIZE - 3) return false;
                 if (inTownCore(candidate.x, candidate.y)) return false;
                 const tile = logicalMap[candidate.z] && logicalMap[candidate.z][candidate.y] ? logicalMap[candidate.z][candidate.y][candidate.x] : null;
-                if (tile !== TileId.GRASS && tile !== TileId.TREE) return false;
+                if (tile !== TileId.GRASS) return false;
                 if (isCandidateNearRuneEssence(candidate)) return false;
                 if (isCandidateNearExistingAltars(candidate)) return false;
+                if (!satisfiesWoodcuttingHabitatRule(candidate, zoneSpec)) return false;
                 return true;
             }
 
@@ -2963,6 +3130,17 @@
                 return true;
             }
 
+            function isTreeCandidateReservedAreaClear(candidate, candidateNodeId) {
+                const candidateBounds = getTreeReservedBounds(candidate.x, candidate.y, candidateNodeId);
+                for (let i = 0; i < placedWoodcuttingTrees.length; i++) {
+                    const placed = placedWoodcuttingTrees[i];
+                    if (!placed) continue;
+                    const placedBounds = getTreeReservedBounds(placed.x, placed.y, placed.nodeId);
+                    if (treeReservedBoundsOverlap(candidateBounds, placedBounds)) return false;
+                }
+                return true;
+            }
+
             function assignWoodcuttingBandTrees(zoneSpec) {
                 if (!zoneSpec) return;
                 const targetDistance = (zoneSpec.minDistance + zoneSpec.maxDistance) * 0.5;
@@ -2972,7 +3150,7 @@
 
                 for (let attempt = 0; attempt < 4; attempt++) {
                     const inBand = deterministicFeatureCandidates.filter((candidate) => {
-                        if (!canPlaceWoodcuttingTreeCandidate(candidate)) return false;
+                        if (!canPlaceWoodcuttingTreeCandidate(candidate, zoneSpec)) return false;
                         const dist = distanceFromWoodcuttingAnchor(candidate);
                         return dist >= minDistance && dist <= maxDistance;
                     });
@@ -2985,18 +3163,22 @@
                 }
 
                 if (sortedCandidates.length === 0) {
-                    const anyEligible = deterministicFeatureCandidates.filter((candidate) => canPlaceWoodcuttingTreeCandidate(candidate));
+                    const anyEligible = deterministicFeatureCandidates.filter((candidate) => canPlaceWoodcuttingTreeCandidate(candidate, zoneSpec));
                     sortedCandidates = sortWoodcuttingCandidates(anyEligible, targetDistance);
                 }
 
-                const minSpacing = Number.isFinite(zoneSpec.minSpacing) ? Math.max(1.5, zoneSpec.minSpacing) : 2.0;
+                const reservedArea = resolveTreeReservedArea(zoneSpec.nodeId);
+                const minSpacing = Number.isFinite(zoneSpec.minSpacing)
+                    ? Math.max(1.5, zoneSpec.minSpacing, reservedArea)
+                    : reservedArea;
                 const targetCount = Number.isFinite(zoneSpec.targetCount) ? Math.max(1, Math.floor(zoneSpec.targetCount)) : 1;
                 let placedCount = 0;
 
                 for (let i = 0; i < sortedCandidates.length && placedCount < targetCount; i++) {
                     const candidate = sortedCandidates[i];
                     if (!isTreeCandidateFarEnough(candidate, minSpacing)) continue;
-                    logicalMap[candidate.z][candidate.y][candidate.x] = 1;
+                    if (!isTreeCandidateReservedAreaClear(candidate, zoneSpec.nodeId)) continue;
+                    logicalMap[candidate.z][candidate.y][candidate.x] = TileId.TREE;
                     setTreeNode(candidate.x, candidate.y, candidate.z, zoneSpec.nodeId, {
                         areaGateFlag: zoneSpec.areaGateFlag || null,
                         areaName: zoneSpec.areaName || null,
