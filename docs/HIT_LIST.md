@@ -596,6 +596,276 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
+### HIT-032 - Item source-of-truth split (runtime catalog vs content files)
+- Status: Backlog
+- Severity: S1
+- Area: Other
+- Source: Manual
+- Links: `docs/ASSET_PIPELINE.md`, `content/items/README.txt`, `src/js/content/item-catalog.js`, `src/js/core.js`
+- Repro:
+  1. Read docs that item definitions live in `content/items/<item_id>.json`.
+  2. Trace runtime item loading from `core.js` (`ItemCatalog.buildItemDb`).
+  3. Observe runtime uses hard-coded `ITEM_DEFS` in `src/js/content/item-catalog.js` instead of loading `content/items`.
+- Expected: One canonical item definition source consumed by runtime and tools.
+- Actual: Item metadata exists in both docs/content files and hard-coded runtime JS, creating drift risk.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Pick canonical source (`content/items` or generated runtime artifact) and document it.
+  2. Add/adjust build tooling so runtime item DB is generated from canonical source.
+  3. Add parity validation to fail CI when runtime and content diverge.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-033 - Inline icon sprite registry bypasses asset pipeline
+- Status: Backlog
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `docs/ASSET_PIPELINE.md`, `src/js/core.js`, `src/js/content/item-catalog.js`
+- Repro:
+  1. Inspect `makeIconSprite` in `src/js/core.js`.
+  2. Observe dozens of inline SVG literals and hard-coded rune fallback sprite mappings.
+  3. Compare to documented icon pipeline under `assets/pixel/*`.
+- Expected: Icon selection/rendering should primarily come from item/content asset metadata.
+- Actual: Core runtime carries a hand-maintained sprite map with manual fallback logic.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Move icon mapping responsibility into item metadata (or generated catalog metadata).
+  2. Keep a small generic fallback path only for missing assets.
+  3. Add validation for missing icon references and fallback usage counts.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-034 - World layout and service placement are embedded in `initLogicalMap`
+- Status: Backlog
+- Severity: S1
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/world.js`
+- Repro:
+  1. Inspect `initLogicalMap` and surrounding world setup code.
+  2. Note inline ASCII blueprints (`castleFloor0`, `generalStoreBlueprint`, `smithingHallBlueprint`) and hard-coded stamp coordinates.
+  3. Note direct arrays for merchant/service placements and one-off tile mutations.
+- Expected: Building layouts, NPC/service spawns, and tile edits should come from structured world data files/manifests.
+- Actual: World authoring data is tightly coupled to procedural/init code in one large function.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Define a world layout schema (buildings, stamps, objects, post-stamp edits).
+  2. Move current inline layout/spawn definitions into content data files.
+  3. Implement a loader/applier and validate parity against current map.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-035 - Training route tuning lives in hard-coded zone/band arrays
+- Status: Backlog
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/world.js`, `src/js/core.js`
+- Repro:
+  1. Inspect `miningZoneSpecs`, `runecraftingAltarBandSpecs`, `woodcuttingZoneSpecs`, and `cookingRouteSpecs` in `src/js/world.js`.
+  2. Inspect QA fallback route mappings in `src/js/core.js`.
+  3. Observe distances, counts, spacing, and labels are manually tuned in code.
+- Expected: Route/ring/zone progression tuning should be data-driven with centralized authoring.
+- Actual: Tuning constants are spread across runtime files, making balancing changes code-heavy.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Create skill route config files for zone bands, counts, spacing, and labels.
+  2. Refactor placement logic to read and validate those configs.
+  3. Update QA route lookups to consume runtime-generated route metadata only.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-036 - Context menu behavior is a monolithic hard-coded branch
+- Status: Backlog
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `src/js/input-render.js`, `src/js/skills/runtime.js`, `src/js/skills/manifest.js`
+- Repro:
+  1. Inspect `onContextMenu` in `src/js/input-render.js`.
+  2. Observe a long `if/else` chain keyed on `hitData.type` with embedded action labels/messages.
+  3. Observe target-specific exceptions (for example Shopkeeper/general_store) inside UI-layer logic.
+- Expected: Interactions should resolve from a registry/manifest so new target types can be added without expanding a single branch.
+- Actual: UI interaction behavior is centralized in a brittle conditional block with mixed gameplay/UI responsibilities.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Define a target interaction registry contract (`actions`, `examine`, `priority`, `guards`).
+  2. Migrate existing target handlers into per-domain modules.
+  3. Keep `onContextMenu` as a generic renderer over resolved actions.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-037 - Tile semantics rely on magic numbers across runtime
+- Status: Backlog
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/core.js`, `src/js/world.js`, `src/js/input-render.js`
+- Repro:
+  1. Inspect tile ID comments and `WALKABLE_TILES` in `src/js/core.js`.
+  2. Search for direct numeric checks (`tile === 21`, `tile === 22`, etc.) in world/input systems.
+  3. Observe repeated hard-coded tile meaning assumptions in multiple modules.
+- Expected: Tile IDs and properties should be centralized via enum/constants + tile metadata helpers.
+- Actual: Numeric literals are repeated in many places, increasing regression risk when tile semantics evolve.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Introduce `TileId` constants and shared helpers (`isWater`, `isWalkable`, `isNatural`).
+  2. Replace numeric comparisons across world/input/render code.
+  3. Add a quick lint/test guard for direct literal tile comparisons.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-038 - QA location aliases and openable merchant list are manually duplicated
+- Status: Backlog
+- Severity: S3
+- Area: Other
+- Source: Manual
+- Links: `src/js/core.js`, `src/js/world.js`, `src/js/shop-economy.js`
+- Repro:
+  1. Inspect QA helpers in `src/js/core.js` (`getQaFishingSpots`, `getQaCookingSpots`, `getQaFishingMerchants`, merchant alias map, `qaOpenableMerchants` list).
+  2. Compare against runtime world/merchant placement sources in `src/js/world.js` and merchant config in specs/economy.
+  3. Observe QA command behavior depends on manually curated coordinate/alias lists.
+- Expected: QA discoverability should derive from runtime world entities and merchant configs.
+- Actual: Multiple QA lists require manual syncing and can drift from live map/shop data.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Build a QA discovery layer over runtime world entities and merchant config.
+  2. Replace hard-coded merchant ID and coordinate lists with generated maps.
+  3. Keep alias support but generate defaults from canonical merchant/world registries.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-039 - Shop fallback stock is hard-coded in UI inventory module
+- Status: Backlog
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/inventory.js`, `src/js/shop-economy.js`, `src/js/skills/specs.js`
+- Repro:
+  1. Inspect `createShopInventoryForMerchant` in `src/js/inventory.js`.
+  2. Follow non-configured merchant path and observe fixed fallback items/amounts (`iron_axe`, `tinderbox`, `knife`, `iron_pickaxe`).
+  3. Compare with merchant economy rules in specs/economy modules.
+- Expected: Base shop stock should be configured in economy/content data, not embedded in UI runtime code.
+- Actual: Fallback stock policy is hard-coded in inventory rendering logic.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Move fallback stock policy into economy config (for example `general_store` baseline).
+  2. Keep inventory module read-only against resolved economy stock.
+  3. Add validation for merchants missing both explicit config and fallback policy.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-040 - Skills panel tiles are hard-coded in HTML instead of manifest-driven
+- Status: Backlog
+- Severity: S3
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/skills/manifest.js`, `src/js/inventory.js`
+- Repro:
+  1. Inspect the `#view-stats` block in `index.html`.
+  2. Observe each skill tile is hand-authored markup with duplicated IDs/labels.
+  3. Compare with `SkillManifest.orderedSkillIds` and runtime skill metadata usage.
+- Expected: Skill tile rendering should be generated from a single manifest/data model.
+- Actual: Adding/removing/reordering skills requires manual HTML + JS updates in multiple places.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Expand skill manifest to include icon/label/UI metadata.
+  2. Generate skill tiles at runtime from manifest order.
+  3. Keep DOM IDs/data attributes deterministic for existing hooks/tests.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-041 - Player appearance/model definitions are hard-coded in runtime
+- Status: Backlog
+- Severity: S3
+- Area: Other
+- Source: Manual
+- Links: `src/js/player-model.js`
+- Repro:
+  1. Inspect `src/js/player-model.js`.
+  2. Observe large inline tables for body palettes, default kits, kit fragments, and equipment fragment geometry/offsets.
+  3. Note that changing appearance presets or adding variants requires direct code edits.
+- Expected: Character appearance definitions should be data-driven (content/config) with runtime focused on rendering/assembly.
+- Actual: Appearance/model tuning data is embedded in JS, making iteration and content authoring harder over time.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Define appearance schema for palettes, kits, and fragment definitions.
+  2. Move static appearance tables out of runtime code into content data.
+  3. Keep runtime loader/validator to preserve existing visuals while enabling easier content updates.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->
 
