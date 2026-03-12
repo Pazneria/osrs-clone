@@ -1,16 +1,154 @@
 {
-  "skillId": "woodcutting",
-  "timing": { "baseAttemptTicks": 4, "minimumAttemptTicks": 1 },
-  "nodeTable": {
-    "normal_tree": {
-      "tileId": 1,
-      "requiredLevel": 1,
-      "difficulty": 18,
-      "xpPerSuccess": 25,
-      "rewardItemId": "logs",
-      "depletionChance": 0.2,
-      "respawnTicks": 18
+  "economy": {
+    "generalStoreFallback": {
+      "buyPolicy": "half_price_floor"
+    },
+    "merchantTable": {
+      "advanced_woodsman": {
+        "buys": [
+          "mithril_axe",
+          "adamant_axe",
+          "rune_axe",
+          "willow_logs",
+          "maple_logs",
+          "yew_logs"
+        ],
+        "sells": [
+          "mithril_axe",
+          "adamant_axe",
+          "willow_logs",
+          "maple_logs",
+          "yew_logs"
+        ],
+        "strictBuys": true
+      },
+      "forester_teacher": {
+        "buys": [
+          "bronze_axe",
+          "iron_axe",
+          "steel_axe",
+          "logs",
+          "oak_logs"
+        ],
+        "sells": [
+          "bronze_axe",
+          "iron_axe",
+          "steel_axe",
+          "logs",
+          "oak_logs"
+        ],
+        "strictBuys": true
+      }
+    },
+    "primaryResource": "logs",
+    "valueTable": {
+      "adamant_axe": {
+        "buy": 2200,
+        "sell": 750
+      },
+      "bronze_axe": {
+        "buy": 40,
+        "sell": 10
+      },
+      "iron_axe": {
+        "buy": 120,
+        "sell": 35
+      },
+      "logs": {
+        "buy": 6,
+        "sell": 2
+      },
+      "maple_logs": {
+        "buy": 80,
+        "sell": 32
+      },
+      "mithril_axe": {
+        "buy": 900,
+        "sell": 300
+      },
+      "oak_logs": {
+        "buy": 16,
+        "sell": 6
+      },
+      "rune_axe": {
+        "buy": null,
+        "sell": 2500
+      },
+      "steel_axe": {
+        "buy": 350,
+        "sell": 110
+      },
+      "willow_logs": {
+        "buy": 36,
+        "sell": 14
+      },
+      "yew_logs": {
+        "buy": 180,
+        "sell": 72
+      }
     }
   },
-  "economy": { "primaryResource": "logs", "defaultSellValue": 5 }
+  "formulas": {
+    "interval": "max(min_ticks, base_ticks - speed_bonus)",
+    "success": "level_plus_tool_over_plus_difficulty"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
+  "nodeTable": {
+    "maple_tree": {
+      "depletionChance": 0.27,
+      "difficulty": 50,
+      "requiredLevel": 30,
+      "respawnTicks": 44,
+      "rewardItemId": "maple_logs",
+      "tileId": 1,
+      "xpPerSuccess": 100
+    },
+    "normal_tree": {
+      "depletionChance": 0.2,
+      "difficulty": 18,
+      "requiredLevel": 1,
+      "respawnTicks": 18,
+      "rewardItemId": "logs",
+      "tileId": 1,
+      "xpPerSuccess": 25
+    },
+    "oak_tree": {
+      "depletionChance": 0.22,
+      "difficulty": 28,
+      "requiredLevel": 10,
+      "respawnTicks": 24,
+      "rewardItemId": "oak_logs",
+      "tileId": 1,
+      "xpPerSuccess": 38
+    },
+    "willow_tree": {
+      "depletionChance": 0.24,
+      "difficulty": 38,
+      "requiredLevel": 20,
+      "respawnTicks": 32,
+      "rewardItemId": "willow_logs",
+      "tileId": 1,
+      "xpPerSuccess": 68
+    },
+    "yew_tree": {
+      "depletionChance": 0.3,
+      "difficulty": 64,
+      "requiredLevel": 40,
+      "respawnTicks": 60,
+      "rewardItemId": "yew_logs",
+      "tileId": 1,
+      "xpPerSuccess": 150
+    }
+  },
+  "skillId": "woodcutting",
+  "timing": {
+    "baseAttemptTicks": 4,
+    "minimumAttemptTicks": 1
+  }
 }

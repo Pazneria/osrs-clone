@@ -1,4 +1,9 @@
-﻿# Cooking Roadmap
+# Cooking Roadmap
+
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
 
 ## Purpose
 
@@ -46,7 +51,7 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Burn Chance | The probability that a cooking action produces burnt food |
 | XP per Success | The experience granted when the cooking action succeeds |
 | Cooked Sell Value | The sell value of the cooked food |
-| Burnt Sell Value | The sell value of the burnt food, which is always 0 under the base model |
+| Burnt Sell Value | The sell value of the burnt food under the current item-value table |
 | Raw Sell Value | The sell value of the raw food consumed by the action |
 | Expected Successes per Action | Average cooked-food output per action |
 | Expected XP per Action | Average experience gain per action |
@@ -78,11 +83,11 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 
 | Food | Required Level | Burn Difficulty | XP per Success | Raw Item | Cooked Item | Burnt Item | Healing | Eat Delay Ticks | Raw Sell Value | Cooked Sell Value | Burnt Sell Value |
 | ---- | -------------- | --------------- | -------------- | -------- | ----------- | ---------- | ------- | --------------- | -------------- | ----------------- | ---------------- |
-| Shrimp | 1 | 10 | 10 | Raw Shrimp | Shrimp | Burnt Shrimp | 3 | 4 | 3 | 6 | 0 |
-| Trout | 10 | 22 | 20 | Raw Trout | Trout | Burnt Trout | 5 | 4 | 8 | 16 | 0 |
-| Salmon | 20 | 36 | 32 | Raw Salmon | Salmon | Burnt Salmon | 7 | 4 | 16 | 28 | 0 |
-| Tuna | 30 | 52 | 46 | Raw Tuna | Tuna | Burnt Tuna | 9 | 4 | 28 | 44 | 0 |
-| Swordfish | 40 | 70 | 65 | Raw Swordfish | Swordfish | Burnt Swordfish | 12 | 4 | 48 | 72 | 0 |
+| Shrimp | 1 | 9 | 30 | Raw Shrimp | Cooked Shrimp | Burnt Shrimp | 3 | 4 | 3 | 8 | 1 |
+| Trout | 10 | 24 | 70 | Raw Trout | Cooked Trout | Burnt Trout | 5 | 4 | 18 | 24 | 1 |
+| Salmon | 20 | 48 | 90 | Raw Salmon | Cooked Salmon | Burnt Salmon | 7 | 4 | 24 | 32 | 1 |
+| Tuna | 30 | 84 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 28 | 40 | 1 |
+| Swordfish | 40 | 144 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 40 | 56 | 1 |
 
 ### Standardized Success Chance Comparison
 
@@ -90,11 +95,11 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 
 | Food | Cooking Success Score | Calculation | Cooking Success Chance |
 | ---- | --------------------- | ----------- | ---------------------- |
-| Shrimp | 40 | 40 / (40 + 10) | 80.0000% |
-| Trout | 40 | 40 / (40 + 22) | 64.5161% |
-| Salmon | 40 | 40 / (40 + 36) | 52.6316% |
-| Tuna | 40 | 40 / (40 + 52) | 43.4783% |
-| Swordfish | 40 | 40 / (40 + 70) | 36.3636% |
+| Shrimp | 40 | 40 / (40 + 9) | 81.6327% |
+| Trout | 40 | 40 / (40 + 24) | 62.5000% |
+| Salmon | 40 | 40 / (40 + 48) | 45.4545% |
+| Tuna | 40 | 40 / (40 + 84) | 32.2581% |
+| Swordfish | 40 | 40 / (40 + 144) | 21.7391% |
 
 ## Runtime State
 
@@ -171,7 +176,7 @@ Raw fish merchant stock and unlock behavior are defined by fishing. Cooking does
 
 Cooked fish can be sold to the obvious fish-buying merchants using their cooked sell values.
 
-Burnt fish can be sold to shops, but their sell value is always 0.
+Burnt fish can be sold to shops at their configured low sell values from the canonical item table.
 
 The general store buys everything at half price, rounded down.
 
@@ -209,7 +214,7 @@ The general store buys everything at half price, rounded down.
 - Raw fish are not edible.
 - Burnt fish are not edible.
 - Burnt food is not consumable under the base model.
-- Burnt food is still a normal item and can be sold to shops, but its sell value is always 0.
+- Burnt food is still a normal item and can be sold to shops at its configured low sell value.
 - The player starts cooking by selecting Use on a raw fish in inventory and then clicking a fire.
 - Cooking cannot begin if the selected raw fish requires a higher cooking level than the player currently has.
 - Cooking is initiated strictly through Use raw fish -> fire; fires do not provide direct cooking options from their own click menu.
@@ -234,21 +239,24 @@ The general store buys everything at half price, rounded down.
 
 | Item | Type | Buy Value | Sell Value | Healing | Eat Delay Ticks | Notes |
 | ---- | ---- | --------- | ---------- | ------- | ---------------- | ----- |
-| Raw Shrimp | Resource | 9 | 3 | null | null | Distinct raw-fish item used as shrimp cooking input; raw-fish merchant rules are defined by fishing |
-| Shrimp | Food | 18 | 6 | 3 | 4 | Cooked shrimp |
-| Burnt Shrimp | Burnt Food | 0 | 0 | null | null | Failed shrimp cooking output; inert junk item, not consumable |
-| Raw Trout | Resource | 24 | 8 | null | null | Distinct raw-fish item used as trout cooking input; raw-fish merchant rules are defined by fishing |
-| Trout | Food | 48 | 16 | 5 | 4 | Cooked trout |
-| Burnt Trout | Burnt Food | 0 | 0 | null | null | Failed trout cooking output; inert junk item, not consumable |
-| Raw Salmon | Resource | 48 | 16 | null | null | Distinct raw-fish item used as salmon cooking input; raw-fish merchant rules are defined by fishing |
-| Salmon | Food | 84 | 28 | 7 | 4 | Cooked salmon |
-| Burnt Salmon | Burnt Food | 0 | 0 | null | null | Failed salmon cooking output; inert junk item, not consumable |
-| Raw Tuna | Resource | 84 | 28 | null | null | Distinct raw-fish item used as tuna cooking input; raw-fish merchant rules are defined by fishing |
-| Tuna | Food | 132 | 44 | 9 | 4 | Cooked tuna |
-| Burnt Tuna | Burnt Food | 0 | 0 | null | null | Failed tuna cooking output; inert junk item, not consumable |
-| Raw Swordfish | Resource | 144 | 48 | null | null | Distinct raw-fish item used as swordfish cooking input; raw-fish merchant rules are defined by fishing |
-| Swordfish | Food | 216 | 72 | 12 | 4 | Cooked swordfish |
-| Burnt Swordfish | Burnt Food | 0 | 0 | null | null | Failed swordfish cooking output; inert junk item, not consumable |
+| Raw Shrimp | Resource | 3 | 1 | null | null | Distinct raw-fish item used as shrimp cooking input; raw-fish merchant rules are defined by fishing |
+| Cooked Shrimp | Food | 8 | 3 | 3 | 4 | Cooked shrimp |
+| Burnt Shrimp | Burnt Food | 1 | 1 | null | null | Failed shrimp cooking output; inert junk item, not consumable |
+| Raw Trout | Resource | 18 | 7 | null | null | Distinct raw-fish item used as trout cooking input; raw-fish merchant rules are defined by fishing |
+| Cooked Trout | Food | 24 | 9 | 5 | 4 | Cooked trout |
+| Burnt Trout | Burnt Food | 1 | 1 | null | null | Failed trout cooking output; inert junk item, not consumable |
+| Raw Salmon | Resource | 24 | 9 | null | null | Distinct raw-fish item used as salmon cooking input; raw-fish merchant rules are defined by fishing |
+| Cooked Salmon | Food | 32 | 12 | 7 | 4 | Cooked salmon |
+| Burnt Salmon | Burnt Food | 1 | 1 | null | null | Failed salmon cooking output; inert junk item, not consumable |
+| Raw Tuna | Resource | 28 | 11 | null | null | Distinct raw-fish item used as tuna cooking input; raw-fish merchant rules are defined by fishing |
+| Cooked Tuna | Food | 40 | 16 | 9 | 4 | Cooked tuna |
+| Burnt Tuna | Burnt Food | 1 | 1 | null | null | Failed tuna cooking output; inert junk item, not consumable |
+| Raw Swordfish | Resource | 40 | 16 | null | null | Distinct raw-fish item used as swordfish cooking input; raw-fish merchant rules are defined by fishing |
+| Cooked Swordfish | Food | 56 | 22 | 12 | 4 | Cooked swordfish |
+| Burnt Swordfish | Burnt Food | 1 | 1 | null | null | Failed swordfish cooking output; inert junk item, not consumable |
+
+
+
 
 
 

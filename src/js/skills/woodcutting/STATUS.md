@@ -1,6 +1,7 @@
 # Woodcutting Status
 
 ## Done
+- [x] WOODCUTTING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] WOODCUTTING-001: Core woodcutting loop and XP progression baseline documented.
 - [x] WOODCUTTING-002: Tree and axe progression bands with tool power/speed structure defined.
 - [x] WOODCUTTING-003: Roadmap expanded with full woodcutting design spec (formulas, depletion, runtime state, economy, NPCs).

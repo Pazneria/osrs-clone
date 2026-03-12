@@ -1,20 +1,69 @@
 {
-  "skillId": "cooking",
-  "timing": { "actionTicks": 1 },
+  "economy": {
+    "burntResource": "burnt_shrimp",
+    "cookedResource": "cooked_shrimp",
+    "primaryResource": "raw_shrimp"
+  },
+  "formulas": {
+    "burn": "one_minus_success",
+    "success": "level_over_level_plus_burn_difficulty"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
   "recipeSet": {
+    "raw_salmon": {
+      "burnDifficulty": 48,
+      "burntItemId": "burnt_salmon",
+      "cookedItemId": "cooked_salmon",
+      "requiredLevel": 20,
+      "sourceItemId": "raw_salmon",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 90
+    },
     "raw_shrimp": {
-      "sourceItemId": "raw_shrimp",
-      "cookedItemId": "cooked_shrimp",
+      "burnDifficulty": 9,
       "burntItemId": "burnt_shrimp",
+      "cookedItemId": "cooked_shrimp",
       "requiredLevel": 1,
-      "burnDifficulty": 4,
-      "xpPerSuccess": 30,
-      "sourceTarget": "FIRE"
+      "sourceItemId": "raw_shrimp",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 30
+    },
+    "raw_swordfish": {
+      "burnDifficulty": 144,
+      "burntItemId": "burnt_swordfish",
+      "cookedItemId": "cooked_swordfish",
+      "requiredLevel": 40,
+      "sourceItemId": "raw_swordfish",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 140
+    },
+    "raw_trout": {
+      "burnDifficulty": 24,
+      "burntItemId": "burnt_trout",
+      "cookedItemId": "cooked_trout",
+      "requiredLevel": 10,
+      "sourceItemId": "raw_trout",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 70
+    },
+    "raw_tuna": {
+      "burnDifficulty": 84,
+      "burntItemId": "burnt_tuna",
+      "cookedItemId": "cooked_tuna",
+      "requiredLevel": 30,
+      "sourceItemId": "raw_tuna",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 120
     }
   },
-  "economy": {
-    "primaryResource": "raw_shrimp",
-    "cookedResource": "cooked_shrimp",
-    "burntResource": "burnt_shrimp"
+  "skillId": "cooking",
+  "timing": {
+    "actionTicks": 1
   }
 }

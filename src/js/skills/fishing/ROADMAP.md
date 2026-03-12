@@ -1,5 +1,10 @@
 # Fishing Roadmap
 
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
+
 ## Purpose
 
 Fishing is the gathering skill for catching fish from water.
@@ -63,43 +68,44 @@ The player catches raw fish items that feed into other systems, especially cooki
 | Constant                     | Value |
 | ---------------------------- | ----- |
 | Tick Duration Seconds        | 0.6   |
-| Base Water-Type Catch Chance | 15%   |
-| Water-Type Level Scaling     | 0.5%  |
+| Base Water-Type Catch Chance | 28%   |
+| Water-Type Level Scaling     | 0.8%  |
+| Max Water-Type Catch Chance  | 62%   |
 
 ### Fish Stats
 
-| Fish      | Required Level | XP per Catch | Tool Needed  | Extra Requirement | Water Requirement | Sell Value |
-| --------- | -------------- | ------------ | ------------ | ----------------- | ----------------- | ---------- |
-| Raw Shrimp | 1 | 10 | Small Net | None | Standard Water | 1 |
-| Raw Trout | 10 | 20 | Fishing Rod | Bait | Standard Water | 7 |
-| Raw Salmon | 20 | 32 | Fishing Rod | Bait | Standard Water | 9 |
-| Raw Tuna | 30 | 46 | Harpoon | None | Standard Water | 11 |
-| Raw Swordfish | 40 | 65 | Harpoon or Rune Harpoon | None | Deep Water | 16 |
+| Fish          | Required Level | XP per Catch | Tool Needed               | Extra Requirement | Water Requirement | Sell Value |
+| ------------- | -------------- | ------------ | ------------------------- | ----------------- | ----------------- | ---------- |
+| Raw Shrimp    | 1              | 20           | Small Net                 | None              | Standard Water    | 1          |
+| Raw Trout     | 10             | 50           | Fishing Rod               | Bait              | Standard Water    | 7          |
+| Raw Salmon    | 20             | 70           | Fishing Rod               | Bait              | Standard Water    | 9          |
+| Raw Tuna      | 30             | 80           | Harpoon                   | None              | Standard Water    | 11         |
+| Raw Swordfish | 40             | 100          | Harpoon or Rune Harpoon   | None              | Deep Water        | 16         |
 
 ### Water-Type Stats
 
-| Water Type           | Unlock Level | Tool Needed  | Extra Requirement | Base Water-Type Catch Chance | Water-Type Level Scaling | Max Water-Type Catch Chance |
-| -------------------- | ------------ | ------------ | ----------------- | ---------------------------- | ------------------------ | --------------------------- |
-| Net Fishing          | 1            | Small Net    | None              | 15%                          | 0.5%                     | 55%                         |
-| Rod Fishing          | 10           | Fishing Rod  | Bait              | 15%                          | 0.5%                     | 55%                         |
-| Harpoon Fishing      | 30           | Harpoon      | None              | 15%                          | 0.5%                     | 55%                         |
-| Deep Harpoon Fishing | 40           | Harpoon or Rune Harpoon | None              | 15%                          | 0.5%                     | 55%                         |
+| Water Type           | Unlock Level | Tool Needed             | Extra Requirement | Base Water-Type Catch Chance | Water-Type Level Scaling | Max Water-Type Catch Chance |
+| -------------------- | ------------ | ----------------------- | ----------------- | ---------------------------- | ------------------------ | --------------------------- |
+| Net Fishing          | 1            | Small Net               | None              | 28%                          | 0.8%                     | 62%                         |
+| Rod Fishing          | 10           | Fishing Rod             | Bait              | 28%                          | 0.8%                     | 62%                         |
+| Harpoon Fishing      | 30           | Harpoon                 | None              | 28%                          | 0.8%                     | 62%                         |
+| Deep Harpoon Fishing | 40           | Harpoon or Rune Harpoon | None              | 28%                          | 0.8%                     | 62%                         |
 
 ### Water-Type Catch Chance Examples
 
 **Water-Type Catch Chance = min(Max Water-Type Catch Chance, Base Water-Type Catch Chance + Water-Type Level Scaling x (Fishing Level - Water-Type Unlock Level))**
 
-| Water Type      | Fishing Level | Calculation                      | Water-Type Catch Chance |
-| --------------- | ------------- | -------------------------------- | ----------------------- |
-| Net Fishing     | 1             | min(55%, 15% + 0.5% x (1 - 1))   | 15%                     |
-| Net Fishing     | 10            | min(55%, 15% + 0.5% x (10 - 1))  | 19.5%                   |
-| Rod Fishing     | 10            | min(55%, 15% + 0.5% x (10 - 10)) | 15%                     |
-| Rod Fishing     | 20            | min(55%, 15% + 0.5% x (20 - 10)) | 20%                     |
-| Deep Harpoon Fishing | 40            | min(55%, 15% + 0.5% x (40 - 40)) | 15%                     |
+| Water Type           | Fishing Level | Calculation                      | Water-Type Catch Chance |
+| -------------------- | ------------- | -------------------------------- | ----------------------- |
+| Net Fishing          | 1             | min(62%, 28% + 0.8% x (1 - 1))   | 28%                     |
+| Net Fishing          | 10            | min(62%, 28% + 0.8% x (10 - 1))  | 35.2%                   |
+| Rod Fishing          | 10            | min(62%, 28% + 0.8% x (10 - 10)) | 28%                     |
+| Rod Fishing          | 20            | min(62%, 28% + 0.8% x (20 - 10)) | 36%                     |
+| Deep Harpoon Fishing | 40            | min(62%, 28% + 0.8% x (40 - 40)) | 28%                     |
 
 ### Rod Bait Note
 
-Raw Trout and salmon are caught with rod fishing.
+Raw trout and salmon are caught with rod fishing.
 
 Rod fishing requires bait to start fishing and continue fishing.
 
@@ -107,7 +113,7 @@ One bait is consumed only when a trout or salmon catch succeeds.
 
 ### Deep-Water Harpoon Note
 
-Raw Swordfish requires deep water and Fishing Level 40.
+Raw swordfish requires deep water and Fishing Level 40.
 
 In deep water, a normal harpoon uses the mixed deep-water table and can catch both tuna and swordfish.
 
@@ -119,12 +125,12 @@ Successful catches are assigned to fish using weighted tables. The player rolls 
 
 | Fishing Method       | Fishing Level Range | Water Requirement | Eligible Fish Weights |
 | -------------------- | ------------------- | ----------------- | --------------------- |
-| Net Fishing          | 1+                  | Standard Water    | Raw Shrimp 100            |
-| Rod Fishing          | 10-19               | Standard Water    | Raw Trout 100             |
-| Rod Fishing          | 20-29               | Standard Water    | Raw Trout 75, Raw Salmon 25   |
-| Rod Fishing          | 30+                 | Standard Water    | Raw Trout 60, Raw Salmon 40   |
-| Harpoon Fishing      | 30-39               | Standard Water    | Raw Tuna 100              |
-| Harpoon Fishing      | 40+                 | Standard Water    | Raw Tuna 100              |
+| Net Fishing          | 1+                  | Standard Water    | Raw Shrimp 100 |
+| Rod Fishing          | 10-19               | Standard Water    | Raw Trout 100 |
+| Rod Fishing          | 20-29               | Standard Water    | Raw Trout 75, Raw Salmon 25 |
+| Rod Fishing          | 30+                 | Standard Water    | Raw Trout 60, Raw Salmon 40 |
+| Harpoon Fishing      | 30-39               | Standard Water    | Raw Tuna 100 |
+| Harpoon Fishing      | 40+                 | Standard Water    | Raw Tuna 100 |
 | Deep Harpoon Fishing | 40+                 | Deep Water        | Raw Tuna 70, Raw Swordfish 30 when using Harpoon |
 | Deep Harpoon Fishing | 40+                 | Deep Water        | Raw Swordfish 100 when using Rune Harpoon |
 
@@ -132,10 +138,10 @@ Successful catches are assigned to fish using weighted tables. The player rolls 
 
 **Rod Fishing at Fishing Level 20**
 
-- Water-Type Catch Chance = 20%
+- Water-Type Catch Chance = 36%
 - Eligible Fish Weights = Raw Trout 75, Raw Salmon 25
-- Raw Trout Fish Catch Chance = 20% x 75% = 15%
-- Raw Salmon Fish Catch Chance = 20% x 25% = 5%
+- Raw Trout Fish Catch Chance = 36% x 75% = 27%
+- Raw Salmon Fish Catch Chance = 36% x 25% = 9%
 
 ### Standardized Active Fishing Output Comparison
 
@@ -143,11 +149,11 @@ These active output values measure fishing performance while the player is activ
 
 | Fishing Method       | Fishing Level | Water Requirement | Water-Type Catch Chance | Expected Fish per Tick |
 | -------------------- | ------------- | ----------------- | ----------------------- | ---------------------- |
-| Net Fishing          | 1             | Standard Water    | 15%                     | 0.1500                 |
-| Rod Fishing          | 10            | Standard Water    | 15%                     | 0.1500                 |
-| Rod Fishing          | 20            | Standard Water    | 20%                     | 0.2000                 |
-| Harpoon Fishing      | 30            | Standard Water    | 15%                     | 0.1500                 |
-| Deep Harpoon Fishing | 40            | Deep Water        | 15%                     | 0.1500                 |
+| Net Fishing          | 1             | Standard Water    | 28%                     | 0.2800                 |
+| Rod Fishing          | 10            | Standard Water    | 28%                     | 0.2800                 |
+| Rod Fishing          | 20            | Standard Water    | 36%                     | 0.3600                 |
+| Harpoon Fishing      | 30            | Standard Water    | 28%                     | 0.2800                 |
+| Deep Harpoon Fishing | 40            | Deep Water        | 28%                     | 0.2800                 |
 
 ## Continuous Fishing Model
 
@@ -405,6 +411,8 @@ Current world pass anchors these merchants around the castle pond training route
 | Raw Salmon | Resource | 20 | 24 | 9 | Mid-tier rod-caught fish                            |
 | Raw Tuna | Resource | 30 | 28 | 11 | Higher-value harpoon catch                          |
 | Raw Swordfish | Resource | 40 | 40 | 16 | High-value late-band catch                          |
+
+
 
 
 

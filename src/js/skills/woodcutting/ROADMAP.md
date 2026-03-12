@@ -1,4 +1,9 @@
-﻿# Woodcutting Roadmap
+# Woodcutting Roadmap
+
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
 
 ## Purpose
 
@@ -64,18 +69,18 @@ The player cuts raw materials that feed into other systems, especially firemakin
 | Constant              | Value |
 | --------------------- | ----- |
 | Tick Duration Seconds | 0.6   |
-| Base Attempt Ticks    | 6     |
+| Base Attempt Ticks    | 4     |
 | Minimum Attempt Ticks | 1     |
 
 ### Tree Stats
 
-| Tree        | Required Level | XP per Success | Tree Difficulty | Minimum Logs | Maximum Logs | Depletion Chance | Respawn Ticks |
-| ----------- | -------------- | -------------- | --------------- | ------------- | ------------- | ---------------- | ------------- |
-| Normal Tree | 1              | 10             | 8               | 1            | 1            | 1.00             | 13            |
-| Oak Tree    | 10             | 18             | 16              | 3            | 9            | 0.35             | 20            |
-| Willow Tree | 20             | 28             | 26              | 4             | 11            | 0.30             | 27            |
-| Maple Tree  | 30             | 42             | 38              | 5             | 13            | 0.25             | 37            |
-| Yew Tree    | 40             | 65             | 54              | 6             | 18            | 0.20             | 50            |
+| Tree        | Required Level | XP per Success | Tree Difficulty | Depletion Chance | Respawn Ticks |
+| ----------- | -------------- | -------------- | --------------- | ---------------- | ------------- |
+| Normal Tree | 1              | 25             | 18              | 0.20             | 18            |
+| Oak Tree    | 10             | 38             | 28              | 0.22             | 24            |
+| Willow Tree | 20             | 68             | 38              | 0.24             | 32            |
+| Maple Tree  | 30             | 100            | 50              | 0.27             | 44            |
+| Yew Tree    | 40             | 150            | 64              | 0.30             | 60            |
 
 ### Attempt Timing Examples
 
@@ -83,12 +88,12 @@ The player cuts raw materials that feed into other systems, especially firemakin
 
 | Axe         | Calculation   | Attempt Interval Ticks |
 | ----------- | ------------- | ---------------------- |
-| Bronze Axe  | max(1, 6 - 0) | 6                      |
-| Iron Axe    | max(1, 6 - 1) | 5                      |
-| Steel Axe   | max(1, 6 - 2) | 4                      |
-| Mithril Axe | max(1, 6 - 3) | 3                      |
-| Adamant Axe | max(1, 6 - 4) | 2                      |
-| Rune Axe    | max(1, 6 - 5) | 1                      |
+| Bronze Axe  | max(1, 4 - 0) | 4                      |
+| Iron Axe    | max(1, 4 - 1) | 3                      |
+| Steel Axe   | max(1, 4 - 2) | 2                      |
+| Mithril Axe | max(1, 4 - 3) | 1                      |
+| Adamant Axe | max(1, 4 - 4) | 1                      |
+| Rune Axe    | max(1, 4 - 5) | 1                      |
 
 ### Standardized Success Chance Comparison
 
@@ -96,11 +101,11 @@ The player cuts raw materials that feed into other systems, especially firemakin
 
 | Tree        | Success Score | Calculation    | Success Chance |
 | ----------- | ------------- | -------------- | -------------- |
-| Normal Tree | 68            | 68 / (68 + 8)  | 89.47%         |
-| Oak Tree    | 68            | 68 / (68 + 16) | 80.95%         |
-| Willow Tree | 68            | 68 / (68 + 26) | 72.34%         |
-| Maple Tree  | 68            | 68 / (68 + 38) | 64.15%         |
-| Yew Tree    | 68            | 68 / (68 + 54) | 55.74%         |
+| Normal Tree | 68            | 68 / (68 + 18) | 79.07%         |
+| Oak Tree    | 68            | 68 / (68 + 28) | 70.83%         |
+| Willow Tree | 68            | 68 / (68 + 38) | 64.15%         |
+| Maple Tree  | 68            | 68 / (68 + 50) | 57.63%         |
+| Yew Tree    | 68            | 68 / (68 + 64) | 51.52%         |
 
 ### Standardized Active Woodcutting Output Comparison
 
@@ -109,12 +114,12 @@ The player cuts raw materials that feed into other systems, especially firemakin
 These active output values measure woodcutting performance while the player is actively chopping an available tree and do not include depletion downtime or respawn delay.
 
 | Tree        | Expected Logs per Tick | Expected XP per Tick | Expected Gold per Tick |
-| ----------- | ----------------------- | -------------------- | ---------------------- |
-| Normal Tree | 0.8947                  | 8.9470               | 1.7894                 |
-| Oak Tree    | 0.8095                  | 14.5710              | 4.8570                 |
-| Willow Tree | 0.7234                  | 20.2552              | 10.1276                |
-| Maple Tree  | 0.6415                  | 26.9430              | 20.5280                |
-| Yew Tree    | 0.5574                  | 36.2310              | 40.1328                |
+| ----------- | ---------------------- | -------------------- | ---------------------- |
+| Normal Tree | 0.7907                 | 19.7675              | 1.5814                 |
+| Oak Tree    | 0.7083                 | 26.9154              | 4.2498                 |
+| Willow Tree | 0.6415                 | 43.6220              | 8.9810                 |
+| Maple Tree  | 0.5763                 | 57.6300              | 18.4416                |
+| Yew Tree    | 0.5152                 | 77.2800              | 37.0944                |
 
 ## Inventory Capacity Rules
 
@@ -128,38 +133,35 @@ These active output values measure woodcutting performance while the player is a
 
 ### Core Depletion Rules
 
-| Tree Type       | Depletion Behavior                                                             |
-| --------------- | ------------------------------------------------------------------------------ |
-| Fixed trees     | Always deplete after the successful logs guaranteed by the tree are exhausted |
-| Variable trees  | Deplete after reaching the minimum logs and then passing a depletion roll     |
+| Rule | Description |
+| ---- | ----------- |
+| Per-success depletion roll | After each successful chop, roll that tree's Depletion Chance immediately. If the roll succeeds, the tree depletes and enters respawn. |
+| Persistent availability until depletion | Trees remain available until a depletion roll succeeds; there is no guaranteed minimum or maximum-success band in the canonical runtime model. |
 
 ### Tree Session Variables
 
-| Variable          | Meaning                                                                     |
-| ----------------- | --------------------------------------------------------------------------- |
-| Successful Logs | Number of successful logs produced from the current tree session          |
-| Minimum Logs    | Guaranteed successful logs before depletion is allowed                    |
-| Maximum Logs    | Hard cap on successful logs from the current tree session                 |
-| Depletion Chance  | Chance that the tree depletes after a success once the minimum has been met |
+| Variable        | Meaning |
+| --------------- | ------- |
+| Successful Logs | Number of successful logs produced from the current tree session |
+| Depletion Chance | Chance that the tree depletes immediately after a successful chop |
 
 ### Depletion Equations
 
-| Equation               | Formula                                                                                                    | Purpose                                                           |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Log Increment        | On success: Successful Logs = Successful Logs + 1                                                      | Tracks how many logs have been chopped from the current tree session |
-| Forced Depletion Check | If Successful Logs >= Maximum Logs, the tree depletes immediately                                      | Enforces the hard cap on each tree session                        |
-| Random Depletion Check | If Successful Logs >= Minimum Logs, roll against Depletion Chance after each successful chopping attempt | Allows variable tree lifetimes after the guaranteed minimum       |
-| Depletion Trigger      | Tree depletes if the forced depletion check passes or the random depletion check succeeds                  | Determines when a tree becomes unavailable                        |
+| Equation | Formula | Purpose |
+| -------- | ------- | ------- |
+| Log Increment | On success: Successful Logs = Successful Logs + 1 | Tracks successful logs from the active tree session |
+| Random Depletion Check | After each success: roll against Depletion Chance | Decides whether the tree transitions to a depleted state |
+| Depletion Trigger | Tree depletes when the random depletion check succeeds | Controls transition to respawn state |
 
 ### Depletion Stats
 
-| Tree        | Minimum Logs | Maximum Logs | Depletion Chance | Behavior Summary                                                |
-| ----------- | -------------- | -------------- | ---------------- | --------------------------------------------------------------- |
-| Normal Tree | 1              | 1              | 1.00             | Always depletes after one log                               |
-| Oak Tree    | 3              | 9              | 0.35             | Guaranteed three logs, then variable depletion, capped at nine |
-| Willow Tree | 4              | 11             | 0.30             | Guaranteed four logs, then variable depletion, capped at eleven |
-| Maple Tree  | 5              | 13             | 0.25             | Guaranteed five logs, then variable depletion, capped at thirteen |
-| Yew Tree    | 6              | 18             | 0.20             | Guaranteed six logs, then variable depletion, capped at eighteen |
+| Tree        | Depletion Chance | Behavior Summary |
+| ----------- | ---------------- | ---------------- |
+| Normal Tree | 0.20             | 20% roll after each successful chop |
+| Oak Tree    | 0.22             | 22% roll after each successful chop |
+| Willow Tree | 0.24             | 24% roll after each successful chop |
+| Maple Tree  | 0.27             | 27% roll after each successful chop |
+| Yew Tree    | 0.30             | 30% roll after each successful chop |
 
 ## Tree Runtime State
 
@@ -322,6 +324,8 @@ The general store buys everything at half price.
 | Willow Logs  | Resource | 20             | 36        | 14         | Mid-tier logs               |
 | Maple Logs   | Resource | 30             | 80        | 32         | Higher-tier balanced logs   |
 | Yew Logs     | Resource | 40             | 180       | 72         | High-value late-band logs   |
+
+
 
 
 

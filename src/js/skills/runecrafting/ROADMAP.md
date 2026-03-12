@@ -1,5 +1,10 @@
 # Runecrafting Roadmap
 
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
+
 ## Purpose
 
 Runecrafting is the conversion skill for turning rune essence into usable runes at elemental altars.
@@ -10,7 +15,7 @@ The player gathers or acquires rune essence, travels to the appropriate altar, a
 
 | Rune              | Required Level |
 | ----------------- | -------------- |
-| Fire Rune         | 1              |
+| Ember Rune        | 1              |
 | Water Rune        | 10             |
 | Earth Rune        | 20             |
 | Air Rune          | 30             |
@@ -49,7 +54,7 @@ No special altar-access system is used.
 | Runes Crafted per Essence | Number of runes produced by each essence based on the player's level relative to the rune's scaling start level |
 | Player Level              | The player's current Runecrafting level                                                                    |
 | Rune Required Level       | The minimum Runecrafting level required for that rune                                                      |
-| Scaling Start Level      | The level where output scaling begins for that rune; usually the required level, except Fire Runes start scaling from level 0 for cleaner 10/20/30 breakpoints |
+| Scaling Start Level      | The level where output scaling begins for that rune; usually the required level, except Ember Runes start scaling from level 0 for cleaner 10/20/30 breakpoints |
 | XP per Essence            | Experience granted for converting one essence                                                              |
 | Rune Sell Value           | Sell value of the rune being created                                                                       |
 | Essence Consumed          | Essence actually removed during the action                                                                 |
@@ -89,12 +94,11 @@ Ember uses scaling start level 0 specifically so level-10 breakpoints land clean
 - Levels 20-29: 3 runes per essence
 - and so on every +10 levels.
 
-### Implemented Combination Slice Note
+### Implemented Combination Coverage Note
 
-Phase A currently includes one combination reference path at Ember Altar:
-- Smoke combo recipe is active when the player carries Air runes and meets level/unlock requirements.
-- Secondary rune consumption equals total smoke rune output.
-- If secondary runes are insufficient for all essence, crafting consumes only the essence supported by available secondary runes and leaves remaining essence in inventory.
+The current runtime implementation includes all six bidirectional combination rune pairs (12 route entries) at level 40 with the combination unlock flag.
+
+Combination crafting consumes secondary runes equal to total output and supports partial-essence resolution when secondary runes are limited.
 
 ### Pouch Mechanics
 
@@ -122,7 +126,7 @@ Pouch essence is not used directly for crafting. The player must first empty the
 
 | Rune       | Required Level | XP per Essence | Rune Sell Value | Crafting Location                  | Notes |
 | ---------- | -------------- | -------------- | --------------- | ---------------------------------- | ----- |
-| Fire Rune  | 1              | 5              | 4               | Fire altar on world map            | Entry-level crafted rune |
+| Ember Rune | 1              | 8              | 4               | Ember altar on world map           | Entry-level crafted rune |
 | Water Rune | 10             | 7              | 8               | Water altar on world map           | Early upgrade crafted rune |
 | Earth Rune | 20             | 9              | 16              | Earth altar on world map           | Mid-tier crafted rune |
 | Air Rune   | 30             | 12             | 32              | Air altar on world map             | Highest base elemental rune |
@@ -136,7 +140,7 @@ A combination rune is created by using the normal altar-crafting process while a
 
 The altar element plus the carried secondary elemental rune determine the resulting combination rune. The resulting combination rune replaces the normal elemental output from that craft.
 
-Example: at level 40, crafting at the fire altar while carrying 27 air runes and 27 rune essence produces 27 smoke runes and consumes 27 air runes. At level 50, the same craft produces 54 smoke runes and consumes 54 air runes. If the player instead had 27 rune essence and only 40 air runes at level 50, the action would use 20 essence, consume 40 air runes, produce 40 smoke runes, and leave 7 essence in inventory.
+Example: at level 40, crafting at the ember altar while carrying 27 air runes and 27 rune essence produces 27 smoke runes and consumes 27 air runes. At level 50, the same craft produces 54 smoke runes and consumes 54 air runes. If the player instead had 27 rune essence and only 40 air runes at level 50, the action would use 20 essence, consume 40 air runes, produce 40 smoke runes, and leave 7 essence in inventory.
 
 | Rule                          | Description                                                                                                |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -160,9 +164,9 @@ Each combination rune can be crafted from either valid elemental direction.
 
 | Combination Rune | Element Pair  | Level Requirement | Other Requirement          | Valid Crafting Routes                                         |
 | ---------------- | ------------- | ----------------- | -------------------------- | ------------------------------------------------------------- |
-| Steam Rune       | Fire + Water  | 40                | Combination quest complete | Fire altar with water runes, or water altar with fire runes   |
-| Smoke Rune       | Fire + Air    | 40                | Combination quest complete | Fire altar with air runes, or air altar with fire runes       |
-| Lava Rune        | Fire + Earth  | 40                | Combination quest complete | Fire altar with earth runes, or earth altar with fire runes   |
+| Steam Rune       | Ember + Water | 40                | Combination quest complete | Ember altar with water runes, or water altar with ember runes |
+| Smoke Rune       | Ember + Air   | 40                | Combination quest complete | Ember altar with air runes, or air altar with ember runes     |
+| Lava Rune        | Ember + Earth | 40                | Combination quest complete | Ember altar with earth runes, or earth altar with ember runes |
 | Mud Rune         | Water + Earth | 40                | Combination quest complete | Water altar with earth runes, or earth altar with water runes |
 | Mist Rune        | Water + Air   | 40                | Combination quest complete | Water altar with air runes, or air altar with water runes     |
 | Dust Rune        | Earth + Air   | 40                | Combination quest complete | Earth altar with air runes, or air altar with earth runes     |
@@ -171,9 +175,9 @@ Each combination rune can be crafted from either valid elemental direction.
 
 | Combination Rune | Required Level | XP per Essence | Rune Sell Value | Crafting Location                  | Notes |
 | ---------------- | -------------- | -------------- | --------------- | ---------------------------------- | ----- |
-| Steam Rune       | 40             | 16             | 64              | Fire or Water altar on world map   | Combination rune crafted from a valid Fire + Water route |
-| Smoke Rune       | 40             | 16             | 64              | Fire or Air altar on world map     | Combination rune crafted from a valid Fire + Air route |
-| Lava Rune        | 40             | 16             | 64              | Fire or Earth altar on world map   | Combination rune crafted from a valid Fire + Earth route |
+| Steam Rune       | 40             | 16             | 64              | Ember or Water altar on world map  | Combination rune crafted from a valid Ember + Water route |
+| Smoke Rune       | 40             | 16             | 64              | Ember or Air altar on world map    | Combination rune crafted from a valid Ember + Air route |
+| Lava Rune        | 40             | 16             | 64              | Ember or Earth altar on world map  | Combination rune crafted from a valid Ember + Earth route |
 | Mud Rune         | 40             | 16             | 64              | Water or Earth altar on world map  | Combination rune crafted from a valid Water + Earth route |
 | Mist Rune        | 40             | 16             | 64              | Water or Air altar on world map    | Combination rune crafted from a valid Water + Air route |
 | Dust Rune        | 40             | 16             | 64              | Earth or Air altar on world map    | Combination rune crafted from a valid Earth + Air route |
@@ -210,7 +214,7 @@ Runecrafting creates value by converting rune essence into usable runes.
 | Item         | Category | Buy Value | Sell Value |
 | ------------ | -------- | --------- | ---------- |
 | Rune Essence | Resource | 12        | 4          |
-| Fire Rune    | Rune     | 10        | 4          |
+| Ember Rune   | Rune     | 10        | 4          |
 | Water Rune   | Rune     | 20        | 8          |
 | Earth Rune   | Rune     | 40        | 16         |
 | Air Rune     | Rune     | 80        | 32         |
@@ -230,14 +234,14 @@ Runecrafting creates value by converting rune essence into usable runes.
 
 The rune tutor introduces the basics of runecrafting. This NPC helps new players understand rune essence, world-map altar interaction, and early rune progression.
 
-**Location:** Near the main town or close to the first fire altar approach.
+**Location:** Near the main town or close to the first ember altar approach.
 
 **Associated Quests:** Introductory runecrafting task.
 
 | Item         | Buys | Sells |
 | ------------ | ---- | ----- |
 | Rune Essence | 4    | 12    |
-| Fire Rune    | 4    | 10    |
+| Ember Rune   | 4    | 10    |
 | Water Rune   | 8    | 20    |
 | Earth Rune   | 16   | 40    |
 | Air Rune     | 32   | 80    |
@@ -284,7 +288,7 @@ The general store buys everything at half price.
 
 | Location Type                                   | Role                             |
 | ----------------------------------------------- | -------------------------------- |
-| Fire altar approach near early game area        | Entry-level rune training        |
+| Ember altar approach near early game area        | Entry-level rune training        |
 | Water altar route with mild travel time         | Early upgrade rune training      |
 | Earth altar route in a broader region           | Mid-tier elemental rune training |
 | Air altar route in a broader or elevated region | Highest base elemental training  |
@@ -322,19 +326,22 @@ The general store buys everything at half price.
 | Item         | Category | Required Level | Buy Value | Sell Value | Notes                                                  |
 | ------------ | -------- | -------------- | --------- | ---------- | ------------------------------------------------------ |
 | Rune Essence | Resource | 1              | 12        | 4          | Base material for runecrafting                         |
-| Fire Rune    | Rune     | 1              | 10        | 4          | Entry-level crafted rune                               |
+| Ember Rune   | Rune     | 1              | 10        | 4          | Entry-level crafted rune                               |
 | Water Rune   | Rune     | 10             | 20        | 8          | Early upgrade crafted rune                             |
 | Earth Rune   | Rune     | 20             | 40        | 16         | Mid-tier crafted rune                                  |
 | Air Rune     | Rune     | 30             | 80        | 32         | Highest base elemental rune                            |
-| Steam Rune   | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Fire + Water route |
-| Smoke Rune   | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Fire + Air route |
-| Lava Rune    | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Fire + Earth route |
+| Steam Rune   | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Ember + Water route |
+| Smoke Rune   | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Ember + Air route |
+| Lava Rune    | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Ember + Earth route |
 | Mud Rune     | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Water + Earth route |
 | Mist Rune    | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Water + Air route |
 | Dust Rune    | Rune     | 40             | 160       | 64         | Combination rune crafted from a valid Earth + Air route |
 | Small Pouch  | Utility  | 10             | 500       | 200        | Carries 6 essence |
 | Medium Pouch | Utility  | 20             | 2000      | 800        | Carries 13 essence |
 | Large Pouch  | Utility  | 30             | 8000      | 3200       | Carries 26 essence |
+
+
+
 
 
 

@@ -1,17 +1,284 @@
 {
-  "skillId": "fishing",
-  "timing": { "baseAttemptTicks": 3, "minimumAttemptTicks": 1 },
-  "nodeTable": {
-    "shallow_water": {
-      "tileIds": [21, 22],
-      "unlockLevel": 1,
-      "maxCatchChance": 0.62,
-      "baseCatchChance": 0.28,
-      "levelScaling": 0.008,
-      "fish": [
-        { "itemId": "raw_shrimp", "requiredLevel": 1, "weight": 100, "xp": 20 }
-      ]
+  "economy": {
+    "generalStoreFallback": {
+      "buyPolicy": "half_price_floor"
+    },
+    "merchantTable": {
+      "fishing_supplier": {
+        "buys": [
+          "small_net",
+          "fishing_rod",
+          "harpoon",
+          "bait",
+          "raw_shrimp",
+          "raw_trout",
+          "raw_salmon",
+          "raw_tuna",
+          "raw_swordfish"
+        ],
+        "sells": [
+          "small_net",
+          "fishing_rod",
+          "harpoon",
+          "bait"
+        ],
+        "unlocks": {
+          "itemIds": [
+            "raw_shrimp",
+            "raw_trout",
+            "raw_salmon",
+            "raw_tuna",
+            "raw_swordfish"
+          ],
+          "stockAmount": 20,
+          "threshold": 50
+        }
+      },
+      "fishing_teacher": {
+        "buys": [
+          "small_net",
+          "fishing_rod",
+          "harpoon",
+          "rune_harpoon"
+        ],
+        "sells": []
+      }
+    },
+    "primaryResource": "raw_shrimp",
+    "valueTable": {
+      "bait": {
+        "buy": 2,
+        "sell": 1
+      },
+      "fishing_rod": {
+        "buy": 45,
+        "sell": 18
+      },
+      "harpoon": {
+        "buy": 110,
+        "sell": 44
+      },
+      "raw_salmon": {
+        "buy": 24,
+        "sell": 9
+      },
+      "raw_shrimp": {
+        "buy": 3,
+        "sell": 1
+      },
+      "raw_swordfish": {
+        "buy": 40,
+        "sell": 16
+      },
+      "raw_trout": {
+        "buy": 18,
+        "sell": 7
+      },
+      "raw_tuna": {
+        "buy": 28,
+        "sell": 11
+      },
+      "rune_harpoon": {
+        "buy": 2500,
+        "sell": 1000
+      },
+      "small_net": {
+        "buy": 25,
+        "sell": 10
+      }
     }
   },
-  "economy": { "primaryResource": "raw_shrimp", "defaultSellValue": 3 }
+  "formulas": {
+    "selection": "weighted_fish_table",
+    "success": "water_base_plus_scaling_clamped"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
+  "nodeTable": {
+    "deep_water": {
+      "baseCatchChance": 0.28,
+      "levelScaling": 0.008,
+      "maxCatchChance": 0.62,
+      "methods": {
+        "deep_harpoon_mixed": {
+          "fishByLevel": [
+            {
+              "fish": [
+                {
+                  "itemId": "raw_tuna",
+                  "requiredLevel": 30,
+                  "weight": 70,
+                  "xp": 80
+                },
+                {
+                  "itemId": "raw_swordfish",
+                  "requiredLevel": 40,
+                  "weight": 30,
+                  "xp": 100
+                }
+              ],
+              "minLevel": 40
+            }
+          ],
+          "methodId": "deep_harpoon_mixed",
+          "priority": 40,
+          "toolIds": [
+            "harpoon"
+          ],
+          "unlockLevel": 40
+        },
+        "deep_rune_harpoon": {
+          "fishByLevel": [
+            {
+              "fish": [
+                {
+                  "itemId": "raw_swordfish",
+                  "requiredLevel": 40,
+                  "weight": 100,
+                  "xp": 100
+                }
+              ],
+              "minLevel": 40
+            }
+          ],
+          "methodId": "deep_rune_harpoon",
+          "priority": 50,
+          "toolIds": [
+            "rune_harpoon"
+          ],
+          "unlockLevel": 40
+        }
+      },
+      "tileIds": [
+        22
+      ],
+      "unlockLevel": 40
+    },
+    "shallow_water": {
+      "baseCatchChance": 0.28,
+      "levelScaling": 0.008,
+      "maxCatchChance": 0.62,
+      "methods": {
+        "harpoon": {
+          "fishByLevel": [
+            {
+              "fish": [
+                {
+                  "itemId": "raw_tuna",
+                  "requiredLevel": 30,
+                  "weight": 100,
+                  "xp": 80
+                }
+              ],
+              "minLevel": 30
+            }
+          ],
+          "methodId": "harpoon",
+          "priority": 30,
+          "toolIds": [
+            "harpoon",
+            "rune_harpoon"
+          ],
+          "unlockLevel": 30
+        },
+        "net": {
+          "fishByLevel": [
+            {
+              "fish": [
+                {
+                  "itemId": "raw_shrimp",
+                  "requiredLevel": 1,
+                  "weight": 100,
+                  "xp": 20
+                }
+              ],
+              "minLevel": 1
+            }
+          ],
+          "methodId": "net",
+          "priority": 10,
+          "toolIds": [
+            "small_net"
+          ],
+          "unlockLevel": 1
+        },
+        "rod": {
+          "extraRequirement": {
+            "amount": 1,
+            "consumeOn": "success",
+            "itemId": "bait"
+          },
+          "fishByLevel": [
+            {
+              "fish": [
+                {
+                  "itemId": "raw_trout",
+                  "requiredLevel": 10,
+                  "weight": 100,
+                  "xp": 50
+                }
+              ],
+              "maxLevel": 19,
+              "minLevel": 10
+            },
+            {
+              "fish": [
+                {
+                  "itemId": "raw_trout",
+                  "requiredLevel": 10,
+                  "weight": 75,
+                  "xp": 50
+                },
+                {
+                  "itemId": "raw_salmon",
+                  "requiredLevel": 20,
+                  "weight": 25,
+                  "xp": 70
+                }
+              ],
+              "maxLevel": 29,
+              "minLevel": 20
+            },
+            {
+              "fish": [
+                {
+                  "itemId": "raw_trout",
+                  "requiredLevel": 10,
+                  "weight": 60,
+                  "xp": 50
+                },
+                {
+                  "itemId": "raw_salmon",
+                  "requiredLevel": 20,
+                  "weight": 40,
+                  "xp": 70
+                }
+              ],
+              "minLevel": 30
+            }
+          ],
+          "methodId": "rod",
+          "priority": 20,
+          "toolIds": [
+            "fishing_rod"
+          ],
+          "unlockLevel": 10
+        }
+      },
+      "tileIds": [
+        21
+      ],
+      "unlockLevel": 1
+    }
+  },
+  "skillId": "fishing",
+  "timing": {
+    "baseAttemptTicks": 3,
+    "minimumAttemptTicks": 1
+  }
 }

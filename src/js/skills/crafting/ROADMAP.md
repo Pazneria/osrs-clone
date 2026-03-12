@@ -1,4 +1,9 @@
-﻿# Crafting Roadmap
+# Crafting Roadmap
+
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
 
 ## Purpose
 
@@ -660,6 +665,8 @@ The general store buys everything at half price.
 | Ring Mould             | Tool / Utility | Quest unlock       | null      | null       | Created by imprinting a borrowed ring into soft clay, then firing it; cannot be sold or dropped |
 | Amulet Mould          | Tool / Utility | Quest unlock       | null      | null       | Created by imprinting a borrowed amulet into soft clay, then firing it; cannot be sold or dropped |
 | Tiara Mould            | Tool / Utility | Quest unlock       | null      | null       | Created by imprinting a borrowed tiara into soft clay, then firing it; cannot be sold or dropped |
+
+
 
 
 

@@ -1,6 +1,7 @@
 # Fletching Status
 
 ## Done
+- [x] FLETCHING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] FLETCHING-001: Core deterministic fletching loop and fixed 3-tick action timing documented.
 - [x] FLETCHING-002: Base log-tier progression and key tools/supplies (knife, feathers, bow string) defined.
 - [x] FLETCHING-003: Roadmap expanded with full fletching design spec (recipes, queueing, economy, merchants, dependencies).

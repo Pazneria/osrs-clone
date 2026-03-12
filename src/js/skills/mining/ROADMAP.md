@@ -1,4 +1,9 @@
-﻿# Mining Roadmap
+# Mining Roadmap
+
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
 
 ## Purpose
 
@@ -391,6 +396,8 @@ This item list includes both current main-band mining outputs and valid off-band
 | Mithril Ore     | Resource | null           | 120       | 60         | Outside normal 1-40 mining band     |
 | Adamant Ore     | Resource | null           | 300       | 150        | Outside normal 1-40 mining band     |
 | Rune Ore        | Resource | null           | 1200      | 600        | Outside normal 1-40 mining band     |
+
+
 
 
 

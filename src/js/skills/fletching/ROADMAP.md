@@ -1,4 +1,9 @@
-﻿# Fletching Roadmap
+# Fletching Roadmap
+
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
 
 ## Purpose
 
@@ -426,6 +431,8 @@ The general store buys everything at half price.
 | Willow Longbow | Bow | 20 | null | 36 | Strung from willow longbow (u); can use bronze through mithril arrows |
 | Maple Longbow | Bow | 30 | null | 62 | Strung from maple longbow (u); can use bronze through adamant arrows |
 | Yew Longbow | Bow | 40 | null | 100 | Strung from yew longbow (u); can use any arrows |
+
+
 
 
 

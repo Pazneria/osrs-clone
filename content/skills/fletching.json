@@ -1,0 +1,1190 @@
+{
+  "economy": {
+    "generalStoreFallback": {
+      "buyPolicy": "half_price_floor"
+    },
+    "merchantTable": {
+      "advanced_fletcher": {
+        "buys": [
+          "wooden_handle",
+          "oak_handle",
+          "willow_handle",
+          "maple_handle",
+          "yew_handle",
+          "plain_staff_wood",
+          "plain_staff_oak",
+          "plain_staff_willow",
+          "plain_staff_maple",
+          "plain_staff_yew",
+          "wooden_shafts",
+          "oak_shafts",
+          "willow_shafts",
+          "maple_shafts",
+          "yew_shafts",
+          "wooden_headless_arrows",
+          "oak_headless_arrows",
+          "willow_headless_arrows",
+          "maple_headless_arrows",
+          "yew_headless_arrows",
+          "bronze_arrows",
+          "iron_arrows",
+          "steel_arrows",
+          "mithril_arrows",
+          "adamant_arrows",
+          "rune_arrows",
+          "normal_shortbow_u",
+          "normal_longbow_u",
+          "oak_shortbow_u",
+          "oak_longbow_u",
+          "willow_shortbow_u",
+          "willow_longbow_u",
+          "maple_shortbow_u",
+          "maple_longbow_u",
+          "yew_shortbow_u",
+          "yew_longbow_u",
+          "normal_shortbow",
+          "normal_longbow",
+          "oak_shortbow",
+          "oak_longbow",
+          "willow_shortbow",
+          "willow_longbow",
+          "maple_shortbow",
+          "maple_longbow",
+          "yew_shortbow",
+          "yew_longbow"
+        ],
+        "sells": [],
+        "strictBuys": true
+      },
+      "fletching_supplier": {
+        "buys": [
+          "knife",
+          "feathers_bundle",
+          "bow_string"
+        ],
+        "sells": [
+          "knife",
+          "feathers_bundle",
+          "bow_string"
+        ],
+        "strictBuys": true
+      }
+    },
+    "primaryResource": "wooden_handle",
+    "valueTable": {
+      "adamant_arrows": {
+        "buy": null,
+        "sell": 50
+      },
+      "bow_string": {
+        "buy": 12,
+        "sell": 3
+      },
+      "bronze_arrows": {
+        "buy": null,
+        "sell": 8
+      },
+      "feathers_bundle": {
+        "buy": 8,
+        "sell": 2
+      },
+      "iron_arrows": {
+        "buy": null,
+        "sell": 12
+      },
+      "knife": {
+        "buy": 8,
+        "sell": 2
+      },
+      "maple_handle": {
+        "buy": null,
+        "sell": 32
+      },
+      "maple_headless_arrows": {
+        "buy": null,
+        "sell": 24
+      },
+      "maple_longbow": {
+        "buy": null,
+        "sell": 62
+      },
+      "maple_longbow_u": {
+        "buy": null,
+        "sell": 44
+      },
+      "maple_shafts": {
+        "buy": null,
+        "sell": 16
+      },
+      "maple_shortbow": {
+        "buy": null,
+        "sell": 68
+      },
+      "maple_shortbow_u": {
+        "buy": null,
+        "sell": 46
+      },
+      "mithril_arrows": {
+        "buy": null,
+        "sell": 32
+      },
+      "normal_longbow": {
+        "buy": null,
+        "sell": 10
+      },
+      "normal_longbow_u": {
+        "buy": null,
+        "sell": 6
+      },
+      "normal_shortbow": {
+        "buy": null,
+        "sell": 12
+      },
+      "normal_shortbow_u": {
+        "buy": null,
+        "sell": 7
+      },
+      "oak_handle": {
+        "buy": null,
+        "sell": 12
+      },
+      "oak_headless_arrows": {
+        "buy": null,
+        "sell": 10
+      },
+      "oak_longbow": {
+        "buy": null,
+        "sell": 20
+      },
+      "oak_longbow_u": {
+        "buy": null,
+        "sell": 14
+      },
+      "oak_shafts": {
+        "buy": null,
+        "sell": 6
+      },
+      "oak_shortbow": {
+        "buy": null,
+        "sell": 22
+      },
+      "oak_shortbow_u": {
+        "buy": null,
+        "sell": 15
+      },
+      "rune_arrows": {
+        "buy": null,
+        "sell": 80
+      },
+      "steel_arrows": {
+        "buy": null,
+        "sell": 20
+      },
+      "willow_handle": {
+        "buy": null,
+        "sell": 20
+      },
+      "willow_headless_arrows": {
+        "buy": null,
+        "sell": 16
+      },
+      "willow_longbow": {
+        "buy": null,
+        "sell": 36
+      },
+      "willow_longbow_u": {
+        "buy": null,
+        "sell": 26
+      },
+      "willow_shafts": {
+        "buy": null,
+        "sell": 10
+      },
+      "willow_shortbow": {
+        "buy": null,
+        "sell": 40
+      },
+      "willow_shortbow_u": {
+        "buy": null,
+        "sell": 28
+      },
+      "wooden_handle": {
+        "buy": null,
+        "sell": 6
+      },
+      "wooden_headless_arrows": {
+        "buy": null,
+        "sell": 6
+      },
+      "wooden_shafts": {
+        "buy": null,
+        "sell": 4
+      },
+      "yew_handle": {
+        "buy": null,
+        "sell": 50
+      },
+      "yew_headless_arrows": {
+        "buy": null,
+        "sell": 36
+      },
+      "yew_longbow": {
+        "buy": null,
+        "sell": 100
+      },
+      "yew_longbow_u": {
+        "buy": null,
+        "sell": 70
+      },
+      "yew_shafts": {
+        "buy": null,
+        "sell": 24
+      },
+      "yew_shortbow": {
+        "buy": null,
+        "sell": 110
+      },
+      "yew_shortbow_u": {
+        "buy": null,
+        "sell": 72
+      }
+    }
+  },
+  "formulas": {
+    "interval": "fixed_action_ticks",
+    "output": "fixed_per_action"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
+  "recipeSet": {
+    "fletch_adamant_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "adamant_arrowheads"
+        },
+        {
+          "amount": 1,
+          "itemId": "maple_headless_arrows"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_arrows"
+      },
+      "recipeFamily": "finished_arrows",
+      "requiredLevel": 30,
+      "xpPerAction": 10
+    },
+    "fletch_bronze_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "bronze_arrowheads"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_headless_arrows"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_arrows"
+      },
+      "recipeFamily": "finished_arrows",
+      "requiredLevel": 1,
+      "xpPerAction": 2
+    },
+    "fletch_iron_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_arrowheads"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_headless_arrows"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_arrows"
+      },
+      "recipeFamily": "finished_arrows",
+      "requiredLevel": 1,
+      "xpPerAction": 3
+    },
+    "fletch_maple_handle": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_handle"
+      },
+      "recipeFamily": "handle",
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "maple_logs",
+      "xpPerAction": 20
+    },
+    "fletch_maple_headless_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_shafts"
+        },
+        {
+          "amount": 1,
+          "itemId": "feathers_bundle"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_headless_arrows"
+      },
+      "recipeFamily": "headless_arrows",
+      "requiredLevel": 30,
+      "xpPerAction": 13
+    },
+    "fletch_maple_longbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_longbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_longbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 30,
+      "xpPerAction": 12
+    },
+    "fletch_maple_longbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_longbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "maple_logs",
+      "xpPerAction": 20
+    },
+    "fletch_maple_shafts": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_shafts"
+      },
+      "recipeFamily": "shafts",
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "maple_logs",
+      "xpPerAction": 13
+    },
+    "fletch_maple_shortbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_shortbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_shortbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 35,
+      "xpPerAction": 12
+    },
+    "fletch_maple_shortbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_shortbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 35,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "maple_logs",
+      "xpPerAction": 20
+    },
+    "fletch_mithril_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "mithril_arrowheads"
+        },
+        {
+          "amount": 1,
+          "itemId": "willow_headless_arrows"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_arrows"
+      },
+      "recipeFamily": "finished_arrows",
+      "requiredLevel": 20,
+      "xpPerAction": 7
+    },
+    "fletch_normal_longbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "normal_longbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "normal_longbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 1,
+      "xpPerAction": 3
+    },
+    "fletch_normal_longbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "normal_longbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "logs",
+      "xpPerAction": 5
+    },
+    "fletch_normal_shortbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "normal_shortbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "normal_shortbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 5,
+      "xpPerAction": 3
+    },
+    "fletch_normal_shortbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "normal_shortbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 5,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "logs",
+      "xpPerAction": 5
+    },
+    "fletch_oak_handle": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_handle"
+      },
+      "recipeFamily": "handle",
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "oak_logs",
+      "xpPerAction": 10
+    },
+    "fletch_oak_headless_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_shafts"
+        },
+        {
+          "amount": 1,
+          "itemId": "feathers_bundle"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_headless_arrows"
+      },
+      "recipeFamily": "headless_arrows",
+      "requiredLevel": 10,
+      "xpPerAction": 6
+    },
+    "fletch_oak_longbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_longbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_longbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 10,
+      "xpPerAction": 5
+    },
+    "fletch_oak_longbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_longbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "oak_logs",
+      "xpPerAction": 9
+    },
+    "fletch_oak_shafts": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_shafts"
+      },
+      "recipeFamily": "shafts",
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "oak_logs",
+      "xpPerAction": 6
+    },
+    "fletch_oak_shortbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_shortbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_shortbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 15,
+      "xpPerAction": 5
+    },
+    "fletch_oak_shortbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_shortbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 15,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "oak_logs",
+      "xpPerAction": 9
+    },
+    "fletch_plain_staff_maple": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "plain_staff_maple"
+      },
+      "recipeFamily": "staff",
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "maple_logs",
+      "xpPerAction": 26
+    },
+    "fletch_plain_staff_oak": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "plain_staff_oak"
+      },
+      "recipeFamily": "staff",
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "oak_logs",
+      "xpPerAction": 12
+    },
+    "fletch_plain_staff_willow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "plain_staff_willow"
+      },
+      "recipeFamily": "staff",
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "willow_logs",
+      "xpPerAction": 18
+    },
+    "fletch_plain_staff_wood": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "plain_staff_wood"
+      },
+      "recipeFamily": "staff",
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "logs",
+      "xpPerAction": 6
+    },
+    "fletch_plain_staff_yew": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "plain_staff_yew"
+      },
+      "recipeFamily": "staff",
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "yew_logs",
+      "xpPerAction": 36
+    },
+    "fletch_rune_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "rune_arrowheads"
+        },
+        {
+          "amount": 1,
+          "itemId": "yew_headless_arrows"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_arrows"
+      },
+      "recipeFamily": "finished_arrows",
+      "requiredLevel": 40,
+      "xpPerAction": 14
+    },
+    "fletch_steel_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "steel_arrowheads"
+        },
+        {
+          "amount": 1,
+          "itemId": "oak_headless_arrows"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_arrows"
+      },
+      "recipeFamily": "finished_arrows",
+      "requiredLevel": 10,
+      "xpPerAction": 5
+    },
+    "fletch_willow_handle": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_handle"
+      },
+      "recipeFamily": "handle",
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "willow_logs",
+      "xpPerAction": 14
+    },
+    "fletch_willow_headless_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_shafts"
+        },
+        {
+          "amount": 1,
+          "itemId": "feathers_bundle"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_headless_arrows"
+      },
+      "recipeFamily": "headless_arrows",
+      "requiredLevel": 20,
+      "xpPerAction": 9
+    },
+    "fletch_willow_longbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_longbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_longbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 20,
+      "xpPerAction": 8
+    },
+    "fletch_willow_longbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_longbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "willow_logs",
+      "xpPerAction": 14
+    },
+    "fletch_willow_shafts": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_shafts"
+      },
+      "recipeFamily": "shafts",
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "willow_logs",
+      "xpPerAction": 9
+    },
+    "fletch_willow_shortbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_shortbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_shortbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 25,
+      "xpPerAction": 8
+    },
+    "fletch_willow_shortbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_shortbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 25,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "willow_logs",
+      "xpPerAction": 14
+    },
+    "fletch_wooden_handle": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "wooden_handle"
+      },
+      "recipeFamily": "handle",
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "logs",
+      "xpPerAction": 6
+    },
+    "fletch_wooden_headless_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "wooden_shafts"
+        },
+        {
+          "amount": 1,
+          "itemId": "feathers_bundle"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "wooden_headless_arrows"
+      },
+      "recipeFamily": "headless_arrows",
+      "requiredLevel": 1,
+      "xpPerAction": 4
+    },
+    "fletch_wooden_shafts": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "wooden_shafts"
+      },
+      "recipeFamily": "shafts",
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "logs",
+      "xpPerAction": 4
+    },
+    "fletch_yew_handle": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_handle"
+      },
+      "recipeFamily": "handle",
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "yew_logs",
+      "xpPerAction": 28
+    },
+    "fletch_yew_headless_arrows": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_shafts"
+        },
+        {
+          "amount": 1,
+          "itemId": "feathers_bundle"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_headless_arrows"
+      },
+      "recipeFamily": "headless_arrows",
+      "requiredLevel": 40,
+      "xpPerAction": 18
+    },
+    "fletch_yew_longbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_longbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_longbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 40,
+      "xpPerAction": 18
+    },
+    "fletch_yew_longbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_longbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "yew_logs",
+      "xpPerAction": 28
+    },
+    "fletch_yew_shafts": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_shafts"
+      },
+      "recipeFamily": "shafts",
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "yew_logs",
+      "xpPerAction": 18
+    },
+    "fletch_yew_shortbow": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_shortbow_u"
+        },
+        {
+          "amount": 1,
+          "itemId": "bow_string"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_shortbow"
+      },
+      "recipeFamily": "bow_strung",
+      "requiredLevel": 45,
+      "xpPerAction": 18
+    },
+    "fletch_yew_shortbow_u": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_logs"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_shortbow_u"
+      },
+      "recipeFamily": "bow_unstrung",
+      "requiredLevel": 45,
+      "requiredToolIds": [
+        "knife"
+      ],
+      "sourceLogItemId": "yew_logs",
+      "xpPerAction": 28
+    }
+  },
+  "skillId": "fletching",
+  "timing": {
+    "actionTicks": 3
+  }
+}

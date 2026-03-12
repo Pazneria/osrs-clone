@@ -1,0 +1,1044 @@
+{
+  "formulas": {
+    "interval": "recipe_action_ticks",
+    "output": "fixed_per_action"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
+  "recipeSet": {
+    "assemble_adamant_axe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "adamant_axe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "maple_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_axe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 30,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "assemble_adamant_pickaxe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "adamant_pickaxe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "maple_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_pickaxe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 30,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "assemble_adamant_sword": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "adamant_sword_blade"
+        },
+        {
+          "amount": 1,
+          "itemId": "maple_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_sword"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 30,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "assemble_bronze_axe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "bronze_axe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_axe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "assemble_bronze_pickaxe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "bronze_pickaxe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_pickaxe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "assemble_bronze_sword": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "bronze_sword_blade"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_sword"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "assemble_iron_axe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_axe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_axe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 5
+    },
+    "assemble_iron_pickaxe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_pickaxe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_pickaxe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 5
+    },
+    "assemble_iron_sword": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_sword_blade"
+        },
+        {
+          "amount": 1,
+          "itemId": "wooden_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_sword"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 5
+    },
+    "assemble_mithril_axe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "mithril_axe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "willow_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_axe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "assemble_mithril_pickaxe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "mithril_pickaxe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "willow_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_pickaxe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "assemble_mithril_sword": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "mithril_sword_blade"
+        },
+        {
+          "amount": 1,
+          "itemId": "willow_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_sword"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "assemble_rune_axe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "rune_axe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "yew_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_axe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 32
+    },
+    "assemble_rune_pickaxe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "rune_pickaxe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "yew_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_pickaxe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 32
+    },
+    "assemble_rune_sword": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "rune_sword_blade"
+        },
+        {
+          "amount": 1,
+          "itemId": "yew_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_sword"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 32
+    },
+    "assemble_steel_axe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "steel_axe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "oak_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_axe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "assemble_steel_pickaxe": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "steel_pickaxe_head"
+        },
+        {
+          "amount": 1,
+          "itemId": "oak_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_pickaxe"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "assemble_steel_sword": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "steel_sword_blade"
+        },
+        {
+          "amount": 1,
+          "itemId": "oak_handle_strapped"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_sword"
+      },
+      "recipeFamily": "tool_weapon_assembly",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_air_staff": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "plain_staff_yew"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_diamond"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "air_staff"
+      },
+      "recipeFamily": "staff_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "craft_diamond_gold_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_amulet"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_diamond"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "diamond_gold_amulet"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "craft_diamond_gold_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_ring"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_diamond"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "diamond_gold_ring"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "craft_diamond_gold_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_tiara"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_diamond"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "diamond_gold_tiara"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "craft_earth_staff": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "plain_staff_maple"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_emerald"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "earth_staff"
+      },
+      "recipeFamily": "staff_attachment",
+      "requiredLevel": 30,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "craft_emerald_gold_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_amulet"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_emerald"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "emerald_gold_amulet"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "craft_emerald_gold_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_ring"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_emerald"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "emerald_gold_ring"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "craft_emerald_gold_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_tiara"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_emerald"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "emerald_gold_tiara"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "craft_fire_staff": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "plain_staff_oak"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "fire_staff"
+      },
+      "recipeFamily": "staff_attachment",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_maple_handle_strapped": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "maple_handle"
+        },
+        {
+          "amount": 1,
+          "itemId": "wolf_leather"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "maple_handle_strapped"
+      },
+      "recipeFamily": "strapped_handle",
+      "requiredLevel": 30,
+      "stationType": "INVENTORY",
+      "xpPerAction": 12
+    },
+    "craft_oak_handle_strapped": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "oak_handle"
+        },
+        {
+          "amount": 1,
+          "itemId": "normal_leather"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "oak_handle_strapped"
+      },
+      "recipeFamily": "strapped_handle",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_ruby_gold_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_amulet"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ruby_gold_amulet"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_ruby_gold_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_ring"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ruby_gold_ring"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_ruby_gold_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_tiara"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ruby_gold_tiara"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_ruby_silver_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_amulet"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ruby_silver_amulet"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_ruby_silver_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_ring"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ruby_silver_ring"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_ruby_silver_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_tiara"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ruby_silver_tiara"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 10,
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "craft_sapphire_gold_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_amulet"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "sapphire_gold_amulet"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_sapphire_gold_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_ring"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "sapphire_gold_ring"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_sapphire_gold_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_tiara"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "sapphire_gold_tiara"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_sapphire_silver_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_amulet"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "sapphire_silver_amulet"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_sapphire_silver_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_ring"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "sapphire_silver_ring"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_sapphire_silver_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_tiara"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "sapphire_silver_tiara"
+      },
+      "recipeFamily": "jewelry_gem_attachment",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_water_staff": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "plain_staff_willow"
+        },
+        {
+          "amount": 1,
+          "itemId": "cut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "water_staff"
+      },
+      "recipeFamily": "staff_attachment",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_willow_handle_strapped": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "willow_handle"
+        },
+        {
+          "amount": 1,
+          "itemId": "wolf_leather"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "willow_handle_strapped"
+      },
+      "recipeFamily": "strapped_handle",
+      "requiredLevel": 20,
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    },
+    "craft_wooden_handle_strapped": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "wooden_handle"
+        },
+        {
+          "amount": 1,
+          "itemId": "normal_leather"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "wooden_handle_strapped"
+      },
+      "recipeFamily": "strapped_handle",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 2
+    },
+    "craft_yew_handle_strapped": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "yew_handle"
+        },
+        {
+          "amount": 1,
+          "itemId": "bear_leather"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "yew_handle_strapped"
+      },
+      "recipeFamily": "strapped_handle",
+      "requiredLevel": 40,
+      "stationType": "INVENTORY",
+      "xpPerAction": 18
+    },
+    "cut_diamond": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "uncut_diamond"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "cut_diamond"
+      },
+      "recipeFamily": "gem_cutting",
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "chisel"
+      ],
+      "stationType": "INVENTORY",
+      "xpPerAction": 22
+    },
+    "cut_emerald": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "uncut_emerald"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "cut_emerald"
+      },
+      "recipeFamily": "gem_cutting",
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "chisel"
+      ],
+      "stationType": "INVENTORY",
+      "xpPerAction": 14
+    },
+    "cut_ruby": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "uncut_ruby"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "cut_ruby"
+      },
+      "recipeFamily": "gem_cutting",
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "chisel"
+      ],
+      "stationType": "INVENTORY",
+      "xpPerAction": 4
+    },
+    "cut_sapphire": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "uncut_sapphire"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "cut_sapphire"
+      },
+      "recipeFamily": "gem_cutting",
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "chisel"
+      ],
+      "stationType": "INVENTORY",
+      "xpPerAction": 8
+    }
+  },
+  "skillId": "crafting",
+  "timing": {
+    "actionTicks": 3
+  }
+}

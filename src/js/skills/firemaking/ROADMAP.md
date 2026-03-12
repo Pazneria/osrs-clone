@@ -1,5 +1,10 @@
 # Firemaking Roadmap
 
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
+
 ## Purpose
 
 Firemaking is the utility and support skill for converting logs into temporary fires.
@@ -8,13 +13,9 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 
 ## Core Progression
 
-| Log Type    | Required Level |
-| ----------- | -------------- |
-| Normal Logs | 1              |
-| Oak Logs    | 10             |
-| Willow Logs | 20             |
-| Maple Logs  | 30             |
-| Yew Logs    | 40             |
+| Log Type | Required Level |
+| -------- | -------------- |
+| Logs     | 1              |
 
 ## Tools
 
@@ -56,27 +57,17 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 
 ### Firemaking Stats
 
-| Log Type    | Required Level | Ignition Difficulty | XP per Action | Fire Lifetime Ticks |
-| ----------- | -------------- | --------------- | ------------- | ------------------- |
-| Normal Logs | 1              | 12              | 8             | 15                  |
-| Oak Logs    | 10             | 24              | 16            | 18                  |
-| Willow Logs | 20             | 38              | 28            | 21                  |
-| Maple Logs  | 30             | 54              | 45            | 24                  |
-| Yew Logs    | 40             | 72              | 70            | 27                  |
+| Log Type | Required Level | Ignition Difficulty | XP per Action | Fire Lifetime Ticks |
+| -------- | -------------- | ------------------- | ------------- | ------------------- |
+| Logs     | 1              | 15                  | 40            | 90                  |
 
 ### Standardized Success Chance Comparison
 
 **Using level 40 firemaking**
 
-| Log Type    | Ignition Success Score | Calculation    | Ignition Success Chance |
-| ----------- | ------------------ | -------------- | ------------------- |
-| Normal Logs | 40                 | 40 / (40 + 12) | 76.9231%            |
-| Oak Logs    | 40                 | 40 / (40 + 24) | 62.5000%            |
-| Willow Logs | 40                 | 40 / (40 + 38) | 51.2821%            |
-| Maple Logs  | 40                 | 40 / (40 + 54) | 42.5532%            |
-| Yew Logs    | 40                 | 40 / (40 + 72) | 35.7143%            |
-
-
+| Log Type | Ignition Success Score | Calculation    | Ignition Success Chance |
+| -------- | ---------------------- | -------------- | ----------------------- |
+| Logs     | 40                     | 40 / (40 + 15) | 72.7273%                |
 
 ## Fire Runtime State
 
@@ -131,15 +122,11 @@ Firemaking creates value indirectly by consuming logs to unlock utility rather t
 
 ### Input Values
 
-| Item        | Category | Buy Value | Sell Value |
-| ----------- | -------- | --------- | ---------- |
-| Normal Logs | Resource | 6         | 2          |
-| Oak Logs    | Resource | 16        | 6          |
-| Willow Logs | Resource | 36        | 14         |
-| Maple Logs  | Resource | 80        | 32         |
-| Yew Logs    | Resource | 180       | 72         |
-| Ashes       | Resource | 4         | 1          |
-| Tinderbox   | Tool     | 8         | 2          |
+| Item      | Category | Buy Value | Sell Value |
+| --------- | -------- | --------- | ---------- |
+| Logs      | Resource | 6         | 2          |
+| Ashes     | Resource | 4         | 1          |
+| Tinderbox | Tool     | 8         | 2          |
 
 ## Merchant / NPC Structure
 
@@ -170,7 +157,7 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 - Firemaking is primarily a utility and resource-sink skill rather than a direct gold-making skill.
 - The general store buys all firemaking-related items at half price, rounded down.
 - Firemaking success improves as firemaking level rises because higher skill increases ignition success chance.
-- Higher-tier firemaking progression depends entirely on access to higher-tier logs from woodcutting or merchants.
+- Current runtime progression is a single-tier logs band; higher-tier log progression is reserved for a future expansion pass.
 - Fires can be made on any tile that does not already contain a lit fire.
 - Lit fires do not block movement or standing.
 - Lit fires do not deal damage and are not treated as hazards.
@@ -182,16 +169,8 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 
 ## Items
 
-| Item        | Type     | Required Level | Buy Value | Sell Value | Notes |
-| ----------- | -------- | -------------- | --------- | ---------- | ----- |
-| Tinderbox   | Tool     | 1              | 8         | 2          | Required for all firemaking actions |
-| Normal Logs | Resource | 1              | 6         | 2          | Used to create normal fires |
-| Oak Logs    | Resource | 10             | 16        | 6          | Used to create oak fires |
-| Willow Logs | Resource | 20             | 36        | 14         | Used to create willow fires |
-| Maple Logs  | Resource | 30             | 80        | 32         | Used to create maple fires |
-| Yew Logs    | Resource | 40             | 180       | 72         | Used to create yew fires |
-| Ashes       | Resource | 1              | 4         | 1          | Stackable; created when fires expire |
-
-
-
-
+| Item      | Type     | Required Level | Buy Value | Sell Value | Notes |
+| --------- | -------- | -------------- | --------- | ---------- | ----- |
+| Tinderbox | Tool     | 1              | 8         | 2          | Required for all firemaking actions |
+| Logs      | Resource | 1              | 6         | 2          | Used to create fires in the current runtime band |
+| Ashes     | Resource | 1              | 4         | 1          | Stackable; created when fires expire |

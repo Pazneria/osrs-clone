@@ -1,6 +1,7 @@
 # Smithing Status
 
 ## Done
+- [x] SMITHING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] SMITHING-001: Core smithing progression, tier bands, and recipe families documented in the roadmap.
 - [x] SMITHING-002: Baseline smithing mechanics and station requirements defined with fixed 3-tick deterministic actions.
 - [x] SMITHING-003: Economy role, merchant/NPC structure, dependencies, and canonical item/component lists consolidated.

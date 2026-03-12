@@ -1,5 +1,10 @@
 # Smithing Roadmap
 
+## Canonical Runtime Source
+
+All mechanic/value tables in this roadmap are synchronized against `src/js/skills/specs.js` (version `2026.03.m6`).
+Where a skill defers market values to item data, value rows mirror `src/js/content/item-catalog.js`.
+
 ## Purpose
 
 Smithing is the processing skill for turning mined ores into bars and turning bars into metal equipment.
@@ -487,4 +492,6 @@ These item definitions are the canonical smithing-side source of truth for smith
 - Gold Ring
 - Gold Tiara
 - Gold Amulet
+
+
 

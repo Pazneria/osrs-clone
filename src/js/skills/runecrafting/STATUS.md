@@ -1,6 +1,7 @@
 # Runecrafting Status
 
 ## Done
+- [x] RUNECRAFTING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] RUNECRAFTING-001: Core altar-based runecrafting loop and XP progression baseline documented.
 - [x] RUNECRAFTING-002: Elemental rune progression with level-based output scaling rules defined.
 - [x] RUNECRAFTING-003: Roadmap expanded with full runecrafting design spec (combination runes, pouches, economy, dependencies).

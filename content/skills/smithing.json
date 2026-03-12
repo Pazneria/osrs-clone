@@ -1,0 +1,1456 @@
+{
+  "economy": {
+    "generalStoreFallback": {
+      "buyPolicy": "half_price_floor"
+    },
+    "merchantTable": {
+      "borin_ironvein": {
+        "buys": [
+          "hammer",
+          "copper_ore",
+          "tin_ore",
+          "iron_ore",
+          "coal",
+          "mithril_ore",
+          "bronze_bar",
+          "iron_bar",
+          "steel_bar",
+          "mithril_bar"
+        ],
+        "sells": [
+          "hammer",
+          "copper_ore",
+          "tin_ore",
+          "iron_ore",
+          "coal",
+          "mithril_ore"
+        ],
+        "strictBuys": true
+      },
+      "elira_gemhand": {
+        "buys": [
+          "silver_ore",
+          "gold_ore",
+          "silver_bar",
+          "gold_bar",
+          "silver_ring",
+          "silver_amulet",
+          "silver_tiara",
+          "gold_ring",
+          "gold_amulet",
+          "gold_tiara"
+        ],
+        "sells": [
+          "silver_ore",
+          "gold_ore"
+        ],
+        "strictBuys": true
+      },
+      "thrain_deepforge": {
+        "buys": [
+          "adamant_ore",
+          "rune_ore",
+          "adamant_bar",
+          "rune_bar"
+        ],
+        "sells": [
+          "adamant_ore",
+          "rune_ore"
+        ],
+        "strictBuys": true
+      }
+    },
+    "primaryResource": "bronze_bar",
+    "valueTable": {
+      "adamant_bar": {
+        "buy": null,
+        "sell": 128
+      },
+      "adamant_ore": {
+        "buy": 300,
+        "sell": 120
+      },
+      "amulet_mould": {
+        "buy": null,
+        "sell": null
+      },
+      "bronze_bar": {
+        "buy": null,
+        "sell": 8
+      },
+      "coal": {
+        "buy": 30,
+        "sell": 12
+      },
+      "copper_ore": {
+        "buy": 8,
+        "sell": 3
+      },
+      "gold_bar": {
+        "buy": null,
+        "sell": 70
+      },
+      "gold_ore": {
+        "buy": 70,
+        "sell": 28
+      },
+      "hammer": {
+        "buy": 8,
+        "sell": 2
+      },
+      "iron_bar": {
+        "buy": null,
+        "sell": 16
+      },
+      "iron_ore": {
+        "buy": 18,
+        "sell": 7
+      },
+      "mithril_bar": {
+        "buy": null,
+        "sell": 64
+      },
+      "mithril_ore": {
+        "buy": 120,
+        "sell": 48
+      },
+      "ring_mould": {
+        "buy": null,
+        "sell": null
+      },
+      "rune_bar": {
+        "buy": null,
+        "sell": 256
+      },
+      "rune_ore": {
+        "buy": 1200,
+        "sell": 480
+      },
+      "silver_bar": {
+        "buy": null,
+        "sell": 45
+      },
+      "silver_ore": {
+        "buy": 45,
+        "sell": 18
+      },
+      "steel_bar": {
+        "buy": null,
+        "sell": 32
+      },
+      "tiara_mould": {
+        "buy": null,
+        "sell": null
+      },
+      "tin_ore": {
+        "buy": 8,
+        "sell": 3
+      }
+    }
+  },
+  "formulas": {
+    "interval": "fixed_action_ticks",
+    "output": "fixed_per_action"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
+  "recipeSet": {
+    "forge_adamant_arrowheads": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_arrowheads"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 14
+    },
+    "forge_adamant_axe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_axe_head"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 28
+    },
+    "forge_adamant_boots": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_boots"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 28
+    },
+    "forge_adamant_helmet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 5,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_helmet"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 70
+    },
+    "forge_adamant_pickaxe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_pickaxe_head"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 28
+    },
+    "forge_adamant_platebody": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 9,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_platebody"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 126
+    },
+    "forge_adamant_platelegs": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 7,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_platelegs"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 98
+    },
+    "forge_adamant_shield": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 6,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_shield"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 84
+    },
+    "forge_adamant_sword_blade": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "adamant_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_sword_blade"
+      },
+      "requiredLevel": 30,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 28
+    },
+    "forge_bronze_arrowheads": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_arrowheads"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 4
+    },
+    "forge_bronze_axe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_axe_head"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 8
+    },
+    "forge_bronze_boots": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_boots"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 8
+    },
+    "forge_bronze_helmet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 5,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_helmet"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 20
+    },
+    "forge_bronze_pickaxe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_pickaxe_head"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 8
+    },
+    "forge_bronze_platebody": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 9,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_platebody"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 36
+    },
+    "forge_bronze_platelegs": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 7,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_platelegs"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 28
+    },
+    "forge_bronze_shield": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 6,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_shield"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 24
+    },
+    "forge_bronze_sword_blade": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "bronze_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_sword_blade"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 8
+    },
+    "forge_gold_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "gold_amulet"
+      },
+      "requiredLevel": 40,
+      "requiredMouldIds": [
+        "amulet_mould"
+      ],
+      "stationType": "FURNACE",
+      "xpPerAction": 22
+    },
+    "forge_gold_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "gold_ring"
+      },
+      "requiredLevel": 40,
+      "requiredMouldIds": [
+        "ring_mould"
+      ],
+      "stationType": "FURNACE",
+      "xpPerAction": 22
+    },
+    "forge_gold_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "gold_tiara"
+      },
+      "requiredLevel": 40,
+      "requiredMouldIds": [
+        "tiara_mould"
+      ],
+      "stationType": "FURNACE",
+      "xpPerAction": 22
+    },
+    "forge_iron_arrowheads": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_arrowheads"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 5
+    },
+    "forge_iron_axe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_axe_head"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 10
+    },
+    "forge_iron_boots": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_boots"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 10
+    },
+    "forge_iron_helmet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 5,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_helmet"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 25
+    },
+    "forge_iron_pickaxe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_pickaxe_head"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 10
+    },
+    "forge_iron_platebody": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 9,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_platebody"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 45
+    },
+    "forge_iron_platelegs": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 7,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_platelegs"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 35
+    },
+    "forge_iron_shield": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 6,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_shield"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 30
+    },
+    "forge_iron_sword_blade": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "iron_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_sword_blade"
+      },
+      "requiredLevel": 1,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 10
+    },
+    "forge_mithril_arrowheads": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_arrowheads"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 10
+    },
+    "forge_mithril_axe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_axe_head"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 20
+    },
+    "forge_mithril_boots": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_boots"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 20
+    },
+    "forge_mithril_helmet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 5,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_helmet"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 50
+    },
+    "forge_mithril_pickaxe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_pickaxe_head"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 20
+    },
+    "forge_mithril_platebody": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 9,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_platebody"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 90
+    },
+    "forge_mithril_platelegs": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 7,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_platelegs"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 70
+    },
+    "forge_mithril_shield": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 6,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_shield"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 60
+    },
+    "forge_mithril_sword_blade": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "mithril_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_sword_blade"
+      },
+      "requiredLevel": 20,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 20
+    },
+    "forge_rune_arrowheads": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_arrowheads"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 20
+    },
+    "forge_rune_axe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_axe_head"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 40
+    },
+    "forge_rune_boots": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_boots"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 40
+    },
+    "forge_rune_helmet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 5,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_helmet"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 100
+    },
+    "forge_rune_pickaxe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_pickaxe_head"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 40
+    },
+    "forge_rune_platebody": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 9,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_platebody"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 180
+    },
+    "forge_rune_platelegs": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 7,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_platelegs"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 140
+    },
+    "forge_rune_shield": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 6,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_shield"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 120
+    },
+    "forge_rune_sword_blade": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "rune_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_sword_blade"
+      },
+      "requiredLevel": 40,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 40
+    },
+    "forge_silver_amulet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "silver_amulet"
+      },
+      "requiredLevel": 10,
+      "requiredMouldIds": [
+        "amulet_mould"
+      ],
+      "stationType": "FURNACE",
+      "xpPerAction": 14
+    },
+    "forge_silver_ring": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "silver_ring"
+      },
+      "requiredLevel": 10,
+      "requiredMouldIds": [
+        "ring_mould"
+      ],
+      "stationType": "FURNACE",
+      "xpPerAction": 14
+    },
+    "forge_silver_tiara": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "silver_tiara"
+      },
+      "requiredLevel": 10,
+      "requiredMouldIds": [
+        "tiara_mould"
+      ],
+      "stationType": "FURNACE",
+      "xpPerAction": 14
+    },
+    "forge_steel_arrowheads": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_arrowheads"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 7
+    },
+    "forge_steel_axe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_axe_head"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 14
+    },
+    "forge_steel_boots": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_boots"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 14
+    },
+    "forge_steel_helmet": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 5,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_helmet"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 35
+    },
+    "forge_steel_pickaxe_head": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_pickaxe_head"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 14
+    },
+    "forge_steel_platebody": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 9,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_platebody"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 63
+    },
+    "forge_steel_platelegs": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 7,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_platelegs"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 49
+    },
+    "forge_steel_shield": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 6,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_shield"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 42
+    },
+    "forge_steel_sword_blade": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 2,
+          "itemId": "steel_bar"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_sword_blade"
+      },
+      "requiredLevel": 10,
+      "requiredToolIds": [
+        "hammer"
+      ],
+      "stationType": "ANVIL",
+      "xpPerAction": 14
+    },
+    "smelt_adamant_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "adamant_ore"
+        },
+        {
+          "amount": 6,
+          "itemId": "coal"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "adamant_bar"
+      },
+      "requiredLevel": 30,
+      "stationType": "FURNACE",
+      "xpPerAction": 24
+    },
+    "smelt_bronze_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "copper_ore"
+        },
+        {
+          "amount": 1,
+          "itemId": "tin_ore"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "bronze_bar"
+      },
+      "requiredLevel": 1,
+      "stationType": "FURNACE",
+      "xpPerAction": 6
+    },
+    "smelt_gold_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "gold_ore"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "gold_bar"
+      },
+      "requiredLevel": 40,
+      "stationType": "FURNACE",
+      "xpPerAction": 22
+    },
+    "smelt_iron_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_ore"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "iron_bar"
+      },
+      "requiredLevel": 1,
+      "stationType": "FURNACE",
+      "xpPerAction": 8
+    },
+    "smelt_mithril_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "mithril_ore"
+        },
+        {
+          "amount": 4,
+          "itemId": "coal"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "mithril_bar"
+      },
+      "requiredLevel": 20,
+      "stationType": "FURNACE",
+      "xpPerAction": 18
+    },
+    "smelt_rune_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "rune_ore"
+        },
+        {
+          "amount": 8,
+          "itemId": "coal"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "rune_bar"
+      },
+      "requiredLevel": 40,
+      "stationType": "FURNACE",
+      "xpPerAction": 32
+    },
+    "smelt_silver_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "silver_ore"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "silver_bar"
+      },
+      "requiredLevel": 30,
+      "stationType": "FURNACE",
+      "xpPerAction": 14
+    },
+    "smelt_steel_bar": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "iron_ore"
+        },
+        {
+          "amount": 2,
+          "itemId": "coal"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "steel_bar"
+      },
+      "requiredLevel": 10,
+      "stationType": "FURNACE",
+      "xpPerAction": 12
+    }
+  },
+  "skillId": "smithing",
+  "timing": {
+    "actionTicks": 3
+  }
+}

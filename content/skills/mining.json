@@ -1,40 +1,122 @@
 {
-  "skillId": "mining",
-  "timing": { "baseAttemptTicks": 6, "minimumAttemptTicks": 1 },
-  "formulas": {
-    "success": "level_plus_tool_over_plus_difficulty",
-    "interval": "max(min_ticks, base_ticks - speed_bonus)"
+  "economy": {
+    "primaryResource": "copper_ore"
   },
+  "formulas": {
+    "interval": "max(min_ticks, base_ticks - speed_bonus)",
+    "success": "level_plus_tool_over_plus_difficulty"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
   "nodeTable": {
-    "copper_rock": {
+    "clay_rock": {
+      "depletionChance": 1,
+      "difficulty": 6,
+      "oreType": "clay",
+      "requiredLevel": 1,
+      "respawnTicks": 5,
+      "rewardItemId": "clay",
       "tileId": 2,
+      "xpPerSuccess": 8
+    },
+    "coal_rock": {
+      "depletionChance": 0.35,
+      "difficulty": 26,
+      "oreType": "coal",
+      "requiredLevel": 20,
+      "respawnTicks": 12,
+      "rewardItemId": "coal",
+      "tileId": 2,
+      "xpPerSuccess": 28
+    },
+    "copper_rock": {
+      "depletionChance": 1,
+      "difficulty": 8,
       "oreType": "copper",
       "requiredLevel": 1,
-      "difficulty": 8,
-      "xpPerSuccess": 10,
+      "respawnTicks": 6,
       "rewardItemId": "copper_ore",
-      "depletionChance": 1.0,
-      "respawnTicks": 13
-    },
-    "tin_rock": {
       "tileId": 2,
-      "oreType": "tin",
-      "requiredLevel": 1,
-      "difficulty": 8,
-      "xpPerSuccess": 10,
-      "rewardItemId": "tin_ore",
-      "depletionChance": 1.0,
-      "respawnTicks": 13
+      "xpPerSuccess": 10
+    },
+    "emerald_rock": {
+      "depletionChance": 0.3,
+      "difficulty": 56,
+      "oreType": "emerald",
+      "requiredLevel": 40,
+      "respawnTicks": 48,
+      "rewardItemId": "uncut_emerald",
+      "tileId": 2,
+      "xpPerSuccess": 72
+    },
+    "gold_rock": {
+      "depletionChance": 0.25,
+      "difficulty": 50,
+      "oreType": "gold",
+      "requiredLevel": 40,
+      "respawnTicks": 21,
+      "rewardItemId": "gold_ore",
+      "tileId": 2,
+      "xpPerSuccess": 60
+    },
+    "iron_rock": {
+      "depletionChance": 0.5,
+      "difficulty": 16,
+      "oreType": "iron",
+      "requiredLevel": 10,
+      "respawnTicks": 9,
+      "rewardItemId": "iron_ore",
+      "tileId": 2,
+      "xpPerSuccess": 18
     },
     "rune_essence": {
-      "tileId": 2,
+      "difficulty": 6,
       "oreType": "rune_essence",
+      "persistent": true,
       "requiredLevel": 1,
-      "difficulty": 1,
-      "xpPerSuccess": 8,
       "rewardItemId": "rune_essence",
-      "persistent": true
+      "tileId": 2,
+      "xpPerSuccess": 2
+    },
+    "sapphire_rock": {
+      "depletionChance": 0.35,
+      "difficulty": 42,
+      "oreType": "sapphire",
+      "requiredLevel": 30,
+      "respawnTicks": 36,
+      "rewardItemId": "uncut_sapphire",
+      "tileId": 2,
+      "xpPerSuccess": 52
+    },
+    "silver_rock": {
+      "depletionChance": 0.3,
+      "difficulty": 36,
+      "oreType": "silver",
+      "requiredLevel": 30,
+      "respawnTicks": 15,
+      "rewardItemId": "silver_ore",
+      "tileId": 2,
+      "xpPerSuccess": 40
+    },
+    "tin_rock": {
+      "depletionChance": 1,
+      "difficulty": 8,
+      "oreType": "tin",
+      "requiredLevel": 1,
+      "respawnTicks": 6,
+      "rewardItemId": "tin_ore",
+      "tileId": 2,
+      "xpPerSuccess": 10
     }
   },
-  "economy": { "primaryResource": "copper_ore" }
+  "skillId": "mining",
+  "timing": {
+    "baseAttemptTicks": 6,
+    "minimumAttemptTicks": 1
+  }
 }

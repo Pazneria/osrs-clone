@@ -1,6 +1,7 @@
 # Cooking Status
 
 ## Done
+- [x] COOKING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] COOKING-001: Core cooking loop and XP leveling baseline documented.
 - [x] COOKING-002: Early fish-to-food progression and fire-based source model defined.
 - [x] COOKING-003: Roadmap expanded with full cooking design spec (success/burn formulas, runtime, eating, economy, dependencies).

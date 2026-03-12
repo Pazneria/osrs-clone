@@ -1,6 +1,7 @@
 # Crafting Status
 
 ## Done
+- [x] CRAFTING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] CRAFTING-001: Core crafting progression and cross-skill role documented in the roadmap.
 - [x] CRAFTING-002: Baseline crafting mechanics and deterministic action rules defined.
 - [x] CRAFTING-003: Initial recipe families, economy values, dependencies, and item lists consolidated.

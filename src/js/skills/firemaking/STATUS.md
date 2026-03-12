@@ -1,6 +1,7 @@
 # Firemaking Status
 
 ## Done
+- [x] FIREMAKING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] FIREMAKING-001: Core firemaking loop and XP progression baseline documented.
 - [x] FIREMAKING-002: Log-tier progression and tinderbox tool requirements defined.
 - [x] FIREMAKING-003: Roadmap expanded with full firemaking design spec (ignition chances, runtime states, economy, dependencies).

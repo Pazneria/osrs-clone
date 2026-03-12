@@ -1,6 +1,7 @@
 # Fishing Status
 
 ## Done
+- [x] FISHING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] FISHING-001: Core fishing loop and XP leveling baseline documented.
 - [x] FISHING-002: Early fish progression and tool unlock path (net/rod/harpoon) defined.
 - [x] FISHING-003: Roadmap expanded with full fishing design spec (progression, formulas, runtime, economy, NPCs).

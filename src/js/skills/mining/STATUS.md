@@ -1,6 +1,7 @@
 # Mining Status
 
 ## Done
+- [x] MINING-AUDIT-2026-03: Spec governance sync completed (roadmap tables, status tracking, and content skill mirrors aligned to runtime spec version `2026.03.m6`).
 - [x] MINING-001: Core mining loop and XP leveling.
 - [x] MINING-002: Baseline rock outputs wired for copper, tin, and rune essence.
 - [x] MINING-003: Roadmap expanded with full mining design spec (progression, formulas, depletion, economy, NPCs).

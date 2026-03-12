@@ -1,14 +1,47 @@
 {
-  "skillId": "firemaking",
-  "timing": { "ignitionAttemptTicks": 1, "postSuccessLockTicks": 3 },
-  "recipeSet": {
-    "logs": {
-      "sourceItemId": "logs",
-      "requiredLevel": 1,
-      "ignitionDifficulty": 15,
-      "xpPerSuccess": 40,
-      "fireLifetimeTicks": 90
+  "economy": {
+    "generalStoreFallback": {
+      "buyPolicy": "half_price_floor"
+    },
+    "primaryResource": "logs",
+    "supportResource": "tinderbox",
+    "valueTable": {
+      "ashes": {
+        "buy": 4,
+        "sell": 1
+      },
+      "logs": {
+        "buy": 6,
+        "sell": 2
+      },
+      "tinderbox": {
+        "buy": 8,
+        "sell": 2
+      }
     }
   },
-  "economy": { "primaryResource": "logs", "supportResource": "tinderbox" }
+  "formulas": {
+    "success": "level_over_level_plus_ignition_difficulty"
+  },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
+  "recipeSet": {
+    "logs": {
+      "fireLifetimeTicks": 90,
+      "ignitionDifficulty": 15,
+      "requiredLevel": 1,
+      "sourceItemId": "logs",
+      "xpPerSuccess": 40
+    }
+  },
+  "skillId": "firemaking",
+  "timing": {
+    "ignitionAttemptTicks": 1,
+    "postSuccessLockTicks": 3
+  }
 }
