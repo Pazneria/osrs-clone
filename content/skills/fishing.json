@@ -14,7 +14,17 @@
           "raw_trout",
           "raw_salmon",
           "raw_tuna",
-          "raw_swordfish"
+          "raw_swordfish",
+          "cooked_shrimp",
+          "burnt_shrimp",
+          "cooked_trout",
+          "burnt_trout",
+          "cooked_salmon",
+          "burnt_salmon",
+          "cooked_tuna",
+          "burnt_tuna",
+          "cooked_swordfish",
+          "burnt_swordfish"
         ],
         "sells": [
           "small_net",
@@ -22,6 +32,7 @@
           "harpoon",
           "bait"
         ],
+        "strictBuys": true,
         "unlocks": {
           "itemIds": [
             "raw_shrimp",
@@ -41,7 +52,8 @@
           "harpoon",
           "rune_harpoon"
         ],
-        "sells": []
+        "sells": [],
+        "strictBuys": true
       }
     },
     "primaryResource": "raw_shrimp",
@@ -49,6 +61,46 @@
       "bait": {
         "buy": 2,
         "sell": 1
+      },
+      "burnt_salmon": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_shrimp": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_swordfish": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_trout": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_tuna": {
+        "buy": 1,
+        "sell": 1
+      },
+      "cooked_salmon": {
+        "buy": 32,
+        "sell": 12
+      },
+      "cooked_shrimp": {
+        "buy": 8,
+        "sell": 3
+      },
+      "cooked_swordfish": {
+        "buy": 56,
+        "sell": 22
+      },
+      "cooked_trout": {
+        "buy": 24,
+        "sell": 9
+      },
+      "cooked_tuna": {
+        "buy": 40,
+        "sell": 16
       },
       "fishing_rod": {
         "buy": 45,

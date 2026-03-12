@@ -109,7 +109,14 @@ function run() {
 
   assert(shopEconomy.resolveBuyPrice("raw_shrimp", "fishing_supplier") === 3, "fishing buy price mismatch");
   assert(shopEconomy.resolveSellPrice("raw_shrimp", "fishing_supplier") === 1, "fishing sell price mismatch");
-  assert(shopEconomy.resolveSellPrice("cooked_shrimp", "fishing_supplier") === 4, "general-store fallback half-price mismatch");
+  assert(shopEconomy.resolveSellPrice("cooked_shrimp", "fishing_supplier") === 3, "cooked fish sell value mismatch");
+  assert(shopEconomy.resolveSellPrice("burnt_shrimp", "fishing_supplier") === 1, "burnt fish sell value mismatch");
+  assert(shopEconomy.resolveSellPrice("cooked_shrimp", "general_store") === 4, "general-store fallback half-price mismatch");
+  assert(shopEconomy.resolveSellPrice("burnt_shrimp", "general_store") === 0, "general-store burnt fallback mismatch");
+
+  const cookedProgress = shopEconomy.recordMerchantPurchaseFromPlayer("cooked_shrimp", "fishing_supplier", 200);
+  assert(cookedProgress.soldAfter === 200, "cooked-fish progress should still track sold counts");
+  assert(!shopEconomy.canMerchantSellItem("raw_shrimp", "fishing_supplier"), "cooked-fish sales should not unlock raw fish stock");
 
   assert(!shopEconomy.canMerchantSellItem("raw_shrimp", "fishing_supplier"), "fish should be locked before threshold");
   const unlockA = shopEconomy.recordMerchantPurchaseFromPlayer("raw_shrimp", "fishing_supplier", 49);
@@ -159,9 +166,12 @@ function run() {
   assert(!shopEconomy.canMerchantSellItem("yew_longbow", "advanced_fletcher"), "advanced fletcher should not sell stock");
   assert(shopEconomy.resolveSellPrice("yew_longbow", "advanced_fletcher") === 100, "advanced fletcher yew longbow sell price mismatch");
   assert(shopEconomy.resolveSellPrice("plain_staff_oak", "advanced_fletcher") === Math.floor(itemDefs.plain_staff_oak.value * 0.5), "advanced fletcher plain staff fallback price mismatch");
+  const cookingSpec = SkillSpecRegistry.getSkillSpec("cooking");
+  assert(!!cookingSpec && !!cookingSpec.economy, "cooking economy tables missing");
+  assert(!cookingSpec.economy.merchantTable, "cooking should not define merchant-stock ownership");
   const fishEconomy = fishSpec.economy;
   assert(!!fishEconomy && !!fishEconomy.valueTable && !!fishEconomy.merchantTable, "fishing economy tables missing");
-  const alignedValueIds = ["small_net", "fishing_rod", "harpoon", "rune_harpoon", "bait", "raw_shrimp", "raw_trout", "raw_salmon", "raw_tuna", "raw_swordfish"];
+  const alignedValueIds = ["small_net", "fishing_rod", "harpoon", "rune_harpoon", "bait", "raw_shrimp", "raw_trout", "raw_salmon", "raw_tuna", "raw_swordfish", "cooked_shrimp", "burnt_shrimp", "cooked_trout", "burnt_trout", "cooked_salmon", "burnt_salmon", "cooked_tuna", "burnt_tuna", "cooked_swordfish", "burnt_swordfish"];
   alignedValueIds.forEach((itemId) => {
     const specRow = fishEconomy.valueTable[itemId];
     const item = itemDefs[itemId];
@@ -174,6 +184,9 @@ function run() {
   assert(shopEconomy.canMerchantSellItem("fishing_rod", "fishing_supplier"), "supplier should sell fishing rod by default");
   assert(shopEconomy.canMerchantSellItem("harpoon", "fishing_supplier"), "supplier should sell harpoon by default");
   assert(shopEconomy.canMerchantSellItem("bait", "fishing_supplier"), "supplier should sell bait by default");
+  assert(shopEconomy.canMerchantBuyItem("cooked_shrimp", "fishing_supplier"), "supplier should buy cooked fish");
+  assert(shopEconomy.canMerchantBuyItem("burnt_shrimp", "fishing_supplier"), "supplier should buy burnt fish");
+  assert(!shopEconomy.canMerchantBuyItem("cooked_shrimp", "fishing_teacher"), "teacher should not buy cooked fish");
   assert(!shopEconomy.canMerchantSellItem("small_net", "fishing_teacher"), "teacher should not sell small net by default");
   assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should not sell rune harpoon by default");
 
@@ -428,6 +441,17 @@ function run() {
   assert(worldScript.includes("Fishing Supplier"), "fishing supplier world placement missing");
   assert(worldScript.includes("merchantId: 'fishing_supplier'"), "fishing supplier merchant wiring missing");
   assert(worldScript.includes("merchantId: 'fishing_teacher'"), "fishing teacher merchant wiring missing");
+  assert(worldScript.includes("const cookingRouteSpecs = ["), "cooking route specs missing");
+  assert(worldScript.includes("routeId: 'starter_campfire'"), "starter campfire route missing");
+  assert(worldScript.includes("routeId: 'riverbank_fire_line'"), "riverbank cooking route missing");
+  assert(worldScript.includes("routeId: 'dockside_fire_line'"), "dockside cooking route missing");
+  assert(worldScript.includes("routeId: 'deep_water_dock_fire_line'"), "deep-water cooking route missing");
+  assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
+  assert(worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should seed on renderer init");
+  assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");
+  assert(worldScript.includes("SkillSpecRegistry.getRecipeSet('firemaking')"), "fire lifetime resolver should read firemaking recipe data");
+  assert(worldScript.includes("function tickFireLifecycle()"), "fire lifecycle tick helper missing");
+  assert(worldScript.includes("window.tickFireLifecycle = tickFireLifecycle;"), "fire lifecycle tick export missing");
   assert(worldScript.includes("Borin Ironvein"), "borin world placement missing");
   assert(worldScript.includes("Thrain Deepforge"), "thrain world placement missing");
   assert(worldScript.includes("Elira Gemhand"), "elira world placement missing");
@@ -450,11 +474,15 @@ function run() {
   assert(smithRuntimeScript.includes("const SKILL_ID = 'smithing'"), "smithing runtime module missing skill id");
   assert(smithRuntimeScript.includes("stationType"), "smithing runtime station validation missing");
 
+  const inputRenderScript = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
+  assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
   assert(coreScript.includes("borin_ironvein"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("thrain_deepforge"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("elira_gemhand"), "core QA smithing merchant alias missing");
   assert(coreScript.includes("/qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>"), "core QA openshop help missing merchant list entries");
+  assert(coreScript.includes("/qa cookspots"), "core QA cookspots command help missing");
+  assert(coreScript.includes("/qa gotocook <camp|river|dock|deep>"), "core QA gotocook command help missing");
   const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
   assert(manifestScript.includes("CRAFTING: 'crafting'"), "skill manifest missing crafting action mapping");
@@ -523,4 +551,3 @@ try {
   console.error(error.message);
   process.exit(1);
 }
-

@@ -643,6 +643,7 @@
             window.addEventListener('mouseup', onPointerUp, false);
             renderer.domElement.addEventListener('wheel', onMouseWheel, { passive: false });
             renderer.domElement.addEventListener('contextmenu', onContextMenu, false);
+            seedCookingTrainingFires();
         }
 
         function initUIPreview() {
@@ -789,8 +790,28 @@
 
         const MAX_SKILL_LEVEL = 99;
         const FIRE_STEP_DIR = { x: 0, y: 1 };
-        const FIRE_LIFETIME_TICKS = 50;
+        const DEFAULT_FIRE_LIFETIME_TICKS = 90;
         const ASHES_DESPAWN_TICKS = 100;
+
+        function resolveFireLifetimeTicks() {
+            const firemakingRecipes = (window.SkillSpecRegistry && typeof SkillSpecRegistry.getRecipeSet === 'function')
+                ? SkillSpecRegistry.getRecipeSet('firemaking')
+                : null;
+            const recipeFromRegistry = firemakingRecipes && firemakingRecipes.logs ? firemakingRecipes.logs : null;
+            if (recipeFromRegistry && Number.isFinite(recipeFromRegistry.fireLifetimeTicks)) {
+                return Math.max(1, Math.floor(recipeFromRegistry.fireLifetimeTicks));
+            }
+
+            const firemakingSpec = window.SkillSpecs && window.SkillSpecs.skills ? window.SkillSpecs.skills.firemaking : null;
+            const fallbackRecipe = firemakingSpec && firemakingSpec.recipeSet ? firemakingSpec.recipeSet.logs : null;
+            if (fallbackRecipe && Number.isFinite(fallbackRecipe.fireLifetimeTicks)) {
+                return Math.max(1, Math.floor(fallbackRecipe.fireLifetimeTicks));
+            }
+
+            return DEFAULT_FIRE_LIFETIME_TICKS;
+        }
+
+        const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();
 
         function getXpForLevel(level) {
             const clamped = Math.max(1, Math.min(MAX_SKILL_LEVEL, level));
@@ -929,16 +950,11 @@
 
             return removed;
         }
-        function lightFireAtCurrentTile() {
-            const x = playerState.x;
-            const y = playerState.y;
-            const z = playerState.z;
+        function isFireOccupiedAt(x, y, z) {
+            return activeFires.some((fire) => fire && fire.x === x && fire.y === y && fire.z === z);
+        }
 
-            if (activeFires.some(f => f.x === x && f.y === y && f.z === z)) {
-                addChatMessage('There is already a fire here.', 'warn');
-                return false;
-            }
-
+        function createFireVisualAt(x, y, z) {
             const group = new THREE.Group();
             const terrainHeight = heightMap[z][y][x] + (z * 3.0);
             group.position.set(x, terrainHeight + 0.05, y);
@@ -946,8 +962,10 @@
             const logMat = new THREE.MeshLambertMaterial({ color: 0x4b2e17 });
             const logGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.55, 8);
             logGeo.rotateZ(Math.PI / 2);
-            const logA = new THREE.Mesh(logGeo, logMat); logA.position.set(0, 0.03, 0.08);
-            const logB = new THREE.Mesh(logGeo, logMat); logB.position.set(0, 0.03, -0.08);
+            const logA = new THREE.Mesh(logGeo, logMat);
+            logA.position.set(0, 0.03, 0.08);
+            const logB = new THREE.Mesh(logGeo, logMat);
+            logB.position.set(0, 0.03, -0.08);
 
             const flame = new THREE.Mesh(
                 new THREE.ConeGeometry(0.16, 0.45, 8),
@@ -960,54 +978,120 @@
             flame.userData = Object.assign({}, flame.userData, { type: 'FIRE', gridX: x, gridY: y, z });
 
             group.add(logA, logB, flame);
+            return { group, flame, hitMeshes: [logA, logB, flame] };
+        }
 
-            let cx = Math.floor(x / CHUNK_SIZE);
-            let cy = Math.floor(y / CHUNK_SIZE);
-            if (chunkGroups[`${cx},${cy}`]) {
-                let pGroup = chunkGroups[`${cx},${cy}`].children.find(pg => pg.userData.z === z);
-                if (pGroup) pGroup.add(group); else scene.add(group);
-            } else scene.add(group);
+        function attachFireVisualGroup(group, x, y, z, preferChunkParent = true) {
+            if (preferChunkParent) {
+                const cx = Math.floor(x / CHUNK_SIZE);
+                const cy = Math.floor(y / CHUNK_SIZE);
+                if (chunkGroups[`${cx},${cy}`]) {
+                    const pGroup = chunkGroups[`${cx},${cy}`].children.find((pg) => pg.userData.z === z);
+                    if (pGroup) {
+                        pGroup.add(group);
+                        return;
+                    }
+                }
+            }
+            scene.add(group);
+        }
 
-            environmentMeshes.push(logA, logB, flame);
+        function spawnFireAtTile(x, y, z, options = {}) {
+            if (isFireOccupiedAt(x, y, z)) return false;
+            if (!scene) return false;
+
+            const fireVisual = createFireVisualAt(x, y, z);
+            const expiresTick = Number.isFinite(options.expiresTick)
+                ? options.expiresTick
+                : currentTick + FIRE_LIFETIME_TICKS;
+            const preferChunkParent = options.preferChunkParent !== false;
+
+            attachFireVisualGroup(fireVisual.group, x, y, z, preferChunkParent);
+            environmentMeshes.push(...fireVisual.hitMeshes);
             activeFires.push({
-                x, y, z, mesh: group, flame,
-                hitMeshes: [logA, logB, flame],
-                expiresTick: currentTick + FIRE_LIFETIME_TICKS,
-                phase: Math.random() * Math.PI * 2
+                x,
+                y,
+                z,
+                mesh: fireVisual.group,
+                flame: fireVisual.flame,
+                hitMeshes: fireVisual.hitMeshes,
+                expiresTick,
+                phase: Math.random() * Math.PI * 2,
+                routeId: options.routeId || null
             });
             return true;
         }
 
-        function updateFires(frameNow) {
+        function seedCookingTrainingFires() {
+            if (!Array.isArray(cookingFireSpotsToRender) || cookingFireSpotsToRender.length === 0) return;
+            for (let i = 0; i < cookingFireSpotsToRender.length; i++) {
+                const spot = cookingFireSpotsToRender[i];
+                if (!spot) continue;
+                spawnFireAtTile(spot.x, spot.y, spot.z, {
+                    expiresTick: Number.POSITIVE_INFINITY,
+                    preferChunkParent: false,
+                    routeId: spot.routeId || null
+                });
+            }
+        }
+
+        function lightFireAtCurrentTile() {
+            const x = playerState.x;
+            const y = playerState.y;
+            const z = playerState.z;
+
+            if (isFireOccupiedAt(x, y, z)) {
+                addChatMessage('There is already a fire here.', 'warn');
+                return false;
+            }
+
+            return spawnFireAtTile(x, y, z, {
+                expiresTick: currentTick + FIRE_LIFETIME_TICKS,
+                preferChunkParent: true
+            });
+        }
+
+        function expireFireAtIndex(index) {
+            const fire = activeFires[index];
+            if (!fire) return false;
+
+            if (fire.mesh && fire.mesh.parent) fire.mesh.parent.remove(fire.mesh);
+            else if (fire.mesh) scene.remove(fire.mesh);
+
+            if (Array.isArray(fire.hitMeshes)) {
+                for (let j = 0; j < fire.hitMeshes.length; j++) {
+                    const idx = environmentMeshes.indexOf(fire.hitMeshes[j]);
+                    if (idx !== -1) environmentMeshes.splice(idx, 1);
+                }
+            }
+
+            const ashesItem = ITEM_DB && ITEM_DB.ashes ? ITEM_DB.ashes : null;
+            if (ashesItem) {
+                spawnGroundItem(ashesItem, fire.x, fire.y, fire.z, 1, {
+                    despawnTicks: ASHES_DESPAWN_TICKS
+                });
+            }
+
+            activeFires.splice(index, 1);
+            return true;
+        }
+
+        function tickFireLifecycle() {
             for (let i = activeFires.length - 1; i >= 0; i--) {
                 const fire = activeFires[i];
+                if (!fire || currentTick < fire.expiresTick) continue;
+                expireFireAtIndex(i);
+            }
+        }
 
-                if (currentTick >= fire.expiresTick) {
-                    if (fire.mesh.parent) fire.mesh.parent.remove(fire.mesh);
-                    else scene.remove(fire.mesh);
-                    if (Array.isArray(fire.hitMeshes)) {
-                        for (let j = 0; j < fire.hitMeshes.length; j++) {
-                            const idx = environmentMeshes.indexOf(fire.hitMeshes[j]);
-                            if (idx !== -1) environmentMeshes.splice(idx, 1);
-                        }
-                    }
-
-                    const ashesItem = ITEM_DB && ITEM_DB.ashes ? ITEM_DB.ashes : null;
-                    if (ashesItem) {
-                        spawnGroundItem(ashesItem, fire.x, fire.y, fire.z, 1, {
-                            despawnTicks: ASHES_DESPAWN_TICKS
-                        });
-                    }
-
-                    activeFires.splice(i, 1);
-                    continue;
-                }
-
-                if (fire.flame) {
-                    const t = (frameNow * 0.01) + fire.phase;
-                    fire.flame.scale.set(1.0 + Math.sin(t) * 0.12, 1.0 + Math.sin(t * 1.8) * 0.18, 1.0 + Math.cos(t) * 0.12);
-                    fire.flame.material.opacity = 0.75 + (Math.sin(t * 1.3) * 0.12);
-                }
+        function updateFires(frameNow) {
+            tickFireLifecycle();
+            for (let i = 0; i < activeFires.length; i++) {
+                const fire = activeFires[i];
+                if (!fire || !fire.flame) continue;
+                const t = (frameNow * 0.01) + fire.phase;
+                fire.flame.scale.set(1.0 + Math.sin(t) * 0.12, 1.0 + Math.sin(t * 1.8) * 0.18, 1.0 + Math.cos(t) * 0.12);
+                fire.flame.material.opacity = 0.75 + (Math.sin(t * 1.3) * 0.12);
             }
         }
 
@@ -1982,6 +2066,97 @@
                     action: 'Trade'
                 });
             }
+
+            const cookingRouteSpecs = [
+                {
+                    routeId: 'starter_campfire',
+                    label: 'Starter Campfire',
+                    fireTiles: [
+                        { x: castleFrontPond.cx - 6, y: pierEntryY + 1 }
+                    ]
+                },
+                {
+                    routeId: 'riverbank_fire_line',
+                    label: 'Riverbank Fire Line',
+                    fireTiles: [
+                        { x: castleFrontPond.cx - 8, y: pierEntryY + 3 },
+                        { x: castleFrontPond.cx - 8, y: pierEntryY + 4 },
+                        { x: castleFrontPond.cx - 8, y: pierEntryY + 5 }
+                    ]
+                },
+                {
+                    routeId: 'dockside_fire_line',
+                    label: 'Dockside Fire Line',
+                    fireTiles: [
+                        { x: castleFrontPond.cx + 7, y: pierEntryY + 3 },
+                        { x: castleFrontPond.cx + 7, y: pierEntryY + 4 },
+                        { x: castleFrontPond.cx + 7, y: pierEntryY + 5 }
+                    ]
+                },
+                {
+                    routeId: 'deep_water_dock_fire_line',
+                    label: 'Deep-Water Dock Fire Line',
+                    fireTiles: [
+                        { x: castleFrontPond.cx - 2, y: pierYEnd - 1 },
+                        { x: castleFrontPond.cx, y: pierYEnd - 2 },
+                        { x: castleFrontPond.cx + 2, y: pierYEnd - 1 }
+                    ]
+                }
+            ];
+            const cookingTrainingLocations = [];
+            cookingFireSpotsToRender = [];
+
+            function setCookingRouteTile(x, y, z = 0) {
+                if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return false;
+                const row = logicalMap[z] && logicalMap[z][y];
+                if (!row) return false;
+                const tile = row[x];
+                const validBase = tile === 0 || tile === 6 || tile === 7 || tile === 8 || tile === 15 || tile === 19 || tile === 20 || tile === 21 || tile === 22;
+                if (!validBase) return false;
+
+                if (tile === 21 || tile === 22) {
+                    logicalMap[z][y][x] = 20;
+                    heightMap[z][y][x] = Math.max(-0.01, heightMap[z][y][x]);
+                }
+                return true;
+            }
+
+            for (let i = 0; i < cookingRouteSpecs.length; i++) {
+                const routeSpec = cookingRouteSpecs[i];
+                if (!routeSpec || !Array.isArray(routeSpec.fireTiles)) continue;
+                const routePlacements = [];
+                for (let j = 0; j < routeSpec.fireTiles.length; j++) {
+                    const tile = routeSpec.fireTiles[j];
+                    if (!tile) continue;
+                    if (!setCookingRouteTile(tile.x, tile.y, 0)) continue;
+
+                    const fireSpot = {
+                        routeId: routeSpec.routeId,
+                        label: routeSpec.label,
+                        x: tile.x,
+                        y: tile.y,
+                        z: 0
+                    };
+                    cookingFireSpotsToRender.push(fireSpot);
+                    routePlacements.push(fireSpot);
+                }
+
+                if (routePlacements.length > 0) {
+                    const anchor = routePlacements[Math.floor(routePlacements.length / 2)];
+                    cookingTrainingLocations.push({
+                        routeId: routeSpec.routeId,
+                        label: routeSpec.label,
+                        x: anchor.x,
+                        y: anchor.y,
+                        z: anchor.z,
+                        count: routePlacements.length
+                    });
+                }
+            }
+
+            window.getCookingTrainingLocations = function getCookingTrainingLocations() {
+                return cookingTrainingLocations.slice();
+            };
 
             rebuildRockNodes();
             rebuildTreeNodes();
@@ -3664,12 +3839,14 @@
         window.initMinimap = initMinimap;
         window.initUIPreview = initUIPreview;
         window.manageChunks = manageChunks;
+        window.tickFireLifecycle = tickFireLifecycle;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateMinimap = updateMinimap;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
+
 
 
 

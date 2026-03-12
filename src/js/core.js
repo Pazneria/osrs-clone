@@ -614,6 +614,82 @@ O445411111OOOOO.
             return false;
         }
 
+        function getQaCookingSpots() {
+            const fallback = {
+                camp: { x: 199, y: 224, z: 0, label: 'starter campfire' },
+                river: { x: 197, y: 227, z: 0, label: 'riverbank fire line' },
+                dock: { x: 212, y: 227, z: 0, label: 'dockside fire line' },
+                deep: { x: 205, y: 229, z: 0, label: 'deep-water dock fire line' }
+            };
+
+            if (typeof window.getCookingTrainingLocations !== 'function') return fallback;
+            const routes = window.getCookingTrainingLocations();
+            if (!Array.isArray(routes) || routes.length === 0) return fallback;
+
+            const routeToKey = {
+                starter_campfire: 'camp',
+                riverbank_fire_line: 'river',
+                dockside_fire_line: 'dock',
+                deep_water_dock_fire_line: 'deep'
+            };
+            const merged = Object.assign({}, fallback);
+            for (let i = 0; i < routes.length; i++) {
+                const route = routes[i];
+                if (!route || typeof route.routeId !== 'string') continue;
+                const key = routeToKey[route.routeId];
+                if (!key) continue;
+                merged[key] = {
+                    x: Number.isFinite(route.x) ? route.x : merged[key].x,
+                    y: Number.isFinite(route.y) ? route.y : merged[key].y,
+                    z: Number.isFinite(route.z) ? route.z : merged[key].z,
+                    label: route.label || merged[key].label
+                };
+            }
+            return merged;
+        }
+
+        function qaListCookingSpots() {
+            const spots = getQaCookingSpots();
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                const spot = spots[id];
+                addChatMessage(`[QA cook] ${id} @ (${spot.x},${spot.y},${spot.z})`, 'info');
+            }
+        }
+
+        function qaGotoCookingSpot(nameLike) {
+            const raw = String(nameLike || '').trim().toLowerCase();
+            if (!raw) return false;
+            const spots = getQaCookingSpots();
+            const aliases = {
+                camp: 'camp',
+                campfire: 'camp',
+                starter: 'camp',
+                river: 'river',
+                riverbank: 'river',
+                dock: 'dock',
+                dockside: 'dock',
+                deep: 'deep',
+                deepwater: 'deep',
+                'deep-water': 'deep'
+            };
+            const key = aliases[raw] || raw;
+            if (spots[key]) {
+                const exact = spots[key];
+                return qaTeleportTo(exact.x, exact.y, exact.z, exact.label);
+            }
+
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                if (!id.includes(key)) continue;
+                const spot = spots[id];
+                return qaTeleportTo(spot.x, spot.y, spot.z, spot.label);
+            }
+            return false;
+        }
+
         function getQaFishingMerchants() {
             return {
                 teacher: { x: 201, y: 223, z: 0, label: 'fishing teacher' },
@@ -865,6 +941,7 @@ O445411111OOOOO.
         let groundItems = [];
         let activeFires = [];
         let fishingSpotsToRender = [];
+        let cookingFireSpotsToRender = [];
         let selectedUse = { invIndex: null, itemId: null }; 
 
         // Temporary interaction diagnostics for cooking-use flow.
@@ -969,7 +1046,7 @@ O445411111OOOOO.
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa gotofish <pond|pier|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <general_store|fishing_supplier|fishing_teacher|rune_tutor|combination_sage|forester_teacher|advanced_woodsman|fletching_supplier|advanced_fletcher|borin_ironvein|thrain_deepforge|elira_gemhand>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock combo <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     return;
                 }
 
@@ -1017,12 +1094,22 @@ O445411111OOOOO.
                     qaListFishingMerchants();
                     return;
                 }
+                if (cmd === 'cookspots') {
+                    qaListCookingSpots();
+                    return;
+                }
 
                 
                 if (cmd === 'gotofish' && parts.length >= 2) {
                     const target = String(parts[1] || '').toLowerCase();
                     const ok = qaGotoFishingSpot(target);
                     if (!ok) addChatMessage('Usage: /qa gotofish <pond|pier|deep>', 'warn');
+                    return;
+                }
+                if (cmd === 'gotocook' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoCookingSpot(target);
+                    if (!ok) addChatMessage('Usage: /qa gotocook <camp|river|dock|deep>', 'warn');
                     return;
                 }
 

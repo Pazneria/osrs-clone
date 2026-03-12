@@ -227,11 +227,22 @@
                     raw_trout: { buy: 18, sell: 7 },
                     raw_salmon: { buy: 24, sell: 9 },
                     raw_tuna: { buy: 28, sell: 11 },
-                    raw_swordfish: { buy: 40, sell: 16 }
+                    raw_swordfish: { buy: 40, sell: 16 },
+                    cooked_shrimp: { buy: 8, sell: 3 },
+                    burnt_shrimp: { buy: 1, sell: 1 },
+                    cooked_trout: { buy: 24, sell: 9 },
+                    burnt_trout: { buy: 1, sell: 1 },
+                    cooked_salmon: { buy: 32, sell: 12 },
+                    burnt_salmon: { buy: 1, sell: 1 },
+                    cooked_tuna: { buy: 40, sell: 16 },
+                    burnt_tuna: { buy: 1, sell: 1 },
+                    cooked_swordfish: { buy: 56, sell: 22 },
+                    burnt_swordfish: { buy: 1, sell: 1 }
                 },
                 merchantTable: {
                     fishing_supplier: {
-                        buys: ['small_net', 'fishing_rod', 'harpoon', 'bait', 'raw_shrimp', 'raw_trout', 'raw_salmon', 'raw_tuna', 'raw_swordfish'],
+                        strictBuys: true,
+                        buys: ['small_net', 'fishing_rod', 'harpoon', 'bait', 'raw_shrimp', 'raw_trout', 'raw_salmon', 'raw_tuna', 'raw_swordfish', 'cooked_shrimp', 'burnt_shrimp', 'cooked_trout', 'burnt_trout', 'cooked_salmon', 'burnt_salmon', 'cooked_tuna', 'burnt_tuna', 'cooked_swordfish', 'burnt_swordfish'],
                         sells: ['small_net', 'fishing_rod', 'harpoon', 'bait'],
                         unlocks: {
                             itemIds: ['raw_shrimp', 'raw_trout', 'raw_salmon', 'raw_tuna', 'raw_swordfish'],
@@ -240,6 +251,7 @@
                         }
                     },
                     fishing_teacher: {
+                        strictBuys: true,
                         buys: ['small_net', 'fishing_rod', 'harpoon', 'rune_harpoon'],
                         sells: []
                     }

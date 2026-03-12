@@ -9,14 +9,14 @@
 - [x] COOKING-005: Runtime cooking processing-session flow implemented (use-item routing, per-tick attempts, stop conditions).
 - [x] COOKING-006: Success/burn resolution wiring implemented (raw consumption, cooked/burnt output, XP-on-success, fire validation).
 - [x] COOKING-007: Eating runtime integration completed (immediate heal, per-food eat cooldown ticks, same-tick attack/cast restrictions).
+- [x] COOKING-008: Merchant/economy alignment completed for raw-cooked-burnt fish sell behavior (explicit fish-merchant sell values plus unchanged general-store half-price fallback).
+- [x] COOKING-009: Training-location placement pass completed for starter campfire, riverbank fire line, dockside fire line, and deep-water dock fire line (with world getters and QA teleports).
+- [x] COOKING-010: Cross-skill integration pass completed for fishing raw-fish stock ownership and firemaking fire-lifecycle interactions (fishing-owned merchant unlock coverage + fire-lifecycle tick wiring synced to firemaking spec lifetime data).
 
 ## Now
-- [ ] COOKING-008: Merchant/economy alignment for raw-cooked-burnt sell behavior and general-store fallback handling.
+- [ ] COOKING-011: UX polish for cooking interruption/switching flows and outcome animation consistency.
 
 ## Next
-- [ ] COOKING-009: Training-location placement pass for campfire, riverbank, dockside, and deep-water cooking routes.
-- [ ] COOKING-010: Cross-skill integration pass for fishing raw-fish stock ownership and firemaking fire-lifecycle interactions.
-- [ ] COOKING-011: UX polish for cooking interruption/switching flows and outcome animation consistency.
 
 ## Later
 - [ ] COOKING-012: Balance pass using expected XP/value-per-action targets across the 1-40 food bands.
