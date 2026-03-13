@@ -905,8 +905,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->
 
+## In Progress
+<!-- Actively being worked -->
+
+## Blocked
+<!-- Waiting on decision/dependency/repro -->
+
+## Fixed (Pending Verify)
+<!-- Code fix landed, waiting for confirmation pass -->
+
 ### HIT-042 - Tree silhouette refinement follow-up (willow/maple/yew)
-- Status: Ready
+- Status: Fixed
 - Severity: S3
 - Area: WC
 - Source: Manual
@@ -921,23 +930,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Run a focused visual review at gameplay zoom bands (near/mid/far).
   2. Tune per-type canopy/branch/drape profiles with small targeted adjustments.
   3. Re-validate readability in showcase row and in-world mixed stands.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Tightened willow silhouettes around a thinner, taller trunk with smaller canopy masses and longer outer drapes so the hanging profile survives better at mid/far zoom.
+  - Broadened maple crowns and branch spread so maples read as the widest, flattest canopy family in the showcase row and mixed-world stands.
+  - Narrowed and stacked yew canopy layers around a taller trunk so yews keep a compact spire-like profile instead of blending into the rounder broadleaf silhouettes.
 - Plan vNext (if revised):
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
-## In Progress
-<!-- Actively being worked -->
-
-## Blocked
-<!-- Waiting on decision/dependency/repro -->
-
-## Fixed (Pending Verify)
-<!-- Code fix landed, waiting for confirmation pass -->
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-010 - Minimap destination flag persistence
 - Status: Fixed
