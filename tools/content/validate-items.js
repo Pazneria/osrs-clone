@@ -6,6 +6,17 @@ const {
   loadRuntimeItemCatalog
 } = require("./runtime-item-catalog");
 const {
+  ICON_STATUS_FILENAME,
+  ICON_STATUS_GENERATED_FROM,
+  ICON_STATUS_VALUES,
+  ICON_TREATMENT_VALUES,
+  buildIconStatusManifest,
+  getAssetUsageById,
+  getIconStatusPath,
+  getRuntimeIconAssetId,
+  inferIconTreatment
+} = require("./icon-status-manifest");
+const {
   validatePixelSource,
   getSolidPixelCoords
 } = require("../pixel/pixel-source");
@@ -29,6 +40,7 @@ function main() {
   const itemsDir = path.join(projectRoot, "content", "items");
   const pixelSourceDir = getPixelSourceDir(projectRoot);
   const runtimeMirrorFilename = "runtime-item-catalog.json";
+  const iconStatusPath = getIconStatusPath(projectRoot);
 
   const errors = [];
   const warnings = [];
@@ -217,8 +229,8 @@ function main() {
     }
   }
 
-  const assetUsageById = {};
   const runtimeItemIds = Object.keys(runtimeItemDefs);
+  const assetUsageById = getAssetUsageById(runtimeItemDefs);
   for (const itemId of runtimeItemIds) {
     const itemDef = runtimeItemDefs[itemId];
     const icon = itemDef && itemDef.icon;
@@ -231,12 +243,11 @@ function main() {
       continue;
     }
 
-    const assetId = isString(icon.assetId) ? icon.assetId.trim() : "";
+    const assetId = getRuntimeIconAssetId(itemDef);
     if (!assetId) {
       errors.push(`runtime ITEM_DEFS.${itemId}: icon.assetId must be a non-empty string`);
       continue;
     }
-    assetUsageById[assetId] = (assetUsageById[assetId] || 0) + 1;
 
     if (!pixelSourceById[assetId]) {
       errors.push(`runtime ITEM_DEFS.${itemId}: missing pixel source '${assetId}'`);
@@ -268,6 +279,95 @@ function main() {
   if (sharedAssets.length > 0) {
     const summary = sharedAssets.map((assetId) => `${assetId}(${assetUsageById[assetId]})`).join(", ");
     infos.push(`Shared pixel asset usage: ${summary}`);
+  }
+
+  if (!fs.existsSync(iconStatusPath)) {
+    errors.push(`missing icon status manifest '${ICON_STATUS_FILENAME}' (run 'npm.cmd run tool:items:sync')`);
+  } else {
+    try {
+      const iconStatusManifest = readJson(iconStatusPath);
+      if (!isObject(iconStatusManifest)) {
+        errors.push(`${ICON_STATUS_FILENAME}: manifest root must be an object`);
+      } else {
+        if (iconStatusManifest.generatedFrom !== ICON_STATUS_GENERATED_FROM) {
+          errors.push(
+            `${ICON_STATUS_FILENAME}: generatedFrom must be '${ICON_STATUS_GENERATED_FROM}'`
+          );
+        }
+
+        const iconStatusItems = iconStatusManifest.items;
+        if (!isObject(iconStatusItems)) {
+          errors.push(`${ICON_STATUS_FILENAME}: missing object field 'items'`);
+        } else {
+          const iconStatusErrorCount = errors.length;
+          const iconStatusInfo = { done: 0, todo: 0 };
+
+          for (const [itemId, entry] of Object.entries(iconStatusItems)) {
+            if (!runtimeItemDefs[itemId]) {
+              errors.push(`${ICON_STATUS_FILENAME}: unknown item id '${itemId}'`);
+              continue;
+            }
+            if (!isObject(entry)) {
+              errors.push(`${ICON_STATUS_FILENAME}: item '${itemId}' entry must be an object`);
+              continue;
+            }
+
+            if (!ICON_STATUS_VALUES.includes(entry.status)) {
+              errors.push(
+                `${ICON_STATUS_FILENAME}: item '${itemId}' has invalid status '${entry.status}'`
+              );
+            } else {
+              iconStatusInfo[entry.status] += 1;
+            }
+
+            const expectedAssetId = getRuntimeIconAssetId(runtimeItemDefs[itemId]);
+            if (!isString(entry.assetId)) {
+              errors.push(`${ICON_STATUS_FILENAME}: item '${itemId}' assetId must be a non-empty string`);
+            } else if (entry.assetId.trim() !== expectedAssetId) {
+              errors.push(
+                `${ICON_STATUS_FILENAME}: item '${itemId}' assetId '${entry.assetId}' does not match runtime asset '${expectedAssetId}'`
+              );
+            }
+
+            const expectedTreatment = inferIconTreatment(assetUsageById, expectedAssetId);
+            if (!ICON_TREATMENT_VALUES.includes(entry.treatment)) {
+              errors.push(
+                `${ICON_STATUS_FILENAME}: item '${itemId}' has invalid treatment '${entry.treatment}'`
+              );
+            } else if (entry.treatment !== expectedTreatment) {
+              errors.push(
+                `${ICON_STATUS_FILENAME}: item '${itemId}' treatment '${entry.treatment}' does not match inferred treatment '${expectedTreatment}'`
+              );
+            }
+
+            if ("notes" in entry && entry.notes !== undefined && !isString(entry.notes)) {
+              errors.push(`${ICON_STATUS_FILENAME}: item '${itemId}' notes must be a non-empty string when present`);
+            }
+          }
+
+          for (const itemId of runtimeItemIds) {
+            if (!iconStatusItems[itemId]) {
+              errors.push(`${ICON_STATUS_FILENAME}: missing item '${itemId}'`);
+            }
+          }
+
+          if (errors.length === iconStatusErrorCount) {
+            const expectedManifest = buildIconStatusManifest(projectRoot, runtimeItemDefs, iconStatusManifest);
+            const actualItems = sortKeysDeep(iconStatusItems);
+            const expectedItems = sortKeysDeep(expectedManifest.items);
+            if (JSON.stringify(actualItems) !== JSON.stringify(expectedItems)) {
+              errors.push(
+                `${ICON_STATUS_FILENAME}: icon status manifest is out of sync with src/js/content/item-catalog.js (run 'npm.cmd run tool:items:sync')`
+              );
+            } else {
+              infos.push(`Icon status summary: ${iconStatusInfo.done} done, ${iconStatusInfo.todo} todo`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      errors.push(`${ICON_STATUS_FILENAME}: invalid JSON (${error.message})`);
+    }
   }
 
   const runtimeMirrorPath = path.join(itemsDir, runtimeMirrorFilename);

@@ -21,6 +21,7 @@
     "tool:model:from-image": "powershell -ExecutionPolicy Bypass -File ./tools/model/image-to-obj.ps1",
     "tool:model:render-icon": "powershell -ExecutionPolicy Bypass -File ./tools/model/render-icon.ps1",
     "tool:item:create": "powershell -ExecutionPolicy Bypass -File ./tools/content/create-item-from-image.ps1",
+    "tool:icons:report": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/report-icon-status.js",
     "tool:items:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-items.js",
     "tool:items:sync": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/sync-items-from-runtime.js",
     "tool:skills:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-skills.js",

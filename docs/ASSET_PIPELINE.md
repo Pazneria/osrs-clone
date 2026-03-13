@@ -56,6 +56,7 @@ npm.cmd run tool:pixel:build:all
 
 ```bat
 npm.cmd run tool:items:sync
+npm.cmd run tool:icons:report
 npm.cmd run tool:items:validate
 ```
 
@@ -75,7 +76,8 @@ By default, Codex should automatically:
 2. Author or update `assets/pixel-src/<asset_id>.json`
 3. Build the generated PNG/OBJ outputs
 4. Wire the item to that asset when the mapping is obvious
-5. Summarize what changed and note any assumptions
+5. Update `content/icon-status.json` so future fresh instances know whether the touched items are done or still todo
+6. Summarize what changed and note any assumptions
 
 Codex should only ask a clarifying question when the request is genuinely ambiguous, especially if:
 
@@ -90,6 +92,37 @@ You can override the default behavior explicitly:
 - `don't iterate, just do a fast first pass`
 - `match the tinderbox style`
 - `revise the existing pickaxe asset instead of creating a new one`
+
+## Tracking Which Icons Are Finished
+
+Fresh Codex instances should not guess which icons are "done" from palette noise, asset names, or git history.
+This repo tracks that explicitly in:
+
+- `content/icon-status.json`
+
+Each runtime item gets an entry with:
+
+- `status`: `done` or `todo`
+- `assetId`: the current runtime icon asset
+- `treatment`: `bespoke` or `shared`
+- `notes`: optional short context for reviewers
+
+`npm.cmd run tool:items:sync` keeps `assetId` and `treatment` aligned with `src/js/content/item-catalog.js` while preserving the recorded `status` values.
+
+To see what still needs bespoke icon work:
+
+```bat
+npm.cmd run tool:icons:report
+```
+
+Use `--all` or `--limit` for larger batches:
+
+```bat
+npm.cmd run tool:icons:report -- --all
+npm.cmd run tool:icons:report -- --limit 20
+```
+
+Codex should consult `content/icon-status.json` before picking a new icon batch. That means you do not need to tell a fresh instance which items are already done; it should read the manifest and target `status: todo` items by default.
 
 ## Source schema
 
@@ -133,6 +166,7 @@ New assistant instances do not remember chat history.
 They can still follow this pipeline because it is codified in:
 
 - `docs/ASSET_PIPELINE.md`
+- `content/icon-status.json`
 - `assets/pixel-src/*`
 - `tools/pixel-editor/*`
 - `tools/pixel/*`
@@ -142,6 +176,7 @@ They can still follow this pipeline because it is codified in:
 
 - Canonical runtime item definitions: `src/js/content/item-catalog.js`
 - Canonical editable icon assets: `assets/pixel-src/*`
+- Canonical item-level icon completion state: `content/icon-status.json`
 - Generated runtime mirror: `content/items/runtime-item-catalog.json`
 
 Keep the runtime mirror in sync with:
