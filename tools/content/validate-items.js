@@ -3,13 +3,21 @@ const path = require("path");
 const {
   isObject,
   sortKeysDeep,
-  loadRuntimeItemCatalog,
-  loadIconSpriteCatalog
+  loadRuntimeItemCatalog
 } = require("./runtime-item-catalog");
+const {
+  validatePixelSource,
+  getSolidPixelCoords
+} = require("../pixel/pixel-source");
+const {
+  getPixelSourceDir,
+  getPixelSourcePath,
+  getPixelArtifactPaths
+} = require("../pixel/pixel-project");
+const { readPngSize } = require("../pixel/pixel-png");
 
 function readJson(filePath) {
-  const raw = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(raw);
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
 function isString(value) {
@@ -19,14 +27,15 @@ function isString(value) {
 function main() {
   const projectRoot = path.resolve(__dirname, "..", "..");
   const itemsDir = path.join(projectRoot, "content", "items");
+  const pixelSourceDir = getPixelSourceDir(projectRoot);
+  const runtimeMirrorFilename = "runtime-item-catalog.json";
 
   const errors = [];
   const warnings = [];
   const infos = [];
-  const runtimeMirrorFilename = "runtime-item-catalog.json";
 
   const requiredDirs = [
-    path.join(projectRoot, "assets", "input"),
+    pixelSourceDir,
     path.join(projectRoot, "assets", "pixel"),
     path.join(projectRoot, "assets", "models"),
     itemsDir
@@ -43,21 +52,17 @@ function main() {
     process.exit(1);
   }
 
-  const files = fs
+  const authoredItemFiles = fs
     .readdirSync(itemsDir)
     .filter((name) => name.toLowerCase().endsWith(".json"))
     .filter((name) => !name.startsWith("_"))
     .filter((name) => name !== runtimeMirrorFilename);
 
-  if (files.length === 0) {
+  if (authoredItemFiles.length === 0) {
     warnings.push("No item JSON files found in content/items (excluding templates).");
   }
 
-  const seenIds = new Map();
   let runtimeItemDefs = {};
-  let spriteMarkupByKey = {};
-  let fallbackSpriteKeyByKey = {};
-
   try {
     const runtime = loadRuntimeItemCatalog(projectRoot);
     runtimeItemDefs = isObject(runtime && runtime.itemDefs) ? runtime.itemDefs : {};
@@ -65,19 +70,81 @@ function main() {
     errors.push(`failed to load runtime item catalog: ${error.message}`);
   }
 
-  try {
-    const spriteCatalog = loadIconSpriteCatalog(projectRoot);
-    spriteMarkupByKey = isObject(spriteCatalog && spriteCatalog.spriteMarkupByKey)
-      ? spriteCatalog.spriteMarkupByKey
-      : {};
-    fallbackSpriteKeyByKey = isObject(spriteCatalog && spriteCatalog.fallbackSpriteKeyByKey)
-      ? spriteCatalog.fallbackSpriteKeyByKey
-      : {};
-  } catch (error) {
-    errors.push(`failed to load icon sprite catalog: ${error.message}`);
+  const pixelSourceFiles = fs.existsSync(pixelSourceDir)
+    ? fs.readdirSync(pixelSourceDir).filter((name) => name.toLowerCase().endsWith(".json")).sort()
+    : [];
+  if (pixelSourceFiles.length === 0) {
+    warnings.push("No pixel source files found in assets/pixel-src.");
   }
 
-  for (const file of files) {
+  const pixelSourceById = {};
+  for (const filename of pixelSourceFiles) {
+    const filePath = path.join(pixelSourceDir, filename);
+    let raw;
+    try {
+      raw = readJson(filePath);
+    } catch (error) {
+      errors.push(`${filename}: invalid JSON (${error.message})`);
+      continue;
+    }
+
+    const validation = validatePixelSource(raw);
+    if (validation.errors.length > 0) {
+      errors.push(`${filename}: ${validation.errors.join("; ")}`);
+      continue;
+    }
+
+    const source = validation.normalized;
+    const expectedFilename = `${source.id}.json`;
+    if (filename !== expectedFilename) {
+      errors.push(`${filename}: id '${source.id}' must match filename '${expectedFilename}'`);
+      continue;
+    }
+    if (pixelSourceById[source.id]) {
+      errors.push(`${filename}: duplicate pixel source id '${source.id}'`);
+      continue;
+    }
+
+    try {
+      const solidPixels = getSolidPixelCoords(source);
+      if (solidPixels.length === 0) {
+        errors.push(`${filename}: pixel source must contain at least one non-transparent pixel`);
+      }
+    } catch (error) {
+      errors.push(`${filename}: ${error.message}`);
+      continue;
+    }
+
+    pixelSourceById[source.id] = source;
+
+    const artifacts = getPixelArtifactPaths(projectRoot, source.id);
+    if (!fs.existsSync(artifacts.icon)) {
+      errors.push(`${filename}: missing generated icon '${path.relative(projectRoot, artifacts.icon)}'`);
+    } else {
+      try {
+        const size = readPngSize(artifacts.icon);
+        if (size.width !== 32 || size.height !== 32) {
+          errors.push(`${filename}: generated icon must be 32x32 (found ${size.width}x${size.height})`);
+        }
+      } catch (error) {
+        errors.push(`${filename}: ${error.message}`);
+      }
+    }
+
+    for (const modelKey of ["model", "groundModel"]) {
+      if (!fs.existsSync(artifacts[modelKey])) {
+        errors.push(`${filename}: missing generated ${modelKey} '${path.relative(projectRoot, artifacts[modelKey])}'`);
+        continue;
+      }
+      const stats = fs.statSync(artifacts[modelKey]);
+      if (stats.size <= 0) {
+        errors.push(`${filename}: generated ${modelKey} '${path.relative(projectRoot, artifacts[modelKey])}' is empty`);
+      }
+    }
+  }
+
+  const seenIds = new Map();
+  for (const file of authoredItemFiles) {
     const fullPath = path.join(itemsDir, file);
     let item;
 
@@ -109,18 +176,9 @@ function main() {
       }
     }
 
-    if (!isString(item.name)) {
-      errors.push(`${file}: name must be a non-empty string`);
-    }
-
-    if (!isString(item.type)) {
-      errors.push(`${file}: type must be a non-empty string`);
-    }
-
-    if (typeof item.stackable !== "boolean") {
-      errors.push(`${file}: stackable must be true or false`);
-    }
-
+    if (!isString(item.name)) errors.push(`${file}: name must be a non-empty string`);
+    if (!isString(item.type)) errors.push(`${file}: type must be a non-empty string`);
+    if (typeof item.stackable !== "boolean") errors.push(`${file}: stackable must be true or false`);
     if (typeof item.value !== "number" || !Number.isFinite(item.value) || item.value < 0) {
       errors.push(`${file}: value must be a number >= 0`);
     }
@@ -135,7 +193,6 @@ function main() {
       if (normalizedActions.length !== item.actions.length) {
         errors.push(`${file}: actions must only contain non-empty strings`);
       }
-
       if (!normalizedActions.includes("use")) {
         errors.push(`${file}: actions must include 'Use'`);
       }
@@ -146,8 +203,7 @@ function main() {
       continue;
     }
 
-    const assetFields = ["icon", "model", "groundModel"];
-    for (const key of assetFields) {
+    for (const key of ["icon", "model", "groundModel"]) {
       const assetPath = item.assets[key];
       if (!isString(assetPath)) {
         errors.push(`${file}: assets.${key} must be a non-empty string path`);
@@ -161,45 +217,57 @@ function main() {
     }
   }
 
-  const fallbackUsageByRequestedKey = {};
+  const assetUsageById = {};
   const runtimeItemIds = Object.keys(runtimeItemDefs);
   for (const itemId of runtimeItemIds) {
     const itemDef = runtimeItemDefs[itemId];
     const icon = itemDef && itemDef.icon;
-    if (!isObject(icon) || icon.kind !== "sprite") {
+    if (!isObject(icon)) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: icon must be an object`);
+      continue;
+    }
+    if (icon.kind !== "pixel") {
+      errors.push(`runtime ITEM_DEFS.${itemId}: icon.kind must be 'pixel'`);
       continue;
     }
 
-    const requestedKey = isString(icon.key) ? icon.key.trim() : "";
-    if (!requestedKey) {
-      errors.push(`runtime ITEM_DEFS.${itemId}: sprite icon key must be a non-empty string`);
+    const assetId = isString(icon.assetId) ? icon.assetId.trim() : "";
+    if (!assetId) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: icon.assetId must be a non-empty string`);
+      continue;
+    }
+    assetUsageById[assetId] = (assetUsageById[assetId] || 0) + 1;
+
+    if (!pixelSourceById[assetId]) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: missing pixel source '${assetId}'`);
       continue;
     }
 
-    if (Object.prototype.hasOwnProperty.call(spriteMarkupByKey, requestedKey)) {
-      continue;
+    const artifacts = getPixelArtifactPaths(projectRoot, assetId);
+    if (!fs.existsSync(artifacts.icon)) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: missing generated icon '${path.relative(projectRoot, artifacts.icon)}'`);
     }
-
-    const fallbackKey = isString(fallbackSpriteKeyByKey[requestedKey])
-      ? fallbackSpriteKeyByKey[requestedKey].trim()
-      : "";
-    if (fallbackKey && Object.prototype.hasOwnProperty.call(spriteMarkupByKey, fallbackKey)) {
-      fallbackUsageByRequestedKey[requestedKey] = (fallbackUsageByRequestedKey[requestedKey] || 0) + 1;
-      continue;
+    if (!fs.existsSync(artifacts.model)) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: missing generated model '${path.relative(projectRoot, artifacts.model)}'`);
     }
-
-    errors.push(
-      `runtime ITEM_DEFS.${itemId}: missing sprite '${requestedKey}' in icon catalog and no valid fallback`
-    );
+    if (!fs.existsSync(artifacts.groundModel)) {
+      errors.push(`runtime ITEM_DEFS.${itemId}: missing generated ground model '${path.relative(projectRoot, artifacts.groundModel)}'`);
+    }
   }
 
-  const fallbackUsageKeys = Object.keys(fallbackUsageByRequestedKey).sort();
-  if (fallbackUsageKeys.length > 0) {
-    const usageSummary = fallbackUsageKeys
-      .map((key) => `${key}(${fallbackUsageByRequestedKey[key]})`)
-      .join(", ");
-    infos.push(`Sprite fallback usage detected: ${usageSummary}`);
-    infos.push(`Icon fallback usage count: ${fallbackUsageKeys.reduce((sum, key) => sum + fallbackUsageByRequestedKey[key], 0)}`);
+  const unreferencedSources = Object.keys(pixelSourceById)
+    .filter((assetId) => !assetUsageById[assetId])
+    .sort();
+  if (unreferencedSources.length > 0) {
+    infos.push(`Unreferenced pixel source assets: ${unreferencedSources.join(", ")}`);
+  }
+
+  const sharedAssets = Object.keys(assetUsageById)
+    .filter((assetId) => assetUsageById[assetId] > 1)
+    .sort();
+  if (sharedAssets.length > 0) {
+    const summary = sharedAssets.map((assetId) => `${assetId}(${assetUsageById[assetId]})`).join(", ");
+    infos.push(`Shared pixel asset usage: ${summary}`);
   }
 
   const runtimeMirrorPath = path.join(itemsDir, runtimeMirrorFilename);
@@ -228,11 +296,9 @@ function main() {
   if (errors.length > 0) {
     for (const e of errors) console.error(`ERROR: ${e}`);
   }
-
   if (warnings.length > 0) {
     for (const w of warnings) console.warn(`WARN: ${w}`);
   }
-
   if (infos.length > 0) {
     for (const info of infos) console.log(`INFO: ${info}`);
   }
@@ -241,8 +307,9 @@ function main() {
     process.exit(1);
   }
 
-  const runtimeCount = Object.keys(runtimeItemDefs).length;
-  console.log(`Validated ${files.length} authored item file(s) and runtime mirror (${runtimeCount} runtime item definitions).`);
+  console.log(
+    `Validated ${authoredItemFiles.length} authored item file(s), ${Object.keys(pixelSourceById).length} pixel source asset(s), and runtime mirror (${runtimeItemIds.length} runtime item definitions).`
+  );
   if (warnings.length > 0) {
     console.log(`Validation passed with ${warnings.length} warning(s).`);
   } else {

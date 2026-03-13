@@ -11,7 +11,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'iron_axe_item' }
         },
         iron_axe: {
             name: 'Iron Axe',
@@ -24,7 +24,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'iron_axe' }
         },
         steel_axe: {
             name: 'Steel Axe',
@@ -37,7 +37,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'iron_axe' }
         },
         mithril_axe: {
             name: 'Mithril Axe',
@@ -50,7 +50,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'iron_axe' }
         },
         adamant_axe: {
             name: 'Adamant Axe',
@@ -63,7 +63,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'iron_axe' }
         },
         rune_axe: {
             name: 'Rune Axe',
@@ -76,7 +76,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'iron_axe' }
         },
         logs: {
             name: 'Logs',
@@ -85,7 +85,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+            icon: { kind: 'pixel', assetId: 'regular_logs' }
         },
         oak_logs: {
             name: 'Oak Logs',
@@ -94,7 +94,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+            icon: { kind: 'pixel', assetId: 'logs' }
         },
         willow_logs: {
             name: 'Willow Logs',
@@ -103,7 +103,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'image', path: './assets/pixel/willow_logs-pixel.png' }
+            icon: { kind: 'pixel', assetId: 'willow_logs' }
         },
         maple_logs: {
             name: 'Maple Logs',
@@ -112,7 +112,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+            icon: { kind: 'pixel', assetId: 'logs' }
         },
         yew_logs: {
             name: 'Yew Logs',
@@ -121,7 +121,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'image', path: './assets/pixel/logs-pixel.png' }
+            icon: { kind: 'pixel', assetId: 'logs' }
         },
         ashes: {
             name: 'Ashes',
@@ -130,7 +130,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'ashes' }
+            icon: { kind: 'pixel', assetId: 'ashes' }
         },
         coins: {
             name: 'Coins',
@@ -139,7 +139,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'coins' }
+            icon: { kind: 'pixel', assetId: 'coins' }
         },
         owie: {
             name: 'Owie',
@@ -148,7 +148,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'ashes' }
+            icon: { kind: 'pixel', assetId: 'ashes' }
         },
         tinderbox: {
             name: 'Tinderbox',
@@ -157,7 +157,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'tinderbox' }
+            icon: { kind: 'pixel', assetId: 'tinderbox' }
         },
         knife: {
             name: 'Knife',
@@ -166,7 +166,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'knife' }
+            icon: { kind: 'pixel', assetId: 'knife' }
         },
         iron_pickaxe: {
             name: 'Iron Pickaxe',
@@ -179,7 +179,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'pickaxe' }
+            icon: { kind: 'pixel', assetId: 'pickaxe' }
         },
         small_net: {
             name: 'Small Net',
@@ -188,7 +188,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'small_net' }
+            icon: { kind: 'pixel', assetId: 'small_net' }
         },
         fishing_rod: {
             name: 'Fishing Rod',
@@ -197,7 +197,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'small_net' }
+            icon: { kind: 'pixel', assetId: 'small_net' }
         },
         harpoon: {
             name: 'Harpoon',
@@ -208,7 +208,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'pickaxe' }
+            icon: { kind: 'pixel', assetId: 'pickaxe' }
         },
         rune_harpoon: {
             name: 'Rune Harpoon',
@@ -219,7 +219,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'sprite', key: 'pickaxe' }
+            icon: { kind: 'pixel', assetId: 'pickaxe' }
         },
         bait: {
             name: 'Bait',
@@ -228,7 +228,7 @@
             stackable: true,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         raw_trout: {
             name: 'Raw Trout',
@@ -239,7 +239,7 @@
             defaultAction: 'Use',
             cookResultId: 'cooked_trout',
             burnResultId: 'burnt_trout',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         raw_salmon: {
             name: 'Raw Salmon',
@@ -250,7 +250,7 @@
             defaultAction: 'Use',
             cookResultId: 'cooked_salmon',
             burnResultId: 'burnt_salmon',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         raw_tuna: {
             name: 'Raw Tuna',
@@ -261,7 +261,7 @@
             defaultAction: 'Use',
             cookResultId: 'cooked_tuna',
             burnResultId: 'burnt_tuna',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         raw_swordfish: {
             name: 'Raw Swordfish',
@@ -272,7 +272,7 @@
             defaultAction: 'Use',
             cookResultId: 'cooked_swordfish',
             burnResultId: 'burnt_swordfish',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         raw_shrimp: {
             name: 'Raw Shrimp',
@@ -284,7 +284,7 @@
             cookResultId: 'cooked_shrimp',
             burnResultId: 'burnt_shrimp',
             burnChance: 0.28,
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'shrimp' }
         },
         cooked_shrimp: {
             name: 'Cooked Shrimp',
@@ -295,7 +295,7 @@
             defaultAction: 'Eat',
             healAmount: 3,
             eatDelayTicks: 4,
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'cooked_shrimp' }
         },
         burnt_shrimp: {
             name: 'Burnt Shrimp',
@@ -304,7 +304,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'burnt_shrimp' }
         },
         cooked_trout: {
             name: 'Cooked Trout',
@@ -315,7 +315,7 @@
             defaultAction: 'Eat',
             healAmount: 5,
             eatDelayTicks: 4,
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         burnt_trout: {
             name: 'Burnt Trout',
@@ -324,7 +324,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         cooked_salmon: {
             name: 'Cooked Salmon',
@@ -335,7 +335,7 @@
             defaultAction: 'Eat',
             healAmount: 7,
             eatDelayTicks: 4,
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         burnt_salmon: {
             name: 'Burnt Salmon',
@@ -344,7 +344,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         cooked_tuna: {
             name: 'Cooked Tuna',
@@ -355,7 +355,7 @@
             defaultAction: 'Eat',
             healAmount: 9,
             eatDelayTicks: 4,
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         burnt_tuna: {
             name: 'Burnt Tuna',
@@ -364,7 +364,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         cooked_swordfish: {
             name: 'Cooked Swordfish',
@@ -375,7 +375,7 @@
             defaultAction: 'Eat',
             healAmount: 12,
             eatDelayTicks: 4,
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         burnt_swordfish: {
             name: 'Burnt Swordfish',
@@ -384,7 +384,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'raw_shrimp' }
+            icon: { kind: 'pixel', assetId: 'raw_shrimp' }
         },
         copper_ore: {
             name: 'Copper ore',
@@ -393,7 +393,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'copper_ore' }
+            icon: { kind: 'pixel', assetId: 'copper_ore' }
         },
         tin_ore: {
             name: 'Tin ore',
@@ -402,7 +402,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'tin_ore' }
+            icon: { kind: 'pixel', assetId: 'tin_ore' }
         },
         clay: {
             name: 'Clay',
@@ -411,7 +411,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'tin_ore' }
+            icon: { kind: 'pixel', assetId: 'tin_ore' }
         },
         uncut_sapphire: {
             name: 'Uncut sapphire',
@@ -420,7 +420,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'rune_essence' }
+            icon: { kind: 'pixel', assetId: 'rune_essence' }
         },
         uncut_emerald: {
             name: 'Uncut emerald',
@@ -429,7 +429,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'rune_essence' }
+            icon: { kind: 'pixel', assetId: 'rune_essence' }
         },
         rune_essence: {
             name: 'Rune essence',
@@ -438,7 +438,7 @@
             stackable: false,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'rune_essence' }
+            icon: { kind: 'pixel', assetId: 'rune_essence' }
         },
         ember_rune: {
             name: 'Ember rune',
@@ -447,7 +447,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'ember_rune' }
+            icon: { kind: 'pixel', assetId: 'ember_rune' }
         },
         water_rune: {
             name: 'Water rune',
@@ -456,7 +456,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'water_rune' }
+            icon: { kind: 'pixel', assetId: 'water_rune' }
         },
         earth_rune: {
             name: 'Earth rune',
@@ -465,7 +465,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'earth_rune' }
+            icon: { kind: 'pixel', assetId: 'earth_rune' }
         },
         air_rune: {
             name: 'Air rune',
@@ -474,7 +474,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'air_rune' }
+            icon: { kind: 'pixel', assetId: 'air_rune' }
         },
         steam_rune: {
             name: 'Steam rune',
@@ -483,7 +483,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'steam_rune' }
+            icon: { kind: 'pixel', assetId: 'steam_rune' }
         },
         smoke_rune: {
             name: 'Smoke rune',
@@ -492,7 +492,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'smoke_rune' }
+            icon: { kind: 'pixel', assetId: 'smoke_rune' }
         },
         lava_rune: {
             name: 'Lava rune',
@@ -501,7 +501,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'lava_rune' }
+            icon: { kind: 'pixel', assetId: 'lava_rune' }
         },
         mud_rune: {
             name: 'Mud rune',
@@ -510,7 +510,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'mud_rune' }
+            icon: { kind: 'pixel', assetId: 'mud_rune' }
         },
         mist_rune: {
             name: 'Mist rune',
@@ -519,7 +519,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'mist_rune' }
+            icon: { kind: 'pixel', assetId: 'mist_rune' }
         },
         dust_rune: {
             name: 'Dust rune',
@@ -528,7 +528,7 @@
             stackable: true,
             actions: ['Drop'],
             defaultAction: 'Drop',
-            icon: { kind: 'sprite', key: 'dust_rune' }
+            icon: { kind: 'pixel', assetId: 'dust_rune' }
         },
         small_pouch: {
             name: 'Small pouch',
@@ -537,7 +537,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'small_pouch' }
+            icon: { kind: 'pixel', assetId: 'small_pouch' }
         },
         medium_pouch: {
             name: 'Medium pouch',
@@ -546,7 +546,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'medium_pouch' }
+            icon: { kind: 'pixel', assetId: 'medium_pouch' }
         },
         large_pouch: {
             name: 'Large pouch',
@@ -555,7 +555,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'sprite', key: 'large_pouch' }
+            icon: { kind: 'pixel', assetId: 'large_pouch' }
         }
     };
     function createFletchingItemDefs() {
@@ -567,7 +567,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             bow_string: {
                 name: 'Bow String',
@@ -576,7 +576,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             }
         };
 
@@ -733,7 +733,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             };
 
             defs[def.staffItemId] = {
@@ -743,7 +743,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             };
 
             defs[def.shaftsItemId] = {
@@ -753,7 +753,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             };
 
             defs[def.headlessItemId] = {
@@ -763,7 +763,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             };
 
             defs[def.shortbowUItemId] = {
@@ -773,7 +773,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             };
 
             defs[def.longbowUItemId] = {
@@ -783,7 +783,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             };
 
             defs[def.shortbowItemId] = {
@@ -793,7 +793,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             };
 
             defs[def.longbowItemId] = {
@@ -803,7 +803,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             };
         }
 
@@ -825,7 +825,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             };
         }
 
@@ -840,7 +840,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             },
             ring_mould: {
                 name: 'Ring mould',
@@ -849,7 +849,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'small_pouch' }
+                icon: { kind: 'pixel', assetId: 'small_pouch' }
             },
             amulet_mould: {
                 name: 'Amulet mould',
@@ -858,7 +858,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'small_pouch' }
+                icon: { kind: 'pixel', assetId: 'small_pouch' }
             },
             tiara_mould: {
                 name: 'Tiara mould',
@@ -867,7 +867,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'small_pouch' }
+                icon: { kind: 'pixel', assetId: 'small_pouch' }
             },
             iron_ore: {
                 name: 'Iron ore',
@@ -876,7 +876,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'copper_ore' }
+                icon: { kind: 'pixel', assetId: 'copper_ore' }
             },
             coal: {
                 name: 'Coal',
@@ -885,7 +885,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             mithril_ore: {
                 name: 'Mithril ore',
@@ -894,7 +894,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             silver_ore: {
                 name: 'Silver ore',
@@ -903,7 +903,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             adamant_ore: {
                 name: 'Adamant ore',
@@ -912,7 +912,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             gold_ore: {
                 name: 'Gold ore',
@@ -921,7 +921,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             rune_ore: {
                 name: 'Rune ore',
@@ -930,7 +930,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             silver_ring: {
                 name: 'Silver Ring',
@@ -939,7 +939,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             },
             silver_amulet: {
                 name: 'Silver Amulet',
@@ -948,7 +948,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             },
             silver_tiara: {
                 name: 'Silver Tiara',
@@ -957,7 +957,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             },
             gold_ring: {
                 name: 'Gold Ring',
@@ -966,7 +966,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             },
             gold_amulet: {
                 name: 'Gold Amulet',
@@ -975,7 +975,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             },
             gold_tiara: {
                 name: 'Gold Tiara',
@@ -984,7 +984,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             }
         };
 
@@ -1053,7 +1053,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             };
         });
 
@@ -1066,7 +1066,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             };
             defs[`${tier.id}_axe_head`] = {
                 name: `${tier.name} Axe Head`,
@@ -1075,7 +1075,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             };
             defs[`${tier.id}_pickaxe_head`] = {
                 name: `${tier.name} Pickaxe Head`,
@@ -1084,7 +1084,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             };
             defs[`${tier.id}_arrowheads`] = {
                 name: `${tier.name} Arrowheads`,
@@ -1093,7 +1093,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             };
 
             defs[`${tier.id}_boots`] = {
@@ -1104,7 +1104,7 @@
                 actions: ['Equip', 'Drop'],
                 defaultAction: 'Equip',
                 stats: { atk: 0, def: tier.defStats.boots, str: 0 },
-                icon: { kind: 'sprite', key: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: 'iron_axe' }
             };
             defs[`${tier.id}_helmet`] = {
                 name: `${tier.name} Helmet`,
@@ -1114,7 +1114,7 @@
                 actions: ['Equip', 'Drop'],
                 defaultAction: 'Equip',
                 stats: { atk: 0, def: tier.defStats.helmet, str: 0 },
-                icon: { kind: 'sprite', key: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: 'iron_axe' }
             };
             defs[`${tier.id}_shield`] = {
                 name: `${tier.name} Shield`,
@@ -1124,7 +1124,7 @@
                 actions: ['Equip', 'Drop'],
                 defaultAction: 'Equip',
                 stats: { atk: 0, def: tier.defStats.shield, str: 0 },
-                icon: { kind: 'sprite', key: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: 'iron_axe' }
             };
             defs[`${tier.id}_platelegs`] = {
                 name: `${tier.name} Platelegs`,
@@ -1134,7 +1134,7 @@
                 actions: ['Equip', 'Drop'],
                 defaultAction: 'Equip',
                 stats: { atk: 0, def: tier.defStats.platelegs, str: 0 },
-                icon: { kind: 'sprite', key: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: 'iron_axe' }
             };
             defs[`${tier.id}_platebody`] = {
                 name: `${tier.name} Platebody`,
@@ -1144,7 +1144,7 @@
                 actions: ['Equip', 'Drop'],
                 defaultAction: 'Equip',
                 stats: { atk: 0, def: tier.defStats.platebody, str: 0 },
-                icon: { kind: 'sprite', key: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: 'iron_axe' }
             };
         }
 
@@ -1159,7 +1159,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             wolf_leather: {
                 name: 'Wolf Leather',
@@ -1168,7 +1168,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             bear_leather: {
                 name: 'Bear Leather',
@@ -1177,7 +1177,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             chisel: {
                 name: 'Chisel',
@@ -1186,7 +1186,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             },
             needle: {
                 name: 'Needle',
@@ -1195,7 +1195,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             },
             thread: {
                 name: 'Thread',
@@ -1204,7 +1204,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             soft_clay: {
                 name: 'Soft Clay',
@@ -1213,7 +1213,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
             uncut_ruby: {
                 name: 'Uncut ruby',
@@ -1222,7 +1222,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             cut_ruby: {
                 name: 'Cut ruby',
@@ -1231,7 +1231,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             cut_sapphire: {
                 name: 'Cut sapphire',
@@ -1240,7 +1240,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             cut_emerald: {
                 name: 'Cut emerald',
@@ -1249,7 +1249,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             uncut_diamond: {
                 name: 'Uncut diamond',
@@ -1258,7 +1258,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             cut_diamond: {
                 name: 'Cut diamond',
@@ -1267,7 +1267,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'rune_essence' }
+                icon: { kind: 'pixel', assetId: 'rune_essence' }
             },
             fire_staff: {
                 name: 'Fire Staff',
@@ -1276,7 +1276,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             },
             water_staff: {
                 name: 'Water Staff',
@@ -1285,7 +1285,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             },
             earth_staff: {
                 name: 'Earth Staff',
@@ -1294,7 +1294,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             },
             air_staff: {
                 name: 'Air Staff',
@@ -1303,7 +1303,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'pickaxe' }
             }
         };
         const tierDefs = [
@@ -1352,7 +1352,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'knife' }
+                icon: { kind: 'pixel', assetId: 'knife' }
             };
         }
 
@@ -1368,7 +1368,7 @@
                 actions: ['Equip', 'Use', 'Drop'],
                 defaultAction: 'Equip',
                 stats: Object.assign({}, tier.swordStats),
-                icon: { kind: 'sprite', key: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: 'iron_axe' }
             };
 
             const pickaxeId = `${tier.id}_pickaxe`;
@@ -1384,7 +1384,7 @@
                     actions: ['Equip', 'Use', 'Drop'],
                     defaultAction: 'Equip',
                     stats: Object.assign({}, tier.pickaxeStats),
-                    icon: { kind: 'sprite', key: 'pickaxe' }
+                    icon: { kind: 'pixel', assetId: 'pickaxe' }
                 };
             }
         }
@@ -1398,7 +1398,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'sprite', key: 'coins' }
+                icon: { kind: 'pixel', assetId: 'coins' }
             };
         }
 
@@ -1408,17 +1408,18 @@
     Object.assign(ITEM_DEFS, createSmithingItemDefs());
     Object.assign(ITEM_DEFS, createCraftingAssemblyItemDefs());
 
-    function resolveIcon(def, makeIconSprite, makeIconFromImage, assetVersionTag) {
+    function resolveIcon(def, makeMissingIconSprite, makeIconFromImage, assetVersionTag) {
         if (!def || !def.icon) return '';
-        if (def.icon.kind === 'sprite') return makeIconSprite(def.icon.key);
-        if (def.icon.kind === 'image') {
-            const taggedPath = `${def.icon.path}?v=${assetVersionTag}`;
+        if (def.icon.kind === 'pixel') {
+            const assetId = typeof def.icon.assetId === 'string' ? def.icon.assetId.trim() : '';
+            if (!assetId) return makeMissingIconSprite();
+            const taggedPath = `./assets/pixel/${assetId}.png?v=${assetVersionTag}`;
             return makeIconFromImage(taggedPath);
         }
-        return '';
+        return makeMissingIconSprite();
     }
 
-    function buildItemDb(makeIconSprite, makeIconFromImage, assetVersionTag) {
+    function buildItemDb(makeMissingIconSprite, makeIconFromImage, assetVersionTag) {
         const db = {};
         const ids = Object.keys(ITEM_DEFS);
         for (let i = 0; i < ids.length; i++) {
@@ -1432,7 +1433,7 @@
                 defaultAction: def.defaultAction || 'Use',
                 value: Number.isFinite(def.value) ? def.value : 0,
                 stackable: !!def.stackable,
-                icon: resolveIcon(def, makeIconSprite, makeIconFromImage, assetVersionTag)
+                icon: resolveIcon(def, makeMissingIconSprite, makeIconFromImage, assetVersionTag)
             };
 
             if (def.weaponClass) db[id].weaponClass = def.weaponClass;

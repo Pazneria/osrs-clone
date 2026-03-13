@@ -18,6 +18,10 @@
         const PROGRESS_SAVE_VERSION = 1;
         const PROGRESS_AUTOSAVE_INTERVAL_MS = 10000;
         const PROGRESS_MAX_SKILL_LEVEL = 99;
+        const PLAYER_PROFILE_DEFAULT_NAME = 'Adventurer';
+        const PLAYER_NAME_MIN_LENGTH = 2;
+        const PLAYER_NAME_MAX_LENGTH = 12;
+        const PLAYER_CREATION_COLOR_LABELS = ['Hair', 'Torso', 'Legs', 'Feet', 'Skin'];
 
         // --- Game State (Logical & Terrain) ---
         let currentTick = 0;
@@ -136,6 +140,13 @@
             unlockFlags: { ...DEFAULT_UNLOCK_FLAGS },
             merchantProgress: {}
         };
+        let playerProfileState = {
+            name: '',
+            creationCompleted: false,
+            createdAt: null,
+            lastStartedAt: null
+        };
+        window.playerProfileState = playerProfileState;
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
         let RUNE_ESSENCE_ROCKS = [];
 
@@ -203,6 +214,16 @@
         let frameLimiterPrev = 0;
         let fpsSampleLast = 0;
         let fpsSampleFrames = 0;
+        let playerEntryFlowState = {
+            isOpen: false,
+            hasLoadedSave: false,
+            saveWasLegacyProfile: false,
+            loadReason: 'startup',
+            savedAt: null,
+            sessionActivated: false,
+            unloadSaveHooksRegistered: false,
+            uiBound: false
+        };
 
         const MOTION_TUNING = {
             runArmSwing: 0.8,
@@ -246,20 +267,11 @@
             return '<svg viewBox="0 0 16 16" class="w-[80%] h-[80%]" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="12" height="12" fill="#2f3439"/><rect x="3" y="3" width="10" height="10" fill="#4a525a"/><rect x="5" y="4" width="6" height="1" fill="#9ba7b3"/><rect x="5" y="11" width="6" height="1" fill="#9ba7b3"/><rect x="4" y="5" width="1" height="6" fill="#9ba7b3"/><rect x="11" y="5" width="1" height="6" fill="#9ba7b3"/></svg>';
         }
 
-        function makeIconSprite(id) {
-            const iconCatalog = window.IconSpriteCatalog;
-            const resolved = (iconCatalog && typeof iconCatalog.resolveSpriteMarkup === 'function')
-                ? iconCatalog.resolveSpriteMarkup(id)
-                : null;
-            const spriteMarkup = resolved && typeof resolved.markup === 'string' ? resolved.markup : '';
-            return `<span class="pointer-events-none drop-shadow-md">${spriteMarkup || makeMissingIconSprite()}</span>`;
-        }
-
         function makeIconFromImage(path) {
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260305a";
+        const ASSET_VERSION_TAG = "20260313a";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
 
         function inferItemActions(item) {
@@ -316,7 +328,7 @@
 
         // Item & Inventory State
         const ITEM_DB = (window.ItemCatalog && typeof window.ItemCatalog.buildItemDb === 'function')
-            ? window.ItemCatalog.buildItemDb(makeIconSprite, makeIconFromImage, ASSET_VERSION_TAG)
+            ? window.ItemCatalog.buildItemDb(makeMissingIconSprite, makeIconFromImage, ASSET_VERSION_TAG)
             : {};
         window.ITEM_DB = ITEM_DB;
 
@@ -1282,6 +1294,73 @@
             return restored;
         }
 
+        function sanitizePlayerName(value) {
+            if (typeof value !== 'string') return '';
+            const cleaned = value
+                .replace(/[^A-Za-z0-9 _-]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (!cleaned) return '';
+            return cleaned.slice(0, PLAYER_NAME_MAX_LENGTH).trim();
+        }
+
+        function createEmptyPlayerProfile() {
+            return {
+                name: '',
+                creationCompleted: false,
+                createdAt: null,
+                lastStartedAt: null
+            };
+        }
+
+        function syncPlayerProfileState(nextProfile) {
+            const safeProfile = nextProfile && typeof nextProfile === 'object'
+                ? nextProfile
+                : createEmptyPlayerProfile();
+            playerProfileState.name = typeof safeProfile.name === 'string' ? safeProfile.name : '';
+            playerProfileState.creationCompleted = !!safeProfile.creationCompleted;
+            playerProfileState.createdAt = Number.isFinite(safeProfile.createdAt)
+                ? Math.max(0, Math.floor(safeProfile.createdAt))
+                : null;
+            playerProfileState.lastStartedAt = Number.isFinite(safeProfile.lastStartedAt)
+                ? Math.max(0, Math.floor(safeProfile.lastStartedAt))
+                : null;
+        }
+
+        function sanitizePlayerProfile(savedProfile, options = {}) {
+            const allowLegacyFallback = !!(options && options.allowLegacyFallback);
+            const restored = createEmptyPlayerProfile();
+            if (savedProfile && typeof savedProfile === 'object') {
+                restored.name = sanitizePlayerName(savedProfile.name);
+                restored.creationCompleted = !!savedProfile.creationCompleted;
+                restored.createdAt = Number.isFinite(savedProfile.createdAt)
+                    ? Math.max(0, Math.floor(savedProfile.createdAt))
+                    : null;
+                restored.lastStartedAt = Number.isFinite(savedProfile.lastStartedAt)
+                    ? Math.max(0, Math.floor(savedProfile.lastStartedAt))
+                    : null;
+            }
+
+            if (allowLegacyFallback && !restored.name) restored.name = PLAYER_PROFILE_DEFAULT_NAME;
+            if (allowLegacyFallback && !restored.creationCompleted) restored.creationCompleted = true;
+            if (allowLegacyFallback && !restored.createdAt) restored.createdAt = Date.now();
+
+            return restored;
+        }
+
+        function serializePlayerProfile() {
+            return {
+                name: sanitizePlayerName(playerProfileState.name) || PLAYER_PROFILE_DEFAULT_NAME,
+                creationCompleted: !!playerProfileState.creationCompleted,
+                createdAt: Number.isFinite(playerProfileState.createdAt)
+                    ? Math.max(0, Math.floor(playerProfileState.createdAt))
+                    : null,
+                lastStartedAt: Number.isFinite(playerProfileState.lastStartedAt)
+                    ? Math.max(0, Math.floor(playerProfileState.lastStartedAt))
+                    : null
+            };
+        }
+
         function sanitizeAppearanceState(savedAppearance) {
             if (!window.playerAppearanceState || typeof window.playerAppearanceState !== 'object') return null;
             if (!savedAppearance || typeof savedAppearance !== 'object') return null;
@@ -1318,6 +1397,7 @@
                     equipment: serializeEquipmentState(),
                     userItemPrefs: sanitizeUserItemPrefs(userItemPrefs),
                     runMode: !!isRunning,
+                    profile: serializePlayerProfile(),
                     appearance: window.playerAppearanceState
                         ? {
                             gender: window.playerAppearanceState.gender === 1 ? 1 : 0,
@@ -1420,6 +1500,8 @@
             equipment = deserializeEquipmentState(state.equipment);
             userItemPrefs = sanitizeUserItemPrefs(state.userItemPrefs);
             isRunning = !!state.runMode;
+            const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');
+            syncPlayerProfileState(sanitizePlayerProfile(state.profile, { allowLegacyFallback: true }));
             selectedUse.invIndex = null;
             selectedUse.itemId = null;
 
@@ -1429,7 +1511,7 @@
                 window.playerAppearanceState.colors = appearance.colors.slice();
             }
 
-            return { loaded: true, savedAt: migrated.savedAt };
+            return { loaded: true, savedAt: migrated.savedAt, legacyProfile: !hasSavedProfile };
         }
 
         function startProgressAutosave() {
@@ -1437,6 +1519,17 @@
             progressAutosaveHandle = setInterval(() => {
                 saveProgressToStorage('autosave');
             }, PROGRESS_AUTOSAVE_INTERVAL_MS);
+        }
+
+        function ensureProgressPersistenceLifecycle() {
+            if (playerEntryFlowState.sessionActivated) return;
+            playerEntryFlowState.sessionActivated = true;
+            startProgressAutosave();
+            if (!playerEntryFlowState.unloadSaveHooksRegistered) {
+                window.addEventListener('beforeunload', () => saveProgressToStorage('beforeunload'));
+                window.addEventListener('pagehide', () => saveProgressToStorage('pagehide'));
+                playerEntryFlowState.unloadSaveHooksRegistered = true;
+            }
         }
 
         // Temporary interaction diagnostics for cooking-use flow.
@@ -1544,6 +1637,404 @@
         function showPlayerOverheadText(text, durationMs = 2800) {
             playerOverheadText.text = text;
             playerOverheadText.expiresAt = Date.now() + durationMs;
+        }
+
+        function isPlayerEntryFlowOpen() {
+            return !!playerEntryFlowState.isOpen;
+        }
+
+        function clearMovementKeys() {
+            const keyIds = Object.keys(keys);
+            for (let i = 0; i < keyIds.length; i++) keys[keyIds[i]] = false;
+        }
+
+        function setPlayerEntryFlowOpen(isOpen) {
+            const overlay = document.getElementById('player-entry-overlay');
+            if (!overlay) return;
+
+            playerEntryFlowState.isOpen = !!isOpen;
+            overlay.classList.toggle('hidden', !isOpen);
+            document.body.classList.toggle('player-entry-open', !!isOpen);
+
+            if (!isOpen) return;
+
+            clearMovementKeys();
+            playerState.path = [];
+            playerState.targetX = playerState.x;
+            playerState.targetY = playerState.y;
+            playerState.pendingSkillStart = null;
+            playerState.pendingActionAfterTurn = null;
+            playerState.turnLock = false;
+            playerState.actionVisualReady = true;
+            playerState.action = 'IDLE';
+            if (typeof closeContextMenu === 'function') closeContextMenu();
+            if (typeof hideInventoryHoverTooltip === 'function') hideInventoryHoverTooltip();
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) chatInput.blur();
+        }
+
+        function validatePlayerEntryName() {
+            const value = sanitizePlayerName(playerProfileState.name);
+            if (!value) {
+                return {
+                    ok: false,
+                    value: '',
+                    message: `Choose a name with ${PLAYER_NAME_MIN_LENGTH}-${PLAYER_NAME_MAX_LENGTH} letters or numbers.`
+                };
+            }
+            if (value.length < PLAYER_NAME_MIN_LENGTH) {
+                return {
+                    ok: false,
+                    value,
+                    message: `Name must be at least ${PLAYER_NAME_MIN_LENGTH} characters long.`
+                };
+            }
+            return { ok: true, value, message: '' };
+        }
+
+        function unpackPlayerEntryHsl(packed) {
+            const safePacked = Number.isFinite(packed) ? Math.floor(packed) : 0;
+            return {
+                h: (safePacked >> 10) & 63,
+                s: (safePacked >> 7) & 7,
+                l: safePacked & 127
+            };
+        }
+
+        function playerEntryHueToRgb(p, q, t) {
+            let wrapped = t;
+            if (wrapped < 0) wrapped += 1;
+            if (wrapped > 1) wrapped -= 1;
+            if (wrapped < 1 / 6) return p + (q - p) * 6 * wrapped;
+            if (wrapped < 1 / 2) return q;
+            if (wrapped < 2 / 3) return p + (q - p) * (2 / 3 - wrapped) * 6;
+            return p;
+        }
+
+        function packedPlayerEntryColorToCss(packed) {
+            const hsl = unpackPlayerEntryHsl(packed);
+            const h = hsl.h / 63;
+            const s = hsl.s / 7;
+            const l = hsl.l / 127;
+            let r;
+            let g;
+            let b;
+            if (s === 0) {
+                r = l;
+                g = l;
+                b = l;
+            } else {
+                const q = l < 0.5 ? l * (1 + s) : l + s - (l * s);
+                const p = (2 * l) - q;
+                r = playerEntryHueToRgb(p, q, h + (1 / 3));
+                g = playerEntryHueToRgb(p, q, h);
+                b = playerEntryHueToRgb(p, q, h - (1 / 3));
+            }
+            return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+        }
+
+        function formatPlayerEntryTimestamp(value) {
+            if (!Number.isFinite(value)) return 'unknown';
+            try {
+                return new Date(value).toLocaleString();
+            } catch (error) {
+                return 'unknown';
+            }
+        }
+
+        function refreshPlayerAppearancePreview() {
+            if (typeof window.rebuildPlayerRigsFromAppearance === 'function') {
+                window.rebuildPlayerRigsFromAppearance();
+            }
+        }
+
+        function updatePlayerEntryGenderButtons() {
+            const currentGender = window.playerAppearanceState && window.playerAppearanceState.gender === 1 ? 1 : 0;
+            [0, 1].forEach((gender) => {
+                const button = document.getElementById(`player-entry-gender-${gender}`);
+                if (!button) return;
+                const active = currentGender === gender;
+                button.classList.toggle('active', active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
+
+        function renderPlayerEntryColorRows() {
+            const container = document.getElementById('player-entry-color-rows');
+            if (!container) return;
+            const catalog = window.PlayerAppearanceCatalog || {};
+            const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
+            if (!window.playerAppearanceState || !Array.isArray(window.playerAppearanceState.colors)) return;
+
+            container.innerHTML = '';
+
+            for (let paletteIndex = 0; paletteIndex < PLAYER_CREATION_COLOR_LABELS.length; paletteIndex++) {
+                const row = document.createElement('div');
+                row.className = 'player-entry-color-row';
+
+                const label = document.createElement('div');
+                label.className = 'player-entry-color-row-label';
+                label.textContent = PLAYER_CREATION_COLOR_LABELS[paletteIndex];
+                row.appendChild(label);
+
+                const swatches = document.createElement('div');
+                swatches.className = 'player-entry-color-row-swatches';
+
+                const palette = Array.isArray(palettes[paletteIndex]) ? palettes[paletteIndex] : [];
+                const activeIndex = Number.isFinite(window.playerAppearanceState.colors[paletteIndex])
+                    ? Math.floor(window.playerAppearanceState.colors[paletteIndex])
+                    : 0;
+
+                for (let swatchIndex = 0; swatchIndex < palette.length; swatchIndex++) {
+                    const swatchButton = document.createElement('button');
+                    swatchButton.type = 'button';
+                    swatchButton.className = 'player-entry-swatch';
+                    if (swatchIndex === activeIndex) swatchButton.classList.add('active');
+                    swatchButton.style.backgroundColor = packedPlayerEntryColorToCss(palette[swatchIndex]);
+                    swatchButton.setAttribute('aria-label', `${PLAYER_CREATION_COLOR_LABELS[paletteIndex]} option ${swatchIndex + 1}`);
+                    swatchButton.onclick = () => {
+                        window.playerAppearanceState.colors[paletteIndex] = swatchIndex;
+                        renderPlayerEntryColorRows();
+                        renderPlayerEntrySummary();
+                        refreshPlayerAppearancePreview();
+                    };
+                    swatches.appendChild(swatchButton);
+                }
+
+                row.appendChild(swatches);
+                container.appendChild(row);
+            }
+        }
+
+        function renderPlayerEntrySummary() {
+            const summary = document.getElementById('player-entry-summary');
+            if (!summary) return;
+            const safeName = sanitizePlayerName(playerProfileState.name) || 'Unnamed Adventurer';
+            const catalog = window.PlayerAppearanceCatalog || {};
+            const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
+            const colors = window.playerAppearanceState && Array.isArray(window.playerAppearanceState.colors)
+                ? window.playerAppearanceState.colors
+                : [0, 0, 0, 0, 0];
+
+            summary.innerHTML = '';
+
+            const heading = document.createElement('div');
+            heading.className = 'player-entry-summary-name';
+            heading.textContent = safeName;
+            summary.appendChild(heading);
+
+            const bodyType = document.createElement('div');
+            bodyType.className = 'player-entry-summary-meta';
+            bodyType.textContent = `Body type: ${window.playerAppearanceState && window.playerAppearanceState.gender === 1 ? 'Female' : 'Male'}`;
+            summary.appendChild(bodyType);
+
+            const meta = document.createElement('div');
+            meta.className = 'player-entry-summary-meta';
+            if (playerEntryFlowState.hasLoadedSave && Number.isFinite(playerEntryFlowState.savedAt)) {
+                meta.textContent = `Last save: ${formatPlayerEntryTimestamp(playerEntryFlowState.savedAt)}`;
+            } else if (Number.isFinite(playerProfileState.createdAt)) {
+                meta.textContent = `Created: ${formatPlayerEntryTimestamp(playerProfileState.createdAt)}`;
+            } else {
+                meta.textContent = 'Fresh character profile';
+            }
+            summary.appendChild(meta);
+
+            const swatchList = document.createElement('div');
+            swatchList.className = 'player-entry-summary-swatches';
+            for (let paletteIndex = 0; paletteIndex < PLAYER_CREATION_COLOR_LABELS.length; paletteIndex++) {
+                const palette = Array.isArray(palettes[paletteIndex]) ? palettes[paletteIndex] : [];
+                const activeIndex = Number.isFinite(colors[paletteIndex]) ? Math.floor(colors[paletteIndex]) : 0;
+                const packed = palette[activeIndex] !== undefined ? palette[activeIndex] : 0;
+
+                const chip = document.createElement('div');
+                chip.className = 'player-entry-summary-chip';
+
+                const colorDot = document.createElement('span');
+                colorDot.className = 'player-entry-summary-chip-color';
+                colorDot.style.backgroundColor = packedPlayerEntryColorToCss(packed);
+                chip.appendChild(colorDot);
+
+                const chipLabel = document.createElement('span');
+                chipLabel.textContent = PLAYER_CREATION_COLOR_LABELS[paletteIndex];
+                chip.appendChild(chipLabel);
+
+                swatchList.appendChild(chip);
+            }
+            summary.appendChild(swatchList);
+        }
+
+        function renderPlayerEntryFlow() {
+            const title = document.getElementById('player-entry-title');
+            const subtitle = document.getElementById('player-entry-subtitle');
+            const nameInput = document.getElementById('player-entry-name');
+            const error = document.getElementById('player-entry-name-error');
+            const note = document.getElementById('player-entry-secondary-note');
+            const primary = document.getElementById('player-entry-primary');
+            const nameValidation = validatePlayerEntryName();
+            const isContinueFlow = !!playerEntryFlowState.hasLoadedSave && !!playerProfileState.creationCompleted;
+
+            if (title) title.textContent = isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer';
+            if (subtitle) {
+                if (playerEntryFlowState.loadReason === 'parse_failed' || playerEntryFlowState.loadReason === 'invalid_payload') {
+                    subtitle.textContent = 'Previous save data could not be read, so this run starts from fresh defaults.';
+                } else if (playerEntryFlowState.saveWasLegacyProfile) {
+                    subtitle.textContent = 'A legacy save was detected. Tune the starter profile and continue without losing your progress.';
+                } else if (isContinueFlow) {
+                    subtitle.textContent = 'Saved progress is loaded. You can tweak the profile here before stepping back into the world.';
+                } else {
+                    subtitle.textContent = 'Choose a starter identity before the prototype lets you into the world.';
+                }
+            }
+
+            if (nameInput) {
+                if (document.activeElement !== nameInput && nameInput.value !== playerProfileState.name) {
+                    nameInput.value = playerProfileState.name;
+                }
+                nameInput.placeholder = PLAYER_PROFILE_DEFAULT_NAME;
+            }
+            if (error) error.textContent = nameValidation.ok ? '' : nameValidation.message;
+            if (primary) {
+                primary.textContent = isContinueFlow ? 'Continue Adventure' : 'Start Adventure';
+                primary.disabled = !nameValidation.ok;
+            }
+            if (note) {
+                if (playerEntryFlowState.saveWasLegacyProfile) {
+                    note.textContent = 'Legacy save note: the old save had no character profile, so a starter profile was generated from your existing progress.';
+                } else if (playerEntryFlowState.hasLoadedSave && Number.isFinite(playerEntryFlowState.savedAt)) {
+                    note.textContent = `Progress loaded from ${formatPlayerEntryTimestamp(playerEntryFlowState.savedAt)}.`;
+                } else {
+                    note.textContent = 'Progress will begin autosaving locally in this browser once you enter the world.';
+                }
+            }
+
+            updatePlayerEntryGenderButtons();
+            renderPlayerEntryColorRows();
+            renderPlayerEntrySummary();
+        }
+
+        function completePlayerEntryFlow() {
+            const nameValidation = validatePlayerEntryName();
+            if (!nameValidation.ok) {
+                renderPlayerEntryFlow();
+                const nameInput = document.getElementById('player-entry-name');
+                if (nameInput) nameInput.focus();
+                return;
+            }
+
+            playerProfileState.name = nameValidation.value;
+            playerProfileState.creationCompleted = true;
+            if (!playerProfileState.createdAt) playerProfileState.createdAt = Date.now();
+            playerProfileState.lastStartedAt = Date.now();
+
+            setPlayerEntryFlowOpen(false);
+            ensureProgressPersistenceLifecycle();
+
+            const isReturning = !!playerEntryFlowState.hasLoadedSave;
+            addChatMessage(isReturning ? `Welcome back, ${playerProfileState.name}.` : `Welcome, ${playerProfileState.name}.`, 'game');
+            addChatMessage('Tip: Left-click to move. Right-click for actions.', 'info');
+            addChatMessage('QA loadouts: type /qa help in chat.', 'info');
+
+            if (isReturning) {
+                addChatMessage('Loaded saved progress from your previous session.', 'info');
+                if (playerEntryFlowState.saveWasLegacyProfile) {
+                    addChatMessage('Legacy save profile upgraded automatically.', 'info');
+                }
+            } else if (playerEntryFlowState.loadReason === 'parse_failed' || playerEntryFlowState.loadReason === 'invalid_payload') {
+                addChatMessage('Save data was invalid and has been ignored; starting with defaults.', 'warn');
+            }
+
+            saveProgressToStorage(isReturning ? 'continue_session' : 'player_creation_complete');
+        }
+
+        function initPlayerEntryFlow(loadProgressResult) {
+            const overlay = document.getElementById('player-entry-overlay');
+            if (!overlay) {
+                ensureProgressPersistenceLifecycle();
+                return;
+            }
+
+            playerEntryFlowState.hasLoadedSave = !!(loadProgressResult && loadProgressResult.loaded);
+            playerEntryFlowState.saveWasLegacyProfile = !!(loadProgressResult && loadProgressResult.legacyProfile);
+            playerEntryFlowState.loadReason = loadProgressResult && loadProgressResult.reason
+                ? loadProgressResult.reason
+                : 'startup';
+            playerEntryFlowState.savedAt = loadProgressResult && Number.isFinite(loadProgressResult.savedAt)
+                ? loadProgressResult.savedAt
+                : null;
+
+            if (playerEntryFlowState.hasLoadedSave && !playerProfileState.name) {
+                playerProfileState.name = PLAYER_PROFILE_DEFAULT_NAME;
+            }
+
+            if (!playerEntryFlowState.uiBound) {
+                const nameInput = document.getElementById('player-entry-name');
+                const primaryButton = document.getElementById('player-entry-primary');
+                const maleButton = document.getElementById('player-entry-gender-0');
+                const femaleButton = document.getElementById('player-entry-gender-1');
+
+                if (nameInput) {
+                    nameInput.addEventListener('input', () => {
+                        const sanitized = sanitizePlayerName(nameInput.value);
+                        if (nameInput.value !== sanitized) nameInput.value = sanitized;
+                        playerProfileState.name = sanitized;
+                        renderPlayerEntryFlow();
+                    });
+                    nameInput.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            completePlayerEntryFlow();
+                        }
+                    });
+                }
+
+                if (maleButton) {
+                    maleButton.addEventListener('click', () => {
+                        if (!window.playerAppearanceState) return;
+                        window.playerAppearanceState.gender = 0;
+                        renderPlayerEntryFlow();
+                        refreshPlayerAppearancePreview();
+                    });
+                }
+
+                if (femaleButton) {
+                    femaleButton.addEventListener('click', () => {
+                        if (!window.playerAppearanceState) return;
+                        window.playerAppearanceState.gender = 1;
+                        renderPlayerEntryFlow();
+                        refreshPlayerAppearancePreview();
+                    });
+                }
+
+                if (primaryButton) primaryButton.addEventListener('click', completePlayerEntryFlow);
+
+                playerEntryFlowState.uiBound = true;
+            }
+
+            const shouldBlockBehindEntryFlow =
+                !playerEntryFlowState.hasLoadedSave ||
+                !playerProfileState.creationCompleted ||
+                playerEntryFlowState.saveWasLegacyProfile ||
+                playerEntryFlowState.loadReason === 'parse_failed' ||
+                playerEntryFlowState.loadReason === 'invalid_payload';
+
+            renderPlayerEntryFlow();
+            if (!shouldBlockBehindEntryFlow) {
+                setPlayerEntryFlowOpen(false);
+                playerProfileState.lastStartedAt = Date.now();
+                ensureProgressPersistenceLifecycle();
+                addChatMessage(`Welcome back, ${playerProfileState.name}.`, 'game');
+                addChatMessage('Loaded saved progress from your previous session.', 'info');
+                saveProgressToStorage('auto_resume_session');
+                return;
+            }
+
+            setPlayerEntryFlowOpen(true);
+
+            const nameInput = document.getElementById('player-entry-name');
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.select();
+            }
         }
 
         function sendChatMessage(rawText) {
@@ -1744,6 +2235,11 @@
             if (!input) return;
 
             input.addEventListener('keydown', (e) => {
+                if (isPlayerEntryFlowOpen()) {
+                    e.preventDefault();
+                    input.blur();
+                    return;
+                }
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     sendChatMessage(input.value);
@@ -1756,6 +2252,7 @@
             window.addEventListener('keydown', (e) => {
                 if (!input) return;
                 if (e.target && e.target.id === 'chat-input') return;
+                if (isPlayerEntryFlowOpen()) return;
                 if (e.defaultPrevented) return;
                 if (e.ctrlKey || e.metaKey || e.altKey) return;
 
@@ -1847,20 +2344,10 @@
             if (typeof window.initMinimap === 'function') window.initMinimap();
             if (typeof window.initUIPreview === 'function') window.initUIPreview(); 
             initInventoryUI(); 
-            addChatMessage('Welcome to the prototype.', 'game');
-            addChatMessage('Tip: Left-click to move. Right-click for actions.', 'info');
-            addChatMessage('QA loadouts: type /qa help in chat.', 'info');
-            if (loadProgressResult && loadProgressResult.loaded) {
-                addChatMessage('Loaded saved progress from your previous session.', 'info');
-            } else if (loadProgressResult && (loadProgressResult.reason === 'parse_failed' || loadProgressResult.reason === 'invalid_payload')) {
-                addChatMessage('Save data was invalid and has been ignored; starting with defaults.', 'warn');
-            }
             initChatInput();
             if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
             if (typeof initPoseEditor === 'function') initPoseEditor();
-            startProgressAutosave();
-            window.addEventListener('beforeunload', () => saveProgressToStorage('beforeunload'));
-            window.addEventListener('pagehide', () => saveProgressToStorage('pagehide'));
+            initPlayerEntryFlow(loadProgressResult);
 
             const worldMapPanel = document.getElementById('world-map-panel');
             const worldMapToggleBtn = document.getElementById('mapToggleBtn');
@@ -1893,6 +2380,7 @@
             // Input Listeners
             window.addEventListener('keydown', (e) => {
                 if (e.target && e.target.id === 'chat-input') return;
+                if (isPlayerEntryFlowOpen()) return;
                 const k = e.key.toLowerCase();
                 if (keys.hasOwnProperty(k)) keys[k] = true;
                 if (e.key === 'Escape' && worldMapPanel && !worldMapPanel.classList.contains('hidden')) setWorldMapOpen(false);
@@ -1900,6 +2388,7 @@
             });
             window.addEventListener('keyup', (e) => {
                 if (e.target && e.target.id === 'chat-input') return;
+                if (isPlayerEntryFlowOpen()) return;
                 const k = e.key.toLowerCase();
                 if (keys.hasOwnProperty(k)) keys[k] = false;
             });

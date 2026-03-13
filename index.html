@@ -36,6 +36,40 @@
             </div>
         </div>
 
+        <div id="player-entry-overlay" class="hidden pointer-events-auto absolute inset-0 z-[1150] player-entry-overlay">
+            <div class="player-entry-panel">
+                <div class="player-entry-intro">
+                    <div class="player-entry-kicker">Arrival Gate</div>
+                    <h1 id="player-entry-title" class="player-entry-title">Create Your Adventurer</h1>
+                    <p id="player-entry-subtitle" class="player-entry-subtitle">Choose a starter identity before the prototype lets you into the world.</p>
+                    <div id="player-entry-summary" class="player-entry-summary"></div>
+                </div>
+                <div class="player-entry-form">
+                    <label class="player-entry-field" for="player-entry-name">
+                        <span class="player-entry-label">Name</span>
+                        <input id="player-entry-name" class="player-entry-input" type="text" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Adventurer">
+                    </label>
+                    <div id="player-entry-name-error" class="player-entry-error"></div>
+                    <div class="player-entry-field">
+                        <span class="player-entry-label">Body Type</span>
+                        <div class="player-entry-gender-buttons">
+                            <button id="player-entry-gender-0" class="player-entry-toggle active" type="button" aria-pressed="true">Male</button>
+                            <button id="player-entry-gender-1" class="player-entry-toggle" type="button" aria-pressed="false">Female</button>
+                        </div>
+                    </div>
+                    <div class="player-entry-field">
+                        <div class="player-entry-label-row">
+                            <span class="player-entry-label">Colors</span>
+                            <span class="player-entry-label-hint">Pick from the runtime palettes already wired into the player model.</span>
+                        </div>
+                        <div id="player-entry-color-rows" class="player-entry-color-rows"></div>
+                    </div>
+                    <div id="player-entry-secondary-note" class="player-entry-secondary-note">Progress will begin autosaving once you enter the world.</div>
+                    <button id="player-entry-primary" class="player-entry-primary" type="button">Start Adventure</button>
+                </div>
+            </div>
+        </div>
+
         <div id="motion-debug-panel" class="absolute top-24 left-4 pointer-events-auto z-[210] bg-[#111418]/95 border border-[#3a444c] rounded p-2 w-52 text-[10px] text-gray-200 hidden">
             <div class="font-bold text-[#c8aa6e] mb-1">Motion Tuning</div>
             <label class="block mb-1">Step Swing <input id="motion-step-swing" type="range" min="0.2" max="1.2" step="0.01" class="w-full"></label>
@@ -246,8 +280,7 @@
         </div>
     </div>
 
-                <script src="./src/js/content/item-catalog.js"></script>
-        <script src="./src/js/content/icon-sprite-catalog.js"></script>
+        <script src="./src/js/content/item-catalog.js"></script>
         <script src="./src/js/content/player-appearance-catalog.js"></script>
         <script src="./src/js/content/examine-catalog.js"></script>
         <script src="./src/js/core.js"></script>

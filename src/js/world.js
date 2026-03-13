@@ -1496,7 +1496,7 @@
                     new THREE.MeshLambertMaterial({ color: 0x3d2a1c })
                 );
                 base.position.set(0, -0.05, 0);
-                addGroundItemSprite(group, './assets/pixel/logs-pixel.png?v=20260305a', 0.2, 0.5);
+                addGroundItemSprite(group, './assets/pixel/logs.png?v=20260313a', 0.2, 0.5);
                 group.add(base);
             } else if (itemData.id === 'coins') {
                 const coinGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.05, 8);
@@ -1603,26 +1603,26 @@
                 stumpScale: [1.56, 0.2, 1.56]
             },
             willow_tree: {
-                trunkScale: [0.74, 2.14, 0.74],
-                canopyScales: [[1.18, 0.94, 1.22], [1.0, 0.86, 1.04], [0.96, 0.82, 1.0], [0.82, 0.74, 0.84]],
-                canopyYOffset: 0.88,
-                canopyOffsets: [[0.0, 0.08, 0.02], [0.54, 0.0, 0.42], [-0.5, -0.02, -0.4], [0.0, 0.28, -0.04]],
-                canopyYRotations: [0.0, 0.16, -0.18, 0.06],
+                trunkScale: [0.82, 1.92, 0.82],
+                canopyScales: [[1.44, 1.12, 1.48], [1.26, 1.04, 1.3], [1.2, 0.98, 1.22], [1.08, 0.92, 1.1]],
+                canopyYOffset: 0.72,
+                canopyOffsets: [[0.0, 0.3, 0.0], [0.4, 0.22, 0.3], [-0.38, 0.2, -0.28], [0.02, 0.5, -0.06]],
+                canopyYRotations: [0.0, 0.22, -0.24, 0.1],
                 canopyJitter: 0.02,
-                branchScale: [0.86, 0.9, 0.86],
-                branchOffset: [-0.14, 0.44, 0.12],
-                branchYaw: 0.66,
-                branch2Scale: [0.82, 0.86, 0.82],
-                branch2Offset: [0.12, 0.72, -0.2],
-                branch2Yaw: -0.74,
-                branch3Scale: [0.74, 0.9, 0.74],
-                branch3Offset: [0.18, 0.92, 0.2],
-                branch3Yaw: 0.3,
-                drapeScales: [[1.18, 1.46, 1.18], [1.12, 1.38, 1.12], [1.16, 1.58, 1.16], [1.22, 1.64, 1.22], [1.02, 1.28, 1.02], [1.06, 1.32, 1.06], [1.12, 1.52, 1.12], [1.18, 1.56, 1.18]],
-                drapeOffsets: [[0.16, 0.04, 0.08], [-0.16, 0.02, -0.08], [0.08, -0.02, 0.16], [-0.1, -0.04, -0.16], [0.04, 0.12, 0.22], [-0.04, 0.14, -0.22], [-0.14, -0.08, 0.04], [0.14, -0.1, -0.04]],
-                drapeYRotations: [0.48, -0.46, 0.74, -0.7, 0.28, -0.26, 0.94, -0.9],
-                drapeJitter: 0.05,
-                stumpScale: [0.92, 0.16, 0.92]
+                branchScale: [0.98, 0.94, 0.98],
+                branchOffset: [-0.12, 0.36, 0.08],
+                branchYaw: 0.58,
+                branch2Scale: [0.94, 0.98, 0.94],
+                branch2Offset: [0.08, 0.58, -0.16],
+                branch2Yaw: -0.66,
+                branch3Scale: [0.9, 1.02, 0.9],
+                branch3Offset: [0.2, 0.72, 0.2],
+                branch3Yaw: 0.28,
+                drapeScales: [[1.08, 1.16, 1.08], [1.04, 1.12, 1.04], [1.06, 1.2, 1.06], [1.12, 1.26, 1.12], [0.98, 1.06, 0.98], [1.0, 1.08, 1.0], [1.04, 1.18, 1.04], [1.1, 1.24, 1.1]],
+                drapeOffsets: [[0.08, 0.22, 0.04], [-0.08, 0.22, -0.04], [0.04, 0.18, 0.06], [-0.04, 0.18, -0.06], [0.02, 0.28, 0.08], [-0.02, 0.28, -0.08], [-0.06, 0.14, 0.02], [0.06, 0.14, -0.02]],
+                drapeYRotations: [0.36, -0.34, 0.52, -0.48, 0.22, -0.2, 0.68, -0.64],
+                drapeJitter: 0.045,
+                stumpScale: [0.98, 0.16, 0.98]
             },
             maple_tree: {
                 trunkScale: [1.24, 1.56, 1.24],

@@ -6,6 +6,8 @@ This repo now includes a starter toolkit under `tools/` so we can move faster wi
 
 - `tools/pixel/pixelize.ps1`: convert one image into pixel-art style output.
 - `tools/pixel/batch-pixelize.ps1`: batch-convert a folder of images.
+- `tools/pixel/build-pixel-assets.js`: generate runtime PNG + OBJ artifacts from `assets/pixel-src/*.json`.
+- `tools/pixel-editor/`: browser-based 32x32 pixel editor for inventory icons.
 - `tools/sim/loot-sim.js`: run weighted drop table simulations.
 - `tools/sim/combat-sim.js`: run quick combat time-to-kill simulations.
 - `tools/check-prereqs.ps1`: verifies required local tooling.
@@ -39,7 +41,14 @@ No PATH or system config needed with this method.
 
 ## Quick commands
 
-Single image to pixel-art:
+Pixel asset build:
+
+```bat
+npm.cmd run tool:pixel:build -- --asset iron_axe
+npm.cmd run tool:pixel:build:all
+```
+
+Legacy image-to-pixel conversion:
 
 ```bat
 npm.cmd run tool:pixelize -- -InputPath .\assets\input\tree.png -CellSize 6 -PaletteColors 24 -Upscale 6
@@ -63,16 +72,17 @@ Combat simulator:
 npm.cmd run tool:sim:combat -- --runs 10000 --strLevel 70 --atkLevel 70 --targetHp 60 --attackSpeedTicks 4
 ```
 
-## New 2D/3D Item Pipeline
+## Custom Pixel Icon Workflow
 
-For item asset workflows (source image -> icon + model + item JSON), use:
+For icon asset workflows (pixel source -> generated icon + model), use:
 
 - `docs/ASSET_PIPELINE.md`
 
-Core commands:
+Open the editor after starting the local server:
 
 ```bat
-npm.cmd run tool:item:create -- -Id logs -Name "Logs" -Image .\assets\input\logs.png -Type resource -Value 4
+npm.cmd run dev
+npm.cmd run tool:pixel:build -- --asset logs
 npm.cmd run tool:items:validate
 ```
 

@@ -1,78 +1,131 @@
-# OSRS Asset Workflow (2D + 3D)
+# OSRS Asset Workflow (Pixel Source + Generated Runtime Assets)
 
-This is the default pipeline for item assets in this project.
+This is the default item-icon pipeline for this project.
+
+## Canonical source of truth
+
+Each icon asset is authored as a text-backed pixel source file:
+
+- `assets/pixel-src/<asset_id>.json`
+
+That source file is canonical. Runtime PNGs and simple OBJ models are generated artifacts.
 
 ## What this pipeline produces
 
-For each item (example: `logs`) we generate:
+For each icon asset (example: `logs`) we generate:
 
-- Source image copy: `assets/input/logs-source.png`
-- UI icon (pixel style): `assets/pixel/logs-pixel.png`
+- Pixel source: `assets/pixel-src/logs.json`
+- Runtime icon: `assets/pixel/logs.png`
 - Held model: `assets/models/logs.obj`
 - Ground model: `assets/models/logs-ground.obj`
-- Draft item metadata file: `content/items/logs.json`
 
-## One-command workflow (recommended)
+Runtime items then reference the asset through:
 
-1. Put your image anywhere (for example `assets/input/logs.png`).
-2. Run:
-
-```bat
-npm.cmd run tool:item:create -- -Id logs -Name "Logs" -Image .\assets\input\logs.png -Type resource -Value 4
+```js
+icon: { kind: 'pixel', assetId: 'logs' }
 ```
 
-3. Validate content:
+`assetId` can differ from `itemId`, so multiple items may intentionally share one icon asset.
+
+## Recommended workflow
+
+1. Start the local server:
 
 ```bat
-npm.cmd run tool:items:sync
-npm.cmd run tool:items:validate
+npm.cmd run dev
 ```
 
-That command auto-copies your source image, creates icon + model, and writes the item JSON.
+2. Open the in-repo editor:
 
-## Manual workflow (if you want control)
+- `http://localhost:5500/tools/pixel-editor/`
 
-1. Create icon from image:
+3. Create or update `assets/pixel-src/<asset_id>.json`.
+4. Build generated assets:
 
 ```bat
-npm.cmd run tool:pixelize -- -InputPath .\assets\input\logs.png -OutputPath .\assets\pixel\logs-pixel.png
+npm.cmd run tool:pixel:build -- --asset logs
 ```
 
-2. Generate 3D OBJ from icon silhouette:
+Or rebuild everything:
 
 ```bat
-npm.cmd run tool:model:from-image -- -InputPath .\assets\pixel\logs-pixel.png -OutputPath .\assets\models\logs.obj -Size 32 -Depth 4 -Threshold 35 -Mode auto
+npm.cmd run tool:pixel:build:all
 ```
 
-3. Copy or edit ground model:
-
-```bat
-copy .\assets\models\logs.obj .\assets\models\logs-ground.obj
-```
-
-4. Create `content/items/logs.json` from `_template.json` (draft metadata only).
-5. Sync + validate:
+5. Sync and validate runtime data:
 
 ```bat
 npm.cmd run tool:items:sync
 npm.cmd run tool:items:validate
 ```
 
-## Rendering icon from 3D model (optional)
+## Ask Codex for an asset
 
-If Blender is installed:
+Natural-language prompts are enough. In this repo, Codex should treat a normal asset request as a direct execution request.
+
+Examples:
+
+- `make an inventory icon for bronze dagger`
+- `redo willow logs so the bark is cooler and the bundle is thinner`
+- `make icons for bronze dagger, iron dagger, and steel dagger`
+
+By default, Codex should automatically:
+
+1. Choose or create the right `assetId`
+2. Author or update `assets/pixel-src/<asset_id>.json`
+3. Build the generated PNG/OBJ outputs
+4. Wire the item to that asset when the mapping is obvious
+5. Summarize what changed and note any assumptions
+
+Codex should only ask a clarifying question when the request is genuinely ambiguous, especially if:
+
+- it is unclear which item or existing asset should be edited
+- changing a shared asset could affect multiple items in a non-obvious way
+- runtime wiring is risky or the intended target item is unclear
+
+You can override the default behavior explicitly:
+
+- `draft only, don't wire it yet`
+- `make these share one asset`
+- `don't iterate, just do a fast first pass`
+- `match the tinderbox style`
+- `revise the existing pickaxe asset instead of creating a new one`
+
+## Source schema
+
+Each `assets/pixel-src/*.json` file uses a fixed `32x32` canvas:
+
+- `id`: lowercase snake_case asset id
+- `width`: `32`
+- `height`: `32`
+- `palette`: single-character symbol map, with `"."` reserved for transparent
+- `pixels`: 32 rows of 32 symbols each
+- `model`: `depth`, `scale`, `groundVariant`
+
+Current model behavior:
+
+- `groundVariant` must be `"copy"`
+- Model generation extrudes every non-transparent pixel into a simple voxel silhouette
+
+## Importing older art
+
+To bring an existing PNG into the new source format:
 
 ```bat
-npm.cmd run tool:model:render-icon -- -InputModel .\assets\models\logs.obj -OutputPath .\assets\pixel\logs-from-model.png -Size 256
+npm.cmd run tool:pixel:import-png -- -InputPath .\assets\pixel\logs-pixel.png -AssetId logs
 ```
 
-This is useful when the model is the source of truth.
+To migrate older runtime icon definitions:
+
+```bat
+npm.cmd run tool:pixel:migrate
+```
 
 ## Quality expectations
 
-- Auto-generated OBJ from image is a prototype mesh.
-- For final held weapons/tools, refine model in Blender or Blockbench.
-- Keep item IDs stable (`logs`, `oak_logs`, etc.) because IDs are used by gameplay systems.
+- Icons are authored on a `32x32` canvas but must stay readable at inventory-slot size.
+- Generated OBJ meshes are prototype silhouettes, not final hero assets.
+- Keep asset IDs and item IDs stable because gameplay systems depend on those identifiers.
 
 ## Future sessions behavior
 
@@ -80,21 +133,20 @@ New assistant instances do not remember chat history.
 They can still follow this pipeline because it is codified in:
 
 - `docs/ASSET_PIPELINE.md`
-- `content/items/_template.json`
+- `assets/pixel-src/*`
+- `tools/pixel-editor/*`
+- `tools/pixel/*`
 - `package.json` scripts
-- `tools/content/*` and `tools/model/*`
 
 ## Catalog Source Of Truth
 
-- Canonical runtime item definitions: `src/js/content/item-catalog.js`.
-- Canonical runtime sprite icon registry + fallback map: `src/js/content/icon-sprite-catalog.js`.
-- Generated runtime mirror: `content/items/runtime-item-catalog.json`.
-- Keep the runtime mirror in sync with:
+- Canonical runtime item definitions: `src/js/content/item-catalog.js`
+- Canonical editable icon assets: `assets/pixel-src/*`
+- Generated runtime mirror: `content/items/runtime-item-catalog.json`
+
+Keep the runtime mirror in sync with:
 
 ```bat
 npm.cmd run tool:items:sync
 ```
-
-`npm.cmd run tool:items:validate` now also validates runtime sprite icon key coverage
-against the icon sprite catalog and reports fallback usage counts.
 

@@ -57,8 +57,8 @@ A lightweight toolkit now exists under `tools/` for asset prep and balancing sim
 
 ```bat
 npm.cmd run tool:check
-npm.cmd run tool:pixelize -- -InputPath .\assets\input\tree.png
-npm.cmd run tool:pixelize:batch -- -InputDir .\assets\input -OutputDir .\assets\pixel -Recurse
+npm.cmd run tool:pixel:build -- --asset iron_axe
+npm.cmd run tool:pixel:build:all
 npm.cmd run tool:sim:loot -- --runs 100000 --table "coins:50,raw_shrimp:30,nothing:20"
 npm.cmd run tool:sim:combat -- --runs 10000 --strLevel 70 --atkLevel 70 --targetHp 60
 ```
@@ -67,17 +67,23 @@ See `docs/TOOLKIT_SETUP.md` for install/setup details.
 
 ## Item Asset Pipeline
 
-Start here for 2D + 3D item workflow:
+Start here for the custom pixel-icon workflow:
 
 - `docs/ASSET_PIPELINE.md`
 
-One-command item creation:
+Editor + build flow:
 
 ```bat
-npm.cmd run tool:item:create -- -Id logs -Name "Logs" -Image .\assets\input\logs.png -Type resource -Value 4
+npm.cmd run dev
+npm.cmd run tool:pixel:build -- --asset logs
+npm.cmd run tool:pixel:build:all
 npm.cmd run tool:items:sync
 npm.cmd run tool:items:validate
 ```
+
+Then open:
+
+- `http://localhost:5500/tools/pixel-editor/`
 
 Item catalog source of truth:
 - Runtime canonical definitions: `src/js/content/item-catalog.js`

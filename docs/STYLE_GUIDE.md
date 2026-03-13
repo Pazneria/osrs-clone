@@ -34,8 +34,8 @@
   - then face back to the lit fire.
 
 ## Asset Rules
-- Keep item icon sprites 16x16 style with crisp edges.
-- Prefer inline SVG or sprite sheets with clear silhouettes.
+- Author inventory icons on a fixed 32x32 canvas and keep silhouettes readable at inventory-slot size.
+- Keep item icon sprites crisp and low-noise.
 - Keep item identity obvious at small sizes:
   - Axe: broad head + wooden shaft
   - Pickaxe: horizontal metal head

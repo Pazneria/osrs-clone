@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OSRS Pixel Editor</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="shell">
+        <aside class="panel sidebar">
+            <div class="brand">
+                <p class="eyebrow">OSRS Clone</p>
+                <h1>Pixel Asset Editor</h1>
+                <p class="lede">Fixed 32x32 inventory icon authoring with JSON source files, PNG import, and live slot previews.</p>
+            </div>
+
+            <section class="stack">
+                <label class="field">
+                    <span>Asset Id</span>
+                    <input id="assetIdInput" type="text" placeholder="iron_axe" spellcheck="false">
+                </label>
+
+                <div class="actions">
+                    <button id="newBtn" type="button">New</button>
+                    <button id="openJsonBtn" type="button">Open JSON</button>
+                    <button id="saveJsonBtn" type="button" class="accent">Save JSON</button>
+                    <button id="importPngBtn" type="button">Import PNG</button>
+                </div>
+
+                <input id="jsonFileInput" type="file" accept=".json,application/json" hidden>
+                <input id="pngFileInput" type="file" accept="image/png" hidden>
+            </section>
+
+            <section class="stack">
+                <h2>Tools</h2>
+                <div class="tool-grid">
+                    <button class="tool-btn active" data-tool="pencil" type="button">Pencil</button>
+                    <button class="tool-btn" data-tool="erase" type="button">Erase</button>
+                    <button class="tool-btn" data-tool="fill" type="button">Fill</button>
+                    <button class="tool-btn" data-tool="eyedropper" type="button">Pick</button>
+                </div>
+
+                <div class="toggle-row">
+                    <label><input id="mirrorXInput" type="checkbox"> Mirror X</label>
+                    <label><input id="mirrorYInput" type="checkbox"> Mirror Y</label>
+                </div>
+
+                <label class="field">
+                    <span>Zoom</span>
+                    <select id="zoomSelect">
+                        <option value="1">1x</option>
+                        <option value="2" selected>2x</option>
+                        <option value="4">4x</option>
+                    </select>
+                </label>
+            </section>
+
+            <section class="stack">
+                <div class="section-head">
+                    <h2>Palette</h2>
+                    <button id="addColorBtn" type="button">Add Color</button>
+                </div>
+                <div id="paletteList" class="palette-list"></div>
+            </section>
+
+            <section class="stack help">
+                <h2>Workflow</h2>
+                <p>Use this editor to author `assets/pixel-src/&lt;assetId&gt;.json`, then run `npm.cmd run tool:pixel:build -- --asset &lt;assetId&gt;` or `npm.cmd run tool:pixel:build:all`.</p>
+                <p>Pencil and erase respect mirror toggles. PNG import rescales and centers source art into the fixed 32x32 canvas.</p>
+            </section>
+        </aside>
+
+        <main class="workspace">
+            <section class="panel canvas-panel">
+                <div class="canvas-head">
+                    <div>
+                        <p class="eyebrow">Canvas</p>
+                        <h2>32 x 32</h2>
+                    </div>
+                    <p id="statusText" class="status">Ready</p>
+                </div>
+                <div id="canvasViewport" class="canvas-viewport" data-zoom="2">
+                    <canvas id="editorCanvas" width="32" height="32" aria-label="Pixel editor canvas"></canvas>
+                </div>
+            </section>
+
+            <section class="panel preview-panel">
+                <div class="preview-head">
+                    <div>
+                        <p class="eyebrow">Preview</p>
+                        <h2>Inventory Readability</h2>
+                    </div>
+                </div>
+
+                <div class="preview-grid">
+                    <div class="preview-card">
+                        <p>Inventory Slot</p>
+                        <div class="inventory-slot-preview">
+                            <canvas id="slotPreviewCanvas" width="32" height="32"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="preview-card">
+                        <p>2x Preview</p>
+                        <canvas id="largePreviewCanvas" width="32" height="32"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../pixel/pixel-source.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>

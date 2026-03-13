@@ -7,7 +7,7 @@
   "actions": ["Use", "Drop"],
   "equipSlot": null,
   "assets": {
-    "icon": "assets/pixel/item_id_here-pixel.png",
+    "icon": "assets/pixel/item_id_here.png",
     "model": "assets/models/item_id_here.obj",
     "groundModel": "assets/models/item_id_here-ground.obj"
   },

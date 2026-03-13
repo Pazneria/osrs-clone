@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-12T20:54:21.333Z",
+  "generatedAt": "2026-03-13T02:55:40.718Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -9,8 +9,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Adamant Arrowheads",
       "stackable": false,
@@ -24,8 +24,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Adamant Arrows x15",
       "stackable": false,
@@ -40,8 +40,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Axe",
       "speedBonusTicks": 4,
@@ -63,8 +63,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Adamant Axe Head",
       "stackable": false,
@@ -78,8 +78,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Adamant Bar",
       "stackable": false,
@@ -93,8 +93,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Boots",
       "stackable": false,
@@ -113,8 +113,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Helmet",
       "stackable": false,
@@ -132,8 +132,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Adamant ore",
       "stackable": false,
@@ -148,8 +148,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Adamant Pickaxe",
       "speedBonusTicks": 4,
@@ -171,8 +171,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Adamant Pickaxe Head",
       "stackable": false,
@@ -186,8 +186,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Platebody",
       "stackable": false,
@@ -206,8 +206,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Platelegs",
       "stackable": false,
@@ -226,8 +226,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Shield",
       "stackable": false,
@@ -247,8 +247,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Adamant Sword",
       "stackable": false,
@@ -268,8 +268,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Adamant Sword Blade",
       "stackable": false,
@@ -282,8 +282,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "air_rune",
-        "kind": "sprite"
+        "assetId": "air_rune",
+        "kind": "pixel"
       },
       "name": "Air rune",
       "stackable": true,
@@ -297,8 +297,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Air Staff",
       "stackable": false,
@@ -312,8 +312,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "small_pouch",
-        "kind": "sprite"
+        "assetId": "small_pouch",
+        "kind": "pixel"
       },
       "name": "Amulet mould",
       "stackable": false,
@@ -326,8 +326,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "ashes",
-        "kind": "sprite"
+        "assetId": "ashes",
+        "kind": "pixel"
       },
       "name": "Ashes",
       "stackable": true,
@@ -341,8 +341,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Bait",
       "stackable": true,
@@ -356,8 +356,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Bear Leather",
       "stackable": false,
@@ -371,8 +371,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Bow String",
       "stackable": false,
@@ -386,8 +386,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Bronze Arrowheads",
       "stackable": false,
@@ -401,8 +401,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Bronze Arrows x15",
       "stackable": false,
@@ -417,8 +417,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe_item",
+        "kind": "pixel"
       },
       "name": "Bronze Axe",
       "speedBonusTicks": 0,
@@ -440,8 +440,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Bronze Axe Head",
       "stackable": false,
@@ -455,8 +455,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Bronze Bar",
       "stackable": false,
@@ -470,8 +470,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Bronze Boots",
       "stackable": false,
@@ -490,8 +490,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Bronze Helmet",
       "stackable": false,
@@ -511,8 +511,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Bronze Pickaxe",
       "speedBonusTicks": 0,
@@ -534,8 +534,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Bronze Pickaxe Head",
       "stackable": false,
@@ -549,8 +549,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Bronze Platebody",
       "stackable": false,
@@ -569,8 +569,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Bronze Platelegs",
       "stackable": false,
@@ -589,8 +589,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Bronze Shield",
       "stackable": false,
@@ -610,8 +610,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Bronze Sword",
       "stackable": false,
@@ -631,8 +631,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Bronze Sword Blade",
       "stackable": false,
@@ -645,8 +645,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Burnt Salmon",
       "stackable": false,
@@ -659,8 +659,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "burnt_shrimp",
+        "kind": "pixel"
       },
       "name": "Burnt Shrimp",
       "stackable": false,
@@ -673,8 +673,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Burnt Swordfish",
       "stackable": false,
@@ -687,8 +687,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Burnt Trout",
       "stackable": false,
@@ -701,8 +701,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Burnt Tuna",
       "stackable": false,
@@ -716,8 +716,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Chisel",
       "stackable": false,
@@ -730,8 +730,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Clay",
       "stackable": false,
@@ -744,8 +744,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Coal",
       "stackable": false,
@@ -758,8 +758,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Coins",
       "stackable": true,
@@ -775,8 +775,8 @@
       "eatDelayTicks": 4,
       "healAmount": 7,
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Cooked Salmon",
       "stackable": false,
@@ -792,8 +792,8 @@
       "eatDelayTicks": 4,
       "healAmount": 3,
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "cooked_shrimp",
+        "kind": "pixel"
       },
       "name": "Cooked Shrimp",
       "stackable": false,
@@ -809,8 +809,8 @@
       "eatDelayTicks": 4,
       "healAmount": 12,
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Cooked Swordfish",
       "stackable": false,
@@ -826,8 +826,8 @@
       "eatDelayTicks": 4,
       "healAmount": 5,
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Cooked Trout",
       "stackable": false,
@@ -843,8 +843,8 @@
       "eatDelayTicks": 4,
       "healAmount": 9,
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Cooked Tuna",
       "stackable": false,
@@ -857,8 +857,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "copper_ore",
-        "kind": "sprite"
+        "assetId": "copper_ore",
+        "kind": "pixel"
       },
       "name": "Copper ore",
       "stackable": false,
@@ -872,8 +872,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Cut diamond",
       "stackable": false,
@@ -887,8 +887,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Cut emerald",
       "stackable": false,
@@ -902,8 +902,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Cut ruby",
       "stackable": false,
@@ -917,8 +917,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Cut sapphire",
       "stackable": false,
@@ -932,8 +932,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Diamond Gold Amulet",
       "stackable": false,
@@ -947,8 +947,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Diamond Gold Ring",
       "stackable": false,
@@ -962,8 +962,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Diamond Gold Tiara",
       "stackable": false,
@@ -976,8 +976,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "dust_rune",
-        "kind": "sprite"
+        "assetId": "dust_rune",
+        "kind": "pixel"
       },
       "name": "Dust rune",
       "stackable": true,
@@ -990,8 +990,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "earth_rune",
-        "kind": "sprite"
+        "assetId": "earth_rune",
+        "kind": "pixel"
       },
       "name": "Earth rune",
       "stackable": true,
@@ -1005,8 +1005,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Earth Staff",
       "stackable": false,
@@ -1019,8 +1019,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "ember_rune",
-        "kind": "sprite"
+        "assetId": "ember_rune",
+        "kind": "pixel"
       },
       "name": "Ember rune",
       "stackable": true,
@@ -1034,8 +1034,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Emerald Gold Amulet",
       "stackable": false,
@@ -1049,8 +1049,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Emerald Gold Ring",
       "stackable": false,
@@ -1064,8 +1064,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Emerald Gold Tiara",
       "stackable": false,
@@ -1079,8 +1079,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Feathers x15",
       "stackable": false,
@@ -1094,8 +1094,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Fire Staff",
       "stackable": false,
@@ -1109,8 +1109,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "small_net",
-        "kind": "sprite"
+        "assetId": "small_net",
+        "kind": "pixel"
       },
       "name": "Fishing Rod",
       "stackable": false,
@@ -1124,8 +1124,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Gold Amulet",
       "stackable": false,
@@ -1139,8 +1139,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Gold Bar",
       "stackable": false,
@@ -1153,8 +1153,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Gold ore",
       "stackable": false,
@@ -1168,8 +1168,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Gold Ring",
       "stackable": false,
@@ -1183,8 +1183,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Gold Tiara",
       "stackable": false,
@@ -1198,8 +1198,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Hammer",
       "stackable": false,
@@ -1214,8 +1214,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Harpoon",
       "stackable": false,
@@ -1235,8 +1235,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Iron Arrowheads",
       "stackable": false,
@@ -1250,8 +1250,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Iron Arrows x15",
       "stackable": false,
@@ -1266,8 +1266,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Axe",
       "speedBonusTicks": 1,
@@ -1289,8 +1289,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Iron Axe Head",
       "stackable": false,
@@ -1304,8 +1304,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Iron Bar",
       "stackable": false,
@@ -1319,8 +1319,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Boots",
       "stackable": false,
@@ -1339,8 +1339,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Helmet",
       "stackable": false,
@@ -1358,8 +1358,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "copper_ore",
-        "kind": "sprite"
+        "assetId": "copper_ore",
+        "kind": "pixel"
       },
       "name": "Iron ore",
       "stackable": false,
@@ -1374,8 +1374,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Iron Pickaxe",
       "speedBonusTicks": 1,
@@ -1397,8 +1397,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Iron Pickaxe Head",
       "stackable": false,
@@ -1412,8 +1412,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Platebody",
       "stackable": false,
@@ -1432,8 +1432,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Platelegs",
       "stackable": false,
@@ -1452,8 +1452,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Shield",
       "stackable": false,
@@ -1473,8 +1473,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Iron Sword",
       "stackable": false,
@@ -1494,8 +1494,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Iron Sword Blade",
       "stackable": false,
@@ -1509,8 +1509,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Knife",
       "stackable": false,
@@ -1524,8 +1524,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "large_pouch",
-        "kind": "sprite"
+        "assetId": "large_pouch",
+        "kind": "pixel"
       },
       "name": "Large pouch",
       "stackable": false,
@@ -1538,8 +1538,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "lava_rune",
-        "kind": "sprite"
+        "assetId": "lava_rune",
+        "kind": "pixel"
       },
       "name": "Lava rune",
       "stackable": true,
@@ -1553,8 +1553,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "kind": "image",
-        "path": "./assets/pixel/logs-pixel.png"
+        "assetId": "regular_logs",
+        "kind": "pixel"
       },
       "name": "Logs",
       "stackable": false,
@@ -1568,8 +1568,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Maple Handle",
       "stackable": false,
@@ -1583,8 +1583,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Maple Handle w/ Strap",
       "stackable": false,
@@ -1598,8 +1598,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Maple Headless Arrows x15",
       "stackable": false,
@@ -1613,8 +1613,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "kind": "image",
-        "path": "./assets/pixel/logs-pixel.png"
+        "assetId": "logs",
+        "kind": "pixel"
       },
       "name": "Maple Logs",
       "stackable": false,
@@ -1628,8 +1628,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Maple Longbow",
       "stackable": false,
@@ -1643,8 +1643,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Maple Longbow (u)",
       "stackable": false,
@@ -1658,8 +1658,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Maple Shafts x15",
       "stackable": false,
@@ -1673,8 +1673,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Maple Shortbow",
       "stackable": false,
@@ -1688,8 +1688,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Maple Shortbow (u)",
       "stackable": false,
@@ -1703,8 +1703,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "medium_pouch",
-        "kind": "sprite"
+        "assetId": "medium_pouch",
+        "kind": "pixel"
       },
       "name": "Medium pouch",
       "stackable": false,
@@ -1717,8 +1717,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "mist_rune",
-        "kind": "sprite"
+        "assetId": "mist_rune",
+        "kind": "pixel"
       },
       "name": "Mist rune",
       "stackable": true,
@@ -1732,8 +1732,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Mithril Arrowheads",
       "stackable": false,
@@ -1747,8 +1747,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Mithril Arrows x15",
       "stackable": false,
@@ -1763,8 +1763,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Axe",
       "speedBonusTicks": 3,
@@ -1786,8 +1786,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Mithril Axe Head",
       "stackable": false,
@@ -1801,8 +1801,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Mithril Bar",
       "stackable": false,
@@ -1816,8 +1816,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Boots",
       "stackable": false,
@@ -1836,8 +1836,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Helmet",
       "stackable": false,
@@ -1855,8 +1855,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Mithril ore",
       "stackable": false,
@@ -1871,8 +1871,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Mithril Pickaxe",
       "speedBonusTicks": 3,
@@ -1894,8 +1894,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Mithril Pickaxe Head",
       "stackable": false,
@@ -1909,8 +1909,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Platebody",
       "stackable": false,
@@ -1929,8 +1929,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Platelegs",
       "stackable": false,
@@ -1949,8 +1949,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Shield",
       "stackable": false,
@@ -1970,8 +1970,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Mithril Sword",
       "stackable": false,
@@ -1991,8 +1991,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Mithril Sword Blade",
       "stackable": false,
@@ -2005,8 +2005,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "mud_rune",
-        "kind": "sprite"
+        "assetId": "mud_rune",
+        "kind": "pixel"
       },
       "name": "Mud rune",
       "stackable": true,
@@ -2020,8 +2020,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Needle",
       "stackable": false,
@@ -2035,8 +2035,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Normal Leather",
       "stackable": false,
@@ -2050,8 +2050,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Normal Longbow",
       "stackable": false,
@@ -2065,8 +2065,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Normal Longbow (u)",
       "stackable": false,
@@ -2080,8 +2080,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Normal Shortbow",
       "stackable": false,
@@ -2095,8 +2095,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Normal Shortbow (u)",
       "stackable": false,
@@ -2110,8 +2110,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Oak Handle",
       "stackable": false,
@@ -2125,8 +2125,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Oak Handle w/ Strap",
       "stackable": false,
@@ -2140,8 +2140,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Oak Headless Arrows x15",
       "stackable": false,
@@ -2155,8 +2155,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "kind": "image",
-        "path": "./assets/pixel/logs-pixel.png"
+        "assetId": "logs",
+        "kind": "pixel"
       },
       "name": "Oak Logs",
       "stackable": false,
@@ -2170,8 +2170,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Oak Longbow",
       "stackable": false,
@@ -2185,8 +2185,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Oak Longbow (u)",
       "stackable": false,
@@ -2200,8 +2200,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Oak Shafts x15",
       "stackable": false,
@@ -2215,8 +2215,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Oak Shortbow",
       "stackable": false,
@@ -2230,8 +2230,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Oak Shortbow (u)",
       "stackable": false,
@@ -2245,8 +2245,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "ashes",
-        "kind": "sprite"
+        "assetId": "ashes",
+        "kind": "pixel"
       },
       "name": "Owie",
       "stackable": false,
@@ -2260,8 +2260,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Plain Staff (Maple)",
       "stackable": false,
@@ -2275,8 +2275,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Plain Staff (Oak)",
       "stackable": false,
@@ -2290,8 +2290,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Plain Staff (Willow)",
       "stackable": false,
@@ -2305,8 +2305,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Plain Staff (Wood)",
       "stackable": false,
@@ -2320,8 +2320,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Plain Staff (Yew)",
       "stackable": false,
@@ -2337,8 +2337,8 @@
       "cookResultId": "cooked_salmon",
       "defaultAction": "Use",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Raw Salmon",
       "stackable": false,
@@ -2355,8 +2355,8 @@
       "cookResultId": "cooked_shrimp",
       "defaultAction": "Use",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "shrimp",
+        "kind": "pixel"
       },
       "name": "Raw Shrimp",
       "stackable": false,
@@ -2372,8 +2372,8 @@
       "cookResultId": "cooked_swordfish",
       "defaultAction": "Use",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Raw Swordfish",
       "stackable": false,
@@ -2389,8 +2389,8 @@
       "cookResultId": "cooked_trout",
       "defaultAction": "Use",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Raw Trout",
       "stackable": false,
@@ -2406,8 +2406,8 @@
       "cookResultId": "cooked_tuna",
       "defaultAction": "Use",
       "icon": {
-        "key": "raw_shrimp",
-        "kind": "sprite"
+        "assetId": "raw_shrimp",
+        "kind": "pixel"
       },
       "name": "Raw Tuna",
       "stackable": false,
@@ -2421,8 +2421,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "small_pouch",
-        "kind": "sprite"
+        "assetId": "small_pouch",
+        "kind": "pixel"
       },
       "name": "Ring mould",
       "stackable": false,
@@ -2436,8 +2436,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Ruby Gold Amulet",
       "stackable": false,
@@ -2451,8 +2451,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Ruby Gold Ring",
       "stackable": false,
@@ -2466,8 +2466,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Ruby Gold Tiara",
       "stackable": false,
@@ -2481,8 +2481,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Ruby Silver Amulet",
       "stackable": false,
@@ -2496,8 +2496,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Ruby Silver Ring",
       "stackable": false,
@@ -2511,8 +2511,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Ruby Silver Tiara",
       "stackable": false,
@@ -2526,8 +2526,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Rune Arrowheads",
       "stackable": false,
@@ -2541,8 +2541,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Rune Arrows x15",
       "stackable": false,
@@ -2557,8 +2557,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Axe",
       "speedBonusTicks": 5,
@@ -2580,8 +2580,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Rune Axe Head",
       "stackable": false,
@@ -2595,8 +2595,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Rune Bar",
       "stackable": false,
@@ -2610,8 +2610,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Boots",
       "stackable": false,
@@ -2629,8 +2629,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Rune essence",
       "stackable": false,
@@ -2645,8 +2645,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Rune Harpoon",
       "stackable": false,
@@ -2666,8 +2666,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Helmet",
       "stackable": false,
@@ -2685,8 +2685,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Rune ore",
       "stackable": false,
@@ -2701,8 +2701,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Rune Pickaxe",
       "speedBonusTicks": 5,
@@ -2724,8 +2724,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Rune Pickaxe Head",
       "stackable": false,
@@ -2739,8 +2739,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Platebody",
       "stackable": false,
@@ -2759,8 +2759,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Platelegs",
       "stackable": false,
@@ -2779,8 +2779,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Shield",
       "stackable": false,
@@ -2800,8 +2800,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Rune Sword",
       "stackable": false,
@@ -2821,8 +2821,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Rune Sword Blade",
       "stackable": false,
@@ -2836,8 +2836,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Sapphire Gold Amulet",
       "stackable": false,
@@ -2851,8 +2851,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Sapphire Gold Ring",
       "stackable": false,
@@ -2866,8 +2866,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Sapphire Gold Tiara",
       "stackable": false,
@@ -2881,8 +2881,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Sapphire Silver Amulet",
       "stackable": false,
@@ -2896,8 +2896,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Sapphire Silver Ring",
       "stackable": false,
@@ -2911,8 +2911,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Sapphire Silver Tiara",
       "stackable": false,
@@ -2926,8 +2926,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Silver Amulet",
       "stackable": false,
@@ -2941,8 +2941,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Silver Bar",
       "stackable": false,
@@ -2955,8 +2955,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Silver ore",
       "stackable": false,
@@ -2970,8 +2970,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Silver Ring",
       "stackable": false,
@@ -2985,8 +2985,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "coins",
-        "kind": "sprite"
+        "assetId": "coins",
+        "kind": "pixel"
       },
       "name": "Silver Tiara",
       "stackable": false,
@@ -3000,8 +3000,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "small_net",
-        "kind": "sprite"
+        "assetId": "small_net",
+        "kind": "pixel"
       },
       "name": "Small Net",
       "stackable": false,
@@ -3015,8 +3015,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "small_pouch",
-        "kind": "sprite"
+        "assetId": "small_pouch",
+        "kind": "pixel"
       },
       "name": "Small pouch",
       "stackable": false,
@@ -3029,8 +3029,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "smoke_rune",
-        "kind": "sprite"
+        "assetId": "smoke_rune",
+        "kind": "pixel"
       },
       "name": "Smoke rune",
       "stackable": true,
@@ -3044,8 +3044,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Soft Clay",
       "stackable": false,
@@ -3058,8 +3058,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "steam_rune",
-        "kind": "sprite"
+        "assetId": "steam_rune",
+        "kind": "pixel"
       },
       "name": "Steam rune",
       "stackable": true,
@@ -3073,8 +3073,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Steel Arrowheads",
       "stackable": false,
@@ -3088,8 +3088,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Steel Arrows x15",
       "stackable": false,
@@ -3104,8 +3104,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Axe",
       "speedBonusTicks": 2,
@@ -3127,8 +3127,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Steel Axe Head",
       "stackable": false,
@@ -3142,8 +3142,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Steel Bar",
       "stackable": false,
@@ -3157,8 +3157,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Boots",
       "stackable": false,
@@ -3177,8 +3177,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Helmet",
       "stackable": false,
@@ -3198,8 +3198,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Steel Pickaxe",
       "speedBonusTicks": 2,
@@ -3221,8 +3221,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Steel Pickaxe Head",
       "stackable": false,
@@ -3236,8 +3236,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Platebody",
       "stackable": false,
@@ -3256,8 +3256,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Platelegs",
       "stackable": false,
@@ -3276,8 +3276,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Shield",
       "stackable": false,
@@ -3297,8 +3297,8 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "key": "iron_axe",
-        "kind": "sprite"
+        "assetId": "iron_axe",
+        "kind": "pixel"
       },
       "name": "Steel Sword",
       "stackable": false,
@@ -3318,8 +3318,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Steel Sword Blade",
       "stackable": false,
@@ -3333,8 +3333,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Thread",
       "stackable": false,
@@ -3348,8 +3348,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "small_pouch",
-        "kind": "sprite"
+        "assetId": "small_pouch",
+        "kind": "pixel"
       },
       "name": "Tiara mould",
       "stackable": false,
@@ -3362,8 +3362,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Tin ore",
       "stackable": false,
@@ -3377,8 +3377,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tinderbox",
-        "kind": "sprite"
+        "assetId": "tinderbox",
+        "kind": "pixel"
       },
       "name": "Tinderbox",
       "stackable": false,
@@ -3392,8 +3392,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Uncut diamond",
       "stackable": false,
@@ -3406,8 +3406,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Uncut emerald",
       "stackable": false,
@@ -3421,8 +3421,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Uncut ruby",
       "stackable": false,
@@ -3435,8 +3435,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "rune_essence",
-        "kind": "sprite"
+        "assetId": "rune_essence",
+        "kind": "pixel"
       },
       "name": "Uncut sapphire",
       "stackable": false,
@@ -3449,8 +3449,8 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "key": "water_rune",
-        "kind": "sprite"
+        "assetId": "water_rune",
+        "kind": "pixel"
       },
       "name": "Water rune",
       "stackable": true,
@@ -3464,8 +3464,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Water Staff",
       "stackable": false,
@@ -3479,8 +3479,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Willow Handle",
       "stackable": false,
@@ -3494,8 +3494,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Willow Handle w/ Strap",
       "stackable": false,
@@ -3509,8 +3509,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Willow Headless Arrows x15",
       "stackable": false,
@@ -3524,8 +3524,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "kind": "image",
-        "path": "./assets/pixel/willow_logs-pixel.png"
+        "assetId": "willow_logs",
+        "kind": "pixel"
       },
       "name": "Willow Logs",
       "stackable": false,
@@ -3539,8 +3539,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Willow Longbow",
       "stackable": false,
@@ -3554,8 +3554,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Willow Longbow (u)",
       "stackable": false,
@@ -3569,8 +3569,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Willow Shafts x15",
       "stackable": false,
@@ -3584,8 +3584,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Willow Shortbow",
       "stackable": false,
@@ -3599,8 +3599,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Willow Shortbow (u)",
       "stackable": false,
@@ -3614,8 +3614,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Wolf Leather",
       "stackable": false,
@@ -3629,8 +3629,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Wooden Handle",
       "stackable": false,
@@ -3644,8 +3644,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Wooden Handle w/ Strap",
       "stackable": false,
@@ -3659,8 +3659,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Wooden Headless Arrows x15",
       "stackable": false,
@@ -3674,8 +3674,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Wooden Shafts x15",
       "stackable": false,
@@ -3689,8 +3689,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Yew Handle",
       "stackable": false,
@@ -3704,8 +3704,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Yew Handle w/ Strap",
       "stackable": false,
@@ -3719,8 +3719,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "tin_ore",
-        "kind": "sprite"
+        "assetId": "tin_ore",
+        "kind": "pixel"
       },
       "name": "Yew Headless Arrows x15",
       "stackable": false,
@@ -3734,8 +3734,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "kind": "image",
-        "path": "./assets/pixel/logs-pixel.png"
+        "assetId": "logs",
+        "kind": "pixel"
       },
       "name": "Yew Logs",
       "stackable": false,
@@ -3749,8 +3749,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Yew Longbow",
       "stackable": false,
@@ -3764,8 +3764,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Yew Longbow (u)",
       "stackable": false,
@@ -3779,8 +3779,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Yew Shafts x15",
       "stackable": false,
@@ -3794,8 +3794,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "pickaxe",
-        "kind": "sprite"
+        "assetId": "pickaxe",
+        "kind": "pixel"
       },
       "name": "Yew Shortbow",
       "stackable": false,
@@ -3809,8 +3809,8 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "key": "knife",
-        "kind": "sprite"
+        "assetId": "knife",
+        "kind": "pixel"
       },
       "name": "Yew Shortbow (u)",
       "stackable": false,
