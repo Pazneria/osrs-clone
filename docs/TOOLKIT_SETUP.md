@@ -7,7 +7,8 @@ This repo now includes a starter toolkit under `tools/` so we can move faster wi
 - `tools/pixel/pixelize.ps1`: convert one image into pixel-art style output.
 - `tools/pixel/batch-pixelize.ps1`: batch-convert a folder of images.
 - `tools/pixel/build-pixel-assets.js`: generate runtime PNG + OBJ artifacts from `assets/pixel-src/*.json`.
-- `tools/pixel-editor/`: browser-based 32x32 pixel editor for inventory icons.
+- `tools/pixel-editor/`: browser-based 64x64 authoring editor with canonical 32x32 export for inventory icons.
+- `tools/pixel/render-pixel-spec.js`: AI-first sprite spec compiler for geometry-driven drafts and review previews.
 - `tools/sim/loot-sim.js`: run weighted drop table simulations.
 - `tools/sim/combat-sim.js`: run quick combat time-to-kill simulations.
 - `tools/check-prereqs.ps1`: verifies required local tooling.

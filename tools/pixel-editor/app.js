@@ -1,5 +1,13 @@
 (function () {
     const PixelSource = window.PixelSource;
+    const EDITOR_CANVAS_SIZE = 64;
+    const EXPORT_CANVAS_SIZE = PixelSource.CANVAS_SIZE;
+    const EXPORT_SCALE = EDITOR_CANVAS_SIZE / EXPORT_CANVAS_SIZE;
+
+    if (!Number.isInteger(EXPORT_SCALE) || EXPORT_SCALE <= 0) {
+        throw new Error("Editor canvas size must be an integer multiple of export canvas size.");
+    }
+
     const canvas = document.getElementById("editorCanvas");
     const ctx = canvas.getContext("2d");
     const slotPreviewCanvas = document.getElementById("slotPreviewCanvas");
@@ -17,6 +25,14 @@
     const pngFileInput = document.getElementById("pngFileInput");
     const toolButtons = Array.from(document.querySelectorAll(".tool-btn"));
 
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = EXPORT_CANVAS_SIZE;
+    exportCanvas.height = EXPORT_CANVAS_SIZE;
+    const exportCtx = exportCanvas.getContext("2d");
+
+    canvas.width = EDITOR_CANVAS_SIZE;
+    canvas.height = EDITOR_CANVAS_SIZE;
+
     const state = {
         source: PixelSource.createBlankPixelSource(""),
         grid: [],
@@ -26,8 +42,75 @@
         lastPaintedKey: ""
     };
 
+    function createBlankEditorGrid() {
+        return PixelSource.rowsToGrid(PixelSource.createBlankRows(EDITOR_CANVAS_SIZE, EDITOR_CANVAS_SIZE));
+    }
+
+    function expandRowsToEditorGrid(rows) {
+        const grid = createBlankEditorGrid();
+        const safeRows = Array.isArray(rows) ? rows : [];
+        for (let y = 0; y < Math.min(EXPORT_CANVAS_SIZE, safeRows.length); y += 1) {
+            const row = typeof safeRows[y] === "string" ? safeRows[y] : "";
+            for (let x = 0; x < Math.min(EXPORT_CANVAS_SIZE, row.length); x += 1) {
+                const symbol = row.charAt(x) || PixelSource.TRANSPARENT_SYMBOL;
+                for (let dy = 0; dy < EXPORT_SCALE; dy += 1) {
+                    for (let dx = 0; dx < EXPORT_SCALE; dx += 1) {
+                        grid[(y * EXPORT_SCALE) + dy][(x * EXPORT_SCALE) + dx] = symbol;
+                    }
+                }
+            }
+        }
+        return grid;
+    }
+
+    function reduceBlockSymbol(grid, startX, startY) {
+        const symbols = [
+            grid[startY][startX],
+            grid[startY][startX + 1],
+            grid[startY + 1][startX],
+            grid[startY + 1][startX + 1]
+        ];
+        const counts = {};
+        for (let i = 0; i < symbols.length; i += 1) {
+            const symbol = symbols[i];
+            counts[symbol] = (counts[symbol] || 0) + 1;
+        }
+
+        let maxCount = 0;
+        const allSymbols = Object.keys(counts);
+        for (let i = 0; i < allSymbols.length; i += 1) {
+            if (counts[allSymbols[i]] > maxCount) maxCount = counts[allSymbols[i]];
+        }
+
+        const candidates = allSymbols.filter((symbol) => counts[symbol] === maxCount);
+        if (candidates.length === 1) return candidates[0];
+
+        const nonTransparent = candidates.filter((symbol) => symbol !== PixelSource.TRANSPARENT_SYMBOL);
+        if (nonTransparent.length === 1) return nonTransparent[0];
+        if (nonTransparent.length > 1) {
+            const priority = [symbols[3], symbols[1], symbols[2], symbols[0]];
+            for (let i = 0; i < priority.length; i += 1) {
+                if (nonTransparent.includes(priority[i])) return priority[i];
+            }
+        }
+
+        return PixelSource.TRANSPARENT_SYMBOL;
+    }
+
+    function exportRowsFromGrid() {
+        const rows = [];
+        for (let y = 0; y < EXPORT_CANVAS_SIZE; y += 1) {
+            let row = "";
+            for (let x = 0; x < EXPORT_CANVAS_SIZE; x += 1) {
+                row += reduceBlockSymbol(state.grid, x * EXPORT_SCALE, y * EXPORT_SCALE);
+            }
+            rows.push(row);
+        }
+        return rows;
+    }
+
     function syncGridFromSource() {
-        state.grid = PixelSource.rowsToGrid(state.source.pixels);
+        state.grid = expandRowsToEditorGrid(state.source.pixels);
         const paletteKeys = Object.keys(state.source.palette).filter((key) => key !== PixelSource.TRANSPARENT_SYMBOL);
         state.activeSymbol = paletteKeys[0] || "a";
     }
@@ -35,10 +118,10 @@
     function currentSource() {
         return {
             id: assetIdInput.value.trim(),
-            width: 32,
-            height: 32,
+            width: EXPORT_CANVAS_SIZE,
+            height: EXPORT_CANVAS_SIZE,
             palette: Object.assign({}, state.source.palette),
-            pixels: PixelSource.gridToRows(state.grid),
+            pixels: exportRowsFromGrid(),
             model: Object.assign({}, state.source.model)
         };
     }
@@ -52,10 +135,31 @@
         return normalized.slice(0, 7);
     }
 
+    function renderExportCanvas() {
+        exportCtx.clearRect(0, 0, EXPORT_CANVAS_SIZE, EXPORT_CANVAS_SIZE);
+        const exportedRows = exportRowsFromGrid();
+        for (let y = 0; y < EXPORT_CANVAS_SIZE; y += 1) {
+            const row = exportedRows[y];
+            for (let x = 0; x < EXPORT_CANVAS_SIZE; x += 1) {
+                const symbol = row.charAt(x);
+                const color = state.source.palette[symbol];
+                if (!color || color === "transparent") continue;
+                exportCtx.fillStyle = toHex(color);
+                exportCtx.fillRect(x, y, 1, 1);
+            }
+        }
+    }
+
+    function renderPreview(previewCtx, previewCanvas) {
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        previewCtx.imageSmoothingEnabled = false;
+        previewCtx.drawImage(exportCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+    }
+
     function renderCanvas() {
-        ctx.clearRect(0, 0, 32, 32);
-        for (let y = 0; y < 32; y += 1) {
-            for (let x = 0; x < 32; x += 1) {
+        ctx.clearRect(0, 0, EDITOR_CANVAS_SIZE, EDITOR_CANVAS_SIZE);
+        for (let y = 0; y < EDITOR_CANVAS_SIZE; y += 1) {
+            for (let x = 0; x < EDITOR_CANVAS_SIZE; x += 1) {
                 const symbol = state.grid[y][x];
                 const color = state.source.palette[symbol];
                 if (!color || color === "transparent") continue;
@@ -64,27 +168,34 @@
             }
         }
 
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
-        ctx.lineWidth = 1 / 32;
-        for (let i = 0; i <= 32; i += 1) {
+        ctx.lineWidth = 1 / EDITOR_CANVAS_SIZE;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.18)";
+        for (let i = 0; i <= EDITOR_CANVAS_SIZE; i += 1) {
             ctx.beginPath();
             ctx.moveTo(i, 0);
-            ctx.lineTo(i, 32);
+            ctx.lineTo(i, EDITOR_CANVAS_SIZE);
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(0, i);
-            ctx.lineTo(32, i);
+            ctx.lineTo(EDITOR_CANVAS_SIZE, i);
             ctx.stroke();
         }
 
-        renderPreview(slotPreviewCtx, slotPreviewCanvas, 32);
-        renderPreview(largePreviewCtx, largePreviewCanvas, 32);
-    }
+        ctx.strokeStyle = "rgba(201, 170, 110, 0.32)";
+        for (let i = 0; i <= EDITOR_CANVAS_SIZE; i += EXPORT_SCALE) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, EDITOR_CANVAS_SIZE);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(EDITOR_CANVAS_SIZE, i);
+            ctx.stroke();
+        }
 
-    function renderPreview(previewCtx, previewCanvas, size) {
-        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-        previewCtx.imageSmoothingEnabled = false;
-        previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        renderExportCanvas();
+        renderPreview(slotPreviewCtx, slotPreviewCanvas);
+        renderPreview(largePreviewCtx, largePreviewCanvas);
     }
 
     function renderPalette() {
@@ -96,7 +207,9 @@
 
             const swatch = document.createElement("div");
             swatch.className = "palette-swatch";
-            swatch.style.background = symbol === PixelSource.TRANSPARENT_SYMBOL ? "linear-gradient(135deg, transparent 45%, rgba(201,170,110,0.55) 45%, rgba(201,170,110,0.55) 55%, transparent 55%)" : toHex(state.source.palette[symbol]);
+            swatch.style.background = symbol === PixelSource.TRANSPARENT_SYMBOL
+                ? "linear-gradient(135deg, transparent 45%, rgba(201,170,110,0.55) 45%, rgba(201,170,110,0.55) 55%, transparent 55%)"
+                : toHex(state.source.palette[symbol]);
 
             const meta = document.createElement("div");
             meta.className = "palette-meta";
@@ -142,8 +255,8 @@
     function removePaletteSymbol(symbol) {
         if (!state.source.palette[symbol]) return;
         delete state.source.palette[symbol];
-        for (let y = 0; y < 32; y += 1) {
-            for (let x = 0; x < 32; x += 1) {
+        for (let y = 0; y < EDITOR_CANVAS_SIZE; y += 1) {
+            for (let x = 0; x < EDITOR_CANVAS_SIZE; x += 1) {
                 if (state.grid[y][x] === symbol) {
                     state.grid[y][x] = PixelSource.TRANSPARENT_SYMBOL;
                 }
@@ -157,18 +270,20 @@
 
     function pointFromEvent(event) {
         const rect = canvas.getBoundingClientRect();
-        const x = Math.floor(((event.clientX - rect.left) / rect.width) * 32);
-        const y = Math.floor(((event.clientY - rect.top) / rect.height) * 32);
-        if (x < 0 || x >= 32 || y < 0 || y >= 32) return null;
+        const x = Math.floor(((event.clientX - rect.left) / rect.width) * EDITOR_CANVAS_SIZE);
+        const y = Math.floor(((event.clientY - rect.top) / rect.height) * EDITOR_CANVAS_SIZE);
+        if (x < 0 || x >= EDITOR_CANVAS_SIZE || y < 0 || y >= EDITOR_CANVAS_SIZE) return null;
         return { x, y };
     }
 
     function mirroredPoints(x, y) {
         const points = {};
         const candidates = [[x, y]];
-        if (mirrorXInput.checked) candidates.push([31 - x, y]);
-        if (mirrorYInput.checked) candidates.push([x, 31 - y]);
-        if (mirrorXInput.checked && mirrorYInput.checked) candidates.push([31 - x, 31 - y]);
+        if (mirrorXInput.checked) candidates.push([(EDITOR_CANVAS_SIZE - 1) - x, y]);
+        if (mirrorYInput.checked) candidates.push([x, (EDITOR_CANVAS_SIZE - 1) - y]);
+        if (mirrorXInput.checked && mirrorYInput.checked) {
+            candidates.push([(EDITOR_CANVAS_SIZE - 1) - x, (EDITOR_CANVAS_SIZE - 1) - y]);
+        }
         candidates.forEach((point) => {
             points[`${point[0]}:${point[1]}`] = point;
         });
@@ -194,9 +309,9 @@
             if (state.grid[point[1]][point[0]] !== targetSymbol) continue;
             setPixel(point[0], point[1], replacementSymbol);
             if (point[0] > 0) queue.push([point[0] - 1, point[1]]);
-            if (point[0] < 31) queue.push([point[0] + 1, point[1]]);
+            if (point[0] < EDITOR_CANVAS_SIZE - 1) queue.push([point[0] + 1, point[1]]);
             if (point[1] > 0) queue.push([point[0], point[1] - 1]);
-            if (point[1] < 31) queue.push([point[0], point[1] + 1]);
+            if (point[1] < EDITOR_CANVAS_SIZE - 1) queue.push([point[0], point[1] + 1]);
         }
     }
 
@@ -257,7 +372,7 @@
         setTimeout(() => URL.revokeObjectURL(url), 0);
     }
 
-    function normalizeAndCommit(sourceLike) {
+    function commitCanonicalSource(sourceLike) {
         const validation = PixelSource.validatePixelSource(sourceLike, { requireId: false });
         if (validation.errors.length > 0) {
             throw new Error(validation.errors.join("; "));
@@ -269,10 +384,42 @@
         renderCanvas();
     }
 
+    function commitAuthoringRows(payload) {
+        const safePayload = payload && typeof payload === "object" ? payload : {};
+        const rows = Array.isArray(safePayload.rows) ? safePayload.rows.slice() : PixelSource.createBlankRows(EDITOR_CANVAS_SIZE, EDITOR_CANVAS_SIZE);
+        if (rows.length !== EDITOR_CANVAS_SIZE) {
+            throw new Error(`authoring rows must contain ${EDITOR_CANVAS_SIZE} rows`);
+        }
+        for (let i = 0; i < rows.length; i += 1) {
+            if (typeof rows[i] !== "string" || rows[i].length !== EDITOR_CANVAS_SIZE) {
+                throw new Error(`authoring row ${i} must be a ${EDITOR_CANVAS_SIZE}-character string`);
+            }
+        }
+
+        state.grid = PixelSource.rowsToGrid(rows);
+        const canonicalValidation = PixelSource.validatePixelSource({
+            id: typeof safePayload.id === "string" ? safePayload.id : "",
+            width: EXPORT_CANVAS_SIZE,
+            height: EXPORT_CANVAS_SIZE,
+            palette: Object.assign({}, safePayload.palette || {}),
+            pixels: exportRowsFromGrid(),
+            model: Object.assign({}, safePayload.model || {})
+        }, { requireId: false });
+
+        if (canonicalValidation.errors.length > 0) {
+            throw new Error(canonicalValidation.errors.join("; "));
+        }
+
+        state.source = canonicalValidation.normalized;
+        assetIdInput.value = state.source.id;
+        renderPalette();
+        renderCanvas();
+    }
+
     function newDocument() {
         const next = PixelSource.createBlankPixelSource(assetIdInput.value.trim());
-        normalizeAndCommit(next);
-        setStatus("New 32x32 asset");
+        commitCanonicalSource(next);
+        setStatus("New 64x64 authoring asset (32x32 export)");
     }
 
     function openJsonFile(file) {
@@ -280,7 +427,7 @@
         reader.onload = function () {
             try {
                 const parsed = JSON.parse(reader.result);
-                normalizeAndCommit(parsed);
+                commitCanonicalSource(parsed);
                 setStatus(`Loaded ${file.name}`);
             } catch (error) {
                 setStatus(`JSON error: ${error.message}`);
@@ -299,67 +446,77 @@
         reader.onload = function () {
             const image = new Image();
             image.onload = function () {
-                const tempCanvas = document.createElement("canvas");
-                tempCanvas.width = 32;
-                tempCanvas.height = 32;
-                const tempCtx = tempCanvas.getContext("2d");
-                tempCtx.imageSmoothingEnabled = false;
-                tempCtx.clearRect(0, 0, 32, 32);
+                try {
+                    const tempCanvas = document.createElement("canvas");
+                    tempCanvas.width = EXPORT_CANVAS_SIZE;
+                    tempCanvas.height = EXPORT_CANVAS_SIZE;
+                    const tempCtx = tempCanvas.getContext("2d");
+                    tempCtx.imageSmoothingEnabled = false;
+                    tempCtx.clearRect(0, 0, EXPORT_CANVAS_SIZE, EXPORT_CANVAS_SIZE);
 
-                const scale = Math.min(32 / image.width, 32 / image.height);
-                const drawWidth = Math.max(1, Math.min(32, Math.round(image.width * scale)));
-                const drawHeight = Math.max(1, Math.min(32, Math.round(image.height * scale)));
-                const offsetX = Math.floor((32 - drawWidth) / 2);
-                const offsetY = Math.floor((32 - drawHeight) / 2);
+                    const scale = Math.min(EXPORT_CANVAS_SIZE / image.width, EXPORT_CANVAS_SIZE / image.height);
+                    const drawWidth = Math.max(1, Math.min(EXPORT_CANVAS_SIZE, Math.round(image.width * scale)));
+                    const drawHeight = Math.max(1, Math.min(EXPORT_CANVAS_SIZE, Math.round(image.height * scale)));
+                    const offsetX = Math.floor((EXPORT_CANVAS_SIZE - drawWidth) / 2);
+                    const offsetY = Math.floor((EXPORT_CANVAS_SIZE - drawHeight) / 2);
 
-                tempCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
-                const imageData = tempCtx.getImageData(0, 0, 32, 32);
-                const palette = { ".": "transparent" };
-                const allocator = PixelSource.makeSymbolAllocator(["."]);
-                const symbolByColor = {};
-                const rows = [];
+                    tempCtx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+                    const imageData = tempCtx.getImageData(0, 0, EXPORT_CANVAS_SIZE, EXPORT_CANVAS_SIZE);
+                    const palette = { ".": "transparent" };
+                    const allocator = PixelSource.makeSymbolAllocator(["."]);
+                    const symbolByColor = {};
+                    const rows = [];
 
-                for (let y = 0; y < 32; y += 1) {
-                    let row = "";
-                    for (let x = 0; x < 32; x += 1) {
-                        const offset = (y * 32 + x) * 4;
-                        const alpha = imageData.data[offset + 3];
-                        if (alpha === 0) {
-                            row += ".";
-                            continue;
+                    for (let y = 0; y < EXPORT_CANVAS_SIZE; y += 1) {
+                        let row = "";
+                        for (let x = 0; x < EXPORT_CANVAS_SIZE; x += 1) {
+                            const offset = (y * EXPORT_CANVAS_SIZE + x) * 4;
+                            const alpha = imageData.data[offset + 3];
+                            if (alpha === 0) {
+                                row += ".";
+                                continue;
+                            }
+                            const hex = rgbaToHex(
+                                imageData.data[offset],
+                                imageData.data[offset + 1],
+                                imageData.data[offset + 2],
+                                alpha
+                            );
+                            if (!symbolByColor[hex]) {
+                                const symbol = allocator.next();
+                                symbolByColor[hex] = symbol;
+                                palette[symbol] = hex;
+                            }
+                            row += symbolByColor[hex];
                         }
-                        const hex = rgbaToHex(
-                            imageData.data[offset],
-                            imageData.data[offset + 1],
-                            imageData.data[offset + 2],
-                            alpha
-                        );
-                        if (!symbolByColor[hex]) {
-                            const symbol = allocator.next();
-                            symbolByColor[hex] = symbol;
-                            palette[symbol] = hex;
-                        }
-                        row += symbolByColor[hex];
+                        rows.push(row);
                     }
-                    rows.push(row);
+
+                    const derivedId = file.name.replace(/\.png$/i, "").replace(/-pixel$/i, "");
+                    commitCanonicalSource({
+                        id: assetIdInput.value.trim() || derivedId,
+                        width: EXPORT_CANVAS_SIZE,
+                        height: EXPORT_CANVAS_SIZE,
+                        palette,
+                        pixels: rows,
+                        model: {
+                            depth: 4,
+                            scale: 0.05,
+                            groundVariant: "copy"
+                        }
+                    });
+                    setStatus(`Imported ${file.name} into 32x32 export and expanded to 64x64 authoring`);
+                } catch (error) {
+                    setStatus(`PNG import failed: ${error.message}`);
                 }
-
-                const derivedId = file.name.replace(/\.png$/i, "").replace(/-pixel$/i, "");
-                normalizeAndCommit({
-                    id: assetIdInput.value.trim() || derivedId,
-                    width: 32,
-                    height: 32,
-                    palette,
-                    pixels: rows,
-                    model: {
-                        depth: 4,
-                        scale: 0.05,
-                        groundVariant: "copy"
-                    }
-                });
-                setStatus(`Imported ${file.name}`);
+            };
+            image.onerror = function () {
+                setStatus(`PNG import failed: could not decode ${file.name}`);
             };
             image.src = reader.result;
+        };
+        reader.onerror = function () {
+            setStatus(`PNG import failed: could not read ${file.name}`);
         };
         reader.readAsDataURL(file);
     }
@@ -374,7 +531,9 @@
     canvas.addEventListener("pointermove", (event) => {
         const point = pointFromEvent(event);
         if (point) {
-            setStatus(`x:${point.x} y:${point.y} tool:${state.activeTool}`);
+            setStatus(
+                `x:${point.x} y:${point.y} export:${Math.floor(point.x / EXPORT_SCALE)},${Math.floor(point.y / EXPORT_SCALE)} tool:${state.activeTool}`
+            );
         }
         if (!state.isPointerDown || !point) return;
         if (state.activeTool === "fill" || state.activeTool === "eyedropper") return;
@@ -406,11 +565,13 @@
             if (validation.errors.length > 0) {
                 throw new Error(validation.errors.join("; "));
             }
-            const normalized = validation.normalized;
-            normalizeAndCommit(normalized);
-            const filename = `${normalized.id || "pixel_asset"}.json`;
-            downloadFile(filename, `${JSON.stringify(normalized, null, 2)}\n`, "application/json");
-            setStatus(`Saved ${filename}`);
+            state.source = validation.normalized;
+            assetIdInput.value = state.source.id;
+            const filename = `${state.source.id || "pixel_asset"}.json`;
+            downloadFile(filename, `${JSON.stringify(state.source, null, 2)}\n`, "application/json");
+            renderPalette();
+            renderCanvas();
+            setStatus(`Saved ${filename} (32x32 export from 64x64 authoring grid)`);
         } catch (error) {
             setStatus(`Save failed: ${error.message}`);
         }

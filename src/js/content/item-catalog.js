@@ -179,7 +179,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'pickaxe' }
+            icon: { kind: 'pixel', assetId: 'iron_pickaxe' }
         },
         small_net: {
             name: 'Small Net',
@@ -197,7 +197,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'pixel', assetId: 'small_net' }
+            icon: { kind: 'pixel', assetId: 'fishing_rod' }
         },
         harpoon: {
             name: 'Harpoon',
@@ -208,7 +208,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'pickaxe' }
+            icon: { kind: 'pixel', assetId: 'harpoon' }
         },
         rune_harpoon: {
             name: 'Rune Harpoon',
@@ -219,7 +219,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'pickaxe' }
+            icon: { kind: 'pixel', assetId: 'rune_harpoon' }
         },
         bait: {
             name: 'Bait',
@@ -840,7 +840,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'hammer' }
             },
             ring_mould: {
                 name: 'Ring mould',
@@ -1276,7 +1276,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'fire_staff' }
             },
             water_staff: {
                 name: 'Water Staff',
@@ -1285,7 +1285,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'water_staff' }
             },
             earth_staff: {
                 name: 'Earth Staff',
@@ -1294,7 +1294,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'earth_staff' }
             },
             air_staff: {
                 name: 'Air Staff',
@@ -1303,7 +1303,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'pickaxe' }
+                icon: { kind: 'pixel', assetId: 'air_staff' }
             }
         };
         const tierDefs = [
@@ -1384,7 +1384,7 @@
                     actions: ['Equip', 'Use', 'Drop'],
                     defaultAction: 'Equip',
                     stats: Object.assign({}, tier.pickaxeStats),
-                    icon: { kind: 'pixel', assetId: 'pickaxe' }
+                    icon: { kind: 'pixel', assetId: pickaxeId }
                 };
             }
         }

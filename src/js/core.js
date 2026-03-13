@@ -271,8 +271,25 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260313a";
+        const ASSET_VERSION_TAG = "20260313g";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
+        const INVENTORY_ICON_REVIEW_GRANT_ID = 'inventory_icon_review_20260313a';
+        const INVENTORY_ICON_REVIEW_ITEM_IDS = [
+            'bronze_pickaxe',
+            'iron_pickaxe',
+            'steel_pickaxe',
+            'mithril_pickaxe',
+            'adamant_pickaxe',
+            'rune_pickaxe',
+            'hammer',
+            'fishing_rod',
+            'harpoon',
+            'rune_harpoon',
+            'air_staff',
+            'water_staff',
+            'earth_staff',
+            'fire_staff'
+        ];
 
         function inferItemActions(item) {
             if (!item || !item.type) return [];
@@ -345,6 +362,7 @@
         inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[11] = { itemData: ITEM_DB['owie'], amount: 1 };
+        let progressContentGrants = {};
 
                         function setInventorySlots(slotDefs) {
             inventory = Array(28).fill(null);
@@ -389,6 +407,99 @@
                 { itemId: 'tinderbox', amount: 1 },
                 { itemId: 'knife', amount: 1 }
             ];
+        }
+
+        function sanitizeContentGrantState(savedGrants) {
+            const restored = {};
+            if (!savedGrants || typeof savedGrants !== 'object') return restored;
+
+            const grantIds = Object.keys(savedGrants);
+            for (let i = 0; i < grantIds.length; i++) {
+                const grantId = String(grantIds[i] || '').trim();
+                if (!grantId) continue;
+                const rawGrant = savedGrants[grantId];
+                if (!rawGrant || typeof rawGrant !== 'object') continue;
+
+                const itemIds = Object.keys(rawGrant);
+                const restoredGrant = {};
+                for (let j = 0; j < itemIds.length; j++) {
+                    const itemId = sanitizeItemId(itemIds[j]);
+                    if (!itemId || !rawGrant[itemIds[j]]) continue;
+                    restoredGrant[itemId] = true;
+                }
+
+                if (Object.keys(restoredGrant).length > 0) {
+                    restored[grantId] = restoredGrant;
+                }
+            }
+
+            return restored;
+        }
+
+        function cloneContentGrantState() {
+            return sanitizeContentGrantState(progressContentGrants);
+        }
+
+        function hasContentGrantItem(grantId, itemId) {
+            const safeGrantId = String(grantId || '').trim();
+            const safeItemId = sanitizeItemId(itemId);
+            if (!safeGrantId || !safeItemId) return false;
+            return !!(progressContentGrants[safeGrantId] && progressContentGrants[safeGrantId][safeItemId]);
+        }
+
+        function markContentGrantItem(grantId, itemId) {
+            const safeGrantId = String(grantId || '').trim();
+            const safeItemId = sanitizeItemId(itemId);
+            if (!safeGrantId || !safeItemId) return false;
+            if (!progressContentGrants[safeGrantId] || typeof progressContentGrants[safeGrantId] !== 'object') {
+                progressContentGrants[safeGrantId] = {};
+            }
+            progressContentGrants[safeGrantId][safeItemId] = true;
+            return true;
+        }
+
+        function inventoryContainsItem(itemId) {
+            const safeItemId = sanitizeItemId(itemId);
+            if (!safeItemId) return false;
+            return inventory.some((slot) => slot && slot.itemData && slot.itemData.id === safeItemId);
+        }
+
+        function applyInventoryIconReviewGrant() {
+            const added = [];
+            const acknowledged = [];
+            const blocked = [];
+
+            for (let i = 0; i < INVENTORY_ICON_REVIEW_ITEM_IDS.length; i++) {
+                const itemId = INVENTORY_ICON_REVIEW_ITEM_IDS[i];
+                if (!ITEM_DB[itemId]) {
+                    blocked.push(itemId);
+                    continue;
+                }
+                if (hasContentGrantItem(INVENTORY_ICON_REVIEW_GRANT_ID, itemId)) continue;
+
+                if (inventoryContainsItem(itemId)) {
+                    markContentGrantItem(INVENTORY_ICON_REVIEW_GRANT_ID, itemId);
+                    acknowledged.push(itemId);
+                    continue;
+                }
+
+                const emptyIdx = inventory.indexOf(null);
+                if (emptyIdx === -1) {
+                    blocked.push(itemId);
+                    continue;
+                }
+
+                inventory[emptyIdx] = { itemData: ITEM_DB[itemId], amount: 1 };
+                markContentGrantItem(INVENTORY_ICON_REVIEW_GRANT_ID, itemId);
+                added.push(itemId);
+            }
+
+            return {
+                added,
+                acknowledged,
+                blocked,
+                changed: added.length > 0 || acknowledged.length > 0
+            };
         }
 
         function applyQaInventoryPreset(presetName) {
@@ -503,6 +614,23 @@
                     { itemId: 'hammer', amount: 1 },
                     { itemId: 'bronze_bar', amount: 1 }
                 ]), 'logs');
+            } else if (name === 'icons') {
+                slots = [
+                    { itemId: 'bronze_pickaxe', amount: 1 },
+                    { itemId: 'iron_pickaxe', amount: 1 },
+                    { itemId: 'steel_pickaxe', amount: 1 },
+                    { itemId: 'mithril_pickaxe', amount: 1 },
+                    { itemId: 'adamant_pickaxe', amount: 1 },
+                    { itemId: 'rune_pickaxe', amount: 1 },
+                    { itemId: 'hammer', amount: 1 },
+                    { itemId: 'fishing_rod', amount: 1 },
+                    { itemId: 'harpoon', amount: 1 },
+                    { itemId: 'rune_harpoon', amount: 1 },
+                    { itemId: 'air_staff', amount: 1 },
+                    { itemId: 'water_staff', amount: 1 },
+                    { itemId: 'earth_staff', amount: 1 },
+                    { itemId: 'fire_staff', amount: 1 }
+                ];
             } else if (name === 'default') {
                 slots = [
                     { itemId: 'iron_axe', amount: 1 },
@@ -1396,6 +1524,7 @@
                     bankItems: serializeItemArray(bankItems),
                     equipment: serializeEquipmentState(),
                     userItemPrefs: sanitizeUserItemPrefs(userItemPrefs),
+                    contentGrants: cloneContentGrantState(),
                     runMode: !!isRunning,
                     profile: serializePlayerProfile(),
                     appearance: window.playerAppearanceState
@@ -1499,6 +1628,7 @@
             bankItems = deserializeItemArray(state.bankItems, 200);
             equipment = deserializeEquipmentState(state.equipment);
             userItemPrefs = sanitizeUserItemPrefs(state.userItemPrefs);
+            progressContentGrants = sanitizeContentGrantState(state.contentGrants);
             isRunning = !!state.runMode;
             const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');
             syncPlayerProfileState(sanitizePlayerProfile(state.profile, { allowLegacyFallback: true }));
@@ -2047,7 +2177,7 @@
                 const cmd = (parts[0] || '').toLowerCase();
 
                 if (cmd === 'help' || !cmd) {
-                    addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa default', 'info');
+                    addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
                     addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     addChatMessage(formatQaOpenShopUsage(), 'info');
                     return;
@@ -2348,6 +2478,19 @@
             if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
             if (typeof initPoseEditor === 'function') initPoseEditor();
             initPlayerEntryFlow(loadProgressResult);
+            const iconGrantResult = applyInventoryIconReviewGrant();
+            if (iconGrantResult.added.length > 0 && typeof renderInventory === 'function') {
+                renderInventory();
+            }
+            if (iconGrantResult.changed) {
+                saveProgressToStorage('inventory_icon_review_grant');
+            }
+            if (iconGrantResult.added.length > 0) {
+                addChatMessage(`Added ${iconGrantResult.added.length} inventory icon QA item(s) to your inventory.`, 'info');
+            }
+            if (iconGrantResult.blocked.length > 0) {
+                addChatMessage(`Inventory icon QA grant left out ${iconGrantResult.blocked.length} item(s) because your inventory is full. Use /qa icons to load the full review set instantly.`, 'warn');
+            }
 
             const worldMapPanel = document.getElementById('world-map-panel');
             const worldMapToggleBtn = document.getElementById('mapToggleBtn');

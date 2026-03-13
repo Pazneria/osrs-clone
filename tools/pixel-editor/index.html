@@ -12,7 +12,7 @@
             <div class="brand">
                 <p class="eyebrow">OSRS Clone</p>
                 <h1>Pixel Asset Editor</h1>
-                <p class="lede">Fixed 32x32 inventory icon authoring with JSON source files, PNG import, and live slot previews.</p>
+                <p class="lede">64x64 authoring with canonical 32x32 JSON export, PNG import, and live inventory-slot previews.</p>
             </div>
 
             <section class="stack">
@@ -66,8 +66,8 @@
 
             <section class="stack help">
                 <h2>Workflow</h2>
-                <p>Use this editor to author `assets/pixel-src/&lt;assetId&gt;.json`, then run `npm.cmd run tool:pixel:build -- --asset &lt;assetId&gt;` or `npm.cmd run tool:pixel:build:all`.</p>
-                <p>Pencil and erase respect mirror toggles. PNG import rescales and centers source art into the fixed 32x32 canvas.</p>
+                <p>Use this editor to author at 64x64, then save the downsampled canonical `assets/pixel-src/&lt;assetId&gt;.json` export and run `npm.cmd run tool:pixel:build -- --asset &lt;assetId&gt;`.</p>
+                <p>Bold grid lines mark the exported 32x32 cells. Pencil and erase respect mirror toggles, and PNG import rescales into the 64x64 authoring grid.</p>
             </section>
         </aside>
 
@@ -76,12 +76,12 @@
                 <div class="canvas-head">
                     <div>
                         <p class="eyebrow">Canvas</p>
-                        <h2>32 x 32</h2>
+                        <h2>64 x 64 Authoring</h2>
                     </div>
                     <p id="statusText" class="status">Ready</p>
                 </div>
                 <div id="canvasViewport" class="canvas-viewport" data-zoom="2">
-                    <canvas id="editorCanvas" width="32" height="32" aria-label="Pixel editor canvas"></canvas>
+                    <canvas id="editorCanvas" width="64" height="64" aria-label="Pixel editor canvas"></canvas>
                 </div>
             </section>
 
@@ -89,7 +89,7 @@
                 <div class="preview-head">
                     <div>
                         <p class="eyebrow">Preview</p>
-                        <h2>Inventory Readability</h2>
+                        <h2>32 x 32 Export Preview</h2>
                     </div>
                 </div>
 
@@ -102,7 +102,7 @@
                     </div>
 
                     <div class="preview-card">
-                        <p>2x Preview</p>
+                        <p>5x Export</p>
                         <canvas id="largePreviewCanvas" width="32" height="32"></canvas>
                     </div>
                 </div>

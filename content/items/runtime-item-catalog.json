@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T03:18:53.108Z",
+  "generatedAt": "2026-03-13T03:34:04.368Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -148,7 +148,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "adamant_pickaxe",
         "kind": "pixel"
       },
       "name": "Adamant Pickaxe",
@@ -297,7 +297,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "air_staff",
         "kind": "pixel"
       },
       "name": "Air Staff",
@@ -511,7 +511,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "bronze_pickaxe",
         "kind": "pixel"
       },
       "name": "Bronze Pickaxe",
@@ -1005,7 +1005,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "earth_staff",
         "kind": "pixel"
       },
       "name": "Earth Staff",
@@ -1094,7 +1094,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "fire_staff",
         "kind": "pixel"
       },
       "name": "Fire Staff",
@@ -1109,7 +1109,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "small_net",
+        "assetId": "fishing_rod",
         "kind": "pixel"
       },
       "name": "Fishing Rod",
@@ -1198,7 +1198,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "hammer",
         "kind": "pixel"
       },
       "name": "Hammer",
@@ -1214,7 +1214,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "harpoon",
         "kind": "pixel"
       },
       "name": "Harpoon",
@@ -1374,7 +1374,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "iron_pickaxe",
         "kind": "pixel"
       },
       "name": "Iron Pickaxe",
@@ -1871,7 +1871,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "mithril_pickaxe",
         "kind": "pixel"
       },
       "name": "Mithril Pickaxe",
@@ -2645,7 +2645,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "rune_harpoon",
         "kind": "pixel"
       },
       "name": "Rune Harpoon",
@@ -2701,7 +2701,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "rune_pickaxe",
         "kind": "pixel"
       },
       "name": "Rune Pickaxe",
@@ -3198,7 +3198,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "steel_pickaxe",
         "kind": "pixel"
       },
       "name": "Steel Pickaxe",
@@ -3464,7 +3464,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "water_staff",
         "kind": "pixel"
       },
       "name": "Water Staff",

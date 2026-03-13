@@ -40,6 +40,38 @@ npm.cmd run dev
 - `http://localhost:5500/tools/pixel-editor/`
 
 3. Create or update `assets/pixel-src/<asset_id>.json`.
+
+Optional AI-first authoring path:
+
+- Author a geometric draft spec in `assets/pixel-spec/<name>.json`
+- Dry-run it with an ASCII preview:
+
+```bat
+npm.cmd run tool:pixel:spec -- --spec assets/pixel-spec/my_icon_workbench.json --ascii --ascii-silhouette --write-review
+```
+
+If you want the resolved construction points too:
+
+```bat
+npm.cmd run tool:pixel:spec -- --spec assets/pixel-spec/my_icon_workbench.json --anchors
+```
+
+- If the draft looks right, write the canonical pixel source:
+
+```bat
+npm.cmd run tool:pixel:spec -- --spec assets/pixel-spec/my_icon_workbench.json --write-source
+```
+
+The spec tool is meant for Codex-first iteration. It can assemble icons from lines, arcs, polygons, fills, and copied source regions, then emit the normal `32x32` pixel source JSON the rest of the pipeline already understands.
+It also supports named anchors plus derived points such as offsets, midpoints, lerps, and perpendicular vector steps, which makes structure-first drafting much easier for tool and weapon silhouettes.
+
+If you approve one silhouette and want to propagate it across a tier family while preserving each target asset's colors, use:
+
+```bat
+npm.cmd run tool:pixel:adopt-shape -- --from bronze_pickaxe --to iron_pickaxe --to steel_pickaxe --to mithril_pickaxe --to adamant_pickaxe --to rune_pickaxe
+```
+
+That copies the accepted `pixels` shape onto the targets, keeps each target asset ID, preserves any existing palette colors for matching symbols, and only imports missing symbols from the source when needed.
 4. Build generated assets:
 
 ```bat
@@ -134,6 +166,9 @@ Each `assets/pixel-src/*.json` file uses a fixed `32x32` canvas:
 - `palette`: single-character symbol map, with `"."` reserved for transparent
 - `pixels`: 32 rows of 32 symbols each
 - `model`: `depth`, `scale`, `groundVariant`
+
+Optional `assets/pixel-spec/*.json` files are not runtime assets. They are authoring recipes that compile down to the canonical `assets/pixel-src/*.json` format.
+They may include top-level `anchors` so geometry can be expressed relative to concepts like `eye`, `butt`, `left_tip`, or other named construction points instead of raw coordinates everywhere.
 
 Current model behavior:
 

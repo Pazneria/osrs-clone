@@ -9,6 +9,7 @@ Default behavior for a normal icon request:
 1. Consult `content/icon-status.json` first. Treat `status: done` as complete, treat `status: todo` as still eligible work, and prefer `npm.cmd run tool:icons:report` when choosing a new batch.
 2. Choose the target `assetId`.
 3. Author or update `assets/pixel-src/<asset_id>.json` directly, or use `tools/pixel-editor/`.
+   For complex silhouettes or family items, prefer a draft/workbench spec under `assets/pixel-spec/` first, get the shape approved, then apply the accepted silhouette to runtime assets.
 4. Build generated assets with `npm.cmd run tool:pixel:build -- --asset <asset_id>` or `npm.cmd run tool:pixel:build:all`.
 5. If the target item mapping is unambiguous, keep runtime item defs on `icon: { kind: 'pixel', assetId: '<asset_id>' }`, then run `npm.cmd run tool:items:sync`.
 6. Update `content/icon-status.json` for the touched items: mark accepted/reviewed bespoke icons as `done`, leave unfinished or placeholder items as `todo`, then run `npm.cmd run tool:items:sync` again if runtime wiring changed during the request.
@@ -20,10 +21,12 @@ Asset selection rules:
 - Otherwise, create a new dedicated `assetId` per explicitly requested item by default.
 - Preserve existing shared assets unless the user clearly asks for bespoke art or the shared asset is obviously a placeholder or poor fit.
 - Ask only when splitting a shared asset has non-obvious gameplay or content consequences, or when the target item/asset mapping is genuinely ambiguous.
+- For tiered item families, lock the silhouette first and preserve palette differences second. Once one family member is approved, prefer copying the accepted `pixels` shape across siblings rather than re-drawing each variant separately.
 
 Execution rules:
 
 - Make reasonable visual assumptions and proceed without asking for approval when the request is clear enough to draft.
+- Keep live runtime assets untouched during back-and-forth shape exploration when a workbench draft will do; only promote the approved draft into `assets/pixel-src/*` once the silhouette is accepted.
 - If the user says `draft only`, create or update the pixel source and build outputs, but do not change runtime item wiring.
 - If the user asks multiple items to share one icon, keep a shared `assetId` and report that decision clearly.
 - Never infer `done` from file age, palette size, or naming patterns alone. Use `content/icon-status.json` as the explicit completion record for fresh instances.
@@ -47,4 +50,5 @@ Execution rules:
 - Treat generated OBJ meshes as silhouette-driven prototypes; refine final held/ground models in DCC tools if needed.
 - `npm.cmd run tool:items:sync` keeps `content/icon-status.json` asset mappings and shared-vs-bespoke treatment in sync, but preserves the explicit `done`/`todo` status values already recorded there.
 - Keep this asset-request behavior defined in this project `AGENTS.md`; do not rely on a global/home-level instruction file for this workflow.
+- In tiered weapon/tool icon sets, the current palette convention is usually `a/b/c` for the handle, `d/e/f` for the main head material, and `g/h` for wraps or binding details when present. That makes recoloring tiers much easier without changing shape.
 

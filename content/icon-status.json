@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T03:18:53.109Z",
+  "generatedAt": "2026-03-13T03:34:04.369Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "tin_ore",
@@ -43,9 +43,9 @@
       "treatment": "shared"
     },
     "adamant_pickaxe": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_pickaxe",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_pickaxe_head": {
       "assetId": "pickaxe",
@@ -83,9 +83,9 @@
       "treatment": "bespoke"
     },
     "air_staff": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "air_staff",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "amulet_mould": {
       "assetId": "small_pouch",
@@ -149,9 +149,9 @@
       "treatment": "shared"
     },
     "bronze_pickaxe": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_pickaxe",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_pickaxe_head": {
       "assetId": "pickaxe",
@@ -306,9 +306,9 @@
       "treatment": "bespoke"
     },
     "earth_staff": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "earth_staff",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ember_rune": {
       "assetId": "ember_rune",
@@ -336,14 +336,14 @@
       "treatment": "shared"
     },
     "fire_staff": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "fire_staff",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "fishing_rod": {
-      "assetId": "small_net",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "fishing_rod",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "gold_amulet": {
       "assetId": "coins",
@@ -371,14 +371,14 @@
       "treatment": "shared"
     },
     "hammer": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "hammer",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "harpoon": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "harpoon",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_arrowheads": {
       "assetId": "tin_ore",
@@ -421,9 +421,9 @@
       "treatment": "shared"
     },
     "iron_pickaxe": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_pickaxe",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_pickaxe_head": {
       "assetId": "pickaxe",
@@ -572,9 +572,9 @@
       "treatment": "shared"
     },
     "mithril_pickaxe": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_pickaxe",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_pickaxe_head": {
       "assetId": "pickaxe",
@@ -813,9 +813,9 @@
       "treatment": "shared"
     },
     "rune_harpoon": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_harpoon",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_helmet": {
       "assetId": "iron_axe",
@@ -828,9 +828,9 @@
       "treatment": "shared"
     },
     "rune_pickaxe": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_pickaxe",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_pickaxe_head": {
       "assetId": "pickaxe",
@@ -920,7 +920,7 @@
     "small_net": {
       "assetId": "small_net",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "small_pouch": {
       "assetId": "small_pouch",
@@ -978,9 +978,9 @@
       "treatment": "shared"
     },
     "steel_pickaxe": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_pickaxe",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_pickaxe_head": {
       "assetId": "pickaxe",
@@ -1059,9 +1059,9 @@
       "treatment": "bespoke"
     },
     "water_staff": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "water_staff",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_handle": {
       "assetId": "knife",
