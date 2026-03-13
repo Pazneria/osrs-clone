@@ -721,13 +721,13 @@
         }
 
         function updateStats() {
-            let totalAtk = baseStats.atk; let totalDef = baseStats.def; let totalStr = baseStats.str;
-            Object.values(equipment).forEach(item => {
-                if(item) { totalAtk += item.stats.atk; totalDef += item.stats.def; totalStr += item.stats.str; }
-            });
-            document.getElementById('stat-atk').innerText = totalAtk;
-            document.getElementById('stat-def').innerText = totalDef;
-            document.getElementById('stat-str').innerText = totalStr;
+            const uiDomainRuntime = window.UiDomainRuntime || null;
+            const statsViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatsViewModel === 'function'
+                ? uiDomainRuntime.buildCombatStatsViewModel({ baseStats, equipment })
+                : { attack: baseStats.atk, defense: baseStats.def, strength: baseStats.str };
+            document.getElementById('stat-atk').innerText = statsViewModel.attack;
+            document.getElementById('stat-def').innerText = statsViewModel.defense;
+            document.getElementById('stat-str').innerText = statsViewModel.strength;
         }
 
         function getMaxHitpoints() {
@@ -1935,28 +1935,19 @@
             rockNodes = {};
             rockOreOverrides = {};
             rockAreaGateOverrides = {};
+            RUNE_ESSENCE_ROCKS = [];
+            respawningTrees = [];
             treeNodes = {};
             // Re-initialize as 3D Arrays! [z][y][x]
             logicalMap = Array(PLANES).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0)));
             heightMap = Array(PLANES).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0)));
             
             // Only populate Ground Terrain on Z=0
-            const forestCenters = [
-                {x: 50, y: 50}, {x: 350, y: 50}, {x: 50, y: 350}, {x: 350, y: 350},
-                {x: 200, y: 100}, {x: 100, y: 200}, {x: 300, y: 200}, {x: 200, y: 300},
-                {x: 150, y: 150}, {x: 250, y: 250}
-            ];
-            const mineCenters = [
-                {x: 30, y: 30}, {x: 370, y: 370}, {x: 30, y: 370}, {x: 370, y: 30},
-                {x: 200, y: 30}, {x: 30, y: 200}, {x: 370, y: 200}, {x: 200, y: 370}
-            ];
-            const treeSpawnBaseChance = 0.0005;
-            const rockSpawnBaseChance = 0.0005;
-            const forestClusterRadius = 34;
-            const forestClusterPeakChance = 0.015;
-            const mineClusterRadius = 18;
-            const mineClusterPeakChance = 0.075;
+            npcsToRender = [];
+            bankBoothsToRender = [];
+            doorsToRender = [];
             fishingSpotsToRender = [];
+            cookingFireSpotsToRender = [];
             directionalSignsToRender = [];
             altarCandidatesToRender = [];
             furnacesToRender = [];
@@ -1974,6 +1965,94 @@
                 const n3 = Math.sin((x + y) * 0.03) * 0.05;
                 return n1 + n2 + n3;
             };
+            const worldBootstrap = (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getWorldLegacyConfig === 'function')
+                ? window.WorldBootstrapRuntime.getWorldLegacyConfig()
+                : null;
+            const lakeDefs = (worldBootstrap && Array.isArray(worldBootstrap.lakeDefs) && worldBootstrap.lakeDefs.length > 0)
+                ? worldBootstrap.lakeDefs.map((lake) => Object.assign({}, lake))
+                : [
+                    { cx: 92, cy: 118, rx: 28, ry: 20 },
+                    { cx: 312, cy: 116, rx: 24, ry: 18 },
+                    { cx: 100, cy: 308, rx: 30, ry: 22 },
+                    { cx: 308, cy: 292, rx: 26, ry: 20 },
+                    { cx: 204, cy: 76, rx: 18, ry: 14 }
+                ];
+            const castleFrontPond = (worldBootstrap && worldBootstrap.castleFrontPond)
+                ? Object.assign({}, worldBootstrap.castleFrontPond)
+                : { cx: 205, cy: 233, rx: 13, ry: 9 };
+            const deepWaterCenter = (worldBootstrap && worldBootstrap.deepWaterCenter)
+                ? Object.assign({}, worldBootstrap.deepWaterCenter)
+                : { xMin: 204, xMax: 206, yMin: 232, yMax: 234 };
+            const pierConfig = (worldBootstrap && worldBootstrap.pier)
+                ? Object.assign({}, worldBootstrap.pier)
+                : { xMin: 204, xMax: 206, yStart: 224, yEnd: 231, entryY: 223 };
+            const stampedStructures = (worldBootstrap && Array.isArray(worldBootstrap.stampedStructures))
+                ? worldBootstrap.stampedStructures.map((structure) => Object.assign({}, structure))
+                : [];
+            const stampMap = (worldBootstrap && worldBootstrap.stampMap && typeof worldBootstrap.stampMap === 'object')
+                ? worldBootstrap.stampMap
+                : null;
+            const smithingStations = (worldBootstrap && Array.isArray(worldBootstrap.smithingStations))
+                ? worldBootstrap.smithingStations.map((station) => Object.assign({}, station))
+                : [
+                    { type: 'FURNACE', x: 226, y: 232, z: 0, facingYaw: -Math.PI / 2, footprintW: 2, footprintD: 3 },
+                    { type: 'ANVIL', x: 226, y: 236, z: 0 }
+                ];
+            const staticMerchantServices = (worldBootstrap && Array.isArray(worldBootstrap.staticMerchants))
+                ? worldBootstrap.staticMerchants.map((service) => Object.assign({}, service))
+                : [];
+            const generalStoreService = (worldBootstrap && worldBootstrap.generalStoreService)
+                ? Object.assign({}, worldBootstrap.generalStoreService)
+                : { merchantId: 'general_store', name: 'Shopkeeper', type: 'MERCHANT', x: 181, y: 235, z: 0, npcType: 2 };
+            const fishingTrainingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.fishingRoutes))
+                ? worldBootstrap.fishingRoutes.map((route) => Object.assign({}, route))
+                : [
+                    { routeId: 'castle_pond_bank', alias: 'pond', label: 'Castle Pond Bank', x: 205, y: 223, z: 0, tags: ['fishing', 'qa', 'starter'] },
+                    { routeId: 'castle_pond_pier', alias: 'pier', label: 'Castle Pond Pier', x: 205, y: 230, z: 0, tags: ['fishing', 'qa', 'starter'] },
+                    { routeId: 'castle_pond_deep_edge', alias: 'deep', label: 'Castle Pond Deep-Water Edge', x: 205, y: 231, z: 0, tags: ['fishing', 'qa', 'starter'] }
+                ];
+            const cookingRouteSpecs = (worldBootstrap && Array.isArray(worldBootstrap.cookingRoutes))
+                ? worldBootstrap.cookingRoutes.map((route) => ({
+                    routeId: route.routeId,
+                    alias: route.alias || null,
+                    label: route.label,
+                    x: route.x,
+                    y: route.y,
+                    z: route.z,
+                    tags: Array.isArray(route.tags) ? route.tags.slice() : [],
+                    fireTiles: Array.isArray(route.fireTiles) ? route.fireTiles.map((tile) => Object.assign({}, tile)) : []
+                }))
+                : [];
+            const miningTrainingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.miningRoutes))
+                ? worldBootstrap.miningRoutes.map((route) => Object.assign({}, route))
+                : [];
+            const runecraftingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.runecraftingRoutes))
+                ? worldBootstrap.runecraftingRoutes.map((route) => Object.assign({}, route))
+                : [];
+            const woodcuttingTrainingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.woodcuttingRoutes))
+                ? worldBootstrap.woodcuttingRoutes.map((route) => Object.assign({}, route))
+                : [];
+            const miningNodePlacements = (worldBootstrap && Array.isArray(worldBootstrap.miningNodePlacements))
+                ? worldBootstrap.miningNodePlacements.map((placement) => Object.assign({}, placement))
+                : [];
+            const authoredAltarPlacements = (worldBootstrap && Array.isArray(worldBootstrap.altarPlacements))
+                ? worldBootstrap.altarPlacements.map((placement) => Object.assign({}, placement))
+                : [];
+            const woodcuttingNodePlacements = (worldBootstrap && Array.isArray(worldBootstrap.woodcuttingNodePlacements))
+                ? worldBootstrap.woodcuttingNodePlacements.map((placement) => Object.assign({}, placement))
+                : [];
+            const staircaseLandmarks = (worldBootstrap && Array.isArray(worldBootstrap.staircases))
+                ? worldBootstrap.staircases.map((landmark) => ({
+                    landmarkId: landmark.landmarkId,
+                    tiles: Array.isArray(landmark.tiles) ? landmark.tiles.map((tile) => Object.assign({}, tile)) : []
+                }))
+                : [];
+            const doorLandmarks = (worldBootstrap && Array.isArray(worldBootstrap.doors))
+                ? worldBootstrap.doors.map((door) => Object.assign({}, door))
+                : [];
+            const showcaseTreeDefs = (worldBootstrap && Array.isArray(worldBootstrap.showcaseTrees))
+                ? worldBootstrap.showcaseTrees.map((tree) => Object.assign({}, tree))
+                : [];
 
             for (let y = 0; y < MAP_SIZE; y++) {
                 for (let x = 0; x < MAP_SIZE; x++) {
@@ -1986,26 +2065,11 @@
                         heightMap[0][y][x] = 0;
                     }
                     else {
-                        let treeChance = treeSpawnBaseChance; let rockChance = rockSpawnBaseChance;
-                        forestCenters.forEach(c => { let d = Math.hypot(x - c.x, y - c.y); if (d < forestClusterRadius) treeChance += forestClusterPeakChance * (1 - d / forestClusterRadius); });
-                        mineCenters.forEach(c => { let d = Math.hypot(x - c.x, y - c.y); if (d < mineClusterRadius) rockChance += mineClusterPeakChance * (1 - d / mineClusterRadius); });
+                        logicalMap[0][y][x] = 0;
                         heightMap[0][y][x] = terrainNoise(x, y);
-                        if (Math.random() < treeChance) logicalMap[0][y][x] = 1;
-                        else if (Math.random() < rockChance) logicalMap[0][y][x] = 2;
-                        else logicalMap[0][y][x] = 0;
                     }
                 }
             }
-
-
-            const lakeDefs = [
-                { cx: 92, cy: 118, rx: 28, ry: 20 },
-                { cx: 312, cy: 116, rx: 24, ry: 18 },
-                { cx: 100, cy: 308, rx: 30, ry: 22 },
-                { cx: 308, cy: 292, rx: 26, ry: 20 },
-                { cx: 204, cy: 76, rx: 18, ry: 14 }
-            ];
-
             const carveWaterTile = (x, y, depthNorm) => {
                 if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return;
                 if (inTownCore(x, y)) return;
@@ -2046,7 +2110,6 @@
                 }
             });
             // Add a guaranteed pond in front of the castle (clearing area).
-            const castleFrontPond = { cx: 205, cy: 233, rx: 13, ry: 9 };
             for (let y = Math.max(1, Math.floor(castleFrontPond.cy - castleFrontPond.ry - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(castleFrontPond.cy + castleFrontPond.ry + 1)); y++) {
                 for (let x = Math.max(1, Math.floor(castleFrontPond.cx - castleFrontPond.rx - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(castleFrontPond.cx + castleFrontPond.rx + 1)); x++) {
                     const nx = (x - castleFrontPond.cx) / castleFrontPond.rx;
@@ -2057,8 +2120,8 @@
             }
 
             // Ensure a stable deep-water center so dockside fishing can target dark water.
-            for (let y = castleFrontPond.cy - 1; y <= castleFrontPond.cy + 1; y++) {
-                for (let x = castleFrontPond.cx - 1; x <= castleFrontPond.cx + 1; x++) {
+            for (let y = deepWaterCenter.yMin; y <= deepWaterCenter.yMax; y++) {
+                for (let x = deepWaterCenter.xMin; x <= deepWaterCenter.xMax; x++) {
                     if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
                     logicalMap[0][y][x] = 22;
                     heightMap[0][y][x] = -0.18;
@@ -2067,10 +2130,10 @@
 
             // Add a wooden pier from the castle-facing bank toward the deep center.
             // The tip stops one tile short of water so the player stands on the pier and fishes adjacent dark water.
-            const pierXMin = castleFrontPond.cx - 1;
-            const pierXMax = castleFrontPond.cx + 1;
-            const pierYStart = castleFrontPond.cy - 9;
-            const pierYEnd = castleFrontPond.cy - 2;
+            const pierXMin = pierConfig.xMin;
+            const pierXMax = pierConfig.xMax;
+            const pierYStart = pierConfig.yStart;
+            const pierYEnd = pierConfig.yEnd;
             for (let y = pierYStart; y <= pierYEnd; y++) {
                 for (let x = pierXMin; x <= pierXMax; x++) {
                     if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
@@ -2080,27 +2143,27 @@
             }
 
             // Shoreline anchor tile so the pier always has a clean walkable entry from land.
-            const pierEntryY = pierYStart - 1;
+            const pierEntryY = pierConfig.entryY;
             for (let x = pierXMin; x <= pierXMax; x++) {
                 if (x <= 1 || pierEntryY <= 1 || x >= MAP_SIZE - 2 || pierEntryY >= MAP_SIZE - 2) continue;
                 logicalMap[0][pierEntryY][x] = 20;
                 heightMap[0][pierEntryY][x] = -0.01;
             }
 
-            const fishingTrainingLocations = [
-                { routeId: 'castle_pond_bank', alias: 'pond', label: 'Castle Pond Bank', x: castleFrontPond.cx, y: pierEntryY, z: 0 },
-                { routeId: 'castle_pond_pier', alias: 'pier', label: 'Castle Pond Pier', x: castleFrontPond.cx, y: pierYEnd - 1, z: 0 },
-                { routeId: 'castle_pond_deep_edge', alias: 'deep', label: 'Castle Pond Deep-Water Edge', x: castleFrontPond.cx, y: pierYEnd, z: 0 }
-            ];
+            const fishingTrainingLocations = fishingTrainingRouteDefs.map((route) => ({
+                routeId: route.routeId,
+                alias: route.alias || null,
+                label: route.label,
+                x: route.x,
+                y: route.y,
+                z: route.z,
+                tags: Array.isArray(route.tags) ? route.tags.slice() : []
+            }));
             window.getFishingTrainingLocations = function getFishingTrainingLocations() {
                 return fishingTrainingLocations.slice();
             };
 
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
-            const smithingStations = [
-                { type: 'FURNACE', x: 226, y: 232, facingYaw: -Math.PI / 2, footprintW: 2, footprintD: 3 },
-                { type: 'ANVIL', x: 226, y: 236 }
-            ];
             for (let i = 0; i < smithingStations.length; i++) {
                 const station = smithingStations[i];
                 if (!station || station.x <= 1 || station.y <= 1 || station.x >= MAP_SIZE - 2 || station.y >= MAP_SIZE - 2) continue;
@@ -2111,10 +2174,18 @@
                 if (station.type === 'ANVIL') anvilsToRender.push({ x: station.x, y: station.y, z: 0, facingYaw: station.facingYaw });
             }
 
-            const fishingMerchantSpots = [
-                { name: 'Fishing Teacher', merchantId: 'fishing_teacher', type: 3, x: castleFrontPond.cx - 4, y: pierEntryY },
-                { name: 'Fishing Supplier', merchantId: 'fishing_supplier', type: 2, x: castleFrontPond.cx + 4, y: pierYEnd - 1 }
-            ];
+            const fishingMerchantSpots = staticMerchantServices.filter((service) => {
+                const tags = Array.isArray(service.tags) ? service.tags : [];
+                return service.type === 'MERCHANT' && tags.includes('fishing');
+            }).map((service) => ({
+                name: service.name,
+                merchantId: service.merchantId,
+                type: Number.isFinite(service.npcType) ? service.npcType : 2,
+                x: service.x,
+                y: service.y,
+                z: Number.isFinite(service.z) ? service.z : 0,
+                facingYaw: service.facingYaw
+            }));
             for (let i = 0; i < fishingMerchantSpots.length; i++) {
                 const spot = fishingMerchantSpots[i];
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
@@ -2134,42 +2205,6 @@
                 });
             }
 
-            const cookingRouteSpecs = [
-                {
-                    routeId: 'starter_campfire',
-                    label: 'Starter Campfire',
-                    fireTiles: [
-                        { x: castleFrontPond.cx - 6, y: pierEntryY + 1 }
-                    ]
-                },
-                {
-                    routeId: 'riverbank_fire_line',
-                    label: 'Riverbank Fire Line',
-                    fireTiles: [
-                        { x: castleFrontPond.cx - 8, y: pierEntryY + 3 },
-                        { x: castleFrontPond.cx - 8, y: pierEntryY + 4 },
-                        { x: castleFrontPond.cx - 8, y: pierEntryY + 5 }
-                    ]
-                },
-                {
-                    routeId: 'dockside_fire_line',
-                    label: 'Dockside Fire Line',
-                    fireTiles: [
-                        { x: castleFrontPond.cx + 7, y: pierEntryY + 3 },
-                        { x: castleFrontPond.cx + 7, y: pierEntryY + 4 },
-                        { x: castleFrontPond.cx + 7, y: pierEntryY + 5 }
-                    ]
-                },
-                {
-                    routeId: 'deep_water_dock_fire_line',
-                    label: 'Deep-Water Dock Fire Line',
-                    fireTiles: [
-                        { x: castleFrontPond.cx - 2, y: pierYEnd - 1 },
-                        { x: castleFrontPond.cx, y: pierYEnd - 2 },
-                        { x: castleFrontPond.cx + 2, y: pierYEnd - 1 }
-                    ]
-                }
-            ];
             const cookingTrainingLocations = [];
             cookingFireSpotsToRender = [];
 
@@ -2219,11 +2254,13 @@
                     const anchor = routePlacements[Math.floor(routePlacements.length / 2)];
                     cookingTrainingLocations.push({
                         routeId: routeSpec.routeId,
+                        alias: routeSpec.alias || null,
                         label: routeSpec.label,
                         x: anchor.x,
                         y: anchor.y,
                         z: anchor.z,
-                        count: routePlacements.length
+                        count: routePlacements.length,
+                        tags: Array.isArray(routeSpec.tags) ? routeSpec.tags.slice() : []
                     });
                 }
             }
@@ -2270,95 +2307,10 @@
             // F = Floor, W = Wall, C = Corner Tower, B = Bank Booth, N = NPC, T = Dummy 
             // U = Climb Up, D = Climb Down, s = Seamless Walkable Stairs
             
-            // Plane 0: Ground Floor (Expanded 31x26 Blueprint)
-            const castleFloor0 = [
-                "CWWWWWWWWWWWWWWWWWWWWWWWWWWWWWC",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFCWWWWWWWFFFFWWWWWWCFFFFFW", // Keep back, added door
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFNNNNNNNFFFFFWFFFFFW",
-                "WFFFFFWFFFFFBBBBBBBFFFFFWFFFFFW", // Banking area
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFTFFFFFFFFWFFFFFW", // Dummy
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFCWWWWWWWFFFFWWWWWWCFFFFFW", // Keep front, added door
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "CWWWWWWWWWWWWWWsssWWWWWWWWWWWWC" // Outer wall front with seamless entrance
-            ];
-
-            // Plane 1: Second Floor
-            const castleFloor1 = [
-                "CWWWWWWWWWWWWWWWWWWWWWWWWWWWWWC",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFCWWWWWWWFFFFWWWWWWCFFFFFW", 
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFKFFFQFFFFWFFFFFW", // Placed King & Queen
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFWFFFFFFFFFFFFFFFFFWFFFFFW",
-                "WFFFFFCWWWWWWWFFFFWWWWWWCFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW", 
-                "WFFFFFFFFFFFFFFFFFFFFFFFFFFFFFW",
-                "CWWWWWWWWWWWWWWWWWWWWWWWWWWWWWC"
-            ];
-
-            // General Store (9x9)
-            const generalStoreBlueprint = [
-                "CWWWWWWWC",
-                "WFFFFFFFW",
-                "WFFFFVFFW", 
-                "WFFF$VFFW", 
-                "WFFFFVFFW", 
-                "WFFFFVFFW", 
-                "WFFFFFFFW",
-                "WFFFFFFFW",
-                "CWWWWWWWC"  
-            ];
-
-            // Open-front smithing hall (13x9): three-walled rectangle, west side open to pond.
-            const smithingHallBlueprint = [
-                "CWWWWWWWC",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "FFFFFFFFW",
-                "CWWWWWWWC"
-            ];
+            const castleFloor0 = stampMap && Array.isArray(stampMap.castle_floor0) ? stampMap.castle_floor0.slice() : [];
+            const castleFloor1 = stampMap && Array.isArray(stampMap.castle_floor1) ? stampMap.castle_floor1.slice() : [];
+            const generalStoreBlueprint = stampMap && Array.isArray(stampMap.general_store) ? stampMap.general_store.slice() : [];
+            const smithingHallBlueprint = stampMap && Array.isArray(stampMap.smithing_hall) ? stampMap.smithing_hall.slice() : [];
 
             function stampBlueprint(startX, startY, z, blueprint) {
                 for (let y = 0; y < blueprint.length; y++) {
@@ -2412,15 +2364,11 @@
                 }
             }
 
-            // Stack the castle planes right in the middle
-            stampBlueprint(190, 190, 0, castleFloor0);
-            stampBlueprint(190, 190, 1, castleFloor1);
-            
-            // Stamp the General Store at the requested coordinates
-            stampBlueprint(177, 232, 0, generalStoreBlueprint);
-
-            // Smithing hall opposite the pond from the shop (east bank): longer rectangle, shop-width.
-            stampBlueprint(221, 228, 0, smithingHallBlueprint);
+            for (let i = 0; i < stampedStructures.length; i++) {
+                const structure = stampedStructures[i];
+                if (!structure || !stampMap || !Array.isArray(stampMap[structure.stampId])) continue;
+                stampBlueprint(structure.x, structure.y, structure.z, stampMap[structure.stampId]);
+            }
             // Re-assert smithing station collision after blueprint stamping.
             for (let i = 0; i < smithingStations.length; i++) {
                 const station = smithingStations[i];
@@ -2440,18 +2388,38 @@
                     logicalMap[0][station.y][station.x] = 16;
                 }
             }
-            const smithingMerchantSpots = [
-                { name: 'Borin Ironvein', merchantId: 'borin_ironvein', type: 2, x: 224, y: 230, facingYaw: -Math.PI / 2 },
-                { name: 'Thrain Deepforge', merchantId: 'thrain_deepforge', type: 6, x: 228, y: 236 },
-                { name: 'Elira Gemhand', merchantId: 'elira_gemhand', type: 3, x: 228, y: 231 },
-                { name: 'Crafting Teacher', merchantId: 'crafting_teacher', type: 2, x: 223, y: 236, facingYaw: Math.PI / 2 },
-                { name: 'Tanner Rusk', merchantId: 'tanner_rusk', type: 6, x: 225, y: 236 }
-            ];
-            for (let i = 0; i < smithingMerchantSpots.length; i++) {
-                const spot = smithingMerchantSpots[i];
+            const staticMerchantSpots = staticMerchantServices.filter((service) => {
+                const tags = Array.isArray(service.tags) ? service.tags : [];
+                return service.type === 'MERCHANT'
+                    && service.merchantId !== 'fishing_teacher'
+                    && service.merchantId !== 'fishing_supplier'
+                    && service.merchantId !== 'general_store';
+            }).map((service) => ({
+                name: service.name,
+                merchantId: service.merchantId,
+                type: Number.isFinite(service.npcType) ? service.npcType : 2,
+                x: service.x,
+                y: service.y,
+                z: Number.isFinite(service.z) ? service.z : 0,
+                action: typeof service.action === 'string' && service.action ? service.action : 'Trade',
+                travelToWorldId: typeof service.travelToWorldId === 'string' && service.travelToWorldId ? service.travelToWorldId : null,
+                travelSpawn: service.travelSpawn && Number.isFinite(service.travelSpawn.x) && Number.isFinite(service.travelSpawn.y) && Number.isFinite(service.travelSpawn.z)
+                    ? {
+                        x: Math.floor(service.travelSpawn.x),
+                        y: Math.floor(service.travelSpawn.y),
+                        z: Math.floor(service.travelSpawn.z)
+                    }
+                    : null,
+                facingYaw: service.facingYaw,
+                tags: Array.isArray(service.tags) ? service.tags.slice() : []
+            }));
+            for (let i = 0; i < staticMerchantSpots.length; i++) {
+                const spot = staticMerchantSpots[i];
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
                 logicalMap[0][spot.y][spot.x] = 16;
-                heightMap[0][spot.y][spot.x] = 0.5;
+                if (Array.isArray(spot.tags) && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))) {
+                    heightMap[0][spot.y][spot.x] = 0.5;
+                }
                 npcsToRender.push({
                     type: spot.type,
                     x: spot.x,
@@ -2460,32 +2428,25 @@
                     name: spot.name,
                     merchantId: spot.merchantId,
                     facingYaw: spot.facingYaw,
-                    action: 'Trade'
+                    action: spot.action || 'Trade',
+                    travelToWorldId: spot.travelToWorldId || null,
+                    travelSpawn: spot.travelSpawn ? Object.assign({}, spot.travelSpawn) : null
                 });
             }
 
-
-            // --- USER TEST: Dual Castle Stairs ---
-            // Left Staircase (194, 214 -> 191, 214)
-            logicalMap[0][214][194] = 15; heightMap[0][214][194] = 0.75; // Tier 1 (Starts flush with 0.5 floor)
-            logicalMap[0][214][193] = 15; heightMap[0][214][193] = 1.25; // Tier 2
-            logicalMap[0][214][192] = 15; heightMap[0][214][192] = 1.75; // Tier 3
-            logicalMap[0][214][191] = 13; heightMap[0][214][191] = 2.0;  // Platform Landing & Climb Up
-
-            // Right Staircase (216, 214 -> 219, 214)
-            logicalMap[0][214][216] = 15; heightMap[0][214][216] = 0.75; // Tier 1 (Starts flush with 0.5 floor)
-            logicalMap[0][214][217] = 15; heightMap[0][214][217] = 1.25; // Tier 2
-            logicalMap[0][214][218] = 15; heightMap[0][214][218] = 1.75; // Tier 3
-            logicalMap[0][214][219] = 13; heightMap[0][214][219] = 2.0;  // Platform Landing & Climb Up
-
-            // Plane 1 (Second Floor) Connectors
-            logicalMap[1][214][191] = 14; heightMap[1][214][191] = 0.5;  // Left Climb Down
-            logicalMap[1][214][219] = 14; heightMap[1][214][219] = 0.5;  // Right Climb Down
-
-            // --- USER TEST: Store Stairs & Interactive Door ---
-            // Ground Floor (Plane 0) - East wall of the General Store
-            logicalMap[0][236][186] = 15; heightMap[0][236][186] = 0.25; // Normal Seamless Stairs (Tier 1, climbs 0 to 0.5)
-            logicalMap[0][236][185] = 18; heightMap[0][236][185] = 0.5;  // Closed Door overriding the wall segment
+            for (let i = 0; i < staircaseLandmarks.length; i++) {
+                const staircase = staircaseLandmarks[i];
+                if (!staircase || !Array.isArray(staircase.tiles)) continue;
+                for (let j = 0; j < staircase.tiles.length; j++) {
+                    const tile = staircase.tiles[j];
+                    if (!tile || !Number.isInteger(tile.x) || !Number.isInteger(tile.y) || !Number.isInteger(tile.z)) continue;
+                    if (!logicalMap[tile.z] || !logicalMap[tile.z][tile.y]) continue;
+                    const tileId = TileId[tile.tileId];
+                    if (!Number.isFinite(tileId)) continue;
+                    logicalMap[tile.z][tile.y][tile.x] = tileId;
+                    heightMap[tile.z][tile.y][tile.x] = Number.isFinite(tile.height) ? tile.height : heightMap[tile.z][tile.y][tile.x];
+                }
+            }
 
             // Smithing hall approach stairs from pond side (west/open side).
             for (let sy = 233; sy <= 235; sy++) {
@@ -2493,717 +2454,72 @@
                 logicalMap[0][sy][220] = 15; heightMap[0][sy][220] = 0.25;
             }
             
-            doorsToRender.push({ 
-                x: 185, y: 236, z: 0, 
-                isOpen: false, 
-                hingeOffsetX: 0,
-                hingeOffsetY: 0.45, // Anchored to the South edge of the tile
-                thickness: 0.1,
-                width: 0.9,
-                isEW: false,        // false = runs North/South (along East wall)
-                closedRot: 0,       // Points North to close the gap
-                openRot: Math.PI / 2, // Swings 90 degrees inward (West)
-                currentRotation: 0, 
-                targetRotation: 0 
+            for (let i = 0; i < doorLandmarks.length; i++) {
+                const door = doorLandmarks[i];
+                if (!door || !Number.isInteger(door.x) || !Number.isInteger(door.y) || !Number.isInteger(door.z)) continue;
+                const tileId = TileId[door.tileId];
+                if (Number.isFinite(tileId)) {
+                    logicalMap[door.z][door.y][door.x] = tileId;
+                    heightMap[door.z][door.y][door.x] = Number.isFinite(door.height) ? door.height : heightMap[door.z][door.y][door.x];
+                }
+                doorsToRender.push({
+                    x: door.x,
+                    y: door.y,
+                    z: door.z,
+                    isOpen: !!door.isOpen,
+                    hingeOffsetX: door.hingeOffsetX,
+                    hingeOffsetY: door.hingeOffsetY,
+                    thickness: door.thickness,
+                    width: door.width,
+                    isEW: door.isEW,
+                    closedRot: door.closedRot,
+                    openRot: door.openRot,
+                    currentRotation: door.currentRotation,
+                    targetRotation: door.targetRotation
+                });
+            }
+
+            const cloneRouteDescriptor = (route) => ({
+                ...route,
+                tags: Array.isArray(route && route.tags) ? route.tags.slice() : []
             });
+            const cloneAltarRenderPlacement = (altar) => ({
+                ...altar,
+                tags: Array.isArray(altar && altar.tags) ? altar.tags.slice() : []
+            });
+            const setMiningRockAt = (placement) => {
+                if (!placement || !placement.oreType) return false;
+                if (!logicalMap[placement.z] || !logicalMap[placement.z][placement.y]) return false;
+                logicalMap[placement.z][placement.y][placement.x] = TileId.ROCK;
+                const key = rockNodeKey(placement.x, placement.y, placement.z);
+                rockOreOverrides[key] = placement.oreType;
 
-            // Replace broad random interior rock spread with structured mining training zones.
-            for (let y = 3; y < MAP_SIZE - 3; y++) {
-                for (let x = 3; x < MAP_SIZE - 3; x++) {
-                    if (logicalMap[0][y][x] !== TileId.ROCK) continue;
-                    logicalMap[0][y][x] = TileId.GRASS;
-                    heightMap[0][y][x] = Math.max(0, heightMap[0][y][x]);
-                }
-            }
-
-            const isWorldFeatureSpawnTile = (x, y) => {
-                if (x <= 2 || y <= 2 || x >= MAP_SIZE - 3 || y >= MAP_SIZE - 3) return false;
-                if (inTownCore(x, y)) return false;
-                const tile = logicalMap[0][y][x];
-                return tile === TileId.GRASS;
-            };
-
-            const randomizeArrayInPlace = (arr) => {
-                for (let i = arr.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    const tmp = arr[i];
-                    arr[i] = arr[j];
-                    arr[j] = tmp;
-                }
-            };
-
-            const allFeatureCandidates = [];
-            for (let y = 3; y < MAP_SIZE - 3; y++) {
-                for (let x = 3; x < MAP_SIZE - 3; x++) {
-                    if (isWorldFeatureSpawnTile(x, y)) allFeatureCandidates.push({ x, y, z: 0 });
-                }
-            }
-            randomizeArrayInPlace(allFeatureCandidates);
-            const deterministicFeatureCandidates = allFeatureCandidates.slice();
-
-            // Place deterministic mining training routes across progression bands.
-            const miningZoneSpecs = [
-                {
-                    zoneId: 'starter_mine',
-                    label: 'Starter Mine',
-                    centerX: 236,
-                    centerY: 248,
-                    minRadius: 8,
-                    maxRadius: 42,
-                    radiusStep: 6,
-                    targetCount: 30,
-                    minSpacing: 2.0,
-                    oreWeights: [
-                        { oreType: 'clay', weight: 3 },
-                        { oreType: 'copper', weight: 4 },
-                        { oreType: 'tin', weight: 4 }
-                    ]
-                },
-                {
-                    zoneId: 'iron_mine',
-                    label: 'Early Iron Mine',
-                    centerX: 286,
-                    centerY: 248,
-                    minRadius: 8,
-                    maxRadius: 46,
-                    radiusStep: 6,
-                    targetCount: 24,
-                    minSpacing: 2.1,
-                    oreWeights: [
-                        { oreType: 'iron', weight: 10 },
-                        { oreType: 'copper', weight: 1 },
-                        { oreType: 'tin', weight: 1 }
-                    ]
-                },
-                {
-                    zoneId: 'coal_mine',
-                    label: 'Deep Coal Mine',
-                    centerX: 324,
-                    centerY: 286,
-                    minRadius: 10,
-                    maxRadius: 48,
-                    radiusStep: 6,
-                    targetCount: 20,
-                    minSpacing: 2.2,
-                    oreWeights: [
-                        { oreType: 'coal', weight: 8 },
-                        { oreType: 'iron', weight: 2 }
-                    ]
-                },
-                {
-                    zoneId: 'precious_mine',
-                    label: 'Silver and Gold Mine',
-                    centerX: 344,
-                    centerY: 334,
-                    minRadius: 10,
-                    maxRadius: 52,
-                    radiusStep: 6,
-                    targetCount: 16,
-                    minSpacing: 2.4,
-                    oreWeights: [
-                        { oreType: 'silver', weight: 5 },
-                        { oreType: 'gold', weight: 4 }
-                    ]
-                },
-                {
-                    zoneId: 'gem_mine',
-                    label: 'Gem Mine',
-                    centerX: 204,
-                    centerY: 364,
-                    minRadius: 8,
-                    maxRadius: 46,
-                    radiusStep: 6,
-                    targetCount: 14,
-                    minSpacing: 2.5,
-                    areaGateFlag: 'gemMineUnlocked',
-                    areaName: 'the gem mine',
-                    areaGateMessage: 'The gem mine is locked. Speak with Elira Gemhand to gain access.',
-                    oreWeights: [
-                        { oreType: 'sapphire', weight: 6 },
-                        { oreType: 'emerald', weight: 4 }
-                    ]
-                },
-                {
-                    zoneId: 'rune_essence_mine',
-                    label: 'Rune Essence Mine',
-                    centerX: 74,
-                    centerY: 74,
-                    minRadius: 10,
-                    maxRadius: 50,
-                    radiusStep: 6,
-                    targetCount: 10,
-                    minSpacing: 2.6,
-                    oreWeights: [
-                        { oreType: 'rune_essence', weight: 1 }
-                    ]
-                }
-            ];
-            const miningTrainingLocations = [];
-            const placedMiningRocks = [];
-            RUNE_ESSENCE_ROCKS = [];
-
-            function isValidMiningCandidate(x, y, z = 0) {
-                if (x <= 2 || y <= 2 || x >= MAP_SIZE - 3 || y >= MAP_SIZE - 3) return false;
-                if (inTownCore(x, y)) return false;
-                const row = logicalMap[z] && logicalMap[z][y];
-                if (!row) return false;
-                const tile = row[x];
-                return tile === TileId.GRASS || tile === TileId.ROCK || isTreeTileId(tile);
-            }
-
-            function isFarEnoughFromPlacedMiningRocks(candidate, minSpacing) {
-                for (let i = 0; i < placedMiningRocks.length; i++) {
-                    const placed = placedMiningRocks[i];
-                    if (!placed) continue;
-                    if (Math.hypot(placed.x - candidate.x, placed.y - candidate.y) < minSpacing) return false;
-                }
-                return true;
-            }
-
-            function getWeightedOreType(weights, x, y) {
-                if (!Array.isArray(weights) || weights.length === 0) return null;
-                let totalWeight = 0;
-                for (let i = 0; i < weights.length; i++) {
-                    const row = weights[i];
-                    if (!row || !row.oreType || !Number.isFinite(row.weight) || row.weight <= 0) continue;
-                    totalWeight += Math.floor(row.weight);
-                }
-                if (totalWeight <= 0) return null;
-
-                const hash = ((x * 73856093) ^ (y * 19349663) ^ (totalWeight * 83492791)) >>> 0;
-                let roll = hash % totalWeight;
-                for (let i = 0; i < weights.length; i++) {
-                    const row = weights[i];
-                    if (!row || !row.oreType || !Number.isFinite(row.weight) || row.weight <= 0) continue;
-                    roll -= Math.floor(row.weight);
-                    if (roll < 0) return row.oreType;
-                }
-                return weights[weights.length - 1].oreType;
-            }
-
-            function setMiningRockAt(x, y, z, oreType, options = {}) {
-                if (!oreType) return false;
-                logicalMap[z][y][x] = TileId.ROCK;
-                const key = rockNodeKey(x, y, z);
-                rockOreOverrides[key] = oreType;
-
-                const hasAreaGate = options
-                    && ((typeof options.areaGateFlag === 'string' && options.areaGateFlag)
-                        || (typeof options.areaName === 'string' && options.areaName)
-                        || (typeof options.areaGateMessage === 'string' && options.areaGateMessage));
+                const hasAreaGate = placement
+                    && ((typeof placement.areaGateFlag === 'string' && placement.areaGateFlag)
+                        || (typeof placement.areaName === 'string' && placement.areaName)
+                        || (typeof placement.areaGateMessage === 'string' && placement.areaGateMessage));
                 if (hasAreaGate) {
                     rockAreaGateOverrides[key] = {
-                        areaGateFlag: (typeof options.areaGateFlag === 'string' && options.areaGateFlag) ? options.areaGateFlag : null,
-                        areaName: (typeof options.areaName === 'string' && options.areaName) ? options.areaName : null,
-                        areaGateMessage: (typeof options.areaGateMessage === 'string' && options.areaGateMessage) ? options.areaGateMessage : null
+                        areaGateFlag: (typeof placement.areaGateFlag === 'string' && placement.areaGateFlag) ? placement.areaGateFlag : null,
+                        areaName: (typeof placement.areaName === 'string' && placement.areaName) ? placement.areaName : null,
+                        areaGateMessage: (typeof placement.areaGateMessage === 'string' && placement.areaGateMessage) ? placement.areaGateMessage : null
                     };
                 } else if (rockAreaGateOverrides && rockAreaGateOverrides[key]) {
                     delete rockAreaGateOverrides[key];
                 }
-
-                if (oreType === 'rune_essence') {
-                    RUNE_ESSENCE_ROCKS.push({ x, y, z });
-                }
                 return true;
-            }
-
-            function collectZoneCandidates(zoneSpec, radius) {
-                const candidates = [];
-                const minX = Math.max(3, Math.floor(zoneSpec.centerX - radius));
-                const maxX = Math.min(MAP_SIZE - 4, Math.ceil(zoneSpec.centerX + radius));
-                const minY = Math.max(3, Math.floor(zoneSpec.centerY - radius));
-                const maxY = Math.min(MAP_SIZE - 4, Math.ceil(zoneSpec.centerY + radius));
-
-                for (let y = minY; y <= maxY; y++) {
-                    for (let x = minX; x <= maxX; x++) {
-                        const dist = Math.hypot(x - zoneSpec.centerX, y - zoneSpec.centerY);
-                        if (dist > radius) continue;
-                        if (!isValidMiningCandidate(x, y, 0)) continue;
-                        candidates.push({ x, y, z: 0, dist });
-                    }
-                }
-
-                candidates.sort((a, b) => {
-                    if (a.dist !== b.dist) return a.dist - b.dist;
-                    if (a.y !== b.y) return a.y - b.y;
-                    return a.x - b.x;
-                });
-                return candidates;
-            }
-
-            function placeMiningZone(zoneSpec) {
-                if (!zoneSpec) return;
-                const targetCount = Number.isFinite(zoneSpec.targetCount) ? Math.max(1, Math.floor(zoneSpec.targetCount)) : 1;
-                const minSpacing = Number.isFinite(zoneSpec.minSpacing) ? Math.max(1.6, zoneSpec.minSpacing) : 2.0;
-                const radiusStep = Number.isFinite(zoneSpec.radiusStep) ? Math.max(2, Math.floor(zoneSpec.radiusStep)) : 6;
-                let placedCount = 0;
-                const zonePlacements = [];
-
-                for (let radius = zoneSpec.minRadius; radius <= zoneSpec.maxRadius && placedCount < targetCount; radius += radiusStep) {
-                    const candidates = collectZoneCandidates(zoneSpec, radius);
-                    for (let i = 0; i < candidates.length && placedCount < targetCount; i++) {
-                        const candidate = candidates[i];
-                        const key = rockNodeKey(candidate.x, candidate.y, candidate.z);
-                        if (rockOreOverrides[key]) continue;
-                        if (!isFarEnoughFromPlacedMiningRocks(candidate, minSpacing)) continue;
-
-                        const oreType = getWeightedOreType(zoneSpec.oreWeights, candidate.x, candidate.y);
-                        if (!oreType) continue;
-                        if (!setMiningRockAt(candidate.x, candidate.y, candidate.z, oreType, {
-                            areaGateFlag: zoneSpec.areaGateFlag || null,
-                            areaName: zoneSpec.areaName || null,
-                            areaGateMessage: zoneSpec.areaGateMessage || null
-                        })) continue;
-
-                        placedMiningRocks.push({ x: candidate.x, y: candidate.y, z: candidate.z });
-                        zonePlacements.push({ x: candidate.x, y: candidate.y, z: candidate.z });
-                        placedCount++;
-                    }
-                }
-
-                if (zonePlacements.length > 0) {
-                    const anchor = zonePlacements[Math.floor(zonePlacements.length / 2)];
-                    miningTrainingLocations.push({
-                        zoneId: zoneSpec.zoneId,
-                        label: zoneSpec.label,
-                        x: anchor.x,
-                        y: anchor.y,
-                        z: anchor.z,
-                        count: zonePlacements.length
-                    });
-                }
-            }
-
-            for (let i = 0; i < miningZoneSpecs.length; i++) {
-                placeMiningZone(miningZoneSpecs[i]);
-            }
-
-            rebuildRockNodes();
-            window.getMiningTrainingLocations = function getMiningTrainingLocations() {
-                return miningTrainingLocations.slice();
             };
-
-            // Place elemental altars in deterministic progression bands, anchored around the castle route.
-            const runecraftingAltarOrder = ['Ember Altar', 'Water Altar', 'Earth Altar', 'Air Altar'];
-            const castleRouteAnchor = { x: 205, y: 205 };
-            const runecraftingAltarBandSpecs = [
-                { label: 'Ember Altar', variant: 4, minDistance: 24, maxDistance: 78 },
-                { label: 'Water Altar', variant: 4, minDistance: 88, maxDistance: 126 },
-                { label: 'Earth Altar', variant: 4, minDistance: 136, maxDistance: 174 },
-                { label: 'Air Altar', variant: 4, minDistance: 184, maxDistance: 240 }
-            ];
-            const fallbackBandExpansion = 28;
-
-            function isCandidateNearRuneEssence(candidate) {
-                return RUNE_ESSENCE_ROCKS.some((rock) => Math.hypot(rock.x - candidate.x, rock.y - candidate.y) < 20);
-            }
-
-            function isCandidateNearExistingAltars(candidate) {
-                return altarCandidatesToRender.some((altar) => Math.hypot(altar.x - candidate.x, altar.y - candidate.y) < 28);
-            }
-
-            function canPlaceAltarCandidate(candidate) {
-                if (!candidate) return false;
-                if (logicalMap[candidate.z][candidate.y][candidate.x] !== TileId.GRASS) return false;
-                if (isCandidateNearRuneEssence(candidate)) return false;
-                if (isCandidateNearExistingAltars(candidate)) return false;
-                return true;
-            }
-
-            function distanceFromCastleAnchor(candidate) {
-                return Math.hypot(candidate.x - castleRouteAnchor.x, candidate.y - castleRouteAnchor.y);
-            }
-
-            function sortCandidatesByBandPreference(candidates, targetDistance) {
-                return candidates.sort((a, b) => {
-                    const distanceDelta = Math.abs(distanceFromCastleAnchor(a) - targetDistance) - Math.abs(distanceFromCastleAnchor(b) - targetDistance);
-                    if (distanceDelta !== 0) return distanceDelta;
-                    if (a.y !== b.y) return a.y - b.y;
-                    return a.x - b.x;
+            const setTreePlacement = (placement) => {
+                if (!placement) return false;
+                if (!logicalMap[placement.z] || !logicalMap[placement.z][placement.y]) return false;
+                logicalMap[placement.z][placement.y][placement.x] = TileId.TREE;
+                return setTreeNode(placement.x, placement.y, placement.z, placement.nodeId, {
+                    areaGateFlag: placement.areaGateFlag || null,
+                    areaName: placement.areaName || null,
+                    areaGateMessage: placement.areaGateMessage || null
                 });
-            }
-
-            function chooseBandCandidate(bandSpec) {
-                const targetDistance = (bandSpec.minDistance + bandSpec.maxDistance) * 0.5;
-                let minDistance = bandSpec.minDistance;
-                let maxDistance = bandSpec.maxDistance;
-
-                for (let attempt = 0; attempt < 4; attempt++) {
-                    const inBand = deterministicFeatureCandidates.filter((candidate) => {
-                        if (!canPlaceAltarCandidate(candidate)) return false;
-                        const dist = distanceFromCastleAnchor(candidate);
-                        return dist >= minDistance && dist <= maxDistance;
-                    });
-
-                    if (inBand.length > 0) {
-                        return sortCandidatesByBandPreference(inBand, targetDistance)[0];
-                    }
-
-                    minDistance = Math.max(12, minDistance - fallbackBandExpansion);
-                    maxDistance = maxDistance + fallbackBandExpansion;
-                }
-
-                const anyEligible = deterministicFeatureCandidates.filter((candidate) => canPlaceAltarCandidate(candidate));
-                if (anyEligible.length === 0) return null;
-                return sortCandidatesByBandPreference(anyEligible, targetDistance)[0];
-            }
-
-            altarCandidatesToRender = [];
-            for (let i = 0; i < runecraftingAltarBandSpecs.length; i++) {
-                const bandSpec = runecraftingAltarBandSpecs[i];
-                const placed = chooseBandCandidate(bandSpec);
-                if (!placed) continue;
-
-                altarCandidatesToRender.push({ x: placed.x, y: placed.y, z: placed.z, variant: bandSpec.variant, label: bandSpec.label });
-                // Altar collision footprint is 4x4 tiles.
-                for (let by = placed.y - 1; by <= placed.y + 2; by++) {
-                    if (by < 0 || by >= MAP_SIZE) continue;
-                    for (let bx = placed.x - 1; bx <= placed.x + 2; bx++) {
-                        if (bx < 0 || bx >= MAP_SIZE) continue;
-                        logicalMap[placed.z][by][bx] = 5;
-                    }
-                }
-            }
-
-            // Place runecrafting merchants near altar routes so rune trading and pouch progression are reachable in-world.
-            function isRunecraftingMerchantWalkable(x, y, z) {
-                if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return false;
-                const row = logicalMap[z] && logicalMap[z][y];
-                if (!row) return false;
-                const tile = row[x];
-                return tile === TileId.GRASS
-                    || tile === TileId.SHORE
-                    || tile === TileId.FLOOR_WOOD
-                    || tile === TileId.FLOOR_STONE
-                    || tile === TileId.FLOOR_BRICK
-                    || tile === TileId.STAIRS_RAMP
-                    || tile === TileId.DOOR_OPEN;
-            }
-
-            function findMerchantSpotNearAltar(anchor) {
-                if (!anchor) return null;
-                const maxRadius = 10;
-                for (let radius = 2; radius <= maxRadius; radius++) {
-                    for (let dy = -radius; dy <= radius; dy++) {
-                        for (let dx = -radius; dx <= radius; dx++) {
-                            if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
-                            const x = anchor.x + dx;
-                            const y = anchor.y + dy;
-                            if (!isRunecraftingMerchantWalkable(x, y, anchor.z)) continue;
-                            const occupied = npcsToRender.some((npc) => npc && npc.z === anchor.z && npc.x === x && npc.y === y);
-                            if (occupied) continue;
-                            return { x, y, z: anchor.z };
-                        }
-                    }
-                }
-                return null;
-            }
-
-            const emberAltar = altarCandidatesToRender.find((altar) => altar && altar.label === 'Ember Altar') || null;
-            const airAltar = altarCandidatesToRender.find((altar) => altar && altar.label === 'Air Altar') || null;
-
-            const runecraftingMerchantSpots = [
-                { name: 'Rune Tutor', merchantId: 'rune_tutor', type: 3, anchor: emberAltar },
-                { name: 'Combination Sage', merchantId: 'combination_sage', type: 6, anchor: airAltar }
-            ];
-
-            for (let i = 0; i < runecraftingMerchantSpots.length; i++) {
-                const spotSpec = runecraftingMerchantSpots[i];
-                if (!spotSpec || !spotSpec.anchor) continue;
-
-                const spot = findMerchantSpotNearAltar(spotSpec.anchor);
-                if (!spot) continue;
-
-                logicalMap[spot.z][spot.y][spot.x] = 16;
-                npcsToRender.push({
-                    type: spotSpec.type,
-                    x: spot.x,
-                    y: spot.y,
-                    z: spot.z,
-                    name: spotSpec.name,
-                    merchantId: spotSpec.merchantId,
-                    action: 'Trade'
-                });
-            }
-            window.getRunecraftingAltarLocations = function getRunecraftingAltarLocations() {
-                if (!Array.isArray(altarCandidatesToRender)) return [];
-                const ordered = [];
-                for (let i = 0; i < runecraftingAltarOrder.length; i++) {
-                    const label = runecraftingAltarOrder[i];
-                    const altar = altarCandidatesToRender.find((entry) => entry && entry.label === label);
-                    if (!altar) continue;
-                    ordered.push({
-                        label: altar.label,
-                        x: altar.x,
-                        y: altar.y,
-                        z: altar.z
-                    });
-                }
-                return ordered;
             };
-
-            window.getRunecraftingAltarNameAt = function getRunecraftingAltarNameAt(x, y, z) {
-                if (!Array.isArray(altarCandidatesToRender)) return null;
-                for (let i = 0; i < altarCandidatesToRender.length; i++) {
-                    const altar = altarCandidatesToRender[i];
-                    if (!altar) continue;
-                    if (altar.x === x && altar.y === y && altar.z === z) return altar.label || null;
-                }
-                return null;
-            };
-
-            // Clear broad procedural tree noise before deterministic tier placement.
-            for (let y = 3; y < MAP_SIZE - 3; y++) {
-                for (let x = 3; x < MAP_SIZE - 3; x++) {
-                    const tile = logicalMap[0][y][x];
-                    if (!isTreeTileId(tile)) continue;
-                    logicalMap[0][y][x] = TileId.GRASS;
-                    heightMap[0][y][x] = Math.max(0, heightMap[0][y][x]);
-                }
-            }
-
-            // Place deterministic woodcutting training routes for normal->yew progression.
-            const woodcuttingRouteAnchor = { x: 205, y: 205 };
-            const woodcuttingZoneSpecs = [
-                { nodeId: 'normal_tree', label: 'Starter Grove', minDistance: 18, maxDistance: 64, targetCount: 26, minSpacing: 3.0, areaGateFlag: null, areaName: 'the starter grove', areaGateMessage: null },
-                { nodeId: 'oak_tree', label: 'Oak Path', minDistance: 74, maxDistance: 116, targetCount: 20, minSpacing: 4.0, areaGateFlag: null, areaName: 'the oak path', areaGateMessage: null },
-                { nodeId: 'willow_tree', label: 'Willow Bend', minDistance: 124, maxDistance: 168, targetCount: 16, minSpacing: 4.0, areaGateFlag: null, areaName: 'the willow bend', areaGateMessage: null, habitatRule: { type: 'near_water', maxDistance: 28 } },
-                { nodeId: 'maple_tree', label: 'Maple Ridge', minDistance: 176, maxDistance: 218, targetCount: 12, minSpacing: 5.0, areaGateFlag: null, areaName: 'the maple ridge', areaGateMessage: null, habitatRule: { type: 'away_from_water', minDistance: 18 } },
-                { nodeId: 'yew_tree', label: 'Yew Frontier', minDistance: 224, maxDistance: 272, targetCount: 8, minSpacing: 6.0, areaGateFlag: null, areaName: 'the yew frontier', areaGateMessage: null, habitatRule: { type: 'near_npc', maxDistance: 52 } }
-            ];
-            const woodcuttingFallbackBandExpansion = 30;
-            const placedWoodcuttingTrees = [];
-            const treeReservedAreaByNodeId = {
-                normal_tree: 3,
-                oak_tree: 4,
-                willow_tree: 4,
-                maple_tree: 5,
-                yew_tree: 6
-            };
-            const nearestWaterDistanceCache = new Map();
-            const nearestNpcDistanceCache = new Map();
-
-            function resolveTreeReservedArea(nodeId) {
-                if (nodeId && Number.isFinite(treeReservedAreaByNodeId[nodeId])) {
-                    return Math.max(3, Math.floor(treeReservedAreaByNodeId[nodeId]));
-                }
-                return 3;
-            }
-
-            function getTreeReservedHalfExtents(nodeId) {
-                const area = resolveTreeReservedArea(nodeId);
-                const minOffset = Math.floor((area - 1) / 2);
-                const maxOffset = Math.ceil((area - 1) / 2);
-                return { minOffset, maxOffset };
-            }
-
-            function getTreeReservedBounds(x, y, nodeId) {
-                const extents = getTreeReservedHalfExtents(nodeId);
-                return {
-                    minX: x - extents.minOffset,
-                    maxX: x + extents.maxOffset,
-                    minY: y - extents.minOffset,
-                    maxY: y + extents.maxOffset
-                };
-            }
-
-            function treeReservedBoundsOverlap(a, b) {
-                if (!a || !b) return false;
-                if (a.maxX < b.minX || b.maxX < a.minX) return false;
-                if (a.maxY < b.minY || b.maxY < a.minY) return false;
-                return true;
-            }
-
-            function collectWaterHabitatAnchors() {
-                const anchors = [];
-                for (let y = 2; y < MAP_SIZE - 2; y++) {
-                    for (let x = 2; x < MAP_SIZE - 2; x++) {
-                        if (!isWaterTileId(logicalMap[0][y][x])) continue;
-                        const isShorelineWater = !isWaterTileId(logicalMap[0][y - 1][x])
-                            || !isWaterTileId(logicalMap[0][y + 1][x])
-                            || !isWaterTileId(logicalMap[0][y][x - 1])
-                            || !isWaterTileId(logicalMap[0][y][x + 1]);
-                        if (!isShorelineWater) continue;
-                        anchors.push({ x, y });
-                    }
-                }
-                return anchors;
-            }
-
-            const waterHabitatAnchors = collectWaterHabitatAnchors();
-            const npcHabitatAnchors = npcsToRender
-                .filter((npc) => npc && npc.z === 0 && Number.isFinite(npc.x) && Number.isFinite(npc.y))
-                .map((npc) => ({ x: npc.x, y: npc.y }));
-
-            function candidateDistanceCacheKey(candidate) {
-                return `${candidate.x},${candidate.y}`;
-            }
-
-            function computeNearestAnchorDistance(candidate, anchors) {
-                if (!candidate || !Array.isArray(anchors) || anchors.length === 0) return Infinity;
-                let bestDistSq = Infinity;
-                for (let i = 0; i < anchors.length; i++) {
-                    const anchor = anchors[i];
-                    if (!anchor) continue;
-                    const dx = anchor.x - candidate.x;
-                    const dy = anchor.y - candidate.y;
-                    const distSq = (dx * dx) + (dy * dy);
-                    if (distSq < bestDistSq) bestDistSq = distSq;
-                }
-                return Number.isFinite(bestDistSq) ? Math.sqrt(bestDistSq) : Infinity;
-            }
-
-            function getNearestWaterDistance(candidate) {
-                if (!candidate) return Infinity;
-                const key = candidateDistanceCacheKey(candidate);
-                if (nearestWaterDistanceCache.has(key)) return nearestWaterDistanceCache.get(key);
-                const distance = computeNearestAnchorDistance(candidate, waterHabitatAnchors);
-                nearestWaterDistanceCache.set(key, distance);
-                return distance;
-            }
-
-            function getNearestNpcDistance(candidate) {
-                if (!candidate) return Infinity;
-                const key = candidateDistanceCacheKey(candidate);
-                if (nearestNpcDistanceCache.has(key)) return nearestNpcDistanceCache.get(key);
-                const distance = computeNearestAnchorDistance(candidate, npcHabitatAnchors);
-                nearestNpcDistanceCache.set(key, distance);
-                return distance;
-            }
-
-            function satisfiesWoodcuttingHabitatRule(candidate, zoneSpec) {
-                const habitat = zoneSpec && zoneSpec.habitatRule ? zoneSpec.habitatRule : null;
-                if (!habitat || typeof habitat.type !== 'string') return true;
-
-                if (habitat.type === 'near_water') {
-                    if (waterHabitatAnchors.length === 0) return true;
-                    const maxDistance = Number.isFinite(habitat.maxDistance) ? Math.max(1, habitat.maxDistance) : Infinity;
-                    return getNearestWaterDistance(candidate) <= maxDistance;
-                }
-
-                if (habitat.type === 'away_from_water') {
-                    if (waterHabitatAnchors.length === 0) return true;
-                    const minDistance = Number.isFinite(habitat.minDistance) ? Math.max(0, habitat.minDistance) : 0;
-                    return getNearestWaterDistance(candidate) >= minDistance;
-                }
-
-                if (habitat.type === 'near_npc') {
-                    if (npcHabitatAnchors.length === 0) return true;
-                    const maxDistance = Number.isFinite(habitat.maxDistance) ? Math.max(1, habitat.maxDistance) : Infinity;
-                    return getNearestNpcDistance(candidate) <= maxDistance;
-                }
-
-                return true;
-            }
-
-            function distanceFromWoodcuttingAnchor(candidate) {
-                return Math.hypot(candidate.x - woodcuttingRouteAnchor.x, candidate.y - woodcuttingRouteAnchor.y);
-            }
-
-            function canPlaceWoodcuttingTreeCandidate(candidate, zoneSpec) {
-                if (!candidate) return false;
-                if (candidate.x <= 2 || candidate.y <= 2 || candidate.x >= MAP_SIZE - 3 || candidate.y >= MAP_SIZE - 3) return false;
-                if (inTownCore(candidate.x, candidate.y)) return false;
-                const tile = logicalMap[candidate.z] && logicalMap[candidate.z][candidate.y] ? logicalMap[candidate.z][candidate.y][candidate.x] : null;
-                if (tile !== TileId.GRASS) return false;
-                if (isCandidateNearRuneEssence(candidate)) return false;
-                if (isCandidateNearExistingAltars(candidate)) return false;
-                if (!satisfiesWoodcuttingHabitatRule(candidate, zoneSpec)) return false;
-                return true;
-            }
-
-            function sortWoodcuttingCandidates(candidates, targetDistance) {
-                return candidates.sort((a, b) => {
-                    const distanceDelta = Math.abs(distanceFromWoodcuttingAnchor(a) - targetDistance) - Math.abs(distanceFromWoodcuttingAnchor(b) - targetDistance);
-                    if (distanceDelta !== 0) return distanceDelta;
-                    if (a.y !== b.y) return a.y - b.y;
-                    return a.x - b.x;
-                });
-            }
-
-            function isTreeCandidateFarEnough(candidate, minSpacing) {
-                for (let i = 0; i < placedWoodcuttingTrees.length; i++) {
-                    const placed = placedWoodcuttingTrees[i];
-                    if (!placed) continue;
-                    if (Math.hypot(placed.x - candidate.x, placed.y - candidate.y) < minSpacing) return false;
-                }
-                return true;
-            }
-
-            function isTreeCandidateReservedAreaClear(candidate, candidateNodeId) {
-                const candidateBounds = getTreeReservedBounds(candidate.x, candidate.y, candidateNodeId);
-                for (let i = 0; i < placedWoodcuttingTrees.length; i++) {
-                    const placed = placedWoodcuttingTrees[i];
-                    if (!placed) continue;
-                    const placedBounds = getTreeReservedBounds(placed.x, placed.y, placed.nodeId);
-                    if (treeReservedBoundsOverlap(candidateBounds, placedBounds)) return false;
-                }
-                return true;
-            }
-
-            function assignWoodcuttingBandTrees(zoneSpec) {
-                if (!zoneSpec) return;
-                const targetDistance = (zoneSpec.minDistance + zoneSpec.maxDistance) * 0.5;
-                let minDistance = zoneSpec.minDistance;
-                let maxDistance = zoneSpec.maxDistance;
-                let sortedCandidates = [];
-
-                for (let attempt = 0; attempt < 4; attempt++) {
-                    const inBand = deterministicFeatureCandidates.filter((candidate) => {
-                        if (!canPlaceWoodcuttingTreeCandidate(candidate, zoneSpec)) return false;
-                        const dist = distanceFromWoodcuttingAnchor(candidate);
-                        return dist >= minDistance && dist <= maxDistance;
-                    });
-                    if (inBand.length > 0) {
-                        sortedCandidates = sortWoodcuttingCandidates(inBand, targetDistance);
-                        break;
-                    }
-                    minDistance = Math.max(12, minDistance - woodcuttingFallbackBandExpansion);
-                    maxDistance = maxDistance + woodcuttingFallbackBandExpansion;
-                }
-
-                if (sortedCandidates.length === 0) {
-                    const anyEligible = deterministicFeatureCandidates.filter((candidate) => canPlaceWoodcuttingTreeCandidate(candidate, zoneSpec));
-                    sortedCandidates = sortWoodcuttingCandidates(anyEligible, targetDistance);
-                }
-
-                const reservedArea = resolveTreeReservedArea(zoneSpec.nodeId);
-                const minSpacing = Number.isFinite(zoneSpec.minSpacing)
-                    ? Math.max(1.5, zoneSpec.minSpacing, reservedArea)
-                    : reservedArea;
-                const targetCount = Number.isFinite(zoneSpec.targetCount) ? Math.max(1, Math.floor(zoneSpec.targetCount)) : 1;
-                let placedCount = 0;
-
-                for (let i = 0; i < sortedCandidates.length && placedCount < targetCount; i++) {
-                    const candidate = sortedCandidates[i];
-                    if (!isTreeCandidateFarEnough(candidate, minSpacing)) continue;
-                    if (!isTreeCandidateReservedAreaClear(candidate, zoneSpec.nodeId)) continue;
-                    logicalMap[candidate.z][candidate.y][candidate.x] = TileId.TREE;
-                    setTreeNode(candidate.x, candidate.y, candidate.z, zoneSpec.nodeId, {
-                        areaGateFlag: zoneSpec.areaGateFlag || null,
-                        areaName: zoneSpec.areaName || null,
-                        areaGateMessage: zoneSpec.areaGateMessage || null
-                    });
-                    placedWoodcuttingTrees.push({ x: candidate.x, y: candidate.y, z: candidate.z, nodeId: zoneSpec.nodeId });
-                    placedCount++;
-                }
-            }
-
-            for (let i = 0; i < woodcuttingZoneSpecs.length; i++) {
-                assignWoodcuttingBandTrees(woodcuttingZoneSpecs[i]);
-            }
-
-            // Starter pond showcase row: one of each tree type with clear spacing for visual inspection.
-            const showcaseRowY = castleFrontPond.cy - 14;
-            const showcaseTrees = [
-                { nodeId: 'normal_tree', x: castleFrontPond.cx - 26, y: showcaseRowY },
-                { nodeId: 'oak_tree', x: castleFrontPond.cx - 13, y: showcaseRowY },
-                { nodeId: 'willow_tree', x: castleFrontPond.cx, y: showcaseRowY },
-                { nodeId: 'maple_tree', x: castleFrontPond.cx + 13, y: showcaseRowY },
-                { nodeId: 'yew_tree', x: castleFrontPond.cx + 26, y: showcaseRowY }
-            ];
-
-            function clearShowcaseNaturalArea(centerX, centerY, radius) {
+            const clearNaturalArea = (centerX, centerY, radius) => {
                 for (let y = centerY - radius; y <= centerY + radius; y++) {
                     for (let x = centerX - radius; x <= centerX + radius; x++) {
                         if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
@@ -3214,18 +2530,84 @@
                         }
                     }
                 }
+            };
+
+            const miningTrainingLocations = miningTrainingRouteDefs.map(cloneRouteDescriptor);
+            const runecraftingRoutes = runecraftingRouteDefs.map(cloneRouteDescriptor);
+            const woodcuttingTrainingLocations = woodcuttingTrainingRouteDefs.map(cloneRouteDescriptor);
+
+            for (let i = 0; i < miningNodePlacements.length; i++) {
+                setMiningRockAt(miningNodePlacements[i]);
             }
 
-            for (let i = 0; i < showcaseTrees.length; i++) {
-                const tree = showcaseTrees[i];
+            RUNE_ESSENCE_ROCKS = miningNodePlacements
+                .filter((placement) => placement && placement.oreType === 'rune_essence')
+                .map((placement) => ({ x: placement.x, y: placement.y, z: placement.z }));
+
+            altarCandidatesToRender = authoredAltarPlacements.map(cloneAltarRenderPlacement);
+            for (let i = 0; i < authoredAltarPlacements.length; i++) {
+                const altar = authoredAltarPlacements[i];
+                if (!altar) continue;
+                for (let by = altar.y - 1; by <= altar.y + 2; by++) {
+                    if (by < 0 || by >= MAP_SIZE) continue;
+                    for (let bx = altar.x - 1; bx <= altar.x + 2; bx++) {
+                        if (bx < 0 || bx >= MAP_SIZE) continue;
+                        if (!logicalMap[altar.z] || !logicalMap[altar.z][by]) continue;
+                        logicalMap[altar.z][by][bx] = TileId.OBSTACLE;
+                    }
+                }
+            }
+
+            for (let i = 0; i < woodcuttingNodePlacements.length; i++) {
+                setTreePlacement(woodcuttingNodePlacements[i]);
+            }
+
+            for (let i = 0; i < showcaseTreeDefs.length; i++) {
+                const tree = showcaseTreeDefs[i];
                 if (!tree) continue;
-                clearShowcaseNaturalArea(tree.x, tree.y, 5);
-                if (tree.x <= 1 || tree.y <= 1 || tree.x >= MAP_SIZE - 2 || tree.y >= MAP_SIZE - 2) continue;
-                logicalMap[0][tree.y][tree.x] = TileId.TREE;
-                setTreeNode(tree.x, tree.y, 0, tree.nodeId);
+                clearNaturalArea(tree.x, tree.y, Number.isFinite(tree.clearRadius) ? tree.clearRadius : 5);
+                setTreePlacement({
+                    placementId: `showcase:${tree.nodeId}:${i + 1}`,
+                    routeId: `showcase:${tree.nodeId}`,
+                    x: tree.x,
+                    y: tree.y,
+                    z: 0,
+                    nodeId: tree.nodeId,
+                    areaGateFlag: null,
+                    areaName: null,
+                    areaGateMessage: null
+                });
             }
 
+            rebuildRockNodes();
             rebuildTreeNodes();
+
+            const readWorldRouteGroup = (groupId, fallbackRoutes) => {
+                if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getRouteGroup === 'function') {
+                    return window.WorldBootstrapRuntime.getRouteGroup(groupId);
+                }
+                return Array.isArray(fallbackRoutes) ? fallbackRoutes.map(cloneRouteDescriptor) : [];
+            };
+
+            window.getMiningTrainingLocations = function getMiningTrainingLocations() {
+                return readWorldRouteGroup('mining', miningTrainingLocations);
+            };
+
+            window.getRunecraftingAltarLocations = function getRunecraftingAltarLocations() {
+                return readWorldRouteGroup('runecrafting', runecraftingRoutes);
+            };
+            window.getRunecraftingAltarNameAt = function getRunecraftingAltarNameAt(x, y, z) {
+                const routes = readWorldRouteGroup('runecrafting', runecraftingRoutes);
+                for (let i = 0; i < routes.length; i++) {
+                    const route = routes[i];
+                    if (!route) continue;
+                    if (route.x === x && route.y === y && route.z === z) return route.label || null;
+                }
+                return null;
+            };
+            window.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations() {
+                return readWorldRouteGroup('woodcutting', woodcuttingTrainingLocations);
+            };
         }
 
         function loadChunk(cx, cy) {
@@ -3850,6 +3232,8 @@
                         hitbox.position.y = 1.0;
                         const npcUid = { name: npc.name, action: npc.action || (npc.name === 'Shopkeeper' ? 'Trade' : 'Talk-to') };
                         if (npc.merchantId) npcUid.merchantId = npc.merchantId;
+                        if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;
+                        if (npc.travelSpawn) npcUid.travelSpawn = Object.assign({}, npc.travelSpawn);
                         hitbox.userData = { type: 'NPC', gridX: npc.x, gridY: npc.y, z: z, name: npc.name, uid: npcUid };
                         dummy.add(hitbox);
                         environmentMeshes.push(hitbox);
@@ -3913,6 +3297,50 @@
 
         function build3DEnvironment() {
             initSharedAssets();
+        }
+
+        function reloadActiveWorldScene() {
+            if (!scene) {
+                initLogicalMap();
+                return;
+            }
+
+            Array.from(loadedChunks).forEach((chunkKey) => unloadChunk(chunkKey));
+            loadedChunks.clear();
+            chunkGroups = {};
+
+            for (let i = 0; i < clickMarkers.length; i++) {
+                const marker = clickMarkers[i];
+                if (marker && marker.mesh) scene.remove(marker.mesh);
+            }
+            clickMarkers = [];
+
+            for (let i = 0; i < activeHitsplats.length; i++) {
+                const hitsplat = activeHitsplats[i];
+                if (hitsplat && hitsplat.el && typeof hitsplat.el.remove === 'function') hitsplat.el.remove();
+            }
+            activeHitsplats = [];
+            environmentMeshes = [];
+
+            initLogicalMap();
+
+            if (playerRig) {
+                playerRig.position.set(
+                    playerState.x,
+                    heightMap[playerState.z][playerState.y][playerState.x] + (playerState.z * 3.0),
+                    playerState.y
+                );
+                if (Number.isFinite(playerState.targetRotation)) {
+                    playerRig.rotation.y = playerState.targetRotation;
+                }
+            }
+            if (isFreeCam) {
+                freeCamTarget.set(playerState.x, heightMap[playerState.z][playerState.y][playerState.x] + (playerState.z * 3.0) + 1.0, playerState.y);
+            }
+
+            if (typeof updateMinimapCanvas === 'function') updateMinimapCanvas();
+            if (typeof manageChunks === 'function' && playerRig) manageChunks();
+            if (typeof updateWorldMapPanel === 'function') updateWorldMapPanel(true);
         }
 
         // Modified to render top-down taking planes into account
@@ -4092,6 +3520,83 @@
             }
         }
 
+        function getRenderRuntime() {
+            return window.RenderRuntime || null;
+        }
+
+        function getInputControllerRuntime() {
+            return window.InputControllerRuntime || null;
+        }
+
+        function resolveRenderWorldId() {
+            if (window.GameSessionRuntime && typeof window.GameSessionRuntime.resolveCurrentWorldId === 'function') {
+                return window.GameSessionRuntime.resolveCurrentWorldId();
+            }
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function') {
+                return window.WorldBootstrapRuntime.getCurrentWorldId();
+            }
+            return 'starter_town';
+        }
+
+        function buildHudRenderSnapshot() {
+            const runtime = getRenderRuntime();
+            const playerX = (playerRig && playerRig.position) ? playerRig.position.x : playerState.x;
+            const playerY = (playerRig && playerRig.position) ? playerRig.position.z : playerState.y;
+            const facingYaw = (playerRig && Number.isFinite(playerRig.rotation && playerRig.rotation.y))
+                ? playerRig.rotation.y
+                : (Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0);
+            const clickMarkerEntries = Array.isArray(clickMarkers)
+                ? clickMarkers.map((marker) => ({
+                    x: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.x : 0,
+                    y: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.z : 0,
+                    z: Math.round((((marker && marker.mesh && marker.mesh.position ? marker.mesh.position.y : 0) || 0) / 3.0)),
+                    visualY: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.y : 0
+                }))
+                : [];
+            const groundItemEntries = Array.isArray(groundItems)
+                ? groundItems.map((item) => ({
+                    x: item.x,
+                    y: item.y,
+                    z: item.z,
+                    uid: item.uid
+                }))
+                : [];
+
+            if (runtime && typeof runtime.buildRenderSnapshot === 'function') {
+                return runtime.buildRenderSnapshot({
+                    worldId: resolveRenderWorldId(),
+                    player: {
+                        x: playerX,
+                        y: playerY,
+                        z: playerState.z,
+                        facingYaw
+                    },
+                    clickMarkers: clickMarkerEntries,
+                    groundItems: groundItemEntries,
+                    minimapDestination: minimapDestination && Number.isFinite(minimapDestination.x) && Number.isFinite(minimapDestination.y) && Number.isFinite(minimapDestination.z)
+                        ? {
+                            x: minimapDestination.x,
+                            y: minimapDestination.y,
+                            z: minimapDestination.z
+                        }
+                        : null
+                });
+            }
+
+            return {
+                worldId: resolveRenderWorldId(),
+                player: {
+                    x: playerX,
+                    y: playerY,
+                    z: playerState.z,
+                    facingYaw
+                },
+                clickMarkers: clickMarkerEntries,
+                groundItems: groundItemEntries,
+                minimapDestination: minimapDestination
+            };
+        }
+
         function initWorldMapPanel() {
             const worldMapCanvas = document.getElementById('world-map-canvas');
             if (!worldMapCanvas || worldMapCanvas.dataset.bound === '1') return;
@@ -4109,8 +3614,15 @@
                 if (!pointInWorldMapViewport(mouseX, mouseY, viewport)) return;
                 e.preventDefault();
 
-                const factor = e.deltaY < 0 ? 1.2 : (1 / 1.2);
-                setWorldMapZoom(worldMapState.zoom * factor, { mouseX, mouseY, viewport });
+                const inputRuntime = getInputControllerRuntime();
+                const nextZoom = inputRuntime && typeof inputRuntime.resolveZoomFactor === 'function'
+                    ? inputRuntime.resolveZoomFactor(worldMapState.zoom, e.deltaY, {
+                        factor: 1.2,
+                        min: worldMapState.minZoom,
+                        max: worldMapState.maxZoom
+                    })
+                    : (worldMapState.zoom * (e.deltaY < 0 ? 1.2 : (1 / 1.2)));
+                setWorldMapZoom(nextZoom, { mouseX, mouseY, viewport });
                 updateWorldMapCursor(worldMapCanvas);
             });
             worldMapCanvas.addEventListener('mousedown', (e) => {
@@ -4144,9 +3656,25 @@
                 const mouseX = (e.clientX - rect.left) * scaleX;
                 const mouseY = (e.clientY - rect.top) * scaleY;
                 const viewport = resolveWorldMapViewport(worldMapCanvas);
-                const tilesPerPixel = worldMapState.dragStartSourceSize / Math.max(1, viewport.size);
-                worldMapState.centerX = worldMapState.dragStartCenterX - ((mouseX - worldMapState.dragStartMouseX) * tilesPerPixel);
-                worldMapState.centerY = worldMapState.dragStartCenterY - ((mouseY - worldMapState.dragStartMouseY) * tilesPerPixel);
+                const inputRuntime = getInputControllerRuntime();
+                if (inputRuntime && typeof inputRuntime.resolveWorldMapDragCenter === 'function') {
+                    const nextCenter = inputRuntime.resolveWorldMapDragCenter({
+                        dragStartCenterX: worldMapState.dragStartCenterX,
+                        dragStartCenterY: worldMapState.dragStartCenterY,
+                        dragStartMouseX: worldMapState.dragStartMouseX,
+                        dragStartMouseY: worldMapState.dragStartMouseY,
+                        dragStartSourceSize: worldMapState.dragStartSourceSize,
+                        viewportSize: viewport.size,
+                        mouseX,
+                        mouseY
+                    });
+                    worldMapState.centerX = nextCenter.centerX;
+                    worldMapState.centerY = nextCenter.centerY;
+                } else {
+                    const tilesPerPixel = worldMapState.dragStartSourceSize / Math.max(1, viewport.size);
+                    worldMapState.centerX = worldMapState.dragStartCenterX - ((mouseX - worldMapState.dragStartMouseX) * tilesPerPixel);
+                    worldMapState.centerY = worldMapState.dragStartCenterY - ((mouseY - worldMapState.dragStartMouseY) * tilesPerPixel);
+                }
                 getWorldMapSourceRect();
             });
 
@@ -4180,17 +3708,16 @@
             const ctx = worldMapCanvas.getContext('2d');
             const viewport = resolveWorldMapViewport(worldMapCanvas);
             const sourceRect = getWorldMapSourceRect();
-            const pxPerTile = viewport.size / sourceRect.sourceSize;
-            const playerX = (playerRig && playerRig.position) ? playerRig.position.x : playerState.x;
-            const playerY = (playerRig && playerRig.position) ? playerRig.position.z : playerState.y;
-            const facingYaw = (playerRig && Number.isFinite(playerRig.rotation && playerRig.rotation.y))
-                ? playerRig.rotation.y
-                : (Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0);
-
-            const worldToCanvas = (wx, wy) => ({
-                x: viewport.x + (((wx - sourceRect.sourceX) / sourceRect.sourceSize) * viewport.size),
-                y: viewport.y + (((wy - sourceRect.sourceY) / sourceRect.sourceSize) * viewport.size)
-            });
+            const renderSnapshot = buildHudRenderSnapshot();
+            const renderRuntime = getRenderRuntime();
+            const worldMapSnapshot = renderRuntime && typeof renderRuntime.buildWorldMapSnapshot === 'function'
+                ? renderRuntime.buildWorldMapSnapshot({
+                    snapshot: renderSnapshot,
+                    viewport,
+                    sourceRect,
+                    zoom: worldMapState.zoom
+                })
+                : null;
 
             ctx.imageSmoothingEnabled = false;
             ctx.fillStyle = '#090b0d';
@@ -4212,47 +3739,45 @@
             ctx.strokeRect(viewport.x + 0.5, viewport.y + 0.5, viewport.size - 1, viewport.size - 1);
 
             ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
-            clickMarkers.forEach((m) => {
-                if (Math.abs(m.mesh.position.y - (playerState.z * 3.0)) >= 2.0) return;
-                if (m.mesh.position.x < sourceRect.sourceX || m.mesh.position.x > (sourceRect.sourceX + sourceRect.sourceSize)) return;
-                if (m.mesh.position.z < sourceRect.sourceY || m.mesh.position.z > (sourceRect.sourceY + sourceRect.sourceSize)) return;
-                const mapped = worldToCanvas(m.mesh.position.x, m.mesh.position.z);
-                const markerSize = Math.max(2, pxPerTile * 0.9);
-                ctx.fillRect(mapped.x - (markerSize / 2), mapped.y - (markerSize / 2), markerSize, markerSize);
+            const worldMapMarkers = worldMapSnapshot ? worldMapSnapshot.clickMarkers : [];
+            worldMapMarkers.forEach((marker) => {
+                ctx.fillRect(marker.x - (marker.size / 2), marker.y - (marker.size / 2), marker.size, marker.size);
             });
 
             ctx.fillStyle = '#ff00aa';
-            groundItems.forEach((gi) => {
-                if (gi.z !== playerState.z) return;
-                const wx = gi.x + 0.5;
-                const wy = gi.y + 0.5;
-                if (wx < sourceRect.sourceX || wx > (sourceRect.sourceX + sourceRect.sourceSize)) return;
-                if (wy < sourceRect.sourceY || wy > (sourceRect.sourceY + sourceRect.sourceSize)) return;
-                const mapped = worldToCanvas(wx, wy);
-                const itemSize = Math.max(2, pxPerTile);
-                ctx.fillRect(mapped.x - (itemSize / 2), mapped.y - (itemSize / 2), itemSize, itemSize);
+            const worldMapItems = worldMapSnapshot ? worldMapSnapshot.groundItems : [];
+            worldMapItems.forEach((item) => {
+                ctx.fillRect(item.x - (item.size / 2), item.y - (item.size / 2), item.size, item.size);
             });
-
-            const playerMapped = worldToCanvas(playerX + 0.5, playerY + 0.5);
-            const playerRadius = Math.max(2.5, pxPerTile * 1.8);
-            const facingLen = Math.max(7, pxPerTile * 8);
 
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(playerMapped.x, playerMapped.y, playerRadius, 0, Math.PI * 2);
+            ctx.arc(
+                worldMapSnapshot ? worldMapSnapshot.playerDot.x : 0,
+                worldMapSnapshot ? worldMapSnapshot.playerDot.y : 0,
+                worldMapSnapshot ? worldMapSnapshot.playerDot.radius : 0,
+                0,
+                Math.PI * 2
+            );
             ctx.fill();
 
             ctx.strokeStyle = '#ff2f2f';
-            ctx.lineWidth = Math.max(1.5, pxPerTile * 0.8);
+            ctx.lineWidth = worldMapSnapshot ? worldMapSnapshot.facingLine.lineWidth : 1.5;
             ctx.beginPath();
-            ctx.moveTo(playerMapped.x, playerMapped.y);
-            ctx.lineTo(playerMapped.x + (Math.sin(facingYaw) * facingLen), playerMapped.y + (Math.cos(facingYaw) * facingLen));
+            ctx.moveTo(
+                worldMapSnapshot ? worldMapSnapshot.facingLine.fromX : 0,
+                worldMapSnapshot ? worldMapSnapshot.facingLine.fromY : 0
+            );
+            ctx.lineTo(
+                worldMapSnapshot ? worldMapSnapshot.facingLine.toX : 0,
+                worldMapSnapshot ? worldMapSnapshot.facingLine.toY : 0
+            );
             ctx.stroke();
 
             ctx.fillStyle = 'rgba(255, 230, 176, 0.95)';
             ctx.font = 'bold 12px monospace';
             ctx.textBaseline = 'top';
-            ctx.fillText(`Zoom x${worldMapState.zoom.toFixed(2)}`, viewport.x + 6, viewport.y + 6);
+            ctx.fillText(worldMapSnapshot ? worldMapSnapshot.zoomLabel : `Zoom x${worldMapState.zoom.toFixed(2)}`, viewport.x + 6, viewport.y + 6);
             updateWorldMapCursor(worldMapCanvas);
         }
 
@@ -4261,7 +3786,13 @@
             initWorldMapPanel();
             const minimapCanvas = document.getElementById('minimap');
             minimapCanvas.addEventListener('contextmenu', e => e.preventDefault());
-            minimapCanvas.addEventListener('wheel', (e) => { e.preventDefault(); minimapZoom += Math.sign(e.deltaY) * -0.2; minimapZoom = Math.max(1.0, Math.min(20.0, minimapZoom)); });
+            minimapCanvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const inputRuntime = getInputControllerRuntime();
+                minimapZoom = inputRuntime && typeof inputRuntime.resolveZoomStep === 'function'
+                    ? inputRuntime.resolveZoomStep(minimapZoom, e.deltaY, { step: -0.2, min: 1.0, max: 20.0 })
+                    : Math.max(1.0, Math.min(20.0, minimapZoom + (Math.sign(e.deltaY) * -0.2)));
+            });
             minimapCanvas.addEventListener('mousedown', (e) => {
                 const rect = minimapCanvas.getBoundingClientRect();
                 const scaleX = minimapCanvas.width / rect.width; const scaleY = minimapCanvas.height / rect.height;
@@ -4273,8 +3804,19 @@
                         clearSelectedUse();
                         return;
                     }
-                    const canvasCenter = minimapCanvas.width / 2; const ppt = (minimapCanvas.width / 100) * minimapZoom; 
-                    const gridX = Math.floor(minimapTargetX + 0.5 + (mouseX - canvasCenter) / ppt); const gridY = Math.floor(minimapTargetY + 0.5 + (mouseY - canvasCenter) / ppt);
+                    const inputRuntime = getInputControllerRuntime();
+                    const walkTarget = inputRuntime && typeof inputRuntime.resolveMinimapWalkTarget === 'function'
+                        ? inputRuntime.resolveMinimapWalkTarget({
+                            mouseX,
+                            mouseY,
+                            canvasSize: minimapCanvas.width,
+                            targetX: minimapTargetX,
+                            targetY: minimapTargetY,
+                            zoom: minimapZoom
+                        })
+                        : null;
+                    const gridX = walkTarget ? walkTarget.gridX : Math.floor(minimapTargetX + 0.5 + (mouseX - (minimapCanvas.width / 2)) / ((minimapCanvas.width / 100) * minimapZoom));
+                    const gridY = walkTarget ? walkTarget.gridY : Math.floor(minimapTargetY + 0.5 + (mouseY - (minimapCanvas.width / 2)) / ((minimapCanvas.width / 100) * minimapZoom));
                     if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
                         // Ensure we check walkability on the PLAYER'S CURRENT PLANE
                         if (isWalkableTileId(logicalMap[playerState.z][gridY][gridX])) { queueAction('WALK', gridX, gridY, null); }
@@ -4288,13 +3830,29 @@
             minimapCanvas.addEventListener('mouseup', (e) => {
                 if (e.button === 2 && isMinimapDragging) {
                     isMinimapDragging = false;
-                    const dx = minimapDragEnd.x - minimapDragStart.x; const dy = minimapDragEnd.y - minimapDragStart.y;
-                    if (Math.sqrt(dx*dx + dy*dy) < 5) { minimapLocked = true; minimapZoom = 1.0; } 
-                    else {
-                        const canvasCenter = minimapCanvas.width / 2; const ppt = (minimapCanvas.width / 100) * minimapZoom; 
-                        minimapTargetX = minimapTargetX + (((minimapDragStart.x + minimapDragEnd.x) / 2) - canvasCenter) / ppt;
-                        minimapTargetY = minimapTargetY + (((minimapDragStart.y + minimapDragEnd.y) / 2) - canvasCenter) / ppt;
-                        minimapLocked = false; minimapZoom = Math.max(1.0, Math.min(20.0, minimapZoom * (minimapCanvas.width / Math.max(Math.abs(dx), Math.abs(dy))))); 
+                    const inputRuntime = getInputControllerRuntime();
+                    if (inputRuntime && typeof inputRuntime.resolveMinimapDragResolution === 'function') {
+                        const resolution = inputRuntime.resolveMinimapDragResolution({
+                            canvasSize: minimapCanvas.width,
+                            zoom: minimapZoom,
+                            targetX: minimapTargetX,
+                            targetY: minimapTargetY,
+                            dragStart: minimapDragStart,
+                            dragEnd: minimapDragEnd
+                        });
+                        minimapTargetX = resolution.targetX;
+                        minimapTargetY = resolution.targetY;
+                        minimapZoom = resolution.zoom;
+                        minimapLocked = resolution.minimapLocked;
+                    } else {
+                        const dx = minimapDragEnd.x - minimapDragStart.x; const dy = minimapDragEnd.y - minimapDragStart.y;
+                        if (Math.sqrt(dx*dx + dy*dy) < 5) { minimapLocked = true; minimapZoom = 1.0; } 
+                        else {
+                            const canvasCenter = minimapCanvas.width / 2; const ppt = (minimapCanvas.width / 100) * minimapZoom; 
+                            minimapTargetX = minimapTargetX + (((minimapDragStart.x + minimapDragEnd.x) / 2) - canvasCenter) / ppt;
+                            minimapTargetY = minimapTargetY + (((minimapDragStart.y + minimapDragEnd.y) / 2) - canvasCenter) / ppt;
+                            minimapLocked = false; minimapZoom = Math.max(1.0, Math.min(20.0, minimapZoom * (minimapCanvas.width / Math.max(Math.abs(dx), Math.abs(dy))))); 
+                        }
                     }
                 }
             });
@@ -4303,50 +3861,56 @@
 
         function updateMinimap() {
             const canvas = document.getElementById('minimap'); const ctx = canvas.getContext('2d');
+            const renderSnapshot = buildHudRenderSnapshot();
+            const renderRuntime = getRenderRuntime();
+            const minimapSnapshot = renderRuntime && typeof renderRuntime.buildMinimapSnapshot === 'function'
+                ? renderRuntime.buildMinimapSnapshot({
+                    snapshot: renderSnapshot,
+                    canvasSize: canvas.width,
+                    zoom: minimapZoom,
+                    targetX: minimapTargetX,
+                    targetY: minimapTargetY,
+                    isDragging: isMinimapDragging,
+                    dragStart: minimapDragStart,
+                    dragEnd: minimapDragEnd
+                })
+                : null;
             ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const canvasCenter = canvas.width / 2; const ppt = (canvas.width / 100) * minimapZoom;
+            const canvasCenter = minimapSnapshot ? minimapSnapshot.canvasCenter : (canvas.width / 2);
+            const ppt = minimapSnapshot ? minimapSnapshot.pixelsPerTile : ((canvas.width / 100) * minimapZoom);
             ctx.save(); ctx.translate(canvasCenter, canvasCenter); ctx.scale(ppt, ppt); ctx.translate(-minimapTargetX - 0.5, -minimapTargetY - 0.5); 
             ctx.drawImage(offscreenMapCanvas, 0, 0);
             
             ctx.fillStyle = 'rgba(255, 255, 0, 0.7)'; 
-            clickMarkers.forEach(m => { if (Math.abs(m.mesh.position.y - (playerState.z * 3.0)) < 2.0) ctx.fillRect(m.mesh.position.x, m.mesh.position.z, 1, 1); });
+            const minimapMarkers = minimapSnapshot ? minimapSnapshot.clickMarkers : [];
+            minimapMarkers.forEach((marker) => { ctx.fillRect(marker.x, marker.y, marker.size, marker.size); });
             ctx.fillStyle = '#ff00aa'; 
-            groundItems.forEach(gi => { if (gi.z === playerState.z) ctx.fillRect(gi.x, gi.y, 1, 1); });
+            const minimapItems = minimapSnapshot ? minimapSnapshot.groundItems : [];
+            minimapItems.forEach((item) => { ctx.fillRect(item.x, item.y, item.size, item.size); });
 
-            if (minimapDestination
-                && minimapDestination.z === playerState.z
-                && Number.isFinite(minimapDestination.x)
-                && Number.isFinite(minimapDestination.y)) {
-                const flagX = minimapDestination.x + 0.5;
-                const flagY = minimapDestination.y + 0.5;
-                const poleHeight = 10 / ppt;
-                const poleBottomY = flagY + (2 / ppt);
-                const poleTopY = poleBottomY - poleHeight;
-                const flagWidth = 7 / ppt;
-                const flagHeight = 4.5 / ppt;
-
+            if (minimapSnapshot && minimapSnapshot.destinationFlag) {
+                const flag = minimapSnapshot.destinationFlag;
                 ctx.strokeStyle = '#3a2a1b';
-                ctx.lineWidth = Math.max(2 / ppt, 0.28);
+                ctx.lineWidth = flag.lineWidth;
                 ctx.beginPath();
-                ctx.moveTo(flagX, poleBottomY);
-                ctx.lineTo(flagX, poleTopY);
+                ctx.moveTo(flag.x, flag.poleBottomY);
+                ctx.lineTo(flag.x, flag.poleTopY);
                 ctx.stroke();
 
                 ctx.fillStyle = '#ff4b4b';
                 ctx.beginPath();
-                ctx.moveTo(flagX, poleTopY);
-                ctx.lineTo(flagX + flagWidth, poleTopY + (flagHeight * 0.5));
-                ctx.lineTo(flagX, poleTopY + flagHeight);
+                ctx.moveTo(flag.x, flag.poleTopY);
+                ctx.lineTo(flag.x + flag.flagWidth, flag.poleTopY + (flag.flagHeight * 0.5));
+                ctx.lineTo(flag.x, flag.poleTopY + flag.flagHeight);
                 ctx.closePath();
                 ctx.fill();
             }
              
-            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(playerRig.position.x + 0.5, playerRig.position.z + 0.5, 3 / ppt, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 2 / ppt; ctx.beginPath(); ctx.moveTo(playerRig.position.x + 0.5, playerRig.position.z + 0.5); ctx.lineTo(playerRig.position.x + 0.5 + Math.sin(playerRig.rotation.y) * (8 / ppt), playerRig.position.z + 0.5 + Math.cos(playerRig.rotation.y) * (8 / ppt)); ctx.stroke(); ctx.restore();
-            if (isMinimapDragging) {
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(minimapSnapshot ? minimapSnapshot.playerDot.x : (playerRig.position.x + 0.5), minimapSnapshot ? minimapSnapshot.playerDot.y : (playerRig.position.z + 0.5), minimapSnapshot ? minimapSnapshot.playerDot.radius : (3 / ppt), 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = minimapSnapshot ? minimapSnapshot.facingLine.lineWidth : (2 / ppt); ctx.beginPath(); ctx.moveTo(minimapSnapshot ? minimapSnapshot.facingLine.fromX : (playerRig.position.x + 0.5), minimapSnapshot ? minimapSnapshot.facingLine.fromY : (playerRig.position.z + 0.5)); ctx.lineTo(minimapSnapshot ? minimapSnapshot.facingLine.toX : (playerRig.position.x + 0.5 + Math.sin(playerRig.rotation.y) * (8 / ppt)), minimapSnapshot ? minimapSnapshot.facingLine.toY : (playerRig.position.z + 0.5 + Math.cos(playerRig.rotation.y) * (8 / ppt))); ctx.stroke(); ctx.restore();
+            if (minimapSnapshot && minimapSnapshot.dragRect) {
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 1; ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                const x = Math.min(minimapDragStart.x, minimapDragEnd.x); const y = Math.min(minimapDragStart.y, minimapDragEnd.y); const w = Math.abs(minimapDragEnd.x - minimapDragStart.x); const h = Math.abs(minimapDragEnd.y - minimapDragStart.y);
-                ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+                ctx.fillRect(minimapSnapshot.dragRect.x, minimapSnapshot.dragRect.y, minimapSnapshot.dragRect.w, minimapSnapshot.dragRect.h); ctx.strokeRect(minimapSnapshot.dragRect.x, minimapSnapshot.dragRect.y, minimapSnapshot.dragRect.w, minimapSnapshot.dragRect.h);
             }
             updateWorldMapPanel();
         }
@@ -4425,6 +3989,7 @@
         window.initMinimap = initMinimap;
         window.initUIPreview = initUIPreview;
         window.manageChunks = manageChunks;
+        window.reloadActiveWorldScene = reloadActiveWorldScene;
         window.tickFireLifecycle = tickFireLifecycle;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;

@@ -1,0 +1,40 @@
+const fs = require("fs");
+const path = require("path");
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function run() {
+  const root = path.resolve(__dirname, "..", "..");
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
+  const authoringSource = fs.readFileSync(path.join(root, "src", "game", "world", "authoring.ts"), "utf8");
+  const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
+  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
+  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+
+  assert(manifest && Array.isArray(manifest.worlds), "world manifest should define a worlds array");
+  assert(manifest.worlds.some((entry) => entry && entry.worldId === "starter_town"), "world manifest should include starter_town");
+  assert(manifest.worlds.some((entry) => entry && entry.worldId === "north_road_camp"), "world manifest should include north_road_camp");
+  assert(authoringSource.includes("worldManifestJson"), "authoring registry should load the manifest");
+  assert(authoringSource.includes("getWorldManifestEntry(worldId: string)"), "authoring registry should expose manifest entry lookup by world id");
+  assert(authoringSource.includes("listWorldIds(): string[]"), "authoring registry should expose world-id enumeration");
+  assert(authoringSource.includes("getDefaultSpawn(worldId: string): Point3"), "authoring registry should expose default spawn lookup");
+  assert(bootstrapSource.includes("buildWorldBootstrapResult(worldId: string)"), "bootstrap should build world results by world id");
+  assert(bridgeSource.includes("getWorldManifest"), "legacy bridge should expose world manifest access");
+  assert(bridgeSource.includes("getCurrentWorldId"), "legacy bridge should expose the active world id");
+  assert(bridgeSource.includes("activateWorld"), "legacy bridge should expose active-world switching");
+  assert(bridgeSource.includes("getBootstrapResult"), "legacy bridge should expose bootstrap lookup by world id");
+  assert(!bridgeSource.includes("getStarterTownLegacyConfig"), "legacy bridge should not expose starter-town-only authored config");
+  assert(worldSource.includes("getWorldLegacyConfig"), "world.js should resolve world config through the generic bridge");
+  assert(!worldSource.includes("getStarterTownLegacyConfig"), "world.js should not call starter-town-only config helpers");
+
+  console.log("World registry guard passed.");
+}
+
+try {
+  run();
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}

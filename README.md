@@ -17,8 +17,10 @@ This project uses a multi-file structure.
 From this folder:
 
 ```bat
-run.bat
+npm.cmd run dev
 ```
+
+Or use `run.bat` for the same Vite-backed flow.
 
 Then keep the terminal open and use `Ctrl + C` to stop.
 
@@ -30,11 +32,26 @@ From this folder:
 npm run check
 npm test
 npm run dev
+npm run build
 ```
 
 Notes:
-- `check` and `test` currently run JavaScript syntax checks across `src/js/*.js`.
-- `dev` runs `run.bat` (local static server + opens browser).
+- `dev` runs the Vite module shell on port `5500`.
+- `build` emits a production bundle to `dist/`.
+- `check` and `test` now include the incremental TypeScript bridge plus world-content validation.
+
+## Platform Shell
+
+- `index.html` now boots through a single Vite module entry: `src/main.ts`
+- `three` is loaded from npm instead of a CDN and exposed to the legacy runtime through the module bridge
+- legacy gameplay scripts still execute in their existing order, but they are now loaded through `src/game/platform/legacy-script-manifest.ts`
+
+## World Authoring
+
+- Canonical starter-town world authoring now lives in `content/world/`
+- Reusable blueprint stamps live under `content/world/stamps/`
+- Region/service/route authoring lives in `content/world/regions/starter_town.json`
+- `npm.cmd run tool:world:validate` validates world authoring, merchant wiring, route aliases, and adjacency rules
 
 ## QA Commands
 

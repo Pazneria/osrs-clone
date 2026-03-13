@@ -22,31 +22,87 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         // In open terrain, BFS iteration budget approximates a Chebyshev radius. Keep tooltip range slightly under that.
         const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
+        const inputControllerRuntime = window.InputControllerRuntime || null;
+
+        function buildInputControllerContext() {
+            if (inputControllerRuntime && typeof inputControllerRuntime.createInputControllerContext === 'function') {
+                return inputControllerRuntime.createInputControllerContext({
+                    isFreeCam,
+                    isDraggingCamera,
+                    poseEditorEnabled: !!poseEditor.enabled,
+                    poseEditorDragging: !!poseEditor.activeHandle,
+                    cameraYaw,
+                    cameraPitch,
+                    cameraDist,
+                    previousMousePosition: { x: previousMousePosition.x, y: previousMousePosition.y },
+                    currentMousePosition: { x: currentMouseX, y: currentMouseY },
+                    playerPlane: playerState.z
+                });
+            }
+            return {
+                isFreeCam,
+                isDraggingCamera,
+                poseEditorEnabled: !!poseEditor.enabled,
+                poseEditorDragging: !!poseEditor.activeHandle,
+                cameraYaw,
+                cameraPitch,
+                cameraDist,
+                previousMousePosition: { x: previousMousePosition.x, y: previousMousePosition.y },
+                currentMousePosition: { x: currentMouseX, y: currentMouseY },
+                playerPlane: playerState.z
+            };
+        }
 
         function onPointerDown(event) {
-            if (event.button === 0 && poseEditor.enabled) {
-                event.preventDefault();
-                closeContextMenu();
+            const decision = inputControllerRuntime && typeof inputControllerRuntime.resolvePointerDown === 'function'
+                ? inputControllerRuntime.resolvePointerDown(buildInputControllerContext(), {
+                    button: event.button,
+                    clientX: event.clientX,
+                    clientY: event.clientY
+                })
+                : null;
+
+            if (decision && decision.preventDefault) event.preventDefault();
+            if (decision && decision.closeContextMenu) closeContextMenu();
+            if (decision && decision.beginPoseEditorDrag) {
                 if (beginPoseEditorDrag(event.clientX, event.clientY)) return;
                 return;
             }
-            if (event.button === 1 || (isFreeCam && event.button === 0)) { 
-                event.preventDefault(); isDraggingCamera = true; previousMousePosition = { x: event.clientX, y: event.clientY }; 
-            } else if (event.button === 0 && !isFreeCam) { 
-                closeContextMenu(); handleInteractionRaycast(event.clientX, event.clientY); 
+            if (decision && decision.beginCameraDrag) {
+                isDraggingCamera = true;
+                if (decision.nextPreviousMousePosition) {
+                    previousMousePosition = decision.nextPreviousMousePosition;
+                }
+                return;
+            }
+            if (decision && decision.handleInteractionRaycast) {
+                handleInteractionRaycast(event.clientX, event.clientY);
             }
         }
 
         function onPointerMove(event) {
-            currentMouseX = event.clientX;
-            currentMouseY = event.clientY;
+            const decision = inputControllerRuntime && typeof inputControllerRuntime.resolvePointerMove === 'function'
+                ? inputControllerRuntime.resolvePointerMove(buildInputControllerContext(), {
+                    clientX: event.clientX,
+                    clientY: event.clientY
+                })
+                : null;
+
+            currentMouseX = decision && decision.nextCurrentMousePosition ? decision.nextCurrentMousePosition.x : event.clientX;
+            currentMouseY = decision && decision.nextCurrentMousePosition ? decision.nextCurrentMousePosition.y : event.clientY;
             
             if (poseEditor.enabled && poseEditor.activeHandle) {
                 updatePoseEditorDrag(event.clientX, event.clientY);
                 return;
             }
             
-            if (isDraggingCamera) {
+            if (decision && decision.nextCameraYaw !== null && decision.nextCameraPitch !== null) {
+                cameraYaw = decision.nextCameraYaw;
+                cameraPitch = decision.nextCameraPitch;
+                if (decision.nextPreviousMousePosition) {
+                    previousMousePosition = decision.nextPreviousMousePosition;
+                }
+            } else if (isDraggingCamera) {
                 cameraYaw += (event.clientX - previousMousePosition.x) * 0.01; 
                 cameraPitch -= (event.clientY - previousMousePosition.y) * 0.01;
                 cameraPitch = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPitch)); 
@@ -55,21 +111,31 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function onPointerUp(event) {
-            if (event.button === 0 && poseEditor.activeHandle) {
+            const decision = inputControllerRuntime && typeof inputControllerRuntime.resolvePointerUp === 'function'
+                ? inputControllerRuntime.resolvePointerUp(buildInputControllerContext(), {
+                    button: event.button
+                })
+                : null;
+
+            if ((decision && decision.endPoseEditorDrag) || (event.button === 0 && poseEditor.activeHandle)) {
                 poseEditor.activeHandle = null;
                 return;
             }
-            if (event.button === 1 || (isFreeCam && event.button === 0)) isDraggingCamera = false;
+            if ((decision && decision.endCameraDrag) || event.button === 1 || (isFreeCam && event.button === 0)) isDraggingCamera = false;
         }
         
         function onMouseWheel(event) { 
             event.preventDefault(); 
-            cameraDist += Math.sign(event.deltaY) * 1.5; 
-            cameraDist = Math.max(5, Math.min(30, cameraDist)); 
+            cameraDist = inputControllerRuntime && typeof inputControllerRuntime.resolveMouseWheelCameraDistance === 'function'
+                ? inputControllerRuntime.resolveMouseWheelCameraDistance(cameraDist, event.deltaY)
+                : Math.max(5, Math.min(30, cameraDist + (Math.sign(event.deltaY) * 1.5))); 
 
         }
 
         function normalizeContextMenuOptions(options) {
+            if (inputControllerRuntime && typeof inputControllerRuntime.normalizeContextMenuOptions === 'function') {
+                return inputControllerRuntime.normalizeContextMenuOptions(options);
+            }
             if (!Array.isArray(options) || options.length === 0) return [];
             const normalized = [];
             for (let i = 0; i < options.length; i++) {
@@ -171,7 +237,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function onContextMenu(event) {
-            if (isFreeCam) return; if (event.target.id === 'minimap' || event.target.id === 'runToggleBtn') return;
+            if (inputControllerRuntime && typeof inputControllerRuntime.shouldIgnoreContextMenu === 'function') {
+                if (inputControllerRuntime.shouldIgnoreContextMenu(isFreeCam, event.target && event.target.id)) return;
+            } else {
+                if (isFreeCam) return; if (event.target.id === 'minimap' || event.target.id === 'runToggleBtn') return;
+            }
             event.preventDefault(); closeContextMenu();
             const hitResults = getRaycastHits(event.clientX, event.clientY);
             if (!hitResults || hitResults.length === 0) return;
@@ -1003,6 +1073,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 
                                 if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade') {
                                     openShop(playerState.targetUid.merchantId || 'general_store');
+                                } else if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Travel') {
+                                    if (typeof window.travelToWorld === 'function' && playerState.targetUid.travelToWorldId) {
+                                        window.travelToWorld(playerState.targetUid.travelToWorldId, {
+                                            spawn: playerState.targetUid.travelSpawn || null,
+                                            label: playerState.targetUid.worldLabel || playerState.targetUid.name || playerState.targetUid.travelToWorldId
+                                        });
+                                    }
                                 }
                             } else if (playerState.targetObj === 'BANK_BOOTH') {
                                 playerState.action = 'IDLE';
@@ -1267,6 +1344,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'NPC') {
                         const npcAction = (hitData.uid && hitData.uid.action) ? hitData.uid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
                         if (npcAction === 'Trade') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
+                        else if (npcAction === 'Travel') actionText = `<span class="text-gray-300">Travel</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
                 }
                 }

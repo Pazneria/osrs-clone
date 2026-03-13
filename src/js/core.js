@@ -94,6 +94,53 @@
             return tileId === TileId.DOOR_CLOSED || tileId === TileId.DOOR_OPEN;
         }
 
+        function resolveDefaultWorldSpawn() {
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getDefaultSpawn === 'function') {
+                const spawn = window.WorldBootstrapRuntime.getDefaultSpawn();
+                if (spawn && Number.isFinite(spawn.x) && Number.isFinite(spawn.y) && Number.isFinite(spawn.z)) {
+                    return {
+                        x: Math.floor(spawn.x),
+                        y: Math.floor(spawn.y),
+                        z: Math.floor(spawn.z)
+                    };
+                }
+            }
+            return { x: 205, y: 210, z: 0 };
+        }
+
+        const DEFAULT_WORLD_SPAWN = resolveDefaultWorldSpawn();
+        const gameSessionRuntime = window.GameSessionRuntime || null;
+        const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
+            ? gameSessionRuntime.createGameSession({
+                currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
+                    ? gameSessionRuntime.resolveCurrentWorldId()
+                    : 'starter_town',
+                defaultSpawn: DEFAULT_WORLD_SPAWN,
+                defaultUnlockFlags: DEFAULT_UNLOCK_FLAGS,
+                inventorySize: 28,
+                bankSize: 200
+            })
+            : null;
+        if (gameSessionRuntime && typeof gameSessionRuntime.setActiveSession === 'function') {
+            gameSessionRuntime.setActiveSession(gameSession);
+        }
+        if (gameSessionRuntime && typeof gameSessionRuntime.bindWindowQaBooleanFlag === 'function') {
+            gameSessionRuntime.bindWindowQaBooleanFlag('QA_RC_DEBUG', 'runecraftingDebug', false);
+            gameSessionRuntime.bindWindowQaBooleanFlag('DEBUG_COOKING_USE', 'cookingUseDebug', false);
+        } else {
+            if (typeof window.QA_RC_DEBUG === 'undefined') window.QA_RC_DEBUG = false;
+            if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
+        }
+
+        function getGameSession() {
+            if (gameSessionRuntime && typeof gameSessionRuntime.getSession === 'function') {
+                return gameSessionRuntime.getSession();
+            }
+            return gameSession;
+        }
+
+        window.getGameSession = getGameSession;
+
         window.TileId = TileId;
         window.isWaterTileId = isWaterTileId;
         window.isNaturalTileId = isNaturalTileId;
@@ -118,11 +165,11 @@
         // Pathfinder Walkability Registry (Added DOOR_OPEN for open doors)
 
         // Player Logical State (Spawn adjusted for chunk map center)
-        let playerState = {
-            x: 205, y: 210, z: 0, // NEW Z-Level Spawn   
-            prevX: 205, prevY: 210, 
+        let playerState = gameSession ? gameSession.player : {
+            x: DEFAULT_WORLD_SPAWN.x, y: DEFAULT_WORLD_SPAWN.y, z: DEFAULT_WORLD_SPAWN.z, // NEW Z-Level Spawn   
+            prevX: DEFAULT_WORLD_SPAWN.x, prevY: DEFAULT_WORLD_SPAWN.y, 
             midX: null, midY: null,
-            targetX: 205, targetY: 210, 
+            targetX: DEFAULT_WORLD_SPAWN.x, targetY: DEFAULT_WORLD_SPAWN.y, 
             targetRotation: 0,  
             path: [],
             action: 'IDLE',
@@ -140,7 +187,7 @@
             unlockFlags: { ...DEFAULT_UNLOCK_FLAGS },
             merchantProgress: {}
         };
-        let playerProfileState = {
+        let playerProfileState = gameSession ? gameSession.progress.profile : {
             name: '',
             creationCompleted: false,
             createdAt: null,
@@ -163,7 +210,7 @@
         let environmentMeshes = [];
         let clickMarkers = [];
         let levelUpAnimations = []; 
-        let isRunning = false; 
+        let isRunning = gameSession ? !!gameSession.ui.runMode : false; 
 
         // Chunk Rendering State
         let loadedChunks = new Set();
@@ -196,13 +243,13 @@
         // UI & Bank State
         let uiScene, uiCamera, uiRenderer, uiPlayerRig;
         let isBankOpen = false;
-        let bankItems = Array(200).fill(null);
+        let bankItems = gameSession ? gameSession.progress.bankItems : Array(200).fill(null);
 
         // Minimap State
         let minimapZoom = 1.0; 
         let minimapLocked = true;
-        let minimapTargetX = 205;
-        let minimapTargetY = 210;
+        let minimapTargetX = DEFAULT_WORLD_SPAWN.x;
+        let minimapTargetY = DEFAULT_WORLD_SPAWN.y;
         let offscreenMapCanvas, offscreenMapCtx;
         let isMinimapDragging = false;
         let minimapDragStart = { x: 0, y: 0 };
@@ -214,16 +261,18 @@
         let frameLimiterPrev = 0;
         let fpsSampleLast = 0;
         let fpsSampleFrames = 0;
-        let playerEntryFlowState = {
-            isOpen: false,
-            hasLoadedSave: false,
-            saveWasLegacyProfile: false,
-            loadReason: 'startup',
-            savedAt: null,
-            sessionActivated: false,
-            unloadSaveHooksRegistered: false,
-            uiBound: false
-        };
+        let playerEntryFlowState = gameSession
+            ? gameSession.runtime.playerEntryFlow
+            : {
+                isOpen: false,
+                hasLoadedSave: false,
+                saveWasLegacyProfile: false,
+                loadReason: 'startup',
+                savedAt: null,
+                sessionActivated: false,
+                unloadSaveHooksRegistered: false,
+                uiBound: false
+            };
 
         const MOTION_TUNING = {
             runArmSwing: 0.8,
@@ -349,7 +398,7 @@
             : {};
         window.ITEM_DB = ITEM_DB;
 
-        let inventory = Array(28).fill(null);
+        let inventory = gameSession ? gameSession.progress.inventory : Array(28).fill(null);
         inventory[0] = { itemData: ITEM_DB['iron_axe'], amount: 1 }; 
         inventory[1] = { itemData: ITEM_DB['logs'], amount: 1 }; 
         inventory[2] = { itemData: ITEM_DB['coins'], amount: 1000 };
@@ -362,7 +411,7 @@
         inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[11] = { itemData: ITEM_DB['owie'], amount: 1 };
-        let progressContentGrants = {};
+        let progressContentGrants = gameSession ? gameSession.progress.contentGrants : {};
 
                         function setInventorySlots(slotDefs) {
             inventory = Array(28).fill(null);
@@ -386,6 +435,7 @@
                 }
             }
 
+            syncGameSessionState();
             if (typeof clearSelectedUse === 'function') clearSelectedUse(false);
             if (typeof renderInventory === 'function') renderInventory();
         }
@@ -687,7 +737,180 @@
             playerState.unlockFlags[flagId] = !!enabled;
             return true;
         }
+        function getWorldGameContext() {
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getGameContext === 'function') {
+                return window.WorldBootstrapRuntime.getGameContext();
+            }
+            return window.GameContext || null;
+        }
+        function getWorldManifest() {
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getWorldManifest === 'function') {
+                return window.WorldBootstrapRuntime.getWorldManifest();
+            }
+            return { version: '', worlds: [] };
+        }
+        function getKnownWorldEntries() {
+            const manifest = getWorldManifest();
+            return manifest && Array.isArray(manifest.worlds) ? manifest.worlds : [];
+        }
+        function getWorldManifestEntry(worldId) {
+            const targetWorldId = String(worldId || '').trim();
+            if (!targetWorldId) return null;
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getWorldManifestEntry === 'function') {
+                try {
+                    return window.WorldBootstrapRuntime.getWorldManifestEntry(targetWorldId);
+                } catch (error) {
+                    return null;
+                }
+            }
+            const worlds = getKnownWorldEntries();
+            for (let i = 0; i < worlds.length; i++) {
+                const entry = worlds[i];
+                if (entry && entry.worldId === targetWorldId) return entry;
+            }
+            return null;
+        }
+        function isKnownWorldId(worldId) {
+            return !!getWorldManifestEntry(worldId);
+        }
+        function resolveKnownWorldId(worldId, fallbackWorldId = null) {
+            const requestedWorldId = String(worldId || '').trim();
+            if (requestedWorldId && isKnownWorldId(requestedWorldId)) return requestedWorldId;
+
+            const fallbackKey = String(fallbackWorldId || '').trim();
+            if (fallbackKey && isKnownWorldId(fallbackKey)) return fallbackKey;
+
+            const activeWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
+                ? String(gameSessionRuntime.resolveCurrentWorldId() || '').trim()
+                : '';
+            if (activeWorldId && isKnownWorldId(activeWorldId)) return activeWorldId;
+
+            const worlds = getKnownWorldEntries();
+            if (worlds.length > 0 && worlds[0] && typeof worlds[0].worldId === 'string' && worlds[0].worldId) {
+                return worlds[0].worldId;
+            }
+            return 'starter_town';
+        }
+        function getWorldLabel(worldId) {
+            const entry = getWorldManifestEntry(worldId);
+            return entry && entry.label ? entry.label : String(worldId || 'Unknown World');
+        }
+        function getWorldDefaultSpawn(worldId) {
+            const resolvedWorldId = resolveKnownWorldId(worldId);
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getDefaultSpawn === 'function') {
+                const spawn = window.WorldBootstrapRuntime.getDefaultSpawn(resolvedWorldId);
+                if (spawn && Number.isFinite(spawn.x) && Number.isFinite(spawn.y) && Number.isFinite(spawn.z)) {
+                    return {
+                        x: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawn.x))),
+                        y: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawn.y))),
+                        z: Math.max(0, Math.min(PLANES - 1, Math.floor(spawn.z)))
+                    };
+                }
+            }
+            const entry = getWorldManifestEntry(resolvedWorldId);
+            const fallbackSpawn = entry && entry.defaultSpawn ? entry.defaultSpawn : { x: 205, y: 210, z: 0 };
+            return {
+                x: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(fallbackSpawn.x))),
+                y: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(fallbackSpawn.y))),
+                z: Math.max(0, Math.min(PLANES - 1, Math.floor(fallbackSpawn.z)))
+            };
+        }
+        function sanitizeWorldSpawn(spawnLike, worldId) {
+            if (!spawnLike || !Number.isFinite(spawnLike.x) || !Number.isFinite(spawnLike.y) || !Number.isFinite(spawnLike.z)) {
+                return getWorldDefaultSpawn(worldId);
+            }
+            return {
+                x: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawnLike.x))),
+                y: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawnLike.y))),
+                z: Math.max(0, Math.min(PLANES - 1, Math.floor(spawnLike.z)))
+            };
+        }
+        function activateWorldContext(worldId, fallbackWorldId = null) {
+            const resolvedWorldId = resolveKnownWorldId(worldId, fallbackWorldId);
+            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.activateWorld === 'function') {
+                window.WorldBootstrapRuntime.activateWorld(resolvedWorldId);
+            }
+            const activeSession = getGameSession();
+            if (activeSession) {
+                activeSession.currentWorldId = resolvedWorldId;
+                if (activeSession.runtime && typeof activeSession.runtime === 'object') {
+                    activeSession.runtime.currentWorldId = resolvedWorldId;
+                }
+            }
+            return resolvedWorldId;
+        }
+        function travelToWorld(worldId, options = {}) {
+            const requestedWorldId = String(worldId || '').trim();
+            if (!requestedWorldId || !isKnownWorldId(requestedWorldId)) return false;
+
+            const resolvedWorldId = activateWorldContext(requestedWorldId, resolveKnownWorldId(null, 'starter_town'));
+            const spawn = sanitizeWorldSpawn(options && options.spawn, resolvedWorldId);
+
+            pendingAction = null;
+            groundItems = [];
+            activeFires = [];
+            playerOverheadText = { text: '', expiresAt: 0 };
+            if (typeof clearSelectedUse === 'function') clearSelectedUse(false);
+            if (typeof closeBank === 'function') closeBank();
+            if (typeof closeShop === 'function') closeShop();
+
+            playerState.x = spawn.x;
+            playerState.y = spawn.y;
+            playerState.z = spawn.z;
+            playerState.prevX = spawn.x;
+            playerState.prevY = spawn.y;
+            playerState.midX = null;
+            playerState.midY = null;
+            playerState.targetX = spawn.x;
+            playerState.targetY = spawn.y;
+            playerState.path = [];
+            playerState.action = 'IDLE';
+            playerState.targetObj = null;
+            playerState.targetUid = null;
+            playerState.pendingActionAfterTurn = null;
+            playerState.pendingInteractAfterFletchingWalk = null;
+            playerState.turnLock = false;
+            playerState.actionVisualReady = true;
+            playerState.firemakingTarget = null;
+            playerState.firemakingSession = null;
+            playerState.pendingSkillStart = null;
+
+            minimapLocked = true;
+            minimapTargetX = spawn.x;
+            minimapTargetY = spawn.y;
+            minimapDestination = null;
+
+            if (typeof window.reloadActiveWorldScene === 'function') {
+                window.reloadActiveWorldScene();
+            } else if (typeof window.initLogicalMap === 'function') {
+                window.initLogicalMap();
+            }
+
+            syncGameSessionState();
+            if (typeof renderInventory === 'function') renderInventory();
+            if (typeof updateCameraNow === 'function') updateCameraNow();
+            const destinationLabel = (options && typeof options.label === 'string' && options.label.trim())
+                ? options.label.trim()
+                : getWorldLabel(resolvedWorldId);
+            addChatMessage(`Travelled to ${destinationLabel}.`, 'info');
+            return true;
+        }
+        window.travelToWorld = travelToWorld;
+        function getWorldRouteGroup(groupId) {
+            const context = getWorldGameContext();
+            if (!context || !context.queries || typeof context.queries.getRouteGroup !== 'function') return [];
+            const routes = context.queries.getRouteGroup(groupId);
+            return Array.isArray(routes) ? routes : [];
+        }
+        function getWorldMerchantServices() {
+            const context = getWorldGameContext();
+            if (!context || !context.queries || typeof context.queries.getMerchantServices !== 'function') return [];
+            const services = context.queries.getMerchantServices();
+            return Array.isArray(services) ? services : [];
+        }
         function getQaAltarLocations() {
+            const fromRegistry = getWorldRouteGroup('runecrafting');
+            if (fromRegistry.length > 0) return fromRegistry;
             if (typeof getRunecraftingAltarLocations !== 'function') return [];
             const locations = getRunecraftingAltarLocations();
             return Array.isArray(locations) ? locations : [];
@@ -703,6 +926,53 @@
                 const altar = altars[i];
                 addChatMessage(`[QA altar] ${altar.label} @ (${altar.x},${altar.y},${altar.z})`, 'info');
             }
+        }
+        function qaListWorlds() {
+            const worlds = getKnownWorldEntries();
+            if (!worlds.length) {
+                addChatMessage('No worlds are currently registered.', 'warn');
+                return;
+            }
+            const activeWorldId = resolveKnownWorldId(null, 'starter_town');
+            for (let i = 0; i < worlds.length; i++) {
+                const entry = worlds[i];
+                if (!entry) continue;
+                const activeLabel = entry.worldId === activeWorldId ? ' [active]' : '';
+                addChatMessage(`[QA world] ${entry.worldId}${activeLabel} - ${entry.label} @ (${entry.defaultSpawn.x},${entry.defaultSpawn.y},${entry.defaultSpawn.z})`, 'info');
+            }
+        }
+        function qaTravelWorld(worldIdLike) {
+            const needle = String(worldIdLike || '').trim().toLowerCase();
+            if (!needle) return false;
+            const worlds = getKnownWorldEntries();
+            let match = null;
+            for (let i = 0; i < worlds.length; i++) {
+                const entry = worlds[i];
+                if (!entry || !entry.worldId) continue;
+                const worldKey = String(entry.worldId).toLowerCase();
+                const labelKey = String(entry.label || '').toLowerCase();
+                if (worldKey === needle || labelKey === needle) {
+                    match = entry;
+                    break;
+                }
+            }
+            if (!match) {
+                for (let i = 0; i < worlds.length; i++) {
+                    const entry = worlds[i];
+                    if (!entry || !entry.worldId) continue;
+                    const worldKey = String(entry.worldId).toLowerCase();
+                    const labelKey = String(entry.label || '').toLowerCase();
+                    if (worldKey.includes(needle) || labelKey.includes(needle)) {
+                        match = entry;
+                        break;
+                    }
+                }
+            }
+            if (!match) return false;
+            return travelToWorld(match.worldId, {
+                spawn: match.defaultSpawn,
+                label: match.label
+            });
         }
 
         function qaTeleportTo(x, y, z, label) {
@@ -746,23 +1016,13 @@
                 pier: { x: 205, y: 230, z: 0, label: 'castle pond pier' },
                 deep: { x: 205, y: 231, z: 0, label: 'castle pond deep-water edge' }
             };
-
-            if (typeof window.getFishingTrainingLocations !== 'function') return fallback;
-            const routes = window.getFishingTrainingLocations();
+            const routes = getWorldRouteGroup('fishing');
             if (!Array.isArray(routes) || routes.length === 0) return fallback;
-
-            const routeToKey = {
-                castle_pond_bank: 'pond',
-                castle_pond_pier: 'pier',
-                castle_pond_deep_edge: 'deep'
-            };
             const merged = Object.assign({}, fallback);
             for (let i = 0; i < routes.length; i++) {
                 const route = routes[i];
-                if (!route || typeof route.routeId !== 'string') continue;
-                const routeId = route.routeId.toLowerCase();
                 const explicitAlias = typeof route.alias === 'string' ? route.alias.trim().toLowerCase() : '';
-                const key = routeToKey[routeId] || (explicitAlias && merged[explicitAlias] ? explicitAlias : null);
+                const key = explicitAlias && merged[explicitAlias] ? explicitAlias : null;
                 if (!key || !merged[key]) continue;
                 merged[key] = {
                     x: Number.isFinite(route.x) ? route.x : merged[key].x,
@@ -811,22 +1071,13 @@
                 dock: { x: 212, y: 227, z: 0, label: 'dockside fire line' },
                 deep: { x: 205, y: 229, z: 0, label: 'deep-water dock fire line' }
             };
-
-            if (typeof window.getCookingTrainingLocations !== 'function') return fallback;
-            const routes = window.getCookingTrainingLocations();
+            const routes = getWorldRouteGroup('cooking');
             if (!Array.isArray(routes) || routes.length === 0) return fallback;
-
-            const routeToKey = {
-                starter_campfire: 'camp',
-                riverbank_fire_line: 'river',
-                dockside_fire_line: 'dock',
-                deep_water_dock_fire_line: 'deep'
-            };
             const merged = Object.assign({}, fallback);
             for (let i = 0; i < routes.length; i++) {
                 const route = routes[i];
-                if (!route || typeof route.routeId !== 'string') continue;
-                const key = routeToKey[route.routeId];
+                if (!route) continue;
+                const key = typeof route.alias === 'string' ? route.alias.trim().toLowerCase() : '';
                 if (!key) continue;
                 merged[key] = {
                     x: Number.isFinite(route.x) ? route.x : merged[key].x,
@@ -881,6 +1132,16 @@
         }
 
         function getQaDiscoveredMerchants() {
+            const merchantServices = getWorldMerchantServices();
+            if (merchantServices.length > 0) {
+                return merchantServices.map((service) => ({
+                    merchantId: String(service.merchantId || '').trim().toLowerCase(),
+                    name: String(service.name || service.merchantId || 'merchant'),
+                    x: Number.isFinite(service.x) ? service.x : 0,
+                    y: Number.isFinite(service.y) ? service.y : 0,
+                    z: Number.isFinite(service.z) ? service.z : 0
+                })).filter((entry) => !!entry.merchantId);
+            }
             const byId = {};
             for (let i = 0; i < npcsToRender.length; i++) {
                 const npc = npcsToRender[i];
@@ -1074,8 +1335,9 @@
             const merchantId = aliases[raw] || raw;
 
             const matches = [];
-            for (let i = 0; i < npcsToRender.length; i++) {
-                const npc = npcsToRender[i];
+            const merchants = getQaDiscoveredMerchants();
+            for (let i = 0; i < merchants.length; i++) {
+                const npc = merchants[i];
                 if (!npc || !npc.merchantId) continue;
                 const id = String(npc.merchantId).toLowerCase();
                 const name = String(npc.name || '').toLowerCase();
@@ -1233,10 +1495,10 @@
                 }
             }
         }
-        let equipment = { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
+        let equipment = gameSession ? gameSession.progress.equipment : { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
         let baseStats = { atk: 10, def: 10, str: 10 };
-        let userItemPrefs = {};
-        let playerSkills = {
+        let userItemPrefs = gameSession ? gameSession.progress.userItemPrefs : {};
+        let playerSkills = gameSession ? gameSession.progress.playerSkills : {
             attack: { xp: 0, level: 1 },
             hitpoints: { xp: 1154, level: 10 },
             mining: { xp: 0, level: 1 },
@@ -1258,9 +1520,37 @@
         let selectedUse = { invIndex: null, itemId: null }; 
         let progressAutosaveHandle = null;
 
+        function syncGameSessionState() {
+            const activeSession = getGameSession();
+            if (!activeSession) return null;
+
+            if (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function') {
+                activeSession.currentWorldId = gameSessionRuntime.resolveCurrentWorldId();
+            }
+            activeSession.runtime.currentWorldId = activeSession.currentWorldId;
+            activeSession.player = playerState;
+            activeSession.progress.profile = playerProfileState;
+            activeSession.progress.playerSkills = playerSkills;
+            activeSession.progress.inventory = inventory;
+            activeSession.progress.bankItems = bankItems;
+            activeSession.progress.equipment = equipment;
+            activeSession.progress.userItemPrefs = userItemPrefs;
+            activeSession.progress.contentGrants = progressContentGrants;
+            activeSession.ui.runMode = !!isRunning;
+            activeSession.runtime.playerEntryFlow = playerEntryFlowState;
+            window.playerProfileState = playerProfileState;
+            return activeSession;
+        }
+
+        syncGameSessionState();
+
         function canUseProgressStorage() {
             try {
-                return typeof window !== 'undefined' && !!window.localStorage;
+                return typeof window !== 'undefined'
+                    && !!window.localStorage
+                    && !!gameSessionRuntime
+                    && typeof gameSessionRuntime.saveProgressPayloadToStorage === 'function'
+                    && typeof gameSessionRuntime.loadProgressPayloadFromStorage === 'function';
             } catch (error) {
                 return false;
             }
@@ -1369,59 +1659,6 @@
             return restored;
         }
 
-        function sanitizeUnlockFlags(savedFlags) {
-            const restored = { ...DEFAULT_UNLOCK_FLAGS };
-            if (!savedFlags || typeof savedFlags !== 'object') return restored;
-            const keys = Object.keys(DEFAULT_UNLOCK_FLAGS);
-            for (let i = 0; i < keys.length; i++) {
-                const key = keys[i];
-                if (savedFlags[key] === undefined) continue;
-                restored[key] = !!savedFlags[key];
-            }
-            return restored;
-        }
-
-        function sanitizeMerchantProgress(savedProgress) {
-            const restored = {};
-            if (!savedProgress || typeof savedProgress !== 'object') return restored;
-
-            const merchantIds = Object.keys(savedProgress);
-            for (let i = 0; i < merchantIds.length; i++) {
-                const merchantId = merchantIds[i];
-                const row = savedProgress[merchantId];
-                if (!row || typeof row !== 'object') continue;
-
-                const soldCounts = {};
-                const unlockedItems = {};
-
-                const sold = row.soldCounts;
-                if (sold && typeof sold === 'object') {
-                    const soldKeys = Object.keys(sold);
-                    for (let j = 0; j < soldKeys.length; j++) {
-                        const itemId = sanitizeItemId(soldKeys[j]);
-                        if (!itemId) continue;
-                        const value = Number(sold[soldKeys[j]]);
-                        if (!Number.isFinite(value) || value <= 0) continue;
-                        soldCounts[itemId] = Math.floor(value);
-                    }
-                }
-
-                const unlocked = row.unlockedItems;
-                if (unlocked && typeof unlocked === 'object') {
-                    const unlockedKeys = Object.keys(unlocked);
-                    for (let j = 0; j < unlockedKeys.length; j++) {
-                        const itemId = sanitizeItemId(unlockedKeys[j]);
-                        if (!itemId) continue;
-                        if (unlocked[unlockedKeys[j]]) unlockedItems[itemId] = true;
-                    }
-                }
-
-                restored[merchantId] = { soldCounts, unlockedItems };
-            }
-
-            return restored;
-        }
-
         function sanitizePlayerName(value) {
             if (typeof value !== 'string') return '';
             const cleaned = value
@@ -1504,62 +1741,40 @@
         }
 
         function buildProgressPayload(reason = 'manual') {
-            return {
-                version: PROGRESS_SAVE_VERSION,
-                savedAt: Date.now(),
+            const activeSession = syncGameSessionState();
+            if (!activeSession || !gameSessionRuntime || typeof gameSessionRuntime.buildProgressSavePayload !== 'function') return null;
+            return gameSessionRuntime.buildProgressSavePayload({
+                saveVersion: PROGRESS_SAVE_VERSION,
                 reason,
-                state: {
-                    playerState: {
-                        x: playerState.x,
-                        y: playerState.y,
-                        z: playerState.z,
-                        targetRotation: Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0,
-                        currentHitpoints: Number.isFinite(playerState.currentHitpoints) ? Math.floor(playerState.currentHitpoints) : 10,
-                        eatingCooldownEndTick: Number.isFinite(playerState.eatingCooldownEndTick) ? Math.floor(playerState.eatingCooldownEndTick) : 0,
-                        unlockFlags: sanitizeUnlockFlags(playerState.unlockFlags),
-                        merchantProgress: sanitizeMerchantProgress(playerState.merchantProgress)
-                    },
-                    playerSkills: sanitizeSkillState(playerSkills),
-                    inventory: serializeItemArray(inventory),
-                    bankItems: serializeItemArray(bankItems),
-                    equipment: serializeEquipmentState(),
-                    userItemPrefs: sanitizeUserItemPrefs(userItemPrefs),
-                    contentGrants: cloneContentGrantState(),
-                    runMode: !!isRunning,
-                    profile: serializePlayerProfile(),
-                    appearance: window.playerAppearanceState
-                        ? {
-                            gender: window.playerAppearanceState.gender === 1 ? 1 : 0,
-                            colors: Array.isArray(window.playerAppearanceState.colors)
-                                ? window.playerAppearanceState.colors.slice(0, 5)
-                                : [0, 0, 0, 0, 0]
-                        }
-                        : null
-                }
-            };
-        }
-
-        function migrateProgressPayload(payload) {
-            if (!payload || typeof payload !== 'object') return null;
-            if (payload.version === PROGRESS_SAVE_VERSION) return payload;
-            const legacyState = payload.state || payload;
-            if (legacyState && typeof legacyState === 'object') {
-                return {
-                    version: PROGRESS_SAVE_VERSION,
-                    savedAt: Number.isFinite(payload.savedAt) ? payload.savedAt : Date.now(),
-                    reason: payload.reason || 'migrated',
-                    state: legacyState
-                };
-            }
-            return null;
+                session: activeSession,
+                playerSkills: sanitizeSkillState(playerSkills),
+                inventory: serializeItemArray(inventory),
+                bankItems: serializeItemArray(bankItems),
+                equipment: serializeEquipmentState(),
+                userItemPrefs: sanitizeUserItemPrefs(userItemPrefs),
+                contentGrants: cloneContentGrantState(),
+                profile: serializePlayerProfile(),
+                appearance: window.playerAppearanceState
+                    ? {
+                        gender: window.playerAppearanceState.gender === 1 ? 1 : 0,
+                        colors: Array.isArray(window.playerAppearanceState.colors)
+                            ? window.playerAppearanceState.colors.slice(0, 5)
+                            : [0, 0, 0, 0, 0]
+                    }
+                    : null
+            });
         }
 
         function saveProgressToStorage(reason = 'manual') {
             if (!canUseProgressStorage()) return { ok: false, reason: 'storage_unavailable' };
             try {
                 const payload = buildProgressPayload(reason);
-                localStorage.setItem(PROGRESS_SAVE_KEY, JSON.stringify(payload));
-                return { ok: true };
+                if (!payload) return { ok: false, reason: 'session_unavailable' };
+                return gameSessionRuntime.saveProgressPayloadToStorage({
+                    storage: window.localStorage,
+                    storageKey: PROGRESS_SAVE_KEY,
+                    payload
+                });
             } catch (error) {
                 console.warn('Progress save failed', error);
                 return { ok: false, reason: 'save_failed', error };
@@ -1568,35 +1783,30 @@
 
         function loadProgressFromStorage() {
             if (!canUseProgressStorage()) return { loaded: false, reason: 'storage_unavailable' };
-            let raw = null;
-            try {
-                raw = localStorage.getItem(PROGRESS_SAVE_KEY);
-            } catch (error) {
-                console.warn('Progress load failed', error);
-                return { loaded: false, reason: 'load_failed', error };
-            }
-            if (!raw) return { loaded: false, reason: 'no_save' };
-
-            let parsed = null;
-            try {
-                parsed = JSON.parse(raw);
-            } catch (error) {
-                console.warn('Progress load parse failed', error);
-                return { loaded: false, reason: 'parse_failed', error };
+            const activeSession = getGameSession();
+            if (!activeSession || !gameSessionRuntime || typeof gameSessionRuntime.loadProgressPayloadFromStorage !== 'function') {
+                return { loaded: false, reason: 'session_unavailable' };
             }
 
-            const migrated = migrateProgressPayload(parsed);
-            if (!migrated || !migrated.state || typeof migrated.state !== 'object') {
-                return { loaded: false, reason: 'invalid_payload' };
-            }
+            const loaded = gameSessionRuntime.loadProgressPayloadFromStorage({
+                storage: window.localStorage,
+                storageKey: PROGRESS_SAVE_KEY,
+                currentVersion: PROGRESS_SAVE_VERSION
+            });
+            if (!loaded.loaded || !loaded.payload) return loaded;
 
-            const state = migrated.state;
+            const state = loaded.payload.state;
             const savedPlayerState = state.playerState && typeof state.playerState === 'object' ? state.playerState : {};
+            const loadedWorldId = typeof state.worldId === 'string' && state.worldId
+                ? state.worldId
+                : activeSession.currentWorldId;
 
             const safeX = Number.isFinite(savedPlayerState.x) ? Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(savedPlayerState.x))) : playerState.x;
             const safeY = Number.isFinite(savedPlayerState.y) ? Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(savedPlayerState.y))) : playerState.y;
             const safeZ = Number.isFinite(savedPlayerState.z) ? Math.max(0, Math.min(PLANES - 1, Math.floor(savedPlayerState.z))) : playerState.z;
 
+            activeSession.currentWorldId = loadedWorldId;
+            activeSession.runtime.currentWorldId = loadedWorldId;
             playerState.x = safeX;
             playerState.y = safeY;
             playerState.z = safeZ;
@@ -1620,8 +1830,8 @@
             playerState.eatingCooldownEndTick = Number.isFinite(savedPlayerState.eatingCooldownEndTick)
                 ? Math.max(0, Math.floor(savedPlayerState.eatingCooldownEndTick))
                 : 0;
-            playerState.unlockFlags = sanitizeUnlockFlags(savedPlayerState.unlockFlags);
-            playerState.merchantProgress = sanitizeMerchantProgress(savedPlayerState.merchantProgress);
+            playerState.unlockFlags = gameSessionRuntime.sanitizeUnlockFlags(savedPlayerState.unlockFlags, DEFAULT_UNLOCK_FLAGS);
+            playerState.merchantProgress = gameSessionRuntime.sanitizeMerchantProgress(savedPlayerState.merchantProgress);
 
             playerSkills = sanitizeSkillState(state.playerSkills);
             inventory = deserializeItemArray(state.inventory, 28);
@@ -1631,7 +1841,7 @@
             progressContentGrants = sanitizeContentGrantState(state.contentGrants);
             isRunning = !!state.runMode;
             const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');
-            syncPlayerProfileState(sanitizePlayerProfile(state.profile, { allowLegacyFallback: true }));
+            playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: true });
             selectedUse.invIndex = null;
             selectedUse.itemId = null;
 
@@ -1641,7 +1851,8 @@
                 window.playerAppearanceState.colors = appearance.colors.slice();
             }
 
-            return { loaded: true, savedAt: migrated.savedAt, legacyProfile: !hasSavedProfile };
+            syncGameSessionState();
+            return { loaded: true, savedAt: loaded.payload.savedAt, legacyProfile: !hasSavedProfile };
         }
 
         function startProgressAutosave() {
@@ -1663,7 +1874,7 @@
         }
 
         // Temporary interaction diagnostics for cooking-use flow.
-        if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false; 
+        if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false; 
 
         // UI Elements
         const contextMenuEl = document.getElementById('context-menu');
@@ -1939,7 +2150,16 @@
         function renderPlayerEntrySummary() {
             const summary = document.getElementById('player-entry-summary');
             if (!summary) return;
-            const safeName = sanitizePlayerName(playerProfileState.name) || 'Unnamed Adventurer';
+            const uiDomainRuntime = window.UiDomainRuntime || null;
+            const profileSummaryViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
+                ? uiDomainRuntime.buildPlayerProfileSummaryViewModel({
+                    profile: playerProfileState,
+                    playerEntryFlow: playerEntryFlowState,
+                    playerAppearance: window.playerAppearanceState,
+                    formatTimestamp: formatPlayerEntryTimestamp
+                })
+                : null;
+            const safeName = profileSummaryViewModel ? profileSummaryViewModel.name : (sanitizePlayerName(playerProfileState.name) || 'Unnamed Adventurer');
             const catalog = window.PlayerAppearanceCatalog || {};
             const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
             const colors = window.playerAppearanceState && Array.isArray(window.playerAppearanceState.colors)
@@ -1955,18 +2175,12 @@
 
             const bodyType = document.createElement('div');
             bodyType.className = 'player-entry-summary-meta';
-            bodyType.textContent = `Body type: ${window.playerAppearanceState && window.playerAppearanceState.gender === 1 ? 'Female' : 'Male'}`;
+            bodyType.textContent = `Body type: ${profileSummaryViewModel ? profileSummaryViewModel.bodyTypeLabel : (window.playerAppearanceState && window.playerAppearanceState.gender === 1 ? 'Female' : 'Male')}`;
             summary.appendChild(bodyType);
 
             const meta = document.createElement('div');
             meta.className = 'player-entry-summary-meta';
-            if (playerEntryFlowState.hasLoadedSave && Number.isFinite(playerEntryFlowState.savedAt)) {
-                meta.textContent = `Last save: ${formatPlayerEntryTimestamp(playerEntryFlowState.savedAt)}`;
-            } else if (Number.isFinite(playerProfileState.createdAt)) {
-                meta.textContent = `Created: ${formatPlayerEntryTimestamp(playerProfileState.createdAt)}`;
-            } else {
-                meta.textContent = 'Fresh character profile';
-            }
+            meta.textContent = profileSummaryViewModel ? profileSummaryViewModel.statusText : 'Fresh character profile';
             summary.appendChild(meta);
 
             const swatchList = document.createElement('div');
@@ -2001,20 +2215,19 @@
             const note = document.getElementById('player-entry-secondary-note');
             const primary = document.getElementById('player-entry-primary');
             const nameValidation = validatePlayerEntryName();
-            const isContinueFlow = !!playerEntryFlowState.hasLoadedSave && !!playerProfileState.creationCompleted;
+            const uiDomainRuntime = window.UiDomainRuntime || null;
+            const profileSummaryViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
+                ? uiDomainRuntime.buildPlayerProfileSummaryViewModel({
+                    profile: playerProfileState,
+                    playerEntryFlow: playerEntryFlowState,
+                    playerAppearance: window.playerAppearanceState,
+                    formatTimestamp: formatPlayerEntryTimestamp
+                })
+                : null;
+            const isContinueFlow = profileSummaryViewModel ? profileSummaryViewModel.isContinueFlow : (!!playerEntryFlowState.hasLoadedSave && !!playerProfileState.creationCompleted);
 
-            if (title) title.textContent = isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer';
-            if (subtitle) {
-                if (playerEntryFlowState.loadReason === 'parse_failed' || playerEntryFlowState.loadReason === 'invalid_payload') {
-                    subtitle.textContent = 'Previous save data could not be read, so this run starts from fresh defaults.';
-                } else if (playerEntryFlowState.saveWasLegacyProfile) {
-                    subtitle.textContent = 'A legacy save was detected. Tune the starter profile and continue without losing your progress.';
-                } else if (isContinueFlow) {
-                    subtitle.textContent = 'Saved progress is loaded. You can tweak the profile here before stepping back into the world.';
-                } else {
-                    subtitle.textContent = 'Choose a starter identity before the prototype lets you into the world.';
-                }
-            }
+            if (title) title.textContent = profileSummaryViewModel ? profileSummaryViewModel.titleText : (isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer');
+            if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before the prototype lets you into the world.';
 
             if (nameInput) {
                 if (document.activeElement !== nameInput && nameInput.value !== playerProfileState.name) {
@@ -2024,18 +2237,10 @@
             }
             if (error) error.textContent = nameValidation.ok ? '' : nameValidation.message;
             if (primary) {
-                primary.textContent = isContinueFlow ? 'Continue Adventure' : 'Start Adventure';
+                primary.textContent = profileSummaryViewModel ? profileSummaryViewModel.primaryActionText : (isContinueFlow ? 'Continue Adventure' : 'Start Adventure');
                 primary.disabled = !nameValidation.ok;
             }
-            if (note) {
-                if (playerEntryFlowState.saveWasLegacyProfile) {
-                    note.textContent = 'Legacy save note: the old save had no character profile, so a starter profile was generated from your existing progress.';
-                } else if (playerEntryFlowState.hasLoadedSave && Number.isFinite(playerEntryFlowState.savedAt)) {
-                    note.textContent = `Progress loaded from ${formatPlayerEntryTimestamp(playerEntryFlowState.savedAt)}.`;
-                } else {
-                    note.textContent = 'Progress will begin autosaving locally in this browser once you enter the world.';
-                }
-            }
+            if (note) note.textContent = profileSummaryViewModel ? profileSummaryViewModel.noteText : 'Progress will begin autosaving locally in this browser once you enter the world.';
 
             updatePlayerEntryGenderButtons();
             renderPlayerEntryColorRows();
@@ -2178,8 +2383,18 @@
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
-                    addChatMessage('QA tools: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
                     addChatMessage(formatQaOpenShopUsage(), 'info');
+                    return;
+                }
+                if (cmd === 'worlds') {
+                    qaListWorlds();
+                    return;
+                }
+                if (cmd === 'travel' && parts.length >= 2) {
+                    const target = parts.slice(1).join(' ');
+                    const ok = qaTravelWorld(target);
+                    if (!ok) addChatMessage('Usage: /qa travel <worldId>', 'warn');
                     return;
                 }
 
@@ -2468,6 +2683,30 @@
 
         window.onload = function() {
             const loadProgressResult = loadProgressFromStorage();
+            const startupRequestedWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
+                ? gameSessionRuntime.resolveCurrentWorldId()
+                : 'starter_town';
+            const startupWorldId = activateWorldContext(startupRequestedWorldId, 'starter_town');
+            if (startupWorldId !== startupRequestedWorldId) {
+                const fallbackSpawn = getWorldDefaultSpawn(startupWorldId);
+                playerState.x = fallbackSpawn.x;
+                playerState.y = fallbackSpawn.y;
+                playerState.z = fallbackSpawn.z;
+                playerState.prevX = fallbackSpawn.x;
+                playerState.prevY = fallbackSpawn.y;
+                playerState.midX = null;
+                playerState.midY = null;
+                playerState.targetX = fallbackSpawn.x;
+                playerState.targetY = fallbackSpawn.y;
+                playerState.path = [];
+                playerState.action = 'IDLE';
+                playerState.targetObj = null;
+                playerState.targetUid = null;
+                minimapLocked = true;
+                minimapTargetX = fallbackSpawn.x;
+                minimapTargetY = fallbackSpawn.y;
+                minimapDestination = null;
+            }
             if (typeof window.initLogicalMap === 'function') window.initLogicalMap();
             if (typeof window.initThreeJS === 'function') window.initThreeJS();
             if (typeof window.build3DEnvironment === 'function') window.build3DEnvironment();
@@ -2547,6 +2786,7 @@
             syncRunToggleButton();
             runBtn.addEventListener('click', () => {
                 isRunning = !isRunning;
+                syncGameSessionState();
                 syncRunToggleButton();
             });
 

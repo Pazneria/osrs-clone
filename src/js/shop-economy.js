@@ -20,10 +20,28 @@
         return Math.max(0, Math.floor(def.value));
     }
 
+    function getGameSession() {
+        if (window.GameSessionRuntime && typeof window.GameSessionRuntime.getSession === 'function') {
+            return window.GameSessionRuntime.getSession();
+        }
+        if (typeof window.getGameSession === 'function') {
+            return window.getGameSession();
+        }
+        return null;
+    }
+
     function getPlayerState() {
+        const session = getGameSession();
+        if (session && session.player) return session.player;
         if (typeof playerState === 'object' && playerState) return playerState;
         if (!window.__shopEconomyFallbackPlayerState) window.__shopEconomyFallbackPlayerState = {};
         return window.__shopEconomyFallbackPlayerState;
+    }
+
+    function getProgressState() {
+        const session = getGameSession();
+        if (session && session.progress) return session.progress;
+        return null;
     }
 
     function ensureMerchantProgressRoot() {
@@ -149,6 +167,11 @@
 
     function getSkillLevel(skillId) {
         if (!skillId) return 1;
+        const progress = getProgressState();
+        const sessionSkills = progress && progress.playerSkills ? progress.playerSkills : null;
+        if (sessionSkills && sessionSkills[skillId] && Number.isFinite(sessionSkills[skillId].level)) {
+            return Math.max(1, Math.floor(sessionSkills[skillId].level));
+        }
         if (typeof playerSkills === 'object' && playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level)) {
             return Math.max(1, Math.floor(playerSkills[skillId].level));
         }

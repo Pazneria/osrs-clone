@@ -1,0 +1,3070 @@
+{
+  "worldId": "starter_town",
+  "version": "2026.03.m1",
+  "structures": [
+    {
+      "structureId": "castle_ground",
+      "stampId": "castle_floor0",
+      "label": "Castle Ground Floor",
+      "x": 190,
+      "y": 190,
+      "z": 0
+    },
+    {
+      "structureId": "castle_second_floor",
+      "stampId": "castle_floor1",
+      "label": "Castle Second Floor",
+      "x": 190,
+      "y": 190,
+      "z": 1
+    },
+    {
+      "structureId": "general_store",
+      "stampId": "general_store",
+      "label": "General Store",
+      "x": 177,
+      "y": 232,
+      "z": 0
+    },
+    {
+      "structureId": "smithing_hall",
+      "stampId": "smithing_hall",
+      "label": "Smithing Hall",
+      "x": 221,
+      "y": 228,
+      "z": 0
+    }
+  ],
+  "terrainPatches": {
+    "lakes": [
+      {
+        "cx": 92,
+        "cy": 118,
+        "rx": 28,
+        "ry": 20
+      },
+      {
+        "cx": 312,
+        "cy": 116,
+        "rx": 24,
+        "ry": 18
+      },
+      {
+        "cx": 100,
+        "cy": 308,
+        "rx": 30,
+        "ry": 22
+      },
+      {
+        "cx": 308,
+        "cy": 292,
+        "rx": 26,
+        "ry": 20
+      },
+      {
+        "cx": 204,
+        "cy": 76,
+        "rx": 18,
+        "ry": 14
+      }
+    ],
+    "castleFrontPond": {
+      "cx": 205,
+      "cy": 233,
+      "rx": 13,
+      "ry": 9
+    },
+    "deepWaterCenter": {
+      "xMin": 204,
+      "xMax": 206,
+      "yMin": 232,
+      "yMax": 234
+    },
+    "pier": {
+      "xMin": 204,
+      "xMax": 206,
+      "yStart": 224,
+      "yEnd": 231,
+      "entryY": 223
+    },
+    "smithingHallApproach": {
+      "shoreX": 219,
+      "stairX": 220,
+      "yStart": 233,
+      "yEnd": 235
+    },
+    "castleRouteAnchor": {
+      "x": 205,
+      "y": 205
+    },
+    "woodcuttingRouteAnchor": {
+      "x": 205,
+      "y": 205
+    }
+  },
+  "npcSpawns": [],
+  "services": [
+    {
+      "serviceId": "merchant:general_store",
+      "spawnId": "npc:general_store_shopkeeper",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "general_store",
+      "name": "Shopkeeper",
+      "npcType": 2,
+      "x": 181,
+      "y": 235,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "shop",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:starter_caravan_guide",
+      "spawnId": "npc:starter_caravan_guide",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Road Guide",
+      "npcType": 3,
+      "x": 205,
+      "y": 216,
+      "z": 0,
+      "action": "Travel",
+      "travelToWorldId": "north_road_camp",
+      "travelSpawn": {
+        "x": 204,
+        "y": 216,
+        "z": 0
+      },
+      "tags": [
+        "travel",
+        "starter",
+        "proof"
+      ]
+    },
+    {
+      "serviceId": "station:starter_furnace",
+      "spawnId": "station:starter_furnace",
+      "type": "FURNACE",
+      "interactionTarget": "FURNACE",
+      "x": 226,
+      "y": 232,
+      "z": 0,
+      "facingYaw": -1.5707963267948966,
+      "footprintW": 2,
+      "footprintD": 3,
+      "tags": [
+        "station",
+        "smithing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "station:starter_anvil",
+      "spawnId": "station:starter_anvil",
+      "type": "ANVIL",
+      "interactionTarget": "ANVIL",
+      "x": 226,
+      "y": 236,
+      "z": 0,
+      "tags": [
+        "station",
+        "smithing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:fishing_teacher",
+      "spawnId": "npc:fishing_teacher",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "fishing_teacher",
+      "name": "Fishing Teacher",
+      "npcType": 3,
+      "x": 201,
+      "y": 223,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "fishing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:fishing_supplier",
+      "spawnId": "npc:fishing_supplier",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "fishing_supplier",
+      "name": "Fishing Supplier",
+      "npcType": 2,
+      "x": 212,
+      "y": 225,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "fishing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:borin_ironvein",
+      "spawnId": "npc:borin_ironvein",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "borin_ironvein",
+      "name": "Borin Ironvein",
+      "npcType": 2,
+      "x": 224,
+      "y": 230,
+      "z": 0,
+      "facingYaw": -1.5707963267948966,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "smithing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:thrain_deepforge",
+      "spawnId": "npc:thrain_deepforge",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "thrain_deepforge",
+      "name": "Thrain Deepforge",
+      "npcType": 6,
+      "x": 228,
+      "y": 236,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "smithing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:elira_gemhand",
+      "spawnId": "npc:elira_gemhand",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "elira_gemhand",
+      "name": "Elira Gemhand",
+      "npcType": 3,
+      "x": 228,
+      "y": 231,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "smithing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:crafting_teacher",
+      "spawnId": "npc:crafting_teacher",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "crafting_teacher",
+      "name": "Crafting Teacher",
+      "npcType": 2,
+      "x": 223,
+      "y": 236,
+      "z": 0,
+      "facingYaw": 1.5707963267948966,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "crafting",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:tanner_rusk",
+      "spawnId": "npc:tanner_rusk",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "tanner_rusk",
+      "name": "Tanner Rusk",
+      "npcType": 6,
+      "x": 225,
+      "y": 236,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "crafting",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:rune_tutor",
+      "spawnId": "npc:rune_tutor",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "rune_tutor",
+      "name": "Rune Tutor",
+      "npcType": 3,
+      "x": 203,
+      "y": 152,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "runecrafting",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:combination_sage",
+      "spawnId": "npc:combination_sage",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "combination_sage",
+      "name": "Combination Sage",
+      "npcType": 6,
+      "x": 91,
+      "y": 23,
+      "z": 0,
+      "action": "Trade",
+      "tags": [
+        "merchant",
+        "runecrafting",
+        "starter"
+      ]
+    }
+  ],
+  "resourceNodes": {
+    "mining": [
+      {
+        "placementId": "mining:starter_mine:1",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 248,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:2",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 246,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:3",
+        "routeId": "starter_mine",
+        "x": 234,
+        "y": 248,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:4",
+        "routeId": "starter_mine",
+        "x": 238,
+        "y": 248,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:5",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 250,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:6",
+        "routeId": "starter_mine",
+        "x": 234,
+        "y": 246,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:7",
+        "routeId": "starter_mine",
+        "x": 238,
+        "y": 246,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:8",
+        "routeId": "starter_mine",
+        "x": 234,
+        "y": 250,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:9",
+        "routeId": "starter_mine",
+        "x": 238,
+        "y": 250,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:10",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 244,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:11",
+        "routeId": "starter_mine",
+        "x": 232,
+        "y": 248,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:12",
+        "routeId": "starter_mine",
+        "x": 240,
+        "y": 248,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:13",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 252,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:14",
+        "routeId": "starter_mine",
+        "x": 234,
+        "y": 244,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:15",
+        "routeId": "starter_mine",
+        "x": 238,
+        "y": 244,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:16",
+        "routeId": "starter_mine",
+        "x": 232,
+        "y": 246,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:17",
+        "routeId": "starter_mine",
+        "x": 240,
+        "y": 246,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:18",
+        "routeId": "starter_mine",
+        "x": 232,
+        "y": 250,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:19",
+        "routeId": "starter_mine",
+        "x": 240,
+        "y": 250,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:20",
+        "routeId": "starter_mine",
+        "x": 234,
+        "y": 252,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:21",
+        "routeId": "starter_mine",
+        "x": 238,
+        "y": 252,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:22",
+        "routeId": "starter_mine",
+        "x": 240,
+        "y": 244,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:23",
+        "routeId": "starter_mine",
+        "x": 232,
+        "y": 252,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:24",
+        "routeId": "starter_mine",
+        "x": 240,
+        "y": 252,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:25",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 242,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:26",
+        "routeId": "starter_mine",
+        "x": 230,
+        "y": 248,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:27",
+        "routeId": "starter_mine",
+        "x": 242,
+        "y": 248,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:28",
+        "routeId": "starter_mine",
+        "x": 236,
+        "y": 254,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:29",
+        "routeId": "starter_mine",
+        "x": 234,
+        "y": 242,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:30",
+        "routeId": "starter_mine",
+        "x": 238,
+        "y": 242,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:1",
+        "routeId": "iron_mine",
+        "x": 286,
+        "y": 248,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:2",
+        "routeId": "iron_mine",
+        "x": 285,
+        "y": 246,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:3",
+        "routeId": "iron_mine",
+        "x": 288,
+        "y": 247,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:4",
+        "routeId": "iron_mine",
+        "x": 284,
+        "y": 249,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:5",
+        "routeId": "iron_mine",
+        "x": 287,
+        "y": 250,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:6",
+        "routeId": "iron_mine",
+        "x": 287,
+        "y": 245,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:7",
+        "routeId": "iron_mine",
+        "x": 283,
+        "y": 247,
+        "z": 0,
+        "oreType": "copper",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:8",
+        "routeId": "iron_mine",
+        "x": 289,
+        "y": 249,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:9",
+        "routeId": "iron_mine",
+        "x": 285,
+        "y": 251,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:10",
+        "routeId": "iron_mine",
+        "x": 284,
+        "y": 244,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:11",
+        "routeId": "iron_mine",
+        "x": 290,
+        "y": 246,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:12",
+        "routeId": "iron_mine",
+        "x": 282,
+        "y": 250,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:13",
+        "routeId": "iron_mine",
+        "x": 288,
+        "y": 252,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:14",
+        "routeId": "iron_mine",
+        "x": 286,
+        "y": 243,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:15",
+        "routeId": "iron_mine",
+        "x": 289,
+        "y": 244,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:16",
+        "routeId": "iron_mine",
+        "x": 282,
+        "y": 245,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:17",
+        "routeId": "iron_mine",
+        "x": 281,
+        "y": 248,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:18",
+        "routeId": "iron_mine",
+        "x": 291,
+        "y": 248,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:19",
+        "routeId": "iron_mine",
+        "x": 290,
+        "y": 251,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:20",
+        "routeId": "iron_mine",
+        "x": 283,
+        "y": 252,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:21",
+        "routeId": "iron_mine",
+        "x": 286,
+        "y": 253,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:22",
+        "routeId": "iron_mine",
+        "x": 288,
+        "y": 242,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:23",
+        "routeId": "iron_mine",
+        "x": 280,
+        "y": 246,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:iron_mine:24",
+        "routeId": "iron_mine",
+        "x": 292,
+        "y": 250,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:1",
+        "routeId": "coal_mine",
+        "x": 329,
+        "y": 280,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:2",
+        "routeId": "coal_mine",
+        "x": 331,
+        "y": 282,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:3",
+        "routeId": "coal_mine",
+        "x": 332,
+        "y": 284,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:4",
+        "routeId": "coal_mine",
+        "x": 327,
+        "y": 278,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:5",
+        "routeId": "coal_mine",
+        "x": 333,
+        "y": 286,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:6",
+        "routeId": "coal_mine",
+        "x": 331,
+        "y": 279,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:7",
+        "routeId": "coal_mine",
+        "x": 324,
+        "y": 276,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:8",
+        "routeId": "coal_mine",
+        "x": 334,
+        "y": 288,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:9",
+        "routeId": "coal_mine",
+        "x": 329,
+        "y": 277,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:10",
+        "routeId": "coal_mine",
+        "x": 333,
+        "y": 281,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:11",
+        "routeId": "coal_mine",
+        "x": 334,
+        "y": 283,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:12",
+        "routeId": "coal_mine",
+        "x": 335,
+        "y": 285,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:13",
+        "routeId": "coal_mine",
+        "x": 322,
+        "y": 275,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:14",
+        "routeId": "coal_mine",
+        "x": 326,
+        "y": 275,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:15",
+        "routeId": "coal_mine",
+        "x": 334,
+        "y": 291,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:16",
+        "routeId": "coal_mine",
+        "x": 336,
+        "y": 287,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:17",
+        "routeId": "coal_mine",
+        "x": 332,
+        "y": 277,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:18",
+        "routeId": "coal_mine",
+        "x": 334,
+        "y": 279,
+        "z": 0,
+        "oreType": "iron",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:19",
+        "routeId": "coal_mine",
+        "x": 330,
+        "y": 275,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:coal_mine:20",
+        "routeId": "coal_mine",
+        "x": 320,
+        "y": 274,
+        "z": 0,
+        "oreType": "coal",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:1",
+        "routeId": "precious_mine",
+        "x": 344,
+        "y": 334,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:2",
+        "routeId": "precious_mine",
+        "x": 342,
+        "y": 332,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:3",
+        "routeId": "precious_mine",
+        "x": 346,
+        "y": 332,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:4",
+        "routeId": "precious_mine",
+        "x": 342,
+        "y": 336,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:5",
+        "routeId": "precious_mine",
+        "x": 346,
+        "y": 336,
+        "z": 0,
+        "oreType": "gold",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:6",
+        "routeId": "precious_mine",
+        "x": 344,
+        "y": 330,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:7",
+        "routeId": "precious_mine",
+        "x": 340,
+        "y": 334,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:8",
+        "routeId": "precious_mine",
+        "x": 348,
+        "y": 334,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:9",
+        "routeId": "precious_mine",
+        "x": 344,
+        "y": 338,
+        "z": 0,
+        "oreType": "gold",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:10",
+        "routeId": "precious_mine",
+        "x": 340,
+        "y": 330,
+        "z": 0,
+        "oreType": "gold",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:11",
+        "routeId": "precious_mine",
+        "x": 348,
+        "y": 330,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:12",
+        "routeId": "precious_mine",
+        "x": 340,
+        "y": 338,
+        "z": 0,
+        "oreType": "gold",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:13",
+        "routeId": "precious_mine",
+        "x": 348,
+        "y": 338,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:14",
+        "routeId": "precious_mine",
+        "x": 342,
+        "y": 328,
+        "z": 0,
+        "oreType": "gold",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:15",
+        "routeId": "precious_mine",
+        "x": 346,
+        "y": 328,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:precious_mine:16",
+        "routeId": "precious_mine",
+        "x": 338,
+        "y": 332,
+        "z": 0,
+        "oreType": "silver",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:gem_mine:1",
+        "routeId": "gem_mine",
+        "x": 204,
+        "y": 364,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:2",
+        "routeId": "gem_mine",
+        "x": 202,
+        "y": 362,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:3",
+        "routeId": "gem_mine",
+        "x": 206,
+        "y": 362,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:4",
+        "routeId": "gem_mine",
+        "x": 202,
+        "y": 366,
+        "z": 0,
+        "oreType": "sapphire",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:5",
+        "routeId": "gem_mine",
+        "x": 206,
+        "y": 366,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:6",
+        "routeId": "gem_mine",
+        "x": 204,
+        "y": 360,
+        "z": 0,
+        "oreType": "sapphire",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:7",
+        "routeId": "gem_mine",
+        "x": 200,
+        "y": 364,
+        "z": 0,
+        "oreType": "sapphire",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:8",
+        "routeId": "gem_mine",
+        "x": 208,
+        "y": 364,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:9",
+        "routeId": "gem_mine",
+        "x": 204,
+        "y": 368,
+        "z": 0,
+        "oreType": "sapphire",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:10",
+        "routeId": "gem_mine",
+        "x": 200,
+        "y": 360,
+        "z": 0,
+        "oreType": "sapphire",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:11",
+        "routeId": "gem_mine",
+        "x": 208,
+        "y": 360,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:12",
+        "routeId": "gem_mine",
+        "x": 200,
+        "y": 368,
+        "z": 0,
+        "oreType": "sapphire",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:13",
+        "routeId": "gem_mine",
+        "x": 208,
+        "y": 368,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:gem_mine:14",
+        "routeId": "gem_mine",
+        "x": 202,
+        "y": 358,
+        "z": 0,
+        "oreType": "emerald",
+        "areaGateFlag": "gemMineUnlocked",
+        "areaName": "the gem mine",
+        "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
+      },
+      {
+        "placementId": "mining:rune_essence_mine:1",
+        "routeId": "rune_essence_mine",
+        "x": 74,
+        "y": 74,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:2",
+        "routeId": "rune_essence_mine",
+        "x": 72,
+        "y": 72,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:3",
+        "routeId": "rune_essence_mine",
+        "x": 76,
+        "y": 72,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:4",
+        "routeId": "rune_essence_mine",
+        "x": 72,
+        "y": 76,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:5",
+        "routeId": "rune_essence_mine",
+        "x": 76,
+        "y": 76,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:6",
+        "routeId": "rune_essence_mine",
+        "x": 74,
+        "y": 70,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:7",
+        "routeId": "rune_essence_mine",
+        "x": 70,
+        "y": 74,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:8",
+        "routeId": "rune_essence_mine",
+        "x": 78,
+        "y": 74,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:9",
+        "routeId": "rune_essence_mine",
+        "x": 74,
+        "y": 78,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:rune_essence_mine:10",
+        "routeId": "rune_essence_mine",
+        "x": 70,
+        "y": 70,
+        "z": 0,
+        "oreType": "rune_essence",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      }
+    ],
+    "woodcutting": [
+      {
+        "placementId": "woodcutting:starter_grove:1",
+        "routeId": "starter_grove",
+        "x": 165,
+        "y": 196,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:2",
+        "routeId": "starter_grove",
+        "x": 245,
+        "y": 196,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:3",
+        "routeId": "starter_grove",
+        "x": 164,
+        "y": 205,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:4",
+        "routeId": "starter_grove",
+        "x": 246,
+        "y": 205,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:5",
+        "routeId": "starter_grove",
+        "x": 165,
+        "y": 214,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:6",
+        "routeId": "starter_grove",
+        "x": 245,
+        "y": 214,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:7",
+        "routeId": "starter_grove",
+        "x": 196,
+        "y": 245,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:8",
+        "routeId": "starter_grove",
+        "x": 214,
+        "y": 245,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:9",
+        "routeId": "starter_grove",
+        "x": 205,
+        "y": 246,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:10",
+        "routeId": "starter_grove",
+        "x": 176,
+        "y": 176,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:11",
+        "routeId": "starter_grove",
+        "x": 234,
+        "y": 176,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:12",
+        "routeId": "starter_grove",
+        "x": 176,
+        "y": 234,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:13",
+        "routeId": "starter_grove",
+        "x": 234,
+        "y": 234,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:14",
+        "routeId": "starter_grove",
+        "x": 182,
+        "y": 171,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:15",
+        "routeId": "starter_grove",
+        "x": 228,
+        "y": 171,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:16",
+        "routeId": "starter_grove",
+        "x": 171,
+        "y": 182,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:17",
+        "routeId": "starter_grove",
+        "x": 239,
+        "y": 182,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:18",
+        "routeId": "starter_grove",
+        "x": 171,
+        "y": 228,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:19",
+        "routeId": "starter_grove",
+        "x": 239,
+        "y": 228,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:20",
+        "routeId": "starter_grove",
+        "x": 166,
+        "y": 192,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:21",
+        "routeId": "starter_grove",
+        "x": 244,
+        "y": 192,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:22",
+        "routeId": "starter_grove",
+        "x": 164,
+        "y": 202,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:23",
+        "routeId": "starter_grove",
+        "x": 246,
+        "y": 202,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:24",
+        "routeId": "starter_grove",
+        "x": 164,
+        "y": 208,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:25",
+        "routeId": "starter_grove",
+        "x": 246,
+        "y": 208,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:starter_grove:26",
+        "routeId": "starter_grove",
+        "x": 166,
+        "y": 218,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "the starter grove",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:1",
+        "routeId": "oak_path",
+        "x": 148,
+        "y": 129,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:2",
+        "routeId": "oak_path",
+        "x": 262,
+        "y": 129,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:3",
+        "routeId": "oak_path",
+        "x": 129,
+        "y": 148,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:4",
+        "routeId": "oak_path",
+        "x": 281,
+        "y": 148,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:5",
+        "routeId": "oak_path",
+        "x": 110,
+        "y": 205,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:6",
+        "routeId": "oak_path",
+        "x": 300,
+        "y": 205,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:7",
+        "routeId": "oak_path",
+        "x": 129,
+        "y": 262,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:8",
+        "routeId": "oak_path",
+        "x": 281,
+        "y": 262,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:9",
+        "routeId": "oak_path",
+        "x": 148,
+        "y": 281,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:10",
+        "routeId": "oak_path",
+        "x": 262,
+        "y": 281,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:11",
+        "routeId": "oak_path",
+        "x": 205,
+        "y": 300,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:12",
+        "routeId": "oak_path",
+        "x": 157,
+        "y": 123,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:13",
+        "routeId": "oak_path",
+        "x": 253,
+        "y": 123,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:14",
+        "routeId": "oak_path",
+        "x": 143,
+        "y": 133,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:15",
+        "routeId": "oak_path",
+        "x": 267,
+        "y": 133,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:16",
+        "routeId": "oak_path",
+        "x": 133,
+        "y": 143,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:17",
+        "routeId": "oak_path",
+        "x": 277,
+        "y": 143,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:18",
+        "routeId": "oak_path",
+        "x": 123,
+        "y": 157,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:19",
+        "routeId": "oak_path",
+        "x": 287,
+        "y": 157,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:oak_path:20",
+        "routeId": "oak_path",
+        "x": 123,
+        "y": 253,
+        "z": 0,
+        "nodeId": "oak_tree",
+        "areaGateFlag": null,
+        "areaName": "the oak path",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:1",
+        "routeId": "willow_bend",
+        "x": 109,
+        "y": 95,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:2",
+        "routeId": "willow_bend",
+        "x": 301,
+        "y": 95,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:3",
+        "routeId": "willow_bend",
+        "x": 301,
+        "y": 315,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:4",
+        "routeId": "willow_bend",
+        "x": 332,
+        "y": 133,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:5",
+        "routeId": "willow_bend",
+        "x": 78,
+        "y": 277,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:6",
+        "routeId": "willow_bend",
+        "x": 133,
+        "y": 332,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:7",
+        "routeId": "willow_bend",
+        "x": 171,
+        "y": 63,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:8",
+        "routeId": "willow_bend",
+        "x": 239,
+        "y": 63,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:9",
+        "routeId": "willow_bend",
+        "x": 119,
+        "y": 87,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:10",
+        "routeId": "willow_bend",
+        "x": 291,
+        "y": 87,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:11",
+        "routeId": "willow_bend",
+        "x": 71,
+        "y": 147,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:12",
+        "routeId": "willow_bend",
+        "x": 339,
+        "y": 147,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:13",
+        "routeId": "willow_bend",
+        "x": 339,
+        "y": 263,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:14",
+        "routeId": "willow_bend",
+        "x": 291,
+        "y": 323,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:15",
+        "routeId": "willow_bend",
+        "x": 167,
+        "y": 64,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:16",
+        "routeId": "willow_bend",
+        "x": 243,
+        "y": 64,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:1",
+        "routeId": "maple_ridge",
+        "x": 205,
+        "y": 8,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:2",
+        "routeId": "maple_ridge",
+        "x": 177,
+        "y": 10,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:3",
+        "routeId": "maple_ridge",
+        "x": 233,
+        "y": 10,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:4",
+        "routeId": "maple_ridge",
+        "x": 10,
+        "y": 177,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:5",
+        "routeId": "maple_ridge",
+        "x": 400,
+        "y": 177,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:6",
+        "routeId": "maple_ridge",
+        "x": 8,
+        "y": 205,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:7",
+        "routeId": "maple_ridge",
+        "x": 402,
+        "y": 205,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:8",
+        "routeId": "maple_ridge",
+        "x": 10,
+        "y": 233,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:9",
+        "routeId": "maple_ridge",
+        "x": 400,
+        "y": 233,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:10",
+        "routeId": "maple_ridge",
+        "x": 177,
+        "y": 400,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:11",
+        "routeId": "maple_ridge",
+        "x": 233,
+        "y": 400,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:12",
+        "routeId": "maple_ridge",
+        "x": 205,
+        "y": 402,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:1",
+        "routeId": "yew_frontier",
+        "x": 57,
+        "y": 6,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:2",
+        "routeId": "yew_frontier",
+        "x": 48,
+        "y": 13,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:3",
+        "routeId": "yew_frontier",
+        "x": 41,
+        "y": 19,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:4",
+        "routeId": "yew_frontier",
+        "x": 63,
+        "y": 3,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:5",
+        "routeId": "yew_frontier",
+        "x": 51,
+        "y": 7,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:6",
+        "routeId": "yew_frontier",
+        "x": 54,
+        "y": 13,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:7",
+        "routeId": "yew_frontier",
+        "x": 40,
+        "y": 25,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:8",
+        "routeId": "yew_frontier",
+        "x": 42,
+        "y": 13,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      }
+    ]
+  },
+  "skillRoutes": {
+    "fishing": [
+      {
+        "routeId": "castle_pond_bank",
+        "alias": "pond",
+        "label": "Castle Pond Bank",
+        "x": 205,
+        "y": 223,
+        "z": 0,
+        "tags": [
+          "fishing",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "castle_pond_pier",
+        "alias": "pier",
+        "label": "Castle Pond Pier",
+        "x": 205,
+        "y": 230,
+        "z": 0,
+        "tags": [
+          "fishing",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "castle_pond_deep_edge",
+        "alias": "deep",
+        "label": "Castle Pond Deep-Water Edge",
+        "x": 205,
+        "y": 231,
+        "z": 0,
+        "tags": [
+          "fishing",
+          "qa",
+          "starter"
+        ]
+      }
+    ],
+    "cooking": [
+      {
+        "routeId": "starter_campfire",
+        "alias": "camp",
+        "label": "Starter Campfire",
+        "x": 199,
+        "y": 224,
+        "z": 0,
+        "tags": [
+          "cooking",
+          "qa",
+          "starter"
+        ],
+        "fireTiles": [
+          {
+            "x": 199,
+            "y": 224
+          }
+        ]
+      },
+      {
+        "routeId": "riverbank_fire_line",
+        "alias": "river",
+        "label": "Riverbank Fire Line",
+        "x": 197,
+        "y": 227,
+        "z": 0,
+        "tags": [
+          "cooking",
+          "qa",
+          "starter"
+        ],
+        "fireTiles": [
+          {
+            "x": 197,
+            "y": 226
+          },
+          {
+            "x": 197,
+            "y": 227
+          },
+          {
+            "x": 197,
+            "y": 228
+          }
+        ]
+      },
+      {
+        "routeId": "dockside_fire_line",
+        "alias": "dock",
+        "label": "Dockside Fire Line",
+        "x": 212,
+        "y": 227,
+        "z": 0,
+        "tags": [
+          "cooking",
+          "qa",
+          "starter"
+        ],
+        "fireTiles": [
+          {
+            "x": 212,
+            "y": 226
+          },
+          {
+            "x": 212,
+            "y": 227
+          },
+          {
+            "x": 212,
+            "y": 228
+          }
+        ]
+      },
+      {
+        "routeId": "deep_water_dock_fire_line",
+        "alias": "deep",
+        "label": "Deep-Water Dock Fire Line",
+        "x": 205,
+        "y": 229,
+        "z": 0,
+        "tags": [
+          "cooking",
+          "qa",
+          "starter"
+        ],
+        "fireTiles": [
+          {
+            "x": 203,
+            "y": 230
+          },
+          {
+            "x": 205,
+            "y": 229
+          },
+          {
+            "x": 207,
+            "y": 230
+          }
+        ]
+      }
+    ],
+    "mining": [
+      {
+        "routeId": "starter_mine",
+        "alias": "starter",
+        "label": "Starter Mine",
+        "x": 232,
+        "y": 246,
+        "z": 0,
+        "count": 30,
+        "tags": [
+          "mining",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "iron_mine",
+        "alias": "iron",
+        "label": "Early Iron Mine",
+        "x": 288,
+        "y": 252,
+        "z": 0,
+        "count": 24,
+        "tags": [
+          "mining",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "coal_mine",
+        "alias": "coal",
+        "label": "Deep Coal Mine",
+        "x": 334,
+        "y": 283,
+        "z": 0,
+        "count": 20,
+        "tags": [
+          "mining",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "precious_mine",
+        "alias": "precious",
+        "label": "Silver and Gold Mine",
+        "x": 344,
+        "y": 338,
+        "z": 0,
+        "count": 16,
+        "tags": [
+          "mining",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "gem_mine",
+        "alias": "gem",
+        "label": "Gem Mine",
+        "x": 208,
+        "y": 364,
+        "z": 0,
+        "count": 14,
+        "tags": [
+          "mining",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "rune_essence_mine",
+        "alias": "essence",
+        "label": "Rune Essence Mine",
+        "x": 74,
+        "y": 70,
+        "z": 0,
+        "count": 10,
+        "tags": [
+          "mining",
+          "qa",
+          "starter",
+          "runecrafting"
+        ]
+      }
+    ],
+    "runecrafting": [
+      {
+        "routeId": "ember_altar",
+        "alias": "ember",
+        "label": "Ember Altar",
+        "x": 205,
+        "y": 154,
+        "z": 0,
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      },
+      {
+        "routeId": "water_altar",
+        "alias": "water",
+        "label": "Water Altar",
+        "x": 205,
+        "y": 98,
+        "z": 0,
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      },
+      {
+        "routeId": "earth_altar",
+        "alias": "earth",
+        "label": "Earth Altar",
+        "x": 205,
+        "y": 50,
+        "z": 0,
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      },
+      {
+        "routeId": "air_altar",
+        "alias": "air",
+        "label": "Air Altar",
+        "x": 93,
+        "y": 25,
+        "z": 0,
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      }
+    ],
+    "woodcutting": [
+      {
+        "routeId": "starter_grove",
+        "alias": "starter",
+        "label": "Starter Grove",
+        "x": 182,
+        "y": 171,
+        "z": 0,
+        "count": 26,
+        "tags": [
+          "woodcutting",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "oak_path",
+        "alias": "oak",
+        "label": "Oak Path",
+        "x": 205,
+        "y": 300,
+        "z": 0,
+        "count": 20,
+        "tags": [
+          "woodcutting",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "willow_bend",
+        "alias": "willow",
+        "label": "Willow Bend",
+        "x": 119,
+        "y": 87,
+        "z": 0,
+        "count": 16,
+        "tags": [
+          "woodcutting",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "maple_ridge",
+        "alias": "maple",
+        "label": "Maple Ridge",
+        "x": 402,
+        "y": 205,
+        "z": 0,
+        "count": 12,
+        "tags": [
+          "woodcutting",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "yew_frontier",
+        "alias": "yew",
+        "label": "Yew Frontier",
+        "x": 51,
+        "y": 7,
+        "z": 0,
+        "count": 8,
+        "tags": [
+          "woodcutting",
+          "qa",
+          "starter"
+        ]
+      }
+    ]
+  },
+  "landmarks": {
+    "staircases": [
+      {
+        "landmarkId": "castle_stairs_left",
+        "tiles": [
+          {
+            "x": 194,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.75
+          },
+          {
+            "x": 193,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 1.25
+          },
+          {
+            "x": 192,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 1.75
+          },
+          {
+            "x": 191,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_UP",
+            "height": 2
+          },
+          {
+            "x": 191,
+            "y": 214,
+            "z": 1,
+            "tileId": "STAIRS_DOWN",
+            "height": 0.5
+          }
+        ]
+      },
+      {
+        "landmarkId": "castle_stairs_right",
+        "tiles": [
+          {
+            "x": 216,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.75
+          },
+          {
+            "x": 217,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 1.25
+          },
+          {
+            "x": 218,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 1.75
+          },
+          {
+            "x": 219,
+            "y": 214,
+            "z": 0,
+            "tileId": "STAIRS_UP",
+            "height": 2
+          },
+          {
+            "x": 219,
+            "y": 214,
+            "z": 1,
+            "tileId": "STAIRS_DOWN",
+            "height": 0.5
+          }
+        ]
+      },
+      {
+        "landmarkId": "general_store_stairs",
+        "tiles": [
+          {
+            "x": 186,
+            "y": 236,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      }
+    ],
+    "doors": [
+      {
+        "landmarkId": "general_store_east_door",
+        "x": 185,
+        "y": 236,
+        "z": 0,
+        "tileId": "DOOR_CLOSED",
+        "height": 0.5,
+        "isOpen": false,
+        "hingeOffsetX": 0,
+        "hingeOffsetY": 0.45,
+        "thickness": 0.1,
+        "width": 0.9,
+        "isEW": false,
+        "closedRot": 0,
+        "openRot": 1.5707963267948966,
+        "currentRotation": 0,
+        "targetRotation": 0
+      }
+    ],
+    "altars": [
+      {
+        "x": 205,
+        "y": 154,
+        "z": 0,
+        "variant": 4,
+        "label": "Ember Altar",
+        "routeId": "ember_altar",
+        "alias": "ember",
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      },
+      {
+        "x": 205,
+        "y": 98,
+        "z": 0,
+        "variant": 4,
+        "label": "Water Altar",
+        "routeId": "water_altar",
+        "alias": "water",
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      },
+      {
+        "x": 205,
+        "y": 50,
+        "z": 0,
+        "variant": 4,
+        "label": "Earth Altar",
+        "routeId": "earth_altar",
+        "alias": "earth",
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      },
+      {
+        "x": 93,
+        "y": 25,
+        "z": 0,
+        "variant": 4,
+        "label": "Air Altar",
+        "routeId": "air_altar",
+        "alias": "air",
+        "tags": [
+          "runecrafting",
+          "qa",
+          "altar"
+        ]
+      }
+    ],
+    "showcaseTrees": [
+      {
+        "nodeId": "normal_tree",
+        "x": 179,
+        "y": 219,
+        "clearRadius": 5
+      },
+      {
+        "nodeId": "oak_tree",
+        "x": 192,
+        "y": 219,
+        "clearRadius": 5
+      },
+      {
+        "nodeId": "willow_tree",
+        "x": 205,
+        "y": 219,
+        "clearRadius": 5
+      },
+      {
+        "nodeId": "maple_tree",
+        "x": 218,
+        "y": 219,
+        "clearRadius": 5
+      },
+      {
+        "nodeId": "yew_tree",
+        "x": 231,
+        "y": 219,
+        "clearRadius": 5
+      }
+    ]
+  }
+}

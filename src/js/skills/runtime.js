@@ -19,6 +19,48 @@
         if (typeof addChatMessage === 'function') addChatMessage(text, 'info');
     }
 
+    function getGameSession() {
+        if (window.GameSessionRuntime && typeof window.GameSessionRuntime.getSession === 'function') {
+            return window.GameSessionRuntime.getSession();
+        }
+        if (typeof window.getGameSession === 'function') {
+            return window.getGameSession();
+        }
+        return null;
+    }
+
+    function getActivePlayerState() {
+        const session = getGameSession();
+        if (session && session.player) return session.player;
+        if (typeof playerState === 'object' && playerState) return playerState;
+        if (!window.__skillRuntimeFallbackPlayerState) window.__skillRuntimeFallbackPlayerState = {};
+        return window.__skillRuntimeFallbackPlayerState;
+    }
+
+    function getActiveProgressState() {
+        const session = getGameSession();
+        if (session && session.progress) return session.progress;
+        return null;
+    }
+
+    function getActiveInventory() {
+        const progress = getActiveProgressState();
+        if (progress && Array.isArray(progress.inventory)) return progress.inventory;
+        return Array.isArray(inventory) ? inventory : [];
+    }
+
+    function getActiveEquipment() {
+        const progress = getActiveProgressState();
+        if (progress && progress.equipment && typeof progress.equipment === 'object') return progress.equipment;
+        return (typeof equipment === 'object' && equipment) ? equipment : {};
+    }
+
+    function getActivePlayerSkills() {
+        const progress = getActiveProgressState();
+        if (progress && progress.playerSkills && typeof progress.playerSkills === 'object') return progress.playerSkills;
+        return (typeof playerSkills === 'object' && playerSkills) ? playerSkills : {};
+    }
+
     function resolveSkillIdFromTarget(targetObj) {
         if (!targetObj) return null;
         return targetToSkillId[targetObj] || null;
@@ -41,12 +83,14 @@
     function getBestToolByClass(toolClass) {
         if (!toolClass) return null;
         const candidates = [];
+        const activeEquipment = getActiveEquipment();
+        const activeInventory = getActiveInventory();
 
-        const equipped = equipment && equipment.weapon;
+        const equipped = activeEquipment && activeEquipment.weapon;
         if (equipped && equipped.weaponClass === toolClass) candidates.push(equipped);
 
-        for (let i = 0; i < inventory.length; i++) {
-            const slot = inventory[i];
+        for (let i = 0; i < activeInventory.length; i++) {
+            const slot = activeInventory[i];
             if (!slot || !slot.itemData) continue;
             const item = slot.itemData;
             if (item.weaponClass === toolClass) candidates.push(item);
@@ -83,19 +127,20 @@
     }
 
     function hasItem(itemId) {
-        return inventory.some(i => i && i.itemData && i.itemData.id === itemId);
+        return getActiveInventory().some(i => i && i.itemData && i.itemData.id === itemId);
     }
     function canAcceptItemById(itemId, amount = 1) {
         if (!itemId || !ITEM_DB || !ITEM_DB[itemId]) return false;
         const item = ITEM_DB[itemId];
+        const activeInventory = getActiveInventory();
         if (item.stackable) {
-            if (inventory.some((slot) => slot && slot.itemData && slot.itemData.id === itemId)) return true;
-            return inventory.indexOf(null) !== -1;
+            if (activeInventory.some((slot) => slot && slot.itemData && slot.itemData.id === itemId)) return true;
+            return activeInventory.indexOf(null) !== -1;
         }
 
         let emptySlots = 0;
-        for (let i = 0; i < inventory.length; i++) {
-            if (!inventory[i]) emptySlots++;
+        for (let i = 0; i < activeInventory.length; i++) {
+            if (!activeInventory[i]) emptySlots++;
         }
         return emptySlots >= Math.max(1, amount);
     }
@@ -106,9 +151,10 @@
     }
 
     function getInventorySlotsSnapshot() {
+        const activeInventory = getActiveInventory();
         const slots = [];
-        for (let i = 0; i < inventory.length; i++) {
-            const slot = inventory[i];
+        for (let i = 0; i < activeInventory.length; i++) {
+            const slot = activeInventory[i];
             if (!slot || !slot.itemData) {
                 slots.push(null);
                 continue;
@@ -123,8 +169,9 @@
     }
 
     function getSkillLevel(skillId) {
-        if (!skillId || !playerSkills || !playerSkills[skillId]) return 1;
-        const level = playerSkills[skillId].level;
+        const activeSkills = getActivePlayerSkills();
+        if (!skillId || !activeSkills || !activeSkills[skillId]) return 1;
+        const level = activeSkills[skillId].level;
         return Number.isFinite(level) ? level : 1;
     }
 
@@ -138,10 +185,11 @@
     }
 
     function ensureUnlockFlags() {
-        if (!playerState.unlockFlags || typeof playerState.unlockFlags !== 'object') {
-            playerState.unlockFlags = {};
+        const currentPlayerState = getActivePlayerState();
+        if (!currentPlayerState.unlockFlags || typeof currentPlayerState.unlockFlags !== 'object') {
+            currentPlayerState.unlockFlags = {};
         }
-        return playerState.unlockFlags;
+        return currentPlayerState.unlockFlags;
     }
 
     function hasUnlockFlag(flagId) {
@@ -158,11 +206,13 @@
     }
 
     function createSkillContext(overrides = {}) {
-        const targetObj = overrides.targetObj || playerState.targetObj;
-        const targetX = Number.isInteger(overrides.targetX) ? overrides.targetX : playerState.targetX;
-        const targetY = Number.isInteger(overrides.targetY) ? overrides.targetY : playerState.targetY;
-        const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : playerState.z;
-        const targetUid = (overrides.targetUid !== undefined ? overrides.targetUid : playerState.targetUid);
+        const currentPlayerState = getActivePlayerState();
+        const currentEquipment = getActiveEquipment();
+        const targetObj = overrides.targetObj || currentPlayerState.targetObj;
+        const targetX = Number.isInteger(overrides.targetX) ? overrides.targetX : currentPlayerState.targetX;
+        const targetY = Number.isInteger(overrides.targetY) ? overrides.targetY : currentPlayerState.targetY;
+        const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : currentPlayerState.z;
+        const targetUid = (overrides.targetUid !== undefined ? overrides.targetUid : currentPlayerState.targetUid);
 
         return {
             skillId: overrides.skillId || resolveSkillIdFromTarget(targetObj),
@@ -174,7 +224,7 @@
             hitData: overrides.hitData || null,
             random: Math.random,
             currentTick,
-            playerState,
+            playerState: currentPlayerState,
             logicalMap,
             heightMap,
             getSkillSpec: (id) => (window.SkillSpecRegistry && typeof SkillSpecRegistry.getSkillSpec === 'function' ? SkillSpecRegistry.getSkillSpec(id) : null),
@@ -222,7 +272,7 @@
             baseVisualY: overrides.baseVisualY,
             rig: overrides.rig || null,
             playerRig: overrides.playerRig || null,
-            equipment: overrides.equipment || equipment,
+            equipment: overrides.equipment || currentEquipment,
             setShoulderPivot: overrides.setShoulderPivot || null,
             shoulderPivot: overrides.shoulderPivot || null,
             applyRockMiningPose: overrides.applyRockMiningPose || null,
@@ -254,7 +304,7 @@
             giveItemById,
             addSkillXp: (skillId, amount) => addSkillXp(skillId, amount),
             addChatMessage: (message, tone = 'info') => addChatMessage(message, tone),
-            stopAction: () => { playerState.action = 'IDLE'; },
+            stopAction: () => { currentPlayerState.action = 'IDLE'; },
             startSkillingAction: () => startFacingAction(`SKILLING: ${targetObj}`, true),
             queueInteract: () => queueAction('INTERACT', targetX, targetY, targetObj),
             queueInteractAt: (obj, x, y, targetUid = null) => queueAction('INTERACT', x, y, obj, targetUid),
@@ -266,17 +316,17 @@
                 return false;
             },
             haltMovement: () => {
-                playerState.path = [];
-                playerState.midX = null;
-                playerState.midY = null;
-                playerState.pendingActionAfterTurn = null;
-                playerState.turnLock = false;
-                playerState.actionVisualReady = true;
-                playerState.action = 'IDLE';
-                playerState.targetX = playerState.x;
-                playerState.targetY = playerState.y;
-                playerState.prevX = playerState.x;
-                playerState.prevY = playerState.y;
+                currentPlayerState.path = [];
+                currentPlayerState.midX = null;
+                currentPlayerState.midY = null;
+                currentPlayerState.pendingActionAfterTurn = null;
+                currentPlayerState.turnLock = false;
+                currentPlayerState.actionVisualReady = true;
+                currentPlayerState.action = 'IDLE';
+                currentPlayerState.targetX = currentPlayerState.x;
+                currentPlayerState.targetY = currentPlayerState.y;
+                currentPlayerState.prevX = currentPlayerState.x;
+                currentPlayerState.prevY = currentPlayerState.y;
                 if (typeof pendingAction !== 'undefined') pendingAction = null;
             },
             spawnClickMarker: (isRed = true) => {
@@ -311,7 +361,7 @@
             targetObj: hitData.type,
             targetX: hitData.gridX,
             targetY: hitData.gridY,
-            targetZ: playerState.z,
+            targetZ: getActivePlayerState().z,
             hitData
         });
 
@@ -328,7 +378,7 @@
             targetObj: hitData.type,
             targetX: hitData.gridX,
             targetY: hitData.gridY,
-            targetZ: playerState.z,
+            targetZ: getActivePlayerState().z,
             hitData
         });
 
@@ -358,28 +408,29 @@
     }
 
     function tryStartFromPlayerTarget() {
-        const pending = playerState.pendingSkillStart;
+        const currentPlayerState = getActivePlayerState();
+        const pending = currentPlayerState.pendingSkillStart;
         if (pending) {
-            const pendingTargetObj = pending.targetObj || playerState.targetObj;
-            const pendingTargetX = Number.isInteger(pending.targetX) ? pending.targetX : playerState.targetX;
-            const pendingTargetY = Number.isInteger(pending.targetY) ? pending.targetY : playerState.targetY;
-            const pendingZ = Number.isInteger(pending.targetZ) ? pending.targetZ : playerState.z;
+            const pendingTargetObj = pending.targetObj || currentPlayerState.targetObj;
+            const pendingTargetX = Number.isInteger(pending.targetX) ? pending.targetX : currentPlayerState.targetX;
+            const pendingTargetY = Number.isInteger(pending.targetY) ? pending.targetY : currentPlayerState.targetY;
+            const pendingZ = Number.isInteger(pending.targetZ) ? pending.targetZ : currentPlayerState.z;
             const pendingSkillId = (typeof pending.skillId === 'string' && pending.skillId)
                 ? pending.skillId
                 : resolveSkillIdFromTarget(pendingTargetObj);
 
-            const matchesTarget = pendingTargetObj === playerState.targetObj
-                && pendingTargetX === playerState.targetX
-                && pendingTargetY === playerState.targetY
-                && pendingZ === playerState.z;
+            const matchesTarget = pendingTargetObj === currentPlayerState.targetObj
+                && pendingTargetX === currentPlayerState.targetX
+                && pendingTargetY === currentPlayerState.targetY
+                && pendingZ === currentPlayerState.z;
 
-            playerState.pendingSkillStart = null;
+            currentPlayerState.pendingSkillStart = null;
             if (matchesTarget && pendingSkillId) {
                 return tryStartSkillById(pendingSkillId, Object.assign({}, pending, { skillId: pendingSkillId }));
             }
         }
 
-        const skillId = resolveSkillIdFromTarget(playerState.targetObj);
+        const skillId = resolveSkillIdFromTarget(currentPlayerState.targetObj);
         if (!skillId) return false;
         return tryStartSkillById(skillId);
     }
@@ -389,7 +440,7 @@
         const targetObj = overrides.targetObj || (hitData ? hitData.type : null);
         const targetX = Number.isInteger(overrides.targetX) ? overrides.targetX : (hitData ? hitData.gridX : null);
         const targetY = Number.isInteger(overrides.targetY) ? overrides.targetY : (hitData ? hitData.gridY : null);
-        const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : playerState.z;
+        const targetZ = Number.isInteger(overrides.targetZ) ? overrides.targetZ : getActivePlayerState().z;
 
         if (window.DEBUG_COOKING_USE) {
             debugCookingUse(`runtime.tryUseItemOnTarget item=${overrides.sourceItemId || 'none'} target=${targetObj || 'none'} @ (${targetX},${targetY},${targetZ})`);
@@ -432,12 +483,12 @@
 
     function queuePendingSkillStart(pending) {
         if (!pending || typeof pending !== 'object') return false;
-        playerState.pendingSkillStart = Object.assign({}, pending);
+        getActivePlayerState().pendingSkillStart = Object.assign({}, pending);
         return true;
     }
 
     function handleSkillTick() {
-        const skillId = resolveSkillIdFromAction(playerState.action);
+        const skillId = resolveSkillIdFromAction(getActivePlayerState().action);
         const module = skillId ? skillRegistry[skillId] : null;
         if (!module || typeof module.onTick !== 'function') return false;
 
@@ -447,7 +498,7 @@
     }
 
     function handleSkillAnimation(overrides = {}) {
-        const skillId = resolveSkillIdFromAction(playerState.action);
+        const skillId = resolveSkillIdFromAction(getActivePlayerState().action);
         const module = skillId ? skillRegistry[skillId] : null;
         if (!module || typeof module.onAnimate !== 'function') return false;
 

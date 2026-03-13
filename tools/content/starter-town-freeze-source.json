@@ -1,0 +1,251 @@
+{
+  "runecraftingAltarOrder": [
+    "Ember Altar",
+    "Water Altar",
+    "Earth Altar",
+    "Air Altar"
+  ],
+  "miningZones": [
+    {
+      "routeId": "starter_mine",
+      "alias": "starter",
+      "zoneId": "starter_mine",
+      "label": "Starter Mine",
+      "centerX": 236,
+      "centerY": 248,
+      "minRadius": 8,
+      "maxRadius": 42,
+      "radiusStep": 6,
+      "targetCount": 30,
+      "minSpacing": 2,
+      "tags": ["mining", "qa", "starter"],
+      "oreWeights": [
+        { "oreType": "clay", "weight": 3 },
+        { "oreType": "copper", "weight": 4 },
+        { "oreType": "tin", "weight": 4 }
+      ]
+    },
+    {
+      "routeId": "iron_mine",
+      "alias": "iron",
+      "zoneId": "iron_mine",
+      "label": "Early Iron Mine",
+      "centerX": 286,
+      "centerY": 248,
+      "minRadius": 8,
+      "maxRadius": 46,
+      "radiusStep": 6,
+      "targetCount": 24,
+      "minSpacing": 2.1,
+      "tags": ["mining", "qa", "starter"],
+      "oreWeights": [
+        { "oreType": "iron", "weight": 10 },
+        { "oreType": "copper", "weight": 1 },
+        { "oreType": "tin", "weight": 1 }
+      ]
+    },
+    {
+      "routeId": "coal_mine",
+      "alias": "coal",
+      "zoneId": "coal_mine",
+      "label": "Deep Coal Mine",
+      "centerX": 324,
+      "centerY": 286,
+      "minRadius": 10,
+      "maxRadius": 48,
+      "radiusStep": 6,
+      "targetCount": 20,
+      "minSpacing": 2.2,
+      "tags": ["mining", "qa", "starter"],
+      "oreWeights": [
+        { "oreType": "coal", "weight": 8 },
+        { "oreType": "iron", "weight": 2 }
+      ]
+    },
+    {
+      "routeId": "precious_mine",
+      "alias": "precious",
+      "zoneId": "precious_mine",
+      "label": "Silver and Gold Mine",
+      "centerX": 344,
+      "centerY": 334,
+      "minRadius": 10,
+      "maxRadius": 52,
+      "radiusStep": 6,
+      "targetCount": 16,
+      "minSpacing": 2.4,
+      "tags": ["mining", "qa", "starter"],
+      "oreWeights": [
+        { "oreType": "silver", "weight": 5 },
+        { "oreType": "gold", "weight": 4 }
+      ]
+    },
+    {
+      "routeId": "gem_mine",
+      "alias": "gem",
+      "zoneId": "gem_mine",
+      "label": "Gem Mine",
+      "centerX": 204,
+      "centerY": 364,
+      "minRadius": 8,
+      "maxRadius": 46,
+      "radiusStep": 6,
+      "targetCount": 14,
+      "minSpacing": 2.5,
+      "areaGateFlag": "gemMineUnlocked",
+      "areaName": "the gem mine",
+      "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access.",
+      "tags": ["mining", "qa", "starter"],
+      "oreWeights": [
+        { "oreType": "sapphire", "weight": 6 },
+        { "oreType": "emerald", "weight": 4 }
+      ]
+    },
+    {
+      "routeId": "rune_essence_mine",
+      "alias": "essence",
+      "zoneId": "rune_essence_mine",
+      "label": "Rune Essence Mine",
+      "centerX": 74,
+      "centerY": 74,
+      "minRadius": 10,
+      "maxRadius": 50,
+      "radiusStep": 6,
+      "targetCount": 10,
+      "minSpacing": 2.6,
+      "tags": ["mining", "qa", "starter", "runecrafting"],
+      "oreWeights": [
+        { "oreType": "rune_essence", "weight": 1 }
+      ]
+    }
+  ],
+  "runecraftingBands": [
+    {
+      "routeId": "ember_altar",
+      "alias": "ember",
+      "label": "Ember Altar",
+      "variant": 4,
+      "minDistance": 24,
+      "maxDistance": 78,
+      "tags": ["runecrafting", "qa", "altar"]
+    },
+    {
+      "routeId": "water_altar",
+      "alias": "water",
+      "label": "Water Altar",
+      "variant": 4,
+      "minDistance": 88,
+      "maxDistance": 126,
+      "tags": ["runecrafting", "qa", "altar"]
+    },
+    {
+      "routeId": "earth_altar",
+      "alias": "earth",
+      "label": "Earth Altar",
+      "variant": 4,
+      "minDistance": 136,
+      "maxDistance": 174,
+      "tags": ["runecrafting", "qa", "altar"]
+    },
+    {
+      "routeId": "air_altar",
+      "alias": "air",
+      "label": "Air Altar",
+      "variant": 4,
+      "minDistance": 184,
+      "maxDistance": 240,
+      "tags": ["runecrafting", "qa", "altar"]
+    }
+  ],
+  "runecraftingMerchants": [
+    {
+      "serviceId": "merchant:rune_tutor",
+      "spawnId": "npc:rune_tutor",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "rune_tutor",
+      "name": "Rune Tutor",
+      "npcType": 3,
+      "action": "Trade",
+      "anchorRouteId": "ember_altar",
+      "tags": ["merchant", "runecrafting", "starter"]
+    },
+    {
+      "serviceId": "merchant:combination_sage",
+      "spawnId": "npc:combination_sage",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "combination_sage",
+      "name": "Combination Sage",
+      "npcType": 6,
+      "action": "Trade",
+      "anchorRouteId": "air_altar",
+      "tags": ["merchant", "runecrafting", "starter"]
+    }
+  ],
+  "woodcuttingZones": [
+    {
+      "routeId": "starter_grove",
+      "alias": "starter",
+      "nodeId": "normal_tree",
+      "label": "Starter Grove",
+      "minDistance": 18,
+      "maxDistance": 64,
+      "targetCount": 26,
+      "minSpacing": 3,
+      "areaName": "the starter grove",
+      "tags": ["woodcutting", "qa", "starter"]
+    },
+    {
+      "routeId": "oak_path",
+      "alias": "oak",
+      "nodeId": "oak_tree",
+      "label": "Oak Path",
+      "minDistance": 74,
+      "maxDistance": 116,
+      "targetCount": 20,
+      "minSpacing": 4,
+      "areaName": "the oak path",
+      "tags": ["woodcutting", "qa", "starter"]
+    },
+    {
+      "routeId": "willow_bend",
+      "alias": "willow",
+      "nodeId": "willow_tree",
+      "label": "Willow Bend",
+      "minDistance": 124,
+      "maxDistance": 168,
+      "targetCount": 16,
+      "minSpacing": 4,
+      "areaName": "the willow bend",
+      "tags": ["woodcutting", "qa", "starter"],
+      "habitatRule": { "type": "near_water", "maxDistance": 28 }
+    },
+    {
+      "routeId": "maple_ridge",
+      "alias": "maple",
+      "nodeId": "maple_tree",
+      "label": "Maple Ridge",
+      "minDistance": 176,
+      "maxDistance": 218,
+      "targetCount": 12,
+      "minSpacing": 5,
+      "areaName": "the maple ridge",
+      "tags": ["woodcutting", "qa", "starter"],
+      "habitatRule": { "type": "away_from_water", "minDistance": 18 }
+    },
+    {
+      "routeId": "yew_frontier",
+      "alias": "yew",
+      "nodeId": "yew_tree",
+      "label": "Yew Frontier",
+      "minDistance": 224,
+      "maxDistance": 272,
+      "targetCount": 8,
+      "minSpacing": 6,
+      "areaName": "the yew frontier",
+      "tags": ["woodcutting", "qa", "starter"],
+      "habitatRule": { "type": "near_npc", "maxDistance": 52 }
+    }
+  ]
+}

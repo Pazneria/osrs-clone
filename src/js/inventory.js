@@ -1,5 +1,54 @@
 // --- Bank & Drag/Drop Logic ---
 
+        function getUiDomainRuntime() {
+            return window.UiDomainRuntime || null;
+        }
+
+        function buildInventorySlotViewModels() {
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.buildInventorySlotViewModels === 'function') {
+                return runtime.buildInventorySlotViewModels({
+                    inventory,
+                    selectedUse: getSelectedUseItem()
+                        ? { invIndex: selectedUse.invIndex, itemId: selectedUse.itemId }
+                        : { invIndex: null, itemId: null }
+                });
+            }
+            return [];
+        }
+
+        function buildBankSlotViewModels() {
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.buildBankSlotViewModels === 'function') {
+                return runtime.buildBankSlotViewModels(bankItems);
+            }
+            return [];
+        }
+
+        function buildShopSlotViewModels() {
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.buildShopSlotViewModels === 'function') {
+                return runtime.buildShopSlotViewModels({
+                    shopInventory,
+                    merchantId: activeShopMerchantId,
+                    itemDb: ITEM_DB,
+                    economy: getShopEconomy()
+                });
+            }
+            return [];
+        }
+
+        function buildEquipmentSlotViewModels() {
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.buildEquipmentSlotViewModels === 'function') {
+                return runtime.buildEquipmentSlotViewModels({
+                    slots: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
+                    equipment
+                });
+            }
+            return [];
+        }
+
         function openBank() {
             isBankOpen = true;
             setInterfaceOpenState('bank-interface', true);
@@ -217,34 +266,24 @@
         let rememberedDepositXAmount = null;
 
         function collectMatchingInventorySlots(itemId, preferredIndex, maxCount) {
-            const matched = [];
-            if (!itemId || maxCount <= 0) return matched;
-
-            const pushIndex = (idx) => {
-                if (idx < 0 || idx >= inventory.length) return;
-                if (matched.length >= maxCount) return;
-                const slot = inventory[idx];
-                if (slot && slot.itemData && slot.itemData.id === itemId) matched.push(idx);
-            };
-
-            pushIndex(preferredIndex);
-            for (let i = 0; i < inventory.length && matched.length < maxCount; i++) {
-                if (i === preferredIndex) continue;
-                pushIndex(i);
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.collectMatchingSlotIndexes === 'function') {
+                return runtime.collectMatchingSlotIndexes(inventory, itemId, preferredIndex, maxCount);
             }
-
-            return matched;
+            return [];
         }
 
         function renderBank() {
             const container = document.getElementById('bank-grid');
             container.innerHTML = '';
             let usedSlots = 0;
+            const bankSlotViewModels = buildBankSlotViewModels();
             
             for (let i = 0; i < 200; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-pointer hover:bg-[#2b251d] select-none relative group transition-colors';
                 const bItem = bankItems[i];
+                const bankViewModel = bankSlotViewModels[i] || null;
                 
                 slot.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
                 slot.addEventListener('drop', (e) => {
@@ -254,8 +293,8 @@
                 });
                     if (bItem) {
                     usedSlots++;
-                    slot.innerHTML = `${bItem.itemData.icon}${formatStackSize(bItem.amount)}`;
-                    slot.title = `${bItem.itemData.name} x ${bItem.amount.toLocaleString()}`;
+                    slot.innerHTML = `${bankViewModel ? bankViewModel.icon : bItem.itemData.icon}${formatStackSize(bankViewModel ? bankViewModel.amount : bItem.amount)}`;
+                    slot.title = bankViewModel ? bankViewModel.title : `${bItem.itemData.name} x ${bItem.amount.toLocaleString()}`;
                     
                     slot.draggable = true;
                     slot.addEventListener('dragstart', (e) => {
@@ -299,10 +338,19 @@
         }
 
         function handleDragDrop(sourceType, sourceIndex, targetType, targetIndex) {
+            const runtime = getUiDomainRuntime();
             if (sourceType === 'inv' && targetType === 'inv') {
-                const temp = inventory[sourceIndex]; inventory[sourceIndex] = inventory[targetIndex]; inventory[targetIndex] = temp;
+                if (runtime && typeof runtime.swapSlotEntries === 'function') {
+                    inventory = runtime.swapSlotEntries(inventory, sourceIndex, targetIndex);
+                } else {
+                    const temp = inventory[sourceIndex]; inventory[sourceIndex] = inventory[targetIndex]; inventory[targetIndex] = temp;
+                }
             } else if (sourceType === 'bank' && targetType === 'bank') {
-                const temp = bankItems[sourceIndex]; bankItems[sourceIndex] = bankItems[targetIndex]; bankItems[targetIndex] = temp;
+                if (runtime && typeof runtime.swapSlotEntries === 'function') {
+                    bankItems = runtime.swapSlotEntries(bankItems, sourceIndex, targetIndex);
+                } else {
+                    const temp = bankItems[sourceIndex]; bankItems[sourceIndex] = bankItems[targetIndex]; bankItems[targetIndex] = temp;
+                }
             } else if (sourceType === 'inv' && targetType === 'bank') { depositInvItem(sourceIndex, -1, targetIndex); }
             else if (sourceType === 'bank' && targetType === 'inv') { withdrawBankItem(sourceIndex, 1, targetIndex); }
             if (isBankOpen) renderBank();
@@ -310,43 +358,18 @@
         }
 
         function depositInvItem(invIndex, amount = -1, targetBankIndex = -1) {
-            const invSlot = inventory[invIndex];
-            if (!invSlot) return;
-            const itemData = invSlot.itemData;
-            
-            let amountToDeposit = 0;
-            let targetAmount = amount === -1 ? (itemData.stackable ? invSlot.amount : 28) : amount;
-
-            if (itemData.stackable) {
-                amountToDeposit = Math.min(targetAmount, invSlot.amount);
-                let bIndex = bankItems.findIndex(b => b !== null && b.itemData.id === itemData.id);
-                if (bIndex === -1 && !bankItems.includes(null) && targetBankIndex === -1) {
-                    console.log("Bank is full!"); return;
-                }
-                if (bIndex !== -1) bankItems[bIndex].amount += amountToDeposit;
-                else {
-                    let slot = targetBankIndex !== -1 ? targetBankIndex : bankItems.indexOf(null);
-                    bankItems[slot] = { itemData: itemData, amount: amountToDeposit };
-                }
-                inventory[invIndex].amount -= amountToDeposit;
-                if (inventory[invIndex].amount <= 0) inventory[invIndex] = null;
-            } else {
-                const sourceSlots = collectMatchingInventorySlots(itemData.id, invIndex, targetAmount);
-                for (let i = 0; i < sourceSlots.length && amountToDeposit < targetAmount; i++) {
-                    const checkIdx = sourceSlots[i];
-                    let bIndex = bankItems.findIndex(b => b !== null && b.itemData.id === itemData.id);
-                    let slot = bIndex !== -1 ? bIndex : (targetBankIndex !== -1 && bankItems[targetBankIndex] === null ? targetBankIndex : bankItems.indexOf(null));
-                    if (slot !== -1) {
-                        if (bankItems[slot]) bankItems[slot].amount += 1;
-                        else bankItems[slot] = { itemData: itemData, amount: 1 };
-                        inventory[checkIdx] = null;
-                        amountToDeposit++;
-                    } else {
-                        console.log("Bank is full!");
-                        break;
-                    }
-                }
-            }
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.depositInventoryItem !== 'function') return;
+            const result = runtime.depositInventoryItem({
+                inventory,
+                bankItems,
+                invIndex,
+                amount,
+                targetBankIndex
+            });
+            inventory = result.inventory;
+            bankItems = result.bankItems;
+            if (result.reason === 'bank_full' || result.reason === 'bank_full_partial') console.log("Bank is full!");
 
             if(isBankOpen) renderBank(); 
             if(typeof isShopOpen !== 'undefined' && isShopOpen) renderShop(); 
@@ -354,30 +377,18 @@
         }
 
         function withdrawBankItem(bankIndex, amountToWithdraw, targetInvIndex = -1) {
-            const bItem = bankItems[bankIndex];
-            if (!bItem) return;
-            let actualAmount = Math.min(bItem.amount, amountToWithdraw);
-                    if (bItem.itemData.stackable) {
-                let existingInvIdx = inventory.findIndex(s => s && s.itemData.id === bItem.itemData.id);
-                if (existingInvIdx !== -1) {
-                    inventory[existingInvIdx].amount += actualAmount;
-                    bItem.amount -= actualAmount;
-                } else {
-                    let slotToFill = (targetInvIndex !== -1 && inventory[targetInvIndex] === null) ? targetInvIndex : inventory.indexOf(null);
-                    if (slotToFill !== -1) {
-                        inventory[slotToFill] = { itemData: bItem.itemData, amount: actualAmount };
-                        bItem.amount -= actualAmount;
-                    } else console.log("Inventory full.");
-                }
-            } else {
-                let slotsFilled = 0;
-                for (let i = 0; i < actualAmount; i++) {
-                    let slotToFill = (i === 0 && targetInvIndex !== -1 && inventory[targetInvIndex] === null) ? targetInvIndex : inventory.indexOf(null);
-                    if (slotToFill !== -1) { inventory[slotToFill] = { itemData: bItem.itemData, amount: 1 }; bItem.amount -= 1; slotsFilled++; } 
-                    else { console.log("Inventory full."); break; }
-                }
-            }
-            if (bItem.amount <= 0) bankItems[bankIndex] = null;
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.withdrawBankItem !== 'function') return;
+            const result = runtime.withdrawBankItem({
+                inventory,
+                bankItems,
+                bankIndex,
+                amount: amountToWithdraw,
+                targetInvIndex
+            });
+            inventory = result.inventory;
+            bankItems = result.bankItems;
+            if (result.reason === 'inventory_full' || result.reason === 'inventory_full_partial') console.log("Inventory full.");
             if (isBankOpen) renderBank(); renderInventory();
         }
 
@@ -393,12 +404,20 @@
 
         function resolveMerchantBuyPrice(itemId) {
             const economy = getShopEconomy();
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.resolveMerchantBuyPrice === 'function') {
+                return runtime.resolveMerchantBuyPrice(ITEM_DB, economy, itemId, activeShopMerchantId);
+            }
             if (economy) return economy.resolveBuyPrice(itemId, activeShopMerchantId);
             return ITEM_DB[itemId] && Number.isFinite(ITEM_DB[itemId].value) ? ITEM_DB[itemId].value : 0;
         }
 
         function resolveMerchantSellPrice(itemId) {
             const economy = getShopEconomy();
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.resolveMerchantSellPrice === 'function') {
+                return runtime.resolveMerchantSellPrice(ITEM_DB, economy, itemId, activeShopMerchantId);
+            }
             if (economy) return economy.resolveSellPrice(itemId, activeShopMerchantId);
             const base = ITEM_DB[itemId] && Number.isFinite(ITEM_DB[itemId].value) ? ITEM_DB[itemId].value : 0;
             return Math.floor(base * 0.4);
@@ -413,61 +432,30 @@
         }
 
         function createShopInventoryForMerchant(merchantId) {
-            const inventoryArray = Array(100).fill(null);
-            const economy = getShopEconomy();
-            const seedRows = economy && typeof economy.getMerchantSeedStockRows === 'function'
-                ? economy.getMerchantSeedStockRows(merchantId)
-                : [];
-            const hasExplicitMerchantConfig = economy && typeof economy.hasMerchantConfig === 'function'
-                ? economy.hasMerchantConfig(merchantId)
-                : false;
-
-            if (seedRows.length > 0) {
-                for (let i = 0; i < seedRows.length; i++) {
-                    const row = seedRows[i] || {};
-                    const itemId = typeof row.itemId === 'string' ? row.itemId : '';
-                    if (!itemId) continue;
-                    const stockAmount = Number.isFinite(row.stockAmount) ? Math.max(1, Math.floor(row.stockAmount)) : 20;
-                    seedShopInventorySlot(inventoryArray, itemId, stockAmount, true);
-                }
-                return inventoryArray;
+            const runtime = getUiDomainRuntime();
+            if (runtime && typeof runtime.createShopInventoryForMerchant === 'function') {
+                const result = runtime.createShopInventoryForMerchant({
+                    merchantId,
+                    inventorySize: 100,
+                    itemDb: ITEM_DB,
+                    economy: getShopEconomy()
+                });
+                if (result.warning) console.warn(result.warning);
+                return result.inventory;
             }
-
-            // Keep explicitly configured merchants with empty default stock (buys-only) truly empty.
-            if (hasExplicitMerchantConfig) {
-                return inventoryArray;
-            }
-
-            const hasStockPolicy = economy && typeof economy.hasStockPolicy === 'function'
-                ? economy.hasStockPolicy(merchantId)
-                : false;
-            if (!hasStockPolicy) {
-                const id = merchantId || 'general_store';
-                console.warn(`[Shop] Merchant '${id}' has no explicit stock config and no fallback stock policy.`);
-            }
-            return inventoryArray;
+            return Array(100).fill(null);
         }
 
         function ensureUnlockedMerchantStock(merchantId) {
-            const economy = getShopEconomy();
-            if (!economy || typeof economy.getMerchantDefaultSellItemIds !== 'function') return;
-            const defaults = economy.getMerchantDefaultSellItemIds(merchantId);
-            for (let i = 0; i < defaults.length; i++) {
-                const itemId = defaults[i];
-                const itemData = ITEM_DB[itemId];
-                if (!itemData) continue;
-
-                const desiredStock = typeof economy.getUnlockedStockAmount === 'function'
-                    ? Math.max(1, economy.getUnlockedStockAmount(itemId, merchantId) || 20)
-                    : 20;
-                const existing = shopInventory.find((slot) => slot && slot.itemData && slot.itemData.id === itemId);
-                if (existing) {
-                    existing.normalStock = true;
-                    if (existing.amount < desiredStock) existing.amount = desiredStock;
-                    continue;
-                }
-                seedShopInventorySlot(shopInventory, itemId, desiredStock, true);
-            }
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.ensureUnlockedMerchantStock !== 'function') return;
+            shopInventory = runtime.ensureUnlockedMerchantStock({
+                shopInventory,
+                merchantId,
+                itemDb: ITEM_DB,
+                economy: getShopEconomy()
+            });
+            shopInventoriesByMerchant[merchantId] = shopInventory;
         }
 
         function ensureMerchantShopInventory(merchantId) {
@@ -500,14 +488,16 @@
         function renderShop() {
             const container = document.getElementById('shop-grid');
             container.innerHTML = '';
+            const shopSlotViewModels = buildShopSlotViewModels();
             for (let i = 0; i < 100; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-pointer hover:bg-[#2b251d] select-none relative group transition-colors';
                 const sItem = shopInventory[i];
+                const shopViewModel = shopSlotViewModels[i] || null;
                 if (sItem && sItem.amount > 0) {
-                    slot.innerHTML = `${sItem.itemData.icon}${formatStackSize(sItem.amount)}`;
-                    const buyPrice = resolveMerchantBuyPrice(sItem.itemData.id);
-                    slot.title = sItem.itemData.name + ' - ' + buyPrice + ' coins';
+                    slot.innerHTML = `${shopViewModel ? shopViewModel.icon : sItem.itemData.icon}${formatStackSize(shopViewModel ? shopViewModel.amount : sItem.amount)}`;
+                    const buyPrice = shopViewModel ? shopViewModel.buyPrice : resolveMerchantBuyPrice(sItem.itemData.id);
+                    slot.title = shopViewModel ? shopViewModel.title : (sItem.itemData.name + ' - ' + buyPrice + ' coins');
                     const shopActionPrefKey = getItemMenuPreferenceKey('shop', sItem.itemData.id);
                     const shopActions = ['Buy-1', 'Buy-5', 'Buy-10', 'Buy-50', 'Buy-X'];
                     const runShopAction = (actionName) => {
@@ -540,97 +530,57 @@
         }
 
         function buyItem(shopIdx, amount) {
-            const sItem = shopInventory[shopIdx];
-            if (!sItem || sItem.amount <= 0) return;
-            if (sItem.itemData.id === 'coins') {
-                console.log("You cannot buy coins.");
-                return;
-            }
-            let cost = resolveMerchantBuyPrice(sItem.itemData.id);
-            let canBuyAmount = Math.min(amount, sItem.amount);
-            let coinSlotIdx = inventory.findIndex(s => s && s.itemData.id === 'coins');
-            let playerCoins = coinSlotIdx !== -1 ? inventory[coinSlotIdx].amount : 0;
-            
-            if (playerCoins >= cost) {
-                let affordAmount = Math.floor(playerCoins / cost);
-                canBuyAmount = Math.min(canBuyAmount, affordAmount);
-                
-                let amountGiven = giveItem(sItem.itemData, canBuyAmount);
-                    if (amountGiven > 0) {
-                    let totalCost = cost * amountGiven;
-                    sItem.amount -= amountGiven;
-                    coinSlotIdx = inventory.findIndex(s => s && s.itemData.id === 'coins');
-                    inventory[coinSlotIdx].amount -= totalCost;
-                    if (inventory[coinSlotIdx].amount <= 0) inventory[coinSlotIdx] = null;
-                    renderShop(); renderInventory();
-                } else console.log("Inventory full!");
-            } else console.log("Not enough coins!");
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.buyShopItem !== 'function') return;
+            const result = runtime.buyShopItem({
+                inventory,
+                shopInventory,
+                shopIndex: shopIdx,
+                amount,
+                merchantId: activeShopMerchantId,
+                itemDb: ITEM_DB,
+                economy: getShopEconomy()
+            });
+            inventory = result.inventory;
+            shopInventory = result.shopInventory;
+            shopInventoriesByMerchant[activeShopMerchantId] = shopInventory;
+            if (result.reason === 'inventory_full') console.log("Inventory full!");
+            else if (result.reason === 'not_enough_coins') console.log("Not enough coins!");
+            else if (result.reason === 'cannot_buy_coins') console.log("You cannot buy coins.");
+            renderShop(); renderInventory();
         }
 
         function sellItem(invIdx, amount) {
-            const invSlot = inventory[invIdx];
-            if (!invSlot) return;
-            const itemData = invSlot.itemData;
-            if (itemData.id === 'coins') {
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.sellInventoryItem !== 'function') return;
+            const existingSlot = inventory[invIdx];
+            const existingItemName = existingSlot && existingSlot.itemData ? existingSlot.itemData.name : 'That item';
+            const result = runtime.sellInventoryItem({
+                inventory,
+                shopInventory,
+                inventoryIndex: invIdx,
+                amount,
+                merchantId: activeShopMerchantId,
+                itemDb: ITEM_DB,
+                economy: getShopEconomy()
+            });
+            inventory = result.inventory;
+            shopInventory = result.shopInventory;
+            shopInventoriesByMerchant[activeShopMerchantId] = shopInventory;
+            if (result.reason === 'merchant_wont_buy_item') {
+                if (typeof addChatMessage === 'function') addChatMessage(existingItemName + ' cannot be sold to this merchant.', 'warn');
+                return;
+            }
+            if (result.reason === 'item_has_no_sell_value') {
+                if (typeof addChatMessage === 'function') addChatMessage(existingItemName + ' has no sell value at this merchant.', 'warn');
+                return;
+            }
+            if (result.reason === 'cannot_sell_coins') {
                 console.log("You cannot sell coins.");
                 return;
             }
-
-            const economy = getShopEconomy();
-            const merchantCanBuy = (economy && typeof economy.canMerchantBuyItem === 'function')
-                ? economy.canMerchantBuyItem(itemData.id, activeShopMerchantId)
-                : true;
-            if (!merchantCanBuy) {
-                if (typeof addChatMessage === 'function') addChatMessage(itemData.name + ' cannot be sold to this merchant.', 'warn');
-                return;
-            }
-
-            let sellValue = resolveMerchantSellPrice(itemData.id);
-            if (!Number.isFinite(sellValue) || sellValue <= 0) {
-                if (typeof addChatMessage === 'function') addChatMessage(itemData.name + ' has no sell value at this merchant.', 'warn');
-                return;
-            }
-
-            let amountSold = 0;
-            let targetAmount = amount === -1 ? (itemData.stackable ? invSlot.amount : 28) : amount;
-
-            if (itemData.stackable) {
-                amountSold = Math.min(targetAmount, invSlot.amount);
-                inventory[invIdx].amount -= amountSold;
-                if (inventory[invIdx].amount <= 0) inventory[invIdx] = null;
-            } else {
-                const sourceSlots = collectMatchingInventorySlots(itemData.id, invIdx, targetAmount);
-                for (let i = 0; i < sourceSlots.length && amountSold < targetAmount; i++) {
-                    inventory[sourceSlots[i]] = null;
-                    amountSold++;
-                }
-            }
-
-            if (amountSold > 0) {
-                const unlockResult = (economy && typeof economy.recordMerchantPurchaseFromPlayer === 'function')
-                    ? economy.recordMerchantPurchaseFromPlayer(itemData.id, activeShopMerchantId, amountSold)
-                    : null;
-                const canBeNormalStock = (economy && typeof economy.canMerchantSellItem === 'function')
-                    ? economy.canMerchantSellItem(itemData.id, activeShopMerchantId)
-                    : true;
-
-                if (canBeNormalStock) {
-                    let shopIdx = shopInventory.findIndex(s => s && s.itemData.id === itemData.id);
-                    if (shopIdx === -1) {
-                        shopIdx = shopInventory.indexOf(null);
-                        if (shopIdx !== -1) shopInventory[shopIdx] = { itemData: itemData, amount: 0, normalStock: false };
-                    }
-                    if (shopIdx !== -1) shopInventory[shopIdx].amount += amountSold;
-                }
-
-                if (unlockResult && unlockResult.unlockedNow) {
-                    ensureUnlockedMerchantStock(activeShopMerchantId);
-                    if (typeof addChatMessage === 'function') {
-                        addChatMessage(itemData.name + ' is now unlocked as permanent stock at this merchant.', 'info');
-                    }
-                }
-
-                giveItem(ITEM_DB['coins'], amountSold * sellValue);
+            if (result.unlockedNow && typeof addChatMessage === 'function') {
+                addChatMessage(existingItemName + ' is now unlocked as permanent stock at this merchant.', 'info');
             }
             renderShop(); renderInventory();
         }
@@ -640,6 +590,7 @@
         function renderInventory() {
             const container = document.getElementById('view-inv');
             container.innerHTML = '';
+            const inventorySlotViewModels = buildInventorySlotViewModels();
             for (let i = 0; i < 28; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'inventory-slot';
@@ -651,14 +602,14 @@
                     handleDragDrop(data.source, data.index, 'inv', i);
                 });
 
-                                const itemDataSlot = inventory[i];
-                const selectedUseSlot = getSelectedUseItem();
-                if (itemDataSlot && selectedUseSlot && selectedUse.invIndex === i && selectedUse.itemId === itemDataSlot.itemData.id) {
+                const itemDataSlot = inventory[i];
+                const inventoryViewModel = inventorySlotViewModels[i] || null;
+                if (inventoryViewModel && inventoryViewModel.selected) {
                     slot.classList.add('item-slot-selected');
                 }
                 if (itemDataSlot) {
                     const item = itemDataSlot.itemData;
-                    slot.innerHTML = `<span class="inv-item-icon">${item.icon}</span>${formatStackSize(itemDataSlot.amount, 'item-amt-inv')}`;
+                    slot.innerHTML = `<span class="inv-item-icon">${inventoryViewModel ? inventoryViewModel.icon : item.icon}</span>${formatStackSize(inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, 'item-amt-inv')}`;
                     slot.draggable = true;
                     slot.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('application/json', JSON.stringify({ source: 'inv', index: i }));
@@ -761,12 +712,13 @@
         }
 
         function renderEquipment() {
-            const slots = ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'];
-            slots.forEach(slotName => {
+            const slotViewModels = buildEquipmentSlotViewModels();
+            slotViewModels.forEach((slotViewModel) => {
+                const slotName = slotViewModel.slotName;
                 const el = document.getElementById(`eq-${slotName}`); if (!el) return;
                 el.className = 'w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl select-none hover:bg-[#1a1f24]';
                 const item = equipment[slotName];
-                if (item) { el.innerHTML = item.icon; el.title = item.name; el.onclick = () => unequipItem(slotName); el.style.cursor = 'pointer'; } 
+                if (slotViewModel.hasItem && item) { el.innerHTML = slotViewModel.icon; el.title = slotViewModel.itemName; el.onclick = () => unequipItem(slotName); el.style.cursor = 'pointer'; } 
                 else { el.innerHTML = ''; el.title = ''; el.onclick = null; el.style.cursor = 'default'; }
             });
         }
@@ -1472,19 +1424,21 @@
             const container = document.getElementById('view-stats');
             if (!container) return;
             const defs = getSkillTileDefinitions();
+            const runtime = getUiDomainRuntime();
+            const skillTileViewModels = runtime && typeof runtime.buildSkillTileViewModels === 'function'
+                ? runtime.buildSkillTileViewModels({ definitions: defs, playerSkills })
+                : defs;
             container.innerHTML = '';
 
-            for (let i = 0; i < defs.length; i++) {
-                const def = defs[i] || {};
+            for (let i = 0; i < skillTileViewModels.length; i++) {
+                const def = skillTileViewModels[i] || {};
                 const skillId = typeof def.skillId === 'string' ? def.skillId : '';
                 const levelKey = typeof def.levelKey === 'string' ? def.levelKey : '';
                 if (!skillId || !levelKey) continue;
 
                 const icon = (typeof def.icon === 'string' && def.icon.trim()) ? def.icon.trim() : skillId.slice(0, 3).toUpperCase();
                 const displayName = (typeof def.displayName === 'string' && def.displayName.trim()) ? def.displayName.trim() : skillId;
-                const initialLevel = (playerSkills && playerSkills[skillId] && Number.isFinite(playerSkills[skillId].level))
-                    ? Math.max(1, Math.floor(playerSkills[skillId].level))
-                    : 1;
+                const initialLevel = Number.isFinite(def.level) ? Math.max(1, Math.floor(def.level)) : 1;
 
                 const tile = document.createElement('div');
                 tile.className = 'skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none';
@@ -1531,27 +1485,29 @@
 
             const tile = document.querySelector(`.skill-tile[data-skill="${skillName}"]`);
             const tileMeta = getSkillTileMeta(skillName) || {};
-            const skill = playerSkills[skillName];
-            const level = skill.level;
-            const xp = skill.xp;
-            const levelXp = getXpForLevel(level);
-            const nextLevel = Math.min(MAX_SKILL_LEVEL, level + 1);
-            const nextLevelXp = level >= MAX_SKILL_LEVEL ? levelXp : getXpForLevel(nextLevel);
-            const span = Math.max(1, nextLevelXp - levelXp);
-            const gained = Math.max(0, xp - levelXp);
-            const pct = level >= MAX_SKILL_LEVEL ? 100 : Math.max(0, Math.min(100, (gained / span) * 100));
+            const runtime = getUiDomainRuntime();
+            const progressViewModel = runtime && typeof runtime.buildSkillProgressViewModel === 'function'
+                ? runtime.buildSkillProgressViewModel({
+                    skillId: skillName,
+                    playerSkills,
+                    skillMeta: {
+                        icon: tile ? tile.dataset.skillIcon : (tileMeta.icon || '?'),
+                        displayName: tile ? tile.dataset.skillName : (tileMeta.displayName || skillName)
+                    },
+                    getXpForLevel,
+                    maxSkillLevel: MAX_SKILL_LEVEL
+                })
+                : null;
+            if (!progressViewModel) return;
 
-            const icon = tile ? tile.dataset.skillIcon : (tileMeta.icon || '?');
-            const name = tile ? tile.dataset.skillName : (tileMeta.displayName || skillName);
-
-            document.getElementById('skill-panel-icon').innerText = icon;
-            document.getElementById('skill-panel-title').innerText = name;
-            document.getElementById('skill-panel-level').innerText = level;
-            document.getElementById('skill-panel-xp').innerText = xp.toLocaleString();
-            document.getElementById('skill-panel-next').innerText = level >= MAX_SKILL_LEVEL ? 'Maxed' : (nextLevelXp.toLocaleString() + ' XP');
-            document.getElementById('skill-panel-progress').style.width = pct.toFixed(1) + '%';
-            document.getElementById('skill-panel-percent').innerText = pct.toFixed(1) + '% to next level';
-            renderSkillPanelTimeline(skillName, level);
+            document.getElementById('skill-panel-icon').innerText = progressViewModel.icon;
+            document.getElementById('skill-panel-title').innerText = progressViewModel.name;
+            document.getElementById('skill-panel-level').innerText = progressViewModel.level;
+            document.getElementById('skill-panel-xp').innerText = progressViewModel.xpText;
+            document.getElementById('skill-panel-next').innerText = progressViewModel.nextText;
+            document.getElementById('skill-panel-progress').style.width = progressViewModel.progressWidth;
+            document.getElementById('skill-panel-percent').innerText = progressViewModel.progressPercentText;
+            renderSkillPanelTimeline(skillName, progressViewModel.level);
         }
 
         function openSkillProgressPanel(skillName, tileEl) {

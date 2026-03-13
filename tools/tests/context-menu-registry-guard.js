@@ -10,10 +10,12 @@ function run() {
   const inputRenderPath = path.join(root, "src/js/input-render.js");
   const registryPath = path.join(root, "src/js/interactions/target-interaction-registry.js");
   const indexPath = path.join(root, "index.html");
+  const legacyManifestPath = path.join(root, "src/game/platform/legacy-script-manifest.ts");
 
   const inputRenderScript = fs.readFileSync(inputRenderPath, "utf8");
   const registryScript = fs.readFileSync(registryPath, "utf8");
   const indexHtml = fs.readFileSync(indexPath, "utf8");
+  const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
 
   const contextMenuStart = inputRenderScript.indexOf("function onContextMenu(event)");
   const contextMenuEnd = inputRenderScript.indexOf("function addContextMenuOption", contextMenuStart);
@@ -57,8 +59,8 @@ function run() {
   );
 
   assert(
-    indexHtml.includes("./src/js/interactions/target-interaction-registry.js"),
-    "index should include target interaction registry script"
+    indexHtml.includes('/src/main.ts') && legacyManifest.includes("../../js/interactions/target-interaction-registry.js?raw"),
+    "platform shell should load target interaction registry through the legacy manifest"
   );
 
   console.log("Context menu registry guard passed.");

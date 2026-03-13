@@ -10,16 +10,18 @@ function run() {
   const indexPath = path.join(root, "index.html");
   const playerModelPath = path.join(root, "src/js/player-model.js");
   const catalogPath = path.join(root, "src/js/content/player-appearance-catalog.js");
+  const legacyManifestPath = path.join(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(fs.existsSync(catalogPath), "player appearance catalog file missing");
 
   const indexHtml = fs.readFileSync(indexPath, "utf8");
   const playerModelScript = fs.readFileSync(playerModelPath, "utf8");
   const catalogScript = fs.readFileSync(catalogPath, "utf8");
+  const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
 
   assert(
-    indexHtml.includes("./src/js/content/player-appearance-catalog.js"),
-    "index should include player appearance catalog script"
+    indexHtml.includes('/src/main.ts') && legacyManifest.includes("../../js/content/player-appearance-catalog.js?raw"),
+    "platform shell should load the player appearance catalog through the legacy manifest"
   );
 
   assert(

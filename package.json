@@ -4,9 +4,13 @@
   "private": true,
   "description": "3D OSRS tick engine prototype",
   "scripts": {
-    "dev": "run.bat",
-    "check": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" --check ./src/js/interactions/target-interaction-registry.js",
-    "test": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" --check ./src/js/interactions/target-interaction-registry.js && \"%NODE%\" ./tools/content/validate-items.js && \"%NODE%\" ./tools/content/validate-skills.js && \"%NODE%\" ./tools/tests/spec-contracts.js && \"%NODE%\" ./tools/tests/spec-doc-parity.js && \"%NODE%\" ./tools/tests/fletching-crafting-interactions.js && \"%NODE%\" ./tools/tests/validate-skills-negatives.js && \"%NODE%\" ./tools/tests/context-menu-registry-guard.js && \"%NODE%\" ./tools/tests/tile-semantics-guard.js && \"%NODE%\" ./tools/tests/pixel-asset-pipeline-guard.js && \"%NODE%\" ./tools/tests/player-appearance-catalog-guard.js && \"%NODE%\" ./tools/tests/progress-persistence-guard.js",
+    "dev": "vite",
+    "dev:legacy": "run.bat",
+    "build": "vite build",
+    "preview": "vite preview --strictPort --port 5501",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" --check ./src/js/interactions/target-interaction-registry.js",
+    "test": "tsc --noEmit && set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" --check ./src/js/interactions/target-interaction-registry.js && \"%NODE%\" ./tools/content/validate-items.js && \"%NODE%\" ./tools/content/validate-skills.js && \"%NODE%\" ./tools/content/validate-world.js && \"%NODE%\" ./tools/tests/spec-contracts.js && \"%NODE%\" ./tools/tests/spec-doc-parity.js && \"%NODE%\" ./tools/tests/fletching-crafting-interactions.js && \"%NODE%\" ./tools/tests/validate-skills-negatives.js && \"%NODE%\" ./tools/tests/context-menu-registry-guard.js && \"%NODE%\" ./tools/tests/tile-semantics-guard.js && \"%NODE%\" ./tools/tests/pixel-asset-pipeline-guard.js && \"%NODE%\" ./tools/tests/player-appearance-catalog-guard.js && \"%NODE%\" ./tools/tests/progress-persistence-guard.js && \"%NODE%\" ./tools/tests/game-session-guard.js && \"%NODE%\" ./tools/tests/render-input-shell-guard.js && \"%NODE%\" ./tools/tests/inventory-hud-domain-tests.js && \"%NODE%\" ./tools/tests/inventory-hud-domain-guard.js && \"%NODE%\" ./tools/tests/world-registry-guard.js && \"%NODE%\" ./tools/tests/world-bootstrap-parity.js && \"%NODE%\" ./tools/tests/qa-registry-parity.js && \"%NODE%\" ./tools/tests/service-adjacency.js && \"%NODE%\" ./tools/tests/skill-runtime-parity.js && \"%NODE%\" ./tools/tests/freeze-starter-town-parity.js && \"%NODE%\" ./tools/tests/legacy-world-runtime-shape.js && \"%NODE%\" ./tools/tests/world-travel-proof.js",
     "tool:check": "powershell -ExecutionPolicy Bypass -File ./tools/check-prereqs.ps1",
     "tool:pixelize": "powershell -ExecutionPolicy Bypass -File ./tools/pixel/pixelize.ps1",
     "tool:pixelize:batch": "powershell -ExecutionPolicy Bypass -File ./tools/pixel/batch-pixelize.ps1",
@@ -28,7 +32,27 @@
     "tool:items:sync": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/sync-items-from-runtime.js",
     "tool:skills:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-skills.js",
     "tool:skills:sync": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/sync-skills-from-runtime.js",
+    "tool:world:freeze": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/freeze-starter-town-world.js --write",
+    "tool:world:validate": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/content/validate-world.js",
     "test:qa:interactions": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/fletching-crafting-interactions.js",
-    "test:tile:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/tile-semantics-guard.js"
+    "test:tile:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/tile-semantics-guard.js",
+    "test:session:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/game-session-guard.js",
+    "test:render-input:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/render-input-shell-guard.js",
+    "test:inventory-hud:domain": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/inventory-hud-domain-tests.js",
+    "test:inventory-hud:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/inventory-hud-domain-guard.js",
+    "test:world:registry": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/world-registry-guard.js",
+    "test:world:bootstrap": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/world-bootstrap-parity.js",
+    "test:world:skill-runtime": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/skill-runtime-parity.js",
+    "test:world:freeze": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/freeze-starter-town-parity.js",
+    "test:world:legacy-shape": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/legacy-world-runtime-shape.js",
+    "test:world:travel-proof": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/world-travel-proof.js",
+    "test:qa:registry": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/qa-registry-parity.js",
+    "test:services:adjacency": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/service-adjacency.js"
+  },
+  "dependencies": {
+    "@types/three": "^0.183.1",
+    "three": "^0.183.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0"
   }
 }

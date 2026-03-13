@@ -194,6 +194,14 @@
                         );
                     }
 
+                    if (npcAction === 'Travel') {
+                        const travelTarget = npcUid ? Object.assign({}, npcUid) : { name: npcName, action: 'Travel' };
+                        return createOption(
+                            `Travel <span class="text-yellow-400">${npcName}</span>`,
+                            () => context.queueInteract('NPC', travelTarget)
+                        );
+                    }
+
                     const talkTarget = npcUid ? Object.assign({}, npcUid) : { name: npcName, action: 'Talk-to' };
                     return createOption(
                         `Talk-to <span class="text-yellow-400">${npcName}</span>`,

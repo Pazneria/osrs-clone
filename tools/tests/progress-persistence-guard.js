@@ -9,6 +9,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const corePath = path.join(root, "src/js/core.js");
   const coreScript = fs.readFileSync(corePath, "utf8");
+  const sessionBridgeScript = fs.readFileSync(path.join(root, "src", "game", "platform", "session-bridge.ts"), "utf8");
 
   assert(
     coreScript.includes("const PROGRESS_SAVE_KEY = 'osrsClone.progress.v1';"),
@@ -19,8 +20,8 @@ function run() {
     "core should define a progress save schema version"
   );
   assert(
-    coreScript.includes("function migrateProgressPayload(payload)"),
-    "core should include progress-payload migration handling"
+    sessionBridgeScript.includes("migrateProgressSavePayload"),
+    "session bridge should include progress-payload migration handling"
   );
   assert(
     coreScript.includes("function saveProgressToStorage(reason = 'manual')"),
@@ -31,12 +32,20 @@ function run() {
     "core should define loadProgressFromStorage"
   );
   assert(
-    coreScript.includes("localStorage.setItem(PROGRESS_SAVE_KEY"),
-    "core should write progress to localStorage"
+    coreScript.includes("gameSessionRuntime.buildProgressSavePayload"),
+    "core should build progress payloads through the session runtime"
   );
   assert(
-    coreScript.includes("localStorage.getItem(PROGRESS_SAVE_KEY)"),
-    "core should read progress from localStorage"
+    coreScript.includes("gameSessionRuntime.saveProgressPayloadToStorage"),
+    "core should write progress through the session runtime"
+  );
+  assert(
+    coreScript.includes("gameSessionRuntime.loadProgressPayloadFromStorage"),
+    "core should read progress through the session runtime"
+  );
+  assert(
+    !coreScript.includes("function migrateProgressPayload(payload)"),
+    "core should not own the progress-payload migration contract directly"
   );
   assert(
     coreScript.includes("function startProgressAutosave()"),
