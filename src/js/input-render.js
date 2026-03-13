@@ -292,7 +292,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             if (!data || data.z !== playerState.z) return null;
 
-            if (data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER') {
+            if (data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER') {
                 let gridX = Math.floor(hit.point.x + 0.5);
                 let gridY = Math.floor(hit.point.z + 0.5);
                 if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
@@ -385,8 +385,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const z = playerState.z;
             let best = null;
             let bestDist = Infinity;
+            const playerOnPierDeck = isPierDeckTile(playerState.x, playerState.y, z);
 
             const hasAdjacentStandable = (x, y) => {
+                if (playerOnPierDeck) return hasPierFishingApproachForWaterTile(x, y, z);
                 const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
                 for (let i = 0; i < dirs.length; i++) {
                     const nx = x + dirs[i].x;
@@ -421,6 +423,47 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             return best;
         }
+        function getActivePierConfig() {
+            return sharedMaterials && sharedMaterials.activePierConfig
+                ? sharedMaterials.activePierConfig
+                : null;
+        }
+        function isPierDeckTile(x, y, z = playerState.z) {
+            const pierConfig = getActivePierConfig();
+            return !!(
+                pierConfig
+                && z === 0
+                && x >= pierConfig.xMin
+                && x <= pierConfig.xMax
+                && y >= pierConfig.yStart
+                && y <= pierConfig.yEnd
+            );
+        }
+        function isPierFishingApproachTile(standX, standY, targetX, targetY, z = playerState.z) {
+            if (!isPierDeckTile(standX, standY, z)) return false;
+            if (standX < 0 || standY < 0 || targetX < 0 || targetY < 0 || standX >= MAP_SIZE || standY >= MAP_SIZE || targetX >= MAP_SIZE || targetY >= MAP_SIZE) return false;
+            if (!isWaterTileId(logicalMap[z][targetY][targetX])) return false;
+            return (Math.abs(standX - targetX) + Math.abs(standY - targetY)) === 1;
+        }
+        function hasPierFishingApproachForWaterTile(targetX, targetY, z = playerState.z) {
+            const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
+            for (let i = 0; i < dirs.length; i++) {
+                const standX = targetX + dirs[i].x;
+                const standY = targetY + dirs[i].y;
+                if (isPierFishingApproachTile(standX, standY, targetX, targetY, z)) return true;
+            }
+            return false;
+        }
+        function isPierProtectedWaterTile(x, y, z = playerState.z) {
+            const pierConfig = getActivePierConfig();
+            return !!(
+                pierConfig
+                && z === 0
+                && y >= (pierConfig.yStart + 1)
+                && y <= pierConfig.yEnd
+                && (x === (pierConfig.xMin - 1) || x === (pierConfig.xMax + 1))
+            );
+        }
         function isStandableTile(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
             const tile = logicalMap[z][y][x];
@@ -428,6 +471,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             // Edge shallow-water tiles are standable; deeper water is not.
             if (tile === TileId.WATER_SHALLOW) {
+                if (isPierProtectedWaterTile(x, y, z)) return false;
                 const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
                 for (let i = 0; i < dirs.length; i++) {
                     const nx = x + dirs[i].x;
@@ -762,7 +806,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
                                 // Normal adjacent interaction check
                                 if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
-                                    if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) {
+                                    const pierFishingApproach = interactionObj === 'WATER'
+                                        && isPierFishingApproachTile(nx, ny, targetX, targetY, playerState.z);
+                                    if (pierFishingApproach || Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) {
                                         const neighborKey = `${nx},${ny}`;
                                         if (stationApproachKeys.size === 0 || stationApproachKeys.has(neighborKey)) validTargets.add(neighborKey);
                                     }
@@ -805,6 +851,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             visited.set(`${startX},${startY}`, null);
             
             let dirs8 = [{x: 0, y: -1}, {x: 0, y: 1}, {x: -1, y: 0}, {x: 1, y: 0}, {x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1}, {x: 1, y: 1}];
+            const restrictPierFishingToDeck = interactionObj === 'WATER' && isPierDeckTile(startX, startY, playerState.z);
             
             let iterations = 0; 
             let foundTargetKey = null;
@@ -817,6 +864,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 for (let dir of dirs8) {
                     let nx = current.x + dir.x; let ny = current.y + dir.y; let key = `${nx},${ny}`;
                     if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && !visited.has(key) && isStandableTile(nx, ny, playerState.z)) {
+                        if (restrictPierFishingToDeck && isWaterTileId(logicalMap[playerState.z][ny][nx])) continue;
                         let nextHeight = heightMap[playerState.z][ny][nx]; 
                         let isStairTransition = (logicalMap[playerState.z][ny][nx] === TileId.STAIRS_RAMP || logicalMap[playerState.z][current.y][current.x] === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
                         if (Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition) continue;
@@ -1062,7 +1110,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 return;
                             }
 
-                            if (Math.abs(playerH - targetH) > 0.3 && !isAcrossCounter) {
+                            const pierFishingApproach = playerState.targetObj === 'WATER'
+                                && isPierFishingApproachTile(playerState.x, playerState.y, playerState.targetX, playerState.targetY, playerState.z);
+                            if (Math.abs(playerH - targetH) > 0.3 && !isAcrossCounter && !pierFishingApproach) {
                                 playerState.action = 'IDLE';
                             } else if (playerState.targetObj === 'DUMMY') {
                                 startFacingAction('COMBAT: DUMMY', true);
@@ -1734,15 +1784,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (typeof window.updateFires === 'function') window.updateFires(frameNow);
             if (typeof updateMiningPoseReferences === 'function') updateMiningPoseReferences(frameNowMs);
 
-            if (sharedMaterials.waterShallow && sharedMaterials.waterShallow.map) {
-                const m = sharedMaterials.waterShallow.map;
-                m.offset.x = (frameNowMs * 0.000025) % 1;
-                m.offset.y = (frameNowMs * 0.00001) % 1;
-            }
-            if (sharedMaterials.waterDeep && sharedMaterials.waterDeep.map) {
-                const m = sharedMaterials.waterDeep.map;
-                m.offset.x = (frameNowMs * -0.000018) % 1;
-                m.offset.y = (frameNowMs * 0.000015) % 1;
+            if (Array.isArray(sharedMaterials.waterAnimatedMaterials)) {
+                sharedMaterials.waterAnimatedMaterials.forEach((material) => {
+                    if (!material || !material.uniforms || !material.uniforms.uTime) return;
+                    material.uniforms.uTime.value = frameNowMs * 0.001;
+                });
             }
 
             // Handle Door Animations

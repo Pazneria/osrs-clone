@@ -15,6 +15,7 @@ import {
   buildWorldBootstrapResult,
   createGameContext
 } from "../world/bootstrap";
+import { cloneRouteDescriptor } from "../world/clone";
 import {
   getDefaultSpawn,
   getWorldManifest,
@@ -71,21 +72,14 @@ let activeBaseBootstrap = getBaseBootstrap(activeWorldId);
 let activeBootstrap = activeBaseBootstrap;
 let activeContext = createGameContext(activeBootstrap);
 
-function cloneRoute(route: RouteDescriptor): RouteDescriptor {
-  return {
-    ...route,
-    tags: Array.isArray(route.tags) ? route.tags.slice() : []
-  };
-}
-
 function exposeCompatibilityHooks(): void {
   window.GameContext = activeContext;
   window.getWorldGameContext = () => activeContext;
-  window.getFishingTrainingLocations = () => activeContext.queries.getRouteGroup("fishing").map(cloneRoute);
-  window.getCookingTrainingLocations = () => activeContext.queries.getRouteGroup("cooking").map(cloneRoute);
-  window.getMiningTrainingLocations = () => activeContext.queries.getRouteGroup("mining").map(cloneRoute);
-  window.getWoodcuttingTrainingLocations = () => activeContext.queries.getRouteGroup("woodcutting").map(cloneRoute);
-  window.getRunecraftingAltarLocations = () => activeContext.queries.getRouteGroup("runecrafting").map(cloneRoute);
+  window.getFishingTrainingLocations = () => activeContext.queries.getRouteGroup("fishing").map(cloneRouteDescriptor);
+  window.getCookingTrainingLocations = () => activeContext.queries.getRouteGroup("cooking").map(cloneRouteDescriptor);
+  window.getMiningTrainingLocations = () => activeContext.queries.getRouteGroup("mining").map(cloneRouteDescriptor);
+  window.getWoodcuttingTrainingLocations = () => activeContext.queries.getRouteGroup("woodcutting").map(cloneRouteDescriptor);
+  window.getRunecraftingAltarLocations = () => activeContext.queries.getRouteGroup("runecrafting").map(cloneRouteDescriptor);
   window.getRunecraftingAltarNameAt = (x: number, y: number, z: number) => {
     const altars = activeContext.queries.getRouteGroup("runecrafting");
     for (let i = 0; i < altars.length; i++) {

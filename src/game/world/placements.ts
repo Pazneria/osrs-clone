@@ -7,6 +7,12 @@ import type {
   ServiceRegistry,
   WorldDefinition
 } from "../contracts/world";
+import {
+  cloneNpcDescriptor,
+  cloneRouteDescriptor,
+  cloneServiceDescriptor,
+  createMerchantNpcDescriptor
+} from "./clone";
 
 function normalizeTag(tag: string): string {
   return String(tag || "").trim().toLowerCase();
@@ -16,32 +22,13 @@ function normalizeAlias(alias?: string | null): string {
   return String(alias || "").trim().toLowerCase();
 }
 
-function cloneRoute(route: RouteDescriptor): RouteDescriptor {
-  return {
-    ...route,
-    tags: Array.isArray(route.tags) ? route.tags.slice() : []
-  };
-}
-
-function cloneService(service: ServiceDescriptor): ServiceDescriptor {
-  return {
-    ...service,
-    tags: Array.isArray(service.tags) ? service.tags.slice() : [],
-    travelSpawn: service.travelSpawn
-      ? { x: service.travelSpawn.x, y: service.travelSpawn.y, z: service.travelSpawn.z }
-      : service.travelSpawn === null
-        ? null
-        : undefined
-  };
-}
-
 export function createStaticRouteGroups(definition: WorldDefinition): Record<string, RouteDescriptor[]> {
   return {
-    fishing: definition.skillRoutes.fishing.map(cloneRoute),
-    cooking: definition.skillRoutes.cooking.map(cloneRoute),
-    mining: definition.skillRoutes.mining.map(cloneRoute),
-    runecrafting: definition.skillRoutes.runecrafting.map(cloneRoute),
-    woodcutting: definition.skillRoutes.woodcutting.map(cloneRoute)
+    fishing: definition.skillRoutes.fishing.map(cloneRouteDescriptor),
+    cooking: definition.skillRoutes.cooking.map(cloneRouteDescriptor),
+    mining: definition.skillRoutes.mining.map(cloneRouteDescriptor),
+    runecrafting: definition.skillRoutes.runecrafting.map(cloneRouteDescriptor),
+    woodcutting: definition.skillRoutes.woodcutting.map(cloneRouteDescriptor)
   };
 }
 
@@ -57,7 +44,7 @@ export function mergeRouteGroups(
 
   groupIds.forEach((groupId) => {
     const source = dynamicGroups[groupId] || baseGroups[groupId] || [];
-    merged[groupId] = source.map(cloneRoute);
+    merged[groupId] = source.map(cloneRouteDescriptor);
   });
 
   return merged;
@@ -71,7 +58,7 @@ export function createRouteRegistry(groups: Record<string, RouteDescriptor[]>): 
   const normalizedGroups: Record<string, RouteDescriptor[]> = {};
 
   Object.keys(groups).forEach((groupId) => {
-    normalizedGroups[groupId] = groups[groupId].map(cloneRoute);
+    normalizedGroups[groupId] = groups[groupId].map(cloneRouteDescriptor);
     for (let i = 0; i < normalizedGroups[groupId].length; i++) {
       const route = normalizedGroups[groupId][i];
       if (!route) continue;
@@ -99,7 +86,7 @@ export function createRouteRegistry(groups: Record<string, RouteDescriptor[]>): 
 }
 
 export function createStaticServices(definition: WorldDefinition): ServiceDescriptor[] {
-  return definition.services.map(cloneService);
+  return definition.services.map(cloneServiceDescriptor);
 }
 
 export function createStaticNpcDescriptors(definition: WorldDefinition): NpcDescriptor[] {
@@ -108,34 +95,13 @@ export function createStaticNpcDescriptors(definition: WorldDefinition): NpcDesc
   for (let i = 0; i < definition.npcSpawns.length; i++) {
     const npc = definition.npcSpawns[i];
     if (!npc || !npc.spawnId) continue;
-    npcs.push({
-      ...npc,
-      tags: Array.isArray(npc.tags) ? npc.tags.slice() : []
-    });
+    npcs.push(cloneNpcDescriptor(npc));
   }
 
   for (let i = 0; i < definition.services.length; i++) {
-    const service = definition.services[i];
-    if (!service || service.type !== "MERCHANT" || !service.spawnId) continue;
-    const npcType = Number.isFinite(service.npcType) ? Number(service.npcType) : 2;
-    npcs.push({
-      spawnId: service.spawnId,
-      name: service.name || String(service.merchantId || service.serviceId || "merchant"),
-      npcType,
-      x: service.x,
-      y: service.y,
-      z: service.z,
-      merchantId: service.merchantId || null,
-      action: service.action,
-      travelToWorldId: service.travelToWorldId || null,
-      travelSpawn: service.travelSpawn
-        ? { x: service.travelSpawn.x, y: service.travelSpawn.y, z: service.travelSpawn.z }
-        : service.travelSpawn === null
-          ? null
-          : undefined,
-      facingYaw: service.facingYaw,
-      tags: Array.isArray(service.tags) ? service.tags.slice() : []
-    });
+    const serviceNpc = createMerchantNpcDescriptor(definition.services[i]);
+    if (!serviceNpc) continue;
+    npcs.push(serviceNpc);
   }
 
   return npcs;
@@ -148,7 +114,7 @@ export function createServiceRegistry(services: ServiceDescriptor[]): ServiceReg
   const byTag: Record<string, ServiceDescriptor[]> = {};
 
   for (let i = 0; i < services.length; i++) {
-    const service = cloneService(services[i]);
+    const service = cloneServiceDescriptor(services[i]);
     if (!service) continue;
     byId[service.serviceId] = service;
     bySpawnId[service.spawnId] = service;
@@ -184,7 +150,7 @@ export function createNpcRegistry(npcs: NpcDescriptor[]): NpcRegistry {
   for (let i = 0; i < npcs.length; i++) {
     const entry = npcs[i];
     if (!entry) continue;
-    const npc = { ...entry, tags: Array.isArray(entry.tags) ? entry.tags.slice() : [] };
+    const npc = cloneNpcDescriptor(entry);
     if (!npc.spawnId) continue;
     bySpawnId[npc.spawnId] = npc;
     const merchantId = normalizeAlias(npc.merchantId);

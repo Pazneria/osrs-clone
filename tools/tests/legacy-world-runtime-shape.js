@@ -9,6 +9,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
+  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const contractsSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "world.ts"), "utf8");
   const worldDefinitionStart = contractsSource.indexOf("export interface WorldDefinition");
   const worldDefinitionEnd = contractsSource.indexOf("export interface RouteRegistry");
@@ -49,12 +50,12 @@ function run() {
     "legacy bridge should not expose starter-town-only world config helpers"
   );
   assert(
-    worldSource.includes("getWorldLegacyConfig"),
-    "world.js should consume authored world config through the generic world bridge"
+    adapterSource.includes("getCurrentWorldPayload"),
+    "legacy world adapter should expose the legacy-ready world payload"
   );
   assert(
-    !worldSource.includes("getStarterTownLegacyConfig"),
-    "world.js should not depend on starter-town-only bridge helpers"
+    worldSource.includes("getCurrentWorldPayload"),
+    "world.js should consume authored world config through the typed world adapter"
   );
   assert(
     !worldSource.includes("loadStarterTownWorld"),
@@ -63,6 +64,10 @@ function run() {
   assert(
     !bridgeSource.includes("materializeSkillWorldRuntime"),
     "legacy bridge should not expose the procedural skill-world runtime entrypoint"
+  );
+  assert(
+    !worldSource.includes("getWorldLegacyConfig"),
+    "world.js should not reach into the bootstrap bridge for legacy payload shaping"
   );
   assert(
     !worldDefinitionSection.includes("miningZones:"),

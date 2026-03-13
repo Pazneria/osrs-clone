@@ -11,6 +11,7 @@ function run() {
   const authoringSource = fs.readFileSync(path.join(root, "src", "game", "world", "authoring.ts"), "utf8");
   const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
+  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
 
   assert(manifest && Array.isArray(manifest.worlds), "world manifest should define a worlds array");
@@ -26,7 +27,8 @@ function run() {
   assert(bridgeSource.includes("activateWorld"), "legacy bridge should expose active-world switching");
   assert(bridgeSource.includes("getBootstrapResult"), "legacy bridge should expose bootstrap lookup by world id");
   assert(!bridgeSource.includes("getStarterTownLegacyConfig"), "legacy bridge should not expose starter-town-only authored config");
-  assert(worldSource.includes("getWorldLegacyConfig"), "world.js should resolve world config through the generic bridge");
+  assert(adapterSource.includes("getCurrentWorldPayload"), "legacy world adapter should expose current-world payload lookup");
+  assert(worldSource.includes("getCurrentWorldPayload"), "world.js should resolve world config through the typed legacy world adapter");
   assert(!worldSource.includes("getStarterTownLegacyConfig"), "world.js should not call starter-town-only config helpers");
 
   console.log("World registry guard passed.");

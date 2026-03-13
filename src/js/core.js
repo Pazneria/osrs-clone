@@ -94,16 +94,13 @@
             return tileId === TileId.DOOR_CLOSED || tileId === TileId.DOOR_OPEN;
         }
 
+        const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;
         function resolveDefaultWorldSpawn() {
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getDefaultSpawn === 'function') {
-                const spawn = window.WorldBootstrapRuntime.getDefaultSpawn();
-                if (spawn && Number.isFinite(spawn.x) && Number.isFinite(spawn.y) && Number.isFinite(spawn.z)) {
-                    return {
-                        x: Math.floor(spawn.x),
-                        y: Math.floor(spawn.y),
-                        z: Math.floor(spawn.z)
-                    };
-                }
+            if (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldDefaultSpawn === 'function') {
+                return worldAdapterRuntime.getWorldDefaultSpawn(null, {
+                    mapSize: MAP_SIZE,
+                    planes: PLANES
+                });
             }
             return { x: 205, y: 210, z: 0 };
         }
@@ -738,113 +735,25 @@
             return true;
         }
         function getWorldGameContext() {
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getGameContext === 'function') {
-                return window.WorldBootstrapRuntime.getGameContext();
+            if (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldGameContext === 'function') {
+                return worldAdapterRuntime.getWorldGameContext();
             }
             return window.GameContext || null;
         }
-        function getWorldManifest() {
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getWorldManifest === 'function') {
-                return window.WorldBootstrapRuntime.getWorldManifest();
-            }
-            return { version: '', worlds: [] };
-        }
-        function getKnownWorldEntries() {
-            const manifest = getWorldManifest();
-            return manifest && Array.isArray(manifest.worlds) ? manifest.worlds : [];
-        }
-        function getWorldManifestEntry(worldId) {
-            const targetWorldId = String(worldId || '').trim();
-            if (!targetWorldId) return null;
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getWorldManifestEntry === 'function') {
-                try {
-                    return window.WorldBootstrapRuntime.getWorldManifestEntry(targetWorldId);
-                } catch (error) {
-                    return null;
-                }
-            }
-            const worlds = getKnownWorldEntries();
-            for (let i = 0; i < worlds.length; i++) {
-                const entry = worlds[i];
-                if (entry && entry.worldId === targetWorldId) return entry;
-            }
-            return null;
-        }
-        function isKnownWorldId(worldId) {
-            return !!getWorldManifestEntry(worldId);
-        }
-        function resolveKnownWorldId(worldId, fallbackWorldId = null) {
-            const requestedWorldId = String(worldId || '').trim();
-            if (requestedWorldId && isKnownWorldId(requestedWorldId)) return requestedWorldId;
-
-            const fallbackKey = String(fallbackWorldId || '').trim();
-            if (fallbackKey && isKnownWorldId(fallbackKey)) return fallbackKey;
-
-            const activeWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
-                ? String(gameSessionRuntime.resolveCurrentWorldId() || '').trim()
-                : '';
-            if (activeWorldId && isKnownWorldId(activeWorldId)) return activeWorldId;
-
-            const worlds = getKnownWorldEntries();
-            if (worlds.length > 0 && worlds[0] && typeof worlds[0].worldId === 'string' && worlds[0].worldId) {
-                return worlds[0].worldId;
-            }
-            return 'starter_town';
-        }
-        function getWorldLabel(worldId) {
-            const entry = getWorldManifestEntry(worldId);
-            return entry && entry.label ? entry.label : String(worldId || 'Unknown World');
-        }
-        function getWorldDefaultSpawn(worldId) {
-            const resolvedWorldId = resolveKnownWorldId(worldId);
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getDefaultSpawn === 'function') {
-                const spawn = window.WorldBootstrapRuntime.getDefaultSpawn(resolvedWorldId);
-                if (spawn && Number.isFinite(spawn.x) && Number.isFinite(spawn.y) && Number.isFinite(spawn.z)) {
-                    return {
-                        x: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawn.x))),
-                        y: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawn.y))),
-                        z: Math.max(0, Math.min(PLANES - 1, Math.floor(spawn.z)))
-                    };
-                }
-            }
-            const entry = getWorldManifestEntry(resolvedWorldId);
-            const fallbackSpawn = entry && entry.defaultSpawn ? entry.defaultSpawn : { x: 205, y: 210, z: 0 };
-            return {
-                x: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(fallbackSpawn.x))),
-                y: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(fallbackSpawn.y))),
-                z: Math.max(0, Math.min(PLANES - 1, Math.floor(fallbackSpawn.z)))
-            };
-        }
-        function sanitizeWorldSpawn(spawnLike, worldId) {
-            if (!spawnLike || !Number.isFinite(spawnLike.x) || !Number.isFinite(spawnLike.y) || !Number.isFinite(spawnLike.z)) {
-                return getWorldDefaultSpawn(worldId);
-            }
-            return {
-                x: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawnLike.x))),
-                y: Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(spawnLike.y))),
-                z: Math.max(0, Math.min(PLANES - 1, Math.floor(spawnLike.z)))
-            };
-        }
-        function activateWorldContext(worldId, fallbackWorldId = null) {
-            const resolvedWorldId = resolveKnownWorldId(worldId, fallbackWorldId);
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.activateWorld === 'function') {
-                window.WorldBootstrapRuntime.activateWorld(resolvedWorldId);
-            }
-            const activeSession = getGameSession();
-            if (activeSession) {
-                activeSession.currentWorldId = resolvedWorldId;
-                if (activeSession.runtime && typeof activeSession.runtime === 'object') {
-                    activeSession.runtime.currentWorldId = resolvedWorldId;
-                }
-            }
-            return resolvedWorldId;
-        }
         function travelToWorld(worldId, options = {}) {
-            const requestedWorldId = String(worldId || '').trim();
-            if (!requestedWorldId || !isKnownWorldId(requestedWorldId)) return false;
+            if (!worldAdapterRuntime || typeof worldAdapterRuntime.resolveTravelTarget !== 'function') return false;
+            const travelTarget = worldAdapterRuntime.resolveTravelTarget(worldId, {
+                spawn: options && options.spawn,
+                label: options && options.label,
+                fallbackWorldId: 'starter_town',
+                mapSize: MAP_SIZE,
+                planes: PLANES,
+                activate: true
+            });
+            if (!travelTarget || !travelTarget.ok || !travelTarget.worldId || !travelTarget.spawn) return false;
 
-            const resolvedWorldId = activateWorldContext(requestedWorldId, resolveKnownWorldId(null, 'starter_town'));
-            const spawn = sanitizeWorldSpawn(options && options.spawn, resolvedWorldId);
+            const resolvedWorldId = travelTarget.worldId;
+            const spawn = travelTarget.spawn;
 
             pendingAction = null;
             groundItems = [];
@@ -889,9 +798,7 @@
             syncGameSessionState();
             if (typeof renderInventory === 'function') renderInventory();
             if (typeof updateCameraNow === 'function') updateCameraNow();
-            const destinationLabel = (options && typeof options.label === 'string' && options.label.trim())
-                ? options.label.trim()
-                : getWorldLabel(resolvedWorldId);
+            const destinationLabel = travelTarget.label || String(resolvedWorldId || 'Unknown World');
             addChatMessage(`Travelled to ${destinationLabel}.`, 'info');
             return true;
         }
@@ -928,46 +835,24 @@
             }
         }
         function qaListWorlds() {
-            const worlds = getKnownWorldEntries();
-            if (!worlds.length) {
+            const worldSummaries = (worldAdapterRuntime && typeof worldAdapterRuntime.getQaWorldSummaries === 'function')
+                ? worldAdapterRuntime.getQaWorldSummaries()
+                : [];
+            if (!worldSummaries.length) {
                 addChatMessage('No worlds are currently registered.', 'warn');
                 return;
             }
-            const activeWorldId = resolveKnownWorldId(null, 'starter_town');
-            for (let i = 0; i < worlds.length; i++) {
-                const entry = worlds[i];
-                if (!entry) continue;
-                const activeLabel = entry.worldId === activeWorldId ? ' [active]' : '';
-                addChatMessage(`[QA world] ${entry.worldId}${activeLabel} - ${entry.label} @ (${entry.defaultSpawn.x},${entry.defaultSpawn.y},${entry.defaultSpawn.z})`, 'info');
+            for (let i = 0; i < worldSummaries.length; i++) {
+                const summary = worldSummaries[i];
+                if (!summary) continue;
+                const activeLabel = summary.isActive ? ' [active]' : '';
+                addChatMessage(`[QA world] ${summary.worldId}${activeLabel} - ${summary.label} @ (${summary.defaultSpawn.x},${summary.defaultSpawn.y},${summary.defaultSpawn.z})`, 'info');
             }
         }
         function qaTravelWorld(worldIdLike) {
-            const needle = String(worldIdLike || '').trim().toLowerCase();
-            if (!needle) return false;
-            const worlds = getKnownWorldEntries();
-            let match = null;
-            for (let i = 0; i < worlds.length; i++) {
-                const entry = worlds[i];
-                if (!entry || !entry.worldId) continue;
-                const worldKey = String(entry.worldId).toLowerCase();
-                const labelKey = String(entry.label || '').toLowerCase();
-                if (worldKey === needle || labelKey === needle) {
-                    match = entry;
-                    break;
-                }
-            }
-            if (!match) {
-                for (let i = 0; i < worlds.length; i++) {
-                    const entry = worlds[i];
-                    if (!entry || !entry.worldId) continue;
-                    const worldKey = String(entry.worldId).toLowerCase();
-                    const labelKey = String(entry.label || '').toLowerCase();
-                    if (worldKey.includes(needle) || labelKey.includes(needle)) {
-                        match = entry;
-                        break;
-                    }
-                }
-            }
+            const match = (worldAdapterRuntime && typeof worldAdapterRuntime.matchQaWorld === 'function')
+                ? worldAdapterRuntime.matchQaWorld(worldIdLike)
+                : null;
             if (!match) return false;
             return travelToWorld(match.worldId, {
                 spawn: match.defaultSpawn,
@@ -2686,9 +2571,16 @@
             const startupRequestedWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                 ? gameSessionRuntime.resolveCurrentWorldId()
                 : 'starter_town';
-            const startupWorldId = activateWorldContext(startupRequestedWorldId, 'starter_town');
+            const startupWorldId = (worldAdapterRuntime && typeof worldAdapterRuntime.activateWorldContext === 'function')
+                ? worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, 'starter_town')
+                : 'starter_town';
             if (startupWorldId !== startupRequestedWorldId) {
-                const fallbackSpawn = getWorldDefaultSpawn(startupWorldId);
+                const fallbackSpawn = (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldDefaultSpawn === 'function')
+                    ? worldAdapterRuntime.getWorldDefaultSpawn(startupWorldId, {
+                        mapSize: MAP_SIZE,
+                        planes: PLANES
+                    })
+                    : DEFAULT_WORLD_SPAWN;
                 playerState.x = fallbackSpawn.x;
                 playerState.y = fallbackSpawn.y;
                 playerState.z = fallbackSpawn.z;

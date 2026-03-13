@@ -1,12 +1,137 @@
 // --- Rest of ThreeJS & Engine Init ---
+        function applyColorTextureSettings(texture, filter = 'nearest') {
+            if (!texture) return texture;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            if (filter === 'nearest') {
+                texture.magFilter = THREE.NearestFilter;
+                texture.minFilter = THREE.NearestFilter;
+            } else if (filter === 'linear') {
+                texture.magFilter = THREE.LinearFilter;
+                texture.minFilter = THREE.LinearFilter;
+            }
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function getWaterMaterialCaches() {
+            if (!sharedMaterials.waterSurfaceCache) sharedMaterials.waterSurfaceCache = Object.create(null);
+            if (!sharedMaterials.waterShoreCache) sharedMaterials.waterShoreCache = Object.create(null);
+            if (!Array.isArray(sharedMaterials.waterAnimatedMaterials)) sharedMaterials.waterAnimatedMaterials = [];
+            return {
+                surface: sharedMaterials.waterSurfaceCache,
+                shore: sharedMaterials.waterShoreCache,
+                animated: sharedMaterials.waterAnimatedMaterials
+            };
+        }
+
+        const PIER_DECK_TOP_HEIGHT = 0.28;
+        const PIER_DECK_THICKNESS = 0.14;
+        const PIER_WATER_SURFACE_HEIGHT = -0.075;
+
+        function buildWaterMaterialKey(tokens) {
+            return [
+                tokens.shallowColor,
+                tokens.deepColor,
+                tokens.foamColor,
+                tokens.shoreColor,
+                tokens.rippleColor,
+                tokens.highlightColor,
+                tokens.opacity,
+                tokens.shoreOpacity
+            ].join(':');
+        }
+
+        function createWaterSurfaceMaterial(tokens) {
+            return new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: false,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uShallowColor: { value: new THREE.Color(tokens.shallowColor) },
+                    uDeepColor: { value: new THREE.Color(tokens.deepColor) },
+                    uFoamColor: { value: new THREE.Color(tokens.foamColor) },
+                    uRippleColor: { value: new THREE.Color(tokens.rippleColor) },
+                    uHighlightColor: { value: new THREE.Color(tokens.highlightColor) },
+                    uOpacity: { value: Number.isFinite(tokens.opacity) ? tokens.opacity : 0.86 }
+                },
+                vertexShader: `
+                    uniform float uTime;
+                    attribute vec2 waterData;
+                    varying vec3 vWorldPos;
+                    varying float vDepth;
+                    varying float vShore;
+                    void main() {
+                        vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                        float waveA = sin((worldPos.x * 0.17) + (uTime * 0.72) + (worldPos.z * 0.11));
+                        float waveB = cos((worldPos.z * 0.21) - (uTime * 0.56) + (worldPos.x * 0.07));
+                        float wave = (waveA + waveB) * 0.014 * (0.55 + (waterData.x * 0.45));
+                        vec3 transformed = position;
+                        transformed.y += wave;
+                        vec4 displacedWorld = modelMatrix * vec4(transformed, 1.0);
+                        vWorldPos = displacedWorld.xyz;
+                        vDepth = clamp(waterData.x, 0.0, 1.0);
+                        vShore = clamp(waterData.y, 0.0, 1.0);
+                        gl_Position = projectionMatrix * viewMatrix * displacedWorld;
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uShallowColor;
+                    uniform vec3 uDeepColor;
+                    uniform vec3 uFoamColor;
+                    uniform vec3 uRippleColor;
+                    uniform vec3 uHighlightColor;
+                    uniform float uOpacity;
+                    varying vec3 vWorldPos;
+                    varying float vDepth;
+                    varying float vShore;
+                    void main() {
+                        float ripple = sin((vWorldPos.x * 0.36) + (uTime * 1.14)) * cos((vWorldPos.z * 0.28) - (uTime * 0.92));
+                        float wideRipple = sin((vWorldPos.x + vWorldPos.z) * 0.12 - (uTime * 0.44));
+                        float rippleMix = (ripple * 0.5) + (wideRipple * 0.5);
+                        float depthMix = smoothstep(0.18, 0.96, vDepth);
+                        vec3 color = mix(uShallowColor, uDeepColor, depthMix);
+                        color += uRippleColor * (rippleMix * 0.045);
+                        color = mix(color, uFoamColor, vShore * 0.24);
+                        float highlight = smoothstep(0.52, 1.0, rippleMix) * (0.04 + (depthMix * 0.05));
+                        color += uHighlightColor * highlight;
+                        gl_FragColor = vec4(clamp(color, 0.0, 1.0), uOpacity);
+                    }
+                `
+            });
+        }
+
+        function getWaterSurfaceMaterial(tokens) {
+            const caches = getWaterMaterialCaches();
+            const key = buildWaterMaterialKey(tokens);
+            if (!caches.surface[key]) {
+                const material = createWaterSurfaceMaterial(tokens);
+                material.userData = Object.assign({}, material.userData, { waterAnimated: true });
+                caches.surface[key] = material;
+                caches.animated.push(material);
+            }
+            return caches.surface[key];
+        }
+
+        function getWaterShoreMaterial(tokens) {
+            const caches = getWaterMaterialCaches();
+            const key = buildWaterMaterialKey(tokens);
+            if (!caches.shore[key]) {
+                caches.shore[key] = new THREE.MeshBasicMaterial({
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: Number.isFinite(tokens.shoreOpacity) ? Math.max(tokens.shoreOpacity, 0.78) : 0.78,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                });
+            }
+            return caches.shore[key];
+        }
 
         function initSharedAssets() {
             sharedGeometries.ground = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE);
             sharedGeometries.ground.rotateX(-Math.PI / 2);
             sharedGeometries.tileColumn = new THREE.BoxGeometry(1, 1, 1);
-            sharedGeometries.waterPlane = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-            sharedGeometries.shoreHalfNS = new THREE.PlaneGeometry(1, 0.5).rotateX(-Math.PI / 2);
-            sharedGeometries.shoreHalfEW = new THREE.PlaneGeometry(0.5, 1).rotateX(-Math.PI / 2);
             sharedGeometries.fishingSpotMarker = new THREE.CylinderGeometry(0.15, 0.15, 0.25, 10);
 
             sharedGeometries.treeTrunk = new THREE.CylinderGeometry(0.16, 0.28, 2.0, 6).translate(0, 1.0, 0);
@@ -35,12 +160,9 @@
             sharedGeometries.castleWall = new THREE.BoxGeometry(1, 3, 1).translate(0, 1.5, 0);
             sharedGeometries.castleTower = new THREE.BoxGeometry(1.22, 4, 1.22).translate(0, 2.0, 0);
 
-            sharedMaterials.ground = new THREE.MeshLambertMaterial({ color: 0x2d4a22 });
-            sharedMaterials.grassTile = new THREE.MeshLambertMaterial({ color: 0x355f2c });
-            sharedMaterials.shoreTile = new THREE.MeshLambertMaterial({ color: 0x7f6a3c });
-            sharedMaterials.waterShallow = new THREE.MeshLambertMaterial({ color: 0x2b6fa3, transparent: true, opacity: 0.78 });
-            sharedMaterials.waterDeep = new THREE.MeshLambertMaterial({ color: 0x174d7a, transparent: true, opacity: 0.85 });
-            sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0x7fd8ff });
+            sharedMaterials.ground = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            sharedMaterials.grassTile = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
             sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x9aa5ae, flatShading: true });
             sharedMaterials.rockDepleted = new THREE.MeshLambertMaterial({ color: 0x5a5f68, flatShading: true });
@@ -64,14 +186,16 @@
             const grassCanvas = document.createElement('canvas');
             grassCanvas.width = 64; grassCanvas.height = 64;
             const gCtx = grassCanvas.getContext('2d');
-            gCtx.fillStyle = '#4f7a3d';
+            gCtx.fillStyle = '#739966';
             gCtx.fillRect(0, 0, 64, 64);
             for (let i = 0; i < 900; i++) {
-                const shade = 68 + Math.floor(Math.random() * 55);
-                gCtx.fillStyle = `rgb(${shade - 24}, ${shade}, ${shade - 32})`;
+                const green = 92 + Math.floor(Math.random() * 52);
+                const red = Math.max(56, green - (18 + Math.floor(Math.random() * 12)));
+                const blue = Math.max(42, green - (32 + Math.floor(Math.random() * 16)));
+                gCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
                 gCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
             }
-            const grassTex = new THREE.CanvasTexture(grassCanvas);
+            const grassTex = applyColorTextureSettings(new THREE.CanvasTexture(grassCanvas));
             grassTex.wrapS = THREE.RepeatWrapping;
             grassTex.wrapT = THREE.RepeatWrapping;
             grassTex.repeat.set(18, 18);
@@ -92,7 +216,7 @@
                 bCtx.fillStyle = 'rgba(30, 18, 10, ' + (0.08 + Math.random() * 0.25) + ')';
                 bCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 3);
             }
-            const barkTex = new THREE.CanvasTexture(barkCanvas);
+            const barkTex = applyColorTextureSettings(new THREE.CanvasTexture(barkCanvas));
             barkTex.wrapS = THREE.RepeatWrapping;
             barkTex.wrapT = THREE.RepeatWrapping;
             barkTex.repeat.set(1, 3.5);
@@ -102,70 +226,25 @@
             const leafCanvas = document.createElement('canvas');
             leafCanvas.width = 64; leafCanvas.height = 64;
             const lCtx = leafCanvas.getContext('2d');
-            lCtx.fillStyle = '#4a6f2a';
+            lCtx.fillStyle = '#82a171';
             lCtx.fillRect(0, 0, 64, 64);
             for (let i = 0; i < 900; i++) {
-                const tone = 80 + Math.floor(Math.random() * 95);
-                lCtx.fillStyle = 'rgba(' + Math.max(42, tone - 45) + ', ' + tone + ', ' + Math.max(28, tone - 58) + ', ' + (0.4 + Math.random() * 0.45) + ')';
+                const green = 112 + Math.floor(Math.random() * 60);
+                const red = Math.max(74, green - (24 + Math.floor(Math.random() * 10)));
+                const blue = Math.max(56, green - (40 + Math.floor(Math.random() * 14)));
+                lCtx.fillStyle = 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + (0.42 + Math.random() * 0.42) + ')';
                 lCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
             }
             for (let i = 0; i < 120; i++) {
-                lCtx.fillStyle = 'rgba(155, 128, 64, ' + (0.06 + Math.random() * 0.1) + ')';
+                lCtx.fillStyle = 'rgba(182, 168, 112, ' + (0.04 + Math.random() * 0.06) + ')';
                 lCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 2, 2);
             }
-            const leafTex = new THREE.CanvasTexture(leafCanvas);
+            const leafTex = applyColorTextureSettings(new THREE.CanvasTexture(leafCanvas));
             leafTex.wrapS = THREE.RepeatWrapping;
             leafTex.wrapT = THREE.RepeatWrapping;
             leafTex.repeat.set(1.8, 1.8);
             sharedMaterials.leaves.color.setHex(0xffffff);
             sharedMaterials.leaves.map = leafTex;
-
-            const makeWaterTexture = (topColor, bottomColor, foamAlpha) => {
-                const waterCanvas = document.createElement('canvas');
-                waterCanvas.width = 64; waterCanvas.height = 64;
-                const wCtx = waterCanvas.getContext('2d');
-                const grad = wCtx.createLinearGradient(0, 0, 0, 64);
-                grad.addColorStop(0, topColor);
-                grad.addColorStop(1, bottomColor);
-                wCtx.fillStyle = grad;
-                wCtx.fillRect(0, 0, 64, 64);
-                for (let y = 0; y < 64; y += 4) {
-                    wCtx.fillStyle = `rgba(196, 235, 255, ${foamAlpha + Math.random() * foamAlpha})`;
-                    wCtx.fillRect(0, y, 64, 1);
-                }
-                for (let i = 0; i < 140; i++) {
-                    wCtx.fillStyle = `rgba(20, 55, 82, ${0.08 + Math.random() * 0.08})`;
-                    wCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 2, 1);
-                }
-                const tex = new THREE.CanvasTexture(waterCanvas);
-                tex.wrapS = THREE.RepeatWrapping;
-                tex.wrapT = THREE.RepeatWrapping;
-                return tex;
-            };
-
-            const waterShallowTex = makeWaterTexture('#3c8fc0', '#236792', 0.07);
-            waterShallowTex.repeat.set(2.8, 2.8);
-            const waterDeepTex = makeWaterTexture('#255f8f', '#123c61', 0.05);
-            waterDeepTex.repeat.set(2.4, 2.4);
-            sharedMaterials.waterShallow.map = waterShallowTex;
-            sharedMaterials.waterDeep.map = waterDeepTex;
-
-            const shoreCanvas = document.createElement('canvas');
-            shoreCanvas.width = 64; shoreCanvas.height = 64;
-            const sCtx = shoreCanvas.getContext('2d');
-            sCtx.fillStyle = '#c9b07f';
-            sCtx.fillRect(0, 0, 64, 64);
-            for (let i = 0; i < 700; i++) {
-                const tint = 170 + Math.floor(Math.random() * 55);
-                sCtx.fillStyle = `rgb(${tint}, ${tint - 18}, ${tint - 48})`;
-                sCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
-            }
-            const shoreTex = new THREE.CanvasTexture(shoreCanvas);
-            shoreTex.wrapS = THREE.RepeatWrapping;
-            shoreTex.wrapT = THREE.RepeatWrapping;
-            shoreTex.repeat.set(4, 4);
-            sharedMaterials.shoreTile.color.setHex(0xffffff);
-            sharedMaterials.shoreTile.map = shoreTex;
 
             const makeNoiseTexture = (baseHex, vMin, vMax, speckleCount, patchCount = 42, patchSize = 5) => {
                 const texCanvas = document.createElement('canvas');
@@ -201,11 +280,9 @@
                     tCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
                 }
 
-                const tex = new THREE.CanvasTexture(texCanvas);
+                const tex = applyColorTextureSettings(new THREE.CanvasTexture(texCanvas));
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
-                tex.magFilter = THREE.NearestFilter;
-                tex.minFilter = THREE.NearestFilter;
                 return tex;
             };
 
@@ -233,11 +310,9 @@
                     }
                 }
 
-                const tex = new THREE.CanvasTexture(canvas);
+                const tex = applyColorTextureSettings(new THREE.CanvasTexture(canvas));
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
-                tex.magFilter = THREE.NearestFilter;
-                tex.minFilter = THREE.NearestFilter;
                 return tex;
             };
 
@@ -254,7 +329,7 @@
                 return tex;
             };
 
-            const castleStoneTex = makeBrickTexture(0x8d6f60, 0x5b4d45, 16);
+            const castleStoneTex = makeBrickTexture(0x927560, 0x77685d, 14);
             castleStoneTex.repeat.set(1.55, 1.55);
             sharedMaterials.castleStone.color.setHex(0xffffff);
             sharedMaterials.castleStone.map = castleStoneTex;
@@ -266,12 +341,12 @@
             sharedMaterials.floor6.color.setHex(0xffffff);
             sharedMaterials.floor6.map = floorWoodTex;
 
-            const floorStoneTex = makeNoiseTexture(0x6f7680, -34, 24, 560, 56, 9);
+            const floorStoneTex = makeNoiseTexture(0xaea694, -20, 18, 560, 56, 9);
             floorStoneTex.repeat.set(1.75, 1.75);
             sharedMaterials.floor7.color.setHex(0xffffff);
             sharedMaterials.floor7.map = floorStoneTex;
 
-            const floorBrickTex = makeNoiseTexture(0x7d2a1c, -20, 16, 740, 54, 7);
+            const floorBrickTex = makeNoiseTexture(0x7e5648, -10, 12, 740, 54, 7);
             floorBrickTex.repeat.set(2.0, 2.0);
             sharedMaterials.floor8.color.setHex(0xffffff);
             sharedMaterials.floor8.map = floorBrickTex;
@@ -281,15 +356,16 @@
             sharedMaterials.boothWood.color.setHex(0xffffff);
             sharedMaterials.boothWood.map = boothWoodTex;
 
-            const stairUpTex = makeNoiseTexture(0xb8b4a6, -22, 14, 520, 42, 7);
+            const stairUpTex = makeNoiseTexture(0xd7cfb9, -18, 16, 520, 42, 7);
             stairUpTex.repeat.set(1.6, 1.6);
             sharedMaterials.stairsUp.color.setHex(0xffffff);
             sharedMaterials.stairsUp.map = stairUpTex;
 
-            const stairDownTex = makeNoiseTexture(0x43474f, -16, 12, 520, 42, 7);
+            const stairDownTex = makeNoiseTexture(0x7e7566, -12, 14, 520, 42, 7);
             stairDownTex.repeat.set(1.6, 1.6);
             sharedMaterials.stairsDown.color.setHex(0xffffff);
             sharedMaterials.stairsDown.map = stairDownTex;
+            getWaterMaterialCaches();
             const dirCanvas = document.createElement('canvas');
             dirCanvas.width = 256; dirCanvas.height = 128;
             const dCtx = dirCanvas.getContext('2d');
@@ -304,12 +380,16 @@
             dCtx.fillText('NORTH  ^', 128, 28);
             dCtx.fillText('WEST  <   +   EAST  >', 128, 66);
             dCtx.fillText('SOUTH  v', 128, 104);
-            sharedMaterials.directionSignMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(dirCanvas) });
+            sharedMaterials.directionSignMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(dirCanvas))
+            });
 
 
             const bankCanvas = document.createElement('canvas'); bankCanvas.width = 256; bankCanvas.height = 64;
             const bankCtx = bankCanvas.getContext('2d'); bankCtx.fillStyle = '#000000'; bankCtx.fillRect(0,0,256,64); bankCtx.fillStyle = '#c8aa6e'; bankCtx.font = 'bold 48px monospace'; bankCtx.textAlign = 'center'; bankCtx.textBaseline = 'middle'; bankCtx.fillText('BANK', 128, 36);
-            sharedMaterials.bankTexPlaneMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(bankCanvas) });
+            sharedMaterials.bankTexPlaneMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(bankCanvas))
+            });
         }
 
         function createPickaxePoseReferenceRig() {
@@ -530,9 +610,7 @@
             ctx.textBaseline = 'middle';
             ctx.fillText(labelText, canvas.width / 2, canvas.height / 2 + 1);
 
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
+            const texture = applyColorTextureSettings(new THREE.CanvasTexture(canvas), 'linear');
             const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false });
             const sprite = new THREE.Sprite(material);
             sprite.scale.set(0.9, 0.45, 1);
@@ -616,23 +694,28 @@
         function initThreeJS() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
+            scene.background = new THREE.Color(0xa7ceda);
             // Keep fog only at the far render horizon so nearby space stays clear.
-            scene.fog = new THREE.Fog(0x87CEEB, 140, 240); 
+            scene.fog = new THREE.Fog(0xdce7ea, 255, 440); 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 260);
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
             renderer.shadowMap.enabled = false;
             renderer.shadowMap.type = THREE.BasicShadowMap;
             container.appendChild(renderer.domElement);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(10, 40, 10);
+            scene.add(new THREE.HemisphereLight(0xfff2d6, 0xb0c29a, 1.08));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.88));
+            const dirLight = new THREE.DirectionalLight(0xffefc0, 1.18);
+            dirLight.position.set(18, 44, 14);
             dirLight.castShadow = false;
             dirLight.shadow.mapSize.width = 256; dirLight.shadow.mapSize.height = 256;
             dirLight.shadow.camera.left = -50; dirLight.shadow.camera.right = 50; dirLight.shadow.camera.top = 50; dirLight.shadow.camera.bottom = -50;
             scene.add(dirLight);
+            const fillLight = new THREE.DirectionalLight(0xcadbe2, 0.3);
+            fillLight.position.set(-20, 22, -16);
+            scene.add(fillLight);
             playerRig = createPlayerRigFromCurrentAppearance();
             scene.add(playerRig);
             raycaster = new THREE.Raycaster();
@@ -654,10 +737,12 @@
             uiCamera.lookAt(0, 0.8, 0); 
             uiRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
             uiRenderer.setSize(width, height);
+            uiRenderer.outputColorSpace = THREE.SRGBColorSpace;
             uiRenderer.domElement.style.margin = 'auto'; 
             container.appendChild(uiRenderer.domElement);
-            uiScene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            uiScene.add(new THREE.HemisphereLight(0xfff4de, 0xb6c7a2, 0.9));
+            uiScene.add(new THREE.AmbientLight(0xffffff, 1.0));
+            const dirLight = new THREE.DirectionalLight(0xffefc8, 0.9);
             dirLight.position.set(2, 5, 3);
             uiScene.add(dirLight);
             uiPlayerRig = createPlayerRigFromCurrentAppearance();
@@ -1434,6 +1519,7 @@
         function getGroundItemSpriteTexture(path) {
             if (groundItemSpriteTextureCache[path]) return groundItemSpriteTextureCache[path];
             const texture = new THREE.TextureLoader().load(path);
+            texture.colorSpace = THREE.SRGBColorSpace;
             texture.magFilter = THREE.NearestFilter;
             texture.minFilter = THREE.NearestFilter;
             texture.generateMipmaps = false;
@@ -1965,94 +2051,39 @@
                 const n3 = Math.sin((x + y) * 0.03) * 0.05;
                 return n1 + n2 + n3;
             };
-            const worldBootstrap = (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getWorldLegacyConfig === 'function')
-                ? window.WorldBootstrapRuntime.getWorldLegacyConfig()
+            const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;
+            const worldPayload = (worldAdapterRuntime && typeof worldAdapterRuntime.getCurrentWorldPayload === 'function')
+                ? worldAdapterRuntime.getCurrentWorldPayload()
                 : null;
-            const lakeDefs = (worldBootstrap && Array.isArray(worldBootstrap.lakeDefs) && worldBootstrap.lakeDefs.length > 0)
-                ? worldBootstrap.lakeDefs.map((lake) => Object.assign({}, lake))
-                : [
-                    { cx: 92, cy: 118, rx: 28, ry: 20 },
-                    { cx: 312, cy: 116, rx: 24, ry: 18 },
-                    { cx: 100, cy: 308, rx: 30, ry: 22 },
-                    { cx: 308, cy: 292, rx: 26, ry: 20 },
-                    { cx: 204, cy: 76, rx: 18, ry: 14 }
-                ];
-            const castleFrontPond = (worldBootstrap && worldBootstrap.castleFrontPond)
-                ? Object.assign({}, worldBootstrap.castleFrontPond)
-                : { cx: 205, cy: 233, rx: 13, ry: 9 };
-            const deepWaterCenter = (worldBootstrap && worldBootstrap.deepWaterCenter)
-                ? Object.assign({}, worldBootstrap.deepWaterCenter)
-                : { xMin: 204, xMax: 206, yMin: 232, yMax: 234 };
-            const pierConfig = (worldBootstrap && worldBootstrap.pier)
-                ? Object.assign({}, worldBootstrap.pier)
-                : { xMin: 204, xMax: 206, yStart: 224, yEnd: 231, entryY: 223 };
-            const stampedStructures = (worldBootstrap && Array.isArray(worldBootstrap.stampedStructures))
-                ? worldBootstrap.stampedStructures.map((structure) => Object.assign({}, structure))
+            if (!worldPayload) {
+                throw new Error('LegacyWorldAdapterRuntime is unavailable.');
+            }
+            const lakeDefs = worldPayload.lakeDefs;
+            const castleFrontPond = worldPayload.castleFrontPond;
+            const deepWaterCenter = worldPayload.deepWaterCenter;
+            const pierConfig = worldPayload.pierConfig;
+            const waterRenderPayload = worldPayload.waterRenderPayload;
+            const stampedStructures = worldPayload.stampedStructures;
+            const stampMap = worldPayload.stampMap;
+            const smithingStations = worldPayload.smithingStations;
+            const fishingTrainingRouteDefs = worldPayload.fishingTrainingRouteDefs;
+            const cookingRouteSpecs = worldPayload.cookingRouteSpecs;
+            const miningTrainingRouteDefs = worldPayload.miningTrainingRouteDefs;
+            const runecraftingRouteDefs = worldPayload.runecraftingRouteDefs;
+            const woodcuttingTrainingRouteDefs = worldPayload.woodcuttingTrainingRouteDefs;
+            const miningNodePlacements = worldPayload.miningNodePlacements;
+            const authoredAltarPlacements = worldPayload.authoredAltarPlacements;
+            const woodcuttingNodePlacements = worldPayload.woodcuttingNodePlacements;
+            const staircaseLandmarks = worldPayload.staircaseLandmarks;
+            const doorLandmarks = worldPayload.doorLandmarks;
+            const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
+            furnacesToRender = worldPayload.furnacesToRender.map((station) => Object.assign({}, station));
+            anvilsToRender = worldPayload.anvilsToRender.map((station) => Object.assign({}, station));
+            const waterRenderBodies = Array.isArray(waterRenderPayload && waterRenderPayload.bodies)
+                ? waterRenderPayload.bodies.slice()
                 : [];
-            const stampMap = (worldBootstrap && worldBootstrap.stampMap && typeof worldBootstrap.stampMap === 'object')
-                ? worldBootstrap.stampMap
-                : null;
-            const smithingStations = (worldBootstrap && Array.isArray(worldBootstrap.smithingStations))
-                ? worldBootstrap.smithingStations.map((station) => Object.assign({}, station))
-                : [
-                    { type: 'FURNACE', x: 226, y: 232, z: 0, facingYaw: -Math.PI / 2, footprintW: 2, footprintD: 3 },
-                    { type: 'ANVIL', x: 226, y: 236, z: 0 }
-                ];
-            const staticMerchantServices = (worldBootstrap && Array.isArray(worldBootstrap.staticMerchants))
-                ? worldBootstrap.staticMerchants.map((service) => Object.assign({}, service))
-                : [];
-            const generalStoreService = (worldBootstrap && worldBootstrap.generalStoreService)
-                ? Object.assign({}, worldBootstrap.generalStoreService)
-                : { merchantId: 'general_store', name: 'Shopkeeper', type: 'MERCHANT', x: 181, y: 235, z: 0, npcType: 2 };
-            const fishingTrainingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.fishingRoutes))
-                ? worldBootstrap.fishingRoutes.map((route) => Object.assign({}, route))
-                : [
-                    { routeId: 'castle_pond_bank', alias: 'pond', label: 'Castle Pond Bank', x: 205, y: 223, z: 0, tags: ['fishing', 'qa', 'starter'] },
-                    { routeId: 'castle_pond_pier', alias: 'pier', label: 'Castle Pond Pier', x: 205, y: 230, z: 0, tags: ['fishing', 'qa', 'starter'] },
-                    { routeId: 'castle_pond_deep_edge', alias: 'deep', label: 'Castle Pond Deep-Water Edge', x: 205, y: 231, z: 0, tags: ['fishing', 'qa', 'starter'] }
-                ];
-            const cookingRouteSpecs = (worldBootstrap && Array.isArray(worldBootstrap.cookingRoutes))
-                ? worldBootstrap.cookingRoutes.map((route) => ({
-                    routeId: route.routeId,
-                    alias: route.alias || null,
-                    label: route.label,
-                    x: route.x,
-                    y: route.y,
-                    z: route.z,
-                    tags: Array.isArray(route.tags) ? route.tags.slice() : [],
-                    fireTiles: Array.isArray(route.fireTiles) ? route.fireTiles.map((tile) => Object.assign({}, tile)) : []
-                }))
-                : [];
-            const miningTrainingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.miningRoutes))
-                ? worldBootstrap.miningRoutes.map((route) => Object.assign({}, route))
-                : [];
-            const runecraftingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.runecraftingRoutes))
-                ? worldBootstrap.runecraftingRoutes.map((route) => Object.assign({}, route))
-                : [];
-            const woodcuttingTrainingRouteDefs = (worldBootstrap && Array.isArray(worldBootstrap.woodcuttingRoutes))
-                ? worldBootstrap.woodcuttingRoutes.map((route) => Object.assign({}, route))
-                : [];
-            const miningNodePlacements = (worldBootstrap && Array.isArray(worldBootstrap.miningNodePlacements))
-                ? worldBootstrap.miningNodePlacements.map((placement) => Object.assign({}, placement))
-                : [];
-            const authoredAltarPlacements = (worldBootstrap && Array.isArray(worldBootstrap.altarPlacements))
-                ? worldBootstrap.altarPlacements.map((placement) => Object.assign({}, placement))
-                : [];
-            const woodcuttingNodePlacements = (worldBootstrap && Array.isArray(worldBootstrap.woodcuttingNodePlacements))
-                ? worldBootstrap.woodcuttingNodePlacements.map((placement) => Object.assign({}, placement))
-                : [];
-            const staircaseLandmarks = (worldBootstrap && Array.isArray(worldBootstrap.staircases))
-                ? worldBootstrap.staircases.map((landmark) => ({
-                    landmarkId: landmark.landmarkId,
-                    tiles: Array.isArray(landmark.tiles) ? landmark.tiles.map((tile) => Object.assign({}, tile)) : []
-                }))
-                : [];
-            const doorLandmarks = (worldBootstrap && Array.isArray(worldBootstrap.doors))
-                ? worldBootstrap.doors.map((door) => Object.assign({}, door))
-                : [];
-            const showcaseTreeDefs = (worldBootstrap && Array.isArray(worldBootstrap.showcaseTrees))
-                ? worldBootstrap.showcaseTrees.map((tree) => Object.assign({}, tree))
-                : [];
+            sharedMaterials.activeWaterRenderBodies = waterRenderBodies;
+            sharedMaterials.activePierConfig = Object.assign({}, pierConfig);
 
             for (let y = 0; y < MAP_SIZE; y++) {
                 for (let x = 0; x < MAP_SIZE; x++) {
@@ -2138,8 +2169,30 @@
                 for (let x = pierXMin; x <= pierXMax; x++) {
                     if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
                     logicalMap[0][y][x] = 6;
-                    heightMap[0][y][x] = -0.03;
+                    heightMap[0][y][x] = PIER_DECK_TOP_HEIGHT;
                 }
+            }
+            for (let y = pierYStart; y <= pierYEnd; y++) {
+                const sideXs = [pierXMin - 1, pierXMax + 1];
+                for (let i = 0; i < sideXs.length; i++) {
+                    const sideX = sideXs[i];
+                    if (!isPierSideWaterTile(pierConfig, sideX, y, 0)) continue;
+                    if (sideX <= 1 || y <= 1 || sideX >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
+                    logicalMap[0][y][sideX] = TileId.WATER_SHALLOW;
+                    heightMap[0][y][sideX] = -0.10;
+                }
+            }
+
+            const pierEntryShoulders = [
+                { x: pierXMin - 1, y: pierYStart },
+                { x: pierXMax + 1, y: pierYStart }
+            ];
+            for (let i = 0; i < pierEntryShoulders.length; i++) {
+                const shoulder = pierEntryShoulders[i];
+                if (!shoulder) continue;
+                if (shoulder.x <= 1 || shoulder.y <= 1 || shoulder.x >= MAP_SIZE - 2 || shoulder.y >= MAP_SIZE - 2) continue;
+                logicalMap[0][shoulder.y][shoulder.x] = TileId.GRASS;
+                heightMap[0][shoulder.y][shoulder.x] = Math.max(0.01, terrainNoise(shoulder.x, shoulder.y));
             }
 
             // Shoreline anchor tile so the pier always has a clean walkable entry from land.
@@ -2150,42 +2203,13 @@
                 heightMap[0][pierEntryY][x] = -0.01;
             }
 
-            const fishingTrainingLocations = fishingTrainingRouteDefs.map((route) => ({
-                routeId: route.routeId,
-                alias: route.alias || null,
-                label: route.label,
-                x: route.x,
-                y: route.y,
-                z: route.z,
-                tags: Array.isArray(route.tags) ? route.tags.slice() : []
-            }));
+            const fishingTrainingLocations = fishingTrainingRouteDefs.slice();
             window.getFishingTrainingLocations = function getFishingTrainingLocations() {
                 return fishingTrainingLocations.slice();
             };
 
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
-            for (let i = 0; i < smithingStations.length; i++) {
-                const station = smithingStations[i];
-                if (!station || station.x <= 1 || station.y <= 1 || station.x >= MAP_SIZE - 2 || station.y >= MAP_SIZE - 2) continue;
-                if (station.type === 'FURNACE') furnacesToRender.push({
-                    x: station.x, y: station.y, z: 0, facingYaw: station.facingYaw,
-                    footprintW: station.footprintW, footprintD: station.footprintD
-                });
-                if (station.type === 'ANVIL') anvilsToRender.push({ x: station.x, y: station.y, z: 0, facingYaw: station.facingYaw });
-            }
-
-            const fishingMerchantSpots = staticMerchantServices.filter((service) => {
-                const tags = Array.isArray(service.tags) ? service.tags : [];
-                return service.type === 'MERCHANT' && tags.includes('fishing');
-            }).map((service) => ({
-                name: service.name,
-                merchantId: service.merchantId,
-                type: Number.isFinite(service.npcType) ? service.npcType : 2,
-                x: service.x,
-                y: service.y,
-                z: Number.isFinite(service.z) ? service.z : 0,
-                facingYaw: service.facingYaw
-            }));
+            const fishingMerchantSpots = worldPayload.fishingMerchantSpots;
             for (let i = 0; i < fishingMerchantSpots.length; i++) {
                 const spot = fishingMerchantSpots[i];
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
@@ -2201,7 +2225,7 @@
                     name: spot.name,
                     merchantId: spot.merchantId,
                     facingYaw: spot.facingYaw,
-                    action: 'Trade'
+                    action: spot.action || 'Trade'
                 });
             }
 
@@ -2388,31 +2412,7 @@
                     logicalMap[0][station.y][station.x] = 16;
                 }
             }
-            const staticMerchantSpots = staticMerchantServices.filter((service) => {
-                const tags = Array.isArray(service.tags) ? service.tags : [];
-                return service.type === 'MERCHANT'
-                    && service.merchantId !== 'fishing_teacher'
-                    && service.merchantId !== 'fishing_supplier'
-                    && service.merchantId !== 'general_store';
-            }).map((service) => ({
-                name: service.name,
-                merchantId: service.merchantId,
-                type: Number.isFinite(service.npcType) ? service.npcType : 2,
-                x: service.x,
-                y: service.y,
-                z: Number.isFinite(service.z) ? service.z : 0,
-                action: typeof service.action === 'string' && service.action ? service.action : 'Trade',
-                travelToWorldId: typeof service.travelToWorldId === 'string' && service.travelToWorldId ? service.travelToWorldId : null,
-                travelSpawn: service.travelSpawn && Number.isFinite(service.travelSpawn.x) && Number.isFinite(service.travelSpawn.y) && Number.isFinite(service.travelSpawn.z)
-                    ? {
-                        x: Math.floor(service.travelSpawn.x),
-                        y: Math.floor(service.travelSpawn.y),
-                        z: Math.floor(service.travelSpawn.z)
-                    }
-                    : null,
-                facingYaw: service.facingYaw,
-                tags: Array.isArray(service.tags) ? service.tags.slice() : []
-            }));
+            const staticMerchantSpots = worldPayload.staticMerchantSpots;
             for (let i = 0; i < staticMerchantSpots.length; i++) {
                 const spot = staticMerchantSpots[i];
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
@@ -2430,7 +2430,7 @@
                     facingYaw: spot.facingYaw,
                     action: spot.action || 'Trade',
                     travelToWorldId: spot.travelToWorldId || null,
-                    travelSpawn: spot.travelSpawn ? Object.assign({}, spot.travelSpawn) : null
+                    travelSpawn: spot.travelSpawn || null
                 });
             }
 
@@ -2479,14 +2479,6 @@
                 });
             }
 
-            const cloneRouteDescriptor = (route) => ({
-                ...route,
-                tags: Array.isArray(route && route.tags) ? route.tags.slice() : []
-            });
-            const cloneAltarRenderPlacement = (altar) => ({
-                ...altar,
-                tags: Array.isArray(altar && altar.tags) ? altar.tags.slice() : []
-            });
             const setMiningRockAt = (placement) => {
                 if (!placement || !placement.oreType) return false;
                 if (!logicalMap[placement.z] || !logicalMap[placement.z][placement.y]) return false;
@@ -2532,9 +2524,9 @@
                 }
             };
 
-            const miningTrainingLocations = miningTrainingRouteDefs.map(cloneRouteDescriptor);
-            const runecraftingRoutes = runecraftingRouteDefs.map(cloneRouteDescriptor);
-            const woodcuttingTrainingLocations = woodcuttingTrainingRouteDefs.map(cloneRouteDescriptor);
+            const miningTrainingLocations = miningTrainingRouteDefs.slice();
+            const runecraftingRoutes = runecraftingRouteDefs.slice();
+            const woodcuttingTrainingLocations = woodcuttingTrainingRouteDefs.slice();
 
             for (let i = 0; i < miningNodePlacements.length; i++) {
                 setMiningRockAt(miningNodePlacements[i]);
@@ -2544,7 +2536,7 @@
                 .filter((placement) => placement && placement.oreType === 'rune_essence')
                 .map((placement) => ({ x: placement.x, y: placement.y, z: placement.z }));
 
-            altarCandidatesToRender = authoredAltarPlacements.map(cloneAltarRenderPlacement);
+            altarCandidatesToRender = authoredAltarPlacements.slice();
             for (let i = 0; i < authoredAltarPlacements.length; i++) {
                 const altar = authoredAltarPlacements[i];
                 if (!altar) continue;
@@ -2582,22 +2574,15 @@
             rebuildRockNodes();
             rebuildTreeNodes();
 
-            const readWorldRouteGroup = (groupId, fallbackRoutes) => {
-                if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getRouteGroup === 'function') {
-                    return window.WorldBootstrapRuntime.getRouteGroup(groupId);
-                }
-                return Array.isArray(fallbackRoutes) ? fallbackRoutes.map(cloneRouteDescriptor) : [];
-            };
-
             window.getMiningTrainingLocations = function getMiningTrainingLocations() {
-                return readWorldRouteGroup('mining', miningTrainingLocations);
+                return miningTrainingLocations.slice();
             };
 
             window.getRunecraftingAltarLocations = function getRunecraftingAltarLocations() {
-                return readWorldRouteGroup('runecrafting', runecraftingRoutes);
+                return runecraftingRoutes.slice();
             };
             window.getRunecraftingAltarNameAt = function getRunecraftingAltarNameAt(x, y, z) {
-                const routes = readWorldRouteGroup('runecrafting', runecraftingRoutes);
+                const routes = runecraftingRoutes;
                 for (let i = 0; i < routes.length; i++) {
                     const route = routes[i];
                     if (!route) continue;
@@ -2606,8 +2591,499 @@
                 return null;
             };
             window.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations() {
-                return readWorldRouteGroup('woodcutting', woodcuttingTrainingLocations);
+                return woodcuttingTrainingLocations.slice();
             };
+        }
+
+        function pointInPolygon(points, x, y) {
+            let inside = false;
+            for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+                const a = points[i];
+                const b = points[j];
+                if (!a || !b) continue;
+                const intersects = ((a.y > y) !== (b.y > y))
+                    && (x < (((b.x - a.x) * (y - a.y)) / ((b.y - a.y) || 0.00001)) + a.x);
+                if (intersects) inside = !inside;
+            }
+            return inside;
+        }
+
+        function waterShapeContains(shape, x, y) {
+            if (!shape || !shape.kind) return false;
+            if (shape.kind === 'ellipse') {
+                if (!Number.isFinite(shape.rx) || !Number.isFinite(shape.ry) || shape.rx <= 0 || shape.ry <= 0) return false;
+                const nx = (x - shape.cx) / shape.rx;
+                const ny = (y - shape.cy) / shape.ry;
+                return ((nx * nx) + (ny * ny)) <= 1.0;
+            }
+            if (shape.kind === 'box') {
+                return x >= shape.xMin && x <= shape.xMax && y >= shape.yMin && y <= shape.yMax;
+            }
+            if (!Array.isArray(shape.points) || shape.points.length < 3) return false;
+            return pointInPolygon(shape.points, x, y);
+        }
+
+        function resolveWaterRenderBodyForTile(waterBodies, x, y) {
+            if (!Array.isArray(waterBodies)) return null;
+            for (let i = waterBodies.length - 1; i >= 0; i--) {
+                const body = waterBodies[i];
+                if (!body || !body.bounds) continue;
+                if (x < body.bounds.xMin || x > body.bounds.xMax || y < body.bounds.yMin || y > body.bounds.yMax) continue;
+                if (waterShapeContains(body.shape, x, y)) return body;
+            }
+            return null;
+        }
+
+        function getDefaultWaterRenderBody() {
+            return {
+                id: 'legacy-water-fallback',
+                shoreline: { width: 0.78, foamWidth: 0.34, skirtDepth: 0.18 },
+                styleTokens: {
+                    shallowColor: 0x78b3c4,
+                    deepColor: 0x3f748d,
+                    foamColor: 0xe5f6fc,
+                    shoreColor: 0xd5c393,
+                    rippleColor: 0xa7e0f0,
+                    highlightColor: 0xf9ffff,
+                    opacity: 0.86,
+                    shoreOpacity: 0.52
+                },
+                surfaceY: -0.075
+            };
+        }
+
+        function findNearbyWaterRenderBodyForTile(waterBodies, x, y, z, maxRadius = 3) {
+            if (!Array.isArray(waterBodies)) return null;
+            for (let radius = 1; radius <= maxRadius; radius++) {
+                for (let ny = Math.max(0, y - radius); ny <= Math.min(MAP_SIZE - 1, y + radius); ny++) {
+                    for (let nx = Math.max(0, x - radius); nx <= Math.min(MAP_SIZE - 1, x + radius); nx++) {
+                        if (!isWaterTileId(logicalMap[z][ny][nx])) continue;
+                        const body = resolveWaterRenderBodyForTile(waterBodies, nx, ny);
+                        if (body) return body;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function resolveVisualWaterRenderBodyForTile(waterBodies, x, y, z) {
+            if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
+            const tile = logicalMap[z][y][x];
+            const pierCovered = isPierVisualCoverageTile(getActivePierConfig(), x, y, z);
+            if (!isWaterTileId(tile) && !pierCovered) return null;
+
+            const directBody = resolveWaterRenderBodyForTile(waterBodies, x, y);
+            if (directBody) return directBody;
+            if (isWaterTileId(tile)) return getDefaultWaterRenderBody();
+            if (pierCovered) return findNearbyWaterRenderBodyForTile(waterBodies, x, y, z) || getDefaultWaterRenderBody();
+            return null;
+        }
+
+        function getWaterSurfaceHeightForTile(waterBodies, x, y, z) {
+            if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
+            if (!isWaterTileId(logicalMap[z][y][x])) return null;
+            const waterBody = resolveWaterRenderBodyForTile(waterBodies, x, y) || getDefaultWaterRenderBody();
+            return Number.isFinite(waterBody.surfaceY) ? waterBody.surfaceY : -0.075;
+        }
+
+        function getWaterDepthWeightForTile(tile) {
+            if (tile === TileId.WATER_DEEP) return 1.0;
+            if (tile === TileId.WATER_SHALLOW) return 0.36;
+            return null;
+        }
+
+        function getWaterDepthWeightAtPoint(worldX, worldY, z) {
+            const sampleOffsets = [
+                { x: -0.24, y: -0.24 },
+                { x: 0.24, y: -0.24 },
+                { x: 0.24, y: 0.24 },
+                { x: -0.24, y: 0.24 }
+            ];
+            let total = 0;
+            let count = 0;
+            for (let i = 0; i < sampleOffsets.length; i++) {
+                const sample = sampleOffsets[i];
+                const gridX = Math.floor(worldX + sample.x + 0.5);
+                const gridY = Math.floor(worldY + sample.y + 0.5);
+                if (gridX < 0 || gridY < 0 || gridX >= MAP_SIZE || gridY >= MAP_SIZE) continue;
+                const weight = getWaterDepthWeightForTile(logicalMap[z][gridY][gridX]);
+                if (weight !== null) {
+                    total += weight;
+                    count++;
+                }
+            }
+            if (count > 0) return total / count;
+
+            const centerX = Math.floor(worldX + 0.5);
+            const centerY = Math.floor(worldY + 0.5);
+            for (let radius = 1; radius <= 2; radius++) {
+                total = 0;
+                count = 0;
+                for (let y = Math.max(0, centerY - radius); y <= Math.min(MAP_SIZE - 1, centerY + radius); y++) {
+                    for (let x = Math.max(0, centerX - radius); x <= Math.min(MAP_SIZE - 1, centerX + radius); x++) {
+                        const weight = getWaterDepthWeightForTile(logicalMap[z][y][x]);
+                        if (weight === null) continue;
+                        total += weight;
+                        count++;
+                    }
+                }
+                if (count > 0) return total / count;
+            }
+
+            return 0.48;
+        }
+
+        function distanceToTileRect(worldX, worldY, tileX, tileY) {
+            const dx = Math.max(Math.abs(worldX - tileX) - 0.5, 0);
+            const dy = Math.max(Math.abs(worldY - tileY) - 0.5, 0);
+            return Math.sqrt((dx * dx) + (dy * dy));
+        }
+
+        function getWaterShoreStrengthAtPoint(worldX, worldY, z, shorelineWidth) {
+            const searchRadius = Math.max(1, Math.ceil(Math.max(0.2, shorelineWidth) + 1));
+            const minX = Math.max(0, Math.floor(worldX - searchRadius));
+            const maxX = Math.min(MAP_SIZE - 1, Math.ceil(worldX + searchRadius));
+            const minY = Math.max(0, Math.floor(worldY - searchRadius));
+            const maxY = Math.min(MAP_SIZE - 1, Math.ceil(worldY + searchRadius));
+            let minDistance = Math.max(0.2, shorelineWidth);
+            const pierConfig = getActivePierConfig();
+
+            for (let tileY = minY; tileY <= maxY; tileY++) {
+                for (let tileX = minX; tileX <= maxX; tileX++) {
+                    if (isWaterTileId(logicalMap[z][tileY][tileX])) continue;
+                    if (isPierVisualCoverageTile(pierConfig, tileX, tileY, z)) continue;
+                    minDistance = Math.min(minDistance, distanceToTileRect(worldX, worldY, tileX, tileY));
+                    if (minDistance <= 0.001) return 1;
+                }
+            }
+
+            return 1 - Math.min(1, minDistance / Math.max(0.2, shorelineWidth));
+        }
+
+        function pushWaterVertex(builder, worldX, worldY, surfaceY) {
+            builder.surfacePositions.push(worldX, surfaceY, worldY);
+            builder.surfaceData.push(
+                getWaterDepthWeightAtPoint(worldX, worldY, builder.z),
+                getWaterShoreStrengthAtPoint(worldX, worldY, builder.z, builder.body.shoreline.width)
+            );
+        }
+
+        function pushShoreColor(target, color) {
+            target.push(color.r, color.g, color.b);
+        }
+
+        function createChunkWaterBuilder(body, z) {
+            return {
+                body,
+                z,
+                surfacePositions: [],
+                surfaceData: []
+            };
+        }
+
+        function appendWaterTileToBuilder(builder, x, y, surfaceY) {
+            const pierConfig = getActivePierConfig();
+            const isPierCoveredTile = isPierVisualCoverageTile(pierConfig, x, y, builder.z);
+            const edges = {
+                north: classifyWaterEdgeType(x, y, 0, -1, builder.z, surfaceY),
+                east: classifyWaterEdgeType(x, y, 1, 0, builder.z, surfaceY),
+                south: classifyWaterEdgeType(x, y, 0, 1, builder.z, surfaceY),
+                west: classifyWaterEdgeType(x, y, -1, 0, builder.z, surfaceY)
+            };
+            const edgeOverlap = isPierCoveredTile ? 0 : 0.18;
+
+            const northY = (edges.north && edges.north.kind !== 'structural_cover') ? (y - 0.5 - edgeOverlap) : (y - 0.5);
+            const eastX = (edges.east && edges.east.kind !== 'structural_cover') ? (x + 0.5 + edgeOverlap) : (x + 0.5);
+            const southY = (edges.south && edges.south.kind !== 'structural_cover') ? (y + 0.5 + edgeOverlap) : (y + 0.5);
+            const westX = (edges.west && edges.west.kind !== 'structural_cover') ? (x - 0.5 - edgeOverlap) : (x - 0.5);
+
+            const nw = { x: westX, y: northY, h: surfaceY };
+            const ne = { x: eastX, y: northY, h: surfaceY };
+            const se = { x: eastX, y: southY, h: surfaceY };
+            const sw = { x: westX, y: southY, h: surfaceY };
+
+            pushWaterVertex(builder, nw.x, nw.y, nw.h);
+            pushWaterVertex(builder, se.x, se.y, se.h);
+            pushWaterVertex(builder, ne.x, ne.y, ne.h);
+            pushWaterVertex(builder, nw.x, nw.y, nw.h);
+            pushWaterVertex(builder, sw.x, sw.y, sw.h);
+            pushWaterVertex(builder, se.x, se.y, se.h);
+        }
+
+        function flushChunkWaterBuilders(planeGroup, builders) {
+            Object.keys(builders).forEach((bodyId) => {
+                const builder = builders[bodyId];
+                if (!builder) return;
+
+                if (builder.surfacePositions.length > 0) {
+                    const surfaceGeometry = new THREE.BufferGeometry();
+                    surfaceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(builder.surfacePositions, 3));
+                    surfaceGeometry.setAttribute('waterData', new THREE.Float32BufferAttribute(builder.surfaceData, 2));
+                    surfaceGeometry.computeBoundingSphere();
+                    const surfaceMesh = new THREE.Mesh(surfaceGeometry, getWaterSurfaceMaterial(builder.body.styleTokens));
+                    surfaceMesh.userData = { type: 'WATER', z: builder.z, waterBodyId: builder.body.id };
+                    surfaceMesh.receiveShadow = false;
+                    surfaceMesh.castShadow = false;
+                    surfaceMesh.renderOrder = 3;
+                    planeGroup.add(surfaceMesh);
+                    environmentMeshes.push(surfaceMesh);
+                }
+
+            });
+        }
+
+        function createWaterSurfacePatchMesh(bounds, surfaceY, styleTokens, depthWeight = 0.68, shoreStrength = 0.12) {
+            if (!bounds || !styleTokens) return null;
+            const xMin = Number.isFinite(bounds.xMin) ? bounds.xMin : 0;
+            const xMax = Number.isFinite(bounds.xMax) ? bounds.xMax : 0;
+            const yMin = Number.isFinite(bounds.yMin) ? bounds.yMin : 0;
+            const yMax = Number.isFinite(bounds.yMax) ? bounds.yMax : 0;
+            if ((xMax - xMin) <= 0.01 || (yMax - yMin) <= 0.01) return null;
+
+            const positions = [];
+            const waterData = [];
+            const tileColumns = Math.max(1, Math.round(xMax - xMin));
+            const tileRows = Math.max(1, Math.round(yMax - yMin));
+            const stepX = (xMax - xMin) / tileColumns;
+            const stepY = (yMax - yMin) / tileRows;
+
+            for (let row = 0; row < tileRows; row++) {
+                const cellYMin = yMin + (row * stepY);
+                const cellYMax = cellYMin + stepY;
+                for (let column = 0; column < tileColumns; column++) {
+                    const cellXMin = xMin + (column * stepX);
+                    const cellXMax = cellXMin + stepX;
+                    positions.push(
+                        cellXMin, surfaceY, cellYMin,
+                        cellXMax, surfaceY, cellYMax,
+                        cellXMax, surfaceY, cellYMin,
+                        cellXMin, surfaceY, cellYMin,
+                        cellXMin, surfaceY, cellYMax,
+                        cellXMax, surfaceY, cellYMax
+                    );
+                    for (let i = 0; i < 6; i++) {
+                        waterData.push(depthWeight, shoreStrength);
+                    }
+                }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('waterData', new THREE.Float32BufferAttribute(waterData, 2));
+            geometry.computeBoundingSphere();
+
+            const mesh = new THREE.Mesh(geometry, getWaterSurfaceMaterial(styleTokens));
+            mesh.receiveShadow = false;
+            mesh.castShadow = false;
+            mesh.renderOrder = 3;
+            return mesh;
+        }
+
+        function createTopAnchoredFloorMesh(material, x, y, zOffset, topHeight, z) {
+            const minThickness = 0.08;
+            const thickness = topHeight > 0 ? topHeight : minThickness;
+            const centerY = zOffset + (topHeight > 0 ? (topHeight / 2) : (topHeight - (thickness / 2)));
+            const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(1, thickness, 1), material);
+            floorMesh.position.set(x, centerY, y);
+            floorMesh.receiveShadow = true;
+            floorMesh.castShadow = true;
+            floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
+            return floorMesh;
+        }
+
+        function getActivePierConfig() {
+            return sharedMaterials.activePierConfig || null;
+        }
+
+        function isPierDeckTile(pierConfig, x, y, z) {
+            return !!(
+                pierConfig
+                && z === 0
+                && x >= pierConfig.xMin
+                && x <= pierConfig.xMax
+                && y >= pierConfig.yStart
+                && y <= pierConfig.yEnd
+            );
+        }
+
+        function isPierSideWaterTile(pierConfig, x, y, z) {
+            return !!(
+                pierConfig
+                && z === 0
+                && y >= (pierConfig.yStart + 1)
+                && y <= pierConfig.yEnd
+                && (x === (pierConfig.xMin - 1) || x === (pierConfig.xMax + 1))
+            );
+        }
+
+        function isPierVisualCoverageTile(pierConfig, x, y, z) {
+            return !!(
+                pierConfig
+                && z === 0
+                && (
+                    isPierDeckTile(pierConfig, x, y, z)
+                    || isPierSideWaterTile(pierConfig, x, y, z)
+                    || (
+                        y >= (pierConfig.yEnd - 1)
+                        && y <= pierConfig.yEnd
+                        && x >= (pierConfig.xMin - 1)
+                        && x <= (pierConfig.xMax + 1)
+                    )
+                )
+            );
+        }
+
+        function classifyWaterEdgeType(x, y, dx, dy, z, waterSurfaceY) {
+            const nx = x + dx;
+            const ny = y + dy;
+            const planeOffset = z * 3.0;
+            if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) {
+                return {
+                    kind: 'outside',
+                    topY: waterSurfaceY + 0.16
+                };
+            }
+
+            if (isWaterTileId(logicalMap[z][ny][nx])) return null;
+            const waterBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies)
+                ? sharedMaterials.activeWaterRenderBodies
+                : [];
+            if (resolveVisualWaterRenderBodyForTile(waterBodies, nx, ny, z)) return null;
+
+            const pierConfig = getActivePierConfig();
+            if (isPierVisualCoverageTile(pierConfig, nx, ny, z)) {
+                return {
+                    kind: 'structural_cover',
+                    topY: heightMap[z][ny][nx] + planeOffset
+                };
+            }
+
+            return {
+                kind: 'natural_bank',
+                topY: heightMap[z][ny][nx] + planeOffset
+            };
+        }
+
+        function appendChunkWaterTilesToBuilders(builders, waterBodies, z, Z_OFFSET, startX, startY, endX, endY) {
+            const bodies = Array.isArray(waterBodies) ? waterBodies : [];
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const visualBody = resolveVisualWaterRenderBodyForTile(bodies, x, y, z);
+                    if (!visualBody) continue;
+                    if (!builders[visualBody.id]) {
+                        builders[visualBody.id] = createChunkWaterBuilder(visualBody, z);
+                    }
+                    const surfaceY = Z_OFFSET + (Number.isFinite(visualBody.surfaceY) ? visualBody.surfaceY : -0.075);
+                    appendWaterTileToBuilder(builders[visualBody.id], x, y, surfaceY);
+                }
+            }
+        }
+
+        function addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
+            const pierConfig = getActivePierConfig();
+            if (!pierConfig || z !== 0) return;
+            if (pierConfig.xMax < startX || pierConfig.xMin >= endX || pierConfig.yEnd < startY || pierConfig.entryY >= endY) return;
+
+            const deckTop = Z_OFFSET + PIER_DECK_TOP_HEIGHT;
+            const deckThickness = PIER_DECK_THICKNESS;
+            const deckCenterY = deckTop - (deckThickness / 2);
+            const pierCenterX = (pierConfig.xMin + pierConfig.xMax) / 2;
+            const pierWidth = (pierConfig.xMax - pierConfig.xMin) + 1;
+            const waterBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies) ? sharedMaterials.activeWaterRenderBodies : [];
+            const pierWaterBody = findNearbyWaterRenderBodyForTile(waterBodies, pierCenterX, pierConfig.yStart + 1, z)
+                || resolveWaterRenderBodyForTile(waterBodies, pierCenterX, pierConfig.yEnd, z)
+                || getDefaultWaterRenderBody();
+            const intersectsPierRows = !(pierConfig.yEnd < startY || pierConfig.yStart >= endY);
+            const containsEntryRow = pierConfig.entryY >= startY && pierConfig.entryY < endY;
+            const containsTipRows = (pierConfig.yEnd - 1) < endY && pierConfig.yEnd >= startY;
+
+            if (intersectsPierRows) {
+                const straightRunStartY = Math.max(startY, pierConfig.yStart) - 0.5;
+                const straightRunEndY = Math.min(endY - 0.5, pierConfig.yEnd - 0.62);
+                if (straightRunEndY > straightRunStartY) {
+                    const straightRunUnderlay = createWaterSurfacePatchMesh(
+                        {
+                            xMin: pierConfig.xMin - 0.62,
+                            xMax: pierConfig.xMax + 0.62,
+                            yMin: straightRunStartY,
+                            yMax: straightRunEndY
+                        },
+                        Z_OFFSET + (Number.isFinite(pierWaterBody.surfaceY) ? pierWaterBody.surfaceY : -0.075) - 0.002,
+                        pierWaterBody.styleTokens,
+                        0.62,
+                        0.08
+                    );
+                    if (straightRunUnderlay) planeGroup.add(straightRunUnderlay);
+                }
+
+                for (let y = Math.max(startY, pierConfig.yStart); y < Math.min(endY, pierConfig.yEnd + 1); y++) {
+                    for (let x = Math.max(startX, pierConfig.xMin); x < Math.min(endX, pierConfig.xMax + 1); x++) {
+                        const deckMesh = new THREE.Mesh(new THREE.BoxGeometry(1.06, deckThickness, 1.06), sharedMaterials.floor6);
+                        deckMesh.position.set(x, deckCenterY, y);
+                        deckMesh.castShadow = true;
+                        deckMesh.receiveShadow = true;
+                        deckMesh.userData = { type: 'GROUND', z: z };
+                        planeGroup.add(deckMesh);
+                        environmentMeshes.push(deckMesh);
+                    }
+
+                    const isSupportRow = y === pierConfig.yStart || y === pierConfig.yEnd || ((y - pierConfig.yStart) % 3 === 0);
+                    if (!isSupportRow) continue;
+                    const postTop = deckCenterY - (deckThickness / 2) + 0.02;
+                    const waterBed = -0.28;
+                    const postHeight = Math.max(0.5, postTop - waterBed);
+                    const postY = waterBed + (postHeight / 2);
+                    const edgePostXs = [pierConfig.xMin - 0.36, pierConfig.xMax + 0.36];
+                    for (let i = 0; i < edgePostXs.length; i++) {
+                        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, postHeight, 6), sharedMaterials.trunk);
+                        post.position.set(edgePostXs[i], postY, y);
+                        post.castShadow = true;
+                        post.receiveShadow = true;
+                        planeGroup.add(post);
+                    }
+                }
+            }
+
+            if (containsEntryRow) {
+                const stepDepth = 0.26;
+                const stepHeights = [0.08, 0.16, 0.24];
+                const stepCenters = [0.18, 0.43, 0.68];
+                for (let i = 0; i < stepHeights.length; i++) {
+                    const stepHeight = stepHeights[i];
+                    const step = new THREE.Mesh(new THREE.BoxGeometry(pierWidth + 0.08, stepHeight, stepDepth), sharedMaterials.floor6);
+                    step.position.set(pierCenterX, Z_OFFSET + (stepHeight / 2), pierConfig.entryY + stepCenters[i]);
+                    step.castShadow = true;
+                    step.receiveShadow = true;
+                    step.userData = { type: 'GROUND', z: z };
+                    planeGroup.add(step);
+                    environmentMeshes.push(step);
+                }
+            }
+
+            if (containsTipRows) {
+                const tipPlatform = new THREE.Mesh(new THREE.BoxGeometry(pierWidth + 2.0, deckThickness, 2.0), sharedMaterials.floor6);
+                tipPlatform.position.set(pierCenterX, deckCenterY, pierConfig.yEnd - 0.25);
+                tipPlatform.castShadow = true;
+                tipPlatform.receiveShadow = true;
+                planeGroup.add(tipPlatform);
+
+                const tipPostOffsets = [
+                    { x: -((pierWidth + 1.4) / 2), y: -0.82 },
+                    { x: ((pierWidth + 1.4) / 2), y: -0.82 },
+                    { x: -((pierWidth + 1.4) / 2), y: 0.82 },
+                    { x: ((pierWidth + 1.4) / 2), y: 0.82 }
+                ];
+                for (let i = 0; i < tipPostOffsets.length; i++) {
+                    const offset = tipPostOffsets[i];
+                    const postTop = deckCenterY - (deckThickness / 2) + 0.02;
+                    const postHeight = Math.max(0.58, postTop - (-0.28));
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, postHeight, 6), sharedMaterials.trunk);
+                    post.position.set(pierCenterX + offset.x, (-0.28) + (postHeight / 2), (pierConfig.yEnd - 0.25) + offset.y);
+                    post.castShadow = true;
+                    post.receiveShadow = true;
+                    planeGroup.add(post);
+                }
+            }
         }
 
         function loadChunk(cx, cy) {
@@ -2616,6 +3092,10 @@
             const startY = cy * CHUNK_SIZE;
             const endX = startX + CHUNK_SIZE;
             const endY = startY + CHUNK_SIZE;
+            const waterRenderBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies)
+                ? sharedMaterials.activeWaterRenderBodies
+                : [];
+            const activePierConfig = getActivePierConfig();
 
             for (let z = 0; z < PLANES; z++) {
                 const planeGroup = new THREE.Group();
@@ -2626,10 +3106,42 @@
                     terrainGeo.rotateX(-Math.PI / 2);
 
                     const isNaturalTile = (tileType) => isNaturalTileId(tileType);
-                    const sampleTileHeight = (tx, ty) => {
-                        if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return 0;
-                        const tt = logicalMap[0][ty][tx];
-                        return isNaturalTile(tt) ? heightMap[0][ty][tx] : 0;
+                    const isRenderableTerrainTile = (tileType) => isNaturalTile(tileType) && !isWaterTileId(tileType);
+                    const sampleTerrainVertexHeight = (cornerX, cornerY) => {
+                        const tx0 = Math.floor(cornerX);
+                        const ty0 = Math.floor(cornerY);
+                        const sampleTiles = [
+                            { x: tx0, y: ty0 },
+                            { x: tx0 + 1, y: ty0 },
+                            { x: tx0, y: ty0 + 1 },
+                            { x: tx0 + 1, y: ty0 + 1 }
+                        ];
+                        let sum = 0;
+                        let count = 0;
+                        let waterSum = 0;
+                        let waterCount = 0;
+                        for (let i = 0; i < sampleTiles.length; i++) {
+                            const sample = sampleTiles[i];
+                            if (sample.x < 0 || sample.y < 0 || sample.x >= MAP_SIZE || sample.y >= MAP_SIZE) continue;
+                            if (isPierVisualCoverageTile(activePierConfig, sample.x, sample.y, 0)) continue;
+                            const tileType = logicalMap[0][sample.y][sample.x];
+                            if (isRenderableTerrainTile(tileType)) {
+                                sum += heightMap[0][sample.y][sample.x];
+                                count++;
+                                continue;
+                            }
+
+                            const waterSurfaceY = getWaterSurfaceHeightForTile(waterRenderBodies, sample.x, sample.y, 0);
+                            if (waterSurfaceY === null) continue;
+                            waterSum += waterSurfaceY;
+                            waterCount++;
+                        }
+                        if (count > 0 && waterCount > 0) {
+                            const landHeight = sum / count;
+                            const waterHeight = waterSum / waterCount;
+                            return Math.min(landHeight, waterHeight + 0.012);
+                        }
+                        return count > 0 ? (sum / count) : 0;
                     };
 
                     const positions = terrainGeo.attributes.position;
@@ -2638,31 +3150,38 @@
                             const idx = (vy * (CHUNK_SIZE + 1)) + vx;
                             const cornerX = startX - 0.5 + vx;
                             const cornerY = startY - 0.5 + vy;
-
-                            const tx0 = Math.floor(cornerX);
-                            const ty0 = Math.floor(cornerY);
-                            const tx1 = tx0 + 1;
-                            const ty1 = ty0 + 1;
-
-                            const h00 = sampleTileHeight(tx0, ty0);
-                            const h10 = sampleTileHeight(tx1, ty0);
-                            const h01 = sampleTileHeight(tx0, ty1);
-                            const h11 = sampleTileHeight(tx1, ty1);
-                            const h = (h00 + h10 + h01 + h11) * 0.25;
-
+                            const h = sampleTerrainVertexHeight(cornerX, cornerY);
                             positions.setY(idx, h);
                         }
                     }
                     positions.needsUpdate = true;
+                    const baseTerrainIndices = terrainGeo.index ? Array.from(terrainGeo.index.array) : [];
+                    const filteredTerrainIndices = [];
+                    for (let tileY = 0; tileY < CHUNK_SIZE; tileY++) {
+                        for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
+                            const worldTileX = startX + tileX;
+                            const worldTileY = startY + tileY;
+                            const tile = logicalMap[0][worldTileY][worldTileX];
+                            if (!isRenderableTerrainTile(tile)) continue;
+                            if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
+                            const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
+                            for (let i = 0; i < 6; i++) {
+                                filteredTerrainIndices.push(baseTerrainIndices[cellIndexOffset + i]);
+                            }
+                        }
+                    }
+                    terrainGeo.setIndex(filteredTerrainIndices);
                     terrainGeo.computeVertexNormals();
 
-                    const terrainMesh = new THREE.Mesh(terrainGeo, sharedMaterials.grassTile);
-                    terrainMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
-                    terrainMesh.receiveShadow = true;
-                    terrainMesh.castShadow = false;
-                    terrainMesh.userData = { type: 'GROUND', z: 0 };
-                    planeGroup.add(terrainMesh);
-                    environmentMeshes.push(terrainMesh);
+                    if (filteredTerrainIndices.length > 0) {
+                        const terrainMesh = new THREE.Mesh(terrainGeo, sharedMaterials.grassTile);
+                        terrainMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
+                        terrainMesh.receiveShadow = true;
+                        terrainMesh.castShadow = false;
+                        terrainMesh.userData = { type: 'GROUND', z: 0 };
+                        planeGroup.add(terrainMesh);
+                        environmentMeshes.push(terrainMesh);
+                    }
                 }
 
                 let tCount = 0, rCopperCount = 0, rTinCount = 0, rDepletedCount = 0, rRuneEssenceCount = 0, wCount = 0, cCount = 0;
@@ -2748,6 +3267,8 @@
 
                 const dummyTransform = new THREE.Object3D();
                 let tIdx = 0, rCopperIdx = 0, rTinIdx = 0, rDepletedIdx = 0, rRuneEssenceIdx = 0, wIdx = 0, cIdx = 0;
+                const chunkWaterBuilders = Object.create(null);
+                appendChunkWaterTilesToBuilders(chunkWaterBuilders, waterRenderBodies, z, Z_OFFSET, startX, startY, endX, endY);
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
@@ -2830,39 +3351,6 @@
                             dummyTransform.rotation.set(0, 0, 0); dummyTransform.scale.set(1, 1, 1); dummyTransform.updateMatrix();
                             castleData.iTower.setMatrixAt(cIdx, dummyTransform.matrix);
                             castleData.towerMap[cIdx] = { type: 'TOWER', gridX: x, gridY: y, z: z }; cIdx++;
-                                                } else if (isWaterTileId(tile)) {
-                            // Keep a stable water surface so deep beds do not expose grass through the center channel.
-                            const waterSurfaceH = Z_OFFSET + Math.max(-0.08, heightMap[z][y][x] + 0.01);
-                            const water = new THREE.Mesh(sharedGeometries.waterPlane, tile === TileId.WATER_DEEP ? sharedMaterials.waterDeep : sharedMaterials.waterShallow);
-                            water.position.set(x, waterSurfaceH, y);
-                            water.scale.set(1.08, 1, 1.08);
-                            water.rotation.y = (((x * 33391) + (y * 12763)) % 4) * (Math.PI / 2);
-                            water.userData = { type: 'WATER', gridX: x, gridY: y, z: z };
-                            water.receiveShadow = false;
-                            water.castShadow = false;
-                            planeGroup.add(water);
-                            environmentMeshes.push(water);
-
-                            // Beachy outer edge on water tiles (visual only, no transition tile logic).
-                            const isLand = (tx, ty) => {
-                                if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return true;
-                                const t = logicalMap[z][ty][tx];
-                                return !isWaterTileId(t);
-                            };
-                            const dirs = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
-                            for (let di = 0; di < dirs.length; di++) {
-                                const d = dirs[di];
-                                if (!isLand(x + d.dx, y + d.dy)) continue;
-                                const rimGeo = d.dx !== 0 ? sharedGeometries.shoreHalfEW : sharedGeometries.shoreHalfNS;
-                                const rim = new THREE.Mesh(rimGeo, sharedMaterials.shoreTile);
-                                rim.position.set(x + (d.dx * 0.25), waterSurfaceH + 0.0015, y + (d.dy * 0.25));
-                                rim.scale.set(1.10, 1, 1.10);
-                                rim.userData = { type: 'WATER', gridX: x, gridY: y, z: z };
-                                rim.receiveShadow = false;
-                                rim.castShadow = false;
-                                planeGroup.add(rim);
-
-                            }
                         } else if (tile === TileId.DUMMY) { // Dummy
                             const dummyGroup = new THREE.Group(); dummyGroup.position.set(x, h, y);
                             const dummyPost = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), new THREE.MeshLambertMaterial({color: 0x5c4033})); dummyPost.position.y = 0.5; dummyPost.castShadow = true;
@@ -2874,13 +3362,8 @@
                             
                             // Explicitly build floor beneath Dummy
                             const floorHeight = heightMap[z][y][x];
-                            if (floorHeight > 0) {
-                                const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), sharedMaterials.floor7);
-                                floorMesh.position.set(x, Z_OFFSET + (floorHeight / 2), y);
-                                floorMesh.receiveShadow = true; floorMesh.castShadow = true; 
-                                floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
-                                planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                            }
+                            const floorMesh = createTopAnchoredFloorMesh(sharedMaterials.floor7, x, y, Z_OFFSET, floorHeight, z);
+                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                         } else if (tile === TileId.SHOP_COUNTER) { // Shop Counter
                             const counterGroup = new THREE.Group(); counterGroup.position.set(x, h, y);
                             
@@ -2902,26 +3385,19 @@
                             
                             // Explicitly build floor beneath Counter
                             const floorHeight = heightMap[z][y][x];
-                            if (floorHeight > 0) {
-                                const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), sharedMaterials.floor7);
-                                floorMesh.position.set(x, Z_OFFSET + (floorHeight / 2), y);
-                                floorMesh.receiveShadow = true; floorMesh.castShadow = true; 
-                                floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
-                                planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                            }
+                            const floorMesh = createTopAnchoredFloorMesh(sharedMaterials.floor7, x, y, Z_OFFSET, floorHeight, z);
+                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                         } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || tile === TileId.SOLID_NPC) { // Floors (Now includes Bank & Solid NPCs bases)
+                            if (tile === TileId.FLOOR_WOOD && isPierDeckTile(getActivePierConfig(), x, y, z)) {
+                                continue;
+                            }
                             let floorMat = sharedMaterials.floor7; // default to stone
                             if (tile === TileId.FLOOR_WOOD) floorMat = sharedMaterials.floor6;
                             if (tile === TileId.FLOOR_BRICK) floorMat = sharedMaterials.floor8;
                             
                             const floorHeight = heightMap[z][y][x];
-                            if (floorHeight > 0) {
-                                const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), floorMat);
-                                floorMesh.position.set(x, Z_OFFSET + (floorHeight / 2), y);
-                                floorMesh.receiveShadow = true; floorMesh.castShadow = true; 
-                                floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
-                                planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                            }
+                            const floorMesh = createTopAnchoredFloorMesh(floorMat, x, y, Z_OFFSET, floorHeight, z);
+                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                         } else if (tile === TileId.STAIRS_UP || tile === TileId.STAIRS_DOWN) { // Stairs Up/Down
                             const isUp = tile === TileId.STAIRS_UP;
                             const floorHeight = heightMap[z][y][x] || 0.5;
@@ -2971,6 +3447,8 @@
                         }
                     }
                 }
+                addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY);
+                flushChunkWaterBuilders(planeGroup, chunkWaterBuilders);
                 
                 if (tCount > 0) markTreeVisualsDirty(tData);
                 if (rCopperCount > 0 && rData.iRockCopper) { rData.iRockCopper.instanceMatrix.needsUpdate = true; if (rData.iRockCopper.instanceColor) rData.iRockCopper.instanceColor.needsUpdate = true; }

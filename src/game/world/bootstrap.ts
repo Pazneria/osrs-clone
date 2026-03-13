@@ -1,18 +1,21 @@
 import type {
   GameContext,
-  MiningNodePlacement,
-  NpcDescriptor,
-  RouteDescriptor,
-  RunecraftingAltarPlacement,
   RuntimeWorldStateInput,
-  ServiceDescriptor,
-  SkillRouteWithFireTiles,
-  WoodcuttingNodePlacement,
   WorldBootstrapResult,
   WorldDefinition
 } from "../contracts/world";
 
 import { getWorldDefinition, getWorldStamps } from "./authoring";
+import {
+  cloneMiningNodePlacement,
+  cloneNpcDescriptor,
+  cloneRouteDescriptor,
+  cloneRunecraftingAltarPlacement,
+  cloneServiceDescriptor,
+  cloneSkillRouteWithFireTiles,
+  cloneWaterBodyDefinition,
+  cloneWoodcuttingNodePlacement
+} from "./clone";
 import {
   createNpcRegistry,
   createRouteRegistry,
@@ -31,61 +34,7 @@ import {
 } from "./queries";
 import { createStaticRenderPayload } from "./render";
 import { createLegacyTerrainView } from "./terrain";
-
-function cloneRoute(route: RouteDescriptor): RouteDescriptor {
-  return {
-    ...route,
-    tags: Array.isArray(route.tags) ? route.tags.slice() : []
-  };
-}
-
-function cloneCookingRoute(route: SkillRouteWithFireTiles): SkillRouteWithFireTiles {
-  return {
-    ...route,
-    tags: Array.isArray(route.tags) ? route.tags.slice() : [],
-    fireTiles: Array.isArray(route.fireTiles) ? route.fireTiles.map((tile) => ({ ...tile })) : []
-  };
-}
-
-function cloneService(service: ServiceDescriptor): ServiceDescriptor {
-  return {
-    ...service,
-    tags: Array.isArray(service.tags) ? service.tags.slice() : [],
-    questHookIds: Array.isArray(service.questHookIds) ? service.questHookIds.slice() : undefined,
-    travelSpawn: service.travelSpawn
-      ? { x: service.travelSpawn.x, y: service.travelSpawn.y, z: service.travelSpawn.z }
-      : service.travelSpawn === null
-        ? null
-        : undefined
-  };
-}
-
-function cloneNpc(npc: NpcDescriptor): NpcDescriptor {
-  return {
-    ...npc,
-    tags: Array.isArray(npc.tags) ? npc.tags.slice() : [],
-    travelSpawn: npc.travelSpawn
-      ? { x: npc.travelSpawn.x, y: npc.travelSpawn.y, z: npc.travelSpawn.z }
-      : npc.travelSpawn === null
-        ? null
-        : undefined
-  };
-}
-
-function cloneMiningNodePlacement(placement: MiningNodePlacement): MiningNodePlacement {
-  return { ...placement };
-}
-
-function cloneAltarPlacement(placement: RunecraftingAltarPlacement): RunecraftingAltarPlacement {
-  return {
-    ...placement,
-    tags: Array.isArray(placement.tags) ? placement.tags.slice() : []
-  };
-}
-
-function cloneWoodcuttingNodePlacement(placement: WoodcuttingNodePlacement): WoodcuttingNodePlacement {
-  return { ...placement };
-}
+import { buildWaterRenderPayload, getWorldWaterBodies } from "./water";
 
 function buildStaticBootstrap(worldId: string, definition: WorldDefinition): WorldBootstrapResult {
   const stamps = getWorldStamps(worldId);
@@ -97,7 +46,9 @@ function buildStaticBootstrap(worldId: string, definition: WorldDefinition): Wor
   const staticRouteGroups = createStaticRouteGroups(definition);
   const staticServices = createStaticServices(definition);
   const staticNpcs = createStaticNpcDescriptors(definition);
-  const renderPayload = createStaticRenderPayload(staticServices);
+  const staticRenderPayload = createStaticRenderPayload(staticServices);
+  const waterBodies = getWorldWaterBodies(definition);
+  const waterRenderPayload = buildWaterRenderPayload(definition);
 
   return {
     definition,
@@ -107,19 +58,23 @@ function buildStaticBootstrap(worldId: string, definition: WorldDefinition): Wor
     npcRegistry: createNpcRegistry(staticNpcs),
     legacy: {
       ...createLegacyTerrainView(definition, stampMap),
+      waterBodies: waterBodies.map(cloneWaterBodyDefinition),
       generalStoreService: staticServices.find((service) => service.merchantId === "general_store") || null,
       staticMerchants: staticServices.filter((service) => service.type === "MERCHANT"),
       smithingStations: staticServices.filter((service) => service.type === "FURNACE" || service.type === "ANVIL"),
-      fishingRoutes: definition.skillRoutes.fishing.map(cloneRoute),
-      cookingRoutes: definition.skillRoutes.cooking.map(cloneCookingRoute),
-      miningRoutes: definition.skillRoutes.mining.map(cloneRoute),
-      runecraftingRoutes: definition.skillRoutes.runecrafting.map(cloneRoute),
-      woodcuttingRoutes: definition.skillRoutes.woodcutting.map(cloneRoute),
+      fishingRoutes: definition.skillRoutes.fishing.map(cloneRouteDescriptor),
+      cookingRoutes: definition.skillRoutes.cooking.map(cloneSkillRouteWithFireTiles),
+      miningRoutes: definition.skillRoutes.mining.map(cloneRouteDescriptor),
+      runecraftingRoutes: definition.skillRoutes.runecrafting.map(cloneRouteDescriptor),
+      woodcuttingRoutes: definition.skillRoutes.woodcutting.map(cloneRouteDescriptor),
       miningNodePlacements: definition.resourceNodes.mining.map(cloneMiningNodePlacement),
-      altarPlacements: definition.landmarks.altars.map(cloneAltarPlacement),
+      altarPlacements: definition.landmarks.altars.map(cloneRunecraftingAltarPlacement),
       woodcuttingNodePlacements: definition.resourceNodes.woodcutting.map(cloneWoodcuttingNodePlacement)
     },
-    renderPayload
+    renderPayload: {
+      ...staticRenderPayload,
+      water: waterRenderPayload
+    }
   };
 }
 
@@ -155,11 +110,11 @@ export function applyRuntimeWorldState(
   );
   const staticServices = createStaticServices(baseResult.definition);
   const runtimeServices = Array.isArray(runtimeState.runtimeServices)
-    ? runtimeState.runtimeServices.map(cloneService)
+    ? runtimeState.runtimeServices.map(cloneServiceDescriptor)
     : [];
   const staticNpcs = createStaticNpcDescriptors(baseResult.definition);
   const runtimeNpcs = Array.isArray(runtimeState.runtimeNpcs)
-    ? runtimeState.runtimeNpcs.map(cloneNpc)
+    ? runtimeState.runtimeNpcs.map(cloneNpcDescriptor)
     : [];
 
   return {

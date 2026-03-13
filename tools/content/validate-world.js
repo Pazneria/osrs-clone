@@ -32,6 +32,31 @@ function collectRouteIds(world) {
   return ids;
 }
 
+function assertFinitePoint2(point, message) {
+  assert(point && Number.isFinite(point.x) && Number.isFinite(point.y), message);
+}
+
+function validateWaterShape(worldId, bodyId, shape) {
+  assert(shape && typeof shape === "object", `${worldId}: water body ${bodyId} missing shape`);
+  assert(shape.kind === "ellipse" || shape.kind === "box" || shape.kind === "polygon", `${worldId}: water body ${bodyId} has unsupported shape kind`);
+  if (shape.kind === "ellipse") {
+    assert(Number.isFinite(shape.cx) && Number.isFinite(shape.cy), `${worldId}: water body ${bodyId} ellipse missing center`);
+    assert(Number.isFinite(shape.rx) && shape.rx > 0 && Number.isFinite(shape.ry) && shape.ry > 0, `${worldId}: water body ${bodyId} ellipse missing radii`);
+    return;
+  }
+  if (shape.kind === "box") {
+    assert(Number.isFinite(shape.xMin) && Number.isFinite(shape.xMax), `${worldId}: water body ${bodyId} box missing x bounds`);
+    assert(Number.isFinite(shape.yMin) && Number.isFinite(shape.yMax), `${worldId}: water body ${bodyId} box missing y bounds`);
+    assert(shape.xMin <= shape.xMax && shape.yMin <= shape.yMax, `${worldId}: water body ${bodyId} box bounds are inverted`);
+    return;
+  }
+  const points = Array.isArray(shape.points) ? shape.points : [];
+  assert(points.length >= 3, `${worldId}: water body ${bodyId} polygon needs at least 3 points`);
+  for (let i = 0; i < points.length; i++) {
+    assertFinitePoint2(points[i], `${worldId}: water body ${bodyId} polygon point ${i} is invalid`);
+  }
+}
+
 function validateWorld(root, worldId, shopEconomy) {
   const { manifestEntry, world, stamps } = loadWorldContent(root, worldId);
   const manifest = loadWorldManifest(root);
@@ -50,6 +75,36 @@ function validateWorld(root, worldId, shopEconomy) {
   assert(!world.skillRoutes.miningZones, `${worldId} should not define legacy miningZones`);
   assert(!world.skillRoutes.runecraftingBands, `${worldId} should not define legacy runecraftingBands`);
   assert(!world.skillRoutes.woodcuttingZones, `${worldId} should not define legacy woodcuttingZones`);
+
+  const waterBodyIds = new Set();
+  const waterBodies = Array.isArray(world.waterBodies) ? world.waterBodies : [];
+  for (let i = 0; i < waterBodies.length; i++) {
+    const body = waterBodies[i];
+    assert(body && body.id, `${worldId}: water body missing id`);
+    assert(!waterBodyIds.has(body.id), `${worldId}: duplicate water body id ${body.id}`);
+    waterBodyIds.add(body.id);
+    validateWaterShape(worldId, body.id, body.shape);
+    assert(Number.isFinite(body.surfaceY), `${worldId}: water body ${body.id} missing surfaceY`);
+    if (body.style !== undefined) {
+      assert(body.style === "calm_lake", `${worldId}: water body ${body.id} has unsupported style ${body.style}`);
+    }
+    if (body.shoreline) {
+      assert(Number.isFinite(body.shoreline.width) && body.shoreline.width > 0, `${worldId}: water body ${body.id} missing shoreline width`);
+      if (body.shoreline.foamWidth !== undefined) {
+        assert(Number.isFinite(body.shoreline.foamWidth) && body.shoreline.foamWidth >= 0, `${worldId}: water body ${body.id} has invalid foamWidth`);
+      }
+      if (body.shoreline.skirtDepth !== undefined) {
+        assert(Number.isFinite(body.shoreline.skirtDepth) && body.shoreline.skirtDepth >= 0, `${worldId}: water body ${body.id} has invalid skirtDepth`);
+      }
+    }
+    if (body.depthProfile) {
+      assert(body.depthProfile.mode === "tile_truth" || body.depthProfile.mode === "uniform", `${worldId}: water body ${body.id} has unsupported depthProfile mode`);
+      const deepZones = Array.isArray(body.depthProfile.deepZones) ? body.depthProfile.deepZones : [];
+      for (let j = 0; j < deepZones.length; j++) {
+        validateWaterShape(worldId, `${body.id}.deepZone.${j}`, deepZones[j].shape);
+      }
+    }
+  }
 
   const structureIds = new Set();
   const spawnIds = new Set();

@@ -1,0 +1,407 @@
+import type {
+  GameContext,
+  LegacyNpcRenderPlacement,
+  Point3,
+  RouteDescriptor,
+  ServiceDescriptor,
+  SkillRouteWithFireTiles,
+  WorldBootstrapResult,
+  WorldManifestEntry
+} from "../contracts/world";
+import { getWorldManifest, getWorldManifestEntry } from "../world/authoring";
+import { buildWorldBootstrapResult } from "../world/bootstrap";
+import {
+  cloneDoorLandmark,
+  cloneMiningNodePlacement,
+  clonePoint3,
+  cloneRouteDescriptor,
+  cloneRunecraftingAltarPlacement,
+  cloneServiceDescriptor,
+  cloneShowcaseTree,
+  cloneSkillRouteWithFireTiles,
+  cloneStaircaseLandmark,
+  cloneStructurePlacement,
+  cloneTerrainBox2D,
+  cloneTerrainEllipse,
+  cloneTerrainPier,
+  cloneTravelSpawn,
+  cloneWaterBodyDefinition,
+  cloneWaterRenderPayload,
+  cloneWoodcuttingNodePlacement,
+  cloneWorldManifestEntry
+} from "../world/clone";
+
+interface LegacyWorldBounds {
+  mapSize?: number;
+  planes?: number;
+}
+
+interface LegacyMerchantNpcRenderPlacement extends LegacyNpcRenderPlacement {
+  travelToWorldId?: string | null;
+  travelSpawn?: Point3 | null;
+}
+
+interface QaWorldSummary {
+  worldId: string;
+  label: string;
+  defaultSpawn: Point3;
+  isActive: boolean;
+}
+
+interface TravelResolutionOptions extends LegacyWorldBounds {
+  spawn?: unknown;
+  label?: unknown;
+  fallbackWorldId?: string | null;
+  activate?: boolean;
+}
+
+interface TravelResolutionResult {
+  ok: boolean;
+  requestedWorldId: string;
+  worldId: string | null;
+  spawn: Point3 | null;
+  label: string | null;
+}
+
+interface LegacyWorldPayload {
+  worldId: string;
+  label: string;
+  lakeDefs: WorldBootstrapResult["legacy"]["lakeDefs"];
+  castleFrontPond: WorldBootstrapResult["legacy"]["castleFrontPond"];
+  deepWaterCenter: WorldBootstrapResult["legacy"]["deepWaterCenter"];
+  pierConfig: WorldBootstrapResult["legacy"]["pier"];
+  waterBodies: WorldBootstrapResult["legacy"]["waterBodies"];
+  stampedStructures: WorldBootstrapResult["legacy"]["stampedStructures"];
+  stampMap: WorldBootstrapResult["legacy"]["stampMap"];
+  smithingStations: ServiceDescriptor[];
+  fishingTrainingRouteDefs: RouteDescriptor[];
+  cookingRouteSpecs: SkillRouteWithFireTiles[];
+  miningTrainingRouteDefs: RouteDescriptor[];
+  runecraftingRouteDefs: RouteDescriptor[];
+  woodcuttingTrainingRouteDefs: RouteDescriptor[];
+  miningNodePlacements: WorldBootstrapResult["legacy"]["miningNodePlacements"];
+  authoredAltarPlacements: WorldBootstrapResult["legacy"]["altarPlacements"];
+  woodcuttingNodePlacements: WorldBootstrapResult["legacy"]["woodcuttingNodePlacements"];
+  staircaseLandmarks: WorldBootstrapResult["legacy"]["staircases"];
+  doorLandmarks: WorldBootstrapResult["legacy"]["doors"];
+  showcaseTreeDefs: WorldBootstrapResult["legacy"]["showcaseTrees"];
+  fishingMerchantSpots: LegacyNpcRenderPlacement[];
+  staticMerchantSpots: LegacyMerchantNpcRenderPlacement[];
+  furnacesToRender: WorldBootstrapResult["renderPayload"]["furnacesToRender"];
+  anvilsToRender: WorldBootstrapResult["renderPayload"]["anvilsToRender"];
+  waterRenderPayload: WorldBootstrapResult["renderPayload"]["water"];
+}
+
+declare global {
+  interface Window {
+    LegacyWorldAdapterRuntime?: {
+      getKnownWorldEntries: () => WorldManifestEntry[];
+      getWorldManifestEntry: (worldId?: string | null) => WorldManifestEntry | null;
+      isKnownWorldId: (worldId?: string | null) => boolean;
+      resolveKnownWorldId: (worldId?: string | null, fallbackWorldId?: string | null) => string;
+      getWorldLabel: (worldId?: string | null) => string;
+      getWorldDefaultSpawn: (worldId?: string | null, bounds?: LegacyWorldBounds) => Point3;
+      sanitizeWorldSpawn: (spawnLike: unknown, worldId?: string | null, bounds?: LegacyWorldBounds) => Point3;
+      activateWorldContext: (worldId?: string | null, fallbackWorldId?: string | null) => string;
+      resolveTravelTarget: (worldId: unknown, options?: TravelResolutionOptions) => TravelResolutionResult;
+      getQaWorldSummaries: () => QaWorldSummary[];
+      matchQaWorld: (query: unknown) => QaWorldSummary | null;
+      getWorldPayload: (worldId?: string | null) => LegacyWorldPayload;
+      getCurrentWorldPayload: () => LegacyWorldPayload;
+      getWorldGameContext: () => GameContext | null;
+    };
+  }
+}
+
+function normalizeWorldId(worldId?: string | null): string {
+  return String(worldId || "").trim();
+}
+
+function normalizeLabel(label: unknown): string {
+  return typeof label === "string" ? label.trim() : "";
+}
+
+function clampAxis(value: number, size: number | undefined): number {
+  const max = Number.isFinite(size) ? Math.max(1, Math.floor(Number(size))) - 1 : null;
+  const normalized = Math.floor(value);
+  if (max === null) return normalized;
+  return Math.max(0, Math.min(max, normalized));
+}
+
+function clampSpawn(spawn: Point3, bounds?: LegacyWorldBounds): Point3 {
+  return {
+    x: clampAxis(spawn.x, bounds?.mapSize),
+    y: clampAxis(spawn.y, bounds?.mapSize),
+    z: clampAxis(spawn.z, bounds?.planes)
+  };
+}
+
+function getSafeWorldManifestEntry(worldId?: string | null): WorldManifestEntry | null {
+  const normalizedWorldId = normalizeWorldId(worldId);
+  if (!normalizedWorldId) return null;
+  try {
+    return cloneWorldManifestEntry(getWorldManifestEntry(normalizedWorldId));
+  } catch (error) {
+    return null;
+  }
+}
+
+function getKnownWorldEntries(): WorldManifestEntry[] {
+  const manifest = getWorldManifest();
+  const worlds = manifest && Array.isArray(manifest.worlds) ? manifest.worlds : [];
+  return worlds.map(cloneWorldManifestEntry);
+}
+
+function isKnownWorldId(worldId?: string | null): boolean {
+  return !!getSafeWorldManifestEntry(worldId);
+}
+
+function getCurrentWorldId(): string {
+  const activeSessionWorldId = normalizeWorldId(window.GameSessionRuntime?.getSession?.()?.currentWorldId);
+  if (activeSessionWorldId && isKnownWorldId(activeSessionWorldId)) return activeSessionWorldId;
+
+  const bridgeWorldId = normalizeWorldId(window.WorldBootstrapRuntime?.getCurrentWorldId?.());
+  if (bridgeWorldId && isKnownWorldId(bridgeWorldId)) return bridgeWorldId;
+
+  return "";
+}
+
+function resolveKnownWorldId(worldId?: string | null, fallbackWorldId: string | null = null): string {
+  const requestedWorldId = normalizeWorldId(worldId);
+  if (requestedWorldId && isKnownWorldId(requestedWorldId)) return requestedWorldId;
+
+  const fallbackKey = normalizeWorldId(fallbackWorldId);
+  if (fallbackKey && isKnownWorldId(fallbackKey)) return fallbackKey;
+
+  const currentWorldId = getCurrentWorldId();
+  if (currentWorldId && isKnownWorldId(currentWorldId)) return currentWorldId;
+
+  const worlds = getKnownWorldEntries();
+  if (worlds.length > 0 && worlds[0] && worlds[0].worldId) return worlds[0].worldId;
+
+  return "starter_town";
+}
+
+function getWorldLabel(worldId?: string | null): string {
+  const entry = getSafeWorldManifestEntry(worldId);
+  if (entry && entry.label) return entry.label;
+  const normalizedWorldId = normalizeWorldId(worldId);
+  return normalizedWorldId || "Unknown World";
+}
+
+function getWorldDefaultSpawn(worldId?: string | null, bounds?: LegacyWorldBounds): Point3 {
+  const resolvedWorldId = resolveKnownWorldId(worldId);
+  const entry = getSafeWorldManifestEntry(resolvedWorldId);
+  const defaultSpawn = entry ? entry.defaultSpawn : { x: 205, y: 210, z: 0 };
+  return clampSpawn(clonePoint3(defaultSpawn), bounds);
+}
+
+function sanitizeWorldSpawn(spawnLike: unknown, worldId?: string | null, bounds?: LegacyWorldBounds): Point3 {
+  if (
+    !spawnLike
+    || typeof spawnLike !== "object"
+    || !Number.isFinite((spawnLike as Point3).x)
+    || !Number.isFinite((spawnLike as Point3).y)
+    || !Number.isFinite((spawnLike as Point3).z)
+  ) {
+    return getWorldDefaultSpawn(worldId, bounds);
+  }
+
+  return clampSpawn({
+    x: Number((spawnLike as Point3).x),
+    y: Number((spawnLike as Point3).y),
+    z: Number((spawnLike as Point3).z)
+  }, bounds);
+}
+
+function syncActiveSessionWorldId(worldId: string): void {
+  const activeSession = window.GameSessionRuntime?.getSession?.();
+  if (!activeSession) return;
+  activeSession.currentWorldId = worldId;
+  if (activeSession.runtime && typeof activeSession.runtime === "object") {
+    activeSession.runtime.currentWorldId = worldId;
+  }
+}
+
+function activateWorldContext(worldId?: string | null, fallbackWorldId: string | null = null): string {
+  const resolvedWorldId = resolveKnownWorldId(worldId, fallbackWorldId);
+  if (window.WorldBootstrapRuntime?.activateWorld) {
+    window.WorldBootstrapRuntime.activateWorld(resolvedWorldId);
+  }
+  syncActiveSessionWorldId(resolvedWorldId);
+  return resolvedWorldId;
+}
+
+function resolveTravelTarget(worldId: unknown, options: TravelResolutionOptions = {}): TravelResolutionResult {
+  const requestedWorldId = normalizeWorldId(typeof worldId === "string" ? worldId : "");
+  if (!requestedWorldId || !isKnownWorldId(requestedWorldId)) {
+    return {
+      ok: false,
+      requestedWorldId,
+      worldId: null,
+      spawn: null,
+      label: null
+    };
+  }
+
+  const resolvedWorldId = options.activate === false
+    ? resolveKnownWorldId(requestedWorldId, options.fallbackWorldId || null)
+    : activateWorldContext(requestedWorldId, options.fallbackWorldId || null);
+
+  return {
+    ok: true,
+    requestedWorldId,
+    worldId: resolvedWorldId,
+    spawn: sanitizeWorldSpawn(options.spawn, resolvedWorldId, options),
+    label: normalizeLabel(options.label) || getWorldLabel(resolvedWorldId)
+  };
+}
+
+function createQaWorldSummary(entry: WorldManifestEntry, activeWorldId: string): QaWorldSummary {
+  return {
+    worldId: entry.worldId,
+    label: entry.label,
+    defaultSpawn: clonePoint3(entry.defaultSpawn),
+    isActive: entry.worldId === activeWorldId
+  };
+}
+
+function getQaWorldSummaries(): QaWorldSummary[] {
+  const activeWorldId = resolveKnownWorldId(null, "starter_town");
+  return getKnownWorldEntries().map((entry) => createQaWorldSummary(entry, activeWorldId));
+}
+
+function matchQaWorld(query: unknown): QaWorldSummary | null {
+  const needle = normalizeLabel(query).toLowerCase();
+  if (!needle) return null;
+
+  const summaries = getQaWorldSummaries();
+  for (let i = 0; i < summaries.length; i++) {
+    const entry = summaries[i];
+    if (!entry) continue;
+    const worldKey = String(entry.worldId || "").toLowerCase();
+    const labelKey = String(entry.label || "").toLowerCase();
+    if (worldKey === needle || labelKey === needle) return entry;
+  }
+
+  for (let i = 0; i < summaries.length; i++) {
+    const entry = summaries[i];
+    if (!entry) continue;
+    const worldKey = String(entry.worldId || "").toLowerCase();
+    const labelKey = String(entry.label || "").toLowerCase();
+    if (worldKey.includes(needle) || labelKey.includes(needle)) return entry;
+  }
+
+  return null;
+}
+
+function getBootstrapResult(worldId?: string | null): WorldBootstrapResult {
+  const resolvedWorldId = resolveKnownWorldId(worldId);
+  if (window.WorldBootstrapRuntime?.getBootstrapResult) {
+    return window.WorldBootstrapRuntime.getBootstrapResult(resolvedWorldId);
+  }
+  return buildWorldBootstrapResult(resolvedWorldId);
+}
+
+function toMerchantRenderPlacement(
+  service: ServiceDescriptor,
+  options: { includeTravel: boolean }
+): LegacyMerchantNpcRenderPlacement | null {
+  if (!service || service.type !== "MERCHANT") return null;
+  return {
+    type: Number.isFinite(service.npcType) ? Number(service.npcType) : 2,
+    x: service.x,
+    y: service.y,
+    z: Number.isFinite(service.z) ? Number(service.z) : 0,
+    name: service.name,
+    merchantId: service.merchantId || null,
+    action: normalizeLabel(service.action) || "Trade",
+    facingYaw: service.facingYaw,
+    tags: Array.isArray(service.tags) ? service.tags.slice() : [],
+    travelToWorldId: options.includeTravel
+      ? (normalizeWorldId(service.travelToWorldId) || null)
+      : undefined,
+    travelSpawn: options.includeTravel
+      ? (cloneTravelSpawn(service.travelSpawn) ?? null)
+      : undefined
+  };
+}
+
+function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
+  const resolvedWorldId = resolveKnownWorldId(worldId);
+  const manifestEntry = getSafeWorldManifestEntry(resolvedWorldId);
+  const bootstrap = getBootstrapResult(resolvedWorldId);
+  const legacy = bootstrap.legacy;
+  const staticMerchantServices = legacy.staticMerchants.map(cloneServiceDescriptor);
+
+  return {
+    worldId: resolvedWorldId,
+    label: manifestEntry ? manifestEntry.label : resolvedWorldId,
+    lakeDefs: legacy.lakeDefs.map(cloneTerrainEllipse),
+    castleFrontPond: cloneTerrainEllipse(legacy.castleFrontPond),
+    deepWaterCenter: cloneTerrainBox2D(legacy.deepWaterCenter),
+    pierConfig: cloneTerrainPier(legacy.pier),
+    waterBodies: legacy.waterBodies.map(cloneWaterBodyDefinition),
+    stampedStructures: legacy.stampedStructures.map(cloneStructurePlacement),
+    stampMap: Object.fromEntries(
+      Object.entries(legacy.stampMap || {}).map(([stampId, rows]) => [stampId, Array.isArray(rows) ? rows.slice() : []])
+    ),
+    smithingStations: legacy.smithingStations.map(cloneServiceDescriptor),
+    fishingTrainingRouteDefs: legacy.fishingRoutes.map(cloneRouteDescriptor),
+    cookingRouteSpecs: legacy.cookingRoutes.map(cloneSkillRouteWithFireTiles),
+    miningTrainingRouteDefs: legacy.miningRoutes.map(cloneRouteDescriptor),
+    runecraftingRouteDefs: legacy.runecraftingRoutes.map(cloneRouteDescriptor),
+    woodcuttingTrainingRouteDefs: legacy.woodcuttingRoutes.map(cloneRouteDescriptor),
+    miningNodePlacements: legacy.miningNodePlacements.map(cloneMiningNodePlacement),
+    authoredAltarPlacements: legacy.altarPlacements.map(cloneRunecraftingAltarPlacement),
+    woodcuttingNodePlacements: legacy.woodcuttingNodePlacements.map(cloneWoodcuttingNodePlacement),
+    staircaseLandmarks: legacy.staircases.map(cloneStaircaseLandmark),
+    doorLandmarks: legacy.doors.map(cloneDoorLandmark),
+    showcaseTreeDefs: legacy.showcaseTrees.map(cloneShowcaseTree),
+    fishingMerchantSpots: staticMerchantServices
+      .filter((service) => Array.isArray(service.tags) && service.tags.includes("fishing"))
+      .map((service) => toMerchantRenderPlacement(service, { includeTravel: false }))
+      .filter((entry): entry is LegacyNpcRenderPlacement => !!entry),
+    staticMerchantSpots: staticMerchantServices
+      .filter((service) => {
+        const merchantId = normalizeWorldId(service.merchantId);
+        return service.type === "MERCHANT"
+          && merchantId !== "fishing_teacher"
+          && merchantId !== "fishing_supplier"
+          && merchantId !== "general_store";
+      })
+      .map((service) => toMerchantRenderPlacement(service, { includeTravel: true }))
+      .filter((entry): entry is LegacyMerchantNpcRenderPlacement => !!entry),
+    furnacesToRender: bootstrap.renderPayload.furnacesToRender.map((station) => ({ ...station })),
+    anvilsToRender: bootstrap.renderPayload.anvilsToRender.map((station) => ({ ...station })),
+    waterRenderPayload: cloneWaterRenderPayload(bootstrap.renderPayload.water)
+  };
+}
+
+function getCurrentWorldPayload(): LegacyWorldPayload {
+  return getWorldPayload(resolveKnownWorldId(window.WorldBootstrapRuntime?.getCurrentWorldId?.(), "starter_town"));
+}
+
+function getWorldGameContext(): GameContext | null {
+  if (window.WorldBootstrapRuntime?.getGameContext) return window.WorldBootstrapRuntime.getGameContext();
+  return window.GameContext || null;
+}
+
+export function exposeLegacyWorldAdapter(): void {
+  window.LegacyWorldAdapterRuntime = {
+    getKnownWorldEntries,
+    getWorldManifestEntry: getSafeWorldManifestEntry,
+    isKnownWorldId,
+    resolveKnownWorldId,
+    getWorldLabel,
+    getWorldDefaultSpawn,
+    sanitizeWorldSpawn,
+    activateWorldContext,
+    resolveTravelTarget,
+    getQaWorldSummaries,
+    matchQaWorld,
+    getWorldPayload,
+    getCurrentWorldPayload,
+    getWorldGameContext
+  };
+}

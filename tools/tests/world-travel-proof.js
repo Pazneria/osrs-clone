@@ -9,6 +9,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const targetSource = fs.readFileSync(path.join(root, "src", "js", "interactions", "target-interaction-registry.js"), "utf8");
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
@@ -18,20 +19,23 @@ function run() {
   assert(Array.isArray(manifest.worlds) && manifest.worlds.length >= 2, "proof pass should register at least two worlds");
   assert(coreSource.includes("function travelToWorld(worldId, options = {})"), "core should define travelToWorld");
   assert(coreSource.includes("window.travelToWorld = travelToWorld;"), "core should expose travelToWorld on window");
+  assert(coreSource.includes("worldAdapterRuntime.resolveTravelTarget"), "core world travel should delegate target resolution through the typed adapter");
   assert(coreSource.includes("function qaListWorlds()"), "core should expose QA world listing");
   assert(coreSource.includes("function qaTravelWorld(worldIdLike)"), "core should expose QA world travel");
   assert(coreSource.includes("/qa worlds, /qa travel <worldId>"), "QA help should document world travel commands");
+  assert(adapterSource.includes("matchQaWorld"), "legacy world adapter should expose QA world matching");
 
   const loadCall = coreSource.indexOf("const loadProgressResult = loadProgressFromStorage();");
-  const activateCall = coreSource.indexOf("const startupWorldId = activateWorldContext(startupRequestedWorldId, 'starter_town');");
+  const activateCall = coreSource.indexOf("worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, 'starter_town')");
   const initCall = coreSource.indexOf("if (typeof window.initLogicalMap === 'function') window.initLogicalMap();");
   assert(loadCall !== -1, "core startup should still load progress");
-  assert(activateCall !== -1, "core startup should activate the saved world before map init");
+  assert(activateCall !== -1, "core startup should activate the saved world through the typed adapter before map init");
   assert(initCall !== -1, "core startup should initialize the world map");
   assert(loadCall < activateCall && activateCall < initCall, "startup should activate the current world after loading progress and before initLogicalMap");
 
   assert(worldSource.includes("function reloadActiveWorldScene()"), "world.js should define an active-world scene reload hook");
   assert(worldSource.includes("window.reloadActiveWorldScene = reloadActiveWorldScene;"), "world.js should expose the scene reload hook");
+  assert(worldSource.includes("getCurrentWorldPayload"), "world.js should fetch the active world payload through the typed adapter");
   assert(worldSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "world.js should attach travel world metadata to NPC hitboxes");
 
   assert(inputSource.includes("playerState.targetUid.action === 'Travel'"), "input handler should resolve travel NPC actions");

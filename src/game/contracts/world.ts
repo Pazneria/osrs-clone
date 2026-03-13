@@ -93,6 +93,77 @@ export interface TerrainPier {
   entryY: number;
 }
 
+export interface WaterBodyEllipseShape extends TerrainEllipse {
+  kind: "ellipse";
+}
+
+export interface WaterBodyBoxShape extends TerrainBox2D {
+  kind: "box";
+}
+
+export interface WaterBodyPolygonShape {
+  kind: "polygon";
+  points: Point2[];
+}
+
+export type WaterBodyShape =
+  | WaterBodyEllipseShape
+  | WaterBodyBoxShape
+  | WaterBodyPolygonShape;
+
+export interface WaterDepthZone {
+  shape: WaterBodyShape;
+  weight?: number;
+}
+
+export interface WaterDepthProfile {
+  mode: "tile_truth" | "uniform";
+  deepZones?: WaterDepthZone[];
+}
+
+export interface WaterShoreline {
+  width: number;
+  foamWidth?: number;
+  skirtDepth?: number;
+}
+
+export type WaterStyleId = "calm_lake";
+
+export interface WaterBodyDefinition {
+  id: string;
+  shape: WaterBodyShape;
+  surfaceY: number;
+  depthProfile?: WaterDepthProfile;
+  shoreline?: WaterShoreline;
+  style?: WaterStyleId;
+}
+
+export interface WaterStyleTokens {
+  shallowColor: number;
+  deepColor: number;
+  foamColor: number;
+  shoreColor: number;
+  rippleColor: number;
+  highlightColor: number;
+  opacity: number;
+  shoreOpacity: number;
+}
+
+export interface WaterRenderBody {
+  id: string;
+  shape: WaterBodyShape;
+  surfaceY: number;
+  depthProfile: WaterDepthProfile;
+  shoreline: Required<WaterShoreline>;
+  style: WaterStyleId;
+  bounds: TerrainBox2D;
+  styleTokens: WaterStyleTokens;
+}
+
+export interface WaterRenderPayload {
+  bodies: WaterRenderBody[];
+}
+
 export interface SkillRouteWithFireTiles extends RouteDescriptor {
   fireTiles: Point2[];
 }
@@ -203,6 +274,7 @@ export interface WorldDefinition {
   worldId: string;
   version: string;
   structures: StructurePlacement[];
+  waterBodies?: WaterBodyDefinition[];
   terrainPatches: {
     lakes: TerrainEllipse[];
     castleFrontPond: TerrainEllipse;
@@ -265,6 +337,7 @@ export interface WorldLegacyView {
   castleFrontPond: TerrainEllipse;
   deepWaterCenter: TerrainBox2D;
   pier: TerrainPier;
+  waterBodies: WaterBodyDefinition[];
   smithingHallApproach: {
     shoreX: number;
     stairX: number;
@@ -301,6 +374,7 @@ export interface WorldBootstrapResult {
   renderPayload: {
     furnacesToRender: Array<Pick<ServiceDescriptor, "x" | "y" | "z" | "facingYaw" | "footprintW" | "footprintD">>;
     anvilsToRender: Array<Pick<ServiceDescriptor, "x" | "y" | "z" | "facingYaw">>;
+    water: WaterRenderPayload;
   };
 }
 
