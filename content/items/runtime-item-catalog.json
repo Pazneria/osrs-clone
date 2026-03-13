@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T06:54:23.049Z",
+  "generatedAt": "2026-03-13T23:21:45.255Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -40,7 +40,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_axe",
         "kind": "pixel"
       },
       "name": "Adamant Axe",
@@ -78,7 +78,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "adamant_bar",
         "kind": "pixel"
       },
       "name": "Adamant Bar",
@@ -417,7 +417,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe_item",
+        "assetId": "bronze_axe",
         "kind": "pixel"
       },
       "name": "Bronze Axe",
@@ -455,7 +455,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "bronze_bar",
         "kind": "pixel"
       },
       "name": "Bronze Bar",
@@ -1139,7 +1139,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "gold_bar",
         "kind": "pixel"
       },
       "name": "Gold Bar",
@@ -1304,7 +1304,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "iron_bar",
         "kind": "pixel"
       },
       "name": "Iron Bar",
@@ -1763,7 +1763,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_axe",
         "kind": "pixel"
       },
       "name": "Mithril Axe",
@@ -1801,7 +1801,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "mithril_bar",
         "kind": "pixel"
       },
       "name": "Mithril Bar",
@@ -2557,7 +2557,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_axe",
         "kind": "pixel"
       },
       "name": "Rune Axe",
@@ -2595,7 +2595,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "rune_bar",
         "kind": "pixel"
       },
       "name": "Rune Bar",
@@ -2941,7 +2941,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "silver_bar",
         "kind": "pixel"
       },
       "name": "Silver Bar",
@@ -3104,7 +3104,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_axe",
         "kind": "pixel"
       },
       "name": "Steel Axe",
@@ -3142,7 +3142,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "steel_bar",
         "kind": "pixel"
       },
       "name": "Steel Bar",

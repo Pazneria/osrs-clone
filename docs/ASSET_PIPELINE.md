@@ -92,6 +92,51 @@ npm.cmd run tool:icons:report
 npm.cmd run tool:items:validate
 ```
 
+6. Keep the current review batch visible in-game:
+
+- Update `src/js/content/icon-review-catalog.js` with the runtime item IDs you just touched.
+- The game auto-adds that active review batch to inventory on the next app reload, so you can inspect the icons without a per-item QA preset.
+
+## Right-Hand Held Item Family Workflow
+
+For held right-hand equippables such as pickaxes, axes, swords, and similar tools/weapons, the inventory icon should usually become the source silhouette for all three presentations:
+
+- inventory icon
+- equipped hand model
+- dropped ground model
+
+The generated `assets/models/*.obj` files are still useful build artifacts, but the current live held-item runtime path is driven by the player appearance system:
+
+- `src/js/content/player-appearance-catalog.js`
+- `src/js/player-model.js`
+
+Recommended family workflow:
+
+1. Approve the icon silhouette first in `assets/pixel-src/<family_lead>.json`.
+2. Propagate that silhouette to sibling tiers with `npm.cmd run tool:pixel:adopt-shape`.
+3. Keep tier distinction mostly in palette differences unless a tier really needs unique geometry.
+4. Keep metal tier colors consistent across families. The shared bronze/iron/steel/mithril/adamant/rune held-item palette in `src/js/content/player-appearance-catalog.js` should stay the runtime source of truth, and matching inventory icon palettes in `assets/pixel-src/*.json` should mirror it.
+5. Default right-hand tool/weapon inventory silhouettes to the same diagonal used by the approved pickaxe and sword families: grip low-left, business end high-right. Avoid the opposite `-45deg` diagonal unless the request explicitly calls for it.
+6. Mirror the approved silhouette into `src/js/content/player-appearance-catalog.js` as a shared family recipe using `pixelExtrude` fragments.
+7. Start the family from the shared standard right-hand hold preset in `src/js/content/player-appearance-catalog.js`, then override only what truly needs to differ. This keeps new right-hand weapons/tools aligned with the proven pickaxe pose by default.
+8. Put shared pose/origin/depth values in one family config object so all tiers inherit the same hand placement. When the silhouette changes meaningfully, move the `origin` to the real grip point on that family's handle rather than copying the pickaxe grip point unchanged.
+9. If a head/blade should hang below the handle in-world while the handle direction itself should still match the pickaxe-style hold, prefer a local roll around the handle axis in the held-model config rather than a new hand rotation.
+10. Reserve `flipY` for cases where you intentionally want to invert the icon's vertical mapping into the held mesh.
+11. If a family needs tiered metal shading instead of a single flat color, define shared dark/mid/light metal roles for each material tier and map the icon's metal symbols onto those roles.
+12. For pointed right-hand weapons like swords, use a runtime depth resolver so the main blade can stay at full thickness while the last two point layers taper `3 -> 2 -> 1` voxels without redrawing the icon.
+13. If the inventory icon is already approved and the user only wants the live in-world item to feel larger, chunkier, or more tapered, prefer changing `pixelSize`, `depth`, `depthBySymbol`, or the depth resolver in the held-model config before redrawing the icon.
+14. If the live held/dropped mesh should be chunky but still keep sharp blade/tip reads, add a secondary metal symbol with the same color and give it a thinner `depthBySymbol` override instead of making the whole item uniformly thick.
+15. When strong colors matter, keep literal hex color fidelity on the held fragments. Saturated blues/greens can look washed out if they rely only on packed Jagex-HSL conversion.
+16. Reuse the same family mesh builder for dropped world items in `src/js/world.js` instead of leaving those items on a generic fallback mesh.
+17. Rebuild the pixel assets, reload the game, equip the family items, and also drop them on the ground to verify all three presentations still match.
+
+Current runtime notes:
+
+- `pixelExtrude` is the family-friendly shape for turning icon pixels into held meshes.
+- `window.createEquipmentVisualMeshes(...)` is the reusable runtime hook for building held-family meshes outside the player rig, including ground-item visuals.
+- If a family exists in the runtime mirror but editable defs are missing in `src/js/content/item-catalog.js`, add the missing item defs there rather than patching the generated mirror.
+- If icon imagery changes, bump the cache tag in `src/js/core.js` so the refreshed PNGs appear reliably after reload.
+
 ## Ask Codex for an asset
 
 Natural-language prompts are enough. In this repo, Codex should treat a normal asset request as a direct execution request.
@@ -109,7 +154,8 @@ By default, Codex should automatically:
 3. Build the generated PNG/OBJ outputs
 4. Wire the item to that asset when the mapping is obvious
 5. Update `content/icon-status.json` so future fresh instances know whether the touched items are done or still todo
-6. Summarize what changed and note any assumptions
+6. Update `src/js/content/icon-review-catalog.js` so the current review batch auto-appears in inventory after reload
+7. Summarize what changed and note any assumptions
 
 Codex should only ask a clarifying question when the request is genuinely ambiguous, especially if:
 
@@ -193,6 +239,7 @@ npm.cmd run tool:pixel:migrate
 
 - Icons are authored on a `32x32` canvas but must stay readable at inventory-slot size.
 - Generated OBJ meshes are prototype silhouettes, not final hero assets.
+- For right-hand equippable families, do not assume generated OBJ files alone are enough to update the live held model. Check the appearance/ground runtime path too.
 - Keep asset IDs and item IDs stable because gameplay systems depend on those identifiers.
 
 ## Future sessions behavior

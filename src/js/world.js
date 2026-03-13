@@ -27,6 +27,18 @@
         const PIER_DECK_TOP_HEIGHT = 0.28;
         const PIER_DECK_THICKNESS = 0.14;
         const PIER_WATER_SURFACE_HEIGHT = -0.075;
+        const MAIN_DIRECTIONAL_SHADOW_CONFIG = {
+            enabled: true,
+            mapSize: 1024,
+            cameraHalfSize: 28,
+            cameraNear: 1,
+            cameraFar: 120,
+            height: 44,
+            offsetX: 18,
+            offsetZ: 14,
+            bias: -0.00045,
+            normalBias: 0.02
+        };
 
         function buildWaterMaterialKey(tokens) {
             return [
@@ -126,6 +138,27 @@
                 });
             }
             return caches.shore[key];
+        }
+
+        function updateMainDirectionalShadowFocus(focusX, focusY, focusZ) {
+            const dirLight = sharedMaterials.mainDirectionalShadowLight;
+            const dirLightTarget = sharedMaterials.mainDirectionalShadowTarget;
+            const shadowConfig = sharedMaterials.mainDirectionalShadowConfig;
+            if (!dirLight || !dirLightTarget || !shadowConfig || !shadowConfig.enabled) return;
+
+            const targetX = Number.isFinite(focusX) ? focusX : 0;
+            const targetY = Number.isFinite(focusY) ? focusY : 0;
+            const targetZ = Number.isFinite(focusZ) ? focusZ : 0;
+
+            dirLight.position.set(
+                targetX + shadowConfig.offsetX,
+                targetY + shadowConfig.height,
+                targetZ + shadowConfig.offsetZ
+            );
+            dirLightTarget.position.set(targetX, targetY, targetZ);
+            dirLight.updateMatrixWorld();
+            dirLightTarget.updateMatrixWorld();
+            dirLight.shadow.camera.updateMatrixWorld();
         }
 
         function initSharedAssets() {
@@ -702,22 +735,37 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.outputColorSpace = THREE.SRGBColorSpace;
-            renderer.shadowMap.enabled = false;
+            renderer.shadowMap.enabled = !!MAIN_DIRECTIONAL_SHADOW_CONFIG.enabled;
             renderer.shadowMap.type = THREE.BasicShadowMap;
             container.appendChild(renderer.domElement);
             scene.add(new THREE.HemisphereLight(0xfff2d6, 0xb0c29a, 1.08));
             scene.add(new THREE.AmbientLight(0xffffff, 0.88));
             const dirLight = new THREE.DirectionalLight(0xffefc0, 1.18);
-            dirLight.position.set(18, 44, 14);
-            dirLight.castShadow = false;
-            dirLight.shadow.mapSize.width = 256; dirLight.shadow.mapSize.height = 256;
-            dirLight.shadow.camera.left = -50; dirLight.shadow.camera.right = 50; dirLight.shadow.camera.top = 50; dirLight.shadow.camera.bottom = -50;
+            const dirLightTarget = new THREE.Object3D();
+            scene.add(dirLightTarget);
+            dirLight.target = dirLightTarget;
+            dirLight.castShadow = !!MAIN_DIRECTIONAL_SHADOW_CONFIG.enabled;
+            dirLight.shadow.mapSize.width = MAIN_DIRECTIONAL_SHADOW_CONFIG.mapSize;
+            dirLight.shadow.mapSize.height = MAIN_DIRECTIONAL_SHADOW_CONFIG.mapSize;
+            dirLight.shadow.camera.left = -MAIN_DIRECTIONAL_SHADOW_CONFIG.cameraHalfSize;
+            dirLight.shadow.camera.right = MAIN_DIRECTIONAL_SHADOW_CONFIG.cameraHalfSize;
+            dirLight.shadow.camera.top = MAIN_DIRECTIONAL_SHADOW_CONFIG.cameraHalfSize;
+            dirLight.shadow.camera.bottom = -MAIN_DIRECTIONAL_SHADOW_CONFIG.cameraHalfSize;
+            dirLight.shadow.camera.near = MAIN_DIRECTIONAL_SHADOW_CONFIG.cameraNear;
+            dirLight.shadow.camera.far = MAIN_DIRECTIONAL_SHADOW_CONFIG.cameraFar;
+            dirLight.shadow.bias = MAIN_DIRECTIONAL_SHADOW_CONFIG.bias;
+            dirLight.shadow.normalBias = MAIN_DIRECTIONAL_SHADOW_CONFIG.normalBias;
+            dirLight.shadow.camera.updateProjectionMatrix();
             scene.add(dirLight);
+            sharedMaterials.mainDirectionalShadowConfig = MAIN_DIRECTIONAL_SHADOW_CONFIG;
+            sharedMaterials.mainDirectionalShadowLight = dirLight;
+            sharedMaterials.mainDirectionalShadowTarget = dirLightTarget;
             const fillLight = new THREE.DirectionalLight(0xcadbe2, 0.3);
             fillLight.position.set(-20, 22, -16);
             scene.add(fillLight);
             playerRig = createPlayerRigFromCurrentAppearance();
             scene.add(playerRig);
+            updateMainDirectionalShadowFocus(playerState.x, 0, playerState.y);
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             window.addEventListener('resize', onWindowResize, false);
@@ -1569,7 +1617,15 @@
             const group = new THREE.Group();
             const terrainHeight = heightMap[z][y][x] + (z * 3.0);
             group.position.set(x, terrainHeight + 0.1, y);
-            if (itemData.id === 'iron_axe') {
+            const equipmentMeshes = (itemData && typeof itemData.id === 'string' && typeof window.createEquipmentVisualMeshes === 'function')
+                ? window.createEquipmentVisualMeshes(itemData.id, 'axe', [0, 0, 0, 0, 0])
+                : [];
+            if (equipmentMeshes.length > 0) {
+                equipmentMeshes.forEach((mesh) => {
+                    mesh.position.y += 0.06;
+                    group.add(mesh);
+                });
+            } else if (itemData.id === 'iron_axe') {
                 const handleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8); handleGeo.rotateX(Math.PI / 2);
                 const handle = new THREE.Mesh(handleGeo, new THREE.MeshLambertMaterial({color: 0x5c4033}));
                 const axeHead = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.4, 0.25), new THREE.MeshLambertMaterial({color: 0x999999}));
@@ -3220,7 +3276,7 @@
                     tData.iLeaf3 = new THREE.InstancedMesh(sharedGeometries.leaf3, sharedMaterials.leaves, tCount);
                     tData.iLeaf4 = new THREE.InstancedMesh(sharedGeometries.leaf4, sharedMaterials.leaves, tCount);
                     [tData.iTrunk, tData.iBranch, tData.iBranch2, tData.iBranch3, tData.iDrape1, tData.iDrape2, tData.iDrape3, tData.iDrape4, tData.iDrape5, tData.iDrape6, tData.iDrape7, tData.iDrape8, tData.iLeaf1, tData.iLeaf2, tData.iLeaf3, tData.iLeaf4].forEach(mesh => {
-                        mesh.castShadow = false; mesh.matrixAutoUpdate = false;
+                        mesh.castShadow = true; mesh.matrixAutoUpdate = false;
                         mesh.userData = { instanceMap: tData.treeMap };
                         planeGroup.add(mesh); environmentMeshes.push(mesh);
                     });
@@ -4469,6 +4525,7 @@
         window.manageChunks = manageChunks;
         window.reloadActiveWorldScene = reloadActiveWorldScene;
         window.tickFireLifecycle = tickFireLifecycle;
+        window.updateMainDirectionalShadowFocus = updateMainDirectionalShadowFocus;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;
         window.updateMiningPoseReferences = updateMiningPoseReferences;

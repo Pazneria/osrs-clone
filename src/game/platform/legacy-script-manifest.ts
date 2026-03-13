@@ -1,4 +1,5 @@
 import itemCatalogScript from "../../js/content/item-catalog.js?raw";
+import iconReviewCatalogScript from "../../js/content/icon-review-catalog.js?raw";
 import playerAppearanceCatalogScript from "../../js/content/player-appearance-catalog.js?raw";
 import examineCatalogScript from "../../js/content/examine-catalog.js?raw";
 import coreScript from "../../js/core.js?raw";
@@ -35,6 +36,7 @@ export interface LegacyScriptEntry {
 
 export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "item-catalog", filename: "src/js/content/item-catalog.js", code: itemCatalogScript },
+  { id: "icon-review-catalog", filename: "src/js/content/icon-review-catalog.js", code: iconReviewCatalogScript },
   { id: "player-appearance-catalog", filename: "src/js/content/player-appearance-catalog.js", code: playerAppearanceCatalogScript },
   { id: "examine-catalog", filename: "src/js/content/examine-catalog.js", code: examineCatalogScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },

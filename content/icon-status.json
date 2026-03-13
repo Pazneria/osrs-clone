@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T06:54:23.050Z",
+  "generatedAt": "2026-03-13T23:21:45.256Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "tin_ore",
@@ -13,9 +13,10 @@
       "treatment": "shared"
     },
     "adamant_axe": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_axe",
+      "notes": "Tiered axe family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_axe_head": {
       "assetId": "pickaxe",
@@ -23,9 +24,10 @@
       "treatment": "shared"
     },
     "adamant_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_boots": {
       "assetId": "iron_axe",
@@ -123,9 +125,9 @@
       "treatment": "shared"
     },
     "bronze_axe": {
-      "assetId": "iron_axe_item",
-      "notes": "Dedicated axe draft exists here, but it was originally requested as an iron axe pass. Re-check intended owner before marking done.",
-      "status": "todo",
+      "assetId": "bronze_axe",
+      "notes": "Tiered axe family silhouette.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "bronze_axe_head": {
@@ -134,9 +136,10 @@
       "treatment": "shared"
     },
     "bronze_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_boots": {
       "assetId": "iron_axe",
@@ -351,9 +354,10 @@
       "treatment": "shared"
     },
     "gold_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "gold_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "gold_ore": {
       "assetId": "tin_ore",
@@ -392,7 +396,8 @@
     },
     "iron_axe": {
       "assetId": "iron_axe",
-      "status": "todo",
+      "notes": "Tiered axe family silhouette.",
+      "status": "done",
       "treatment": "shared"
     },
     "iron_axe_head": {
@@ -401,9 +406,10 @@
       "treatment": "shared"
     },
     "iron_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_boots": {
       "assetId": "iron_axe",
@@ -542,9 +548,10 @@
       "treatment": "shared"
     },
     "mithril_axe": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_axe",
+      "notes": "Tiered axe family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_axe_head": {
       "assetId": "pickaxe",
@@ -552,9 +559,10 @@
       "treatment": "shared"
     },
     "mithril_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_boots": {
       "assetId": "iron_axe",
@@ -788,9 +796,10 @@
       "treatment": "shared"
     },
     "rune_axe": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_axe",
+      "notes": "Tiered axe family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_axe_head": {
       "assetId": "pickaxe",
@@ -798,9 +807,10 @@
       "treatment": "shared"
     },
     "rune_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_boots": {
       "assetId": "iron_axe",
@@ -898,9 +908,10 @@
       "treatment": "shared"
     },
     "silver_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "silver_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "silver_ore": {
       "assetId": "tin_ore",
@@ -953,9 +964,10 @@
       "treatment": "shared"
     },
     "steel_axe": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_axe",
+      "notes": "Tiered axe family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_axe_head": {
       "assetId": "pickaxe",
@@ -963,9 +975,10 @@
       "treatment": "shared"
     },
     "steel_bar": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_bar",
+      "notes": "Tiered ingot family silhouette.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_boots": {
       "assetId": "iron_axe",

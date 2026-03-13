@@ -11,7 +11,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'iron_axe_item' }
+            icon: { kind: 'pixel', assetId: 'bronze_axe' }
         },
         iron_axe: {
             name: 'Iron Axe',
@@ -37,7 +37,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'steel_axe' }
         },
         mithril_axe: {
             name: 'Mithril Axe',
@@ -50,7 +50,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'mithril_axe' }
         },
         adamant_axe: {
             name: 'Adamant Axe',
@@ -63,7 +63,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'adamant_axe' }
         },
         rune_axe: {
             name: 'Rune Axe',
@@ -76,7 +76,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
-            icon: { kind: 'pixel', assetId: 'iron_axe' }
+            icon: { kind: 'pixel', assetId: 'rune_axe' }
         },
         logs: {
             name: 'Logs',
@@ -168,6 +168,19 @@
             defaultAction: 'Use',
             icon: { kind: 'pixel', assetId: 'knife' }
         },
+        bronze_pickaxe: {
+            name: 'Bronze Pickaxe',
+            type: 'weapon',
+            weaponClass: 'pickaxe',
+            toolTier: 4,
+            speedBonusTicks: 0,
+            stats: { atk: 5, def: 0, str: 7 },
+            value: 40,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'pixel', assetId: 'bronze_pickaxe' }
+        },
         iron_pickaxe: {
             name: 'Iron Pickaxe',
             type: 'weapon',
@@ -180,6 +193,58 @@
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
             icon: { kind: 'pixel', assetId: 'iron_pickaxe' }
+        },
+        steel_pickaxe: {
+            name: 'Steel Pickaxe',
+            type: 'weapon',
+            weaponClass: 'pickaxe',
+            toolTier: 10,
+            speedBonusTicks: 2,
+            stats: { atk: 12, def: 0, str: 15 },
+            value: 350,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'pixel', assetId: 'steel_pickaxe' }
+        },
+        mithril_pickaxe: {
+            name: 'Mithril Pickaxe',
+            type: 'weapon',
+            weaponClass: 'pickaxe',
+            toolTier: 15,
+            speedBonusTicks: 3,
+            stats: { atk: 18, def: 0, str: 22 },
+            value: 900,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'pixel', assetId: 'mithril_pickaxe' }
+        },
+        adamant_pickaxe: {
+            name: 'Adamant Pickaxe',
+            type: 'weapon',
+            weaponClass: 'pickaxe',
+            toolTier: 21,
+            speedBonusTicks: 4,
+            stats: { atk: 24, def: 0, str: 30 },
+            value: 2200,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'pixel', assetId: 'adamant_pickaxe' }
+        },
+        rune_pickaxe: {
+            name: 'Rune Pickaxe',
+            type: 'weapon',
+            weaponClass: 'pickaxe',
+            toolTier: 28,
+            speedBonusTicks: 5,
+            stats: { atk: 32, def: 0, str: 40 },
+            value: 2500,
+            stackable: false,
+            actions: ['Equip', 'Use', 'Drop'],
+            defaultAction: 'Equip',
+            icon: { kind: 'pixel', assetId: 'rune_pickaxe' }
         },
         small_net: {
             name: 'Small Net',
@@ -1053,7 +1118,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'tin_ore' }
+                icon: { kind: 'pixel', assetId: `${barTier}_bar` }
             };
         });
 

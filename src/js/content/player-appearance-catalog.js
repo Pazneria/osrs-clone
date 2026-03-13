@@ -3,6 +3,53 @@
         return ((h & 63) << 10) | ((s & 7) << 7) | (l & 127);
     }
 
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function hexToRgb(hex) {
+        if (typeof hex !== 'string') return null;
+        const normalized = hex.trim().replace(/^#/, '');
+        if (normalized.length !== 6) return null;
+        return {
+            r: parseInt(normalized.slice(0, 2), 16),
+            g: parseInt(normalized.slice(2, 4), 16),
+            b: parseInt(normalized.slice(4, 6), 16)
+        };
+    }
+
+    function rgbToPackedJagexHsl(r, g, b) {
+        const nr = clamp((Number(r) || 0) / 255, 0, 1);
+        const ng = clamp((Number(g) || 0) / 255, 0, 1);
+        const nb = clamp((Number(b) || 0) / 255, 0, 1);
+        const max = Math.max(nr, ng, nb);
+        const min = Math.min(nr, ng, nb);
+        const lightness = (max + min) / 2;
+        let hue = 0;
+        let saturation = 0;
+
+        if (max !== min) {
+            const delta = max - min;
+            saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+            if (max === nr) hue = ((ng - nb) / delta) + (ng < nb ? 6 : 0);
+            else if (max === ng) hue = ((nb - nr) / delta) + 2;
+            else hue = ((nr - ng) / delta) + 4;
+            hue /= 6;
+        }
+
+        return packJagexHsl(
+            clamp(Math.round(hue * 63), 0, 63),
+            clamp(Math.round(saturation * 7), 0, 7),
+            clamp(Math.round(lightness * 127), 0, 127)
+        );
+    }
+
+    function hexToPackedJagexHsl(hex, fallback) {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return fallback;
+        return rgbToPackedJagexHsl(rgb.r, rgb.g, rgb.b);
+    }
+
     const bodyColorFind = [
         packJagexHsl(2, 3, 64),  // hair
         packJagexHsl(10, 4, 72), // torso
@@ -37,48 +84,363 @@
         kit_feet_female: { slot: 'feet', fragments: [{ target: 'leftLowerLeg', shape: 'box', size: [0.24, 0.10, 0.30], offset: [0, -0.26, 0.03], color: bodyColorFind[3], bodyColorIndex: 3 }, { target: 'rightLowerLeg', shape: 'box', size: [0.24, 0.10, 0.30], offset: [0, -0.26, 0.03], color: bodyColorFind[3], bodyColorIndex: 3 }] }
     };
 
-    const fragmentSets = {
-        pickaxe_base: [
-            { target: 'axe', shape: 'cylinder4', size: [0.030, 0.66, 0.030], rotation: [Math.PI / 2, 0, 0], offset: [0, -0.02, 0.24], isHandle: true, headAnchorAlong: -0.33, color: packJagexHsl(12, 4, 35) },
-            { target: 'axe', shape: 'torusArcTaper', size: [0.67, 0.05, 1.02, 14, 42, 1.55], rotation: [Math.PI / 2, -Math.PI / 2, 1.0507963268], handleRelative: [0.0, 0.0, 0.0], color: packJagexHsl(0, 0, 80) }
-        ]
+    const PICKAXE_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.......ffffff...................',
+        '.........ffffff.................',
+        '...........ffffff...............',
+        '.............ffffffff...........',
+        '................ffffff..........',
+        '...............bbffffff.........',
+        '..............bbbfffffff........',
+        '.............bbccaaffffff.......',
+        '............bbcca....ffff.......',
+        '............bcca......fff.......',
+        '...........bccba.......ff.......',
+        '..........bccba.........ff......',
+        '.........bccba...........f......',
+        '........bccba...................',
+        '.......bccba....................',
+        '......bccba.....................',
+        '.....bccba......................',
+        '....bccba.......................',
+        '...bccba........................',
+        '..bbcba.........................',
+        '..bcbba.........................',
+        '.bbcba..........................',
+        'bbcba...........................',
+        'bcba............................',
+        'bba.............................',
+        'ba..............................'
+    ];
+
+    const STANDARD_RIGHT_HAND_WEAPON_HOLD = Object.freeze({
+        pixelSize: 0.022,
+        origin: [5.5, 24.5],
+        rotation: [0.9561333749, -Math.PI / 2, 0],
+        offset: [0, -0.02, 0.08]
+    });
+
+    function createRightHandHeldModel(options) {
+        const safeOptions = options && typeof options === 'object' ? options : {};
+        const heldModel = {
+            pixelSize: Number.isFinite(safeOptions.pixelSize) ? safeOptions.pixelSize : STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize,
+            depth: Number.isFinite(safeOptions.depth) ? safeOptions.depth : (Number.isFinite(safeOptions.pixelSize) ? safeOptions.pixelSize : STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize),
+            origin: Array.isArray(safeOptions.origin) ? safeOptions.origin.slice() : STANDARD_RIGHT_HAND_WEAPON_HOLD.origin.slice(),
+            rotation: Array.isArray(safeOptions.rotation) ? safeOptions.rotation.slice() : STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation.slice(),
+            offset: Array.isArray(safeOptions.offset) ? safeOptions.offset.slice() : STANDARD_RIGHT_HAND_WEAPON_HOLD.offset.slice()
+        };
+        if (typeof safeOptions.flipY === 'boolean') heldModel.flipY = safeOptions.flipY;
+        if (Array.isArray(safeOptions.localRotationAxis)) heldModel.localRotationAxis = safeOptions.localRotationAxis.slice();
+        if (Number.isFinite(safeOptions.localRotationAngle)) heldModel.localRotationAngle = safeOptions.localRotationAngle;
+        if (typeof safeOptions.depthResolver === 'function') heldModel.depthResolver = safeOptions.depthResolver;
+        if (safeOptions.metalRoleBySymbol && typeof safeOptions.metalRoleBySymbol === 'object') {
+            heldModel.metalRoleBySymbol = Object.assign({}, safeOptions.metalRoleBySymbol);
+        }
+        if (safeOptions.depthBySymbol && typeof safeOptions.depthBySymbol === 'object') {
+            heldModel.depthBySymbol = Object.assign({}, safeOptions.depthBySymbol);
+        }
+        if (Array.isArray(safeOptions.metalSymbols) && safeOptions.metalSymbols.length) {
+            heldModel.metalSymbols = safeOptions.metalSymbols.slice();
+        }
+        return heldModel;
+    }
+
+    const PICKAXE_HELD_MODEL = createRightHandHeldModel({
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 2
+    });
+
+    const AXE_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '..............gffff.............',
+        '.............ffffffff...........',
+        '.............gfffffffff.........',
+        '.............fffffffffg.........',
+        '..............gffffff.fff.......',
+        '............ffff.fbabf.fff......',
+        '............gfffffacb...........',
+        '............ffff..babb..........',
+        '.............fff.bbabb..........',
+        '..............bbabb.............',
+        '.............bbacb..............',
+        '............bbabb...............',
+        '...........bbabb................',
+        '..........bbacb.................',
+        '.........bbabb..................',
+        '........bbabb...................',
+        '.......bbacb....................',
+        '......bbabb.....................',
+        '.....bbabb......................',
+        '....bbacb.......................',
+        '...bbabb........................',
+        '..bbabb.........................',
+        '.bbacb..........................',
+        'bbabb...........................',
+        'bba.............................',
+        'ba..............................'
+    ];
+
+    const SWORD_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.......................edf......',
+        '......................eeed......',
+        '....................eefed.......',
+        '...................efffd........',
+        '..................efffd.........',
+        '..................efffd.........',
+        '.................effdd..........',
+        '................effd............',
+        '...............effd.............',
+        '..............effd..............',
+        '........g....effd...............',
+        '.........hh.effd................',
+        '...........heed.................',
+        '...........dhd..................',
+        '........cbb.dh..................',
+        '........cbb.dh..................',
+        '.......ccbb...g.................',
+        '......ccbaa.....................',
+        '......bba.......................',
+        '.....caa........................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+    ];
+
+    const AXE_HELD_MODEL = createRightHandHeldModel({
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 3,
+        origin: [6.5, 24.5],
+        localRotationAxis: [1, 1, 0],
+        localRotationAngle: Math.PI,
+        depthBySymbol: {
+            g: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize
+        },
+        metalSymbols: ['f', 'g']
+    });
+
+    function resolveSwordBladeDepth(symbol, x, y, defaultDepth, heldModel) {
+        if (!/[def]/.test(symbol)) return defaultDepth;
+        const pixelSize = heldModel && Number.isFinite(heldModel.pixelSize)
+            ? heldModel.pixelSize
+            : STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize;
+        if (y === 6) return pixelSize;
+        if (y === 7) return pixelSize * 2;
+        return pixelSize * 3;
+    }
+
+    const SWORD_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15,
+        depth: (STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15) * 2,
+        origin: [7.5, 24.5],
+        depthResolver: resolveSwordBladeDepth,
+        metalRoleBySymbol: {
+            d: 'dark',
+            e: 'mid',
+            f: 'light'
+        }
+    });
+
+    const RIGHT_HAND_METAL_TIER_PALETTES = Object.freeze({
+        bronze: Object.freeze({ flat: '#f3b04e', dark: '#704332', mid: '#b87248', light: '#f0c28d' }),
+        iron: Object.freeze({ flat: '#8da9d8', dark: '#4f5963', mid: '#97a3ae', light: '#e2e8ef' }),
+        steel: Object.freeze({ flat: '#d9e2ec', dark: '#7b8a96', mid: '#becbd6', light: '#f6fbff' }),
+        mithril: Object.freeze({ flat: '#244bdb', dark: '#18308f', mid: '#3f6aff', light: '#a9bcff' }),
+        adamant: Object.freeze({ flat: '#28c57a', dark: '#1b7d4f', mid: '#45d895', light: '#b8ffd9' }),
+        rune: Object.freeze({ flat: '#40f0ff', dark: '#217b93', mid: '#64d8ea', light: '#dcfbff' })
+    });
+
+    const RIGHT_HAND_METAL_TIER_COLORS = Object.freeze({
+        bronze: RIGHT_HAND_METAL_TIER_PALETTES.bronze.flat,
+        iron: RIGHT_HAND_METAL_TIER_PALETTES.iron.flat,
+        steel: RIGHT_HAND_METAL_TIER_PALETTES.steel.flat,
+        mithril: RIGHT_HAND_METAL_TIER_PALETTES.mithril.flat,
+        adamant: RIGHT_HAND_METAL_TIER_PALETTES.adamant.flat,
+        rune: RIGHT_HAND_METAL_TIER_PALETTES.rune.flat
+    });
+
+    const PICKAXE_HANDLE_PALETTE = Object.freeze({
+        a: '#4f3219',
+        b: '#7b5430',
+        c: '#b78750'
+    });
+
+    const AXE_HANDLE_PALETTE = Object.freeze({
+        a: '#4d3119',
+        b: '#7b5530',
+        c: '#b68550'
+    });
+
+    const SWORD_HANDLE_PALETTE = Object.freeze({
+        a: '#4f3219',
+        b: '#7b5430',
+        c: '#b78750',
+        g: '#bf8c54',
+        h: '#f0c994'
+    });
+
+    function getRightHandMetalTier(itemId) {
+        if (typeof itemId !== 'string') return 'iron';
+        const match = /^(bronze|iron|steel|mithril|adamant|rune)_/.exec(itemId);
+        return match ? match[1] : 'iron';
+    }
+
+    function buildRightHandPalette(handlePalette, itemId, heldModel) {
+        const metalTier = getRightHandMetalTier(itemId);
+        const tierPalette = RIGHT_HAND_METAL_TIER_PALETTES[metalTier] || RIGHT_HAND_METAL_TIER_PALETTES.iron;
+        const palette = Object.assign({}, handlePalette);
+        const roleBySymbol = heldModel && heldModel.metalRoleBySymbol && typeof heldModel.metalRoleBySymbol === 'object'
+            ? heldModel.metalRoleBySymbol
+            : null;
+        if (roleBySymbol) {
+            const roleSymbols = Object.keys(roleBySymbol);
+            for (let i = 0; i < roleSymbols.length; i++) {
+                const symbol = roleSymbols[i];
+                const role = roleBySymbol[symbol];
+                palette[symbol] = tierPalette[role] || tierPalette.flat;
+            }
+            return palette;
+        }
+        const metalColor = tierPalette.flat;
+        const symbols = Array.isArray(heldModel && heldModel.metalSymbols) && heldModel.metalSymbols.length
+            ? heldModel.metalSymbols
+            : ['f'];
+        for (let i = 0; i < symbols.length; i++) palette[symbols[i]] = metalColor;
+        return palette;
+    }
+
+    function buildPixelExtrudeFragments(pixelRows, palette, heldModel) {
+        const fragments = [];
+        const symbols = Object.keys(palette || {});
+        for (let i = 0; i < symbols.length; i++) {
+            const symbol = symbols[i];
+            const colorHex = palette[symbol];
+            if (symbol === '.' || colorHex === 'transparent') continue;
+            const voxels = [];
+            for (let y = 0; y < pixelRows.length; y++) {
+                const row = pixelRows[y];
+                for (let x = 0; x < row.length; x++) {
+                    if (row[x] === symbol) voxels.push([x, y]);
+                }
+            }
+            if (!voxels.length) continue;
+            const depthBySymbol = heldModel && heldModel.depthBySymbol ? heldModel.depthBySymbol : null;
+            const defaultDepth = depthBySymbol && Number.isFinite(depthBySymbol[symbol]) && depthBySymbol[symbol] > 0
+                ? depthBySymbol[symbol]
+                : heldModel.depth;
+            const depthResolver = heldModel && typeof heldModel.depthResolver === 'function' ? heldModel.depthResolver : null;
+            const voxelGroups = new Map();
+            for (let voxelIndex = 0; voxelIndex < voxels.length; voxelIndex++) {
+                const voxel = voxels[voxelIndex];
+                let voxelDepth = defaultDepth;
+                if (depthResolver) {
+                    const resolvedDepth = depthResolver(symbol, voxel[0], voxel[1], defaultDepth, heldModel, pixelRows);
+                    if (Number.isFinite(resolvedDepth) && resolvedDepth > 0) voxelDepth = resolvedDepth;
+                }
+                const depthKey = String(voxelDepth);
+                if (!voxelGroups.has(depthKey)) voxelGroups.set(depthKey, { depth: voxelDepth, voxels: [] });
+                voxelGroups.get(depthKey).voxels.push(voxel);
+            }
+            voxelGroups.forEach((group) => {
+                fragments.push({
+                    target: 'axe',
+                    shape: 'pixelExtrude',
+                    size: [heldModel.pixelSize, group.depth],
+                    origin: heldModel.origin.slice(),
+                    rotation: heldModel.rotation.slice(),
+                    offset: heldModel.offset.slice(),
+                    flipY: !!heldModel.flipY,
+                    localRotationAxis: Array.isArray(heldModel.localRotationAxis) ? heldModel.localRotationAxis.slice() : null,
+                    localRotationAngle: Number.isFinite(heldModel.localRotationAngle) ? heldModel.localRotationAngle : 0,
+                    voxels: group.voxels,
+                    rgbColor: colorHex,
+                    color: hexToPackedJagexHsl(colorHex, packJagexHsl(0, 0, 64))
+                });
+            });
+        }
+        return fragments;
+    }
+
+    function createRightHandAppearanceItemDef(itemId, modelIds, pixelRows, heldModel, handlePalette) {
+        const palette = buildRightHandPalette(handlePalette, itemId, heldModel);
+        return {
+            slot: 'weapon',
+            maleModelIds: modelIds.male.slice(),
+            femaleModelIds: modelIds.female.slice(),
+            recolors: [],
+            fragments: buildPixelExtrudeFragments(pixelRows, palette, heldModel)
+        };
+    }
+
+    const pickaxeModelIds = {
+        male: [1135, -1, -1],
+        female: [1235, -1, -1]
     };
 
-    const itemDefs = {
-        iron_axe: {
-            slot: 'weapon',
-            maleModelIds: [1100, -1, -1],
-            femaleModelIds: [1200, -1, -1],
-            recolors: [],
-            fragments: [
-                { target: 'axe', shape: 'cylinder4', size: [0.028, 0.62, 0.028], rotation: [Math.PI / 2, 0, 0], offset: [0, -0.02, 0.24], color: packJagexHsl(12, 4, 38) },
-                { target: 'axe', shape: 'box', size: [0.06, 0.28, 0.18], offset: [0, -0.16, 0.48], color: packJagexHsl(0, 0, 76) },
-                { target: 'axe', shape: 'box', size: [0.04, 0.18, 0.10], offset: [0, -0.02, 0.47], color: packJagexHsl(0, 0, 86) }
-            ]
-        },
-        pickaxe_base_reference: {
-            slot: 'weapon',
-            maleModelIds: [1135, -1, -1],
-            femaleModelIds: [1235, -1, -1],
-            recolors: [],
-            fragments: fragmentSets.pickaxe_base
-        },
-        iron_pickaxe: {
-            slot: 'weapon',
-            maleModelIds: [1135, -1, -1],
-            femaleModelIds: [1235, -1, -1],
-            recolors: [],
-            fragments: fragmentSets.pickaxe_base
-        }
+    const pickaxeItemDefs = {
+        pickaxe_base_reference: createRightHandAppearanceItemDef('iron_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        bronze_pickaxe: createRightHandAppearanceItemDef('bronze_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        iron_pickaxe: createRightHandAppearanceItemDef('iron_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        steel_pickaxe: createRightHandAppearanceItemDef('steel_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        mithril_pickaxe: createRightHandAppearanceItemDef('mithril_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        adamant_pickaxe: createRightHandAppearanceItemDef('adamant_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        rune_pickaxe: createRightHandAppearanceItemDef('rune_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE)
+    };
+
+    const axeModelIds = {
+        male: [1100, -1, -1],
+        female: [1200, -1, -1]
+    };
+
+    const axeItemDefs = {
+        axe_base_reference: createRightHandAppearanceItemDef('iron_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE),
+        bronze_axe: createRightHandAppearanceItemDef('bronze_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE),
+        iron_axe: createRightHandAppearanceItemDef('iron_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE),
+        steel_axe: createRightHandAppearanceItemDef('steel_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE),
+        mithril_axe: createRightHandAppearanceItemDef('mithril_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE),
+        adamant_axe: createRightHandAppearanceItemDef('adamant_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE),
+        rune_axe: createRightHandAppearanceItemDef('rune_axe', axeModelIds, AXE_ICON_PIXELS, AXE_HELD_MODEL, AXE_HANDLE_PALETTE)
+    };
+
+    const swordModelIds = {
+        male: [1100, -1, -1],
+        female: [1200, -1, -1]
+    };
+
+    const swordItemDefs = {
+        sword_base_reference: createRightHandAppearanceItemDef('iron_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE),
+        bronze_sword: createRightHandAppearanceItemDef('bronze_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE),
+        iron_sword: createRightHandAppearanceItemDef('iron_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE),
+        steel_sword: createRightHandAppearanceItemDef('steel_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE),
+        mithril_sword: createRightHandAppearanceItemDef('mithril_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE),
+        adamant_sword: createRightHandAppearanceItemDef('adamant_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE),
+        rune_sword: createRightHandAppearanceItemDef('rune_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE)
     };
 
     window.PlayerAppearanceCatalog = {
-        version: '2026.03.m1',
+        version: '2026.03.m13',
         slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
         bodyColorFind,
         bodyColorPalettes,
         defaultSlotKits,
         kitDefs,
-        itemDefs
+        itemDefs: Object.assign({}, pickaxeItemDefs, axeItemDefs, swordItemDefs)
     };
 })();

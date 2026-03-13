@@ -782,7 +782,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function findPath(startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null) {
-            let validTargets = new Set(); 
+            let validTargets = new Set();
             let targetTileType = logicalMap[playerState.z][targetY][targetX];
             const stationApproachKeys = new Set(
                 getStationApproachPositions(interactionObj, targetX, targetY, playerState.z)
@@ -1867,6 +1867,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (minimapLocked && !isFreeCam) { minimapTargetX = currentVisualX; minimapTargetY = currentVisualY; }
             const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
             if (!rig) {
+                if (typeof window.updateMainDirectionalShadowFocus === 'function') {
+                    const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
+                    window.updateMainDirectionalShadowFocus(shadowFocus.x, baseVisualY, shadowFocus.z);
+                }
                 renderer.render(scene, camera);
                 return;
             }
@@ -2064,6 +2068,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 camera.position.y = Math.max(camera.position.y, followCamGround + 0.3);
                 const lookTarget = new THREE.Vector3(playerRig.position.x, cameraFollowY + 1.0, playerRig.position.z);
                 camera.lookAt(lookTarget);
+            }
+            if (typeof window.updateMainDirectionalShadowFocus === 'function') {
+                const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
+                const shadowFocusY = isFreeCam ? freeCamTarget.y : baseVisualY;
+                window.updateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z);
             }
             renderer.render(scene, camera); updateMinimap();
             if (uiPlayerRig && !document.getElementById('view-equip').classList.contains('hidden')) uiRenderer.render(uiScene, uiCamera);

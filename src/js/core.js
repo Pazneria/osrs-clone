@@ -317,10 +317,11 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260313g";
+        const ASSET_VERSION_TAG = "20260313n";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
-        const INVENTORY_ICON_REVIEW_GRANT_ID = 'inventory_icon_review_20260313a';
-        const INVENTORY_ICON_REVIEW_ITEM_IDS = [
+        const DEFAULT_ICON_REVIEW_GRANT_ID = 'inventory_icon_review_20260313a';
+        const DEFAULT_ICON_REVIEW_LABEL = 'Inventory Icons';
+        const DEFAULT_ICON_REVIEW_ITEM_IDS = [
             'bronze_pickaxe',
             'iron_pickaxe',
             'steel_pickaxe',
@@ -336,6 +337,38 @@
             'earth_staff',
             'fire_staff'
         ];
+
+        function sanitizeIconReviewItemIds(itemIds) {
+            if (!Array.isArray(itemIds)) return [];
+            const restored = [];
+            const seen = new Set();
+            for (let i = 0; i < itemIds.length; i++) {
+                const itemId = sanitizeItemId(itemIds[i]);
+                if (!itemId || seen.has(itemId)) continue;
+                seen.add(itemId);
+                restored.push(itemId);
+            }
+            return restored;
+        }
+
+        function getActiveIconReviewBatch() {
+            const fallbackItemIds = sanitizeIconReviewItemIds(DEFAULT_ICON_REVIEW_ITEM_IDS);
+            const catalog = window.IconReviewCatalog && typeof window.IconReviewCatalog === 'object'
+                ? window.IconReviewCatalog
+                : null;
+            const itemIds = sanitizeIconReviewItemIds(catalog && Array.isArray(catalog.itemIds) ? catalog.itemIds : fallbackItemIds);
+            const activeBatchId = (catalog && typeof catalog.activeBatchId === 'string' && catalog.activeBatchId.trim())
+                ? catalog.activeBatchId.trim()
+                : DEFAULT_ICON_REVIEW_GRANT_ID;
+            const label = (catalog && typeof catalog.label === 'string' && catalog.label.trim())
+                ? catalog.label.trim()
+                : DEFAULT_ICON_REVIEW_LABEL;
+            return {
+                batchId: activeBatchId,
+                label,
+                itemIds: itemIds.length > 0 ? itemIds : fallbackItemIds
+            };
+        }
 
         function inferItemActions(item) {
             if (!item || !item.type) return [];
@@ -512,20 +545,21 @@
         }
 
         function applyInventoryIconReviewGrant() {
+            const reviewBatch = getActiveIconReviewBatch();
             const added = [];
             const acknowledged = [];
             const blocked = [];
 
-            for (let i = 0; i < INVENTORY_ICON_REVIEW_ITEM_IDS.length; i++) {
-                const itemId = INVENTORY_ICON_REVIEW_ITEM_IDS[i];
+            for (let i = 0; i < reviewBatch.itemIds.length; i++) {
+                const itemId = reviewBatch.itemIds[i];
                 if (!ITEM_DB[itemId]) {
                     blocked.push(itemId);
                     continue;
                 }
-                if (hasContentGrantItem(INVENTORY_ICON_REVIEW_GRANT_ID, itemId)) continue;
+                if (hasContentGrantItem(reviewBatch.batchId, itemId)) continue;
 
                 if (inventoryContainsItem(itemId)) {
-                    markContentGrantItem(INVENTORY_ICON_REVIEW_GRANT_ID, itemId);
+                    markContentGrantItem(reviewBatch.batchId, itemId);
                     acknowledged.push(itemId);
                     continue;
                 }
@@ -537,11 +571,13 @@
                 }
 
                 inventory[emptyIdx] = { itemData: ITEM_DB[itemId], amount: 1 };
-                markContentGrantItem(INVENTORY_ICON_REVIEW_GRANT_ID, itemId);
+                markContentGrantItem(reviewBatch.batchId, itemId);
                 added.push(itemId);
             }
 
             return {
+                batchId: reviewBatch.batchId,
+                batchLabel: reviewBatch.label,
                 added,
                 acknowledged,
                 blocked,
@@ -662,22 +698,8 @@
                     { itemId: 'bronze_bar', amount: 1 }
                 ]), 'logs');
             } else if (name === 'icons') {
-                slots = [
-                    { itemId: 'bronze_pickaxe', amount: 1 },
-                    { itemId: 'iron_pickaxe', amount: 1 },
-                    { itemId: 'steel_pickaxe', amount: 1 },
-                    { itemId: 'mithril_pickaxe', amount: 1 },
-                    { itemId: 'adamant_pickaxe', amount: 1 },
-                    { itemId: 'rune_pickaxe', amount: 1 },
-                    { itemId: 'hammer', amount: 1 },
-                    { itemId: 'fishing_rod', amount: 1 },
-                    { itemId: 'harpoon', amount: 1 },
-                    { itemId: 'rune_harpoon', amount: 1 },
-                    { itemId: 'air_staff', amount: 1 },
-                    { itemId: 'water_staff', amount: 1 },
-                    { itemId: 'earth_staff', amount: 1 },
-                    { itemId: 'fire_staff', amount: 1 }
-                ];
+                const reviewBatch = getActiveIconReviewBatch();
+                slots = reviewBatch.itemIds.map((itemId) => ({ itemId, amount: 1 }));
             } else if (name === 'default') {
                 slots = [
                     { itemId: 'iron_axe', amount: 1 },
@@ -2617,10 +2639,10 @@
                 saveProgressToStorage('inventory_icon_review_grant');
             }
             if (iconGrantResult.added.length > 0) {
-                addChatMessage(`Added ${iconGrantResult.added.length} inventory icon QA item(s) to your inventory.`, 'info');
+                addChatMessage(`Added ${iconGrantResult.added.length} active icon review item(s) to your inventory.`, 'info');
             }
             if (iconGrantResult.blocked.length > 0) {
-                addChatMessage(`Inventory icon QA grant left out ${iconGrantResult.blocked.length} item(s) because your inventory is full. Use /qa icons to load the full review set instantly.`, 'warn');
+                addChatMessage(`Active icon review batch "${iconGrantResult.batchLabel || 'current'}" left out ${iconGrantResult.blocked.length} item(s) because your inventory is full. Clear a few slots and reload to inspect them.`, 'warn');
             }
 
             const worldMapPanel = document.getElementById('world-map-panel');

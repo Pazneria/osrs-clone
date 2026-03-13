@@ -53,6 +53,25 @@ function jagexHslToRgb(packed) {
     return { r: rgb[0] / 255, g: rgb[1] / 255, b: rgb[2] / 255 };
 }
 
+function hexColorToRgb(hex) {
+    if (typeof hex !== 'string') return null;
+    const normalized = hex.trim().replace(/^#/, '');
+    if (normalized.length !== 6) return null;
+    const r = parseInt(normalized.slice(0, 2), 16);
+    const g = parseInt(normalized.slice(2, 4), 16);
+    const b = parseInt(normalized.slice(4, 6), 16);
+    if (![r, g, b].every((value) => Number.isFinite(value))) return null;
+    return { r: r / 255, g: g / 255, b: b / 255 };
+}
+
+function resolveFragmentRgb(fragment, packedColor) {
+    if (fragment && typeof fragment.rgbColor === 'string') {
+        const rgb = hexColorToRgb(fragment.rgbColor);
+        if (rgb) return rgb;
+    }
+    return jagexHslToRgb(packedColor);
+}
+
 function hslToRgb(h, s, l) {
     if (s === 0) {
         const v = Math.round(l * 255);
@@ -85,9 +104,10 @@ function getPlayerMaterial() {
     return PLAYER_SHARED_MATERIAL;
 }
 
-function createColorizedMesh(shape, size, packedColor) {
-    const geometry = createGeometry(shape, size).toNonIndexed();
-    const rgb = jagexHslToRgb(packedColor);
+function createColorizedMesh(shape, size, packedColor, fragment) {
+    let geometry = createGeometry(shape, size, fragment);
+    if (geometry.index) geometry = geometry.toNonIndexed();
+    const rgb = resolveFragmentRgb(fragment, packedColor);
     const positions = geometry.getAttribute('position');
     const colors = new Float32Array(positions.count * 3);
     for (let i = 0; i < positions.count; i++) {
@@ -100,7 +120,87 @@ function createColorizedMesh(shape, size, packedColor) {
     return new THREE.Mesh(geometry, getPlayerMaterial());
 }
 
-function createGeometry(shape, size) {
+function createPixelExtrudeGeometry(fragment, size) {
+    const voxelSize = Array.isArray(size) ? Number(size[0]) : NaN;
+    const depth = Array.isArray(size) ? Number(size[1]) : NaN;
+    const safeVoxelSize = Number.isFinite(voxelSize) && voxelSize > 0 ? voxelSize : 0.02;
+    const safeDepth = Number.isFinite(depth) && depth > 0 ? depth : safeVoxelSize;
+    const origin = Array.isArray(fragment && fragment.origin) ? fragment.origin : [0.5, 0.5];
+    const originX = Number.isFinite(origin[0]) ? origin[0] : 0.5;
+    const originY = Number.isFinite(origin[1]) ? origin[1] : 0.5;
+    const flipY = !!(fragment && fragment.flipY);
+    const voxelsIn = Array.isArray(fragment && fragment.voxels) ? fragment.voxels : [];
+    const voxels = [];
+    const localRotationAxis = Array.isArray(fragment && fragment.localRotationAxis) ? fragment.localRotationAxis : null;
+    const localRotationAngle = Number(fragment && fragment.localRotationAngle);
+
+    for (let i = 0; i < voxelsIn.length; i++) {
+        const voxel = voxelsIn[i];
+        if (!Array.isArray(voxel) || voxel.length < 2) continue;
+        const x = Number(voxel[0]);
+        const y = Number(voxel[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+        voxels.push([x, y]);
+    }
+
+    if (!voxels.length) return new THREE.BoxGeometry(safeVoxelSize, safeVoxelSize, safeDepth);
+
+    const template = new THREE.BoxGeometry(safeVoxelSize, safeVoxelSize, safeDepth).toNonIndexed();
+    const templatePositions = template.getAttribute('position');
+    const templateNormals = template.getAttribute('normal');
+    const verticesPerVoxel = templatePositions.count;
+    const positions = new Float32Array(verticesPerVoxel * 3 * voxels.length);
+    const normals = new Float32Array(verticesPerVoxel * 3 * voxels.length);
+
+    for (let voxelIndex = 0; voxelIndex < voxels.length; voxelIndex++) {
+        const voxel = voxels[voxelIndex];
+        const centerX = ((voxel[0] + 0.5) - originX) * safeVoxelSize;
+        const centerY = flipY
+            ? (((voxel[1] + 0.5) - originY) * safeVoxelSize)
+            : ((originY - (voxel[1] + 0.5)) * safeVoxelSize);
+        const baseOffset = voxelIndex * verticesPerVoxel * 3;
+        for (let vertexIndex = 0; vertexIndex < verticesPerVoxel; vertexIndex++) {
+            const outputIndex = baseOffset + (vertexIndex * 3);
+            positions[outputIndex] = templatePositions.getX(vertexIndex) + centerX;
+            positions[outputIndex + 1] = templatePositions.getY(vertexIndex) + centerY;
+            positions[outputIndex + 2] = templatePositions.getZ(vertexIndex);
+            normals[outputIndex] = templateNormals.getX(vertexIndex);
+            normals[outputIndex + 1] = templateNormals.getY(vertexIndex);
+            normals[outputIndex + 2] = templateNormals.getZ(vertexIndex);
+        }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    if (localRotationAxis && Number.isFinite(localRotationAngle) && Math.abs(localRotationAngle) > 1e-6) {
+        const axis = new THREE.Vector3(
+            Number(localRotationAxis[0]) || 0,
+            Number(localRotationAxis[1]) || 0,
+            Number(localRotationAxis[2]) || 0
+        );
+        if (axis.lengthSq() > 1e-6) {
+            axis.normalize();
+            const rotation = new THREE.Quaternion().setFromAxisAngle(axis, localRotationAngle);
+            const positionAttr = geometry.getAttribute('position');
+            const normalAttr = geometry.getAttribute('normal');
+            const temp = new THREE.Vector3();
+            for (let i = 0; i < positionAttr.count; i++) {
+                temp.set(positionAttr.getX(i), positionAttr.getY(i), positionAttr.getZ(i));
+                temp.applyQuaternion(rotation);
+                positionAttr.setXYZ(i, temp.x, temp.y, temp.z);
+                temp.set(normalAttr.getX(i), normalAttr.getY(i), normalAttr.getZ(i));
+                temp.applyQuaternion(rotation);
+                normalAttr.setXYZ(i, temp.x, temp.y, temp.z);
+            }
+            positionAttr.needsUpdate = true;
+            normalAttr.needsUpdate = true;
+        }
+    }
+    return geometry;
+}
+
+function createGeometry(shape, size, fragment) {
     if (shape === 'box') return new THREE.BoxGeometry(size[0], size[1], size[2]);
     if (shape === 'cylinder4') return new THREE.CylinderGeometry(size[0], size[2], size[1], 4, 1);
     if (shape === 'cylinder') return new THREE.CylinderGeometry(size[0], size[2], size[1], 16, 1);
@@ -151,6 +251,7 @@ function createGeometry(shape, size) {
         ];
         return new THREE.LatheGeometry(profile, segments);
     }
+    if (shape === 'pixelExtrude') return createPixelExtrudeGeometry(fragment, size);
     return new THREE.BoxGeometry(0.2, 0.2, 0.2);
 }
 
@@ -323,26 +424,40 @@ function resolveFragmentPosition(fragment, handleFrame) {
     return null;
 }
 
-function addFragmentsToRig(rigRoot, fragments, bodyColors, recolors) {
-    const nodes = rigNodeMap(rigRoot);
+function createMeshesForTarget(targetName, fragments, bodyColors, recolors) {
+    if (!targetName || !Array.isArray(fragments)) return [];
+    const targetFragments = [];
     const handleFrames = new Map();
+
     fragments.forEach((fragment) => {
-        if (fragment && fragment.isHandle) {
-            handleFrames.set(fragment.target, buildHandleFrame(fragment));
-        }
+        if (!fragment || fragment.target !== targetName) return;
+        targetFragments.push(fragment);
+        if (fragment.isHandle) handleFrames.set(fragment.target, buildHandleFrame(fragment));
     });
 
-    fragments.forEach((fragment) => {
-        const targetNode = nodes[fragment.target];
-        if (!targetNode) return;
+    const meshes = [];
+    targetFragments.forEach((fragment) => {
         const finalPacked = applyPackedRecolors(fragment.color, fragment.bodyColorIndex, bodyColors, recolors);
-        const mesh = createColorizedMesh(fragment.shape, fragment.size, finalPacked);
-
+        const mesh = createColorizedMesh(fragment.shape, fragment.size, finalPacked, fragment);
         const pos = resolveFragmentPosition(fragment, handleFrames.get(fragment.target));
         if (pos) mesh.position.copy(pos);
         if (Array.isArray(fragment.rotation)) mesh.rotation.set(fragment.rotation[0], fragment.rotation[1], fragment.rotation[2]);
-        targetNode.add(mesh);
+        mesh.castShadow = true;
+        meshes.push(mesh);
     });
+    return meshes;
+}
+
+function addFragmentsToRig(rigRoot, fragments, bodyColors, recolors) {
+    const nodes = rigNodeMap(rigRoot);
+    const targetNames = Object.keys(nodes);
+    for (let i = 0; i < targetNames.length; i++) {
+        const targetName = targetNames[i];
+        const targetNode = nodes[targetName];
+        if (!targetNode) continue;
+        const meshes = createMeshesForTarget(targetName, fragments, bodyColors, recolors);
+        for (let meshIndex = 0; meshIndex < meshes.length; meshIndex++) targetNode.add(meshes[meshIndex]);
+    }
 }
 
 function resolveSlotFragments(slotEntry, slotName, normalizedAppearance) {
@@ -603,14 +718,25 @@ function setPlayerRigToolVisual(rigRoot, itemId) {
     rigRoot.userData.skillingToolVisualId = desiredId;
     if (!desiredId) return;
 
-    const itemDef = PLAYER_ITEM_DEFS[desiredId] || PLAYER_ITEM_DEFS.pickaxe_base_reference;
-    if (!itemDef || !Array.isArray(itemDef.fragments)) return;
+    let toolMeshes = createEquipmentVisualMeshes(desiredId, 'axe');
+    let fallbackId = null;
+    if (/_pickaxe$/.test(desiredId)) fallbackId = 'pickaxe_base_reference';
+    else if (/_axe$/.test(desiredId)) fallbackId = 'axe_base_reference';
+    else if (/_sword$/.test(desiredId)) fallbackId = 'sword_base_reference';
+    if (toolMeshes.length === 0 && fallbackId && desiredId !== fallbackId) {
+        toolMeshes = createEquipmentVisualMeshes(fallbackId, 'axe');
+    }
+    for (let i = 0; i < toolMeshes.length; i++) axeNode.add(toolMeshes[i]);
+}
 
-    const axeFragments = itemDef.fragments.filter((fragment) => fragment && fragment.target === 'axe');
-    if (axeFragments.length === 0) return;
-
-    const bodyColors = Array.isArray(playerAppearanceState.colors) ? playerAppearanceState.colors : [0, 0, 0, 0, 0];
-    addFragmentsToRig(rigRoot, axeFragments, bodyColors, itemDef.recolors || []);
+function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverride = null) {
+    const itemDef = PLAYER_ITEM_DEFS[itemId] || null;
+    if (!itemDef || !Array.isArray(itemDef.fragments)) return [];
+    const bodyColors = Array.isArray(bodyColorsOverride)
+        ? bodyColorsOverride
+        : (Array.isArray(playerAppearanceState.colors) ? playerAppearanceState.colors : [0, 0, 0, 0, 0]);
+    return createMeshesForTarget(targetName, itemDef.fragments, bodyColors, itemDef.recolors || []);
 }
 
 window.setPlayerRigToolVisual = setPlayerRigToolVisual;
+window.createEquipmentVisualMeshes = createEquipmentVisualMeshes;
