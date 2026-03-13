@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T03:34:04.368Z",
+  "generatedAt": "2026-03-13T06:54:23.049Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -247,7 +247,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_sword",
         "kind": "pixel"
       },
       "name": "Adamant Sword",
@@ -610,7 +610,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "bronze_sword",
         "kind": "pixel"
       },
       "name": "Bronze Sword",
@@ -1473,7 +1473,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "iron_sword",
         "kind": "pixel"
       },
       "name": "Iron Sword",
@@ -1970,7 +1970,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_sword",
         "kind": "pixel"
       },
       "name": "Mithril Sword",
@@ -2800,7 +2800,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_sword",
         "kind": "pixel"
       },
       "name": "Rune Sword",
@@ -3297,7 +3297,7 @@
       ],
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_sword",
         "kind": "pixel"
       },
       "name": "Steel Sword",

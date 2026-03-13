@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T03:34:04.369Z",
+  "generatedAt": "2026-03-13T06:54:23.050Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "tin_ore",
@@ -68,9 +68,9 @@
       "treatment": "shared"
     },
     "adamant_sword": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_sword",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_sword_blade": {
       "assetId": "pickaxe",
@@ -174,9 +174,9 @@
       "treatment": "shared"
     },
     "bronze_sword": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_sword",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_sword_blade": {
       "assetId": "pickaxe",
@@ -446,9 +446,9 @@
       "treatment": "shared"
     },
     "iron_sword": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_sword",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_sword_blade": {
       "assetId": "pickaxe",
@@ -597,9 +597,9 @@
       "treatment": "shared"
     },
     "mithril_sword": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_sword",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_sword_blade": {
       "assetId": "pickaxe",
@@ -853,9 +853,9 @@
       "treatment": "shared"
     },
     "rune_sword": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_sword",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_sword_blade": {
       "assetId": "pickaxe",
@@ -1003,9 +1003,9 @@
       "treatment": "shared"
     },
     "steel_sword": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_sword",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_sword_blade": {
       "assetId": "pickaxe",

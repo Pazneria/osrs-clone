@@ -1368,7 +1368,7 @@
                 actions: ['Equip', 'Use', 'Drop'],
                 defaultAction: 'Equip',
                 stats: Object.assign({}, tier.swordStats),
-                icon: { kind: 'pixel', assetId: 'iron_axe' }
+                icon: { kind: 'pixel', assetId: `${tier.id}_sword` }
             };
 
             const pickaxeId = `${tier.id}_pickaxe`;
