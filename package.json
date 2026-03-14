@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:legacy": "run.bat",
-    "build": "vite build",
+    "build": "vite build && node ./tools/build/copy-runtime-assets.js",
     "preview": "vite preview --strictPort --port 5501",
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" --check ./src/js/core.js && \"%NODE%\" --check ./src/js/inventory.js && \"%NODE%\" --check ./src/js/world.js && \"%NODE%\" --check ./src/js/combat.js && \"%NODE%\" --check ./src/js/input-render.js && \"%NODE%\" --check ./src/js/interactions/target-interaction-registry.js",
