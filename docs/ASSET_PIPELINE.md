@@ -27,6 +27,12 @@ icon: { kind: 'pixel', assetId: 'logs' }
 
 `assetId` can differ from `itemId`, so multiple items may intentionally share one icon asset.
 
+Production note:
+
+- `npm.cmd run build` must copy `assets/pixel/` and `assets/models/` into `dist/` after the Vite bundle step.
+- GitHub Pages should publish through GitHub Actions so that built `dist/` artifact is what reaches the website.
+- If the website shows broken file/placeholders instead of real inventory icons, check deploy/build first before blaming the icon source files.
+
 ## Recommended workflow
 
 1. Start the local server:

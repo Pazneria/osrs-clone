@@ -37,8 +37,15 @@ npm run build
 
 Notes:
 - `dev` runs the Vite module shell on port `5500`.
-- `build` emits a production bundle to `dist/`.
+- `build` emits a production bundle to `dist/` and copies the runtime PNG/OBJ asset folders the live game still reads by URL.
 - `check` and `test` now include the incremental TypeScript bridge plus world-content validation.
+
+## GitHub Pages Deploy
+
+- The website should publish through GitHub Actions, not `Deploy from a branch`.
+- The deploy workflow lives in `.github/workflows/deploy-pages.yml`.
+- `npm.cmd run build` must leave both `dist/assets/pixel/` and `dist/assets/models/` populated, because runtime item icons and some item presentation paths still reference those files directly.
+- If the website looks stale or broken, start with `docs/DEPLOYMENT.md`.
 
 ## Platform Shell
 
@@ -87,6 +94,7 @@ npm.cmd run tool:sim:combat -- --runs 10000 --strLevel 70 --atkLevel 70 --target
 ```
 
 See `docs/TOOLKIT_SETUP.md` for install/setup details.
+See `docs/DEPLOYMENT.md` for the production publish checklist and GitHub Pages troubleshooting.
 
 ## Item Asset Pipeline
 
