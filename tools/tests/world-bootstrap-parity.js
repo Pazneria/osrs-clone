@@ -10,9 +10,9 @@ function assertStarterTown(root) {
 
   assert(manifestEntry.worldId === "starter_town", "starter_town manifest world-id mismatch");
   assert(manifestEntry.defaultSpawn.x === 205 && manifestEntry.defaultSpawn.y === 210 && manifestEntry.defaultSpawn.z === 0, "starter_town default spawn mismatch");
-  assert(Object.keys(stamps).length === 4, "expected 4 starter-town stamps");
-  assert(Array.isArray(world.structures) && world.structures.length === 4, "expected 4 starter-town structures");
-  assert(Array.isArray(world.services) && world.services.length === 13, "expected 13 authored starter-town services");
+  assert(Object.keys(stamps).length === 5, "expected 5 starter-town stamps");
+  assert(Array.isArray(world.structures) && world.structures.length === 5, "expected 5 starter-town structures");
+  assert(Array.isArray(world.services) && world.services.length === 16, "expected 16 authored starter-town services");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 114, "expected 114 authored mining nodes");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 82, "expected 82 authored woodcutting nodes");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 3, "expected 3 fishing routes");
@@ -27,6 +27,7 @@ function assertStarterTown(root) {
   assert(structureById.castle_ground.x === 190 && structureById.castle_ground.y === 190, "castle ground placement mismatch");
   assert(structureById.general_store.x === 177 && structureById.general_store.y === 232, "general store placement mismatch");
   assert(structureById.smithing_hall.x === 221 && structureById.smithing_hall.y === 228, "smithing hall placement mismatch");
+  assert(structureById.east_road_outpost.x === 360 && structureById.east_road_outpost.y === 250, "east road outpost placement mismatch");
 
   const fishingById = Object.fromEntries(world.skillRoutes.fishing.map((entry) => [entry.routeId, entry]));
   assert(fishingById.castle_pond_bank.alias === "pond", "pond alias mismatch");
@@ -40,9 +41,17 @@ function assertStarterTown(root) {
 
   const servicesById = Object.fromEntries(world.services.map((entry) => [entry.serviceId, entry]));
   assert(servicesById["merchant:general_store"].x === 181 && servicesById["merchant:general_store"].y === 235, "general store service mismatch");
-  assert(servicesById["merchant:starter_caravan_guide"].travelToWorldId === "north_road_camp", "starter caravan travel target mismatch");
+  assert(servicesById["merchant:starter_caravan_guide"].travelToWorldId === "starter_town", "starter caravan travel target mismatch");
+  assert(servicesById["merchant:starter_caravan_guide"].travelSpawn.x === 364 && servicesById["merchant:starter_caravan_guide"].travelSpawn.y === 262, "starter caravan travel spawn mismatch");
+  assert(servicesById["merchant:east_outpost_caravan_guide"].travelToWorldId === "starter_town", "east outpost caravan travel target mismatch");
+  assert(servicesById["merchant:east_outpost_caravan_guide"].travelSpawn.x === 205 && servicesById["merchant:east_outpost_caravan_guide"].travelSpawn.y === 210, "east outpost caravan travel spawn mismatch");
   assert(servicesById["station:starter_furnace"].footprintW === 2, "furnace footprint mismatch");
+  assert(servicesById["station:east_outpost_furnace"].x === 374 && servicesById["station:east_outpost_furnace"].y === 254, "east outpost furnace placement mismatch");
+  assert(servicesById["station:east_outpost_anvil"].x === 374 && servicesById["station:east_outpost_anvil"].y === 257, "east outpost anvil placement mismatch");
   assert(servicesById["merchant:borin_ironvein"].merchantId === "borin_ironvein", "smithing merchant mismatch");
+  assert(servicesById["merchant:thrain_deepforge"].x === 228 && servicesById["merchant:thrain_deepforge"].y === 236, "thrain merchant authored placement mismatch");
+  assert(servicesById["merchant:elira_gemhand"].x === 228 && servicesById["merchant:elira_gemhand"].y === 231, "elira merchant authored placement mismatch");
+  assert(servicesById["merchant:tanner_rusk"].x === 225 && servicesById["merchant:tanner_rusk"].y === 236, "tanner merchant authored placement mismatch");
   assert(servicesById["merchant:rune_tutor"].x === 203 && servicesById["merchant:rune_tutor"].y === 152, "rune tutor authored placement mismatch");
   assert(servicesById["merchant:combination_sage"].x === 91 && servicesById["merchant:combination_sage"].y === 23, "combination sage authored placement mismatch");
 

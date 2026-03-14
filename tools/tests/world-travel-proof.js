@@ -39,12 +39,17 @@ function run() {
   assert(worldSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "world.js should attach travel world metadata to NPC hitboxes");
 
   assert(inputSource.includes("playerState.targetUid.action === 'Travel'"), "input handler should resolve travel NPC actions");
-  assert(inputSource.includes("window.travelToWorld(playerState.targetUid.travelToWorldId"), "input handler should delegate travel through the core world-travel helper");
+  assert(inputSource.includes("const targetWorldId = explicitWorldId || sessionWorldId;"), "input handler should resolve the target world before dispatch");
+  assert(inputSource.includes("window.travelToWorld(targetWorldId, {"), "input handler should delegate travel through the core world-travel helper");
   assert(targetSource.includes("`Travel <span class=\"text-yellow-400\">${npcName}</span>`"), "target interaction registry should surface Travel for NPCs");
 
   const starterTravel = (starterTown.services || []).find((service) => service && service.serviceId === "merchant:starter_caravan_guide");
+  const eastOutpostTravel = (starterTown.services || []).find((service) => service && service.serviceId === "merchant:east_outpost_caravan_guide");
   const northTravel = (northRoadCamp.services || []).find((service) => service && service.serviceId === "merchant:north_road_caravan_guide");
-  assert(starterTravel && starterTravel.travelToWorldId === "north_road_camp", "starter town should include travel to north_road_camp");
+  assert(starterTravel && starterTravel.travelToWorldId === "starter_town", "starter town should route to the east outpost through starter_town");
+  assert(starterTravel && starterTravel.travelSpawn && starterTravel.travelSpawn.x === 364 && starterTravel.travelSpawn.y === 262, "starter town should route to the east outpost spawn");
+  assert(eastOutpostTravel && eastOutpostTravel.travelToWorldId === "starter_town", "east outpost should route back into starter town");
+  assert(eastOutpostTravel && eastOutpostTravel.travelSpawn && eastOutpostTravel.travelSpawn.x === 205 && eastOutpostTravel.travelSpawn.y === 210, "east outpost should route back to the starter-town square");
   assert(northTravel && northTravel.travelToWorldId === "starter_town", "north_road_camp should include travel back to starter_town");
 
   console.log("World travel proof passed.");
