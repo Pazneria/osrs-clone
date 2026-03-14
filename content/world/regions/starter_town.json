@@ -413,7 +413,7 @@
         "x": 114,
         "y": 204,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -435,7 +435,7 @@
         "x": 112,
         "y": 204,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -446,7 +446,7 @@
         "x": 116,
         "y": 204,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -457,7 +457,7 @@
         "x": 114,
         "y": 206,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -468,7 +468,7 @@
         "x": 112,
         "y": 202,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -479,7 +479,7 @@
         "x": 116,
         "y": 202,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -512,7 +512,7 @@
         "x": 114,
         "y": 200,
         "z": 0,
-        "oreType": "clay",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -534,7 +534,7 @@
         "x": 118,
         "y": 204,
         "z": 0,
-        "oreType": "clay",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -567,7 +567,7 @@
         "x": 116,
         "y": 200,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "clay",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -578,7 +578,7 @@
         "x": 110,
         "y": 202,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "clay",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -589,7 +589,7 @@
         "x": 118,
         "y": 202,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -600,7 +600,7 @@
         "x": 110,
         "y": 206,
         "z": 0,
-        "oreType": "clay",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -611,7 +611,7 @@
         "x": 118,
         "y": 206,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "clay",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -622,7 +622,7 @@
         "x": 112,
         "y": 208,
         "z": 0,
-        "oreType": "clay",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -633,7 +633,7 @@
         "x": 116,
         "y": 208,
         "z": 0,
-        "oreType": "clay",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -641,10 +641,10 @@
       {
         "placementId": "mining:starter_mine:22",
         "routeId": "starter_mine",
-        "x": 118,
+        "x": 110,
         "y": 200,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "clay",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -652,10 +652,10 @@
       {
         "placementId": "mining:starter_mine:23",
         "routeId": "starter_mine",
-        "x": 110,
-        "y": 208,
+        "x": 118,
+        "y": 200,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -663,7 +663,7 @@
       {
         "placementId": "mining:starter_mine:24",
         "routeId": "starter_mine",
-        "x": 118,
+        "x": 110,
         "y": 208,
         "z": 0,
         "oreType": "copper",
@@ -674,8 +674,8 @@
       {
         "placementId": "mining:starter_mine:25",
         "routeId": "starter_mine",
-        "x": 114,
-        "y": 198,
+        "x": 118,
+        "y": 208,
         "z": 0,
         "oreType": "clay",
         "areaGateFlag": null,
@@ -685,10 +685,10 @@
       {
         "placementId": "mining:starter_mine:26",
         "routeId": "starter_mine",
-        "x": 108,
-        "y": 204,
+        "x": 114,
+        "y": 198,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "clay",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -696,16 +696,27 @@
       {
         "placementId": "mining:starter_mine:27",
         "routeId": "starter_mine",
-        "x": 120,
+        "x": 108,
         "y": 204,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "clay",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
       },
       {
         "placementId": "mining:starter_mine:28",
+        "routeId": "starter_mine",
+        "x": 120,
+        "y": 204,
+        "z": 0,
+        "oreType": "clay",
+        "areaGateFlag": null,
+        "areaName": null,
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:starter_mine:29",
         "routeId": "starter_mine",
         "x": 114,
         "y": 210,
@@ -716,23 +727,12 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "mining:starter_mine:29",
+        "placementId": "mining:starter_mine:30",
         "routeId": "starter_mine",
         "x": 112,
         "y": 198,
         "z": 0,
         "oreType": "copper",
-        "areaGateFlag": null,
-        "areaName": null,
-        "areaGateMessage": null
-      },
-      {
-        "placementId": "mining:starter_mine:30",
-        "routeId": "starter_mine",
-        "x": 116,
-        "y": 198,
-        "z": 0,
-        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -754,7 +754,7 @@
         "x": 403,
         "y": 202,
         "z": 0,
-        "oreType": "tin",
+        "oreType": "iron",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -765,7 +765,7 @@
         "x": 406,
         "y": 203,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -809,7 +809,7 @@
         "x": 401,
         "y": 203,
         "z": 0,
-        "oreType": "copper",
+        "oreType": "iron",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -831,7 +831,7 @@
         "x": 403,
         "y": 207,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -853,7 +853,7 @@
         "x": 408,
         "y": 202,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -897,7 +897,7 @@
         "x": 407,
         "y": 200,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "tin",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1004,8 +1004,8 @@
       {
         "placementId": "mining:coal_mine:1",
         "routeId": "coal_mine",
-        "x": 435,
-        "y": 348,
+        "x": 434,
+        "y": 350,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1015,8 +1015,8 @@
       {
         "placementId": "mining:coal_mine:2",
         "routeId": "coal_mine",
-        "x": 437,
-        "y": 350,
+        "x": 433,
+        "y": 348,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1026,8 +1026,8 @@
       {
         "placementId": "mining:coal_mine:3",
         "routeId": "coal_mine",
-        "x": 438,
-        "y": 352,
+        "x": 436,
+        "y": 349,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1037,8 +1037,8 @@
       {
         "placementId": "mining:coal_mine:4",
         "routeId": "coal_mine",
-        "x": 433,
-        "y": 346,
+        "x": 432,
+        "y": 351,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1048,8 +1048,8 @@
       {
         "placementId": "mining:coal_mine:5",
         "routeId": "coal_mine",
-        "x": 439,
-        "y": 354,
+        "x": 435,
+        "y": 352,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1059,10 +1059,10 @@
       {
         "placementId": "mining:coal_mine:6",
         "routeId": "coal_mine",
-        "x": 437,
+        "x": 435,
         "y": 347,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1070,10 +1070,10 @@
       {
         "placementId": "mining:coal_mine:7",
         "routeId": "coal_mine",
-        "x": 430,
-        "y": 344,
+        "x": 431,
+        "y": 349,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1081,8 +1081,8 @@
       {
         "placementId": "mining:coal_mine:8",
         "routeId": "coal_mine",
-        "x": 440,
-        "y": 356,
+        "x": 437,
+        "y": 351,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1092,8 +1092,8 @@
       {
         "placementId": "mining:coal_mine:9",
         "routeId": "coal_mine",
-        "x": 435,
-        "y": 345,
+        "x": 433,
+        "y": 353,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1103,8 +1103,8 @@
       {
         "placementId": "mining:coal_mine:10",
         "routeId": "coal_mine",
-        "x": 439,
-        "y": 349,
+        "x": 432,
+        "y": 346,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1114,8 +1114,8 @@
       {
         "placementId": "mining:coal_mine:11",
         "routeId": "coal_mine",
-        "x": 440,
-        "y": 351,
+        "x": 438,
+        "y": 348,
         "z": 0,
         "oreType": "iron",
         "areaGateFlag": null,
@@ -1125,10 +1125,10 @@
       {
         "placementId": "mining:coal_mine:12",
         "routeId": "coal_mine",
-        "x": 441,
-        "y": 353,
+        "x": 430,
+        "y": 352,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1136,8 +1136,8 @@
       {
         "placementId": "mining:coal_mine:13",
         "routeId": "coal_mine",
-        "x": 428,
-        "y": 343,
+        "x": 436,
+        "y": 354,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1147,10 +1147,10 @@
       {
         "placementId": "mining:coal_mine:14",
         "routeId": "coal_mine",
-        "x": 432,
-        "y": 343,
+        "x": 434,
+        "y": 345,
         "z": 0,
-        "oreType": "coal",
+        "oreType": "iron",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1158,8 +1158,8 @@
       {
         "placementId": "mining:coal_mine:15",
         "routeId": "coal_mine",
-        "x": 440,
-        "y": 359,
+        "x": 437,
+        "y": 346,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1169,8 +1169,8 @@
       {
         "placementId": "mining:coal_mine:16",
         "routeId": "coal_mine",
-        "x": 442,
-        "y": 355,
+        "x": 430,
+        "y": 347,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1180,8 +1180,8 @@
       {
         "placementId": "mining:coal_mine:17",
         "routeId": "coal_mine",
-        "x": 438,
-        "y": 345,
+        "x": 429,
+        "y": 350,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1191,10 +1191,10 @@
       {
         "placementId": "mining:coal_mine:18",
         "routeId": "coal_mine",
-        "x": 440,
-        "y": 347,
+        "x": 439,
+        "y": 350,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1202,8 +1202,8 @@
       {
         "placementId": "mining:coal_mine:19",
         "routeId": "coal_mine",
-        "x": 436,
-        "y": 343,
+        "x": 438,
+        "y": 353,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -1213,10 +1213,10 @@
       {
         "placementId": "mining:coal_mine:20",
         "routeId": "coal_mine",
-        "x": 426,
-        "y": 342,
+        "x": 431,
+        "y": 354,
         "z": 0,
-        "oreType": "coal",
+        "oreType": "iron",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1224,10 +1224,10 @@
       {
         "placementId": "mining:precious_mine:1",
         "routeId": "precious_mine",
-        "x": 50,
-        "y": 372,
+        "x": 49,
+        "y": 371,
         "z": 0,
-        "oreType": "silver",
+        "oreType": "gold",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1235,8 +1235,8 @@
       {
         "placementId": "mining:precious_mine:2",
         "routeId": "precious_mine",
-        "x": 48,
-        "y": 370,
+        "x": 47,
+        "y": 369,
         "z": 0,
         "oreType": "silver",
         "areaGateFlag": null,
@@ -1246,8 +1246,8 @@
       {
         "placementId": "mining:precious_mine:3",
         "routeId": "precious_mine",
-        "x": 52,
-        "y": 370,
+        "x": 51,
+        "y": 369,
         "z": 0,
         "oreType": "silver",
         "areaGateFlag": null,
@@ -1257,10 +1257,10 @@
       {
         "placementId": "mining:precious_mine:4",
         "routeId": "precious_mine",
-        "x": 48,
-        "y": 374,
+        "x": 47,
+        "y": 373,
         "z": 0,
-        "oreType": "silver",
+        "oreType": "gold",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1268,8 +1268,8 @@
       {
         "placementId": "mining:precious_mine:5",
         "routeId": "precious_mine",
-        "x": 52,
-        "y": 374,
+        "x": 51,
+        "y": 373,
         "z": 0,
         "oreType": "gold",
         "areaGateFlag": null,
@@ -1279,10 +1279,10 @@
       {
         "placementId": "mining:precious_mine:6",
         "routeId": "precious_mine",
-        "x": 50,
-        "y": 368,
+        "x": 49,
+        "y": 367,
         "z": 0,
-        "oreType": "silver",
+        "oreType": "gold",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1290,10 +1290,10 @@
       {
         "placementId": "mining:precious_mine:7",
         "routeId": "precious_mine",
-        "x": 46,
-        "y": 372,
+        "x": 45,
+        "y": 371,
         "z": 0,
-        "oreType": "silver",
+        "oreType": "gold",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1301,8 +1301,8 @@
       {
         "placementId": "mining:precious_mine:8",
         "routeId": "precious_mine",
-        "x": 54,
-        "y": 372,
+        "x": 53,
+        "y": 371,
         "z": 0,
         "oreType": "silver",
         "areaGateFlag": null,
@@ -1312,10 +1312,10 @@
       {
         "placementId": "mining:precious_mine:9",
         "routeId": "precious_mine",
-        "x": 50,
-        "y": 376,
+        "x": 49,
+        "y": 375,
         "z": 0,
-        "oreType": "gold",
+        "oreType": "silver",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1323,10 +1323,10 @@
       {
         "placementId": "mining:precious_mine:10",
         "routeId": "precious_mine",
-        "x": 46,
-        "y": 368,
+        "x": 45,
+        "y": 367,
         "z": 0,
-        "oreType": "gold",
+        "oreType": "silver",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1334,8 +1334,8 @@
       {
         "placementId": "mining:precious_mine:11",
         "routeId": "precious_mine",
-        "x": 54,
-        "y": 368,
+        "x": 53,
+        "y": 367,
         "z": 0,
         "oreType": "silver",
         "areaGateFlag": null,
@@ -1345,8 +1345,8 @@
       {
         "placementId": "mining:precious_mine:12",
         "routeId": "precious_mine",
-        "x": 46,
-        "y": 376,
+        "x": 45,
+        "y": 375,
         "z": 0,
         "oreType": "gold",
         "areaGateFlag": null,
@@ -1356,8 +1356,8 @@
       {
         "placementId": "mining:precious_mine:13",
         "routeId": "precious_mine",
-        "x": 54,
-        "y": 376,
+        "x": 53,
+        "y": 375,
         "z": 0,
         "oreType": "silver",
         "areaGateFlag": null,
@@ -1367,8 +1367,8 @@
       {
         "placementId": "mining:precious_mine:14",
         "routeId": "precious_mine",
-        "x": 48,
-        "y": 366,
+        "x": 47,
+        "y": 365,
         "z": 0,
         "oreType": "gold",
         "areaGateFlag": null,
@@ -1378,8 +1378,8 @@
       {
         "placementId": "mining:precious_mine:15",
         "routeId": "precious_mine",
-        "x": 52,
-        "y": 366,
+        "x": 51,
+        "y": 365,
         "z": 0,
         "oreType": "silver",
         "areaGateFlag": null,
@@ -1389,10 +1389,10 @@
       {
         "placementId": "mining:precious_mine:16",
         "routeId": "precious_mine",
-        "x": 44,
-        "y": 370,
+        "x": 43,
+        "y": 369,
         "z": 0,
-        "oreType": "silver",
+        "oreType": "gold",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -1401,7 +1401,7 @@
         "placementId": "mining:gem_mine:1",
         "routeId": "gem_mine",
         "x": 262,
-        "y": 428,
+        "y": 427,
         "z": 0,
         "oreType": "emerald",
         "areaGateFlag": "gemMineUnlocked",
@@ -1412,7 +1412,7 @@
         "placementId": "mining:gem_mine:2",
         "routeId": "gem_mine",
         "x": 260,
-        "y": 426,
+        "y": 425,
         "z": 0,
         "oreType": "emerald",
         "areaGateFlag": "gemMineUnlocked",
@@ -1423,9 +1423,9 @@
         "placementId": "mining:gem_mine:3",
         "routeId": "gem_mine",
         "x": 264,
-        "y": 426,
+        "y": 425,
         "z": 0,
-        "oreType": "emerald",
+        "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
         "areaName": "the gem mine",
         "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
@@ -1434,7 +1434,7 @@
         "placementId": "mining:gem_mine:4",
         "routeId": "gem_mine",
         "x": 260,
-        "y": 430,
+        "y": 429,
         "z": 0,
         "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
@@ -1445,9 +1445,9 @@
         "placementId": "mining:gem_mine:5",
         "routeId": "gem_mine",
         "x": 264,
-        "y": 430,
+        "y": 429,
         "z": 0,
-        "oreType": "emerald",
+        "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
         "areaName": "the gem mine",
         "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
@@ -1456,7 +1456,7 @@
         "placementId": "mining:gem_mine:6",
         "routeId": "gem_mine",
         "x": 262,
-        "y": 424,
+        "y": 423,
         "z": 0,
         "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
@@ -1467,7 +1467,7 @@
         "placementId": "mining:gem_mine:7",
         "routeId": "gem_mine",
         "x": 258,
-        "y": 428,
+        "y": 427,
         "z": 0,
         "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
@@ -1478,7 +1478,7 @@
         "placementId": "mining:gem_mine:8",
         "routeId": "gem_mine",
         "x": 266,
-        "y": 428,
+        "y": 427,
         "z": 0,
         "oreType": "emerald",
         "areaGateFlag": "gemMineUnlocked",
@@ -1489,9 +1489,9 @@
         "placementId": "mining:gem_mine:9",
         "routeId": "gem_mine",
         "x": 262,
-        "y": 432,
+        "y": 431,
         "z": 0,
-        "oreType": "sapphire",
+        "oreType": "emerald",
         "areaGateFlag": "gemMineUnlocked",
         "areaName": "the gem mine",
         "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
@@ -1500,7 +1500,7 @@
         "placementId": "mining:gem_mine:10",
         "routeId": "gem_mine",
         "x": 258,
-        "y": 424,
+        "y": 423,
         "z": 0,
         "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
@@ -1511,9 +1511,9 @@
         "placementId": "mining:gem_mine:11",
         "routeId": "gem_mine",
         "x": 266,
-        "y": 424,
+        "y": 423,
         "z": 0,
-        "oreType": "emerald",
+        "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
         "areaName": "the gem mine",
         "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
@@ -1522,7 +1522,7 @@
         "placementId": "mining:gem_mine:12",
         "routeId": "gem_mine",
         "x": 258,
-        "y": 432,
+        "y": 431,
         "z": 0,
         "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
@@ -1533,7 +1533,7 @@
         "placementId": "mining:gem_mine:13",
         "routeId": "gem_mine",
         "x": 266,
-        "y": 432,
+        "y": 431,
         "z": 0,
         "oreType": "emerald",
         "areaGateFlag": "gemMineUnlocked",
@@ -1544,9 +1544,9 @@
         "placementId": "mining:gem_mine:14",
         "routeId": "gem_mine",
         "x": 260,
-        "y": 422,
+        "y": 421,
         "z": 0,
-        "oreType": "emerald",
+        "oreType": "sapphire",
         "areaGateFlag": "gemMineUnlocked",
         "areaName": "the gem mine",
         "areaGateMessage": "The gem mine is locked. Speak with Elira Gemhand to gain access."
@@ -2227,6 +2227,17 @@
       {
         "placementId": "woodcutting:willow_bend:6",
         "routeId": "willow_bend",
+        "x": 332,
+        "y": 277,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:7",
+        "routeId": "willow_bend",
         "x": 133,
         "y": 332,
         "z": 0,
@@ -2236,7 +2247,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:willow_bend:7",
+        "placementId": "woodcutting:willow_bend:8",
         "routeId": "willow_bend",
         "x": 171,
         "y": 63,
@@ -2247,7 +2258,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:willow_bend:8",
+        "placementId": "woodcutting:willow_bend:9",
         "routeId": "willow_bend",
         "x": 239,
         "y": 63,
@@ -2258,7 +2269,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:willow_bend:9",
+        "placementId": "woodcutting:willow_bend:10",
         "routeId": "willow_bend",
         "x": 119,
         "y": 87,
@@ -2269,7 +2280,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:willow_bend:10",
+        "placementId": "woodcutting:willow_bend:11",
         "routeId": "willow_bend",
         "x": 291,
         "y": 87,
@@ -2280,20 +2291,9 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:willow_bend:11",
-        "routeId": "willow_bend",
-        "x": 71,
-        "y": 147,
-        "z": 0,
-        "nodeId": "willow_tree",
-        "areaGateFlag": null,
-        "areaName": "the willow bend",
-        "areaGateMessage": null
-      },
-      {
         "placementId": "woodcutting:willow_bend:12",
         "routeId": "willow_bend",
-        "x": 339,
+        "x": 71,
         "y": 147,
         "z": 0,
         "nodeId": "willow_tree",
@@ -2305,7 +2305,7 @@
         "placementId": "woodcutting:willow_bend:13",
         "routeId": "willow_bend",
         "x": 339,
-        "y": 263,
+        "y": 147,
         "z": 0,
         "nodeId": "willow_tree",
         "areaGateFlag": null,
@@ -2314,6 +2314,17 @@
       },
       {
         "placementId": "woodcutting:willow_bend:14",
+        "routeId": "willow_bend",
+        "x": 339,
+        "y": 263,
+        "z": 0,
+        "nodeId": "willow_tree",
+        "areaGateFlag": null,
+        "areaName": "the willow bend",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:willow_bend:15",
         "routeId": "willow_bend",
         "x": 291,
         "y": 323,
@@ -2324,20 +2335,9 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:willow_bend:15",
-        "routeId": "willow_bend",
-        "x": 167,
-        "y": 64,
-        "z": 0,
-        "nodeId": "willow_tree",
-        "areaGateFlag": null,
-        "areaName": "the willow bend",
-        "areaGateMessage": null
-      },
-      {
         "placementId": "woodcutting:willow_bend:16",
         "routeId": "willow_bend",
-        "x": 243,
+        "x": 167,
         "y": 64,
         "z": 0,
         "nodeId": "willow_tree",
@@ -2414,17 +2414,6 @@
       {
         "placementId": "woodcutting:maple_ridge:7",
         "routeId": "maple_ridge",
-        "x": 402,
-        "y": 205,
-        "z": 0,
-        "nodeId": "maple_tree",
-        "areaGateFlag": null,
-        "areaName": "the maple ridge",
-        "areaGateMessage": null
-      },
-      {
-        "placementId": "woodcutting:maple_ridge:8",
-        "routeId": "maple_ridge",
         "x": 10,
         "y": 233,
         "z": 0,
@@ -2434,7 +2423,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:maple_ridge:9",
+        "placementId": "woodcutting:maple_ridge:8",
         "routeId": "maple_ridge",
         "x": 400,
         "y": 233,
@@ -2445,7 +2434,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:maple_ridge:10",
+        "placementId": "woodcutting:maple_ridge:9",
         "routeId": "maple_ridge",
         "x": 177,
         "y": 400,
@@ -2456,7 +2445,7 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:maple_ridge:11",
+        "placementId": "woodcutting:maple_ridge:10",
         "routeId": "maple_ridge",
         "x": 233,
         "y": 400,
@@ -2467,10 +2456,21 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:maple_ridge:12",
+        "placementId": "woodcutting:maple_ridge:11",
         "routeId": "maple_ridge",
         "x": 205,
         "y": 402,
+        "z": 0,
+        "nodeId": "maple_tree",
+        "areaGateFlag": null,
+        "areaName": "the maple ridge",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:maple_ridge:12",
+        "routeId": "maple_ridge",
+        "x": 324,
+        "y": 48,
         "z": 0,
         "nodeId": "maple_tree",
         "areaGateFlag": null,
@@ -2716,8 +2716,8 @@
         "routeId": "starter_mine",
         "alias": "starter",
         "label": "Starter Mine",
-        "x": 114,
-        "y": 204,
+        "x": 110,
+        "y": 202,
         "z": 0,
         "count": 30,
         "tags": [
@@ -2730,8 +2730,8 @@
         "routeId": "iron_mine",
         "alias": "iron",
         "label": "Early Iron Mine",
-        "x": 404,
-        "y": 204,
+        "x": 406,
+        "y": 208,
         "z": 0,
         "count": 24,
         "tags": [
@@ -2744,8 +2744,8 @@
         "routeId": "coal_mine",
         "alias": "coal",
         "label": "Deep Coal Mine",
-        "x": 434,
-        "y": 350,
+        "x": 438,
+        "y": 348,
         "z": 0,
         "count": 20,
         "tags": [
@@ -2759,7 +2759,7 @@
         "alias": "precious",
         "label": "Silver and Gold Mine",
         "x": 49,
-        "y": 371,
+        "y": 375,
         "z": 0,
         "count": 16,
         "tags": [
@@ -2772,7 +2772,7 @@
         "routeId": "gem_mine",
         "alias": "gem",
         "label": "Gem Mine",
-        "x": 262,
+        "x": 266,
         "y": 427,
         "z": 0,
         "count": 14,
@@ -2787,7 +2787,7 @@
         "alias": "essence",
         "label": "Rune Essence Mine",
         "x": 408,
-        "y": 50,
+        "y": 46,
         "z": 0,
         "count": 10,
         "tags": [
@@ -2885,8 +2885,8 @@
         "routeId": "willow_bend",
         "alias": "willow",
         "label": "Willow Bend",
-        "x": 119,
-        "y": 87,
+        "x": 239,
+        "y": 63,
         "z": 0,
         "count": 16,
         "tags": [
@@ -2899,8 +2899,8 @@
         "routeId": "maple_ridge",
         "alias": "maple",
         "label": "Maple Ridge",
-        "x": 402,
-        "y": 205,
+        "x": 10,
+        "y": 233,
         "z": 0,
         "count": 12,
         "tags": [
