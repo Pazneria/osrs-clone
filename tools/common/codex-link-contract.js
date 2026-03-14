@@ -1,4 +1,4 @@
-const DEFAULT_WIKI_BASE_PATH = "/osrs-clone-wiki/";
+const DEFAULT_CODEX_BASE_PATH = "/osrs-clone-codex/";
 
 const ENTITY_SEGMENTS = Object.freeze({
   item: "items",
@@ -10,21 +10,21 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function normalizeWikiBasePath(basePath = DEFAULT_WIKI_BASE_PATH) {
-  let normalized = String(basePath || DEFAULT_WIKI_BASE_PATH).trim();
-  if (!normalized) normalized = DEFAULT_WIKI_BASE_PATH;
+function normalizeCodexBasePath(basePath = DEFAULT_CODEX_BASE_PATH) {
+  let normalized = String(basePath || DEFAULT_CODEX_BASE_PATH).trim();
+  if (!normalized) normalized = DEFAULT_CODEX_BASE_PATH;
   if (!normalized.startsWith("/")) normalized = `/${normalized}`;
   normalized = normalized.replace(/\/+/g, "/");
   if (!normalized.endsWith("/")) normalized += "/";
   return normalized;
 }
 
-function normalizeWikiEntityType(entityType) {
+function normalizeCodexEntityType(entityType) {
   const normalized = String(entityType || "").trim().toLowerCase();
   if (normalized === "item" || normalized === "items") return "item";
   if (normalized === "skill" || normalized === "skills") return "skill";
   if (normalized === "world" || normalized === "worlds") return "world";
-  throw new Error(`Unsupported wiki entity type: ${entityType}`);
+  throw new Error(`Unsupported codex entity type: ${entityType}`);
 }
 
 function normalizeEntityId(entityId, entityType = "entity") {
@@ -43,30 +43,30 @@ function buildSearchParams(options = {}) {
   return query ? `?${query}` : "";
 }
 
-function buildWikiHomePath(options = {}) {
-  return `${normalizeWikiBasePath(options.basePath)}${buildSearchParams(options)}`;
+function buildCodexHomePath(options = {}) {
+  return `${normalizeCodexBasePath(options.basePath)}${buildSearchParams(options)}`;
 }
 
-function buildWikiEntityPath(entityType, entityId, options = {}) {
-  const normalizedType = normalizeWikiEntityType(entityType);
+function buildCodexEntityPath(entityType, entityId, options = {}) {
+  const normalizedType = normalizeCodexEntityType(entityType);
   const normalizedId = normalizeEntityId(entityId, normalizedType);
-  const basePath = normalizeWikiBasePath(options.basePath);
+  const basePath = normalizeCodexBasePath(options.basePath);
   const segment = ENTITY_SEGMENTS[normalizedType];
   return `${basePath}${segment}/${encodeURIComponent(normalizedId)}${buildSearchParams(options)}`;
 }
 
-function buildWikiHomeUrl(options = {}) {
-  if (!options.baseUrl) return buildWikiHomePath(options);
-  return new URL(buildWikiHomePath(options), options.baseUrl).toString();
+function buildCodexHomeUrl(options = {}) {
+  if (!options.baseUrl) return buildCodexHomePath(options);
+  return new URL(buildCodexHomePath(options), options.baseUrl).toString();
 }
 
-function buildWikiEntityUrl(entityType, entityId, options = {}) {
-  if (!options.baseUrl) return buildWikiEntityPath(entityType, entityId, options);
-  return new URL(buildWikiEntityPath(entityType, entityId, options), options.baseUrl).toString();
+function buildCodexEntityUrl(entityType, entityId, options = {}) {
+  if (!options.baseUrl) return buildCodexEntityPath(entityType, entityId, options);
+  return new URL(buildCodexEntityPath(entityType, entityId, options), options.baseUrl).toString();
 }
 
-function getWikiRouteTemplates(basePath = DEFAULT_WIKI_BASE_PATH) {
-  const normalizedBasePath = normalizeWikiBasePath(basePath);
+function getCodexRouteTemplates(basePath = DEFAULT_CODEX_BASE_PATH) {
+  const normalizedBasePath = normalizeCodexBasePath(basePath);
   return {
     home: normalizedBasePath,
     item: `${normalizedBasePath}${ENTITY_SEGMENTS.item}/:itemId`,
@@ -76,13 +76,13 @@ function getWikiRouteTemplates(basePath = DEFAULT_WIKI_BASE_PATH) {
 }
 
 module.exports = {
-  DEFAULT_WIKI_BASE_PATH,
+  DEFAULT_CODEX_BASE_PATH,
   ENTITY_SEGMENTS,
-  normalizeWikiBasePath,
-  normalizeWikiEntityType,
-  buildWikiHomePath,
-  buildWikiEntityPath,
-  buildWikiHomeUrl,
-  buildWikiEntityUrl,
-  getWikiRouteTemplates
+  normalizeCodexBasePath,
+  normalizeCodexEntityType,
+  buildCodexHomePath,
+  buildCodexEntityPath,
+  buildCodexHomeUrl,
+  buildCodexEntityUrl,
+  getCodexRouteTemplates
 };

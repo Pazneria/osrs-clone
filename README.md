@@ -60,11 +60,11 @@ Notes:
 - Region/service/route authoring lives in `content/world/regions/starter_town.json`
 - `npm.cmd run tool:world:validate` validates world authoring, merchant wiring, route aliases, and adjacency rules
 
-## Wiki Export
+## Codex Export
 
-- `npm.cmd run tool:wiki:export` emits a versioned wiki bundle to `dist/wiki-export/`
-- The standalone wiki consumes that bundle at build time instead of duplicating game facts by hand
-- See `docs/WIKI_EXPORT.md` for the bundle shape and route contract
+- `npm.cmd run tool:codex:export` emits a versioned codex bundle to `dist/codex-export/`
+- The standalone codex consumes that bundle at build time instead of duplicating game facts by hand
+- See `docs/CODEX_EXPORT.md` for the bundle shape and route contract
 
 ## QA Commands
 

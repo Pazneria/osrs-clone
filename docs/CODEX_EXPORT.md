@@ -1,8 +1,8 @@
-# Wiki Export
+# Codex Export
 
-The standalone wiki lives outside this repo, but it should not invent gameplay facts on its own.
+The standalone codex lives outside this repo, but it should not invent gameplay facts on its own.
 
-This project now provides a versioned wiki export bundle built from the canonical runtime/content sources:
+This project now provides a versioned codex export bundle built from the canonical runtime/content sources:
 
 - item data from `src/js/content/item-catalog.js`
 - skill data from `content/skills/*.json`
@@ -13,10 +13,10 @@ This project now provides a versioned wiki export bundle built from the canonica
 From the project root:
 
 ```bat
-npm.cmd run tool:wiki:export
+npm.cmd run tool:codex:export
 ```
 
-By default that writes a bundle to `dist/wiki-export/`:
+By default that writes a bundle to `dist/codex-export/`:
 
 - `manifest.json`
 - `items.json`
@@ -26,7 +26,7 @@ By default that writes a bundle to `dist/wiki-export/`:
 Use a custom output directory when another repo needs to consume the export directly:
 
 ```bat
-node .\tools\content\export-wiki.js --out-dir "..\osrs-clone-wiki\content\generated\wiki-export"
+node .\tools\content\export-codex.js --out-dir "..\osrs-clone-codex\content\generated\codex-export"
 ```
 
 ## Bundle Contract
@@ -42,15 +42,15 @@ node .\tools\content\export-wiki.js --out-dir "..\osrs-clone-wiki\content\genera
 
 Stable routes in v1:
 
-- `/osrs-clone-wiki/items/:itemId`
-- `/osrs-clone-wiki/skills/:skillId`
-- `/osrs-clone-wiki/world/:worldId`
+- `/osrs-clone-codex/items/:itemId`
+- `/osrs-clone-codex/skills/:skillId`
+- `/osrs-clone-codex/world/:worldId`
 
-The export intentionally uses stable IDs for routing. The wiki can own slugs, presentation, and redirects later without changing the game/content IDs.
+The export intentionally uses stable IDs for routing. The codex can own slugs, presentation, and redirects later without changing the game/content IDs.
 
 ## Validation
 
-`tools/tests/wiki-export-guard.js` verifies that the export:
+`tools/tests/codex-export-guard.js` verifies that the export:
 
 - rejects duplicate IDs
 - rejects slug collisions

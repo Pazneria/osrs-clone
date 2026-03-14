@@ -8,7 +8,7 @@ import { exposeLegacyWorldAdapter } from "./game/platform/legacy-world-adapter";
 import { exposeRenderInputBridge } from "./game/platform/render-input-bridge";
 import { exposeSessionBridge } from "./game/platform/session-bridge";
 import { exposeUiDomainBridge } from "./game/platform/ui-domain-bridge";
-import { exposeWikiLinkBridge } from "./game/platform/wiki-link-bridge";
+import { exposeCodexLinkBridge } from "./game/platform/codex-link-bridge";
 
 async function bootstrap(): Promise<void> {
   window.THREE = THREE;
@@ -18,7 +18,7 @@ async function bootstrap(): Promise<void> {
   exposeSessionBridge();
   exposeLegacyWorldAdapter();
   exposeUiDomainBridge();
-  exposeWikiLinkBridge();
+  exposeCodexLinkBridge();
   await loadLegacyRuntime(legacyScriptManifest);
 }
 

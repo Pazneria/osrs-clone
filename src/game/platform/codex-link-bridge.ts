@@ -1,16 +1,16 @@
 import {
-  DEFAULT_WIKI_BASE_PATH,
-  buildWikiEntityPath,
-  buildWikiEntityUrl,
-  buildWikiHomePath,
-  buildWikiHomeUrl,
-  getWikiRouteTemplates,
-  normalizeWikiBasePath
-} from "../wiki/link-contract";
+  DEFAULT_CODEX_BASE_PATH,
+  buildCodexEntityPath,
+  buildCodexEntityUrl,
+  buildCodexHomePath,
+  buildCodexHomeUrl,
+  getCodexRouteTemplates,
+  normalizeCodexBasePath
+} from "../codex/link-contract";
 
 declare global {
   interface Window {
-    GameWikiRuntime?: {
+    GameCodexRuntime?: {
       defaultBasePath: string;
       normalizeBasePath: (basePath?: string) => string;
       buildHomePath: (options?: { basePath?: string; from?: string; returnTo?: string | null }) => string;
@@ -22,14 +22,14 @@ declare global {
   }
 }
 
-export function exposeWikiLinkBridge(): void {
-  window.GameWikiRuntime = {
-    defaultBasePath: DEFAULT_WIKI_BASE_PATH,
-    normalizeBasePath: normalizeWikiBasePath,
-    buildHomePath: buildWikiHomePath,
-    buildEntityPath: buildWikiEntityPath,
-    buildHomeUrl: buildWikiHomeUrl,
-    buildEntityUrl: buildWikiEntityUrl,
-    getRouteTemplates: getWikiRouteTemplates
+export function exposeCodexLinkBridge(): void {
+  window.GameCodexRuntime = {
+    defaultBasePath: DEFAULT_CODEX_BASE_PATH,
+    normalizeBasePath: normalizeCodexBasePath,
+    buildHomePath: buildCodexHomePath,
+    buildEntityPath: buildCodexEntityPath,
+    buildHomeUrl: buildCodexHomeUrl,
+    buildEntityUrl: buildCodexEntityUrl,
+    getRouteTemplates: getCodexRouteTemplates
   };
 }

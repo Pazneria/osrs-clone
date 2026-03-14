@@ -1,6 +1,6 @@
 const path = require("path");
 
-const { exportWikiBundle } = require("./wiki-export");
+const { exportCodexBundle } = require("./codex-export");
 
 function readArg(flag) {
   const index = process.argv.indexOf(flag);
@@ -15,12 +15,12 @@ function run() {
   const sourceCommit = readArg("--source-commit");
   const outDir = outDirArg
     ? path.resolve(process.cwd(), outDirArg)
-    : path.join(root, "dist", "wiki-export");
+    : path.join(root, "dist", "codex-export");
 
-  const bundle = exportWikiBundle(root, outDir, { generatedAt, sourceCommit });
+  const bundle = exportCodexBundle(root, outDir, { generatedAt, sourceCommit });
 
   console.log(
-    `Exported wiki bundle to ${outDir} `
+    `Exported codex bundle to ${outDir} `
     + `(${bundle.items.length} items, ${bundle.skills.length} skills, ${bundle.worlds.length} worlds).`
   );
 }

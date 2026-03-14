@@ -6,13 +6,13 @@ const { loadRuntimeItemCatalog } = require("./runtime-item-catalog");
 const { loadShopEconomy, loadWorldContent, loadWorldManifest } = require("./world-utils");
 const { validateWorld } = require("./validate-world");
 const {
-  DEFAULT_WIKI_BASE_PATH,
-  buildWikiEntityPath,
-  getWikiRouteTemplates
-} = require("../common/wiki-link-contract");
+  DEFAULT_CODEX_BASE_PATH,
+  buildCodexEntityPath,
+  getCodexRouteTemplates
+} = require("../common/codex-link-contract");
 
-const WIKI_EXPORT_SCHEMA_VERSION = 1;
-const WIKI_EXPORT_FILENAMES = Object.freeze({
+const CODEX_EXPORT_SCHEMA_VERSION = 1;
+const CODEX_EXPORT_FILENAMES = Object.freeze({
   manifest: "manifest.json",
   items: "items.json",
   skills: "skills.json",
@@ -136,7 +136,7 @@ function buildItemEntries(root) {
       itemId,
       title,
       slug: slugify(title),
-      path: buildWikiEntityPath("item", itemId, { basePath: DEFAULT_WIKI_BASE_PATH }),
+      path: buildCodexEntityPath("item", itemId, { basePath: DEFAULT_CODEX_BASE_PATH }),
       data,
       relatedSkillIds: [],
       relatedWorldIds: []
@@ -188,7 +188,7 @@ function buildSkillEntries(root, itemIdSet) {
       skillId,
       title,
       slug: slugify(title),
-      path: buildWikiEntityPath("skill", skillId, { basePath: DEFAULT_WIKI_BASE_PATH }),
+      path: buildCodexEntityPath("skill", skillId, { basePath: DEFAULT_CODEX_BASE_PATH }),
       data,
       relatedItemIds,
       relatedWorldIds: [],
@@ -223,7 +223,7 @@ function buildWorldEntries(root, skillIdSet) {
 
     for (let j = 0; j < relatedSkillIds.length; j++) {
       const skillId = relatedSkillIds[j];
-      assert(skillIdSet.has(skillId), `${worldId}: route group ${skillId} has no matching skill wiki page`);
+      assert(skillIdSet.has(skillId), `${worldId}: route group ${skillId} has no matching skill codex page`);
     }
 
     const services = Array.isArray(world.services) ? cloneJson(world.services) : [];
@@ -232,7 +232,7 @@ function buildWorldEntries(root, skillIdSet) {
       .map((service) => ({
         serviceId: service.serviceId,
         targetWorldId: service.travelToWorldId,
-        path: buildWikiEntityPath("world", service.travelToWorldId, { basePath: DEFAULT_WIKI_BASE_PATH })
+        path: buildCodexEntityPath("world", service.travelToWorldId, { basePath: DEFAULT_CODEX_BASE_PATH })
       }));
 
     worlds.push({
@@ -240,7 +240,7 @@ function buildWorldEntries(root, skillIdSet) {
       worldId,
       title: String(manifestEntry.label || humanizeId(worldId)),
       slug: slugify(String(manifestEntry.label || humanizeId(worldId))),
-      path: buildWikiEntityPath("world", worldId, { basePath: DEFAULT_WIKI_BASE_PATH }),
+      path: buildCodexEntityPath("world", worldId, { basePath: DEFAULT_CODEX_BASE_PATH }),
       defaultSpawn: cloneJson(manifestEntry.defaultSpawn || null),
       manifestVersion: String(manifest.version || ""),
       regionFile: String(manifestEntry.regionFile || ""),
@@ -278,21 +278,21 @@ function validateEntityCollection(rows, idField, entityLabel, entityType) {
     assert(!slugs.has(slug), `Duplicate ${entityLabel} slug ${slug}`);
     slugs.add(slug);
 
-    const expectedPath = buildWikiEntityPath(entityType, id, { basePath: DEFAULT_WIKI_BASE_PATH });
+    const expectedPath = buildCodexEntityPath(entityType, id, { basePath: DEFAULT_CODEX_BASE_PATH });
     assert(row.path === expectedPath, `${entityLabel} ${id} path mismatch`);
     assert(!paths.has(row.path), `Duplicate ${entityLabel} path ${row.path}`);
     paths.add(row.path);
   }
 }
 
-function validateWikiExportBundle(bundle) {
-  assert(bundle && typeof bundle === "object", "wiki export bundle is required");
+function validateCodexExportBundle(bundle) {
+  assert(bundle && typeof bundle === "object", "codex export bundle is required");
   const manifest = bundle.manifest;
-  assert(manifest && typeof manifest === "object", "wiki export manifest is required");
-  assert(manifest.schemaVersion === WIKI_EXPORT_SCHEMA_VERSION, "wiki export schema version mismatch");
-  assert(typeof manifest.generatedAt === "string" && manifest.generatedAt, "wiki export manifest missing generatedAt");
-  assert(typeof manifest.sourceCommit === "string" && manifest.sourceCommit, "wiki export manifest missing sourceCommit");
-  assert(manifest.basePath === DEFAULT_WIKI_BASE_PATH, "wiki export manifest basePath mismatch");
+  assert(manifest && typeof manifest === "object", "codex export manifest is required");
+  assert(manifest.schemaVersion === CODEX_EXPORT_SCHEMA_VERSION, "codex export schema version mismatch");
+  assert(typeof manifest.generatedAt === "string" && manifest.generatedAt, "codex export manifest missing generatedAt");
+  assert(typeof manifest.sourceCommit === "string" && manifest.sourceCommit, "codex export manifest missing sourceCommit");
+  assert(manifest.basePath === DEFAULT_CODEX_BASE_PATH, "codex export manifest basePath mismatch");
 
   const items = Array.isArray(bundle.items) ? bundle.items : [];
   const skills = Array.isArray(bundle.skills) ? bundle.skills : [];
@@ -352,23 +352,23 @@ function validateWikiExportBundle(bundle) {
     }
   }
 
-  assert(manifest.routes && typeof manifest.routes === "object", "wiki export manifest missing routes");
-  const expectedRoutes = getWikiRouteTemplates(DEFAULT_WIKI_BASE_PATH);
-  assert(JSON.stringify(manifest.routes) === JSON.stringify(expectedRoutes), "wiki export route templates mismatch");
+  assert(manifest.routes && typeof manifest.routes === "object", "codex export manifest missing routes");
+  const expectedRoutes = getCodexRouteTemplates(DEFAULT_CODEX_BASE_PATH);
+  assert(JSON.stringify(manifest.routes) === JSON.stringify(expectedRoutes), "codex export route templates mismatch");
 
-  assert(manifest.counts && manifest.counts.items === items.length, "wiki export item count mismatch");
-  assert(manifest.counts && manifest.counts.skills === skills.length, "wiki export skill count mismatch");
-  assert(manifest.counts && manifest.counts.worlds === worlds.length, "wiki export world count mismatch");
+  assert(manifest.counts && manifest.counts.items === items.length, "codex export item count mismatch");
+  assert(manifest.counts && manifest.counts.skills === skills.length, "codex export skill count mismatch");
+  assert(manifest.counts && manifest.counts.worlds === worlds.length, "codex export world count mismatch");
 
   const manifestIndexes = manifest.indexes || {};
-  assert(JSON.stringify(manifestIndexes.items || []) === JSON.stringify(createEntityIndex(items, "itemId")), "wiki export item index mismatch");
-  assert(JSON.stringify(manifestIndexes.skills || []) === JSON.stringify(createEntityIndex(skills, "skillId")), "wiki export skill index mismatch");
-  assert(JSON.stringify(manifestIndexes.worlds || []) === JSON.stringify(createEntityIndex(worlds, "worldId")), "wiki export world index mismatch");
+  assert(JSON.stringify(manifestIndexes.items || []) === JSON.stringify(createEntityIndex(items, "itemId")), "codex export item index mismatch");
+  assert(JSON.stringify(manifestIndexes.skills || []) === JSON.stringify(createEntityIndex(skills, "skillId")), "codex export skill index mismatch");
+  assert(JSON.stringify(manifestIndexes.worlds || []) === JSON.stringify(createEntityIndex(worlds, "worldId")), "codex export world index mismatch");
 
   return bundle;
 }
 
-function buildWikiExportBundle(root, options = {}) {
+function buildCodexExportBundle(root, options = {}) {
   const { items, itemIdSet } = buildItemEntries(root);
   const { skills, skillIdSet } = buildSkillEntries(root, itemIdSet);
   const { worlds } = buildWorldEntries(root, skillIdSet);
@@ -406,12 +406,12 @@ function buildWikiExportBundle(root, options = {}) {
   }
 
   const manifest = {
-    schemaVersion: WIKI_EXPORT_SCHEMA_VERSION,
+    schemaVersion: CODEX_EXPORT_SCHEMA_VERSION,
     generatedAt: String(options.generatedAt || new Date().toISOString()),
     sourceCommit: String(options.sourceCommit || getSourceCommit(root)),
-    basePath: DEFAULT_WIKI_BASE_PATH,
-    routes: getWikiRouteTemplates(DEFAULT_WIKI_BASE_PATH),
-    files: { ...WIKI_EXPORT_FILENAMES },
+    basePath: DEFAULT_CODEX_BASE_PATH,
+    routes: getCodexRouteTemplates(DEFAULT_CODEX_BASE_PATH),
+    files: { ...CODEX_EXPORT_FILENAMES },
     counts: {
       items: items.length,
       skills: skills.length,
@@ -424,7 +424,7 @@ function buildWikiExportBundle(root, options = {}) {
     }
   };
 
-  return validateWikiExportBundle({
+  return validateCodexExportBundle({
     manifest,
     items,
     skills,
@@ -432,27 +432,27 @@ function buildWikiExportBundle(root, options = {}) {
   });
 }
 
-function writeWikiExportBundle(bundle, outDir) {
+function writeCodexExportBundle(bundle, outDir) {
   const resolvedOutDir = path.resolve(outDir);
   fs.mkdirSync(resolvedOutDir, { recursive: true });
-  fs.writeFileSync(path.join(resolvedOutDir, WIKI_EXPORT_FILENAMES.manifest), `${JSON.stringify(bundle.manifest, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, WIKI_EXPORT_FILENAMES.items), `${JSON.stringify(bundle.items, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, WIKI_EXPORT_FILENAMES.skills), `${JSON.stringify(bundle.skills, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, WIKI_EXPORT_FILENAMES.worlds), `${JSON.stringify(bundle.worlds, null, 2)}\n`);
+  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.manifest), `${JSON.stringify(bundle.manifest, null, 2)}\n`);
+  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.items), `${JSON.stringify(bundle.items, null, 2)}\n`);
+  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.skills), `${JSON.stringify(bundle.skills, null, 2)}\n`);
+  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.worlds), `${JSON.stringify(bundle.worlds, null, 2)}\n`);
   return resolvedOutDir;
 }
 
-function exportWikiBundle(root, outDir, options = {}) {
-  const bundle = buildWikiExportBundle(root, options);
-  if (outDir) writeWikiExportBundle(bundle, outDir);
+function exportCodexBundle(root, outDir, options = {}) {
+  const bundle = buildCodexExportBundle(root, options);
+  if (outDir) writeCodexExportBundle(bundle, outDir);
   return bundle;
 }
 
 module.exports = {
-  WIKI_EXPORT_SCHEMA_VERSION,
-  WIKI_EXPORT_FILENAMES,
-  buildWikiExportBundle,
-  validateWikiExportBundle,
-  writeWikiExportBundle,
-  exportWikiBundle
+  CODEX_EXPORT_SCHEMA_VERSION,
+  CODEX_EXPORT_FILENAMES,
+  buildCodexExportBundle,
+  validateCodexExportBundle,
+  writeCodexExportBundle,
+  exportCodexBundle
 };

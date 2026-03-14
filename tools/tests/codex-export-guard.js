@@ -2,10 +2,10 @@ const fs = require("fs");
 const path = require("path");
 
 const {
-  WIKI_EXPORT_SCHEMA_VERSION,
-  exportWikiBundle,
-  validateWikiExportBundle
-} = require("../content/wiki-export");
+  CODEX_EXPORT_SCHEMA_VERSION,
+  exportCodexBundle,
+  validateCodexExportBundle
+} = require("../content/codex-export");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -31,10 +31,10 @@ function expectFailure(fn, expectedMessageRegex, label) {
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const outDir = path.join(root, "tmp", "wiki-export-guard");
+  const outDir = path.join(root, "tmp", "codex-export-guard");
   fs.mkdirSync(outDir, { recursive: true });
 
-  const bundle = exportWikiBundle(root, outDir, {
+  const bundle = exportCodexBundle(root, outDir, {
     generatedAt: "2026-03-13T00:00:00.000Z",
     sourceCommit: "test-commit"
   });
@@ -48,32 +48,32 @@ function run() {
   const skills = JSON.parse(fs.readFileSync(path.join(outDir, "skills.json"), "utf8"));
   const worlds = JSON.parse(fs.readFileSync(path.join(outDir, "worlds.json"), "utf8"));
 
-  assert(manifest.schemaVersion === WIKI_EXPORT_SCHEMA_VERSION, "wiki export schema version mismatch");
-  assert(manifest.generatedAt === "2026-03-13T00:00:00.000Z", "wiki export generatedAt mismatch");
-  assert(manifest.sourceCommit === "test-commit", "wiki export sourceCommit mismatch");
-  assert(manifest.counts.items === items.length, "wiki export items count mismatch");
-  assert(manifest.counts.skills === skills.length, "wiki export skills count mismatch");
-  assert(manifest.counts.worlds === worlds.length, "wiki export worlds count mismatch");
+  assert(manifest.schemaVersion === CODEX_EXPORT_SCHEMA_VERSION, "codex export schema version mismatch");
+  assert(manifest.generatedAt === "2026-03-13T00:00:00.000Z", "codex export generatedAt mismatch");
+  assert(manifest.sourceCommit === "test-commit", "codex export sourceCommit mismatch");
+  assert(manifest.counts.items === items.length, "codex export items count mismatch");
+  assert(manifest.counts.skills === skills.length, "codex export skills count mismatch");
+  assert(manifest.counts.worlds === worlds.length, "codex export worlds count mismatch");
 
   const duplicateIdBundle = cloneJson(bundle);
   duplicateIdBundle.items[1].itemId = duplicateIdBundle.items[0].itemId;
-  expectFailure(() => validateWikiExportBundle(duplicateIdBundle), /duplicate item id/i, "duplicate item id guard");
+  expectFailure(() => validateCodexExportBundle(duplicateIdBundle), /duplicate item id/i, "duplicate item id guard");
 
   const duplicateSlugBundle = cloneJson(bundle);
   duplicateSlugBundle.skills[1].slug = duplicateSlugBundle.skills[0].slug;
-  expectFailure(() => validateWikiExportBundle(duplicateSlugBundle), /duplicate skill slug/i, "duplicate skill slug guard");
+  expectFailure(() => validateCodexExportBundle(duplicateSlugBundle), /duplicate skill slug/i, "duplicate skill slug guard");
 
   const missingLinkBundle = cloneJson(bundle);
   missingLinkBundle.skills[0].relatedItemIds = missingLinkBundle.skills[0].relatedItemIds.concat(["missing_item"]);
-  expectFailure(() => validateWikiExportBundle(missingLinkBundle), /unknown item/i, "missing linked entity guard");
+  expectFailure(() => validateCodexExportBundle(missingLinkBundle), /unknown item/i, "missing linked entity guard");
 
   const invalidWorldRefBundle = cloneJson(bundle);
   const travelService = invalidWorldRefBundle.worlds[0].data.services.find((service) => service && service.travelToWorldId);
   assert(!!travelService, "expected a travel service for invalid world reference guard");
   travelService.travelToWorldId = "missing_world";
-  expectFailure(() => validateWikiExportBundle(invalidWorldRefBundle), /references unknown world/i, "invalid world reference guard");
+  expectFailure(() => validateCodexExportBundle(invalidWorldRefBundle), /references unknown world/i, "invalid world reference guard");
 
-  console.log(`Wiki export guard passed (${bundle.items.length} items, ${bundle.skills.length} skills, ${bundle.worlds.length} worlds).`);
+  console.log(`Codex export guard passed (${bundle.items.length} items, ${bundle.skills.length} skills, ${bundle.worlds.length} worlds).`);
 }
 
 try {
