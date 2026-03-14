@@ -36,6 +36,7 @@ function isWaterTileId(tileId) {
 
 function isNaturalTileId(tileId) {
   return tileId === TileId.GRASS
+    || tileId === TileId.DIRT
     || tileId === TileId.TREE
     || tileId === TileId.ROCK
     || tileId === TileId.STUMP

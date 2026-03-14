@@ -177,11 +177,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-006 - Terrain shaping pass for mining depressions/quarries
-- Status: Backlog
+- Status: Fixed
 - Severity: S3
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `src/js/world.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/freeze-starter-town-parity.js`
 - Repro:
   1. Inspect mining area terrain profiles.
 - Expected: Mining areas generally sit in depressions/quarries.
@@ -192,14 +192,21 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Identify mining regions needing terrain shaping.
   2. Sculpt depressions and edge transitions.
   3. Re-test movement/pathing and node interactions.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added a deterministic quarry sculpt pass in `initLogicalMap` that groups mining nodes by route and applies cluster-based basin shaping (depression falloff plus broken-up noise) after mining rocks are placed.
+  - Added deterministic rock-thinning per mining route so quarry silhouettes read less cluttered and the pit floor is more visible.
+  - Introduced a dedicated `DIRT` tile surface for quarry interiors, with separate terrain material/texture rendering and minimap color treatment.
+  - Added gentle rim lifting and localized smoothing around touched quarry tiles so mining areas read as carved terrain rather than circular bowls or flat patches.
+  - Kept gameplay-safe bounds by sculpting only natural land tiles (grass/dirt/rock/stump), excluding town-core and water-adjacent terrain classes, then clamping final quarry floor depths to conservative limits.
+  - Rock instances now sample local terrain center height and apply a slight grounding offset so they seat into the quarry floor instead of floating over it.
+  - Verified world bootstrap and starter-town freeze parity guards after the terrain pass.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-007 - Mining spot layout pass (spread out, avoid rows)
 - Status: Backlog

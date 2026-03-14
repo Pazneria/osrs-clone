@@ -30,6 +30,7 @@
             GRASS: 0,
             TREE: 1,
             ROCK: 2,
+            DIRT: 3,
             STUMP: 4,
             OBSTACLE: 5,
             FLOOR_WOOD: 6,
@@ -51,6 +52,7 @@
         });
         const WALKABLE_TILES = [
             TileId.GRASS,
+            TileId.DIRT,
             TileId.FLOOR_WOOD,
             TileId.FLOOR_STONE,
             TileId.FLOOR_BRICK,
@@ -63,6 +65,7 @@
         const WATER_TILE_SET = new Set([TileId.WATER_SHALLOW, TileId.WATER_DEEP]);
         const NATURAL_TILE_SET = new Set([
             TileId.GRASS,
+            TileId.DIRT,
             TileId.TREE,
             TileId.ROCK,
             TileId.STUMP,

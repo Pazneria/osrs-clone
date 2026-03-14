@@ -13,6 +13,207 @@
             return texture;
         }
 
+        function clamp01(value) {
+            return Math.max(0, Math.min(1, value));
+        }
+
+        function lerpNumber(start, end, t) {
+            return start + ((end - start) * t);
+        }
+
+        function smoothstep(edge0, edge1, value) {
+            if (edge0 === edge1) return value < edge0 ? 0 : 1;
+            const t = clamp01((value - edge0) / (edge1 - edge0));
+            return t * t * (3 - (2 * t));
+        }
+
+        function hash2D(x, y, seed = 0) {
+            const s = Math.sin((x * 127.1) + (y * 311.7) + (seed * 74.7)) * 43758.5453123;
+            return s - Math.floor(s);
+        }
+
+        function sampleValueNoise2D(x, y, seed = 0) {
+            const x0 = Math.floor(x);
+            const y0 = Math.floor(y);
+            const tx = x - x0;
+            const ty = y - y0;
+            const sx = tx * tx * (3 - (2 * tx));
+            const sy = ty * ty * (3 - (2 * ty));
+
+            const n00 = hash2D(x0, y0, seed);
+            const n10 = hash2D(x0 + 1, y0, seed);
+            const n01 = hash2D(x0, y0 + 1, seed);
+            const n11 = hash2D(x0 + 1, y0 + 1, seed);
+
+            const nx0 = lerpNumber(n00, n10, sx);
+            const nx1 = lerpNumber(n01, n11, sx);
+            return lerpNumber(nx0, nx1, sy);
+        }
+
+        function sampleFractalNoise2D(x, y, seed, octaves = 4, lacunarity = 2.0, gain = 0.5) {
+            let amplitude = 1;
+            let frequency = 1;
+            let sum = 0;
+            let sumAmplitude = 0;
+            for (let i = 0; i < octaves; i++) {
+                sum += sampleValueNoise2D(x * frequency, y * frequency, seed + (i * 13.37)) * amplitude;
+                sumAmplitude += amplitude;
+                amplitude *= gain;
+                frequency *= lacunarity;
+            }
+            return sumAmplitude > 0 ? (sum / sumAmplitude) : 0;
+        }
+
+        function createSeededRandom(seed) {
+            let state = (seed >>> 0) || 1;
+            return function seededRandom() {
+                state = (Math.imul(1664525, state) + 1013904223) >>> 0;
+                return state / 4294967296;
+            };
+        }
+
+        function buildGrassTextureCanvas(size = 192) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return canvas;
+
+            const imageData = ctx.createImageData(size, size);
+            const pixels = imageData.data;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const nx = x / size;
+                    const ny = y / size;
+                    const low = sampleFractalNoise2D(nx * 4.2, ny * 4.2, 19.43, 4, 2.0, 0.54);
+                    const mid = sampleFractalNoise2D((nx * 12.8) + 5.3, (ny * 12.8) - 7.1, 37.91, 3, 2.1, 0.56);
+                    const grain = sampleFractalNoise2D((nx * 44.0) - 12.4, (ny * 44.0) + 8.7, 73.28, 2, 2.0, 0.5);
+
+                    const lushMask = smoothstep(0.24, 0.72, low);
+                    const wornMask = smoothstep(0.62, 0.94, mid);
+
+                    let red = 41 + (low * 24) + (mid * 10) - (wornMask * 14);
+                    let green = 65 + (low * 40) + (mid * 16) + (lushMask * 10) - (wornMask * 18);
+                    let blue = 30 + (low * 18) + (mid * 8) - (wornMask * 12);
+
+                    const grainLift = (grain - 0.5) * 14;
+                    red += grainLift * 0.5;
+                    green += grainLift;
+                    blue += grainLift * 0.45;
+
+                    const idx = ((y * size) + x) * 4;
+                    pixels[idx] = Math.max(0, Math.min(255, Math.round(red)));
+                    pixels[idx + 1] = Math.max(0, Math.min(255, Math.round(green)));
+                    pixels[idx + 2] = Math.max(0, Math.min(255, Math.round(blue)));
+                    pixels[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            const random = createSeededRandom(0x8f43a2b1);
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 4200; i++) {
+                const x = random() * size;
+                const y = random() * size;
+                const length = 1.8 + (random() * 4.6);
+                const sway = (random() - 0.5) * (0.8 + (length * 0.22));
+                const tone = random();
+                const alpha = 0.07 + (random() * 0.16);
+                const red = 56 + Math.round(tone * 18);
+                const green = 92 + Math.round(tone * 34);
+                const blue = 42 + Math.round(tone * 14);
+
+                ctx.strokeStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + sway, y - length);
+                ctx.stroke();
+            }
+
+            ctx.globalCompositeOperation = 'multiply';
+            for (let i = 0; i < 160; i++) {
+                const cx = random() * size;
+                const cy = random() * size;
+                const radius = 2 + (random() * 8);
+                const alpha = 0.05 + (random() * 0.09);
+                ctx.fillStyle = `rgba(39, 57, 31, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+
+            return canvas;
+        }
+
+        function buildDirtTextureCanvas(size = 192) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return canvas;
+
+            const imageData = ctx.createImageData(size, size);
+            const pixels = imageData.data;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const nx = x / size;
+                    const ny = y / size;
+                    const low = sampleFractalNoise2D(nx * 5.6, ny * 5.6, 141.2, 4, 2.0, 0.56);
+                    const mid = sampleFractalNoise2D((nx * 18.0) + 4.1, (ny * 18.0) - 2.2, 208.9, 3, 2.05, 0.54);
+                    const grain = sampleFractalNoise2D((nx * 52.0) + 9.4, (ny * 52.0) - 7.3, 317.4, 2, 2.0, 0.5);
+
+                    const dryMask = smoothstep(0.58, 0.94, low);
+                    const richMask = smoothstep(0.18, 0.66, mid);
+                    let red = 74 + (low * 26) + (mid * 12) - (dryMask * 11);
+                    let green = 56 + (low * 17) + (mid * 8) - (dryMask * 8);
+                    let blue = 38 + (low * 10) + (richMask * 4) - (dryMask * 5);
+
+                    const grainDelta = (grain - 0.5) * 16;
+                    red += grainDelta * 0.8;
+                    green += grainDelta * 0.58;
+                    blue += grainDelta * 0.38;
+
+                    const idx = ((y * size) + x) * 4;
+                    pixels[idx] = Math.max(0, Math.min(255, Math.round(red)));
+                    pixels[idx + 1] = Math.max(0, Math.min(255, Math.round(green)));
+                    pixels[idx + 2] = Math.max(0, Math.min(255, Math.round(blue)));
+                    pixels[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            const random = createSeededRandom(0x53ab1c29);
+            for (let i = 0; i < 1850; i++) {
+                const px = random() * size;
+                const py = random() * size;
+                const radius = 0.35 + (random() * 1.8);
+                const alpha = 0.08 + (random() * 0.2);
+                const tone = random();
+                const red = 92 + Math.round(tone * 26);
+                const green = 70 + Math.round(tone * 15);
+                const blue = 48 + Math.round(tone * 12);
+                ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(px, py, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.globalCompositeOperation = 'multiply';
+            for (let i = 0; i < 380; i++) {
+                const px = random() * size;
+                const py = random() * size;
+                const width = 1 + (random() * 2.8);
+                const height = 1 + (random() * 2.2);
+                const alpha = 0.1 + (random() * 0.14);
+                ctx.fillStyle = `rgba(56, 38, 24, ${alpha})`;
+                ctx.fillRect(px, py, width, height);
+            }
+            ctx.globalCompositeOperation = 'source-over';
+
+            return canvas;
+        }
+
         function getWaterMaterialCaches() {
             if (!sharedMaterials.waterSurfaceCache) sharedMaterials.waterSurfaceCache = Object.create(null);
             if (!sharedMaterials.waterShoreCache) sharedMaterials.waterShoreCache = Object.create(null);
@@ -194,7 +395,8 @@
             sharedGeometries.castleTower = new THREE.BoxGeometry(1.22, 4, 1.22).translate(0, 2.0, 0);
 
             sharedMaterials.ground = new THREE.MeshLambertMaterial({ color: 0xffffff });
-            sharedMaterials.grassTile = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            sharedMaterials.grassTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+            sharedMaterials.dirtTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
             sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x9aa5ae, flatShading: true });
@@ -216,24 +418,26 @@
             sharedMaterials.stairsDown = new THREE.MeshLambertMaterial({ color: 0x444444 });
 
             // Lightweight procedural textures to avoid flat-color terrain/water.
-            const grassCanvas = document.createElement('canvas');
-            grassCanvas.width = 64; grassCanvas.height = 64;
-            const gCtx = grassCanvas.getContext('2d');
-            gCtx.fillStyle = '#739966';
-            gCtx.fillRect(0, 0, 64, 64);
-            for (let i = 0; i < 900; i++) {
-                const green = 92 + Math.floor(Math.random() * 52);
-                const red = Math.max(56, green - (18 + Math.floor(Math.random() * 12)));
-                const blue = Math.max(42, green - (32 + Math.floor(Math.random() * 16)));
-                gCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
-                gCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
-            }
-            const grassTex = applyColorTextureSettings(new THREE.CanvasTexture(grassCanvas));
+            const grassCanvas = buildGrassTextureCanvas(192);
+            const grassTex = applyColorTextureSettings(new THREE.CanvasTexture(grassCanvas), 'linear');
             grassTex.wrapS = THREE.RepeatWrapping;
             grassTex.wrapT = THREE.RepeatWrapping;
-            grassTex.repeat.set(18, 18);
+            grassTex.repeat.set(12, 12);
+            if (renderer && renderer.capabilities && typeof renderer.capabilities.getMaxAnisotropy === 'function') {
+                grassTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+            }
             sharedMaterials.ground.map = grassTex;
             sharedMaterials.grassTile.map = grassTex;
+
+            const dirtCanvas = buildDirtTextureCanvas(192);
+            const dirtTex = applyColorTextureSettings(new THREE.CanvasTexture(dirtCanvas), 'linear');
+            dirtTex.wrapS = THREE.RepeatWrapping;
+            dirtTex.wrapT = THREE.RepeatWrapping;
+            dirtTex.repeat.set(9.5, 9.5);
+            if (renderer && renderer.capabilities && typeof renderer.capabilities.getMaxAnisotropy === 'function') {
+                dirtTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+            }
+            sharedMaterials.dirtTile.map = dirtTex;
 
             const barkCanvas = document.createElement('canvas');
             barkCanvas.width = 64; barkCanvas.height = 64;
@@ -2285,6 +2489,7 @@
                 if (!row) return false;
                 const tile = row[x];
                 const validBase = tile === TileId.GRASS
+                    || tile === TileId.DIRT
                     || tile === TileId.FLOOR_WOOD
                     || tile === TileId.FLOOR_STONE
                     || tile === TileId.FLOOR_BRICK
@@ -2570,16 +2775,932 @@
                     }
                 }
             };
+            const MINING_QUARRY_LAYOUT_OVERRIDES = Object.freeze({
+                starter_mine: Object.freeze({
+                    centerX: 248,
+                    centerY: 268,
+                    anchorX: 248,
+                    anchorY: 268,
+                    radiusScale: 0.72,
+                    dirtRadiusScale: 1.08,
+                    edgeDepth: -0.17,
+                    centerDepth: -0.34
+                }),
+                iron_mine: Object.freeze({
+                    centerX: 328,
+                    centerY: 212,
+                    anchorX: 328,
+                    anchorY: 212,
+                    radiusScale: 0.76,
+                    dirtRadiusScale: 1.08,
+                    edgeDepth: -0.18,
+                    centerDepth: -0.36
+                }),
+                coal_mine: Object.freeze({
+                    centerX: 362,
+                    centerY: 284,
+                    anchorX: 362,
+                    anchorY: 284,
+                    radiusScale: 0.8,
+                    dirtRadiusScale: 1.08,
+                    edgeDepth: -0.2,
+                    centerDepth: -0.4
+                }),
+                precious_mine: Object.freeze({
+                    centerX: 330,
+                    centerY: 356,
+                    anchorX: 330,
+                    anchorY: 356,
+                    radiusScale: 0.78,
+                    dirtRadiusScale: 1.08,
+                    edgeDepth: -0.2,
+                    centerDepth: -0.41
+                }),
+                gem_mine: Object.freeze({
+                    centerX: 152,
+                    centerY: 342,
+                    anchorX: 152,
+                    anchorY: 342,
+                    radiusScale: 0.74,
+                    dirtRadiusScale: 1.08,
+                    edgeDepth: -0.19,
+                    centerDepth: -0.39
+                }),
+                rune_essence_mine: Object.freeze({
+                    centerX: 92,
+                    centerY: 92,
+                    anchorX: 92,
+                    anchorY: 92,
+                    radiusScale: 0.7,
+                    dirtRadiusScale: 1.06,
+                    edgeDepth: -0.18,
+                    centerDepth: -0.35
+                })
+            });
+            const getMiningQuarryLayout = (routeId, clusterPoints) => {
+                const points = Array.isArray(clusterPoints) ? clusterPoints : [];
+                let sumX = 0;
+                let sumY = 0;
+                let maxDistance = 0;
+                let minX = Number.POSITIVE_INFINITY;
+                let maxX = Number.NEGATIVE_INFINITY;
+                let minY = Number.POSITIVE_INFINITY;
+                let maxY = Number.NEGATIVE_INFINITY;
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+                    sumX += point.x;
+                    sumY += point.y;
+                    minX = Math.min(minX, point.x);
+                    maxX = Math.max(maxX, point.x);
+                    minY = Math.min(minY, point.y);
+                    maxY = Math.max(maxY, point.y);
+                }
+                const fallbackX = Number.isFinite(minX) && Number.isFinite(maxX) ? ((minX + maxX) * 0.5) : 0;
+                const fallbackY = Number.isFinite(minY) && Number.isFinite(maxY) ? ((minY + maxY) * 0.5) : 0;
+                const averagedCenterX = points.length > 0 ? (sumX / points.length) : fallbackX;
+                const averagedCenterY = points.length > 0 ? (sumY / points.length) : fallbackY;
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+                    maxDistance = Math.max(maxDistance, Math.hypot(point.x - averagedCenterX, point.y - averagedCenterY));
+                }
 
-            const miningTrainingLocations = miningTrainingRouteDefs.slice();
+                const override = routeId && MINING_QUARRY_LAYOUT_OVERRIDES[routeId]
+                    ? MINING_QUARRY_LAYOUT_OVERRIDES[routeId]
+                    : null;
+                const centerX = override && Number.isFinite(override.centerX) ? override.centerX : averagedCenterX;
+                const centerY = override && Number.isFinite(override.centerY) ? override.centerY : averagedCenterY;
+                let recenteredMaxDistance = 0;
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+                    recenteredMaxDistance = Math.max(recenteredMaxDistance, Math.hypot(point.x - centerX, point.y - centerY));
+                }
+
+                const radiusBase = Math.max(5.2, recenteredMaxDistance + 2.6 + Math.min(2.8, Math.sqrt(Math.max(1, points.length)) * 0.32));
+                const radius = Math.min(16.0, radiusBase * (override && Number.isFinite(override.radiusScale) ? override.radiusScale : 1));
+                const dirtRadius = Math.min(17.6, radius * (override && Number.isFinite(override.dirtRadiusScale) ? override.dirtRadiusScale : 1.06));
+                const edgeDepth = override && Number.isFinite(override.edgeDepth)
+                    ? override.edgeDepth
+                    : Math.max(-0.22, -0.15 - (Math.sqrt(Math.max(1, points.length)) * 0.009));
+                const centerDepth = override && Number.isFinite(override.centerDepth)
+                    ? override.centerDepth
+                    : Math.max(-0.44, edgeDepth - (0.14 + (Math.sqrt(Math.max(1, points.length)) * 0.01)));
+                return {
+                    centerX,
+                    centerY,
+                    radius,
+                    dirtRadius,
+                    edgeDepth,
+                    centerDepth,
+                    anchorX: override && Number.isFinite(override.anchorX) ? override.anchorX : centerX,
+                    anchorY: override && Number.isFinite(override.anchorY) ? override.anchorY : centerY,
+                    minX,
+                    maxX,
+                    minY,
+                    maxY
+                };
+            };
+            const placementCoordKey = (placement) => {
+                if (!placement || !Number.isFinite(placement.x) || !Number.isFinite(placement.y)) return '';
+                const z = Number.isFinite(placement.z) ? placement.z : 0;
+                return z + ':' + placement.x + ',' + placement.y;
+            };
+            const thinMiningRockPlacements = (placements) => {
+                if (!Array.isArray(placements) || placements.length === 0) {
+                    return { active: [], dropped: [] };
+                }
+
+                const alwaysKeep = [];
+                const byRoute = Object.create(null);
+                for (let i = 0; i < placements.length; i++) {
+                    const placement = placements[i];
+                    if (!placement || !Number.isFinite(placement.x) || !Number.isFinite(placement.y)) continue;
+                    if (!Number.isFinite(placement.z) || placement.z !== 0) {
+                        alwaysKeep.push(placement);
+                        continue;
+                    }
+                    const routeId = (typeof placement.routeId === 'string' && placement.routeId)
+                        ? placement.routeId
+                        : 'routeless_mine';
+                    if (!byRoute[routeId]) byRoute[routeId] = [];
+                    byRoute[routeId].push(placement);
+                }
+
+                const active = alwaysKeep.slice();
+                const dropped = [];
+                const routeEntries = Object.entries(byRoute);
+                for (let routeIndex = 0; routeIndex < routeEntries.length; routeIndex++) {
+                    const routeEntry = routeEntries[routeIndex];
+                    const routePoints = routeEntry[1];
+                    if (!Array.isArray(routePoints) || routePoints.length === 0) continue;
+                    if (routePoints.length <= 4) {
+                        active.push(...routePoints);
+                        continue;
+                    }
+
+                    let sumX = 0;
+                    let sumY = 0;
+                    for (let i = 0; i < routePoints.length; i++) {
+                        sumX += routePoints[i].x;
+                        sumY += routePoints[i].y;
+                    }
+                    const centerX = sumX / routePoints.length;
+                    const centerY = sumY / routePoints.length;
+                    let maxDist = 0;
+                    let minX = Number.POSITIVE_INFINITY;
+                    let maxX = Number.NEGATIVE_INFINITY;
+                    let minY = Number.POSITIVE_INFINITY;
+                    let maxY = Number.NEGATIVE_INFINITY;
+                    for (let i = 0; i < routePoints.length; i++) {
+                        const point = routePoints[i];
+                        maxDist = Math.max(maxDist, Math.hypot(point.x - centerX, point.y - centerY));
+                        minX = Math.min(minX, point.x);
+                        maxX = Math.max(maxX, point.x);
+                        minY = Math.min(minY, point.y);
+                        maxY = Math.max(maxY, point.y);
+                    }
+                    const spanX = Math.max(1, maxX - minX);
+                    const spanY = Math.max(1, maxY - minY);
+                    const canvasDiag = Math.max(1.8, Math.hypot(spanX, spanY));
+                    const targetKeep = Math.max(4, Math.min(routePoints.length, Math.round(routePoints.length * 0.42)));
+                    const initialSpacing = Math.max(3.1, Math.min(6.8, (canvasDiag * 0.9) / Math.max(2.2, Math.sqrt(targetKeep))));
+                    const classifyBin = (point) => {
+                        const nx = (point.x - minX) / Math.max(1, spanX);
+                        const ny = (point.y - minY) / Math.max(1, spanY);
+                        const bx = Math.max(0, Math.min(2, Math.floor(nx * 3)));
+                        const by = Math.max(0, Math.min(2, Math.floor(ny * 3)));
+                        return bx + ',' + by;
+                    };
+
+                    const remaining = routePoints.slice();
+                    remaining.sort((a, b) => {
+                        const da = Math.hypot(a.x - centerX, a.y - centerY);
+                        const db = Math.hypot(b.x - centerX, b.y - centerY);
+                        if (da !== db) return db - da;
+                        return hash2D(a.x, a.y, 51.7 + routeIndex) - hash2D(b.x, b.y, 51.7 + routeIndex);
+                    });
+
+                    const selected = [];
+                    if (remaining.length > 0) {
+                        selected.push(remaining.shift());
+                    }
+                    if (remaining.length > 0 && selected.length < targetKeep) {
+                        let oppositeIdx = 0;
+                        let oppositeDistance = -Infinity;
+                        const seed = selected[0];
+                        for (let candidateIndex = 0; candidateIndex < remaining.length; candidateIndex++) {
+                            const candidate = remaining[candidateIndex];
+                            const d = Math.hypot(candidate.x - seed.x, candidate.y - seed.y);
+                            if (d > oppositeDistance) {
+                                oppositeDistance = d;
+                                oppositeIdx = candidateIndex;
+                            }
+                        }
+                        selected.push(remaining.splice(oppositeIdx, 1)[0]);
+                    }
+
+                    let spacing = initialSpacing;
+                    let safety = 0;
+                    while (selected.length < targetKeep && remaining.length > 0 && safety < 512) {
+                        safety++;
+                        let bestIdx = 0;
+                        let bestScore = -Infinity;
+                        const selectedBins = new Set(selected.map(classifyBin));
+                        for (let candidateIndex = 0; candidateIndex < remaining.length; candidateIndex++) {
+                            const candidate = remaining[candidateIndex];
+                            let minDist = Number.POSITIVE_INFINITY;
+                            for (let s = 0; s < selected.length; s++) {
+                                const chosen = selected[s];
+                                const d = Math.hypot(candidate.x - chosen.x, candidate.y - chosen.y);
+                                if (d < minDist) minDist = d;
+                            }
+                            if (selected.length > 0 && minDist < spacing) continue;
+                            const candidateBin = classifyBin(candidate);
+                            const jitter = hash2D(candidate.x, candidate.y, 86.1 + (routeIndex * 7.7) + (selected.length * 1.9));
+                            const centerDist = Math.hypot(candidate.x - centerX, candidate.y - centerY);
+                            const edgeBias = centerDist / Math.max(1, canvasDiag * 0.5);
+                            const binBonus = selectedBins.has(candidateBin) ? 0 : 1.15;
+                            const score = (minDist * 1.45) + (edgeBias * 0.85) + binBonus + (jitter * 0.22);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestIdx = candidateIndex;
+                            }
+                        }
+                        if (bestScore === -Infinity) {
+                            spacing = Math.max(1.9, spacing - 0.28);
+                            if (spacing <= 1.92) {
+                                let fallbackIdx = 0;
+                                let fallbackScore = -Infinity;
+                                const selectedBins = new Set(selected.map(classifyBin));
+                                for (let candidateIndex = 0; candidateIndex < remaining.length; candidateIndex++) {
+                                    const candidate = remaining[candidateIndex];
+                                    let minDist = Number.POSITIVE_INFINITY;
+                                    for (let s = 0; s < selected.length; s++) {
+                                        const chosen = selected[s];
+                                        const d = Math.hypot(candidate.x - chosen.x, candidate.y - chosen.y);
+                                        if (d < minDist) minDist = d;
+                                    }
+                                    const candidateBin = classifyBin(candidate);
+                                    const jitter = hash2D(candidate.x, candidate.y, 126.4 + (routeIndex * 9.9));
+                                    const centerDist = Math.hypot(candidate.x - centerX, candidate.y - centerY);
+                                    const edgeBias = centerDist / Math.max(1, canvasDiag * 0.5);
+                                    const binBonus = selectedBins.has(candidateBin) ? 0 : 0.9;
+                                    const score = (minDist * 1.24) + (edgeBias * 0.62) + binBonus + (jitter * 0.16);
+                                    if (score > fallbackScore) {
+                                        fallbackScore = score;
+                                        fallbackIdx = candidateIndex;
+                                    }
+                                }
+                                selected.push(remaining.splice(fallbackIdx, 1)[0]);
+                            }
+                            continue;
+                        }
+                        selected.push(remaining.splice(bestIdx, 1)[0]);
+                    }
+
+                    const selectedKeys = new Set(selected.map(placementCoordKey));
+                    for (let i = 0; i < routePoints.length; i++) {
+                        const point = routePoints[i];
+                        if (selectedKeys.has(placementCoordKey(point))) active.push(point);
+                        else dropped.push(point);
+                    }
+                }
+
+                return { active, dropped };
+            };
+            const redistributeMiningRockPlacements = (placements, sourcePlacements) => {
+                if (!Array.isArray(placements) || placements.length === 0) return [];
+
+                const byRoute = Object.create(null);
+                const sourceByRoute = Object.create(null);
+                const preserved = [];
+                for (let i = 0; i < placements.length; i++) {
+                    const placement = placements[i];
+                    if (!placement || !Number.isFinite(placement.x) || !Number.isFinite(placement.y)) continue;
+                    if (!Number.isFinite(placement.z) || placement.z !== 0) {
+                        preserved.push({ ...placement });
+                        continue;
+                    }
+                    const routeId = (typeof placement.routeId === 'string' && placement.routeId)
+                        ? placement.routeId
+                        : 'routeless_mine';
+                    if (!byRoute[routeId]) byRoute[routeId] = [];
+                    byRoute[routeId].push(placement);
+                }
+                if (Array.isArray(sourcePlacements)) {
+                    for (let i = 0; i < sourcePlacements.length; i++) {
+                        const placement = sourcePlacements[i];
+                        if (!placement || !Number.isFinite(placement.x) || !Number.isFinite(placement.y)) continue;
+                        if (!Number.isFinite(placement.z) || placement.z !== 0) continue;
+                        const routeId = (typeof placement.routeId === 'string' && placement.routeId)
+                            ? placement.routeId
+                            : 'routeless_mine';
+                        if (!sourceByRoute[routeId]) sourceByRoute[routeId] = [];
+                        sourceByRoute[routeId].push(placement);
+                    }
+                }
+
+                const redistributed = preserved.slice();
+                const globallyUsed = new Set();
+                const routeEntries = Object.entries(byRoute);
+                for (let routeIndex = 0; routeIndex < routeEntries.length; routeIndex++) {
+                    const [routeId, routePlacements] = routeEntries[routeIndex];
+                    if (!Array.isArray(routePlacements) || routePlacements.length === 0) continue;
+                    const clusterPoints = Array.isArray(sourceByRoute[routeId]) && sourceByRoute[routeId].length > 0
+                        ? sourceByRoute[routeId]
+                        : routePlacements;
+                    const layout = getMiningQuarryLayout(routeId, clusterPoints);
+                    const centerX = layout.centerX;
+                    const centerY = layout.centerY;
+                    const radius = layout.radius;
+                    const dirtRadius = layout.dirtRadius;
+                    const edgeDepth = layout.edgeDepth;
+                    const centerDepth = layout.centerDepth;
+                    const scanMinX = Math.max(2, Math.floor(centerX - dirtRadius - 2));
+                    const scanMaxX = Math.min(MAP_SIZE - 3, Math.ceil(centerX + dirtRadius + 2));
+                    const scanMinY = Math.max(2, Math.floor(centerY - dirtRadius - 2));
+                    const scanMaxY = Math.min(MAP_SIZE - 3, Math.ceil(centerY + dirtRadius + 2));
+                    const dirtCandidates = [];
+                    for (let y = scanMinY; y <= scanMaxY; y++) {
+                        for (let x = scanMinX; x <= scanMaxX; x++) {
+                            if (logicalMap[0][y][x] !== TileId.DIRT) continue;
+                            if (globallyUsed.has(x + ',' + y)) continue;
+                            const distance = Math.hypot(x - centerX, y - centerY);
+                            if (distance > dirtRadius * 1.22) continue;
+                            const fieldNoise = sampleFractalNoise2D(
+                                ((x * 0.18) + (routeIndex * 3.1)),
+                                ((y * 0.18) - (routeIndex * 2.7)),
+                                701.2 + (routeIndex * 23.9),
+                                2,
+                                2.0,
+                                0.5
+                            );
+                            const currentHeight = heightMap[0][y][x];
+                            const depthSpan = Math.max(0.01, Math.abs(centerDepth - edgeDepth));
+                            const depthBias = clamp01((edgeDepth - currentHeight) / depthSpan);
+                            const normalizedDistance = distance / Math.max(1, dirtRadius);
+                            const canvasBias = Math.max(0, 1 - Math.abs(normalizedDistance - 0.52));
+                            dirtCandidates.push({ x, y, z: 0, distance, fieldNoise, depthBias, canvasBias });
+                        }
+                    }
+
+                    const spanX = Math.max(1, scanMaxX - scanMinX);
+                    const spanY = Math.max(1, scanMaxY - scanMinY);
+                    const canvasDiag = Math.max(2, Math.hypot(spanX, spanY));
+                    const classifyBin = (point) => {
+                        const nx = (point.x - scanMinX) / Math.max(1, spanX);
+                        const ny = (point.y - scanMinY) / Math.max(1, spanY);
+                        const bx = Math.max(0, Math.min(3, Math.floor(nx * 4)));
+                        const by = Math.max(0, Math.min(3, Math.floor(ny * 4)));
+                        return bx + ',' + by;
+                    };
+                    const baseTargetCount = routePlacements.length;
+                    const requestedExtraCount = 12 + Math.floor(
+                        hash2D(centerX + (routeIndex * 4.1), centerY - (routeIndex * 3.7), 944.2) * 3
+                    );
+                    const targetCount = Math.max(
+                        baseTargetCount,
+                        Math.min(dirtCandidates.length, baseTargetCount + requestedExtraCount)
+                    );
+                    const selected = [];
+                    const remaining = dirtCandidates.slice();
+                    const clusterCenters = [];
+                    const takenKeys = new Set();
+                    const selectedBins = new Set();
+                    const candidateKey = (point) => point.x + ',' + point.y;
+                    const removeRemainingAt = (index) => {
+                        if (index < 0 || index >= remaining.length) return null;
+                        return remaining.splice(index, 1)[0];
+                    };
+                    const minDistanceToPoints = (point, points) => {
+                        if (!Array.isArray(points) || points.length === 0) return Number.POSITIVE_INFINITY;
+                        let minDist = Number.POSITIVE_INFINITY;
+                        for (let p = 0; p < points.length; p++) {
+                            const target = points[p];
+                            if (!target) continue;
+                            minDist = Math.min(minDist, Math.hypot(point.x - target.x, point.y - target.y));
+                        }
+                        return minDist;
+                    };
+                    const addSelectedCandidate = (candidate) => {
+                        if (!candidate) return false;
+                        const key = candidateKey(candidate);
+                        if (takenKeys.has(key)) return false;
+                        takenKeys.add(key);
+                        selected.push(candidate);
+                        selectedBins.add(classifyBin(candidate));
+                        return true;
+                    };
+
+                    // Build a deterministic clump plan (pairs/triples/quads) plus a few strays.
+                    // First pass uses the base count; extra rocks are filled in a second, interior-biased pass.
+                    const primaryTargetCount = Math.min(targetCount, baseTargetCount);
+                    const strayTarget = primaryTargetCount >= 14 ? 3 : (primaryTargetCount >= 9 ? 2 : (primaryTargetCount >= 6 ? 1 : 0));
+                    let clusteredCount = Math.max(0, primaryTargetCount - strayTarget);
+                    const clumpSizes = [];
+                    let clumpIndex = 0;
+                    while (clusteredCount > 0) {
+                        const clumpRoll = hash2D(centerX + (clumpIndex * 3.7), centerY - (clumpIndex * 2.9), 615.4 + (routeIndex * 11.7));
+                        let requestedSize = clumpRoll < 0.24 ? 4 : (clumpRoll < 0.68 ? 3 : 2);
+                        if (clusteredCount <= 2) requestedSize = clusteredCount;
+                        const clumpSize = Math.max(1, Math.min(requestedSize, clusteredCount));
+                        clumpSizes.push(clumpSize);
+                        clusteredCount -= clumpSize;
+                        clumpIndex++;
+                    }
+
+                    const centerTargetCount = Math.max(1, clumpSizes.length);
+                    let centerSpacing = Math.max(3.3, Math.min(7.1, (canvasDiag * 0.82) / Math.max(1.8, Math.sqrt(centerTargetCount))));
+                    for (let c = 0; c < clumpSizes.length && remaining.length > 0 && selected.length < primaryTargetCount; c++) {
+                        const clumpSize = clumpSizes[c];
+                        let centerCandidateIndex = -1;
+                        let centerCandidateScore = -Infinity;
+                        for (let pass = 0; pass < 4 && centerCandidateIndex === -1; pass++) {
+                            const spacingLimit = Math.max(2.1, centerSpacing - (pass * 0.55));
+                            for (let candidateIndex = 0; candidateIndex < remaining.length; candidateIndex++) {
+                                const candidate = remaining[candidateIndex];
+                                if (!candidate) continue;
+                                const minCenterDist = minDistanceToPoints(candidate, clusterCenters);
+                                const resolvedCenterDist = Number.isFinite(minCenterDist) ? minCenterDist : centerSpacing;
+                                if (clusterCenters.length > 0 && resolvedCenterDist < spacingLimit) continue;
+                                const binBonus = selectedBins.has(classifyBin(candidate)) ? 0 : 1.15;
+                                const jitter = hash2D(candidate.x, candidate.y, 641.9 + (routeIndex * 8.4) + (c * 2.2));
+                                const score = (resolvedCenterDist * 0.95)
+                                    + (binBonus * 0.74)
+                                    + (candidate.fieldNoise * 0.78)
+                                    + (candidate.canvasBias * 0.52)
+                                    + (candidate.depthBias * 0.26)
+                                    + (jitter * 0.24);
+                                if (score > centerCandidateScore) {
+                                    centerCandidateScore = score;
+                                    centerCandidateIndex = candidateIndex;
+                                }
+                            }
+                        }
+                        if (centerCandidateIndex === -1) break;
+                        const centerCandidate = removeRemainingAt(centerCandidateIndex);
+                        if (!addSelectedCandidate(centerCandidate)) continue;
+                        clusterCenters.push(centerCandidate);
+
+                        const localIdeal = 1.18 + (hash2D(centerCandidate.x, centerCandidate.y, 704.1 + c) * 0.66);
+                        const maxLocalRadius = clumpSize >= 4 ? 2.95 : (clumpSize === 3 ? 2.55 : 2.25);
+                        for (let member = 1; member < clumpSize && selected.length < primaryTargetCount; member++) {
+                            let neighborIndex = -1;
+                            let neighborScore = -Infinity;
+                            for (let pass = 0; pass < 3 && neighborIndex === -1; pass++) {
+                                const maxRadius = maxLocalRadius + (pass * 0.62);
+                                const minRadius = Math.max(0.65, 0.85 - (pass * 0.2));
+                                for (let candidateIndex = 0; candidateIndex < remaining.length; candidateIndex++) {
+                                    const candidate = remaining[candidateIndex];
+                                    if (!candidate) continue;
+                                    const centerDist = Math.hypot(candidate.x - centerCandidate.x, candidate.y - centerCandidate.y);
+                                    if (centerDist < minRadius || centerDist > maxRadius) continue;
+                                    const minPlacedDist = minDistanceToPoints(candidate, selected);
+                                    if (minPlacedDist < 0.78) continue;
+                                    const clumpProximity = 1 - clamp01(Math.abs(centerDist - localIdeal) / Math.max(0.1, maxRadius));
+                                    let nearOtherCenterDist = Number.POSITIVE_INFINITY;
+                                    for (let cc = 0; cc < clusterCenters.length; cc++) {
+                                        const otherCenter = clusterCenters[cc];
+                                        if (!otherCenter || otherCenter === centerCandidate) continue;
+                                        nearOtherCenterDist = Math.min(
+                                            nearOtherCenterDist,
+                                            Math.hypot(candidate.x - otherCenter.x, candidate.y - otherCenter.y)
+                                        );
+                                    }
+                                    const centerSeparationPenalty = nearOtherCenterDist < 1.8 ? (1.8 - nearOtherCenterDist) : 0;
+                                    const jitter = hash2D(candidate.x, candidate.y, 731.3 + (routeIndex * 9.6) + (member * 3.3));
+                                    const score = (clumpProximity * 1.05)
+                                        + (candidate.fieldNoise * 0.66)
+                                        + (candidate.depthBias * 0.2)
+                                        + (candidate.canvasBias * 0.24)
+                                        + (jitter * 0.22)
+                                        - (centerSeparationPenalty * 0.7);
+                                    if (score > neighborScore) {
+                                        neighborScore = score;
+                                        neighborIndex = candidateIndex;
+                                    }
+                                }
+                            }
+                            if (neighborIndex === -1) break;
+                            const neighbor = removeRemainingAt(neighborIndex);
+                            addSelectedCandidate(neighbor);
+                        }
+                    }
+
+                    // Fill remaining target slots with wider strays so the area doesn't look artificially packed.
+                    const strayCandidates = remaining.sort((a, b) => {
+                        const aScore = (a.fieldNoise * 0.72) + (a.canvasBias * 0.35) + (hash2D(a.x, a.y, 820.2 + routeIndex) * 0.22);
+                        const bScore = (b.fieldNoise * 0.72) + (b.canvasBias * 0.35) + (hash2D(b.x, b.y, 820.2 + routeIndex) * 0.22);
+                        return bScore - aScore;
+                    });
+                    let straySpacing = Math.max(1.95, Math.min(4.1, (canvasDiag * 0.52) / Math.max(2, Math.sqrt(Math.max(1, primaryTargetCount)))));
+                    let straySafety = 0;
+                    while (selected.length < primaryTargetCount && strayCandidates.length > 0 && straySafety < 1024) {
+                        straySafety++;
+                        let bestStrayIdx = -1;
+                        let bestStrayScore = -Infinity;
+                        for (let candidateIndex = 0; candidateIndex < strayCandidates.length; candidateIndex++) {
+                            const candidate = strayCandidates[candidateIndex];
+                            const minPlacedDist = minDistanceToPoints(candidate, selected);
+                            const resolvedPlacedDist = Number.isFinite(minPlacedDist) ? minPlacedDist : (straySpacing + 0.8);
+                            if (selected.length > 0 && resolvedPlacedDist < straySpacing) continue;
+                            const binBonus = selectedBins.has(classifyBin(candidate)) ? 0 : 1.0;
+                            const jitter = hash2D(candidate.x, candidate.y, 867.5 + (routeIndex * 8.1) + (selected.length * 1.9));
+                            const score = (resolvedPlacedDist * 0.84)
+                                + (binBonus * 0.68)
+                                + (candidate.fieldNoise * 0.62)
+                                + (candidate.canvasBias * 0.3)
+                                + (candidate.depthBias * 0.14)
+                                + (jitter * 0.2);
+                            if (score > bestStrayScore) {
+                                bestStrayScore = score;
+                                bestStrayIdx = candidateIndex;
+                            }
+                        }
+                        if (bestStrayIdx === -1) {
+                            straySpacing = Math.max(1.05, straySpacing - 0.24);
+                            if (straySpacing <= 1.08) {
+                                const fallback = strayCandidates.shift();
+                                if (fallback) addSelectedCandidate(fallback);
+                            }
+                            continue;
+                        }
+                        const stray = strayCandidates.splice(bestStrayIdx, 1)[0];
+                        addSelectedCandidate(stray);
+                    }
+
+                    // Extra pass: add +12..+14 rocks using deterministic random picks.
+                    if (selected.length < targetCount && strayCandidates.length > 0) {
+                        const fillCandidates = strayCandidates.slice();
+                        let fillSpacing = 1.16;
+                        let fillSafety = 0;
+                        let fillMisses = 0;
+                        while (selected.length < targetCount && fillCandidates.length > 0 && fillSafety < 1024) {
+                            fillSafety++;
+                            const randomIndex = Math.floor(
+                                hash2D(
+                                    centerX + (fillSafety * 1.73) + (selected.length * 0.41),
+                                    centerY - (fillSafety * 1.11) + (routeIndex * 0.37),
+                                    911.4 + (routeIndex * 5.3)
+                                ) * fillCandidates.length
+                            );
+                            const fillPick = fillCandidates.splice(randomIndex, 1)[0];
+                            if (!fillPick) continue;
+                            const minPlacedDist = minDistanceToPoints(fillPick, selected);
+                            const resolvedPlacedDist = Number.isFinite(minPlacedDist) ? minPlacedDist : (fillSpacing + 0.9);
+                            if (selected.length > 0 && resolvedPlacedDist < fillSpacing) {
+                                fillCandidates.push(fillPick);
+                                fillMisses++;
+                                if (fillMisses >= Math.max(8, Math.floor(fillCandidates.length * 0.6))) {
+                                    fillSpacing = Math.max(0.62, fillSpacing - 0.1);
+                                    fillMisses = 0;
+                                }
+                                continue;
+                            }
+                            addSelectedCandidate(fillPick);
+                            fillMisses = 0;
+                        }
+                    }
+
+                    const orderedPlacements = routePlacements.slice().sort((a, b) => {
+                        const aId = typeof a.placementId === 'string' ? a.placementId : '';
+                        const bId = typeof b.placementId === 'string' ? b.placementId : '';
+                        return aId.localeCompare(bId);
+                    });
+                    const orderedTargets = selected.slice().sort((a, b) => {
+                        const aEdge = a.distance / Math.max(1, radius);
+                        const bEdge = b.distance / Math.max(1, radius);
+                        if (aEdge !== bEdge) return bEdge - aEdge;
+                        if (a.y !== b.y) return a.y - b.y;
+                        return a.x - b.x;
+                    });
+
+                    const extraPlacementCount = Math.max(0, orderedTargets.length - orderedPlacements.length);
+                    for (let i = 0; i < extraPlacementCount; i++) {
+                        const template = orderedPlacements.length > 0
+                            ? orderedPlacements[i % orderedPlacements.length]
+                            : routePlacements[Math.min(i, routePlacements.length - 1)];
+                        if (!template) break;
+                        const templateId = typeof template.placementId === 'string' && template.placementId
+                            ? template.placementId
+                            : `${routeId}:rock`;
+                        orderedPlacements.push({
+                            ...template,
+                            placementId: `${templateId}:fill_${i + 1}`
+                        });
+                    }
+
+                    for (let i = 0; i < orderedPlacements.length; i++) {
+                        const placement = orderedPlacements[i];
+                        const target = orderedTargets[i];
+                        if (!target) {
+                            redistributed.push({ ...placement });
+                            continue;
+                        }
+                        globallyUsed.add(target.x + ',' + target.y);
+                        redistributed.push({
+                            ...placement,
+                            x: target.x,
+                            y: target.y,
+                            z: 0
+                        });
+                    }
+                }
+
+                return redistributed;
+            };
+            const isQuarrySculptTile = (x, y) => {
+                if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return false;
+                if (inTownCore(x, y)) return false;
+                const row = logicalMap[0] && logicalMap[0][y];
+                if (!row) return false;
+                const tile = row[x];
+                return tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.ROCK || tile === TileId.STUMP;
+            };
+            const applyMiningQuarryTerrain = (placements, activePlacements = placements) => {
+                if (!Array.isArray(placements) || placements.length === 0) return;
+                const clusters = Object.create(null);
+                const activeByRoute = Object.create(null);
+                for (let i = 0; i < placements.length; i++) {
+                    const placement = placements[i];
+                    if (!placement || placement.z !== 0) continue;
+                    if (!Number.isFinite(placement.x) || !Number.isFinite(placement.y)) continue;
+                    const routeId = (typeof placement.routeId === 'string' && placement.routeId)
+                        ? placement.routeId
+                        : 'routeless_mine';
+                    if (!clusters[routeId]) clusters[routeId] = [];
+                    clusters[routeId].push(placement);
+                }
+                if (Array.isArray(activePlacements)) {
+                    for (let i = 0; i < activePlacements.length; i++) {
+                        const placement = activePlacements[i];
+                        if (!placement || placement.z !== 0) continue;
+                        if (!Number.isFinite(placement.x) || !Number.isFinite(placement.y)) continue;
+                        const routeId = (typeof placement.routeId === 'string' && placement.routeId)
+                            ? placement.routeId
+                            : 'routeless_mine';
+                        if (!activeByRoute[routeId]) activeByRoute[routeId] = [];
+                        activeByRoute[routeId].push(placement);
+                    }
+                }
+
+                const touched = new Set();
+                const markTouched = (x, y) => touched.add(x + ',' + y);
+                const clusterEntries = Object.entries(clusters);
+                for (let i = 0; i < clusterEntries.length; i++) {
+                    const clusterEntry = clusterEntries[i];
+                    const routeId = clusterEntry[0];
+                    const clusterPoints = clusterEntry[1];
+                    if (!Array.isArray(clusterPoints) || clusterPoints.length === 0) continue;
+                    const clusterRocks = Array.isArray(activeByRoute[routeId]) ? activeByRoute[routeId] : [];
+
+                    const layout = getMiningQuarryLayout(routeId, clusterPoints);
+                    const centerX = layout.centerX;
+                    const centerY = layout.centerY;
+                    const radius = layout.radius;
+                    const dirtRadius = layout.dirtRadius;
+                    const edgeDepth = layout.edgeDepth;
+                    const centerDepth = layout.centerDepth;
+                    const clusterSeed = hash2D((centerX * 0.37) + i, (centerY * 0.41) - i, clusterPoints.length + 17.6);
+                    const footprintSeed = 611.4 + (clusterSeed * 187.9) + (i * 41.7);
+                    const floorSeed = footprintSeed + 97.3;
+                    const shoulderSeed = footprintSeed + 223.1;
+                    const minX = Math.max(2, Math.floor(centerX - dirtRadius - 4));
+                    const maxX = Math.min(MAP_SIZE - 3, Math.ceil(centerX + dirtRadius + 4));
+                    const minY = Math.max(2, Math.floor(centerY - dirtRadius - 4));
+                    const maxY = Math.min(MAP_SIZE - 3, Math.ceil(centerY + dirtRadius + 4));
+                    const resolveFootprint = (x, y) => {
+                        const dx = x - centerX;
+                        const dy = y - centerY;
+                        const distance = Math.hypot(dx, dy);
+                        const angle = Math.atan2(dy, dx);
+                        const macroNoise = sampleFractalNoise2D(
+                            ((x + (clusterSeed * 31.2)) * 0.12),
+                            ((y - (clusterSeed * 27.8)) * 0.12),
+                            footprintSeed,
+                            3,
+                            2.0,
+                            0.55
+                        );
+                        const angularNoise = sampleFractalNoise2D(
+                            ((((angle / Math.PI) + 1) * 0.95) + (clusterSeed * 0.8)),
+                            ((distance * 0.085) + (clusterSeed * 0.65)),
+                            footprintSeed + 34.8,
+                            2,
+                            2.0,
+                            0.5
+                        );
+                        const lobeNoise = sampleFractalNoise2D(
+                            ((dx * 0.08) + (clusterSeed * 9.1)),
+                            ((dy * 0.08) - (clusterSeed * 7.3)),
+                            footprintSeed + 79.6,
+                            2,
+                            2.0,
+                            0.52
+                        );
+                        const dirtScale = Math.max(0.72, 0.84 + (macroNoise * 0.18) + ((angularNoise - 0.5) * 0.16) + ((lobeNoise - 0.5) * 0.12));
+                        const pitScale = Math.max(0.66, 0.78 + (macroNoise * 0.12) + ((angularNoise - 0.5) * 0.08));
+                        return {
+                            distance,
+                            macroNoise,
+                            angularNoise,
+                            lobeNoise,
+                            effectiveDirtRadius: dirtRadius * dirtScale,
+                            effectivePitRadius: radius * pitScale
+                        };
+                    };
+
+                    for (let y = minY; y <= maxY; y++) {
+                        for (let x = minX; x <= maxX; x++) {
+                            if (!isQuarrySculptTile(x, y)) continue;
+                            const footprint = resolveFootprint(x, y);
+                            const distance = footprint.distance;
+                            const dirtMask = 1 - smoothstep(
+                                footprint.effectiveDirtRadius - 0.55,
+                                footprint.effectiveDirtRadius + 0.25,
+                                distance
+                            );
+                            const shoulderMask = 1 - smoothstep(
+                                footprint.effectiveDirtRadius + 0.25,
+                                footprint.effectiveDirtRadius + 1.55,
+                                distance
+                            );
+                            if (dirtMask <= 0 && shoulderMask <= 0) continue;
+
+                            const tile = logicalMap[0][y][x];
+                            if (dirtMask > 0.12 && (tile === TileId.GRASS || tile === TileId.STUMP || tile === TileId.DIRT)) {
+                                logicalMap[0][y][x] = TileId.DIRT;
+                            }
+
+                            let targetHeight = heightMap[0][y][x];
+                            let blend = 0;
+                            if (dirtMask > 0) {
+                                const basinNoise = sampleFractalNoise2D(
+                                    ((x + (clusterSeed * 13.8)) * 0.2),
+                                    ((y - (clusterSeed * 18.4)) * 0.2),
+                                    floorSeed,
+                                    3,
+                                    2.0,
+                                    0.56
+                                );
+                                const pocketNoise = sampleFractalNoise2D(
+                                    ((x - (clusterSeed * 9.4)) * 0.42),
+                                    ((y + (clusterSeed * 6.7)) * 0.42),
+                                    floorSeed + 53.4,
+                                    2,
+                                    2.0,
+                                    0.5
+                                );
+                                const shelfNoise = sampleFractalNoise2D(
+                                    ((x + (clusterSeed * 5.2)) * 0.1),
+                                    ((y - (clusterSeed * 3.7)) * 0.1),
+                                    shoulderSeed,
+                                    2,
+                                    2.0,
+                                    0.54
+                                );
+                                const pitMask = 1 - smoothstep(0.12, 1.02, distance / Math.max(1, footprint.effectivePitRadius));
+                                const depthMask = Math.pow(clamp01(pitMask), 1.18);
+                                const floorVariation = ((basinNoise - 0.5) * (0.08 + (depthMask * 0.08)))
+                                    + ((pocketNoise - 0.5) * (0.04 + (depthMask * 0.05)))
+                                    + ((shelfNoise - 0.5) * 0.026)
+                                    + ((footprint.lobeNoise - 0.5) * (0.02 + (depthMask * 0.016)));
+                                targetHeight = lerpNumber(edgeDepth, centerDepth, depthMask) + floorVariation;
+                                blend = 0.82 + (dirtMask * 0.12);
+                            } else if (shoulderMask > 0) {
+                                targetHeight = edgeDepth * (0.14 + (shoulderMask * 0.26));
+                                blend = shoulderMask * 0.34;
+                            }
+
+                            if (blend > 0) {
+                                const currentHeight = heightMap[0][y][x];
+                                const loweredHeight = lerpNumber(currentHeight, targetHeight, blend);
+                                heightMap[0][y][x] = Math.min(currentHeight, loweredHeight);
+                                markTouched(x, y);
+                            }
+                        }
+                    }
+
+                    for (let j = 0; j < clusterRocks.length; j++) {
+                        const rock = clusterRocks[j];
+                        if (!isQuarrySculptTile(rock.x, rock.y)) continue;
+                        let weightedSum = 0;
+                        let weightedWeight = 0;
+                        for (let oy = -1; oy <= 1; oy++) {
+                            for (let ox = -1; ox <= 1; ox++) {
+                                const nx = rock.x + ox;
+                                const ny = rock.y + oy;
+                                if (!isQuarrySculptTile(nx, ny)) continue;
+                                const weight = (ox === 0 && oy === 0) ? 0.28 : ((ox === 0 || oy === 0) ? 0.16 : 0.08);
+                                weightedSum += heightMap[0][ny][nx] * weight;
+                                weightedWeight += weight;
+                            }
+                        }
+                        const rockGroundHeight = weightedWeight > 0
+                            ? (weightedSum / weightedWeight)
+                            : heightMap[0][rock.y][rock.x];
+                        heightMap[0][rock.y][rock.x] = lerpNumber(heightMap[0][rock.y][rock.x], rockGroundHeight, 0.72);
+                        markTouched(rock.x, rock.y);
+
+                        for (let oy = -1; oy <= 1; oy++) {
+                            for (let ox = -1; ox <= 1; ox++) {
+                                const nx = rock.x + ox;
+                                const ny = rock.y + oy;
+                                if (!isQuarrySculptTile(nx, ny)) continue;
+                                const neighborDist = Math.hypot(ox, oy);
+                                const blend = neighborDist <= 0.01 ? 1 : (neighborDist <= 1.01 ? 0.32 : 0.18);
+                                heightMap[0][ny][nx] = lerpNumber(heightMap[0][ny][nx], rockGroundHeight, blend);
+                                markTouched(nx, ny);
+                            }
+                        }
+                    }
+                }
+
+                const touchedCoords = Array.from(touched).map((key) => {
+                    const comma = key.indexOf(',');
+                    return {
+                        x: parseInt(key.slice(0, comma), 10),
+                        y: parseInt(key.slice(comma + 1), 10)
+                    };
+                });
+
+                for (let pass = 0; pass < 3; pass++) {
+                    const snapshot = heightMap[0].map((row) => row.slice());
+                    for (let i = 0; i < touchedCoords.length; i++) {
+                        const coord = touchedCoords[i];
+                        if (!coord || !isQuarrySculptTile(coord.x, coord.y)) continue;
+                        const tile = logicalMap[0][coord.y][coord.x];
+
+                        let sum = 0;
+                        let count = 0;
+                        for (let oy = -1; oy <= 1; oy++) {
+                            for (let ox = -1; ox <= 1; ox++) {
+                                const nx = coord.x + ox;
+                                const ny = coord.y + oy;
+                                if (!isQuarrySculptTile(nx, ny)) continue;
+                                sum += snapshot[ny][nx];
+                                count++;
+                            }
+                        }
+                        if (count > 0) {
+                            const avg = sum / count;
+                            const blend = tile === TileId.ROCK ? 0.18 : (tile === TileId.DIRT ? 0.22 : 0.28);
+                            heightMap[0][coord.y][coord.x] = lerpNumber(snapshot[coord.y][coord.x], avg, blend);
+                        }
+                    }
+                }
+
+                for (let i = 0; i < touchedCoords.length; i++) {
+                    const coord = touchedCoords[i];
+                    if (!coord || !isQuarrySculptTile(coord.x, coord.y)) continue;
+                    const tile = logicalMap[0][coord.y][coord.x];
+                    const currentHeight = heightMap[0][coord.y][coord.x];
+                    if (tile === TileId.DIRT || tile === TileId.ROCK) {
+                        heightMap[0][coord.y][coord.x] = Math.min(-0.11, Math.max(-0.56, currentHeight));
+                    } else {
+                        heightMap[0][coord.y][coord.x] = Math.max(-0.14, currentHeight);
+                    }
+                }
+            };
+
+            const miningPlacementPlan = thinMiningRockPlacements(miningNodePlacements);
+            let activeMiningPlacements = miningPlacementPlan.active;
             const runecraftingRoutes = runecraftingRouteDefs.slice();
             const woodcuttingTrainingLocations = woodcuttingTrainingRouteDefs.slice();
 
-            for (let i = 0; i < miningNodePlacements.length; i++) {
-                setMiningRockAt(miningNodePlacements[i]);
+            // Shape the quarry floor first, then redistribute kept rocks across the dirt canvas.
+            applyMiningQuarryTerrain(miningNodePlacements, []);
+            activeMiningPlacements = redistributeMiningRockPlacements(activeMiningPlacements, miningNodePlacements);
+            for (let i = 0; i < activeMiningPlacements.length; i++) {
+                setMiningRockAt(activeMiningPlacements[i]);
             }
 
-            RUNE_ESSENCE_ROCKS = miningNodePlacements
+            const miningRouteCountById = Object.create(null);
+            for (let i = 0; i < activeMiningPlacements.length; i++) {
+                const placement = activeMiningPlacements[i];
+                if (!placement || placement.z !== 0) continue;
+                const routeId = (typeof placement.routeId === 'string' && placement.routeId)
+                    ? placement.routeId
+                    : null;
+                if (!routeId) continue;
+                miningRouteCountById[routeId] = (miningRouteCountById[routeId] || 0) + 1;
+            }
+            const miningTrainingLocations = miningTrainingRouteDefs.map((route) => {
+                const layoutOverride = route && route.routeId ? MINING_QUARRY_LAYOUT_OVERRIDES[route.routeId] : null;
+                return {
+                    ...route,
+                    x: layoutOverride && Number.isFinite(layoutOverride.anchorX) ? layoutOverride.anchorX : route.x,
+                    y: layoutOverride && Number.isFinite(layoutOverride.anchorY) ? layoutOverride.anchorY : route.y,
+                    tags: Array.isArray(route && route.tags) ? route.tags.slice() : [],
+                    count: Number.isFinite(miningRouteCountById[route.routeId])
+                        ? miningRouteCountById[route.routeId]
+                        : route.count
+                };
+            });
+
+            RUNE_ESSENCE_ROCKS = activeMiningPlacements
                 .filter((placement) => placement && placement.oreType === 'rune_essence')
                 .map((placement) => ({ x: placement.x, y: placement.y, z: placement.z }));
 
@@ -3205,7 +4326,8 @@
                     }
                     positions.needsUpdate = true;
                     const baseTerrainIndices = terrainGeo.index ? Array.from(terrainGeo.index.array) : [];
-                    const filteredTerrainIndices = [];
+                    const grassTerrainIndices = [];
+                    const dirtTerrainIndices = [];
                     for (let tileY = 0; tileY < CHUNK_SIZE; tileY++) {
                         for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
                             const worldTileX = startX + tileX;
@@ -3214,16 +4336,50 @@
                             if (!isRenderableTerrainTile(tile)) continue;
                             if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
                             const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
+                            const destination = (tile === TileId.DIRT || tile === TileId.ROCK) ? dirtTerrainIndices : grassTerrainIndices;
                             for (let i = 0; i < 6; i++) {
-                                filteredTerrainIndices.push(baseTerrainIndices[cellIndexOffset + i]);
+                                destination.push(baseTerrainIndices[cellIndexOffset + i]);
                             }
                         }
                     }
+                    const filteredTerrainIndices = grassTerrainIndices.concat(dirtTerrainIndices);
                     terrainGeo.setIndex(filteredTerrainIndices);
                     terrainGeo.computeVertexNormals();
 
                     if (filteredTerrainIndices.length > 0) {
-                        const terrainMesh = new THREE.Mesh(terrainGeo, sharedMaterials.grassTile);
+                        // Add low-frequency tinting and slope darkening so terrain reads less tiled.
+                        const normals = terrainGeo.attributes.normal;
+                        const vertexColors = new Float32Array((CHUNK_SIZE + 1) * (CHUNK_SIZE + 1) * 3);
+                        for (let vy = 0; vy <= CHUNK_SIZE; vy++) {
+                            for (let vx = 0; vx <= CHUNK_SIZE; vx++) {
+                                const idx = (vy * (CHUNK_SIZE + 1)) + vx;
+                                const worldX = startX - 0.5 + vx;
+                                const worldY = startY - 0.5 + vy;
+                                const macro = sampleFractalNoise2D(worldX * 0.12, worldY * 0.12, 29.71, 3, 2.0, 0.55);
+                                const tint = sampleFractalNoise2D((worldX + 64) * 0.28, (worldY - 48) * 0.28, 83.17, 2, 2.0, 0.5);
+                                const normalY = normals ? normals.getY(idx) : 1;
+                                const slope = 1 - THREE.MathUtils.clamp(normalY, 0, 1);
+                                const shade = THREE.MathUtils.clamp(0.85 + ((macro - 0.5) * 0.24) - (slope * 0.18), 0.62, 1.05);
+                                const hueShift = (tint - 0.5) * 0.12;
+                                const colorIndex = idx * 3;
+                                vertexColors[colorIndex] = THREE.MathUtils.clamp(shade * (0.95 - (hueShift * 0.72)), 0, 1);
+                                vertexColors[colorIndex + 1] = THREE.MathUtils.clamp(shade * (1.02 + (hueShift * 0.25)), 0, 1);
+                                vertexColors[colorIndex + 2] = THREE.MathUtils.clamp(shade * (0.89 - (hueShift * 0.62)), 0, 1);
+                            }
+                        }
+                        terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
+
+                        let terrainMaterial = sharedMaterials.grassTile;
+                        if (grassTerrainIndices.length > 0 && dirtTerrainIndices.length > 0) {
+                            terrainGeo.clearGroups();
+                            terrainGeo.addGroup(0, grassTerrainIndices.length, 0);
+                            terrainGeo.addGroup(grassTerrainIndices.length, dirtTerrainIndices.length, 1);
+                            terrainMaterial = [sharedMaterials.grassTile, sharedMaterials.dirtTile];
+                        } else if (dirtTerrainIndices.length > 0) {
+                            terrainMaterial = sharedMaterials.dirtTile;
+                        }
+
+                        const terrainMesh = new THREE.Mesh(terrainGeo, terrainMaterial);
                         terrainMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
                         terrainMesh.receiveShadow = true;
                         terrainMesh.castShadow = false;
@@ -3318,6 +4474,31 @@
                 let tIdx = 0, rCopperIdx = 0, rTinIdx = 0, rDepletedIdx = 0, rRuneEssenceIdx = 0, wIdx = 0, cIdx = 0;
                 const chunkWaterBuilders = Object.create(null);
                 appendChunkWaterTilesToBuilders(chunkWaterBuilders, waterRenderBodies, z, Z_OFFSET, startX, startY, endX, endY);
+                const sampleGroundTileCenterHeight = (tileX, tileY, layerZ) => {
+                    if (!heightMap[layerZ] || !heightMap[layerZ][tileY]) return 0;
+                    if (layerZ !== 0 || tileX <= 0 || tileY <= 0 || tileX >= MAP_SIZE - 1 || tileY >= MAP_SIZE - 1) {
+                        return heightMap[layerZ][tileY][tileX];
+                    }
+
+                    let weightedSum = 0;
+                    let weightedWeight = 0;
+                    for (let oy = -1; oy <= 1; oy++) {
+                        for (let ox = -1; ox <= 1; ox++) {
+                            const nx = tileX + ox;
+                            const ny = tileY + oy;
+                            if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
+                            if (isPierVisualCoverageTile(activePierConfig, nx, ny, 0)) continue;
+                            const tileType = logicalMap[0][ny][nx];
+                            if (isWaterTileId(tileType)) continue;
+                            const weight = (ox === 0 && oy === 0) ? 0.25 : ((ox === 0 || oy === 0) ? 0.125 : 0.0625);
+                            weightedSum += heightMap[0][ny][nx] * weight;
+                            weightedWeight += weight;
+                        }
+                    }
+
+                    if (weightedWeight > 0) return weightedSum / weightedWeight;
+                    return heightMap[layerZ][tileY][tileX];
+                };
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
@@ -3341,7 +4522,8 @@
                         } else if (tile === TileId.ROCK) {
                             const rockNode = getRockNodeAt(x, y, z);
                             const depleted = !!(rockNode && rockNode.depletedUntilTick > currentTick);
-                            dummyTransform.position.set(x, h, y);
+                            const rockGroundY = sampleGroundTileCenterHeight(x, y, z) + Z_OFFSET - 0.01;
+                            dummyTransform.position.set(x, rockGroundY, y);
                             dummyTransform.rotation.set(0, Math.random() * Math.PI, 0);
                             dummyTransform.updateMatrix();
 
@@ -3887,6 +5069,7 @@
                         if (tile === TileId.GRASS && layer > 0) continue; 
                         
                         if (tile === TileId.GRASS && layer === 0) offscreenMapCtx.fillStyle = '#2d4a22'; 
+                        else if (tile === TileId.DIRT) offscreenMapCtx.fillStyle = '#5f4c32';
                         else if (isTreeTileId(tile)) offscreenMapCtx.fillStyle = '#1e752d'; 
                         else if (tile === TileId.ROCK) offscreenMapCtx.fillStyle = '#6b7280'; 
                         else if (tile === TileId.FLOOR_WOOD || tile === TileId.SHOP_COUNTER) offscreenMapCtx.fillStyle = '#654321'; 

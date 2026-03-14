@@ -9,6 +9,7 @@ const TileId = Object.freeze({
   GRASS: 0,
   TREE: 1,
   ROCK: 2,
+  DIRT: 3,
   STUMP: 4,
   OBSTACLE: 5,
   FLOOR_WOOD: 6,
@@ -31,6 +32,7 @@ const TileId = Object.freeze({
 
 const WALKABLE = new Set([
   TileId.GRASS,
+  TileId.DIRT,
   TileId.FLOOR_WOOD,
   TileId.FLOOR_STONE,
   TileId.FLOOR_BRICK,
