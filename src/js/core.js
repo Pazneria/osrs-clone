@@ -1813,6 +1813,43 @@
             return { loaded: true, savedAt: loaded.payload.savedAt, legacyProfile: !hasSavedProfile };
         }
 
+        function clearProgressFromStorage(options = {}) {
+            if (!canUseProgressStorage()) return { ok: false, reason: 'storage_unavailable' };
+            const clearPoseEditor = !!options.clearPoseEditor;
+            try {
+                window.localStorage.removeItem(PROGRESS_SAVE_KEY);
+                if (clearPoseEditor) window.localStorage.removeItem('poseEditor.v1');
+                return { ok: true, clearedPoseEditor: clearPoseEditor };
+            } catch (error) {
+                console.warn('Progress save clear failed', error);
+                return { ok: false, reason: 'clear_failed', error };
+            }
+        }
+
+        function shouldConsumeFreshSessionParam(paramValue) {
+            if (paramValue === null || paramValue === undefined) return false;
+            if (paramValue === '') return true;
+            const normalized = String(paramValue).trim().toLowerCase();
+            return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y';
+        }
+
+        function consumeFreshSessionRequest() {
+            if (typeof window === 'undefined' || !window.location || typeof URLSearchParams !== 'function') return false;
+            const params = new URLSearchParams(window.location.search || '');
+            const requested = ['fresh', 'resetProgress', 'clearSave'].some((key) => shouldConsumeFreshSessionParam(params.get(key)));
+            if (!requested) return false;
+
+            clearProgressFromStorage({ clearPoseEditor: true });
+
+            ['fresh', 'resetProgress', 'clearSave'].forEach((key) => params.delete(key));
+            if (window.history && typeof window.history.replaceState === 'function') {
+                const nextQuery = params.toString();
+                const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash || ''}`;
+                window.history.replaceState({}, document.title, nextUrl);
+            }
+            return true;
+        }
+
         function startProgressAutosave() {
             if (progressAutosaveHandle) clearInterval(progressAutosaveHandle);
             progressAutosaveHandle = setInterval(() => {
@@ -1830,6 +1867,19 @@
                 playerEntryFlowState.unloadSaveHooksRegistered = true;
             }
         }
+
+        window.clearProgressSave = function clearProgressSave(options = {}) {
+            const result = clearProgressFromStorage(options);
+            if (result && result.ok && options && options.reload && window.location) {
+                window.location.reload();
+            }
+            return result;
+        };
+        window.startFreshSession = function startFreshSession() {
+            const result = clearProgressFromStorage({ clearPoseEditor: true });
+            if (result && result.ok && window.location) window.location.reload();
+            return result;
+        };
 
         // Temporary interaction diagnostics for cooking-use flow.
         if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false; 
@@ -2640,6 +2690,7 @@
         }
 
         window.onload = function() {
+            const forcedFreshSession = consumeFreshSessionRequest();
             const loadProgressResult = loadProgressFromStorage();
             const startupRequestedWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                 ? gameSessionRuntime.resolveCurrentWorldId()
@@ -2691,6 +2742,9 @@
             }
             if (iconGrantResult.added.length > 0) {
                 addChatMessage(`Added ${iconGrantResult.added.length} active icon review item(s) to your inventory.`, 'info');
+            }
+            if (forcedFreshSession) {
+                addChatMessage('Started with a fresh local session. Saved progress was cleared before load.', 'info');
             }
             if (iconGrantResult.blocked.length > 0) {
                 addChatMessage(`Active icon review batch "${iconGrantResult.batchLabel || 'current'}" left out ${iconGrantResult.blocked.length} item(s) because your inventory is full. Clear a few slots and reload to inspect them.`, 'warn');
