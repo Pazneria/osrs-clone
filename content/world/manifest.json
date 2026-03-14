@@ -9,7 +9,8 @@
         "castle_floor0",
         "castle_floor1",
         "general_store",
-        "smithing_hall"
+        "smithing_hall",
+        "road_outpost"
       ],
       "defaultSpawn": {
         "x": 205,

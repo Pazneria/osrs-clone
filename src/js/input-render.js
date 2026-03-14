@@ -1149,11 +1149,20 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade') {
                                     openShop(playerState.targetUid.merchantId || 'general_store');
                                 } else if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Travel') {
-                                    if (typeof window.travelToWorld === 'function' && playerState.targetUid.travelToWorldId) {
-                                        window.travelToWorld(playerState.targetUid.travelToWorldId, {
-                                            spawn: playerState.targetUid.travelSpawn || null,
-                                            label: playerState.targetUid.worldLabel || playerState.targetUid.name || playerState.targetUid.travelToWorldId
-                                        });
+                                    if (typeof window.travelToWorld === 'function') {
+                                        const explicitWorldId = playerState.targetUid.travelToWorldId || null;
+                                        const sessionWorldId = (window.GameSessionRuntime && typeof window.GameSessionRuntime.resolveCurrentWorldId === 'function')
+                                            ? window.GameSessionRuntime.resolveCurrentWorldId()
+                                            : ((window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function')
+                                                ? window.WorldBootstrapRuntime.getCurrentWorldId()
+                                                : null);
+                                        const targetWorldId = explicitWorldId || sessionWorldId;
+                                        if (targetWorldId) {
+                                            window.travelToWorld(targetWorldId, {
+                                                spawn: playerState.targetUid.travelSpawn || null,
+                                                label: playerState.targetUid.worldLabel || playerState.targetUid.name || targetWorldId
+                                            });
+                                        }
                                     }
                                 }
                             } else if (playerState.targetObj === 'BANK_BOOTH') {
