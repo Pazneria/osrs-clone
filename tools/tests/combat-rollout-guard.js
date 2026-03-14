@@ -30,6 +30,16 @@ assert.ok(
   "combat runtime should expose tick and render hooks"
 );
 assert.ok(
+  inputRenderSource.includes("else if (hitData.type === 'ENEMY') {") &&
+    inputRenderSource.includes("enemyId: String(hitData.uid || '').trim()"),
+  "left-click enemy interaction should queue a normalized enemy target payload"
+);
+assert.ok(
+  inputRenderSource.includes("else if (typeof pendingAction.targetUid === 'string')") &&
+    inputRenderSource.includes("window.lockPlayerCombatTarget(enemyRuntimeId);"),
+  "enemy interaction resolution should support both object and string target IDs when locking combat targets"
+);
+assert.ok(
   targetRegistrySource.includes("ENEMY:"),
   "target interaction registry should provide ENEMY interactions"
 );

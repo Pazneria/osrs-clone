@@ -25,10 +25,84 @@ const allStamps: Record<string, WorldStamp> = {
 };
 
 const manifest = worldManifestJson as WorldManifest;
+const LEGACY_WORLD_MAP_SIZE = 486;
+const EXPANDED_WORLD_MAP_SIZE = 648;
+const WORLD_COORD_SCALE = EXPANDED_WORLD_MAP_SIZE / LEGACY_WORLD_MAP_SIZE;
+
+const AXIS_COORD_KEYS = new Set([
+  "x",
+  "y",
+  "cx",
+  "cy",
+  "xMin",
+  "xMax",
+  "yMin",
+  "yMax",
+  "centerX",
+  "centerY",
+  "shoreX",
+  "stairX",
+  "yStart",
+  "yEnd",
+  "entryY"
+]);
+
+const RADIUS_COORD_KEYS = new Set([
+  "rx",
+  "ry"
+]);
+
+function scaleAxis(value: number): number {
+  if (!Number.isFinite(value)) return value;
+  return Math.round(value * WORLD_COORD_SCALE);
+}
+
+function scaleRadius(value: number): number {
+  if (!Number.isFinite(value)) return value;
+  const scaled = value * WORLD_COORD_SCALE;
+  return Math.max(0.05, Number(scaled.toFixed(3)));
+}
+
+function cloneAndScaleValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => cloneAndScaleValue(entry));
+  }
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const input = value as Record<string, unknown>;
+  const output: Record<string, unknown> = {};
+  Object.keys(input).forEach((key) => {
+    const fieldValue = input[key];
+    if (typeof fieldValue === "number") {
+      if (AXIS_COORD_KEYS.has(key)) {
+        output[key] = scaleAxis(fieldValue);
+        return;
+      }
+      if (RADIUS_COORD_KEYS.has(key)) {
+        output[key] = scaleRadius(fieldValue);
+        return;
+      }
+      output[key] = fieldValue;
+      return;
+    }
+    output[key] = cloneAndScaleValue(fieldValue);
+  });
+  return output;
+}
+
+function cloneAndScaleSpawn(spawn: Point3): Point3 {
+  return {
+    x: scaleAxis(spawn.x),
+    y: scaleAxis(spawn.y),
+    z: spawn.z
+  };
+}
 
 const worldDefinitions: Record<string, WorldDefinition> = {
-  [northRoadCamp.worldId]: northRoadCamp as WorldDefinition,
-  [starterTown.worldId]: starterTown as WorldDefinition
+  [northRoadCamp.worldId]: cloneAndScaleValue(northRoadCamp as WorldDefinition) as WorldDefinition,
+  [starterTown.worldId]: cloneAndScaleValue(starterTown as WorldDefinition) as WorldDefinition
 };
 
 function cloneSpawn(spawn: Point3): Point3 {
@@ -41,7 +115,7 @@ function cloneManifestEntry(entry: WorldManifestEntry): WorldManifestEntry {
     label: entry.label,
     regionFile: entry.regionFile,
     stampIds: Array.isArray(entry.stampIds) ? entry.stampIds.slice() : [],
-    defaultSpawn: cloneSpawn(entry.defaultSpawn)
+    defaultSpawn: cloneAndScaleSpawn(cloneSpawn(entry.defaultSpawn))
   };
 }
 
@@ -115,5 +189,5 @@ export function getWorldStamps(worldId: string): Record<string, WorldStamp> {
 }
 
 export function getDefaultSpawn(worldId: string): Point3 {
-  return worldRegistry.getDefaultSpawn(worldId);
+  return cloneAndScaleSpawn(worldRegistry.getDefaultSpawn(worldId));
 }

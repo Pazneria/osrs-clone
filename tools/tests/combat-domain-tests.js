@@ -81,6 +81,27 @@ function makeWeapon(overrides = {}) {
 }
 
 {
+  const unarmedSnapshot = combatFormulas.computePlayerMeleeCombatSnapshot({
+    playerSkills: {
+      attack: { xp: 0, level: 10 },
+      strength: { xp: 0, level: 10 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {},
+    playerState: {
+      selectedMeleeStyle: "attack"
+    }
+  });
+
+  assert.strictEqual(unarmedSnapshot.canAttack, true, "player should be able to attack unarmed");
+  assert.strictEqual(unarmedSnapshot.attackValue, 11, "unarmed attack style should still apply melee attack-style math");
+  assert.strictEqual(unarmedSnapshot.maxHit, 2, "unarmed should use the base melee max-hit formula");
+  assert.strictEqual(unarmedSnapshot.attackRange, 1, "unarmed attacks should stay melee range");
+  assert.strictEqual(unarmedSnapshot.attackTickCycle, 5, "unarmed attacks should use the default melee cadence");
+}
+
+{
   const enemySnapshot = combatFormulas.computeEnemyMeleeCombatSnapshot(combatContent.getEnemyTypeDefinition("enemy_goblin_grunt"));
   assert.deepStrictEqual(
     enemySnapshot,

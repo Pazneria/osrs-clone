@@ -18,7 +18,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             modeSelect: null,
             axisSelect: null
         };
-        const PATHFIND_MAX_ITERATIONS = 25000;
+        const LEGACY_PATHFIND_MAP_SIZE = 486;
+        const PATHFIND_MAX_ITERATIONS = Math.max(
+            25000,
+            Math.floor(25000 * Math.pow((MAP_SIZE / LEGACY_PATHFIND_MAP_SIZE), 2))
+        );
         // In open terrain, BFS iteration budget approximates a Chebyshev radius. Keep tooltip range slightly under that.
         const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
@@ -708,6 +712,14 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             else {
                 let targetData = hitData.uid;
                 if (hitData.type === 'DOOR') targetData = hitData.doorObj;
+                else if (hitData.type === 'ENEMY') {
+                    targetData = {
+                        enemyId: String(hitData.uid || '').trim(),
+                        enemyX: Number.isInteger(hitData.gridX) ? hitData.gridX : null,
+                        enemyY: Number.isInteger(hitData.gridY) ? hitData.gridY : null,
+                        name: hitData.name || 'Enemy'
+                    };
+                }
 
                                 else if (hitData.type === 'NPC') {
                     if (hitData.uid && typeof hitData.uid === 'object') targetData = Object.assign({}, hitData.uid);
@@ -966,12 +978,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         playerState.actionVisualReady = true;
                         playerState.targetObj = 'ENEMY';
                         playerState.targetUid = pendingAction.targetUid;
+                        let enemyRuntimeId = null;
                         if (pendingAction.targetUid && typeof pendingAction.targetUid === 'object') {
                             if (Number.isInteger(pendingAction.targetUid.enemyX)) playerState.targetX = pendingAction.targetUid.enemyX;
                             if (Number.isInteger(pendingAction.targetUid.enemyY)) playerState.targetY = pendingAction.targetUid.enemyY;
-                            if (pendingAction.targetUid.enemyId && typeof window.lockPlayerCombatTarget === 'function') {
-                                window.lockPlayerCombatTarget(pendingAction.targetUid.enemyId);
-                            }
+                            enemyRuntimeId = String(pendingAction.targetUid.enemyId || '').trim();
+                        } else if (typeof pendingAction.targetUid === 'string') {
+                            enemyRuntimeId = pendingAction.targetUid.trim();
+                        }
+                        if (enemyRuntimeId && typeof window.lockPlayerCombatTarget === 'function') {
+                            window.lockPlayerCombatTarget(enemyRuntimeId);
                         }
                         playerState.action = 'IDLE';
                     } else {

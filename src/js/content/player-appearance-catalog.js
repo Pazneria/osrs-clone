@@ -125,6 +125,8 @@
         rotation: [0.9561333749, -Math.PI / 2, 0],
         offset: [0, -0.02, 0.08]
     });
+    const SWORD_UPWARD_TILT_RADIANS = 25 * (Math.PI / 180);
+    const SWORD_WORLD_SCALE_MULTIPLIER = 1.15;
 
     function createRightHandHeldModel(options) {
         const safeOptions = options && typeof options === 'object' ? options : {};
@@ -247,9 +249,14 @@
     }
 
     const SWORD_HELD_MODEL = createRightHandHeldModel({
-        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15,
-        depth: (STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15) * 2,
+        pixelSize: (STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15) * SWORD_WORLD_SCALE_MULTIPLIER,
+        depth: ((STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15) * SWORD_WORLD_SCALE_MULTIPLIER) * 2,
         origin: [7.5, 24.5],
+        rotation: [
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[0] - SWORD_UPWARD_TILT_RADIANS,
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[1],
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[2]
+        ],
         depthResolver: resolveSwordBladeDepth,
         metalRoleBySymbol: {
             d: 'dark',

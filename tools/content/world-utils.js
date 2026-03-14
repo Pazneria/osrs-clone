@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const MAP_SIZE = 486;
+const MAP_SIZE = 648;
 const PLANES = 2;
 
 const TileId = Object.freeze({

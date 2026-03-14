@@ -36,7 +36,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Placeholder combat removal (`DUMMY`, `owie`, old combat sim) | Complete |
 | Combat-focused tests and rollout guards | Complete |
 | Starter-town encounter authoring pass | Now |
-| First-pass melee-only enemy template rollout beyond rat/goblin | Now |
+| First-pass melee-only enemy template rollout beyond rat/goblin | Complete |
 | Loot-table and drop-band authoring pass | Now |
 | Spawn-node / spawn-group authoring pass | Now |
 | Combat content validation and perf-gate pass | Now |

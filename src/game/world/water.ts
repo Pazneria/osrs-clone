@@ -14,7 +14,10 @@ import type {
   WorldDefinition
 } from "../contracts/world";
 
-const LEGACY_MAP_SIZE = 486;
+const LEGACY_COORD_MAP_SIZE = 486;
+const ACTIVE_WORLD_MAP_SIZE = 648;
+const RIVER_AXIS_SCALE = ACTIVE_WORLD_MAP_SIZE / LEGACY_COORD_MAP_SIZE;
+const RIVER_FREQUENCY_SCALE = LEGACY_COORD_MAP_SIZE / ACTIVE_WORLD_MAP_SIZE;
 const LEGACY_RIVER_ID = "legacy-east-river";
 const DEFAULT_SURFACE_Y = -0.075;
 const DEFAULT_WATER_STYLE: WaterStyleId = "calm_lake";
@@ -114,21 +117,34 @@ function cloneTerrainBoxAsShape(box: TerrainBox2D): WaterBodyShape {
   };
 }
 
+function scaleLegacyAxis(value: number): number {
+  if (!Number.isFinite(value)) return value;
+  return Math.round(value * RIVER_AXIS_SCALE);
+}
+
 function sampleLegacyRiverAtY(y: number): { centerX: number; halfWidth: number } {
-  const eastCenterBase = 298;
-  const southCurveT = Math.max(0, (y - 296) / 98);
-  const westBend = Math.pow(Math.min(1, southCurveT), 1.35) * 86;
+  const eastCenterBase = 298 * RIVER_AXIS_SCALE;
+  const southCurveT = Math.max(0, (y - (296 * RIVER_AXIS_SCALE)) / Math.max(1, (98 * RIVER_AXIS_SCALE)));
+  const westBend = Math.pow(Math.min(1, southCurveT), 1.35) * (86 * RIVER_AXIS_SCALE);
   return {
-    centerX: eastCenterBase + Math.sin(y * 0.018) * 8 + Math.sin(y * 0.007) * 5 - westBend,
-    halfWidth: 6.2 + Math.sin(y * 0.045) * 1.8
+    centerX: eastCenterBase
+      + (Math.sin(y * 0.018 * RIVER_FREQUENCY_SCALE) * (8 * RIVER_AXIS_SCALE))
+      + (Math.sin(y * 0.007 * RIVER_FREQUENCY_SCALE) * (5 * RIVER_AXIS_SCALE))
+      - westBend,
+    halfWidth: Math.max(
+      2.4,
+      (6.2 * RIVER_AXIS_SCALE) + (Math.sin(y * 0.045 * RIVER_FREQUENCY_SCALE) * (1.8 * RIVER_AXIS_SCALE))
+    )
   };
 }
 
 function buildLegacyRiverPolygonPoints(): Point2[] {
   const leftBank: Point2[] = [];
   const rightBank: Point2[] = [];
+  const edgeInset = Math.max(4, scaleLegacyAxis(4));
+  const step = Math.max(6, Math.round(8 * RIVER_AXIS_SCALE));
 
-  for (let y = 4; y <= LEGACY_MAP_SIZE - 4; y += 8) {
+  for (let y = edgeInset; y <= ACTIVE_WORLD_MAP_SIZE - edgeInset; y += step) {
     const sample = sampleLegacyRiverAtY(y);
     leftBank.push({ x: sample.centerX - sample.halfWidth - 1.4, y });
     rightBank.push({ x: sample.centerX + sample.halfWidth + 1.4, y });
@@ -137,10 +153,10 @@ function buildLegacyRiverPolygonPoints(): Point2[] {
   const points = leftBank.concat(rightBank.reverse());
   if (points.length === 0) {
     return [
-      { x: 288, y: 1 },
-      { x: 308, y: 1 },
-      { x: 254, y: LEGACY_MAP_SIZE - 2 },
-      { x: 278, y: LEGACY_MAP_SIZE - 2 }
+      { x: scaleLegacyAxis(288), y: 1 },
+      { x: scaleLegacyAxis(308), y: 1 },
+      { x: scaleLegacyAxis(254), y: ACTIVE_WORLD_MAP_SIZE - 2 },
+      { x: scaleLegacyAxis(278), y: ACTIVE_WORLD_MAP_SIZE - 2 }
     ];
   }
   return points;

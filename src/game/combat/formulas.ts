@@ -108,22 +108,12 @@ export function computePlayerMeleeCombatSnapshot(options: {
   const defenseLevel = getSkillLevel(options.playerSkills, "defense", 1);
   const bonuses = sumCombatBonuses(options.equipment || {});
   const weaponCombat = bonuses.weaponCombat;
-  const requiredAttackLevel = weaponCombat ? clampFloor(weaponCombat.requiredAttackLevel, 1, 1) : 0;
-
-  if (!weaponCombat || !weaponCombat.attackProfile || weaponCombat.attackProfile.styleFamily !== "melee") {
-    return {
-      styleId,
-      canAttack: false,
-      attackValue: attackLevel,
-      defenseValue: defenseLevel,
-      maxHit: 0,
-      attackRange: 1,
-      attackTickCycle: 5,
-      accuracyBonus: bonuses.meleeAccuracyBonus,
-      strengthBonus: bonuses.meleeStrengthBonus,
-      defenseBonus: bonuses.meleeDefenseBonus
-    };
-  }
+  const hasMeleeWeapon = !!(
+    weaponCombat &&
+    weaponCombat.attackProfile &&
+    weaponCombat.attackProfile.styleFamily === "melee"
+  );
+  const requiredAttackLevel = hasMeleeWeapon ? clampFloor(weaponCombat.requiredAttackLevel, 1, 1) : 0;
 
   const baseAttackValue = attackLevel + bonuses.meleeAccuracyBonus;
   const baseDefenseValue = defenseLevel + bonuses.meleeDefenseBonus;
@@ -147,8 +137,9 @@ export function computePlayerMeleeCombatSnapshot(options: {
     attackValue,
     defenseValue,
     maxHit,
-    attackRange: clampFloor(weaponCombat.attackProfile.range, 1, 1),
-    attackTickCycle: clampFloor(weaponCombat.attackProfile.tickCycle, 1, 5),
+    // No melee weapon equipped falls back to unarmed melee defaults.
+    attackRange: hasMeleeWeapon ? clampFloor(weaponCombat.attackProfile.range, 1, 1) : 1,
+    attackTickCycle: hasMeleeWeapon ? clampFloor(weaponCombat.attackProfile.tickCycle, 1, 5) : 5,
     accuracyBonus: bonuses.meleeAccuracyBonus,
     strengthBonus: bonuses.meleeStrengthBonus,
     defenseBonus: bonuses.meleeDefenseBonus

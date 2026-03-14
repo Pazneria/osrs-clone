@@ -2336,19 +2336,6 @@
             altarCandidatesToRender = [];
             furnacesToRender = [];
             anvilsToRender = [];
-            const inTownCore = (x, y) => {
-                const inCastle = (x >= 190 && x <= 220 && y >= 190 && y <= 215);
-                const inStore = (x >= 177 && x <= 185 && y >= 232 && y <= 240);
-                // Keep a clean spawn-safe apron around the open smithing hall footprint.
-                const inSmithyApron = (x >= 217 && x <= 233 && y >= 224 && y <= 244);
-                return inCastle || inStore || inSmithyApron;
-            };
-            const terrainNoise = (x, y) => {
-                const n1 = Math.sin(x * 0.045) * 0.08;
-                const n2 = Math.cos(y * 0.05) * 0.07;
-                const n3 = Math.sin((x + y) * 0.03) * 0.05;
-                return n1 + n2 + n3;
-            };
             const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;
             const worldPayload = (worldAdapterRuntime && typeof worldAdapterRuntime.getCurrentWorldPayload === 'function')
                 ? worldAdapterRuntime.getCurrentWorldPayload()
@@ -2375,6 +2362,83 @@
             const staircaseLandmarks = worldPayload.staircaseLandmarks;
             const doorLandmarks = worldPayload.doorLandmarks;
             const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
+
+            function getStampBounds(structureId) {
+                for (let i = 0; i < stampedStructures.length; i++) {
+                    const structure = stampedStructures[i];
+                    if (!structure || structure.structureId !== structureId) continue;
+                    const rows = stampMap && Array.isArray(stampMap[structure.stampId]) ? stampMap[structure.stampId] : [];
+                    const height = rows.length;
+                    let width = 0;
+                    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+                        const row = rows[rowIndex];
+                        if (typeof row === 'string') width = Math.max(width, row.length);
+                    }
+                    if (width <= 0 || height <= 0) continue;
+                    return {
+                        xMin: structure.x,
+                        xMax: structure.x + width - 1,
+                        yMin: structure.y,
+                        yMax: structure.y + height - 1
+                    };
+                }
+                return null;
+            }
+
+            function expandBounds(bounds, padX, padY) {
+                if (!bounds) return null;
+                return {
+                    xMin: Math.max(1, bounds.xMin - padX),
+                    xMax: Math.min(MAP_SIZE - 2, bounds.xMax + padX),
+                    yMin: Math.max(1, bounds.yMin - padY),
+                    yMax: Math.min(MAP_SIZE - 2, bounds.yMax + padY)
+                };
+            }
+
+            const castleBounds = getStampBounds('castle_ground') || { xMin: 190, xMax: 220, yMin: 190, yMax: 215 };
+            const generalStoreBounds = getStampBounds('general_store') || { xMin: 177, xMax: 185, yMin: 232, yMax: 240 };
+            const smithingHallBounds = getStampBounds('smithing_hall') || { xMin: 221, xMax: 229, yMin: 228, yMax: 240 };
+            const townCoreBounds = [
+                expandBounds(castleBounds, 0, 0),
+                expandBounds(generalStoreBounds, 0, 0),
+                // Keep a clean spawn-safe apron around the open smithing hall footprint.
+                expandBounds(smithingHallBounds, 4, 4)
+            ].filter(Boolean);
+            const townSquareBounds = expandBounds(castleBounds, 10, 10);
+            const inTownCore = (x, y) => {
+                for (let i = 0; i < townCoreBounds.length; i++) {
+                    const bounds = townCoreBounds[i];
+                    if (!bounds) continue;
+                    if (x >= bounds.xMin && x <= bounds.xMax && y >= bounds.yMin && y <= bounds.yMax) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            const terrainNoise = (x, y) => {
+                const n1 = Math.sin(x * 0.045) * 0.08;
+                const n2 = Math.cos(y * 0.05) * 0.07;
+                const n3 = Math.sin((x + y) * 0.03) * 0.05;
+                return n1 + n2 + n3;
+            };
+            const LEGACY_COORD_MAP_SIZE = 486;
+            const riverAxisScale = MAP_SIZE / LEGACY_COORD_MAP_SIZE;
+            const riverFrequencyScale = LEGACY_COORD_MAP_SIZE / Math.max(1, MAP_SIZE);
+            const sampleRiverAtY = (y) => {
+                const eastCenterBase = 298 * riverAxisScale;
+                const southCurveT = Math.max(0, (y - (296 * riverAxisScale)) / Math.max(1, 98 * riverAxisScale));
+                const westBend = Math.pow(Math.min(1, southCurveT), 1.35) * (86 * riverAxisScale);
+                return {
+                    centerX: eastCenterBase
+                        + (Math.sin(y * 0.018 * riverFrequencyScale) * (8 * riverAxisScale))
+                        + (Math.sin(y * 0.007 * riverFrequencyScale) * (5 * riverAxisScale))
+                        - westBend,
+                    halfWidth: Math.max(
+                        2.4,
+                        (6.2 * riverAxisScale) + (Math.sin(y * 0.045 * riverFrequencyScale) * (1.8 * riverAxisScale))
+                    )
+                };
+            };
             furnacesToRender = worldPayload.furnacesToRender.map((station) => Object.assign({}, station));
             anvilsToRender = worldPayload.anvilsToRender.map((station) => Object.assign({}, station));
             const waterRenderBodies = Array.isArray(waterRenderPayload && waterRenderPayload.bodies)
@@ -2389,7 +2453,7 @@
                         logicalMap[0][y][x] = 2; // Map borders
                         heightMap[0][y][x] = 0.08;
                     }
-                    else if (x >= 180 && x < 225 && y >= 180 && y < 225) {
+                    else if (townSquareBounds && x >= townSquareBounds.xMin && x <= townSquareBounds.xMax && y >= townSquareBounds.yMin && y <= townSquareBounds.yMax) {
                         logicalMap[0][y][x] = 0; // Empty Town Square
                         heightMap[0][y][x] = 0;
                     }
@@ -2413,11 +2477,9 @@
             };
 
             for (let y = 1; y < MAP_SIZE - 1; y++) {
-                const eastCenterBase = 298;
-                const southCurveT = Math.max(0, (y - 296) / 98);
-                const westBend = Math.pow(Math.min(1, southCurveT), 1.35) * 86;
-                const riverCenter = eastCenterBase + Math.sin(y * 0.018) * 8 + Math.sin(y * 0.007) * 5 - westBend;
-                const riverHalfWidth = 6.2 + Math.sin(y * 0.045) * 1.8;
+                const riverSample = sampleRiverAtY(y);
+                const riverCenter = riverSample.centerX;
+                const riverHalfWidth = riverSample.halfWidth;
                 const carveSpan = Math.ceil(riverHalfWidth + 4);
                 for (let x = Math.max(1, Math.floor(riverCenter - carveSpan)); x <= Math.min(MAP_SIZE - 2, Math.ceil(riverCenter + carveSpan)); x++) {
                     const d = Math.abs(x - riverCenter);
@@ -2425,6 +2487,32 @@
                         const depthNorm = Math.max(0, 1 - (d / Math.max(0.1, riverHalfWidth)));
                         carveWaterTile(x, y, depthNorm);
                     }
+                }
+            }
+
+            const riverBridgeRows = [
+                Math.floor(MAP_SIZE * 0.24),
+                Math.floor(MAP_SIZE * 0.49),
+                Math.floor(MAP_SIZE * 0.73)
+            ];
+            for (let i = 0; i < riverBridgeRows.length; i++) {
+                const bridgeY = riverBridgeRows[i];
+                if (bridgeY <= 2 || bridgeY >= MAP_SIZE - 3) continue;
+                const sample = sampleRiverAtY(bridgeY);
+                const bridgeHalfSpan = Math.ceil(sample.halfWidth + Math.max(3, 2 * riverAxisScale));
+                const bridgeXMin = Math.max(2, Math.floor(sample.centerX - bridgeHalfSpan));
+                const bridgeXMax = Math.min(MAP_SIZE - 3, Math.ceil(sample.centerX + bridgeHalfSpan));
+                for (let x = bridgeXMin; x <= bridgeXMax; x++) {
+                    logicalMap[0][bridgeY][x] = TileId.FLOOR_WOOD;
+                    heightMap[0][bridgeY][x] = PIER_DECK_TOP_HEIGHT;
+                }
+                if (bridgeXMin - 1 > 1) {
+                    logicalMap[0][bridgeY][bridgeXMin - 1] = TileId.SHORE;
+                    heightMap[0][bridgeY][bridgeXMin - 1] = -0.01;
+                }
+                if (bridgeXMax + 1 < MAP_SIZE - 2) {
+                    logicalMap[0][bridgeY][bridgeXMax + 1] = TileId.SHORE;
+                    heightMap[0][bridgeY][bridgeXMax + 1] = -0.01;
                 }
             }
 
