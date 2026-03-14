@@ -1,4 +1,5 @@
 import type { Point3 } from "./world";
+import type { CombatTargetKind, MeleeStyleId } from "./combat";
 
 export interface PlayerUnlockFlags {
   [flagId: string]: boolean | undefined;
@@ -45,6 +46,13 @@ export interface GameSessionPlayerState extends Point3 {
   eatingCooldownEndTick: number;
   lastAttackTick: number;
   lastCastTick: number;
+  remainingAttackCooldown: number;
+  lockedTargetId: string | null;
+  combatTargetKind: CombatTargetKind | null;
+  selectedMeleeStyle: MeleeStyleId;
+  autoRetaliateEnabled: boolean;
+  inCombat: boolean;
+  lastDamagerEnemyId: string | null;
   firemakingTarget: unknown;
   pendingSkillStart: Record<string, unknown> | null;
   unlockFlags: PlayerUnlockFlags;
@@ -118,6 +126,13 @@ export interface ProgressSavePlayerState extends Point3 {
   targetRotation: number;
   currentHitpoints: number;
   eatingCooldownEndTick: number;
+  remainingAttackCooldown: number;
+  lockedTargetId: string | null;
+  combatTargetKind: CombatTargetKind | null;
+  selectedMeleeStyle: MeleeStyleId;
+  autoRetaliateEnabled: boolean;
+  inCombat: boolean;
+  lastDamagerEnemyId: string | null;
   unlockFlags: PlayerUnlockFlags;
   merchantProgress: MerchantProgressState;
 }

@@ -36,7 +36,6 @@
             FLOOR_STONE: 7,
             FLOOR_BRICK: 8,
             BANK_BOOTH: 9,
-            DUMMY: 10,
             WALL: 11,
             TOWER: 12,
             STAIRS_UP: 13,
@@ -107,6 +106,7 @@
 
         const DEFAULT_WORLD_SPAWN = resolveDefaultWorldSpawn();
         const gameSessionRuntime = window.GameSessionRuntime || null;
+        const combatRuntime = window.CombatRuntime || null;
         const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
             ? gameSessionRuntime.createGameSession({
                 currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
@@ -127,6 +127,25 @@
         } else {
             if (typeof window.QA_RC_DEBUG === 'undefined') window.QA_RC_DEBUG = false;
             if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
+        }
+
+        function createFallbackCombatPlayerState(maxHitpoints = 10) {
+            if (combatRuntime && typeof combatRuntime.createDefaultPlayerCombatState === 'function') {
+                return combatRuntime.createDefaultPlayerCombatState(maxHitpoints);
+            }
+            return {
+                currentHitpoints: Math.max(1, Math.floor(maxHitpoints)),
+                eatingCooldownEndTick: 0,
+                lastAttackTick: -1,
+                lastCastTick: -1,
+                remainingAttackCooldown: 0,
+                lockedTargetId: null,
+                combatTargetKind: null,
+                selectedMeleeStyle: 'attack',
+                autoRetaliateEnabled: true,
+                inCombat: false,
+                lastDamagerEnemyId: null
+            };
         }
 
         function getGameSession() {
@@ -162,6 +181,7 @@
         // Pathfinder Walkability Registry (Added DOOR_OPEN for open doors)
 
         // Player Logical State (Spawn adjusted for chunk map center)
+        const defaultCombatPlayerState = createFallbackCombatPlayerState(10);
         let playerState = gameSession ? gameSession.player : {
             x: DEFAULT_WORLD_SPAWN.x, y: DEFAULT_WORLD_SPAWN.y, z: DEFAULT_WORLD_SPAWN.z, // NEW Z-Level Spawn   
             prevX: DEFAULT_WORLD_SPAWN.x, prevY: DEFAULT_WORLD_SPAWN.y, 
@@ -175,10 +195,17 @@
             turnLock: false,
             actionVisualReady: true,
             actionUntilTick: 0,
-            currentHitpoints: 10,
-            eatingCooldownEndTick: 0,
-            lastAttackTick: -1,
-            lastCastTick: -1,
+            currentHitpoints: defaultCombatPlayerState.currentHitpoints,
+            eatingCooldownEndTick: defaultCombatPlayerState.eatingCooldownEndTick,
+            lastAttackTick: defaultCombatPlayerState.lastAttackTick,
+            lastCastTick: defaultCombatPlayerState.lastCastTick,
+            remainingAttackCooldown: defaultCombatPlayerState.remainingAttackCooldown,
+            lockedTargetId: defaultCombatPlayerState.lockedTargetId,
+            combatTargetKind: defaultCombatPlayerState.combatTargetKind,
+            selectedMeleeStyle: defaultCombatPlayerState.selectedMeleeStyle,
+            autoRetaliateEnabled: defaultCombatPlayerState.autoRetaliateEnabled,
+            inCombat: defaultCombatPlayerState.inCombat,
+            lastDamagerEnemyId: defaultCombatPlayerState.lastDamagerEnemyId,
             firemakingTarget: null,
             pendingSkillStart: null,
             unlockFlags: { ...DEFAULT_UNLOCK_FLAGS },
@@ -252,7 +279,10 @@
         let minimapDragStart = { x: 0, y: 0 };
         let minimapDragEnd = { x: 0, y: 0 };
         let minimapDestination = null;
+        let lastMinimapRenderFrameMs = 0;
+        let lastVisibleChunkPlaneZ = null;
         let playerOverheadText = { text: '', expiresAt: 0 };
+        const MINIMAP_RENDER_INTERVAL_MS = 75;
         const TARGET_FPS = 50;
         const FRAME_INTERVAL_MS = 1000 / TARGET_FPS;
         let frameLimiterPrev = 0;
@@ -440,7 +470,6 @@
         inventory[8] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
-        inventory[11] = { itemData: ITEM_DB['owie'], amount: 1 };
         let progressContentGrants = gameSession ? gameSession.progress.contentGrants : {};
 
                         function setInventorySlots(slotDefs) {
@@ -1728,19 +1757,41 @@
             playerState.actionVisualReady = true;
             playerState.action = 'IDLE';
             playerState.targetObj = null;
+            playerState.targetUid = null;
             playerState.targetRotation = Number.isFinite(savedPlayerState.targetRotation)
                 ? savedPlayerState.targetRotation
                 : playerState.targetRotation;
+            playerSkills = sanitizeSkillState(state.playerSkills);
+            const loadedCombatDefaults = combatRuntime && typeof combatRuntime.buildPlayerCombatDefaults === 'function'
+                ? combatRuntime.buildPlayerCombatDefaults(playerSkills)
+                : createFallbackCombatPlayerState(10);
             playerState.currentHitpoints = Number.isFinite(savedPlayerState.currentHitpoints)
-                ? Math.max(1, Math.floor(savedPlayerState.currentHitpoints))
-                : playerState.currentHitpoints;
+                ? Math.max(0, Math.min(loadedCombatDefaults.currentHitpoints, Math.floor(savedPlayerState.currentHitpoints)))
+                : Math.max(0, Math.min(loadedCombatDefaults.currentHitpoints, playerState.currentHitpoints));
             playerState.eatingCooldownEndTick = Number.isFinite(savedPlayerState.eatingCooldownEndTick)
                 ? Math.max(0, Math.floor(savedPlayerState.eatingCooldownEndTick))
-                : 0;
+                : loadedCombatDefaults.eatingCooldownEndTick;
+            playerState.lastAttackTick = Number.isFinite(savedPlayerState.lastAttackTick)
+                ? Math.floor(savedPlayerState.lastAttackTick)
+                : loadedCombatDefaults.lastAttackTick;
+            playerState.lastCastTick = Number.isFinite(savedPlayerState.lastCastTick)
+                ? Math.floor(savedPlayerState.lastCastTick)
+                : loadedCombatDefaults.lastCastTick;
+            playerState.remainingAttackCooldown = Number.isFinite(savedPlayerState.remainingAttackCooldown)
+                ? Math.max(0, Math.floor(savedPlayerState.remainingAttackCooldown))
+                : loadedCombatDefaults.remainingAttackCooldown;
+            playerState.lockedTargetId = typeof savedPlayerState.lockedTargetId === 'string' ? savedPlayerState.lockedTargetId : null;
+            playerState.combatTargetKind = savedPlayerState.combatTargetKind === 'enemy' ? 'enemy' : null;
+            playerState.selectedMeleeStyle = savedPlayerState.selectedMeleeStyle === 'strength' || savedPlayerState.selectedMeleeStyle === 'defense'
+                ? savedPlayerState.selectedMeleeStyle
+                : loadedCombatDefaults.selectedMeleeStyle;
+            playerState.autoRetaliateEnabled = savedPlayerState.autoRetaliateEnabled !== false;
+            playerState.inCombat = !!savedPlayerState.inCombat;
+            playerState.lastDamagerEnemyId = typeof savedPlayerState.lastDamagerEnemyId === 'string'
+                ? savedPlayerState.lastDamagerEnemyId
+                : null;
             playerState.unlockFlags = gameSessionRuntime.sanitizeUnlockFlags(savedPlayerState.unlockFlags, DEFAULT_UNLOCK_FLAGS);
             playerState.merchantProgress = gameSessionRuntime.sanitizeMerchantProgress(savedPlayerState.merchantProgress);
-
-            playerSkills = sanitizeSkillState(state.playerSkills);
             inventory = deserializeItemArray(state.inventory, 28);
             bankItems = deserializeItemArray(state.bankItems, 200);
             equipment = deserializeEquipmentState(state.equipment);

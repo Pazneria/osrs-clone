@@ -15,7 +15,6 @@ const TileId = Object.freeze({
   FLOOR_STONE: 7,
   FLOOR_BRICK: 8,
   BANK_BOOTH: 9,
-  DUMMY: 10,
   WALL: 11,
   TOWER: 12,
   STAIRS_UP: 13,
@@ -179,7 +178,6 @@ function applyStamp(map, stamp, startX, startY, z) {
       else if (ch === "B") map[z][mapY][mapX] = TileId.BANK_BOOTH;
       else if (ch === "N" || ch === "K" || ch === "Q" || ch === "$") map[z][mapY][mapX] = TileId.SOLID_NPC;
       else if (ch === "V") map[z][mapY][mapX] = TileId.SHOP_COUNTER;
-      else if (ch === "T") map[z][mapY][mapX] = TileId.DUMMY;
     }
   }
 }

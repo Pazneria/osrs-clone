@@ -5,7 +5,6 @@
         willow_logs: 'Light wood that burns quickly.',
         ashes: 'All that\'s left of a warm idea.',
         coins: 'Money talks. Usually about prices.',
-        owie: 'Poke at your own risk.',
         tinderbox: 'Small box, big fire ambitions.',
         knife: 'Sharp enough for basic work.',
         iron_pickaxe: 'Solid mining gear for rough rock.',
@@ -87,10 +86,15 @@
         FURNACE: 'A roaring smithing furnace.',
         ANVIL: 'A solid anvil for forging metal.',
         BANK_BOOTH: 'A safe place for your valuables.',
-        DUMMY: 'It never complains about your form.',
+        ENEMY: 'It looks ready for a fight.',
         SHOP_COUNTER: 'A counter built for haggling.',
         DOOR: 'A sturdy wooden door.',
         WATER: 'The water looks fishable.'
+    };
+
+    const EXAMINE_TEXT_BY_ENEMY_NAME = {
+        rat: 'A scrappy little pest.',
+        'goblin grunt': 'A mean little bruiser looking for trouble.'
     };
 
     const EXAMINE_TEXT_BY_ROCK_ORE_TYPE = {
@@ -202,6 +206,10 @@
             const altarKey = cleanName(options.name).toLowerCase();
             if (altarKey && EXAMINE_TEXT_BY_ALTAR_NAME[altarKey]) return EXAMINE_TEXT_BY_ALTAR_NAME[altarKey];
             return 'An elemental altar humming with energy.';
+        }
+        if (type === 'ENEMY') {
+            const enemyKey = cleanName(options.name).toLowerCase();
+            if (enemyKey && EXAMINE_TEXT_BY_ENEMY_NAME[enemyKey]) return EXAMINE_TEXT_BY_ENEMY_NAME[enemyKey];
         }
         if (type === 'ROCK') {
             const oreKey = String(options.oreType || '').toLowerCase();

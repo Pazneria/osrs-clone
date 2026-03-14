@@ -2,6 +2,7 @@
 
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
+| Combat | In Progress | Melee-v1 feel polish for the new rat/goblin slice | Attack-style UI + rebuilt combat sim | None |
 | Mining | In Progress | Thrain late-ore off-band progression integration | Yield/xp/gold-per-tick balance pass | Quest content |
 | Woodcutting | In Progress | Per-tree silhouette polish for willow/maple/yew showcase row | Logs/xp/gold-per-tick balance pass | None |
 | Fishing | In Progress | Teacher quest + rune-harpoon reward/replacement flow | Method/level economic balance pass | Quest content |

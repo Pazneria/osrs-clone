@@ -1,0 +1,137 @@
+import type { Point3 } from "./world";
+
+export type CombatStyleFamily = "melee";
+export type CombatDamageType = "melee";
+export type MeleeStyleId = "attack" | "strength" | "defense";
+export type CombatTargetKind = "enemy";
+export type EnemyAggroType = "passive" | "aggressive";
+export type EnemyRuntimeStateId = "idle" | "aggroed" | "returning" | "dead";
+export type EnemyAppearanceKind = "rat" | "humanoid";
+export type EnemyDropKind = "nothing" | "item" | "coins";
+
+export interface CombatAttackProfile {
+  styleFamily: CombatStyleFamily;
+  damageType: CombatDamageType;
+  range: number;
+  tickCycle: number;
+  projectile: boolean;
+  ammoUse: boolean;
+  familyTag?: string | null;
+}
+
+export interface CombatBonuses {
+  meleeAccuracyBonus: number;
+  meleeStrengthBonus: number;
+  meleeDefenseBonus: number;
+  rangedDefenseBonus: number;
+  magicDefenseBonus: number;
+}
+
+export interface CombatItemProfile {
+  attackProfile: CombatAttackProfile;
+  bonuses: CombatBonuses;
+  requiredAttackLevel: number;
+  weaponFamily?: string | null;
+  toolFamily?: string | null;
+}
+
+export interface CombatEnemyAppearance {
+  kind: EnemyAppearanceKind;
+  npcType?: number;
+  facingYaw?: number;
+}
+
+export interface EnemyCombatStats {
+  hitpoints: number;
+  attack: number;
+  strength: number;
+  defense: number;
+}
+
+export interface EnemyCombatBonuses {
+  meleeAccuracyBonus: number;
+  meleeDefenseBonus: number;
+  enemyMaxHit: number;
+}
+
+export interface EnemyBehaviorProfile {
+  aggroType: EnemyAggroType;
+  aggroRadius: number;
+  chaseRange: number;
+  roamingRadius: number;
+  defaultMovementSpeed: number;
+  combatMovementSpeed: number;
+}
+
+export interface EnemyDropEntry {
+  kind: EnemyDropKind;
+  weight: number;
+  itemId?: string | null;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+export interface EnemyTypeDefinition {
+  enemyId: string;
+  displayName: string;
+  combatFamily: "melee";
+  appearance: CombatEnemyAppearance;
+  stats: EnemyCombatStats;
+  bonuses: EnemyCombatBonuses;
+  attackProfile: CombatAttackProfile;
+  behavior: EnemyBehaviorProfile;
+  respawnTicks: number;
+  dropTable: EnemyDropEntry[];
+}
+
+export interface EnemySpawnNodeDefinition {
+  spawnNodeId: string;
+  enemyId: string;
+  spawnTile: Point3;
+  homeTileOverride?: Point3 | null;
+  respawnTicks?: number | null;
+  spawnEnabled: boolean;
+  facingYaw?: number;
+  spawnGroupId?: string | null;
+}
+
+export interface EnemyRuntimeState extends Point3 {
+  runtimeId: string;
+  spawnNodeId: string;
+  enemyId: string;
+  currentHealth: number;
+  currentState: EnemyRuntimeStateId;
+  lockedTargetId: string | null;
+  remainingAttackCooldown: number;
+  resolvedHomeTile: Point3;
+  resolvedSpawnTile: Point3;
+  resolvedRoamingRadius: number;
+  resolvedChaseRange: number;
+  resolvedAggroRadius: number;
+  defaultMovementSpeed: number;
+  combatMovementSpeed: number;
+  facingYaw: number;
+  respawnAtTick: number | null;
+  lastDamagerId: string | null;
+  attackTriggerAt: number;
+}
+
+export interface PlayerCombatStateShape {
+  currentHitpoints: number;
+  eatingCooldownEndTick: number;
+  lastAttackTick: number;
+  lastCastTick: number;
+  remainingAttackCooldown: number;
+  lockedTargetId: string | null;
+  combatTargetKind: CombatTargetKind | null;
+  selectedMeleeStyle: MeleeStyleId;
+  autoRetaliateEnabled: boolean;
+  inCombat: boolean;
+  lastDamagerEnemyId: string | null;
+}
+
+export interface CombatStatsViewModelShape {
+  attack: number;
+  defense: number;
+  strength: number;
+}

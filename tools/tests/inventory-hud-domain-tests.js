@@ -13,7 +13,31 @@ function makeItem(id, overrides = {}) {
     icon: overrides.icon || id.toUpperCase(),
     stackable: !!overrides.stackable,
     value: overrides.value || 0,
-    stats: overrides.stats || { atk: 0, def: 0, str: 0 }
+    stats: overrides.stats || { atk: 0, def: 0, str: 0 },
+    combat: overrides.combat || null,
+    requiredAttackLevel: overrides.requiredAttackLevel || 0
+  };
+}
+
+function makeMeleeCombatProfile(overrides = {}) {
+  return {
+    attackProfile: {
+      styleFamily: "melee",
+      damageType: "melee",
+      range: overrides.range || 1,
+      tickCycle: overrides.tickCycle || 5,
+      projectile: false,
+      ammoUse: false,
+      familyTag: overrides.familyTag || "test"
+    },
+    bonuses: {
+      meleeAccuracyBonus: overrides.meleeAccuracyBonus || 0,
+      meleeStrengthBonus: overrides.meleeStrengthBonus || 0,
+      meleeDefenseBonus: overrides.meleeDefenseBonus || 0,
+      rangedDefenseBonus: overrides.rangedDefenseBonus || 0,
+      magicDefenseBonus: overrides.magicDefenseBonus || 0
+    },
+    requiredAttackLevel: overrides.requiredAttackLevel || 1
   };
 }
 
@@ -22,8 +46,19 @@ const ITEM_DB = {
   logs: makeItem("logs", { stackable: false, value: 5 }),
   shrimp: makeItem("shrimp", { stackable: false, value: 10 }),
   rune: makeItem("rune", { stackable: true, value: 50 }),
-  sword: makeItem("sword", { stackable: false, value: 100, stats: { atk: 4, def: 0, str: 2 } }),
-  shield: makeItem("shield", { stackable: false, value: 90, stats: { atk: 0, def: 3, str: 0 } })
+  sword: makeItem("sword", {
+    stackable: false,
+    value: 100,
+    stats: { atk: 4, def: 0, str: 2 },
+    combat: makeMeleeCombatProfile({ meleeAccuracyBonus: 4, meleeStrengthBonus: 2, tickCycle: 4, familyTag: "sword" }),
+    requiredAttackLevel: 1
+  }),
+  shield: makeItem("shield", {
+    stackable: false,
+    value: 90,
+    stats: { atk: 0, def: 3, str: 0 },
+    combat: makeMeleeCombatProfile({ meleeDefenseBonus: 3, rangedDefenseBonus: 3, magicDefenseBonus: 3, familyTag: "shield" })
+  })
 };
 
 {
@@ -115,13 +150,21 @@ const ITEM_DB = {
 
 {
   const stats = hudViewModels.buildCombatStatsViewModel({
-    baseStats: { atk: 1, def: 1, str: 1 },
+    playerSkills: {
+      attack: { xp: 0, level: 1 },
+      strength: { xp: 0, level: 1 },
+      defense: { xp: 0, level: 1 },
+      hitpoints: { xp: 0, level: 10 }
+    },
     equipment: {
       weapon: ITEM_DB.sword,
       shield: ITEM_DB.shield
+    },
+    playerState: {
+      selectedMeleeStyle: "attack"
     }
   });
-  assert.deepStrictEqual(stats, { attack: 5, defense: 4, strength: 3 }, "combat stats should include equipment bonuses");
+  assert.deepStrictEqual(stats, { attack: 5, defense: 4, strength: 1 }, "combat stats should derive from combat bonuses and melee formulas");
 }
 
 {

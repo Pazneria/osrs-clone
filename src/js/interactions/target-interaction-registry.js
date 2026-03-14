@@ -107,18 +107,29 @@
                 );
             }
         },
-        DUMMY: {
+        ENEMY: {
             priority: 100,
             guards: [hasGridHit],
             actions: [
-                function resolveDummyAction(context) {
-                    return createOption('Attack <span class="text-white">Training Dummy</span>', () => context.queueInteract('DUMMY'));
+                function resolveEnemyAction(context) {
+                    const enemyName = context.hitData && context.hitData.name ? context.hitData.name : 'Enemy';
+                    const enemyId = context.hitData ? context.hitData.uid : null;
+                    return createOption(
+                        `Attack <span class="text-white">${enemyName}</span>`,
+                        () => context.queueInteract('ENEMY', {
+                            enemyId,
+                            enemyX: context.hitData.gridX,
+                            enemyY: context.hitData.gridY,
+                            name: enemyName
+                        })
+                    );
                 }
             ],
-            examine: function resolveDummyExamine(context) {
+            examine: function resolveEnemyExamine(context) {
+                const enemyName = context.hitData && context.hitData.name ? context.hitData.name : 'Enemy';
                 return createOption(
-                    'Examine <span class="text-white">Training Dummy</span>',
-                    () => context.examineTarget('DUMMY', 'It never complains about your form.')
+                    `Examine <span class="text-white">${enemyName}</span>`,
+                    () => context.examineTarget('ENEMY', 'It looks ready for a fight.', { name: enemyName })
                 );
             }
         },

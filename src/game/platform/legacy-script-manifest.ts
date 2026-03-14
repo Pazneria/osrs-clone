@@ -26,6 +26,7 @@ import skillsRegisterScript from "../../js/skills/register.js?raw";
 import playerModelScript from "../../js/player-model.js?raw";
 import inventoryScript from "../../js/inventory.js?raw";
 import worldScript from "../../js/world.js?raw";
+import combatScript from "../../js/combat.js?raw";
 import inputRenderScript from "../../js/input-render.js?raw";
 
 export interface LegacyScriptEntry {
@@ -63,5 +64,6 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "player-model", filename: "src/js/player-model.js", code: playerModelScript },
   { id: "inventory", filename: "src/js/inventory.js", code: inventoryScript },
   { id: "world", filename: "src/js/world.js", code: worldScript },
+  { id: "combat", filename: "src/js/combat.js", code: combatScript },
   { id: "input-render", filename: "src/js/input-render.js", code: inputRenderScript }
 ];

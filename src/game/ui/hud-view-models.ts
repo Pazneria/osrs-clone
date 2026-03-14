@@ -1,3 +1,4 @@
+import { buildCombatStatsViewModel as buildCombatStatsFromFormulas } from "../combat/formulas";
 import type {
   CombatStatsViewModel,
   EquipmentSlotViewModel,
@@ -10,25 +11,17 @@ import type {
 import type { PlayerProfileState, PlayerSkillMap } from "../contracts/session";
 
 export function buildCombatStatsViewModel(options: {
-  baseStats: { atk: number; def: number; str: number };
+  playerSkills: PlayerSkillMap;
   equipment: Record<string, UiItemData | null | undefined>;
+  playerState?: {
+    selectedMeleeStyle?: "attack" | "strength" | "defense";
+  } | null;
 }): CombatStatsViewModel {
-  let attack = Number.isFinite(options.baseStats.atk) ? Math.floor(options.baseStats.atk) : 0;
-  let defense = Number.isFinite(options.baseStats.def) ? Math.floor(options.baseStats.def) : 0;
-  let strength = Number.isFinite(options.baseStats.str) ? Math.floor(options.baseStats.str) : 0;
-
-  const equipment = options.equipment || {};
-  const itemIds = Object.keys(equipment);
-  for (let index = 0; index < itemIds.length; index += 1) {
-    const item = equipment[itemIds[index]];
-    if (!item || typeof item !== "object") continue;
-    const stats = item.stats || {};
-    attack += Number.isFinite(stats.atk) ? Math.floor(Number(stats.atk)) : 0;
-    defense += Number.isFinite(stats.def) ? Math.floor(Number(stats.def)) : 0;
-    strength += Number.isFinite(stats.str) ? Math.floor(Number(stats.str)) : 0;
-  }
-
-  return { attack, defense, strength };
+  return buildCombatStatsFromFormulas({
+    playerSkills: options.playerSkills || {},
+    equipment: options.equipment || {},
+    playerState: options.playerState || null
+  });
 }
 
 export function buildEquipmentSlotViewModels(options: {

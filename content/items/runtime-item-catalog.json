@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T23:21:45.255Z",
+  "generatedAt": "2026-03-14T01:41:36.292Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -38,18 +38,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "axe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 21,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 10,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 30,
+        "toolFamily": "axe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "adamant_axe",
         "kind": "pixel"
       },
       "name": "Adamant Axe",
+      "requiredAttackLevel": 30,
       "speedBonusTicks": 4,
       "stackable": false,
       "stats": {
-        "atk": 40,
+        "atk": 21,
         "def": 0,
-        "str": 32
+        "str": 10
       },
       "toolTier": 21,
       "type": "weapon",
@@ -91,6 +113,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 7,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 7,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 7
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -111,6 +154,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 17,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 17,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 17
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -146,18 +210,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "pickaxe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 21,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 10,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 30,
+        "toolFamily": "pickaxe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "adamant_pickaxe",
         "kind": "pixel"
       },
       "name": "Adamant Pickaxe",
+      "requiredAttackLevel": 30,
       "speedBonusTicks": 4,
       "stackable": false,
       "stats": {
-        "atk": 24,
+        "atk": 21,
         "def": 0,
-        "str": 30
+        "str": 10
       },
       "toolTier": 21,
       "type": "weapon",
@@ -184,6 +270,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 30,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 30,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 30
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -204,6 +311,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 25,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 25,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 25
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -224,6 +352,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 21,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 21,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 21
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -245,17 +394,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "sword",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 21,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 21,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 30,
+        "toolFamily": null,
+        "weaponFamily": "sword"
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "adamant_sword",
         "kind": "pixel"
       },
       "name": "Adamant Sword",
+      "requiredAttackLevel": 30,
       "stackable": false,
       "stats": {
-        "atk": 40,
+        "atk": 21,
         "def": 0,
-        "str": 32
+        "str": 21
       },
       "type": "weapon",
       "value": 2200,
@@ -415,18 +586,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "axe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 4,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 2,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": "axe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "bronze_axe",
         "kind": "pixel"
       },
       "name": "Bronze Axe",
+      "requiredAttackLevel": 1,
       "speedBonusTicks": 0,
       "stackable": false,
       "stats": {
-        "atk": 10,
+        "atk": 4,
         "def": 0,
-        "str": 8
+        "str": 2
       },
       "toolTier": 4,
       "type": "weapon",
@@ -468,6 +661,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 1,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 1,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 1
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -488,6 +702,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 3,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 3,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 3
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -509,18 +744,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "pickaxe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 4,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 2,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": "pickaxe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "bronze_pickaxe",
         "kind": "pixel"
       },
       "name": "Bronze Pickaxe",
+      "requiredAttackLevel": 1,
       "speedBonusTicks": 0,
       "stackable": false,
       "stats": {
-        "atk": 5,
+        "atk": 4,
         "def": 0,
-        "str": 7
+        "str": 2
       },
       "toolTier": 4,
       "type": "weapon",
@@ -547,6 +804,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 7,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 7,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 7
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -567,6 +845,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 5,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 5,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 5
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -587,6 +886,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 4,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 4,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 4
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -608,17 +928,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "sword",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 4,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 4,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": "sword"
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "bronze_sword",
         "kind": "pixel"
       },
       "name": "Bronze Sword",
+      "requiredAttackLevel": 1,
       "stackable": false,
       "stats": {
-        "atk": 10,
+        "atk": 4,
         "def": 0,
-        "str": 8
+        "str": 4
       },
       "type": "weapon",
       "value": 40,
@@ -1104,18 +1446,47 @@
     },
     "fishing_rod": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "fishing_rod",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 8,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 4,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 10,
+        "toolFamily": "fishing_rod",
+        "weaponFamily": null
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "fishing_rod",
         "kind": "pixel"
       },
       "name": "Fishing Rod",
+      "requiredAttackLevel": 10,
       "stackable": false,
-      "type": "tool",
-      "value": 45
+      "stats": {
+        "atk": 8,
+        "def": 0,
+        "str": 4
+      },
+      "type": "weapon",
+      "value": 45,
+      "weaponClass": "fishing_rod"
     },
     "gold_amulet": {
       "actions": [
@@ -1212,17 +1583,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "harpoon",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 18,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 9,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 30,
+        "toolFamily": "harpoon",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "harpoon",
         "kind": "pixel"
       },
       "name": "Harpoon",
+      "requiredAttackLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 18,
         "def": 0,
-        "str": 10
+        "str": 9
       },
       "type": "weapon",
       "value": 110,
@@ -1264,18 +1657,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "axe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 6,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 3,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": "axe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
         "kind": "pixel"
       },
       "name": "Iron Axe",
+      "requiredAttackLevel": 1,
       "speedBonusTicks": 1,
       "stackable": false,
       "stats": {
-        "atk": 15,
+        "atk": 6,
         "def": 0,
-        "str": 12
+        "str": 3
       },
       "toolTier": 6,
       "type": "weapon",
@@ -1317,6 +1732,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 2,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 2,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 2
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1337,6 +1773,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 5,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 5,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 5
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1372,18 +1829,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "pickaxe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 6,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 3,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": "pickaxe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_pickaxe",
         "kind": "pixel"
       },
       "name": "Iron Pickaxe",
+      "requiredAttackLevel": 1,
       "speedBonusTicks": 1,
       "stackable": false,
       "stats": {
-        "atk": 8,
+        "atk": 6,
         "def": 0,
-        "str": 10
+        "str": 3
       },
       "toolTier": 6,
       "type": "weapon",
@@ -1410,6 +1889,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 10,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 10,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 10
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1430,6 +1930,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 8,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 8,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 8
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1450,6 +1971,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 6,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 6,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 6
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1471,17 +2013,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "sword",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 6,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 6,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": "sword"
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_sword",
         "kind": "pixel"
       },
       "name": "Iron Sword",
+      "requiredAttackLevel": 1,
       "stackable": false,
       "stats": {
-        "atk": 15,
+        "atk": 6,
         "def": 0,
-        "str": 12
+        "str": 6
       },
       "type": "weapon",
       "value": 120,
@@ -1761,18 +2325,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "axe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 15,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 7,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 20,
+        "toolFamily": "axe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "mithril_axe",
         "kind": "pixel"
       },
       "name": "Mithril Axe",
+      "requiredAttackLevel": 20,
       "speedBonusTicks": 3,
       "stackable": false,
       "stats": {
-        "atk": 30,
+        "atk": 15,
         "def": 0,
-        "str": 24
+        "str": 7
       },
       "toolTier": 15,
       "type": "weapon",
@@ -1814,6 +2400,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 5,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 5,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 5
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1834,6 +2441,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 12,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 12,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 12
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1869,18 +2497,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "pickaxe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 15,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 7,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 20,
+        "toolFamily": "pickaxe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "mithril_pickaxe",
         "kind": "pixel"
       },
       "name": "Mithril Pickaxe",
+      "requiredAttackLevel": 20,
       "speedBonusTicks": 3,
       "stackable": false,
       "stats": {
-        "atk": 18,
+        "atk": 15,
         "def": 0,
-        "str": 22
+        "str": 7
       },
       "toolTier": 15,
       "type": "weapon",
@@ -1907,6 +2557,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 22,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 22,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 22
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1927,6 +2598,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 18,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 18,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 18
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1947,6 +2639,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 15,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 15,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 15
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -1968,17 +2681,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "sword",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 15,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 15,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 20,
+        "toolFamily": null,
+        "weaponFamily": "sword"
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "mithril_sword",
         "kind": "pixel"
       },
       "name": "Mithril Sword",
+      "requiredAttackLevel": 20,
       "stackable": false,
       "stats": {
-        "atk": 30,
+        "atk": 15,
         "def": 0,
-        "str": 24
+        "str": 15
       },
       "type": "weapon",
       "value": 900,
@@ -2237,21 +2972,6 @@
       "stackable": false,
       "type": "component",
       "value": 15
-    },
-    "owie": {
-      "actions": [
-        "Use",
-        "Drop"
-      ],
-      "defaultAction": "Use",
-      "icon": {
-        "assetId": "ashes",
-        "kind": "pixel"
-      },
-      "name": "Owie",
-      "stackable": false,
-      "type": "tool",
-      "value": 1
     },
     "plain_staff_maple": {
       "actions": [
@@ -2555,18 +3275,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "axe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 28,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 14,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 40,
+        "toolFamily": "axe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "rune_axe",
         "kind": "pixel"
       },
       "name": "Rune Axe",
+      "requiredAttackLevel": 40,
       "speedBonusTicks": 5,
       "stackable": false,
       "stats": {
-        "atk": 54,
+        "atk": 28,
         "def": 0,
-        "str": 44
+        "str": 14
       },
       "toolTier": 28,
       "type": "weapon",
@@ -2608,6 +3350,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 10,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 10,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 10
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -2643,17 +3406,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "harpoon",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 24,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 12,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 40,
+        "toolFamily": "harpoon",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "rune_harpoon",
         "kind": "pixel"
       },
       "name": "Rune Harpoon",
+      "requiredAttackLevel": 40,
       "stackable": false,
       "stats": {
-        "atk": 32,
+        "atk": 24,
         "def": 0,
-        "str": 20
+        "str": 12
       },
       "type": "weapon",
       "value": 2500,
@@ -2664,6 +3449,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 24,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 24,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 24
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -2699,18 +3505,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "pickaxe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 28,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 14,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 40,
+        "toolFamily": "pickaxe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "rune_pickaxe",
         "kind": "pixel"
       },
       "name": "Rune Pickaxe",
+      "requiredAttackLevel": 40,
       "speedBonusTicks": 5,
       "stackable": false,
       "stats": {
-        "atk": 32,
+        "atk": 28,
         "def": 0,
-        "str": 40
+        "str": 14
       },
       "toolTier": 28,
       "type": "weapon",
@@ -2737,6 +3565,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 40,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 40,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 40
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -2757,6 +3606,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 34,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 34,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 34
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -2777,6 +3647,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 28,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 28,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 28
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -2798,17 +3689,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "sword",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 28,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 28,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 40,
+        "toolFamily": null,
+        "weaponFamily": "sword"
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "rune_sword",
         "kind": "pixel"
       },
       "name": "Rune Sword",
+      "requiredAttackLevel": 40,
       "stackable": false,
       "stats": {
-        "atk": 54,
+        "atk": 28,
         "def": 0,
-        "str": 44
+        "str": 28
       },
       "type": "weapon",
       "value": 2500,
@@ -3102,18 +4015,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "axe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 10,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 5,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 10,
+        "toolFamily": "axe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "steel_axe",
         "kind": "pixel"
       },
       "name": "Steel Axe",
+      "requiredAttackLevel": 10,
       "speedBonusTicks": 2,
       "stackable": false,
       "stats": {
-        "atk": 22,
+        "atk": 10,
         "def": 0,
-        "str": 18
+        "str": 5
       },
       "toolTier": 10,
       "type": "weapon",
@@ -3155,6 +4090,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 3,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 3,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 3
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -3175,6 +4131,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 8,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 8,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 8
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -3196,18 +4173,40 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "pickaxe",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 10,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 5,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 10,
+        "toolFamily": "pickaxe",
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "steel_pickaxe",
         "kind": "pixel"
       },
       "name": "Steel Pickaxe",
+      "requiredAttackLevel": 10,
       "speedBonusTicks": 2,
       "stackable": false,
       "stats": {
-        "atk": 12,
+        "atk": 10,
         "def": 0,
-        "str": 15
+        "str": 5
       },
       "toolTier": 10,
       "type": "weapon",
@@ -3234,6 +4233,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 15,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 15,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 15
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -3254,6 +4274,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 12,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 12,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 12
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -3274,6 +4315,27 @@
         "Equip",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "armor",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicDefenseBonus": 10,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 10,
+          "meleeStrengthBonus": 0,
+          "rangedDefenseBonus": 10
+        },
+        "requiredAttackLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": null
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_axe",
@@ -3295,17 +4357,39 @@
         "Use",
         "Drop"
       ],
+      "combat": {
+        "attackProfile": {
+          "ammoUse": false,
+          "damageType": "melee",
+          "familyTag": "sword",
+          "projectile": false,
+          "range": 1,
+          "styleFamily": "melee",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicDefenseBonus": 0,
+          "meleeAccuracyBonus": 10,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 10,
+          "rangedDefenseBonus": 0
+        },
+        "requiredAttackLevel": 10,
+        "toolFamily": null,
+        "weaponFamily": "sword"
+      },
       "defaultAction": "Equip",
       "icon": {
         "assetId": "steel_sword",
         "kind": "pixel"
       },
       "name": "Steel Sword",
+      "requiredAttackLevel": 10,
       "stackable": false,
       "stats": {
-        "atk": 22,
+        "atk": 10,
         "def": 0,
-        "str": 18
+        "str": 10
       },
       "type": "weapon",
       "value": 350,

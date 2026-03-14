@@ -776,6 +776,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
         function queueAction(type, gridX, gridY, obj, targetUid = null) {
             cancelManualFiremakingChain();
+            if (type === 'WALK' && typeof window.clearPlayerCombatTarget === 'function') {
+                window.clearPlayerCombatTarget();
+            } else if (type === 'INTERACT' && obj !== 'ENEMY' && typeof window.clearPlayerCombatTarget === 'function') {
+                window.clearPlayerCombatTarget();
+            }
             if (type === 'WALK') setMinimapDestination(gridX, gridY, playerState.z);
             else clearMinimapDestination();
             pendingAction = { type, x: gridX, y: gridY, obj, targetUid };
@@ -846,7 +851,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             
             if (validTargets.has(`${startX},${startY}`)) return [];
             
-            let queue = [{x: startX, y: startY}]; 
+            let queue = [{x: startX, y: startY}];
+            let queueIndex = 0;
             let visited = new Map();
             visited.set(`${startX},${startY}`, null);
             
@@ -856,10 +862,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             let iterations = 0; 
             let foundTargetKey = null;
 
-            while (queue.length > 0) {
+            while (queueIndex < queue.length) {
                 if (iterations++ > PATHFIND_MAX_ITERATIONS) break; 
                 
-                let current = queue.shift(); let currentHeight = heightMap[playerState.z][current.y][current.x];
+                let current = queue[queueIndex++]; let currentHeight = heightMap[playerState.z][current.y][current.x];
                 
                 for (let dir of dirs8) {
                     let nx = current.x + dir.x; let ny = current.y + dir.y; let key = `${nx},${ny}`;
@@ -951,55 +957,76 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         playerState.action = playerState.path.length > 0 ? 'WALKING' : 'IDLE';
                     }
                 } else if (pendingAction.type === 'INTERACT') {
-                    // Force standing adjacent to interactables (unless picking up a ground item)
-                    const forceAdjacent = pendingAction.obj !== 'GROUND_ITEM';
-                    playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, forceAdjacent, pendingAction.obj);
-                    playerState.pendingActionAfterTurn = null;
-                    playerState.turnLock = false;
-                    playerState.actionVisualReady = true;
-                    const keepFletchingAction = playerState.action === 'SKILLING: FLETCHING' && hasActiveFletchingProcessingSession();
-
-                    let pendingSkillStart = playerState.pendingSkillStart || null;
-                    if (window.SkillRuntime
-                        && typeof SkillRuntime.canHandleTarget === 'function'
-                        && SkillRuntime.canHandleTarget(pendingAction.obj)
-                        && pendingAction.targetUid
-                        && typeof pendingAction.targetUid === 'object'
-                        && typeof pendingAction.targetUid.skillId === 'string') {
-                        pendingSkillStart = Object.assign({}, pendingAction.targetUid, {
-                            targetObj: pendingAction.obj,
-                            targetX: actionX,
-                            targetY: actionY,
-                            targetZ: playerState.z
-                        });
-                    } else if (pendingSkillStart && pendingSkillStart.targetObj === pendingAction.obj) {
-                        pendingSkillStart = Object.assign({}, pendingSkillStart, {
-                            targetX: actionX,
-                            targetY: actionY,
-                            targetZ: playerState.z
-                        });
-                    }
-                    if (keepFletchingAction) {
-                        playerState.pendingInteractAfterFletchingWalk = {
-                            targetObj: pendingAction.obj,
-                            targetUid: pendingAction.targetUid,
-                            targetX: actionX,
-                            targetY: actionY,
-                            targetZ: playerState.z
-                        };
-                        playerState.pendingSkillStart = pendingSkillStart;
-                        playerState.action = 'SKILLING: FLETCHING';
-                        playerState.targetObj = pendingAction.obj;
-                        playerState.targetUid = pendingAction.targetUid;
-                    } else {
+                    if (pendingAction.obj === 'ENEMY') {
+                        playerState.pendingSkillStart = null;
                         playerState.pendingInteractAfterFletchingWalk = null;
-                        playerState.pendingSkillStart = pendingSkillStart;
-                        playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
+                        playerState.path = [];
+                        playerState.pendingActionAfterTurn = null;
+                        playerState.turnLock = false;
+                        playerState.actionVisualReady = true;
+                        playerState.targetObj = 'ENEMY';
+                        playerState.targetUid = pendingAction.targetUid;
+                        if (pendingAction.targetUid && typeof pendingAction.targetUid === 'object') {
+                            if (Number.isInteger(pendingAction.targetUid.enemyX)) playerState.targetX = pendingAction.targetUid.enemyX;
+                            if (Number.isInteger(pendingAction.targetUid.enemyY)) playerState.targetY = pendingAction.targetUid.enemyY;
+                            if (pendingAction.targetUid.enemyId && typeof window.lockPlayerCombatTarget === 'function') {
+                                window.lockPlayerCombatTarget(pendingAction.targetUid.enemyId);
+                            }
+                        }
+                        playerState.action = 'IDLE';
+                    } else {
+                        // Force standing adjacent to interactables (unless picking up a ground item)
+                        const forceAdjacent = pendingAction.obj !== 'GROUND_ITEM';
+                        playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, forceAdjacent, pendingAction.obj);
+                        playerState.pendingActionAfterTurn = null;
+                        playerState.turnLock = false;
+                        playerState.actionVisualReady = true;
+                        const keepFletchingAction = playerState.action === 'SKILLING: FLETCHING' && hasActiveFletchingProcessingSession();
+
+                        let pendingSkillStart = playerState.pendingSkillStart || null;
+                        if (window.SkillRuntime
+                            && typeof SkillRuntime.canHandleTarget === 'function'
+                            && SkillRuntime.canHandleTarget(pendingAction.obj)
+                            && pendingAction.targetUid
+                            && typeof pendingAction.targetUid === 'object'
+                            && typeof pendingAction.targetUid.skillId === 'string') {
+                            pendingSkillStart = Object.assign({}, pendingAction.targetUid, {
+                                targetObj: pendingAction.obj,
+                                targetX: actionX,
+                                targetY: actionY,
+                                targetZ: playerState.z
+                            });
+                        } else if (pendingSkillStart && pendingSkillStart.targetObj === pendingAction.obj) {
+                            pendingSkillStart = Object.assign({}, pendingSkillStart, {
+                                targetX: actionX,
+                                targetY: actionY,
+                                targetZ: playerState.z
+                            });
+                        }
+                        if (keepFletchingAction) {
+                            playerState.pendingInteractAfterFletchingWalk = {
+                                targetObj: pendingAction.obj,
+                                targetUid: pendingAction.targetUid,
+                                targetX: actionX,
+                                targetY: actionY,
+                                targetZ: playerState.z
+                            };
+                            playerState.pendingSkillStart = pendingSkillStart;
+                            playerState.action = 'SKILLING: FLETCHING';
+                            playerState.targetObj = pendingAction.obj;
+                            playerState.targetUid = pendingAction.targetUid;
+                        } else {
+                            playerState.pendingInteractAfterFletchingWalk = null;
+                            playerState.pendingSkillStart = pendingSkillStart;
+                            playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
+                        }
                     }
                 }
                 pendingAction = null;
 
             }
+
+            if (typeof window.processCombatTick === 'function') window.processCombatTick();
             
             if (playerState.path.length > 0) {
                 let stepsToTake = isRunning ? 2 : 1; let nextStep = playerState.path.shift();
@@ -1114,8 +1141,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 && isPierFishingApproachTile(playerState.x, playerState.y, playerState.targetX, playerState.targetY, playerState.z);
                             if (Math.abs(playerH - targetH) > 0.3 && !isAcrossCounter && !pierFishingApproach) {
                                 playerState.action = 'IDLE';
-                            } else if (playerState.targetObj === 'DUMMY') {
-                                startFacingAction('COMBAT: DUMMY', true);
                             } else if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
                                 playerState.action = 'IDLE';
                                 const faceDx = playerState.targetX - playerState.x; const faceDy = playerState.targetY - playerState.y; 
@@ -1189,15 +1214,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             
             if (!(window.SkillRuntime && SkillRuntime.handleSkillTick())) {
-                if (playerState.action === 'COMBAT: DUMMY') {
-                    if (currentTick % 4 === 0) {
-                        playerState.lastAttackTick = currentTick;
-                        playerRig.userData.rig.attackTrigger = Date.now();
-                        const damage = Math.floor(Math.random() * 3); 
-                        spawnHitsplat(damage, playerState.targetX, playerState.targetY);
-                        if (damage > 0) addSkillXp('strength', damage * 4);
-                    }
-                }
+                // Combat ticks are handled by the dedicated combat runtime.
             }
         }
 
@@ -1388,7 +1405,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
                     else if (hitData.type === 'WATER') actionText = '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
                     else if (hitData.type === 'DOOR') actionText = `<span class="text-gray-300">${hitData.doorObj.isOpen ? 'Close' : 'Open'}</span> <span class="text-cyan-400">Door</span>`;
-                    else if (hitData.type === 'DUMMY') actionText = '<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">Training Dummy</span>';
+                    else if (hitData.type === 'ENEMY') actionText = `<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">${hitData.name || 'Enemy'}</span>`;
                     else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'NPC') {
@@ -1780,6 +1797,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             
             const hasPlayerRig = !!(typeof playerRig !== 'undefined' && playerRig && playerRig.position);
             if (hasPlayerRig && typeof window.manageChunks === 'function') window.manageChunks();
+            if (lastVisibleChunkPlaneZ !== playerState.z && typeof window.setLoadedChunkPlaneVisibility === 'function') {
+                window.setLoadedChunkPlaneVisibility(playerState.z);
+                lastVisibleChunkPlaneZ = playerState.z;
+            }
             if (hasPlayerRig) updatePoseEditorHandles();
             if (typeof window.updateFires === 'function') window.updateFires(frameNow);
             if (typeof updateMiningPoseReferences === 'function') updateMiningPoseReferences(frameNowMs);
@@ -1805,14 +1826,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 }
             });
 
-            // Z-Plane Visibility Culling!
-            Object.values(chunkGroups).forEach(group => {
-                group.children.forEach(planeGroup => {
-                    if (planeGroup.userData.z !== undefined) {
-                        planeGroup.visible = (planeGroup.userData.z <= playerState.z);
-                    }
-                });
-            });
+            if (typeof window.updateCombatRenderers === 'function') window.updateCombatRenderers(frameNow);
 
             const runPhase = (frameNow % 600) / 600 * Math.PI * 2; const absSinRun = Math.abs(Math.sin(runPhase));
             const walkPhase = (frameNow % TICK_RATE_MS) / TICK_RATE_MS * Math.PI * 2;
@@ -1946,9 +1960,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 applyRockMiningPose
             })) {
                 // Skill module handled pose.
-            } else if (playerState.action === 'COMBAT: DUMMY') {
+            } else if (playerState.action === 'COMBAT: MELEE') {
                 if (!playerState.actionVisualReady) {
-                    rig.axe.visible = true;
+                    rig.axe.visible = !!equipment.weapon;
                     setPlayerRigShoulderPivot(rig);
                     rig.leftArm.rotation.set(0, 0, 0); rig.rightArm.rotation.set(0, 0, 0);
                     rig.leftLowerArm.rotation.set(0, 0, 0); rig.rightLowerArm.rotation.set(0, 0, 0);
@@ -2074,7 +2088,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 const shadowFocusY = isFreeCam ? freeCamTarget.y : baseVisualY;
                 window.updateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z);
             }
-            renderer.render(scene, camera); updateMinimap();
+            renderer.render(scene, camera); updateMinimap(frameNowMs);
             if (uiPlayerRig && !document.getElementById('view-equip').classList.contains('hidden')) uiRenderer.render(uiScene, uiCamera);
             
             updatePlayerOverheadText();

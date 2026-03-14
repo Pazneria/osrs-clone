@@ -5,6 +5,7 @@ import type {
   MerchantProgressState,
   PlayerUnlockFlags
 } from "../contracts/session";
+import { createDefaultPlayerCombatState } from "../combat/content";
 
 function cloneUnlockFlags(defaultUnlockFlags: PlayerUnlockFlags): PlayerUnlockFlags {
   return { ...defaultUnlockFlags };
@@ -33,6 +34,7 @@ export function createDefaultPlayerState(
   defaultSpawn: Point3,
   defaultUnlockFlags: PlayerUnlockFlags
 ): GameSessionPlayerState {
+  const combatDefaults = createDefaultPlayerCombatState(10);
   return {
     x: defaultSpawn.x,
     y: defaultSpawn.y,
@@ -51,10 +53,17 @@ export function createDefaultPlayerState(
     turnLock: false,
     actionVisualReady: true,
     actionUntilTick: 0,
-    currentHitpoints: 10,
-    eatingCooldownEndTick: 0,
-    lastAttackTick: -1,
-    lastCastTick: -1,
+    currentHitpoints: combatDefaults.currentHitpoints,
+    eatingCooldownEndTick: combatDefaults.eatingCooldownEndTick,
+    lastAttackTick: combatDefaults.lastAttackTick,
+    lastCastTick: combatDefaults.lastCastTick,
+    remainingAttackCooldown: combatDefaults.remainingAttackCooldown,
+    lockedTargetId: combatDefaults.lockedTargetId,
+    combatTargetKind: combatDefaults.combatTargetKind,
+    selectedMeleeStyle: combatDefaults.selectedMeleeStyle,
+    autoRetaliateEnabled: combatDefaults.autoRetaliateEnabled,
+    inCombat: combatDefaults.inCombat,
+    lastDamagerEnemyId: combatDefaults.lastDamagerEnemyId,
     firemakingTarget: null,
     pendingSkillStart: null,
     unlockFlags: cloneUnlockFlags(defaultUnlockFlags),

@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-13T23:21:45.256Z",
+  "generatedAt": "2026-03-14T01:41:36.293Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "tin_ore",
@@ -97,7 +97,7 @@
     "ashes": {
       "assetId": "ashes",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "bait": {
       "assetId": "raw_shrimp",
@@ -691,11 +691,6 @@
     },
     "oak_shortbow_u": {
       "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
-    },
-    "owie": {
-      "assetId": "ashes",
       "status": "todo",
       "treatment": "shared"
     },

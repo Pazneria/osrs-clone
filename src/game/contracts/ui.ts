@@ -1,3 +1,5 @@
+import type { CombatItemProfile } from "./combat";
+
 export interface UiItemStats {
   atk?: number;
   def?: number;
@@ -12,6 +14,8 @@ export interface UiItemData {
   stackable: boolean;
   value?: number;
   stats?: UiItemStats;
+  combat?: CombatItemProfile;
+  requiredAttackLevel?: number;
   [key: string]: unknown;
 }
 

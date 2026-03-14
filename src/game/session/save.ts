@@ -62,6 +62,15 @@ export function buildProgressSavePayload(options: {
         targetRotation: Number.isFinite(session.player.targetRotation) ? session.player.targetRotation : 0,
         currentHitpoints: Number.isFinite(session.player.currentHitpoints) ? Math.floor(session.player.currentHitpoints) : 10,
         eatingCooldownEndTick: Number.isFinite(session.player.eatingCooldownEndTick) ? Math.floor(session.player.eatingCooldownEndTick) : 0,
+        remainingAttackCooldown: Number.isFinite(session.player.remainingAttackCooldown) ? Math.floor(session.player.remainingAttackCooldown) : 0,
+        lockedTargetId: typeof session.player.lockedTargetId === "string" ? session.player.lockedTargetId : null,
+        combatTargetKind: session.player.combatTargetKind === "enemy" ? "enemy" : null,
+        selectedMeleeStyle: session.player.selectedMeleeStyle === "strength" || session.player.selectedMeleeStyle === "defense"
+          ? session.player.selectedMeleeStyle
+          : "attack",
+        autoRetaliateEnabled: session.player.autoRetaliateEnabled !== false,
+        inCombat: !!session.player.inCombat,
+        lastDamagerEnemyId: typeof session.player.lastDamagerEnemyId === "string" ? session.player.lastDamagerEnemyId : null,
         unlockFlags: cloneUnlockFlags(session.player.unlockFlags),
         merchantProgress: cloneMerchantProgress(session.player.merchantProgress)
       },

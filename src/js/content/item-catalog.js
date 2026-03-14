@@ -141,15 +141,6 @@
             defaultAction: 'Drop',
             icon: { kind: 'pixel', assetId: 'coins' }
         },
-        owie: {
-            name: 'Owie',
-            type: 'tool',
-            value: 1,
-            stackable: false,
-            actions: ['Use', 'Drop'],
-            defaultAction: 'Use',
-            icon: { kind: 'pixel', assetId: 'ashes' }
-        },
         tinderbox: {
             name: 'Tinderbox',
             type: 'tool',
@@ -1473,6 +1464,155 @@
     Object.assign(ITEM_DEFS, createSmithingItemDefs());
     Object.assign(ITEM_DEFS, createCraftingAssemblyItemDefs());
 
+    function createMeleeCombatProfile(options) {
+        const accuracyBonus = Number.isFinite(options && options.meleeAccuracyBonus) ? Math.floor(options.meleeAccuracyBonus) : 0;
+        const strengthBonus = Number.isFinite(options && options.meleeStrengthBonus) ? Math.floor(options.meleeStrengthBonus) : 0;
+        const meleeDefenseBonus = Number.isFinite(options && options.meleeDefenseBonus) ? Math.floor(options.meleeDefenseBonus) : 0;
+        const rangedDefenseBonus = Number.isFinite(options && options.rangedDefenseBonus) ? Math.floor(options.rangedDefenseBonus) : meleeDefenseBonus;
+        const magicDefenseBonus = Number.isFinite(options && options.magicDefenseBonus) ? Math.floor(options.magicDefenseBonus) : meleeDefenseBonus;
+        return {
+            attackProfile: {
+                styleFamily: 'melee',
+                damageType: 'melee',
+                range: Number.isFinite(options && options.range) ? Math.max(1, Math.floor(options.range)) : 1,
+                tickCycle: Number.isFinite(options && options.tickCycle) ? Math.max(1, Math.floor(options.tickCycle)) : 5,
+                projectile: false,
+                ammoUse: false,
+                familyTag: typeof options.familyTag === 'string' ? options.familyTag : null
+            },
+            bonuses: {
+                meleeAccuracyBonus: accuracyBonus,
+                meleeStrengthBonus: strengthBonus,
+                meleeDefenseBonus: meleeDefenseBonus,
+                rangedDefenseBonus: rangedDefenseBonus,
+                magicDefenseBonus: magicDefenseBonus
+            },
+            requiredAttackLevel: Number.isFinite(options && options.requiredAttackLevel)
+                ? Math.max(1, Math.floor(options.requiredAttackLevel))
+                : 1,
+            weaponFamily: typeof options.weaponFamily === 'string' ? options.weaponFamily : null,
+            toolFamily: typeof options.toolFamily === 'string' ? options.toolFamily : null
+        };
+    }
+
+    function cloneCombatProfile(profile) {
+        if (!profile || typeof profile !== 'object') return null;
+        return {
+            attackProfile: Object.assign({}, profile.attackProfile || {}),
+            bonuses: Object.assign({}, profile.bonuses || {}),
+            requiredAttackLevel: Number.isFinite(profile.requiredAttackLevel) ? Math.floor(profile.requiredAttackLevel) : 1,
+            weaponFamily: typeof profile.weaponFamily === 'string' ? profile.weaponFamily : null,
+            toolFamily: typeof profile.toolFamily === 'string' ? profile.toolFamily : null
+        };
+    }
+
+    function applyCombatProfiles(itemDefs) {
+        if (!itemDefs || typeof itemDefs !== 'object') return;
+
+        const weaponRows = {
+            bronze_sword: { meleeAccuracyBonus: 4, meleeStrengthBonus: 4, tickCycle: 4, requiredAttackLevel: 1, weaponFamily: 'sword', familyTag: 'sword' },
+            iron_sword: { meleeAccuracyBonus: 6, meleeStrengthBonus: 6, tickCycle: 4, requiredAttackLevel: 1, weaponFamily: 'sword', familyTag: 'sword' },
+            steel_sword: { meleeAccuracyBonus: 10, meleeStrengthBonus: 10, tickCycle: 4, requiredAttackLevel: 10, weaponFamily: 'sword', familyTag: 'sword' },
+            mithril_sword: { meleeAccuracyBonus: 15, meleeStrengthBonus: 15, tickCycle: 4, requiredAttackLevel: 20, weaponFamily: 'sword', familyTag: 'sword' },
+            adamant_sword: { meleeAccuracyBonus: 21, meleeStrengthBonus: 21, tickCycle: 4, requiredAttackLevel: 30, weaponFamily: 'sword', familyTag: 'sword' },
+            rune_sword: { meleeAccuracyBonus: 28, meleeStrengthBonus: 28, tickCycle: 4, requiredAttackLevel: 40, weaponFamily: 'sword', familyTag: 'sword' },
+            bronze_axe: { meleeAccuracyBonus: 4, meleeStrengthBonus: 2, tickCycle: 5, requiredAttackLevel: 1, toolFamily: 'axe', familyTag: 'axe' },
+            iron_axe: { meleeAccuracyBonus: 6, meleeStrengthBonus: 3, tickCycle: 5, requiredAttackLevel: 1, toolFamily: 'axe', familyTag: 'axe' },
+            steel_axe: { meleeAccuracyBonus: 10, meleeStrengthBonus: 5, tickCycle: 5, requiredAttackLevel: 10, toolFamily: 'axe', familyTag: 'axe' },
+            mithril_axe: { meleeAccuracyBonus: 15, meleeStrengthBonus: 7, tickCycle: 5, requiredAttackLevel: 20, toolFamily: 'axe', familyTag: 'axe' },
+            adamant_axe: { meleeAccuracyBonus: 21, meleeStrengthBonus: 10, tickCycle: 5, requiredAttackLevel: 30, toolFamily: 'axe', familyTag: 'axe' },
+            rune_axe: { meleeAccuracyBonus: 28, meleeStrengthBonus: 14, tickCycle: 5, requiredAttackLevel: 40, toolFamily: 'axe', familyTag: 'axe' },
+            bronze_pickaxe: { meleeAccuracyBonus: 4, meleeStrengthBonus: 2, tickCycle: 5, requiredAttackLevel: 1, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
+            iron_pickaxe: { meleeAccuracyBonus: 6, meleeStrengthBonus: 3, tickCycle: 5, requiredAttackLevel: 1, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
+            steel_pickaxe: { meleeAccuracyBonus: 10, meleeStrengthBonus: 5, tickCycle: 5, requiredAttackLevel: 10, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
+            mithril_pickaxe: { meleeAccuracyBonus: 15, meleeStrengthBonus: 7, tickCycle: 5, requiredAttackLevel: 20, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
+            adamant_pickaxe: { meleeAccuracyBonus: 21, meleeStrengthBonus: 10, tickCycle: 5, requiredAttackLevel: 30, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
+            rune_pickaxe: { meleeAccuracyBonus: 28, meleeStrengthBonus: 14, tickCycle: 5, requiredAttackLevel: 40, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
+            fishing_rod: { meleeAccuracyBonus: 8, meleeStrengthBonus: 4, tickCycle: 5, requiredAttackLevel: 10, toolFamily: 'fishing_rod', familyTag: 'fishing_rod' },
+            harpoon: { meleeAccuracyBonus: 18, meleeStrengthBonus: 9, tickCycle: 5, requiredAttackLevel: 30, toolFamily: 'harpoon', familyTag: 'harpoon' },
+            rune_harpoon: { meleeAccuracyBonus: 24, meleeStrengthBonus: 12, tickCycle: 5, requiredAttackLevel: 40, toolFamily: 'harpoon', familyTag: 'harpoon' }
+        };
+
+        const armorRows = {
+            bronze_boots: 1,
+            bronze_helmet: 3,
+            bronze_shield: 4,
+            bronze_platelegs: 5,
+            bronze_platebody: 7,
+            iron_boots: 2,
+            iron_helmet: 5,
+            iron_shield: 6,
+            iron_platelegs: 8,
+            iron_platebody: 10,
+            steel_boots: 3,
+            steel_helmet: 8,
+            steel_shield: 10,
+            steel_platelegs: 12,
+            steel_platebody: 15,
+            mithril_boots: 5,
+            mithril_helmet: 12,
+            mithril_shield: 15,
+            mithril_platelegs: 18,
+            mithril_platebody: 22,
+            adamant_boots: 7,
+            adamant_helmet: 17,
+            adamant_shield: 21,
+            adamant_platelegs: 25,
+            adamant_platebody: 30,
+            rune_boots: 10,
+            rune_helmet: 24,
+            rune_shield: 28,
+            rune_platelegs: 34,
+            rune_platebody: 40
+        };
+
+        const weaponIds = Object.keys(weaponRows);
+        for (let i = 0; i < weaponIds.length; i++) {
+            const itemId = weaponIds[i];
+            const def = itemDefs[itemId];
+            if (!def) continue;
+            const row = weaponRows[itemId];
+            def.combat = createMeleeCombatProfile(row);
+            def.requiredAttackLevel = def.combat.requiredAttackLevel;
+            def.stats = {
+                atk: row.meleeAccuracyBonus,
+                def: 0,
+                str: row.meleeStrengthBonus
+            };
+            if (itemId === 'fishing_rod') {
+                def.type = 'weapon';
+                def.weaponClass = 'fishing_rod';
+                def.actions = ['Equip', 'Use', 'Drop'];
+                def.defaultAction = 'Equip';
+            }
+        }
+
+        const armorIds = Object.keys(armorRows);
+        for (let i = 0; i < armorIds.length; i++) {
+            const itemId = armorIds[i];
+            const def = itemDefs[itemId];
+            if (!def) continue;
+            const defenseBonus = armorRows[itemId];
+            def.combat = createMeleeCombatProfile({
+                meleeAccuracyBonus: 0,
+                meleeStrengthBonus: 0,
+                meleeDefenseBonus: defenseBonus,
+                rangedDefenseBonus: defenseBonus,
+                magicDefenseBonus: defenseBonus,
+                tickCycle: 5,
+                range: 1,
+                familyTag: 'armor'
+            });
+            def.stats = {
+                atk: 0,
+                def: defenseBonus,
+                str: 0
+            };
+        }
+    }
+
+    applyCombatProfiles(ITEM_DEFS);
+
     function resolveIcon(def, makeMissingIconSprite, makeIconFromImage, assetVersionTag) {
         if (!def || !def.icon) return '';
         if (def.icon.kind === 'pixel') {
@@ -1505,6 +1645,8 @@
             if (Number.isFinite(def.toolTier)) db[id].toolTier = def.toolTier;
             if (Number.isFinite(def.speedBonusTicks)) db[id].speedBonusTicks = def.speedBonusTicks;
             if (def.stats) db[id].stats = Object.assign({}, def.stats);
+            if (def.combat) db[id].combat = cloneCombatProfile(def.combat);
+            if (Number.isFinite(def.requiredAttackLevel)) db[id].requiredAttackLevel = Math.max(1, Math.floor(def.requiredAttackLevel));
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;
             if (def.burnResultId) db[id].burnResultId = def.burnResultId;
             if (Number.isFinite(def.burnChance)) db[id].burnChance = def.burnChance;

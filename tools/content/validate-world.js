@@ -233,9 +233,16 @@ function run() {
   console.log(`Validated world content: ${summaryText}.`);
 }
 
-try {
-  run();
-} catch (error) {
-  console.error(error.message);
-  process.exit(1);
+if (require.main === module) {
+  try {
+    run();
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
 }
+
+module.exports = {
+  validateWorld,
+  run
+};

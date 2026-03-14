@@ -856,8 +856,8 @@
         function updateStats() {
             const uiDomainRuntime = window.UiDomainRuntime || null;
             const statsViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatsViewModel === 'function'
-                ? uiDomainRuntime.buildCombatStatsViewModel({ baseStats, equipment })
-                : { attack: baseStats.atk, defense: baseStats.def, strength: baseStats.str };
+                ? uiDomainRuntime.buildCombatStatsViewModel({ playerSkills, equipment, playerState })
+                : { attack: 0, defense: 0, strength: 0 };
             document.getElementById('stat-atk').innerText = statsViewModel.attack;
             document.getElementById('stat-def').innerText = statsViewModel.defense;
             document.getElementById('stat-str').innerText = statsViewModel.strength;
@@ -902,8 +902,6 @@
         function didAttackOrCastThisTick() {
             const attackedThisTick = (
                 Number.isFinite(playerState.lastAttackTick) && playerState.lastAttackTick === currentTick
-            ) || (
-                playerState.action === 'COMBAT: DUMMY' && currentTick % 4 === 0
             );
 
             const actionName = typeof playerState.action === 'string' ? playerState.action.toUpperCase() : '';
@@ -1442,17 +1440,6 @@
                 : null;
             handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData, prefKey));
         }
-        function useOwie() {
-            const currentHitpoints = getCurrentHitpoints();
-            if (currentHitpoints <= 1) {
-                addChatMessage('Owie refuses to hurt you below 1 HP.', 'warn');
-                return;
-            }
-
-            const damageDealt = applyHitpointDamage(1, 1);
-            addChatMessage(`Owie! You take ${damageDealt} damage. (${playerState.currentHitpoints} HP)`, 'warn');
-        }
-
         function eatItem(invIndex) {
             const invSlot = inventory[invIndex];
             if (!invSlot || !invSlot.itemData) return;
@@ -1496,10 +1483,6 @@
             if (!invSlot) return;
             const item = invSlot.itemData;
             if (actionName === 'Use') {
-                if (item.id === 'owie') {
-                    useOwie();
-                    return;
-                }
                 if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUsePouch === 'function') {
                     const pouchUsed = window.RunecraftingPouchRuntime.tryUsePouch(createRunecraftingPouchContext(), item.id);
                     if (pouchUsed) return;
@@ -1520,6 +1503,14 @@
                     ? item.type
                     : ((item && item.weaponClass && Object.prototype.hasOwnProperty.call(equipment, 'weapon')) ? 'weapon' : null);
                 if (!slotName) return;
+                const requiredAttackLevel = Number.isFinite(item.requiredAttackLevel) ? Math.max(1, Math.floor(item.requiredAttackLevel)) : 0;
+                const attackLevel = playerSkills && playerSkills.attack && Number.isFinite(playerSkills.attack.level)
+                    ? Math.max(1, Math.floor(playerSkills.attack.level))
+                    : 1;
+                if (requiredAttackLevel > 0 && attackLevel < requiredAttackLevel) {
+                    addChatMessage(`You need Attack level ${requiredAttackLevel} to equip the ${item.name}.`, 'warn');
+                    return;
+                }
                 const oldItem = equipment[slotName];
                 equipment[slotName] = item; inventory[invIndex] = oldItem ? { itemData: oldItem, amount: 1 } : null;
                 clearSelectedUse(false);
@@ -3033,6 +3024,7 @@
                     appendWaterTileToBuilder(builders[visualBody.id], x, y, surfaceY);
                 }
             }
+            if (typeof window.initCombatWorldState === 'function') window.initCombatWorldState();
         }
 
         function addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
@@ -3155,7 +3147,8 @@
 
             for (let z = 0; z < PLANES; z++) {
                 const planeGroup = new THREE.Group();
-                planeGroup.userData.z = z; 
+                planeGroup.userData.z = z;
+                planeGroup.visible = z <= playerState.z;
                 const Z_OFFSET = z * 3.0;
                 if (z === 0) {
                     const terrainGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
@@ -3407,19 +3400,6 @@
                             dummyTransform.rotation.set(0, 0, 0); dummyTransform.scale.set(1, 1, 1); dummyTransform.updateMatrix();
                             castleData.iTower.setMatrixAt(cIdx, dummyTransform.matrix);
                             castleData.towerMap[cIdx] = { type: 'TOWER', gridX: x, gridY: y, z: z }; cIdx++;
-                        } else if (tile === TileId.DUMMY) { // Dummy
-                            const dummyGroup = new THREE.Group(); dummyGroup.position.set(x, h, y);
-                            const dummyPost = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.0), new THREE.MeshLambertMaterial({color: 0x5c4033})); dummyPost.position.y = 0.5; dummyPost.castShadow = true;
-                            const dummyBody = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), new THREE.MeshLambertMaterial({color: 0xddddaa})); dummyBody.position.y = 1.0; dummyBody.castShadow = true;
-                            const dummyHitbox = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 1), new THREE.MeshBasicMaterial({visible: false})); dummyHitbox.position.y = 0.75;
-                            dummyGroup.add(dummyPost, dummyBody, dummyHitbox);
-                            dummyGroup.children.forEach(c => { c.userData = { type: 'DUMMY', gridX: x, gridY: y, z: z }; environmentMeshes.push(c); });
-                            planeGroup.add(dummyGroup);
-                            
-                            // Explicitly build floor beneath Dummy
-                            const floorHeight = heightMap[z][y][x];
-                            const floorMesh = createTopAnchoredFloorMesh(sharedMaterials.floor7, x, y, Z_OFFSET, floorHeight, z);
-                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                         } else if (tile === TileId.SHOP_COUNTER) { // Shop Counter
                             const counterGroup = new THREE.Group(); counterGroup.position.set(x, h, y);
                             
@@ -3783,6 +3763,17 @@
             chunkGroups[`${cx},${cy}`] = group;
         }
 
+        function setLoadedChunkPlaneVisibility(maxVisiblePlane) {
+            const visiblePlane = Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0;
+            Object.values(chunkGroups).forEach((group) => {
+                if (!group || !Array.isArray(group.children)) return;
+                group.children.forEach((planeGroup) => {
+                    if (!planeGroup || !planeGroup.userData || planeGroup.userData.z === undefined) return;
+                    planeGroup.visible = planeGroup.userData.z <= visiblePlane;
+                });
+            });
+        }
+
         function unloadChunk(key) {
             const group = chunkGroups[key];
             if (group) {
@@ -3838,6 +3829,8 @@
                 initLogicalMap();
                 return;
             }
+
+            if (typeof window.clearCombatEnemyRenderers === 'function') window.clearCombatEnemyRenderers();
 
             Array.from(loadedChunks).forEach((chunkKey) => unloadChunk(chunkKey));
             loadedChunks.clear();
@@ -3900,7 +3893,6 @@
                         else if (tile === TileId.FLOOR_STONE || tile === TileId.STAIRS_RAMP || tile === TileId.SOLID_NPC) offscreenMapCtx.fillStyle = '#666666'; 
                         else if (tile === TileId.FLOOR_BRICK) offscreenMapCtx.fillStyle = '#800000'; 
                         else if (tile === TileId.BANK_BOOTH) offscreenMapCtx.fillStyle = '#d4af37'; 
-                        else if (tile === TileId.DUMMY) offscreenMapCtx.fillStyle = '#ff0000'; 
                         else if (tile === TileId.WALL || tile === TileId.TOWER) offscreenMapCtx.fillStyle = '#4b5563'; 
                         else if (tile === TileId.STAIRS_UP) offscreenMapCtx.fillStyle = '#aaaaaa'; 
                         else if (tile === TileId.STAIRS_DOWN) offscreenMapCtx.fillStyle = '#444444'; 
@@ -4393,7 +4385,14 @@
             minimapCanvas.addEventListener('mouseleave', () => { isMinimapDragging = false; });
         }
 
-        function updateMinimap() {
+        function updateMinimap(frameNowMs = performance.now(), forceRender = false) {
+            const worldMapPanel = document.getElementById('world-map-panel');
+            const worldMapOpen = !!(worldMapPanel && !worldMapPanel.classList.contains('hidden'));
+            const interactiveRender = forceRender || isMinimapDragging || worldMapState.isDragging || worldMapOpen;
+            const resolvedFrameNowMs = Number.isFinite(frameNowMs) ? frameNowMs : performance.now();
+            if (!interactiveRender && (resolvedFrameNowMs - lastMinimapRenderFrameMs) < MINIMAP_RENDER_INTERVAL_MS) return;
+            lastMinimapRenderFrameMs = resolvedFrameNowMs;
+
             const canvas = document.getElementById('minimap'); const ctx = canvas.getContext('2d');
             const renderSnapshot = buildHudRenderSnapshot();
             const renderRuntime = getRenderRuntime();
@@ -4530,6 +4529,7 @@
         window.updateGroundItems = updateGroundItems;
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateMinimap = updateMinimap;
+        window.setLoadedChunkPlaneVisibility = setLoadedChunkPlaneVisibility;
         window.updateWorldMapPanel = updateWorldMapPanel;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;
