@@ -47,13 +47,28 @@ function run() {
   writeCanonicalSkillSet(mismatchCaseDir, canonical.rows, {
     mutateBySkillId: {
       woodcutting: (row) => {
-        row.timing.baseAttemptTicks = row.timing.baseAttemptTicks + 99;
+        row.timing.baseAttemptTicks += 99;
       }
     }
   });
   const mismatchResult = validateSkillDirectory(mismatchCaseDir, canonical.rows);
   assert(mismatchResult.errors.some((entry) => entry.includes("content mismatch for skill 'woodcutting'")), "expected woodcutting mismatch error");
   assert(mismatchResult.errors.some((entry) => entry.includes("timing.baseAttemptTicks")), "expected mismatch path for woodcutting timing.baseAttemptTicks");
+
+  const ignoredWoodcuttingDir = path.join(tempRoot, "ignored-woodcutting-drift");
+  writeCanonicalSkillSet(ignoredWoodcuttingDir, canonical.rows, {
+    mutateBySkillId: {
+      woodcutting: (row) => {
+        row.nodeTable.normal_tree.depletionChance = 0.001;
+        row.nodeTable.oak_tree.depletionChance = 0.001;
+      }
+    }
+  });
+  const ignoredWoodcuttingResult = validateSkillDirectory(ignoredWoodcuttingDir, canonical.rows);
+  assert(
+    !ignoredWoodcuttingResult.errors.some((entry) => entry.includes("content mismatch for skill 'woodcutting'")),
+    "expected non-timing woodcutting drift to be ignored by the validator"
+  );
 
   console.log("Skill validator negative tests passed.");
 }

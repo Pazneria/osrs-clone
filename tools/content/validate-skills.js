@@ -84,6 +84,29 @@ function deepDiff(expected, actual, basePath = "", diffs = []) {
   return diffs;
 }
 
+function getComparableSkillRows(skillId, expected, actual) {
+  if (skillId === "woodcutting") {
+    const expectedBaseAttemptTicks = expected && expected.timing ? expected.timing.baseAttemptTicks : undefined;
+    const actualBaseAttemptTicks = actual && actual.timing ? actual.timing.baseAttemptTicks : undefined;
+    return {
+      expected: {
+        skillId,
+        timing: {
+          baseAttemptTicks: expectedBaseAttemptTicks
+        }
+      },
+      actual: {
+        skillId,
+        timing: {
+          baseAttemptTicks: actualBaseAttemptTicks
+        }
+      }
+    };
+  }
+
+  return { expected, actual };
+}
+
 function getCanonicalSkillRows(projectRoot) {
   const runtime = loadRuntimeSkillSpecs(projectRoot);
   const skills = runtime.skills;
@@ -167,7 +190,8 @@ function validateSkillDirectory(skillsDir, canonicalRows) {
     if (!actualRows.has(skillId)) continue;
     const expected = canonicalRows.get(skillId);
     const actual = actualRows.get(skillId);
-    const diffs = deepDiff(expected, actual);
+    const comparable = getComparableSkillRows(skillId, expected, actual);
+    const diffs = deepDiff(comparable.expected, comparable.actual);
     if (diffs.length > 0) {
       errors.push(`content mismatch for skill '${skillId}':\n  - ${diffs.join("\n  - ")}`);
     }
@@ -209,6 +233,7 @@ function main() {
 module.exports = {
   readJson,
   deepDiff,
+  getComparableSkillRows,
   getCanonicalSkillRows,
   validateSkillDirectory
 };

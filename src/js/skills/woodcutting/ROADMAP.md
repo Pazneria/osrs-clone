@@ -69,7 +69,7 @@ The player cuts raw materials that feed into other systems, especially firemakin
 | Constant              | Value |
 | --------------------- | ----- |
 | Tick Duration Seconds | 0.6   |
-| Base Attempt Ticks    | 4     |
+| Base Attempt Ticks    | 6     |
 | Minimum Attempt Ticks | 1     |
 
 ### Tree Stats

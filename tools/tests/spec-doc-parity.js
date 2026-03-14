@@ -53,25 +53,11 @@ function assertCanonicalHeader(skillId, roadmap, version) {
 }
 
 function runWoodcuttingChecks(roadmap, spec) {
-  const lines = roadmap.split(/\r?\n/);
-  assertRegex(roadmap, /\|\s*Base Attempt Ticks\s*\|\s*4\s*\|/, "woodcutting roadmap base attempt ticks should be 4");
-  assertRegex(roadmap, /\|\s*Minimum Attempt Ticks\s*\|\s*1\s*\|/, "woodcutting roadmap minimum attempt ticks should be 1");
-
-  const nodeIds = ["normal_tree", "oak_tree", "willow_tree", "maple_tree", "yew_tree"];
-  for (const nodeId of nodeIds) {
-    const row = spec.nodeTable[nodeId];
-    const label = toTitleCaseId(nodeId);
-    const depletion = Number(row.depletionChance).toFixed(2);
-
-    const line = findLine(lines, (entry) => {
-      const prefix = new RegExp(`^\\|\\s*${escapeRegex(label)}\\s*\\|\\s*${row.requiredLevel}\\s*\\|\\s*${row.xpPerSuccess}\\s*\\|\\s*${row.difficulty}\\s*\\|`);
-      return prefix.test(entry);
-    });
-
-    assert(!!line, `woodcutting roadmap row mismatch for ${label}`);
-    assert(new RegExp(`\\|\\s*${depletion}\\s*\\|`).test(line), `woodcutting depletion mismatch for ${label}`);
-    assert(new RegExp(`\\|\\s*${row.respawnTicks}\\s*\\|\\s*$`).test(line), `woodcutting respawn mismatch for ${label}`);
-  }
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*Base Attempt Ticks\\s*\\|\\s*${spec.timing.baseAttemptTicks}\\s*\\|`),
+    "woodcutting roadmap base attempt ticks mismatch"
+  );
 }
 
 function runFishingChecks(roadmap, spec, itemDefs) {

@@ -154,7 +154,7 @@
   },
   "skillId": "woodcutting",
   "timing": {
-    "baseAttemptTicks": 4,
+    "baseAttemptTicks": 6,
     "minimumAttemptTicks": 1
   }
 }
