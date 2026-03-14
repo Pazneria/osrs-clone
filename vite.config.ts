@@ -5,6 +5,7 @@ export default defineConfig(({ mode }) => {
   const devPort = Number(env.PORT || 5502);
 
   return {
+    base: "./",
     server: {
       port: Number.isFinite(devPort) ? devPort : 5502,
       strictPort: false,
