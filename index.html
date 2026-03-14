@@ -253,6 +253,13 @@
         </div>
         <!-- Chat Box -->
         <div id="chat-box" class="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 w-[560px] max-w-[calc(100vw-2rem)] bg-[#1a1511]/95 border-2 border-[#5d5447] rounded shadow-[0_10px_30px_rgba(0,0,0,0.8)] overflow-hidden">
+            <div class="border-b border-[#3e3529] bg-[#201a15] px-2 py-1 flex items-center justify-between">
+                <span class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Chat</span>
+                <div class="flex items-center gap-1">
+                    <button id="chat-copy-btn" type="button" class="chat-control-btn text-[10px] px-2 py-0.5 uppercase tracking-wide text-[#d6c39a] bg-[#2a221c] border border-[#3e3529] hover:text-white hover:border-[#c8aa6e] transition-colors">Copy</button>
+                    <button id="chat-expand-toggle" type="button" class="chat-control-btn text-[10px] px-2 py-0.5 uppercase tracking-wide text-[#d6c39a] bg-[#2a221c] border border-[#3e3529] hover:text-white hover:border-[#c8aa6e] transition-colors" aria-expanded="false">Expand</button>
+                </div>
+            </div>
             <div id="chat-log" class="h-28 px-2 py-1.5 overflow-y-auto custom-scrollbar text-[12px] leading-5"></div>
             <div class="border-t border-[#3e3529] bg-[#14100d] px-2 py-1 flex items-center gap-2">
                 <span class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">All</span>

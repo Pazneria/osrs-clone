@@ -90,35 +90,36 @@ export function buildCombatStatusViewModel(options: {
     : 0;
   const target = normalizeTargetSnapshot(options.target);
   const inCombat = !!options.inCombat;
+  const combatActive = inCombat;
 
   let bannerText = "Combat Status";
-  if (target && inCombat) bannerText = "In Combat";
-  else if (target) bannerText = "Tracking Target";
-  else if (inCombat || playerRemainingAttackCooldown > 0) bannerText = "Combat Recovery";
+  if (target && combatActive) bannerText = "In Combat";
+  else if (combatActive) bannerText = "Combat Recovery";
 
-  const rangeText = !target
+  const visibleTarget = combatActive ? target : null;
+  const rangeText = !visibleTarget
     ? "No target"
-    : (target.inMeleeRange
+    : (visibleTarget.inMeleeRange
       ? "In melee range"
-      : (target.distance === null
+      : (visibleTarget.distance === null
         ? "Range unknown"
-        : `${target.distance} tile${target.distance === 1 ? "" : "s"} away`));
+        : `${visibleTarget.distance} tile${visibleTarget.distance === 1 ? "" : "s"} away`));
 
   return {
-    visible: inCombat || playerRemainingAttackCooldown > 0 || !!target,
+    visible: combatActive,
     bannerText,
     playerHitpointsText: `${playerCurrentHitpoints} / ${playerMaxHitpoints}`,
     playerHitpointsWidth: clampPercent(playerCurrentHitpoints, playerMaxHitpoints),
     playerCooldownText: formatTickLabel(playerRemainingAttackCooldown),
     playerCooldownReady: playerRemainingAttackCooldown === 0,
-    targetVisible: !!target,
-    targetName: target ? target.label : "No target",
-    targetFocusLabel: target ? target.focusLabel || "Target" : "Target",
-    targetHitpointsText: target ? `${target.currentHealth} / ${target.maxHealth}` : "-- / --",
-    targetHitpointsWidth: target ? clampPercent(target.currentHealth, target.maxHealth) : "0%",
-    targetStateText: target ? formatEnemyStateLabel(target.state) : "No target",
-    targetCooldownText: target ? formatTickLabel(target.remainingAttackCooldown) : "Ready",
-    targetCooldownReady: !target || target.remainingAttackCooldown === 0,
+    targetVisible: !!visibleTarget,
+    targetName: visibleTarget ? visibleTarget.label : "No target",
+    targetFocusLabel: visibleTarget ? visibleTarget.focusLabel || "Target" : "Target",
+    targetHitpointsText: visibleTarget ? `${visibleTarget.currentHealth} / ${visibleTarget.maxHealth}` : "-- / --",
+    targetHitpointsWidth: visibleTarget ? clampPercent(visibleTarget.currentHealth, visibleTarget.maxHealth) : "0%",
+    targetStateText: visibleTarget ? formatEnemyStateLabel(visibleTarget.state) : "No target",
+    targetCooldownText: visibleTarget ? formatTickLabel(visibleTarget.remainingAttackCooldown) : "Ready",
+    targetCooldownReady: !visibleTarget || visibleTarget.remainingAttackCooldown === 0,
     rangeText
   };
 }

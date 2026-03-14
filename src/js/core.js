@@ -127,9 +127,11 @@
         if (gameSessionRuntime && typeof gameSessionRuntime.bindWindowQaBooleanFlag === 'function') {
             gameSessionRuntime.bindWindowQaBooleanFlag('QA_RC_DEBUG', 'runecraftingDebug', false);
             gameSessionRuntime.bindWindowQaBooleanFlag('DEBUG_COOKING_USE', 'cookingUseDebug', false);
+            gameSessionRuntime.bindWindowQaBooleanFlag('QA_COMBAT_DEBUG', 'combatDebug', false);
         } else {
             if (typeof window.QA_RC_DEBUG === 'undefined') window.QA_RC_DEBUG = false;
             if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
+            if (typeof window.QA_COMBAT_DEBUG === 'undefined') window.QA_COMBAT_DEBUG = false;
         }
 
         function createFallbackCombatPlayerState(maxHitpoints = 10) {
@@ -173,6 +175,172 @@
         window.isTreeTileId = isTreeTileId;
         window.isWalkableTileId = isWalkableTileId;
         window.isDoorTileId = isDoorTileId;
+
+        function getQaCombatDebugSnapshot() {
+            const hudSnapshot = (typeof window.getCombatHudSnapshot === 'function')
+                ? window.getCombatHudSnapshot()
+                : null;
+            const lockedTargetId = playerState && playerState.lockedTargetId
+                ? String(playerState.lockedTargetId)
+                : '';
+            const lockedEnemy = (lockedTargetId && typeof window.getCombatEnemyState === 'function')
+                ? window.getCombatEnemyState(lockedTargetId)
+                : null;
+
+            return {
+                tick: Number.isFinite(currentTick) ? currentTick : 0,
+                player: {
+                    x: Number.isFinite(playerState && playerState.x) ? playerState.x : 0,
+                    y: Number.isFinite(playerState && playerState.y) ? playerState.y : 0,
+                    z: Number.isFinite(playerState && playerState.z) ? playerState.z : 0,
+                    targetX: Number.isFinite(playerState && playerState.targetX) ? playerState.targetX : 0,
+                    targetY: Number.isFinite(playerState && playerState.targetY) ? playerState.targetY : 0,
+                    action: String((playerState && playerState.action) || 'IDLE'),
+                    inCombat: !!(playerState && playerState.inCombat),
+                    remainingAttackCooldown: Number.isFinite(playerState && playerState.remainingAttackCooldown)
+                        ? Math.max(0, Math.floor(playerState.remainingAttackCooldown))
+                        : 0,
+                    lockedTargetId: lockedTargetId || null,
+                    targetObj: (playerState && playerState.targetObj) || null,
+                    pathLength: Array.isArray(playerState && playerState.path) ? playerState.path.length : 0,
+                    lastAttackTick: Number.isFinite(playerState && playerState.lastAttackTick) ? playerState.lastAttackTick : null,
+                    lastDamagerEnemyId: (playerState && playerState.lastDamagerEnemyId) || null,
+                    lastClearReason: (typeof window.__qaCombatDebugLastClearReason === 'string' && window.__qaCombatDebugLastClearReason)
+                        ? window.__qaCombatDebugLastClearReason
+                        : null,
+                    lastClearTick: Number.isFinite(window.__qaCombatDebugLastClearTick)
+                        ? Math.floor(window.__qaCombatDebugLastClearTick)
+                        : null
+                },
+                enemy: lockedEnemy ? {
+                    runtimeId: String(lockedEnemy.runtimeId || ''),
+                    enemyId: String(lockedEnemy.enemyId || ''),
+                    x: Number.isFinite(lockedEnemy.x) ? lockedEnemy.x : 0,
+                    y: Number.isFinite(lockedEnemy.y) ? lockedEnemy.y : 0,
+                    z: Number.isFinite(lockedEnemy.z) ? lockedEnemy.z : 0,
+                    state: String(lockedEnemy.currentState || ''),
+                    currentHealth: Number.isFinite(lockedEnemy.currentHealth) ? lockedEnemy.currentHealth : null,
+                    remainingAttackCooldown: Number.isFinite(lockedEnemy.remainingAttackCooldown)
+                        ? Math.max(0, Math.floor(lockedEnemy.remainingAttackCooldown))
+                        : 0
+                } : null,
+                hud: hudSnapshot && typeof hudSnapshot === 'object'
+                    ? {
+                        inCombat: !!hudSnapshot.inCombat,
+                        playerRemainingAttackCooldown: Number.isFinite(hudSnapshot.playerRemainingAttackCooldown)
+                            ? Math.max(0, Math.floor(hudSnapshot.playerRemainingAttackCooldown))
+                            : 0,
+                        target: hudSnapshot.target && typeof hudSnapshot.target === 'object'
+                            ? {
+                                label: String(hudSnapshot.target.label || ''),
+                                state: String(hudSnapshot.target.state || ''),
+                                distance: Number.isFinite(hudSnapshot.target.distance) ? hudSnapshot.target.distance : null,
+                                inMeleeRange: !!hudSnapshot.target.inMeleeRange,
+                                currentHealth: Number.isFinite(hudSnapshot.target.currentHealth) ? hudSnapshot.target.currentHealth : null,
+                                maxHealth: Number.isFinite(hudSnapshot.target.maxHealth) ? hudSnapshot.target.maxHealth : null,
+                                remainingAttackCooldown: Number.isFinite(hudSnapshot.target.remainingAttackCooldown)
+                                    ? Math.max(0, Math.floor(hudSnapshot.target.remainingAttackCooldown))
+                                    : 0
+                            }
+                            : null
+                    }
+                    : null
+            };
+        }
+
+        function getQaCombatDebugSignature(snapshot = null) {
+            const state = snapshot && typeof snapshot === 'object' ? snapshot : getQaCombatDebugSnapshot();
+            const player = state.player || {};
+            const enemy = state.enemy || null;
+            const hudTarget = state.hud && state.hud.target ? state.hud.target : null;
+            const hud = state.hud || null;
+            return [
+                player.action || 'IDLE',
+                player.inCombat ? 1 : 0,
+                Number.isFinite(player.remainingAttackCooldown) ? player.remainingAttackCooldown : 0,
+                player.lockedTargetId || '-',
+                player.targetObj || '-',
+                Number.isFinite(player.lastAttackTick) ? player.lastAttackTick : -1,
+                player.lastDamagerEnemyId || '-',
+                player.lastClearReason || '-',
+                Number.isFinite(player.lastClearTick) ? player.lastClearTick : -1,
+                enemy
+                    ? `${enemy.runtimeId || '-'}:${enemy.state || '-'}:${Number.isFinite(enemy.currentHealth) ? enemy.currentHealth : '-'}:${enemy.remainingAttackCooldown || 0}`
+                    : 'none',
+                hudTarget
+                    ? `${hudTarget.state || '-'}:${Number.isFinite(hudTarget.currentHealth) ? hudTarget.currentHealth : '-'}:${Number.isFinite(hudTarget.maxHealth) ? hudTarget.maxHealth : '-'}:${hudTarget.inMeleeRange ? 1 : 0}:${hudTarget.remainingAttackCooldown || 0}`
+                    : 'none',
+                hud ? (hud.inCombat ? 1 : 0) : -1
+            ].join('|');
+        }
+
+        function emitQaCombatDebugClearHistory() {
+            const clearEvents = Array.isArray(window.__qaCombatDebugClearEvents) ? window.__qaCombatDebugClearEvents : [];
+            if (clearEvents.length === 0) {
+                addChatMessage('[QA combatdbg] clear history is empty.', 'info');
+                return;
+            }
+            addChatMessage(`[QA combatdbg] clear history count=${clearEvents.length}`, 'info');
+            const startIndex = Math.max(0, clearEvents.length - 12);
+            for (let i = startIndex; i < clearEvents.length; i++) {
+                const event = clearEvents[i] || {};
+                const tickLabel = Number.isFinite(event.tick) ? event.tick : 'none';
+                const reasonLabel = event.reason || 'generic';
+                const blockedLabel = event.blocked ? 'yes' : 'no';
+                const forcedLabel = event.forced ? 'yes' : 'no';
+                const lockLabel = event.lockBeforeClear || 'none';
+                const actionLabel = event.action || 'IDLE';
+                const pathLabel = Number.isFinite(event.pathLength) ? event.pathLength : 0;
+                addChatMessage(
+                    `[QA combatdbg] clear#${i + 1} tick=${tickLabel} reason=${reasonLabel} forced=${forcedLabel} blocked=${blockedLabel} lockBefore=${lockLabel} action=${actionLabel} path=${pathLabel}`,
+                    'info'
+                );
+            }
+        }
+
+        function emitQaCombatDebugSnapshot(reason = 'manual') {
+            const snapshot = getQaCombatDebugSnapshot();
+            const player = snapshot.player || {};
+            const enemy = snapshot.enemy || null;
+            const hud = snapshot.hud || null;
+            const hudTarget = hud && hud.target ? hud.target : null;
+
+            addChatMessage(
+                `[QA combatdbg] reason=${reason} tick=${snapshot.tick} action=${player.action || 'IDLE'} inCombat=${player.inCombat ? 'yes' : 'no'} pCD=${Number.isFinite(player.remainingAttackCooldown) ? player.remainingAttackCooldown : 0} lock=${player.lockedTargetId || 'none'} targetObj=${player.targetObj || 'none'} pos=(${player.x},${player.y},${player.z}) target=(${player.targetX},${player.targetY}) path=${Number.isFinite(player.pathLength) ? player.pathLength : 0} lastAtk=${Number.isFinite(player.lastAttackTick) ? player.lastAttackTick : 'none'} lastDamager=${player.lastDamagerEnemyId || 'none'}`,
+                'info'
+            );
+            const includeClearReason =
+                !!player.lastClearReason
+                && (reason === 'manual' || (Number.isFinite(player.lastClearTick) && player.lastClearTick === snapshot.tick));
+            if (includeClearReason) {
+                addChatMessage(
+                    `[QA combatdbg] clear reason=${player.lastClearReason} atTick=${Number.isFinite(player.lastClearTick) ? player.lastClearTick : 'none'}`,
+                    'info'
+                );
+            }
+            if (enemy) {
+                addChatMessage(
+                    `[QA combatdbg] enemy runtime=${enemy.runtimeId || 'none'} type=${enemy.enemyId || 'none'} state=${enemy.state || 'none'} hp=${Number.isFinite(enemy.currentHealth) ? enemy.currentHealth : 'unknown'} eCD=${Number.isFinite(enemy.remainingAttackCooldown) ? enemy.remainingAttackCooldown : 0} ePos=(${enemy.x},${enemy.y},${enemy.z})`,
+                    'info'
+                );
+            } else {
+                addChatMessage('[QA combatdbg] enemy runtime=none', 'info');
+            }
+            if (hud) {
+                addChatMessage(
+                    `[QA combatdbg] hud inCombat=${hud.inCombat ? 'yes' : 'no'} pCD=${Number.isFinite(hud.playerRemainingAttackCooldown) ? hud.playerRemainingAttackCooldown : 0} hudTarget=${hudTarget ? hudTarget.label : 'none'} hudState=${hudTarget ? hudTarget.state : 'none'} hudHp=${hudTarget && Number.isFinite(hudTarget.currentHealth) ? hudTarget.currentHealth : 'none'}/${hudTarget && Number.isFinite(hudTarget.maxHealth) ? hudTarget.maxHealth : 'none'} dist=${hudTarget && Number.isFinite(hudTarget.distance) ? hudTarget.distance : 'none'} melee=${hudTarget && hudTarget.inMeleeRange ? 'yes' : 'no'} eCD=${hudTarget && Number.isFinite(hudTarget.remainingAttackCooldown) ? hudTarget.remainingAttackCooldown : 'none'}`,
+                    'info'
+                );
+            } else {
+                addChatMessage('[QA combatdbg] hud unavailable', 'warn');
+            }
+            return snapshot;
+        }
+
+        window.getQaCombatDebugSnapshot = getQaCombatDebugSnapshot;
+        window.getQaCombatDebugSignature = getQaCombatDebugSignature;
+        window.emitQaCombatDebugClearHistory = emitQaCombatDebugClearHistory;
+        window.emitQaCombatDebugSnapshot = emitQaCombatDebugSnapshot;
 
         // 3D Array Logic: logicalMap[z][y][x]
         let logicalMap = []; 
@@ -1950,8 +2118,9 @@
             return result;
         };
 
-        // Temporary interaction diagnostics for cooking-use flow.
-        if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false; 
+        // Temporary interaction diagnostics for QA flows.
+        if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
+        if (!gameSessionRuntime && typeof window.QA_COMBAT_DEBUG === 'undefined') window.QA_COMBAT_DEBUG = false;
 
         // UI Elements
         const contextMenuEl = document.getElementById('context-menu');
@@ -2027,7 +2196,7 @@
                 if (e.key === 'Escape') btnCancel.onclick();
             };
         }
-                function addChatMessage(message, type = 'game') {
+        function addChatMessage(message, type = 'game') {
             const logEl = document.getElementById('chat-log');
             if (!logEl) return;
 
@@ -2050,6 +2219,102 @@
             }
 
             logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function getChatLogCopyText() {
+            const logEl = document.getElementById('chat-log');
+            if (!logEl) return '';
+            const lines = Array.from(logEl.children)
+                .map((node) => (node && node.innerText ? node.innerText.trim() : ''))
+                .filter(Boolean);
+            return lines.join('\n');
+        }
+
+        async function copyChatLogTextToClipboard() {
+            const chatText = getChatLogCopyText();
+            if (!chatText) {
+                addChatMessage('Chat log is empty.', 'warn');
+                return false;
+            }
+
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                try {
+                    await navigator.clipboard.writeText(chatText);
+                    addChatMessage(`Copied ${chatText.split('\n').length} chat line(s).`, 'info');
+                    return true;
+                } catch (error) {
+                    // Fall through to legacy copy path.
+                }
+            }
+
+            const fallbackInput = document.createElement('textarea');
+            fallbackInput.value = chatText;
+            fallbackInput.setAttribute('readonly', 'readonly');
+            fallbackInput.style.position = 'fixed';
+            fallbackInput.style.left = '-9999px';
+            fallbackInput.style.opacity = '0';
+            document.body.appendChild(fallbackInput);
+            fallbackInput.focus();
+            fallbackInput.select();
+
+            let copied = false;
+            try {
+                copied = document.execCommand('copy');
+            } catch (error) {
+                copied = false;
+            }
+
+            document.body.removeChild(fallbackInput);
+            if (copied) {
+                addChatMessage(`Copied ${chatText.split('\n').length} chat line(s).`, 'info');
+                return true;
+            }
+
+            addChatMessage('Copy failed. Select chat text and press Ctrl+C.', 'warn');
+            return false;
+        }
+
+        function setChatBoxExpanded(expanded) {
+            const chatBox = document.getElementById('chat-box');
+            const expandBtn = document.getElementById('chat-expand-toggle');
+            if (!chatBox || !expandBtn) return;
+            const shouldExpand = !!expanded;
+            chatBox.classList.toggle('chat-expanded', shouldExpand);
+            expandBtn.innerText = shouldExpand ? 'Collapse' : 'Expand';
+            expandBtn.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
+            try {
+                if (window.localStorage) window.localStorage.setItem('osrsClone.chatExpanded', shouldExpand ? '1' : '0');
+            } catch (error) {
+                // Ignore persistence failures in private mode or restricted contexts.
+            }
+        }
+
+        function initChatControls() {
+            const chatBox = document.getElementById('chat-box');
+            if (!chatBox) return;
+            const copyBtn = document.getElementById('chat-copy-btn');
+            const expandBtn = document.getElementById('chat-expand-toggle');
+
+            let savedExpanded = false;
+            try {
+                savedExpanded = !!(window.localStorage && window.localStorage.getItem('osrsClone.chatExpanded') === '1');
+            } catch (error) {
+                savedExpanded = false;
+            }
+            setChatBoxExpanded(savedExpanded);
+
+            if (copyBtn) {
+                copyBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    void copyChatLogTextToClipboard();
+                });
+            }
+            if (expandBtn) {
+                expandBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    setChatBoxExpanded(!chatBox.classList.contains('chat-expanded'));
+                });
+            }
         }
 
         function showPlayerOverheadText(text, durationMs = 2800) {
@@ -2460,7 +2725,7 @@
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
-                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>', 'info');
+                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
                     addChatMessage(formatQaOpenShopUsage(), 'info');
                     return;
                 }
@@ -2597,6 +2862,42 @@
                     }
                     window.QA_RC_DEBUG = (value === 'on');
                     addChatMessage(`QA rcdebug: ${value}`, 'info');
+                    return;
+                }
+                if (cmd === 'combatdebug') {
+                    const value = String(parts[1] || 'now').toLowerCase();
+                    if (value === 'now') {
+                        if (typeof window.emitQaCombatDebugSnapshot === 'function') {
+                            window.emitQaCombatDebugSnapshot('manual');
+                        } else {
+                            addChatMessage('QA combatdebug unavailable: missing combat snapshot helper.', 'warn');
+                        }
+                        return;
+                    }
+                    if (value === 'clears') {
+                        if (typeof window.emitQaCombatDebugClearHistory === 'function') {
+                            window.emitQaCombatDebugClearHistory();
+                        } else {
+                            addChatMessage('QA combatdebug clear-history unavailable.', 'warn');
+                        }
+                        return;
+                    }
+                    if (value === 'clearreset') {
+                        window.__qaCombatDebugClearEvents = [];
+                        addChatMessage('QA combatdebug clear-history reset.', 'info');
+                        return;
+                    }
+                    if (value !== 'on' && value !== 'off') {
+                        addChatMessage('Usage: /qa combatdebug [on|off|now|clears|clearreset]', 'warn');
+                        return;
+                    }
+                    window.QA_COMBAT_DEBUG = (value === 'on');
+                    window.__qaCombatDebugLastSignature = null;
+                    window.__qaCombatDebugLastEmitTick = null;
+                    addChatMessage(`QA combatdebug: ${value}`, 'info');
+                    if (value === 'on' && typeof window.emitQaCombatDebugSnapshot === 'function') {
+                        window.emitQaCombatDebugSnapshot('watch-on');
+                    }
                     return;
                 }
                 if (cmd === 'shopdiag') {
@@ -2799,6 +3100,7 @@
             if (typeof window.initUIPreview === 'function') window.initUIPreview(); 
             initInventoryUI(); 
             initChatInput();
+            initChatControls();
             if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
             if (typeof initPoseEditor === 'function') initPoseEditor();
             initPlayerEntryFlow(loadProgressResult);

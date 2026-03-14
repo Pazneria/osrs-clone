@@ -801,10 +801,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
         function queueAction(type, gridX, gridY, obj, targetUid = null) {
             cancelManualFiremakingChain();
-            if (type === 'WALK' && typeof window.clearPlayerCombatTarget === 'function') {
-                window.clearPlayerCombatTarget();
-            } else if (type === 'INTERACT' && obj !== 'ENEMY' && typeof window.clearPlayerCombatTarget === 'function') {
-                window.clearPlayerCombatTarget();
+            const hasCombatSelection = !!(
+                playerState.lockedTargetId
+                || playerState.combatTargetKind === 'enemy'
+                || playerState.targetObj === 'ENEMY'
+                || playerState.inCombat
+            );
+            if (type === 'WALK' && hasCombatSelection && typeof window.clearPlayerCombatTarget === 'function') {
+                window.clearPlayerCombatTarget({ force: true, reason: 'queue-walk' });
+            } else if (type === 'INTERACT' && obj !== 'ENEMY' && hasCombatSelection && typeof window.clearPlayerCombatTarget === 'function') {
+                window.clearPlayerCombatTarget({ force: true, reason: 'queue-interact-non-enemy' });
             }
             if (type === 'WALK') setMinimapDestination(gridX, gridY, playerState.z);
             else clearMinimapDestination();
@@ -1063,6 +1069,23 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
 
             if (typeof window.processCombatTick === 'function') window.processCombatTick();
+            if (window.QA_COMBAT_DEBUG
+                && typeof window.getQaCombatDebugSignature === 'function'
+                && typeof window.emitQaCombatDebugSnapshot === 'function') {
+                const combatDebugSignature = window.getQaCombatDebugSignature();
+                if (window.__qaCombatDebugLastSignature !== combatDebugSignature) {
+                    window.__qaCombatDebugLastSignature = combatDebugSignature;
+                    const tickNow = Number.isFinite(currentTick) ? currentTick : null;
+                    const lastEmitTick = Number.isFinite(window.__qaCombatDebugLastEmitTick)
+                        ? window.__qaCombatDebugLastEmitTick
+                        : null;
+                    const canEmit = tickNow === null || lastEmitTick === null || (tickNow - lastEmitTick) >= 6;
+                    if (canEmit) {
+                        window.__qaCombatDebugLastEmitTick = tickNow;
+                        window.emitQaCombatDebugSnapshot('tick');
+                    }
+                }
+            }
             if (typeof window.updateStats === 'function') window.updateStats();
             
             if (playerState.path.length > 0) {

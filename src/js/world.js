@@ -397,6 +397,7 @@
             sharedMaterials.ground = new THREE.MeshLambertMaterial({ color: 0xffffff });
             sharedMaterials.grassTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
             sharedMaterials.dirtTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+            sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
             sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x9aa5ae, flatShading: true });
@@ -428,6 +429,7 @@
             }
             sharedMaterials.ground.map = grassTex;
             sharedMaterials.grassTile.map = grassTex;
+            sharedMaterials.terrainUnderlay.map = grassTex;
 
             const dirtCanvas = buildDirtTextureCanvas(192);
             const dirtTex = applyColorTextureSettings(new THREE.CanvasTexture(dirtCanvas), 'linear');
@@ -3898,6 +3900,8 @@
             window.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations() {
                 return woodcuttingTrainingLocations.slice();
             };
+
+            if (typeof window.initCombatWorldState === 'function') window.initCombatWorldState();
         }
 
         function pointInPolygon(points, x, y) {
@@ -4282,7 +4286,6 @@
                     appendWaterTileToBuilder(builders[visualBody.id], x, y, surfaceY);
                 }
             }
-            if (typeof window.initCombatWorldState === 'function') window.initCombatWorldState();
         }
 
         function addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
@@ -4802,11 +4805,14 @@
                 planeGroup.visible = z <= playerState.z;
                 const Z_OFFSET = z * 3.0;
                 if (z === 0) {
-                    const terrainGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
-                    terrainGeo.rotateX(-Math.PI / 2);
-
                     const isNaturalTile = (tileType) => isNaturalTileId(tileType);
                     const isRenderableTerrainTile = (tileType) => isNaturalTile(tileType) && !isWaterTileId(tileType);
+                    const isRenderableUnderlayTile = (tileType) => !isWaterTileId(tileType);
+                    const isManmadeLandTile = (tileType) => !isNaturalTile(tileType) && !isWaterTileId(tileType);
+                    const UNDERLAY_DROP = 0.08;
+                    const TERRAIN_EDGE_BLEND_CAP = 0.28;
+                    const TERRAIN_EDGE_BLEND_FACTOR = 0.4;
+
                     const sampleTerrainVertexHeight = (cornerX, cornerY) => {
                         const tx0 = Math.floor(cornerX);
                         const ty0 = Math.floor(cornerY);
@@ -4820,6 +4826,8 @@
                         let count = 0;
                         let waterSum = 0;
                         let waterCount = 0;
+                        let manmadeSum = 0;
+                        let manmadeCount = 0;
                         for (let i = 0; i < sampleTiles.length; i++) {
                             const sample = sampleTiles[i];
                             if (sample.x < 0 || sample.y < 0 || sample.x >= MAP_SIZE || sample.y >= MAP_SIZE) continue;
@@ -4829,6 +4837,10 @@
                                 sum += heightMap[0][sample.y][sample.x];
                                 count++;
                                 continue;
+                            }
+                            if (isManmadeLandTile(tileType)) {
+                                manmadeSum += heightMap[0][sample.y][sample.x];
+                                manmadeCount++;
                             }
 
                             const waterSurfaceY = getWaterSurfaceHeightForTile(waterRenderBodies, sample.x, sample.y, 0);
@@ -4841,8 +4853,87 @@
                             const waterHeight = waterSum / waterCount;
                             return Math.min(landHeight, waterHeight + 0.012);
                         }
+                        if (count > 0 && manmadeCount > 0) {
+                            const naturalHeight = sum / count;
+                            const manmadeHeight = manmadeSum / manmadeCount;
+                            const edgeDelta = THREE.MathUtils.clamp(
+                                manmadeHeight - naturalHeight,
+                                -TERRAIN_EDGE_BLEND_CAP,
+                                TERRAIN_EDGE_BLEND_CAP
+                            );
+                            return naturalHeight + (edgeDelta * TERRAIN_EDGE_BLEND_FACTOR);
+                        }
                         return count > 0 ? (sum / count) : 0;
                     };
+
+                    const sampleUnderlayVertexHeight = (cornerX, cornerY) => {
+                        const tx0 = Math.floor(cornerX);
+                        const ty0 = Math.floor(cornerY);
+                        const sampleTiles = [
+                            { x: tx0, y: ty0 },
+                            { x: tx0 + 1, y: ty0 },
+                            { x: tx0, y: ty0 + 1 },
+                            { x: tx0 + 1, y: ty0 + 1 }
+                        ];
+                        let sum = 0;
+                        let count = 0;
+                        for (let i = 0; i < sampleTiles.length; i++) {
+                            const sample = sampleTiles[i];
+                            if (sample.x < 0 || sample.y < 0 || sample.x >= MAP_SIZE || sample.y >= MAP_SIZE) continue;
+                            if (isPierVisualCoverageTile(activePierConfig, sample.x, sample.y, 0)) continue;
+                            const tileType = logicalMap[0][sample.y][sample.x];
+                            if (!isRenderableUnderlayTile(tileType)) continue;
+                            sum += heightMap[0][sample.y][sample.x];
+                            count++;
+                        }
+                        if (count <= 0) return -UNDERLAY_DROP;
+                        return (sum / count) - UNDERLAY_DROP;
+                    };
+
+                    const underlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
+                    underlayGeo.rotateX(-Math.PI / 2);
+                    const underlayPositions = underlayGeo.attributes.position;
+                    for (let vy = 0; vy <= CHUNK_SIZE; vy++) {
+                        for (let vx = 0; vx <= CHUNK_SIZE; vx++) {
+                            const idx = (vy * (CHUNK_SIZE + 1)) + vx;
+                            const cornerX = startX - 0.5 + vx;
+                            const cornerY = startY - 0.5 + vy;
+                            const h = sampleUnderlayVertexHeight(cornerX, cornerY);
+                            underlayPositions.setY(idx, h);
+                        }
+                    }
+                    underlayPositions.needsUpdate = true;
+
+                    const baseUnderlayIndices = underlayGeo.index ? Array.from(underlayGeo.index.array) : [];
+                    const underlayIndices = [];
+                    for (let tileY = 0; tileY < CHUNK_SIZE; tileY++) {
+                        for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
+                            const worldTileX = startX + tileX;
+                            const worldTileY = startY + tileY;
+                            const tile = logicalMap[0][worldTileY][worldTileX];
+                            if (!isRenderableUnderlayTile(tile)) continue;
+                            if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
+                            const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
+                            for (let i = 0; i < 6; i++) {
+                                underlayIndices.push(baseUnderlayIndices[cellIndexOffset + i]);
+                            }
+                        }
+                    }
+                    underlayGeo.setIndex(underlayIndices);
+                    underlayGeo.computeVertexNormals();
+                    if (underlayIndices.length > 0) {
+                        const underlayMesh = new THREE.Mesh(underlayGeo, sharedMaterials.terrainUnderlay);
+                        underlayMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
+                        underlayMesh.receiveShadow = false;
+                        underlayMesh.castShadow = false;
+                        underlayMesh.renderOrder = -1;
+                        underlayMesh.userData = { type: 'GROUND', z: 0, underlay: true };
+                        planeGroup.add(underlayMesh);
+                        environmentMeshes.push(underlayMesh);
+                    }
+
+                    const terrainGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
+                    terrainGeo.rotateX(-Math.PI / 2);
 
                     const positions = terrainGeo.attributes.position;
                     for (let vy = 0; vy <= CHUNK_SIZE; vy++) {

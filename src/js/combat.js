@@ -5,6 +5,7 @@
     const PLAYER_DEFEAT_MESSAGE = 'You were defeated and return to safety.';
 
     let activeCombatWorldId = null;
+    let lastResolvedCombatWorldId = 'starter_town';
     let combatEnemySpawnNodesById = Object.create(null);
     let combatEnemyStates = [];
     let combatEnemyStateById = Object.create(null);
@@ -21,11 +22,31 @@
         };
     }
 
-    function getCurrentWorldId() {
+    function normalizeWorldId(worldId) {
+        return String(worldId || '').trim();
+    }
+
+    function getCurrentWorldId(worldIdOverride = null) {
+        let rawWorldId = normalizeWorldId(worldIdOverride);
         if (window.GameSessionRuntime && typeof window.GameSessionRuntime.resolveCurrentWorldId === 'function') {
-            return window.GameSessionRuntime.resolveCurrentWorldId();
+            if (!rawWorldId) rawWorldId = normalizeWorldId(window.GameSessionRuntime.resolveCurrentWorldId());
         }
-        return 'starter_town';
+        if (!rawWorldId && window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function') {
+            rawWorldId = normalizeWorldId(window.WorldBootstrapRuntime.getCurrentWorldId());
+        }
+
+        const fallbackWorldId = normalizeWorldId(activeCombatWorldId) || normalizeWorldId(lastResolvedCombatWorldId) || 'starter_town';
+        if (window.LegacyWorldAdapterRuntime && typeof window.LegacyWorldAdapterRuntime.resolveKnownWorldId === 'function') {
+            const resolvedWorldId = normalizeWorldId(window.LegacyWorldAdapterRuntime.resolveKnownWorldId(rawWorldId || null, fallbackWorldId));
+            if (resolvedWorldId) {
+                lastResolvedCombatWorldId = resolvedWorldId;
+                return resolvedWorldId;
+            }
+        }
+
+        const resolvedWorldId = rawWorldId || fallbackWorldId;
+        lastResolvedCombatWorldId = resolvedWorldId || 'starter_town';
+        return lastResolvedCombatWorldId;
     }
 
     function getEnemyDefinition(enemyId) {
@@ -110,15 +131,70 @@
         combatEnemyStates = [];
     }
 
-    function clearPlayerCombatTarget() {
+    function shouldPreservePreEngagementTargetLock() {
+        if (playerState.inCombat) return false;
+        if (playerState.action !== 'WALKING') return false;
+        if (playerState.targetObj !== 'ENEMY') return false;
+        if (!Array.isArray(playerState.path) || playerState.path.length <= 0) return false;
+        if (!playerState.lockedTargetId) return false;
+        return true;
+    }
+
+    function hasActivePlayerCombatSelection() {
+        if (playerState.lockedTargetId) return true;
+        if (playerState.combatTargetKind === PLAYER_TARGET_KIND) return true;
+        if (playerState.targetObj === 'ENEMY') return true;
+        if (playerState.inCombat) return true;
+        if (Number.isFinite(playerState.remainingAttackCooldown) && playerState.remainingAttackCooldown > 0) return true;
+        return false;
+    }
+
+    function recordCombatClearEvent(event) {
+        if (!window.QA_COMBAT_DEBUG) return;
+        if (!event || typeof event !== 'object') return;
+        const clearEvents = Array.isArray(window.__qaCombatDebugClearEvents) ? window.__qaCombatDebugClearEvents : [];
+        if (!Array.isArray(window.__qaCombatDebugClearEvents)) window.__qaCombatDebugClearEvents = clearEvents;
+        clearEvents.push(event);
+        if (clearEvents.length > 40) clearEvents.splice(0, clearEvents.length - 40);
+    }
+
+    function clearPlayerCombatTarget(options = null) {
+        if (!hasActivePlayerCombatSelection()) return false;
+        const opts = options && typeof options === 'object' ? options : null;
+        const forced = !!(opts && opts.force);
+        const reason = opts && typeof opts.reason === 'string' && opts.reason ? opts.reason : 'generic';
+        const shouldRecordClearDebug = !!window.QA_COMBAT_DEBUG;
+        const combatClearEvent = shouldRecordClearDebug
+            ? {
+                tick: Number.isFinite(currentTick) ? currentTick : null,
+                reason,
+                forced: !!forced,
+                blocked: false,
+                lockBeforeClear: playerState.lockedTargetId ? String(playerState.lockedTargetId) : null,
+                action: playerState.action || 'IDLE',
+                pathLength: Array.isArray(playerState.path) ? playerState.path.length : 0
+            }
+            : null;
+        if (!forced && shouldPreservePreEngagementTargetLock()) {
+            window.__qaCombatDebugLastClearReason = `blocked:${reason}`;
+            window.__qaCombatDebugLastClearTick = Number.isFinite(currentTick) ? currentTick : null;
+            if (combatClearEvent) combatClearEvent.blocked = true;
+            recordCombatClearEvent(combatClearEvent);
+            return false;
+        }
+        window.__qaCombatDebugLastClearReason = reason;
+        window.__qaCombatDebugLastClearTick = Number.isFinite(currentTick) ? currentTick : null;
+        recordCombatClearEvent(combatClearEvent);
         playerState.lockedTargetId = null;
         playerState.combatTargetKind = null;
+        playerState.remainingAttackCooldown = 0;
         playerState.inCombat = false;
         if (playerState.targetObj === 'ENEMY') {
             playerState.targetObj = null;
             playerState.targetUid = null;
         }
         if (playerState.action === 'COMBAT: MELEE') playerState.action = 'IDLE';
+        return true;
     }
 
     function lockPlayerCombatTarget(enemyId) {
@@ -129,7 +205,6 @@
         if (playerState.lockedTargetId === resolvedEnemyId && playerState.combatTargetKind === PLAYER_TARGET_KIND) return true;
         playerState.lockedTargetId = resolvedEnemyId;
         playerState.combatTargetKind = PLAYER_TARGET_KIND;
-        playerState.inCombat = true;
         playerState.targetObj = 'ENEMY';
         playerState.targetUid = {
             enemyId: resolvedEnemyId,
@@ -141,7 +216,7 @@
     }
 
     function getPlayerLockedEnemy() {
-        if (playerState.combatTargetKind !== PLAYER_TARGET_KIND || !playerState.lockedTargetId) return null;
+        if (!playerState.lockedTargetId) return null;
         return getCombatEnemyState(playerState.lockedTargetId);
     }
 
@@ -213,13 +288,13 @@
         return { x: 205, y: 210, z: 0 };
     }
 
-    function initCombatWorldState() {
-        activeCombatWorldId = getCurrentWorldId();
+    function initCombatWorldState(worldIdOverride = null) {
+        activeCombatWorldId = getCurrentWorldId(worldIdOverride);
         clearCombatEnemyRenderers();
         clearCombatEnemyOccupancy();
         resetCombatStateCollections();
         combatEnemyOccupancyDirty = true;
-        clearPlayerCombatTarget();
+        clearPlayerCombatTarget({ force: true, reason: 'init-world-state' });
         playerState.lastDamagerEnemyId = null;
 
         if (!combatRuntime || typeof combatRuntime.listEnemySpawnNodesForWorld !== 'function' || typeof combatRuntime.createEnemyRuntimeState !== 'function') {
@@ -245,7 +320,13 @@
 
     function ensureCombatEnemyWorldReady() {
         const currentWorldId = getCurrentWorldId();
-        if (activeCombatWorldId !== currentWorldId) initCombatWorldState();
+        if (!activeCombatWorldId) {
+            initCombatWorldState(currentWorldId);
+            return;
+        }
+        // World transitions should explicitly reinitialize combat via initLogicalMap/reloadActiveWorldScene.
+        // Ignoring transient world-id drift here prevents mid-pursuit combat state resets.
+        lastResolvedCombatWorldId = currentWorldId;
     }
 
     function getSquareRange(attacker, target, range) {
@@ -379,7 +460,7 @@
             || (enemyType && enemyType.respawnTicks)
             || 1
         ));
-        if (playerState.lockedTargetId === enemyState.runtimeId) clearPlayerCombatTarget();
+        if (playerState.lockedTargetId === enemyState.runtimeId) clearPlayerCombatTarget({ force: true, reason: 'target-defeated' });
         spawnEnemyDrop(enemyState);
         clearEnemyRenderer(enemyState.runtimeId);
         markCombatEnemyOccupancyDirty();
@@ -444,7 +525,7 @@
         playerState.action = 'IDLE';
         playerState.turnLock = false;
         playerState.actionVisualReady = true;
-        clearPlayerCombatTarget();
+        clearPlayerCombatTarget({ force: true, reason: 'player-defeated' });
         if (typeof clearMinimapDestination === 'function') clearMinimapDestination();
         if (typeof addChatMessage === 'function') addChatMessage(PLAYER_DEFEAT_MESSAGE, 'warn');
 
@@ -457,20 +538,26 @@
     function validatePlayerTargetLock() {
         const lockedEnemy = getPlayerLockedEnemy();
         if (!lockedEnemy) {
-            clearPlayerCombatTarget();
+            const hasCombatSelection =
+                !!playerState.lockedTargetId
+                || playerState.combatTargetKind === PLAYER_TARGET_KIND
+                || playerState.targetObj === 'ENEMY';
+            if (hasCombatSelection) clearPlayerCombatTarget({ reason: 'missing-locked-enemy' });
             return null;
         }
         if (!isEnemyAlive(lockedEnemy)) {
-            clearPlayerCombatTarget();
-            return null;
-        }
-        const pursuitPath = resolvePathToEnemy(lockedEnemy);
-        if (pursuitPath === null) {
-            clearPlayerCombatTarget();
+            clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-not-alive' });
             return null;
         }
         playerState.targetX = lockedEnemy.x;
         playerState.targetY = lockedEnemy.y;
+        const pursuitPath = resolvePathToEnemy(lockedEnemy);
+        if (pursuitPath === null) {
+            return {
+                enemyState: lockedEnemy,
+                pursuitPath: null
+            };
+        }
         return {
             enemyState: lockedEnemy,
             pursuitPath
@@ -657,11 +744,9 @@
         if (playerLockState.pursuitPath && playerLockState.pursuitPath.length > 0) {
             playerState.path = playerLockState.pursuitPath;
             playerState.action = 'WALKING';
-            playerState.inCombat = true;
         } else if (isWithinMeleeRange(playerState, playerLockState.enemyState)) {
             facePlayerTowards(playerLockState.enemyState);
             playerState.action = 'COMBAT: MELEE';
-            playerState.inCombat = true;
         }
     }
 
@@ -751,7 +836,11 @@
             return;
         }
 
-        playerState.remainingAttackCooldown = combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);
+        if (!playerState.inCombat) {
+            playerState.remainingAttackCooldown = 0;
+        } else {
+            playerState.remainingAttackCooldown = combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);
+        }
 
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];

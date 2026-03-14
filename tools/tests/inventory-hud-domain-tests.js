@@ -220,6 +220,40 @@ const ITEM_DB = {
 }
 
 {
+  const preEngagementStatus = hudViewModels.buildCombatStatusViewModel({
+    playerCurrentHitpoints: 10,
+    playerMaxHitpoints: 10,
+    playerRemainingAttackCooldown: 0,
+    inCombat: false,
+    target: {
+      label: "Goblin",
+      focusLabel: "Target",
+      currentHealth: 7,
+      maxHealth: 7,
+      remainingAttackCooldown: 0,
+      state: "idle",
+      distance: 4,
+      inMeleeRange: false
+    }
+  });
+
+  assert.strictEqual(preEngagementStatus.visible, false, "combat HUD should stay hidden while only tracking a distant target");
+  assert.strictEqual(preEngagementStatus.targetVisible, false, "target details should stay hidden before engagement starts");
+}
+
+{
+  const staleCooldownStatus = hudViewModels.buildCombatStatusViewModel({
+    playerCurrentHitpoints: 10,
+    playerMaxHitpoints: 10,
+    playerRemainingAttackCooldown: 3,
+    inCombat: false,
+    target: null
+  });
+
+  assert.strictEqual(staleCooldownStatus.visible, false, "combat HUD should stay hidden when not in combat even if a cooldown value exists");
+}
+
+{
   const tiles = hudViewModels.buildSkillTileViewModels({
     definitions: [
       { skillId: "mining", displayName: "Mining", icon: "MIN", levelKey: "min" },

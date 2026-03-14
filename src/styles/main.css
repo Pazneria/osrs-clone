@@ -35,6 +35,24 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
             font-weight: 700;
             margin-right: 6px;
         }
+        #chat-box,
+        #chat-box #chat-log,
+        #chat-box #chat-log .chat-line,
+        #chat-box #chat-log .chat-prefix {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        #chat-box .chat-control-btn {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #chat-box.chat-expanded {
+            width: min(960px, calc(100vw - 1rem));
+            max-width: calc(100vw - 1rem);
+        }
+        #chat-box.chat-expanded #chat-log {
+            height: min(52vh, 430px);
+        }
 
         .tab-icon-btn {
             display: flex;
