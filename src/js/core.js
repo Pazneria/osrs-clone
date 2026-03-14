@@ -159,6 +159,13 @@
         }
 
         window.getGameSession = getGameSession;
+        window.getChunkRenderPolicy = getChunkRenderPolicy;
+        window.getActiveChunkRenderPolicyPreset = getActiveChunkRenderPolicyPreset;
+        window.applyChunkRenderPolicyPreset = applyChunkRenderPolicyPreset;
+        window.getChunkRenderPolicyRevision = getChunkRenderPolicyRevision;
+        window.getChunkRenderPolicyPresetOrder = function getChunkRenderPolicyPresetOrder() {
+            return CHUNK_RENDER_POLICY_ORDER.slice();
+        };
 
         window.TileId = TileId;
         window.isWaterTileId = isWaterTileId;
@@ -240,7 +247,66 @@
         let isRunning = gameSession ? !!gameSession.ui.runMode : false; 
 
         // Chunk Rendering State
+        const CHUNK_RENDER_POLICY_PRESETS = Object.freeze({
+            high: Object.freeze({
+                nearRadius: 2,
+                midRadius: 4,
+                interactionRadius: 1,
+                farMode: 'all'
+            }),
+            balanced: Object.freeze({
+                nearRadius: 1,
+                midRadius: 3,
+                interactionRadius: 1,
+                farMode: 'all'
+            }),
+            safe: Object.freeze({
+                nearRadius: 1,
+                midRadius: 2,
+                interactionRadius: 1,
+                farMode: 'all'
+            })
+        });
+        const CHUNK_RENDER_POLICY_ORDER = Object.freeze(['safe', 'balanced', 'high']);
+        const CHUNK_RENDER_DEFAULT_PRESET = 'balanced';
+        let activeChunkRenderPolicyPreset = CHUNK_RENDER_DEFAULT_PRESET;
+        let chunkRenderPolicyRevision = 0;
+
+        function resolveChunkRenderPolicyPresetName(presetName) {
+            if (typeof presetName === 'string' && CHUNK_RENDER_POLICY_PRESETS[presetName]) return presetName;
+            if (CHUNK_RENDER_POLICY_PRESETS[CHUNK_RENDER_DEFAULT_PRESET]) return CHUNK_RENDER_DEFAULT_PRESET;
+            return 'balanced';
+        }
+
+        function getActiveChunkRenderPolicyPreset() {
+            return resolveChunkRenderPolicyPresetName(activeChunkRenderPolicyPreset);
+        }
+
+        function getChunkRenderPolicy(presetName = null) {
+            const resolvedName = resolveChunkRenderPolicyPresetName(presetName || activeChunkRenderPolicyPreset);
+            const preset = CHUNK_RENDER_POLICY_PRESETS[resolvedName] || CHUNK_RENDER_POLICY_PRESETS.balanced;
+            return {
+                preset: resolvedName,
+                nearRadius: Math.max(0, Math.floor(Number.isFinite(preset.nearRadius) ? preset.nearRadius : 1)),
+                midRadius: Math.max(0, Math.floor(Number.isFinite(preset.midRadius) ? preset.midRadius : 3)),
+                interactionRadius: Math.max(0, Math.floor(Number.isFinite(preset.interactionRadius) ? preset.interactionRadius : 1)),
+                farMode: preset.farMode === 'all' ? 'all' : 'window'
+            };
+        }
+
+        function applyChunkRenderPolicyPreset(nextPreset) {
+            const resolvedNextPreset = resolveChunkRenderPolicyPresetName(nextPreset);
+            if (resolvedNextPreset === activeChunkRenderPolicyPreset) return false;
+            activeChunkRenderPolicyPreset = resolvedNextPreset;
+            chunkRenderPolicyRevision += 1;
+            return true;
+        }
+
+        function getChunkRenderPolicyRevision() {
+            return chunkRenderPolicyRevision;
+        }
         let loadedChunks = new Set();
+        let loadedChunkInteractionState = new Map();
         let chunkGroups = {}; 
         let sharedGeometries = {};
         let sharedMaterials = {};

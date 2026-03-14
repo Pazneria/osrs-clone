@@ -343,10 +343,33 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         
+        function forEachTileInSearchRing(targetX, targetY, radius, visit) {
+            if (radius < 0 || typeof visit !== 'function') return false;
+            if (radius === 0) {
+                if (targetX < 0 || targetY < 0 || targetX >= MAP_SIZE || targetY >= MAP_SIZE) return false;
+                return !!visit(targetX, targetY);
+            }
+
+            const minX = Math.max(0, targetX - radius);
+            const maxX = Math.min(MAP_SIZE - 1, targetX + radius);
+            const minY = Math.max(0, targetY - radius);
+            const maxY = Math.min(MAP_SIZE - 1, targetY + radius);
+
+            for (let x = minX; x <= maxX; x++) {
+                if (visit(x, minY)) return true;
+                if (maxY !== minY && visit(x, maxY)) return true;
+            }
+            for (let y = minY + 1; y <= maxY - 1; y++) {
+                if (visit(minX, y)) return true;
+                if (maxX !== minX && visit(maxX, y)) return true;
+            }
+            return false;
+        }
+
         function findNearestRiverBankTile(targetX, targetY) {
             const z = playerState.z;
             let best = null;
-            let bestDist = Infinity;
+            let bestDistSq = Infinity;
 
             const hasAdjacentWater = (x, y) => {
                 const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
@@ -361,23 +384,18 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             };
 
             for (let r = 1; r <= 10; r++) {
-                const minX = Math.max(0, targetX - r);
-                const maxX = Math.min(MAP_SIZE - 1, targetX + r);
-                const minY = Math.max(0, targetY - r);
-                const maxY = Math.min(MAP_SIZE - 1, targetY + r);
-
-                for (let y = minY; y <= maxY; y++) {
-                    for (let x = minX; x <= maxX; x++) {
-                        if (!isStandableTile(x, y, z)) continue;
-                        if (!hasAdjacentWater(x, y)) continue;
-
-                        const d = Math.hypot(x - targetX, y - targetY);
-                        if (d < bestDist) {
-                            bestDist = d;
-                            best = { x, y };
-                        }
+                forEachTileInSearchRing(targetX, targetY, r, (x, y) => {
+                    if (!isStandableTile(x, y, z)) return false;
+                    if (!hasAdjacentWater(x, y)) return false;
+                    const dx = x - targetX;
+                    const dy = y - targetY;
+                    const distSq = (dx * dx) + (dy * dy);
+                    if (distSq < bestDistSq) {
+                        bestDistSq = distSq;
+                        best = { x, y };
                     }
-                }
+                    return false;
+                });
                 if (best) break;
             }
 
@@ -388,7 +406,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function findNearestFishableWaterEdgeTile(targetX, targetY) {
             const z = playerState.z;
             let best = null;
-            let bestDist = Infinity;
+            let bestDistSq = Infinity;
             const playerOnPierDeck = isPierDeckTile(playerState.x, playerState.y, z);
 
             const hasAdjacentStandable = (x, y) => {
@@ -404,24 +422,19 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             };
 
             for (let r = 0; r <= 20; r++) {
-                const minX = Math.max(0, targetX - r);
-                const maxX = Math.min(MAP_SIZE - 1, targetX + r);
-                const minY = Math.max(0, targetY - r);
-                const maxY = Math.min(MAP_SIZE - 1, targetY + r);
-
-                for (let y = minY; y <= maxY; y++) {
-                    for (let x = minX; x <= maxX; x++) {
-                        const tile = logicalMap[z][y][x];
-                        if (!isWaterTileId(tile)) continue;
-                        if (!hasAdjacentStandable(x, y)) continue;
-
-                        const d = Math.hypot(x - targetX, y - targetY);
-                        if (d < bestDist) {
-                            bestDist = d;
-                            best = { x, y };
-                        }
+                forEachTileInSearchRing(targetX, targetY, r, (x, y) => {
+                    const tile = logicalMap[z][y][x];
+                    if (!isWaterTileId(tile)) return false;
+                    if (!hasAdjacentStandable(x, y)) return false;
+                    const dx = x - targetX;
+                    const dy = y - targetY;
+                    const distSq = (dx * dx) + (dy * dy);
+                    if (distSq < bestDistSq) {
+                        bestDistSq = distSq;
+                        best = { x, y };
                     }
-                }
+                    return false;
+                });
                 if (best) break;
             }
 
@@ -799,11 +812,14 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function findPath(startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null) {
+            const encodeTileKey = (x, y) => (y * MAP_SIZE) + x;
+            const decodeTileX = (key) => key % MAP_SIZE;
+            const decodeTileY = (key) => Math.floor(key / MAP_SIZE);
             let validTargets = new Set();
             let targetTileType = logicalMap[playerState.z][targetY][targetX];
             const stationApproachKeys = new Set(
                 getStationApproachPositions(interactionObj, targetX, targetY, playerState.z)
-                    .map((p) => `${p.x},${p.y}`)
+                    .map((p) => encodeTileKey(p.x, p.y))
             );
             let isInteract = forceAdjacent || !isStandableTile(targetX, targetY, playerState.z);
 
@@ -812,7 +828,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (targetTileType === TileId.BANK_BOOTH) { // BANK BOOTH
                     let nx = targetX, ny = targetY + 1;
                     if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
-                        if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) < 0.1) validTargets.add(`${nx},${ny}`);
+                        if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) < 0.1) validTargets.add(encodeTileKey(nx, ny));
                     }
                 } else {
                     for (let dy = -2; dy <= 2; dy++) {
@@ -826,7 +842,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                     const pierFishingApproach = interactionObj === 'WATER'
                                         && isPierFishingApproachTile(nx, ny, targetX, targetY, playerState.z);
                                     if (pierFishingApproach || Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) {
-                                        const neighborKey = `${nx},${ny}`;
+                                        const neighborKey = encodeTileKey(nx, ny);
                                         if (stationApproachKeys.size === 0 || stationApproachKeys.has(neighborKey)) validTargets.add(neighborKey);
                                     }
                                 }
@@ -837,7 +853,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             const isAltarRingTile = interactionObj === 'ALTAR_CANDIDATE' && maxAxis === 2;
                             if (isAltarRingTile) {
                                 if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
-                                    if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) validTargets.add(`${nx},${ny}`);
+                                    if (Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) validTargets.add(encodeTileKey(nx, ny));
                                 }
                                 continue;
                             }
@@ -846,12 +862,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 if (Math.abs(dx) === 2 && dy === 0) {
                                     let midX = targetX + dx / 2;
                                     if (logicalMap[playerState.z][targetY][midX] === TileId.SHOP_COUNTER) {
-                                        if (nx >= 0 && nx < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(`${nx},${ny}`);
+                                        if (nx >= 0 && nx < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(encodeTileKey(nx, ny));
                                     }
                                 } else if (Math.abs(dy) === 2 && dx === 0) {
                                     let midY = targetY + dy / 2;
                                     if (logicalMap[playerState.z][midY][targetX] === TileId.SHOP_COUNTER) {
-                                        if (ny >= 0 && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(`${nx},${ny}`);
+                                        if (ny >= 0 && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) validTargets.add(encodeTileKey(nx, ny));
                                     }
                                 }
                             }
@@ -859,66 +875,70 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     }
                 }
                 if (validTargets.size === 0) return [];
-            } else validTargets.add(`${targetX},${targetY}`);
+            } else validTargets.add(encodeTileKey(targetX, targetY));
             
-            if (validTargets.has(`${startX},${startY}`)) return [];
+            const startKey = encodeTileKey(startX, startY);
+            if (validTargets.has(startKey)) return [];
             
-            let queue = [{x: startX, y: startY}];
+            let queue = [startKey];
             let queueIndex = 0;
-            let visited = new Map();
-            visited.set(`${startX},${startY}`, null);
+            let visitedParents = new Map();
+            visitedParents.set(startKey, -1);
             
             let dirs8 = [{x: 0, y: -1}, {x: 0, y: 1}, {x: -1, y: 0}, {x: 1, y: 0}, {x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1}, {x: 1, y: 1}];
             const restrictPierFishingToDeck = interactionObj === 'WATER' && isPierDeckTile(startX, startY, playerState.z);
             
             let iterations = 0; 
-            let foundTargetKey = null;
+            let foundTargetKey = -1;
 
             while (queueIndex < queue.length) {
                 if (iterations++ > PATHFIND_MAX_ITERATIONS) break; 
                 
-                let current = queue[queueIndex++]; let currentHeight = heightMap[playerState.z][current.y][current.x];
+                let currentKey = queue[queueIndex++];
+                let currentX = decodeTileX(currentKey);
+                let currentY = decodeTileY(currentKey);
+                let currentHeight = heightMap[playerState.z][currentY][currentX];
                 
                 for (let dir of dirs8) {
-                    let nx = current.x + dir.x; let ny = current.y + dir.y; let key = `${nx},${ny}`;
-                    if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && !visited.has(key) && isStandableTile(nx, ny, playerState.z)) {
+                    let nx = currentX + dir.x; let ny = currentY + dir.y;
+                    let nextKey = encodeTileKey(nx, ny);
+                    if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && !visitedParents.has(nextKey) && isStandableTile(nx, ny, playerState.z)) {
                         if (restrictPierFishingToDeck && isWaterTileId(logicalMap[playerState.z][ny][nx])) continue;
                         let nextHeight = heightMap[playerState.z][ny][nx]; 
-                        let isStairTransition = (logicalMap[playerState.z][ny][nx] === TileId.STAIRS_RAMP || logicalMap[playerState.z][current.y][current.x] === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
+                        let isStairTransition = (logicalMap[playerState.z][ny][nx] === TileId.STAIRS_RAMP || logicalMap[playerState.z][currentY][currentX] === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
                         if (Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition) continue;
                         
                         if (Math.abs(dir.x) === 1 && Math.abs(dir.y) === 1) {
-                            let hX = heightMap[playerState.z][current.y][current.x + dir.x]; let hY = heightMap[playerState.z][current.y + dir.y][current.x];
-                            let blockX = !isStandableTile(current.x + dir.x, current.y, playerState.z) || Math.abs(hX - currentHeight) > 0.3;
-                            let blockY = !isStandableTile(current.x, current.y + dir.y, playerState.z) || Math.abs(hY - currentHeight) > 0.3;
+                            let hX = heightMap[playerState.z][currentY][currentX + dir.x]; let hY = heightMap[playerState.z][currentY + dir.y][currentX];
+                            let blockX = !isStandableTile(currentX + dir.x, currentY, playerState.z) || Math.abs(hX - currentHeight) > 0.3;
+                            let blockY = !isStandableTile(currentX, currentY + dir.y, playerState.z) || Math.abs(hY - currentHeight) > 0.3;
                             if (blockX && blockY) continue; 
                         }
                         
-                        visited.set(key, current);
+                        visitedParents.set(nextKey, currentKey);
                         
-                        if (validTargets.has(key)) {
-                            foundTargetKey = key;
-                            queue = []; 
+                        if (validTargets.has(nextKey)) {
+                            foundTargetKey = nextKey;
+                            queueIndex = queue.length;
                             break;
                         }
-                        queue.push({x: nx, y: ny});
+                        queue.push(nextKey);
                     }
                 }
             }
             
-            if (!foundTargetKey) return [];
+            if (foundTargetKey === -1) return [];
 
             let path = [];
-            let currStr = foundTargetKey;
+            let currentPathKey = foundTargetKey;
             
-            while (currStr) {
-                let parts = currStr.split(',');
-                let cx = parseInt(parts[0], 10);
-                let cy = parseInt(parts[1], 10);
-                if (cx === startX && cy === startY) break; 
+            while (currentPathKey !== -1 && currentPathKey !== startKey) {
+                let cx = decodeTileX(currentPathKey);
+                let cy = decodeTileY(currentPathKey);
                 path.unshift({x: cx, y: cy});
-                let parent = visited.get(currStr);
-                currStr = parent ? `${parent.x},${parent.y}` : null;
+                const parentKey = visitedParents.get(currentPathKey);
+                if (parentKey === undefined) break;
+                currentPathKey = parentKey;
             }
             
             return path;
@@ -1815,6 +1835,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 const fps = Math.round((fpsSampleFrames * 1000) / (frameNowMs - fpsSampleLast));
                 const fpsEl = document.getElementById('fps-value');
                 if (fpsEl) fpsEl.innerText = fps;
+                if (typeof window.reportChunkPerformanceSample === 'function') {
+                    window.reportChunkPerformanceSample(fps, frameNowMs);
+                }
                 fpsSampleFrames = 0;
                 fpsSampleLast = frameNowMs;
             }

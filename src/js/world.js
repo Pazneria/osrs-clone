@@ -2280,8 +2280,9 @@
             const cy = Math.floor(y / CHUNK_SIZE);
             const key = cx + ',' + cy;
             if (loadedChunks.has(key)) {
+                const wasInteractive = loadedChunkInteractionState.has(key) ? !!loadedChunkInteractionState.get(key) : true;
                 unloadChunk(key);
-                loadChunk(cx, cy);
+                loadChunk(cx, cy, wasInteractive);
                 loadedChunks.add(key);
             }
         }
@@ -2310,8 +2311,9 @@
                 const parts = chunkKey.split(',');
                 const cx = parseInt(parts[0], 10);
                 const cy = parseInt(parts[1], 10);
+                const wasInteractive = loadedChunkInteractionState.has(chunkKey) ? !!loadedChunkInteractionState.get(chunkKey) : true;
                 unloadChunk(chunkKey);
-                loadChunk(cx, cy);
+                loadChunk(cx, cy, wasInteractive);
                 loadedChunks.add(chunkKey);
             });
         }
@@ -4390,8 +4392,401 @@
             }
         }
 
-        function loadChunk(cx, cy) {
+        const CHUNK_TIER_NEAR = 'near';
+        const CHUNK_TIER_MID = 'mid';
+        const CHUNK_TIER_FAR = 'far';
+        const CHUNK_AUTO_QUALITY_WINDOW_MS = 3000;
+        const CHUNK_AUTO_QUALITY_COOLDOWN_MS = 10000;
+        const CHUNK_AUTO_QUALITY_LOW_FPS = 43;
+        const CHUNK_AUTO_QUALITY_HIGH_FPS = 48;
+        let chunkMidGroups = {};
+        let chunkFarGroups = {};
+        const chunkTierStateByKey = new Map();
+        const chunkInteractionMeshes = new Map();
+        let chunkPolicyDirty = true;
+        let lastChunkPolicyCenterX = null;
+        let lastChunkPolicyCenterY = null;
+        let lastChunkPolicyRevision = -1;
+        let chunkAutoQualityState = {
+            windowStartMs: 0,
+            accumulatedFps: 0,
+            sampleCount: 0,
+            lowWindows: 0,
+            highWindows: 0,
+            lastPresetChangeMs: 0
+        };
+
+        function markChunkPolicyDirty() {
+            chunkPolicyDirty = true;
+            lastChunkPolicyCenterX = null;
+            lastChunkPolicyCenterY = null;
+        }
+
+        function resolveActiveChunkRenderPolicy() {
+            const fallback = { preset: 'balanced', nearRadius: 1, midRadius: 3, interactionRadius: 1, farMode: 'all' };
+            const policy = (typeof window.getChunkRenderPolicy === 'function')
+                ? window.getChunkRenderPolicy()
+                : fallback;
+            const nearRadius = Math.max(0, Math.floor(Number.isFinite(policy && policy.nearRadius) ? policy.nearRadius : fallback.nearRadius));
+            const midRadius = Math.max(nearRadius, Math.floor(Number.isFinite(policy && policy.midRadius) ? policy.midRadius : fallback.midRadius));
+            const interactionRadius = Math.max(0, Math.min(nearRadius, Math.floor(Number.isFinite(policy && policy.interactionRadius) ? policy.interactionRadius : fallback.interactionRadius)));
+            return {
+                preset: (policy && typeof policy.preset === 'string') ? policy.preset : fallback.preset,
+                nearRadius,
+                midRadius,
+                interactionRadius,
+                farMode: 'all'
+            };
+        }
+
+        function getChunkPresetOrder() {
+            const fallback = ['safe', 'balanced', 'high'];
+            const order = (typeof window.getChunkRenderPolicyPresetOrder === 'function')
+                ? window.getChunkRenderPolicyPresetOrder()
+                : fallback;
+            if (!Array.isArray(order) || order.length === 0) return fallback;
+            return order.slice();
+        }
+
+        function getChunkPresetIndex(order, preset) {
+            if (!Array.isArray(order) || order.length === 0) return -1;
+            return order.indexOf(preset);
+        }
+
+        function stepChunkRenderPolicyPreset(direction, nowMs) {
+            if (typeof window.applyChunkRenderPolicyPreset !== 'function') return false;
+            const policy = resolveActiveChunkRenderPolicy();
+            const order = getChunkPresetOrder();
+            const currentIndex = getChunkPresetIndex(order, policy.preset);
+            if (currentIndex === -1) return false;
+            const targetIndex = Math.max(0, Math.min(order.length - 1, currentIndex + direction));
+            if (targetIndex === currentIndex) return false;
+            const changed = window.applyChunkRenderPolicyPreset(order[targetIndex]);
+            if (changed) {
+                chunkAutoQualityState.lastPresetChangeMs = nowMs;
+                markChunkPolicyDirty();
+            }
+            return !!changed;
+        }
+
+        function reportChunkPerformanceSample(fps, nowMs = performance.now()) {
+            if (!Number.isFinite(fps) || fps <= 0) return;
+            const now = Number.isFinite(nowMs) ? nowMs : performance.now();
+            if (!chunkAutoQualityState.windowStartMs) chunkAutoQualityState.windowStartMs = now;
+            chunkAutoQualityState.accumulatedFps += fps;
+            chunkAutoQualityState.sampleCount += 1;
+            if ((now - chunkAutoQualityState.windowStartMs) < CHUNK_AUTO_QUALITY_WINDOW_MS) return;
+
+            const avgFps = chunkAutoQualityState.accumulatedFps / Math.max(1, chunkAutoQualityState.sampleCount);
+            chunkAutoQualityState.windowStartMs = now;
+            chunkAutoQualityState.accumulatedFps = 0;
+            chunkAutoQualityState.sampleCount = 0;
+
+            if (avgFps < CHUNK_AUTO_QUALITY_LOW_FPS) {
+                chunkAutoQualityState.lowWindows += 1;
+                chunkAutoQualityState.highWindows = 0;
+            } else if (avgFps > CHUNK_AUTO_QUALITY_HIGH_FPS) {
+                chunkAutoQualityState.highWindows += 1;
+                chunkAutoQualityState.lowWindows = 0;
+            } else {
+                chunkAutoQualityState.lowWindows = 0;
+                chunkAutoQualityState.highWindows = 0;
+                return;
+            }
+
+            if ((now - chunkAutoQualityState.lastPresetChangeMs) < CHUNK_AUTO_QUALITY_COOLDOWN_MS) return;
+
+            if (chunkAutoQualityState.lowWindows >= 2) {
+                if (stepChunkRenderPolicyPreset(-1, now)) {
+                    chunkAutoQualityState.lowWindows = 0;
+                    chunkAutoQualityState.highWindows = 0;
+                }
+                return;
+            }
+
+            if (chunkAutoQualityState.highWindows >= 3) {
+                if (stepChunkRenderPolicyPreset(1, now)) {
+                    chunkAutoQualityState.lowWindows = 0;
+                    chunkAutoQualityState.highWindows = 0;
+                }
+            }
+        }
+
+        function setChunkGroupPlaneVisibility(group, maxVisiblePlane) {
+            if (!group || !Array.isArray(group.children)) return;
+            const visiblePlane = Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0;
+            group.children.forEach((planeGroup) => {
+                if (!planeGroup || !planeGroup.userData || planeGroup.userData.z === undefined) return;
+                planeGroup.visible = planeGroup.userData.z <= visiblePlane;
+            });
+        }
+
+        function removeChunkGroupsFromScene(groupMap) {
+            if (!groupMap || !scene) return {};
+            Object.keys(groupMap).forEach((key) => {
+                const group = groupMap[key];
+                if (group) scene.remove(group);
+            });
+            return {};
+        }
+
+        function clearChunkTierGroups() {
+            chunkMidGroups = removeChunkGroupsFromScene(chunkMidGroups);
+            chunkFarGroups = removeChunkGroupsFromScene(chunkFarGroups);
+            chunkTierStateByKey.clear();
+            chunkInteractionMeshes.clear();
+            chunkAutoQualityState.windowStartMs = 0;
+            chunkAutoQualityState.accumulatedFps = 0;
+            chunkAutoQualityState.sampleCount = 0;
+            chunkAutoQualityState.lowWindows = 0;
+            chunkAutoQualityState.highWindows = 0;
+            markChunkPolicyDirty();
+        }
+
+        function ensureChunkTierRenderAssets() {
+            if (!sharedMaterials.chunkMidTerrain) {
+                sharedMaterials.chunkMidTerrain = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            }
+            if (!sharedMaterials.chunkFarTerrain) {
+                sharedMaterials.chunkFarTerrain = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            }
+            if (!sharedMaterials.chunkMidFeatureTree) {
+                sharedMaterials.chunkMidFeatureTree = new THREE.MeshLambertMaterial({ color: 0x4f6a3f, flatShading: true });
+            }
+            if (!sharedMaterials.chunkMidFeatureRock) {
+                sharedMaterials.chunkMidFeatureRock = new THREE.MeshLambertMaterial({ color: 0x7a7f89, flatShading: true });
+            }
+            if (!sharedMaterials.chunkMidFeatureStone) {
+                sharedMaterials.chunkMidFeatureStone = new THREE.MeshLambertMaterial({ color: 0x6f7278, flatShading: true });
+            }
+            if (!sharedMaterials.chunkFarFeatureTree) {
+                sharedMaterials.chunkFarFeatureTree = new THREE.MeshLambertMaterial({ color: 0x43583a, flatShading: true });
+            }
+            if (!sharedMaterials.chunkFarFeatureRock) {
+                sharedMaterials.chunkFarFeatureRock = new THREE.MeshLambertMaterial({ color: 0x666b74, flatShading: true });
+            }
+            if (!sharedMaterials.chunkFarFeatureStone) {
+                sharedMaterials.chunkFarFeatureStone = new THREE.MeshLambertMaterial({ color: 0x5d6066, flatShading: true });
+            }
+
+            if (!sharedGeometries.chunkTierTree) {
+                sharedGeometries.chunkTierTree = new THREE.ConeGeometry(0.34, 1.24, 6).translate(0, 0.62, 0);
+            }
+            if (!sharedGeometries.chunkTierRock) {
+                sharedGeometries.chunkTierRock = new THREE.DodecahedronGeometry(0.28, 0).scale(1, 0.72, 0.95).translate(0, 0.24, 0);
+            }
+            if (!sharedGeometries.chunkTierWall) {
+                sharedGeometries.chunkTierWall = new THREE.BoxGeometry(1.0, 2.0, 0.34).translate(0, 1.0, 0);
+            }
+            if (!sharedGeometries.chunkTierTower) {
+                sharedGeometries.chunkTierTower = new THREE.CylinderGeometry(0.6, 0.7, 2.8, 8).translate(0, 1.4, 0);
+            }
+
+            const grassMap = sharedMaterials.grassTile && sharedMaterials.grassTile.map
+                ? sharedMaterials.grassTile.map
+                : null;
+            if (grassMap) {
+                if (sharedMaterials.chunkMidTerrain.map !== grassMap) {
+                    sharedMaterials.chunkMidTerrain.map = grassMap;
+                    sharedMaterials.chunkMidTerrain.needsUpdate = true;
+                }
+                if (sharedMaterials.chunkFarTerrain.map !== grassMap) {
+                    sharedMaterials.chunkFarTerrain.map = grassMap;
+                    sharedMaterials.chunkFarTerrain.needsUpdate = true;
+                }
+            }
+        }
+
+        function createSimplifiedTerrainMesh(startX, startY, tier) {
+            const segments = tier === CHUNK_TIER_FAR ? 10 : 18;
+            const terrainGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, segments, segments);
+            terrainGeo.rotateX(-Math.PI / 2);
+            const positions = terrainGeo.attributes.position;
+            for (let vy = 0; vy <= segments; vy++) {
+                for (let vx = 0; vx <= segments; vx++) {
+                    const idx = (vy * (segments + 1)) + vx;
+                    const worldX = startX - 0.5 + ((vx / segments) * CHUNK_SIZE);
+                    const worldY = startY - 0.5 + ((vy / segments) * CHUNK_SIZE);
+                    const sampleX = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(worldX + 0.5)));
+                    const sampleY = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(worldY + 0.5)));
+                    const h = (heightMap[0] && heightMap[0][sampleY]) ? heightMap[0][sampleY][sampleX] : 0;
+                    positions.setY(idx, h);
+                }
+            }
+            positions.needsUpdate = true;
+            terrainGeo.computeVertexNormals();
+            const terrainMat = tier === CHUNK_TIER_FAR ? sharedMaterials.chunkFarTerrain : sharedMaterials.chunkMidTerrain;
+            const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+            terrainMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
+            terrainMesh.castShadow = false;
+            terrainMesh.receiveShadow = tier === CHUNK_TIER_MID;
+            terrainMesh.userData = { type: 'GROUND', z: 0, tier };
+            return terrainMesh;
+        }
+
+        function addSimplifiedChunkFeatures(planeGroup, startX, startY, endX, endY, z, tier) {
+            const stride = tier === CHUNK_TIER_FAR ? 4 : 2;
+            let treeCount = 0;
+            let rockCount = 0;
+            let wallCount = 0;
+            let towerCount = 0;
+            for (let y = startY; y < endY; y += stride) {
+                for (let x = startX; x < endX; x += stride) {
+                    const tile = logicalMap[z][y][x];
+                    if (z === 0 && isTreeTileId(tile)) treeCount += 1;
+                    else if (z === 0 && tile === TileId.ROCK) rockCount += 1;
+                    else if (tile === TileId.WALL) wallCount += 1;
+                    else if (tile === TileId.TOWER) towerCount += 1;
+                }
+            }
+            const allowReceiveShadow = tier === CHUNK_TIER_MID;
+            const treeMat = tier === CHUNK_TIER_FAR ? sharedMaterials.chunkFarFeatureTree : sharedMaterials.chunkMidFeatureTree;
+            const rockMat = tier === CHUNK_TIER_FAR ? sharedMaterials.chunkFarFeatureRock : sharedMaterials.chunkMidFeatureRock;
+            const stoneMat = tier === CHUNK_TIER_FAR ? sharedMaterials.chunkFarFeatureStone : sharedMaterials.chunkMidFeatureStone;
+            const dummy = new THREE.Object3D();
+            const zOffset = z * 3.0;
+
+            const fillInstances = (mesh, matchFn) => {
+                if (!mesh) return;
+                let idx = 0;
+                for (let y = startY; y < endY; y += stride) {
+                    for (let x = startX; x < endX; x += stride) {
+                        const tile = logicalMap[z][y][x];
+                        if (!matchFn(tile, x, y)) continue;
+                        const tileHeight = heightMap[z] && heightMap[z][y] ? heightMap[z][y][x] : 0;
+                        dummy.position.set(x, tileHeight + zOffset, y);
+                        dummy.rotation.set(0, ((x * 13.7) + (y * 7.9)) % (Math.PI * 2), 0);
+                        dummy.updateMatrix();
+                        mesh.setMatrixAt(idx, dummy.matrix);
+                        idx += 1;
+                    }
+                }
+                mesh.instanceMatrix.needsUpdate = true;
+            };
+
+            if (treeCount > 0) {
+                const trees = new THREE.InstancedMesh(sharedGeometries.chunkTierTree, treeMat, treeCount);
+                trees.castShadow = false;
+                trees.receiveShadow = allowReceiveShadow;
+                trees.matrixAutoUpdate = false;
+                fillInstances(trees, (tile) => z === 0 && isTreeTileId(tile));
+                planeGroup.add(trees);
+            }
+            if (rockCount > 0) {
+                const rocks = new THREE.InstancedMesh(sharedGeometries.chunkTierRock, rockMat, rockCount);
+                rocks.castShadow = false;
+                rocks.receiveShadow = allowReceiveShadow;
+                rocks.matrixAutoUpdate = false;
+                fillInstances(rocks, (tile) => z === 0 && tile === TileId.ROCK);
+                planeGroup.add(rocks);
+            }
+            if (wallCount > 0) {
+                const walls = new THREE.InstancedMesh(sharedGeometries.chunkTierWall, stoneMat, wallCount);
+                walls.castShadow = false;
+                walls.receiveShadow = allowReceiveShadow;
+                walls.matrixAutoUpdate = false;
+                fillInstances(walls, (tile) => tile === TileId.WALL);
+                planeGroup.add(walls);
+            }
+            if (towerCount > 0) {
+                const towers = new THREE.InstancedMesh(sharedGeometries.chunkTierTower, stoneMat, towerCount);
+                towers.castShadow = false;
+                towers.receiveShadow = allowReceiveShadow;
+                towers.matrixAutoUpdate = false;
+                fillInstances(towers, (tile) => tile === TileId.TOWER);
+                planeGroup.add(towers);
+            }
+        }
+
+        function createSimplifiedChunkGroup(cx, cy, tier = CHUNK_TIER_MID) {
+            ensureChunkTierRenderAssets();
             const group = new THREE.Group();
+            group.userData = { chunkTier: tier, chunkX: cx, chunkY: cy };
+            const startX = cx * CHUNK_SIZE;
+            const startY = cy * CHUNK_SIZE;
+            const endX = startX + CHUNK_SIZE;
+            const endY = startY + CHUNK_SIZE;
+            for (let z = 0; z < PLANES; z++) {
+                const planeGroup = new THREE.Group();
+                planeGroup.userData.z = z;
+                planeGroup.visible = z <= playerState.z;
+                if (z === 0) planeGroup.add(createSimplifiedTerrainMesh(startX, startY, tier));
+                addSimplifiedChunkFeatures(planeGroup, startX, startY, endX, endY, z, tier);
+                group.add(planeGroup);
+            }
+            return group;
+        }
+
+        function ensureFarChunkGroup(cx, cy) {
+            const key = `${cx},${cy}`;
+            if (chunkFarGroups[key]) return chunkFarGroups[key];
+            const group = createSimplifiedChunkGroup(cx, cy, CHUNK_TIER_FAR);
+            group.visible = false;
+            scene.add(group);
+            chunkFarGroups[key] = group;
+            return group;
+        }
+
+        function ensureMidChunkGroup(cx, cy) {
+            const key = `${cx},${cy}`;
+            if (chunkMidGroups[key]) return chunkMidGroups[key];
+            const group = createSimplifiedChunkGroup(cx, cy, CHUNK_TIER_MID);
+            group.visible = false;
+            scene.add(group);
+            chunkMidGroups[key] = group;
+            return group;
+        }
+
+        function ensureFarChunkBackdropBuilt() {
+            if (!scene) return;
+            for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
+                for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
+                    ensureFarChunkGroup(cx, cy);
+                }
+            }
+        }
+
+        function setChunkInteractionState(key, shouldRegisterInteraction) {
+            const targetState = !!shouldRegisterInteraction;
+            const currentState = loadedChunkInteractionState.has(key)
+                ? !!loadedChunkInteractionState.get(key)
+                : false;
+            if (currentState === targetState) return;
+
+            const interactionMeshes = chunkInteractionMeshes.get(key) || [];
+            if (targetState) {
+                const existing = new Set(environmentMeshes);
+                for (let i = 0; i < interactionMeshes.length; i++) {
+                    const mesh = interactionMeshes[i];
+                    if (!mesh || existing.has(mesh)) continue;
+                    environmentMeshes.push(mesh);
+                    existing.add(mesh);
+                }
+            } else if (interactionMeshes.length > 0) {
+                const removeSet = new Set(interactionMeshes);
+                environmentMeshes = environmentMeshes.filter((mesh) => !removeSet.has(mesh));
+            }
+
+            loadedChunkInteractionState.set(key, targetState);
+        }
+
+        function collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, nearRadius, midRadius) {
+            const assignments = new Map();
+            for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
+                for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
+                    const dist = Math.max(Math.abs(cx - centerChunkX), Math.abs(cy - centerChunkY));
+                    let tier = CHUNK_TIER_FAR;
+                    if (dist <= nearRadius) tier = CHUNK_TIER_NEAR;
+                    else if (dist <= midRadius) tier = CHUNK_TIER_MID;
+                    assignments.set(`${cx},${cy}`, tier);
+                }
+            }
+            return assignments;
+        }
+
+        function loadChunk(cx, cy, registerInteraction = true) {
+            const group = new THREE.Group();
+            const environmentMeshStartIndex = environmentMeshes.length;
             const startX = cx * CHUNK_SIZE;
             const startY = cy * CHUNK_SIZE;
             const endX = startX + CHUNK_SIZE;
@@ -5077,17 +5472,26 @@
             }
             
             scene.add(group);
-            chunkGroups[`${cx},${cy}`] = group;
+            const key = `${cx},${cy}`;
+            const interactionMeshes = environmentMeshes.slice(environmentMeshStartIndex);
+            chunkInteractionMeshes.set(key, interactionMeshes);
+            if (!registerInteraction && environmentMeshes.length > environmentMeshStartIndex) {
+                environmentMeshes.length = environmentMeshStartIndex;
+            }
+            loadedChunkInteractionState.set(key, !!registerInteraction);
+            chunkGroups[key] = group;
+            loadedChunks.add(key);
         }
 
         function setLoadedChunkPlaneVisibility(maxVisiblePlane) {
-            const visiblePlane = Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0;
             Object.values(chunkGroups).forEach((group) => {
-                if (!group || !Array.isArray(group.children)) return;
-                group.children.forEach((planeGroup) => {
-                    if (!planeGroup || !planeGroup.userData || planeGroup.userData.z === undefined) return;
-                    planeGroup.visible = planeGroup.userData.z <= visiblePlane;
-                });
+                setChunkGroupPlaneVisibility(group, maxVisiblePlane);
+            });
+            Object.values(chunkMidGroups).forEach((group) => {
+                setChunkGroupPlaneVisibility(group, maxVisiblePlane);
+            });
+            Object.values(chunkFarGroups).forEach((group) => {
+                setChunkGroupPlaneVisibility(group, maxVisiblePlane);
             });
         }
 
@@ -5105,40 +5509,115 @@
                 });
                 delete chunkGroups[key];
             }
+            chunkInteractionMeshes.delete(key);
+            loadedChunks.delete(key);
+            loadedChunkInteractionState.delete(key);
         }
 
-        function manageChunks() {
-            let pX = isFreeCam ? freeCamTarget.x : playerRig.position.x;
-            let pZ = isFreeCam ? freeCamTarget.z : playerRig.position.z;
-            let pCX = Math.floor(pX / CHUNK_SIZE);
-            let pCY = Math.floor(pZ / CHUNK_SIZE);
-            
-            let desiredChunks = new Set();
-            for(let dy = -1; dy <= 1; dy++) {
-                for(let dx = -1; dx <= 1; dx++) {
-                    let cx = pCX + dx, cy = pCY + dy;
-                    if(cx >= 0 && cx < WORLD_CHUNKS_X && cy >= 0 && cy < WORLD_CHUNKS_Y) desiredChunks.add(`${cx},${cy}`);
+        function collectDesiredChunks(centerChunkX, centerChunkY, xMinOffset, xMaxOffset, yMinOffset, yMaxOffset) {
+            const desired = new Set();
+            for (let dy = yMinOffset; dy <= yMaxOffset; dy++) {
+                for (let dx = xMinOffset; dx <= xMaxOffset; dx++) {
+                    const cx = centerChunkX + dx;
+                    const cy = centerChunkY + dy;
+                    if (cx < 0 || cy < 0 || cx >= WORLD_CHUNKS_X || cy >= WORLD_CHUNKS_Y) continue;
+                    desired.add(`${cx},${cy}`);
                 }
             }
-            
-            desiredChunks.forEach(key => {
-                if(!loadedChunks.has(key)) {
-                    let parts = key.split(',');
-                    loadChunk(parseInt(parts[0]), parseInt(parts[1]));
-                    loadedChunks.add(key);
+            return desired;
+        }
+
+        function applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, maxVisiblePlane) {
+            const nearGroup = chunkGroups[key];
+            const midGroup = chunkMidGroups[key];
+            const farGroup = chunkFarGroups[key];
+
+            if (targetTier === CHUNK_TIER_NEAR) {
+                if (midGroup) midGroup.visible = false;
+                if (farGroup) farGroup.visible = false;
+                if (!nearGroup) {
+                    loadChunk(cx, cy, shouldRegisterInteraction);
+                } else {
+                    nearGroup.visible = true;
+                    setChunkInteractionState(key, shouldRegisterInteraction);
                 }
-            });
-            
-            loadedChunks.forEach(key => {
-                if(!desiredChunks.has(key)) {
-                    unloadChunk(key);
-                    loadedChunks.delete(key);
+                const loadedNearGroup = chunkGroups[key];
+                if (loadedNearGroup) setChunkGroupPlaneVisibility(loadedNearGroup, maxVisiblePlane);
+                chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
+                return;
+            }
+
+            if (nearGroup) unloadChunk(key);
+
+            if (targetTier === CHUNK_TIER_MID) {
+                if (farGroup) farGroup.visible = false;
+                const nextMidGroup = ensureMidChunkGroup(cx, cy);
+                nextMidGroup.visible = true;
+                setChunkGroupPlaneVisibility(nextMidGroup, maxVisiblePlane);
+                chunkTierStateByKey.set(key, CHUNK_TIER_MID);
+                return;
+            }
+
+            if (midGroup) midGroup.visible = false;
+            const nextFarGroup = ensureFarChunkGroup(cx, cy);
+            nextFarGroup.visible = true;
+            setChunkGroupPlaneVisibility(nextFarGroup, maxVisiblePlane);
+            chunkTierStateByKey.set(key, CHUNK_TIER_FAR);
+        }
+
+        function manageChunks(forceRefresh = false) {
+            if (!playerRig) return;
+            const pX = isFreeCam ? freeCamTarget.x : playerRig.position.x;
+            const pZ = isFreeCam ? freeCamTarget.z : playerRig.position.z;
+            const pCX = Math.max(0, Math.min(WORLD_CHUNKS_X - 1, Math.floor(pX / CHUNK_SIZE)));
+            const pCY = Math.max(0, Math.min(WORLD_CHUNKS_Y - 1, Math.floor(pZ / CHUNK_SIZE)));
+            const policyRevision = (typeof window.getChunkRenderPolicyRevision === 'function')
+                ? window.getChunkRenderPolicyRevision()
+                : 0;
+
+            if (
+                !forceRefresh
+                && !chunkPolicyDirty
+                && lastChunkPolicyCenterX === pCX
+                && lastChunkPolicyCenterY === pCY
+                && lastChunkPolicyRevision === policyRevision
+            ) {
+                return;
+            }
+
+            const policy = resolveActiveChunkRenderPolicy();
+            const desiredTierByKey = collectDesiredChunkTierAssignments(pCX, pCY, policy.nearRadius, policy.midRadius);
+            const desiredInteractionChunks = collectDesiredChunks(
+                pCX,
+                pCY,
+                -policy.interactionRadius,
+                policy.interactionRadius,
+                -policy.interactionRadius,
+                policy.interactionRadius
+            );
+
+            ensureFarChunkBackdropBuilt();
+            const visiblePlane = playerState.z;
+
+            for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
+                for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
+                    const key = `${cx},${cy}`;
+                    const targetTier = desiredTierByKey.get(key) || CHUNK_TIER_FAR;
+                    const shouldRegisterInteraction = targetTier === CHUNK_TIER_NEAR && desiredInteractionChunks.has(key);
+                    applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, visiblePlane);
                 }
-            });
+            }
+
+            lastChunkPolicyCenterX = pCX;
+            lastChunkPolicyCenterY = pCY;
+            lastChunkPolicyRevision = policyRevision;
+            chunkPolicyDirty = false;
         }
 
         function build3DEnvironment() {
             initSharedAssets();
+            ensureFarChunkBackdropBuilt();
+            markChunkPolicyDirty();
         }
 
         function reloadActiveWorldScene() {
@@ -5151,7 +5630,10 @@
 
             Array.from(loadedChunks).forEach((chunkKey) => unloadChunk(chunkKey));
             loadedChunks.clear();
+            loadedChunkInteractionState.clear();
             chunkGroups = {};
+            clearChunkTierGroups();
+            lastChunkPolicyRevision = -1;
 
             for (let i = 0; i < clickMarkers.length; i++) {
                 const marker = clickMarkers[i];
@@ -5183,7 +5665,7 @@
             }
 
             if (typeof updateMinimapCanvas === 'function') updateMinimapCanvas();
-            if (typeof manageChunks === 'function' && playerRig) manageChunks();
+            if (typeof manageChunks === 'function' && playerRig) manageChunks(true);
             if (typeof updateWorldMapPanel === 'function') updateWorldMapPanel(true);
         }
 
@@ -5763,7 +6245,7 @@
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 1; ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
                 ctx.fillRect(minimapSnapshot.dragRect.x, minimapSnapshot.dragRect.y, minimapSnapshot.dragRect.w, minimapSnapshot.dragRect.h); ctx.strokeRect(minimapSnapshot.dragRect.x, minimapSnapshot.dragRect.y, minimapSnapshot.dragRect.w, minimapSnapshot.dragRect.h);
             }
-            updateWorldMapPanel();
+            if (worldMapOpen || worldMapState.isDragging) updateWorldMapPanel();
         }
 
         function resolveTreeRespawnTicks(gridX, gridY, z) {
@@ -5845,6 +6327,8 @@
         window.updateMainDirectionalShadowFocus = updateMainDirectionalShadowFocus;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;
+        window.reportChunkPerformanceSample = reportChunkPerformanceSample;
+        window.markChunkPolicyDirty = markChunkPolicyDirty;
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateMinimap = updateMinimap;
         window.setLoadedChunkPlaneVisibility = setLoadedChunkPlaneVisibility;
