@@ -7,6 +7,7 @@
 - [x] COMBAT-002: Shipped the first player melee slice with saved combat state, melee-style persistence, and equip/use gating from explicit combat item data.
 - [x] COMBAT-003: Shipped the first melee-only enemy slice with passive/aggressive enemy templates, chase/reset behavior, respawns, loot, combat-driven render hooks, and starter-town rat/goblin world placements.
 - [x] COMBAT-004: Removed the placeholder combat path entirely (`DUMMY`, `owie`, and the old combat simulator/tooling) so the new melee runtime is the only live combat route.
+- [x] COMBAT-012: Added a live combat-status HUD panel that surfaces player/target HP, focus, range, and both swing cooldowns directly from the typed UI/combat runtime.
 
 ## Now
 - [ ] COMBAT-005: Run a starter-town combat encounter pass so enemy pockets, aggro spacing, and safe non-combat routes are clearly authored in-world.
@@ -18,7 +19,6 @@
 
 ## Next
 - [ ] COMBAT-011: Add melee attack-style UI so the player can switch Attack / Strength / Defence in-game.
-- [ ] COMBAT-012: Surface combat state better in the HUD with clearer target, hitpoint, and cooldown feedback during fights.
 - [ ] COMBAT-013: Rebuild the combat simulator around the canonical combat/melee formulas and data contracts.
 - [ ] COMBAT-014: Build progression bands for combat content so enemy difficulty, drops, and placement scale cleanly across starter, mid-band, and later regions.
 - [ ] COMBAT-015: Expand first-pass melee encounter coverage beyond starter-town into outer roads, camps, and guarded thresholds using the same authored spawn-node model.

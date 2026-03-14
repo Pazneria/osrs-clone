@@ -119,6 +119,35 @@ export interface CombatStatsViewModel {
   strength: number;
 }
 
+export interface CombatStatusTargetSnapshot {
+  label: string;
+  focusLabel?: string;
+  currentHealth: number;
+  maxHealth: number;
+  remainingAttackCooldown: number;
+  state: string;
+  distance: number | null;
+  inMeleeRange: boolean;
+}
+
+export interface CombatStatusViewModel {
+  visible: boolean;
+  bannerText: string;
+  playerHitpointsText: string;
+  playerHitpointsWidth: string;
+  playerCooldownText: string;
+  playerCooldownReady: boolean;
+  targetVisible: boolean;
+  targetName: string;
+  targetFocusLabel: string;
+  targetHitpointsText: string;
+  targetHitpointsWidth: string;
+  targetStateText: string;
+  targetCooldownText: string;
+  targetCooldownReady: boolean;
+  rangeText: string;
+}
+
 export interface PlayerProfileSummaryViewModel {
   name: string;
   bodyTypeLabel: string;

@@ -1065,6 +1065,52 @@
             document.getElementById('stat-atk').innerText = statsViewModel.attack;
             document.getElementById('stat-def').innerText = statsViewModel.defense;
             document.getElementById('stat-str').innerText = statsViewModel.strength;
+
+            const combatHudSnapshot = typeof window.getCombatHudSnapshot === 'function'
+                ? window.getCombatHudSnapshot()
+                : null;
+            const combatStatusViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatusViewModel === 'function'
+                ? uiDomainRuntime.buildCombatStatusViewModel({
+                    playerCurrentHitpoints: getCurrentHitpoints(),
+                    playerMaxHitpoints: getMaxHitpoints(),
+                    playerRemainingAttackCooldown: combatHudSnapshot && Number.isFinite(combatHudSnapshot.playerRemainingAttackCooldown)
+                        ? combatHudSnapshot.playerRemainingAttackCooldown
+                        : playerState.remainingAttackCooldown,
+                    inCombat: combatHudSnapshot ? !!combatHudSnapshot.inCombat : !!playerState.inCombat,
+                    target: combatHudSnapshot && combatHudSnapshot.target ? combatHudSnapshot.target : null
+                })
+                : null;
+
+            const panel = document.getElementById('combat-status-panel');
+            const targetSection = document.getElementById('combat-status-target');
+            if (!panel || !targetSection || !combatStatusViewModel) return;
+
+            panel.classList.toggle('hidden', !combatStatusViewModel.visible);
+            if (!combatStatusViewModel.visible) return;
+
+            document.getElementById('combat-status-banner').innerText = combatStatusViewModel.bannerText;
+            document.getElementById('combat-player-hp-text').innerText = combatStatusViewModel.playerHitpointsText;
+            document.getElementById('combat-player-hp-bar').style.width = combatStatusViewModel.playerHitpointsWidth;
+
+            const playerCooldown = document.getElementById('combat-player-cooldown-text');
+            playerCooldown.innerText = combatStatusViewModel.playerCooldownText;
+            playerCooldown.classList.toggle('text-[#9fdc8f]', combatStatusViewModel.playerCooldownReady);
+            playerCooldown.classList.toggle('text-[#ffcf8b]', !combatStatusViewModel.playerCooldownReady);
+
+            targetSection.classList.toggle('hidden', !combatStatusViewModel.targetVisible);
+            if (!combatStatusViewModel.targetVisible) return;
+
+            document.getElementById('combat-target-focus-label').innerText = combatStatusViewModel.targetFocusLabel;
+            document.getElementById('combat-range-text').innerText = combatStatusViewModel.rangeText;
+            document.getElementById('combat-target-name').innerText = combatStatusViewModel.targetName;
+            document.getElementById('combat-target-state-text').innerText = combatStatusViewModel.targetStateText;
+            document.getElementById('combat-target-hp-text').innerText = combatStatusViewModel.targetHitpointsText;
+            document.getElementById('combat-target-hp-bar').style.width = combatStatusViewModel.targetHitpointsWidth;
+
+            const targetCooldown = document.getElementById('combat-target-cooldown-text');
+            targetCooldown.innerText = combatStatusViewModel.targetCooldownText;
+            targetCooldown.classList.toggle('text-[#9fdc8f]', combatStatusViewModel.targetCooldownReady);
+            targetCooldown.classList.toggle('text-[#ffb27d]', !combatStatusViewModel.targetCooldownReady);
         }
 
         function getMaxHitpoints() {
@@ -1679,6 +1725,7 @@
 
             if (healed > 0) addChatMessage(`You eat the ${item.name}. (+${healed} HP)`, 'game');
             else addChatMessage(`You eat the ${item.name}.`, 'game');
+            updateStats();
             renderInventory();
         }
 

@@ -10,7 +10,7 @@
                 interval: 'max(min_ticks, base_ticks - speed_bonus)'
             },
             timing: {
-                baseAttemptTicks: 4,
+                baseAttemptTicks: 6,
                 minimumAttemptTicks: 1
             },
             nodeTable: {
@@ -20,7 +20,7 @@
                     difficulty: 18,
                     xpPerSuccess: 25,
                     rewardItemId: 'logs',
-                    depletionChance: 0.2,
+                    depletionChance: 0.75,
                     respawnTicks: 18
                 },
                 oak_tree: {
@@ -29,7 +29,7 @@
                     difficulty: 28,
                     xpPerSuccess: 38,
                     rewardItemId: 'oak_logs',
-                    depletionChance: 0.22,
+                    depletionChance: 0.6,
                     respawnTicks: 24
                 },
                 willow_tree: {
@@ -38,7 +38,7 @@
                     difficulty: 38,
                     xpPerSuccess: 68,
                     rewardItemId: 'willow_logs',
-                    depletionChance: 0.24,
+                    depletionChance: 0.45,
                     respawnTicks: 32
                 },
                 maple_tree: {
@@ -47,7 +47,7 @@
                     difficulty: 50,
                     xpPerSuccess: 100,
                     rewardItemId: 'maple_logs',
-                    depletionChance: 0.27,
+                    depletionChance: 0.3,
                     respawnTicks: 44
                 },
                 yew_tree: {
@@ -56,7 +56,7 @@
                     difficulty: 64,
                     xpPerSuccess: 150,
                     rewardItemId: 'yew_logs',
-                    depletionChance: 0.3,
+                    depletionChance: 0.1,
                     respawnTicks: 60
                 }
             },

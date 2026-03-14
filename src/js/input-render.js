@@ -1027,6 +1027,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
 
             if (typeof window.processCombatTick === 'function') window.processCombatTick();
+            if (typeof window.updateStats === 'function') window.updateStats();
             
             if (playerState.path.length > 0) {
                 let stepsToTake = isRunning ? 2 : 1; let nextStep = playerState.path.shift();

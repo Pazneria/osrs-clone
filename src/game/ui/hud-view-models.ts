@@ -1,5 +1,7 @@
 import { buildCombatStatsViewModel as buildCombatStatsFromFormulas } from "../combat/formulas";
 import type {
+  CombatStatusTargetSnapshot,
+  CombatStatusViewModel,
   CombatStatsViewModel,
   EquipmentSlotViewModel,
   PlayerProfileSummaryViewModel,
@@ -22,6 +24,103 @@ export function buildCombatStatsViewModel(options: {
     equipment: options.equipment || {},
     playerState: options.playerState || null
   });
+}
+
+function clampPercent(current: number, maximum: number): string {
+  const safeMaximum = Math.max(1, Math.floor(maximum));
+  const safeCurrent = Math.max(0, Math.min(safeMaximum, Math.floor(current)));
+  return `${((safeCurrent / safeMaximum) * 100).toFixed(1)}%`;
+}
+
+function formatTickLabel(ticks: number): string {
+  const safeTicks = Number.isFinite(ticks) ? Math.max(0, Math.floor(ticks)) : 0;
+  if (safeTicks <= 0) return "Ready";
+  return `${safeTicks} tick${safeTicks === 1 ? "" : "s"} to swing`;
+}
+
+function formatEnemyStateLabel(state: string): string {
+  const normalized = String(state || "").trim().toLowerCase();
+  if (normalized === "aggroed") return "Attacking";
+  if (normalized === "returning") return "Resetting";
+  if (normalized === "idle") return "Idle";
+  if (normalized === "dead") return "Defeated";
+  if (!normalized) return "Unknown";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function normalizeTargetSnapshot(target?: CombatStatusTargetSnapshot | null): CombatStatusTargetSnapshot | null {
+  if (!target || typeof target !== "object") return null;
+
+  const label = typeof target.label === "string" && target.label.trim() ? target.label.trim() : "Unknown enemy";
+  const focusLabel = typeof target.focusLabel === "string" && target.focusLabel.trim() ? target.focusLabel.trim() : "Target";
+  const maxHealth = Number.isFinite(target.maxHealth) ? Math.max(1, Math.floor(target.maxHealth)) : 1;
+  const currentHealth = Number.isFinite(target.currentHealth)
+    ? Math.max(0, Math.min(maxHealth, Math.floor(target.currentHealth)))
+    : maxHealth;
+
+  return {
+    label,
+    focusLabel,
+    currentHealth,
+    maxHealth,
+    remainingAttackCooldown: Number.isFinite(target.remainingAttackCooldown)
+      ? Math.max(0, Math.floor(target.remainingAttackCooldown))
+      : 0,
+    state: typeof target.state === "string" ? target.state : "",
+    distance: Number.isFinite(target.distance) ? Math.max(0, Math.floor(Number(target.distance))) : null,
+    inMeleeRange: !!target.inMeleeRange
+  };
+}
+
+export function buildCombatStatusViewModel(options: {
+  playerCurrentHitpoints?: number;
+  playerMaxHitpoints?: number;
+  playerRemainingAttackCooldown?: number;
+  inCombat?: boolean;
+  target?: CombatStatusTargetSnapshot | null;
+}): CombatStatusViewModel {
+  const playerMaxHitpoints = Number.isFinite(options.playerMaxHitpoints)
+    ? Math.max(1, Math.floor(Number(options.playerMaxHitpoints)))
+    : 10;
+  const playerCurrentHitpoints = Number.isFinite(options.playerCurrentHitpoints)
+    ? Math.max(0, Math.min(playerMaxHitpoints, Math.floor(Number(options.playerCurrentHitpoints))))
+    : playerMaxHitpoints;
+  const playerRemainingAttackCooldown = Number.isFinite(options.playerRemainingAttackCooldown)
+    ? Math.max(0, Math.floor(Number(options.playerRemainingAttackCooldown)))
+    : 0;
+  const target = normalizeTargetSnapshot(options.target);
+  const inCombat = !!options.inCombat;
+
+  let bannerText = "Combat Status";
+  if (target && inCombat) bannerText = "In Combat";
+  else if (target) bannerText = "Tracking Target";
+  else if (inCombat || playerRemainingAttackCooldown > 0) bannerText = "Combat Recovery";
+
+  const rangeText = !target
+    ? "No target"
+    : (target.inMeleeRange
+      ? "In melee range"
+      : (target.distance === null
+        ? "Range unknown"
+        : `${target.distance} tile${target.distance === 1 ? "" : "s"} away`));
+
+  return {
+    visible: inCombat || playerRemainingAttackCooldown > 0 || !!target,
+    bannerText,
+    playerHitpointsText: `${playerCurrentHitpoints} / ${playerMaxHitpoints}`,
+    playerHitpointsWidth: clampPercent(playerCurrentHitpoints, playerMaxHitpoints),
+    playerCooldownText: formatTickLabel(playerRemainingAttackCooldown),
+    playerCooldownReady: playerRemainingAttackCooldown === 0,
+    targetVisible: !!target,
+    targetName: target ? target.label : "No target",
+    targetFocusLabel: target ? target.focusLabel || "Target" : "Target",
+    targetHitpointsText: target ? `${target.currentHealth} / ${target.maxHealth}` : "-- / --",
+    targetHitpointsWidth: target ? clampPercent(target.currentHealth, target.maxHealth) : "0%",
+    targetStateText: target ? formatEnemyStateLabel(target.state) : "No target",
+    targetCooldownText: target ? formatTickLabel(target.remainingAttackCooldown) : "Ready",
+    targetCooldownReady: !target || target.remainingAttackCooldown === 0,
+    rangeText
+  };
 }
 
 export function buildEquipmentSlotViewModels(options: {

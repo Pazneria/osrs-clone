@@ -100,6 +100,43 @@
             <button id="freeCamBtn" class="bg-gray-700 border-2 border-[#5d5447] text-white text-[10px] font-bold py-1.5 px-3 rounded shadow-md hover:bg-gray-600 transition-colors z-40 uppercase tracking-wider">
                 CAM Free Cam: OFF
             </button>
+            <div id="combat-status-panel" class="hidden w-56 max-w-[calc(100vw-2rem)] bg-[#1e2328]/95 border border-[#8a4b33] shadow-[0_8px_18px_rgba(0,0,0,0.7)] rounded px-3 py-2 text-[11px] text-gray-200">
+                <div class="flex items-center justify-between gap-2 uppercase tracking-wide text-[10px]">
+                    <span id="combat-status-banner" class="font-bold text-[#ffcf8b]">Combat Status</span>
+                    <span class="text-gray-500">HUD</span>
+                </div>
+                <div class="mt-2 space-y-1.5">
+                    <div class="flex items-center justify-between text-[10px] text-gray-400">
+                        <span>Player HP</span>
+                        <span id="combat-player-hp-text" class="text-white font-bold">10 / 10</span>
+                    </div>
+                    <div class="h-2 bg-[#0f1215] border border-[#3a444c] overflow-hidden">
+                        <div id="combat-player-hp-bar" class="h-full bg-[#b84a3c]" style="width: 100%;"></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="text-gray-400">Next swing</span>
+                        <span id="combat-player-cooldown-text" class="font-bold text-[#9fdc8f]">Ready</span>
+                    </div>
+                </div>
+                <div id="combat-status-target" class="mt-3 border-t border-[#3a444c] pt-2 space-y-1.5">
+                    <div class="flex items-center justify-between text-[10px] text-gray-400">
+                        <span id="combat-target-focus-label">Target</span>
+                        <span id="combat-range-text" class="text-white">In melee range</span>
+                    </div>
+                    <div id="combat-target-name" class="text-sm font-bold text-[#ffcf8b]">Goblin</div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-400">
+                        <span id="combat-target-state-text">Attacking</span>
+                        <span id="combat-target-hp-text" class="text-white font-bold">7 / 7</span>
+                    </div>
+                    <div class="h-2 bg-[#0f1215] border border-[#3a444c] overflow-hidden">
+                        <div id="combat-target-hp-bar" class="h-full bg-[#d37b35]" style="width: 100%;"></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="text-gray-400">Enemy swing</span>
+                        <span id="combat-target-cooldown-text" class="font-bold text-[#ffb27d]">Ready</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Free Cam Info Overlay -->

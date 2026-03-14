@@ -40,7 +40,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Loot-table and drop-band authoring pass | Now |
 | Spawn-node / spawn-group authoring pass | Now |
 | Combat content validation and perf-gate pass | Now |
-| Combat HUD/target feedback pass | Next |
+| Combat HUD/target feedback pass | Complete |
 
 ## Data Contracts
 
@@ -371,6 +371,6 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 1. Finish the starter-town encounter pass so combat feels intentionally placed in the world, not merely spawned.
 2. Roll out the rest of the first-pass melee-only enemy templates with spec-aligned loot and respawn data.
 3. Lock in first-pass loot table rules so drops support the economy and combat progression instead of fighting them.
-4. Add melee style selection UI and clearer combat state surfacing in the HUD.
+4. Add melee style selection UI and keep combat HUD state aligned as encounter complexity grows.
 5. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
 6. Rebuild the combat simulator from the canonical formulas and content contracts.

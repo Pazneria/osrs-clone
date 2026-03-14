@@ -1,5 +1,6 @@
 import type { PlayerProfileState } from "../contracts/session";
 import type {
+  CombatStatusTargetSnapshot,
   MerchantEconomyLike,
   PlayerProfileSummaryViewModel,
   SelectedUseState,
@@ -25,6 +26,7 @@ import {
   withdrawBankItem
 } from "../ui/inventory-domain";
 import {
+  buildCombatStatusViewModel,
   buildCombatStatsViewModel,
   buildEquipmentSlotViewModels,
   buildPlayerProfileSummaryViewModel,
@@ -58,6 +60,13 @@ declare global {
       }) => ReturnType<typeof buildInventorySlotViewModels>;
       buildBankSlotViewModels: typeof buildBankSlotViewModels;
       buildShopSlotViewModels: typeof buildShopSlotViewModels;
+      buildCombatStatusViewModel: (options: {
+        playerCurrentHitpoints?: number;
+        playerMaxHitpoints?: number;
+        playerRemainingAttackCooldown?: number;
+        inCombat?: boolean;
+        target?: CombatStatusTargetSnapshot | null;
+      }) => ReturnType<typeof buildCombatStatusViewModel>;
       buildCombatStatsViewModel: typeof buildCombatStatsViewModel;
       buildEquipmentSlotViewModels: typeof buildEquipmentSlotViewModels;
       buildSkillTileViewModels: (options: {
@@ -97,6 +106,7 @@ export function exposeUiDomainBridge(): void {
     buildInventorySlotViewModels,
     buildBankSlotViewModels,
     buildShopSlotViewModels,
+    buildCombatStatusViewModel,
     buildCombatStatsViewModel,
     buildEquipmentSlotViewModels,
     buildSkillTileViewModels,

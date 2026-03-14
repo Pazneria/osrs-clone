@@ -145,6 +145,63 @@
         return getCombatEnemyState(playerState.lockedTargetId);
     }
 
+    function getChebyshevDistance(a, b) {
+        if (!a || !b) return null;
+        if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) return null;
+        return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+    }
+
+    function resolveCombatHudFocusEnemy() {
+        const lockedEnemy = getPlayerLockedEnemy();
+        if (lockedEnemy && isEnemyAlive(lockedEnemy)) {
+            return {
+                enemyState: lockedEnemy,
+                focusLabel: 'Target'
+            };
+        }
+
+        const lastDamager = getCombatEnemyState(playerState.lastDamagerEnemyId);
+        if (lastDamager && isEnemyAlive(lastDamager) && (lastDamager.lockedTargetId === PLAYER_TARGET_ID || lastDamager.currentState === 'aggroed')) {
+            return {
+                enemyState: lastDamager,
+                focusLabel: 'Aggressor'
+            };
+        }
+
+        return {
+            enemyState: null,
+            focusLabel: 'Target'
+        };
+    }
+
+    function getCombatHudSnapshot() {
+        ensureCombatEnemyWorldReady();
+        const focus = resolveCombatHudFocusEnemy();
+        const enemyState = focus.enemyState;
+        const enemyType = enemyState ? getEnemyDefinition(enemyState.enemyId) : null;
+
+        return {
+            inCombat: !!playerState.inCombat,
+            playerRemainingAttackCooldown: Number.isFinite(playerState.remainingAttackCooldown)
+                ? Math.max(0, Math.floor(playerState.remainingAttackCooldown))
+                : 0,
+            target: enemyState && enemyType
+                ? {
+                    label: enemyType.displayName || enemyState.enemyId,
+                    focusLabel: focus.focusLabel,
+                    currentHealth: Number.isFinite(enemyState.currentHealth) ? enemyState.currentHealth : enemyType.stats.hitpoints,
+                    maxHealth: enemyType.stats.hitpoints,
+                    remainingAttackCooldown: Number.isFinite(enemyState.remainingAttackCooldown)
+                        ? Math.max(0, Math.floor(enemyState.remainingAttackCooldown))
+                        : 0,
+                    state: enemyState.currentState || '',
+                    distance: getChebyshevDistance(playerState, enemyState),
+                    inMeleeRange: isWithinMeleeRange(playerState, enemyState)
+                }
+                : null
+        };
+    }
+
     function resolveRespawnLocation() {
         const worldId = getCurrentWorldId();
         if (window.LegacyWorldAdapterRuntime && typeof window.LegacyWorldAdapterRuntime.getWorldDefaultSpawn === 'function') {
@@ -902,4 +959,5 @@
     window.clearPlayerCombatTarget = clearPlayerCombatTarget;
     window.lockPlayerCombatTarget = lockPlayerCombatTarget;
     window.getCombatEnemyState = getCombatEnemyState;
+    window.getCombatHudSnapshot = getCombatHudSnapshot;
 })();

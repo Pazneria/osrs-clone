@@ -10,6 +10,7 @@ const bridgeSource = read("src/game/platform/ui-domain-bridge.ts");
 const inventorySource = read("src/js/inventory.js");
 const worldSource = read("src/js/world.js");
 const coreSource = read("src/js/core.js");
+const inputSource = read("src/js/input-render.js");
 
 assert.ok(
   bridgeSource.includes("window.UiDomainRuntime ="),
@@ -18,6 +19,10 @@ assert.ok(
 assert.ok(
   bridgeSource.includes("buildPlayerProfileSummaryViewModel"),
   "ui-domain bridge should expose profile view-model builders"
+);
+assert.ok(
+  bridgeSource.includes("buildCombatStatusViewModel"),
+  "ui-domain bridge should expose combat-status HUD builders"
 );
 
 assert.ok(
@@ -50,8 +55,20 @@ assert.ok(
   "world.js should source combat stat HUD data from the UI domain bridge"
 );
 assert.ok(
+  worldSource.includes("buildCombatStatusViewModel"),
+  "world.js should source combat status HUD data from the UI domain bridge"
+);
+assert.ok(
+  worldSource.includes("getCombatHudSnapshot"),
+  "world.js should read focused combat state from the combat runtime"
+);
+assert.ok(
   coreSource.includes("buildPlayerProfileSummaryViewModel"),
   "core.js should source player profile flow copy from the UI domain bridge"
+);
+assert.ok(
+  inputSource.includes("if (typeof window.updateStats === 'function') window.updateStats();"),
+  "tick loop should refresh the combat HUD through updateStats"
 );
 
 console.log("Inventory/HUD domain guard passed.");

@@ -168,6 +168,58 @@ const ITEM_DB = {
 }
 
 {
+  const combatStatus = hudViewModels.buildCombatStatusViewModel({
+    playerCurrentHitpoints: 7,
+    playerMaxHitpoints: 10,
+    playerRemainingAttackCooldown: 2,
+    inCombat: true,
+    target: {
+      label: "Goblin",
+      focusLabel: "Target",
+      currentHealth: 3,
+      maxHealth: 7,
+      remainingAttackCooldown: 1,
+      state: "aggroed",
+      distance: 2,
+      inMeleeRange: false
+    }
+  });
+
+  assert.strictEqual(combatStatus.visible, true, "combat status should stay visible while in combat");
+  assert.strictEqual(combatStatus.bannerText, "In Combat", "combat banner should reflect active combat");
+  assert.strictEqual(combatStatus.playerHitpointsText, "7 / 10", "player hp text should be formatted");
+  assert.strictEqual(combatStatus.playerCooldownText, "2 ticks to swing", "player cooldown should use tick text");
+  assert.strictEqual(combatStatus.targetName, "Goblin", "target name should surface the focused enemy");
+  assert.strictEqual(combatStatus.targetStateText, "Attacking", "enemy state should map into readable HUD text");
+  assert.strictEqual(combatStatus.rangeText, "2 tiles away", "range copy should reflect target distance");
+}
+
+{
+  const readyCombatStatus = hudViewModels.buildCombatStatusViewModel({
+    playerCurrentHitpoints: 10,
+    playerMaxHitpoints: 10,
+    playerRemainingAttackCooldown: 0,
+    inCombat: true,
+    target: {
+      label: "Rat",
+      focusLabel: "Aggressor",
+      currentHealth: 1,
+      maxHealth: 4,
+      remainingAttackCooldown: 0,
+      state: "idle",
+      distance: 1,
+      inMeleeRange: true
+    }
+  });
+
+  assert.strictEqual(readyCombatStatus.playerCooldownReady, true, "player cooldown should be marked ready at zero");
+  assert.strictEqual(readyCombatStatus.playerCooldownText, "Ready", "ready cooldown text should be compact");
+  assert.strictEqual(readyCombatStatus.targetCooldownText, "Ready", "target cooldown text should be compact");
+  assert.strictEqual(readyCombatStatus.targetFocusLabel, "Aggressor", "focus label should preserve aggressor fallback");
+  assert.strictEqual(readyCombatStatus.rangeText, "In melee range", "melee range text should be explicit");
+}
+
+{
   const tiles = hudViewModels.buildSkillTileViewModels({
     definitions: [
       { skillId: "mining", displayName: "Mining", icon: "MIN", levelKey: "min" },
