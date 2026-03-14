@@ -52,6 +52,16 @@ const RADIUS_COORD_KEYS = new Set([
   "ry"
 ]);
 
+interface StructureShiftBounds {
+  z: number;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  dx: number;
+  dy: number;
+}
+
 function scaleAxis(value: number): number {
   if (!Number.isFinite(value)) return value;
   return Math.round(value * WORLD_COORD_SCALE);
@@ -100,9 +110,220 @@ function cloneAndScaleSpawn(spawn: Point3): Point3 {
   };
 }
 
+function getStampDimensions(stampId: string): { width: number; height: number } {
+  const rows = Array.isArray(allStamps[stampId]?.rows) ? allStamps[stampId].rows : [];
+  const height = rows.length;
+  let width = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (typeof row !== "string") continue;
+    width = Math.max(width, row.length);
+  }
+  return { width, height };
+}
+
+function buildStructureShiftBounds(rawDefinition: WorldDefinition, scaledDefinition: WorldDefinition): StructureShiftBounds[] {
+  const scaledById = new Map<string, WorldDefinition["structures"][number]>();
+  for (let i = 0; i < scaledDefinition.structures.length; i++) {
+    const structure = scaledDefinition.structures[i];
+    if (!structure) continue;
+    scaledById.set(`${structure.structureId}:${structure.z}`, structure);
+  }
+
+  const bounds: StructureShiftBounds[] = [];
+  for (let i = 0; i < rawDefinition.structures.length; i++) {
+    const rawStructure = rawDefinition.structures[i];
+    if (!rawStructure) continue;
+    const scaledStructure = scaledById.get(`${rawStructure.structureId}:${rawStructure.z}`);
+    if (!scaledStructure) continue;
+    const { width, height } = getStampDimensions(rawStructure.stampId);
+    if (width <= 0 || height <= 0) continue;
+    bounds.push({
+      z: rawStructure.z,
+      xMin: rawStructure.x,
+      xMax: rawStructure.x + width - 1,
+      yMin: rawStructure.y,
+      yMax: rawStructure.y + height - 1,
+      dx: scaledStructure.x - rawStructure.x,
+      dy: scaledStructure.y - rawStructure.y
+    });
+  }
+
+  return bounds;
+}
+
+function resolveStructureShift(
+  bounds: StructureShiftBounds[],
+  x: number,
+  y: number,
+  z: number,
+  margin = 0
+): StructureShiftBounds | null {
+  for (let i = 0; i < bounds.length; i++) {
+    const row = bounds[i];
+    if (!row || row.z !== z) continue;
+    if (x < (row.xMin - margin) || x > (row.xMax + margin) || y < (row.yMin - margin) || y > (row.yMax + margin)) continue;
+    return row;
+  }
+  return null;
+}
+
+function remapPoint3WithStructureShift(
+  bounds: StructureShiftBounds[],
+  point: { x: number; y: number; z: number },
+  margin = 0
+): { x: number; y: number; z: number } {
+  const shift = resolveStructureShift(bounds, point.x, point.y, point.z, margin);
+  if (shift) {
+    return {
+      x: point.x + shift.dx,
+      y: point.y + shift.dy,
+      z: point.z
+    };
+  }
+  return {
+    x: scaleAxis(point.x),
+    y: scaleAxis(point.y),
+    z: point.z
+  };
+}
+
+function remapPoint2WithStructureShift(
+  bounds: StructureShiftBounds[],
+  point: { x: number; y: number },
+  z: number,
+  margin = 0
+): { x: number; y: number } {
+  const shift = resolveStructureShift(bounds, point.x, point.y, z, margin);
+  if (shift) {
+    return {
+      x: point.x + shift.dx,
+      y: point.y + shift.dy
+    };
+  }
+  return {
+    x: scaleAxis(point.x),
+    y: scaleAxis(point.y)
+  };
+}
+
+function applyStructureLocalAlignment(
+  rawDefinition: WorldDefinition,
+  scaledDefinition: WorldDefinition
+): WorldDefinition {
+  const structureShiftBounds = buildStructureShiftBounds(rawDefinition, scaledDefinition);
+  if (structureShiftBounds.length === 0) return scaledDefinition;
+
+  scaledDefinition.npcSpawns = rawDefinition.npcSpawns.map((rawNpc, index) => {
+    const scaledNpc = scaledDefinition.npcSpawns[index] || rawNpc;
+    const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawNpc);
+    return { ...scaledNpc, x: mapped.x, y: mapped.y, z: mapped.z };
+  });
+
+  scaledDefinition.services = rawDefinition.services.map((rawService, index) => {
+    const scaledService = scaledDefinition.services[index] || rawService;
+    const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawService);
+    const mappedTravelSpawn = rawService.travelSpawn
+      ? remapPoint3WithStructureShift(structureShiftBounds, rawService.travelSpawn)
+      : scaledService.travelSpawn;
+    return {
+      ...scaledService,
+      x: mapped.x,
+      y: mapped.y,
+      z: mapped.z,
+      travelSpawn: mappedTravelSpawn || null
+    };
+  });
+
+  scaledDefinition.resourceNodes = {
+    mining: rawDefinition.resourceNodes.mining.map((rawNode, index) => {
+      const scaledNode = scaledDefinition.resourceNodes.mining[index] || rawNode;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawNode);
+      return { ...scaledNode, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
+    woodcutting: rawDefinition.resourceNodes.woodcutting.map((rawNode, index) => {
+      const scaledNode = scaledDefinition.resourceNodes.woodcutting[index] || rawNode;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawNode);
+      return { ...scaledNode, x: mapped.x, y: mapped.y, z: mapped.z };
+    })
+  };
+
+  scaledDefinition.skillRoutes = {
+    fishing: rawDefinition.skillRoutes.fishing.map((rawRoute, index) => {
+      const scaledRoute = scaledDefinition.skillRoutes.fishing[index] || rawRoute;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);
+      return { ...scaledRoute, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
+    cooking: rawDefinition.skillRoutes.cooking.map((rawRoute, index) => {
+      const scaledRoute = scaledDefinition.skillRoutes.cooking[index] || rawRoute;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);
+      return {
+        ...scaledRoute,
+        x: mapped.x,
+        y: mapped.y,
+        z: mapped.z,
+        fireTiles: rawRoute.fireTiles.map((tile) =>
+          remapPoint2WithStructureShift(structureShiftBounds, tile, rawRoute.z)
+        )
+      };
+    }),
+    mining: rawDefinition.skillRoutes.mining.map((rawRoute, index) => {
+      const scaledRoute = scaledDefinition.skillRoutes.mining[index] || rawRoute;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);
+      return { ...scaledRoute, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
+    runecrafting: rawDefinition.skillRoutes.runecrafting.map((rawRoute, index) => {
+      const scaledRoute = scaledDefinition.skillRoutes.runecrafting[index] || rawRoute;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);
+      return { ...scaledRoute, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
+    woodcutting: rawDefinition.skillRoutes.woodcutting.map((rawRoute, index) => {
+      const scaledRoute = scaledDefinition.skillRoutes.woodcutting[index] || rawRoute;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);
+      return { ...scaledRoute, x: mapped.x, y: mapped.y, z: mapped.z };
+    })
+  };
+
+  scaledDefinition.landmarks = {
+    staircases: rawDefinition.landmarks.staircases.map((rawStaircase, staircaseIndex) => {
+      const scaledStaircase = scaledDefinition.landmarks.staircases[staircaseIndex] || rawStaircase;
+      return {
+        ...scaledStaircase,
+        tiles: rawStaircase.tiles.map((rawTile, tileIndex) => {
+          const scaledTile = scaledStaircase.tiles[tileIndex] || rawTile;
+          const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawTile, 1);
+          return { ...scaledTile, x: mapped.x, y: mapped.y, z: mapped.z };
+        })
+      };
+    }),
+    doors: rawDefinition.landmarks.doors.map((rawDoor, index) => {
+      const scaledDoor = scaledDefinition.landmarks.doors[index] || rawDoor;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawDoor, 1);
+      return { ...scaledDoor, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
+    altars: rawDefinition.landmarks.altars.map((rawAltar, index) => {
+      const scaledAltar = scaledDefinition.landmarks.altars[index] || rawAltar;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawAltar);
+      return { ...scaledAltar, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
+    showcaseTrees: rawDefinition.landmarks.showcaseTrees.map((rawTree, index) => {
+      const scaledTree = scaledDefinition.landmarks.showcaseTrees[index] || rawTree;
+      const mapped = remapPoint2WithStructureShift(structureShiftBounds, rawTree, 0);
+      return { ...scaledTree, x: mapped.x, y: mapped.y };
+    })
+  };
+
+  return scaledDefinition;
+}
+
+function buildScaledWorldDefinition(rawDefinition: WorldDefinition): WorldDefinition {
+  const scaledDefinition = cloneAndScaleValue(rawDefinition) as WorldDefinition;
+  return applyStructureLocalAlignment(rawDefinition, scaledDefinition);
+}
+
 const worldDefinitions: Record<string, WorldDefinition> = {
-  [northRoadCamp.worldId]: cloneAndScaleValue(northRoadCamp as WorldDefinition) as WorldDefinition,
-  [starterTown.worldId]: cloneAndScaleValue(starterTown as WorldDefinition) as WorldDefinition
+  [northRoadCamp.worldId]: buildScaledWorldDefinition(northRoadCamp as WorldDefinition),
+  [starterTown.worldId]: buildScaledWorldDefinition(starterTown as WorldDefinition)
 };
 
 function cloneSpawn(spawn: Point3): Point3 {
