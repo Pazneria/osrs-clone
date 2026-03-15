@@ -97,6 +97,19 @@
         return 0;
     }
 
+    function computeCombatLevelFromStats(stats) {
+        if (!stats || typeof stats !== 'object') return 1;
+        const attack = Number.isFinite(stats.attack) ? Math.floor(stats.attack) : 1;
+        const strength = Number.isFinite(stats.strength) ? Math.floor(stats.strength) : 1;
+        const defense = Number.isFinite(stats.defense) ? Math.floor(stats.defense) : 1;
+        const hitpoints = Number.isFinite(stats.hitpoints) ? Math.floor(stats.hitpoints) : 10;
+        return Math.max(1, Math.floor((attack + strength + defense + hitpoints) / 4));
+    }
+
+    function getEnemyCombatLevel(enemyType) {
+        return computeCombatLevelFromStats(enemyType && enemyType.stats ? enemyType.stats : null);
+    }
+
     function getCombatEnemyState(enemyId) {
         return combatEnemyStateById[String(enemyId || '').trim()] || null;
     }
@@ -1170,6 +1183,7 @@
     function createRatRenderer(enemyState, enemyType) {
         const group = new THREE.Group();
         group.rotation.order = 'YXZ';
+        const combatLevel = getEnemyCombatLevel(enemyType);
 
         const furMaterial = new THREE.MeshLambertMaterial({ color: 0x6b6258, flatShading: true });
         const bellyMaterial = new THREE.MeshLambertMaterial({ color: 0xcbb7a2, flatShading: true });
@@ -1209,6 +1223,7 @@
             gridY: enemyState.y,
             z: enemyState.z,
             name: enemyType.displayName,
+            combatLevel,
             uid: enemyState.runtimeId
         };
 
@@ -1218,6 +1233,7 @@
 
     function createHumanoidEnemyRenderer(enemyState, enemyType) {
         const group = createHumanoidModel(enemyType.appearance && Number.isFinite(enemyType.appearance.npcType) ? enemyType.appearance.npcType : 3);
+        const combatLevel = getEnemyCombatLevel(enemyType);
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.0, 2.0, 1.0),
             new THREE.MeshBasicMaterial({ visible: false })
@@ -1229,6 +1245,7 @@
             gridY: enemyState.y,
             z: enemyState.z,
             name: enemyType.displayName,
+            combatLevel,
             uid: enemyState.runtimeId
         };
         group.add(hitbox);
@@ -1315,6 +1332,10 @@
         renderer.hitbox.userData.gridX = enemyState.x;
         renderer.hitbox.userData.gridY = enemyState.y;
         renderer.hitbox.userData.z = enemyState.z;
+        if (!Number.isFinite(renderer.hitbox.userData.combatLevel)) {
+            const enemyType = getEnemyDefinition(enemyState.enemyId);
+            renderer.hitbox.userData.combatLevel = getEnemyCombatLevel(enemyType);
+        }
 
         if (renderer.kind === 'rat') {
             const attackAge = frameNow - (enemyState.attackTriggerAt || 0);

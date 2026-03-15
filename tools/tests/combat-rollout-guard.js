@@ -31,6 +31,9 @@ assert.ok(
 );
   assert.ok(
   combatSource.includes("function createEnemyHitpointsBarRenderer()") &&
+    combatSource.includes("function computeCombatLevelFromStats(stats)") &&
+    combatSource.includes("combatLevel = getEnemyCombatLevel(enemyType);") &&
+    combatSource.includes("combatLevel,") &&
     combatSource.includes("function updateEnemyHitpointsBar(enemyState, renderer)") &&
     combatSource.includes("function updateCombatEnemyOverlays()") &&
     combatSource.includes("function updateIdleEnemyMovement(enemyState, reservedTiles)") &&
@@ -50,12 +53,19 @@ assert.ok(
 );
 assert.ok(
   inputRenderSource.includes("else if (hitData.type === 'ENEMY') {") &&
-    inputRenderSource.includes("enemyId: String(hitData.uid || '').trim()"),
+    inputRenderSource.includes("enemyId: String(hitData.uid || '').trim()") &&
+    inputRenderSource.includes("combatLevel: data.combatLevel,"),
   "left-click enemy interaction should queue a normalized enemy target payload"
 );
 assert.ok(
   inputRenderSource.includes("window.updateCombatEnemyOverlays()"),
   "render loop should refresh enemy overlays after camera updates"
+);
+assert.ok(
+  inputRenderSource.includes("function formatEnemyTooltipDisplayName(hitData)") &&
+    inputRenderSource.includes("${baseName} (Level ${combatLevel})") &&
+    inputRenderSource.includes("formatEnemyTooltipDisplayName(hitData)"),
+  "enemy hover tooltips should append computed combat level next to the enemy name"
 );
 assert.ok(
   inputRenderSource.includes("else if (typeof pendingAction.targetUid === 'string')") &&

@@ -1145,8 +1145,7 @@
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x5ea8f7);
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 260);
-            // Keep fog only at the far render horizon so nearby space stays clear.
-            scene.fog = new THREE.Fog(0xcfe4fb, camera.far - 35, camera.far);
+            scene.fog = null;
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
             renderer.setSize(window.innerWidth, window.innerHeight);

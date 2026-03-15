@@ -394,7 +394,15 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (data.type === 'DOOR') {
                 return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, doorObj: data.doorObj };
             }
-            return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, name: data.name, uid: data.uid };
+            return {
+                type: data.type,
+                gridX: data.gridX,
+                gridY: data.gridY,
+                point: hit.point,
+                name: data.name,
+                combatLevel: data.combatLevel,
+                uid: data.uid
+            };
         }
 
         function getRaycastHitKey(hitData) {
@@ -934,6 +942,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (!hitData || hitData.type !== 'GROUND_ITEM') return baseName;
             const tileStackCount = getGroundTileStackCount(hitData.gridX, hitData.gridY);
             return tileStackCount > 1 ? `${baseName} (${tileStackCount})` : baseName;
+        }
+
+        function formatEnemyTooltipDisplayName(hitData) {
+            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+                ? hitData.name
+                : 'Enemy';
+            const combatLevel = hitData && Number.isFinite(hitData.combatLevel)
+                ? Math.max(1, Math.floor(hitData.combatLevel))
+                : null;
+            if (combatLevel === null) return baseName;
+            return `${baseName} (Level ${combatLevel})`;
         }
         function queueAction(type, gridX, gridY, obj, targetUid = null) {
             cancelManualFiremakingChain();
@@ -1666,7 +1685,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
                     else if (hitData.type === 'WATER') actionText = '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
                     else if (hitData.type === 'DOOR') actionText = `<span class="text-gray-300">${hitData.doorObj.isOpen ? 'Close' : 'Open'}</span> <span class="text-cyan-400">Door</span>`;
-                    else if (hitData.type === 'ENEMY') actionText = `<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">${hitData.name || 'Enemy'}</span>`;
+                    else if (hitData.type === 'ENEMY') actionText = `<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">${formatEnemyTooltipDisplayName(hitData)}</span>`;
                     else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'NPC') {
