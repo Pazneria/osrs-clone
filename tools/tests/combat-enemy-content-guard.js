@@ -143,4 +143,17 @@ for (const [enemyId, expected] of Object.entries(EXPECTED_ENEMIES)) {
   }
 }
 
+const starterTownSpawns = combatContent.listEnemySpawnNodesForWorld("starter_town");
+const starterTownSpawnById = new Map(starterTownSpawns.map((spawn) => [spawn.spawnNodeId, spawn]));
+assert.strictEqual(
+  starterTownSpawnById.get("enemy_spawn_rat_south_field")?.roamingRadiusOverride,
+  15,
+  "starter rat spawn should override roaming radius to a wide field wander"
+);
+assert.strictEqual(
+  starterTownSpawnById.get("enemy_spawn_goblin_east_path")?.roamingRadiusOverride,
+  15,
+  "starter goblin spawn should override roaming radius to a wide roadside wander"
+);
+
 console.log("Combat enemy content guard passed.");

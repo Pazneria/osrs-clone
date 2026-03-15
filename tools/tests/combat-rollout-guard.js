@@ -29,10 +29,33 @@ assert.ok(
     combatSource.includes("window.updateCombatRenderers = updateCombatRenderers;"),
   "combat runtime should expose tick and render hooks"
 );
+  assert.ok(
+  combatSource.includes("function createEnemyHitpointsBarRenderer()") &&
+    combatSource.includes("function updateEnemyHitpointsBar(enemyState, renderer)") &&
+    combatSource.includes("function updateCombatEnemyOverlays()") &&
+    combatSource.includes("function updateIdleEnemyMovement(enemyState, reservedTiles)") &&
+    combatSource.includes("function getEnemyVisualMoveProgress(enemyState, frameNow)") &&
+    combatSource.includes("function syncMeleeCombatFacing()") &&
+    combatSource.includes("function isPlayerCombatFacingReady()") &&
+    combatSource.includes("function captureEnemyPendingDefeatFacing(enemyState)") &&
+    combatSource.includes("enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);") &&
+    combatSource.includes("snapCombatFacing = true;") &&
+    combatSource.includes("renderer.group.rotation.y = targetYaw;"),
+  "combat runtime should render overhead enemy hitpoint bars, support idle enemy roaming, smooth enemy movement, and keep melee combatants facing each other"
+);
+assert.ok(
+  combatSource.includes("window.updateCombatEnemyOverlays = updateCombatEnemyOverlays;") &&
+    combatSource.includes("window.getCombatEnemyOccupiedBaseTileId = getCombatEnemyOccupiedBaseTileId;"),
+  "combat runtime should expose the enemy overlay refresh hook and occupied-base-tile helper"
+);
 assert.ok(
   inputRenderSource.includes("else if (hitData.type === 'ENEMY') {") &&
     inputRenderSource.includes("enemyId: String(hitData.uid || '').trim()"),
   "left-click enemy interaction should queue a normalized enemy target payload"
+);
+assert.ok(
+  inputRenderSource.includes("window.updateCombatEnemyOverlays()"),
+  "render loop should refresh enemy overlays after camera updates"
 );
 assert.ok(
   inputRenderSource.includes("else if (typeof pendingAction.targetUid === 'string')") &&

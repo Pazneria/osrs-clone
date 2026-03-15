@@ -49,10 +49,10 @@ function assertStarterTown(root) {
   assert(servicesById["station:east_outpost_furnace"].x === 374 && servicesById["station:east_outpost_furnace"].y === 254, "east outpost furnace placement mismatch");
   assert(servicesById["station:east_outpost_anvil"].x === 374 && servicesById["station:east_outpost_anvil"].y === 257, "east outpost anvil placement mismatch");
   assert(servicesById["merchant:borin_ironvein"].merchantId === "borin_ironvein", "smithing merchant mismatch");
-  assert(servicesById["merchant:thrain_deepforge"].x === 228 && servicesById["merchant:thrain_deepforge"].y === 236, "thrain merchant authored placement mismatch");
-  assert(servicesById["merchant:elira_gemhand"].x === 228 && servicesById["merchant:elira_gemhand"].y === 231, "elira merchant authored placement mismatch");
-  assert(servicesById["merchant:tanner_rusk"].x === 225 && servicesById["merchant:tanner_rusk"].y === 236, "tanner merchant authored placement mismatch");
-  assert(servicesById["merchant:rune_tutor"].x === 203 && servicesById["merchant:rune_tutor"].y === 152, "rune tutor authored placement mismatch");
+  assert(servicesById["merchant:thrain_deepforge"].x === 366 && servicesById["merchant:thrain_deepforge"].y === 252, "thrain merchant authored placement mismatch");
+  assert(servicesById["merchant:elira_gemhand"].x === 198 && servicesById["merchant:elira_gemhand"].y === 205, "elira merchant authored placement mismatch");
+  assert(servicesById["merchant:tanner_rusk"].x === 219 && servicesById["merchant:tanner_rusk"].y === 240, "tanner merchant authored placement mismatch");
+  assert(servicesById["merchant:rune_tutor"].x === 203 && servicesById["merchant:rune_tutor"].y === 96, "rune tutor authored placement mismatch");
   assert(servicesById["merchant:combination_sage"].x === 91 && servicesById["merchant:combination_sage"].y === 23, "combination sage authored placement mismatch");
 
   const miningIds = world.skillRoutes.mining.map((entry) => entry.routeId).join(",");

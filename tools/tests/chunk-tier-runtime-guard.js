@@ -18,9 +18,13 @@ function run() {
   assert(worldSource.includes("collectDesiredChunkTierAssignments"), "world.js should build tier assignments for chunks");
   assert(worldSource.includes("ensureFarChunkBackdropBuilt"), "world.js should prebuild far chunk backdrops");
   assert(worldSource.includes("applyChunkTierForKey"), "world.js should apply tier transitions by chunk");
+  assert(worldSource.includes("pendingNearChunkBuilds"), "world.js should track pending near-chunk builds");
+  assert(worldSource.includes("enqueuePendingNearChunkBuild"), "world.js should queue near-tier promotions instead of building them inline");
+  assert(worldSource.includes("processPendingNearChunkBuilds"), "world.js should process pending near-chunk builds over time");
   assert(worldSource.includes("chunkInteractionMeshes.set(key"), "world.js should cache interaction meshes per near chunk");
   assert(
-    worldSource.includes("targetTier === CHUNK_TIER_NEAR && desiredInteractionChunks.has(key)"),
+    worldSource.includes("targetTier === CHUNK_TIER_NEAR && desiredInteractionChunks.has(key)")
+      || worldSource.includes("targetTier === CHUNK_TIER_NEAR && policyState.desiredInteractionChunks.has(key)"),
     "world.js should keep interaction registration constrained to near-tier chunks"
   );
   assert(worldSource.includes("function reportChunkPerformanceSample"), "world.js should define auto quality sampling");
@@ -30,6 +34,10 @@ function run() {
   assert(
     inputSource.includes("window.reportChunkPerformanceSample"),
     "input-render.js should report fps samples to chunk quality controller"
+  );
+  assert(
+    inputSource.includes("window.processPendingNearChunkBuilds"),
+    "input-render.js should process pending near-chunk builds from the render loop"
   );
 
   console.log("Chunk tier runtime guard passed.");

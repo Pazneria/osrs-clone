@@ -19,9 +19,16 @@ function run() {
   assert(worldSource.includes("buildHudRenderSnapshot"), "world.js should build a render snapshot helper");
   assert(worldSource.includes("buildWorldMapSnapshot"), "world.js should consume the world-map render snapshot bridge");
   assert(worldSource.includes("buildMinimapSnapshot"), "world.js should consume the minimap render snapshot bridge");
+  assert(worldSource.includes("shadowFocusRevision"), "world.js should track shadow focus revision changes across scene reloads");
+  assert(worldSource.includes("function initSkyRuntime"), "world.js should initialize a static sky runtime");
+  assert(worldSource.includes("function updateSkyRuntime"), "world.js should expose a sky update helper");
+  assert(worldSource.includes("window.updateSkyRuntime = updateSkyRuntime;"), "world.js should keep sky updates wired through the world shell");
   assert(inputSource.includes("const inputControllerRuntime = window.InputControllerRuntime || null;"), "input-render.js should adopt the input controller bridge");
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
+  assert(inputSource.includes("function maybeUpdateMainDirectionalShadowFocus"), "input-render.js should throttle directional shadow focus updates through a helper");
+  assert(inputSource.includes("window.updateMainDirectionalShadowFocus"), "input-render.js should keep directional shadow focus wired through the world shell");
+  assert(inputSource.includes("window.updateSkyRuntime(camera.position, frameNowMs);"), "input-render.js should refresh the sky runtime from animate()");
 
   console.log("Render/input shell guard passed.");
 }

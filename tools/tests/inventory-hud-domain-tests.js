@@ -168,6 +168,32 @@ const ITEM_DB = {
 }
 
 {
+  const combatTab = hudViewModels.buildCombatTabViewModel({
+    playerSkills: {
+      attack: { xp: 0, level: 20 },
+      strength: { xp: 0, level: 16 },
+      defense: { xp: 0, level: 12 },
+      hitpoints: { xp: 0, level: 18 }
+    },
+    equipment: {
+      weapon: ITEM_DB.sword,
+      shield: ITEM_DB.shield
+    },
+    playerState: {
+      selectedMeleeStyle: "strength"
+    }
+  });
+
+  assert.strictEqual(combatTab.combatLevel, 16, "combat level should average attack, strength, defense, and hitpoints");
+  assert.strictEqual(combatTab.combatLevelText, "16", "combat level text should be display-ready");
+  assert.strictEqual(combatTab.selectedStyleId, "strength", "combat tab should preserve the active melee style");
+  assert.strictEqual(combatTab.selectedStyleDescription, "+10% max hit", "combat tab should surface the active style effect");
+  assert.strictEqual(combatTab.styleOptions.find((entry) => entry.styleId === "strength").active, true, "selected style option should be marked active");
+  assert.strictEqual(combatTab.attackLevel, 20, "combat tab should expose attack level");
+  assert.strictEqual(combatTab.hitpointsLevel, 18, "combat tab should expose hitpoints level");
+}
+
+{
   const combatStatus = hudViewModels.buildCombatStatusViewModel({
     playerCurrentHitpoints: 7,
     playerMaxHitpoints: 10,

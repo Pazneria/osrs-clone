@@ -30,7 +30,10 @@ function cloneSpawnNode(definition: EnemySpawnNodeDefinition): EnemySpawnNodeDef
   return {
     ...definition,
     spawnTile: clonePoint3(definition.spawnTile),
-    homeTileOverride: definition.homeTileOverride ? clonePoint3(definition.homeTileOverride) : null
+    homeTileOverride: definition.homeTileOverride ? clonePoint3(definition.homeTileOverride) : null,
+    roamingRadiusOverride: Number.isFinite(definition.roamingRadiusOverride)
+      ? Math.max(0, Math.floor(Number(definition.roamingRadiusOverride)))
+      : null
   };
 }
 
@@ -630,6 +633,7 @@ const WORLD_ENEMY_SPAWNS: Record<string, EnemySpawnNodeDefinition[]> = {
       enemyId: "enemy_rat",
       spawnTile: { x: 194, y: 220, z: 0 },
       homeTileOverride: null,
+      roamingRadiusOverride: 15,
       respawnTicks: 20,
       spawnEnabled: true,
       facingYaw: Math.PI,
@@ -640,6 +644,7 @@ const WORLD_ENEMY_SPAWNS: Record<string, EnemySpawnNodeDefinition[]> = {
       enemyId: "enemy_goblin_grunt",
       spawnTile: { x: 240, y: 200, z: 0 },
       homeTileOverride: null,
+      roamingRadiusOverride: 15,
       respawnTicks: 34,
       spawnEnabled: true,
       facingYaw: Math.PI,
@@ -690,6 +695,9 @@ export function createEnemyRuntimeState(
 
   const spawnTile = clonePoint3(spawnNode.spawnTile);
   const homeTile = spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : clonePoint3(spawnTile);
+  const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
+    ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
+    : definition.behavior.roamingRadius;
   return {
     runtimeId: spawnNode.spawnNodeId,
     spawnNodeId: spawnNode.spawnNodeId,
@@ -703,8 +711,8 @@ export function createEnemyRuntimeState(
     remainingAttackCooldown: 0,
     resolvedHomeTile: homeTile,
     resolvedSpawnTile: spawnTile,
-    resolvedRoamingRadius: definition.behavior.roamingRadius,
-    resolvedChaseRange: definition.behavior.chaseRange,
+    resolvedRoamingRadius,
+    resolvedChaseRange: Math.max(definition.behavior.chaseRange, resolvedRoamingRadius + 2),
     resolvedAggroRadius: definition.behavior.aggroRadius,
     defaultMovementSpeed: definition.behavior.defaultMovementSpeed,
     combatMovementSpeed: definition.behavior.combatMovementSpeed,

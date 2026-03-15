@@ -138,27 +138,146 @@
             tooltip.style.top = `${y}px`;
         }
 
-        function showInventoryHoverTooltip(text, clientX, clientY) {
+        function showInventoryHoverTooltip(text, clientX, clientY, html = '') {
             const tooltip = getInventoryHoverTooltipEl();
             const tooltipText = (typeof text === 'string') ? text.trim() : '';
-            if (!tooltip || !tooltipText) {
+            const tooltipHtml = (typeof html === 'string') ? html.trim() : '';
+            if (!tooltip || (!tooltipText && !tooltipHtml)) {
                 hideInventoryHoverTooltip();
                 return;
             }
 
-            tooltip.textContent = tooltipText;
+            if (tooltipHtml) tooltip.innerHTML = tooltipHtml;
+            else tooltip.textContent = tooltipText;
             tooltip.classList.remove('hidden');
             positionInventoryHoverTooltip(tooltip, clientX, clientY);
         }
 
-        function bindInventorySlotTooltip(slot, text) {
+        function escapeTooltipHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatSignedTooltipStat(value) {
+            const numericValue = Number.isFinite(value) ? Math.floor(value) : 0;
+            return `${numericValue >= 0 ? '+' : ''}${numericValue}`;
+        }
+
+        function buildItemTooltipSections(item, options = {}) {
+            if (!item || typeof item !== 'object') return null;
+
+            const detailLines = [];
+            const bonusLines = [];
+            const requirementLines = [];
+
+            const actionText = typeof options.actionText === 'string' ? options.actionText.trim() : '';
+            if (actionText) detailLines.push(actionText);
+
+            const amount = Number.isFinite(options.amount) ? Math.max(0, Math.floor(options.amount)) : 0;
+            if (amount > 1) detailLines.push(`Amount: ${amount.toLocaleString()}`);
+
+            const priceText = typeof options.priceText === 'string' ? options.priceText.trim() : '';
+            if (priceText) detailLines.push(priceText);
+            else if (Number.isFinite(item.value) && item.value > 0) detailLines.push(`Value: ${Math.floor(item.value).toLocaleString()} coins`);
+
+            if (Number.isFinite(item.healAmount) && item.healAmount > 0) {
+                detailLines.push(`Heals: +${Math.floor(item.healAmount)} HP`);
+            }
+
+            const attackProfile = item.combat && item.combat.attackProfile ? item.combat.attackProfile : null;
+            if (attackProfile && Number.isFinite(attackProfile.tickCycle)) {
+                const tickCycle = Math.max(1, Math.floor(attackProfile.tickCycle));
+                detailLines.push(`Speed: ${tickCycle} tick${tickCycle === 1 ? '' : 's'}`);
+            }
+
+            const stats = item.stats && typeof item.stats === 'object' ? item.stats : null;
+            if (stats) {
+                if (Number.isFinite(stats.atk) && Math.floor(stats.atk) !== 0) {
+                    bonusLines.push({ label: 'Attack bonus', value: formatSignedTooltipStat(stats.atk) });
+                }
+                if (Number.isFinite(stats.def) && Math.floor(stats.def) !== 0) {
+                    bonusLines.push({ label: 'Defense bonus', value: formatSignedTooltipStat(stats.def) });
+                }
+                if (Number.isFinite(stats.str) && Math.floor(stats.str) !== 0) {
+                    bonusLines.push({ label: 'Strength bonus', value: formatSignedTooltipStat(stats.str) });
+                }
+            }
+
+            const requiredAttackLevel = Number.isFinite(item.requiredAttackLevel)
+                ? Math.max(1, Math.floor(item.requiredAttackLevel))
+                : 0;
+            if (requiredAttackLevel > 1) {
+                requirementLines.push({ label: 'Attack req.', value: String(requiredAttackLevel) });
+            }
+
+            return {
+                name: typeof item.name === 'string' ? item.name : 'Item',
+                detailLines,
+                bonusLines,
+                requirementLines
+            };
+        }
+
+        function buildItemTooltipText(item, options = {}) {
+            const sections = buildItemTooltipSections(item, options);
+            if (!sections) return '';
+
+            const lines = [sections.name];
+            sections.detailLines.forEach((line) => lines.push(line));
+            sections.bonusLines.forEach((line) => lines.push(`${line.label}: ${line.value}`));
+            sections.requirementLines.forEach((line) => lines.push(`${line.label}: ${line.value}`));
+            return lines.join('\n');
+        }
+
+        function buildItemTooltipHtml(item, options = {}) {
+            const sections = buildItemTooltipSections(item, options);
+            if (!sections) return '';
+
+            const detailHtml = sections.detailLines
+                .map((line) => `<div class="text-gray-300">${escapeTooltipHtml(line)}</div>`)
+                .join('');
+            const bonusHtml = sections.bonusLines.length > 0
+                ? `<div class="mt-2 border-t border-[#3a444c] pt-1.5">
+                        <div class="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#c8aa6e]">Bonuses</div>
+                        ${sections.bonusLines.map((line) => `<div class="flex items-center justify-between gap-3"><span class="text-gray-300">${escapeTooltipHtml(line.label)}</span><span class="text-white">${escapeTooltipHtml(line.value)}</span></div>`).join('')}
+                   </div>`
+                : '';
+            const requirementHtml = sections.requirementLines.length > 0
+                ? `<div class="mt-2 border-t border-[#3a444c] pt-1.5">
+                        <div class="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#c8aa6e]">Requirements</div>
+                        ${sections.requirementLines.map((line) => `<div class="flex items-center justify-between gap-3"><span class="text-gray-300">${escapeTooltipHtml(line.label)}</span><span class="text-white">${escapeTooltipHtml(line.value)}</span></div>`).join('')}
+                   </div>`
+                : '';
+
+            return `<div class="min-w-[180px]">
+                <div class="text-[#ffcf8b] text-[11px] font-bold leading-4">${escapeTooltipHtml(sections.name)}</div>
+                <div class="mt-1 text-[10px] leading-4 font-normal tracking-normal space-y-0.5">
+                    ${detailHtml}
+                </div>
+                ${bonusHtml}
+                ${requirementHtml}
+            </div>`;
+        }
+
+        function bindInventorySlotTooltip(slot, text, html = '') {
             const tooltipText = (typeof text === 'string') ? text.trim() : '';
+            const tooltipHtml = (typeof html === 'string') ? html.trim() : '';
             slot.title = '';
-            if (!tooltipText) return;
+            slot.onmouseenter = null;
+            slot.onmousemove = null;
+            slot.onmouseleave = null;
+            if (!tooltipText && !tooltipHtml) {
+                slot.removeAttribute('aria-label');
+                return;
+            }
             slot.setAttribute('aria-label', tooltipText);
-            slot.addEventListener('mouseenter', (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY));
-            slot.addEventListener('mousemove', (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY));
-            slot.addEventListener('mouseleave', hideInventoryHoverTooltip);
+            slot.onmouseenter = (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY, tooltipHtml);
+            slot.onmousemove = (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY, tooltipHtml);
+            slot.onmouseleave = hideInventoryHoverTooltip;
         }
 
         function setInterfaceOpenState(interfaceId, isOpen) {
@@ -275,6 +394,7 @@
 
         function renderBank() {
             const container = document.getElementById('bank-grid');
+            hideInventoryHoverTooltip();
             container.innerHTML = '';
             let usedSlots = 0;
             const bankSlotViewModels = buildBankSlotViewModels();
@@ -294,7 +414,11 @@
                     if (bItem) {
                     usedSlots++;
                     slot.innerHTML = `${bankViewModel ? bankViewModel.icon : bItem.itemData.icon}${formatStackSize(bankViewModel ? bankViewModel.amount : bItem.amount)}`;
-                    slot.title = bankViewModel ? bankViewModel.title : `${bItem.itemData.name} x ${bItem.amount.toLocaleString()}`;
+                    bindInventorySlotTooltip(
+                        slot,
+                        buildItemTooltipText(bItem.itemData, { amount: bankViewModel ? bankViewModel.amount : bItem.amount }),
+                        buildItemTooltipHtml(bItem.itemData, { amount: bankViewModel ? bankViewModel.amount : bItem.amount })
+                    );
                     
                     slot.draggable = true;
                     slot.addEventListener('dragstart', (e) => {
@@ -487,6 +611,7 @@
 
         function renderShop() {
             const container = document.getElementById('shop-grid');
+            hideInventoryHoverTooltip();
             container.innerHTML = '';
             const shopSlotViewModels = buildShopSlotViewModels();
             for (let i = 0; i < 100; i++) {
@@ -497,7 +622,11 @@
                 if (sItem && sItem.amount > 0) {
                     slot.innerHTML = `${shopViewModel ? shopViewModel.icon : sItem.itemData.icon}${formatStackSize(shopViewModel ? shopViewModel.amount : sItem.amount)}`;
                     const buyPrice = shopViewModel ? shopViewModel.buyPrice : resolveMerchantBuyPrice(sItem.itemData.id);
-                    slot.title = shopViewModel ? shopViewModel.title : (sItem.itemData.name + ' - ' + buyPrice + ' coins');
+                    bindInventorySlotTooltip(
+                        slot,
+                        buildItemTooltipText(sItem.itemData, { amount: shopViewModel ? shopViewModel.amount : sItem.amount, priceText: `Buy: ${buyPrice.toLocaleString()} coins` }),
+                        buildItemTooltipHtml(sItem.itemData, { amount: shopViewModel ? shopViewModel.amount : sItem.amount, priceText: `Buy: ${buyPrice.toLocaleString()} coins` })
+                    );
                     const shopActionPrefKey = getItemMenuPreferenceKey('shop', sItem.itemData.id);
                     const shopActions = ['Buy-1', 'Buy-5', 'Buy-10', 'Buy-50', 'Buy-X'];
                     const runShopAction = (actionName) => {
@@ -589,6 +718,7 @@
 
         function renderInventory() {
             const container = document.getElementById('view-inv');
+            hideInventoryHoverTooltip();
             container.innerHTML = '';
             const inventorySlotViewModels = buildInventorySlotViewModels();
             for (let i = 0; i < 28; i++) {
@@ -636,7 +766,11 @@
                                 }
                             }
                         };
-                        bindInventorySlotTooltip(slot, `Deposit ${item.name}`);
+                        bindInventorySlotTooltip(
+                            slot,
+                            buildItemTooltipText(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Deposit', priceText: `Value: ${Math.floor(item.value || 0).toLocaleString()} coins` }),
+                            buildItemTooltipHtml(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Deposit', priceText: `Value: ${Math.floor(item.value || 0).toLocaleString()} coins` })
+                        );
                         slot.onclick = () => {
                             const defaultAction = getPreferredMenuAction(depositActionPrefKey, depositActions);
                     if (defaultAction) runDepositAction(defaultAction);
@@ -663,7 +797,11 @@
                             else if (actionName === 'Sell-50') sellItem(i, 50);
                             else if (actionName === 'Sell-X') promptAmount((amt) => sellItem(i, amt));
                         };
-                        bindInventorySlotTooltip(slot, `Sell ${item.name}`);
+                        bindInventorySlotTooltip(
+                            slot,
+                            buildItemTooltipText(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Sell', priceText: `Sell: ${resolveMerchantSellPrice(item.id).toLocaleString()} coins` }),
+                            buildItemTooltipHtml(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Sell', priceText: `Sell: ${resolveMerchantSellPrice(item.id).toLocaleString()} coins` })
+                        );
                         slot.onclick = () => {
                             const defaultAction = getPreferredMenuAction(sellActionPrefKey, sellActions);
                     if (defaultAction) runSellAction(defaultAction);
@@ -685,7 +823,11 @@
                         const invActionPrefKey = getItemMenuPreferenceKey('inventory', item.id);
                         const defaultAction = resolveDefaultItemAction(item, invActionPrefKey);
                         const orderedActions = getOrderedItemActions(item);
-                    bindInventorySlotTooltip(slot, `${defaultAction} ${item.name}`);
+                        bindInventorySlotTooltip(
+                            slot,
+                            buildItemTooltipText(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: `Left-click: ${defaultAction}` }),
+                            buildItemTooltipHtml(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: `Left-click: ${defaultAction}` })
+                        );
                         slot.onclick = () => handleInventorySlotClick(i);
                         slot.oncontextmenu = (e) => {
                             hideInventoryHoverTooltip();
@@ -712,14 +854,43 @@
         }
 
         function renderEquipment() {
+            hideInventoryHoverTooltip();
             const slotViewModels = buildEquipmentSlotViewModels();
             slotViewModels.forEach((slotViewModel) => {
                 const slotName = slotViewModel.slotName;
                 const el = document.getElementById(`eq-${slotName}`); if (!el) return;
                 el.className = 'w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl select-none hover:bg-[#1a1f24]';
                 const item = equipment[slotName];
-                if (slotViewModel.hasItem && item) { el.innerHTML = slotViewModel.icon; el.title = slotViewModel.itemName; el.onclick = () => unequipItem(slotName); el.style.cursor = 'pointer'; } 
-                else { el.innerHTML = ''; el.title = ''; el.onclick = null; el.style.cursor = 'default'; }
+                if (slotViewModel.hasItem && item) {
+                    el.innerHTML = slotViewModel.icon;
+                    bindInventorySlotTooltip(
+                        el,
+                        buildItemTooltipText(item, { actionText: 'Click to unequip' }),
+                        buildItemTooltipHtml(item, { actionText: 'Click to unequip' })
+                    );
+                    el.onclick = () => unequipItem(slotName);
+                    el.style.cursor = 'pointer';
+                } else {
+                    el.innerHTML = '';
+                    bindInventorySlotTooltip(el, '');
+                    el.onclick = null;
+                    el.style.cursor = 'default';
+                }
+            });
+        }
+
+        function selectCombatStyle(styleId) {
+            const nextStyle = styleId === 'strength' || styleId === 'defense' ? styleId : 'attack';
+            if (!playerState || playerState.selectedMeleeStyle === nextStyle) return;
+            playerState.selectedMeleeStyle = nextStyle;
+            if (typeof window.updateStats === 'function') window.updateStats();
+        }
+
+        function bindCombatStyleButtons() {
+            ['attack', 'strength', 'defense'].forEach((styleId) => {
+                const button = document.getElementById(`combat-style-${styleId}`);
+                if (!button) return;
+                button.onclick = () => selectCombatStyle(styleId);
             });
         }
 
@@ -1525,17 +1696,24 @@
             if (panel) panel.classList.remove('hidden');
         }
         function initInventoryUI() {
-            const tabs = ['inv', 'equip', 'stats'];
+            const tabs = [
+                { id: 'inv', displayClass: 'grid' },
+                { id: 'equip', displayClass: 'flex' },
+                { id: 'combat', displayClass: 'flex' },
+                { id: 'stats', displayClass: 'grid' }
+            ];
             const mainContainer = document.getElementById('main-ui-container');
             if (mainContainer) mainContainer.dataset.activeTab = 'inv';
-            tabs.forEach(t => {
+            tabs.forEach((tab) => {
+                const t = tab.id;
                 const btn = document.getElementById(`tab-${t}`);
                 btn.onclick = () => {
-                    tabs.forEach(other => {
+                    tabs.forEach((otherTab) => {
+                        const other = otherTab.id;
                         const isTarget = other === t; const view = document.getElementById(`view-${other}`); const btnOther = document.getElementById(`tab-${other}`);
                     if (isTarget) {
                             if (mainContainer) mainContainer.dataset.activeTab = other;
-                            view.classList.remove('hidden'); if(other === 'equip') view.classList.add('flex'); else view.classList.add('grid');
+                            view.classList.remove('hidden'); view.classList.add(otherTab.displayClass);
                             btnOther.classList.replace('text-gray-500', 'text-[#c8aa6e]'); btnOther.classList.replace('bg-[#1e2328]', 'bg-[#2a3138]');
                         } else {
                             view.classList.add('hidden'); view.classList.remove('flex', 'grid');
@@ -1547,6 +1725,7 @@
             let isExpanded = false;
             document.getElementById('btn-expand').onclick = () => { isExpanded = !isExpanded; mainContainer.style.transform = isExpanded ? 'scale(1.5)' : 'scale(1)'; };
             renderSkillTilesFromManifest();
+            bindCombatStyleButtons();
             const skillTiles = Array.from(document.querySelectorAll('.skill-tile'));
             skillTiles.forEach(tile => {
                 tile.onclick = () => openSkillProgressPanel(tile.dataset.skill, tile);

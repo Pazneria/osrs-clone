@@ -678,7 +678,7 @@ function run() {
   assert(starterTownWorld.terrainPatches.castleRouteAnchor.x === 205 && starterTownWorld.terrainPatches.castleRouteAnchor.y === 205, "runecrafting castle route anchor missing");
   assert(runecraftingRuntimeSource.includes("const altarOrder = draft.authored.runecraftingAltarOrder;"), "runecrafting altar order wiring missing");
   assert(!starterTownWorld.dynamicServices, "starter-town should not keep dynamic runecrafting merchants after freeze");
-  assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "rune_tutor" && entry.x === 203 && entry.y === 152), "rune tutor authored service placement missing");
+  assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "rune_tutor" && entry.x === 203 && entry.y === 96), "rune tutor authored service placement missing");
   assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "combination_sage" && entry.x === 91 && entry.y === 23), "combination sage authored service placement missing");
   assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "fishing_teacher"), "fishing teacher world placement missing");
   assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "fishing_supplier"), "fishing supplier world placement missing");

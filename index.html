@@ -14,7 +14,7 @@
 
     <!-- Mouse Hover Tooltip -->
     <div id="hover-tooltip" class="hidden absolute pointer-events-none bg-[#1e2328]/95 text-white text-[11px] px-2 py-1 rounded border border-[#3a444c] shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-[1000] whitespace-nowrap font-sans font-bold tracking-wide" style="transform: translate(14px, 14px);"></div>
-    <div id="inventory-hover-tooltip" class="hidden absolute pointer-events-none bg-[#1e2328]/95 text-white text-[11px] px-2 py-1 rounded border border-[#3a444c] shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-[1100] whitespace-nowrap font-sans font-bold tracking-wide"></div>
+    <div id="inventory-hover-tooltip" class="hidden absolute pointer-events-none bg-[#1e2328]/95 text-white text-[11px] px-2.5 py-2 rounded border border-[#3a444c] shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-[1100] whitespace-normal max-w-[240px] leading-4 font-sans font-bold tracking-wide"></div>
     <div id="player-overhead-text" class="hidden absolute pointer-events-none bg-black/75 border border-[#c8aa6e] text-white text-[11px] px-2 py-1 rounded z-[1001] whitespace-nowrap font-sans font-bold"></div>
 
     <!-- UI Overlay Layer -->
@@ -100,43 +100,6 @@
             <button id="freeCamBtn" class="bg-gray-700 border-2 border-[#5d5447] text-white text-[10px] font-bold py-1.5 px-3 rounded shadow-md hover:bg-gray-600 transition-colors z-40 uppercase tracking-wider">
                 CAM Free Cam: OFF
             </button>
-            <div id="combat-status-panel" class="hidden w-56 max-w-[calc(100vw-2rem)] bg-[#1e2328]/95 border border-[#8a4b33] shadow-[0_8px_18px_rgba(0,0,0,0.7)] rounded px-3 py-2 text-[11px] text-gray-200">
-                <div class="flex items-center justify-between gap-2 uppercase tracking-wide text-[10px]">
-                    <span id="combat-status-banner" class="font-bold text-[#ffcf8b]">Combat Status</span>
-                    <span class="text-gray-500">HUD</span>
-                </div>
-                <div class="mt-2 space-y-1.5">
-                    <div class="flex items-center justify-between text-[10px] text-gray-400">
-                        <span>Player HP</span>
-                        <span id="combat-player-hp-text" class="text-white font-bold">10 / 10</span>
-                    </div>
-                    <div class="h-2 bg-[#0f1215] border border-[#3a444c] overflow-hidden">
-                        <div id="combat-player-hp-bar" class="h-full bg-[#b84a3c]" style="width: 100%;"></div>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px]">
-                        <span class="text-gray-400">Next swing</span>
-                        <span id="combat-player-cooldown-text" class="font-bold text-[#9fdc8f]">Ready</span>
-                    </div>
-                </div>
-                <div id="combat-status-target" class="mt-3 border-t border-[#3a444c] pt-2 space-y-1.5">
-                    <div class="flex items-center justify-between text-[10px] text-gray-400">
-                        <span id="combat-target-focus-label">Target</span>
-                        <span id="combat-range-text" class="text-white">In melee range</span>
-                    </div>
-                    <div id="combat-target-name" class="text-sm font-bold text-[#ffcf8b]">Goblin</div>
-                    <div class="flex items-center justify-between text-[10px] text-gray-400">
-                        <span id="combat-target-state-text">Attacking</span>
-                        <span id="combat-target-hp-text" class="text-white font-bold">7 / 7</span>
-                    </div>
-                    <div class="h-2 bg-[#0f1215] border border-[#3a444c] overflow-hidden">
-                        <div id="combat-target-hp-bar" class="h-full bg-[#d37b35]" style="width: 100%;"></div>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px]">
-                        <span class="text-gray-400">Enemy swing</span>
-                        <span id="combat-target-cooldown-text" class="font-bold text-[#ffb27d]">Ready</span>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Free Cam Info Overlay -->
@@ -199,10 +162,20 @@
                     <path d="M3.8 12.5h2.6"></path>
                 </svg>
             </button>
+            <div class="px-3 pt-3 pb-2 bg-[#14191d] border-b border-[#3a444c]">
+                <div class="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] font-bold">
+                    <span class="text-[#ff9b9b]">Hitpoints</span>
+                    <span id="inventory-hitpoints-text" class="text-white tracking-normal">10 / 10</span>
+                </div>
+                <div class="mt-2 h-3 overflow-hidden rounded-sm border border-[#5c1717] bg-[#250808] shadow-inner">
+                    <div id="inventory-hitpoints-bar-fill" class="h-full w-full bg-gradient-to-r from-[#8d1414] via-[#c92424] to-[#ef4444] transition-all duration-150"></div>
+                </div>
+            </div>
             <!-- Tabs -->
             <div class="flex border-b-2 border-[#c8aa6e]">
                 <button id="tab-inv" title="Inventory" aria-label="Inventory" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-[#c8aa6e] bg-[#2a3138] hover:bg-[#3a444c] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="1"></rect><path d="M6 5V3.5h4V5"></path><path d="M6 8h4"></path></svg></button>
                 <button id="tab-equip" title="Equipment" aria-label="Equipment" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M5 4L8 2l3 2 2 1v3l-2 1v5H5V9L3 8V5l2-1z"></path></svg></button>
+                <button id="tab-combat" title="Combat" aria-label="Combat" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="square" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 2 2-4 4-1 4 4-1 4-4 2 2"></path><path d="m9 3 4 4"></path></svg></button>
                 <button id="tab-stats" title="Stats" aria-label="Stats" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true"><path d="M2 13.5h12"></path><rect x="3" y="9" width="2.2" height="4"></rect><rect x="6.8" y="7" width="2.2" height="6"></rect><rect x="10.6" y="4" width="2.2" height="9"></rect></svg></button>
                 <button id="btn-expand" class="px-2 bg-[#111418] text-[#c8aa6e] hover:bg-[#1a1f24] transition-colors text-sm font-bold border-l border-[#c8aa6e]" title="Toggle UI Size">?</button>
             </div>
@@ -241,6 +214,53 @@
                             <div class="equip-slot" id="eq-hands"></div>
                             <div class="equip-slot" id="eq-feet"></div>
                             <div class="equip-slot" id="eq-ring"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: Combat -->
+                <div id="view-combat" class="hidden flex-col h-full w-full gap-3 text-[11px] text-gray-200">
+                    <div class="border border-[#3a444c] bg-[#0f1215] px-3 py-2 shadow-inner">
+                        <div class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Combat Level</div>
+                        <div class="mt-1 flex items-end justify-between gap-2">
+                            <div id="combat-level-value" class="text-3xl leading-none font-bold text-[#ffcf8b]">3</div>
+                            <div id="combat-style-current" class="text-[10px] uppercase tracking-wide text-gray-400">Attack</div>
+                        </div>
+                        <div id="combat-level-formula" class="mt-2 text-[10px] text-gray-400">(Attack + Strength + Defense + Hitpoints) / 4</div>
+                    </div>
+                    <div class="border border-[#3a444c] bg-[#111418] px-3 py-2 shadow-inner">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Attack Style</div>
+                            <div id="combat-style-effect" class="text-[10px] text-gray-400">+10% accuracy</div>
+                        </div>
+                        <div class="mt-2 grid grid-cols-3 gap-2">
+                            <button id="combat-style-attack" type="button" class="rounded border border-[#3a444c] bg-[#111418] px-2 py-2 text-left transition-colors" aria-pressed="true">
+                                <div class="font-bold text-[#c8aa6e]">Attack</div>
+                                <div class="mt-1 text-[10px] text-gray-400">Accuracy focus</div>
+                            </button>
+                            <button id="combat-style-strength" type="button" class="rounded border border-[#3a444c] bg-[#111418] px-2 py-2 text-left transition-colors" aria-pressed="false">
+                                <div class="font-bold text-[#c8aa6e]">Strength</div>
+                                <div class="mt-1 text-[10px] text-gray-400">Damage focus</div>
+                            </button>
+                            <button id="combat-style-defense" type="button" class="rounded border border-[#3a444c] bg-[#111418] px-2 py-2 text-left transition-colors" aria-pressed="false">
+                                <div class="font-bold text-[#c8aa6e]">Defense</div>
+                                <div class="mt-1 text-[10px] text-gray-400">Mitigation focus</div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="border border-[#3a444c] bg-[#111418] px-3 py-2 shadow-inner space-y-1.5">
+                            <div class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Skill Levels</div>
+                            <div class="flex justify-between"><span>Attack</span><span id="combat-skill-attack" class="font-bold text-white">1</span></div>
+                            <div class="flex justify-between"><span>Strength</span><span id="combat-skill-strength" class="font-bold text-white">1</span></div>
+                            <div class="flex justify-between"><span>Defense</span><span id="combat-skill-defense" class="font-bold text-white">1</span></div>
+                            <div class="flex justify-between"><span>Hitpoints</span><span id="combat-skill-hitpoints" class="font-bold text-white">10</span></div>
+                        </div>
+                        <div class="border border-[#3a444c] bg-[#111418] px-3 py-2 shadow-inner space-y-1.5">
+                            <div class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Current Melee Stats</div>
+                            <div class="flex justify-between"><span>Attack roll</span><span id="combat-roll-attack" class="font-bold text-white">0</span></div>
+                            <div class="flex justify-between"><span>Defense roll</span><span id="combat-roll-defense" class="font-bold text-white">0</span></div>
+                            <div class="flex justify-between"><span>Max hit</span><span id="combat-max-hit" class="font-bold text-white">0</span></div>
                         </div>
                     </div>
                 </div>

@@ -167,7 +167,7 @@
       "name": "Rune Tutor",
       "npcType": 3,
       "action": "Trade",
-      "anchorRouteId": "ember_altar",
+      "anchorRouteId": "water_altar",
       "tags": ["merchant", "runecrafting", "starter"]
     },
     {

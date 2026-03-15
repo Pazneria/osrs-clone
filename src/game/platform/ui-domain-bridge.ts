@@ -26,6 +26,7 @@ import {
   withdrawBankItem
 } from "../ui/inventory-domain";
 import {
+  buildCombatTabViewModel,
   buildCombatStatusViewModel,
   buildCombatStatsViewModel,
   buildEquipmentSlotViewModels,
@@ -67,6 +68,7 @@ declare global {
         inCombat?: boolean;
         target?: CombatStatusTargetSnapshot | null;
       }) => ReturnType<typeof buildCombatStatusViewModel>;
+      buildCombatTabViewModel: typeof buildCombatTabViewModel;
       buildCombatStatsViewModel: typeof buildCombatStatsViewModel;
       buildEquipmentSlotViewModels: typeof buildEquipmentSlotViewModels;
       buildSkillTileViewModels: (options: {
@@ -106,6 +108,7 @@ export function exposeUiDomainBridge(): void {
     buildInventorySlotViewModels,
     buildBankSlotViewModels,
     buildShopSlotViewModels,
+    buildCombatTabViewModel,
     buildCombatStatusViewModel,
     buildCombatStatsViewModel,
     buildEquipmentSlotViewModels,

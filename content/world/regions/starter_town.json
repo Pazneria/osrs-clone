@@ -96,8 +96,8 @@
       "entryY": 222
     },
     "smithingHallApproach": {
-      "shoreX": 219,
-      "stairX": 220,
+      "shoreX": 220,
+      "stairX": 221,
       "yStart": 233,
       "yEnd": 235
     },
@@ -266,8 +266,8 @@
       "merchantId": "fishing_supplier",
       "name": "Fishing Supplier",
       "npcType": 2,
-      "x": 212,
-      "y": 225,
+      "x": 206,
+      "y": 224,
       "z": 0,
       "action": "Trade",
       "tags": [
@@ -303,8 +303,8 @@
       "merchantId": "thrain_deepforge",
       "name": "Thrain Deepforge",
       "npcType": 6,
-      "x": 228,
-      "y": 236,
+      "x": 366,
+      "y": 252,
       "z": 0,
       "action": "Trade",
       "tags": [
@@ -321,8 +321,8 @@
       "merchantId": "elira_gemhand",
       "name": "Elira Gemhand",
       "npcType": 3,
-      "x": 228,
-      "y": 231,
+      "x": 198,
+      "y": 205,
       "z": 0,
       "action": "Trade",
       "tags": [
@@ -339,8 +339,8 @@
       "merchantId": "crafting_teacher",
       "name": "Crafting Teacher",
       "npcType": 2,
-      "x": 223,
-      "y": 236,
+      "x": 183,
+      "y": 237,
       "z": 0,
       "facingYaw": 1.5707963267948966,
       "action": "Trade",
@@ -358,8 +358,8 @@
       "merchantId": "tanner_rusk",
       "name": "Tanner Rusk",
       "npcType": 6,
-      "x": 225,
-      "y": 236,
+      "x": 219,
+      "y": 240,
       "z": 0,
       "action": "Trade",
       "tags": [
@@ -377,7 +377,7 @@
       "name": "Rune Tutor",
       "npcType": 3,
       "x": 203,
-      "y": 152,
+      "y": 96,
       "z": 0,
       "action": "Trade",
       "tags": [

@@ -3,6 +3,13 @@
     const PLAYER_TARGET_ID = 'player';
     const PLAYER_TARGET_KIND = 'enemy';
     const PLAYER_DEFEAT_MESSAGE = 'You were defeated and return to safety.';
+    const ENEMY_IDLE_WANDER_PAUSE_MIN_TICKS = 2;
+    const ENEMY_IDLE_WANDER_PAUSE_MAX_TICKS = 5;
+    const ENEMY_IDLE_WANDER_PICK_ATTEMPTS = 12;
+    const ENEMY_IDLE_WANDER_MIN_PATH_LENGTH = 3;
+    const ENEMY_MOVE_LERP_DURATION_MS = (typeof TICK_RATE_MS === 'number' && Number.isFinite(TICK_RATE_MS) && TICK_RATE_MS > 0)
+        ? Math.max(320, Math.floor(TICK_RATE_MS * 0.9))
+        : 540;
 
     let activeCombatWorldId = null;
     let lastResolvedCombatWorldId = 'starter_town';
@@ -72,6 +79,24 @@
         return !!(enemyState && enemyState.currentState !== 'dead' && enemyState.currentHealth > 0);
     }
 
+    function isEnemyPendingDefeat(enemyState) {
+        return !!(enemyState && enemyState.currentState !== 'dead' && Number.isFinite(enemyState.pendingDefeatAtTick));
+    }
+
+    function shouldEnemyOccupyTile(enemyState) {
+        return isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);
+    }
+
+    function captureEnemyPendingDefeatFacing(enemyState) {
+        if (!enemyState) return 0;
+        const renderer = combatEnemyRenderersById[enemyState.runtimeId];
+        if (renderer && renderer.group && Number.isFinite(renderer.group.rotation.y)) {
+            return renderer.group.rotation.y;
+        }
+        if (Number.isFinite(enemyState.facingYaw)) return enemyState.facingYaw;
+        return 0;
+    }
+
     function getCombatEnemyState(enemyId) {
         return combatEnemyStateById[String(enemyId || '').trim()] || null;
     }
@@ -80,6 +105,7 @@
         const renderer = combatEnemyRenderersById[enemyId];
         if (!renderer) return;
         if (renderer.group && renderer.group.parent) renderer.group.parent.remove(renderer.group);
+        if (renderer.healthBarEl && renderer.healthBarEl.parentNode) renderer.healthBarEl.parentNode.removeChild(renderer.healthBarEl);
         environmentMeshes = environmentMeshes.filter((mesh) => mesh !== renderer.hitbox);
         delete combatEnemyRenderersById[enemyId];
     }
@@ -113,7 +139,7 @@
         clearCombatEnemyOccupancy();
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];
-            if (!isEnemyAlive(enemyState)) continue;
+            if (!shouldEnemyOccupyTile(enemyState)) continue;
             const z = enemyState.z;
             const x = enemyState.x;
             const y = enemyState.y;
@@ -123,6 +149,11 @@
             logicalMap[z][y][x] = TileId.SOLID_NPC;
         }
         combatEnemyOccupancyDirty = false;
+    }
+
+    function getCombatEnemyOccupiedBaseTileId(x, y, z = 0) {
+        const key = `${z}:${x}:${y}`;
+        return combatEnemyOccupiedTiles.has(key) ? combatEnemyOccupiedTiles.get(key) : null;
     }
 
     function resetCombatStateCollections() {
@@ -311,6 +342,7 @@
             enemyState.prevY = enemyState.y;
             enemyState.moveTriggerAt = 0;
             enemyState.homeReachedAt = 0;
+            scheduleEnemyIdleWanderPause(enemyState, 1, 3);
             combatEnemyStates.push(enemyState);
             combatEnemyStateById[enemyState.runtimeId] = enemyState;
         }
@@ -349,6 +381,35 @@
         return typeof getCurrentHitpoints === 'function' ? getCurrentHitpoints() > 0 : playerState.currentHitpoints > 0;
     }
 
+    function isPlayerCombatFacingReady() {
+        if (!playerState) return false;
+        if (playerState.midX !== null || playerState.midY !== null) return false;
+        if (playerState.x !== playerState.prevX || playerState.y !== playerState.prevY) return false;
+        if (Array.isArray(playerState.path) && playerState.path.length > 0) return false;
+        return true;
+    }
+
+    function clearEnemyIdleWanderState(enemyState) {
+        if (!enemyState) return;
+        enemyState.idleDestination = null;
+        enemyState.idleMoveReadyAtTick = currentTick;
+    }
+
+    function scheduleEnemyIdleWanderPause(enemyState, minTicks = ENEMY_IDLE_WANDER_PAUSE_MIN_TICKS, maxTicks = ENEMY_IDLE_WANDER_PAUSE_MAX_TICKS) {
+        if (!enemyState) return;
+        enemyState.idleDestination = null;
+        enemyState.idleMoveReadyAtTick = currentTick + rollInclusive(minTicks, maxTicks);
+    }
+
+    function resolvePathToTile(enemyState, targetTile, allowTargetOccupied = false, targetKind = null) {
+        if (!enemyState || !targetTile) return null;
+        if (enemyState.z !== targetTile.z) return null;
+        if (enemyState.x === targetTile.x && enemyState.y === targetTile.y) return [];
+        if (typeof findPath !== 'function') return null;
+        const path = findPath(enemyState.x, enemyState.y, targetTile.x, targetTile.y, allowTargetOccupied, targetKind);
+        return path.length > 0 ? path : null;
+    }
+
     function resolvePathToEnemy(enemyState) {
         if (!enemyState || !isEnemyAlive(enemyState)) return null;
         if (enemyState.z !== playerState.z) return null;
@@ -370,11 +431,82 @@
     function resolvePathToHome(enemyState) {
         if (!enemyState) return null;
         const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
-        if (!homeTile || enemyState.z !== homeTile.z) return null;
-        if (enemyState.x === homeTile.x && enemyState.y === homeTile.y) return [];
-        if (typeof findPath !== 'function') return null;
-        const path = findPath(enemyState.x, enemyState.y, homeTile.x, homeTile.y, false, null);
-        return path.length > 0 ? path : null;
+        return resolvePathToTile(enemyState, homeTile, false, null);
+    }
+
+    function pickEnemyIdleWanderTarget(enemyState, reservedTiles) {
+        if (!enemyState) return null;
+        const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
+        const roamingRadius = Number.isFinite(enemyState.resolvedRoamingRadius)
+            ? Math.max(0, Math.floor(enemyState.resolvedRoamingRadius))
+            : 0;
+        if (!homeTile || roamingRadius <= 0) return null;
+
+        let bestPlan = null;
+        const preferredPathLength = Math.max(ENEMY_IDLE_WANDER_MIN_PATH_LENGTH, Math.floor(roamingRadius * 0.65));
+        for (let attempt = 0; attempt < ENEMY_IDLE_WANDER_PICK_ATTEMPTS; attempt++) {
+            const targetX = homeTile.x + rollInclusive(-roamingRadius, roamingRadius);
+            const targetY = homeTile.y + rollInclusive(-roamingRadius, roamingRadius);
+            if (targetX < 0 || targetY < 0 || targetX >= MAP_SIZE || targetY >= MAP_SIZE) continue;
+            if (!logicalMap[homeTile.z] || !logicalMap[homeTile.z][targetY]) continue;
+            if (targetX === enemyState.x && targetY === enemyState.y) continue;
+            if (playerState && playerState.z === homeTile.z && targetX === playerState.x && targetY === playerState.y) continue;
+
+            const targetKey = `${targetX},${targetY},${homeTile.z}`;
+            if (reservedTiles.has(targetKey)) continue;
+            if (!isWalkableTileId(logicalMap[homeTile.z][targetY][targetX])) continue;
+
+            const destination = { x: targetX, y: targetY, z: homeTile.z };
+            const path = resolvePathToTile(enemyState, destination, false, null);
+            if (!path || path.length <= 0) continue;
+
+            if (!bestPlan || path.length > bestPlan.path.length) {
+                bestPlan = { destination, path };
+                if (path.length >= preferredPathLength) break;
+            }
+        }
+
+        return bestPlan;
+    }
+
+    function updateIdleEnemyMovement(enemyState, reservedTiles) {
+        if (!enemyState || enemyState.currentState !== 'idle') return false;
+        const roamingRadius = Number.isFinite(enemyState.resolvedRoamingRadius)
+            ? Math.max(0, Math.floor(enemyState.resolvedRoamingRadius))
+            : 0;
+        if (roamingRadius <= 0) return false;
+
+        if (enemyState.idleDestination && enemyState.x === enemyState.idleDestination.x && enemyState.y === enemyState.idleDestination.y) {
+            scheduleEnemyIdleWanderPause(enemyState);
+            return false;
+        }
+
+        const readyAtTick = Number.isFinite(enemyState.idleMoveReadyAtTick) ? enemyState.idleMoveReadyAtTick : 0;
+        if (!enemyState.idleDestination) {
+            if (currentTick < readyAtTick) return false;
+            const wanderPlan = pickEnemyIdleWanderTarget(enemyState, reservedTiles);
+            if (!wanderPlan) {
+                scheduleEnemyIdleWanderPause(enemyState, 1, 2);
+                return false;
+            }
+            enemyState.idleDestination = wanderPlan.destination;
+        }
+
+        const idlePath = resolvePathToTile(enemyState, enemyState.idleDestination, false, null);
+        if (idlePath === null || idlePath.length === 0) {
+            scheduleEnemyIdleWanderPause(enemyState, 1, 2);
+            return false;
+        }
+
+        const nextStep = idlePath[0];
+        const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
+        if (!reservedTiles.has(nextKey)) moveEnemyToStep(enemyState, nextStep);
+
+        if (enemyState.idleDestination && enemyState.x === enemyState.idleDestination.x && enemyState.y === enemyState.idleDestination.y) {
+            scheduleEnemyIdleWanderPause(enemyState);
+        }
+
+        return true;
     }
 
     function facePlayerTowards(tile) {
@@ -399,6 +531,7 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyIdleWanderState(enemyState);
     }
 
     function restoreEnemyAtHome(enemyState) {
@@ -417,7 +550,9 @@
         enemyState.lastDamagerId = null;
         enemyState.attackTriggerAt = 0;
         enemyState.homeReachedAt = Date.now();
+        enemyState.moveTriggerAt = 0;
         faceEnemyTowards(enemyState, homeTile);
+        scheduleEnemyIdleWanderPause(enemyState, 2, 4);
         markCombatEnemyOccupancyDirty();
     }
 
@@ -449,13 +584,18 @@
 
     function defeatEnemy(enemyState) {
         const enemyType = getEnemyDefinition(enemyState.enemyId);
+        const defeatTick = Number.isFinite(enemyState && enemyState.pendingDefeatAtTick)
+            ? Math.floor(enemyState.pendingDefeatAtTick)
+            : currentTick;
         enemyState.currentState = 'dead';
         enemyState.currentHealth = 0;
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.attackTriggerAt = 0;
         enemyState.lastDamagerId = null;
-        enemyState.respawnAtTick = currentTick + Math.max(1, Math.floor(
+        enemyState.pendingDefeatAtTick = null;
+        enemyState.pendingDefeatFacingYaw = null;
+        enemyState.respawnAtTick = defeatTick + Math.max(1, Math.floor(
             (combatEnemySpawnNodesById[enemyState.spawnNodeId] && combatEnemySpawnNodesById[enemyState.spawnNodeId].respawnTicks)
             || (enemyType && enemyType.respawnTicks)
             || 1
@@ -472,6 +612,9 @@
         if (!spawnNode || !enemyType) return;
         const spawnTile = clonePoint(spawnNode.spawnTile);
         const homeTile = spawnNode.homeTileOverride ? clonePoint(spawnNode.homeTileOverride) : clonePoint(spawnTile);
+        const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
+            ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
+            : enemyType.behavior.roamingRadius;
         enemyState.prevX = spawnTile.x;
         enemyState.prevY = spawnTile.y;
         enemyState.x = spawnTile.x;
@@ -483,8 +626,8 @@
         enemyState.remainingAttackCooldown = 0;
         enemyState.resolvedHomeTile = homeTile;
         enemyState.resolvedSpawnTile = clonePoint(spawnTile);
-        enemyState.resolvedRoamingRadius = enemyType.behavior.roamingRadius;
-        enemyState.resolvedChaseRange = enemyType.behavior.chaseRange;
+        enemyState.resolvedRoamingRadius = resolvedRoamingRadius;
+        enemyState.resolvedChaseRange = Math.max(enemyType.behavior.chaseRange, resolvedRoamingRadius + 2);
         enemyState.resolvedAggroRadius = enemyType.behavior.aggroRadius;
         enemyState.defaultMovementSpeed = enemyType.behavior.defaultMovementSpeed;
         enemyState.combatMovementSpeed = enemyType.behavior.combatMovementSpeed;
@@ -492,10 +635,13 @@
             ? Number(spawnNode.facingYaw)
             : (Number.isFinite(enemyType.appearance.facingYaw) ? Number(enemyType.appearance.facingYaw) : Math.PI);
         enemyState.respawnAtTick = null;
+        enemyState.pendingDefeatAtTick = null;
+        enemyState.pendingDefeatFacingYaw = null;
         enemyState.lastDamagerId = null;
         enemyState.attackTriggerAt = 0;
         enemyState.moveTriggerAt = 0;
         enemyState.homeReachedAt = 0;
+        scheduleEnemyIdleWanderPause(enemyState, 2, 4);
         markCombatEnemyOccupancyDirty();
     }
 
@@ -594,6 +740,8 @@
             enemyState.currentState = 'aggroed';
             enemyState.lockedTargetId = PLAYER_TARGET_ID;
             enemyState.lastDamagerId = PLAYER_TARGET_ID;
+            faceEnemyTowards(enemyState, playerState);
+            clearEnemyIdleWanderState(enemyState);
         }
     }
 
@@ -704,7 +852,16 @@
                     enemyState.currentState = 'aggroed';
                     enemyState.lockedTargetId = PLAYER_TARGET_ID;
                     enemyState.lastDamagerId = PLAYER_TARGET_ID;
+                    faceEnemyTowards(enemyState, playerState);
+                    clearEnemyIdleWanderState(enemyState);
                     if (shouldSetOpeningCooldown) enemyState.remainingAttackCooldown = 1;
+                } else if (!Number.isFinite(enemyState.pendingDefeatAtTick)) {
+                    enemyState.pendingDefeatAtTick = currentTick;
+                    enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);
+                    enemyState.facingYaw = enemyState.pendingDefeatFacingYaw;
+                    enemyState.lockedTargetId = null;
+                    enemyState.remainingAttackCooldown = 0;
+                    enemyState.lastDamagerId = PLAYER_TARGET_ID;
                 }
             } else {
                 const enemyState = getCombatEnemyState(result.attackerId);
@@ -714,6 +871,7 @@
                 enemyState.currentState = 'aggroed';
                 enemyState.lockedTargetId = PLAYER_TARGET_ID;
                 enemyState.lastDamagerId = PLAYER_TARGET_ID;
+                clearEnemyIdleWanderState(enemyState);
                 playerState.lastDamagerEnemyId = enemyState.runtimeId;
                 playerState.inCombat = true;
                 if (typeof spawnHitsplat === 'function') spawnHitsplat(result.damage, playerState.x, playerState.y);
@@ -722,11 +880,6 @@
 
         if (playerDamageTotal > 0 && typeof applyHitpointDamage === 'function') {
             applyHitpointDamage(playerDamageTotal, 0);
-        }
-
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (!isEnemyAlive(enemyState) && enemyState.currentState !== 'dead') defeatEnemy(enemyState);
         }
 
         if (!isPlayerAlive()) {
@@ -765,6 +918,25 @@
         return true;
     }
 
+    function syncMeleeCombatFacing() {
+        if (!isPlayerAlive()) return;
+        if (!isPlayerCombatFacingReady()) return;
+
+        const focus = resolveCombatHudFocusEnemy();
+        const focusEnemy = focus && focus.enemyState ? focus.enemyState : null;
+        if (playerState.inCombat && focusEnemy && focusEnemy.z === playerState.z) {
+            facePlayerTowards(focusEnemy);
+        }
+
+        for (let i = 0; i < combatEnemyStates.length; i++) {
+            const enemyState = combatEnemyStates[i];
+            if (!isEnemyAlive(enemyState)) continue;
+            if (enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID) continue;
+            if (enemyState.z !== playerState.z) continue;
+            faceEnemyTowards(enemyState, playerState);
+        }
+    }
+
     function updateEnemyMovement(attacks) {
         const attackedEnemyIds = new Set(attacks.filter((entry) => entry.attackerKind === 'enemy').map((entry) => entry.attackerId));
         const reservedTiles = new Set();
@@ -788,6 +960,12 @@
                 const homeStep = returnPath[0];
                 const homeKey = `${homeStep.x},${homeStep.y},${enemyState.z}`;
                 if (!reservedTiles.has(homeKey)) moveEnemyToStep(enemyState, homeStep);
+                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
+                continue;
+            }
+
+            if (enemyState.currentState === 'idle') {
+                updateIdleEnemyMovement(enemyState, reservedTiles);
                 reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                 continue;
             }
@@ -844,6 +1022,10 @@
 
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];
+            if (isEnemyPendingDefeat(enemyState) && currentTick > enemyState.pendingDefeatAtTick) {
+                defeatEnemy(enemyState);
+                continue;
+            }
             if (enemyState.currentState === 'dead' && Number.isFinite(enemyState.respawnAtTick) && currentTick >= enemyState.respawnAtTick) {
                 respawnEnemy(enemyState);
                 continue;
@@ -875,6 +1057,7 @@
         }
 
         updateEnemyMovement(attackResults);
+        syncMeleeCombatFacing();
         refreshCombatEnemyOccupancy();
 
         if (!playerState.lockedTargetId && playerState.action === 'COMBAT: MELEE') playerState.action = 'IDLE';
@@ -888,6 +1071,100 @@
             scene.add(combatEnemyRenderLayer);
         }
         return combatEnemyRenderLayer;
+    }
+
+    function createEnemyHitpointsBarRenderer() {
+        const el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.left = '0px';
+        el.style.top = '0px';
+        el.style.transform = 'translate(-50%, -135%)';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1002';
+        el.style.display = 'none';
+        el.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.55))';
+
+        const frame = document.createElement('div');
+        frame.style.width = '38px';
+        frame.style.height = '7px';
+        frame.style.padding = '1px';
+        frame.style.border = '1px solid rgba(8, 10, 12, 0.95)';
+        frame.style.background = 'rgba(34, 14, 14, 0.95)';
+        frame.style.borderRadius = '999px';
+        frame.style.boxSizing = 'border-box';
+        frame.style.overflow = 'hidden';
+
+        const fill = document.createElement('div');
+        fill.style.width = '100%';
+        fill.style.height = '100%';
+        fill.style.borderRadius = '999px';
+        fill.style.background = '#52d273';
+        fill.style.transition = 'width 80ms linear, background-color 80ms linear';
+
+        frame.appendChild(fill);
+        el.appendChild(frame);
+        document.body.appendChild(el);
+        return { el, fill };
+    }
+
+    function shouldShowEnemyHitpointsBar(enemyState) {
+        const isVisibleEnemy = isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);
+        if (!isVisibleEnemy) return false;
+        if (!playerState || !playerState.inCombat) return false;
+        if (enemyState.lockedTargetId === PLAYER_TARGET_ID) return true;
+        if (enemyState.lastDamagerId === PLAYER_TARGET_ID) return true;
+        if (enemyState.runtimeId === playerState.lockedTargetId) return true;
+        if (enemyState.runtimeId === playerState.lastDamagerEnemyId) return true;
+        return false;
+    }
+
+    function updateEnemyHitpointsBar(enemyState, renderer) {
+        if (!renderer || !renderer.healthBarEl || !renderer.healthBarFillEl || !renderer.group || !camera) return;
+        if (!shouldShowEnemyHitpointsBar(enemyState) || enemyState.z !== playerState.z) {
+            renderer.healthBarEl.style.display = 'none';
+            return;
+        }
+
+        const maxHealth = Math.max(1, Number.isFinite(renderer.maxHealth) ? Math.floor(renderer.maxHealth) : 1);
+        const currentHealth = Math.max(0, Math.min(maxHealth, Number.isFinite(enemyState.currentHealth) ? Math.floor(enemyState.currentHealth) : maxHealth));
+        const ratio = Math.max(0, Math.min(1, currentHealth / maxHealth));
+
+        renderer.healthBarFillEl.style.width = `${ratio * 100}%`;
+        if (ratio > 0.6) renderer.healthBarFillEl.style.background = '#52d273';
+        else if (ratio > 0.3) renderer.healthBarFillEl.style.background = '#f1c453';
+        else renderer.healthBarFillEl.style.background = '#ef5555';
+
+        const overheadPos = renderer.group.position.clone();
+        overheadPos.y += Number.isFinite(renderer.healthBarYOffset) ? renderer.healthBarYOffset : 1.0;
+        overheadPos.project(camera);
+
+        if (overheadPos.z >= 1 || overheadPos.z <= -1) {
+            renderer.healthBarEl.style.display = 'none';
+            return;
+        }
+
+        const screenX = (overheadPos.x * 0.5 + 0.5) * window.innerWidth;
+        const screenY = (overheadPos.y * -0.5 + 0.5) * window.innerHeight;
+        if (screenX < -64 || screenX > window.innerWidth + 64 || screenY < -32 || screenY > window.innerHeight + 32) {
+            renderer.healthBarEl.style.display = 'none';
+            return;
+        }
+
+        renderer.healthBarEl.style.left = `${screenX}px`;
+        renderer.healthBarEl.style.top = `${screenY}px`;
+        renderer.healthBarEl.style.display = 'block';
+    }
+
+    function updateCombatEnemyOverlays() {
+        if (camera && typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld();
+        const enemyIds = Object.keys(combatEnemyRenderersById);
+        for (let i = 0; i < enemyIds.length; i++) {
+            const enemyId = enemyIds[i];
+            const renderer = combatEnemyRenderersById[enemyId];
+            const enemyState = combatEnemyStateById[enemyId];
+            if (!renderer || !enemyState) continue;
+            updateEnemyHitpointsBar(enemyState, renderer);
+        }
     }
 
     function createRatRenderer(enemyState, enemyType) {
@@ -967,6 +1244,13 @@
         if (enemyType.appearance && enemyType.appearance.kind === 'rat') renderer = createRatRenderer(enemyState, enemyType);
         else renderer = createHumanoidEnemyRenderer(enemyState, enemyType);
 
+        const hitpointsBar = createEnemyHitpointsBarRenderer();
+        renderer.healthBarEl = hitpointsBar.el;
+        renderer.healthBarFillEl = hitpointsBar.fill;
+        renderer.maxHealth = Number.isFinite(enemyType.stats && enemyType.stats.hitpoints)
+            ? Math.max(1, Math.floor(enemyType.stats.hitpoints))
+            : 1;
+        renderer.healthBarYOffset = renderer.kind === 'rat' ? 0.66 : 1.15;
         renderer.group.position.set(enemyState.x, 0, enemyState.y);
         renderer.group.rotation.y = enemyState.facingYaw || 0;
         layer.add(renderer.group);
@@ -975,17 +1259,57 @@
         return renderer;
     }
 
-    function updateEnemyRenderer(enemyState, renderer, frameNow) {
-        const terrainHeight = getVisualHeight(enemyState.x, enemyState.y, enemyState.z);
-        const idlePhase = ((frameNow + (enemyState.x * 37) + (enemyState.y * 19)) % 1200) / 1200 * Math.PI * 2;
-        const idleBob = Math.sin(idlePhase) * 0.04;
-        renderer.group.position.set(enemyState.x, terrainHeight + idleBob, enemyState.y);
+    function getEnemyVisualMoveProgress(enemyState, frameNow) {
+        if (!enemyState) return 1;
+        const moved = enemyState.x !== enemyState.prevX || enemyState.y !== enemyState.prevY;
+        if (!moved) return 1;
+        const moveStartedAt = Number.isFinite(enemyState.moveTriggerAt) ? enemyState.moveTriggerAt : 0;
+        if (moveStartedAt <= 0) return 1;
+        const elapsed = Math.max(0, frameNow - moveStartedAt);
+        return Math.max(0, Math.min(1, elapsed / ENEMY_MOVE_LERP_DURATION_MS));
+    }
 
-        if (enemyState.facingYaw !== undefined) {
-            let diff = enemyState.facingYaw - renderer.group.rotation.y;
-            while (diff < -Math.PI) diff += Math.PI * 2;
-            while (diff > Math.PI) diff -= Math.PI * 2;
-            renderer.group.rotation.y += diff * 0.25;
+    function updateEnemyRenderer(enemyState, renderer, frameNow) {
+        const moveProgress = getEnemyVisualMoveProgress(enemyState, frameNow);
+        const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
+        const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
+        const currentVisualX = prevX + ((enemyState.x - prevX) * moveProgress);
+        const currentVisualY = prevY + ((enemyState.y - prevY) * moveProgress);
+        const prevTerrainHeight = getVisualHeight(prevX, prevY, enemyState.z);
+        const terrainHeight = getVisualHeight(enemyState.x, enemyState.y, enemyState.z);
+        const currentVisualHeight = prevTerrainHeight + ((terrainHeight - prevTerrainHeight) * moveProgress);
+        const idlePhase = ((frameNow + (currentVisualX * 37) + (currentVisualY * 19)) % 1200) / 1200 * Math.PI * 2;
+        const idleBob = Math.sin(idlePhase) * 0.04;
+        renderer.group.position.set(currentVisualX, currentVisualHeight + idleBob, currentVisualY);
+
+        let targetYaw = enemyState.facingYaw;
+        let snapCombatFacing = false;
+        const moved = enemyState.x !== prevX || enemyState.y !== prevY;
+        if (isEnemyPendingDefeat(enemyState) && Number.isFinite(enemyState.pendingDefeatFacingYaw)) {
+            targetYaw = enemyState.pendingDefeatFacingYaw;
+            snapCombatFacing = true;
+        } else if (
+            enemyState.currentState === 'aggroed'
+            && enemyState.lockedTargetId === PLAYER_TARGET_ID
+            && isPlayerAlive()
+            && enemyState.z === playerState.z
+            && isPlayerCombatFacingReady()
+        ) {
+            targetYaw = Math.atan2(playerState.x - currentVisualX, playerState.y - currentVisualY);
+            snapCombatFacing = true;
+        } else if (moved) {
+            targetYaw = Math.atan2(enemyState.x - prevX, enemyState.y - prevY);
+        }
+        if (targetYaw !== undefined) {
+            if (snapCombatFacing) {
+                renderer.group.rotation.y = targetYaw;
+            } else {
+                let diff = targetYaw - renderer.group.rotation.y;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                const turnLerp = moved ? 0.55 : 0.25;
+                renderer.group.rotation.y += diff * turnLerp;
+            }
         }
 
         renderer.hitbox.userData.gridX = enemyState.x;
@@ -1030,7 +1354,8 @@
 
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];
-            if (!isEnemyAlive(enemyState)) {
+            if (!enemyState) continue;
+            if (enemyState.currentState === 'dead') {
                 clearEnemyRenderer(enemyState.runtimeId);
                 continue;
             }
@@ -1044,6 +1369,8 @@
     window.initCombatWorldState = initCombatWorldState;
     window.processCombatTick = processCombatTick;
     window.updateCombatRenderers = updateCombatRenderers;
+    window.updateCombatEnemyOverlays = updateCombatEnemyOverlays;
+    window.getCombatEnemyOccupiedBaseTileId = getCombatEnemyOccupiedBaseTileId;
     window.clearCombatEnemyRenderers = clearCombatEnemyRenderers;
     window.clearPlayerCombatTarget = clearPlayerCombatTarget;
     window.lockPlayerCombatTarget = lockPlayerCombatTarget;

@@ -214,6 +214,57 @@
             return canvas;
         }
 
+        function sampleTileableFractalNoise2D(nx, ny, scale, seed, octaves = 4, lacunarity = 2.0, gain = 0.5) {
+            const sampleX = nx * scale;
+            const sampleY = ny * scale;
+            const wrappedX = sampleX - scale;
+            const wrappedY = sampleY - scale;
+
+            const n00 = sampleFractalNoise2D(sampleX, sampleY, seed, octaves, lacunarity, gain);
+            const n10 = sampleFractalNoise2D(wrappedX, sampleY, seed, octaves, lacunarity, gain);
+            const n01 = sampleFractalNoise2D(sampleX, wrappedY, seed, octaves, lacunarity, gain);
+            const n11 = sampleFractalNoise2D(wrappedX, wrappedY, seed, octaves, lacunarity, gain);
+
+            const blendX0 = lerpNumber(n00, n10, nx);
+            const blendX1 = lerpNumber(n01, n11, nx);
+            return lerpNumber(blendX0, blendX1, ny);
+        }
+
+        function buildSkyCloudNoiseCanvas(size = 512) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return canvas;
+
+            const imageData = ctx.createImageData(size, size);
+            const pixels = imageData.data;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const nx = x / size;
+                    const ny = y / size;
+                    const base = sampleTileableFractalNoise2D(nx, ny, 5.5, 411.2, 5, 2.02, 0.56);
+                    const detail = sampleTileableFractalNoise2D(nx, ny, 11.0, 823.7, 3, 2.08, 0.5);
+                    const wisps = sampleTileableFractalNoise2D(nx, ny, 18.0, 1291.4, 2, 2.0, 0.46);
+
+                    const puffMask = smoothstep(0.48, 0.88, base);
+                    const detailMask = smoothstep(0.42, 0.82, detail);
+                    let cloudValue = (puffMask * 0.68) + (detailMask * 0.22) + (wisps * 0.1);
+                    cloudValue = smoothstep(0.50, 0.82, cloudValue);
+
+                    const brightness = 196 + Math.round(cloudValue * 54);
+                    const alpha = 110 + Math.round(cloudValue * 100);
+                    const idx = ((y * size) + x) * 4;
+                    pixels[idx] = brightness;
+                    pixels[idx + 1] = brightness;
+                    pixels[idx + 2] = Math.min(255, brightness + 4);
+                    pixels[idx + 3] = alpha;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            return canvas;
+        }
+
         function getWaterMaterialCaches() {
             if (!sharedMaterials.waterSurfaceCache) sharedMaterials.waterSurfaceCache = Object.create(null);
             if (!sharedMaterials.waterShoreCache) sharedMaterials.waterShoreCache = Object.create(null);
@@ -362,6 +413,133 @@
             dirLight.shadow.camera.updateMatrixWorld();
         }
 
+        function createSkyDomeMaterial(cloudTexture, sunDirection) {
+            return new THREE.ShaderMaterial({
+                side: THREE.BackSide,
+                depthWrite: false,
+                depthTest: false,
+                fog: false,
+                transparent: false,
+                toneMapped: false,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uZenithColor: { value: new THREE.Color(0x5ea8f7) },
+                    uUpperSkyColor: { value: new THREE.Color(0x8fcaff) },
+                    uHorizonColor: { value: new THREE.Color(0xc7e4ff) },
+                    uHazeColor: { value: new THREE.Color(0xe0f0ff) },
+                    uSunColor: { value: new THREE.Color(0xfff2bf) },
+                    uCloudTexture: { value: cloudTexture || null },
+                    uSunDirection: { value: sunDirection ? sunDirection.clone() : new THREE.Vector3(0.3, 0.85, 0.2).normalize() }
+                },
+                vertexShader: `
+                    varying vec3 vSkyDirection;
+                    void main() {
+                        vSkyDirection = normalize(position);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uZenithColor;
+                    uniform vec3 uUpperSkyColor;
+                    uniform vec3 uHorizonColor;
+                    uniform vec3 uHazeColor;
+                    uniform vec3 uSunColor;
+                    uniform sampler2D uCloudTexture;
+                    uniform vec3 uSunDirection;
+                    varying vec3 vSkyDirection;
+
+                    const float PI = 3.141592653589793;
+
+                    void main() {
+                        vec3 skyDir = normalize(vSkyDirection);
+                        float elevation = clamp((skyDir.y * 0.5) + 0.5, 0.0, 1.0);
+                        float horizonGlow = 1.0 - smoothstep(0.05, 0.44, abs(skyDir.y));
+                        float upperBlend = smoothstep(0.12, 0.42, elevation);
+                        float zenithBlend = smoothstep(0.45, 0.98, elevation);
+                        float lowerFade = smoothstep(-0.34, 0.12, skyDir.y);
+
+                        vec3 color = mix(uHazeColor, uUpperSkyColor, upperBlend);
+                        color = mix(color, uZenithColor, zenithBlend);
+                        color = mix(color, uHorizonColor, horizonGlow * 0.72);
+                        color = mix(uHazeColor, color, lowerFade);
+
+                        float sunAmount = max(dot(skyDir, normalize(uSunDirection)), 0.0);
+                        float sunHalo = pow(sunAmount, 12.0);
+                        float sunCore = pow(sunAmount, 64.0);
+                        color += uSunColor * ((sunHalo * 0.28) + (sunCore * 0.18));
+
+                        float cloudU = (atan(skyDir.z, skyDir.x) / (2.0 * PI)) + 0.5;
+                        float cloudV = clamp((skyDir.y * 0.5) + 0.5, 0.0, 1.0);
+                        vec2 uvA = vec2((cloudU * 1.05) + (uTime * 0.0018), cloudV * 1.75);
+                        vec2 uvB = vec2((cloudU * 1.55) - (uTime * 0.0026), (cloudV * 2.35) + 0.11);
+                        float cloudSampleA = texture2D(uCloudTexture, uvA).r;
+                        float cloudSampleB = texture2D(uCloudTexture, uvB).r;
+                        float cloudShape = smoothstep(0.55, 0.80, (cloudSampleA * 0.62) + (cloudSampleB * 0.38));
+                        float cloudFade = smoothstep(-0.02, 0.22, skyDir.y);
+                        float cloudAmount = cloudShape * cloudFade * 0.22;
+                        vec3 cloudColor = mix(vec3(1.0), uHazeColor, 0.2);
+                        color = mix(color, cloudColor, cloudAmount);
+
+                        gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+                    }
+                `
+            });
+        }
+
+        function initSkyRuntime() {
+            if (!scene || !camera) return null;
+
+            const existing = sharedMaterials.skyRuntime || null;
+            if (existing && existing.mesh && existing.mesh.parent) existing.mesh.parent.remove(existing.mesh);
+            if (existing && existing.mesh && existing.mesh.geometry && typeof existing.mesh.geometry.dispose === 'function') existing.mesh.geometry.dispose();
+            if (existing && existing.material && typeof existing.material.dispose === 'function') existing.material.dispose();
+            if (existing && existing.cloudTexture && typeof existing.cloudTexture.dispose === 'function') existing.cloudTexture.dispose();
+
+            const cloudTexture = new THREE.CanvasTexture(buildSkyCloudNoiseCanvas(512));
+            cloudTexture.wrapS = THREE.RepeatWrapping;
+            cloudTexture.wrapT = THREE.RepeatWrapping;
+            cloudTexture.magFilter = THREE.LinearFilter;
+            cloudTexture.minFilter = THREE.LinearMipmapLinearFilter;
+            cloudTexture.generateMipmaps = true;
+            cloudTexture.needsUpdate = true;
+
+            const sunDirection = new THREE.Vector3(
+                MAIN_DIRECTIONAL_SHADOW_CONFIG.offsetX,
+                MAIN_DIRECTIONAL_SHADOW_CONFIG.height,
+                MAIN_DIRECTIONAL_SHADOW_CONFIG.offsetZ
+            ).normalize();
+            const material = createSkyDomeMaterial(cloudTexture, sunDirection);
+            const skyRadius = Math.max(1, camera.far - 20);
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(skyRadius, 24, 16), material);
+            mesh.frustumCulled = false;
+            mesh.renderOrder = -1000;
+            mesh.castShadow = false;
+            mesh.receiveShadow = false;
+            mesh.position.copy(camera.position);
+            scene.add(mesh);
+
+            sharedMaterials.skyRuntime = {
+                cloudTexture,
+                material,
+                mesh,
+                sunDirection
+            };
+            return sharedMaterials.skyRuntime;
+        }
+
+        function updateSkyRuntime(cameraPosition, frameNowMs) {
+            const skyRuntime = sharedMaterials.skyRuntime || null;
+            if (!skyRuntime || !skyRuntime.mesh || !skyRuntime.material || !skyRuntime.material.uniforms) return;
+
+            if (cameraPosition && typeof skyRuntime.mesh.position.copy === 'function') {
+                skyRuntime.mesh.position.copy(cameraPosition);
+            }
+            if (skyRuntime.material.uniforms.uTime) {
+                skyRuntime.material.uniforms.uTime.value = Number.isFinite(frameNowMs) ? frameNowMs * 0.001 : 0;
+            }
+        }
+
         function initSharedAssets() {
             sharedGeometries.ground = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE);
             sharedGeometries.ground.rotateX(-Math.PI / 2);
@@ -417,6 +595,12 @@
             // Stairs Materials
             sharedMaterials.stairsUp = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
             sharedMaterials.stairsDown = new THREE.MeshLambertMaterial({ color: 0x444444 });
+            sharedMaterials.hiddenHitbox = new THREE.MeshBasicMaterial({ visible: false });
+            sharedMaterials.shopCounterGlass = new THREE.MeshLambertMaterial({ color: 0x88ccff, transparent: true, opacity: 0.6 });
+            sharedMaterials.altarStone = new THREE.MeshLambertMaterial({ color: 0x5e5449, flatShading: true });
+            sharedMaterials.altarCoal = new THREE.MeshLambertMaterial({ color: 0x2d2320, flatShading: true });
+            sharedMaterials.altarEmber = new THREE.MeshLambertMaterial({ color: 0xff7a1a, emissive: 0x8a2f00 });
+            sharedMaterials.altarCore = new THREE.MeshLambertMaterial({ color: 0xffc04d, emissive: 0x8a4d00 });
 
             // Lightweight procedural textures to avoid flat-color terrain/water.
             const grassCanvas = buildGrassTextureCanvas(192);
@@ -864,6 +1048,7 @@
         ];
 
         let miningPoseReferences = [];
+        let staticNpcBaseTiles = new Map();
 
         function clearMiningPoseReferences() {
             for (let i = 0; i < miningPoseReferences.length; i++) {
@@ -872,6 +1057,31 @@
                 if (refRig && refRig.parent) refRig.parent.remove(refRig);
             }
             miningPoseReferences = [];
+        }
+
+        function occupiedTileKey(x, y, z = 0) {
+            return `${z}:${x}:${y}`;
+        }
+
+        function rememberStaticNpcBaseTile(x, y, z, tileId) {
+            if (!Number.isFinite(tileId)) return;
+            staticNpcBaseTiles.set(occupiedTileKey(x, y, z), Math.floor(Number(tileId)));
+        }
+
+        function resolveSolidNpcBaseTile(x, y, z) {
+            const staticBaseTile = staticNpcBaseTiles.get(occupiedTileKey(x, y, z));
+            if (Number.isFinite(staticBaseTile)) return staticBaseTile;
+            if (typeof window.getCombatEnemyOccupiedBaseTileId === 'function') {
+                const combatBaseTile = window.getCombatEnemyOccupiedBaseTileId(x, y, z);
+                if (Number.isFinite(combatBaseTile)) return Math.floor(Number(combatBaseTile));
+            }
+            return null;
+        }
+
+        function getVisualTileId(tileId, x, y, z) {
+            if (tileId !== TileId.SOLID_NPC) return tileId;
+            const baseTile = resolveSolidNpcBaseTile(x, y, z);
+            return Number.isFinite(baseTile) ? baseTile : tileId;
         }
 
         function getTileHeightSafe(x, y, z = 0) {
@@ -933,10 +1143,10 @@
         function initThreeJS() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xa7ceda);
-            // Keep fog only at the far render horizon so nearby space stays clear.
-            scene.fog = new THREE.Fog(0xdce7ea, 255, 440); 
+            scene.background = new THREE.Color(0x5ea8f7);
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 260);
+            // Keep fog only at the far render horizon so nearby space stays clear.
+            scene.fog = new THREE.Fog(0xcfe4fb, camera.far - 35, camera.far);
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -944,6 +1154,7 @@
             renderer.shadowMap.enabled = !!MAIN_DIRECTIONAL_SHADOW_CONFIG.enabled;
             renderer.shadowMap.type = THREE.BasicShadowMap;
             container.appendChild(renderer.domElement);
+            initSkyRuntime();
             scene.add(new THREE.HemisphereLight(0xfff2d6, 0xb0c29a, 1.08));
             scene.add(new THREE.AmbientLight(0xffffff, 0.88));
             const dirLight = new THREE.DirectionalLight(0xffefc0, 1.18);
@@ -966,12 +1177,16 @@
             sharedMaterials.mainDirectionalShadowConfig = MAIN_DIRECTIONAL_SHADOW_CONFIG;
             sharedMaterials.mainDirectionalShadowLight = dirLight;
             sharedMaterials.mainDirectionalShadowTarget = dirLightTarget;
+            sharedMaterials.shadowFocusRevision = Number.isFinite(sharedMaterials.shadowFocusRevision)
+                ? sharedMaterials.shadowFocusRevision + 1
+                : 1;
             const fillLight = new THREE.DirectionalLight(0xcadbe2, 0.3);
             fillLight.position.set(-20, 22, -16);
             scene.add(fillLight);
             playerRig = createPlayerRigFromCurrentAppearance();
             scene.add(playerRig);
             updateMainDirectionalShadowFocus(playerState.x, 0, playerState.y);
+            updateSkyRuntime(camera.position, performance.now());
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             window.addEventListener('resize', onWindowResize, false);
@@ -1059,60 +1274,70 @@
             } 
         }
 
+        function updateCombatStyleButtonState(button, active) {
+            if (!button) return;
+            button.classList.toggle('bg-[#5a311d]', active);
+            button.classList.toggle('border-[#ffcf8b]', active);
+            button.classList.toggle('text-[#ffcf8b]', active);
+            button.classList.toggle('bg-[#111418]', !active);
+            button.classList.toggle('border-[#3a444c]', !active);
+            button.classList.toggle('text-[#c8aa6e]', !active);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+
+        function updateCombatTab(combatTabViewModel) {
+            const combatLevelEl = document.getElementById('combat-level-value');
+            if (!combatLevelEl || !combatTabViewModel) return;
+
+            combatLevelEl.innerText = combatTabViewModel.combatLevelText;
+            document.getElementById('combat-level-formula').innerText = combatTabViewModel.combatLevelFormulaText;
+            document.getElementById('combat-style-current').innerText = combatTabViewModel.selectedStyleLabel;
+            document.getElementById('combat-style-effect').innerText = combatTabViewModel.selectedStyleDescription;
+            document.getElementById('combat-skill-attack').innerText = combatTabViewModel.attackLevel;
+            document.getElementById('combat-skill-strength').innerText = combatTabViewModel.strengthLevel;
+            document.getElementById('combat-skill-defense').innerText = combatTabViewModel.defenseLevel;
+            document.getElementById('combat-skill-hitpoints').innerText = combatTabViewModel.hitpointsLevel;
+            document.getElementById('combat-roll-attack').innerText = combatTabViewModel.combatStats.attack;
+            document.getElementById('combat-roll-defense').innerText = combatTabViewModel.combatStats.defense;
+            document.getElementById('combat-max-hit').innerText = combatTabViewModel.combatStats.strength;
+
+            const styleOptionsById = Object.fromEntries((combatTabViewModel.styleOptions || []).map((entry) => [entry.styleId, entry]));
+            updateCombatStyleButtonState(document.getElementById('combat-style-attack'), !!(styleOptionsById.attack && styleOptionsById.attack.active));
+            updateCombatStyleButtonState(document.getElementById('combat-style-strength'), !!(styleOptionsById.strength && styleOptionsById.strength.active));
+            updateCombatStyleButtonState(document.getElementById('combat-style-defense'), !!(styleOptionsById.defense && styleOptionsById.defense.active));
+        }
+
+        function updateInventoryHitpointsHud() {
+            const hitpointsTextEl = document.getElementById('inventory-hitpoints-text');
+            const hitpointsBarFillEl = document.getElementById('inventory-hitpoints-bar-fill');
+            if (!hitpointsTextEl || !hitpointsBarFillEl) return;
+
+            const currentHitpoints = getCurrentHitpoints();
+            const maxHitpoints = getMaxHitpoints();
+            const hitpointsLevel = playerSkills && playerSkills.hitpoints && Number.isFinite(playerSkills.hitpoints.level)
+                ? Math.max(1, Math.floor(playerSkills.hitpoints.level))
+                : maxHitpoints;
+            const fillPercent = Math.max(0, Math.min(100, (currentHitpoints / Math.max(1, maxHitpoints)) * 100));
+
+            hitpointsTextEl.innerText = `${currentHitpoints} / ${hitpointsLevel}`;
+            hitpointsBarFillEl.style.width = `${fillPercent}%`;
+        }
+
         function updateStats() {
             const uiDomainRuntime = window.UiDomainRuntime || null;
-            const statsViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatsViewModel === 'function'
-                ? uiDomainRuntime.buildCombatStatsViewModel({ playerSkills, equipment, playerState })
-                : { attack: 0, defense: 0, strength: 0 };
+            const combatTabViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatTabViewModel === 'function'
+                ? uiDomainRuntime.buildCombatTabViewModel({ playerSkills, equipment, playerState })
+                : null;
+            const statsViewModel = combatTabViewModel && combatTabViewModel.combatStats
+                ? combatTabViewModel.combatStats
+                : (uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatsViewModel === 'function'
+                    ? uiDomainRuntime.buildCombatStatsViewModel({ playerSkills, equipment, playerState })
+                    : { attack: 0, defense: 0, strength: 0 });
             document.getElementById('stat-atk').innerText = statsViewModel.attack;
             document.getElementById('stat-def').innerText = statsViewModel.defense;
             document.getElementById('stat-str').innerText = statsViewModel.strength;
-
-            const combatHudSnapshot = typeof window.getCombatHudSnapshot === 'function'
-                ? window.getCombatHudSnapshot()
-                : null;
-            const combatStatusViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatusViewModel === 'function'
-                ? uiDomainRuntime.buildCombatStatusViewModel({
-                    playerCurrentHitpoints: getCurrentHitpoints(),
-                    playerMaxHitpoints: getMaxHitpoints(),
-                    playerRemainingAttackCooldown: combatHudSnapshot && Number.isFinite(combatHudSnapshot.playerRemainingAttackCooldown)
-                        ? combatHudSnapshot.playerRemainingAttackCooldown
-                        : playerState.remainingAttackCooldown,
-                    inCombat: combatHudSnapshot ? !!combatHudSnapshot.inCombat : !!playerState.inCombat,
-                    target: combatHudSnapshot && combatHudSnapshot.target ? combatHudSnapshot.target : null
-                })
-                : null;
-
-            const panel = document.getElementById('combat-status-panel');
-            const targetSection = document.getElementById('combat-status-target');
-            if (!panel || !targetSection || !combatStatusViewModel) return;
-
-            panel.classList.toggle('hidden', !combatStatusViewModel.visible);
-            if (!combatStatusViewModel.visible) return;
-
-            document.getElementById('combat-status-banner').innerText = combatStatusViewModel.bannerText;
-            document.getElementById('combat-player-hp-text').innerText = combatStatusViewModel.playerHitpointsText;
-            document.getElementById('combat-player-hp-bar').style.width = combatStatusViewModel.playerHitpointsWidth;
-
-            const playerCooldown = document.getElementById('combat-player-cooldown-text');
-            playerCooldown.innerText = combatStatusViewModel.playerCooldownText;
-            playerCooldown.classList.toggle('text-[#9fdc8f]', combatStatusViewModel.playerCooldownReady);
-            playerCooldown.classList.toggle('text-[#ffcf8b]', !combatStatusViewModel.playerCooldownReady);
-
-            targetSection.classList.toggle('hidden', !combatStatusViewModel.targetVisible);
-            if (!combatStatusViewModel.targetVisible) return;
-
-            document.getElementById('combat-target-focus-label').innerText = combatStatusViewModel.targetFocusLabel;
-            document.getElementById('combat-range-text').innerText = combatStatusViewModel.rangeText;
-            document.getElementById('combat-target-name').innerText = combatStatusViewModel.targetName;
-            document.getElementById('combat-target-state-text').innerText = combatStatusViewModel.targetStateText;
-            document.getElementById('combat-target-hp-text').innerText = combatStatusViewModel.targetHitpointsText;
-            document.getElementById('combat-target-hp-bar').style.width = combatStatusViewModel.targetHitpointsWidth;
-
-            const targetCooldown = document.getElementById('combat-target-cooldown-text');
-            targetCooldown.innerText = combatStatusViewModel.targetCooldownText;
-            targetCooldown.classList.toggle('text-[#9fdc8f]', combatStatusViewModel.targetCooldownReady);
-            targetCooldown.classList.toggle('text-[#ffb27d]', !combatStatusViewModel.targetCooldownReady);
+            updateInventoryHitpointsHud();
+            updateCombatTab(combatTabViewModel);
         }
 
         function getMaxHitpoints() {
@@ -1913,7 +2138,7 @@
                 const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.3), new THREE.MeshLambertMaterial({color: 0x888888}));
                 group.add(boxMesh);
             }
-            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshBasicMaterial({visible: false}));
+            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), sharedMaterials.hiddenHitbox);
             group.add(hitbox);
             const uid = Date.now() + Math.random();
             group.children.forEach(c => {
@@ -2336,6 +2561,7 @@
             heightMap = Array(PLANES).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0)));
             
             // Only populate Ground Terrain on Z=0
+            staticNpcBaseTiles = new Map();
             npcsToRender = [];
             bankBoothsToRender = [];
             doorsToRender = [];
@@ -2356,6 +2582,7 @@
             const castleFrontPond = worldPayload.castleFrontPond;
             const deepWaterCenter = worldPayload.deepWaterCenter;
             const pierConfig = worldPayload.pierConfig;
+            const smithingHallApproach = worldPayload.smithingHallApproach || { shoreX: 220, stairX: 221, yStart: 233, yEnd: 235 };
             const waterRenderPayload = worldPayload.waterRenderPayload;
             const stampedStructures = worldPayload.stampedStructures;
             const stampMap = worldPayload.stampMap;
@@ -2371,6 +2598,17 @@
             const staircaseLandmarks = worldPayload.staircaseLandmarks;
             const doorLandmarks = worldPayload.doorLandmarks;
             const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
+
+            function placeStaticNpcOccupancyTile(x, y, z = 0, options = {}) {
+                if (!logicalMap[z] || !logicalMap[z][y]) return false;
+                const baseTile = Number.isFinite(options.baseTile)
+                    ? Math.floor(Number(options.baseTile))
+                    : logicalMap[z][y][x];
+                rememberStaticNpcBaseTile(x, y, z, baseTile);
+                logicalMap[z][y][x] = TileId.SOLID_NPC;
+                if (Number.isFinite(options.height)) heightMap[z][y][x] = Number(options.height);
+                return true;
+            }
 
             function getStampBounds(structureId) {
                 for (let i = 0; i < stampedStructures.length; i++) {
@@ -2615,8 +2853,7 @@
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
 
                 // Force a shallow shoreline anchor so these merchants are always reachable beside fishing routes.
-                logicalMap[0][spot.y][spot.x] = 16;
-                heightMap[0][spot.y][spot.x] = -0.01;
+                placeStaticNpcOccupancyTile(spot.x, spot.y, 0, { baseTile: TileId.SHORE, height: -0.01 });
                 npcsToRender.push({
                     type: spot.type,
                     x: spot.x,
@@ -2764,22 +3001,22 @@
                             bankBoothsToRender.push({ x: mapX, y: mapY, z: z });
                         }
                         else if (char === 'N') { 
-                            logicalMap[z][mapY][mapX] = 16; heightMap[z][mapY][mapX] = 0.5; // 16 = Solid NPC
+                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
                             npcsToRender.push({ type: 3, x: mapX, y: mapY, z: z, name: "Banker" });
                         }
                         else if (char === 'K') { 
-                            logicalMap[z][mapY][mapX] = 16; heightMap[z][mapY][mapX] = 0.5; 
+                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
                             npcsToRender.push({ type: 7, x: mapX, y: mapY, z: z, name: "King Roald" });
                         }
                         else if (char === 'Q') { 
-                            logicalMap[z][mapY][mapX] = 16; heightMap[z][mapY][mapX] = 0.5; 
+                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
                             npcsToRender.push({ type: 8, x: mapX, y: mapY, z: z, name: "Queen Ellamaria" });
                         }
                         else if (char === 'V') { 
                             logicalMap[z][mapY][mapX] = 17; heightMap[z][mapY][mapX] = 0.5; 
                         }
                         else if (char === '$') { 
-                            logicalMap[z][mapY][mapX] = 16; heightMap[z][mapY][mapX] = 0.5; 
+                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
                             npcsToRender.push({ type: 2, x: mapX, y: mapY, z: z, name: "Shopkeeper" });
                         }
                         else if (char === 'T') { 
@@ -2817,10 +3054,10 @@
             for (let i = 0; i < staticMerchantSpots.length; i++) {
                 const spot = staticMerchantSpots[i];
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
-                logicalMap[0][spot.y][spot.x] = 16;
-                if (Array.isArray(spot.tags) && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))) {
-                    heightMap[0][spot.y][spot.x] = 0.5;
-                }
+                const merchantHeight = Array.isArray(spot.tags) && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))
+                    ? 0.5
+                    : null;
+                placeStaticNpcOccupancyTile(spot.x, spot.y, 0, { height: merchantHeight });
                 npcsToRender.push({
                     type: spot.type,
                     x: spot.x,
@@ -2850,9 +3087,26 @@
             }
 
             // Smithing hall approach stairs from pond side (west/open side).
-            for (let sy = 233; sy <= 235; sy++) {
-                logicalMap[0][sy][219] = 20; heightMap[0][sy][219] = -0.01;
-                logicalMap[0][sy][220] = 15; heightMap[0][sy][220] = 0.25;
+            if (
+                smithingHallApproach
+                && Number.isInteger(smithingHallApproach.shoreX)
+                && Number.isInteger(smithingHallApproach.stairX)
+                && Number.isInteger(smithingHallApproach.yStart)
+                && Number.isInteger(smithingHallApproach.yEnd)
+            ) {
+                const yStart = Math.min(smithingHallApproach.yStart, smithingHallApproach.yEnd);
+                const yEnd = Math.max(smithingHallApproach.yStart, smithingHallApproach.yEnd);
+                for (let sy = yStart; sy <= yEnd; sy++) {
+                    if (sy <= 1 || sy >= MAP_SIZE - 2) continue;
+                    if (smithingHallApproach.shoreX > 1 && smithingHallApproach.shoreX < MAP_SIZE - 2) {
+                        logicalMap[0][sy][smithingHallApproach.shoreX] = 20;
+                        heightMap[0][sy][smithingHallApproach.shoreX] = -0.01;
+                    }
+                    if (smithingHallApproach.stairX > 1 && smithingHallApproach.stairX < MAP_SIZE - 2) {
+                        logicalMap[0][sy][smithingHallApproach.stairX] = 15;
+                        heightMap[0][sy][smithingHallApproach.stairX] = 0.25;
+                    }
+                }
             }
             
             for (let i = 0; i < doorLandmarks.length; i++) {
@@ -4418,6 +4672,8 @@
         let chunkFarGroups = {};
         const chunkTierStateByKey = new Map();
         const chunkInteractionMeshes = new Map();
+        const pendingNearChunkBuilds = new Map();
+        let pendingNearChunkBuildSequence = 0;
         let chunkPolicyDirty = true;
         let lastChunkPolicyCenterX = null;
         let lastChunkPolicyCenterY = null;
@@ -4545,11 +4801,20 @@
             return {};
         }
 
+        function clearPendingNearChunkBuilds(key = null) {
+            if (typeof key === 'string' && key) {
+                pendingNearChunkBuilds.delete(key);
+                return;
+            }
+            pendingNearChunkBuilds.clear();
+        }
+
         function clearChunkTierGroups() {
             chunkMidGroups = removeChunkGroupsFromScene(chunkMidGroups);
             chunkFarGroups = removeChunkGroupsFromScene(chunkFarGroups);
             chunkTierStateByKey.clear();
             chunkInteractionMeshes.clear();
+            clearPendingNearChunkBuilds();
             chunkAutoQualityState.windowStartMs = 0;
             chunkAutoQualityState.accumulatedFps = 0;
             chunkAutoQualityState.sampleCount = 0;
@@ -4647,7 +4912,7 @@
             let towerCount = 0;
             for (let y = startY; y < endY; y += stride) {
                 for (let x = startX; x < endX; x += stride) {
-                    const tile = logicalMap[z][y][x];
+                    const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
                     if (z === 0 && isTreeTileId(tile)) treeCount += 1;
                     else if (z === 0 && tile === TileId.ROCK) rockCount += 1;
                     else if (tile === TileId.WALL) wallCount += 1;
@@ -4666,7 +4931,7 @@
                 let idx = 0;
                 for (let y = startY; y < endY; y += stride) {
                     for (let x = startX; x < endX; x += stride) {
-                        const tile = logicalMap[z][y][x];
+                        const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
                         if (!matchFn(tile, x, y)) continue;
                         const tileHeight = heightMap[z] && heightMap[z][y] ? heightMap[z][y][x] : 0;
                         dummy.position.set(x, tileHeight + zOffset, y);
@@ -4844,7 +5109,7 @@
                             const sample = sampleTiles[i];
                             if (sample.x < 0 || sample.y < 0 || sample.x >= MAP_SIZE || sample.y >= MAP_SIZE) continue;
                             if (isPierVisualCoverageTile(activePierConfig, sample.x, sample.y, 0)) continue;
-                            const tileType = logicalMap[0][sample.y][sample.x];
+                            const tileType = getVisualTileId(logicalMap[0][sample.y][sample.x], sample.x, sample.y, 0);
                             if (isRenderableTerrainTile(tileType)) {
                                 sum += heightMap[0][sample.y][sample.x];
                                 count++;
@@ -4893,7 +5158,7 @@
                             const sample = sampleTiles[i];
                             if (sample.x < 0 || sample.y < 0 || sample.x >= MAP_SIZE || sample.y >= MAP_SIZE) continue;
                             if (isPierVisualCoverageTile(activePierConfig, sample.x, sample.y, 0)) continue;
-                            const tileType = logicalMap[0][sample.y][sample.x];
+                            const tileType = getVisualTileId(logicalMap[0][sample.y][sample.x], sample.x, sample.y, 0);
                             if (!isRenderableUnderlayTile(tileType)) continue;
                             sum += heightMap[0][sample.y][sample.x];
                             count++;
@@ -4922,7 +5187,7 @@
                         for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
                             const worldTileX = startX + tileX;
                             const worldTileY = startY + tileY;
-                            const tile = logicalMap[0][worldTileY][worldTileX];
+                            const tile = getVisualTileId(logicalMap[0][worldTileY][worldTileX], worldTileX, worldTileY, 0);
                             if (!isRenderableUnderlayTile(tile)) continue;
                             if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
                             const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
@@ -4965,7 +5230,7 @@
                         for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
                             const worldTileX = startX + tileX;
                             const worldTileY = startY + tileY;
-                            const tile = logicalMap[0][worldTileY][worldTileX];
+                            const tile = getVisualTileId(logicalMap[0][worldTileY][worldTileX], worldTileX, worldTileY, 0);
                             if (!isRenderableTerrainTile(tile)) continue;
                             if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
                             const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
@@ -5025,7 +5290,7 @@
                 let tCount = 0, rCopperCount = 0, rTinCount = 0, rDepletedCount = 0, rRuneEssenceCount = 0, wCount = 0, cCount = 0;
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
-                        let tile = logicalMap[z][y][x];
+                        let tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
                         if (isTreeTileId(tile)) tCount++;
                         else if (tile === TileId.ROCK) {
                             const rockNode = getRockNodeAt(x, y, z);
@@ -5121,7 +5386,7 @@
                             const ny = tileY + oy;
                             if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
                             if (isPierVisualCoverageTile(activePierConfig, nx, ny, 0)) continue;
-                            const tileType = logicalMap[0][ny][nx];
+                            const tileType = getVisualTileId(logicalMap[0][ny][nx], nx, ny, 0);
                             if (isWaterTileId(tileType)) continue;
                             const weight = (ox === 0 && oy === 0) ? 0.25 : ((ox === 0 || oy === 0) ? 0.125 : 0.0625);
                             weightedSum += heightMap[0][ny][nx] * weight;
@@ -5135,7 +5400,7 @@
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
-                        const tile = logicalMap[z][y][x];
+                        const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
                         const h = heightMap[z][y][x] + Z_OFFSET; 
 
                         if (isTreeTileId(tile)) {
@@ -5227,7 +5492,7 @@
                             const counter = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.8), sharedMaterials.boothWood); 
                             counter.position.y = 0.5; counter.castShadow = true; counter.receiveShadow = true; 
                             
-                            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.7), new THREE.MeshLambertMaterial({color: 0x88ccff, transparent: true, opacity: 0.6}));
+                            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.7), sharedMaterials.shopCounterGlass);
                             glass.position.y = 1.025; glass.receiveShadow = true;
                             
                             counterGroup.add(counter, glass);
@@ -5238,13 +5503,17 @@
                             const floorHeight = heightMap[z][y][x];
                             const floorMesh = createTopAnchoredFloorMesh(sharedMaterials.floor7, x, y, Z_OFFSET, floorHeight, z);
                             planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                        } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || tile === TileId.SOLID_NPC) { // Floors (Now includes Bank & Solid NPCs bases)
-                            if (tile === TileId.FLOOR_WOOD && isPierDeckTile(getActivePierConfig(), x, y, z)) {
+                        } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || logicalMap[z][y][x] === TileId.SOLID_NPC) { // Floors
+                            const floorTile = logicalMap[z][y][x] === TileId.SOLID_NPC ? tile : logicalMap[z][y][x];
+                            if (floorTile === TileId.GRASS || floorTile === TileId.DIRT || floorTile === TileId.SHORE) {
+                                continue;
+                            }
+                            if (floorTile === TileId.FLOOR_WOOD && isPierDeckTile(getActivePierConfig(), x, y, z)) {
                                 continue;
                             }
                             let floorMat = sharedMaterials.floor7; // default to stone
-                            if (tile === TileId.FLOOR_WOOD) floorMat = sharedMaterials.floor6;
-                            if (tile === TileId.FLOOR_BRICK) floorMat = sharedMaterials.floor8;
+                            if (floorTile === TileId.FLOOR_WOOD) floorMat = sharedMaterials.floor6;
+                            if (floorTile === TileId.FLOOR_BRICK) floorMat = sharedMaterials.floor8;
                             
                             const floorHeight = heightMap[z][y][x];
                             const floorMesh = createTopAnchoredFloorMesh(floorMat, x, y, Z_OFFSET, floorHeight, z);
@@ -5346,7 +5615,7 @@
                         const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 0.45), sharedMaterials.floor7);
                         chimney.position.set(0.55, 1.9, -((bodyLocalD * 0.5) - 0.45));
                         // Tooltip/click hitbox should match rectangular furnace body only (exclude chimney).
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), new THREE.MeshBasicMaterial({ visible: false }));
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.hiddenHitbox);
                         hitbox.position.set(0, 0.8, 0);
                         hitbox.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
                         furnaceGroup.add(base, mouth, chimney, hitbox);
@@ -5370,7 +5639,7 @@
                         const horn = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.2), sharedMaterials.floor7);
                         horn.position.set(0.5, 0.6, 0);
                         // Keep click volume aligned with the physical anvil silhouette.
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.3), new THREE.MeshBasicMaterial({ visible: false }));
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.3), sharedMaterials.hiddenHitbox);
                         hitbox.position.set(0, 0.4, 0);
                         hitbox.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
                         anvilGroup.add(stand, top, horn, hitbox);
@@ -5412,10 +5681,10 @@
                         // Upscale target: ~4x footprint area (2x width/depth) and ~2x height.
                         const footprintScale = 2.0;
                         const heightScale = 2.0;
-                        const stoneMat = new THREE.MeshLambertMaterial({ color: 0x5e5449, flatShading: true });
-                        const coalMat = new THREE.MeshLambertMaterial({ color: 0x2d2320, flatShading: true });
-                        const emberMat = new THREE.MeshLambertMaterial({ color: 0xff7a1a, emissive: 0x8a2f00 });
-                        const coreMat = new THREE.MeshLambertMaterial({ color: 0xffc04d, emissive: 0x8a4d00 });
+                        const stoneMat = sharedMaterials.altarStone;
+                        const coalMat = sharedMaterials.altarCoal;
+                        const emberMat = sharedMaterials.altarEmber;
+                        const coreMat = sharedMaterials.altarCore;
 
                         const plinth = new THREE.Mesh(
                             new THREE.CylinderGeometry(0.52 * footprintScale, 0.64 * footprintScale, 0.28 * heightScale, 10),
@@ -5486,7 +5755,7 @@
                         // Keep visuals unchanged; click/hover footprint is 3x3.
                         const altarHitbox = new THREE.Mesh(
                             new THREE.BoxGeometry(3, 2.6, 3),
-                            new THREE.MeshBasicMaterial({ visible: false })
+                            sharedMaterials.hiddenHitbox
                         );
                         altarHitbox.position.set(0, 1.3, 0);
                         altarHitbox.userData = { type: 'ALTAR_CANDIDATE', gridX: ac.x, gridY: ac.y, z: z, name: ac.label, variant: ac.variant };
@@ -5517,7 +5786,7 @@
                         // Slightly thicker hitbox for easier clicking
                         const hw = d.isEW ? d.width : 0.6;
                         const hd = d.isEW ? 0.6 : d.width;
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, 2, hd), new THREE.MeshBasicMaterial({visible: false}));
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, 2, hd), sharedMaterials.hiddenHitbox);
                         hitbox.position.set(meshOffsetX, 1.0, meshOffsetZ);
                         
                         doorGroup.add(doorMesh, hitbox);
@@ -5557,7 +5826,7 @@
                         }
                         
                         // Add interactive hitbox to NPCs
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshBasicMaterial({visible: false}));
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), sharedMaterials.hiddenHitbox);
                         hitbox.position.y = 1.0;
                         const npcUid = { name: npc.name, action: npc.action || (npc.name === 'Shopkeeper' ? 'Trade' : 'Talk-to') };
                         if (npc.merchantId) npcUid.merchantId = npc.merchantId;
@@ -5630,26 +5899,147 @@
             return desired;
         }
 
+        function buildCurrentChunkPolicyState() {
+            if (!playerRig) return null;
+            const pX = isFreeCam ? freeCamTarget.x : playerRig.position.x;
+            const pZ = isFreeCam ? freeCamTarget.z : playerRig.position.z;
+            const centerChunkX = Math.max(0, Math.min(WORLD_CHUNKS_X - 1, Math.floor(pX / CHUNK_SIZE)));
+            const centerChunkY = Math.max(0, Math.min(WORLD_CHUNKS_Y - 1, Math.floor(pZ / CHUNK_SIZE)));
+            const policy = resolveActiveChunkRenderPolicy();
+            return {
+                centerChunkX,
+                centerChunkY,
+                visiblePlane: playerState.z,
+                policy,
+                desiredTierByKey: collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, policy.nearRadius, policy.midRadius),
+                desiredInteractionChunks: collectDesiredChunks(
+                    centerChunkX,
+                    centerChunkY,
+                    -policy.interactionRadius,
+                    policy.interactionRadius,
+                    -policy.interactionRadius,
+                    policy.interactionRadius
+                )
+            };
+        }
+
+        function enqueuePendingNearChunkBuild(cx, cy, key, shouldRegisterInteraction, maxVisiblePlane) {
+            const existingRequest = pendingNearChunkBuilds.get(key);
+            if (existingRequest) {
+                existingRequest.shouldRegisterInteraction = !!shouldRegisterInteraction;
+                existingRequest.maxVisiblePlane = Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0;
+                existingRequest.cx = cx;
+                existingRequest.cy = cy;
+                return existingRequest;
+            }
+
+            const request = {
+                key,
+                cx,
+                cy,
+                shouldRegisterInteraction: !!shouldRegisterInteraction,
+                maxVisiblePlane: Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0,
+                sequence: pendingNearChunkBuildSequence++
+            };
+            pendingNearChunkBuilds.set(key, request);
+            return request;
+        }
+
+        function showPendingNearChunkFallback(cx, cy, key, maxVisiblePlane) {
+            const midGroup = chunkMidGroups[key];
+            if (midGroup) {
+                midGroup.visible = true;
+                setChunkGroupPlaneVisibility(midGroup, maxVisiblePlane);
+                if (chunkFarGroups[key]) chunkFarGroups[key].visible = false;
+                return;
+            }
+
+            const farGroup = chunkFarGroups[key] || ensureFarChunkGroup(cx, cy);
+            farGroup.visible = true;
+            setChunkGroupPlaneVisibility(farGroup, maxVisiblePlane);
+        }
+
+        function processPendingNearChunkBuilds(maxBuilds = 1) {
+            if (!playerRig || pendingNearChunkBuilds.size === 0) return 0;
+            const buildLimit = Math.max(0, Math.floor(Number.isFinite(maxBuilds) ? maxBuilds : 1));
+            if (buildLimit <= 0) return 0;
+
+            const policyState = buildCurrentChunkPolicyState();
+            if (!policyState) return 0;
+
+            const requests = Array.from(pendingNearChunkBuilds.values()).sort((left, right) => {
+                const leftDistance = Math.max(
+                    Math.abs(left.cx - policyState.centerChunkX),
+                    Math.abs(left.cy - policyState.centerChunkY)
+                );
+                const rightDistance = Math.max(
+                    Math.abs(right.cx - policyState.centerChunkX),
+                    Math.abs(right.cy - policyState.centerChunkY)
+                );
+                if (leftDistance !== rightDistance) return leftDistance - rightDistance;
+                return left.sequence - right.sequence;
+            });
+
+            let processed = 0;
+            for (let i = 0; i < requests.length && processed < buildLimit; i++) {
+                const request = requests[i];
+                if (!request) continue;
+
+                const key = request.key;
+                if (chunkGroups[key]) {
+                    clearPendingNearChunkBuilds(key);
+                    continue;
+                }
+
+                const targetTier = policyState.desiredTierByKey.get(key) || CHUNK_TIER_FAR;
+                if (targetTier !== CHUNK_TIER_NEAR) {
+                    clearPendingNearChunkBuilds(key);
+                    continue;
+                }
+
+                const shouldRegisterInteraction = policyState.desiredInteractionChunks.has(key);
+                loadChunk(request.cx, request.cy, shouldRegisterInteraction);
+
+                const loadedNearGroup = chunkGroups[key];
+                if (loadedNearGroup) {
+                    loadedNearGroup.visible = true;
+                    setChunkGroupPlaneVisibility(loadedNearGroup, policyState.visiblePlane);
+                }
+                if (chunkMidGroups[key]) chunkMidGroups[key].visible = false;
+                if (chunkFarGroups[key]) chunkFarGroups[key].visible = false;
+                setChunkInteractionState(key, shouldRegisterInteraction);
+                chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
+                clearPendingNearChunkBuilds(key);
+                processed += 1;
+            }
+
+            return processed;
+        }
+
         function applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, maxVisiblePlane) {
             const nearGroup = chunkGroups[key];
             const midGroup = chunkMidGroups[key];
             const farGroup = chunkFarGroups[key];
 
             if (targetTier === CHUNK_TIER_NEAR) {
-                if (midGroup) midGroup.visible = false;
-                if (farGroup) farGroup.visible = false;
-                if (!nearGroup) {
-                    loadChunk(cx, cy, shouldRegisterInteraction);
-                } else {
+                if (nearGroup) {
+                    clearPendingNearChunkBuilds(key);
+                    if (midGroup) midGroup.visible = false;
+                    if (farGroup) farGroup.visible = false;
                     nearGroup.visible = true;
                     setChunkInteractionState(key, shouldRegisterInteraction);
+                    setChunkGroupPlaneVisibility(nearGroup, maxVisiblePlane);
+                    chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
+                    return;
                 }
-                const loadedNearGroup = chunkGroups[key];
-                if (loadedNearGroup) setChunkGroupPlaneVisibility(loadedNearGroup, maxVisiblePlane);
-                chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
+
+                enqueuePendingNearChunkBuild(cx, cy, key, shouldRegisterInteraction, maxVisiblePlane);
+                showPendingNearChunkFallback(cx, cy, key, maxVisiblePlane);
+                chunkTierStateByKey.set(key, midGroup ? CHUNK_TIER_MID : CHUNK_TIER_FAR);
                 return;
             }
 
+            clearPendingNearChunkBuilds(key);
             if (nearGroup) unloadChunk(key);
 
             if (targetTier === CHUNK_TIER_MID) {
@@ -5669,14 +6059,14 @@
         }
 
         function manageChunks(forceRefresh = false) {
-            if (!playerRig) return;
-            const pX = isFreeCam ? freeCamTarget.x : playerRig.position.x;
-            const pZ = isFreeCam ? freeCamTarget.z : playerRig.position.z;
-            const pCX = Math.max(0, Math.min(WORLD_CHUNKS_X - 1, Math.floor(pX / CHUNK_SIZE)));
-            const pCY = Math.max(0, Math.min(WORLD_CHUNKS_Y - 1, Math.floor(pZ / CHUNK_SIZE)));
+            const policyState = buildCurrentChunkPolicyState();
+            if (!policyState) return;
+            const pCX = policyState.centerChunkX;
+            const pCY = policyState.centerChunkY;
             const policyRevision = (typeof window.getChunkRenderPolicyRevision === 'function')
                 ? window.getChunkRenderPolicyRevision()
                 : 0;
+            if (forceRefresh) clearPendingNearChunkBuilds();
 
             if (
                 !forceRefresh
@@ -5688,25 +6078,14 @@
                 return;
             }
 
-            const policy = resolveActiveChunkRenderPolicy();
-            const desiredTierByKey = collectDesiredChunkTierAssignments(pCX, pCY, policy.nearRadius, policy.midRadius);
-            const desiredInteractionChunks = collectDesiredChunks(
-                pCX,
-                pCY,
-                -policy.interactionRadius,
-                policy.interactionRadius,
-                -policy.interactionRadius,
-                policy.interactionRadius
-            );
-
             ensureFarChunkBackdropBuilt();
-            const visiblePlane = playerState.z;
+            const visiblePlane = policyState.visiblePlane;
 
             for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
                 for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
                     const key = `${cx},${cy}`;
-                    const targetTier = desiredTierByKey.get(key) || CHUNK_TIER_FAR;
-                    const shouldRegisterInteraction = targetTier === CHUNK_TIER_NEAR && desiredInteractionChunks.has(key);
+                    const targetTier = policyState.desiredTierByKey.get(key) || CHUNK_TIER_FAR;
+                    const shouldRegisterInteraction = targetTier === CHUNK_TIER_NEAR && policyState.desiredInteractionChunks.has(key);
                     applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, visiblePlane);
                 }
             }
@@ -5719,6 +6098,7 @@
 
         function build3DEnvironment() {
             initSharedAssets();
+            clearPendingNearChunkBuilds();
             ensureFarChunkBackdropBuilt();
             markChunkPolicyDirty();
         }
@@ -5737,6 +6117,9 @@
             chunkGroups = {};
             clearChunkTierGroups();
             lastChunkPolicyRevision = -1;
+            sharedMaterials.shadowFocusRevision = Number.isFinite(sharedMaterials.shadowFocusRevision)
+                ? sharedMaterials.shadowFocusRevision + 1
+                : 1;
 
             for (let i = 0; i < clickMarkers.length; i++) {
                 const marker = clickMarkers[i];
@@ -5784,7 +6167,7 @@
             for (let layer = 0; layer <= playerState.z; layer++) {
                 for (let y = 0; y < MAP_SIZE; y++) {
                     for (let x = 0; x < MAP_SIZE; x++) {
-                        const tile = logicalMap[layer][y][x];
+                        const tile = getVisualTileId(logicalMap[layer][y][x], x, y, layer);
                         
                         if (tile === TileId.GRASS && layer > 0) continue; 
                         
@@ -6425,9 +6808,11 @@
         window.initMinimap = initMinimap;
         window.initUIPreview = initUIPreview;
         window.manageChunks = manageChunks;
+        window.processPendingNearChunkBuilds = processPendingNearChunkBuilds;
         window.reloadActiveWorldScene = reloadActiveWorldScene;
         window.tickFireLifecycle = tickFireLifecycle;
         window.updateMainDirectionalShadowFocus = updateMainDirectionalShadowFocus;
+        window.updateSkyRuntime = updateSkyRuntime;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;
         window.reportChunkPerformanceSample = reportChunkPerformanceSample;

@@ -40,6 +40,19 @@ function run() {
     !moveTowardTargetBody.includes("playerState.inCombat = true;"),
     "pursuing or facing a locked target should not mark the player in-combat before an attack"
   );
+  const idleEnemyMovementBody = getFunctionBody(combatSource, "updateIdleEnemyMovement");
+  assert(idleEnemyMovementBody, "combat.js should define updateIdleEnemyMovement");
+  assert(
+    idleEnemyMovementBody.includes("const nextStep = idlePath[0];"),
+    "idle enemy roaming should continue to advance at one tile per tick"
+  );
+  const updateEnemyMovementBody = getFunctionBody(combatSource, "updateEnemyMovement");
+  assert(updateEnemyMovementBody, "combat.js should define updateEnemyMovement");
+  assert(
+    updateEnemyMovementBody.includes("const homeStep = returnPath[0];")
+      && updateEnemyMovementBody.includes("const nextStep = pursuitPath[0];"),
+    "enemy return and pursuit movement should continue to advance one tile per tick"
+  );
 
   assert(
     combatSource.includes("if (result.attackerKind === 'player') {")
@@ -57,6 +70,10 @@ function run() {
   assert(
     inputRenderSource.includes("window.lockPlayerCombatTarget(enemyRuntimeId);"),
     "enemy interactions should still lock the selected target for pursuit"
+  );
+  assert(
+    inputRenderSource.includes("let stepsToTake = isRunning ? 2 : 1;"),
+    "running should continue to move the player two tiles per tick so roaming enemies remain catchable"
   );
   const lockedEnemyBody = getFunctionBody(combatSource, "getPlayerLockedEnemy");
   assert(lockedEnemyBody, "combat.js should define getPlayerLockedEnemy");
@@ -110,6 +127,26 @@ function run() {
       && combatSource.includes("} else {")
       && combatSource.includes("combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);"),
     "player cooldown should only tick while combat is active and stay zero outside combat"
+  );
+  assert(
+    combatSource.includes("function isPlayerCombatFacingReady() {")
+      && combatSource.includes("if (playerState.midX !== null || playerState.midY !== null) return false;")
+      && combatSource.includes("if (playerState.x !== playerState.prevX || playerState.y !== playerState.prevY) return false;")
+      && combatSource.includes("if (Array.isArray(playerState.path) && playerState.path.length > 0) return false;")
+      && combatSource.includes("if (!isPlayerCombatFacingReady()) return;"),
+    "combat-facing should wait until the player is visually settled on the destination tile before snapping"
+  );
+  assert(
+    combatSource.includes("enemyState.pendingDefeatAtTick = currentTick;")
+      && combatSource.includes("if (isEnemyPendingDefeat(enemyState) && currentTick > enemyState.pendingDefeatAtTick) {")
+      && combatSource.includes("const defeatTick = Number.isFinite(enemyState && enemyState.pendingDefeatAtTick)")
+      && combatSource.includes("enemyState.respawnAtTick = defeatTick + Math.max(1, Math.floor("),
+    "enemy defeats should linger through the attack tick, then resolve on the following tick without stretching respawn timing"
+  );
+  assert(
+    combatSource.includes("const isVisibleEnemy = isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);")
+      && combatSource.includes("if (!isVisibleEnemy) return false;"),
+    "enemy hitpoint bars should remain visible through the pending-defeat tick so the bar can drain to empty before despawn"
   );
   assert(
     worldSource.includes("const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;")

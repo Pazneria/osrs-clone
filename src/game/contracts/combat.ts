@@ -89,6 +89,7 @@ export interface EnemySpawnNodeDefinition {
   enemyId: string;
   spawnTile: Point3;
   homeTileOverride?: Point3 | null;
+  roamingRadiusOverride?: number | null;
   respawnTicks?: number | null;
   spawnEnabled: boolean;
   facingYaw?: number;

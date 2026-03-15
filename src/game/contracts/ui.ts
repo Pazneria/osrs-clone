@@ -1,4 +1,4 @@
-import type { CombatItemProfile } from "./combat";
+import type { CombatItemProfile, MeleeStyleId } from "./combat";
 
 export interface UiItemStats {
   atk?: number;
@@ -117,6 +117,28 @@ export interface CombatStatsViewModel {
   attack: number;
   defense: number;
   strength: number;
+}
+
+export interface CombatStyleOptionViewModel {
+  styleId: MeleeStyleId;
+  label: string;
+  description: string;
+  active: boolean;
+}
+
+export interface CombatTabViewModel {
+  combatLevel: number;
+  combatLevelText: string;
+  combatLevelFormulaText: string;
+  selectedStyleId: MeleeStyleId;
+  selectedStyleLabel: string;
+  selectedStyleDescription: string;
+  attackLevel: number;
+  strengthLevel: number;
+  defenseLevel: number;
+  hitpointsLevel: number;
+  combatStats: CombatStatsViewModel;
+  styleOptions: CombatStyleOptionViewModel[];
 }
 
 export interface CombatStatusTargetSnapshot {

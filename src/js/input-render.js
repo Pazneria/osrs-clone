@@ -2039,6 +2039,50 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 }
             });
         }
+        const SHADOW_FOCUS_TILE_EPSILON = 0.25;
+        const SHADOW_FOCUS_HEIGHT_EPSILON = 0.15;
+        const SHADOW_FOCUS_UPDATE_INTERVAL_MS = 120;
+        let lastShadowFocusUpdateMs = 0;
+        let lastShadowFocusX = null;
+        let lastShadowFocusY = null;
+        let lastShadowFocusZ = null;
+        let lastShadowFocusFreeCam = null;
+        let lastShadowFocusPlane = null;
+        let lastShadowFocusRevision = -1;
+
+        function maybeUpdateMainDirectionalShadowFocus(focusX, focusY, focusZ, frameNowMs) {
+            if (typeof window.updateMainDirectionalShadowFocus !== 'function') return;
+            const shadowFocusRevision = (sharedMaterials && Number.isFinite(sharedMaterials.shadowFocusRevision))
+                ? Math.floor(sharedMaterials.shadowFocusRevision)
+                : 0;
+            const forceUpdate = lastShadowFocusRevision !== shadowFocusRevision
+                || lastShadowFocusFreeCam !== !!isFreeCam
+                || lastShadowFocusPlane !== playerState.z;
+            const deltaX = Number.isFinite(lastShadowFocusX) ? Math.abs(focusX - lastShadowFocusX) : Infinity;
+            const deltaY = Number.isFinite(lastShadowFocusY) ? Math.abs(focusY - lastShadowFocusY) : Infinity;
+            const deltaZ = Number.isFinite(lastShadowFocusZ) ? Math.abs(focusZ - lastShadowFocusZ) : Infinity;
+            const intervalElapsed = !Number.isFinite(lastShadowFocusUpdateMs)
+                || (frameNowMs - lastShadowFocusUpdateMs) >= SHADOW_FOCUS_UPDATE_INTERVAL_MS;
+            if (
+                !forceUpdate
+                && deltaX < SHADOW_FOCUS_TILE_EPSILON
+                && deltaZ < SHADOW_FOCUS_TILE_EPSILON
+                && deltaY < SHADOW_FOCUS_HEIGHT_EPSILON
+                && !intervalElapsed
+            ) {
+                return;
+            }
+
+            window.updateMainDirectionalShadowFocus(focusX, focusY, focusZ);
+            lastShadowFocusUpdateMs = frameNowMs;
+            lastShadowFocusX = focusX;
+            lastShadowFocusY = focusY;
+            lastShadowFocusZ = focusZ;
+            lastShadowFocusFreeCam = !!isFreeCam;
+            lastShadowFocusPlane = playerState.z;
+            lastShadowFocusRevision = shadowFocusRevision;
+        }
+
         function animate(nowMs) {
             requestAnimationFrame(animate);
             const frameNowMs = nowMs || performance.now();
@@ -2065,6 +2109,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 window.setLoadedChunkPlaneVisibility(playerState.z);
                 lastVisibleChunkPlaneZ = playerState.z;
             }
+            if (hasPlayerRig && typeof window.processPendingNearChunkBuilds === 'function') window.processPendingNearChunkBuilds(1);
             if (hasPlayerRig) updatePoseEditorHandles();
             if (typeof window.updateFires === 'function') window.updateFires(frameNow);
             if (typeof updateMiningPoseReferences === 'function') updateMiningPoseReferences(frameNowMs);
@@ -2137,7 +2182,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             } else baseVisualY = getVisualHeight(playerState.x, playerState.y, playerState.z);
             
             if (!hasPlayerRig) {
+                if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
                 renderer.render(scene, camera);
+                if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
                 return;
             }
             playerRig.position.set(currentVisualX, baseVisualY, currentVisualY);
@@ -2145,11 +2192,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (minimapLocked && !isFreeCam) { minimapTargetX = currentVisualX; minimapTargetY = currentVisualY; }
             const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
             if (!rig) {
-                if (typeof window.updateMainDirectionalShadowFocus === 'function') {
-                    const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
-                    window.updateMainDirectionalShadowFocus(shadowFocus.x, baseVisualY, shadowFocus.z);
-                }
+                const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
+                maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, baseVisualY, shadowFocus.z, frameNowMs);
+                if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
                 renderer.render(scene, camera);
+                if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
                 return;
             }
             let rotationDiff = 0;
@@ -2347,12 +2394,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 const lookTarget = new THREE.Vector3(playerRig.position.x, cameraFollowY + 1.0, playerRig.position.z);
                 camera.lookAt(lookTarget);
             }
-            if (typeof window.updateMainDirectionalShadowFocus === 'function') {
-                const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
-                const shadowFocusY = isFreeCam ? freeCamTarget.y : baseVisualY;
-                window.updateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z);
-            }
+            const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
+            const shadowFocusY = isFreeCam ? freeCamTarget.y : baseVisualY;
+            maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z, frameNowMs);
+            if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
             renderer.render(scene, camera); updateMinimap(frameNowMs);
+            if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
             if (uiPlayerRig && !document.getElementById('view-equip').classList.contains('hidden')) uiRenderer.render(uiScene, uiCamera);
             
             updatePlayerOverheadText();

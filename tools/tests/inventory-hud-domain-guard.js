@@ -11,6 +11,7 @@ const inventorySource = read("src/js/inventory.js");
 const worldSource = read("src/js/world.js");
 const coreSource = read("src/js/core.js");
 const inputSource = read("src/js/input-render.js");
+const indexSource = read("index.html");
 
 assert.ok(
   bridgeSource.includes("window.UiDomainRuntime ="),
@@ -23,6 +24,10 @@ assert.ok(
 assert.ok(
   bridgeSource.includes("buildCombatStatusViewModel"),
   "ui-domain bridge should expose combat-status HUD builders"
+);
+assert.ok(
+  bridgeSource.includes("buildCombatTabViewModel"),
+  "ui-domain bridge should expose combat-tab HUD builders"
 );
 
 assert.ok(
@@ -49,18 +54,54 @@ assert.ok(
   inventorySource.includes("runtime.buildSkillProgressViewModel"),
   "inventory.js should render skill HUD data from view models"
 );
+assert.ok(
+  inventorySource.includes("bindCombatStyleButtons"),
+  "inventory.js should wire combat-style tab controls"
+);
+assert.ok(
+  inventorySource.includes("buildItemTooltipHtml"),
+  "inventory.js should build rich item hover tooltips"
+);
+assert.ok(
+  inventorySource.includes("bindInventorySlotTooltip"),
+  "inventory.js should bind inventory and equipment tooltip handlers"
+);
 
 assert.ok(
   worldSource.includes("buildCombatStatsViewModel"),
   "world.js should source combat stat HUD data from the UI domain bridge"
 );
 assert.ok(
-  worldSource.includes("buildCombatStatusViewModel"),
-  "world.js should source combat status HUD data from the UI domain bridge"
+  worldSource.includes("buildCombatTabViewModel"),
+  "world.js should source combat-tab data from the UI domain bridge"
 );
 assert.ok(
-  worldSource.includes("getCombatHudSnapshot"),
-  "world.js should read focused combat state from the combat runtime"
+  !worldSource.includes("buildCombatStatusViewModel"),
+  "world.js should not render a combat status HUD"
+);
+assert.ok(
+  !worldSource.includes("getCombatHudSnapshot"),
+  "world.js should not read combat HUD snapshots after the HUD is removed"
+);
+assert.ok(
+  !indexSource.includes("combat-status-panel"),
+  "index.html should not mount a combat status panel"
+);
+assert.ok(
+  indexSource.includes("inventory-hitpoints-bar-fill"),
+  "index.html should mount the inventory hitpoints bar"
+);
+assert.ok(
+  worldSource.includes("updateInventoryHitpointsHud"),
+  "world.js should refresh the inventory hitpoints bar through updateStats"
+);
+assert.ok(
+  indexSource.includes("tab-combat"),
+  "index.html should mount a combat tab"
+);
+assert.ok(
+  indexSource.includes("combat-level-value"),
+  "index.html should mount combat-level output"
 );
 assert.ok(
   coreSource.includes("buildPlayerProfileSummaryViewModel"),
@@ -68,7 +109,7 @@ assert.ok(
 );
 assert.ok(
   inputSource.includes("if (typeof window.updateStats === 'function') window.updateStats();"),
-  "tick loop should refresh the combat HUD through updateStats"
+  "tick loop should refresh the world stat HUD through updateStats"
 );
 
 console.log("Inventory/HUD domain guard passed.");

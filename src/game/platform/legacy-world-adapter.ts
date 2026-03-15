@@ -70,6 +70,7 @@ interface LegacyWorldPayload {
   castleFrontPond: WorldBootstrapResult["legacy"]["castleFrontPond"];
   deepWaterCenter: WorldBootstrapResult["legacy"]["deepWaterCenter"];
   pierConfig: WorldBootstrapResult["legacy"]["pier"];
+  smithingHallApproach: WorldBootstrapResult["legacy"]["smithingHallApproach"];
   waterBodies: WorldBootstrapResult["legacy"]["waterBodies"];
   stampedStructures: WorldBootstrapResult["legacy"]["stampedStructures"];
   stampMap: WorldBootstrapResult["legacy"]["stampMap"];
@@ -341,6 +342,7 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     castleFrontPond: cloneTerrainEllipse(legacy.castleFrontPond),
     deepWaterCenter: cloneTerrainBox2D(legacy.deepWaterCenter),
     pierConfig: cloneTerrainPier(legacy.pier),
+    smithingHallApproach: { ...legacy.smithingHallApproach },
     waterBodies: legacy.waterBodies.map(cloneWaterBodyDefinition),
     stampedStructures: legacy.stampedStructures.map(cloneStructurePlacement),
     stampMap: Object.fromEntries(

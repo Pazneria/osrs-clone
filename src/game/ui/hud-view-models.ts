@@ -1,7 +1,12 @@
-import { buildCombatStatsViewModel as buildCombatStatsFromFormulas } from "../combat/formulas";
+import {
+  buildCombatStatsViewModel as buildCombatStatsFromFormulas,
+  getSkillLevel
+} from "../combat/formulas";
 import type {
+  CombatStyleOptionViewModel,
   CombatStatusTargetSnapshot,
   CombatStatusViewModel,
+  CombatTabViewModel,
   CombatStatsViewModel,
   EquipmentSlotViewModel,
   PlayerProfileSummaryViewModel,
@@ -10,6 +15,7 @@ import type {
   SkillTileViewModel,
   UiItemData
 } from "../contracts/ui";
+import type { MeleeStyleId } from "../contracts/combat";
 import type { PlayerProfileState, PlayerSkillMap } from "../contracts/session";
 
 export function buildCombatStatsViewModel(options: {
@@ -24,6 +30,64 @@ export function buildCombatStatsViewModel(options: {
     equipment: options.equipment || {},
     playerState: options.playerState || null
   });
+}
+
+const COMBAT_STYLE_OPTION_DEFS: Array<{ styleId: MeleeStyleId; label: string; description: string }> = [
+  { styleId: "attack", label: "Attack", description: "+10% accuracy" },
+  { styleId: "strength", label: "Strength", description: "+10% max hit" },
+  { styleId: "defense", label: "Defense", description: "+10% defense" }
+];
+
+function normalizeMeleeStyleId(styleId: unknown): MeleeStyleId {
+  if (styleId === "strength" || styleId === "defense") return styleId;
+  return "attack";
+}
+
+function computeCombatLevel(playerSkills: PlayerSkillMap): number {
+  const attackLevel = getSkillLevel(playerSkills, "attack", 1);
+  const strengthLevel = getSkillLevel(playerSkills, "strength", 1);
+  const defenseLevel = getSkillLevel(playerSkills, "defense", 1);
+  const hitpointsLevel = getSkillLevel(playerSkills, "hitpoints", 10);
+  return Math.max(1, Math.floor((attackLevel + strengthLevel + defenseLevel + hitpointsLevel) / 4));
+}
+
+export function buildCombatTabViewModel(options: {
+  playerSkills: PlayerSkillMap;
+  equipment: Record<string, UiItemData | null | undefined>;
+  playerState?: {
+    selectedMeleeStyle?: MeleeStyleId;
+  } | null;
+}): CombatTabViewModel {
+  const playerSkills = options.playerSkills || {};
+  const selectedStyleId = normalizeMeleeStyleId(options.playerState && options.playerState.selectedMeleeStyle);
+  const combatStats = buildCombatStatsViewModel(options);
+  const styleOptions: CombatStyleOptionViewModel[] = COMBAT_STYLE_OPTION_DEFS.map((entry) => ({
+    styleId: entry.styleId,
+    label: entry.label,
+    description: entry.description,
+    active: entry.styleId === selectedStyleId
+  }));
+  const selectedStyle = styleOptions.find((entry) => entry.active) || styleOptions[0];
+  const attackLevel = getSkillLevel(playerSkills, "attack", 1);
+  const strengthLevel = getSkillLevel(playerSkills, "strength", 1);
+  const defenseLevel = getSkillLevel(playerSkills, "defense", 1);
+  const hitpointsLevel = getSkillLevel(playerSkills, "hitpoints", 10);
+  const combatLevel = computeCombatLevel(playerSkills);
+
+  return {
+    combatLevel,
+    combatLevelText: String(combatLevel),
+    combatLevelFormulaText: "(Attack + Strength + Defense + Hitpoints) / 4",
+    selectedStyleId,
+    selectedStyleLabel: selectedStyle ? selectedStyle.label : "Attack",
+    selectedStyleDescription: selectedStyle ? selectedStyle.description : "+10% accuracy",
+    attackLevel,
+    strengthLevel,
+    defenseLevel,
+    hitpointsLevel,
+    combatStats,
+    styleOptions
+  };
 }
 
 function clampPercent(current: number, maximum: number): string {
