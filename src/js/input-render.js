@@ -289,6 +289,41 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (typeof window.hideInventoryHoverTooltip === 'function') window.hideInventoryHoverTooltip();
         }
 
+        function emitPierDebug(message) {
+            if (!window.QA_PIER_DEBUG || typeof addChatMessage !== 'function') return;
+            addChatMessage(`[pier-debug] ${String(message || '').trim()}`, 'info');
+        }
+
+        function isNearPierBoundsTile(x, y, z = playerState.z, pad = 2) {
+            const pierConfig = getActivePierConfig();
+            if (!pierConfig || z !== 0) return false;
+            return (
+                x >= (pierConfig.xMin - pad)
+                && x <= (pierConfig.xMax + pad)
+                && y >= (pierConfig.yStart - pad)
+                && y <= (pierConfig.yEnd + pad)
+            );
+        }
+
+        function findNearestPierDeckBoardingTile(targetX, targetY, z = playerState.z) {
+            const pierConfig = getActivePierConfig();
+            if (!pierConfig || z !== 0) return null;
+
+            let best = null;
+            for (let y = pierConfig.yStart; y <= pierConfig.yEnd; y++) {
+                for (let x = pierConfig.xMin; x <= pierConfig.xMax; x++) {
+                    if (!isStandableTile(x, y, z)) continue;
+                    const dist = Math.abs(x - targetX) + Math.abs(y - targetY);
+                    if (dist > 2) continue;
+                    if (!best || dist < best.dist || (dist === best.dist && y < best.y)) {
+                        best = { x, y, dist };
+                    }
+                }
+            }
+
+            return best;
+        }
+
         function normalizeRaycastHit(hit) {
             let data = hit.object.userData;
             if (hit.instanceId !== undefined && hit.object.userData.instanceMap) {
@@ -300,7 +335,59 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 let gridX = Math.floor(hit.point.x + 0.5);
                 let gridY = Math.floor(hit.point.z + 0.5);
                 if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
-                    return { type: data.type, gridX, gridY, point: hit.point };
+                    let resolvedType = data.type;
+                    let pierStepDescend = false;
+                    const rawWaterHit = data.type === 'WATER';
+                    const playerOnPierDeck = isPierDeckTile(playerState.x, playerState.y, playerState.z);
+                    if (resolvedType === 'WATER') {
+                        const tile = logicalMap[playerState.z][gridY][gridX];
+                        let snappedBoardTile = null;
+
+                        if (!isWaterTileId(tile) && isWalkableTileId(tile)) {
+                            resolvedType = 'GROUND';
+                        } else if (!playerOnPierDeck) {
+                            snappedBoardTile = findNearestPierDeckBoardingTile(gridX, gridY, playerState.z);
+                            if (snappedBoardTile) {
+                                resolvedType = 'GROUND';
+                                gridX = snappedBoardTile.x;
+                                gridY = snappedBoardTile.y;
+                            }
+                        }
+
+                        if (window.QA_PIER_DEBUG && isNearPierBoundsTile(gridX, gridY, playerState.z, 3)) {
+                            emitPierDebug(`ray raw=WATER tile=${tile} resolved=${resolvedType} hit=(${Math.floor(hit.point.x * 100) / 100},${Math.floor(hit.point.z * 100) / 100}) grid=(${gridX},${gridY}) snap=${snappedBoardTile ? `${snappedBoardTile.x},${snappedBoardTile.y}` : 'none'}`);
+                        }
+                    }
+
+                    const pierConfig = getActivePierConfig();
+                    const stairBandMinY = pierConfig ? Math.min(pierConfig.entryY, pierConfig.yStart) - 1 : 0;
+                    const stairBandMaxY = pierConfig ? Math.max(pierConfig.entryY, pierConfig.yStart) + 1 : 0;
+                    const canDescendViaPierStep = !!(
+                        pierConfig
+                        && playerState.z === 0
+                        && playerOnPierDeck
+                        && gridX >= (pierConfig.xMin - 1)
+                        && gridX <= (pierConfig.xMax + 1)
+                        && gridY >= stairBandMinY
+                        && gridY <= stairBandMaxY
+                        && (data.isPierStep || rawWaterHit)
+                        && isStandableTile(
+                            Math.max(pierConfig.xMin, Math.min(pierConfig.xMax, gridX)),
+                            pierConfig.entryY,
+                            playerState.z
+                        )
+                    );
+                    if (canDescendViaPierStep) {
+                        const snappedX = Math.max(pierConfig.xMin, Math.min(pierConfig.xMax, gridX));
+                        const fromY = gridY;
+                        const fromX = gridX;
+                        gridX = snappedX;
+                        gridY = pierConfig.entryY;
+                        resolvedType = 'GROUND';
+                        pierStepDescend = true;
+                        if (window.QA_PIER_DEBUG) emitPierDebug(`stair descend snap (${fromX},${fromY}) -> (${gridX},${gridY}) source=${data.isPierStep ? 'step' : 'water'}`);
+                    }
+                    return { type: resolvedType, gridX, gridY, point: hit.point, pierStepDescend };
                 }
                 return null;
             }
@@ -411,14 +498,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             const hasAdjacentStandable = (x, y) => {
                 if (playerOnPierDeck) return hasPierFishingApproachForWaterTile(x, y, z);
-                const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-                for (let i = 0; i < dirs.length; i++) {
-                    const nx = x + dirs[i].x;
-                    const ny = y + dirs[i].y;
-                    if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
-                    if (isStandableTile(nx, ny, z)) return true;
-                }
-                return false;
+                return hasDryFishingApproachForWaterTile(x, y, z);
             };
 
             for (let r = 0; r <= 20; r++) {
@@ -470,6 +550,61 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (isPierFishingApproachTile(standX, standY, targetX, targetY, z)) return true;
             }
             return false;
+        }
+        function hasDryFishingApproachForWaterTile(targetX, targetY, z = playerState.z) {
+            const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
+            for (let i = 0; i < dirs.length; i++) {
+                const standX = targetX + dirs[i].x;
+                const standY = targetY + dirs[i].y;
+                if (standX < 0 || standY < 0 || standX >= MAP_SIZE || standY >= MAP_SIZE) continue;
+                if (!isStandableTile(standX, standY, z)) continue;
+                if (isWaterTileId(logicalMap[z][standY][standX])) continue;
+                return true;
+            }
+            return false;
+        }
+        function buildPierStepDescendPath(startX, startY, targetX, targetY, z = playerState.z) {
+            const pierConfig = getActivePierConfig();
+            if (!pierConfig || z !== 0) return null;
+            if (!isPierDeckTile(startX, startY, z)) return null;
+
+            const stairDeckY = pierConfig.yStart;
+            const stairX = Math.max(pierConfig.xMin, Math.min(pierConfig.xMax, targetX));
+            const shoreCandidates = [pierConfig.entryY, pierConfig.yStart - 1, pierConfig.entryY - 1];
+            let shoreY = null;
+            for (let i = 0; i < shoreCandidates.length; i++) {
+                const candidateY = shoreCandidates[i];
+                if (!Number.isInteger(candidateY) || candidateY < 0 || candidateY >= MAP_SIZE) continue;
+                if (isStandableTile(stairX, candidateY, z)) {
+                    shoreY = candidateY;
+                    break;
+                }
+            }
+            if (!Number.isInteger(shoreY)) return null;
+
+            let pathToStair = findPath(startX, startY, stairX, stairDeckY, false, null);
+            let stairXNow = startX;
+            let stairYNow = startY;
+            if (Array.isArray(pathToStair) && pathToStair.length > 0) {
+                const last = pathToStair[pathToStair.length - 1];
+                stairXNow = last.x;
+                stairYNow = last.y;
+            } else {
+                pathToStair = [];
+            }
+
+            if (!(stairXNow === stairX && stairYNow === stairDeckY)) {
+                if (!(startX === stairX && startY === stairDeckY)) return null;
+                stairXNow = stairX;
+                stairYNow = stairDeckY;
+            }
+
+            if ((Math.abs(stairXNow - stairX) + Math.abs(stairYNow - shoreY)) !== 1) return null;
+
+            const finalPath = pathToStair.slice();
+            finalPath.push({ x: stairX, y: shoreY });
+            if (window.QA_PIER_DEBUG) emitPierDebug(`stair fallback step start=(${startX},${startY}) -> deck=(${stairX},${stairDeckY}) -> shore=(${stairX},${shoreY})`);
+            return finalPath;
         }
         function isPierProtectedWaterTile(x, y, z = playerState.z) {
             const pierConfig = getActivePierConfig();
@@ -719,7 +854,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 queueAction('INTERACT', hitData.gridX, hitData.gridY, 'WATER');
                 spawnClickMarker(hitData.point, true);
             } else if (hitData.type === 'GROUND' || hitData.type === 'WALL' || hitData.type === 'TOWER' || hitData.type === 'FIRE') {
-                queueAction('WALK', hitData.gridX, hitData.gridY, null);
+                const walkObj = hitData.pierStepDescend ? 'PIER_STEP_DESCEND' : null;
+                queueAction('WALK', hitData.gridX, hitData.gridY, walkObj);
                 spawnClickMarker(hitData.point, false);
             }
             else {
@@ -847,6 +983,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTile(nx, ny, playerState.z)) {
                                     const pierFishingApproach = interactionObj === 'WATER'
                                         && isPierFishingApproachTile(nx, ny, targetX, targetY, playerState.z);
+                                    if (interactionObj === 'WATER' && !pierFishingApproach) {
+                                        const isCardinalAdjacent = (Math.abs(dx) + Math.abs(dy)) === 1;
+                                        if (!isCardinalAdjacent) continue;
+                                        if (isWaterTileId(logicalMap[playerState.z][ny][nx])) continue;
+                                    }
                                     if (pierFishingApproach || Math.abs(heightMap[playerState.z][ny][nx] - targetH) <= 0.3) {
                                         const neighborKey = encodeTileKey(nx, ny);
                                         if (stationApproachKeys.size === 0 || stationApproachKeys.has(neighborKey)) validTargets.add(neighborKey);
@@ -909,6 +1050,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     let nx = currentX + dir.x; let ny = currentY + dir.y;
                     let nextKey = encodeTileKey(nx, ny);
                     if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && !visitedParents.has(nextKey) && isStandableTile(nx, ny, playerState.z)) {
+                        if (interactionObj === 'WATER' && isWaterTileId(logicalMap[playerState.z][ny][nx])) continue;
                         if (restrictPierFishingToDeck && isWaterTileId(logicalMap[playerState.z][ny][nx])) continue;
                         let nextHeight = heightMap[playerState.z][ny][nx]; 
                         let isStairTransition = (logicalMap[playerState.z][ny][nx] === TileId.STAIRS_RAMP || logicalMap[playerState.z][currentY][currentX] === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
@@ -983,7 +1125,30 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (pendingAction.type === 'WALK') {
                     playerState.pendingSkillStart = null;
                     playerState.pendingInteractAfterFletchingWalk = null;
-                    playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, false);
+                    const stairDescendPath = pendingAction.obj === 'PIER_STEP_DESCEND'
+                        ? buildPierStepDescendPath(playerState.x, playerState.y, actionX, actionY, playerState.z)
+                        : null;
+                    playerState.path = stairDescendPath || findPath(playerState.x, playerState.y, actionX, actionY, false);
+
+                    if (playerState.path.length === 0 && pendingAction.obj === 'PIER_STEP_DESCEND') {
+                        const z = playerState.z;
+                        const onPierDeck = isPierDeckTile(playerState.x, playerState.y, z);
+                        const targetStandable = isStandableTile(actionX, actionY, z);
+                        if (window.QA_PIER_DEBUG) emitPierDebug(`stair fallback blocked onDeck=${onPierDeck} standable=${targetStandable}`);
+                    }
+
+                    if (window.QA_PIER_DEBUG && playerState.path.length === 0) {
+                        const nearPier = isNearPierBoundsTile(playerState.x, playerState.y, playerState.z, 3)
+                            || isNearPierBoundsTile(actionX, actionY, playerState.z, 3);
+                        if (nearPier) {
+                            const z = playerState.z;
+                            const startTile = logicalMap[z][playerState.y][playerState.x];
+                            const targetTile = logicalMap[z][actionY][actionX];
+                            const startH = heightMap[z][playerState.y][playerState.x];
+                            const targetH = heightMap[z][actionY][actionX];
+                            emitPierDebug(`walk path empty start=(${playerState.x},${playerState.y}) t=${startTile} h=${startH.toFixed(2)} target=(${actionX},${actionY}) t=${targetTile} h=${targetH.toFixed(2)} standable=${isStandableTile(actionX, actionY, z)}`);
+                        }
+                    }
                     if (playerState.path.length === 0) clearMinimapDestination();
                     playerState.pendingActionAfterTurn = null;
                     playerState.turnLock = false;
@@ -1176,6 +1341,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         if (playerState.targetObj === 'ALTAR_CANDIDATE') {
                             // Altars are interacted from one tile farther than default.
                             isAdjacent = (distX <= 2 && distY <= 2 && (distX > 1 || distY > 1));
+                        } else if (playerState.targetObj === 'WATER') {
+                            const cardinalAdjacent = (distX + distY) === 1;
+                            const isPierApproach = isPierFishingApproachTile(
+                                playerState.x,
+                                playerState.y,
+                                playerState.targetX,
+                                playerState.targetY,
+                                playerState.z
+                            );
+                            const standingOnWater = isWaterTileId(logicalMap[playerState.z][playerState.y][playerState.x]);
+                            isAdjacent = cardinalAdjacent && (isPierApproach || !standingOnWater);
                         }
                         let isAcrossCounter = false;
                         if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
@@ -1233,6 +1409,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             } else {
                                 if (playerState.targetObj === 'FURNACE' || playerState.targetObj === 'ANVIL') {
                                     // Force straight cardinal facing toward station.
+                                    let faceDx = playerState.targetX - playerState.x;
+                                    let faceDy = playerState.targetY - playerState.y;
+                                    if (Math.abs(faceDx) >= Math.abs(faceDy)) {
+                                        faceDx = Math.sign(faceDx);
+                                        faceDy = 0;
+                                    } else {
+                                        faceDy = Math.sign(faceDy);
+                                        faceDx = 0;
+                                    }
+                                    if (faceDx !== 0 || faceDy !== 0) {
+                                        playerState.targetRotation = Math.atan2(faceDx, faceDy);
+                                        if (playerRig) playerRig.rotation.y = playerState.targetRotation;
+                                    }
+                                }
+                                if (playerState.targetObj === 'WATER') {
+                                    // Keep fishing stance head-on toward the selected water tile.
                                     let faceDx = playerState.targetX - playerState.x;
                                     let faceDy = playerState.targetY - playerState.y;
                                     if (Math.abs(faceDx) >= Math.abs(faceDy)) {

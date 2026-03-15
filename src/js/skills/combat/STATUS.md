@@ -9,6 +9,7 @@
 - [x] COMBAT-004: Removed the placeholder combat path entirely (`DUMMY`, `owie`, and the old combat simulator/tooling) so the new melee runtime is the only live combat route.
 - [x] COMBAT-006: Expanded first-pass melee enemy runtime content to include `Chicken`, `Boar`, `Wolf`, `Guard`, `Bear`, `Heavy Brute`, and `Fast Striker` with authored combat stats, behavior, respawn timing, and weighted drop tables.
 - [x] COMBAT-012: Added a live combat-status HUD panel that surfaces player/target HP, focus, range, and both swing cooldowns directly from the typed UI/combat runtime.
+- [x] COMBAT-010A: Added regression guard coverage for same-tick eat restrictions and stale eat-cooldown sanitization so persisted cooldown ticks cannot lock food usage across session reloads.
 
 ## Now
 - [ ] COMBAT-005: Run a starter-town combat encounter pass so enemy pockets, aggro spacing, and safe non-combat routes are clearly authored in-world.

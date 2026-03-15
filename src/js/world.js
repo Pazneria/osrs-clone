@@ -1171,6 +1171,7 @@
         window.markPlayerCastTick = markPlayerCastTick;
 
         const MAX_SKILL_LEVEL = 99;
+        const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;
         const FIRE_STEP_DIR = { x: 0, y: 1 };
         const DEFAULT_FIRE_LIFETIME_TICKS = 90;
         const ASHES_DESPAWN_TICKS = 100;
@@ -1704,9 +1705,13 @@
                 return;
             }
 
-            const cooldownEndTick = Number.isFinite(playerState.eatingCooldownEndTick)
+            let cooldownEndTick = Number.isFinite(playerState.eatingCooldownEndTick)
                 ? Math.floor(playerState.eatingCooldownEndTick)
                 : 0;
+            if ((cooldownEndTick - currentTick) > MAX_REASONABLE_EAT_COOLDOWN_TICKS) {
+                cooldownEndTick = currentTick;
+                playerState.eatingCooldownEndTick = currentTick;
+            }
             if (currentTick < cooldownEndTick) {
                 const remainingTicks = cooldownEndTick - currentTick;
                 addChatMessage(`You need to wait ${remainingTicks} tick${remainingTicks === 1 ? '' : 's'} before eating again.`, 'warn');
@@ -2585,12 +2590,17 @@
                 heightMap[0][shoulder.y][shoulder.x] = Math.max(0.01, terrainNoise(shoulder.x, shoulder.y));
             }
 
-            // Shoreline anchor tile so the pier always has a clean walkable entry from land.
+            // Shoreline anchor tiles so the pier always has a clean walkable entry from land.
             const pierEntryY = pierConfig.entryY;
+            const pierLandAnchorY = pierEntryY - 1;
             for (let x = pierXMin; x <= pierXMax; x++) {
                 if (x <= 1 || pierEntryY <= 1 || x >= MAP_SIZE - 2 || pierEntryY >= MAP_SIZE - 2) continue;
                 logicalMap[0][pierEntryY][x] = 20;
                 heightMap[0][pierEntryY][x] = -0.01;
+                if (pierLandAnchorY > 1) {
+                    logicalMap[0][pierLandAnchorY][x] = TileId.SHORE;
+                    heightMap[0][pierLandAnchorY][x] = -0.01;
+                }
             }
 
             const fishingTrainingLocations = fishingTrainingRouteDefs.slice();
@@ -4291,7 +4301,9 @@
         function addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
             const pierConfig = getActivePierConfig();
             if (!pierConfig || z !== 0) return;
-            if (pierConfig.xMax < startX || pierConfig.xMin >= endX || pierConfig.yEnd < startY || pierConfig.entryY >= endY) return;
+            // Keep pier stairs visually attached to the first deck row.
+            const pierStepBaseY = pierConfig.entryY + 1;
+            if (pierConfig.xMax < startX || pierConfig.xMin >= endX || pierConfig.yEnd < startY || pierStepBaseY >= endY) return;
 
             const deckTop = Z_OFFSET + PIER_DECK_TOP_HEIGHT;
             const deckThickness = PIER_DECK_THICKNESS;
@@ -4303,7 +4315,7 @@
                 || resolveWaterRenderBodyForTile(waterBodies, pierCenterX, pierConfig.yEnd, z)
                 || getDefaultWaterRenderBody();
             const intersectsPierRows = !(pierConfig.yEnd < startY || pierConfig.yStart >= endY);
-            const containsEntryRow = pierConfig.entryY >= startY && pierConfig.entryY < endY;
+            const containsEntryRow = pierStepBaseY >= startY && pierStepBaseY < endY;
             const containsTipRows = (pierConfig.yEnd - 1) < endY && pierConfig.yEnd >= startY;
 
             if (intersectsPierRows) {
@@ -4360,10 +4372,10 @@
                 for (let i = 0; i < stepHeights.length; i++) {
                     const stepHeight = stepHeights[i];
                     const step = new THREE.Mesh(new THREE.BoxGeometry(pierWidth + 0.08, stepHeight, stepDepth), sharedMaterials.floor6);
-                    step.position.set(pierCenterX, Z_OFFSET + (stepHeight / 2), pierConfig.entryY + stepCenters[i]);
+                    step.position.set(pierCenterX, Z_OFFSET + (stepHeight / 2), pierStepBaseY + stepCenters[i]);
                     step.castShadow = true;
                     step.receiveShadow = true;
-                    step.userData = { type: 'GROUND', z: z };
+                    step.userData = { type: 'GROUND', z: z, isPierStep: true };
                     planeGroup.add(step);
                     environmentMeshes.push(step);
                 }

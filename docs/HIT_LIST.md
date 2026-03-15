@@ -921,6 +921,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-043 - Eat cooldown can lock for hundreds/thousands of ticks after reload
+- Status: Fixed
+- Severity: S1
+- Area: BUG
+- Source: Manual
+- Links: `src/js/core.js`, `src/js/world.js`, `tools/tests/progress-persistence-guard.js`, `tools/tests/combat-engagement-guard.js`
+- Repro:
+  1. Eat food to apply cooldown.
+  2. Save/reload or continue a session with persisted combat state.
+  3. Try to eat again and observe an unexpectedly large remaining-ticks warning.
+- Expected: Eat cooldown should remain short (food-defined delay) and never restore as a long multi-hundred tick lockout.
+- Actual: Persisted absolute cooldown ticks could survive restarts and produce very long wait times before eating again.
+- Frequency: Sometimes
+- Owner: Pair
+- Plan v1:
+  1. Clamp stale persisted `eatingCooldownEndTick` values during save-load restore.
+  2. Add runtime self-heal in `eatItem` to clear impossible cooldown deltas.
+  3. Add regression guard assertions for persistence and combat/eat rule coverage.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added load-time stale cooldown clamp in `core.js` (`MAX_PERSISTED_EAT_COOLDOWN_TICKS`) so persisted absolute ticks cannot lock eating after tick counter reset.
+  - Added runtime cooldown sanity self-heal in `world.js` (`MAX_REASONABLE_EAT_COOLDOWN_TICKS`) before wait messaging.
+  - Extended `progress-persistence-guard` and `combat-engagement-guard` to enforce both protections and preserve same-tick eat restrictions.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-042 - Tree silhouette refinement follow-up (willow/maple/yew)
 - Status: Fixed
 - Severity: S3

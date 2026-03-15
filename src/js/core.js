@@ -17,6 +17,7 @@
         const PROGRESS_SAVE_KEY = 'osrsClone.progress.v1';
         const PROGRESS_SAVE_VERSION = 1;
         const PROGRESS_AUTOSAVE_INTERVAL_MS = 10000;
+        const MAX_PERSISTED_EAT_COOLDOWN_TICKS = 10;
         const PROGRESS_MAX_SKILL_LEVEL = 99;
         const PLAYER_PROFILE_DEFAULT_NAME = 'Adventurer';
         const PLAYER_NAME_MIN_LENGTH = 2;
@@ -128,10 +129,12 @@
             gameSessionRuntime.bindWindowQaBooleanFlag('QA_RC_DEBUG', 'runecraftingDebug', false);
             gameSessionRuntime.bindWindowQaBooleanFlag('DEBUG_COOKING_USE', 'cookingUseDebug', false);
             gameSessionRuntime.bindWindowQaBooleanFlag('QA_COMBAT_DEBUG', 'combatDebug', false);
+            gameSessionRuntime.bindWindowQaBooleanFlag('QA_PIER_DEBUG', 'pierDebug', false);
         } else {
             if (typeof window.QA_RC_DEBUG === 'undefined') window.QA_RC_DEBUG = false;
             if (typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
             if (typeof window.QA_COMBAT_DEBUG === 'undefined') window.QA_COMBAT_DEBUG = false;
+            if (typeof window.QA_PIER_DEBUG === 'undefined') window.QA_PIER_DEBUG = false;
         }
 
         function createFallbackCombatPlayerState(maxHitpoints = 10) {
@@ -2005,9 +2008,14 @@
             playerState.currentHitpoints = Number.isFinite(savedPlayerState.currentHitpoints)
                 ? Math.max(0, Math.min(loadedCombatDefaults.currentHitpoints, Math.floor(savedPlayerState.currentHitpoints)))
                 : Math.max(0, Math.min(loadedCombatDefaults.currentHitpoints, playerState.currentHitpoints));
-            playerState.eatingCooldownEndTick = Number.isFinite(savedPlayerState.eatingCooldownEndTick)
+            const loadedEatingCooldownEndTick = Number.isFinite(savedPlayerState.eatingCooldownEndTick)
                 ? Math.max(0, Math.floor(savedPlayerState.eatingCooldownEndTick))
                 : loadedCombatDefaults.eatingCooldownEndTick;
+            // Save payloads persisted an absolute cooldown tick while runtime ticks always restart at 0.
+            // Clamp old/stale values so reloads cannot lock eating for hundreds or thousands of ticks.
+            playerState.eatingCooldownEndTick = loadedEatingCooldownEndTick > (currentTick + MAX_PERSISTED_EAT_COOLDOWN_TICKS)
+                ? loadedCombatDefaults.eatingCooldownEndTick
+                : loadedEatingCooldownEndTick;
             playerState.lastAttackTick = Number.isFinite(savedPlayerState.lastAttackTick)
                 ? Math.floor(savedPlayerState.lastAttackTick)
                 : loadedCombatDefaults.lastAttackTick;
@@ -2121,6 +2129,7 @@
         // Temporary interaction diagnostics for QA flows.
         if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
         if (!gameSessionRuntime && typeof window.QA_COMBAT_DEBUG === 'undefined') window.QA_COMBAT_DEBUG = false;
+        if (!gameSessionRuntime && typeof window.QA_PIER_DEBUG === 'undefined') window.QA_PIER_DEBUG = false;
 
         // UI Elements
         const contextMenuEl = document.getElementById('context-menu');
@@ -2725,7 +2734,7 @@
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
-                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
+                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
                     addChatMessage(formatQaOpenShopUsage(), 'info');
                     return;
                 }
@@ -2862,6 +2871,16 @@
                     }
                     window.QA_RC_DEBUG = (value === 'on');
                     addChatMessage(`QA rcdebug: ${value}`, 'info');
+                    return;
+                }
+                if (cmd === 'pierdebug' && parts.length >= 2) {
+                    const value = String(parts[1] || '').toLowerCase();
+                    if (value !== 'on' && value !== 'off') {
+                        addChatMessage('Usage: /qa pierdebug <on|off>', 'warn');
+                        return;
+                    }
+                    window.QA_PIER_DEBUG = (value === 'on');
+                    addChatMessage(`QA pierdebug: ${value}`, 'info');
                     return;
                 }
                 if (cmd === 'combatdebug') {

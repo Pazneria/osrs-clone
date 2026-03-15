@@ -91,9 +91,9 @@
     "pier": {
       "xMin": 204,
       "xMax": 206,
-      "yStart": 224,
+      "yStart": 223,
       "yEnd": 231,
-      "entryY": 223
+      "entryY": 222
     },
     "smithingHallApproach": {
       "shoreX": 219,

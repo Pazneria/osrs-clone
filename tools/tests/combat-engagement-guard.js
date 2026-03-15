@@ -111,6 +111,17 @@ function run() {
       && combatSource.includes("combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);"),
     "player cooldown should only tick while combat is active and stay zero outside combat"
   );
+  assert(
+    worldSource.includes("const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;")
+      && worldSource.includes("if ((cooldownEndTick - currentTick) > MAX_REASONABLE_EAT_COOLDOWN_TICKS) {")
+      && worldSource.includes("playerState.eatingCooldownEndTick = currentTick;"),
+    "eat handling should self-heal impossible cooldown values so stale state cannot lock food usage for long durations"
+  );
+  assert(
+    worldSource.includes("if (didAttackOrCastThisTick()) {")
+      && worldSource.includes("You cannot eat on the same tick as attacking or casting."),
+    "eat handling should keep same-tick attack/cast restrictions"
+  );
   const validateLockBody = getFunctionBody(combatSource, "validatePlayerTargetLock");
   assert(validateLockBody, "combat.js should define validatePlayerTargetLock");
   assert(

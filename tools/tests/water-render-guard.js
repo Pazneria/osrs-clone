@@ -46,9 +46,17 @@ function run() {
 
   assert(inputRenderSource.includes("sharedMaterials.waterAnimatedMaterials"), "render loop should animate shader-driven water materials");
   assert(inputRenderSource.includes("data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER'"), "raycast hit normalization should resolve merged water mesh hits to grid tiles");
+  assert(inputRenderSource.includes("if (!isWaterTileId(tile) && isWalkableTileId(tile)) {") && inputRenderSource.includes("resolvedType = 'GROUND';"), "raycast hit normalization should treat pier-overlaid walkable tiles as ground so dock clicks can walk");
   assert(inputRenderSource.includes("isPierProtectedWaterTile"), "input-render.js should keep pier-edge shallow water fishable without making it pathable");
   assert(inputRenderSource.includes("isPierFishingApproachTile"), "input-render.js should treat raised pier deck tiles as valid fishing approach tiles");
   assert(inputRenderSource.includes("hasPierFishingApproachForWaterTile"), "input-render.js should resolve pier fishing clicks to water that is directly fishable from the dock");
+  assert(inputRenderSource.includes("findNearestPierDeckBoardingTile"), "input-render.js should expose a dock-boarding resolver for ambiguous water click targets around the pier");
+  assert(inputRenderSource.includes("snappedBoardTile = findNearestPierDeckBoardingTile"), "input-render.js should snap shoreline water hits to nearby pier deck tiles when boarding");
+  assert(inputRenderSource.includes("const canDescendViaPierStep ="), "input-render.js should detect pier stair clicks while on deck");
+  assert(inputRenderSource.includes("pierStepDescend = true;"), "input-render.js should mark pier-descend walk intents when stair hits are normalized");
+  assert(inputRenderSource.includes("pendingAction.obj === 'PIER_STEP_DESCEND'"), "input-render.js should carry pier-descend walk intents into movement resolution");
+  assert(inputRenderSource.includes("stair fallback step"), "input-render.js should provide a stair fallback move when pathfinding cannot bridge dock seam tiles");
+  assert(inputRenderSource.includes("source=${data.isPierStep ? 'step' : 'water'}"), "input-render.js should tag stair descend snaps for QA pier-debug traces");
   assert(inputRenderSource.includes("restrictPierFishingToDeck"), "input-render.js should prevent fishing pathing from stepping off the pier into shallow water");
 
   console.log("Water render guard passed.");

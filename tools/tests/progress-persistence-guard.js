@@ -32,6 +32,17 @@ function run() {
     "core should define loadProgressFromStorage"
   );
   assert(
+    coreScript.includes("const MAX_PERSISTED_EAT_COOLDOWN_TICKS = 10;"),
+    "core should define a bounded persisted eat-cooldown window"
+  );
+  assert(
+    coreScript.includes("loadedEatingCooldownEndTick > (currentTick + MAX_PERSISTED_EAT_COOLDOWN_TICKS)")
+      && coreScript.includes("playerState.eatingCooldownEndTick = loadedEatingCooldownEndTick > (currentTick + MAX_PERSISTED_EAT_COOLDOWN_TICKS)")
+      && coreScript.includes("? loadedCombatDefaults.eatingCooldownEndTick")
+      && coreScript.includes(": loadedEatingCooldownEndTick;"),
+    "core should clamp stale persisted eat cooldowns on load so absolute save ticks cannot lock eating after restart"
+  );
+  assert(
     coreScript.includes("gameSessionRuntime.buildProgressSavePayload"),
     "core should build progress payloads through the session runtime"
   );
