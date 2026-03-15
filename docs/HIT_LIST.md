@@ -208,31 +208,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-007 - Mining spot layout pass (spread out, avoid rows)
-- Status: Backlog
-- Severity: S3
-- Area: WORLD
-- Source: Manual
-- Links:
-- Repro:
-  1. Inspect mining node layouts.
-- Expected: Mining spots are more spread out and not arranged in neat straight rows.
-- Actual: Node placement can look too linear/dense.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Define spacing/no-row heuristics.
-  2. Reposition existing node clusters.
-  3. Validate accessibility and progression pacing.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-008 - Player creation menu
 - Status: Backlog
 - Severity: S2
@@ -1261,6 +1236,34 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
+
+### HIT-007 - Mining spot layout pass (spread out, avoid rows)
+- Status: Closed
+- Severity: S3
+- Area: WORLD
+- Source: Manual
+- Links: `src/game/world/mining-runtime.ts`, `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `tools/tests/mining-layout-guard.js`
+- Repro:
+  1. Inspect mining node layouts.
+- Expected: Mining spots are more spread out and not arranged in neat straight rows.
+- Actual: Node placement can look too linear/dense.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Define spacing/no-row heuristics.
+  2. Reposition existing node clusters.
+  3. Validate accessibility and progression pacing.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Reworked the authored mining runtime placement in `src/game/world/mining-runtime.ts` from simple radial filling into deterministic clumps plus strays, with explicit line-conflict penalties so starter-town mines no longer freeze into obvious rows/diamond lattices.
+  - Regenerated `starter_town` mining nodes/routes from the new runtime and hand-tuned the small `north_road_camp` outpost quarry cluster so current authored mining content follows the same spread/no-row goal.
+  - Added `tools/tests/mining-layout-guard.js` and wired it into `npm test` to lock in zero straight mining triples, bounded line occupancy, and minimum spacing across current mining routes.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ## Parking Lot
 <!-- Ideas worth keeping, but not urgent -->
