@@ -40,6 +40,13 @@ function run() {
     !moveTowardTargetBody.includes("playerState.inCombat = true;"),
     "pursuing or facing a locked target should not mark the player in-combat before an attack"
   );
+  const chaseAttackOpportunityBody = getFunctionBody(combatSource, "resolvePlayerChaseAttackOpportunity");
+  assert(chaseAttackOpportunityBody, "combat.js should define resolvePlayerChaseAttackOpportunity");
+  assert(
+    chaseAttackOpportunityBody.includes("const stepBudget = Math.max(1, Math.floor(getPlayerCombatMovementStepCount()));")
+      && chaseAttackOpportunityBody.includes("if (!isWithinMeleeRange(attackTile, playerLockState.enemyState)) return null;"),
+    "combat chase attacks should check whether the player's within-tick movement reaches melee range"
+  );
   const idleEnemyMovementBody = getFunctionBody(combatSource, "updateIdleEnemyMovement");
   assert(idleEnemyMovementBody, "combat.js should define updateIdleEnemyMovement");
   assert(
@@ -59,6 +66,12 @@ function run() {
       && combatSource.includes("playerState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));")
       && combatSource.includes("playerState.inCombat = true;"),
     "player combat state should flip in-combat when an actual player attack resolves"
+  );
+  assert(
+    combatSource.includes("const chaseAttackOpportunity = resolvePlayerChaseAttackOpportunity(playerLockState);")
+      && combatSource.includes("approachPath: chaseAttackOpportunity.approachPath")
+      && combatSource.includes("playerState.path = (playerAttackResult && Array.isArray(playerAttackResult.approachPath) && playerAttackResult.approachPath.length > 0)"),
+    "player melee attacks should be able to resolve off the same-tick chase approach and keep the approach movement so running can catch moving enemies"
   );
   assert(
     combatSource.includes("enemyState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));")

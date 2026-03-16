@@ -1,0 +1,175 @@
+{
+  "clipId": "player/combat_slash",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 1100,
+  "loopMode": "once",
+  "maskId": "upperBody",
+  "poses": {
+    "neutral": {},
+    "stage1": {
+      "rightArm": {
+        "position": {
+          "x": -0.38,
+          "y": 0.29000000000000004,
+          "z": 0.07
+        },
+        "rotationDeg": {
+          "x": -125.33085770173322,
+          "y": -27.99813312542817,
+          "z": -1.801069286290645e-15
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      },
+      "torso": {
+        "position": {
+          "x": 0,
+          "y": 1.05,
+          "z": 0
+        },
+        "rotationDeg": {
+          "x": 0,
+          "y": -33.80306120893966,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      },
+      "rightLowerArm": {
+        "position": {
+          "x": 0,
+          "y": -0.354,
+          "z": -0.1
+        },
+        "rotationDeg": {
+          "x": -34.06675361991102,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      }
+    },
+    "stage2": {
+      "torso": {
+        "position": {
+          "x": 0,
+          "y": 1.05,
+          "z": 0
+        },
+        "rotationDeg": {
+          "x": 0,
+          "y": 23.45497533791149,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      },
+      "rightArm": {
+        "position": {
+          "x": -0.38,
+          "y": 0.29000000000000004,
+          "z": 0.07
+        },
+        "rotationDeg": {
+          "x": -61.01872038440355,
+          "y": -35.62883815635268,
+          "z": -3.913047113561118e-15
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      },
+      "rightLowerArm": {
+        "position": {
+          "x": 0,
+          "y": -0.354,
+          "z": -0.1
+        },
+        "rotationDeg": {
+          "x": -6.175149462630925,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      },
+      "weapon": {
+        "position": {
+          "x": 0,
+          "y": -0.35,
+          "z": 0
+        },
+        "rotationDeg": {
+          "x": 22.207781170633012,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      }
+    },
+    "recover": {}
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "stage1",
+      "atMs": 260,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "stage2",
+      "atMs": 620,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "recover",
+      "atMs": 920,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 1100,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "stage1",
+      "atMs": 260
+    },
+    {
+      "markerId": "contact",
+      "atMs": 620
+    },
+    {
+      "markerId": "recover_start",
+      "atMs": 920
+    }
+  ]
+}

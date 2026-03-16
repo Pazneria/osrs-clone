@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
+import { createAnimationStudioDevMiddleware } from "./src/game/animation/dev-bridge";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
@@ -17,6 +18,14 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: "es2020"
-    }
+    },
+    plugins: [
+      {
+        name: "animation-studio-dev-bridge",
+        configureServer(server) {
+          server.middlewares.use(createAnimationStudioDevMiddleware("."));
+        }
+      }
+    ]
   };
 });

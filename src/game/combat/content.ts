@@ -623,6 +623,51 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
         weight: 23
       }
     ]
+  },
+  enemy_training_dummy: {
+    enemyId: "enemy_training_dummy",
+    displayName: "Training Dummy",
+    combatFamily: "melee",
+    appearance: {
+      kind: "humanoid",
+      npcType: 2,
+      facingYaw: Math.PI
+    },
+    stats: {
+      hitpoints: 250,
+      attack: 1,
+      strength: 1,
+      defense: 0
+    },
+    bonuses: {
+      meleeAccuracyBonus: 0,
+      meleeDefenseBonus: 0,
+      enemyMaxHit: 0
+    },
+    attackProfile: {
+      styleFamily: "melee",
+      damageType: "melee",
+      range: 1,
+      tickCycle: 4,
+      projectile: false,
+      ammoUse: false,
+      familyTag: "training_dummy"
+    },
+    behavior: {
+      aggroType: "passive",
+      aggroRadius: 0,
+      chaseRange: 2,
+      roamingRadius: 0,
+      defaultMovementSpeed: 1,
+      combatMovementSpeed: 1
+    },
+    respawnTicks: 8,
+    dropTable: [
+      {
+        kind: "nothing",
+        weight: 100
+      }
+    ]
   }
 };
 
@@ -649,6 +694,17 @@ const WORLD_ENEMY_SPAWNS: Record<string, EnemySpawnNodeDefinition[]> = {
       spawnEnabled: true,
       facingYaw: Math.PI,
       spawnGroupId: "starter_road"
+    },
+    {
+      spawnNodeId: "enemy_spawn_training_dummy_hub",
+      enemyId: "enemy_training_dummy",
+      spawnTile: { x: 210, y: 211, z: 0 },
+      homeTileOverride: null,
+      roamingRadiusOverride: 0,
+      respawnTicks: 8,
+      spawnEnabled: true,
+      facingYaw: Math.PI,
+      spawnGroupId: "starter_training"
     }
   ]
 };

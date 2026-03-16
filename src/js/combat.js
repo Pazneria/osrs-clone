@@ -75,6 +75,19 @@
         return combatRuntime.computeEnemyMeleeCombatSnapshot(getEnemyDefinition(enemyState.enemyId));
     }
 
+    function isTrainingDummyEnemy(enemyStateOrId) {
+        const enemyId = typeof enemyStateOrId === 'string'
+            ? enemyStateOrId
+            : (enemyStateOrId && typeof enemyStateOrId.enemyId === 'string' ? enemyStateOrId.enemyId : '');
+        return enemyId === 'enemy_training_dummy';
+    }
+
+    function markPlayerRigAnimationTrigger(triggerKey, triggerAt = Date.now()) {
+        const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
+        if (!rig || typeof triggerKey !== 'string' || !triggerKey) return;
+        rig[triggerKey] = Number.isFinite(triggerAt) ? triggerAt : Date.now();
+    }
+
     function isEnemyAlive(enemyState) {
         return !!(enemyState && enemyState.currentState !== 'dead' && enemyState.currentHealth > 0);
     }
@@ -441,6 +454,33 @@
         return path.length > 0 ? path : null;
     }
 
+    function getPlayerCombatMovementStepCount() {
+        return isRunning ? 2 : 1;
+    }
+
+    function cloneCombatPathStep(step) {
+        return {
+            x: Number.isFinite(step && step.x) ? Math.floor(step.x) : playerState.x,
+            y: Number.isFinite(step && step.y) ? Math.floor(step.y) : playerState.y
+        };
+    }
+
+    function resolvePlayerChaseAttackOpportunity(playerLockState) {
+        if (!playerLockState || !playerLockState.enemyState || !Array.isArray(playerLockState.pursuitPath)) return null;
+        if (playerLockState.pursuitPath.length === 0) return null;
+        const stepBudget = Math.max(1, Math.floor(getPlayerCombatMovementStepCount()));
+        const approachPath = playerLockState.pursuitPath
+            .slice(0, stepBudget)
+            .map((step) => cloneCombatPathStep(step));
+        if (approachPath.length === 0) return null;
+        const attackTile = approachPath[approachPath.length - 1];
+        if (!isWithinMeleeRange(attackTile, playerLockState.enemyState)) return null;
+        return {
+            attackTile,
+            approachPath
+        };
+    }
+
     function resolvePathToHome(enemyState) {
         if (!enemyState) return null;
         const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
@@ -771,6 +811,19 @@
                     targetId: playerLockState.enemyState.runtimeId,
                     snapshot: playerSnapshot
                 });
+            } else {
+                const chaseAttackOpportunity = resolvePlayerChaseAttackOpportunity(playerLockState);
+                if (chaseAttackOpportunity) {
+                    facePlayerTowards(playerLockState.enemyState);
+                    attacks.push({
+                        attackerKind: 'player',
+                        attackerId: PLAYER_TARGET_ID,
+                        targetKind: 'enemy',
+                        targetId: playerLockState.enemyState.runtimeId,
+                        snapshot: playerSnapshot,
+                        approachPath: chaseAttackOpportunity.approachPath
+                    });
+                }
             }
         }
 
@@ -816,7 +869,8 @@
                     targetId: enemyState.runtimeId,
                     landed,
                     damage,
-                    tickCycle: attack.snapshot.attackTickCycle
+                    tickCycle: attack.snapshot.attackTickCycle,
+                    approachPath: Array.isArray(attack.approachPath) ? attack.approachPath.map((step) => cloneCombatPathStep(step)) : []
                 });
                 continue;
             }
@@ -825,10 +879,23 @@
             if (!isEnemyAlive(enemyState) || !isPlayerAlive()) continue;
             const playerSnapshot = getPlayerCombatSnapshot();
             if (!playerSnapshot) continue;
-            const landed = combatRuntime.rollOpposedHitCheck(attack.snapshot.attackValue, playerSnapshot.defenseValue);
-            const damage = landed ? combatRuntime.rollDamage(attack.snapshot.maxHit) : 0;
+            const isTrainingDummyAttack = isTrainingDummyEnemy(enemyState);
+            const landed = isTrainingDummyAttack
+                ? true
+                : combatRuntime.rollOpposedHitCheck(attack.snapshot.attackValue, playerSnapshot.defenseValue);
+            const damage = isTrainingDummyAttack
+                ? 0
+                : (landed ? combatRuntime.rollDamage(attack.snapshot.maxHit) : 0);
             playerDamageTotal += damage;
             playerAttackers.push(enemyState.runtimeId);
+            window.__qaCombatDebugLastEnemyAttackResult = {
+                tick: Number.isFinite(currentTick) ? currentTick : null,
+                attackerId: enemyState.runtimeId,
+                enemyId: enemyState.enemyId,
+                landed: !!landed,
+                damage: Number.isFinite(damage) ? damage : 0,
+                isTrainingDummyAttack: !!isTrainingDummyAttack
+            };
             results.push({
                 attackerKind: 'enemy',
                 attackerId: enemyState.runtimeId,
@@ -846,9 +913,8 @@
                 playerState.lastAttackTick = currentTick;
                 playerState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));
                 playerState.inCombat = true;
-                if (playerRig && playerRig.userData && playerRig.userData.rig) {
-                    playerRig.userData.rig.attackTrigger = Date.now();
-                }
+                markPlayerRigAnimationTrigger('attackTick', currentTick);
+                markPlayerRigAnimationTrigger('attackAnimationStartedAt');
                 const enemyState = getCombatEnemyState(result.targetId);
                 if (!enemyState || !isEnemyAlive(enemyState)) continue;
                 enemyState.lastDamagerId = PLAYER_TARGET_ID;
@@ -888,6 +954,8 @@
                 playerState.lastDamagerEnemyId = enemyState.runtimeId;
                 playerState.inCombat = true;
                 if (typeof spawnHitsplat === 'function') spawnHitsplat(result.damage, playerState.x, playerState.y);
+                markPlayerRigAnimationTrigger('hitReactionTick', currentTick);
+                markPlayerRigAnimationTrigger('hitReactionStartedAt');
             }
         }
 
@@ -951,7 +1019,9 @@
     }
 
     function updateEnemyMovement(attacks) {
-        const attackedEnemyIds = new Set(attacks.filter((entry) => entry.attackerKind === 'enemy').map((entry) => entry.attackerId));
+        const attackedEnemyIds = new Set(attacks
+            .filter((entry) => entry.attackerKind === 'enemy' || entry.attackerKind === 'player')
+            .map((entry) => (entry.attackerKind === 'enemy' ? entry.attackerId : entry.targetId)));
         const reservedTiles = new Set();
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];
@@ -990,6 +1060,12 @@
 
             if (!isPlayerAlive()) {
                 beginEnemyReturn(enemyState);
+                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
+                continue;
+            }
+
+            if (isTrainingDummyEnemy(enemyState)) {
+                faceEnemyTowards(enemyState, playerState);
                 reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                 continue;
             }
@@ -1058,11 +1134,14 @@
         const playerLockState = validatePlayerTargetLock();
         const attacks = collectReadyAttacks(playerLockState);
         const attackResults = resolveAttackBatch(attacks);
-        const playerAttackedThisTick = attackResults.some((entry) => entry.attackerKind === 'player');
+        const playerAttackResult = attackResults.find((entry) => entry.attackerKind === 'player') || null;
+        const playerAttackedThisTick = !!playerAttackResult;
 
         if (playerAttackedThisTick && isPlayerAlive()) {
             playerState.action = 'COMBAT: MELEE';
-            playerState.path = [];
+            playerState.path = (playerAttackResult && Array.isArray(playerAttackResult.approachPath) && playerAttackResult.approachPath.length > 0)
+                ? playerAttackResult.approachPath.map((step) => cloneCombatPathStep(step))
+                : [];
         }
 
         if (isPlayerAlive()) {

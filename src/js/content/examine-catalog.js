@@ -94,7 +94,8 @@
 
     const EXAMINE_TEXT_BY_ENEMY_NAME = {
         rat: 'A scrappy little pest.',
-        'goblin grunt': 'A mean little bruiser looking for trouble.'
+        'goblin grunt': 'A mean little bruiser looking for trouble.',
+        'training dummy': 'Built to take hits and give none worth fearing.'
     };
 
     const EXAMINE_TEXT_BY_ROCK_ORE_TYPE = {

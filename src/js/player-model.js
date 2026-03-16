@@ -324,10 +324,11 @@ function createRigBones(armRigDefaults) {
     const torso = new THREE.Group();
     torso.name = 'pm-torso';
     torso.position.y = 1.05;
+    const shoulderLocalY = PLAYER_SHOULDER_PIVOT.y - torso.position.y;
 
     const leftArm = new THREE.Group();
     leftArm.name = 'pm-leftArm';
-    leftArm.position.set(PLAYER_SHOULDER_PIVOT.x, PLAYER_SHOULDER_PIVOT.y, PLAYER_SHOULDER_PIVOT.z);
+    leftArm.position.set(PLAYER_SHOULDER_PIVOT.x, shoulderLocalY, PLAYER_SHOULDER_PIVOT.z);
 
     const leftLowerArm = new THREE.Group();
     leftLowerArm.name = 'pm-leftLowerArm';
@@ -336,7 +337,7 @@ function createRigBones(armRigDefaults) {
 
     const rightArm = new THREE.Group();
     rightArm.name = 'pm-rightArm';
-    rightArm.position.set(-PLAYER_SHOULDER_PIVOT.x, PLAYER_SHOULDER_PIVOT.y, PLAYER_SHOULDER_PIVOT.z);
+    rightArm.position.set(-PLAYER_SHOULDER_PIVOT.x, shoulderLocalY, PLAYER_SHOULDER_PIVOT.z);
 
     const rightLowerArm = new THREE.Group();
     rightLowerArm.name = 'pm-rightLowerArm';
@@ -364,7 +365,8 @@ function createRigBones(armRigDefaults) {
     axe.position.set(0, -0.35, 0);
     rightLowerArm.add(axe);
 
-    root.add(head, torso, leftArm, rightArm, leftLeg, rightLeg);
+    torso.add(leftArm, rightArm);
+    root.add(head, torso, leftLeg, rightLeg);
     return root;
 }
 
@@ -579,8 +581,12 @@ function bindRigUserData(rigRoot) {
         rightLowerLeg: nodes.rightLowerLeg,
         axe: nodes.axe,
         elbowPivot,
-        attackTrigger: 0
+        attackTick: -1,
+        attackAnimationStartedAt: -1,
+        hitReactionTick: -1,
+        hitReactionStartedAt: -1
     };
+    rigRoot.userData.animationRigId = 'player_humanoid_v1';
     rigRoot.traverse((child) => {
         if (child.isMesh) child.castShadow = true;
     });
@@ -656,6 +662,7 @@ function rebuildPlayerRigsFromAppearance() {
 
 window.syncPlayerAppearanceFromEquipment = syncPlayerAppearanceFromEquipment;
 window.rebuildPlayerRigsFromAppearance = rebuildPlayerRigsFromAppearance;
+window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;
 
 
 

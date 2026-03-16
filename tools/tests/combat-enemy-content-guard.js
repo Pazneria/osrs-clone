@@ -90,6 +90,15 @@ const EXPECTED_ENEMIES = {
     respawnTicks: 40,
     attackTickCycle: 4,
     expectedSnapshot: { attackValue: 18, defenseValue: 6, maxHit: 4 }
+  },
+  enemy_training_dummy: {
+    displayName: "Training Dummy",
+    stats: { hitpoints: 250, attack: 1, strength: 1, defense: 0 },
+    bonuses: { meleeAccuracyBonus: 0, meleeDefenseBonus: 0, enemyMaxHit: 0 },
+    behavior: { aggroType: "passive", aggroRadius: 0, chaseRange: 2, roamingRadius: 0 },
+    respawnTicks: 8,
+    attackTickCycle: 4,
+    expectedSnapshot: { attackValue: 1, defenseValue: 0, maxHit: 0 }
   }
 };
 
@@ -154,6 +163,16 @@ assert.strictEqual(
   starterTownSpawnById.get("enemy_spawn_goblin_east_path")?.roamingRadiusOverride,
   15,
   "starter goblin spawn should override roaming radius to a wide roadside wander"
+);
+assert.strictEqual(
+  starterTownSpawnById.get("enemy_spawn_training_dummy_hub")?.enemyId,
+  "enemy_training_dummy",
+  "starter town should expose a dedicated training dummy spawn"
+);
+assert.strictEqual(
+  starterTownSpawnById.get("enemy_spawn_training_dummy_hub")?.roamingRadiusOverride,
+  0,
+  "training dummy spawn should stay rooted in place"
 );
 
 console.log("Combat enemy content guard passed.");

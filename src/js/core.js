@@ -183,11 +183,21 @@
             const hudSnapshot = (typeof window.getCombatHudSnapshot === 'function')
                 ? window.getCombatHudSnapshot()
                 : null;
+            const animationBridge = window.AnimationRuntimeBridge || null;
             const lockedTargetId = playerState && playerState.lockedTargetId
                 ? String(playerState.lockedTargetId)
                 : '';
             const lockedEnemy = (lockedTargetId && typeof window.getCombatEnemyState === 'function')
                 ? window.getCombatEnemyState(lockedTargetId)
+                : null;
+            const playerRigRuntime = playerRig && playerRig.userData ? playerRig.userData.rig : null;
+            const animationRigId = (playerRig && playerRig.userData && playerRig.userData.animationRigId)
+                ? playerRig.userData.animationRigId
+                : 'player_humanoid_v1';
+            const animationController = (animationBridge
+                && playerRig
+                && typeof animationBridge.getLegacyControllerDebugState === 'function')
+                ? animationBridge.getLegacyControllerDebugState(playerRig, animationRigId, Date.now())
                 : null;
 
             return {
@@ -214,6 +224,35 @@
                     lastClearTick: Number.isFinite(window.__qaCombatDebugLastClearTick)
                         ? Math.floor(window.__qaCombatDebugLastClearTick)
                         : null
+                },
+                lastEnemyAttack: window.__qaCombatDebugLastEnemyAttackResult
+                    ? {
+                        tick: Number.isFinite(window.__qaCombatDebugLastEnemyAttackResult.tick)
+                            ? Math.floor(window.__qaCombatDebugLastEnemyAttackResult.tick)
+                            : null,
+                        attackerId: window.__qaCombatDebugLastEnemyAttackResult.attackerId || null,
+                        enemyId: window.__qaCombatDebugLastEnemyAttackResult.enemyId || null,
+                        landed: !!window.__qaCombatDebugLastEnemyAttackResult.landed,
+                        damage: Number.isFinite(window.__qaCombatDebugLastEnemyAttackResult.damage)
+                            ? Math.floor(window.__qaCombatDebugLastEnemyAttackResult.damage)
+                            : 0,
+                        isTrainingDummyAttack: !!window.__qaCombatDebugLastEnemyAttackResult.isTrainingDummyAttack
+                    }
+                    : null,
+                animation: {
+                    attackTick: (playerRigRuntime && Number.isFinite(playerRigRuntime.attackTick))
+                        ? Math.floor(playerRigRuntime.attackTick)
+                        : null,
+                    attackStartedAtMs: (playerRigRuntime && Number.isFinite(playerRigRuntime.attackAnimationStartedAt))
+                        ? Math.floor(playerRigRuntime.attackAnimationStartedAt)
+                        : null,
+                    hitReactionTick: (playerRigRuntime && Number.isFinite(playerRigRuntime.hitReactionTick))
+                        ? Math.floor(playerRigRuntime.hitReactionTick)
+                        : null,
+                    hitReactionStartedAtMs: (playerRigRuntime && Number.isFinite(playerRigRuntime.hitReactionStartedAt))
+                        ? Math.floor(playerRigRuntime.hitReactionStartedAt)
+                        : null,
+                    controller: animationController
                 },
                 enemy: lockedEnemy ? {
                     runtimeId: String(lockedEnemy.runtimeId || ''),
@@ -254,6 +293,9 @@
         function getQaCombatDebugSignature(snapshot = null) {
             const state = snapshot && typeof snapshot === 'object' ? snapshot : getQaCombatDebugSnapshot();
             const player = state.player || {};
+            const lastEnemyAttack = state.lastEnemyAttack || null;
+            const animation = state.animation || {};
+            const controller = animation.controller || null;
             const enemy = state.enemy || null;
             const hudTarget = state.hud && state.hud.target ? state.hud.target : null;
             const hud = state.hud || null;
@@ -273,7 +315,15 @@
                 hudTarget
                     ? `${hudTarget.state || '-'}:${Number.isFinite(hudTarget.currentHealth) ? hudTarget.currentHealth : '-'}:${Number.isFinite(hudTarget.maxHealth) ? hudTarget.maxHealth : '-'}:${hudTarget.inMeleeRange ? 1 : 0}:${hudTarget.remainingAttackCooldown || 0}`
                     : 'none',
-                hud ? (hud.inCombat ? 1 : 0) : -1
+                hud ? (hud.inCombat ? 1 : 0) : -1,
+                lastEnemyAttack
+                    ? `${Number.isFinite(lastEnemyAttack.tick) ? lastEnemyAttack.tick : -1}:${lastEnemyAttack.enemyId || '-'}:${lastEnemyAttack.landed ? 1 : 0}:${Number.isFinite(lastEnemyAttack.damage) ? lastEnemyAttack.damage : 0}`
+                    : 'none',
+                Number.isFinite(animation.attackTick) ? animation.attackTick : -1,
+                Number.isFinite(animation.hitReactionTick) ? animation.hitReactionTick : -1,
+                controller
+                    ? `${controller.baseClipId || '-'}:${controller.actionClipId || '-'}:${controller.winningRequest ? controller.winningRequest.clipId : '-'}:${controller.requestedActions && controller.requestedActions.length ? controller.requestedActions.map((request) => request.clipId).join(',') : '-'}`
+                    : 'none'
             ].join('|');
         }
 
@@ -304,6 +354,9 @@
         function emitQaCombatDebugSnapshot(reason = 'manual') {
             const snapshot = getQaCombatDebugSnapshot();
             const player = snapshot.player || {};
+            const lastEnemyAttack = snapshot.lastEnemyAttack || null;
+            const animation = snapshot.animation || {};
+            const controller = animation.controller || null;
             const enemy = snapshot.enemy || null;
             const hud = snapshot.hud || null;
             const hudTarget = hud && hud.target ? hud.target : null;
@@ -321,6 +374,14 @@
                     'info'
                 );
             }
+            addChatMessage(
+                `[QA combatdbg] anim atkTick=${Number.isFinite(animation.attackTick) ? animation.attackTick : 'none'} atkStart=${Number.isFinite(animation.attackStartedAtMs) ? animation.attackStartedAtMs : 'none'} hitTick=${Number.isFinite(animation.hitReactionTick) ? animation.hitReactionTick : 'none'} hitStart=${Number.isFinite(animation.hitReactionStartedAtMs) ? animation.hitReactionStartedAtMs : 'none'} base=${controller && controller.baseClipId ? controller.baseClipId : 'none'} action=${controller && controller.actionClipId ? controller.actionClipId : 'none'} winner=${controller && controller.winningRequest ? controller.winningRequest.clipId : 'none'} requests=${controller && controller.requestedActions && controller.requestedActions.length ? controller.requestedActions.map((request) => `${request.clipId}@p${request.priority}`).join(',') : 'none'}`,
+                'info'
+            );
+            addChatMessage(
+                `[QA combatdbg] lastEnemyAttack tick=${lastEnemyAttack && Number.isFinite(lastEnemyAttack.tick) ? lastEnemyAttack.tick : 'none'} enemy=${lastEnemyAttack && lastEnemyAttack.enemyId ? lastEnemyAttack.enemyId : 'none'} landed=${lastEnemyAttack ? (lastEnemyAttack.landed ? 'yes' : 'no') : 'none'} damage=${lastEnemyAttack && Number.isFinite(lastEnemyAttack.damage) ? lastEnemyAttack.damage : 'none'} dummy=${lastEnemyAttack ? (lastEnemyAttack.isTrainingDummyAttack ? 'yes' : 'no') : 'none'}`,
+                'info'
+            );
             if (enemy) {
                 addChatMessage(
                     `[QA combatdbg] enemy runtime=${enemy.runtimeId || 'none'} type=${enemy.enemyId || 'none'} state=${enemy.state || 'none'} hp=${Number.isFinite(enemy.currentHealth) ? enemy.currentHealth : 'unknown'} eCD=${Number.isFinite(enemy.remainingAttackCooldown) ? enemy.remainingAttackCooldown : 0} ePos=(${enemy.x},${enemy.y},${enemy.z})`,
@@ -404,10 +465,11 @@
 
         // Shared shoulder pivot for player rig/animations.
         // X is width-aware: torso half-width (0.54/2) + upper-arm half-width (0.20/2) + small gap.
+        // Z sits slightly forward on the torso so the shoulders read less flat from the side.
         const PLAYER_SHOULDER_PIVOT = {
             x: (0.54 * 0.5) + (0.20 * 0.5) + 0.01,
             y: 1.34,
-            z: 0.03
+            z: 0.07
         };
         // Three.js Variables
         let scene, camera, renderer, raycaster, mouse;
@@ -3120,8 +3182,9 @@
             initInventoryUI(); 
             initChatInput();
             initChatControls();
-            if (typeof initMotionDebugPanel === 'function') initMotionDebugPanel();
-            if (typeof initPoseEditor === 'function') initPoseEditor();
+            if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.init === 'function') {
+                window.AnimationStudioBridge.init();
+            }
             initPlayerEntryFlow(loadProgressResult);
             const iconGrantResult = applyInventoryIconReviewGrant();
             if (iconGrantResult.added.length > 0 && typeof renderInventory === 'function') {
@@ -3172,6 +3235,7 @@
             window.addEventListener('keydown', (e) => {
                 if (e.target && e.target.id === 'chat-input') return;
                 if (isPlayerEntryFlowOpen()) return;
+                if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.isStudioActive === 'function' && window.AnimationStudioBridge.isStudioActive()) return;
                 const k = e.key.toLowerCase();
                 if (keys.hasOwnProperty(k)) keys[k] = true;
                 if (e.key === 'Escape' && worldMapPanel && !worldMapPanel.classList.contains('hidden')) setWorldMapOpen(false);
@@ -3180,6 +3244,7 @@
             window.addEventListener('keyup', (e) => {
                 if (e.target && e.target.id === 'chat-input') return;
                 if (isPlayerEntryFlowOpen()) return;
+                if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.isStudioActive === 'function' && window.AnimationStudioBridge.isStudioActive()) return;
                 const k = e.key.toLowerCase();
                 if (keys.hasOwnProperty(k)) keys[k] = false;
             });
@@ -3220,6 +3285,7 @@
 
             // Close UI Menus when clicking outside
             window.addEventListener('mousedown', (e) => {
+                if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.isStudioActive === 'function' && window.AnimationStudioBridge.isStudioActive()) return;
                 // Only close menus if it's a left-click (ignore middle-click/camera drag or right-click)
                 if (e.button !== 0) return;
 

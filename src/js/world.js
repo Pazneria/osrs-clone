@@ -833,11 +833,23 @@
             forcedAppearance.slots[3] = { kind: 'item', id: 'iron_pickaxe' };
             return createPlayerRigFromAppearance(forcedAppearance);
         }
+        function getPlayerRigShoulderPivotLocal(rig) {
+            const defaultTorsoY = 1.05;
+            const torsoY = (rig && rig.torso && rig.torso.userData && rig.torso.userData.defaultPos && Number.isFinite(rig.torso.userData.defaultPos.y))
+                ? rig.torso.userData.defaultPos.y
+                : ((rig && rig.torso && Number.isFinite(rig.torso.position.y)) ? rig.torso.position.y : defaultTorsoY);
+            return {
+                x: PLAYER_SHOULDER_PIVOT.x,
+                y: PLAYER_SHOULDER_PIVOT.y - torsoY,
+                z: PLAYER_SHOULDER_PIVOT.z
+            };
+        }
 
         function resetMiningReferencePose(rig) {
             if (!rig) return;
-            rig.leftArm.position.set(PLAYER_SHOULDER_PIVOT.x, PLAYER_SHOULDER_PIVOT.y, PLAYER_SHOULDER_PIVOT.z);
-            rig.rightArm.position.set(-PLAYER_SHOULDER_PIVOT.x, PLAYER_SHOULDER_PIVOT.y, PLAYER_SHOULDER_PIVOT.z);
+            const shoulderPivot = getPlayerRigShoulderPivotLocal(rig);
+            rig.leftArm.position.set(shoulderPivot.x, shoulderPivot.y, shoulderPivot.z);
+            rig.rightArm.position.set(-shoulderPivot.x, shoulderPivot.y, shoulderPivot.z);
             rig.leftArm.rotation.set(0, 0, 0);
             rig.rightArm.rotation.set(0, 0, 0);
             rig.leftLowerArm.rotation.set(0, 0, 0);
@@ -869,16 +881,17 @@
             resetMiningReferencePose(rig);
 
             const centerlineBottomPose = (opts = {}) => {
+                const shoulderPivot = getPlayerRigShoulderPivotLocal(rig);
                 const torsoHalfWidth = 0.54 * 0.5;
                 const upperArmHalfWidth = (0.20 * 1.02) * 0.5;
                 const shoulderClearance = 0.008;
                 const minShoulderAbsX = torsoHalfWidth + upperArmHalfWidth + shoulderClearance;
-                const maxInward = Math.max(0, PLAYER_SHOULDER_PIVOT.x - minShoulderAbsX);
+                const maxInward = Math.max(0, shoulderPivot.x - minShoulderAbsX);
                 const requestedInward = opts.shoulderInward || 0.0;
                 const shoulderInward = Math.min(Math.max(0, requestedInward), maxInward);
                 const shoulderBack = opts.shoulderBack || 0.07;
-                const torsoTopY = 1.05 + (0.68 * 0.5);
-                const shoulderLiftDefault = torsoTopY - PLAYER_SHOULDER_PIVOT.y;
+                const torsoTopY = 0.68 * 0.5;
+                const shoulderLiftDefault = torsoTopY - shoulderPivot.y;
                 const shoulderLift = (opts.shoulderLift !== undefined) ? opts.shoulderLift : shoulderLiftDefault;
                 const torsoTwist = (opts.torsoTwist || 0) * deg;
                 const torsoLean = (opts.torsoLean || -4) * deg;
@@ -896,14 +909,14 @@
                 const elbowBaseZ = Number.isFinite(elbowPivot.z) ? elbowPivot.z : -0.1;
 
                 rig.leftArm.position.set(
-                    PLAYER_SHOULDER_PIVOT.x - shoulderInward,
-                    PLAYER_SHOULDER_PIVOT.y + shoulderLift,
-                    PLAYER_SHOULDER_PIVOT.z - shoulderBack
+                    shoulderPivot.x - shoulderInward,
+                    shoulderPivot.y + shoulderLift,
+                    shoulderPivot.z - shoulderBack
                 );
                 rig.rightArm.position.set(
-                    -PLAYER_SHOULDER_PIVOT.x + shoulderInward,
-                    PLAYER_SHOULDER_PIVOT.y + shoulderLift,
-                    PLAYER_SHOULDER_PIVOT.z - shoulderBack
+                    -shoulderPivot.x + shoulderInward,
+                    shoulderPivot.y + shoulderLift,
+                    shoulderPivot.z - shoulderBack
                 );
 
                 // Move elbows toward centerline and forward to avoid forearm clipping upper arm.

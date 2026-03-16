@@ -1,0 +1,99 @@
+{
+  "clipId": "player/idle",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 1800,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "neutral": {
+      "torso": {
+        "rotationDeg": {
+          "x": -2
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -1
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -2
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -2
+        }
+      }
+    },
+    "breathe": {
+      "root": {
+        "position": {
+          "y": 0.022
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": -3
+        },
+        "scale": {
+          "y": 1.01
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": 1
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -4
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -3
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -3
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "breathe",
+      "atMs": 900,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 1800,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "settle",
+      "atMs": 0
+    },
+    {
+      "markerId": "breathe_peak",
+      "atMs": 900
+    }
+  ]
+}
+

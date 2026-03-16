@@ -1,0 +1,247 @@
+{
+  "clipId": "player/run",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 600,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "drive_left": {
+      "root": {
+        "position": {
+          "y": 0.03
+        },
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 44
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -44
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -42
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": 42
+        }
+      },
+      "rightLowerLeg": {
+        "rotationDeg": {
+          "x": 48
+        }
+      }
+    },
+    "flight_left": {
+      "root": {
+        "position": {
+          "y": 0.09
+        },
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 16
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -16
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -12
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": 12
+        }
+      },
+      "rightLowerLeg": {
+        "rotationDeg": {
+          "x": 12
+        }
+      }
+    },
+    "drive_right": {
+      "root": {
+        "position": {
+          "y": 0.03
+        },
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -44
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 44
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": 42
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -42
+        }
+      },
+      "leftLowerLeg": {
+        "rotationDeg": {
+          "x": 48
+        }
+      }
+    },
+    "flight_right": {
+      "root": {
+        "position": {
+          "y": 0.09
+        },
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -16
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 16
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -72
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": 12
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -12
+        }
+      },
+      "leftLowerLeg": {
+        "rotationDeg": {
+          "x": 12
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "drive_left",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "flight_left",
+      "atMs": 150,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "drive_right",
+      "atMs": 300,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "flight_right",
+      "atMs": 450,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "drive_left",
+      "atMs": 600,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "left_drive",
+      "atMs": 0
+    },
+    {
+      "markerId": "right_drive",
+      "atMs": 300
+    }
+  ]
+}
+
