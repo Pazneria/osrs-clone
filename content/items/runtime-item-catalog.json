@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-14T01:41:36.292Z",
+  "generatedAt": "2026-03-16T21:06:45.454Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -1467,7 +1467,7 @@
           "meleeStrengthBonus": 4,
           "rangedDefenseBonus": 0
         },
-        "requiredAttackLevel": 10,
+        "requiredAttackLevel": 1,
         "toolFamily": "fishing_rod",
         "weaponFamily": null
       },
@@ -1477,7 +1477,7 @@
         "kind": "pixel"
       },
       "name": "Fishing Rod",
-      "requiredAttackLevel": 10,
+      "requiredFishingLevel": 10,
       "stackable": false,
       "stats": {
         "atk": 8,
@@ -1600,7 +1600,7 @@
           "meleeStrengthBonus": 9,
           "rangedDefenseBonus": 0
         },
-        "requiredAttackLevel": 30,
+        "requiredAttackLevel": 1,
         "toolFamily": "harpoon",
         "weaponFamily": null
       },
@@ -1610,7 +1610,7 @@
         "kind": "pixel"
       },
       "name": "Harpoon",
-      "requiredAttackLevel": 30,
+      "requiredFishingLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 18,
@@ -3423,7 +3423,7 @@
           "meleeStrengthBonus": 12,
           "rangedDefenseBonus": 0
         },
-        "requiredAttackLevel": 40,
+        "requiredAttackLevel": 1,
         "toolFamily": "harpoon",
         "weaponFamily": null
       },
@@ -3433,7 +3433,7 @@
         "kind": "pixel"
       },
       "name": "Rune Harpoon",
-      "requiredAttackLevel": 40,
+      "requiredFishingLevel": 40,
       "stackable": false,
       "stats": {
         "atk": 24,

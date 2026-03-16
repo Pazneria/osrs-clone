@@ -1,0 +1,312 @@
+{
+  "id": "small_net",
+  "palette": {
+    ".": "transparent",
+    "a": "#4b3422",
+    "b": "#745339",
+    "c": "#a8825c"
+  },
+  "model": {
+    "depth": 4,
+    "scale": 0.05,
+    "groundVariant": "copy"
+  },
+  "layers": [
+    {
+      "op": "arc",
+      "center": [8, 10],
+      "radiusX": 3,
+      "radiusY": 3,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [13, 10],
+      "radiusX": 3,
+      "radiusY": 3,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [18, 10],
+      "radiusX": 3,
+      "radiusY": 3,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [23, 10],
+      "radiusX": 3,
+      "radiusY": 3,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [10.5, 15],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [15.5, 15],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [20.5, 15],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [8, 20],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [13, 20],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [18, 20],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [23, 20],
+      "radiusX": 3,
+      "radiusY": 3.2,
+      "startDeg": 180,
+      "endDeg": 360,
+      "symbol": "a",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [8, 10],
+      "radiusX": 2,
+      "radiusY": 2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [13, 10],
+      "radiusX": 2,
+      "radiusY": 2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [18, 10],
+      "radiusX": 2,
+      "radiusY": 2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [23, 10],
+      "radiusX": 2,
+      "radiusY": 2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [10.5, 15],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [15.5, 15],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [20.5, 15],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [8, 20],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [13, 20],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [18, 20],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "arc",
+      "center": [23, 20],
+      "radiusX": 2,
+      "radiusY": 2.2,
+      "startDeg": 205,
+      "endDeg": 330,
+      "symbol": "b",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "plot",
+      "points": [
+        [6, 10],
+        [11, 10],
+        [16, 10],
+        [21, 10],
+        [26, 10],
+        [8, 15],
+        [13, 15],
+        [18, 15],
+        [23, 15],
+        [6, 20],
+        [11, 20],
+        [16, 20],
+        [21, 20],
+        [26, 20]
+      ],
+      "symbol": "c",
+      "thickness": 1,
+      "brush": "diamond"
+    },
+    {
+      "op": "line",
+      "from": [7, 20],
+      "to": [6, 22],
+      "symbol": "a",
+      "thickness": 1,
+      "brush": "diamond"
+    },
+    {
+      "op": "line",
+      "from": [12, 20],
+      "to": [11, 22],
+      "symbol": "a",
+      "thickness": 1,
+      "brush": "diamond"
+    },
+    {
+      "op": "line",
+      "from": [17, 20],
+      "to": [16, 22],
+      "symbol": "a",
+      "thickness": 1,
+      "brush": "diamond"
+    },
+    {
+      "op": "line",
+      "from": [22, 20],
+      "to": [21, 22],
+      "symbol": "a",
+      "thickness": 1,
+      "brush": "diamond"
+    }
+  ]
+}

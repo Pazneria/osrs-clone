@@ -319,7 +319,7 @@ function createRigBones(armRigDefaults) {
 
     const head = new THREE.Group();
     head.name = 'pm-head';
-    head.position.y = 1.55;
+    head.position.y = 0.5;
 
     const torso = new THREE.Group();
     torso.name = 'pm-torso';
@@ -365,8 +365,8 @@ function createRigBones(armRigDefaults) {
     axe.position.set(0, -0.35, 0);
     rightLowerArm.add(axe);
 
-    torso.add(leftArm, rightArm);
-    root.add(head, torso, leftLeg, rightLeg);
+    torso.add(head, leftArm, rightArm);
+    root.add(torso, leftLeg, rightLeg);
     return root;
 }
 
@@ -711,18 +711,47 @@ window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearan
 
 
 
+const SKILLING_TOOL_VISUAL_GROUP_NAME = 'pm-skillingToolVisual';
+
+function ensureSkillingToolVisualGroup(axeNode) {
+    if (!axeNode) return null;
+    let group = axeNode.getObjectByName(SKILLING_TOOL_VISUAL_GROUP_NAME);
+    if (group && group.parent === axeNode) return group;
+    group = new THREE.Group();
+    group.name = SKILLING_TOOL_VISUAL_GROUP_NAME;
+    axeNode.add(group);
+    return group;
+}
+
+function clearObjectChildren(node) {
+    if (!node) return;
+    while (node.children.length > 0) {
+        node.remove(node.children[node.children.length - 1]);
+    }
+}
+
+function setBaseToolVisualVisibility(axeNode, visible) {
+    if (!axeNode) return;
+    for (let i = 0; i < axeNode.children.length; i++) {
+        const child = axeNode.children[i];
+        if (!child || child.name === SKILLING_TOOL_VISUAL_GROUP_NAME) continue;
+        child.visible = !!visible;
+    }
+}
+
 function setPlayerRigToolVisual(rigRoot, itemId) {
     if (!rigRoot || !rigRoot.userData || !rigRoot.userData.rig || !rigRoot.userData.rig.axe) return;
     const axeNode = rigRoot.userData.rig.axe;
+    const skillingToolGroup = ensureSkillingToolVisualGroup(axeNode);
     const desiredId = itemId || null;
+    if (!skillingToolGroup) return;
 
     if (rigRoot.userData.skillingToolVisualId === desiredId) return;
 
-    while (axeNode.children.length > 0) {
-        axeNode.remove(axeNode.children[axeNode.children.length - 1]);
-    }
-
+    clearObjectChildren(skillingToolGroup);
     rigRoot.userData.skillingToolVisualId = desiredId;
+    skillingToolGroup.visible = !!desiredId;
+    setBaseToolVisualVisibility(axeNode, !desiredId);
     if (!desiredId) return;
 
     let toolMeshes = createEquipmentVisualMeshes(desiredId, 'axe');
@@ -733,7 +762,7 @@ function setPlayerRigToolVisual(rigRoot, itemId) {
     if (toolMeshes.length === 0 && fallbackId && desiredId !== fallbackId) {
         toolMeshes = createEquipmentVisualMeshes(fallbackId, 'axe');
     }
-    for (let i = 0; i < toolMeshes.length; i++) axeNode.add(toolMeshes[i]);
+    for (let i = 0; i < toolMeshes.length; i++) skillingToolGroup.add(toolMeshes[i]);
 }
 
 function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverride = null) {

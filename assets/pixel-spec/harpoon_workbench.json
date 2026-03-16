@@ -1,0 +1,110 @@
+{
+  "id": "harpoon",
+  "palette": {
+    ".": "transparent",
+    "a": "#4a3018",
+    "b": "#724f2d",
+    "c": "#ab8150",
+    "d": "#4d5967",
+    "e": "#8fa2b5",
+    "f": "#e1ebf4"
+  },
+  "model": {
+    "depth": 4,
+    "scale": 0.05,
+    "groundVariant": "copy"
+  },
+  "layers": [
+    {
+      "op": "line",
+      "from": [6, 29],
+      "to": [20, 15],
+      "symbol": "a",
+      "thickness": 3,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [7, 28],
+      "to": [19, 16],
+      "symbol": "b",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [8, 27],
+      "to": [18, 17],
+      "symbol": "c",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [20, 15],
+      "to": [28, 7],
+      "symbol": "d",
+      "thickness": 3,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [21, 14],
+      "to": [27, 8],
+      "symbol": "e",
+      "thickness": 2,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [22, 13],
+      "to": [26, 9],
+      "symbol": "f",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [21, 12],
+      "to": [18, 9],
+      "symbol": "d",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [22, 14],
+      "to": [18, 17],
+      "symbol": "d",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [22, 12],
+      "to": [19, 10],
+      "symbol": "e",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "line",
+      "from": [23, 14],
+      "to": [19, 16],
+      "symbol": "e",
+      "thickness": 1,
+      "brush": "circle"
+    },
+    {
+      "op": "plot",
+      "points": [
+        [27, 6],
+        [28, 6],
+        [29, 5]
+      ],
+      "symbol": "f",
+      "thickness": 1,
+      "brush": "circle"
+    }
+  ]
+}

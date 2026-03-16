@@ -139,12 +139,12 @@
     },
     {
       "poseId": "stage1",
-      "atMs": 260,
+      "atMs": 109,
       "ease": "easeInOut"
     },
     {
       "poseId": "stage2",
-      "atMs": 620,
+      "atMs": 424,
       "ease": "easeInOut"
     },
     {

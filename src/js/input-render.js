@@ -766,11 +766,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const t = clamp01(v);
             return t * t * (3 - (2 * t));
         }
-        function cycleEase(phase, start, end) {
-            if (phase <= start) return 0;
-            if (phase >= end) return 1;
-            return smoothStep01((phase - start) / (end - start));
-        }
         function lerpScalar(from, to, t) {
             return from + ((to - from) * t);
         }
@@ -941,11 +936,67 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 rig.head.rotation.y -= recoil * 0.1;
             }
         }
+        function isMiningSkillAction(actionName) {
+            return actionName === 'SKILLING: ROCK';
+        }
+        function isFishingSkillAction(actionName) {
+            return actionName === 'SKILLING: WATER';
+        }
+        const FISHING_START_ACTION_STARTED_AT_STATE_KEY = 'fishingCastStartedAt';
+        const FISHING_START_ACTION_REQUEST_WINDOW_MS = 250;
+        function getFishingSkillMethodId() {
+            return playerState && typeof playerState.fishingActiveMethodId === 'string'
+                ? playerState.fishingActiveMethodId
+                : null;
+        }
+        function isHarpoonFishingMethodId(methodId) {
+            return typeof methodId === 'string' && methodId.includes('harpoon');
+        }
+        function getFishingStartActionStartedAt() {
+            if (!isFishingSkillAction(playerState && playerState.action)) return null;
+            const startedAt = playerState ? playerState[FISHING_START_ACTION_STARTED_AT_STATE_KEY] : null;
+            return Number.isFinite(startedAt) ? startedAt : null;
+        }
+        function getFishingStartActionClipId() {
+            if (!isFishingSkillAction(playerState && playerState.action)) return null;
+            const methodId = getFishingSkillMethodId();
+            if (methodId === 'rod') return 'player/fishing_rod_cast1';
+            if (isHarpoonFishingMethodId(methodId)) return 'player/fishing_harpoon_strike1';
+            return null;
+        }
+        function getFishingSkillBaseClipId() {
+            if (!isFishingSkillAction(playerState && playerState.action)) return null;
+            const methodId = getFishingSkillMethodId();
+            if (isHarpoonFishingMethodId(methodId)) return 'player/fishing_harpoon_hold1';
+            if (!methodId) return null;
+            if (methodId === 'rod') return 'player/fishing_rod_hold1';
+            return 'player/fishing_net1';
+        }
+        function getActiveSkillBaseClipId() {
+            if (isMiningSkillAction(playerState && playerState.action)) return 'player/mining1';
+            return getFishingSkillBaseClipId();
+        }
+        function isAnySkillingAction(actionName) {
+            return typeof actionName === 'string' && actionName.startsWith('SKILLING:');
+        }
+        function syncPlayerRigSkillingToolVisual(playerRigRef) {
+            if (!playerRigRef || typeof setPlayerRigToolVisual !== 'function') return;
+            if (isAnySkillingAction(playerState && playerState.action)) return;
+            if (!(playerRigRef.userData && playerRigRef.userData.skillingToolVisualId)) return;
+            setPlayerRigToolVisual(playerRigRef, null);
+        }
+        function shouldShowRigToolVisual(playerRigRef) {
+            if (equipment && equipment.weapon) return true;
+            if (!getActiveSkillBaseClipId()) return false;
+            return !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisualId);
+        }
         function getPlayerBaseClipId(isMoving, logicalTilesMoved) {
             if (isMoving) {
                 if (logicalTilesMoved > 1 || (isRunning && logicalTilesMoved > 0)) return 'player/run';
                 return 'player/walk';
             }
+            const skillBaseClipId = getActiveSkillBaseClipId();
+            if (skillBaseClipId) return skillBaseClipId;
             return 'player/idle';
         }
         function ensureCombatAnimationDebugPanel() {
@@ -1038,7 +1089,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 ? playerRigRef.userData.animationRigId
                 : 'player_humanoid_v1';
 
-            rig.axe.visible = !!equipment.weapon;
+            rig.axe.visible = shouldShowRigToolVisual(playerRigRef);
             rig.axe.rotation.set(0, 0, 0);
             setPlayerRigShoulderPivot(rig);
             playerRigRef.rotation.x = 0;
@@ -1065,76 +1116,21 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 });
             }
 
+            const fishingStartActionStartedAt = getFishingStartActionStartedAt();
+            const fishingStartActionClipId = getFishingStartActionClipId();
+            if (fishingStartActionClipId
+                && Number.isFinite(fishingStartActionStartedAt)
+                && (frameNow - fishingStartActionStartedAt) >= 0
+                && (frameNow - fishingStartActionStartedAt) <= FISHING_START_ACTION_REQUEST_WINDOW_MS) {
+                animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, fishingStartActionClipId, {
+                    startedAtMs: fishingStartActionStartedAt,
+                    startKey: `${fishingStartActionClipId}:${fishingStartActionStartedAt}`,
+                    priority: 0
+                });
+            }
+
             animationRuntimeBridge.applyLegacyFrame(playerRigRef, rigId, frameNow);
             return true;
-        }
-        function applyRockMiningPose(rig, frameNow, baseVisualY, isPickaxeEquipped) {
-            const deg = Math.PI / 180;
-            const shoulderPivot = getPlayerRigShoulderPivot(rig);
-            const cycle = 1050;
-            const phase = (frameNow % cycle) / cycle;
-            // Three-beat loop: gather -> strike -> recover.
-            const strike = cycleEase(phase, 0.34, 0.62) * (1 - cycleEase(phase, 0.62, 0.78));
-            const recover = cycleEase(phase, 0.78, 1.00);
-            const gather = 1 - strike;
-            const inhale = Math.sin(phase * Math.PI * 2);
-            rig.axe.visible = isPickaxeEquipped;
-            rig.axe.rotation.set(0, 0, 0);
-            playerRig.rotation.x = 0;
-            setPlayerRigShoulderPivot(rig);
-
-            // Pull shoulders inward/forward so both hands converge to a single strike line.
-            const torsoSafeInward = Math.max(0.0, shoulderPivot.x - 0.22);
-            const shoulderInward = Math.min(0.12 + (0.05 * gather), torsoSafeInward);
-            const shoulderForward = 0.1 + (0.03 * gather);
-            const shoulderLift = 0.01 + (0.02 * gather);
-            rig.leftArm.position.set(
-                shoulderPivot.x - shoulderInward,
-                shoulderPivot.y + shoulderLift,
-                shoulderPivot.z + shoulderForward
-            );
-            rig.rightArm.position.set(
-                -shoulderPivot.x + shoulderInward,
-                shoulderPivot.y + shoulderLift,
-                shoulderPivot.z + shoulderForward
-            );
-
-            // Stretch arms ~10% so the stacked hand grip reads cleanly.
-            rig.leftArm.scale.set(1.02, 1.1, 1.02);
-            rig.rightArm.scale.set(1.02, 1.1, 1.02);
-            rig.leftLowerArm.scale.set(1.0, 1.1, 1.0);
-            rig.rightLowerArm.scale.set(1.0, 1.1, 1.0);
-
-            const torsoTwist = ((-4 + (10 * strike)) * deg);
-            rig.torso.rotation.set((-6 + (8 * strike)) * deg, torsoTwist, 0);
-            rig.head.rotation.set(0, torsoTwist * 0.45, 0);
-
-            // Mirror arm yaw/roll to keep both hands meeting over the centerline.
-            rig.leftArm.rotation.set(
-                (-70 + (30 * strike) - (10 * recover)) * deg,
-                (-17 + (3 * strike)) * deg,
-                (15 + (6 * gather)) * deg
-            );
-            rig.rightArm.rotation.set(
-                (-82 + (34 * strike) - (12 * recover)) * deg,
-                (17 - (3 * strike)) * deg,
-                (-15 - (6 * gather)) * deg
-            );
-            rig.leftLowerArm.rotation.set(
-                (-114 + (45 * strike) + (8 * recover)) * deg,
-                (-12 - (7 * gather)) * deg,
-                (5 * deg)
-            );
-            rig.rightLowerArm.rotation.set(
-                (-124 + (50 * strike) + (8 * recover)) * deg,
-                (12 + (7 * gather)) * deg,
-                (-5 * deg)
-            );
-            rig.leftLeg.rotation.x = 0;
-            rig.rightLeg.rotation.x = 0;
-            if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0;
-            if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0;
-            playerRig.position.y = baseVisualY + (0.01 * inhale);
         }
 
         function spawnClickMarker(position, isAction) {
@@ -2596,6 +2592,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (rig.leftLowerLeg) rig.leftLowerLeg.position.set(0, -0.35, 0);
             if (rig.rightLowerLeg) rig.rightLowerLeg.position.set(0, -0.35, 0);
             const logicalTilesMoved = Math.max(Math.abs(playerState.x - playerState.prevX), Math.abs(playerState.y - playerState.prevY));
+            syncPlayerRigSkillingToolVisual(playerRig);
             const skillAnimationHandled = !isMoving && window.SkillRuntime && SkillRuntime.handleSkillAnimation({
                 rig,
                 frameNow,
@@ -2603,8 +2600,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 playerRig,
                 equipment,
                 setShoulderPivot: setPlayerRigShoulderPivot,
-                shoulderPivot: getPlayerRigShoulderPivot(rig),
-                applyRockMiningPose
+                shoulderPivot: getPlayerRigShoulderPivot(rig)
             });
             const clipAnimationHandled = !skillAnimationHandled && applyClipDrivenPlayerAnimation(rig, playerRig, frameNow, isMoving, logicalTilesMoved);
             if (!skillAnimationHandled && !clipAnimationHandled) {

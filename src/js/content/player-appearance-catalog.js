@@ -125,6 +125,7 @@
         rotation: [0.9561333749, -Math.PI / 2, 0],
         offset: [0, -0.02, 0.08]
     });
+    const FISHING_ROD_UPWARD_TILT_RADIANS = 30 * (Math.PI / 180);
     const SWORD_UPWARD_TILT_RADIANS = 25 * (Math.PI / 180);
     const SWORD_WORLD_SCALE_MULTIPLIER = 1.15;
 
@@ -303,6 +304,199 @@
         h: '#f0c994'
     });
 
+    const SMALL_NET_PALETTE = Object.freeze({
+        a: '#4b3422',
+        b: '#745339',
+        c: '#a8825c'
+    });
+
+    const FISHING_ROD_PALETTE = Object.freeze({
+        a: '#3f2a17',
+        b: '#6b4a28',
+        c: '#af7f4c',
+        d: '#6d5130',
+        e: '#d2ae7b',
+        f: '#5c3d22',
+        g: '#b98e5a',
+        h: '#edf6ff',
+        i: '#d94a40',
+        j: '#cfd9e6'
+    });
+
+    const HARPOON_PALETTE = Object.freeze({
+        a: '#4a3018',
+        b: '#724f2d',
+        c: '#ab8150',
+        d: '#4d5967',
+        e: '#8fa2b5',
+        f: '#e1ebf4'
+    });
+
+    const RUNE_HARPOON_PALETTE = Object.freeze({
+        a: '#4a3018',
+        b: '#724f2d',
+        c: '#ab8150',
+        d: '#233a63',
+        e: '#4f78c8',
+        f: '#d7e2ff'
+    });
+
+    const SMALL_NET_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '......aaaaaaaaaaaaaaaaaaaa......',
+        '.....aabbbaabbbaabbbaabbbaa.....',
+        '.....abb.bbbb.bbbb.bbbb.bba.....',
+        '.....ac...ac...ac...ac....c.....',
+        '..........aa...aa...aa..........',
+        '........aaaaaaaaaaaaaaaa........',
+        '........abbbbabbbbabbbba........',
+        '.......aab..bab..bab..baa.......',
+        '.......ac...aca..aca...ca.......',
+        '.......aaa..aaa..aaa..aaa.......',
+        '......aaaaaaaaaaaaaaaaaaaa......',
+        '.....aabbbaabbbaabbbaabbbaa.....',
+        '.....abb.bbbb.bbbb.bbbb.bba.....',
+        '.....aca..aca..aca..aca...c.....',
+        '......aa...aa...aa...aa.........',
+        '......a....a....a....a..........',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+    ];
+
+    const FISHING_ROD_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.............................c..',
+        '..........................aac...',
+        '..........................aha...',
+        '.........................bbaah..',
+        '........................bcba....',
+        '.......................bcca.h...',
+        '......................bcca....h.',
+        '.....................bcca.......',
+        '....................acca.....h..',
+        '...................acca.........',
+        '..................acca........h.',
+        '..................cca...........',
+        '.................ccaa..........h',
+        '................ccaa..........ii',
+        '...............ccaa............j',
+        '............g.bcba..............',
+        '..........ff.gcba...............',
+        '..........ffbgba................',
+        '..........ffcba.................',
+        '.........dddba..................',
+        '........dddda...................',
+        '.......deedda...................',
+        '......deeed.....................',
+        '.....deeed......................',
+        '....ddeed.......................',
+        '....dddd........................',
+        '....eed.........................',
+        '................................'
+    ];
+
+    const HARPOON_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.............................f..',
+        '...........................ffd..',
+        '..........................dddd..',
+        '.........................deedd..',
+        '..................d.....defed...',
+        '...................ee..deffd....',
+        '....................eedeffd.....',
+        '.....................eeffd......',
+        '....................deffd.......',
+        '...................ddeee........',
+        '..................adeee.........',
+        '.................abeed..........',
+        '................abdda...........',
+        '...............abcca............',
+        '..............abcca.............',
+        '.............abcca..............',
+        '............abcca...............',
+        '...........abcca................',
+        '..........abcca.................',
+        '.........abcca..................',
+        '........abcca...................',
+        '.......abcca....................',
+        '......abcca.....................',
+        '.....aabba......................',
+        '.....aaaa.......................',
+        '.....aaa........................',
+        '................................',
+        '................................'
+    ];
+
+    const SMALL_NET_HELD_MODEL = createRightHandHeldModel({
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.42,
+        origin: [6.5, 18.5],
+        offset: [0.01, -0.015, 0.08],
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.65,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.42,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.52
+        }
+    });
+
+    const FISHING_ROD_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.45,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.6,
+        origin: [8.5, 26.5],
+        rotation: [
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[0] - FISHING_ROD_UPWARD_TILT_RADIANS,
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[1],
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[2]
+        ],
+        offset: [0.005, -0.02, 0.08],
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.75,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.7,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.65,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.85,
+            e: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.75,
+            f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.9,
+            g: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.7,
+            h: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.18,
+            i: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.3,
+            j: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.2
+        }
+    });
+
+    const HARPOON_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.08,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.74,
+        origin: [6.5, 28.5],
+        offset: [0.002, -0.02, 0.08],
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.82,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.82,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.82,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.2,
+            e: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.02,
+            f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.86
+        }
+    });
+
     function getRightHandMetalTier(itemId) {
         if (typeof itemId !== 'string') return 'iron';
         const match = /^(bronze|iron|steel|mithril|adamant|rune)_/.exec(itemId);
@@ -396,6 +590,16 @@
         };
     }
 
+    function createLiteralRightHandAppearanceItemDef(modelIds, pixelRows, heldModel, palette) {
+        return {
+            slot: 'weapon',
+            maleModelIds: modelIds.male.slice(),
+            femaleModelIds: modelIds.female.slice(),
+            recolors: [],
+            fragments: buildPixelExtrudeFragments(pixelRows, palette, heldModel)
+        };
+    }
+
     const pickaxeModelIds = {
         male: [1135, -1, -1],
         female: [1235, -1, -1]
@@ -441,13 +645,35 @@
         rune_sword: createRightHandAppearanceItemDef('rune_sword', swordModelIds, SWORD_ICON_PIXELS, SWORD_HELD_MODEL, SWORD_HANDLE_PALETTE)
     };
 
+    const previewOnlyWeaponModelIds = {
+        male: [-1, -1, -1],
+        female: [-1, -1, -1]
+    };
+
+    const fishingRodModelIds = {
+        male: [1135, -1, -1],
+        female: [1235, -1, -1]
+    };
+
+    const harpoonModelIds = {
+        male: [1135, -1, -1],
+        female: [1235, -1, -1]
+    };
+
+    const utilityToolItemDefs = {
+        fishing_rod: createLiteralRightHandAppearanceItemDef(fishingRodModelIds, FISHING_ROD_ICON_PIXELS, FISHING_ROD_HELD_MODEL, FISHING_ROD_PALETTE),
+        small_net: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SMALL_NET_ICON_PIXELS, SMALL_NET_HELD_MODEL, SMALL_NET_PALETTE),
+        harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, HARPOON_PALETTE),
+        rune_harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, RUNE_HARPOON_PALETTE)
+    };
+
     window.PlayerAppearanceCatalog = {
-        version: '2026.03.m13',
+        version: '2026.03.m23',
         slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
         bodyColorFind,
         bodyColorPalettes,
         defaultSlotKits,
         kitDefs,
-        itemDefs: Object.assign({}, pickaxeItemDefs, axeItemDefs, swordItemDefs)
+        itemDefs: Object.assign({}, pickaxeItemDefs, axeItemDefs, swordItemDefs, utilityToolItemDefs)
     };
 })();

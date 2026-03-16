@@ -2,6 +2,22 @@
 
 This is the default item-icon pipeline for this project.
 
+## Canonical pipeline
+
+The canonical asset-authoring path for this repo is:
+
+- `assets/pixel-spec/<asset>.json` for Codex-first workbench drafts
+- `assets/pixel-src/<asset>.json` for canonical editable sources
+- `tools/pixel-editor/` for direct in-repo editing
+- `npm.cmd run tool:pixel:spec -- --spec ...` for drafting/review/promote
+- `npm.cmd run tool:pixel:build -- --asset <asset>` for generated PNG/OBJ outputs
+
+If a request is to create or revise art for this repo, use the pipeline above by default.
+
+## Removed legacy pipeline
+
+The older image-conversion and migration helpers have been removed. This repo now has one supported asset-authoring workflow: the pixel-spec/pixel-source/editor/build path described in this document.
+
 ## Canonical source of truth
 
 Each icon asset is authored as a text-backed pixel source file:
@@ -229,17 +245,7 @@ Current model behavior:
 
 ## Importing older art
 
-To bring an existing PNG into the new source format:
-
-```bat
-npm.cmd run tool:pixel:import-png -- -InputPath .\assets\pixel\logs-pixel.png -AssetId logs
-```
-
-To migrate older runtime icon definitions:
-
-```bat
-npm.cmd run tool:pixel:migrate
-```
+The old import/migration helpers were retired along with the legacy pipeline. If older art needs to be brought in now, recreate or trace it through the canonical in-repo tools instead of reviving the removed conversion scripts.
 
 ## Quality expectations
 
@@ -259,6 +265,10 @@ They can still follow this pipeline because it is codified in:
 - `tools/pixel-editor/*`
 - `tools/pixel/*`
 - `package.json` scripts
+
+## Chat preview note
+
+When sharing a local preview image in Codex chat, prefer copying it to a short no-space absolute path first if the workspace path contains spaces. The canonical asset should stay in its real project location; the no-space copy is only for chat rendering reliability.
 
 ## Catalog Source Of Truth
 

@@ -14,7 +14,37 @@ function run() {
 
   const schema = schemaModule.PLAYER_HUMANOID_V1_RIG;
   const descriptors = registry.listAnimationClipDescriptors();
-  assert(descriptors.length >= 5, "expected animation clip descriptors");
+  assert(descriptors.length >= 11, "expected animation clip descriptors");
+  assert(!!registry.getAnimationClip("player/mining1"), "expected mining1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/fishing_net1"), "expected fishing_net1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/fishing_rod_hold1"), "expected fishing_rod_hold1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/fishing_rod_cast1"), "expected fishing_rod_cast1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/fishing_harpoon_hold1"), "expected fishing_harpoon_hold1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/fishing_harpoon_strike1"), "expected fishing_harpoon_strike1 clip to be registered");
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/mining1.json"),
+    "expected to resolve descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fishing_net1.json"),
+    "expected to resolve fishing_net1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fishing_rod_hold1.json"),
+    "expected to resolve fishing_rod_hold1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fishing_rod_cast1.json"),
+    "expected to resolve fishing_rod_cast1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fishing_harpoon_hold1.json"),
+    "expected to resolve fishing_harpoon_hold1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fishing_harpoon_strike1.json"),
+    "expected to resolve fishing_harpoon_strike1 descriptors by source path"
+  );
   for (let i = 0; i < descriptors.length; i += 1) {
     const clip = registry.getAnimationClip(descriptors[i].clipId);
     const errors = clipUtils.validateAnimationClip(clip, schema);
@@ -113,6 +143,63 @@ function run() {
 
   const resetClip = clipUtils.resetPoseNodeToBindPose(registry.getAnimationClip("player/combat_slash"), "stage1", "rightArm", bindPose);
   assert(!resetClip.poses.stage1.rightArm, "reset-to-bind should remove node override");
+
+  const createdClip = {
+    clipId: "player/test_blank",
+    rigId: "player_humanoid_v1",
+    durationMs: 1000,
+    loopMode: "loop",
+    maskId: "fullBody",
+    poses: {
+      neutral: {}
+    },
+    keys: [
+      { poseId: "neutral", atMs: 0, ease: "hold" }
+    ],
+    markers: []
+  };
+  registry.registerAnimationClip({
+    clipId: createdClip.clipId,
+    rigId: createdClip.rigId,
+    sourcePath: "src/game/animation/clips/player/test_blank.json"
+  }, createdClip);
+  assert(!!registry.getAnimationClip(createdClip.clipId), "registerAnimationClip should store new clips");
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/test_blank.json"),
+    "registerAnimationClip should retain source-path lookup"
+  );
+  const conflictingClip = {
+    clipId: "player/test_blank_replacement",
+    rigId: "player_humanoid_v1",
+    durationMs: 1000,
+    loopMode: "loop",
+    maskId: "fullBody",
+    poses: {
+      neutral: {
+        rightArm: {
+          rotationDeg: { z: 15 }
+        }
+      }
+    },
+    keys: [
+      { poseId: "neutral", atMs: 0, ease: "hold" }
+    ],
+    markers: []
+  };
+  registry.registerAnimationClip({
+    clipId: conflictingClip.clipId,
+    rigId: conflictingClip.rigId,
+    sourcePath: "src/game/animation/clips/player/test_blank.json"
+  }, conflictingClip);
+  assert(
+    !registry.getAnimationClip(createdClip.clipId),
+    "registerAnimationClip should evict prior clips that reuse the same source path"
+  );
+  const storedConflictDescriptor = registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/test_blank.json");
+  assert(
+    storedConflictDescriptor && storedConflictDescriptor.clipId === conflictingClip.clipId,
+    "source-path lookup should resolve to the latest registered clip"
+  );
 
   console.log("Animation domain tests passed.");
 }

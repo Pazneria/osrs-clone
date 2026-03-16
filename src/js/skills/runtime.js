@@ -275,7 +275,6 @@
             equipment: overrides.equipment || currentEquipment,
             setShoulderPivot: overrides.setShoulderPivot || null,
             shoulderPivot: overrides.shoulderPivot || null,
-            applyRockMiningPose: overrides.applyRockMiningPose || null,
             sourceInvIndex: Number.isInteger(overrides.sourceInvIndex) ? overrides.sourceInvIndex : null,
             sourceItemId: (typeof overrides.sourceItemId === 'string' ? overrides.sourceItemId : null),
             recipeId: (typeof overrides.recipeId === 'string' ? overrides.recipeId : (targetUid && typeof targetUid.recipeId === 'string' ? targetUid.recipeId : null)),
@@ -503,8 +502,8 @@
         if (!module || typeof module.onAnimate !== 'function') return false;
 
         const context = createSkillContext(Object.assign({}, overrides, { skillId }));
-        module.onAnimate(context);
-        return true;
+        const handled = module.onAnimate(context);
+        return handled !== false;
     }
 
     window.SkillRuntime = {

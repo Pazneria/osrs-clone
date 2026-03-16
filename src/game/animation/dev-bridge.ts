@@ -4,11 +4,13 @@ const fs = require("fs");
 const path = require("path");
 import {
   ANIMATION_STUDIO_CLIPS_ROOT,
+  ANIMATION_STUDIO_CLIP_ROUTE,
   ANIMATION_STUDIO_MANIFEST_ROUTE,
   ANIMATION_STUDIO_SAVE_ROUTE
 } from "./persistence";
 export {
   ANIMATION_STUDIO_CLIPS_ROOT,
+  ANIMATION_STUDIO_CLIP_ROUTE,
   ANIMATION_STUDIO_MANIFEST_ROUTE,
   ANIMATION_STUDIO_SAVE_ROUTE
 } from "./persistence";
@@ -56,6 +58,19 @@ export function resolveAnimationClipWritePath(projectRoot: string, sourcePath: s
   return null;
 }
 
+function readAnimationClipSourcePathFromRequest(req: { url?: string }): string {
+  const requestUrl = String(req.url || "");
+  try {
+    const parsed = new URL(requestUrl, "http://animation-studio.local");
+    return typeof parsed.searchParams.get("sourcePath") === "string"
+      ? String(parsed.searchParams.get("sourcePath") || "")
+      : "";
+  } catch (error) {
+    void error;
+    return "";
+  }
+}
+
 export function createAnimationStudioDevMiddleware(projectRoot: string) {
   return async function animationStudioDevMiddleware(
     req: any,
@@ -70,6 +85,30 @@ export function createAnimationStudioDevMiddleware(projectRoot: string) {
       });
       res.setHeader("Content-Type", "application/json");
       res.end(payload);
+      return;
+    }
+
+    if (req.method === "GET" && requestUrl.startsWith(ANIMATION_STUDIO_CLIP_ROUTE)) {
+      const sourcePath = readAnimationClipSourcePathFromRequest(req);
+      const resolvedPath = resolveAnimationClipWritePath(projectRoot, sourcePath);
+      if (!resolvedPath || !fs.existsSync(resolvedPath)) {
+        res.statusCode = 404;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ ok: false, error: "clip_not_found" }));
+        return;
+      }
+      try {
+        const clip = JSON.parse(fs.readFileSync(resolvedPath, "utf8"));
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ ok: true, sourcePath, clip }));
+      } catch (error) {
+        res.statusCode = 500;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({
+          ok: false,
+          error: error instanceof Error ? error.message : "clip_read_failed"
+        }));
+      }
       return;
     }
 

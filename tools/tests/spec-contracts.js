@@ -710,6 +710,15 @@ function run() {
   const fishingAnimationHandled = skillModules.fishing.onAnimate(fishingAnimateContext);
   assert(fishingAnimationHandled === false, "fishing should defer body motion to clip-driven animation");
   assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "small_net", "fishing should still surface the small-net visual during clip-driven playback");
+  fishingAnimateContext.playerState.fishingActiveMethodId = "rod";
+  skillModules.fishing.onAnimate(fishingAnimateContext);
+  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "fishing_rod", "fishing should surface the rod visual during rod clip playback");
+  fishingAnimateContext.playerState.fishingActiveMethodId = "harpoon";
+  skillModules.fishing.onAnimate(fishingAnimateContext);
+  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "harpoon", "fishing should surface the harpoon visual during harpoon clip playback");
+  fishingAnimateContext.playerState.fishingActiveMethodId = "deep_rune_harpoon";
+  skillModules.fishing.onAnimate(fishingAnimateContext);
+  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const miningRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/mining-runtime.ts"), "utf8");
   const runecraftingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/runecrafting-runtime.ts"), "utf8");
@@ -771,6 +780,10 @@ function run() {
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
   assert(inputRenderScript.includes("'player/mining1'"), "input render should route mining through the studio clip");
   assert(inputRenderScript.includes("'player/fishing_net1'"), "input render should route net fishing through the studio clip");
+  assert(inputRenderScript.includes("'player/fishing_rod_hold1'"), "input render should route rod fishing through the studio hold clip");
+  assert(inputRenderScript.includes("'player/fishing_rod_cast1'"), "input render should request the rod cast action clip");
+  assert(inputRenderScript.includes("'player/fishing_harpoon_hold1'"), "input render should route harpoon fishing through the studio hold clip");
+  assert(inputRenderScript.includes("'player/fishing_harpoon_strike1'"), "input render should request the harpoon startup action clip");
   assert(!inputRenderScript.includes("function applyRockMiningPose"), "legacy hardcoded mining pose should be removed");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
   assert(coreScript.includes("function getQaDiscoveredMerchants()"), "core QA merchant discovery helper missing");

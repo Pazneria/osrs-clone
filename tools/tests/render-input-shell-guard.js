@@ -29,6 +29,8 @@ function run() {
   assert(inputSource.includes("function maybeUpdateMainDirectionalShadowFocus"), "input-render.js should throttle directional shadow focus updates through a helper");
   assert(inputSource.includes("window.updateMainDirectionalShadowFocus"), "input-render.js should keep directional shadow focus wired through the world shell");
   assert(inputSource.includes("window.updateSkyRuntime(camera.position, frameNowMs);"), "input-render.js should refresh the sky runtime from animate()");
+  assert(inputSource.includes("function syncPlayerRigSkillingToolVisual("), "input-render.js should reconcile temporary skilling tool visuals with live actions");
+  assert(inputSource.includes("setPlayerRigToolVisual(playerRigRef, null);"), "input-render.js should clear temporary skilling tool visuals after skilling ends");
 
   console.log("Render/input shell guard passed.");
 }

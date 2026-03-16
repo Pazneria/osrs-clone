@@ -49,6 +49,25 @@ async function run() {
   assert(manifestPayload.writable === true, "manifest should report writable");
   assert(manifestPayload.clipSourceFiles.includes(sourcePath), "manifest should list clip source files");
 
+  const clipRes = createFakeRes();
+  await middleware(
+    createFakeReq("GET", `${bridge.ANIMATION_STUDIO_CLIP_ROUTE}?sourcePath=${encodeURIComponent(sourcePath)}`),
+    clipRes,
+    () => {}
+  );
+  const clipPayload = JSON.parse(clipRes.body);
+  assert(clipRes.statusCode === 200, "clip lookup should succeed");
+  assert(clipPayload.ok === true, "clip lookup should mark success");
+  assert(clipPayload.clip && clipPayload.clip.clipId === "test", "clip lookup should return parsed clip data");
+
+  const blockedClipRes = createFakeRes();
+  await middleware(
+    createFakeReq("GET", `${bridge.ANIMATION_STUDIO_CLIP_ROUTE}?sourcePath=${encodeURIComponent("../outside.json")}`),
+    blockedClipRes,
+    () => {}
+  );
+  assert(blockedClipRes.statusCode === 404, "clip lookup should reject paths outside clips root");
+
   const nextSource = "{\n  \"clipId\": \"saved\"\n}\n";
   const saveRes = createFakeRes();
   await middleware(
@@ -77,4 +96,3 @@ run().catch((error) => {
   console.error(error.message);
   process.exit(1);
 });
-

@@ -649,7 +649,7 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260313n";
+        const ASSET_VERSION_TAG = "20260316i";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
         const DEFAULT_ICON_REVIEW_GRANT_ID = 'inventory_icon_review_20260313a';
         const DEFAULT_ICON_REVIEW_LABEL = 'Inventory Icons';

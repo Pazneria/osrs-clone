@@ -4,14 +4,28 @@ This repo now includes a starter toolkit under `tools/` so we can move faster wi
 
 ## What is already added
 
-- `tools/pixel/pixelize.ps1`: convert one image into pixel-art style output.
-- `tools/pixel/batch-pixelize.ps1`: batch-convert a folder of images.
 - `tools/pixel/build-pixel-assets.js`: generate runtime PNG + OBJ artifacts from `assets/pixel-src/*.json`.
 - `tools/pixel-editor/`: browser-based 64x64 authoring editor with canonical 32x32 export for inventory icons.
 - `tools/pixel/render-pixel-spec.js`: AI-first sprite spec compiler for geometry-driven drafts and review previews.
 - `tools/sim/loot-sim.js`: run weighted drop table simulations.
 - `tools/sim/combat-sim.js`: run quick combat time-to-kill simulations.
 - `tools/check-prereqs.ps1`: verifies required local tooling.
+
+## Canonical asset workflow
+
+For item icons and held-tool silhouettes, the canonical repo-owned workflow is:
+
+- `assets/pixel-spec/*` for workbench drafts
+- `assets/pixel-src/*` for canonical editable sources
+- `tools/pixel-editor/`
+- `npm.cmd run tool:pixel:spec -- --spec ...`
+- `npm.cmd run tool:pixel:build -- --asset <asset_id>`
+
+Use `docs/ASSET_PIPELINE.md` for the real day-to-day icon workflow.
+
+## Removed legacy helpers
+
+The older image-conversion and migration helpers were removed so the repo now points at a single asset-authoring workflow. If you need to revise or create art, use the canonical workflow above rather than looking for an import shortcut.
 
 ## Easiest ImageMagick setup (recommended)
 
@@ -47,18 +61,6 @@ Pixel asset build:
 ```bat
 npm.cmd run tool:pixel:build -- --asset iron_axe
 npm.cmd run tool:pixel:build:all
-```
-
-Legacy image-to-pixel conversion:
-
-```bat
-npm.cmd run tool:pixelize -- -InputPath .\assets\input\tree.png -CellSize 6 -PaletteColors 24 -Upscale 6
-```
-
-Batch folder conversion:
-
-```bat
-npm.cmd run tool:pixelize:batch -- -InputDir .\assets\input -OutputDir .\assets\pixel -Recurse
 ```
 
 Loot simulator:

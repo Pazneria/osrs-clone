@@ -1528,7 +1528,7 @@
             mithril_pickaxe: { meleeAccuracyBonus: 15, meleeStrengthBonus: 7, tickCycle: 5, requiredAttackLevel: 20, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
             adamant_pickaxe: { meleeAccuracyBonus: 21, meleeStrengthBonus: 10, tickCycle: 5, requiredAttackLevel: 30, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
             rune_pickaxe: { meleeAccuracyBonus: 28, meleeStrengthBonus: 14, tickCycle: 5, requiredAttackLevel: 40, toolFamily: 'pickaxe', familyTag: 'pickaxe' },
-            fishing_rod: { meleeAccuracyBonus: 8, meleeStrengthBonus: 4, tickCycle: 5, requiredAttackLevel: 10, toolFamily: 'fishing_rod', familyTag: 'fishing_rod' },
+            fishing_rod: { meleeAccuracyBonus: 8, meleeStrengthBonus: 4, tickCycle: 5, requiredAttackLevel: 1, toolFamily: 'fishing_rod', familyTag: 'fishing_rod' },
             harpoon: { meleeAccuracyBonus: 18, meleeStrengthBonus: 9, tickCycle: 5, requiredAttackLevel: 30, toolFamily: 'harpoon', familyTag: 'harpoon' },
             rune_harpoon: { meleeAccuracyBonus: 24, meleeStrengthBonus: 12, tickCycle: 5, requiredAttackLevel: 40, toolFamily: 'harpoon', familyTag: 'harpoon' }
         };
@@ -1566,6 +1566,12 @@
             rune_platebody: 40
         };
 
+        const fishingRequirementByItemId = {
+            fishing_rod: 10,
+            harpoon: 30,
+            rune_harpoon: 40
+        };
+
         const weaponIds = Object.keys(weaponRows);
         for (let i = 0; i < weaponIds.length; i++) {
             const itemId = weaponIds[i];
@@ -1579,9 +1585,12 @@
                 def: 0,
                 str: row.meleeStrengthBonus
             };
-            if (itemId === 'fishing_rod') {
+            if (Object.prototype.hasOwnProperty.call(fishingRequirementByItemId, itemId)) {
                 def.type = 'weapon';
-                def.weaponClass = 'fishing_rod';
+                if (itemId === 'fishing_rod') def.weaponClass = 'fishing_rod';
+                if (def.combat) def.combat.requiredAttackLevel = 1;
+                def.requiredAttackLevel = undefined;
+                def.requiredFishingLevel = fishingRequirementByItemId[itemId];
                 def.actions = ['Equip', 'Use', 'Drop'];
                 def.defaultAction = 'Equip';
             }
@@ -1647,6 +1656,7 @@
             if (def.stats) db[id].stats = Object.assign({}, def.stats);
             if (def.combat) db[id].combat = cloneCombatProfile(def.combat);
             if (Number.isFinite(def.requiredAttackLevel)) db[id].requiredAttackLevel = Math.max(1, Math.floor(def.requiredAttackLevel));
+            if (Number.isFinite(def.requiredFishingLevel)) db[id].requiredFishingLevel = Math.max(1, Math.floor(def.requiredFishingLevel));
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;
             if (def.burnResultId) db[id].burnResultId = def.burnResultId;
             if (Number.isFinite(def.burnChance)) db[id].burnChance = def.burnChance;

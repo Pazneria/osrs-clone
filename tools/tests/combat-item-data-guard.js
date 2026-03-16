@@ -24,7 +24,10 @@ const MELEE_HELD_ITEMS = [
   "steel_pickaxe",
   "mithril_pickaxe",
   "adamant_pickaxe",
-  "rune_pickaxe",
+  "rune_pickaxe"
+];
+
+const FISHING_HELD_ITEMS = [
   "fishing_rod",
   "harpoon",
   "rune_harpoon"
@@ -49,6 +52,15 @@ for (const itemId of MELEE_HELD_ITEMS) {
   assert.ok(item.combat, `${itemId} should expose explicit combat data`);
   assert.strictEqual(item.combat.attackProfile.styleFamily, "melee", `${itemId} should be authored as a melee attack source`);
   assert.ok(Number.isFinite(item.requiredAttackLevel), `${itemId} should expose a required Attack level`);
+}
+
+for (const itemId of FISHING_HELD_ITEMS) {
+  const item = itemDefs[itemId];
+  assert.ok(item, `${itemId} should exist in the runtime item catalog`);
+  assert.ok(item.combat, `${itemId} should expose explicit combat data`);
+  assert.strictEqual(item.combat.attackProfile.styleFamily, "melee", `${itemId} should still be authored as a melee attack source`);
+  assert.ok(Number.isFinite(item.requiredFishingLevel), `${itemId} should expose a required Fishing level`);
+  assert.ok(!Number.isFinite(item.requiredAttackLevel), `${itemId} should not expose an Attack gate`);
 }
 
 for (const itemId of ARMOR_ITEMS) {

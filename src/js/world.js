@@ -2032,6 +2032,14 @@
                     addChatMessage(`You need Attack level ${requiredAttackLevel} to equip the ${item.name}.`, 'warn');
                     return;
                 }
+                const requiredFishingLevel = Number.isFinite(item.requiredFishingLevel) ? Math.max(1, Math.floor(item.requiredFishingLevel)) : 0;
+                const fishingLevel = playerSkills && playerSkills.fishing && Number.isFinite(playerSkills.fishing.level)
+                    ? Math.max(1, Math.floor(playerSkills.fishing.level))
+                    : 1;
+                if (requiredFishingLevel > 0 && fishingLevel < requiredFishingLevel) {
+                    addChatMessage(`You need Fishing level ${requiredFishingLevel} to equip the ${item.name}.`, 'warn');
+                    return;
+                }
                 const oldItem = equipment[slotName];
                 equipment[slotName] = item; inventory[invIndex] = oldItem ? { itemData: oldItem, amount: 1 } : null;
                 clearSelectedUse(false);

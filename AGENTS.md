@@ -30,6 +30,27 @@ Default behavior for a normal icon request:
    - When a held weapon/tool should feel chunky but keep a crisp edge, use a thicker default runtime depth with a thinner secondary metal symbol for blade/tip voxels instead of making the whole model uniformly thick.
    - Reuse the same family mesh path for dropped world items instead of leaving them on a generic fallback.
 
+## Canonical vs Legacy Asset Tools
+
+Treat the in-repo pixel workflow as the only canonical authoring pipeline:
+
+- Canonical authoring/editor tools:
+  - `assets/pixel-spec/*` for Codex-first workbench drafts
+  - `assets/pixel-src/*` for canonical editable pixel sources
+  - `tools/pixel-editor/` for direct in-repo editing
+  - `npm.cmd run tool:pixel:spec -- --spec ...` for draft/render/promote
+  - `npm.cmd run tool:pixel:build -- --asset <asset_id>` for generated PNG/OBJ outputs
+- The older image-conversion/migration pipeline has been removed from this repo. Do not suggest or recreate it unless the user explicitly asks to restore a specific archived tool.
+- Do not treat external/older conversion flows as the "real" pipeline when the request is to create or revise art for this repo. The real pipeline is the repo-owned pixel-spec/pixel-source/editor flow above.
+
+## Chat Preview Images
+
+When sharing local preview images in Codex chat:
+
+- Do not embed image paths from workspace folders with spaces when a no-space preview path is easy to create.
+- Prefer copying the preview image to a short no-space absolute path such as `C:\Users\jmore\.codex\projects\preview-<asset>.png` before embedding it in chat.
+- This is only for chat rendering reliability. Do not move the canonical runtime asset out of its real project location.
+
 Asset selection rules:
 
 - Reuse an existing `assetId` when the request is clearly revising an existing icon.

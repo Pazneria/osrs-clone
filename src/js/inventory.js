@@ -213,6 +213,12 @@
             if (requiredAttackLevel > 1) {
                 requirementLines.push({ label: 'Attack req.', value: String(requiredAttackLevel) });
             }
+            const requiredFishingLevel = Number.isFinite(item.requiredFishingLevel)
+                ? Math.max(1, Math.floor(item.requiredFishingLevel))
+                : 0;
+            if (requiredFishingLevel > 0) {
+                requirementLines.push({ label: 'Fishing req.', value: String(requiredFishingLevel) });
+            }
 
             return {
                 name: typeof item.name === 'string' ? item.name : 'Item',

@@ -209,10 +209,11 @@
         },
 
         onAnimate(context) {
-            if (!context.rig || typeof context.applyRockMiningPose !== 'function') return;
             const pickaxeData = getPickaxeContext(context);
-            if (pickaxeData.pickaxe && typeof context.setToolVisualById === 'function') context.setToolVisualById(pickaxeData.pickaxe.id);
-            context.applyRockMiningPose(context.rig, context.frameNow, context.baseVisualY, !!pickaxeData.pickaxe);
+            if (typeof context.setToolVisualById === 'function') {
+                context.setToolVisualById(pickaxeData.pickaxe ? pickaxeData.pickaxe.id : null);
+            }
+            return false;
         },
 
         getTooltip(context) {

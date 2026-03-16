@@ -6,24 +6,9 @@
   "maskId": "fullBody",
   "poses": {
     "neutral": {
-      "torso": {
-        "rotationDeg": {
-          "x": -2
-        }
-      },
       "head": {
         "rotationDeg": {
           "x": -1
-        }
-      },
-      "leftLowerArm": {
-        "rotationDeg": {
-          "x": -2
-        }
-      },
-      "rightLowerArm": {
-        "rotationDeg": {
-          "x": -2
         }
       }
     },
@@ -96,4 +81,3 @@
     }
   ]
 }
-

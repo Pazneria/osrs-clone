@@ -32,10 +32,21 @@ function run() {
   assert(catalogScript.includes("bodyColorPalettes"), "player appearance catalog should define bodyColorPalettes");
   assert(catalogScript.includes("kit_head_male"), "player appearance catalog should define base kits");
   assert(catalogScript.includes("iron_pickaxe"), "player appearance catalog should define item fragments");
+  assert(catalogScript.includes("small_net"), "player appearance catalog should define fishing-net held fragments");
+  assert(catalogScript.includes("harpoon"), "player appearance catalog should define harpoon held fragments");
+  assert(catalogScript.includes("rune_harpoon"), "player appearance catalog should define rune-harpoon held fragments");
 
   assert(
     playerModelScript.includes("window.PlayerAppearanceCatalog"),
     "player model should load appearance data from PlayerAppearanceCatalog"
+  );
+  assert(
+    playerModelScript.includes("SKILLING_TOOL_VISUAL_GROUP_NAME"),
+    "player model should isolate temporary skilling tool meshes from base equipped visuals"
+  );
+  assert(
+    playerModelScript.includes("setBaseToolVisualVisibility"),
+    "player model should restore base equipped visuals when temporary skilling tools are cleared"
   );
   assert(
     !playerModelScript.includes("kit_head_male: { slot: 'head'"),
