@@ -884,6 +884,86 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
+### HIT-044 - Complete inventory icon coverage for all log types
+- Status: Backlog
+- Severity: S3
+- Area: WC
+- Source: Manual
+- Links: `content/icon-status.json`, `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `assets/pixel-src/regular_logs.json`, `assets/pixel-src/willow_logs.json`
+- Repro:
+  1. Compare the inventory icons for `logs`, `oak_logs`, `willow_logs`, `maple_logs`, and `yew_logs`.
+  2. Check the current icon asset mapping in `content/icon-status.json` or `src/js/content/item-catalog.js`.
+- Expected: Every log tier has a distinct, recognizable inventory icon so the full log family reads clearly at a glance.
+- Actual: Log icon coverage is incomplete; `oak_logs`, `maple_logs`, and `yew_logs` still point at the shared `logs` asset instead of having dedicated tier-specific icons.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Audit canonical log item mappings and confirm the intended dedicated asset IDs for each tier.
+  2. Author/build the missing log inventory icons in the pixel asset pipeline.
+  3. Update item/icon status wiring and verify the full log family displays distinct icons in inventory.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-045 - Firemaking progression is still logs-only instead of all log tiers
+- Status: Backlog
+- Severity: S2
+- Area: BUG
+- Source: Manual
+- Links: `src/js/skills/firemaking/index.js`, `content/skills/firemaking.json`, `src/js/skills/specs.js`, `src/js/world.js`, `tools/tests/spec-contracts.js`
+- Repro:
+  1. Put a `tinderbox` in inventory with `oak_logs`, `willow_logs`, `maple_logs`, or `yew_logs`.
+  2. Try to use the tinderbox on any of those log items to start firemaking.
+  3. Compare the result with using `tinderbox` on regular `logs`.
+- Expected: Firemaking should support every canonical log tier (`logs`, `oak_logs`, `willow_logs`, `maple_logs`, `yew_logs`) with proper progression data instead of a regular-logs-only ruleset.
+- Actual: Firemaking currently only accepts regular `logs`; higher-tier logs do not start the action, and the current data/spec guardrails explicitly preserve the undesired single-tier `logs`-only flow.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Audit runtime interaction checks and skill recipe/spec data for log-to-firemaking eligibility.
+  2. Replace the current single-tier firemaking data model with explicit all-tier log progression and validation rules.
+  3. Implement/support multi-tier log lighting and add regression coverage for every canonical log tier.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
+### HIT-046 - Skills menu needs logical organization and full tier-by-tier coverage
+- Status: Backlog
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `src/js/inventory.js`, `src/js/skills/_index.md`, `src/js/skills/woodcutting/ROADMAP.md`, `src/js/skills/firemaking/ROADMAP.md`, `src/js/skills/fishing/ROADMAP.md`, `src/js/skills/specs.js`
+- Repro:
+  1. Open the skills menu and drill into several different skills.
+  2. Compare how progression information is grouped, labeled, and exposed across skill tiers.
+  3. Look for whether each skill surfaces a complete tier-by-tier reference for unlocks, methods, outputs, and other important progression info.
+- Expected: Skills menus should be organized consistently and logically, with every skill exposing complete tier-by-tier progression information in a way that is easy to scan and compare.
+- Actual: The current skills/progression UI has a good baseline, but the organization and depth of information are not yet serving as a complete, consistent per-tier reference across every skill.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Audit the current skills-menu information architecture and identify where tier coverage is missing, unclear, or inconsistent by skill.
+  2. Define a shared per-tier presentation model for skill menus so unlocks, methods, outputs, and progression notes render in a predictable structure.
+  3. Implement the menu improvements incrementally and, when a partial pass leaves meaningful gaps, add follow-up hits for the remaining skills or menu sections.
+- Plan Outcome: Pending
+- Fix Notes:
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [ ] Repro no longer occurs / requirement met
+  - [ ] Regression checks passed
+  - [ ] Notes/logs/docs updated
+
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->
 
