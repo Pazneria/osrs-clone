@@ -1,14 +1,71 @@
 (function () {
     const SKILL_ID = 'firemaking';
 
-    function getLogRecipe(context) {
+    function getRecipeSet(context) {
         const recipes = typeof context.getRecipeSet === 'function' ? context.getRecipeSet(SKILL_ID) : null;
-        return recipes ? recipes.logs : null;
+        return recipes && typeof recipes === 'object' ? recipes : null;
+    }
+
+    function getRecipeEntries(context) {
+        const recipes = getRecipeSet(context);
+        if (!recipes) return [];
+
+        return Object.keys(recipes)
+            .map((recipeId) => recipes[recipeId])
+            .filter((recipe) => recipe && typeof recipe === 'object');
+    }
+
+    function getRecipeBySourceItemId(context, sourceItemId) {
+        if (typeof sourceItemId !== 'string' || !sourceItemId) return null;
+        const recipes = getRecipeEntries(context);
+        for (let i = 0; i < recipes.length; i++) {
+            const recipe = recipes[i];
+            if (recipe.sourceItemId === sourceItemId) return recipe;
+        }
+        return null;
+    }
+
+    function getInventoryUseLogItemId(context) {
+        if (!context || context.targetObj !== 'INVENTORY') return null;
+        const targetUid = context.targetUid && typeof context.targetUid === 'object' ? context.targetUid : null;
+        const sourceItemId = typeof context.sourceItemId === 'string' ? context.sourceItemId : '';
+        const targetItemId = targetUid && typeof targetUid.targetItemId === 'string' ? targetUid.targetItemId : '';
+        const sourceRecipe = getRecipeBySourceItemId(context, sourceItemId);
+        const targetRecipe = getRecipeBySourceItemId(context, targetItemId);
+
+        if (sourceItemId === 'tinderbox' && targetRecipe) return targetItemId;
+        if (targetItemId === 'tinderbox' && sourceRecipe) return sourceItemId;
+        return null;
+    }
+
+    function getLogRecipe(context, options = {}) {
+        const includeLocked = !!options.includeLocked;
+        const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
+        const requestedLogItemId = getInventoryUseLogItemId(context)
+            || (typeof context.sourceItemId === 'string' ? context.sourceItemId : '');
+        const requestedRecipe = getRecipeBySourceItemId(context, requestedLogItemId);
+        if (requestedRecipe) {
+            if (!includeLocked && level < (requestedRecipe.requiredLevel || 1)) return null;
+            return requestedRecipe;
+        }
+
+        const recipes = getRecipeEntries(context);
+        for (let i = 0; i < recipes.length; i++) {
+            const recipe = recipes[i];
+            if (!recipe || typeof recipe !== 'object' || typeof recipe.sourceItemId !== 'string') continue;
+            if (context.getInventoryCount(recipe.sourceItemId) <= 0) continue;
+            if (!includeLocked && level < (recipe.requiredLevel || 1)) continue;
+            return recipe;
+        }
+
+        return null;
     }
 
     function isValidFiremakingUse(context) {
-        if (!context || context.targetObj !== 'GROUND') return false;
-        return context.sourceItemId === 'logs' || context.sourceItemId === 'tinderbox';
+        if (!context) return false;
+        if (context.targetObj === 'INVENTORY') return !!getInventoryUseLogItemId(context);
+        if (context.targetObj !== 'GROUND') return false;
+        return context.sourceItemId === 'tinderbox' || !!getRecipeBySourceItemId(context, context.sourceItemId);
     }
 
     function getAttemptInterval(recipe, skillSpec) {
@@ -65,14 +122,14 @@
         canStart(context) {
             const recipe = getLogRecipe(context);
             if (!recipe) return false;
-            const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
-            return level >= (recipe.requiredLevel || 1)
-                && context.getInventoryCount('tinderbox') > 0
+            return context.getInventoryCount('tinderbox') > 0
                 && context.getInventoryCount(recipe.sourceItemId) > 0;
         },
 
         onUseItem(context) {
             if (!isValidFiremakingUse(context)) return false;
+            const recipe = getLogRecipe(context, { includeLocked: true });
+            if (!recipe) return false;
 
             if (typeof context.haltMovement === 'function') context.haltMovement();
 
@@ -80,12 +137,12 @@
                 skillId: SKILL_ID,
                 targetObj: 'GROUND',
                 sourceInvIndex: context.sourceInvIndex,
-                sourceItemId: context.sourceItemId
+                sourceItemId: recipe.sourceItemId
             });
         },
 
         onStart(context) {
-            const recipe = getLogRecipe(context);
+            const recipe = getLogRecipe(context, { includeLocked: true });
             if (!recipe) {
                 context.addChatMessage('You need logs and a tinderbox.', 'warn');
                 return false;
@@ -112,8 +169,8 @@
 
         onTick(context) {
             if (context.playerState.action !== 'SKILLING: FIREMAKING') return;
-            const recipe = getLogRecipe(context);
             const session = context.playerState.firemakingSession;
+            const recipe = session ? getRecipeBySourceItemId(context, session.sourceItemId) : null;
             if (!recipe || !session) {
                 context.stopAction();
                 context.playerState.firemakingSession = null;

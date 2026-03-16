@@ -16,6 +16,10 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Log Type | Required Level |
 | -------- | -------------- |
 | Logs     | 1              |
+| Oak Logs | 10             |
+| Willow Logs | 20          |
+| Maple Logs | 30           |
+| Yew Logs | 40             |
 
 ## Tools
 
@@ -60,6 +64,10 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Log Type | Required Level | Ignition Difficulty | XP per Action | Fire Lifetime Ticks |
 | -------- | -------------- | ------------------- | ------------- | ------------------- |
 | Logs     | 1              | 15                  | 40            | 90                  |
+| Oak Logs | 10             | 25                  | 60            | 90                  |
+| Willow Logs | 20          | 35                  | 90            | 90                  |
+| Maple Logs | 30           | 50                  | 135           | 90                  |
+| Yew Logs | 40             | 65                  | 200           | 90                  |
 
 ### Standardized Success Chance Comparison
 
@@ -68,6 +76,10 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Log Type | Ignition Success Score | Calculation    | Ignition Success Chance |
 | -------- | ---------------------- | -------------- | ----------------------- |
 | Logs     | 40                     | 40 / (40 + 15) | 72.7273%                |
+| Oak Logs | 40                     | 40 / (40 + 25) | 61.5385%                |
+| Willow Logs | 40                  | 40 / (40 + 35) | 53.3333%                |
+| Maple Logs | 40                   | 40 / (40 + 50) | 44.4444%                |
+| Yew Logs | 40                     | 40 / (40 + 65) | 38.0952%                |
 
 ## Fire Runtime State
 
@@ -125,6 +137,10 @@ Firemaking creates value indirectly by consuming logs to unlock utility rather t
 | Item      | Category | Buy Value | Sell Value |
 | --------- | -------- | --------- | ---------- |
 | Logs      | Resource | 6         | 2          |
+| Oak Logs  | Resource | 16        | 6          |
+| Willow Logs | Resource | 36      | 14         |
+| Maple Logs | Resource | 80       | 32         |
+| Yew Logs  | Resource | 180       | 72         |
 | Ashes     | Resource | 4         | 1          |
 | Tinderbox | Tool     | 8         | 2          |
 
@@ -157,7 +173,7 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 - Firemaking is primarily a utility and resource-sink skill rather than a direct gold-making skill.
 - The general store buys all firemaking-related items at half price, rounded down.
 - Firemaking success improves as firemaking level rises because higher skill increases ignition success chance.
-- Current runtime progression is a single-tier logs band; higher-tier log progression is reserved for a future expansion pass.
+- Firemaking progression spans all canonical log tiers: `logs`, `oak_logs`, `willow_logs`, `maple_logs`, and `yew_logs`.
 - Fires can be made on any tile that does not already contain a lit fire.
 - Lit fires do not block movement or standing.
 - Lit fires do not deal damage and are not treated as hazards.
@@ -172,5 +188,9 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 | Item      | Type     | Required Level | Buy Value | Sell Value | Notes |
 | --------- | -------- | -------------- | --------- | ---------- | ----- |
 | Tinderbox | Tool     | 1              | 8         | 2          | Required for all firemaking actions |
-| Logs      | Resource | 1              | 6         | 2          | Used to create fires in the current runtime band |
+| Logs      | Resource | 1              | 6         | 2          | Entry-tier firemaking fuel |
+| Oak Logs  | Resource | 10             | 16        | 6          | Level 10 firemaking fuel |
+| Willow Logs | Resource | 20           | 36        | 14         | Level 20 firemaking fuel |
+| Maple Logs | Resource | 30            | 80        | 32         | Level 30 firemaking fuel |
+| Yew Logs  | Resource | 40             | 180       | 72         | Level 40 firemaking fuel |
 | Ashes     | Resource | 1              | 4         | 1          | Stackable; created when fires expire |

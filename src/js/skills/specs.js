@@ -281,6 +281,34 @@
                     ignitionDifficulty: 15,
                     xpPerSuccess: 40,
                     fireLifetimeTicks: 90
+                },
+                oak_logs: {
+                    sourceItemId: 'oak_logs',
+                    requiredLevel: 10,
+                    ignitionDifficulty: 25,
+                    xpPerSuccess: 60,
+                    fireLifetimeTicks: 90
+                },
+                willow_logs: {
+                    sourceItemId: 'willow_logs',
+                    requiredLevel: 20,
+                    ignitionDifficulty: 35,
+                    xpPerSuccess: 90,
+                    fireLifetimeTicks: 90
+                },
+                maple_logs: {
+                    sourceItemId: 'maple_logs',
+                    requiredLevel: 30,
+                    ignitionDifficulty: 50,
+                    xpPerSuccess: 135,
+                    fireLifetimeTicks: 90
+                },
+                yew_logs: {
+                    sourceItemId: 'yew_logs',
+                    requiredLevel: 40,
+                    ignitionDifficulty: 65,
+                    xpPerSuccess: 200,
+                    fireLifetimeTicks: 90
                 }
             },
             economy: {
@@ -288,6 +316,10 @@
                 supportResource: 'tinderbox',
                 valueTable: {
                     logs: { buy: 6, sell: 2 },
+                    oak_logs: { buy: 16, sell: 6 },
+                    willow_logs: { buy: 36, sell: 14 },
+                    maple_logs: { buy: 80, sell: 32 },
+                    yew_logs: { buy: 180, sell: 72 },
                     tinderbox: { buy: 8, sell: 2 },
                     ashes: { buy: 4, sell: 1 }
                 },
@@ -1578,18 +1610,29 @@
             errors.push('firemaking recipe set is missing for woodcutting demand integration');
         } else {
             const fireRows = Object.entries(firemakingRecipes);
-            let hasBaseLogsConsumer = false;
+            const firemakingConsumersByLog = {};
+            for (let i = 0; i < canonicalLogs.length; i++) {
+                firemakingConsumersByLog[canonicalLogs[i]] = [];
+            }
+
             for (let i = 0; i < fireRows.length; i++) {
                 const recipeId = fireRows[i][0];
                 const recipe = fireRows[i][1] || {};
                 const sourceItemId = typeof recipe.sourceItemId === 'string' ? recipe.sourceItemId : '';
-                if (sourceItemId !== 'logs') {
-                    errors.push('firemaking:' + recipeId + ' must remain single-tier and consume only logs (found ' + (sourceItemId || 'missing') + ')');
+                if (!canonicalSet.has(sourceItemId)) {
+                    errors.push('firemaking:' + recipeId + ' uses non-canonical sourceItemId ' + (sourceItemId || 'missing'));
+                    continue;
                 }
-                if (sourceItemId === 'logs') hasBaseLogsConsumer = true;
+
+                firemakingConsumersByLog[sourceItemId].push(recipeId);
             }
-            if (!hasBaseLogsConsumer) {
-                errors.push('firemaking is missing a base logs consumer recipe');
+
+            for (let i = 0; i < canonicalLogs.length; i++) {
+                const logItemId = canonicalLogs[i];
+                const consumers = firemakingConsumersByLog[logItemId] || [];
+                if (consumers.length === 0) {
+                    errors.push('woodcutting canonical log ' + logItemId + ' has no firemaking consumer recipes');
+                }
             }
         }
 

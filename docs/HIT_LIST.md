@@ -911,7 +911,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-045 - Firemaking progression is still logs-only instead of all log tiers
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: BUG
 - Source: Manual
@@ -928,14 +928,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Audit runtime interaction checks and skill recipe/spec data for log-to-firemaking eligibility.
   2. Replace the current single-tier firemaking data model with explicit all-tier log progression and validation rules.
   3. Implement/support multi-tier log lighting and add regression coverage for every canonical log tier.
-- Plan Outcome: Pending
+- Plan Outcome: Completed
 - Fix Notes:
+  - Added canonical firemaking recipes for `logs`, `oak_logs`, `willow_logs`, `maple_logs`, and `yew_logs` in runtime/content skill specs with tiered level, difficulty, XP, and economy rows.
+  - Updated firemaking interaction resolution so using `tinderbox` with any canonical log tier preserves the chosen log type when starting the action.
+  - Replaced the old woodcutting-demand single-tier firemaking guard with all-tier coverage checks and added regression coverage for every canonical log tier in the runtime tests.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-046 - Skills menu needs logical organization and full tier-by-tier coverage
 - Status: Backlog

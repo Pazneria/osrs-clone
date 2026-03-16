@@ -233,21 +233,22 @@ function run() {
   assert(!!logsRow, "woodcutting demand row missing base logs");
   assert(Array.isArray(logsRow.consumers.firemaking) && logsRow.consumers.firemaking.includes("logs"), "firemaking logs consumer missing from demand summary");
 
-  const nonLogsRows = woodcuttingDemand.rows.filter((entry) => entry && entry.logItemId !== "logs");
-  nonLogsRows.forEach((row) => {
-    assert(Array.isArray(row.consumers.firemaking) && row.consumers.firemaking.length === 0, "firemaking should remain single-tier for " + row.logItemId);
+  canonicalLogs.forEach((logId) => {
+    const row = woodcuttingDemand.rows.find((entry) => entry && entry.logItemId === logId);
+    assert(!!row, "woodcutting demand row missing firemaking coverage for " + logId);
+    assert(Array.isArray(row.consumers.firemaking) && row.consumers.firemaking.includes(logId), "firemaking consumer missing from demand summary for " + logId);
   });
 
   expectMutatedSpecsFailure(
     root,
     (source) => replaceOnce(
       source,
-      "sourceItemId: 'logs',",
-      "sourceItemId: 'oak_logs',",
-      "firemaking-tier-regression"
+      "sourceItemId: 'yew_logs',",
+      "sourceItemId: 'maple_logs',",
+      "missing-yew-firemaking-consumer"
     ),
-    /must remain single-tier and consume only logs/i,
-    "firemaking-tier-regression"
+    /has no firemaking consumer recipes/i,
+    "missing-yew-firemaking-consumer"
   );
 
   expectMutatedSpecsFailure(
@@ -515,11 +516,15 @@ function run() {
 
   loadBrowserScript(root, "src/js/skills/fletching/index.js");
   loadBrowserScript(root, "src/js/skills/crafting/index.js");
+  loadBrowserScript(root, "src/js/skills/firemaking/index.js");
   loadBrowserScript(root, "src/js/skills/mining/index.js");
+  loadBrowserScript(root, "src/js/skills/fishing/index.js");
   const skillModules = window.SkillModules || {};
   assert(!!skillModules.fletching && typeof skillModules.fletching.onUseItem === "function", "fletching runtime module missing onUseItem");
   assert(!!skillModules.crafting && typeof skillModules.crafting.onUseItem === "function", "crafting runtime module missing onUseItem");
+  assert(!!skillModules.firemaking && typeof skillModules.firemaking.onUseItem === "function", "firemaking runtime module missing onUseItem");
   assert(!!skillModules.mining && typeof skillModules.mining.onStart === "function", "mining runtime module missing onStart");
+  assert(!!skillModules.fishing && typeof skillModules.fishing.onAnimate === "function", "fishing runtime module missing onAnimate");
 
   function makeInventoryContext(sourceItemId, targetItemId, counts, messages, startedPayloads) {
     const inventoryCounts = Object.assign({}, counts);
@@ -545,6 +550,11 @@ function run() {
       requireSkillLevel: () => true,
       addSkillXp: () => {},
       renderInventory: () => {},
+      haltMovement: () => {},
+      startSkillById: (_skillId, payload) => {
+        startedPayloads.push(payload);
+        return true;
+      },
       addChatMessage: (message, tone) => messages.push({ message, tone }),
       _counts: inventoryCounts,
       _startedPayloads: startedPayloads
@@ -571,6 +581,18 @@ function run() {
   const usedMismatch = skillModules.fletching.onUseItem(fletchCtxMismatch);
   assert(usedMismatch, "mismatched arrowhead+headless pair should still be recognized");
   assert(fletchMessagesMismatch.some((entry) => entry.message === "These don't match."), "fletching mismatch message should be preserved for non-matching tiers");
+
+  canonicalLogs.forEach((logItemId) => {
+    const firemakingMessages = [];
+    const firemakingCtx = makeInventoryContext("tinderbox", logItemId, { tinderbox: 1, [logItemId]: 1 }, firemakingMessages, startedPayloads);
+    const startedBefore = startedPayloads.length;
+    const handled = skillModules.firemaking.onUseItem(firemakingCtx);
+    assert(handled, "firemaking should handle tinderbox+" + logItemId + " inventory use");
+    assert(startedPayloads.length === startedBefore + 1, "firemaking should queue exactly one start payload for " + logItemId);
+    const payload = startedPayloads[startedPayloads.length - 1];
+    assert(payload && payload.sourceItemId === logItemId, "firemaking should preserve selected log tier for " + logItemId);
+    assert(payload && payload.targetObj === "GROUND", "firemaking should continue to target the ground when starting from inventory use");
+  });
 
   const craftMessagesStrapped = [];
   const craftingCtxStrapped = makeInventoryContext("wooden_handle", "normal_leather", { wooden_handle: 1, normal_leather: 1 }, craftMessagesStrapped, startedPayloads);
@@ -600,6 +622,7 @@ function run() {
     const messages = [];
     let started = false;
     let unlockedState = !!unlocked;
+    const toolVisualCalls = [];
 
     const context = {
       targetObj: "ROCK",
@@ -623,6 +646,9 @@ function run() {
       isTargetTile: (tileId) => tileId === 2,
       canAcceptItemById: () => true,
       addChatMessage: (message, tone) => messages.push({ message, tone }),
+      setToolVisualById: (itemId) => {
+        toolVisualCalls.push(itemId || null);
+      },
       startSkillingAction: () => {
         context.playerState.action = "SKILLING: ROCK";
         started = true;
@@ -643,6 +669,7 @@ function run() {
     return {
       context,
       messages,
+      toolVisualCalls,
       wasStarted: () => started,
       setUnlocked: (value) => {
         unlockedState = !!value;
@@ -660,12 +687,29 @@ function run() {
   const miningStartUnlocked = skillModules.mining.onStart(miningUnlocked.context);
   assert(miningStartUnlocked, "mining should start once gem mine is unlocked");
   assert(miningUnlocked.wasStarted(), "mining should enter skilling state when unlocked");
+  const miningAnimationHandled = skillModules.mining.onAnimate(miningUnlocked.context);
+  assert(miningAnimationHandled === false, "mining should defer body motion to clip-driven animation");
+  assert(miningUnlocked.toolVisualCalls[miningUnlocked.toolVisualCalls.length - 1] === "rune_pickaxe", "mining should still surface the best pickaxe visual during clip-driven playback");
 
   miningUnlocked.messages.length = 0;
   miningUnlocked.setUnlocked(false);
   skillModules.mining.onTick(miningUnlocked.context);
   assert(miningUnlocked.messages.some((entry) => /gem mine is locked/i.test(entry.message)), "mining should re-check gem-mine gate during active ticks");
   assert(miningUnlocked.context.playerState.action === "IDLE", "mining should stop if gem-mine access is lost mid-session");
+
+  const fishingToolVisualCalls = [];
+  const fishingAnimateContext = {
+    playerState: {
+      action: "SKILLING: WATER",
+      fishingActiveMethodId: "net"
+    },
+    setToolVisualById: (itemId) => {
+      fishingToolVisualCalls.push(itemId || null);
+    }
+  };
+  const fishingAnimationHandled = skillModules.fishing.onAnimate(fishingAnimateContext);
+  assert(fishingAnimationHandled === false, "fishing should defer body motion to clip-driven animation");
+  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "small_net", "fishing should still surface the small-net visual during clip-driven playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const miningRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/mining-runtime.ts"), "utf8");
   const runecraftingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/runecrafting-runtime.ts"), "utf8");
@@ -725,6 +769,9 @@ function run() {
 
   const inputRenderScript = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
+  assert(inputRenderScript.includes("'player/mining1'"), "input render should route mining through the studio clip");
+  assert(inputRenderScript.includes("'player/fishing_net1'"), "input render should route net fishing through the studio clip");
+  assert(!inputRenderScript.includes("function applyRockMiningPose"), "legacy hardcoded mining pose should be removed");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
   assert(coreScript.includes("function getQaDiscoveredMerchants()"), "core QA merchant discovery helper missing");
   assert(coreScript.includes("getWorldRouteGroup('fishing')"), "core QA fishing-spot discovery should read world registry");
@@ -754,6 +801,10 @@ function run() {
   const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
   assert(skillRuntimeScript.includes("requireAreaAccess"), "skill runtime area-access hook missing");
   assert(skillRuntimeScript.includes("getTreeNodeAt"), "skill runtime tree-node hook missing");
+  assert(skillRuntimeScript.includes("return handled !== false;"), "skill runtime should allow onAnimate hooks to pass through into clip playback");
+  const fishingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/fishing/index.js"), "utf8");
+  assert(fishingRuntimeScript.includes("const toolVisualId = getFishingToolVisualId(context);"), "fishing runtime should still resolve held-tool visuals");
+  assert(!fishingRuntimeScript.includes("alignTorsoToUpperLegFrontHinge"), "fishing runtime should remove the legacy procedural fishing pose");
   const woodcutRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/woodcutting/index.js"), "utf8");
   assert(woodcutRuntimeScript.includes("const TREE_NODE_NAMES ="), "woodcutting runtime tree naming table missing");
   assert(woodcutRuntimeScript.includes("context.getTreeNodeAt"), "woodcutting runtime tree-node resolver missing");

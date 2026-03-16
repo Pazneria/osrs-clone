@@ -1804,9 +1804,34 @@
             return { stepped: false, reason };
         }
 
-                function startFiremaking() {
+        function startFiremaking(sourceItemId = null) {
             if (!(window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function')) return false;
-            return SkillRuntime.tryStartSkillById('firemaking', { skillId: 'firemaking' });
+            const payload = { skillId: 'firemaking' };
+            if (typeof sourceItemId === 'string' && sourceItemId) payload.sourceItemId = sourceItemId;
+            return SkillRuntime.tryStartSkillById('firemaking', payload);
+        }
+
+        function getFiremakingLogItemIdForPair(itemA, itemB) {
+            const a = String(itemA || '');
+            const b = String(itemB || '');
+            if (!a || !b) return null;
+
+            const firemakingRecipes = (window.SkillSpecRegistry && typeof SkillSpecRegistry.getRecipeSet === 'function')
+                ? SkillSpecRegistry.getRecipeSet('firemaking')
+                : null;
+            if (!firemakingRecipes || typeof firemakingRecipes !== 'object') return null;
+
+            const logItemIds = new Set();
+            const recipeIds = Object.keys(firemakingRecipes);
+            for (let i = 0; i < recipeIds.length; i++) {
+                const recipe = firemakingRecipes[recipeIds[i]];
+                const sourceItemId = typeof (recipe && recipe.sourceItemId) === 'string' ? recipe.sourceItemId : '';
+                if (sourceItemId) logItemIds.add(sourceItemId);
+            }
+
+            if (a === 'tinderbox' && logItemIds.has(b)) return b;
+            if (b === 'tinderbox' && logItemIds.has(a)) return a;
+            return null;
         }
 
         function resolveFireTargetFromHit(hitData) {
@@ -1894,8 +1919,9 @@
                 if (skillUsed) return true;
             }
 
-            if ((a === 'tinderbox' && b === 'logs') || (a === 'logs' && b === 'tinderbox')) {
-                return startFiremaking();
+            const firemakingSourceItemId = getFiremakingLogItemIdForPair(a, b);
+            if (firemakingSourceItemId) {
+                return startFiremaking(firemakingSourceItemId);
             }
 
             return false;

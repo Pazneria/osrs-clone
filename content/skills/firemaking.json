@@ -20,9 +20,25 @@
         "buy": 6,
         "sell": 2
       },
+      "maple_logs": {
+        "buy": 80,
+        "sell": 32
+      },
+      "oak_logs": {
+        "buy": 16,
+        "sell": 6
+      },
       "tinderbox": {
         "buy": 8,
         "sell": 2
+      },
+      "willow_logs": {
+        "buy": 36,
+        "sell": 14
+      },
+      "yew_logs": {
+        "buy": 180,
+        "sell": 72
       }
     }
   },
@@ -43,6 +59,34 @@
       "requiredLevel": 1,
       "sourceItemId": "logs",
       "xpPerSuccess": 40
+    },
+    "maple_logs": {
+      "fireLifetimeTicks": 90,
+      "ignitionDifficulty": 50,
+      "requiredLevel": 30,
+      "sourceItemId": "maple_logs",
+      "xpPerSuccess": 135
+    },
+    "oak_logs": {
+      "fireLifetimeTicks": 90,
+      "ignitionDifficulty": 25,
+      "requiredLevel": 10,
+      "sourceItemId": "oak_logs",
+      "xpPerSuccess": 60
+    },
+    "willow_logs": {
+      "fireLifetimeTicks": 90,
+      "ignitionDifficulty": 35,
+      "requiredLevel": 20,
+      "sourceItemId": "willow_logs",
+      "xpPerSuccess": 90
+    },
+    "yew_logs": {
+      "fireLifetimeTicks": 90,
+      "ignitionDifficulty": 65,
+      "requiredLevel": 40,
+      "sourceItemId": "yew_logs",
+      "xpPerSuccess": 200
     }
   },
   "skillId": "firemaking",

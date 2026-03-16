@@ -110,13 +110,31 @@ function runFiremakingChecks(roadmap, spec) {
   const lines = roadmap.split(/\r?\n/);
   assertRegex(roadmap, /\|\s*Ignition Attempt Interval Ticks\s*\|\s*1\s*\|/, "firemaking roadmap ignition tick mismatch");
 
-  const recipe = spec.recipeSet.logs;
-  const statLine = findLine(lines, (entry) => new RegExp(`^\\|\\s*Logs\\s*\\|\\s*${recipe.requiredLevel}\\s*\\|\\s*${recipe.ignitionDifficulty}\\s*\\|\\s*${recipe.xpPerSuccess}\\s*\\|\\s*${recipe.fireLifetimeTicks}\\s*\\|`).test(entry));
-  assert(!!statLine, "firemaking logs stat row mismatch");
+  const recipeRows = [
+    { label: "Logs", recipeId: "logs" },
+    { label: "Oak Logs", recipeId: "oak_logs" },
+    { label: "Willow Logs", recipeId: "willow_logs" },
+    { label: "Maple Logs", recipeId: "maple_logs" },
+    { label: "Yew Logs", recipeId: "yew_logs" }
+  ];
+  for (const row of recipeRows) {
+    const recipe = spec.recipeSet[row.recipeId];
+    const statLine = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${recipe.requiredLevel}\\s*\\|\\s*${recipe.ignitionDifficulty}\\s*\\|\\s*${recipe.xpPerSuccess}\\s*\\|\\s*${recipe.fireLifetimeTicks}\\s*\\|`).test(entry));
+    assert(!!statLine, `firemaking stat row mismatch for ${row.label}`);
+  }
 
   const values = spec.economy.valueTable;
-  const logsLine = findLine(lines, (entry) => /^\|\s*Logs\s*\|\s*Resource\s*\|/.test(entry));
-  assert(!!logsLine && new RegExp(`\\|\\s*${values.logs.buy}\\s*\\|\\s*${values.logs.sell}\\s*\\|`).test(logsLine), "firemaking logs value row mismatch");
+  const valueRows = [
+    { label: "Logs", itemId: "logs" },
+    { label: "Oak Logs", itemId: "oak_logs" },
+    { label: "Willow Logs", itemId: "willow_logs" },
+    { label: "Maple Logs", itemId: "maple_logs" },
+    { label: "Yew Logs", itemId: "yew_logs" }
+  ];
+  for (const row of valueRows) {
+    const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*Resource\\s*\\|`).test(entry));
+    assert(!!line && new RegExp(`\\|\\s*${values[row.itemId].buy}\\s*\\|\\s*${values[row.itemId].sell}\\s*\\|`).test(line), `firemaking value row mismatch for ${row.label}`);
+  }
 
   const tinderLine = findLine(lines, (entry) => /^\|\s*Tinderbox\s*\|\s*Tool\s*\|/.test(entry));
   assert(!!tinderLine && new RegExp(`\\|\\s*${values.tinderbox.buy}\\s*\\|\\s*${values.tinderbox.sell}\\s*\\|`).test(tinderLine), "firemaking tinderbox value row mismatch");
