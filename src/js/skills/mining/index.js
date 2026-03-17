@@ -209,11 +209,12 @@
         },
 
         onAnimate(context) {
-            const pickaxeData = getPickaxeContext(context);
-            if (typeof context.setToolVisualById === 'function') {
-                context.setToolVisualById(pickaxeData.pickaxe ? pickaxeData.pickaxe.id : null);
-            }
             return false;
+        },
+
+        getAnimationHeldItemId(context) {
+            const pickaxeData = getPickaxeContext(context);
+            return pickaxeData.pickaxe ? pickaxeData.pickaxe.id : null;
         },
 
         getTooltip(context) {

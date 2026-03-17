@@ -74,13 +74,20 @@
         return 1;
     }
 
-    function startContinuousFiremaking(context, recipe) {
+    function startContinuousFiremaking(context, recipe, options = {}) {
         const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
         const attemptInterval = getAttemptInterval(recipe, skillSpec);
+        const target = options.target && typeof options.target === 'object'
+            ? options.target
+            : { x: context.playerState.x, y: context.playerState.y, z: context.playerState.z };
+        const standAt = options.standAt && typeof options.standAt === 'object'
+            ? options.standAt
+            : { x: context.playerState.x, y: context.playerState.y, z: context.playerState.z };
 
         context.playerState.firemakingSession = {
             phase: 'attempting',
-            target: { x: context.playerState.x, y: context.playerState.y, z: context.playerState.z },
+            target: { x: target.x, y: target.y, z: target.z },
+            standAt: { x: standAt.x, y: standAt.y, z: standAt.z },
             sourceItemId: recipe.sourceItemId,
             attemptInterval,
             nextAttemptTick: context.currentTick
@@ -94,6 +101,8 @@
 
     function stopFiremaking(context, message, tone = 'info') {
         context.playerState.firemakingSession = null;
+        context.playerState.turnLock = false;
+        context.playerState.actionVisualReady = true;
         context.stopAction();
         if (message) context.addChatMessage(message, tone);
     }
@@ -116,6 +125,16 @@
         if (reason === 'height_mismatch') return 'You stay put because the terrain is too uneven.';
         if (reason === 'out_of_bounds') return 'You stay put because there is no room to move.';
         return 'You stay put because the way forward is blocked.';
+    }
+
+    function faceTile(context, tile) {
+        if (!context || !tile || typeof tile !== 'object') return;
+        const dx = tile.x - context.playerState.x;
+        const dy = tile.y - context.playerState.y;
+        if (dx === 0 && dy === 0) return;
+        context.playerState.targetRotation = Math.atan2(dx, dy);
+        context.playerState.turnLock = true;
+        context.playerState.actionVisualReady = true;
     }
 
     const firemakingModule = {
@@ -163,8 +182,18 @@
                 return false;
             }
 
+            const stepResult = normalizeStepResult(context.tryStepBeforeFiremaking());
+            if (!stepResult.stepped) {
+                context.addChatMessage(getBlockedStepMessage(stepResult.reason), 'info');
+                return false;
+            }
+
+            const standAt = { x: context.playerState.x, y: context.playerState.y, z: context.playerState.z };
+
             context.addChatMessage('You begin trying to light the logs.', 'info');
-            return startContinuousFiremaking(context, recipe);
+            const started = startContinuousFiremaking(context, recipe, { target, standAt });
+            if (started) faceTile(context, target);
+            return started;
         },
 
         onTick(context) {
@@ -172,53 +201,37 @@
             const session = context.playerState.firemakingSession;
             const recipe = session ? getRecipeBySourceItemId(context, session.sourceItemId) : null;
             if (!recipe || !session) {
-                context.stopAction();
-                context.playerState.firemakingSession = null;
+                stopFiremaking(context);
                 return;
             }
 
             if (session.phase === 'post_success') {
                 if (context.currentTick < (session.finishTick || 0)) return;
-                const fireTarget = session.target;
-                if (fireTarget && fireTarget.z === context.playerState.z) {
-                    const stepResult = normalizeStepResult(context.tryStepAfterFire());
-                    if (stepResult.stepped) {
-                        const faceDx = fireTarget.x - context.playerState.x;
-                        const faceDy = fireTarget.y - context.playerState.y;
-                        if (faceDx !== 0 || faceDy !== 0) {
-                            context.playerState.targetRotation = Math.atan2(faceDx, faceDy);
-                            context.playerState.turnLock = true;
-                            context.playerState.actionVisualReady = true;
-                        }
-                    } else {
-                        context.addChatMessage(getBlockedStepMessage(stepResult.reason), 'info');
-                    }
-                }
-
-                context.playerState.firemakingSession = null;
-                context.stopAction();
+                stopFiremaking(context);
                 return;
             }
 
             if (context.currentTick < (session.nextAttemptTick || 0)) return;
 
             if (context.getInventoryCount('tinderbox') <= 0 || context.getInventoryCount(recipe.sourceItemId) <= 0) {
-                context.addChatMessage('You need logs and a tinderbox.', 'warn');
-                context.playerState.firemakingSession = null;
-                context.stopAction();
+                stopFiremaking(context, 'You need logs and a tinderbox.', 'warn');
                 return;
             }
 
             const target = session.target;
-            if (!target || context.playerState.x !== target.x || context.playerState.y !== target.y || context.playerState.z !== target.z) {
+            const standAt = session.standAt || target;
+            if (!target || !standAt) {
+                stopFiremaking(context, 'You stop lighting the logs.', 'info');
+                return;
+            }
+
+            if (context.playerState.x !== standAt.x || context.playerState.y !== standAt.y || context.playerState.z !== standAt.z) {
                 stopFiremaking(context, 'You stop lighting the logs.', 'info');
                 return;
             }
 
             if (context.hasActiveFireAt(target.x, target.y, target.z)) {
-                context.addChatMessage('There is already a fire here.', 'warn');
-                context.playerState.firemakingSession = null;
-                context.stopAction();
+                stopFiremaking(context, 'There is already a fire here.', 'warn');
                 return;
             }
 
@@ -232,6 +245,7 @@
                 : ((chance, rng) => (typeof rng === 'function' ? rng() : Math.random()) < chance);
 
             session.nextAttemptTick = context.currentTick + Math.max(1, session.attemptInterval || 1);
+            faceTile(context, target);
 
             if (!rollChance(successChance, context.random)) {
                 return;
@@ -256,27 +270,19 @@
         },
 
         onAnimate(context) {
-            if (!context.rig || !context.playerRig || typeof context.setShoulderPivot !== 'function') return;
-            const rig = context.rig;
-            const playerRig = context.playerRig;
+            return false;
+        },
 
-            rig.axe.visible = false;
-            playerRig.rotation.x = 0;
-            context.setShoulderPivot(rig);
+        getAnimationHeldItemId() {
+            return 'tinderbox';
+        },
 
-            const phase = ((context.frameNow % 700) / 700) * Math.PI * 2;
-            const s = Math.sin(phase);
+        getAnimationHeldItemSlot() {
+            return 'leftHand';
+        },
 
-            rig.torso.rotation.set(0, 0.08 * s, 0);
-            rig.head.rotation.set(0, 0.05 * s, 0);
-            rig.rightArm.rotation.set(-0.9 + (s * 0.25), -0.2, -0.15);
-            rig.rightLowerArm.rotation.set(-0.6 + (s * 0.35), -0.1, 0);
-            rig.leftArm.rotation.set(-0.4, 0.15, 0.2);
-            rig.leftLowerArm.rotation.set(-0.8, -0.2, 0);
-            rig.leftLeg.rotation.set(0, 0, 0);
-            rig.rightLeg.rotation.set(0, 0, 0);
-            if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.set(0, 0, 0);
-            if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.set(0, 0, 0);
+        getAnimationSuppressEquipmentVisual() {
+            return true;
         }
     };
 

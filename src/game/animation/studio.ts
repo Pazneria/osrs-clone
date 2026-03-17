@@ -5,6 +5,8 @@ import type {
   AnimationChannelId,
   AnimationClip,
   AnimationClipDescriptor,
+  AnimationHeldItemMap,
+  AnimationHeldItemSlot,
   AnimationResolvedPose,
   AnimationResolvedTransform,
   AnimationTransform,
@@ -40,7 +42,17 @@ import { getAnimationRigSchema } from "./schema";
 declare global {
   interface Window {
     createPlayerRigFromCurrentAppearance?: () => THREE.Group;
-    setPlayerRigToolVisual?: (rigRoot: THREE.Group, itemId: string | null) => void;
+    createPlayerRigForAnimationStudio?: () => THREE.Group;
+    setPlayerRigToolVisuals?: (
+      rigRoot: THREE.Group,
+      heldItems: AnimationHeldItemMap | null,
+      primaryHeldItemSlot?: AnimationHeldItemSlot | null
+    ) => void;
+    setPlayerRigToolVisual?: (
+      rigRoot: THREE.Group,
+      itemId: string | null,
+      heldItemSlot?: AnimationHeldItemSlot | null
+    ) => void;
     ItemCatalog?: {
       ITEM_DEFS?: Record<string, { name?: string }>;
     };
@@ -59,6 +71,18 @@ type StudioPoseClipboard = {
   sourceClipId: string;
   sourcePoseId: string;
   pose: AnimationClip["poses"][string];
+};
+type StudioNodeClipboardEntry = {
+  sourceNodeId: string;
+  relativePath: number[];
+  transform: AnimationTransform | null;
+};
+type StudioNodeClipboard = {
+  sourceClipId: string;
+  sourcePoseId: string;
+  sourceRootNodeId: string;
+  includeDescendants: boolean;
+  entries: StudioNodeClipboardEntry[];
 };
 type StudioUndoEntry = {
   clip: AnimationClip;
@@ -102,11 +126,16 @@ interface StudioState {
   easeSelect: HTMLSelectElement | null;
   nodeSelect: HTMLSelectElement | null;
   heldItemSelect: HTMLSelectElement | null;
+  leftHeldItemSelect: HTMLSelectElement | null;
+  heldItemSlotSelect: HTMLSelectElement | null;
   playButton: HTMLButtonElement | null;
   undoButton: HTMLButtonElement | null;
   copyPoseButton: HTMLButtonElement | null;
   pastePoseButton: HTMLButtonElement | null;
   pastePoseNewButton: HTMLButtonElement | null;
+  nodeContextMenu: HTMLDivElement | null;
+  copyNodeButton: HTMLButtonElement | null;
+  pasteNodeButton: HTMLButtonElement | null;
   renderer: THREE.WebGLRenderer | null;
   scene: THREE.Scene | null;
   camera: THREE.PerspectiveCamera | null;
@@ -147,8 +176,10 @@ interface StudioState {
   jointMarker: THREE.Mesh | null;
   axisGizmo: THREE.Group | null;
   transformControls: TransformControls | null;
-  selectedHeldItemId: string;
+  selectedHeldItems: Record<AnimationHeldItemSlot, string>;
+  selectedHeldItemSlot: AnimationHeldItemSlot;
   poseClipboard: StudioPoseClipboard | null;
+  nodeClipboard: StudioNodeClipboard | null;
   decoupledDescendantWorldMatrices: Map<string, THREE.Matrix4> | null;
   undoHistory: StudioUndoEntry[];
   undoTransactionEntry: StudioUndoEntry | null;
@@ -188,11 +219,16 @@ const state: StudioState = {
   easeSelect: null,
   nodeSelect: null,
   heldItemSelect: null,
+  leftHeldItemSelect: null,
+  heldItemSlotSelect: null,
   playButton: null,
   undoButton: null,
   copyPoseButton: null,
   pastePoseButton: null,
   pastePoseNewButton: null,
+  nodeContextMenu: null,
+  copyNodeButton: null,
+  pasteNodeButton: null,
   renderer: null,
   scene: null,
   camera: null,
@@ -233,8 +269,13 @@ const state: StudioState = {
   jointMarker: null,
   axisGizmo: null,
   transformControls: null,
-  selectedHeldItemId: "",
+  selectedHeldItems: {
+    rightHand: "",
+    leftHand: ""
+  },
+  selectedHeldItemSlot: "rightHand",
   poseClipboard: null,
+  nodeClipboard: null,
   decoupledDescendantWorldMatrices: null,
   undoHistory: [],
   undoTransactionEntry: null
@@ -245,6 +286,7 @@ const previewPickRaycaster = new THREE.Raycaster();
 const previewPickPointer = new THREE.Vector2();
 const DEFAULT_NEW_CLIP_ID = "player/new_clip";
 const DEFAULT_NEW_CLIP_DURATION_MS = 1000;
+const DEFAULT_STUDIO_HELD_ITEM_SLOT: AnimationHeldItemSlot = "rightHand";
 const MAX_STUDIO_UNDO_ENTRIES = 80;
 const LIMB_SUBTREE_NODE_IDS: Record<string, string[]> = {
   leftArm: ["leftArm", "leftLowerArm"],
@@ -287,6 +329,7 @@ function buildFreshClip(clipId: string): AnimationClip {
     durationMs: DEFAULT_NEW_CLIP_DURATION_MS,
     loopMode: "loop",
     maskId: "fullBody",
+    heldItemId: null,
     poses: {
       neutral: {}
     },
@@ -307,6 +350,58 @@ function humanizeStudioItemId(itemId: string): string {
     .filter((part) => part)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function normalizeStudioHeldItemSlot(slot?: AnimationHeldItemSlot | null): AnimationHeldItemSlot {
+  return slot === "leftHand" ? "leftHand" : DEFAULT_STUDIO_HELD_ITEM_SLOT;
+}
+
+function createEmptyStudioHeldItems(): Record<AnimationHeldItemSlot, string> {
+  return {
+    rightHand: "",
+    leftHand: ""
+  };
+}
+
+function normalizeStudioHeldItemId(itemId: string | null | undefined): string {
+  return typeof itemId === "string" ? itemId.trim() : "";
+}
+
+function buildSparseStudioHeldItemMap(selectedHeldItems: Record<AnimationHeldItemSlot, string>): AnimationHeldItemMap | null {
+  const heldItems: AnimationHeldItemMap = {};
+  const rightHandItemId = normalizeStudioHeldItemId(selectedHeldItems.rightHand);
+  const leftHandItemId = normalizeStudioHeldItemId(selectedHeldItems.leftHand);
+  if (rightHandItemId) heldItems.rightHand = rightHandItemId;
+  if (leftHandItemId) heldItems.leftHand = leftHandItemId;
+  return Object.keys(heldItems).length > 0 ? heldItems : null;
+}
+
+function resolveStudioHeldItemSlotFromSelection(
+  selectedHeldItems: Record<AnimationHeldItemSlot, string>,
+  preferredSlot?: AnimationHeldItemSlot | null
+): AnimationHeldItemSlot {
+  const normalizedPreferredSlot = normalizeStudioHeldItemSlot(preferredSlot || null);
+  const rightHandItemId = normalizeStudioHeldItemId(selectedHeldItems.rightHand);
+  const leftHandItemId = normalizeStudioHeldItemId(selectedHeldItems.leftHand);
+  if (normalizedPreferredSlot === "leftHand" && leftHandItemId) return "leftHand";
+  if (normalizedPreferredSlot === "rightHand" && rightHandItemId) return "rightHand";
+  if (rightHandItemId) return "rightHand";
+  if (leftHandItemId) return "leftHand";
+  return normalizedPreferredSlot;
+}
+
+function buildStudioHeldItemsFromClip(clip: AnimationClip | null): Record<AnimationHeldItemSlot, string> {
+  const selectedHeldItems = createEmptyStudioHeldItems();
+  if (!clip) return selectedHeldItems;
+  if (clip.heldItems && typeof clip.heldItems === "object") {
+    selectedHeldItems.rightHand = normalizeStudioHeldItemId(clip.heldItems.rightHand);
+    selectedHeldItems.leftHand = normalizeStudioHeldItemId(clip.heldItems.leftHand);
+    return selectedHeldItems;
+  }
+  const legacyHeldItemId = normalizeStudioHeldItemId(clip.heldItemId || "");
+  if (!legacyHeldItemId) return selectedHeldItems;
+  selectedHeldItems[normalizeStudioHeldItemSlot(clip.heldItemSlot || null)] = legacyHeldItemId;
+  return selectedHeldItems;
 }
 
 function listStudioHeldItemOptions(): StudioHeldItemOption[] {
@@ -418,6 +513,29 @@ function refreshPoseClipboardButtons(): void {
   refreshPoseClipboardButton(state.pastePoseNewButton, canPasteNew);
 }
 
+function cloneStudioNodeTransform(transform: AnimationTransform | undefined): AnimationTransform | null {
+  return transform ? JSON.parse(JSON.stringify(transform)) as AnimationTransform : null;
+}
+
+function isNodeClipboardSubtreeMode(): boolean {
+  return isDecoupleDescendantsActiveForSelectedNode();
+}
+
+function refreshNodeClipboardButtons(): void {
+  const canCopy = !!(state.clip && state.selectedPoseId && state.selectedNodeId && state.selectedNodeId !== "root");
+  const canPaste = !!(canCopy && state.nodeClipboard);
+  if (state.copyNodeButton) {
+    state.copyNodeButton.innerText = isNodeClipboardSubtreeMode() ? "Copy Node + Children" : "Copy Node";
+  }
+  refreshPoseClipboardButton(state.copyNodeButton, canCopy);
+  refreshPoseClipboardButton(state.pasteNodeButton, canPaste);
+}
+
+function hideNodeContextMenu(): void {
+  if (!state.nodeContextMenu) return;
+  state.nodeContextMenu.classList.add("hidden");
+}
+
 function createStudioUndoEntry(): StudioUndoEntry | null {
   if (!state.clip) return null;
   return {
@@ -461,6 +579,7 @@ function undoStudioEdit(): void {
     return;
   }
   if (!state.clip || !state.schema) return;
+  hideNodeContextMenu();
   pausePlayback();
   state.clip = sortClipKeysAndMarkers(cloneAnimationClip(entry.clip));
   state.timeMs = Math.max(0, Math.min(entry.timeMs, state.clip.durationMs));
@@ -485,6 +604,7 @@ function undoStudioEdit(): void {
   if (state.easeSelect && state.clip && keyIndex >= 0) {
     state.easeSelect.value = state.clip.keys[keyIndex].ease;
   }
+  refreshHeldItemSelectionFromClip();
   refreshPoseList();
   refreshKeyList();
   refreshMarkerLane();
@@ -495,6 +615,7 @@ function undoStudioEdit(): void {
   refreshDecoupleButton();
   refreshIsolationButton();
   refreshSnapButton();
+  refreshNodeClipboardButtons();
   applyNodeIsolationToPreview();
   refreshInspector();
   setSummary();
@@ -551,17 +672,25 @@ function collectOwnedRenderableObjects(node: THREE.Object3D, rigNodes: Set<THREE
 function applyNodeIsolationToPreview(): void {
   if (!state.previewRig || !state.schema) return;
   const nodeMap = resolveLegacyRigNodeMap(state.previewRig);
-  const rigNodeEntries = state.schema.nodeOrder
-    .map((nodeId) => [nodeId, nodeMap[nodeId as keyof typeof nodeMap] || null] as const)
-    .filter((entry): entry is readonly [string, THREE.Object3D] => !!entry[1]);
+  const rigNodeEntries = state.schema.nodeOrder.reduce<Array<readonly [string, THREE.Object3D]>>((entries, nodeId) => {
+    const node = nodeMap[nodeId as keyof typeof nodeMap] || null;
+    if (node) entries.push([nodeId, node] as const);
+    return entries;
+  }, []);
   const rigNodes = new Set(rigNodeEntries.map((entry) => entry[1]));
+  const nodeIdsByObject = new Map<THREE.Object3D, string[]>();
+  rigNodeEntries.forEach(([nodeId, node]) => {
+    const nodeIds = nodeIdsByObject.get(node) || [];
+    nodeIds.push(nodeId);
+    nodeIdsByObject.set(node, nodeIds);
+  });
   const isolatedNodeId = state.isolatedNodeId && state.isolatedNodeId !== "root"
     ? state.isolatedNodeId
     : null;
 
-  rigNodeEntries.forEach(([nodeId, node]) => {
-    if (nodeId === "root") return;
-    const visible = !isolatedNodeId || nodeId === isolatedNodeId;
+  nodeIdsByObject.forEach((nodeIds, node) => {
+    if (nodeIds.includes("root")) return;
+    const visible = !isolatedNodeId || nodeIds.includes(isolatedNodeId);
     collectOwnedRenderableObjects(node, rigNodes).forEach((object) => {
       object.visible = visible;
     });
@@ -569,36 +698,93 @@ function applyNodeIsolationToPreview(): void {
 }
 
 function refreshHeldItemSelect(): void {
-  if (!state.heldItemSelect) return;
+  if (!state.heldItemSelect && !state.leftHeldItemSelect) return;
   const options = listStudioHeldItemOptions();
-  state.heldItemSelect.innerHTML = "";
+  const populateSelect = (select: HTMLSelectElement | null, selectedItemId: string): string => {
+    if (!select) return selectedItemId;
+    select.innerHTML = "";
+    const noneOption = document.createElement("option");
+    noneOption.value = "";
+    noneOption.innerText = "None";
+    select.appendChild(noneOption);
+    options.forEach((optionDef) => {
+      const option = document.createElement("option");
+      option.value = optionDef.itemId;
+      option.innerText = optionDef.label;
+      select.appendChild(option);
+    });
+    const nextSelectedItemId = selectedItemId.length === 0 || options.some((option) => option.itemId === selectedItemId)
+      ? selectedItemId
+      : "";
+    select.value = nextSelectedItemId;
+    return nextSelectedItemId;
+  };
 
-  const noneOption = document.createElement("option");
-  noneOption.value = "";
-  noneOption.innerText = "None";
-  state.heldItemSelect.appendChild(noneOption);
+  state.selectedHeldItems.rightHand = populateSelect(state.heldItemSelect, state.selectedHeldItems.rightHand);
+  state.selectedHeldItems.leftHand = populateSelect(state.leftHeldItemSelect, state.selectedHeldItems.leftHand);
+}
 
-  options.forEach((optionDef) => {
-    const option = document.createElement("option");
-    option.value = optionDef.itemId;
-    option.innerText = optionDef.label;
-    state.heldItemSelect?.appendChild(option);
-  });
+function refreshHeldItemSlotSelect(): void {
+  if (!state.heldItemSlotSelect) return;
+  state.selectedHeldItemSlot = normalizeStudioHeldItemSlot(state.selectedHeldItemSlot);
+  state.heldItemSlotSelect.value = state.selectedHeldItemSlot;
+}
 
-  const stillValid = state.selectedHeldItemId.length === 0
-    || options.some((option) => option.itemId === state.selectedHeldItemId);
-  if (!stillValid) state.selectedHeldItemId = "";
-  state.heldItemSelect.value = state.selectedHeldItemId;
+function refreshWeaponNodeBindingAfterHeldItemChange(): void {
+  if (state.selectedNodeId !== "weapon" && state.selectedNodeId !== "leftWeapon" && state.selectedNodeId !== "rightWeapon") return;
+  attachManipulatorToSelectedNode();
+  refreshInspector();
+  setSummary();
 }
 
 function applyHeldItemSelectionToPreview(): void {
   if (!state.previewRig) return;
-  const weaponNode = resolveLegacyRigNodeMap(state.previewRig).weapon;
-  if (typeof window.setPlayerRigToolVisual === "function") {
-    window.setPlayerRigToolVisual(state.previewRig, state.selectedHeldItemId || null);
+  const desiredHeldItems = buildSparseStudioHeldItemMap(state.selectedHeldItems);
+  const previewHeldItemSlot = resolveStudioHeldItemSlotFromSelection(state.selectedHeldItems, state.selectedHeldItemSlot);
+  state.previewRig.userData.animationHeldItemSlot = previewHeldItemSlot;
+  state.previewRig.userData.animationHeldItems = {
+    rightHand: desiredHeldItems?.rightHand || null,
+    leftHand: desiredHeldItems?.leftHand || null
+  };
+  if (typeof window.setPlayerRigToolVisuals === "function") {
+    window.setPlayerRigToolVisuals(state.previewRig, desiredHeldItems, previewHeldItemSlot);
+  } else if (typeof window.setPlayerRigToolVisual === "function") {
+    const previewHeldItemId = desiredHeldItems ? (desiredHeldItems[previewHeldItemSlot] || null) : null;
+    window.setPlayerRigToolVisual(state.previewRig, previewHeldItemId, previewHeldItemSlot);
   }
-  if (weaponNode) weaponNode.visible = !!state.selectedHeldItemId;
+  refreshWeaponNodeBindingAfterHeldItemChange();
   applyNodeIsolationToPreview();
+}
+
+function syncClipHeldItemSelection(): void {
+  if (!state.clip) return;
+  const nextHeldItems = buildSparseStudioHeldItemMap(state.selectedHeldItems);
+  const nextHeldItemId = nextHeldItems ? (nextHeldItems[state.selectedHeldItemSlot] || null) : null;
+  if (!nextHeldItems) {
+    delete state.clip.heldItems;
+  } else {
+    state.clip.heldItems = nextHeldItems;
+  }
+  if (!nextHeldItemId) {
+    delete state.clip.heldItemId;
+  } else {
+    state.clip.heldItemId = nextHeldItemId;
+  }
+  if (!nextHeldItemId && !nextHeldItems && state.selectedHeldItemSlot === DEFAULT_STUDIO_HELD_ITEM_SLOT) {
+    delete state.clip.heldItemSlot;
+    return;
+  }
+  state.clip.heldItemSlot = state.selectedHeldItemSlot;
+}
+
+function refreshHeldItemSelectionFromClip(): void {
+  state.selectedHeldItems = buildStudioHeldItemsFromClip(state.clip);
+  state.selectedHeldItemSlot = normalizeStudioHeldItemSlot(
+    state.clip?.heldItemSlot || resolveStudioHeldItemSlotFromSelection(state.selectedHeldItems, null)
+  );
+  refreshHeldItemSelect();
+  refreshHeldItemSlotSelect();
+  applyHeldItemSelectionToPreview();
 }
 
 function refreshMirrorButton(): void {
@@ -645,14 +831,7 @@ function refreshSnapButton(): void {
 function listDescendantNodeIds(nodeId: string | null): string[] {
   if (!nodeId || nodeId === "root" || !state.schema) return [];
   const parentByNodeId = resolvePreviewRigParentNodeIds();
-  const childrenByNodeId: Record<string, string[]> = {};
-  state.schema.nodeOrder.forEach((schemaNodeId) => {
-    childrenByNodeId[schemaNodeId] = [];
-  });
-  Object.entries(parentByNodeId).forEach(([schemaNodeId, parentNodeId]) => {
-    if (!parentNodeId || !childrenByNodeId[parentNodeId]) return;
-    childrenByNodeId[parentNodeId].push(schemaNodeId);
-  });
+  const childrenByNodeId = buildPreviewRigChildrenByNodeId(parentByNodeId);
   const descendants: string[] = [];
   const pending = [...(childrenByNodeId[nodeId] || [])];
   while (pending.length > 0) {
@@ -662,6 +841,19 @@ function listDescendantNodeIds(nodeId: string | null): string[] {
     pending.unshift(...(childrenByNodeId[nextNodeId] || []));
   }
   return descendants;
+}
+
+function buildPreviewRigChildrenByNodeId(parentByNodeId: Record<string, string | null>): Record<string, string[]> {
+  const childrenByNodeId: Record<string, string[]> = {};
+  if (!state.schema) return childrenByNodeId;
+  state.schema.nodeOrder.forEach((schemaNodeId) => {
+    childrenByNodeId[schemaNodeId] = [];
+  });
+  Object.entries(parentByNodeId).forEach(([schemaNodeId, parentNodeId]) => {
+    if (!parentNodeId || !childrenByNodeId[parentNodeId]) return;
+    childrenByNodeId[parentNodeId].push(schemaNodeId);
+  });
+  return childrenByNodeId;
 }
 
 function isDecoupleDescendantsAvailable(nodeId: string | null): boolean {
@@ -770,6 +962,43 @@ function resolvePreviewRigParentNodeIds(): Record<string, string | null> {
     parentByNodeId[nodeId] = resolvedParentId;
   });
   return parentByNodeId;
+}
+
+function resolveRelativeNodePath(
+  nodeId: string,
+  rootNodeId: string,
+  parentByNodeId: Record<string, string | null>,
+  childrenByNodeId: Record<string, string[]>
+): number[] | null {
+  if (nodeId === rootNodeId) return [];
+  const path: number[] = [];
+  let currentNodeId: string | null = nodeId;
+  while (currentNodeId && currentNodeId !== rootNodeId) {
+    const parentNodeId: string | null = parentByNodeId[currentNodeId] || null;
+    if (!parentNodeId) return null;
+    const siblings: string[] = childrenByNodeId[parentNodeId] || [];
+    const childIndex = siblings.indexOf(currentNodeId);
+    if (childIndex < 0) return null;
+    path.unshift(childIndex);
+    currentNodeId = parentNodeId;
+  }
+  return currentNodeId === rootNodeId ? path : null;
+}
+
+function resolveNodeIdFromRelativePath(
+  rootNodeId: string,
+  relativePath: number[],
+  childrenByNodeId: Record<string, string[]>
+): string | null {
+  let currentNodeId: string | null = rootNodeId;
+  for (let index = 0; index < relativePath.length; index += 1) {
+    if (!currentNodeId) return null;
+    const childNodeIds: string[] = childrenByNodeId[currentNodeId] || [];
+    const childNodeId: string | undefined = childNodeIds[relativePath[index]];
+    if (!childNodeId) return null;
+    currentNodeId = childNodeId;
+  }
+  return currentNodeId;
 }
 
 function buildMatrixFromResolvedTransform(transform: AnimationResolvedTransform | undefined): THREE.Matrix4 {
@@ -964,6 +1193,7 @@ function attachManipulatorToSelectedNode(): void {
 
 function selectNode(nodeId: string | null): void {
   if (nodeId && state.schema && !state.schema.nodes[nodeId]) return;
+  hideNodeContextMenu();
   state.selectedNodeId = nodeId;
   state.decoupledDescendantWorldMatrices = null;
   if (state.nodeSelect) {
@@ -978,6 +1208,7 @@ function selectNode(nodeId: string | null): void {
   refreshDecoupleButton();
   refreshIsolationButton();
   refreshSnapButton();
+  refreshNodeClipboardButtons();
   applyNodeIsolationToPreview();
   setSummary();
 }
@@ -986,6 +1217,7 @@ function ensureClip(clipId: string): void {
   const clip = getAnimationClip(clipId);
   const descriptor = getAnimationClipDescriptor(clipId);
   if (!clip || !descriptor) return;
+  hideNodeContextMenu();
   clearUndoHistory();
   const schema = getAnimationRigSchema(clip.rigId);
   if (!schema) return;
@@ -1000,6 +1232,7 @@ function ensureClip(clipId: string): void {
     state.timeline.value = String(Math.floor(state.timeMs));
   }
   if (state.durationInput) state.durationInput.value = String(Math.round(clip.durationMs));
+  refreshHeldItemSelectionFromClip();
   refreshPoseList();
   refreshKeyList();
   refreshMarkerLane();
@@ -1011,6 +1244,7 @@ function ensureClip(clipId: string): void {
   refreshIsolationButton();
   refreshSnapButton();
   refreshPoseClipboardButtons();
+  refreshNodeClipboardButtons();
   applyNodeIsolationToPreview();
   refreshInspector();
   setSummary();
@@ -1019,6 +1253,7 @@ function ensureClip(clipId: string): void {
 
 function commitClip(nextClip: AnimationClip, refreshStructure = true, recordUndo = true): void {
   if (recordUndo && !state.undoTransactionEntry) pushUndoEntry(createStudioUndoEntry());
+  hideNodeContextMenu();
   state.clip = sortClipKeysAndMarkers(nextClip);
   state.timeMs = Math.max(0, Math.min(state.timeMs, state.clip.durationMs));
   state.draftDirty = true;
@@ -1027,6 +1262,7 @@ function commitClip(nextClip: AnimationClip, refreshStructure = true, recordUndo
     state.timeline.value = String(Math.floor(state.timeMs));
   }
   if (state.durationInput) state.durationInput.value = String(Math.round(state.clip.durationMs));
+  refreshHeldItemSelectionFromClip();
   if (refreshStructure) {
     refreshPoseList();
     refreshKeyList();
@@ -1035,15 +1271,31 @@ function commitClip(nextClip: AnimationClip, refreshStructure = true, recordUndo
   }
   refreshInspector();
   refreshPoseClipboardButtons();
+  refreshNodeClipboardButtons();
   setSummary();
   setReadyStatus();
   refreshUndoButton();
 }
 
+function expandSharedPreviewNodeIds(nodeIds: string[]): string[] {
+  const uniqueNodeIds = new Set(nodeIds.filter((nodeId) => !!nodeId && nodeId !== "root"));
+  if (!state.previewRig) return Array.from(uniqueNodeIds);
+  const nodeMap = resolveLegacyRigNodeMap(state.previewRig);
+  Array.from(uniqueNodeIds).forEach((nodeId) => {
+    if (nodeId !== "weapon" && nodeId !== "leftWeapon" && nodeId !== "rightWeapon") return;
+    const node = nodeMap[nodeId as keyof typeof nodeMap];
+    if (!node) return;
+    (["weapon", "leftWeapon", "rightWeapon"] as const).forEach((aliasNodeId) => {
+      if (nodeMap[aliasNodeId] === node) uniqueNodeIds.add(aliasNodeId);
+    });
+  });
+  return Array.from(uniqueNodeIds);
+}
+
 function syncPoseNodeTransformsFromPreview(nodeIds: string[]): void {
   if (!state.previewRig || !state.clip || !state.selectedPoseId) return;
   const nodeMap = resolveLegacyRigNodeMap(state.previewRig);
-  const uniqueNodeIds = Array.from(new Set(nodeIds.filter((nodeId) => !!nodeId && nodeId !== "root")));
+  const uniqueNodeIds = expandSharedPreviewNodeIds(nodeIds);
   if (uniqueNodeIds.length === 0) return;
   const clip = cloneAnimationClip(state.clip);
   const pose = clip.poses[state.selectedPoseId] || {};
@@ -1114,17 +1366,20 @@ function toggleDecoupleDescendantsMode(): void {
     state.decoupleDescendants = false;
     state.decoupledDescendantWorldMatrices = null;
     refreshDecoupleButton();
+    refreshNodeClipboardButtons();
     setStatus("Decouple Children disabled. Descendants will follow parent nodes again.");
     return;
   }
   if (!isDecoupleDescendantsAvailable(state.selectedNodeId)) {
     refreshDecoupleButton();
+    refreshNodeClipboardButtons();
     setStatus("Select a node with child parts first.");
     return;
   }
   state.decoupleDescendants = true;
   state.decoupledDescendantWorldMatrices = null;
   refreshDecoupleButton();
+  refreshNodeClipboardButtons();
   setStatus("Decouple Children enabled. Descendants stay put until you toggle it off.");
 }
 
@@ -1237,8 +1492,16 @@ function createOverlay(): HTMLDivElement {
             <select id="animation-studio-node-select" class="w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100"></select>
           </div>
           <div class="rounded border border-[#39434c] bg-[#10161b] p-2">
-            <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8aa6e]">Held Item</div>
-            <select id="animation-studio-held-item-select" class="w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100"></select>
+            <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8aa6e]">Held Items</div>
+            <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">Right Hand</div>
+            <select id="animation-studio-held-item-select" class="mt-1 w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100"></select>
+            <div class="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">Left Hand</div>
+            <select id="animation-studio-held-item-left-select" class="mt-1 w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100"></select>
+            <div class="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">Weapon Node Hand</div>
+            <select id="animation-studio-held-item-slot-select" class="mt-1 w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100">
+              <option value="rightHand">Right hand</option>
+              <option value="leftHand">Left hand</option>
+            </select>
           </div>
           <div id="animation-studio-inspector" class="space-y-2"></div>
           <div class="flex flex-wrap gap-2">
@@ -1253,6 +1516,10 @@ function createOverlay(): HTMLDivElement {
             <textarea id="animation-studio-export" class="h-full min-h-[180px] w-full rounded border border-[#39434c] bg-[#0a0f13] p-2 font-mono text-[10px] text-gray-200"></textarea>
           </div>
         </div>
+      </div>
+      <div id="animation-studio-node-menu" class="hidden absolute z-20 w-44 rounded border border-[#4b5660] bg-[#0d1318] p-1 shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
+        <button id="animation-studio-copy-node-btn" type="button" class="mb-1 w-full rounded border border-[#2e3740] bg-[#11161b] px-2 py-1 text-left text-[11px] font-bold text-gray-500 cursor-not-allowed" disabled>Copy Node</button>
+        <button id="animation-studio-paste-node-btn" type="button" class="w-full rounded border border-[#2e3740] bg-[#11161b] px-2 py-1 text-left text-[11px] font-bold text-gray-500 cursor-not-allowed" disabled>Paste Node</button>
       </div>
     </div>
   `;
@@ -1338,9 +1605,16 @@ function isSelectedPoseUnkeyed(): boolean {
   return !!state.selectedPoseId && findFirstKeyIndexForPose(state.selectedPoseId) < 0;
 }
 
+function resolveSelectedPosePreviewReason(): "unkeyed" | "node edit" | null {
+  if (state.playing || !state.selectedPoseId) return null;
+  if (isSelectedPoseUnkeyed()) return "unkeyed";
+  if (state.selectedNodeId && state.selectedNodeId !== "root") return "node edit";
+  return null;
+}
+
 function resolveStudioPreviewPose(): AnimationResolvedPose | null {
   if (!state.clip || !state.schema || !state.bindPose) return null;
-  const shouldPreviewSelectedPose = !state.playing && !!state.selectedPoseId && isSelectedPoseUnkeyed();
+  const shouldPreviewSelectedPose = !!resolveSelectedPosePreviewReason();
   if (!shouldPreviewSelectedPose || !state.selectedPoseId) {
     return sampleAnimationClip(state.clip, state.schema, state.bindPose, state.timeMs);
   }
@@ -1430,6 +1704,7 @@ function moveSelectedPoseKeyToTime(timeMs: number): boolean {
 
 function selectPose(poseId: string, jumpToFirstKey = true): void {
   if (!state.clip || !state.clip.poses[poseId]) return;
+  hideNodeContextMenu();
   state.selectedPoseId = poseId;
   if (state.renamePose) state.renamePose.value = poseId;
   if (jumpToFirstKey) {
@@ -1444,6 +1719,7 @@ function selectPose(poseId: string, jumpToFirstKey = true): void {
   refreshKeyLane();
   refreshInspector();
   refreshPoseClipboardButtons();
+  refreshNodeClipboardButtons();
   setSummary();
 }
 
@@ -1873,6 +2149,126 @@ function copySelectedPoseToClipboard(): void {
   setStatus(`Copied pose ${state.selectedPoseId} from ${state.clip.clipId}. Switch clips and paste it anywhere.`);
 }
 
+function copySelectedNodeToClipboard(): void {
+  if (!state.clip || !state.selectedPoseId || !state.selectedNodeId || state.selectedNodeId === "root" || !state.schema) {
+    setStatus("Select a body part node first.");
+    hideNodeContextMenu();
+    return;
+  }
+  const sourcePose = state.clip.poses[state.selectedPoseId] || {};
+  const includeDescendants = isNodeClipboardSubtreeMode();
+  const sourceNodeIds = includeDescendants
+    ? [state.selectedNodeId, ...listDescendantNodeIds(state.selectedNodeId)]
+    : [state.selectedNodeId];
+  const parentByNodeId = resolvePreviewRigParentNodeIds();
+  const childrenByNodeId = buildPreviewRigChildrenByNodeId(parentByNodeId);
+  const entries: StudioNodeClipboardEntry[] = [];
+  sourceNodeIds.forEach((sourceNodeId) => {
+    const relativePath = resolveRelativeNodePath(
+      sourceNodeId,
+      state.selectedNodeId as string,
+      parentByNodeId,
+      childrenByNodeId
+    );
+    if (!relativePath) return;
+    entries.push({
+      sourceNodeId,
+      relativePath,
+      transform: cloneStudioNodeTransform(sourcePose[sourceNodeId])
+    });
+  });
+  if (entries.length === 0) {
+    setStatus(`Could not resolve ${getNodeDisplayLabel(state.selectedNodeId)} for node copy.`);
+    hideNodeContextMenu();
+    return;
+  }
+  state.nodeClipboard = {
+    sourceClipId: state.clip.clipId,
+    sourcePoseId: state.selectedPoseId,
+    sourceRootNodeId: state.selectedNodeId,
+    includeDescendants,
+    entries
+  };
+  refreshNodeClipboardButtons();
+  hideNodeContextMenu();
+  setStatus(includeDescendants
+    ? `Copied ${getNodeDisplayLabel(state.selectedNodeId)} and ${Math.max(0, entries.length - 1)} child parts from ${state.selectedPoseId}.`
+    : `Copied ${getNodeDisplayLabel(state.selectedNodeId)} from ${state.selectedPoseId}.`);
+}
+
+function pasteNodeClipboardOverSelection(): void {
+  if (!state.clip || !state.selectedPoseId || !state.selectedNodeId || state.selectedNodeId === "root") {
+    setStatus("Select a body part node to paste over.");
+    hideNodeContextMenu();
+    return;
+  }
+  if (!state.nodeClipboard) {
+    setStatus("Copy a node first.");
+    hideNodeContextMenu();
+    return;
+  }
+  const targetRootNodeId = state.selectedNodeId;
+  const parentByNodeId = resolvePreviewRigParentNodeIds();
+  const childrenByNodeId = buildPreviewRigChildrenByNodeId(parentByNodeId);
+  const clip = cloneAnimationClip(state.clip);
+  const pose = clip.poses[state.selectedPoseId] || {};
+  const nextPose = { ...pose };
+  let matchedCount = 0;
+  let skippedCount = 0;
+
+  state.nodeClipboard.entries.forEach((entry) => {
+    const targetNodeId = resolveNodeIdFromRelativePath(targetRootNodeId, entry.relativePath, childrenByNodeId);
+    if (!targetNodeId || targetNodeId === "root") {
+      skippedCount += 1;
+      return;
+    }
+    matchedCount += 1;
+    const clonedTransform = cloneStudioNodeTransform(entry.transform || undefined);
+    if (clonedTransform && Object.keys(clonedTransform).length > 0) {
+      nextPose[targetNodeId] = clonedTransform;
+      return;
+    }
+    if (nextPose[targetNodeId]) delete nextPose[targetNodeId];
+  });
+
+  if (matchedCount === 0) {
+    setStatus(`No matching child layout found under ${getNodeDisplayLabel(targetRootNodeId)}.`);
+    hideNodeContextMenu();
+    return;
+  }
+
+  clip.poses = {
+    ...clip.poses,
+    [state.selectedPoseId]: nextPose
+  };
+  commitClip(clip, false);
+  refreshNodeClipboardButtons();
+  hideNodeContextMenu();
+  const scopeLabel = state.nodeClipboard.includeDescendants ? "node subtree" : "node";
+  const skipText = skippedCount > 0 ? ` ${skippedCount} unmatched child parts were skipped.` : "";
+  setStatus(`Pasted ${scopeLabel} from ${state.nodeClipboard.sourcePoseId} over ${getNodeDisplayLabel(targetRootNodeId)}.${skipText}`);
+}
+
+function showNodeContextMenu(clientX: number, clientY: number): void {
+  if (!state.overlay || !state.nodeContextMenu) return;
+  refreshNodeClipboardButtons();
+  const overlayRect = state.overlay.getBoundingClientRect();
+  const menuWidth = 176;
+  const menuHeight = 96;
+  const minPadding = 12;
+  const left = Math.min(
+    Math.max(minPadding, clientX - overlayRect.left),
+    Math.max(minPadding, overlayRect.width - menuWidth - minPadding)
+  );
+  const top = Math.min(
+    Math.max(minPadding, clientY - overlayRect.top),
+    Math.max(minPadding, overlayRect.height - menuHeight - minPadding)
+  );
+  state.nodeContextMenu.style.left = `${left}px`;
+  state.nodeContextMenu.style.top = `${top}px`;
+  state.nodeContextMenu.classList.remove("hidden");
+}
+
 function pasteClipboardPoseOverSelectedPose(): void {
   if (!state.clip || !state.selectedPoseId || !state.poseClipboard) return;
   const targetPoseId = state.selectedPoseId;
@@ -1882,7 +2278,7 @@ function pasteClipboardPoseOverSelectedPose(): void {
     [targetPoseId]: cloneStudioPoseData(state.poseClipboard.pose)
   };
   commitClip(clip);
-  selectPose(targetPoseId, false);
+  selectPose(targetPoseId, true);
   setStatus(`Pasted ${state.poseClipboard.sourcePoseId} from ${state.poseClipboard.sourceClipId} over ${targetPoseId}.`);
 }
 
@@ -1905,7 +2301,7 @@ function pasteClipboardPoseAsNew(): void {
   clip.poses = buildOrderedPosesMap(clip, poseIds);
   state.selectedPoseId = targetPoseId;
   commitClip(clip);
-  selectPose(targetPoseId, false);
+  selectPose(targetPoseId, true);
   setStatus(`Pasted ${state.poseClipboard.sourcePoseId} from ${state.poseClipboard.sourceClipId} as ${targetPoseId}.`);
 }
 
@@ -2257,6 +2653,14 @@ async function refreshManifest(): Promise<void> {
   }
 }
 
+async function loadPersistedClipFromSourcePath(sourcePath: string): Promise<AnimationClip | null> {
+  if (!sourcePath) return null;
+  const response = await fetch(`${ANIMATION_STUDIO_CLIP_ROUTE}?sourcePath=${encodeURIComponent(sourcePath)}`);
+  if (!response.ok) return null;
+  const payload = await response.json() as { ok?: boolean; clip?: AnimationClip };
+  return payload.ok && payload.clip ? payload.clip : null;
+}
+
 async function saveClip(): Promise<void> {
   if (!state.clip || !state.descriptor) return;
   const sourceText = serializeAnimationClip(state.clip);
@@ -2278,9 +2682,19 @@ async function saveClip(): Promise<void> {
     setStatus(`Save failed (${response.status}). Export text is ready.`);
     return;
   }
-  replaceAnimationClip(state.clip);
+  const persistedClip = await loadPersistedClipFromSourcePath(state.descriptor.sourcePath);
+  const savedClip = persistedClip ? cloneAnimationClip(persistedClip) : cloneAnimationClip(state.clip);
+  state.clip = savedClip;
+  replaceAnimationClip(savedClip);
   state.draftDirty = false;
   if (state.exportText) state.exportText.value = sourceText;
+  refreshPoseList();
+  refreshKeyList();
+  refreshMarkerLane();
+  refreshKeyLane();
+  refreshInspector();
+  setSummary();
+  setReadyStatus();
   setStatus(`Saved ${state.clip.clipId}. Live animation updated.`);
 }
 
@@ -2436,14 +2850,15 @@ function ensureScene(): void {
   applyCameraPreset("threeQuarter");
   resizeRenderer();
 
-  if (!window.createPlayerRigFromCurrentAppearance) {
+  if (!window.createPlayerRigForAnimationStudio) {
     setStatus("Preview rig unavailable.");
     return;
   }
-  state.previewRig = window.createPlayerRigFromCurrentAppearance();
+  state.previewRig = window.createPlayerRigForAnimationStudio();
   state.scene.add(state.previewRig);
   state.bindPose = captureRigBindPose(state.previewRig, "player_humanoid_v1");
   refreshHeldItemSelect();
+  refreshHeldItemSlotSelect();
   applyHeldItemSelectionToPreview();
   attachManipulatorToSelectedNode();
   refreshManipulatorButtons();
@@ -2460,7 +2875,8 @@ function applyPreviewPose(rig: THREE.Group | null, pose: AnimationResolvedPose |
   applyResolvedPoseToRig(rig, state.clip.rigId, pose, {
     additiveRootPosition: false,
     additiveRootRotation: false,
-    multiplicativeRootScale: false
+    multiplicativeRootScale: false,
+    bindPose: state.bindPose
   });
 }
 
@@ -2555,8 +2971,9 @@ function tick(frameNowMs: number): void {
     }
     if (state.playheadSummary) {
       const markers = summary.activeMarkerIds.length > 0 ? summary.activeMarkerIds.join(", ") : "none";
-      const previewMode = !state.playing && isSelectedPoseUnkeyed() && state.selectedPoseId
-        ? ` | preview ${state.selectedPoseId} (unkeyed)`
+      const previewReason = resolveSelectedPosePreviewReason();
+      const previewMode = previewReason && state.selectedPoseId
+        ? ` | preview ${state.selectedPoseId} (${previewReason})`
         : "";
       state.playheadSummary.innerText = `playhead ${Math.round(summary.timeMs)}ms | prev ${summary.previousPoseId || "none"} | next ${summary.nextPoseId || "none"} | markers ${markers}${previewMode} | ${buildPlayheadEasingSummary()}`;
     }
@@ -2604,11 +3021,16 @@ function bindUI(): void {
   state.easeSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-ease");
   state.nodeSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-node-select");
   state.heldItemSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-held-item-select");
+  state.leftHeldItemSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-held-item-left-select");
+  state.heldItemSlotSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-held-item-slot-select");
   state.playButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-play");
   state.undoButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-undo");
   state.copyPoseButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-copy-pose-btn");
   state.pastePoseButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-paste-pose-btn");
   state.pastePoseNewButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-paste-pose-new-btn");
+  state.nodeContextMenu = overlay.querySelector<HTMLDivElement>("#animation-studio-node-menu");
+  state.copyNodeButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-copy-node-btn");
+  state.pasteNodeButton = overlay.querySelector<HTMLButtonElement>("#animation-studio-paste-node-btn");
 
   const inspector = overlay.querySelector<HTMLDivElement>("#animation-studio-inspector");
   if (inspector) {
@@ -2628,6 +3050,8 @@ function bindUI(): void {
   state.copyPoseButton?.addEventListener("click", copySelectedPoseToClipboard);
   state.pastePoseButton?.addEventListener("click", pasteClipboardPoseOverSelectedPose);
   state.pastePoseNewButton?.addEventListener("click", pasteClipboardPoseAsNew);
+  state.copyNodeButton?.addEventListener("click", copySelectedNodeToClipboard);
+  state.pasteNodeButton?.addEventListener("click", pasteNodeClipboardOverSelection);
   overlay.querySelector<HTMLButtonElement>("#animation-studio-rename-pose-btn")?.addEventListener("click", renamePose);
   state.renamePose?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
@@ -2693,12 +3117,34 @@ function bindUI(): void {
     selectNode(state.nodeSelect?.value || null);
   });
   state.heldItemSelect?.addEventListener("change", () => {
-    state.selectedHeldItemId = state.heldItemSelect?.value || "";
+    state.selectedHeldItems.rightHand = state.heldItemSelect?.value || "";
+    syncClipHeldItemSelection();
+    state.draftDirty = true;
     applyHeldItemSelectionToPreview();
-    const selectedOption = listStudioHeldItemOptions().find((option) => option.itemId === state.selectedHeldItemId) || null;
-    setStatus(state.selectedHeldItemId
-      ? `Preview held item: ${selectedOption?.label || humanizeStudioItemId(state.selectedHeldItemId)}.`
-      : "Preview held item cleared.");
+    const selectedOption = listStudioHeldItemOptions().find((option) => option.itemId === state.selectedHeldItems.rightHand) || null;
+    setStatus(state.selectedHeldItems.rightHand
+      ? `Preview right-hand item: ${selectedOption?.label || humanizeStudioItemId(state.selectedHeldItems.rightHand)}.`
+      : "Preview right-hand item cleared.");
+    setReadyStatus();
+  });
+  state.leftHeldItemSelect?.addEventListener("change", () => {
+    state.selectedHeldItems.leftHand = state.leftHeldItemSelect?.value || "";
+    syncClipHeldItemSelection();
+    state.draftDirty = true;
+    applyHeldItemSelectionToPreview();
+    const selectedOption = listStudioHeldItemOptions().find((option) => option.itemId === state.selectedHeldItems.leftHand) || null;
+    setStatus(state.selectedHeldItems.leftHand
+      ? `Preview left-hand item: ${selectedOption?.label || humanizeStudioItemId(state.selectedHeldItems.leftHand)}.`
+      : "Preview left-hand item cleared.");
+    setReadyStatus();
+  });
+  state.heldItemSlotSelect?.addEventListener("change", () => {
+    state.selectedHeldItemSlot = normalizeStudioHeldItemSlot((state.heldItemSlotSelect?.value || null) as AnimationHeldItemSlot | null);
+    syncClipHeldItemSelection();
+    state.draftDirty = true;
+    applyHeldItemSelectionToPreview();
+    setStatus(`Weapon node now targets the ${state.selectedHeldItemSlot === "leftHand" ? "left" : "right"} hand.`);
+    setReadyStatus();
   });
   state.newClipName?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
@@ -2712,6 +3158,23 @@ function bindUI(): void {
   state.canvas?.addEventListener("click", handleViewportSelection);
   state.canvas?.addEventListener("contextmenu", (event) => {
     event.preventDefault();
+    if (state.cameraDragging || state.manipulatorDragging || state.cameraDragDidMove) {
+      hideNodeContextMenu();
+      return;
+    }
+    const pickedNodeId = pickNodeIdFromViewport(event.clientX, event.clientY);
+    if (pickedNodeId) selectNode(pickedNodeId);
+    if (!state.selectedNodeId || state.selectedNodeId === "root") {
+      hideNodeContextMenu();
+      setStatus("Select a body part node to copy or paste.");
+      return;
+    }
+    showNodeContextMenu(event.clientX, event.clientY);
+  });
+  overlay.addEventListener("pointerdown", (event) => {
+    if (!state.nodeContextMenu || state.nodeContextMenu.classList.contains("hidden")) return;
+    if (event.target instanceof Node && state.nodeContextMenu.contains(event.target)) return;
+    hideNodeContextMenu();
   });
   refreshLabelsToggleButton();
   refreshManipulatorButtons();
@@ -2721,6 +3184,8 @@ function bindUI(): void {
   refreshIsolationButton();
   refreshSnapButton();
   refreshHeldItemSelect();
+  refreshHeldItemSlotSelect();
+  refreshNodeClipboardButtons();
   updateCanvasCursor();
   window.addEventListener("resize", resizeRenderer);
 }
@@ -2752,6 +3217,7 @@ export function toggleAnimationStudio(nextState?: boolean): void {
   state.active = typeof nextState === "boolean" ? nextState : !state.active;
   if (state.overlay) state.overlay.classList.toggle("hidden", !state.active);
   if (!state.active) {
+    hideNodeContextMenu();
     endViewportCameraDrag();
     if (state.rafId) window.cancelAnimationFrame(state.rafId);
     state.playing = false;
@@ -2763,7 +3229,9 @@ export function toggleAnimationStudio(nextState?: boolean): void {
     return;
   }
   ensureScene();
+  hideNodeContextMenu();
   refreshHeldItemSelect();
+  refreshHeldItemSlotSelect();
   applyHeldItemSelectionToPreview();
   state.showLabels = false;
   state.isolatedNodeId = null;

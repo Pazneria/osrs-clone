@@ -4,6 +4,7 @@
   "durationMs": 1800,
   "loopMode": "loop",
   "maskId": "fullBody",
+  "heldItemId": "harpoon",
   "poses": {
     "down": {
       "leftLeg": {

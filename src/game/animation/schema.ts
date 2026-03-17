@@ -26,7 +26,9 @@ export const PLAYER_HUMANOID_V1_RIG: AnimationRigSchema = {
     "rightLeg",
     "leftLowerLeg",
     "rightLowerLeg",
-    "weapon"
+    "weapon",
+    "leftWeapon",
+    "rightWeapon"
   ],
   nodes: {
     root: createNode("root", "Root", null, POSITION_ROTATION_SCALE),
@@ -40,7 +42,9 @@ export const PLAYER_HUMANOID_V1_RIG: AnimationRigSchema = {
     rightLeg: createNode("rightLeg", "Right Leg", "leftLeg", POSITION_ROTATION_SCALE),
     leftLowerLeg: createNode("leftLowerLeg", "Left Shin", "rightLowerLeg", POSITION_ROTATION_SCALE),
     rightLowerLeg: createNode("rightLowerLeg", "Right Shin", "leftLowerLeg", POSITION_ROTATION_SCALE),
-    weapon: createNode("weapon", "Weapon", null, POSITION_ROTATION_SCALE)
+    weapon: createNode("weapon", "Weapon (Legacy)", null, POSITION_ROTATION_SCALE),
+    leftWeapon: createNode("leftWeapon", "Left Hand Item", "rightWeapon", POSITION_ROTATION_SCALE),
+    rightWeapon: createNode("rightWeapon", "Right Hand Item", "leftWeapon", POSITION_ROTATION_SCALE)
   },
   masks: {
     fullBody: [
@@ -55,7 +59,9 @@ export const PLAYER_HUMANOID_V1_RIG: AnimationRigSchema = {
       "rightLeg",
       "leftLowerLeg",
       "rightLowerLeg",
-      "weapon"
+      "weapon",
+      "leftWeapon",
+      "rightWeapon"
     ],
     upperBody: [
       "head",
@@ -64,7 +70,9 @@ export const PLAYER_HUMANOID_V1_RIG: AnimationRigSchema = {
       "rightArm",
       "leftLowerArm",
       "rightLowerArm",
-      "weapon"
+      "weapon",
+      "leftWeapon",
+      "rightWeapon"
     ]
   }
 };
@@ -85,4 +93,3 @@ export function getAnimationMaskNodeIds(rigId: string, maskId: AnimationMaskId):
   if (!schema) return [];
   return Array.isArray(schema.masks[maskId]) ? schema.masks[maskId].slice() : [];
 }
-

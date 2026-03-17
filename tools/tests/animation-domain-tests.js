@@ -1,4 +1,5 @@
 const path = require("path");
+const THREE = require("three");
 const { loadTsModule } = require("./ts-module-loader");
 
 function assert(condition, message) {
@@ -14,13 +15,31 @@ function run() {
 
   const schema = schemaModule.PLAYER_HUMANOID_V1_RIG;
   const descriptors = registry.listAnimationClipDescriptors();
-  assert(descriptors.length >= 11, "expected animation clip descriptors");
+  assert(descriptors.length >= 17, "expected animation clip descriptors");
   assert(!!registry.getAnimationClip("player/mining1"), "expected mining1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_net1"), "expected fishing_net1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_rod_hold1"), "expected fishing_rod_hold1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_rod_cast1"), "expected fishing_rod_cast1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_harpoon_hold1"), "expected fishing_harpoon_hold1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_harpoon_strike1"), "expected fishing_harpoon_strike1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/woodcutting1"), "expected woodcutting1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/cooking1"), "expected cooking1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/firemaking1"), "expected firemaking1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/fletching1"), "expected fletching1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/smithing_smelting1"), "expected smithing_smelting1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/smithing_forging1"), "expected smithing_forging1 clip to be registered");
+  assert(schema.nodes.leftWeapon, "expected player rig schema to expose a left-hand item node");
+  assert(schema.nodes.rightWeapon, "expected player rig schema to expose a right-hand item node");
+  assert(registry.getAnimationClip("player/fishing_net1").heldItemId === "small_net", "expected fishing_net1 to default its held item");
+  assert(registry.getAnimationClip("player/fishing_rod_hold1").heldItemId === "fishing_rod", "expected fishing_rod_hold1 to default its held item");
+  assert(registry.getAnimationClip("player/fishing_rod_cast1").heldItemId === "fishing_rod", "expected fishing_rod_cast1 to default its held item");
+  assert(registry.getAnimationClip("player/fishing_harpoon_hold1").heldItemId === "harpoon", "expected fishing_harpoon_hold1 to default its held item");
+  assert(registry.getAnimationClip("player/fishing_harpoon_strike1").heldItemId === "harpoon", "expected fishing_harpoon_strike1 to default its held item");
+  assert(!registry.getAnimationClip("player/woodcutting1").heldItemId, "expected woodcutting1 to rely on runtime-held-item selection");
+  assert(!registry.getAnimationClip("player/fletching1").heldItemId, "expected fletching1 to stay prop-neutral until runtime logic adds held items");
+  assert(!registry.getAnimationClip("player/smithing_smelting1").heldItemId, "expected smithing_smelting1 to rely on runtime-held-item selection");
+  assert(!registry.getAnimationClip("player/smithing_forging1").heldItemId, "expected smithing_forging1 to rely on runtime-held-item selection");
+  assert(registry.getAnimationClip("player/firemaking1").heldItemSlot === "leftHand", "expected firemaking1 to default its held item slot to the left hand");
   assert(
     !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/mining1.json"),
     "expected to resolve descriptors by source path"
@@ -44,6 +63,30 @@ function run() {
   assert(
     !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fishing_harpoon_strike1.json"),
     "expected to resolve fishing_harpoon_strike1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/woodcutting1.json"),
+    "expected to resolve woodcutting1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/cooking1.json"),
+    "expected to resolve cooking1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/firemaking1.json"),
+    "expected to resolve firemaking1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/fletching1.json"),
+    "expected to resolve fletching1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/smithing_smelting1.json"),
+    "expected to resolve smithing_smelting1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/smithing_forging1.json"),
+    "expected to resolve smithing_forging1 descriptors by source path"
   );
   for (let i = 0; i < descriptors.length; i += 1) {
     const clip = registry.getAnimationClip(descriptors[i].clipId);
@@ -140,6 +183,101 @@ function run() {
   assert(controllerDebug.requestedActions.length === 2, "debug snapshot should retain both same-frame action requests");
   assert(controllerDebug.winningRequest && controllerDebug.winningRequest.clipId === "player/combat_slash", "debug snapshot should expose the winning action request");
   assert(controllerDebug.lastCommittedAction && controllerDebug.lastCommittedAction.clipId === "player/combat_slash", "debug snapshot should expose the committed action");
+
+  const heldItemController = controllerModule.createAnimationControllerState("player_humanoid_v1", bindPose);
+  controllerModule.beginAnimationFrame(heldItemController);
+  controllerModule.setBaseAnimationClip(heldItemController, "player/mining1", 0, "bronze_pickaxe", "rightHand");
+  assert(heldItemController.baseHeldItemId === "bronze_pickaxe", "base clips should accept held-item overrides");
+  assert(heldItemController.baseHeldItemSlot === "rightHand", "base clips should accept held-item slot overrides");
+  controllerModule.setBaseAnimationClip(heldItemController, "player/mining1", 250, "rune_pickaxe", "rightHand");
+  assert(heldItemController.baseHeldItemId === "rune_pickaxe", "base held-item overrides should update without changing clips");
+  assert(heldItemController.baseHeldItemSlot === "rightHand", "base held-item slot overrides should update without changing clips");
+  assert(heldItemController.baseStartedAtMs === 0, "changing only the held item should not restart the base clip");
+  controllerModule.requestActionAnimationClip(heldItemController, "player/fishing_harpoon_strike1", 100, "harpoon:1", 2, "rune_harpoon", "rightHand");
+  controllerModule.sampleAnimationControllerPose(heldItemController, 120);
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemId(heldItemController, 120) === "rune_harpoon",
+    "active action clips should override the base held item"
+  );
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemSlot(heldItemController, 120) === "rightHand",
+    "active action clips should override the base held-item slot"
+  );
+  const heldItemDebug = controllerModule.getAnimationControllerDebugSnapshot(heldItemController, 120);
+  assert(heldItemDebug.baseHeldItemId === "rune_pickaxe", "debug snapshot should expose the base held item");
+  assert(heldItemDebug.baseHeldItemSlot === "rightHand", "debug snapshot should expose the base held-item slot");
+  assert(heldItemDebug.actionHeldItemId === "rune_harpoon", "debug snapshot should expose the action held item");
+  assert(heldItemDebug.actionHeldItemSlot === "rightHand", "debug snapshot should expose the action held-item slot");
+  assert(heldItemDebug.resolvedHeldItemId === "rune_harpoon", "debug snapshot should expose the resolved held item");
+  assert(heldItemDebug.resolvedHeldItemSlot === "rightHand", "debug snapshot should expose the resolved held-item slot");
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemId(heldItemController, 700) === "rune_pickaxe",
+    "held-item resolution should fall back to the base clip after the action expires"
+  );
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemSlot(heldItemController, 700) === "rightHand",
+    "held-item slot resolution should fall back to the base clip after the action expires"
+  );
+
+  const heldItemSlotController = controllerModule.createAnimationControllerState("player_humanoid_v1", bindPose);
+  controllerModule.beginAnimationFrame(heldItemSlotController);
+  controllerModule.setBaseAnimationClip(heldItemSlotController, "player/firemaking1", 0, "tinderbox", "leftHand");
+  assert(heldItemSlotController.baseHeldItemSlot === "leftHand", "firemaking should be able to target the left-hand prop slot");
+  controllerModule.requestActionAnimationClip(heldItemSlotController, "player/fishing_harpoon_strike1", 100, "harpoon:left-test", 2, "rune_harpoon", "rightHand");
+  controllerModule.sampleAnimationControllerPose(heldItemSlotController, 120);
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemSlot(heldItemSlotController, 120) === "rightHand",
+    "action clips should temporarily replace a left-hand base slot"
+  );
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemSlot(heldItemSlotController, 700) === "leftHand",
+    "slot resolution should restore the left-hand base slot after the action expires"
+  );
+
+  const dualHeldItemController = controllerModule.createAnimationControllerState("player_humanoid_v1", bindPose);
+  controllerModule.beginAnimationFrame(dualHeldItemController);
+  controllerModule.setBaseAnimationClip(
+    dualHeldItemController,
+    "player/firemaking1",
+    0,
+    undefined,
+    "leftHand",
+    { leftHand: "tinderbox", rightHand: "logs" }
+  );
+  const resolvedDualHeldItems = controllerModule.resolveAnimationControllerHeldItems(dualHeldItemController, 0);
+  assert(resolvedDualHeldItems.leftHand === "tinderbox", "controller should preserve left-hand held-item maps");
+  assert(resolvedDualHeldItems.rightHand === "logs", "controller should preserve right-hand held-item maps");
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemSlot(dualHeldItemController, 0) === "leftHand",
+    "legacy weapon routing should still honor the preferred hand when both props are active"
+  );
+  assert(
+    controllerModule.resolveAnimationControllerHeldItemId(dualHeldItemController, 0) === "tinderbox",
+    "legacy held-item resolution should read from the preferred hand when both props are active"
+  );
+
+  const aliasRigRoot = new THREE.Group();
+  const aliasLeftWeapon = new THREE.Group();
+  aliasLeftWeapon.name = "pm-leftTool";
+  const aliasRightWeapon = new THREE.Group();
+  aliasRightWeapon.name = "pm-axe";
+  aliasRigRoot.add(aliasLeftWeapon);
+  aliasRigRoot.add(aliasRightWeapon);
+  aliasRigRoot.userData.rig = {
+    leftTool: aliasLeftWeapon,
+    rightTool: aliasRightWeapon,
+    axe: aliasRightWeapon
+  };
+  aliasRigRoot.userData.animationHeldItemSlot = "leftHand";
+  const aliasPose = clipUtils.buildBindFallbackPose(schema);
+  aliasPose.weapon = {
+    position: { x: 2, y: 0, z: 0 },
+    rotationDeg: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 }
+  };
+  controllerModule.applyResolvedPoseToRig(aliasRigRoot, "player_humanoid_v1", aliasPose, { bindPose });
+  assert(aliasLeftWeapon.position.x === 2, "legacy weapon transforms should still move the active left-hand prop anchor");
+  assert(aliasRightWeapon.position.x === 0, "left-hand alias fixes should not disturb the inactive right-hand prop anchor");
 
   const resetClip = clipUtils.resetPoseNodeToBindPose(registry.getAnimationClip("player/combat_slash"), "stage1", "rightArm", bindPose);
   assert(!resetClip.poses.stage1.rightArm, "reset-to-bind should remove node override");

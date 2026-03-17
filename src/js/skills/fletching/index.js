@@ -783,27 +783,11 @@
         },
 
         onAnimate(context) {
-            if (!context || !context.rig || !context.playerRig) return;
+            return false;
+        },
 
-            const rig = context.rig;
-            if (typeof context.setShoulderPivot === 'function') context.setShoulderPivot(rig);
-
-            rig.leftArm.rotation.set(0, 0, 0);
-            rig.rightArm.rotation.set(0, 0, 0);
-            rig.leftLowerArm.rotation.set(-0.03, 0, 0);
-            rig.rightLowerArm.rotation.set(-0.03, 0, 0);
-            rig.leftLeg.rotation.x = 0;
-            rig.rightLeg.rotation.x = 0;
-            if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0;
-            if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0;
-
-            if (rig.leftLeg && rig.leftLeg.position) rig.leftLeg.position.set(0.14, 0.7, 0);
-            if (rig.rightLeg && rig.rightLeg.position) rig.rightLeg.position.set(-0.14, 0.7, 0);
-            if (rig.leftLowerLeg && rig.leftLowerLeg.position) rig.leftLowerLeg.position.set(0, -0.35, 0);
-            if (rig.rightLowerLeg && rig.rightLowerLeg.position) rig.rightLowerLeg.position.set(0, -0.35, 0);
-
-            context.playerRig.rotation.x = 0;
-            if (Number.isFinite(context.baseVisualY)) context.playerRig.position.y = context.baseVisualY;
+        getAnimationSuppressEquipmentVisual() {
+            return true;
         }
     };
 

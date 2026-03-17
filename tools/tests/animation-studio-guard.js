@@ -26,6 +26,7 @@ function run() {
   assert(inputSource.includes("combat-animation-debug-panel"), "input-render.js should expose a combat animation debug panel");
   assert(inputSource.includes("updateCombatAnimationDebugPanel"), "input-render.js should refresh combat animation debug state");
   assert(playerModelSource.includes("window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;"), "player-model.js should expose preview rig creation");
+  assert(playerModelSource.includes("window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;"), "player-model.js should expose a weaponless studio preview rig");
   assert(playerModelSource.includes("torso.add(head, leftArm, rightArm);"), "player-model.js should parent the head under the torso for shared motion");
   assert(bridgeSource.includes("window.AnimationRuntimeBridge"), "animation bridge should expose AnimationRuntimeBridge");
   assert(bridgeSource.includes("window.AnimationStudioBridge"), "animation bridge should expose AnimationStudioBridge");
@@ -40,6 +41,8 @@ function run() {
   assert(studioSource.includes("animation-studio-create-clip"), "studio should expose a new-clip create button");
   assert(studioSource.includes("animation-studio-undo"), "studio should expose an undo control");
   assert(studioSource.includes("animation-studio-held-item-select"), "studio should expose a held-item dropdown");
+  assert(studioSource.includes("animation-studio-held-item-left-select"), "studio should expose a left-hand held-item dropdown");
+  assert(studioSource.includes("animation-studio-held-item-slot-select"), "studio should expose a held-item hand dropdown");
   assert(studioSource.includes("animation-studio-isolate-node"), "studio should expose a node isolation toggle");
   assert(studioSource.includes("animation-studio-snap-node"), "studio should expose a snap-to-node control");
   assert(studioSource.includes("animation-studio-decouple-children"), "studio should expose a descendant decoupling toggle");
@@ -49,6 +52,8 @@ function run() {
   assert(studioSource.includes("animation-studio-copy-pose-btn"), "studio should expose a pose copy control");
   assert(studioSource.includes("animation-studio-paste-pose-btn"), "studio should expose a pose paste-over control");
   assert(studioSource.includes("animation-studio-paste-pose-new-btn"), "studio should expose a pose paste-new control");
+  assert(studioSource.includes("animation-studio-copy-node-btn"), "studio should expose a node copy context action");
+  assert(studioSource.includes("animation-studio-paste-node-btn"), "studio should expose a node paste context action");
   assert(studioSource.includes("animation-studio-move-pose-up-btn"), "studio should expose a pose move-up control");
   assert(studioSource.includes("animation-studio-move-pose-down-btn"), "studio should expose a pose move-down control");
   assert(studioSource.includes("function createNewClip()"), "studio should support creating fresh clips from the UI");
@@ -56,6 +61,7 @@ function run() {
   assert(studioSource.includes("function beginUndoTransaction()"), "studio should support coalescing editor drags into one undo step");
   assert(studioSource.includes("function finishUndoTransaction("), "studio should finish coalesced undo transactions cleanly");
   assert(studioSource.includes("function refreshHeldItemSelect()"), "studio should populate held-item options");
+  assert(studioSource.includes("function refreshHeldItemSlotSelect()"), "studio should populate held-item hand options");
   assert(studioSource.includes("function applyHeldItemSelectionToPreview()"), "studio should apply held-item previews to the rig");
   assert(studioSource.includes("function refreshIsolationButton()"), "studio should refresh the node isolation toggle state");
   assert(studioSource.includes("function toggleNodeIsolation()"), "studio should support toggling node isolation");
@@ -72,6 +78,9 @@ function run() {
   assert(studioSource.includes("activeInspectorInputKey"), "studio should track the active inspector input while editing");
   assert(studioSource.includes("function resolveCaretStepMagnitude("), "studio should support caret-aware wheel step sizing for inspector values");
   assert(studioSource.includes("setPlayerRigToolVisual"), "studio should drive preview held items through player-model visuals");
+  assert(studioSource.includes("setPlayerRigToolVisuals"), "studio should support previewing both held hands at once");
+  assert(studioSource.includes("function expandSharedPreviewNodeIds("), "studio should keep shared weapon-node aliases synchronized while editing");
+  assert(studioSource.includes("createPlayerRigForAnimationStudio"), "studio should build preview rigs through the dedicated studio rig factory");
   assert(studioSource.includes("function mirrorSelectedLimb()"), "studio should support mirroring a selected limb");
   assert(studioSource.includes("LIMB_SUBTREE_NODE_IDS"), "studio should define limb subtree mappings for mirroring");
   assert(studioSource.includes("registerAnimationClip"), "studio should register newly created clips in memory");
@@ -80,6 +89,9 @@ function run() {
   assert(studioSource.includes("function copySelectedPoseToClipboard()"), "studio should support copying a pose into a studio clipboard");
   assert(studioSource.includes("function pasteClipboardPoseOverSelectedPose()"), "studio should support pasting a copied pose over the selected pose");
   assert(studioSource.includes("function pasteClipboardPoseAsNew()"), "studio should support pasting a copied pose as a new pose");
+  assert(studioSource.includes("function copySelectedNodeToClipboard()"), "studio should support copying the selected node into a node clipboard");
+  assert(studioSource.includes("function pasteNodeClipboardOverSelection()"), "studio should support pasting the node clipboard over the selected node");
+  assert(studioSource.includes("function showNodeContextMenu("), "studio should expose a viewport node context menu");
   assert(studioSource.includes("function moveSelectedPoseRelative(offset: number)"), "studio should support reordering poses");
   assert(studioSource.includes("function deleteSelectedPose()"), "studio should support deleting the selected pose");
   assert(studioSource.includes("handleViewportSelection"), "studio should support selecting nodes from the viewport");
@@ -88,7 +100,7 @@ function run() {
   assert(studioSource.includes("event.button !== 0 && event.button !== 2"), "studio should keep a dedicated right-drag orbit path");
   assert(studioSource.includes("stopImmediatePropagation"), "studio should keep camera orbit from leaking into gizmo input");
   assert(studioSource.includes("draftDirty"), "studio should track unsaved draft edits separately from live clips");
-  assert(studioSource.includes("replaceAnimationClip(state.clip);"), "studio should only push draft clips live on save");
+  assert(studioSource.includes("replaceAnimationClip(savedClip);"), "studio should only push persisted clips live on save");
   assert(studioSource.includes("Selection cleared."), "studio should allow background clicks to clear selection");
   assert(studioSource.includes("No selection"), "studio should expose a no-selection inspector state");
   assert(studioSource.includes("selectedNodeId: null"), "studio should default to no selected node");
@@ -102,7 +114,7 @@ function run() {
   assert(studioSource.includes("function moveSelectedPoseKeyToTime(timeMs: number)"), "studio should support moving the selected pose key from the timeline");
   assert(studioSource.includes("function findNearestAvailableKeyTime("), "studio should snap moved or placed pose keys away from occupied times");
   assert(studioSource.includes("function resolveStudioPreviewPose()"), "studio should resolve a visible preview pose even for unkeyed pose drafts");
-  assert(studioSource.includes("preview ${state.selectedPoseId} (unkeyed)"), "studio should label when the viewport is previewing an unkeyed pose draft");
+  assert(studioSource.includes("preview ${state.selectedPoseId} (${previewReason})"), "studio should label when the viewport is previewing the selected pose directly");
   assert(studioSource.includes("animation-studio-duration-handle"), "studio should expose a draggable duration handle on the timeline");
   assert(studioSource.includes("beginDurationDrag"), "studio should support dragging the duration handle");
   assert(studioSource.includes("animation-studio-key-lane"), "studio should render keyed poses directly on the timeline");

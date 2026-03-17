@@ -3116,10 +3116,20 @@
         }
 
         function startFacingAction(nextAction, startActionNow = false) {
+            const resolvedRotation = (typeof window.resolveInteractionFacingRotation === 'function')
+                ? window.resolveInteractionFacingRotation(
+                    playerState.targetObj,
+                    playerState.targetX,
+                    playerState.targetY,
+                    playerState.x,
+                    playerState.y,
+                    playerState.z
+                )
+                : null;
             const faceDx = playerState.targetX - playerState.x;
             const faceDy = playerState.targetY - playerState.y;
 
-            if (faceDx === 0 && faceDy === 0) {
+            if (!Number.isFinite(resolvedRotation) && faceDx === 0 && faceDy === 0) {
                 playerState.pendingActionAfterTurn = null;
                 playerState.turnLock = false;
                 playerState.actionVisualReady = true;
@@ -3127,7 +3137,9 @@
                 return;
             }
 
-            playerState.targetRotation = Math.atan2(faceDx, faceDy);
+            playerState.targetRotation = Number.isFinite(resolvedRotation)
+                ? resolvedRotation
+                : Math.atan2(faceDx, faceDy);
             playerState.turnLock = true;
             playerState.actionVisualReady = false;
 

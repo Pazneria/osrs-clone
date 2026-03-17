@@ -1,0 +1,19 @@
+{
+  "clipId": "player/fletching1",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 1000,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "heldItemId": null,
+  "poses": {
+    "neutral": {}
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "hold"
+    }
+  ],
+  "markers": []
+}

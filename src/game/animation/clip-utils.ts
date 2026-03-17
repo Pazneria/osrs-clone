@@ -1,6 +1,8 @@
 import type {
   AnimationClip,
   AnimationEaseId,
+  AnimationHeldItemMap,
+  AnimationHeldItemSlot,
   AnimationMaskId,
   AnimationResolvedPose,
   AnimationResolvedTransform,
@@ -13,12 +15,33 @@ import { applyAnimationEase } from "./easing";
 
 const VALID_EASES: ReadonlySet<AnimationEaseId> = new Set(["linear", "easeIn", "easeOut", "easeInOut", "hold"]);
 const VALID_MASKS: ReadonlySet<AnimationMaskId> = new Set(["fullBody", "upperBody"]);
+const VALID_HELD_ITEM_SLOTS: ReadonlySet<AnimationHeldItemSlot> = new Set(["rightHand", "leftHand"]);
 const DEFAULT_SCALE = Object.freeze({ x: 1, y: 1, z: 1 });
 const DEFAULT_ZERO = Object.freeze({ x: 0, y: 0, z: 0 });
 
 function cloneVector3<T extends AnimationVector3>(value?: T): T | undefined {
   if (!value) return undefined;
   return { ...value };
+}
+
+function validateHeldItemMap(heldItems: AnimationHeldItemMap | null | undefined, errors: string[]): void {
+  if (heldItems === undefined || heldItems === null) return;
+  if (typeof heldItems !== "object" || Array.isArray(heldItems)) {
+    errors.push("heldItems must be an object or null");
+    return;
+  }
+  const slotIds = Object.keys(heldItems);
+  for (let index = 0; index < slotIds.length; index += 1) {
+    const slotId = slotIds[index];
+    if (!VALID_HELD_ITEM_SLOTS.has(slotId as AnimationHeldItemSlot)) {
+      errors.push(`heldItems uses unknown slot ${slotId}`);
+      continue;
+    }
+    const heldItemId = heldItems[slotId as AnimationHeldItemSlot];
+    if (heldItemId !== undefined && heldItemId !== null && typeof heldItemId !== "string") {
+      errors.push(`heldItems.${slotId} must be a string or null`);
+    }
+  }
 }
 
 export function cloneAnimationClip<T extends AnimationClip>(clip: T): T {
@@ -104,6 +127,17 @@ export function validateAnimationClip(clip: AnimationClip, schema: AnimationRigS
   if (!Number.isFinite(clip.durationMs) || clip.durationMs <= 0) errors.push("durationMs must be > 0");
   if (clip.loopMode !== "loop" && clip.loopMode !== "once") errors.push("loopMode must be loop or once");
   if (!VALID_MASKS.has(clip.maskId)) errors.push("maskId must be fullBody or upperBody");
+  validateHeldItemMap(clip.heldItems, errors);
+  if (clip.heldItemId !== undefined && clip.heldItemId !== null && typeof clip.heldItemId !== "string") {
+    errors.push("heldItemId must be a string or null");
+  }
+  if (
+    clip.heldItemSlot !== undefined
+    && clip.heldItemSlot !== null
+    && !VALID_HELD_ITEM_SLOTS.has(clip.heldItemSlot)
+  ) {
+    errors.push("heldItemSlot must be rightHand, leftHand, or null");
+  }
   if (!clip.poses || typeof clip.poses !== "object") errors.push("poses must be an object");
   if (!Array.isArray(clip.keys) || clip.keys.length === 0) errors.push("keys must be a non-empty array");
   if (!Array.isArray(clip.markers)) errors.push("markers must be an array");
@@ -300,4 +334,3 @@ export function sortClipKeysAndMarkers(clip: AnimationClip): AnimationClip {
 export function serializeAnimationClip(clip: AnimationClip): string {
   return `${JSON.stringify(sortClipKeysAndMarkers(clip), null, 2)}\n`;
 }
-

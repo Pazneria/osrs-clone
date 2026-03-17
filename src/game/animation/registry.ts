@@ -13,6 +13,12 @@ import fishingRodHold1ClipJson from "./clips/player/fishing_rod_hold1.json";
 import fishingRodCast1ClipJson from "./clips/player/fishing_rod_cast1.json";
 import fishingHarpoonHold1ClipJson from "./clips/player/fishing_harpoon_hold1.json";
 import fishingHarpoonStrike1ClipJson from "./clips/player/fishing_harpoon_strike1.json";
+import woodcutting1ClipJson from "./clips/player/woodcutting1.json";
+import cooking1ClipJson from "./clips/player/cooking1.json";
+import firemaking1ClipJson from "./clips/player/firemaking1.json";
+import fletching1ClipJson from "./clips/player/fletching1.json";
+import smithingSmelting1ClipJson from "./clips/player/smithing_smelting1.json";
+import smithingForging1ClipJson from "./clips/player/smithing_forging1.json";
 
 interface AnimationClipRecord {
   descriptor: AnimationClipDescriptor;
@@ -107,6 +113,54 @@ const clipRecords: AnimationClipRecord[] = [
       sourcePath: "src/game/animation/clips/player/fishing_harpoon_strike1.json"
     },
     clip: fishingHarpoonStrike1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/woodcutting1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/woodcutting1.json"
+    },
+    clip: woodcutting1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/cooking1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/cooking1.json"
+    },
+    clip: cooking1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/firemaking1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/firemaking1.json"
+    },
+    clip: firemaking1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/fletching1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/fletching1.json"
+    },
+    clip: fletching1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/smithing_smelting1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/smithing_smelting1.json"
+    },
+    clip: smithingSmelting1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/smithing_forging1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/smithing_forging1.json"
+    },
+    clip: smithingForging1ClipJson as AnimationClip
   }
 ];
 

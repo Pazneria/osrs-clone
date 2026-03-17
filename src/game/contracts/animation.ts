@@ -3,6 +3,17 @@ export type AnimationEaseId = "linear" | "easeIn" | "easeOut" | "easeInOut" | "h
 export type AnimationLoopMode = "loop" | "once";
 export type AnimationMaskId = "fullBody" | "upperBody";
 export type AnimationChannelId = "position" | "rotationDeg" | "scale";
+export type AnimationHeldItemSlot = "rightHand" | "leftHand";
+
+export interface AnimationHeldItemMap {
+  rightHand?: string | null;
+  leftHand?: string | null;
+}
+
+export interface AnimationResolvedHeldItemMap {
+  rightHand: string | null;
+  leftHand: string | null;
+}
 
 export interface AnimationVector3 {
   x?: number;
@@ -35,6 +46,9 @@ export interface AnimationClip {
   durationMs: number;
   loopMode: AnimationLoopMode;
   maskId: AnimationMaskId;
+  heldItems?: AnimationHeldItemMap | null;
+  heldItemId?: string | null;
+  heldItemSlot?: AnimationHeldItemSlot | null;
   poses: Record<string, AnimationPose>;
   keys: AnimationKey[];
   markers: AnimationMarker[];
@@ -89,17 +103,29 @@ export interface AnimationActionRequest {
   priority: number;
   startKey: string;
   startedAtMs: number;
+  heldItems: AnimationResolvedHeldItemMap;
+  heldItemId: string | null;
+  heldItemSlot: AnimationHeldItemSlot | null;
 }
 
 export interface AnimationControllerDebugSnapshot {
   rigId: string;
   baseClipId: string | null;
   baseStartedAtMs: number;
+  baseHeldItems: AnimationResolvedHeldItemMap;
+  baseHeldItemId: string | null;
+  baseHeldItemSlot: AnimationHeldItemSlot | null;
   actionClipId: string | null;
   actionStartedAtMs: number;
+  actionHeldItems: AnimationResolvedHeldItemMap;
+  actionHeldItemId: string | null;
+  actionHeldItemSlot: AnimationHeldItemSlot | null;
   actionStartKey: string | null;
   actionAgeMs: number | null;
   actionDurationMs: number | null;
+  resolvedHeldItems: AnimationResolvedHeldItemMap;
+  resolvedHeldItemId: string | null;
+  resolvedHeldItemSlot: AnimationHeldItemSlot | null;
   pendingAction: AnimationActionRequest | null;
   requestedActions: AnimationActionRequest[];
   winningRequest: AnimationActionRequest | null;
@@ -111,8 +137,14 @@ export interface AnimationControllerState {
   bindPose: AnimationResolvedPose;
   baseClipId: string | null;
   baseStartedAtMs: number;
+  baseHeldItems: AnimationResolvedHeldItemMap;
+  baseHeldItemId: string | null;
+  baseHeldItemSlot: AnimationHeldItemSlot | null;
   actionClipId: string | null;
   actionStartedAtMs: number;
+  actionHeldItems: AnimationResolvedHeldItemMap;
+  actionHeldItemId: string | null;
+  actionHeldItemSlot: AnimationHeldItemSlot | null;
   actionStartKey: string | null;
   pendingAction: AnimationActionRequest | null;
   debugRequestedActions: AnimationActionRequest[];

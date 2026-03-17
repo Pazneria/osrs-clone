@@ -4,6 +4,7 @@
   "durationMs": 2000,
   "loopMode": "loop",
   "maskId": "fullBody",
+  "heldItemId": "fishing_rod",
   "poses": {
     "hold1": {
       "leftArm": {

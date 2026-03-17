@@ -447,6 +447,76 @@
         '................................'
     ];
 
+    const TINDERBOX_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.............bbbbbb.............',
+        '...........bbccccccbb...........',
+        '..........bbccccccccbb..........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '.........bbccccccccccbb.........',
+        '..........bbccccccccbb..........',
+        '...........bbccccccbb...........',
+        '............bbbbbbbb............',
+        '..............dddd..............',
+        '.............ddaadd.............',
+        '............ddaaaadd............',
+        '.............ddaadd.............',
+        '..............dddd..............',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+    ];
+
+    const HAMMER_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.........bbbbbbbbbbbb...........',
+        '...........bbccccccccbb.........',
+        '.............bbccccccccbb.......',
+        '...............bbbbbbbbbbbb.....',
+        '................aaa.............',
+        '...............aaa..............',
+        '..............aaa...............',
+        '.............aaa................',
+        '............aaa.................',
+        '...........aaa..................',
+        '..........aaa...................',
+        '.........aaa....................',
+        '........aaa.....................',
+        '.......aaa......................',
+        '......aaa.......................',
+        '.....aaa........................',
+        '....aaa.........................',
+        '...aaa..........................',
+        '..aaa...........................',
+        '.aa.............................',
+        '..a.............................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+    ];
+
     const SMALL_NET_HELD_MODEL = createRightHandHeldModel({
         depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.42,
         origin: [6.5, 18.5],
@@ -496,6 +566,73 @@
             f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.86
         }
     });
+
+    const TINDERBOX_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.82,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.1,
+        origin: [14.5, 18.5],
+        offset: [0.01, -0.01, 0.075],
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.55,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.2,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.1,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.45
+        }
+    });
+
+    const TINDERBOX_PALETTE = Object.freeze({
+        a: '#b7c3d0',
+        b: '#59381d',
+        c: '#8b5a2b',
+        d: '#3f4954'
+    });
+
+    const HAMMER_PALETTE = Object.freeze({
+        a: '#6f4a29',
+        b: '#b7c3d0',
+        c: '#6d7985'
+    });
+    const HAMMER_HANDLE_ROTATION = Object.freeze([
+        STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[0],
+        STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[1],
+        STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[2]
+    ]);
+    const HAMMER_HEAD_ROTATION = Object.freeze([
+        STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[0],
+        STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[1],
+        STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[2] + (Math.PI / 2)
+    ]);
+    const HAMMER_HELD_FRAGMENTS = Object.freeze([
+        {
+            target: 'axe',
+            shape: 'box',
+            size: [STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 3, 0.46, STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 3],
+            offset: [0.01, 0.11, 0.155],
+            rotation: HAMMER_HANDLE_ROTATION.slice(),
+            isHandle: true,
+            headAnchorAlong: 0.16,
+            rgbColor: HAMMER_PALETTE.a,
+            color: hexToPackedJagexHsl(HAMMER_PALETTE.a, packJagexHsl(0, 0, 64))
+        },
+        {
+            target: 'axe',
+            shape: 'box',
+            size: [STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 4.5, 0.18, STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 6],
+            handleRelative: [0, 0, 0],
+            rotation: HAMMER_HEAD_ROTATION.slice(),
+            rgbColor: HAMMER_PALETTE.b,
+            color: hexToPackedJagexHsl(HAMMER_PALETTE.b, packJagexHsl(0, 0, 64))
+        },
+        {
+            target: 'axe',
+            shape: 'box',
+            size: [STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.6, 0.2, STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 6.2],
+            handleRelative: [0, -0.01, 0],
+            rotation: HAMMER_HEAD_ROTATION.slice(),
+            rgbColor: HAMMER_PALETTE.c,
+            color: hexToPackedJagexHsl(HAMMER_PALETTE.c, packJagexHsl(0, 0, 64))
+        }
+    ]);
 
     function getRightHandMetalTier(itemId) {
         if (typeof itemId !== 'string') return 'iron';
@@ -664,7 +801,20 @@
         fishing_rod: createLiteralRightHandAppearanceItemDef(fishingRodModelIds, FISHING_ROD_ICON_PIXELS, FISHING_ROD_HELD_MODEL, FISHING_ROD_PALETTE),
         small_net: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SMALL_NET_ICON_PIXELS, SMALL_NET_HELD_MODEL, SMALL_NET_PALETTE),
         harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, HARPOON_PALETTE),
-        rune_harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, RUNE_HARPOON_PALETTE)
+        rune_harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, RUNE_HARPOON_PALETTE),
+        tinderbox: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, TINDERBOX_ICON_PIXELS, TINDERBOX_HELD_MODEL, TINDERBOX_PALETTE),
+        hammer: {
+            slot: 'weapon',
+            maleModelIds: previewOnlyWeaponModelIds.male.slice(),
+            femaleModelIds: previewOnlyWeaponModelIds.female.slice(),
+            recolors: [],
+            fragments: HAMMER_HELD_FRAGMENTS.map((fragment) => Object.assign({}, fragment, {
+                size: Array.isArray(fragment.size) ? fragment.size.slice() : fragment.size,
+                offset: Array.isArray(fragment.offset) ? fragment.offset.slice() : fragment.offset,
+                rotation: Array.isArray(fragment.rotation) ? fragment.rotation.slice() : fragment.rotation,
+                handleRelative: Array.isArray(fragment.handleRelative) ? fragment.handleRelative.slice() : fragment.handleRelative
+            }))
+        }
     };
 
     window.PlayerAppearanceCatalog = {

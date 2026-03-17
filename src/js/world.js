@@ -1587,6 +1587,8 @@
             return activeFires.some((fire) => fire && fire.x === x && fire.y === y && fire.z === z);
         }
 
+        let activeFiremakingLogPreview = null;
+
         function createFireVisualAt(x, y, z) {
             const group = new THREE.Group();
             const terrainHeight = heightMap[z][y][x] + (z * 3.0);
@@ -1614,6 +1616,43 @@
             return { group, flame, hitMeshes: [logA, logB, flame] };
         }
 
+        function getItemIconSpritePath(itemData) {
+            if (!itemData || !itemData.icon || itemData.icon.kind !== 'pixel' || typeof itemData.icon.assetId !== 'string' || !itemData.icon.assetId) {
+                return null;
+            }
+            return `./assets/pixel/${itemData.icon.assetId}.png?v=20260313a`;
+        }
+
+        function createFiremakingLogPreviewAt(x, y, z, itemId) {
+            const group = new THREE.Group();
+            const terrainHeight = heightMap[z][y][x] + (z * 3.0);
+            group.position.set(x, terrainHeight + 0.04, y);
+
+            const itemData = ITEM_DB && typeof itemId === 'string' ? ITEM_DB[itemId] : null;
+            const spritePath = getItemIconSpritePath(itemData);
+            const base = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.18, 0.18, 0.06, 12),
+                new THREE.MeshLambertMaterial({ color: 0x3d2a1c })
+            );
+            base.position.set(0, -0.05, 0);
+            group.add(base);
+
+            if (spritePath) {
+                addGroundItemSprite(group, spritePath, 0.2, 0.5);
+            } else {
+                const logMat = new THREE.MeshLambertMaterial({ color: 0x4b2e17 });
+                const logGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.55, 8);
+                logGeo.rotateZ(Math.PI / 2);
+                const logA = new THREE.Mesh(logGeo, logMat);
+                logA.position.set(0, 0.03, 0.08);
+                const logB = new THREE.Mesh(logGeo, logMat);
+                logB.position.set(0, 0.03, -0.08);
+                group.add(logA, logB);
+            }
+
+            return group;
+        }
+
         function attachFireVisualGroup(group, x, y, z, preferChunkParent = true) {
             if (preferChunkParent) {
                 const cx = Math.floor(x / CHUNK_SIZE);
@@ -1629,9 +1668,57 @@
             scene.add(group);
         }
 
+        function removeFiremakingLogPreview() {
+            if (!activeFiremakingLogPreview) return;
+            const preview = activeFiremakingLogPreview;
+            if (preview.mesh && preview.mesh.parent) preview.mesh.parent.remove(preview.mesh);
+            else if (preview.mesh) scene.remove(preview.mesh);
+            activeFiremakingLogPreview = null;
+        }
+
+        function syncFiremakingLogPreview() {
+            const session = playerState && playerState.firemakingSession ? playerState.firemakingSession : null;
+            const target = session && session.target && typeof session.target === 'object' ? session.target : null;
+            const shouldShow = !!(
+                scene
+                && session
+                && session.phase === 'attempting'
+                && playerState.action === 'SKILLING: FIREMAKING'
+                && target
+                && Number.isFinite(target.x)
+                && Number.isFinite(target.y)
+                && Number.isFinite(target.z)
+                && !isFireOccupiedAt(target.x, target.y, target.z)
+            );
+
+            if (!shouldShow) {
+                removeFiremakingLogPreview();
+                return;
+            }
+
+            const itemId = typeof session.sourceItemId === 'string' && session.sourceItemId ? session.sourceItemId : 'logs';
+            if (
+                activeFiremakingLogPreview
+                && activeFiremakingLogPreview.x === target.x
+                && activeFiremakingLogPreview.y === target.y
+                && activeFiremakingLogPreview.z === target.z
+                && activeFiremakingLogPreview.itemId === itemId
+            ) {
+                return;
+            }
+
+            removeFiremakingLogPreview();
+            const mesh = createFiremakingLogPreviewAt(target.x, target.y, target.z, itemId);
+            attachFireVisualGroup(mesh, target.x, target.y, target.z, true);
+            activeFiremakingLogPreview = { x: target.x, y: target.y, z: target.z, itemId, mesh };
+        }
+
         function spawnFireAtTile(x, y, z, options = {}) {
             if (isFireOccupiedAt(x, y, z)) return false;
             if (!scene) return false;
+            if (activeFiremakingLogPreview && activeFiremakingLogPreview.x === x && activeFiremakingLogPreview.y === y && activeFiremakingLogPreview.z === z) {
+                removeFiremakingLogPreview();
+            }
 
             const fireVisual = createFireVisualAt(x, y, z);
             const expiresTick = Number.isFinite(options.expiresTick)
@@ -1668,10 +1755,10 @@
             }
         }
 
-        function lightFireAtCurrentTile() {
-            const x = playerState.x;
-            const y = playerState.y;
-            const z = playerState.z;
+        function lightFireAtCurrentTile(x = playerState.x, y = playerState.y, z = playerState.z) {
+            x = Number.isFinite(x) ? Math.floor(x) : playerState.x;
+            y = Number.isFinite(y) ? Math.floor(y) : playerState.y;
+            z = Number.isFinite(z) ? Math.floor(z) : playerState.z;
 
             if (isFireOccupiedAt(x, y, z)) {
                 addChatMessage('There is already a fire here.', 'warn');
@@ -1719,6 +1806,7 @@
 
         function updateFires(frameNow) {
             tickFireLifecycle();
+            syncFiremakingLogPreview();
             for (let i = 0; i < activeFires.length; i++) {
                 const fire = activeFires[i];
                 if (!fire || !fire.flame) continue;
@@ -1752,7 +1840,7 @@
             }
         }
 
-        function tryStepAfterFire() {
+        function findFireStepDestination() {
             const z = playerState.z;
             const currentH = heightMap[z][playerState.y][playerState.x];
             const candidates = [
@@ -1787,12 +1875,6 @@
                     continue;
                 }
 
-                playerState.prevX = playerState.x;
-                playerState.prevY = playerState.y;
-                playerState.x = nx;
-                playerState.y = ny;
-                playerState.path = [];
-
                 return { stepped: true, direction: candidate.direction, x: nx, y: ny };
             }
 
@@ -1802,6 +1884,28 @@
             else if (failureReasons.includes('out_of_bounds')) reason = 'out_of_bounds';
 
             return { stepped: false, reason };
+        }
+
+        function applyFireStepDestination(stepResult) {
+            if (!stepResult || !stepResult.stepped) return stepResult;
+            playerState.prevX = playerState.x;
+            playerState.prevY = playerState.y;
+            playerState.x = stepResult.x;
+            playerState.y = stepResult.y;
+            playerState.targetX = stepResult.x;
+            playerState.targetY = stepResult.y;
+            playerState.midX = null;
+            playerState.midY = null;
+            playerState.path = [];
+            return stepResult;
+        }
+
+        function tryStepAfterFire() {
+            return applyFireStepDestination(findFireStepDestination());
+        }
+
+        function tryStepBeforeFiremaking() {
+            return applyFireStepDestination(findFireStepDestination());
         }
 
         function startFiremaking(sourceItemId = null) {

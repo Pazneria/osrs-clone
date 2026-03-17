@@ -701,6 +701,35 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return { dx, dy };
         }
 
+        function resolveCardinalFacingStep(fromX, fromY, toX, toY) {
+            let dx = toX - fromX;
+            let dy = toY - fromY;
+            if (Math.abs(dx) >= Math.abs(dy)) {
+                dx = Math.sign(dx);
+                dy = 0;
+            } else {
+                dy = Math.sign(dy);
+                dx = 0;
+            }
+            return { dx, dy };
+        }
+
+        function getStationInteractionFacingStep(targetObj, tx, ty, px = playerState.x, py = playerState.y, z = playerState.z) {
+            if (targetObj === 'FURNACE') {
+                const front = resolveCardinalStepFromYaw(getStationFacingYaw(targetObj, tx, ty, z));
+                return { dx: -front.dx, dy: -front.dy };
+            }
+            return resolveCardinalFacingStep(px, py, tx, ty);
+        }
+
+        function resolveInteractionFacingRotation(targetObj, tx, ty, px = playerState.x, py = playerState.y, z = playerState.z) {
+            if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return null;
+            const facingStep = getStationInteractionFacingStep(targetObj, tx, ty, px, py, z);
+            if (facingStep.dx === 0 && facingStep.dy === 0) return null;
+            return Math.atan2(facingStep.dx, facingStep.dy);
+        }
+        window.resolveInteractionFacingRotation = resolveInteractionFacingRotation;
+
         function getStationApproachPositions(targetObj, tx, ty, z = playerState.z) {
             if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return [];
 
@@ -762,144 +791,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function clamp01(v) {
             return Math.max(0, Math.min(1, v));
         }
-        function smoothStep01(v) {
-            const t = clamp01(v);
-            return t * t * (3 - (2 * t));
-        }
-        function lerpScalar(from, to, t) {
-            return from + ((to - from) * t);
-        }
-        function lerpTriplet(from, to, t) {
-            return [
-                lerpScalar(from[0], to[0], t),
-                lerpScalar(from[1], to[1], t),
-                lerpScalar(from[2], to[2], t)
-            ];
-        }
-        function blendCombatPose(fromPose, toPose, t) {
-            return {
-                leftArmPos: lerpTriplet(fromPose.leftArmPos, toPose.leftArmPos, t),
-                rightArmPos: lerpTriplet(fromPose.rightArmPos, toPose.rightArmPos, t),
-                leftArmRot: lerpTriplet(fromPose.leftArmRot, toPose.leftArmRot, t),
-                rightArmRot: lerpTriplet(fromPose.rightArmRot, toPose.rightArmRot, t),
-                leftLowerArmRot: lerpTriplet(fromPose.leftLowerArmRot, toPose.leftLowerArmRot, t),
-                rightLowerArmRot: lerpTriplet(fromPose.rightLowerArmRot, toPose.rightLowerArmRot, t),
-                torsoRot: lerpTriplet(fromPose.torsoRot, toPose.torsoRot, t),
-                headRot: lerpTriplet(fromPose.headRot, toPose.headRot, t),
-                axeRot: lerpTriplet(fromPose.axeRot, toPose.axeRot, t)
-            };
-        }
-        function getPlayerCombatNeutralPose(rig) {
-            const shoulderPivot = getPlayerRigShoulderPivot(rig);
-            return {
-                leftArmPos: [shoulderPivot.x, shoulderPivot.y, shoulderPivot.z],
-                rightArmPos: [-shoulderPivot.x, shoulderPivot.y, shoulderPivot.z],
-                leftArmRot: [0, 0, 0],
-                rightArmRot: [0, 0, 0],
-                leftLowerArmRot: [0, 0, 0],
-                rightLowerArmRot: [0, 0, 0],
-                torsoRot: [0, 0, 0],
-                headRot: [0, 0, 0],
-                axeRot: [0, 0, 0]
-            };
-        }
-        function getPlayerCombatSlashWindupPose(rig) {
-            const deg = Math.PI / 180;
-            const shoulderPivot = getPlayerRigShoulderPivot(rig);
-            return {
-                leftArmPos: [shoulderPivot.x, shoulderPivot.y + 0.01, shoulderPivot.z],
-                rightArmPos: [-shoulderPivot.x - 0.01, shoulderPivot.y + 0.07, shoulderPivot.z + 0.06],
-                leftArmRot: [(-6 * deg), 0, (8 * deg)],
-                rightArmRot: [(-72 * deg), (10 * deg), (-42 * deg)],
-                leftLowerArmRot: [(-44 * deg), (-14 * deg), 0],
-                rightLowerArmRot: [(-46 * deg), (12 * deg), 0],
-                torsoRot: [(-2 * deg), (14 * deg), 0],
-                headRot: [(1 * deg), (6 * deg), 0],
-                axeRot: [0, 0, (-22 * deg)]
-            };
-        }
-        function getPlayerCombatSlashStage2Pose(rig) {
-            const deg = Math.PI / 180;
-            const shoulderPivot = getPlayerRigShoulderPivot(rig);
-            return {
-                leftArmPos: [shoulderPivot.x, shoulderPivot.y + 0.01, shoulderPivot.z],
-                rightArmPos: [-shoulderPivot.x + 0.06, shoulderPivot.y + 0.03, shoulderPivot.z + 0.03],
-                leftArmRot: [(-6 * deg), 0, (8 * deg)],
-                rightArmRot: [(-102 * deg), (-18 * deg), (10 * deg)],
-                leftLowerArmRot: [(-44 * deg), (-14 * deg), 0],
-                rightLowerArmRot: [(10 * deg), 0, 0],
-                torsoRot: [(-3 * deg), (18 * deg), 0],
-                headRot: [(1 * deg), (8 * deg), 0],
-                axeRot: [0, 0, (-8 * deg)]
-            };
-        }
-        function applyPlayerCombatPose(rig, pose) {
-            if (!rig || !pose) return;
-            rig.leftArm.position.set(pose.leftArmPos[0], pose.leftArmPos[1], pose.leftArmPos[2]);
-            rig.rightArm.position.set(pose.rightArmPos[0], pose.rightArmPos[1], pose.rightArmPos[2]);
-            rig.leftArm.rotation.set(pose.leftArmRot[0], pose.leftArmRot[1], pose.leftArmRot[2]);
-            rig.rightArm.rotation.set(pose.rightArmRot[0], pose.rightArmRot[1], pose.rightArmRot[2]);
-            rig.leftLowerArm.rotation.set(pose.leftLowerArmRot[0], pose.leftLowerArmRot[1], pose.leftLowerArmRot[2]);
-            rig.rightLowerArm.rotation.set(pose.rightLowerArmRot[0], pose.rightLowerArmRot[1], pose.rightLowerArmRot[2]);
-            if (rig.torso) rig.torso.rotation.set(pose.torsoRot[0], pose.torsoRot[1], pose.torsoRot[2]);
-            if (rig.head) rig.head.rotation.set(pose.headRot[0], pose.headRot[1], pose.headRot[2]);
-            if (rig.axe) rig.axe.rotation.set(pose.axeRot[0], pose.axeRot[1], pose.axeRot[2]);
-        }
         function getCurrentTickProgress(frameNow) {
             const tickDurationMs = (typeof TICK_RATE_MS === 'number' && Number.isFinite(TICK_RATE_MS) && TICK_RATE_MS > 0)
                 ? TICK_RATE_MS
                 : 600;
             return clamp01((frameNow - lastTickTime) / tickDurationMs);
         }
-        function getPlayerAttackAnimationProgress(rig, frameNow) {
-            if (!rig || !Number.isFinite(rig.attackAnimationStartedAt) || rig.attackAnimationStartedAt <= 0) return null;
-            const attackAge = frameNow - rig.attackAnimationStartedAt;
-            if (!Number.isFinite(attackAge) || attackAge < 0) return null;
-            const attackDurationMs = 1100;
-            if (attackAge >= attackDurationMs) return null;
-            return clamp01(attackAge / attackDurationMs);
-        }
         function isTimedAnimationActive(startedAtMs, durationMs, frameNow) {
             if (!Number.isFinite(startedAtMs) || startedAtMs <= 0) return false;
             if (!Number.isFinite(durationMs) || durationMs <= 0) return false;
             const age = frameNow - startedAtMs;
             return Number.isFinite(age) && age >= 0 && age < durationMs;
-        }
-        function getPlayerAttackStep1Factor(attackT) {
-            if (!Number.isFinite(attackT)) return 0;
-            if (attackT < 0.24) return smoothStep01(attackT / 0.24);
-            if (attackT < 0.88) return 1;
-            return 1 - smoothStep01((attackT - 0.88) / 0.12);
-        }
-        function applyPlayerAttackStep1UpperArmSpin(rig, step1Factor) {
-            if (!rig || !rig.rightArm || step1Factor <= 0.0001) return;
-            if (!rig.rightLowerArm) return;
-            const upperArmAxis = rig.rightLowerArm.position.clone();
-            if (upperArmAxis.lengthSq() <= 0.000001) return;
-            upperArmAxis.normalize();
-            rig.rightArm.rotateOnAxis(upperArmAxis, step1Factor * ((5 * Math.PI) / 12));
-        }
-        function applyPlayerSlashCombatPose(rig, frameNow) {
-            const attackT = getPlayerAttackAnimationProgress(rig, frameNow);
-            if (attackT === null) return 0;
-            const neutralPose = getPlayerCombatNeutralPose(rig);
-            const windupPose = getPlayerCombatSlashWindupPose(rig);
-            const stage2Pose = getPlayerCombatSlashStage2Pose(rig);
-            const step1Factor = getPlayerAttackStep1Factor(attackT);
-
-            let pose = neutralPose;
-            if (attackT < 0.24) {
-                pose = blendCombatPose(neutralPose, windupPose, smoothStep01(attackT / 0.24));
-            } else if (attackT < 0.58) {
-                pose = blendCombatPose(windupPose, stage2Pose, smoothStep01((attackT - 0.24) / 0.34));
-            } else if (attackT < 0.88) {
-                pose = stage2Pose;
-            } else {
-                pose = blendCombatPose(stage2Pose, neutralPose, smoothStep01((attackT - 0.88) / 0.12));
-            }
-            applyPlayerCombatPose(rig, pose);
-            applyPlayerAttackStep1UpperArmSpin(rig, step1Factor);
-            return Math.sin(Math.min(attackT, 0.88) / 0.88 * Math.PI) * 0.014;
         }
         function applyPlayerHitRecoilOverlay(rig, playerRigRef, frameNow) {
             if (!rig || !playerRigRef) return;
@@ -939,6 +841,27 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function isMiningSkillAction(actionName) {
             return actionName === 'SKILLING: ROCK';
         }
+        function isWoodcuttingSkillAction(actionName) {
+            return actionName === 'SKILLING: TREE';
+        }
+        function isCookingSkillAction(actionName) {
+            return actionName === 'SKILLING: FIRE';
+        }
+        function isSmithingSkillAction(actionName) {
+            return actionName === 'SKILLING: FURNACE' || actionName === 'SKILLING: ANVIL';
+        }
+        function isSmithingSmeltingSkillAction(actionName) {
+            return actionName === 'SKILLING: FURNACE';
+        }
+        function isSmithingForgingSkillAction(actionName) {
+            return actionName === 'SKILLING: ANVIL';
+        }
+        function isFiremakingSkillAction(actionName) {
+            return actionName === 'SKILLING: FIREMAKING';
+        }
+        function isFletchingSkillAction(actionName) {
+            return actionName === 'SKILLING: FLETCHING';
+        }
         function isFishingSkillAction(actionName) {
             return actionName === 'SKILLING: WATER';
         }
@@ -974,21 +897,91 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
         function getActiveSkillBaseClipId() {
             if (isMiningSkillAction(playerState && playerState.action)) return 'player/mining1';
+            if (isWoodcuttingSkillAction(playerState && playerState.action)) return 'player/woodcutting1';
+            if (isCookingSkillAction(playerState && playerState.action)) return 'player/cooking1';
+            if (isSmithingSmeltingSkillAction(playerState && playerState.action)) return 'player/smithing_smelting1';
+            if (isSmithingForgingSkillAction(playerState && playerState.action)) return 'player/smithing_forging1';
+            if (isFiremakingSkillAction(playerState && playerState.action)) return 'player/firemaking1';
+            if (isFletchingSkillAction(playerState && playerState.action)) return 'player/fletching1';
             return getFishingSkillBaseClipId();
         }
         function isAnySkillingAction(actionName) {
             return typeof actionName === 'string' && actionName.startsWith('SKILLING:');
         }
         function syncPlayerRigSkillingToolVisual(playerRigRef) {
-            if (!playerRigRef || typeof setPlayerRigToolVisual !== 'function') return;
+            if (!playerRigRef || !playerRigRef.userData) return;
+            const hadSuppressedBaseToolVisual = !!playerRigRef.userData.appliedSuppressBaseToolVisual;
+            playerRigRef.userData.suppressBaseToolVisual = false;
+            const clearHeldItems = () => {
+                if (typeof setPlayerRigToolVisuals === 'function') {
+                    setPlayerRigToolVisuals(playerRigRef, null);
+                    return;
+                }
+                if (typeof setPlayerRigToolVisual === 'function') {
+                    setPlayerRigToolVisual(playerRigRef, null);
+                }
+            };
+            if (typeof setPlayerRigToolVisuals !== 'function' && typeof setPlayerRigToolVisual !== 'function') return;
             if (isAnySkillingAction(playerState && playerState.action)) return;
-            if (!(playerRigRef.userData && playerRigRef.userData.skillingToolVisualId)) return;
-            setPlayerRigToolVisual(playerRigRef, null);
+            const activeHeldItems = playerRigRef.userData.skillingToolVisuals || null;
+            if ((!activeHeldItems || (!activeHeldItems.rightHand && !activeHeldItems.leftHand))
+                && !playerRigRef.userData.skillingToolVisualId
+                && !hadSuppressedBaseToolVisual) return;
+            clearHeldItems();
+        }
+        function getActiveSkillAnimationHeldItems() {
+            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationHeldItems !== 'function') return null;
+            const heldItems = SkillRuntime.getSkillAnimationHeldItems();
+            if (!heldItems || typeof heldItems !== 'object') return null;
+            const normalized = {};
+            if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) normalized.rightHand = heldItems.rightHand;
+            else if (heldItems.rightHand === null) normalized.rightHand = null;
+            if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) normalized.leftHand = heldItems.leftHand;
+            else if (heldItems.leftHand === null) normalized.leftHand = null;
+            return Object.keys(normalized).length > 0 ? normalized : null;
+        }
+        function getActiveSkillAnimationHeldItemId() {
+            const heldItems = getActiveSkillAnimationHeldItems();
+            if (heldItems) {
+                if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) return heldItems.rightHand;
+                if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) return heldItems.leftHand;
+            }
+            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationHeldItemId !== 'function') return null;
+            const heldItemId = SkillRuntime.getSkillAnimationHeldItemId();
+            return (typeof heldItemId === 'string' && heldItemId) ? heldItemId : null;
+        }
+        function getActiveSkillAnimationHeldItemSlot() {
+            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationHeldItemSlot !== 'function') {
+                const heldItems = getActiveSkillAnimationHeldItems();
+                if (!heldItems) return null;
+                if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) return 'rightHand';
+                if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) return 'leftHand';
+                return null;
+            }
+            const heldItemSlot = SkillRuntime.getSkillAnimationHeldItemSlot();
+            return heldItemSlot === 'leftHand'
+                ? 'leftHand'
+                : (heldItemSlot === 'rightHand' ? 'rightHand' : null);
+        }
+        function getActiveSkillAnimationSuppressEquipmentVisual() {
+            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationSuppressEquipmentVisual !== 'function') return false;
+            return !!SkillRuntime.getSkillAnimationSuppressEquipmentVisual();
         }
         function shouldShowRigToolVisual(playerRigRef) {
+            const activeSkillHeldItems = getActiveSkillAnimationHeldItems();
+            const hasActiveSkillHeldItems = !!(activeSkillHeldItems && (activeSkillHeldItems.rightHand || activeSkillHeldItems.leftHand));
+            if (getActiveSkillAnimationSuppressEquipmentVisual()) {
+                return hasActiveSkillHeldItems
+                    || !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisualId)
+                    || !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisuals
+                        && (playerRigRef.userData.skillingToolVisuals.rightHand || playerRigRef.userData.skillingToolVisuals.leftHand));
+            }
             if (equipment && equipment.weapon) return true;
             if (!getActiveSkillBaseClipId()) return false;
-            return !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisualId);
+            if (hasActiveSkillHeldItems) return true;
+            return !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisualId)
+                || !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisuals
+                    && (playerRigRef.userData.skillingToolVisuals.rightHand || playerRigRef.userData.skillingToolVisuals.leftHand));
         }
         function getPlayerBaseClipId(isMoving, logicalTilesMoved) {
             if (isMoving) {
@@ -1088,6 +1081,18 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const rigId = (playerRigRef && playerRigRef.userData && playerRigRef.userData.animationRigId)
                 ? playerRigRef.userData.animationRigId
                 : 'player_humanoid_v1';
+            const activeSkillHeldItems = getActiveSkillAnimationHeldItems();
+            const activeSkillHeldItemId = getActiveSkillAnimationHeldItemId();
+            const activeSkillHeldItemSlot = getActiveSkillAnimationHeldItemSlot();
+            const suppressSkillEquipmentVisual = getActiveSkillAnimationSuppressEquipmentVisual();
+            if (playerRigRef && playerRigRef.userData) playerRigRef.userData.suppressBaseToolVisual = suppressSkillEquipmentVisual;
+            const hasActiveSkillHeldItems = !!(activeSkillHeldItems && (activeSkillHeldItems.rightHand || activeSkillHeldItems.leftHand));
+            const baseClipOptions = (hasActiveSkillHeldItems || activeSkillHeldItemId || activeSkillHeldItemSlot)
+                ? {}
+                : undefined;
+            if (baseClipOptions && activeSkillHeldItems) baseClipOptions.heldItems = activeSkillHeldItems;
+            if (baseClipOptions && activeSkillHeldItemId) baseClipOptions.heldItemId = activeSkillHeldItemId;
+            if (baseClipOptions && activeSkillHeldItemSlot) baseClipOptions.heldItemSlot = activeSkillHeldItemSlot;
 
             rig.axe.visible = shouldShowRigToolVisual(playerRigRef);
             rig.axe.rotation.set(0, 0, 0);
@@ -1096,7 +1101,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             playerRigRef.rotation.z = 0;
 
             animationRuntimeBridge.beginLegacyFrame(playerRigRef, rigId);
-            animationRuntimeBridge.setLegacyBaseClip(playerRigRef, rigId, getPlayerBaseClipId(isMoving, logicalTilesMoved), frameNow);
+            animationRuntimeBridge.setLegacyBaseClip(playerRigRef, rigId, getPlayerBaseClipId(isMoving, logicalTilesMoved), frameNow, baseClipOptions);
 
             if (isTimedAnimationActive(rig.attackAnimationStartedAt, 1100, frameNow)) {
                 animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, 'player/combat_slash', {
@@ -1122,15 +1127,38 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 && Number.isFinite(fishingStartActionStartedAt)
                 && (frameNow - fishingStartActionStartedAt) >= 0
                 && (frameNow - fishingStartActionStartedAt) <= FISHING_START_ACTION_REQUEST_WINDOW_MS) {
-                animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, fishingStartActionClipId, {
+                const fishingActionOptions = {
                     startedAtMs: fishingStartActionStartedAt,
                     startKey: `${fishingStartActionClipId}:${fishingStartActionStartedAt}`,
                     priority: 0
-                });
+                };
+                if (activeSkillHeldItems) fishingActionOptions.heldItems = activeSkillHeldItems;
+                if (activeSkillHeldItemId) fishingActionOptions.heldItemId = activeSkillHeldItemId;
+                if (activeSkillHeldItemSlot) fishingActionOptions.heldItemSlot = activeSkillHeldItemSlot;
+                animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, fishingStartActionClipId, fishingActionOptions);
             }
 
             animationRuntimeBridge.applyLegacyFrame(playerRigRef, rigId, frameNow);
             return true;
+        }
+        function resetPlayerRigAnimationState(rig, playerRigRef, baseVisualY, showToolVisual) {
+            if (!rig || !playerRigRef) return;
+            rig.axe.visible = !!showToolVisual;
+            rig.axe.rotation.set(0, 0, 0);
+            setPlayerRigShoulderPivot(rig);
+            rig.leftArm.rotation.set(0, 0, 0);
+            rig.rightArm.rotation.set(0, 0, 0);
+            rig.leftLowerArm.rotation.set(0, 0, 0);
+            rig.rightLowerArm.rotation.set(0, 0, 0);
+            if (rig.torso) rig.torso.rotation.set(0, 0, 0);
+            if (rig.head) rig.head.rotation.set(0, 0, 0);
+            if (rig.leftLeg) rig.leftLeg.rotation.set(0, 0, 0);
+            if (rig.rightLeg) rig.rightLeg.rotation.set(0, 0, 0);
+            if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.set(0, 0, 0);
+            if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.set(0, 0, 0);
+            playerRigRef.rotation.x = 0;
+            playerRigRef.rotation.z = 0;
+            playerRigRef.position.y = baseVisualY;
         }
 
         function spawnClickMarker(position, isAction) {
@@ -1750,18 +1778,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 openBank();
                             } else {
                                 if (playerState.targetObj === 'FURNACE' || playerState.targetObj === 'ANVIL') {
-                                    // Force straight cardinal facing toward station.
-                                    let faceDx = playerState.targetX - playerState.x;
-                                    let faceDy = playerState.targetY - playerState.y;
-                                    if (Math.abs(faceDx) >= Math.abs(faceDy)) {
-                                        faceDx = Math.sign(faceDx);
-                                        faceDy = 0;
-                                    } else {
-                                        faceDy = Math.sign(faceDy);
-                                        faceDx = 0;
-                                    }
-                                    if (faceDx !== 0 || faceDy !== 0) {
-                                        playerState.targetRotation = Math.atan2(faceDx, faceDy);
+                                    const facingRotation = resolveInteractionFacingRotation(
+                                        playerState.targetObj,
+                                        playerState.targetX,
+                                        playerState.targetY,
+                                        playerState.x,
+                                        playerState.y,
+                                        playerState.z
+                                    );
+                                    if (Number.isFinite(facingRotation)) {
+                                        playerState.targetRotation = facingRotation;
                                         if (playerRig) playerRig.rotation.y = playerState.targetRotation;
                                     }
                                 }
@@ -2483,13 +2509,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             if (typeof window.updateCombatRenderers === 'function') window.updateCombatRenderers(frameNow);
 
-            const runPhase = (frameNow % 600) / 600 * Math.PI * 2; const absSinRun = Math.abs(Math.sin(runPhase));
-            const walkPhase = (frameNow % TICK_RATE_MS) / TICK_RATE_MS * Math.PI * 2;
-            const sinWalkRaw = Math.sin(walkPhase);
-            const sinWalk = Math.sign(sinWalkRaw) * Math.pow(Math.abs(sinWalkRaw), 0.65);
-            const absSinWalk = Math.abs(sinWalkRaw);
-            const idlePhase = (frameNow % (TICK_RATE_MS * 3)) / (TICK_RATE_MS * 3) * Math.PI * 2;
-            const idlePulse = Math.sin(idlePhase);
             let progress = Math.min((frameNow - lastTickTime) / TICK_RATE_MS, 1.0);
             
             let currentVisualX = playerState.x; let currentVisualY = playerState.y;
@@ -2604,45 +2623,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             });
             const clipAnimationHandled = !skillAnimationHandled && applyClipDrivenPlayerAnimation(rig, playerRig, frameNow, isMoving, logicalTilesMoved);
             if (!skillAnimationHandled && !clipAnimationHandled) {
-                if (isMoving) {
-                    rig.axe.visible = !!equipment.weapon; rig.axe.rotation.set(0, 0, 0); 
-                    setPlayerRigShoulderPivot(rig);
-                    rig.leftArm.rotation.set(0,0,0); rig.rightArm.rotation.set(0,0,0); rig.leftLowerArm.rotation.set(0,0,0); rig.rightLowerArm.rotation.set(0,0,0); rig.torso.rotation.set(0,0,0); rig.head.rotation.set(0,0,0); if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0;
-                    if (logicalTilesMoved > 1 || (isRunning && logicalTilesMoved > 0)) {
-                        const lean = 0.15; const bounce = absSinRun * MOTION_TUNING.runBounce;
-                        rig.leftArm.rotation.x = Math.sin(runPhase) * MOTION_TUNING.runArmSwing; rig.rightArm.rotation.x = -Math.sin(runPhase) * MOTION_TUNING.runArmSwing;
-                        rig.leftLowerArm.rotation.x = -1.3; rig.rightLowerArm.rotation.x = -1.3;
-                        const runStep = Math.sin(runPhase); rig.leftLeg.rotation.x = -runStep * MOTION_TUNING.runLegSwing; rig.rightLeg.rotation.x = runStep * MOTION_TUNING.runLegSwing; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = Math.max(0, runStep) * MOTION_TUNING.runKneeLift; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = Math.max(0, -runStep) * MOTION_TUNING.runKneeLift;
-                        playerRig.position.y = baseVisualY + bounce; playerRig.rotation.x = lean; rig.head.rotation.x = -lean;
-                    } else {
-                        rig.leftArm.rotation.x = sinWalk * MOTION_TUNING.walkArmSwing; rig.rightArm.rotation.x = -sinWalk * MOTION_TUNING.walkArmSwing;
-                        rig.leftLowerArm.rotation.x = -0.1; rig.rightLowerArm.rotation.x = -0.1;
-                        const walkStep = sinWalk; rig.leftLeg.rotation.x = -walkStep * MOTION_TUNING.walkLegSwing; rig.rightLeg.rotation.x = walkStep * MOTION_TUNING.walkLegSwing; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = Math.max(0, walkStep) * MOTION_TUNING.walkKneeLift; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = Math.max(0, -walkStep) * MOTION_TUNING.walkKneeLift;
-                        playerRig.position.y = baseVisualY + (absSinWalk * MOTION_TUNING.walkBounce); rig.torso.rotation.x = -0.1; rig.head.rotation.x = -0.1; playerRig.rotation.x = 0;
-                    }
-                } else if (playerState.action === 'COMBAT: MELEE') {
-                    if (!playerState.actionVisualReady) {
-                        rig.axe.visible = !!equipment.weapon;
-                        setPlayerRigShoulderPivot(rig);
-                        rig.leftArm.rotation.set(0, 0, 0); rig.rightArm.rotation.set(0, 0, 0);
-                        rig.leftLowerArm.rotation.set(0, 0, 0); rig.rightLowerArm.rotation.set(0, 0, 0);
-                        rig.torso.rotation.set(0, 0, 0); rig.head.rotation.set(0, 0, 0);
-                        rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0; playerRig.position.y = baseVisualY;
-                    } else {
-                    rig.axe.visible = !!equipment.weapon; playerRig.rotation.x = 0;
-                    rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0; playerRig.position.y = baseVisualY;
-                    applyPlayerCombatPose(rig, getPlayerCombatNeutralPose(rig));
-                    playerRig.position.y = baseVisualY + applyPlayerSlashCombatPose(rig, frameNow);
-                    }
-                } else {
-                    rig.axe.visible = !!equipment.weapon; rig.axe.rotation.set(0, 0, 0);
-                    setPlayerRigShoulderPivot(rig);
-                    rig.leftArm.rotation.set(idlePulse * 0.05, 0, 0); rig.leftLowerArm.rotation.set(-0.03, 0, 0);
-                    rig.rightArm.rotation.set(-idlePulse * 0.05, 0, 0); rig.rightLowerArm.rotation.set(-0.03, 0, 0);
-                    rig.leftLeg.rotation.x = 0; rig.rightLeg.rotation.x = 0; if (rig.leftLowerLeg) rig.leftLowerLeg.rotation.x = 0; if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = 0;
-                    playerRig.position.y = baseVisualY + (Math.abs(idlePulse) * MOTION_TUNING.idleBounce);
-                    rig.torso.rotation.set(-0.03, 0, 0); rig.head.rotation.set(-0.02 + (idlePulse * 0.02), 0, 0); playerRig.rotation.x = 0;
-                }
+                resetPlayerRigAnimationState(rig, playerRig, baseVisualY, shouldShowRigToolVisual(playerRig));
             }
             if (skillAnimationHandled || !clipAnimationHandled) {
                 applyPlayerHitRecoilOverlay(rig, playerRig, frameNow);

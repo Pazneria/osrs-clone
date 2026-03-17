@@ -286,8 +286,21 @@
             hasToolClass,
             getBestToolByClass,
             autoEquipToolClass,
-            setToolVisualById: (itemId) => {
-                if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) setPlayerRigToolVisual(overrides.playerRig, itemId);
+            setToolVisualById: (itemId, heldItemSlot = null) => {
+                if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) {
+                    setPlayerRigToolVisual(overrides.playerRig, itemId, heldItemSlot);
+                }
+            },
+            setToolVisuals: (heldItems, primaryHeldItemSlot = null) => {
+                if (typeof setPlayerRigToolVisuals === 'function' && overrides.playerRig) {
+                    setPlayerRigToolVisuals(overrides.playerRig, heldItems, primaryHeldItemSlot);
+                    return;
+                }
+                if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) {
+                    const desiredSlot = primaryHeldItemSlot === 'leftHand' ? 'leftHand' : 'rightHand';
+                    const desiredId = heldItems && typeof heldItems === 'object' ? heldItems[desiredSlot] : null;
+                    setPlayerRigToolVisual(overrides.playerRig, desiredId || null, desiredSlot);
+                }
             },
             hasItem,
             canAcceptItemById,
@@ -339,6 +352,7 @@
                 if (typeof depleteRockNode === 'function') depleteRockNode(x, y, z, respawnTicks);
             },
             tryStepAfterFire: () => (typeof tryStepAfterFire === 'function' ? tryStepAfterFire() : false),
+            tryStepBeforeFiremaking: () => (typeof tryStepBeforeFiremaking === 'function' ? tryStepBeforeFiremaking() : false),
             resolveFireTargetFromHit: (hit) => (typeof resolveFireTargetFromHit === 'function' ? resolveFireTargetFromHit(hit) : null),
             startSkillById: (nextSkillId, nextOverrides = {}) => {
                 return tryStartSkillById(nextSkillId, Object.assign({}, nextOverrides, { skillId: nextSkillId }));
@@ -506,6 +520,80 @@
         return handled !== false;
     }
 
+    function getSkillAnimationHeldItemId(overrides = {}) {
+        const skillId = resolveSkillIdFromAction(getActivePlayerState().action);
+        const module = skillId ? skillRegistry[skillId] : null;
+        if (!module) return null;
+
+        const context = createSkillContext(Object.assign({}, overrides, { skillId }));
+        if (typeof module.getAnimationHeldItemId === 'function') {
+            const heldItemId = module.getAnimationHeldItemId(context);
+            return (typeof heldItemId === 'string' && heldItemId) ? heldItemId : null;
+        }
+        if (typeof module.getAnimationHeldItems === 'function') {
+            const heldItems = module.getAnimationHeldItems(context);
+            if (!heldItems || typeof heldItems !== 'object') return null;
+            if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) return heldItems.rightHand;
+            if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) return heldItems.leftHand;
+        }
+        return null;
+    }
+
+    function getSkillAnimationHeldItemSlot(overrides = {}) {
+        const skillId = resolveSkillIdFromAction(getActivePlayerState().action);
+        const module = skillId ? skillRegistry[skillId] : null;
+        if (!module) return null;
+
+        const context = createSkillContext(Object.assign({}, overrides, { skillId }));
+        if (typeof module.getAnimationHeldItemSlot === 'function') {
+            const heldItemSlot = module.getAnimationHeldItemSlot(context);
+            return heldItemSlot === 'leftHand' ? 'leftHand' : (heldItemSlot === 'rightHand' ? 'rightHand' : null);
+        }
+        if (typeof module.getAnimationHeldItems === 'function') {
+            const heldItems = module.getAnimationHeldItems(context);
+            if (!heldItems || typeof heldItems !== 'object') return null;
+            if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) return 'rightHand';
+            if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) return 'leftHand';
+        }
+        return null;
+    }
+
+    function getSkillAnimationHeldItems(overrides = {}) {
+        const skillId = resolveSkillIdFromAction(getActivePlayerState().action);
+        const module = skillId ? skillRegistry[skillId] : null;
+        if (!module) return null;
+
+        const context = createSkillContext(Object.assign({}, overrides, { skillId }));
+        if (typeof module.getAnimationHeldItems === 'function') {
+            const heldItems = module.getAnimationHeldItems(context);
+            if (!heldItems || typeof heldItems !== 'object') return null;
+            const normalized = {};
+            if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) normalized.rightHand = heldItems.rightHand;
+            else if (heldItems.rightHand === null) normalized.rightHand = null;
+            if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) normalized.leftHand = heldItems.leftHand;
+            else if (heldItems.leftHand === null) normalized.leftHand = null;
+            return Object.keys(normalized).length > 0 ? normalized : null;
+        }
+
+        if (typeof module.getAnimationHeldItemId !== 'function') return null;
+        const heldItemId = module.getAnimationHeldItemId(context);
+        if (!(typeof heldItemId === 'string' && heldItemId)) return null;
+        const heldItemSlot = typeof module.getAnimationHeldItemSlot === 'function'
+            ? module.getAnimationHeldItemSlot(context)
+            : null;
+        if (heldItemSlot === 'leftHand') return { leftHand: heldItemId };
+        return { rightHand: heldItemId };
+    }
+
+    function getSkillAnimationSuppressEquipmentVisual(overrides = {}) {
+        const skillId = resolveSkillIdFromAction(getActivePlayerState().action);
+        const module = skillId ? skillRegistry[skillId] : null;
+        if (!module || typeof module.getAnimationSuppressEquipmentVisual !== 'function') return false;
+
+        const context = createSkillContext(Object.assign({}, overrides, { skillId }));
+        return !!module.getAnimationSuppressEquipmentVisual(context);
+    }
+
     window.SkillRuntime = {
         registerSkillModule,
         canHandleTarget,
@@ -516,7 +604,11 @@
         tryUseItemOnTarget,
         queuePendingSkillStart,
         handleSkillTick,
-        handleSkillAnimation
+        handleSkillAnimation,
+        getSkillAnimationHeldItems,
+        getSkillAnimationHeldItemId,
+        getSkillAnimationHeldItemSlot,
+        getSkillAnimationSuppressEquipmentVisual
     };
 })();
 

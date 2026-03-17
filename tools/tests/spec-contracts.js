@@ -517,12 +517,14 @@ function run() {
   loadBrowserScript(root, "src/js/skills/fletching/index.js");
   loadBrowserScript(root, "src/js/skills/crafting/index.js");
   loadBrowserScript(root, "src/js/skills/firemaking/index.js");
+  loadBrowserScript(root, "src/js/skills/smithing/index.js");
   loadBrowserScript(root, "src/js/skills/mining/index.js");
   loadBrowserScript(root, "src/js/skills/fishing/index.js");
   const skillModules = window.SkillModules || {};
   assert(!!skillModules.fletching && typeof skillModules.fletching.onUseItem === "function", "fletching runtime module missing onUseItem");
   assert(!!skillModules.crafting && typeof skillModules.crafting.onUseItem === "function", "crafting runtime module missing onUseItem");
   assert(!!skillModules.firemaking && typeof skillModules.firemaking.onUseItem === "function", "firemaking runtime module missing onUseItem");
+  assert(!!skillModules.smithing && typeof skillModules.smithing.onAnimate === "function", "smithing runtime module missing onAnimate");
   assert(!!skillModules.mining && typeof skillModules.mining.onStart === "function", "mining runtime module missing onStart");
   assert(!!skillModules.fishing && typeof skillModules.fishing.onAnimate === "function", "fishing runtime module missing onAnimate");
 
@@ -618,6 +620,146 @@ function run() {
   assert((craftingCtxSuccess._counts.wooden_handle_strapped || 0) === 0, "crafting should consume strapped handle input");
 
   window.SkillRuntime = originalSkillRuntime;
+
+  function makeFiremakingActionContext(overrides = {}) {
+    const messages = [];
+    const litFires = [];
+    const xpDrops = [];
+    const inventoryCounts = Object.assign({ tinderbox: 1, logs: 1 }, overrides.counts || {});
+    const playerState = Object.assign({
+      x: 10,
+      y: 20,
+      z: 0,
+      action: "IDLE",
+      turnLock: false,
+      actionVisualReady: false,
+      path: [],
+      prevX: 10,
+      prevY: 20
+    }, overrides.playerState || {});
+    let stepBeforeCalls = 0;
+    let stepAfterCalls = 0;
+    let renderInventoryCalls = 0;
+    let removedLogCount = 0;
+    let stopActionCalls = 0;
+
+    const context = {
+      targetObj: "GROUND",
+      sourceItemId: overrides.sourceItemId || "logs",
+      currentTick: Number.isFinite(overrides.currentTick) ? overrides.currentTick : 100,
+      random: typeof overrides.random === "function" ? overrides.random : () => 0,
+      playerState,
+      getRecipeSet: (skillId) => SkillSpecRegistry.getRecipeSet(skillId),
+      getSkillSpec: (skillId) => SkillSpecRegistry.getSkillSpec(skillId),
+      getSkillLevel: () => 99,
+      requireSkillLevel: () => true,
+      getInventoryCount: (itemId) => inventoryCounts[itemId] || 0,
+      haltMovement: () => {
+        playerState.path = [];
+        playerState.targetX = playerState.x;
+        playerState.targetY = playerState.y;
+      },
+      hasActiveFireAt: (x, y, z) => litFires.some((fire) => fire.x === x && fire.y === y && fire.z === z),
+      tryStepBeforeFiremaking: () => {
+        stepBeforeCalls += 1;
+        if (typeof overrides.tryStepBeforeFiremaking === "function") {
+          return overrides.tryStepBeforeFiremaking(playerState);
+        }
+        playerState.prevX = playerState.x;
+        playerState.prevY = playerState.y;
+        playerState.x = 10;
+        playerState.y = 21;
+        return { stepped: true, x: playerState.x, y: playerState.y };
+      },
+      tryStepAfterFire: () => {
+        stepAfterCalls += 1;
+        return { stepped: true, x: playerState.x, y: playerState.y };
+      },
+      lightFireAtCurrentTile: (x, y, z) => {
+        litFires.push({ x, y, z });
+        return true;
+      },
+      removeOneItemById: (itemId) => {
+        if ((inventoryCounts[itemId] || 0) <= 0) return false;
+        inventoryCounts[itemId] -= 1;
+        if (itemId === context.sourceItemId) removedLogCount += 1;
+        return true;
+      },
+      addSkillXp: (skillId, amount) => xpDrops.push({ skillId, amount }),
+      addChatMessage: (message, tone) => messages.push({ message, tone }),
+      renderInventory: () => {
+        renderInventoryCalls += 1;
+      },
+      stopAction: () => {
+        stopActionCalls += 1;
+        playerState.action = "IDLE";
+      }
+    };
+
+    return {
+      context,
+      messages,
+      litFires,
+      xpDrops,
+      inventoryCounts,
+      getStepBeforeCalls: () => stepBeforeCalls,
+      getStepAfterCalls: () => stepAfterCalls,
+      getRenderInventoryCalls: () => renderInventoryCalls,
+      getRemovedLogCount: () => removedLogCount,
+      getStopActionCalls: () => stopActionCalls
+    };
+  }
+
+  const firemakingAction = makeFiremakingActionContext();
+  const firemakingStarted = skillModules.firemaking.onStart(firemakingAction.context);
+  assert(firemakingStarted, "firemaking should start when logs and tinderbox are present");
+  assert(firemakingAction.getStepBeforeCalls() === 1, "firemaking should step before the animation begins");
+  assert(firemakingAction.context.playerState.action === "SKILLING: FIREMAKING", "firemaking should enter skilling state after stepping away");
+  assert(firemakingAction.context.playerState.x === 10 && firemakingAction.context.playerState.y === 21, "firemaking should move the player onto the stand tile before attempting ignition");
+  assert(firemakingAction.context.playerState.turnLock === true, "firemaking should lock facing toward the placed logs");
+  assert(approxEq(firemakingAction.context.playerState.targetRotation, Math.PI), "firemaking should face back toward the origin tile after stepping");
+  assert(!!firemakingAction.context.playerState.firemakingSession, "firemaking session should exist after start");
+  assert(firemakingAction.context.playerState.firemakingSession.target.x === 10 && firemakingAction.context.playerState.firemakingSession.target.y === 20, "firemaking should keep the origin tile as the burn target");
+  assert(firemakingAction.context.playerState.firemakingSession.standAt.x === 10 && firemakingAction.context.playerState.firemakingSession.standAt.y === 21, "firemaking should remember the stepped-to stand tile separately");
+
+  skillModules.firemaking.onTick(firemakingAction.context);
+  assert(firemakingAction.litFires.length === 1, "firemaking should light exactly one fire on success");
+  assert(firemakingAction.litFires[0].x === 10 && firemakingAction.litFires[0].y === 20 && firemakingAction.litFires[0].z === 0, "firemaking should light the original tile instead of the stepped-to tile");
+  assert(firemakingAction.getRemovedLogCount() === 1, "firemaking should consume one log on success");
+  assert(firemakingAction.getRenderInventoryCalls() === 1, "firemaking should refresh inventory after consuming the log");
+  assert(firemakingAction.xpDrops.some((entry) => entry.skillId === "firemaking" && entry.amount > 0), "firemaking should award XP on success");
+  assert(firemakingAction.context.playerState.firemakingSession.phase === "post_success", "firemaking should enter post-success cleanup after ignition");
+  assert(firemakingAction.getStepAfterCalls() === 0, "firemaking should not use the old post-light sidestep path anymore");
+
+  firemakingAction.context.currentTick = firemakingAction.context.playerState.firemakingSession.finishTick;
+  skillModules.firemaking.onTick(firemakingAction.context);
+  assert(firemakingAction.context.playerState.action === "IDLE", "firemaking should stop cleanly after the success delay");
+  assert(firemakingAction.context.playerState.firemakingSession === null, "firemaking should clear the session after the success delay");
+  assert(firemakingAction.context.playerState.turnLock === false, "firemaking should release turn lock after finishing");
+  assert(firemakingAction.getStopActionCalls() >= 1, "firemaking should stop the active action when finished");
+  assert(firemakingAction.getStepAfterCalls() === 0, "firemaking cleanup should not step after lighting the fire");
+
+  const smithingAnimateContext = {
+    playerState: {
+      action: "SKILLING: ANVIL"
+    }
+  };
+  const smithingAnimationHandled = skillModules.smithing.onAnimate(smithingAnimateContext);
+  assert(smithingAnimationHandled === false, "smithing should defer body motion to clip-driven animation");
+  assert(skillModules.smithing.getAnimationHeldItemId(smithingAnimateContext) === "hammer", "smithing anvil work should surface the hammer prop during clip playback");
+  smithingAnimateContext.playerState.action = "SKILLING: FURNACE";
+  assert(skillModules.smithing.getAnimationHeldItemId(smithingAnimateContext) === null, "smithing furnace work should stay empty-handed unless runtime logic adds a prop");
+  assert(skillModules.smithing.getAnimationSuppressEquipmentVisual(smithingAnimateContext) === true, "smithing should hide equipped gear during clip playback");
+
+  const fletchingAnimateContext = {
+    playerState: {
+      action: "SKILLING: FLETCHING"
+    }
+  };
+  const fletchingAnimationHandled = skillModules.fletching.onAnimate(fletchingAnimateContext);
+  assert(fletchingAnimationHandled === false, "fletching should defer body motion to clip-driven animation");
+  assert(skillModules.fletching.getAnimationSuppressEquipmentVisual(fletchingAnimateContext) === true, "fletching should hide equipped gear until explicit held-item logic is authored");
+
   function makeMiningContext(unlocked) {
     const messages = [];
     let started = false;
@@ -689,7 +831,7 @@ function run() {
   assert(miningUnlocked.wasStarted(), "mining should enter skilling state when unlocked");
   const miningAnimationHandled = skillModules.mining.onAnimate(miningUnlocked.context);
   assert(miningAnimationHandled === false, "mining should defer body motion to clip-driven animation");
-  assert(miningUnlocked.toolVisualCalls[miningUnlocked.toolVisualCalls.length - 1] === "rune_pickaxe", "mining should still surface the best pickaxe visual during clip-driven playback");
+  assert(skillModules.mining.getAnimationHeldItemId(miningUnlocked.context) === "rune_pickaxe", "mining should still surface the best pickaxe visual during clip-driven playback");
 
   miningUnlocked.messages.length = 0;
   miningUnlocked.setUnlocked(false);
@@ -697,28 +839,21 @@ function run() {
   assert(miningUnlocked.messages.some((entry) => /gem mine is locked/i.test(entry.message)), "mining should re-check gem-mine gate during active ticks");
   assert(miningUnlocked.context.playerState.action === "IDLE", "mining should stop if gem-mine access is lost mid-session");
 
-  const fishingToolVisualCalls = [];
   const fishingAnimateContext = {
     playerState: {
       action: "SKILLING: WATER",
       fishingActiveMethodId: "net"
-    },
-    setToolVisualById: (itemId) => {
-      fishingToolVisualCalls.push(itemId || null);
     }
   };
   const fishingAnimationHandled = skillModules.fishing.onAnimate(fishingAnimateContext);
   assert(fishingAnimationHandled === false, "fishing should defer body motion to clip-driven animation");
-  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "small_net", "fishing should still surface the small-net visual during clip-driven playback");
+  assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "small_net", "fishing should still surface the small-net visual during clip-driven playback");
   fishingAnimateContext.playerState.fishingActiveMethodId = "rod";
-  skillModules.fishing.onAnimate(fishingAnimateContext);
-  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "fishing_rod", "fishing should surface the rod visual during rod clip playback");
+  assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "fishing_rod", "fishing should surface the rod visual during rod clip playback");
   fishingAnimateContext.playerState.fishingActiveMethodId = "harpoon";
-  skillModules.fishing.onAnimate(fishingAnimateContext);
-  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "harpoon", "fishing should surface the harpoon visual during harpoon clip playback");
+  assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "harpoon", "fishing should surface the harpoon visual during harpoon clip playback");
   fishingAnimateContext.playerState.fishingActiveMethodId = "deep_rune_harpoon";
-  skillModules.fishing.onAnimate(fishingAnimateContext);
-  assert(fishingToolVisualCalls[fishingToolVisualCalls.length - 1] === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
+  assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const miningRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/mining-runtime.ts"), "utf8");
   const runecraftingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/runecrafting-runtime.ts"), "utf8");
@@ -746,6 +881,8 @@ function run() {
   assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");
   assert(worldScript.includes("SkillSpecRegistry.getRecipeSet('firemaking')"), "fire lifetime resolver should read firemaking recipe data");
   assert(worldScript.includes("function tickFireLifecycle()"), "fire lifecycle tick helper missing");
+  assert(worldScript.includes("function tryStepBeforeFiremaking()"), "firemaking should expose the pre-ignition step helper");
+  assert(worldScript.includes("function syncFiremakingLogPreview()"), "firemaking should render a temporary log preview on the origin tile");
   assert(worldScript.includes("window.tickFireLifecycle = tickFireLifecycle;"), "fire lifecycle tick export missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "borin_ironvein"), "borin world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "thrain_deepforge"), "thrain world placement missing");
@@ -775,17 +912,35 @@ function run() {
   assert(starterTownWorld.services.some((entry) => entry.type === "ANVIL"), "anvil world placement missing");
   assert(smithRuntimeScript.includes("const SKILL_ID = 'smithing'"), "smithing runtime module missing skill id");
   assert(smithRuntimeScript.includes("stationType"), "smithing runtime station validation missing");
+  assert(smithRuntimeScript.includes("getAnimationHeldItemId"), "smithing runtime should surface the hammer prop during clip playback");
+  assert(smithRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "smithing runtime should hide equipped visuals during clip playback");
+  assert(!smithRuntimeScript.includes("applyCookingStylePose"), "smithing runtime should remove the old shared procedural smithing pose");
 
   const inputRenderScript = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
+  assert(inputRenderScript.includes("function getActiveSkillAnimationHeldItems()"), "input render should resolve dual-hand skill props");
+  assert(inputRenderScript.includes("function resolveInteractionFacingRotation("), "input render should expose station-aware interaction facing");
+  assert(inputRenderScript.includes("function getStationInteractionFacingStep("), "input render should centralize station-facing resolution");
+  assert(inputRenderScript.includes("return { dx: -front.dx, dy: -front.dy };"), "input render should face furnace interactions back into the furnace front");
   assert(inputRenderScript.includes("'player/mining1'"), "input render should route mining through the studio clip");
+  assert(inputRenderScript.includes("'player/woodcutting1'"), "input render should route woodcutting through the studio clip");
+  assert(inputRenderScript.includes("'player/cooking1'"), "input render should route cooking through the studio clip");
+  assert(inputRenderScript.includes("'player/fletching1'"), "input render should route fletching through the studio clip");
+  assert(inputRenderScript.includes("'player/smithing_smelting1'"), "input render should route furnace smithing through the smelting studio clip");
+  assert(inputRenderScript.includes("'player/smithing_forging1'"), "input render should route anvil smithing through the forging studio clip");
+  assert(inputRenderScript.includes("'player/firemaking1'"), "input render should route firemaking through the studio clip");
   assert(inputRenderScript.includes("'player/fishing_net1'"), "input render should route net fishing through the studio clip");
   assert(inputRenderScript.includes("'player/fishing_rod_hold1'"), "input render should route rod fishing through the studio hold clip");
   assert(inputRenderScript.includes("'player/fishing_rod_cast1'"), "input render should request the rod cast action clip");
   assert(inputRenderScript.includes("'player/fishing_harpoon_hold1'"), "input render should route harpoon fishing through the studio hold clip");
   assert(inputRenderScript.includes("'player/fishing_harpoon_strike1'"), "input render should request the harpoon startup action clip");
+  assert(!inputRenderScript.includes("function applyPlayerCombatPose"), "legacy hardcoded combat-pose fallback should be removed");
   assert(!inputRenderScript.includes("function applyRockMiningPose"), "legacy hardcoded mining pose should be removed");
+  const legacyManifestScript = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
+  assert(!legacyManifestScript.includes("skills-shared-animations"), "legacy manifest should not load the removed shared skill animations script");
+  assert(!fs.existsSync(path.join(root, "src/js/skills/shared/animations.js")), "unused shared skill animations script should be deleted");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
+  assert(coreScript.includes("typeof window.resolveInteractionFacingRotation === 'function'"), "core facing turns should consult station-aware interaction facing");
   assert(coreScript.includes("function getQaDiscoveredMerchants()"), "core QA merchant discovery helper missing");
   assert(coreScript.includes("getWorldRouteGroup('fishing')"), "core QA fishing-spot discovery should read world registry");
   assert(coreScript.includes("function getQaOpenableMerchantIds()"), "core QA openable-merchant resolver missing");
@@ -807,17 +962,28 @@ function run() {
   assert(manifestScript.includes("levelKey"), "skill manifest skill-tile level key metadata missing");
   const indexHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(indexHtml.includes('/src/main.ts'), "index missing Vite module entry");
-  const legacyManifestScript = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
-  assert(legacyManifestScript.includes("../../js/skills/crafting/index.js?raw"), "legacy manifest missing crafting runtime bridge include");
+  const legacyBridgeManifestScript = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
+  assert(legacyBridgeManifestScript.includes("../../js/skills/crafting/index.js?raw"), "legacy manifest missing crafting runtime bridge include");
   assert(!indexHtml.includes('data-skill="attack"'), "stats view should not hard-code attack tile markup");
   assert(!indexHtml.includes('id="stat-atk-level"'), "stats view should not hard-code skill level ids");
   const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
   assert(skillRuntimeScript.includes("requireAreaAccess"), "skill runtime area-access hook missing");
   assert(skillRuntimeScript.includes("getTreeNodeAt"), "skill runtime tree-node hook missing");
   assert(skillRuntimeScript.includes("return handled !== false;"), "skill runtime should allow onAnimate hooks to pass through into clip playback");
+  assert(skillRuntimeScript.includes("getSkillAnimationHeldItems"), "skill runtime should expose dual-hand held-item overrides");
+  assert(skillRuntimeScript.includes("getSkillAnimationHeldItemSlot"), "skill runtime should expose held-item hand overrides");
+  assert(skillRuntimeScript.includes("getSkillAnimationSuppressEquipmentVisual"), "skill runtime should expose animation equipment-visibility overrides");
   const fishingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/fishing/index.js"), "utf8");
-  assert(fishingRuntimeScript.includes("const toolVisualId = getFishingToolVisualId(context);"), "fishing runtime should still resolve held-tool visuals");
+  assert(fishingRuntimeScript.includes("getAnimationHeldItemId(context)"), "fishing runtime should still resolve held-tool visuals");
   assert(!fishingRuntimeScript.includes("alignTorsoToUpperLegFrontHinge"), "fishing runtime should remove the legacy procedural fishing pose");
+  const cookingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/cooking/index.js"), "utf8");
+  assert(cookingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "cooking runtime should request empty hands during clip playback");
+  assert(!cookingRuntimeScript.includes("applyCookingStylePose"), "cooking runtime should remove the legacy procedural cooking pose");
+  const firemakingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/firemaking/index.js"), "utf8");
+  assert(firemakingRuntimeScript.includes("getAnimationHeldItemId"), "firemaking runtime should surface the tinderbox prop during clip playback");
+  assert(firemakingRuntimeScript.includes("getAnimationHeldItemSlot"), "firemaking runtime should request the left-hand prop slot");
+  assert(firemakingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "firemaking runtime should hide equipped weapons during clip playback");
+  assert(!firemakingRuntimeScript.includes("rig.rightLowerArm.rotation.set(-0.6 + (s * 0.35), -0.1, 0);"), "firemaking runtime should remove the legacy procedural firemaking pose");
   const woodcutRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/woodcutting/index.js"), "utf8");
   assert(woodcutRuntimeScript.includes("const TREE_NODE_NAMES ="), "woodcutting runtime tree naming table missing");
   assert(woodcutRuntimeScript.includes("context.getTreeNodeAt"), "woodcutting runtime tree-node resolver missing");

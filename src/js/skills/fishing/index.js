@@ -478,12 +478,11 @@
         },
 
         onAnimate(context) {
-            const toolVisualId = getFishingToolVisualId(context);
-
-            if (typeof context.setToolVisualById === 'function') {
-                context.setToolVisualById(toolVisualId);
-            }
             return false;
+        },
+
+        getAnimationHeldItemId(context) {
+            return getFishingToolVisualId(context);
         },
 
         getTooltip() {

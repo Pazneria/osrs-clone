@@ -797,9 +797,16 @@
         },
 
         onAnimate(context) {
-            if (window.SkillSharedAnimations && typeof SkillSharedAnimations.applyCookingStylePose === 'function') {
-                SkillSharedAnimations.applyCookingStylePose(context);
-            }
+            return false;
+        },
+
+        getAnimationHeldItemId(context) {
+            if (!context || !context.playerState) return null;
+            return context.playerState.action === 'SKILLING: ANVIL' ? 'hammer' : null;
+        },
+
+        getAnimationSuppressEquipmentVisual() {
+            return true;
         },
 
         getTooltip(context) {

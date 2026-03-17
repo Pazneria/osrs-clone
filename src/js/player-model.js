@@ -344,6 +344,12 @@ function createRigBones(armRigDefaults) {
     rightLowerArm.position.set(-elbowX, elbowY, elbowZ);
     rightArm.add(rightLowerArm);
 
+    const leftTool = new THREE.Group();
+    leftTool.name = 'pm-leftTool';
+    leftTool.position.set(0, -0.35, 0);
+    leftTool.visible = false;
+    leftLowerArm.add(leftTool);
+
     const leftLeg = new THREE.Group();
     leftLeg.name = 'pm-leftLeg';
     leftLeg.position.set(0.14, 0.7, 0);
@@ -382,6 +388,8 @@ function rigNodeMap(rigRoot) {
         rightLeg: rigRoot.getObjectByName('pm-rightLeg'),
         leftLowerLeg: rigRoot.getObjectByName('pm-leftLowerLeg'),
         rightLowerLeg: rigRoot.getObjectByName('pm-rightLowerLeg'),
+        leftTool: rigRoot.getObjectByName('pm-leftTool'),
+        rightTool: rigRoot.getObjectByName('pm-axe'),
         axe: rigRoot.getObjectByName('pm-axe')
     };
 }
@@ -552,8 +560,9 @@ function buildPlayerRigTemplate(normalizedAppearance) {
         groups.forEach((group) => addFragmentsToRig(rigRoot, group.fragments, normalizedAppearance.colors, group.recolors));
     }
     const nodes = rigNodeMap(rigRoot);
-    const equippedWeaponSlot = normalizedAppearance.slots[3] && normalizedAppearance.slots[3].kind === 'item' ? normalizedAppearance.slots[3].id : null;
+    const equippedWeaponSlot = normalizedAppearance.slots[3] && normalizedAppearance.slots[3].kind === 'item' ? normalizedAppearance.slots[3].id : null;
     nodes.axe.visible = !!equippedWeaponSlot;
+    if (nodes.leftTool) nodes.leftTool.visible = false;
     rigRoot.userData.armRigDefaults = armRigDefaults;
     rigRoot.userData.baseY = 0;
     return rigRoot;
@@ -579,6 +588,8 @@ function bindRigUserData(rigRoot) {
         rightLeg: nodes.rightLeg,
         leftLowerLeg: nodes.leftLowerLeg,
         rightLowerLeg: nodes.rightLowerLeg,
+        leftTool: nodes.leftTool,
+        rightTool: nodes.rightTool || nodes.axe,
         axe: nodes.axe,
         elbowPivot,
         attackTick: -1,
@@ -587,6 +598,8 @@ function bindRigUserData(rigRoot) {
         hitReactionStartedAt: -1
     };
     rigRoot.userData.animationRigId = 'player_humanoid_v1';
+    rigRoot.userData.animationHeldItemSlot = 'rightHand';
+    rigRoot.userData.animationHeldItems = { rightHand: null, leftHand: null };
     rigRoot.traverse((child) => {
         if (child.isMesh) child.castShadow = true;
     });
@@ -638,6 +651,20 @@ function createPlayerRigFromCurrentAppearance() {
     return createPlayerRigFromAppearance(appearance);
 }
 
+function createPlayerRigForAnimationStudio() {
+    const appearance = syncPlayerAppearanceFromEquipment();
+    const previewAppearance = {
+        gender: appearance.gender,
+        colors: Array.isArray(appearance.colors) ? appearance.colors.slice() : [0, 0, 0, 0, 0],
+        slots: Array.isArray(appearance.slots) ? appearance.slots.slice() : []
+    };
+    const weaponSlotIndex = PLAYER_APPEARANCE_SLOT_ORDER.indexOf('weapon');
+    if (weaponSlotIndex >= 0 && weaponSlotIndex < previewAppearance.slots.length) {
+        previewAppearance.slots[weaponSlotIndex] = null;
+    }
+    return createPlayerRigFromAppearance(previewAppearance);
+}
+
 function rebuildRigInstance(oldRig, parentScene) {
     if (!oldRig || !parentScene) return null;
     const nextRig = createPlayerRigFromCurrentAppearance();
@@ -663,6 +690,7 @@ function rebuildPlayerRigsFromAppearance() {
 window.syncPlayerAppearanceFromEquipment = syncPlayerAppearanceFromEquipment;
 window.rebuildPlayerRigsFromAppearance = rebuildPlayerRigsFromAppearance;
 window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;
+window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;
 
 
 
@@ -712,14 +740,52 @@ window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearan
 
 
 const SKILLING_TOOL_VISUAL_GROUP_NAME = 'pm-skillingToolVisual';
+const RIGHT_HAND_HELD_ITEM_SLOT = 'rightHand';
+const LEFT_HAND_HELD_ITEM_SLOT = 'leftHand';
 
-function ensureSkillingToolVisualGroup(axeNode) {
-    if (!axeNode) return null;
-    let group = axeNode.getObjectByName(SKILLING_TOOL_VISUAL_GROUP_NAME);
-    if (group && group.parent === axeNode) return group;
+function normalizeHeldItemSlot(slot) {
+    return slot === LEFT_HAND_HELD_ITEM_SLOT ? LEFT_HAND_HELD_ITEM_SLOT : RIGHT_HAND_HELD_ITEM_SLOT;
+}
+
+function createEmptyHeldItemVisualMap() {
+    return {
+        rightHand: null,
+        leftHand: null
+    };
+}
+
+function normalizeHeldItemVisualId(itemId) {
+    return (typeof itemId === 'string' && itemId) ? itemId : null;
+}
+
+function normalizeHeldItemVisualMap(heldItems) {
+    const normalized = createEmptyHeldItemVisualMap();
+    if (!heldItems || typeof heldItems !== 'object') return normalized;
+    normalized.rightHand = normalizeHeldItemVisualId(heldItems.rightHand);
+    normalized.leftHand = normalizeHeldItemVisualId(heldItems.leftHand);
+    return normalized;
+}
+
+function areHeldItemVisualMapsEqual(left, right) {
+    return (!!left ? left.rightHand : null) === (!!right ? right.rightHand : null)
+        && (!!left ? left.leftHand : null) === (!!right ? right.leftHand : null);
+}
+
+function resolvePrimaryHeldItemVisualSlot(heldItems, preferredSlot = null) {
+    const normalizedPreferredSlot = preferredSlot ? normalizeHeldItemSlot(preferredSlot) : null;
+    if (normalizedPreferredSlot && heldItems[normalizedPreferredSlot]) return normalizedPreferredSlot;
+    if (heldItems.rightHand) return RIGHT_HAND_HELD_ITEM_SLOT;
+    if (heldItems.leftHand) return LEFT_HAND_HELD_ITEM_SLOT;
+    return normalizedPreferredSlot || RIGHT_HAND_HELD_ITEM_SLOT;
+}
+
+function ensureSkillingToolVisualGroup(anchorNode) {
+    if (!anchorNode) return null;
+    let group = anchorNode.getObjectByName(SKILLING_TOOL_VISUAL_GROUP_NAME);
+    if (group && group.parent === anchorNode) return group;
     group = new THREE.Group();
     group.name = SKILLING_TOOL_VISUAL_GROUP_NAME;
-    axeNode.add(group);
+    anchorNode.add(group);
     return group;
 }
 
@@ -739,30 +805,99 @@ function setBaseToolVisualVisibility(axeNode, visible) {
     }
 }
 
-function setPlayerRigToolVisual(rigRoot, itemId) {
-    if (!rigRoot || !rigRoot.userData || !rigRoot.userData.rig || !rigRoot.userData.rig.axe) return;
-    const axeNode = rigRoot.userData.rig.axe;
-    const skillingToolGroup = ensureSkillingToolVisualGroup(axeNode);
-    const desiredId = itemId || null;
-    if (!skillingToolGroup) return;
-
-    if (rigRoot.userData.skillingToolVisualId === desiredId) return;
-
-    clearObjectChildren(skillingToolGroup);
-    rigRoot.userData.skillingToolVisualId = desiredId;
-    skillingToolGroup.visible = !!desiredId;
-    setBaseToolVisualVisibility(axeNode, !desiredId);
-    if (!desiredId) return;
-
-    let toolMeshes = createEquipmentVisualMeshes(desiredId, 'axe');
-    let fallbackId = null;
-    if (/_pickaxe$/.test(desiredId)) fallbackId = 'pickaxe_base_reference';
-    else if (/_axe$/.test(desiredId)) fallbackId = 'axe_base_reference';
-    else if (/_sword$/.test(desiredId)) fallbackId = 'sword_base_reference';
-    if (toolMeshes.length === 0 && fallbackId && desiredId !== fallbackId) {
-        toolMeshes = createEquipmentVisualMeshes(fallbackId, 'axe');
+function hasBaseToolVisual(axeNode) {
+    if (!axeNode) return false;
+    for (let i = 0; i < axeNode.children.length; i++) {
+        const child = axeNode.children[i];
+        if (!child || child.name === SKILLING_TOOL_VISUAL_GROUP_NAME) continue;
+        return true;
     }
-    for (let i = 0; i < toolMeshes.length; i++) skillingToolGroup.add(toolMeshes[i]);
+    return false;
+}
+
+function resolveRigToolAnchors(rigRoot) {
+    const rig = rigRoot && rigRoot.userData ? rigRoot.userData.rig : null;
+    if (!rig) return { right: null, left: null };
+    return {
+        right: rig.rightTool || rig.axe || null,
+        left: rig.leftTool || null
+    };
+}
+
+function resolveRigToolAnchorBySlot(anchors, slot) {
+    return normalizeHeldItemSlot(slot) === LEFT_HAND_HELD_ITEM_SLOT
+        ? anchors.left
+        : anchors.right;
+}
+
+function setPlayerRigToolVisuals(rigRoot, heldItems, primaryHeldItemSlot = null) {
+    if (!rigRoot || !rigRoot.userData || !rigRoot.userData.rig) return;
+    const anchors = resolveRigToolAnchors(rigRoot);
+    const rightAnchor = anchors.right;
+    const leftAnchor = anchors.left;
+    if (!rightAnchor && !leftAnchor) return;
+    const desiredHeldItems = normalizeHeldItemVisualMap(heldItems);
+    const desiredSlot = resolvePrimaryHeldItemVisualSlot(
+        desiredHeldItems,
+        primaryHeldItemSlot || rigRoot.userData.animationHeldItemSlot || null
+    );
+    const rightSkillingToolGroup = ensureSkillingToolVisualGroup(rightAnchor);
+    const leftSkillingToolGroup = ensureSkillingToolVisualGroup(leftAnchor);
+    const suppressBaseToolVisual = !!rigRoot.userData.suppressBaseToolVisual;
+    const baseToolVisible = hasBaseToolVisual(rightAnchor) && !suppressBaseToolVisual;
+
+    if (areHeldItemVisualMapsEqual(rigRoot.userData.skillingToolVisuals, desiredHeldItems)
+        && rigRoot.userData.skillingToolVisualSlot === desiredSlot
+        && !!rigRoot.userData.appliedSuppressBaseToolVisual === suppressBaseToolVisual) return;
+
+    clearObjectChildren(rightSkillingToolGroup);
+    clearObjectChildren(leftSkillingToolGroup);
+    rigRoot.userData.skillingToolVisuals = {
+        rightHand: desiredHeldItems.rightHand,
+        leftHand: desiredHeldItems.leftHand
+    };
+    rigRoot.userData.animationHeldItems = {
+        rightHand: desiredHeldItems.rightHand,
+        leftHand: desiredHeldItems.leftHand
+    };
+    rigRoot.userData.animationHeldItemSlot = desiredSlot;
+    rigRoot.userData.skillingToolVisualId = desiredHeldItems[desiredSlot] || null;
+    rigRoot.userData.skillingToolVisualSlot = desiredSlot;
+    rigRoot.userData.appliedSuppressBaseToolVisual = suppressBaseToolVisual;
+    if (rightSkillingToolGroup) rightSkillingToolGroup.visible = !!desiredHeldItems.rightHand;
+    if (leftSkillingToolGroup) leftSkillingToolGroup.visible = !!desiredHeldItems.leftHand;
+    setBaseToolVisualVisibility(rightAnchor, !desiredHeldItems.rightHand && !suppressBaseToolVisual);
+    if (rightAnchor) rightAnchor.visible = !!desiredHeldItems.rightHand || baseToolVisible;
+    if (leftAnchor) leftAnchor.visible = !!desiredHeldItems.leftHand;
+
+    const populateAnchor = (itemId, skillingToolGroup) => {
+        const desiredId = normalizeHeldItemVisualId(itemId);
+        if (!desiredId || !skillingToolGroup) return;
+        let toolMeshes = createEquipmentVisualMeshes(desiredId, 'axe');
+        let fallbackId = null;
+        if (/_pickaxe$/.test(desiredId)) fallbackId = 'pickaxe_base_reference';
+        else if (/_axe$/.test(desiredId)) fallbackId = 'axe_base_reference';
+        else if (/_sword$/.test(desiredId)) fallbackId = 'sword_base_reference';
+        if (toolMeshes.length === 0 && fallbackId && desiredId !== fallbackId) {
+            toolMeshes = createEquipmentVisualMeshes(fallbackId, 'axe');
+        }
+        for (let i = 0; i < toolMeshes.length; i++) skillingToolGroup.add(toolMeshes[i]);
+    };
+
+    populateAnchor(desiredHeldItems.rightHand, rightSkillingToolGroup);
+    populateAnchor(desiredHeldItems.leftHand, leftSkillingToolGroup);
+}
+
+function setPlayerRigToolVisual(rigRoot, itemId, heldItemSlot = null) {
+    const desiredId = normalizeHeldItemVisualId(itemId);
+    if (!desiredId) {
+        setPlayerRigToolVisuals(rigRoot, null, heldItemSlot);
+        return;
+    }
+    const desiredSlot = normalizeHeldItemSlot(heldItemSlot);
+    const desiredHeldItems = createEmptyHeldItemVisualMap();
+    desiredHeldItems[desiredSlot] = desiredId;
+    setPlayerRigToolVisuals(rigRoot, desiredHeldItems, desiredSlot);
 }
 
 function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverride = null) {
@@ -774,5 +909,6 @@ function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverr
     return createMeshesForTarget(targetName, itemDef.fragments, bodyColors, itemDef.recolors || []);
 }
 
+window.setPlayerRigToolVisuals = setPlayerRigToolVisuals;
 window.setPlayerRigToolVisual = setPlayerRigToolVisual;
 window.createEquipmentVisualMeshes = createEquipmentVisualMeshes;

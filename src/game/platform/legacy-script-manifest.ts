@@ -11,7 +11,6 @@ import skillRuntimeScript from "../../js/skills/runtime.js?raw";
 import targetInteractionRegistryScript from "../../js/interactions/target-interaction-registry.js?raw";
 import skillSharedUtilsScript from "../../js/skills/shared/utils.js?raw";
 import skillActionResolutionScript from "../../js/skills/shared/action-resolution.js?raw";
-import skillAnimationsScript from "../../js/skills/shared/animations.js?raw";
 import runecraftingConstantsScript from "../../js/skills/runecrafting/constants.js?raw";
 import miningSkillScript from "../../js/skills/mining/index.js?raw";
 import woodcuttingSkillScript from "../../js/skills/woodcutting/index.js?raw";
@@ -49,7 +48,6 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "target-interaction-registry", filename: "src/js/interactions/target-interaction-registry.js", code: targetInteractionRegistryScript },
   { id: "skills-shared-utils", filename: "src/js/skills/shared/utils.js", code: skillSharedUtilsScript },
   { id: "skills-shared-action-resolution", filename: "src/js/skills/shared/action-resolution.js", code: skillActionResolutionScript },
-  { id: "skills-shared-animations", filename: "src/js/skills/shared/animations.js", code: skillAnimationsScript },
   { id: "runecrafting-constants", filename: "src/js/skills/runecrafting/constants.js", code: runecraftingConstantsScript },
   { id: "skills-mining", filename: "src/js/skills/mining/index.js", code: miningSkillScript },
   { id: "skills-woodcutting", filename: "src/js/skills/woodcutting/index.js", code: woodcuttingSkillScript },

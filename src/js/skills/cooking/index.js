@@ -51,12 +51,6 @@
         return window.SkillActionResolution.createActionResolution('stopped', 'INVENTORY_FULL');
     }
 
-    function applyCookingAnimation(context) {
-        if (window.SkillSharedAnimations && typeof SkillSharedAnimations.applyCookingStylePose === 'function') {
-            SkillSharedAnimations.applyCookingStylePose(context);
-        }
-    }
-
     function debugCooking(context, message) {
         if (!window.DEBUG_COOKING_USE) return;
         const text = `[cook-debug] ${message}`;
@@ -196,7 +190,11 @@
         },
 
         onAnimate(context) {
-            applyCookingAnimation(context);
+            return false;
+        },
+
+        getAnimationSuppressEquipmentVisual(context) {
+            return true;
         },
 
         getTooltip() {
