@@ -94,7 +94,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'pixel', assetId: 'logs' }
+            icon: { kind: 'pixel', assetId: 'oak_logs' }
         },
         willow_logs: {
             name: 'Willow Logs',
@@ -112,7 +112,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'pixel', assetId: 'logs' }
+            icon: { kind: 'pixel', assetId: 'maple_logs' }
         },
         yew_logs: {
             name: 'Yew Logs',
@@ -121,7 +121,7 @@
             stackable: false,
             actions: ['Use', 'Drop'],
             defaultAction: 'Use',
-            icon: { kind: 'pixel', assetId: 'logs' }
+            icon: { kind: 'pixel', assetId: 'yew_logs' }
         },
         ashes: {
             name: 'Ashes',

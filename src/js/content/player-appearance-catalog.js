@@ -341,6 +341,62 @@
         f: '#d7e2ff'
     });
 
+    const KNIFE_PALETTE = Object.freeze({
+        a: '#4b301c',
+        b: '#7a5533',
+        c: '#b98958',
+        d: '#707987',
+        e: '#c7d0da',
+        f: '#f4fbff',
+        g: '#7d6642',
+        h: '#c5a56f'
+    });
+
+    const REGULAR_LOGS_PALETTE = Object.freeze({
+        a: '#3a2515',
+        b: '#5c3920',
+        c: '#8a5a31',
+        d: '#b17a46',
+        f: '#d6b27a',
+        g: '#9b7c50'
+    });
+
+    const OAK_LOGS_PALETTE = Object.freeze({
+        a: '#442816',
+        b: '#704124',
+        c: '#a45f33',
+        d: '#cb844a',
+        f: '#e6c694',
+        g: '#b27242'
+    });
+
+    const WILLOW_LOGS_PALETTE = Object.freeze({
+        a: '#3a2b18',
+        b: '#5d4826',
+        c: '#7b6235',
+        d: '#9a7a46',
+        f: '#b59a6d',
+        g: '#7d8b43'
+    });
+
+    const MAPLE_LOGS_PALETTE = Object.freeze({
+        a: '#452716',
+        b: '#714126',
+        c: '#ad6236',
+        d: '#d98a4b',
+        f: '#efc995',
+        g: '#bd7540'
+    });
+
+    const YEW_LOGS_PALETTE = Object.freeze({
+        a: '#2f1d18',
+        b: '#4d2b24',
+        c: '#774137',
+        d: '#9f5c4f',
+        f: '#c98f76',
+        g: '#874d43'
+    });
+
     const SMALL_NET_ICON_PIXELS = [
         '................................',
         '................................',
@@ -443,6 +499,76 @@
         '.....aabba......................',
         '.....aaaa.......................',
         '.....aaa........................',
+        '................................',
+        '................................'
+    ];
+
+    const KNIFE_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '....................f...........',
+        '...................ef...........',
+        '..................def...........',
+        '.................def............',
+        '................dee.............',
+        '...............dee..............',
+        '..............dee...............',
+        '.............dee................',
+        '............dee.................',
+        '...........dee..................',
+        '..........ggd...................',
+        '.........ahg....................',
+        '........abh.....................',
+        '.......abc......................',
+        '......abc.......................',
+        '.....abc........................',
+        '....abc.........................',
+        '...aab..........................',
+        '...aba..........................',
+        '....ba..........................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+    ];
+
+    const LOG_BUNDLE_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '...........aaaaaaaaaa...........',
+        '..........acccddddccca..........',
+        '.........afffddddccfffa.........',
+        '.........afgfcccccddgfa.........',
+        '........afgggfccccfgggfa........',
+        '........aafgfccccccfgfa.........',
+        '......aacccddddddcccffa.........',
+        '.....acfffcccddcccfffca.........',
+        '.....afgggdddccccfgggfa.........',
+        '.....afgggfccccdddgggfa.........',
+        '.....afgggfccccccfgggfa.........',
+        '.....afgggfccccccfgggfa.........',
+        '.....acfffcccbbcccfffca.........',
+        '......aacccbbbbbbcccaa..........',
+        '........aaaaaaaaaaaa............',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '................................',
         '................................',
         '................................'
     ];
@@ -564,6 +690,43 @@
             d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.2,
             e: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.02,
             f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.86
+        }
+    });
+
+    const KNIFE_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.92,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.6,
+        origin: [8.5, 19.5],
+        offset: [0.006, -0.018, 0.082],
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.8,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.84,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.84,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.62,
+            e: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.58,
+            f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.52,
+            g: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.76,
+            h: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.8
+        }
+    });
+
+    const LOG_BUNDLE_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.78,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize,
+        origin: [15.5, 18.5],
+        rotation: [
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[0] - (8 * (Math.PI / 180)),
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[1],
+            STANDARD_RIGHT_HAND_WEAPON_HOLD.rotation[2]
+        ],
+        offset: [0.008, -0.018, 0.064],
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.15,
+            f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.82,
+            g: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize
         }
     });
 
@@ -802,6 +965,12 @@
         small_net: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SMALL_NET_ICON_PIXELS, SMALL_NET_HELD_MODEL, SMALL_NET_PALETTE),
         harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, HARPOON_PALETTE),
         rune_harpoon: createLiteralRightHandAppearanceItemDef(harpoonModelIds, HARPOON_ICON_PIXELS, HARPOON_HELD_MODEL, RUNE_HARPOON_PALETTE),
+        knife: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, KNIFE_ICON_PIXELS, KNIFE_HELD_MODEL, KNIFE_PALETTE),
+        logs: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LOG_BUNDLE_ICON_PIXELS, LOG_BUNDLE_HELD_MODEL, REGULAR_LOGS_PALETTE),
+        oak_logs: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LOG_BUNDLE_ICON_PIXELS, LOG_BUNDLE_HELD_MODEL, OAK_LOGS_PALETTE),
+        willow_logs: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LOG_BUNDLE_ICON_PIXELS, LOG_BUNDLE_HELD_MODEL, WILLOW_LOGS_PALETTE),
+        maple_logs: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LOG_BUNDLE_ICON_PIXELS, LOG_BUNDLE_HELD_MODEL, MAPLE_LOGS_PALETTE),
+        yew_logs: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LOG_BUNDLE_ICON_PIXELS, LOG_BUNDLE_HELD_MODEL, YEW_LOGS_PALETTE),
         tinderbox: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, TINDERBOX_ICON_PIXELS, TINDERBOX_HELD_MODEL, TINDERBOX_PALETTE),
         hammer: {
             slot: 'weapon',
@@ -818,7 +987,7 @@
     };
 
     window.PlayerAppearanceCatalog = {
-        version: '2026.03.m23',
+        version: '2026.03.m24',
         slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
         bodyColorFind,
         bodyColorPalettes,

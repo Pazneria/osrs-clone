@@ -1,11 +1,14 @@
 (function () {
     window.IconReviewCatalog = {
-        version: '2026.03.m13',
-        activeBatchId: 'icon_review_20260316_harpoons_a',
-        label: 'Harpoons',
+        version: '2026.03.m15',
+        activeBatchId: 'icon_review_20260317_log_bundles_a',
+        label: 'Log Bundles',
         itemIds: [
-            'harpoon',
-            'rune_harpoon'
+            'logs',
+            'oak_logs',
+            'willow_logs',
+            'maple_logs',
+            'yew_logs'
         ]
     };
 })();

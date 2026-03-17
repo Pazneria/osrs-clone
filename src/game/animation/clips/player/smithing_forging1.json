@@ -662,6 +662,5 @@
   "heldItemSlot": "rightHand",
   "heldItems": {
     "rightHand": "hammer"
-  },
-  "heldItemId": "hammer"
+  }
 }

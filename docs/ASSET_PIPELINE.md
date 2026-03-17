@@ -28,17 +28,17 @@ That source file is canonical. Runtime PNGs and simple OBJ models are generated 
 
 ## What this pipeline produces
 
-For each icon asset (example: `logs`) we generate:
+For each icon asset (example: `regular_logs`) we generate:
 
-- Pixel source: `assets/pixel-src/logs.json`
-- Runtime icon: `assets/pixel/logs.png`
-- Held model: `assets/models/logs.obj`
-- Ground model: `assets/models/logs-ground.obj`
+- Pixel source: `assets/pixel-src/regular_logs.json`
+- Runtime icon: `assets/pixel/regular_logs.png`
+- Held model: `assets/models/regular_logs.obj`
+- Ground model: `assets/models/regular_logs-ground.obj`
 
 Runtime items then reference the asset through:
 
 ```js
-icon: { kind: 'pixel', assetId: 'logs' }
+icon: { kind: 'pixel', assetId: 'regular_logs' }
 ```
 
 `assetId` can differ from `itemId`, so multiple items may intentionally share one icon asset.

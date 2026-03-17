@@ -358,6 +358,28 @@ function run() {
     assert(!panel.classList.contains("hidden"), "expected fletching interface to be visible");
   });
 
+  test("Fletching animation holds knife right-hand and active log tier left-hand", () => {
+    const recipeSet = window.SkillSpecRegistry.getRecipeSet("fletching");
+    const willowRecipeId = Object.keys(recipeSet).find((recipeId) => recipeSet[recipeId].sourceLogItemId === "willow_logs");
+    assert(!!willowRecipeId, "expected a willow-logs fletching recipe");
+
+    const ctx = createSkillContext({
+      recipeId: willowRecipeId,
+      action: "SKILLING: FLETCHING",
+      counts: { knife: 1, willow_logs: 2 }
+    });
+    ctx.playerState.skillSessions.fletching = {
+      kind: "processing",
+      recipeId: willowRecipeId,
+      nextTick: ctx.currentTick + 3
+    };
+
+    const heldItems = fletching.getAnimationHeldItems(ctx);
+    assert(heldItems && heldItems.rightHand === "knife", "expected knife in the right hand");
+    assert(heldItems && heldItems.leftHand === "willow_logs", "expected active willow logs in the left hand");
+    assert(fletching.getAnimationHeldItemSlot(ctx) === "rightHand", "expected the knife to remain the primary fletching hand");
+  });
+
   test("Fletching onStart/onTick count mode crafts exact quantity", () => {
     const ctx = createSkillContext({
       recipeId: "fletch_bronze_arrows",

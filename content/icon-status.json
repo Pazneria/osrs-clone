@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-16T21:06:45.455Z",
+  "generatedAt": "2026-03-17T17:22:50.262Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "tin_ore",
@@ -463,7 +463,8 @@
     },
     "knife": {
       "assetId": "knife",
-      "status": "todo",
+      "notes": "Reviewed bespoke knife icon and runtime held-prop wiring.",
+      "status": "done",
       "treatment": "shared"
     },
     "large_pouch": {
@@ -498,9 +499,10 @@
       "treatment": "shared"
     },
     "maple_logs": {
-      "assetId": "logs",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_logs",
+      "notes": "Reviewed bespoke maple-log bundle icon.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_longbow": {
       "assetId": "pickaxe",
@@ -665,9 +667,10 @@
       "treatment": "shared"
     },
     "oak_logs": {
-      "assetId": "logs",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_logs",
+      "notes": "Reviewed bespoke oak-log bundle icon.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_longbow": {
       "assetId": "pickaxe",
@@ -1158,9 +1161,10 @@
       "treatment": "shared"
     },
     "yew_logs": {
-      "assetId": "logs",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_logs",
+      "notes": "Reviewed bespoke yew-log bundle icon.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_longbow": {
       "assetId": "pickaxe",

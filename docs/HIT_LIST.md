@@ -884,32 +884,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-044 - Complete inventory icon coverage for all log types
-- Status: Backlog
-- Severity: S3
-- Area: WC
-- Source: Manual
-- Links: `content/icon-status.json`, `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `assets/pixel-src/regular_logs.json`, `assets/pixel-src/willow_logs.json`
-- Repro:
-  1. Compare the inventory icons for `logs`, `oak_logs`, `willow_logs`, `maple_logs`, and `yew_logs`.
-  2. Check the current icon asset mapping in `content/icon-status.json` or `src/js/content/item-catalog.js`.
-- Expected: Every log tier has a distinct, recognizable inventory icon so the full log family reads clearly at a glance.
-- Actual: Log icon coverage is incomplete; `oak_logs`, `maple_logs`, and `yew_logs` still point at the shared `logs` asset instead of having dedicated tier-specific icons.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Audit canonical log item mappings and confirm the intended dedicated asset IDs for each tier.
-  2. Author/build the missing log inventory icons in the pixel asset pipeline.
-  3. Update item/icon status wiring and verify the full log family displays distinct icons in inventory.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-045 - Firemaking progression is still logs-only instead of all log tiers
 - Status: Fixed
 - Severity: S2
@@ -1034,6 +1008,35 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-044 - Complete inventory icon coverage for all log types
+- Status: Fixed
+- Severity: S3
+- Area: WC
+- Source: Manual
+- Links: `content/icon-status.json`, `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `assets/pixel-src/regular_logs.json`, `assets/pixel-src/oak_logs.json`, `assets/pixel-src/willow_logs.json`, `assets/pixel-src/maple_logs.json`, `assets/pixel-src/yew_logs.json`
+- Repro:
+  1. Compare the inventory icons for `logs`, `oak_logs`, `willow_logs`, `maple_logs`, and `yew_logs`.
+  2. Check the current icon asset mapping in `content/icon-status.json` or `src/js/content/item-catalog.js`.
+- Expected: Every log tier has a distinct, recognizable inventory icon so the full log family reads clearly at a glance.
+- Actual: Log icon coverage is incomplete; `oak_logs`, `maple_logs`, and `yew_logs` still point at the shared `logs` asset instead of having dedicated tier-specific icons.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Audit canonical log item mappings and confirm the intended dedicated asset IDs for each tier.
+  2. Author/build the missing log inventory icons in the pixel asset pipeline.
+  3. Update item/icon status wiring and verify the full log family displays distinct icons in inventory.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added dedicated `oak_logs`, `maple_logs`, and `yew_logs` pixel-source assets using the canonical log-bundle palette family already shared with held-item appearance data.
+  - Updated runtime item wiring so each canonical log tier now points at its own dedicated pixel asset instead of the legacy shared `logs` icon.
+  - Marked the new tier icons as bespoke/done in `content/icon-status.json` and switched the active review batch to the full log family for in-game side-by-side inspection.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 

@@ -684,6 +684,18 @@
         return DEFAULT_ACTION_TICKS;
     }
 
+    function resolveActiveFletchingRecipe(context) {
+        if (!context) return null;
+        const session = window.SkillActionResolution && typeof SkillActionResolution.getSkillSession === 'function'
+            ? SkillActionResolution.getSkillSession(context.playerState, SKILL_ID)
+            : null;
+        if (session && session.recipeId) {
+            const sessionRecipe = resolveRecipeById(context, session.recipeId);
+            if (sessionRecipe) return sessionRecipe;
+        }
+        return resolveRecipeById(context, context.recipeId);
+    }
+
     const fletchingModule = {
         canStart(context) {
             if (!context) return false;
@@ -784,6 +796,21 @@
 
         onAnimate(context) {
             return false;
+        },
+
+        getAnimationHeldItems(context) {
+            const recipe = resolveActiveFletchingRecipe(context);
+            const heldLogItemId = recipe && typeof recipe.sourceLogItemId === 'string' && recipe.sourceLogItemId
+                ? recipe.sourceLogItemId
+                : 'logs';
+            return {
+                rightHand: 'knife',
+                leftHand: heldLogItemId
+            };
+        },
+
+        getAnimationHeldItemSlot() {
+            return 'rightHand';
         },
 
         getAnimationSuppressEquipmentVisual() {

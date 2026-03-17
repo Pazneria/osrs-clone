@@ -35,6 +35,9 @@ function run() {
   assert(catalogScript.includes("small_net"), "player appearance catalog should define fishing-net held fragments");
   assert(catalogScript.includes("harpoon"), "player appearance catalog should define harpoon held fragments");
   assert(catalogScript.includes("rune_harpoon"), "player appearance catalog should define rune-harpoon held fragments");
+  assert(catalogScript.includes("knife"), "player appearance catalog should define knife held fragments");
+  assert(catalogScript.includes("oak_logs"), "player appearance catalog should define log-bundle held fragments");
+  assert(catalogScript.includes("yew_logs"), "player appearance catalog should define high-tier log-bundle held fragments");
 
   assert(
     playerModelScript.includes("window.PlayerAppearanceCatalog"),

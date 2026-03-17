@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-16T21:06:45.454Z",
+  "generatedAt": "2026-03-17T17:22:50.261Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -2177,7 +2177,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "logs",
+        "assetId": "maple_logs",
         "kind": "pixel"
       },
       "name": "Maple Logs",
@@ -2890,7 +2890,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "logs",
+        "assetId": "oak_logs",
         "kind": "pixel"
       },
       "name": "Oak Logs",
@@ -4818,7 +4818,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "logs",
+        "assetId": "yew_logs",
         "kind": "pixel"
       },
       "name": "Yew Logs",

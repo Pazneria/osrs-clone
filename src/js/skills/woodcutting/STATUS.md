@@ -18,6 +18,7 @@
 - [x] WOODCUTTING-016: Habitat placement constraints enforced (willow near water, maple away from water, yew near NPC-populated anchors) in deterministic zone assignment.
 - [x] WOODCUTTING-014: Per-tree silhouette polish pass completed for willow/maple/yew in the starter-pond showcase row using stronger shape/branch/drape differentiation.
 - [x] WOODCUTTING-017: Gameplay-zoom silhouette readability tuning completed for willow/maple/yew with stronger willow drape framing, broader maple crowns, and tighter yew spires.
+- [x] WOODCUTTING-018: Dedicated inventory icon coverage completed for oak/maple/yew log bundles so each canonical log tier now has its own bespoke asset.
 
 ## Now
 
