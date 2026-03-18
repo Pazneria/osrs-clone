@@ -219,6 +219,12 @@
             if (requiredFishingLevel > 0) {
                 requirementLines.push({ label: 'Fishing req.', value: String(requiredFishingLevel) });
             }
+            const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel)
+                ? Math.max(1, Math.floor(item.requiredDefenseLevel))
+                : 0;
+            if (requiredDefenseLevel > 0) {
+                requirementLines.push({ label: 'Defense req.', value: String(requiredDefenseLevel) });
+            }
 
             return {
                 name: typeof item.name === 'string' ? item.name : 'Item',

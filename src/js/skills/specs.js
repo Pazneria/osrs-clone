@@ -1713,6 +1713,140 @@
         }
     }
 
+    function computeWoodcuttingBalanceMetrics(woodcuttingSpec, nodeId, benchmark) {
+        const nodeTable = woodcuttingSpec && woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const node = nodeTable[nodeId];
+        if (!node || typeof node !== 'object') return null;
+
+        const timing = woodcuttingSpec && woodcuttingSpec.timing && typeof woodcuttingSpec.timing === 'object'
+            ? woodcuttingSpec.timing
+            : {};
+        const valueTable = woodcuttingSpec && woodcuttingSpec.economy && woodcuttingSpec.economy.valueTable && typeof woodcuttingSpec.economy.valueTable === 'object'
+            ? woodcuttingSpec.economy.valueTable
+            : {};
+        const logValueRow = valueTable[node.rewardItemId] && typeof valueTable[node.rewardItemId] === 'object'
+            ? valueTable[node.rewardItemId]
+            : {};
+        const level = Number.isFinite(benchmark && benchmark.level) ? benchmark.level : 1;
+        const toolPower = Number.isFinite(benchmark && benchmark.toolPower) ? benchmark.toolPower : 0;
+        const speedBonusTicks = Number.isFinite(benchmark && benchmark.speedBonusTicks) ? benchmark.speedBonusTicks : 0;
+        const difficulty = Math.max(1, Number.isFinite(node.difficulty) ? node.difficulty : 1);
+        const successScore = Math.max(1, level + toolPower);
+        const successChance = successScore / (successScore + difficulty);
+        const intervalTicks = Math.max(
+            Number.isFinite(timing.minimumAttemptTicks) ? timing.minimumAttemptTicks : 1,
+            (Number.isFinite(timing.baseAttemptTicks) ? timing.baseAttemptTicks : 1) - speedBonusTicks
+        );
+        const activeLogsPerTick = successChance / intervalTicks;
+        const sellValue = Number.isFinite(logValueRow.sell) ? logValueRow.sell : 0;
+        const activeXpPerTick = activeLogsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const activeGoldPerTick = activeLogsPerTick * sellValue;
+        const expectedLogsPerNode = Number.isFinite(node.depletionChance) && node.depletionChance > 0
+            ? 1 / node.depletionChance
+            : null;
+        const activeTicksPerNode = expectedLogsPerNode && activeLogsPerTick > 0
+            ? expectedLogsPerNode / activeLogsPerTick
+            : null;
+        const respawnTicks = Number.isFinite(node.respawnTicks) ? node.respawnTicks : 0;
+        const sustainedLogsPerTick = expectedLogsPerNode && activeTicksPerNode !== null
+            ? expectedLogsPerNode / (activeTicksPerNode + Math.max(0, respawnTicks))
+            : activeLogsPerTick;
+        const sustainedXpPerTick = sustainedLogsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const sustainedGoldPerTick = sustainedLogsPerTick * sellValue;
+
+        return {
+            nodeId,
+            activeXpPerTick,
+            activeGoldPerTick,
+            sustainedXpPerTick,
+            sustainedGoldPerTick,
+            sellValue
+        };
+    }
+
+    function validateWoodcuttingBalanceCurve(skillSpecs) {
+        const woodcuttingSpec = skillSpecs && skillSpecs.woodcutting ? skillSpecs.woodcutting : null;
+        if (!woodcuttingSpec || !woodcuttingSpec.nodeTable) {
+            throw new Error('Woodcutting balance curve mismatch\n- missing woodcutting node table');
+        }
+
+        const rows = Object.entries(woodcuttingSpec.nodeTable || {})
+            .map(([nodeId, node]) => ({ nodeId, node }))
+            .sort((a, b) => {
+                const aLevel = Number.isFinite(a.node && a.node.requiredLevel) ? a.node.requiredLevel : Number.MAX_SAFE_INTEGER;
+                const bLevel = Number.isFinite(b.node && b.node.requiredLevel) ? b.node.requiredLevel : Number.MAX_SAFE_INTEGER;
+                if (aLevel !== bLevel) return aLevel - bLevel;
+                return a.nodeId.localeCompare(b.nodeId);
+            });
+        const levelBands = Array.isArray(woodcuttingSpec.levelBands) ? woodcuttingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const benchmark = {
+            level: levelBands.length > 0 ? Math.max(...levelBands) : 1,
+            toolPower: 28,
+            speedBonusTicks: 5
+        };
+        const errors = [];
+        let prev = null;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const node = row.node || {};
+            const metrics = computeWoodcuttingBalanceMetrics(woodcuttingSpec, row.nodeId, benchmark);
+            if (!metrics) {
+                errors.push('missing balance metrics for ' + row.nodeId);
+                continue;
+            }
+
+            if (!Number.isFinite(node.requiredLevel)) errors.push(row.nodeId + ' missing requiredLevel');
+            if (!Number.isFinite(node.difficulty)) errors.push(row.nodeId + ' missing difficulty');
+            if (!Number.isFinite(node.xpPerSuccess)) errors.push(row.nodeId + ' missing xpPerSuccess');
+            if (!Number.isFinite(node.depletionChance)) errors.push(row.nodeId + ' missing depletionChance');
+            if (!Number.isFinite(node.respawnTicks)) errors.push(row.nodeId + ' missing respawnTicks');
+            if (!Number.isFinite(metrics.sellValue) || metrics.sellValue <= 0) errors.push(row.nodeId + ' missing positive sell value');
+
+            if (prev) {
+                if (!(node.requiredLevel > prev.node.requiredLevel)) {
+                    errors.push(row.nodeId + ' requiredLevel must increase by tier');
+                }
+                if (!(node.difficulty > prev.node.difficulty)) {
+                    errors.push(row.nodeId + ' difficulty must increase by tier');
+                }
+                if (!(node.xpPerSuccess > prev.node.xpPerSuccess)) {
+                    errors.push(row.nodeId + ' xpPerSuccess must increase by tier');
+                }
+                if (!(node.respawnTicks > prev.node.respawnTicks)) {
+                    errors.push(row.nodeId + ' respawnTicks must increase by tier');
+                }
+                if (!(node.depletionChance < prev.node.depletionChance)) {
+                    errors.push(row.nodeId + ' depletionChance must decrease by tier so higher trees last longer');
+                }
+                if (!(metrics.sellValue > prev.metrics.sellValue)) {
+                    errors.push(row.nodeId + ' sell value must increase by tier');
+                }
+                if (!(metrics.activeXpPerTick > prev.metrics.activeXpPerTick)) {
+                    errors.push(row.nodeId + ' active xp/tick must increase under the standardized benchmark');
+                }
+                if (!(metrics.activeGoldPerTick > prev.metrics.activeGoldPerTick)) {
+                    errors.push(row.nodeId + ' active gold/tick must increase under the standardized benchmark');
+                }
+                if (!(metrics.sustainedXpPerTick > prev.metrics.sustainedXpPerTick)) {
+                    errors.push(row.nodeId + ' sustained xp/tick must increase under the standardized benchmark');
+                }
+                if (!(metrics.sustainedGoldPerTick > prev.metrics.sustainedGoldPerTick)) {
+                    errors.push(row.nodeId + ' sustained gold/tick must increase under the standardized benchmark');
+                }
+            }
+
+            prev = { node, metrics };
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Woodcutting balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
+    validateWoodcuttingBalanceCurve(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
 

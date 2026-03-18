@@ -233,6 +233,8 @@ function run() {
   const woodcuttingDemand = SkillSpecRegistry.getWoodcuttingDemandSummary();
   assert(!!woodcuttingDemand && Array.isArray(woodcuttingDemand.canonicalLogItemIds), "woodcutting demand summary missing canonical logs");
   assert(Array.isArray(woodcuttingDemand.rows), "woodcutting demand summary rows missing");
+  assert(typeof SkillSpecRegistry.computeWoodcuttingNodeMetrics === "function", "woodcutting node metrics helper missing");
+  assert(typeof SkillSpecRegistry.getWoodcuttingBalanceSummary === "function", "woodcutting balance summary helper missing");
 
   const canonicalLogs = ["logs", "oak_logs", "willow_logs", "maple_logs", "yew_logs"];
   assert(woodcuttingDemand.canonicalLogItemIds.length === canonicalLogs.length, "woodcutting canonical log count mismatch");
@@ -253,6 +255,44 @@ function run() {
     const row = woodcuttingDemand.rows.find((entry) => entry && entry.logItemId === logId);
     assert(!!row, "woodcutting demand row missing firemaking coverage for " + logId);
     assert(Array.isArray(row.consumers.firemaking) && row.consumers.firemaking.includes(logId), "firemaking consumer missing from demand summary for " + logId);
+  });
+
+  const woodcuttingBalance = SkillSpecRegistry.getWoodcuttingBalanceSummary();
+  assert(!!woodcuttingBalance && !!woodcuttingBalance.assumptions, "woodcutting balance summary missing assumptions");
+  assert(Array.isArray(woodcuttingBalance.rows) && woodcuttingBalance.rows.length === canonicalLogs.length, "woodcutting balance summary row count mismatch");
+  assert(woodcuttingBalance.assumptions.level === 40, "woodcutting default benchmark level mismatch");
+  assert(woodcuttingBalance.assumptions.toolPower === 28, "woodcutting default benchmark tool power mismatch");
+  assert(woodcuttingBalance.assumptions.speedBonusTicks === 5, "woodcutting default benchmark speed bonus mismatch");
+  assert(woodcuttingBalance.rows[0].nodeId === "normal_tree", "woodcutting balance summary should be sorted by tier");
+  assert(woodcuttingBalance.rows[woodcuttingBalance.rows.length - 1].nodeId === "yew_tree", "woodcutting balance summary should include top tier");
+
+  const tierEntryBenchmarks = [
+    { nodeId: "normal_tree", level: 1, toolPower: 6, speedBonusTicks: 1, activeLogs: 0.056, activeXp: 1.4, activeGold: 0.112, sustainedXp: 0.7973, sustainedGold: 0.0638 },
+    { nodeId: "oak_tree", level: 10, toolPower: 10, speedBonusTicks: 2, activeLogs: 0.1042, activeXp: 3.9583, activeGold: 0.625, sustainedXp: 1.5833, sustainedGold: 0.25 },
+    { nodeId: "willow_tree", level: 20, toolPower: 15, speedBonusTicks: 3, activeLogs: 0.1598, activeXp: 10.8676, activeGold: 2.2374, sustainedXp: 3.2918, sustainedGold: 0.6777 },
+    { nodeId: "maple_tree", level: 30, toolPower: 21, speedBonusTicks: 4, activeLogs: 0.2525, activeXp: 25.2475, activeGold: 8.0792, sustainedXp: 5.8272, sustainedGold: 1.8647 },
+    { nodeId: "yew_tree", level: 40, toolPower: 28, speedBonusTicks: 5, activeLogs: 0.5152, activeXp: 77.2727, activeGold: 37.0909, sustainedXp: 18.8889, sustainedGold: 9.0667 }
+  ];
+  let prevActiveXp = 0;
+  let prevActiveGold = 0;
+  let prevSustainedXp = 0;
+  let prevSustainedGold = 0;
+  tierEntryBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeWoodcuttingNodeMetrics(benchmark.nodeId, benchmark);
+    assert(!!metrics, "woodcutting metrics missing for " + benchmark.nodeId);
+    assert(approxEq(metrics.active.logsPerTick, benchmark.activeLogs, 1e-4), "woodcutting active logs/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.active.xpPerTick, benchmark.activeXp, 1e-4), "woodcutting active xp/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.active.goldPerTick, benchmark.activeGold, 1e-4), "woodcutting active gold/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.sustained.xpPerTick, benchmark.sustainedXp, 1e-4), "woodcutting sustained xp/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.sustained.goldPerTick, benchmark.sustainedGold, 1e-4), "woodcutting sustained gold/tick mismatch for " + benchmark.nodeId);
+    assert(metrics.active.xpPerTick > prevActiveXp, "woodcutting active xp/tick should increase by tier at tier-entry benchmark");
+    assert(metrics.active.goldPerTick > prevActiveGold, "woodcutting active gold/tick should increase by tier at tier-entry benchmark");
+    assert(metrics.sustained.xpPerTick > prevSustainedXp, "woodcutting sustained xp/tick should increase by tier at tier-entry benchmark");
+    assert(metrics.sustained.goldPerTick > prevSustainedGold, "woodcutting sustained gold/tick should increase by tier at tier-entry benchmark");
+    prevActiveXp = metrics.active.xpPerTick;
+    prevActiveGold = metrics.active.goldPerTick;
+    prevSustainedXp = metrics.sustained.xpPerTick;
+    prevSustainedGold = metrics.sustained.goldPerTick;
   });
 
   expectMutatedSpecsFailure(
@@ -289,6 +329,17 @@ function run() {
     ),
     /should not consume logs directly/i,
     "cooking-log-leak"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "depletionChance: 0.1,",
+      "depletionChance: 0.95,",
+      "woodcutting-balance-curve"
+    ),
+    /woodcutting balance curve mismatch/i,
+    "woodcutting-balance-curve"
   );
   assert(woodSpec.economy.valueTable.logs.buy === itemDefs.logs.value, "woodcutting logs buy value mismatch");
   assert(woodSpec.economy.valueTable.oak_logs.buy === itemDefs.oak_logs.value, "woodcutting oak logs buy value mismatch");

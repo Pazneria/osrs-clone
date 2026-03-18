@@ -85,25 +85,6 @@ function deepDiff(expected, actual, basePath = "", diffs = []) {
 }
 
 function getComparableSkillRows(skillId, expected, actual) {
-  if (skillId === "woodcutting") {
-    const expectedBaseAttemptTicks = expected && expected.timing ? expected.timing.baseAttemptTicks : undefined;
-    const actualBaseAttemptTicks = actual && actual.timing ? actual.timing.baseAttemptTicks : undefined;
-    return {
-      expected: {
-        skillId,
-        timing: {
-          baseAttemptTicks: expectedBaseAttemptTicks
-        }
-      },
-      actual: {
-        skillId,
-        timing: {
-          baseAttemptTicks: actualBaseAttemptTicks
-        }
-      }
-    };
-  }
-
   return { expected, actual };
 }
 

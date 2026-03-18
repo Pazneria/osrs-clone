@@ -76,11 +76,11 @@ The player cuts raw materials that feed into other systems, especially firemakin
 
 | Tree        | Required Level | XP per Success | Tree Difficulty | Depletion Chance | Respawn Ticks |
 | ----------- | -------------- | -------------- | --------------- | ---------------- | ------------- |
-| Normal Tree | 1              | 25             | 18              | 0.20             | 18            |
-| Oak Tree    | 10             | 38             | 28              | 0.22             | 24            |
-| Willow Tree | 20             | 68             | 38              | 0.24             | 32            |
-| Maple Tree  | 30             | 100            | 50              | 0.27             | 44            |
-| Yew Tree    | 40             | 150            | 64              | 0.30             | 60            |
+| Normal Tree | 1              | 25             | 18              | 0.75             | 18            |
+| Oak Tree    | 10             | 38             | 28              | 0.60             | 24            |
+| Willow Tree | 20             | 68             | 38              | 0.45             | 32            |
+| Maple Tree  | 30             | 100            | 50              | 0.30             | 44            |
+| Yew Tree    | 40             | 150            | 64              | 0.10             | 60            |
 
 ### Attempt Timing Examples
 
@@ -88,12 +88,12 @@ The player cuts raw materials that feed into other systems, especially firemakin
 
 | Axe         | Calculation   | Attempt Interval Ticks |
 | ----------- | ------------- | ---------------------- |
-| Bronze Axe  | max(1, 4 - 0) | 4                      |
-| Iron Axe    | max(1, 4 - 1) | 3                      |
-| Steel Axe   | max(1, 4 - 2) | 2                      |
-| Mithril Axe | max(1, 4 - 3) | 1                      |
-| Adamant Axe | max(1, 4 - 4) | 1                      |
-| Rune Axe    | max(1, 4 - 5) | 1                      |
+| Bronze Axe  | max(1, 6 - 0) | 6                      |
+| Iron Axe    | max(1, 6 - 1) | 5                      |
+| Steel Axe   | max(1, 6 - 2) | 4                      |
+| Mithril Axe | max(1, 6 - 3) | 3                      |
+| Adamant Axe | max(1, 6 - 4) | 2                      |
+| Rune Axe    | max(1, 6 - 5) | 1                      |
 
 ### Standardized Success Chance Comparison
 
@@ -120,6 +120,34 @@ These active output values measure woodcutting performance while the player is a
 | Willow Tree | 0.6415                 | 43.6220              | 8.9810                 |
 | Maple Tree  | 0.5763                 | 57.6300              | 18.4416                |
 | Yew Tree    | 0.5152                 | 77.2800              | 37.0944                |
+
+### Tier-Entry Active Woodcutting Output Comparison
+
+**Using each tree's required level and the strongest axe unlocked at that level**
+
+These tier-entry values are the progression-balance targets for on-curve woodcutting. Each new tree tier should improve logs, XP, and gold throughput when the player upgrades on schedule.
+
+| Tree        | Benchmark Level | Benchmark Axe | Expected Logs per Tick | Expected XP per Tick | Expected Gold per Tick |
+| ----------- | --------------- | ------------- | ---------------------- | -------------------- | ---------------------- |
+| Normal Tree | 1               | Iron Axe      | 0.0560                 | 1.4000               | 0.1120                 |
+| Oak Tree    | 10              | Steel Axe     | 0.1042                 | 3.9583               | 0.6250                 |
+| Willow Tree | 20              | Mithril Axe   | 0.1598                 | 10.8676              | 2.2374                 |
+| Maple Tree  | 30              | Adamant Axe   | 0.2525                 | 25.2475              | 8.0792                 |
+| Yew Tree    | 40              | Rune Axe      | 0.5152                 | 77.2727              | 37.0909                |
+
+### Standardized Sustained Woodcutting Output Comparison
+
+**Using Woodcutting Level = 40 and Axe Used = Rune Axe for every tree**
+
+These sustained output values include expected depletion and respawn downtime, so they represent long-run rate targets rather than uninterrupted chopping on a currently available tree.
+
+| Tree        | Expected Logs per Tick | Expected XP per Tick | Expected Gold per Tick |
+| ----------- | ---------------------- | -------------------- | ---------------------- |
+| Normal Tree | 0.0677                 | 1.6932               | 0.1355                 |
+| Oak Tree    | 0.0632                 | 2.4033               | 0.3795                 |
+| Willow Tree | 0.0627                 | 4.2610               | 0.8773                 |
+| Maple Tree  | 0.0670                 | 6.6955               | 2.1426                 |
+| Yew Tree    | 0.1259                 | 18.8889              | 9.0667                 |
 
 ## Inventory Capacity Rules
 
@@ -157,11 +185,11 @@ These active output values measure woodcutting performance while the player is a
 
 | Tree        | Depletion Chance | Behavior Summary |
 | ----------- | ---------------- | ---------------- |
-| Normal Tree | 0.20             | 20% roll after each successful chop |
-| Oak Tree    | 0.22             | 22% roll after each successful chop |
-| Willow Tree | 0.24             | 24% roll after each successful chop |
-| Maple Tree  | 0.27             | 27% roll after each successful chop |
-| Yew Tree    | 0.30             | 30% roll after each successful chop |
+| Normal Tree | 0.75             | 75% roll after each successful chop |
+| Oak Tree    | 0.60             | 60% roll after each successful chop |
+| Willow Tree | 0.45             | 45% roll after each successful chop |
+| Maple Tree  | 0.30             | 30% roll after each successful chop |
+| Yew Tree    | 0.10             | 10% roll after each successful chop |
 
 ## Tree Runtime State
 

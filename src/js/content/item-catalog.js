@@ -1566,6 +1566,39 @@
             rune_platebody: 40
         };
 
+        const armorDefenseRequirementByItemId = {
+            bronze_boots: 1,
+            bronze_helmet: 1,
+            bronze_shield: 1,
+            bronze_platelegs: 1,
+            bronze_platebody: 1,
+            iron_boots: 1,
+            iron_helmet: 1,
+            iron_shield: 1,
+            iron_platelegs: 1,
+            iron_platebody: 1,
+            steel_boots: 10,
+            steel_helmet: 10,
+            steel_shield: 10,
+            steel_platelegs: 10,
+            steel_platebody: 10,
+            mithril_boots: 20,
+            mithril_helmet: 20,
+            mithril_shield: 20,
+            mithril_platelegs: 20,
+            mithril_platebody: 20,
+            adamant_boots: 30,
+            adamant_helmet: 30,
+            adamant_shield: 30,
+            adamant_platelegs: 30,
+            adamant_platebody: 30,
+            rune_boots: 40,
+            rune_helmet: 40,
+            rune_shield: 40,
+            rune_platelegs: 40,
+            rune_platebody: 40
+        };
+
         const fishingRequirementByItemId = {
             fishing_rod: 10,
             harpoon: 30,
@@ -1617,6 +1650,9 @@
                 def: defenseBonus,
                 str: 0
             };
+            def.requiredDefenseLevel = Object.prototype.hasOwnProperty.call(armorDefenseRequirementByItemId, itemId)
+                ? Math.max(1, Math.floor(armorDefenseRequirementByItemId[itemId]))
+                : 1;
         }
     }
 
@@ -1657,6 +1693,7 @@
             if (def.combat) db[id].combat = cloneCombatProfile(def.combat);
             if (Number.isFinite(def.requiredAttackLevel)) db[id].requiredAttackLevel = Math.max(1, Math.floor(def.requiredAttackLevel));
             if (Number.isFinite(def.requiredFishingLevel)) db[id].requiredFishingLevel = Math.max(1, Math.floor(def.requiredFishingLevel));
+            if (Number.isFinite(def.requiredDefenseLevel)) db[id].requiredDefenseLevel = Math.max(1, Math.floor(def.requiredDefenseLevel));
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;
             if (def.burnResultId) db[id].burnResultId = def.burnResultId;
             if (Number.isFinite(def.burnChance)) db[id].burnChance = def.burnChance;

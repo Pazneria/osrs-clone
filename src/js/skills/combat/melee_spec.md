@@ -418,6 +418,19 @@ To keep combat-use gating clean and predictable, current equippable tools use th
 | Harpoon | 30 |
 | Rune Harpoon | 40 |
 
+### First-Pass Required Defense Levels For Current Armor
+
+Current metal armor should use tier-based Defense requirements at equip time, and jewelry should not inherit those armor gates.
+
+| Armor Tier | Required Defense Level |
+| ---------- | ---------------------- |
+| Bronze | 1 |
+| Iron | 1 |
+| Steel | 10 |
+| Mithril | 20 |
+| Adamant | 30 |
+| Rune | 40 |
+
 ## Merchant / Economy Relationship
 
 Melee does not own item creation or most shop logic, but it should recognize the current melee economy shape.
@@ -517,4 +530,3 @@ So melee mostly needs to provide:
 - melee attack-style combat and XP routing
 
 That keeps melee from fighting the combat core spec and gives you a clean base to expand later.
-

@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-17T22:14:45.826Z",
+  "generatedAt": "2026-03-18T04:59:46.028Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -140,6 +140,7 @@
         "kind": "pixel"
       },
       "name": "Adamant Boots",
+      "requiredDefenseLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -181,6 +182,7 @@
         "kind": "pixel"
       },
       "name": "Adamant Helmet",
+      "requiredDefenseLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -297,6 +299,7 @@
         "kind": "pixel"
       },
       "name": "Adamant Platebody",
+      "requiredDefenseLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -338,6 +341,7 @@
         "kind": "pixel"
       },
       "name": "Adamant Platelegs",
+      "requiredDefenseLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -379,6 +383,7 @@
         "kind": "pixel"
       },
       "name": "Adamant Shield",
+      "requiredDefenseLevel": 30,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -688,6 +693,7 @@
         "kind": "pixel"
       },
       "name": "Bronze Boots",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -729,6 +735,7 @@
         "kind": "pixel"
       },
       "name": "Bronze Helmet",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -831,6 +838,7 @@
         "kind": "pixel"
       },
       "name": "Bronze Platebody",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -872,6 +880,7 @@
         "kind": "pixel"
       },
       "name": "Bronze Platelegs",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -913,6 +922,7 @@
         "kind": "pixel"
       },
       "name": "Bronze Shield",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -1759,6 +1769,7 @@
         "kind": "pixel"
       },
       "name": "Iron Boots",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -1800,6 +1811,7 @@
         "kind": "pixel"
       },
       "name": "Iron Helmet",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -1916,6 +1928,7 @@
         "kind": "pixel"
       },
       "name": "Iron Platebody",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -1957,6 +1970,7 @@
         "kind": "pixel"
       },
       "name": "Iron Platelegs",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -1998,6 +2012,7 @@
         "kind": "pixel"
       },
       "name": "Iron Shield",
+      "requiredDefenseLevel": 1,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -2427,6 +2442,7 @@
         "kind": "pixel"
       },
       "name": "Mithril Boots",
+      "requiredDefenseLevel": 20,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -2468,6 +2484,7 @@
         "kind": "pixel"
       },
       "name": "Mithril Helmet",
+      "requiredDefenseLevel": 20,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -2584,6 +2601,7 @@
         "kind": "pixel"
       },
       "name": "Mithril Platebody",
+      "requiredDefenseLevel": 20,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -2625,6 +2643,7 @@
         "kind": "pixel"
       },
       "name": "Mithril Platelegs",
+      "requiredDefenseLevel": 20,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -2666,6 +2685,7 @@
         "kind": "pixel"
       },
       "name": "Mithril Shield",
+      "requiredDefenseLevel": 20,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -3377,6 +3397,7 @@
         "kind": "pixel"
       },
       "name": "Rune Boots",
+      "requiredDefenseLevel": 40,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -3476,6 +3497,7 @@
         "kind": "pixel"
       },
       "name": "Rune Helmet",
+      "requiredDefenseLevel": 40,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -3592,6 +3614,7 @@
         "kind": "pixel"
       },
       "name": "Rune Platebody",
+      "requiredDefenseLevel": 40,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -3633,6 +3656,7 @@
         "kind": "pixel"
       },
       "name": "Rune Platelegs",
+      "requiredDefenseLevel": 40,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -3674,6 +3698,7 @@
         "kind": "pixel"
       },
       "name": "Rune Shield",
+      "requiredDefenseLevel": 40,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -4117,6 +4142,7 @@
         "kind": "pixel"
       },
       "name": "Steel Boots",
+      "requiredDefenseLevel": 10,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -4158,6 +4184,7 @@
         "kind": "pixel"
       },
       "name": "Steel Helmet",
+      "requiredDefenseLevel": 10,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -4260,6 +4287,7 @@
         "kind": "pixel"
       },
       "name": "Steel Platebody",
+      "requiredDefenseLevel": 10,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -4301,6 +4329,7 @@
         "kind": "pixel"
       },
       "name": "Steel Platelegs",
+      "requiredDefenseLevel": 10,
       "stackable": false,
       "stats": {
         "atk": 0,
@@ -4342,6 +4371,7 @@
         "kind": "pixel"
       },
       "name": "Steel Shield",
+      "requiredDefenseLevel": 10,
       "stackable": false,
       "stats": {
         "atk": 0,

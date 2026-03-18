@@ -26,6 +26,40 @@ function toTitleCaseId(id) {
     .join(" ");
 }
 
+function roundMetric(value) {
+  return Math.round(value * 10000) / 10000;
+}
+
+function formatMetric(value) {
+  return roundMetric(value).toFixed(4);
+}
+
+function computeWoodcuttingOutputs(spec, node, options) {
+  const level = options.level;
+  const toolPower = options.toolPower;
+  const speedBonusTicks = options.speedBonusTicks;
+  const successChance = (level + toolPower) / ((level + toolPower) + node.difficulty);
+  const intervalTicks = Math.max(spec.timing.minimumAttemptTicks, spec.timing.baseAttemptTicks - speedBonusTicks);
+  const activeLogsPerTick = successChance / intervalTicks;
+  const sellValue = spec.economy.valueTable[node.rewardItemId].sell;
+  const activeXpPerTick = activeLogsPerTick * node.xpPerSuccess;
+  const activeGoldPerTick = activeLogsPerTick * sellValue;
+  const expectedLogsPerNode = 1 / node.depletionChance;
+  const activeTicksPerNode = expectedLogsPerNode / activeLogsPerTick;
+  const sustainedLogsPerTick = expectedLogsPerNode / (activeTicksPerNode + node.respawnTicks);
+  const sustainedXpPerTick = sustainedLogsPerTick * node.xpPerSuccess;
+  const sustainedGoldPerTick = sustainedLogsPerTick * sellValue;
+
+  return {
+    activeLogsPerTick,
+    activeXpPerTick,
+    activeGoldPerTick,
+    sustainedLogsPerTick,
+    sustainedXpPerTick,
+    sustainedGoldPerTick
+  };
+}
+
 function loadItemDefs(projectRoot) {
   const itemCatalogPath = path.join(projectRoot, "src", "js", "content", "item-catalog.js");
   const code = fs.readFileSync(itemCatalogPath, "utf8");
@@ -53,11 +87,76 @@ function assertCanonicalHeader(skillId, roadmap, version) {
 }
 
 function runWoodcuttingChecks(roadmap, spec) {
+  const lines = roadmap.split(/\r?\n/);
   assertRegex(
     roadmap,
     new RegExp(`\\|\\s*Base Attempt Ticks\\s*\\|\\s*${spec.timing.baseAttemptTicks}\\s*\\|`),
     "woodcutting roadmap base attempt ticks mismatch"
   );
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*Minimum Attempt Ticks\\s*\\|\\s*${spec.timing.minimumAttemptTicks}\\s*\\|`),
+    "woodcutting roadmap minimum attempt ticks mismatch"
+  );
+
+  const treeRows = [
+    { label: "Normal Tree", nodeId: "normal_tree" },
+    { label: "Oak Tree", nodeId: "oak_tree" },
+    { label: "Willow Tree", nodeId: "willow_tree" },
+    { label: "Maple Tree", nodeId: "maple_tree" },
+    { label: "Yew Tree", nodeId: "yew_tree" }
+  ];
+  for (const row of treeRows) {
+    const node = spec.nodeTable[row.nodeId];
+    const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${node.requiredLevel}\\s*\\|\\s*${node.xpPerSuccess}\\s*\\|\\s*${node.difficulty}\\s*\\|`).test(entry));
+    assert(!!line, `woodcutting roadmap row mismatch for ${row.label}`);
+    assert(new RegExp(`\\|\\s*${Number(node.depletionChance).toFixed(2)}\\s*\\|\\s*${node.respawnTicks}\\s*\\|`).test(line), `woodcutting depletion/respawn mismatch for ${row.label}`);
+  }
+
+  const axeRows = [
+    { label: "Bronze Axe", speedBonusTicks: 0 },
+    { label: "Iron Axe", speedBonusTicks: 1 },
+    { label: "Steel Axe", speedBonusTicks: 2 },
+    { label: "Mithril Axe", speedBonusTicks: 3 },
+    { label: "Adamant Axe", speedBonusTicks: 4 },
+    { label: "Rune Axe", speedBonusTicks: 5 }
+  ];
+  for (const row of axeRows) {
+    const intervalTicks = Math.max(spec.timing.minimumAttemptTicks, spec.timing.baseAttemptTicks - row.speedBonusTicks);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*max\\(1,\\s*${spec.timing.baseAttemptTicks}\\s*-\\s*${row.speedBonusTicks}\\)\\s*\\|\\s*${intervalTicks}\\s*\\|`),
+      `woodcutting attempt-timing mismatch for ${row.label}`
+    );
+  }
+
+  const tierEntryBenchmarks = [
+    { label: "Normal Tree", nodeId: "normal_tree", level: 1, axeLabel: "Iron Axe", toolPower: 6, speedBonusTicks: 1 },
+    { label: "Oak Tree", nodeId: "oak_tree", level: 10, axeLabel: "Steel Axe", toolPower: 10, speedBonusTicks: 2 },
+    { label: "Willow Tree", nodeId: "willow_tree", level: 20, axeLabel: "Mithril Axe", toolPower: 15, speedBonusTicks: 3 },
+    { label: "Maple Tree", nodeId: "maple_tree", level: 30, axeLabel: "Adamant Axe", toolPower: 21, speedBonusTicks: 4 },
+    { label: "Yew Tree", nodeId: "yew_tree", level: 40, axeLabel: "Rune Axe", toolPower: 28, speedBonusTicks: 5 }
+  ];
+  for (const row of tierEntryBenchmarks) {
+    const node = spec.nodeTable[row.nodeId];
+    const metrics = computeWoodcuttingOutputs(spec, node, row);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${escapeRegex(row.axeLabel)}\\s*\\|\\s*${formatMetric(metrics.activeLogsPerTick)}\\s*\\|\\s*${formatMetric(metrics.activeXpPerTick)}\\s*\\|\\s*${formatMetric(metrics.activeGoldPerTick)}\\s*\\|`),
+      `woodcutting tier-entry output mismatch for ${row.label}`
+    );
+  }
+
+  const masteryBenchmark = { level: 40, toolPower: 28, speedBonusTicks: 5 };
+  for (const row of treeRows) {
+    const node = spec.nodeTable[row.nodeId];
+    const metrics = computeWoodcuttingOutputs(spec, node, masteryBenchmark);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${formatMetric(metrics.sustainedLogsPerTick)}\\s*\\|\\s*${formatMetric(metrics.sustainedXpPerTick)}\\s*\\|\\s*${formatMetric(metrics.sustainedGoldPerTick)}\\s*\\|`),
+      `woodcutting sustained output mismatch for ${row.label}`
+    );
+  }
 }
 
 function runFishingChecks(roadmap, spec, itemDefs) {

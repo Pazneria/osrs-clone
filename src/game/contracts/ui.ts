@@ -16,6 +16,7 @@ export interface UiItemData {
   stats?: UiItemStats;
   combat?: CombatItemProfile;
   requiredAttackLevel?: number;
+  requiredDefenseLevel?: number;
   [key: string]: unknown;
 }
 

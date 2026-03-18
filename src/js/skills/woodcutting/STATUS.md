@@ -19,11 +19,11 @@
 - [x] WOODCUTTING-014: Per-tree silhouette polish pass completed for willow/maple/yew in the starter-pond showcase row using stronger shape/branch/drape differentiation.
 - [x] WOODCUTTING-017: Gameplay-zoom silhouette readability tuning completed for willow/maple/yew with stronger willow drape framing, broader maple crowns, and tighter yew spires.
 - [x] WOODCUTTING-018: Dedicated inventory icon coverage completed for oak/maple/yew log bundles so each canonical log tier now has its own bespoke asset.
+- [x] WOODCUTTING-012: Logs/xp/gold-per-tick balance targets are now locked with canonical tier-entry + sustained throughput tables, runtime summary helpers, and full mirror-validation coverage.
 
 ## Now
 
 ## Next
-- [ ] WOODCUTTING-012: Balance pass using expected logs/xp/gold-per-tick targets across tree tiers.
+- [ ] WOODCUTTING-013: Progression expansion pass for additional tree tiers and gating content.
 
 ## Later
-- [ ] WOODCUTTING-013: Progression expansion pass for additional tree tiers and gating content.

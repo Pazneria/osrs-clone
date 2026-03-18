@@ -107,7 +107,7 @@
   ],
   "nodeTable": {
     "maple_tree": {
-      "depletionChance": 0.27,
+      "depletionChance": 0.3,
       "difficulty": 50,
       "requiredLevel": 30,
       "respawnTicks": 44,
@@ -116,7 +116,7 @@
       "xpPerSuccess": 100
     },
     "normal_tree": {
-      "depletionChance": 0.2,
+      "depletionChance": 0.75,
       "difficulty": 18,
       "requiredLevel": 1,
       "respawnTicks": 18,
@@ -125,7 +125,7 @@
       "xpPerSuccess": 25
     },
     "oak_tree": {
-      "depletionChance": 0.22,
+      "depletionChance": 0.6,
       "difficulty": 28,
       "requiredLevel": 10,
       "respawnTicks": 24,
@@ -134,7 +134,7 @@
       "xpPerSuccess": 38
     },
     "willow_tree": {
-      "depletionChance": 0.24,
+      "depletionChance": 0.45,
       "difficulty": 38,
       "requiredLevel": 20,
       "respawnTicks": 32,
@@ -143,7 +143,7 @@
       "xpPerSuccess": 68
     },
     "yew_tree": {
-      "depletionChance": 0.3,
+      "depletionChance": 0.1,
       "difficulty": 64,
       "requiredLevel": 40,
       "respawnTicks": 60,

@@ -46,6 +46,12 @@ const ARMOR_ITEMS = [
   "rune_platebody"
 ];
 
+const JEWELRY_ITEMS = [
+  "silver_ring",
+  "gold_amulet",
+  "diamond_gold_ring"
+];
+
 for (const itemId of MELEE_HELD_ITEMS) {
   const item = itemDefs[itemId];
   assert.ok(item, `${itemId} should exist in the runtime item catalog`);
@@ -69,6 +75,13 @@ for (const itemId of ARMOR_ITEMS) {
   assert.ok(item.combat.bonuses.meleeDefenseBonus > 0, `${itemId} should contribute melee defense`);
   assert.strictEqual(item.combat.bonuses.rangedDefenseBonus, item.combat.bonuses.meleeDefenseBonus, `${itemId} should mirror v1 ranged defense`);
   assert.strictEqual(item.combat.bonuses.magicDefenseBonus, item.combat.bonuses.meleeDefenseBonus, `${itemId} should mirror v1 magic defense`);
+  assert.ok(Number.isFinite(item.requiredDefenseLevel), `${itemId} should expose a required Defense level`);
+}
+
+for (const itemId of JEWELRY_ITEMS) {
+  const item = itemDefs[itemId];
+  assert.ok(item, `${itemId} should exist in the runtime item catalog`);
+  assert.ok(!Number.isFinite(item.requiredDefenseLevel), `${itemId} should not expose a Defense gate`);
 }
 
 assert.strictEqual(itemDefs.fishing_rod.type, "weapon", "fishing_rod should now be equippable as a weapon");

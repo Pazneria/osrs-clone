@@ -116,6 +116,11 @@
         };
     }
 
+    function roundMetric(value) {
+        if (!Number.isFinite(value)) return null;
+        return Math.round(value * 10000) / 10000;
+    }
+
     function computeGatherSuccessChance(level, toolPower, difficulty) {
         const lvl = Number.isFinite(level) ? level : 1;
         const tool = Number.isFinite(toolPower) ? toolPower : 0;
@@ -129,6 +134,115 @@
         const minTicks = Number.isFinite(minimumTicks) ? minimumTicks : 1;
         const bonus = Number.isFinite(speedBonusTicks) ? speedBonusTicks : 0;
         return Math.max(minTicks, base - bonus);
+    }
+
+    function computeWoodcuttingNodeMetrics(nodeId, options = {}) {
+        const woodcuttingSpec = getSkillSpec('woodcutting') || {};
+        const nodeTable = woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const node = nodeTable[nodeId];
+        if (!node || typeof node !== 'object') return null;
+
+        const timing = woodcuttingSpec.timing && typeof woodcuttingSpec.timing === 'object'
+            ? woodcuttingSpec.timing
+            : {};
+        const economy = woodcuttingSpec.economy && typeof woodcuttingSpec.economy === 'object'
+            ? woodcuttingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const logValueRow = valueTable[node.rewardItemId] && typeof valueTable[node.rewardItemId] === 'object'
+            ? valueTable[node.rewardItemId]
+            : {};
+        const levelBands = Array.isArray(woodcuttingSpec.levelBands) ? woodcuttingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const defaultLevel = levelBands.length > 0 ? Math.max(...levelBands) : 1;
+
+        const level = Number.isFinite(options.level) ? options.level : defaultLevel;
+        const toolPower = Number.isFinite(options.toolPower) ? options.toolPower : 28;
+        const speedBonusTicks = Number.isFinite(options.speedBonusTicks) ? options.speedBonusTicks : 5;
+        const successChance = computeGatherSuccessChance(level, toolPower, node.difficulty);
+        const intervalTicks = computeIntervalTicks(timing.baseAttemptTicks, timing.minimumAttemptTicks, speedBonusTicks);
+        const activeLogsPerTick = successChance / intervalTicks;
+        const sellValue = Number.isFinite(logValueRow.sell) ? logValueRow.sell : 0;
+        const activeXpPerTick = activeLogsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const activeGoldPerTick = activeLogsPerTick * sellValue;
+        const expectedLogsPerNode = Number.isFinite(node.depletionChance) && node.depletionChance > 0
+            ? 1 / node.depletionChance
+            : null;
+        const activeTicksPerNode = expectedLogsPerNode && activeLogsPerTick > 0
+            ? expectedLogsPerNode / activeLogsPerTick
+            : null;
+        const respawnTicks = Number.isFinite(node.respawnTicks) ? node.respawnTicks : 0;
+        const sustainedLogsPerTick = expectedLogsPerNode && activeTicksPerNode !== null
+            ? expectedLogsPerNode / (activeTicksPerNode + Math.max(0, respawnTicks))
+            : activeLogsPerTick;
+        const sustainedXpPerTick = sustainedLogsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const sustainedGoldPerTick = sustainedLogsPerTick * sellValue;
+
+        return {
+            nodeId,
+            rewardItemId: typeof node.rewardItemId === 'string' ? node.rewardItemId : '',
+            requiredLevel: Number.isFinite(node.requiredLevel) ? node.requiredLevel : 1,
+            difficulty: Number.isFinite(node.difficulty) ? node.difficulty : 1,
+            xpPerSuccess: Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0,
+            sellValue,
+            depletionChance: Number.isFinite(node.depletionChance) ? node.depletionChance : null,
+            respawnTicks,
+            benchmark: {
+                level,
+                toolPower,
+                speedBonusTicks
+            },
+            successChance: roundMetric(successChance),
+            intervalTicks,
+            active: {
+                logsPerTick: roundMetric(activeLogsPerTick),
+                xpPerTick: roundMetric(activeXpPerTick),
+                goldPerTick: roundMetric(activeGoldPerTick)
+            },
+            sustained: {
+                logsPerTick: roundMetric(sustainedLogsPerTick),
+                xpPerTick: roundMetric(sustainedXpPerTick),
+                goldPerTick: roundMetric(sustainedGoldPerTick)
+            },
+            expectedLogsPerNode: roundMetric(expectedLogsPerNode),
+            expectedActiveTicksPerNode: roundMetric(activeTicksPerNode)
+        };
+    }
+
+    function getWoodcuttingBalanceSummary(options = {}) {
+        const woodcuttingSpec = getSkillSpec('woodcutting') || {};
+        const nodeTable = woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const levelBands = Array.isArray(woodcuttingSpec.levelBands) ? woodcuttingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const toolPower = Number.isFinite(options.toolPower) ? options.toolPower : 28;
+        const speedBonusTicks = Number.isFinite(options.speedBonusTicks) ? options.speedBonusTicks : 5;
+
+        const nodeIds = Object.keys(nodeTable).sort((a, b) => {
+            const aLevel = Number.isFinite(nodeTable[a] && nodeTable[a].requiredLevel) ? nodeTable[a].requiredLevel : Number.MAX_SAFE_INTEGER;
+            const bLevel = Number.isFinite(nodeTable[b] && nodeTable[b].requiredLevel) ? nodeTable[b].requiredLevel : Number.MAX_SAFE_INTEGER;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < nodeIds.length; i++) {
+            const row = computeWoodcuttingNodeMetrics(nodeIds[i], { level, toolPower, speedBonusTicks });
+            if (row) rows.push(row);
+        }
+
+        return {
+            assumptions: {
+                level,
+                toolPower,
+                speedBonusTicks
+            },
+            rows
+        };
     }
 
     function computeLinearCatchChance(level, unlockLevel, baseChance, scaling, maxChance) {
@@ -181,6 +295,8 @@
         getNodeTable,
         getEconomyTable,
         getWoodcuttingDemandSummary,
+        computeWoodcuttingNodeMetrics,
+        getWoodcuttingBalanceSummary,
         computeGatherSuccessChance,
         computeIntervalTicks,
         computeLinearCatchChance,

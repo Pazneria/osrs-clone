@@ -2147,6 +2147,14 @@
                     addChatMessage(`You need Fishing level ${requiredFishingLevel} to equip the ${item.name}.`, 'warn');
                     return;
                 }
+                const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel) ? Math.max(1, Math.floor(item.requiredDefenseLevel)) : 0;
+                const defenseLevel = playerSkills && playerSkills.defense && Number.isFinite(playerSkills.defense.level)
+                    ? Math.max(1, Math.floor(playerSkills.defense.level))
+                    : 1;
+                if (requiredDefenseLevel > 0 && defenseLevel < requiredDefenseLevel) {
+                    addChatMessage(`You need Defense level ${requiredDefenseLevel} to equip the ${item.name}.`, 'warn');
+                    return;
+                }
                 const oldItem = equipment[slotName];
                 equipment[slotName] = item; inventory[invIndex] = oldItem ? { itemData: oldItem, amount: 1 } : null;
                 clearSelectedUse(false);

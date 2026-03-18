@@ -707,6 +707,39 @@ const WORLD_ENEMY_SPAWNS: Record<string, EnemySpawnNodeDefinition[]> = {
       spawnEnabled: true,
       facingYaw: Math.PI,
       spawnGroupId: "starter_training"
+    },
+    {
+      spawnNodeId: "enemy_spawn_guard_east_outpost_northwest",
+      enemyId: "enemy_guard",
+      spawnTile: { x: 361, y: 248, z: 0 },
+      homeTileOverride: null,
+      roamingRadiusOverride: 0,
+      respawnTicks: 42,
+      spawnEnabled: true,
+      facingYaw: Math.PI,
+      spawnGroupId: "starter_east_outpost_guard_post"
+    },
+    {
+      spawnNodeId: "enemy_spawn_guard_east_outpost_north",
+      enemyId: "enemy_guard",
+      spawnTile: { x: 364, y: 246, z: 0 },
+      homeTileOverride: null,
+      roamingRadiusOverride: 0,
+      respawnTicks: 42,
+      spawnEnabled: true,
+      facingYaw: Math.PI,
+      spawnGroupId: "starter_east_outpost_guard_post"
+    },
+    {
+      spawnNodeId: "enemy_spawn_guard_east_outpost_northeast",
+      enemyId: "enemy_guard",
+      spawnTile: { x: 367, y: 248, z: 0 },
+      homeTileOverride: null,
+      roamingRadiusOverride: 0,
+      respawnTicks: 42,
+      spawnEnabled: true,
+      facingYaw: Math.PI,
+      spawnGroupId: "starter_east_outpost_guard_post"
     }
   ]
 };

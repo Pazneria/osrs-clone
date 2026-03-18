@@ -154,6 +154,7 @@ for (const [enemyId, expected] of Object.entries(EXPECTED_ENEMIES)) {
 
 const starterTownSpawns = combatContent.listEnemySpawnNodesForWorld("starter_town");
 const starterTownSpawnById = new Map(starterTownSpawns.map((spawn) => [spawn.spawnNodeId, spawn]));
+assert.strictEqual(starterTownSpawns.length, 6, "starter town should expose its existing spawns plus the east-outpost guard post");
 assert.strictEqual(
   starterTownSpawnById.get("enemy_spawn_rat_south_field")?.roamingRadiusOverride,
   15,
@@ -174,5 +175,37 @@ assert.strictEqual(
   0,
   "training dummy spawn should stay rooted in place"
 );
+
+[
+  {
+    spawnNodeId: "enemy_spawn_guard_east_outpost_northwest",
+    x: 361,
+    y: 248,
+    z: 0
+  },
+  {
+    spawnNodeId: "enemy_spawn_guard_east_outpost_north",
+    x: 364,
+    y: 246,
+    z: 0
+  },
+  {
+    spawnNodeId: "enemy_spawn_guard_east_outpost_northeast",
+    x: 367,
+    y: 248,
+    z: 0
+  }
+].forEach((expected) => {
+  const spawn = starterTownSpawnById.get(expected.spawnNodeId);
+  assert.ok(spawn, `${expected.spawnNodeId} should exist in starter_town`);
+  assert.strictEqual(spawn.enemyId, "enemy_guard", `${expected.spawnNodeId} should resolve enemy_guard`);
+  assert.deepStrictEqual(spawn.spawnTile, { x: expected.x, y: expected.y, z: expected.z }, `${expected.spawnNodeId} should keep its authored tile`);
+  assert.strictEqual(spawn.roamingRadiusOverride, 0, `${expected.spawnNodeId} should keep the guard post rooted`);
+  assert.strictEqual(spawn.respawnTicks, 42, `${expected.spawnNodeId} should use the guard respawn timing`);
+  assert.strictEqual(spawn.spawnGroupId, "starter_east_outpost_guard_post", `${expected.spawnNodeId} should join the outpost guard group`);
+});
+
+const northRoadCampSpawns = combatContent.listEnemySpawnNodesForWorld("north_road_camp");
+assert.strictEqual(northRoadCampSpawns.length, 0, "north road camp should not expose live combat spawns in this pass");
 
 console.log("Combat enemy content guard passed.");

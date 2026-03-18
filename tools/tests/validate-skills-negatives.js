@@ -55,8 +55,8 @@ function run() {
   assert(mismatchResult.errors.some((entry) => entry.includes("content mismatch for skill 'woodcutting'")), "expected woodcutting mismatch error");
   assert(mismatchResult.errors.some((entry) => entry.includes("timing.baseAttemptTicks")), "expected mismatch path for woodcutting timing.baseAttemptTicks");
 
-  const ignoredWoodcuttingDir = path.join(tempRoot, "ignored-woodcutting-drift");
-  writeCanonicalSkillSet(ignoredWoodcuttingDir, canonical.rows, {
+  const woodcuttingDriftDir = path.join(tempRoot, "woodcutting-drift");
+  writeCanonicalSkillSet(woodcuttingDriftDir, canonical.rows, {
     mutateBySkillId: {
       woodcutting: (row) => {
         row.nodeTable.normal_tree.depletionChance = 0.001;
@@ -64,10 +64,14 @@ function run() {
       }
     }
   });
-  const ignoredWoodcuttingResult = validateSkillDirectory(ignoredWoodcuttingDir, canonical.rows);
+  const woodcuttingDriftResult = validateSkillDirectory(woodcuttingDriftDir, canonical.rows);
   assert(
-    !ignoredWoodcuttingResult.errors.some((entry) => entry.includes("content mismatch for skill 'woodcutting'")),
-    "expected non-timing woodcutting drift to be ignored by the validator"
+    woodcuttingDriftResult.errors.some((entry) => entry.includes("content mismatch for skill 'woodcutting'")),
+    "expected woodcutting node drift to fail full skill validation"
+  );
+  assert(
+    woodcuttingDriftResult.errors.some((entry) => entry.includes("nodeTable.normal_tree.depletionChance")),
+    "expected woodcutting node drift path to be reported"
   );
 
   console.log("Skill validator negative tests passed.");
