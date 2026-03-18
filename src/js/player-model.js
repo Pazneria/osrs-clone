@@ -20,6 +20,7 @@ if (!PLAYER_APPEARANCE_SLOT_ORDER.length || !PLAYER_BODY_COLOR_FIND.length || !P
     throw new Error('PlayerAppearanceCatalog is malformed: missing slot order or body color palettes.');
 }
 const PLAYER_MODEL_CACHE = new Map();
+const NPC_HUMANOID_RIG_CACHE = new Map();
 let PLAYER_SHARED_MATERIAL = null;
 const PLAYER_ELBOW_CONTACT_OVERLAP = 0.006;
 const PLAYER_ELBOW_DEPTH_BIAS = -0.02;
@@ -118,6 +119,68 @@ function createColorizedMesh(shape, size, packedColor, fragment) {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geometry.computeVertexNormals();
     return new THREE.Mesh(geometry, getPlayerMaterial());
+}
+
+function createPixelSourceVisualMeshes(pixelSource, options = {}) {
+    if (!pixelSource || typeof pixelSource !== 'object') return [];
+    const rows = Array.isArray(pixelSource.pixels) ? pixelSource.pixels : [];
+    const palette = pixelSource.palette && typeof pixelSource.palette === 'object' ? pixelSource.palette : null;
+    if (!rows.length || !palette) return [];
+
+    const width = Number.isFinite(pixelSource.width) ? pixelSource.width : (typeof rows[0] === 'string' ? rows[0].length : 0);
+    const height = Number.isFinite(pixelSource.height) ? pixelSource.height : rows.length;
+    const model = pixelSource.model && typeof pixelSource.model === 'object' ? pixelSource.model : {};
+    const modelScale = Number.isFinite(model.scale) && model.scale > 0 ? model.scale : 0.05;
+    const modelDepth = Number.isFinite(model.depth) && model.depth > 0 ? model.depth : 1;
+    const scaleMultiplier = Number.isFinite(options.scaleMultiplier) && options.scaleMultiplier > 0 ? options.scaleMultiplier : 1;
+    const depthMultiplier = Number.isFinite(options.depthMultiplier) && options.depthMultiplier > 0 ? options.depthMultiplier : 1;
+    const pixelSize = Number.isFinite(options.pixelSize) && options.pixelSize > 0
+        ? options.pixelSize
+        : (modelScale * scaleMultiplier);
+    const defaultDepth = pixelSize * modelDepth * depthMultiplier;
+    const origin = Array.isArray(options.origin) ? options.origin.slice() : [width / 2, height / 2];
+    const rotation = Array.isArray(options.rotation) ? options.rotation.slice() : [0, 0, 0];
+    const offset = Array.isArray(options.offset) ? options.offset.slice() : [0, 0, 0];
+    const flipY = options.flipY == null ? false : !!options.flipY;
+    const depthBySymbol = options.depthBySymbol && typeof options.depthBySymbol === 'object'
+        ? options.depthBySymbol
+        : null;
+    const localRotationAxis = Array.isArray(options.localRotationAxis) ? options.localRotationAxis.slice() : null;
+    const localRotationAngle = Number.isFinite(options.localRotationAngle) ? options.localRotationAngle : 0;
+    const meshes = [];
+    const symbols = Object.keys(palette);
+
+    for (let symbolIndex = 0; symbolIndex < symbols.length; symbolIndex++) {
+        const symbol = symbols[symbolIndex];
+        const colorHex = palette[symbol];
+        if (symbol === '.' || colorHex === 'transparent') continue;
+        const voxels = [];
+        for (let y = 0; y < rows.length; y++) {
+            const row = typeof rows[y] === 'string' ? rows[y] : '';
+            for (let x = 0; x < row.length; x++) {
+                if (row.charAt(x) === symbol) voxels.push([x, y]);
+            }
+        }
+        if (!voxels.length) continue;
+        const depth = depthBySymbol && Number.isFinite(depthBySymbol[symbol]) && depthBySymbol[symbol] > 0
+            ? depthBySymbol[symbol]
+            : defaultDepth;
+        const fragment = {
+            shape: 'pixelExtrude',
+            size: [pixelSize, depth],
+            origin,
+            rotation,
+            offset,
+            flipY,
+            localRotationAxis,
+            localRotationAngle,
+            voxels,
+            rgbColor: colorHex
+        };
+        meshes.push(createColorizedMesh('pixelExtrude', [pixelSize, depth], packJagexHsl(0, 0, 64), fragment));
+    }
+
+    return meshes;
 }
 
 function createPixelExtrudeGeometry(fragment, size) {
@@ -470,6 +533,13 @@ function addFragmentsToRig(rigRoot, fragments, bodyColors, recolors) {
     }
 }
 
+function getItemAppearanceFragments(itemDef, gender) {
+    if (!itemDef || typeof itemDef !== 'object') return [];
+    const preferred = gender === 1 ? itemDef.femaleFragments : itemDef.maleFragments;
+    if (Array.isArray(preferred) && preferred.length) return preferred;
+    return Array.isArray(itemDef.fragments) ? itemDef.fragments : [];
+}
+
 function resolveSlotFragments(slotEntry, slotName, normalizedAppearance) {
     if (!slotEntry) return [];
     if (slotEntry.kind === 'kit') {
@@ -480,9 +550,9 @@ function resolveSlotFragments(slotEntry, slotName, normalizedAppearance) {
     if (slotEntry.kind === 'item') {
         const item = PLAYER_ITEM_DEFS[slotEntry.id];
         if (!item || item.slot !== slotName) return [];
-        const modelIds = normalizedAppearance.gender === 1 ? item.femaleModelIds : item.maleModelIds;
-        if (!Array.isArray(modelIds) || modelIds.every((id) => id === -1)) return [];
-        return [{ fragments: item.fragments, recolors: item.recolors || [] }];
+        const fragments = getItemAppearanceFragments(item, normalizedAppearance.gender);
+        if (!fragments.length) return [];
+        return [{ fragments, recolors: item.recolors || [] }];
     }
     return [];
 }
@@ -562,7 +632,7 @@ function buildPlayerRigTemplate(normalizedAppearance) {
     const nodes = rigNodeMap(rigRoot);
     const equippedWeaponSlot = normalizedAppearance.slots[3] && normalizedAppearance.slots[3].kind === 'item' ? normalizedAppearance.slots[3].id : null;
     nodes.axe.visible = !!equippedWeaponSlot;
-    if (nodes.leftTool) nodes.leftTool.visible = false;
+    if (nodes.leftTool) nodes.leftTool.visible = hasBaseToolVisual(nodes.leftTool);
     rigRoot.userData.armRigDefaults = armRigDefaults;
     rigRoot.userData.baseY = 0;
     return rigRoot;
@@ -665,6 +735,119 @@ function createPlayerRigForAnimationStudio() {
     return createPlayerRigFromAppearance(previewAppearance);
 }
 
+function createLiteralRgbFragment(target, shape, size, offset, rgbColor, extras) {
+    const fragment = {
+        target,
+        shape,
+        size: Array.isArray(size) ? size.slice() : [0.1, 0.1, 0.1],
+        offset: Array.isArray(offset) ? offset.slice() : [0, 0, 0],
+        color: packJagexHsl(0, 0, 64),
+        rgbColor: typeof rgbColor === 'string' ? rgbColor : '#ffffff'
+    };
+    if (extras && typeof extras === 'object') Object.assign(fragment, extras);
+    return fragment;
+}
+
+function createGoblinHumanoidFragments() {
+    const skin = '#6fa74d';
+    const skinDark = '#4f7c36';
+    const tunic = '#7a4c2d';
+    const tunicDark = '#53311b';
+    const cloth = '#6f6044';
+    const foot = '#3d3327';
+    const eye = '#111111';
+    return [
+        createLiteralRgbFragment('head', 'box', [0.42, 0.4, 0.36], [0, 0.0, 0.0], skin),
+        createLiteralRgbFragment('head', 'box', [0.34, 0.08, 0.1], [0, 0.1, 0.13], skinDark),
+        createLiteralRgbFragment('head', 'box', [0.14, 0.1, 0.17], [0, -0.02, 0.19], skinDark),
+        createLiteralRgbFragment('head', 'box', [0.08, 0.24, 0.08], [0.24, 0.06, -0.02], skin, {
+            rotation: [0, 0, -0.46]
+        }),
+        createLiteralRgbFragment('head', 'box', [0.08, 0.24, 0.08], [-0.24, 0.06, -0.02], skin, {
+            rotation: [0, 0, 0.46]
+        }),
+        createLiteralRgbFragment('head', 'box', [0.045, 0.045, 0.03], [0.09, 0.03, 0.19], eye),
+        createLiteralRgbFragment('head', 'box', [0.045, 0.045, 0.03], [-0.09, 0.03, 0.19], eye),
+        createLiteralRgbFragment('torso', 'box', [0.56, 0.5, 0.34], [0, 0, 0], tunic),
+        createLiteralRgbFragment('torso', 'box', [0.42, 0.24, 0.12], [0, -0.02, 0.11], tunicDark),
+        createLiteralRgbFragment('torso', 'box', [0.3, 0.14, 0.08], [0, -0.18, 0.12], cloth),
+        createLiteralRgbFragment('leftArm', 'box', [0.2, 0.28, 0.2], [0, -0.14, -0.02], tunic),
+        createLiteralRgbFragment('rightArm', 'box', [0.2, 0.28, 0.2], [0, -0.14, -0.02], tunic),
+        createLiteralRgbFragment('leftLowerArm', 'box', [0.17, 0.28, 0.17], [0, -0.14, 0], skin),
+        createLiteralRgbFragment('rightLowerArm', 'box', [0.17, 0.28, 0.17], [0, -0.14, 0], skin),
+        createLiteralRgbFragment('leftLeg', 'box', [0.2, 0.32, 0.22], [0, -0.16, 0], cloth),
+        createLiteralRgbFragment('rightLeg', 'box', [0.2, 0.32, 0.22], [0, -0.16, 0], cloth),
+        createLiteralRgbFragment('leftLowerLeg', 'box', [0.18, 0.28, 0.18], [0, -0.14, 0], skinDark),
+        createLiteralRgbFragment('rightLowerLeg', 'box', [0.18, 0.28, 0.18], [0, -0.14, 0], skinDark),
+        createLiteralRgbFragment('leftLowerLeg', 'box', [0.2, 0.1, 0.28], [0, -0.26, 0.05], foot),
+        createLiteralRgbFragment('rightLowerLeg', 'box', [0.2, 0.1, 0.28], [0, -0.26, 0.05], foot)
+    ];
+}
+
+function applyGoblinRigBasePose(rigRoot) {
+    const nodes = rigNodeMap(rigRoot);
+    if (!nodes.torso || !nodes.head || !nodes.leftArm || !nodes.rightArm || !nodes.leftLeg || !nodes.rightLeg) return;
+    rigRoot.position.set(0, 0, 0);
+    rigRoot.scale.set(0.94, 0.94, 0.94);
+    nodes.torso.position.set(0, 0.98, 0);
+    nodes.head.position.set(0, 0.42, 0.01);
+    nodes.leftArm.position.set(0.34, 0.24, 0.06);
+    nodes.rightArm.position.set(-0.34, 0.24, 0.06);
+    if (nodes.leftLowerArm) nodes.leftLowerArm.position.set(0, -0.31, -0.06);
+    if (nodes.rightLowerArm) nodes.rightLowerArm.position.set(0, -0.31, -0.06);
+    nodes.leftLeg.position.set(0.13, 0.67, 0);
+    nodes.rightLeg.position.set(-0.13, 0.67, 0);
+    if (nodes.leftLowerLeg) nodes.leftLowerLeg.position.set(0, -0.31, 0);
+    if (nodes.rightLowerLeg) nodes.rightLowerLeg.position.set(0, -0.31, 0);
+}
+
+function buildNpcHumanoidRigTemplate(presetId) {
+    const normalizedPresetId = typeof presetId === 'string' ? presetId.trim().toLowerCase() : '';
+    if (normalizedPresetId !== 'goblin') return null;
+    const rigRoot = createRigBones({
+        elbowPivot: {
+            x: 0,
+            y: -0.31,
+            z: -0.06
+        }
+    });
+    applyGoblinRigBasePose(rigRoot);
+    addFragmentsToRig(rigRoot, createGoblinHumanoidFragments(), [0, 0, 0, 0, 0], []);
+    const nodes = rigNodeMap(rigRoot);
+    if (nodes.axe) nodes.axe.visible = false;
+    if (nodes.leftTool) nodes.leftTool.visible = false;
+    rigRoot.userData.baseY = 0;
+    rigRoot.userData.npcPresetId = normalizedPresetId;
+    return rigRoot;
+}
+
+function createNpcHumanoidRigFromPreset(presetId) {
+    const normalizedPresetId = typeof presetId === 'string' ? presetId.trim().toLowerCase() : '';
+    if (!normalizedPresetId) return null;
+    let template = NPC_HUMANOID_RIG_CACHE.get(normalizedPresetId);
+    if (!template) {
+        template = buildNpcHumanoidRigTemplate(normalizedPresetId);
+        if (!template) return null;
+        NPC_HUMANOID_RIG_CACHE.set(normalizedPresetId, template);
+    }
+    const clone = template.clone(true);
+    clone.userData.npcPresetId = normalizedPresetId;
+    return bindRigUserData(clone);
+}
+
+function listAnimationStudioPreviewActors() {
+    return [
+        { actorId: 'player', label: 'Player' },
+        { actorId: 'goblin', label: 'Goblin' }
+    ];
+}
+
+function createAnimationStudioPreviewRig(actorId) {
+    const normalizedActorId = typeof actorId === 'string' ? actorId.trim().toLowerCase() : '';
+    if (normalizedActorId === 'goblin') return createNpcHumanoidRigFromPreset('goblin');
+    return createPlayerRigForAnimationStudio();
+}
+
 function rebuildRigInstance(oldRig, parentScene) {
     if (!oldRig || !parentScene) return null;
     const nextRig = createPlayerRigFromCurrentAppearance();
@@ -691,6 +874,9 @@ window.syncPlayerAppearanceFromEquipment = syncPlayerAppearanceFromEquipment;
 window.rebuildPlayerRigsFromAppearance = rebuildPlayerRigsFromAppearance;
 window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;
 window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;
+window.createNpcHumanoidRigFromPreset = createNpcHumanoidRigFromPreset;
+window.listAnimationStudioPreviewActors = listAnimationStudioPreviewActors;
+window.createAnimationStudioPreviewRig = createAnimationStudioPreviewRig;
 
 
 
@@ -844,7 +1030,8 @@ function setPlayerRigToolVisuals(rigRoot, heldItems, primaryHeldItemSlot = null)
     const rightSkillingToolGroup = ensureSkillingToolVisualGroup(rightAnchor);
     const leftSkillingToolGroup = ensureSkillingToolVisualGroup(leftAnchor);
     const suppressBaseToolVisual = !!rigRoot.userData.suppressBaseToolVisual;
-    const baseToolVisible = hasBaseToolVisual(rightAnchor) && !suppressBaseToolVisual;
+    const rightBaseToolVisible = hasBaseToolVisual(rightAnchor) && !suppressBaseToolVisual;
+    const leftBaseToolVisible = hasBaseToolVisual(leftAnchor);
 
     if (areHeldItemVisualMapsEqual(rigRoot.userData.skillingToolVisuals, desiredHeldItems)
         && rigRoot.userData.skillingToolVisualSlot === desiredSlot
@@ -867,8 +1054,9 @@ function setPlayerRigToolVisuals(rigRoot, heldItems, primaryHeldItemSlot = null)
     if (rightSkillingToolGroup) rightSkillingToolGroup.visible = !!desiredHeldItems.rightHand;
     if (leftSkillingToolGroup) leftSkillingToolGroup.visible = !!desiredHeldItems.leftHand;
     setBaseToolVisualVisibility(rightAnchor, !desiredHeldItems.rightHand && !suppressBaseToolVisual);
-    if (rightAnchor) rightAnchor.visible = !!desiredHeldItems.rightHand || baseToolVisible;
-    if (leftAnchor) leftAnchor.visible = !!desiredHeldItems.leftHand;
+    setBaseToolVisualVisibility(leftAnchor, !desiredHeldItems.leftHand);
+    if (rightAnchor) rightAnchor.visible = !!desiredHeldItems.rightHand || rightBaseToolVisible;
+    if (leftAnchor) leftAnchor.visible = !!desiredHeldItems.leftHand || leftBaseToolVisible;
 
     const populateAnchor = (itemId, skillingToolGroup) => {
         const desiredId = normalizeHeldItemVisualId(itemId);
@@ -902,13 +1090,15 @@ function setPlayerRigToolVisual(rigRoot, itemId, heldItemSlot = null) {
 
 function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverride = null) {
     const itemDef = PLAYER_ITEM_DEFS[itemId] || null;
-    if (!itemDef || !Array.isArray(itemDef.fragments)) return [];
+    const fragments = getItemAppearanceFragments(itemDef, playerAppearanceState && playerAppearanceState.gender === 1 ? 1 : 0);
+    if (!itemDef || !fragments.length) return [];
     const bodyColors = Array.isArray(bodyColorsOverride)
         ? bodyColorsOverride
         : (Array.isArray(playerAppearanceState.colors) ? playerAppearanceState.colors : [0, 0, 0, 0, 0]);
-    return createMeshesForTarget(targetName, itemDef.fragments, bodyColors, itemDef.recolors || []);
+    return createMeshesForTarget(targetName, fragments, bodyColors, itemDef.recolors || []);
 }
 
 window.setPlayerRigToolVisuals = setPlayerRigToolVisuals;
 window.setPlayerRigToolVisual = setPlayerRigToolVisual;
 window.createEquipmentVisualMeshes = createEquipmentVisualMeshes;
+window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes;

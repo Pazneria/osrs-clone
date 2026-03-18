@@ -1,0 +1,103 @@
+{
+  "clipId": "npc/goblin/hit",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 420,
+  "loopMode": "once",
+  "maskId": "upperBody",
+  "poses": {
+    "neutral": {
+      "torso": {
+        "rotationDeg": {
+          "x": 8
+        }
+      }
+    },
+    "recoil": {
+      "root": {
+        "position": {
+          "z": -0.04
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": -8,
+          "y": -8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": 8,
+          "y": -12
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -12,
+          "z": 18
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -10,
+          "z": -18
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -18
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -18
+        }
+      }
+    },
+    "recover": {
+      "torso": {
+        "rotationDeg": {
+          "x": 6,
+          "y": -2
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -4,
+          "y": -3
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeOut"
+    },
+    {
+      "poseId": "recoil",
+      "atMs": 100,
+      "ease": "easeOut"
+    },
+    {
+      "poseId": "recover",
+      "atMs": 260,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 420,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "impact",
+      "atMs": 100
+    },
+    {
+      "markerId": "recover",
+      "atMs": 260
+    }
+  ]
+}

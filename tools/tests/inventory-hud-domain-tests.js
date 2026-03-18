@@ -297,14 +297,32 @@ const ITEM_DB = {
 {
   const progress = hudViewModels.buildSkillProgressViewModel({
     skillId: "mining",
-    playerSkills: { mining: { xp: 150, level: 5 } },
+    playerSkills: { mining: { xp: 550, level: 5 } },
     skillMeta: { displayName: "Mining", icon: "MIN" },
     getXpForLevel: (level) => level * 100,
     maxSkillLevel: 99
   });
   assert.strictEqual(progress.name, "Mining");
   assert.strictEqual(progress.level, 5);
+  assert.strictEqual(progress.remainingText, "50 XP remaining");
   assert.strictEqual(progress.nextText, "600 XP");
+  assert.strictEqual(progress.progressPercentText, "50.0% to next level");
+}
+
+{
+  const maxed = hudViewModels.buildSkillProgressViewModel({
+    skillId: "mining",
+    playerSkills: { mining: { xp: 13_034_431, level: 99 } },
+    skillMeta: { displayName: "Mining", icon: "MIN" },
+    getXpForLevel: (level) => level * 100,
+    maxSkillLevel: 99
+  });
+  assert.strictEqual(maxed.name, "Mining");
+  assert.strictEqual(maxed.level, 99);
+  assert.strictEqual(maxed.remainingText, "Maxed");
+  assert.strictEqual(maxed.nextText, "Maxed");
+  assert.strictEqual(maxed.progressPercentText, "100.0% to next level");
+  assert.strictEqual(maxed.progressWidth, "100.0%");
 }
 
 {

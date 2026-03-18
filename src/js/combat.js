@@ -10,6 +10,18 @@
     const ENEMY_MOVE_LERP_DURATION_MS = (typeof TICK_RATE_MS === 'number' && Number.isFinite(TICK_RATE_MS) && TICK_RATE_MS > 0)
         ? Math.max(320, Math.floor(TICK_RATE_MS * 0.9))
         : 540;
+    const ENEMY_MOVE_CLIP_HOLD_MS = (typeof TICK_RATE_MS === 'number' && Number.isFinite(TICK_RATE_MS) && TICK_RATE_MS > 0)
+        ? Math.max(ENEMY_MOVE_LERP_DURATION_MS + 140, Math.floor(TICK_RATE_MS * 1.3))
+        : Math.max(ENEMY_MOVE_LERP_DURATION_MS + 140, 780);
+    const ENEMY_ANIMATION_SET_DEFS = {
+        goblin_basic: {
+            rigId: 'player_humanoid_v1',
+            idleClipId: 'npc/goblin/idle',
+            walkClipId: 'npc/goblin/walk',
+            attackClipId: 'npc/goblin/attack',
+            hitClipId: 'npc/goblin/hit'
+        }
+    };
 
     let activeCombatWorldId = null;
     let lastResolvedCombatWorldId = 'starter_town';
@@ -59,6 +71,39 @@
     function getEnemyDefinition(enemyId) {
         if (!combatRuntime || typeof combatRuntime.getEnemyTypeDefinition !== 'function') return null;
         return combatRuntime.getEnemyTypeDefinition(enemyId);
+    }
+
+    function resolveEnemyModelPresetId(enemyType) {
+        const modelPresetId = enemyType && enemyType.appearance && typeof enemyType.appearance.modelPresetId === 'string'
+            ? enemyType.appearance.modelPresetId.trim().toLowerCase()
+            : '';
+        return modelPresetId || null;
+    }
+
+    function resolveEnemyAnimationSetId(enemyType) {
+        const animationSetId = enemyType && enemyType.appearance && typeof enemyType.appearance.animationSetId === 'string'
+            ? enemyType.appearance.animationSetId.trim().toLowerCase()
+            : '';
+        if (animationSetId) return animationSetId;
+        const modelPresetId = resolveEnemyModelPresetId(enemyType);
+        if (modelPresetId === 'goblin') return 'goblin_basic';
+        return null;
+    }
+
+    function resolveEnemyAnimationSetDef(enemyType) {
+        const animationSetId = resolveEnemyAnimationSetId(enemyType);
+        if (!animationSetId) return null;
+        return ENEMY_ANIMATION_SET_DEFS[animationSetId] || null;
+    }
+
+    function isEnemyActionAnimationActive(clipId, startedAtMs, frameNowMs) {
+        const bridge = window.AnimationRuntimeBridge || null;
+        if (!bridge || typeof bridge.getClip !== 'function') return false;
+        if (!clipId || !Number.isFinite(startedAtMs) || startedAtMs <= 0) return false;
+        const clip = bridge.getClip(clipId);
+        if (!clip || !Number.isFinite(clip.durationMs) || clip.durationMs <= 0) return false;
+        const elapsed = Math.max(0, frameNowMs - startedAtMs);
+        return elapsed <= clip.durationMs;
     }
 
     function getPlayerCombatSnapshot() {
@@ -368,6 +413,7 @@
             enemyState.prevY = enemyState.y;
             enemyState.moveTriggerAt = 0;
             enemyState.homeReachedAt = 0;
+            clearEnemyLocomotionIntent(enemyState);
             scheduleEnemyIdleWanderPause(enemyState, 1, 3);
             combatEnemyStates.push(enemyState);
             combatEnemyStateById[enemyState.runtimeId] = enemyState;
@@ -421,10 +467,34 @@
         enemyState.idleMoveReadyAtTick = currentTick;
     }
 
+    function clearEnemyLocomotionIntent(enemyState) {
+        if (!enemyState) return;
+        enemyState.lastLocomotionIntentAt = 0;
+        enemyState.locomotionIntentUntilAt = 0;
+    }
+
+    function markEnemyLocomotionIntent(enemyState, holdMs = ENEMY_MOVE_CLIP_HOLD_MS) {
+        if (!enemyState) return;
+        const now = Date.now();
+        const safeHoldMs = Number.isFinite(holdMs) ? Math.max(0, Math.floor(holdMs)) : ENEMY_MOVE_CLIP_HOLD_MS;
+        enemyState.lastLocomotionIntentAt = now;
+        enemyState.locomotionIntentUntilAt = Math.max(
+            Number.isFinite(enemyState.locomotionIntentUntilAt) ? enemyState.locomotionIntentUntilAt : 0,
+            now + safeHoldMs
+        );
+    }
+
+    function hasTrackedEnemyLocomotionIntent(enemyState, frameNow) {
+        if (!enemyState) return false;
+        const intentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt) ? enemyState.locomotionIntentUntilAt : 0;
+        return intentUntilAt > 0 && frameNow < intentUntilAt;
+    }
+
     function scheduleEnemyIdleWanderPause(enemyState, minTicks = ENEMY_IDLE_WANDER_PAUSE_MIN_TICKS, maxTicks = ENEMY_IDLE_WANDER_PAUSE_MAX_TICKS) {
         if (!enemyState) return;
         enemyState.idleDestination = null;
         enemyState.idleMoveReadyAtTick = currentTick + rollInclusive(minTicks, maxTicks);
+        clearEnemyLocomotionIntent(enemyState);
     }
 
     function resolvePathToTile(enemyState, targetTile, allowTargetOccupied = false, targetKind = null) {
@@ -527,7 +597,10 @@
         const roamingRadius = Number.isFinite(enemyState.resolvedRoamingRadius)
             ? Math.max(0, Math.floor(enemyState.resolvedRoamingRadius))
             : 0;
-        if (roamingRadius <= 0) return false;
+        if (roamingRadius <= 0) {
+            clearEnemyLocomotionIntent(enemyState);
+            return false;
+        }
 
         if (enemyState.idleDestination && enemyState.x === enemyState.idleDestination.x && enemyState.y === enemyState.idleDestination.y) {
             scheduleEnemyIdleWanderPause(enemyState);
@@ -536,7 +609,10 @@
 
         const readyAtTick = Number.isFinite(enemyState.idleMoveReadyAtTick) ? enemyState.idleMoveReadyAtTick : 0;
         if (!enemyState.idleDestination) {
-            if (currentTick < readyAtTick) return false;
+            if (currentTick < readyAtTick) {
+                clearEnemyLocomotionIntent(enemyState);
+                return false;
+            }
             const wanderPlan = pickEnemyIdleWanderTarget(enemyState, reservedTiles);
             if (!wanderPlan) {
                 scheduleEnemyIdleWanderPause(enemyState, 1, 2);
@@ -551,6 +627,7 @@
             return false;
         }
 
+        markEnemyLocomotionIntent(enemyState);
         const nextStep = idlePath[0];
         const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
         if (!reservedTiles.has(nextKey)) moveEnemyToStep(enemyState, nextStep);
@@ -585,6 +662,7 @@
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
         clearEnemyIdleWanderState(enemyState);
+        clearEnemyLocomotionIntent(enemyState);
     }
 
     function restoreEnemyAtHome(enemyState) {
@@ -602,8 +680,10 @@
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
         enemyState.attackTriggerAt = 0;
+        enemyState.hitReactionTriggerAt = 0;
         enemyState.homeReachedAt = Date.now();
         enemyState.moveTriggerAt = 0;
+        clearEnemyLocomotionIntent(enemyState);
         faceEnemyTowards(enemyState, homeTile);
         scheduleEnemyIdleWanderPause(enemyState, 2, 4);
         markCombatEnemyOccupancyDirty();
@@ -645,9 +725,11 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.attackTriggerAt = 0;
+        enemyState.hitReactionTriggerAt = 0;
         enemyState.lastDamagerId = null;
         enemyState.pendingDefeatAtTick = null;
         enemyState.pendingDefeatFacingYaw = null;
+        clearEnemyLocomotionIntent(enemyState);
         enemyState.respawnAtTick = defeatTick + Math.max(1, Math.floor(
             (combatEnemySpawnNodesById[enemyState.spawnNodeId] && combatEnemySpawnNodesById[enemyState.spawnNodeId].respawnTicks)
             || (enemyType && enemyType.respawnTicks)
@@ -692,8 +774,10 @@
         enemyState.pendingDefeatFacingYaw = null;
         enemyState.lastDamagerId = null;
         enemyState.attackTriggerAt = 0;
+        enemyState.hitReactionTriggerAt = 0;
         enemyState.moveTriggerAt = 0;
         enemyState.homeReachedAt = 0;
+        clearEnemyLocomotionIntent(enemyState);
         scheduleEnemyIdleWanderPause(enemyState, 2, 4);
         markCombatEnemyOccupancyDirty();
     }
@@ -921,6 +1005,7 @@
                 if (typeof spawnHitsplat === 'function') spawnHitsplat(result.damage, enemyState.x, enemyState.y);
                 if (result.damage > 0) {
                     enemyState.currentHealth = Math.max(0, enemyState.currentHealth - result.damage);
+                    enemyState.hitReactionTriggerAt = Date.now();
                     if (typeof addSkillXp === 'function') {
                         addSkillXp(resolvePlayerAttackSkill(), result.damage * 4);
                         addSkillXp('hitpoints', result.damage);
@@ -994,6 +1079,7 @@
         enemyState.x = nextX;
         enemyState.y = nextY;
         enemyState.moveTriggerAt = Date.now();
+        markEnemyLocomotionIntent(enemyState);
         faceEnemyTowards(enemyState, nextStep);
         markCombatEnemyOccupancyDirty();
         return true;
@@ -1040,6 +1126,7 @@
                     reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                     continue;
                 }
+                markEnemyLocomotionIntent(enemyState);
                 const homeStep = returnPath[0];
                 const homeKey = `${homeStep.x},${homeStep.y},${enemyState.z}`;
                 if (!reservedTiles.has(homeKey)) moveEnemyToStep(enemyState, homeStep);
@@ -1065,12 +1152,14 @@
             }
 
             if (isTrainingDummyEnemy(enemyState)) {
+                clearEnemyLocomotionIntent(enemyState);
                 faceEnemyTowards(enemyState, playerState);
                 reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                 continue;
             }
 
             if (isWithinMeleeRange(enemyState, playerState)) {
+                clearEnemyLocomotionIntent(enemyState);
                 faceEnemyTowards(enemyState, playerState);
                 reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                 continue;
@@ -1078,15 +1167,18 @@
 
             const pursuitPath = resolvePathToPlayer(enemyState);
             if (pursuitPath === null) {
+                clearEnemyLocomotionIntent(enemyState);
                 beginEnemyReturn(enemyState);
                 reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                 continue;
             }
             if (pursuitPath.length === 0) {
+                clearEnemyLocomotionIntent(enemyState);
                 reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
                 continue;
             }
 
+            markEnemyLocomotionIntent(enemyState);
             const nextStep = pursuitPath[0];
             const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
             if (!reservedTiles.has(nextKey)) moveEnemyToStep(enemyState, nextStep);
@@ -1311,7 +1403,15 @@
     }
 
     function createHumanoidEnemyRenderer(enemyState, enemyType) {
-        const group = createHumanoidModel(enemyType.appearance && Number.isFinite(enemyType.appearance.npcType) ? enemyType.appearance.npcType : 3);
+        const modelPresetId = resolveEnemyModelPresetId(enemyType);
+        const animationSetDef = resolveEnemyAnimationSetDef(enemyType);
+        let group = null;
+        if (modelPresetId && typeof window.createNpcHumanoidRigFromPreset === 'function') {
+            group = window.createNpcHumanoidRigFromPreset(modelPresetId);
+        }
+        if (!group) {
+            group = createHumanoidModel(enemyType.appearance && Number.isFinite(enemyType.appearance.npcType) ? enemyType.appearance.npcType : 3);
+        }
         const combatLevel = getEnemyCombatLevel(enemyType);
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.0, 2.0, 1.0),
@@ -1328,7 +1428,14 @@
             uid: enemyState.runtimeId
         };
         group.add(hitbox);
-        return { group, hitbox, kind: 'humanoid' };
+        return {
+            group,
+            hitbox,
+            kind: 'humanoid',
+            animationSetId: animationSetDef ? resolveEnemyAnimationSetId(enemyType) : null,
+            animationSetDef: animationSetDef || null,
+            animationRigId: animationSetDef && group.userData ? (group.userData.animationRigId || animationSetDef.rigId) : null
+        };
     }
 
     function createEnemyRenderer(enemyState) {
@@ -1365,10 +1472,26 @@
         return Math.max(0, Math.min(1, elapsed / ENEMY_MOVE_LERP_DURATION_MS));
     }
 
+    function isEnemyVisuallyMoving(enemyState, frameNow) {
+        if (!enemyState) return false;
+        const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
+        const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
+        if (enemyState.x === prevX && enemyState.y === prevY) return false;
+        return getEnemyVisualMoveProgress(enemyState, frameNow) < 1;
+    }
+
+    function shouldEnemyUseWalkBaseClip(enemyState, frameNow) {
+        if (isEnemyVisuallyMoving(enemyState, frameNow)) return true;
+        return hasTrackedEnemyLocomotionIntent(enemyState, frameNow);
+    }
+
     function updateEnemyRenderer(enemyState, renderer, frameNow) {
         const moveProgress = getEnemyVisualMoveProgress(enemyState, frameNow);
         const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
         const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
+        const hasRecentStepDirection = enemyState.x !== prevX || enemyState.y !== prevY;
+        const visuallyMoving = isEnemyVisuallyMoving(enemyState, frameNow);
+        const useWalkBaseClip = shouldEnemyUseWalkBaseClip(enemyState, frameNow);
         const currentVisualX = prevX + ((enemyState.x - prevX) * moveProgress);
         const currentVisualY = prevY + ((enemyState.y - prevY) * moveProgress);
         const prevTerrainHeight = getVisualHeight(prevX, prevY, enemyState.z);
@@ -1380,10 +1503,12 @@
 
         let targetYaw = enemyState.facingYaw;
         let snapCombatFacing = false;
-        const moved = enemyState.x !== prevX || enemyState.y !== prevY;
         if (isEnemyPendingDefeat(enemyState) && Number.isFinite(enemyState.pendingDefeatFacingYaw)) {
             targetYaw = enemyState.pendingDefeatFacingYaw;
             snapCombatFacing = true;
+        } else if (useWalkBaseClip && hasRecentStepDirection) {
+            targetYaw = Math.atan2(enemyState.x - prevX, enemyState.y - prevY);
+            snapCombatFacing = false;
         } else if (
             enemyState.currentState === 'aggroed'
             && enemyState.lockedTargetId === PLAYER_TARGET_ID
@@ -1393,8 +1518,6 @@
         ) {
             targetYaw = Math.atan2(playerState.x - currentVisualX, playerState.y - currentVisualY);
             snapCombatFacing = true;
-        } else if (moved) {
-            targetYaw = Math.atan2(enemyState.x - prevX, enemyState.y - prevY);
         }
         if (targetYaw !== undefined) {
             if (snapCombatFacing) {
@@ -1403,7 +1526,7 @@
                 let diff = targetYaw - renderer.group.rotation.y;
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 while (diff > Math.PI) diff -= Math.PI * 2;
-                const turnLerp = moved ? 0.55 : 0.25;
+                const turnLerp = useWalkBaseClip ? 0.55 : 0.25;
                 renderer.group.rotation.y += diff * turnLerp;
             }
         }
@@ -1423,6 +1546,43 @@
             renderer.head.position.z = 0.34 + (attackPulse * 0.14);
             renderer.tail.rotation.y = Math.sin(idlePhase * 2) * 0.35;
             renderer.tail.rotation.x = Math.PI / 8;
+            return;
+        }
+
+        const animationBridge = window.AnimationRuntimeBridge || null;
+        const animationSetDef = renderer.animationSetDef || null;
+        const animationRigId = renderer.animationRigId || null;
+        if (
+            animationBridge
+            && animationSetDef
+            && animationRigId
+            && typeof animationBridge.beginLegacyFrame === 'function'
+            && typeof animationBridge.setLegacyBaseClip === 'function'
+            && typeof animationBridge.requestLegacyActionClip === 'function'
+            && typeof animationBridge.applyLegacyFrame === 'function'
+        ) {
+            animationBridge.beginLegacyFrame(renderer.group, animationRigId);
+            animationBridge.setLegacyBaseClip(
+                renderer.group,
+                animationRigId,
+                useWalkBaseClip ? animationSetDef.walkClipId : animationSetDef.idleClipId,
+                frameNow
+            );
+            if (isEnemyActionAnimationActive(animationSetDef.attackClipId, enemyState.attackTriggerAt || 0, frameNow)) {
+                animationBridge.requestLegacyActionClip(renderer.group, animationRigId, animationSetDef.attackClipId, {
+                    startedAtMs: enemyState.attackTriggerAt || frameNow,
+                    startKey: `${enemyState.runtimeId}:attack:${enemyState.attackTriggerAt || 0}`,
+                    priority: 2
+                });
+            }
+            if (isEnemyActionAnimationActive(animationSetDef.hitClipId, enemyState.hitReactionTriggerAt || 0, frameNow)) {
+                animationBridge.requestLegacyActionClip(renderer.group, animationRigId, animationSetDef.hitClipId, {
+                    startedAtMs: enemyState.hitReactionTriggerAt || frameNow,
+                    startKey: `${enemyState.runtimeId}:hit:${enemyState.hitReactionTriggerAt || 0}`,
+                    priority: 1
+                });
+            }
+            animationBridge.applyLegacyFrame(renderer.group, animationRigId, frameNow);
             return;
         }
 
@@ -1466,6 +1626,69 @@
         }
     }
 
+    function getCombatEnemyAnimationDebugState(enemyId, frameNow = Date.now()) {
+        const resolvedEnemyId = String(enemyId || '').trim();
+        if (!resolvedEnemyId) return null;
+        const enemyState = getCombatEnemyState(resolvedEnemyId);
+        if (!enemyState) return null;
+        const renderer = combatEnemyRenderersById[resolvedEnemyId] || null;
+        const enemyType = getEnemyDefinition(enemyState.enemyId);
+        const animationSetId = resolveEnemyAnimationSetId(enemyType);
+        const animationSetDef = resolveEnemyAnimationSetDef(enemyType);
+        const animationBridge = window.AnimationRuntimeBridge || null;
+        const animationRigId = renderer && renderer.animationRigId
+            ? renderer.animationRigId
+            : (animationSetDef ? animationSetDef.rigId : null);
+        const controller = (animationBridge
+            && renderer
+            && renderer.group
+            && animationRigId
+            && typeof animationBridge.getLegacyControllerDebugState === 'function')
+            ? animationBridge.getLegacyControllerDebugState(renderer.group, animationRigId, frameNow)
+            : null;
+        const moveProgress = getEnemyVisualMoveProgress(enemyState, frameNow);
+        const visuallyMoving = isEnemyVisuallyMoving(enemyState, frameNow);
+        const useWalkBaseClip = shouldEnemyUseWalkBaseClip(enemyState, frameNow);
+        const locomotionIntentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt)
+            ? Math.floor(enemyState.locomotionIntentUntilAt)
+            : 0;
+        return {
+            runtimeId: resolvedEnemyId,
+            enemyId: enemyState.enemyId || null,
+            displayName: enemyType && enemyType.displayName ? enemyType.displayName : null,
+            currentState: enemyState.currentState || null,
+            kind: renderer ? (renderer.kind || null) : null,
+            modelPresetId: resolveEnemyModelPresetId(enemyType),
+            animationSetId: animationSetId || null,
+            animationRigId: animationRigId || null,
+            position: {
+                x: Number.isFinite(enemyState.x) ? enemyState.x : 0,
+                y: Number.isFinite(enemyState.y) ? enemyState.y : 0,
+                z: Number.isFinite(enemyState.z) ? enemyState.z : 0
+            },
+            previousPosition: {
+                x: Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x,
+                y: Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y
+            },
+            facingYaw: Number.isFinite(enemyState.facingYaw) ? enemyState.facingYaw : null,
+            groupRotationY: renderer && renderer.group && Number.isFinite(renderer.group.rotation.y)
+                ? renderer.group.rotation.y
+                : null,
+            moveProgress: Number.isFinite(moveProgress) ? moveProgress : null,
+            visuallyMoving: !!visuallyMoving,
+            useWalkBaseClip: !!useWalkBaseClip,
+            locomotionIntent: {
+                lastAt: Number.isFinite(enemyState.lastLocomotionIntentAt) ? Math.floor(enemyState.lastLocomotionIntentAt) : 0,
+                untilAt: locomotionIntentUntilAt,
+                remainingMs: locomotionIntentUntilAt > 0 ? Math.max(0, locomotionIntentUntilAt - Math.floor(frameNow)) : 0
+            },
+            moveTriggerAt: Number.isFinite(enemyState.moveTriggerAt) ? Math.floor(enemyState.moveTriggerAt) : 0,
+            attackTriggerAt: Number.isFinite(enemyState.attackTriggerAt) ? Math.floor(enemyState.attackTriggerAt) : 0,
+            hitReactionTriggerAt: Number.isFinite(enemyState.hitReactionTriggerAt) ? Math.floor(enemyState.hitReactionTriggerAt) : 0,
+            controller
+        };
+    }
+
     window.initCombatWorldState = initCombatWorldState;
     window.processCombatTick = processCombatTick;
     window.updateCombatRenderers = updateCombatRenderers;
@@ -1475,5 +1698,6 @@
     window.clearPlayerCombatTarget = clearPlayerCombatTarget;
     window.lockPlayerCombatTarget = lockPlayerCombatTarget;
     window.getCombatEnemyState = getCombatEnemyState;
+    window.getCombatEnemyAnimationDebugState = getCombatEnemyAnimationDebugState;
     window.getCombatHudSnapshot = getCombatHudSnapshot;
 })();

@@ -1,0 +1,150 @@
+{
+  "clipId": "npc/goblin/attack",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 860,
+  "loopMode": "once",
+  "maskId": "upperBody",
+  "poses": {
+    "neutral": {
+      "torso": {
+        "rotationDeg": {
+          "x": 8
+        }
+      }
+    },
+    "windup": {
+      "torso": {
+        "rotationDeg": {
+          "x": 14,
+          "y": -18
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -12,
+          "y": -10
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -58,
+          "y": -22,
+          "z": -8
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -38
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 24,
+          "z": 16
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -18
+        }
+      }
+    },
+    "slash": {
+      "torso": {
+        "rotationDeg": {
+          "x": 10,
+          "y": 28
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -6,
+          "y": 8
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 26,
+          "y": -10,
+          "z": 12
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 6,
+          "z": -6
+        }
+      }
+    },
+    "recover": {
+      "torso": {
+        "rotationDeg": {
+          "x": 9,
+          "y": 6
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 10,
+          "z": -4
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -14
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "windup",
+      "atMs": 120,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "slash",
+      "atMs": 340,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "recover",
+      "atMs": 640,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 860,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "windup",
+      "atMs": 120
+    },
+    {
+      "markerId": "contact",
+      "atMs": 420
+    },
+    {
+      "markerId": "recover",
+      "atMs": 640
+    }
+  ]
+}

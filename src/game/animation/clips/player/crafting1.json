@@ -1,0 +1,153 @@
+{
+  "clipId": "player/crafting1",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 1800,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "ready": {
+      "torso": {
+        "rotationDeg": {
+          "x": 10
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -24,
+          "y": -18,
+          "z": -10
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -52
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -30,
+          "y": 22,
+          "z": 12
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -58,
+          "y": 12,
+          "z": 8
+        }
+      }
+    },
+    "work": {
+      "root": {
+        "position": {
+          "y": 0.012
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 18
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -12
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -34,
+          "y": -14,
+          "z": -18
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -76,
+          "y": -6,
+          "z": -4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -48,
+          "y": 16,
+          "z": 18
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -86,
+          "y": 18,
+          "z": 12
+        }
+      }
+    },
+    "reset": {
+      "torso": {
+        "rotationDeg": {
+          "x": 12
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -6
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -20,
+          "y": -16,
+          "z": -8
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -46
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -26,
+          "y": 20,
+          "z": 10
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -54,
+          "y": 10,
+          "z": 6
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "ready",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "work",
+      "atMs": 760,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "reset",
+      "atMs": 1320,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "ready",
+      "atMs": 1800,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": []
+}

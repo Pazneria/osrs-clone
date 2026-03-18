@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-17T17:22:50.261Z",
+  "generatedAt": "2026-03-17T22:14:45.826Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -9,10 +9,10 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "adamant_arrowheads",
         "kind": "pixel"
       },
-      "name": "Adamant Arrowheads",
+      "name": "Adamant Arrowheads x15",
       "stackable": false,
       "type": "component",
       "value": 440
@@ -24,7 +24,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "adamant_arrows",
         "kind": "pixel"
       },
       "name": "Adamant Arrows x15",
@@ -85,7 +85,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "adamant_axe_head",
         "kind": "pixel"
       },
       "name": "Adamant Axe Head",
@@ -136,7 +136,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_boots",
         "kind": "pixel"
       },
       "name": "Adamant Boots",
@@ -177,7 +177,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_helmet",
         "kind": "pixel"
       },
       "name": "Adamant Helmet",
@@ -257,7 +257,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "adamant_pickaxe_head",
         "kind": "pixel"
       },
       "name": "Adamant Pickaxe Head",
@@ -293,7 +293,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_platebody",
         "kind": "pixel"
       },
       "name": "Adamant Platebody",
@@ -334,7 +334,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_platelegs",
         "kind": "pixel"
       },
       "name": "Adamant Platelegs",
@@ -375,7 +375,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "adamant_shield",
         "kind": "pixel"
       },
       "name": "Adamant Shield",
@@ -439,7 +439,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "adamant_sword_blade",
         "kind": "pixel"
       },
       "name": "Adamant Sword Blade",
@@ -542,7 +542,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "bow_string",
         "kind": "pixel"
       },
       "name": "Bow String",
@@ -557,10 +557,10 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "bronze_arrowheads",
         "kind": "pixel"
       },
-      "name": "Bronze Arrowheads",
+      "name": "Bronze Arrowheads x15",
       "stackable": false,
       "type": "component",
       "value": 8
@@ -572,7 +572,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "bronze_arrows",
         "kind": "pixel"
       },
       "name": "Bronze Arrows x15",
@@ -633,7 +633,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "bronze_axe_head",
         "kind": "pixel"
       },
       "name": "Bronze Axe Head",
@@ -684,7 +684,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "bronze_boots",
         "kind": "pixel"
       },
       "name": "Bronze Boots",
@@ -725,7 +725,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "bronze_helmet",
         "kind": "pixel"
       },
       "name": "Bronze Helmet",
@@ -791,7 +791,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "bronze_pickaxe_head",
         "kind": "pixel"
       },
       "name": "Bronze Pickaxe Head",
@@ -827,7 +827,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "bronze_platebody",
         "kind": "pixel"
       },
       "name": "Bronze Platebody",
@@ -868,7 +868,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "bronze_platelegs",
         "kind": "pixel"
       },
       "name": "Bronze Platelegs",
@@ -909,7 +909,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "bronze_shield",
         "kind": "pixel"
       },
       "name": "Bronze Shield",
@@ -973,7 +973,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "bronze_sword_blade",
         "kind": "pixel"
       },
       "name": "Bronze Sword Blade",
@@ -987,7 +987,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "burnt_salmon",
         "kind": "pixel"
       },
       "name": "Burnt Salmon",
@@ -1015,7 +1015,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "burnt_swordfish",
         "kind": "pixel"
       },
       "name": "Burnt Swordfish",
@@ -1029,7 +1029,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "burnt_trout",
         "kind": "pixel"
       },
       "name": "Burnt Trout",
@@ -1043,7 +1043,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "burnt_tuna",
         "kind": "pixel"
       },
       "name": "Burnt Tuna",
@@ -1117,7 +1117,7 @@
       "eatDelayTicks": 4,
       "healAmount": 7,
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "cooked_salmon",
         "kind": "pixel"
       },
       "name": "Cooked Salmon",
@@ -1151,7 +1151,7 @@
       "eatDelayTicks": 4,
       "healAmount": 12,
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "cooked_swordfish",
         "kind": "pixel"
       },
       "name": "Cooked Swordfish",
@@ -1168,7 +1168,7 @@
       "eatDelayTicks": 4,
       "healAmount": 5,
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "cooked_trout",
         "kind": "pixel"
       },
       "name": "Cooked Trout",
@@ -1185,7 +1185,7 @@
       "eatDelayTicks": 4,
       "healAmount": 9,
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "cooked_tuna",
         "kind": "pixel"
       },
       "name": "Cooked Tuna",
@@ -1421,7 +1421,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "feathers_bundle",
         "kind": "pixel"
       },
       "name": "Feathers x15",
@@ -1495,7 +1495,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "gold_amulet",
         "kind": "pixel"
       },
       "name": "Gold Amulet",
@@ -1539,7 +1539,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "gold_ring",
         "kind": "pixel"
       },
       "name": "Gold Ring",
@@ -1554,7 +1554,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "gold_tiara",
         "kind": "pixel"
       },
       "name": "Gold Tiara",
@@ -1628,10 +1628,10 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "iron_arrowheads",
         "kind": "pixel"
       },
-      "name": "Iron Arrowheads",
+      "name": "Iron Arrowheads x15",
       "stackable": false,
       "type": "component",
       "value": 24
@@ -1643,7 +1643,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "iron_arrows",
         "kind": "pixel"
       },
       "name": "Iron Arrows x15",
@@ -1704,7 +1704,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "iron_axe_head",
         "kind": "pixel"
       },
       "name": "Iron Axe Head",
@@ -1755,7 +1755,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "iron_boots",
         "kind": "pixel"
       },
       "name": "Iron Boots",
@@ -1796,7 +1796,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "iron_helmet",
         "kind": "pixel"
       },
       "name": "Iron Helmet",
@@ -1876,7 +1876,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "iron_pickaxe_head",
         "kind": "pixel"
       },
       "name": "Iron Pickaxe Head",
@@ -1912,7 +1912,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "iron_platebody",
         "kind": "pixel"
       },
       "name": "Iron Platebody",
@@ -1953,7 +1953,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "iron_platelegs",
         "kind": "pixel"
       },
       "name": "Iron Platelegs",
@@ -1994,7 +1994,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "iron_shield",
         "kind": "pixel"
       },
       "name": "Iron Shield",
@@ -2058,7 +2058,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "iron_sword_blade",
         "kind": "pixel"
       },
       "name": "Iron Sword Blade",
@@ -2132,7 +2132,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "maple_handle",
         "kind": "pixel"
       },
       "name": "Maple Handle",
@@ -2162,7 +2162,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "maple_headless_arrows",
         "kind": "pixel"
       },
       "name": "Maple Headless Arrows x15",
@@ -2192,7 +2192,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "maple_longbow",
         "kind": "pixel"
       },
       "name": "Maple Longbow",
@@ -2207,7 +2207,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "maple_longbow_u",
         "kind": "pixel"
       },
       "name": "Maple Longbow (u)",
@@ -2222,7 +2222,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "maple_shafts",
         "kind": "pixel"
       },
       "name": "Maple Shafts x15",
@@ -2237,7 +2237,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "maple_shortbow",
         "kind": "pixel"
       },
       "name": "Maple Shortbow",
@@ -2252,7 +2252,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "maple_shortbow_u",
         "kind": "pixel"
       },
       "name": "Maple Shortbow (u)",
@@ -2296,10 +2296,10 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "mithril_arrowheads",
         "kind": "pixel"
       },
-      "name": "Mithril Arrowheads",
+      "name": "Mithril Arrowheads x15",
       "stackable": false,
       "type": "component",
       "value": 180
@@ -2311,7 +2311,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "mithril_arrows",
         "kind": "pixel"
       },
       "name": "Mithril Arrows x15",
@@ -2372,7 +2372,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "mithril_axe_head",
         "kind": "pixel"
       },
       "name": "Mithril Axe Head",
@@ -2423,7 +2423,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_boots",
         "kind": "pixel"
       },
       "name": "Mithril Boots",
@@ -2464,7 +2464,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_helmet",
         "kind": "pixel"
       },
       "name": "Mithril Helmet",
@@ -2544,7 +2544,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "mithril_pickaxe_head",
         "kind": "pixel"
       },
       "name": "Mithril Pickaxe Head",
@@ -2580,7 +2580,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_platebody",
         "kind": "pixel"
       },
       "name": "Mithril Platebody",
@@ -2621,7 +2621,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_platelegs",
         "kind": "pixel"
       },
       "name": "Mithril Platelegs",
@@ -2662,7 +2662,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "mithril_shield",
         "kind": "pixel"
       },
       "name": "Mithril Shield",
@@ -2726,7 +2726,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "mithril_sword_blade",
         "kind": "pixel"
       },
       "name": "Mithril Sword Blade",
@@ -2785,7 +2785,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "normal_longbow",
         "kind": "pixel"
       },
       "name": "Normal Longbow",
@@ -2800,7 +2800,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "normal_longbow_u",
         "kind": "pixel"
       },
       "name": "Normal Longbow (u)",
@@ -2815,7 +2815,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "normal_shortbow",
         "kind": "pixel"
       },
       "name": "Normal Shortbow",
@@ -2830,7 +2830,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "normal_shortbow_u",
         "kind": "pixel"
       },
       "name": "Normal Shortbow (u)",
@@ -2845,7 +2845,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "oak_handle",
         "kind": "pixel"
       },
       "name": "Oak Handle",
@@ -2875,7 +2875,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "oak_headless_arrows",
         "kind": "pixel"
       },
       "name": "Oak Headless Arrows x15",
@@ -2905,7 +2905,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "oak_longbow",
         "kind": "pixel"
       },
       "name": "Oak Longbow",
@@ -2920,7 +2920,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "oak_longbow_u",
         "kind": "pixel"
       },
       "name": "Oak Longbow (u)",
@@ -2935,7 +2935,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "oak_shafts",
         "kind": "pixel"
       },
       "name": "Oak Shafts x15",
@@ -2950,7 +2950,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "oak_shortbow",
         "kind": "pixel"
       },
       "name": "Oak Shortbow",
@@ -2965,7 +2965,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "oak_shortbow_u",
         "kind": "pixel"
       },
       "name": "Oak Shortbow (u)",
@@ -2980,7 +2980,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "plain_staff_maple",
         "kind": "pixel"
       },
       "name": "Plain Staff (Maple)",
@@ -2995,7 +2995,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "plain_staff_oak",
         "kind": "pixel"
       },
       "name": "Plain Staff (Oak)",
@@ -3010,7 +3010,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "plain_staff_willow",
         "kind": "pixel"
       },
       "name": "Plain Staff (Willow)",
@@ -3025,7 +3025,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "plain_staff_wood",
         "kind": "pixel"
       },
       "name": "Plain Staff (Wood)",
@@ -3040,7 +3040,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "plain_staff_yew",
         "kind": "pixel"
       },
       "name": "Plain Staff (Yew)",
@@ -3057,7 +3057,7 @@
       "cookResultId": "cooked_salmon",
       "defaultAction": "Use",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "raw_salmon",
         "kind": "pixel"
       },
       "name": "Raw Salmon",
@@ -3092,7 +3092,7 @@
       "cookResultId": "cooked_swordfish",
       "defaultAction": "Use",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "raw_swordfish",
         "kind": "pixel"
       },
       "name": "Raw Swordfish",
@@ -3109,7 +3109,7 @@
       "cookResultId": "cooked_trout",
       "defaultAction": "Use",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "raw_trout",
         "kind": "pixel"
       },
       "name": "Raw Trout",
@@ -3126,7 +3126,7 @@
       "cookResultId": "cooked_tuna",
       "defaultAction": "Use",
       "icon": {
-        "assetId": "raw_shrimp",
+        "assetId": "raw_tuna",
         "kind": "pixel"
       },
       "name": "Raw Tuna",
@@ -3246,10 +3246,10 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "rune_arrowheads",
         "kind": "pixel"
       },
-      "name": "Rune Arrowheads",
+      "name": "Rune Arrowheads x15",
       "stackable": false,
       "type": "component",
       "value": 1
@@ -3261,7 +3261,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "rune_arrows",
         "kind": "pixel"
       },
       "name": "Rune Arrows x15",
@@ -3322,7 +3322,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "rune_axe_head",
         "kind": "pixel"
       },
       "name": "Rune Axe Head",
@@ -3373,7 +3373,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_boots",
         "kind": "pixel"
       },
       "name": "Rune Boots",
@@ -3472,7 +3472,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_helmet",
         "kind": "pixel"
       },
       "name": "Rune Helmet",
@@ -3552,7 +3552,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "rune_pickaxe_head",
         "kind": "pixel"
       },
       "name": "Rune Pickaxe Head",
@@ -3588,7 +3588,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_platebody",
         "kind": "pixel"
       },
       "name": "Rune Platebody",
@@ -3629,7 +3629,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_platelegs",
         "kind": "pixel"
       },
       "name": "Rune Platelegs",
@@ -3670,7 +3670,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "rune_shield",
         "kind": "pixel"
       },
       "name": "Rune Shield",
@@ -3734,7 +3734,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "rune_sword_blade",
         "kind": "pixel"
       },
       "name": "Rune Sword Blade",
@@ -3839,7 +3839,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "silver_amulet",
         "kind": "pixel"
       },
       "name": "Silver Amulet",
@@ -3883,7 +3883,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "silver_ring",
         "kind": "pixel"
       },
       "name": "Silver Ring",
@@ -3898,7 +3898,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "silver_tiara",
         "kind": "pixel"
       },
       "name": "Silver Tiara",
@@ -3986,10 +3986,10 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "steel_arrowheads",
         "kind": "pixel"
       },
-      "name": "Steel Arrowheads",
+      "name": "Steel Arrowheads x15",
       "stackable": false,
       "type": "component",
       "value": 70
@@ -4001,7 +4001,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "steel_arrows",
         "kind": "pixel"
       },
       "name": "Steel Arrows x15",
@@ -4062,7 +4062,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "steel_axe_head",
         "kind": "pixel"
       },
       "name": "Steel Axe Head",
@@ -4113,7 +4113,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_boots",
         "kind": "pixel"
       },
       "name": "Steel Boots",
@@ -4154,7 +4154,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_helmet",
         "kind": "pixel"
       },
       "name": "Steel Helmet",
@@ -4220,7 +4220,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "steel_pickaxe_head",
         "kind": "pixel"
       },
       "name": "Steel Pickaxe Head",
@@ -4256,7 +4256,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_platebody",
         "kind": "pixel"
       },
       "name": "Steel Platebody",
@@ -4297,7 +4297,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_platelegs",
         "kind": "pixel"
       },
       "name": "Steel Platelegs",
@@ -4338,7 +4338,7 @@
       },
       "defaultAction": "Equip",
       "icon": {
-        "assetId": "iron_axe",
+        "assetId": "steel_shield",
         "kind": "pixel"
       },
       "name": "Steel Shield",
@@ -4402,7 +4402,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "steel_sword_blade",
         "kind": "pixel"
       },
       "name": "Steel Sword Blade",
@@ -4563,7 +4563,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "willow_handle",
         "kind": "pixel"
       },
       "name": "Willow Handle",
@@ -4593,7 +4593,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "willow_headless_arrows",
         "kind": "pixel"
       },
       "name": "Willow Headless Arrows x15",
@@ -4623,7 +4623,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "willow_longbow",
         "kind": "pixel"
       },
       "name": "Willow Longbow",
@@ -4638,7 +4638,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "willow_longbow_u",
         "kind": "pixel"
       },
       "name": "Willow Longbow (u)",
@@ -4653,7 +4653,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "willow_shafts",
         "kind": "pixel"
       },
       "name": "Willow Shafts x15",
@@ -4668,7 +4668,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "willow_shortbow",
         "kind": "pixel"
       },
       "name": "Willow Shortbow",
@@ -4683,7 +4683,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "willow_shortbow_u",
         "kind": "pixel"
       },
       "name": "Willow Shortbow (u)",
@@ -4713,7 +4713,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "wooden_handle",
         "kind": "pixel"
       },
       "name": "Wooden Handle",
@@ -4743,7 +4743,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "wooden_headless_arrows",
         "kind": "pixel"
       },
       "name": "Wooden Headless Arrows x15",
@@ -4758,7 +4758,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "wooden_shafts",
         "kind": "pixel"
       },
       "name": "Wooden Shafts x15",
@@ -4773,7 +4773,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "yew_handle",
         "kind": "pixel"
       },
       "name": "Yew Handle",
@@ -4803,7 +4803,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "tin_ore",
+        "assetId": "yew_headless_arrows",
         "kind": "pixel"
       },
       "name": "Yew Headless Arrows x15",
@@ -4833,7 +4833,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "yew_longbow",
         "kind": "pixel"
       },
       "name": "Yew Longbow",
@@ -4848,7 +4848,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "yew_longbow_u",
         "kind": "pixel"
       },
       "name": "Yew Longbow (u)",
@@ -4863,7 +4863,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "yew_shafts",
         "kind": "pixel"
       },
       "name": "Yew Shafts x15",
@@ -4878,7 +4878,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "pickaxe",
+        "assetId": "yew_shortbow",
         "kind": "pixel"
       },
       "name": "Yew Shortbow",
@@ -4893,7 +4893,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "knife",
+        "assetId": "yew_shortbow_u",
         "kind": "pixel"
       },
       "name": "Yew Shortbow (u)",

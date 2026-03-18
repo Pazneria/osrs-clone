@@ -380,6 +380,18 @@ function run() {
     assert(fletching.getAnimationHeldItemSlot(ctx) === "rightHand", "expected the knife to remain the primary fletching hand");
   });
 
+  test("Crafting animation is clip-driven and suppresses equipped visuals for empty hands", () => {
+    const ctx = createSkillContext({
+      recipeId: "cut_sapphire",
+      action: "SKILLING: CRAFTING",
+      counts: { chisel: 1, uncut_sapphire: 1 }
+    });
+
+    const handled = crafting.onAnimate(ctx);
+    assert(handled === false, "expected crafting to defer body motion to the studio clip");
+    assert(crafting.getAnimationSuppressEquipmentVisual(ctx) === true, "expected crafting to hide equipped visuals while the empty-hand clip is active");
+  });
+
   test("Fletching onStart/onTick count mode crafts exact quantity", () => {
     const ctx = createSkillContext({
       recipeId: "fletch_bronze_arrows",

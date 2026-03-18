@@ -190,6 +190,9 @@
             const lockedEnemy = (lockedTargetId && typeof window.getCombatEnemyState === 'function')
                 ? window.getCombatEnemyState(lockedTargetId)
                 : null;
+            const lockedEnemyAnimation = (lockedTargetId && typeof window.getCombatEnemyAnimationDebugState === 'function')
+                ? window.getCombatEnemyAnimationDebugState(lockedTargetId, Date.now())
+                : null;
             const playerRigRuntime = playerRig && playerRig.userData ? playerRig.userData.rig : null;
             const animationRigId = (playerRig && playerRig.userData && playerRig.userData.animationRigId)
                 ? playerRig.userData.animationRigId
@@ -264,7 +267,8 @@
                     currentHealth: Number.isFinite(lockedEnemy.currentHealth) ? lockedEnemy.currentHealth : null,
                     remainingAttackCooldown: Number.isFinite(lockedEnemy.remainingAttackCooldown)
                         ? Math.max(0, Math.floor(lockedEnemy.remainingAttackCooldown))
-                        : 0
+                        : 0,
+                    animation: lockedEnemyAnimation
                 } : null,
                 hud: hudSnapshot && typeof hudSnapshot === 'object'
                     ? {
@@ -310,7 +314,7 @@
                 player.lastClearReason || '-',
                 Number.isFinite(player.lastClearTick) ? player.lastClearTick : -1,
                 enemy
-                    ? `${enemy.runtimeId || '-'}:${enemy.state || '-'}:${Number.isFinite(enemy.currentHealth) ? enemy.currentHealth : '-'}:${enemy.remainingAttackCooldown || 0}`
+                    ? `${enemy.runtimeId || '-'}:${enemy.state || '-'}:${Number.isFinite(enemy.currentHealth) ? enemy.currentHealth : '-'}:${enemy.remainingAttackCooldown || 0}:${enemy.animation ? (enemy.animation.useWalkBaseClip ? 1 : 0) : -1}:${enemy.animation && Number.isFinite(enemy.animation.facingYaw) ? enemy.animation.facingYaw.toFixed(2) : '-'}:${enemy.animation && Number.isFinite(enemy.animation.groupRotationY) ? enemy.animation.groupRotationY.toFixed(2) : '-'}`
                     : 'none',
                 hudTarget
                     ? `${hudTarget.state || '-'}:${Number.isFinite(hudTarget.currentHealth) ? hudTarget.currentHealth : '-'}:${Number.isFinite(hudTarget.maxHealth) ? hudTarget.maxHealth : '-'}:${hudTarget.inMeleeRange ? 1 : 0}:${hudTarget.remainingAttackCooldown || 0}`
@@ -387,6 +391,18 @@
                     `[QA combatdbg] enemy runtime=${enemy.runtimeId || 'none'} type=${enemy.enemyId || 'none'} state=${enemy.state || 'none'} hp=${Number.isFinite(enemy.currentHealth) ? enemy.currentHealth : 'unknown'} eCD=${Number.isFinite(enemy.remainingAttackCooldown) ? enemy.remainingAttackCooldown : 0} ePos=(${enemy.x},${enemy.y},${enemy.z})`,
                     'info'
                 );
+                if (enemy.animation) {
+                    const enemyAnim = enemy.animation;
+                    const enemyController = enemyAnim.controller || null;
+                    addChatMessage(
+                        `[QA combatdbg] enemy anim preset=${enemyAnim.modelPresetId || 'none'} set=${enemyAnim.animationSetId || 'none'} rig=${enemyAnim.animationRigId || 'none'} walkBase=${enemyAnim.useWalkBaseClip ? 'yes' : 'no'} moving=${enemyAnim.visuallyMoving ? 'yes' : 'no'} moveProgress=${Number.isFinite(enemyAnim.moveProgress) ? enemyAnim.moveProgress.toFixed(2) : 'none'} facing=${Number.isFinite(enemyAnim.facingYaw) ? enemyAnim.facingYaw.toFixed(2) : 'none'} renderYaw=${Number.isFinite(enemyAnim.groupRotationY) ? enemyAnim.groupRotationY.toFixed(2) : 'none'} intentMs=${enemyAnim.locomotionIntent && Number.isFinite(enemyAnim.locomotionIntent.remainingMs) ? enemyAnim.locomotionIntent.remainingMs : 0}`,
+                        'info'
+                    );
+                    addChatMessage(
+                        `[QA combatdbg] enemy clips base=${enemyController && enemyController.baseClipId ? enemyController.baseClipId : 'none'} action=${enemyController && enemyController.actionClipId ? enemyController.actionClipId : 'none'} winner=${enemyController && enemyController.winningRequest ? enemyController.winningRequest.clipId : 'none'} requests=${enemyController && enemyController.requestedActions && enemyController.requestedActions.length ? enemyController.requestedActions.map((request) => `${request.clipId}@p${request.priority}`).join(',') : 'none'}`,
+                        'info'
+                    );
+                }
             } else {
                 addChatMessage('[QA combatdbg] enemy runtime=none', 'info');
             }
@@ -649,7 +665,7 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260316i";
+        const ASSET_VERSION_TAG = "20260317l";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
         const DEFAULT_ICON_REVIEW_GRANT_ID = 'inventory_icon_review_20260313a';
         const DEFAULT_ICON_REVIEW_LABEL = 'Inventory Icons';
@@ -698,7 +714,8 @@
             return {
                 batchId: activeBatchId,
                 label,
-                itemIds: itemIds.length > 0 ? itemIds : fallbackItemIds
+                itemIds: itemIds.length > 0 ? itemIds : fallbackItemIds,
+                replaceInventory: !!(catalog && catalog.replaceInventory)
             };
         }
 
@@ -880,6 +897,39 @@
             const added = [];
             const acknowledged = [];
             const blocked = [];
+            const replaceInventory = reviewBatch.replaceInventory === true;
+
+            if (replaceInventory) {
+                const slots = [];
+
+                for (let i = 0; i < reviewBatch.itemIds.length; i++) {
+                    const itemId = reviewBatch.itemIds[i];
+                    if (!ITEM_DB[itemId]) {
+                        blocked.push(itemId);
+                        continue;
+                    }
+
+                    slots.push({ itemId, amount: 1 });
+                    if (hasContentGrantItem(reviewBatch.batchId, itemId)) {
+                        acknowledged.push(itemId);
+                    } else {
+                        markContentGrantItem(reviewBatch.batchId, itemId);
+                        added.push(itemId);
+                    }
+                }
+
+                setInventorySlots(slots);
+                return {
+                    batchId: reviewBatch.batchId,
+                    batchLabel: reviewBatch.label,
+                    added,
+                    acknowledged,
+                    blocked,
+                    changed: slots.length > 0 || blocked.length > 0,
+                    replaced: true,
+                    placed: slots.length
+                };
+            }
 
             for (let i = 0; i < reviewBatch.itemIds.length; i++) {
                 const itemId = reviewBatch.itemIds[i];
@@ -912,7 +962,9 @@
                 added,
                 acknowledged,
                 blocked,
-                changed: added.length > 0 || acknowledged.length > 0
+                changed: added.length > 0 || acknowledged.length > 0,
+                replaced: false,
+                placed: added.length + acknowledged.length
             };
         }
 
@@ -3199,13 +3251,15 @@
             }
             initPlayerEntryFlow(loadProgressResult);
             const iconGrantResult = applyInventoryIconReviewGrant();
-            if (iconGrantResult.added.length > 0 && typeof renderInventory === 'function') {
+            if (iconGrantResult.changed && typeof renderInventory === 'function') {
                 renderInventory();
             }
             if (iconGrantResult.changed) {
                 saveProgressToStorage('inventory_icon_review_grant');
             }
-            if (iconGrantResult.added.length > 0) {
+            if (iconGrantResult.replaced) {
+                addChatMessage(`Replaced inventory with ${iconGrantResult.placed} active icon review item(s).`, 'info');
+            } else if (iconGrantResult.added.length > 0) {
                 addChatMessage(`Added ${iconGrantResult.added.length} active icon review item(s) to your inventory.`, 'info');
             }
             if (forcedFreshSession) {

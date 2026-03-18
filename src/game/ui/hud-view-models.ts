@@ -258,6 +258,7 @@ export function buildSkillProgressViewModel(options: {
   const span = Math.max(1, nextLevelXp - levelXp);
   const gained = Math.max(0, xp - levelXp);
   const percent = level >= maxSkillLevel ? 100 : Math.max(0, Math.min(100, (gained / span) * 100));
+  const remainingXp = level >= maxSkillLevel ? 0 : Math.max(0, nextLevelXp - xp);
 
   return {
     skillId,
@@ -265,6 +266,7 @@ export function buildSkillProgressViewModel(options: {
     icon: options.skillMeta.icon || "?",
     level,
     xpText: xp.toLocaleString(),
+    remainingText: level >= maxSkillLevel ? "Maxed" : `${remainingXp.toLocaleString()} XP remaining`,
     nextText: level >= maxSkillLevel ? "Maxed" : `${nextLevelXp.toLocaleString()} XP`,
     progressPercentText: `${percent.toFixed(1)}% to next level`,
     progressWidth: `${percent.toFixed(1)}%`

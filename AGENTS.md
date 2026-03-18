@@ -82,6 +82,19 @@ Execution rules:
 - 3D models: `assets/models/*`
 - Pipeline docs: `docs/ASSET_PIPELINE.md`
 
+## Architecture Guardrails
+
+- Before implementing a new feature, content batch, or tool, do a quick compounding-risk check against the current project risks instead of blindly extending the nearest file or pattern.
+- Flag the work for the user before proceeding if the planned change would materially deepen one of these problems:
+  - introducing a new source of truth where an existing canonical file or generator already exists
+  - extending a large monolithic file with a new unrelated responsibility when a nearby module, helper, or data file would keep the change contained
+  - adding more one-off handcrafted NPC/building/content data when a small authoring system, prefab path, palette/parts override, or stamp workflow would obviously pay off first
+  - mixing legacy and newer runtime patterns in the same feature when the newer pattern is already available
+  - editing generated artifacts as if they are the primary authored source
+- Keep the warning practical, not alarmist: explain the specific compounding risk in plain language, say whether it is safe to defer, and recommend the smallest reasonable next step.
+- Do not block normal vertical-slice progress over minor cleanup debt. Only pause and flag when the requested approach would noticeably increase future maintenance cost or slow later content creation.
+- Assume the user may not know which changes have architecture consequences yet. When a task has that kind of hidden cost, surface it proactively instead of waiting for the user to ask.
+
 ## Notes
 
 - Prefer updating existing item JSON drafts rather than creating duplicate IDs.

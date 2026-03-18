@@ -847,6 +847,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function isCookingSkillAction(actionName) {
             return actionName === 'SKILLING: FIRE';
         }
+        function isCraftingSkillAction(actionName) {
+            return actionName === 'SKILLING: CRAFTING';
+        }
+        function isRunecraftingSkillAction(actionName) {
+            return actionName === 'SKILLING: ALTAR_CANDIDATE';
+        }
         function isSmithingSkillAction(actionName) {
             return actionName === 'SKILLING: FURNACE' || actionName === 'SKILLING: ANVIL';
         }
@@ -899,6 +905,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (isMiningSkillAction(playerState && playerState.action)) return 'player/mining1';
             if (isWoodcuttingSkillAction(playerState && playerState.action)) return 'player/woodcutting1';
             if (isCookingSkillAction(playerState && playerState.action)) return 'player/cooking1';
+            if (isCraftingSkillAction(playerState && playerState.action)) return 'player/crafting1';
+            if (isRunecraftingSkillAction(playerState && playerState.action)) return 'player/runecrafting1';
             if (isSmithingSmeltingSkillAction(playerState && playerState.action)) return 'player/smithing_smelting1';
             if (isSmithingForgingSkillAction(playerState && playerState.action)) return 'player/smithing_forging1';
             if (isFiremakingSkillAction(playerState && playerState.action)) return 'player/firemaking1';
@@ -1044,6 +1052,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 ? controllerDebug.requestedActions
                 : [];
             const lastEnemyAttack = window.__qaCombatDebugLastEnemyAttackResult || null;
+            const lockedTargetId = playerState && playerState.lockedTargetId
+                ? String(playerState.lockedTargetId)
+                : '';
+            const enemyDebug = (lockedTargetId && typeof window.getCombatEnemyAnimationDebugState === 'function')
+                ? window.getCombatEnemyAnimationDebugState(lockedTargetId, frameNow)
+                : null;
+            const enemyControllerDebug = enemyDebug && enemyDebug.controller ? enemyDebug.controller : null;
             const winningClipId = controllerDebug && controllerDebug.winningRequest
                 ? controllerDebug.winningRequest.clipId
                 : 'none';
@@ -1065,7 +1080,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 `winner=${winningClipId}`,
                 `requests=${requests.length ? requests.map(formatCombatAnimationDebugRequest).join(' | ') : 'none'}`,
                 `lastCommit=${controllerDebug && controllerDebug.lastCommittedAction ? formatCombatAnimationDebugRequest(controllerDebug.lastCommittedAction) : 'none'}`,
-                `priorityBlock=${blockedByPriority ? 'attack_over_recoil' : 'no'}`
+                `priorityBlock=${blockedByPriority ? 'attack_over_recoil' : 'no'}`,
+                `enemy=${enemyDebug ? `${enemyDebug.runtimeId || 'none'} ${enemyDebug.enemyId || 'none'} state=${enemyDebug.currentState || 'none'}` : 'none'}`,
+                `enemy yaw facing=${enemyDebug && Number.isFinite(enemyDebug.facingYaw) ? enemyDebug.facingYaw.toFixed(2) : 'none'} render=${enemyDebug && Number.isFinite(enemyDebug.groupRotationY) ? enemyDebug.groupRotationY.toFixed(2) : 'none'}`,
+                `enemy move visual=${enemyDebug ? (enemyDebug.visuallyMoving ? 'yes' : 'no') : 'none'} walkBase=${enemyDebug ? (enemyDebug.useWalkBaseClip ? 'yes' : 'no') : 'none'} progress=${enemyDebug && Number.isFinite(enemyDebug.moveProgress) ? enemyDebug.moveProgress.toFixed(2) : 'none'} intentMs=${enemyDebug && enemyDebug.locomotionIntent && Number.isFinite(enemyDebug.locomotionIntent.remainingMs) ? enemyDebug.locomotionIntent.remainingMs : 'none'}`,
+                `enemy base=${enemyControllerDebug && enemyControllerDebug.baseClipId ? enemyControllerDebug.baseClipId : 'none'} action=${enemyControllerDebug && enemyControllerDebug.actionClipId ? enemyControllerDebug.actionClipId : 'none'} winner=${enemyControllerDebug && enemyControllerDebug.winningRequest ? enemyControllerDebug.winningRequest.clipId : 'none'}`,
+                `enemy requests=${enemyControllerDebug && enemyControllerDebug.requestedActions && enemyControllerDebug.requestedActions.length ? enemyControllerDebug.requestedActions.map(formatCombatAnimationDebugRequest).join(' | ') : 'none'}`
             ].join('\n');
             panel.style.display = 'block';
         }

@@ -147,6 +147,22 @@ function run() {
   assert(itemDefs.harpoon.value === 110, "item catalog harpoon missing");
   assert(itemDefs.rune_harpoon.value === 2500, "item catalog rune harpoon missing");
   assert(itemDefs.raw_swordfish.value === 40, "item catalog swordfish missing");
+  [
+    "raw_trout",
+    "cooked_trout",
+    "burnt_trout",
+    "raw_salmon",
+    "cooked_salmon",
+    "burnt_salmon",
+    "raw_tuna",
+    "cooked_tuna",
+    "burnt_tuna",
+    "raw_swordfish",
+    "cooked_swordfish",
+    "burnt_swordfish"
+  ].forEach((itemId) => {
+    assert(itemDefs[itemId] && itemDefs[itemId].icon && itemDefs[itemId].icon.assetId === itemId, `item catalog fish icon should be bespoke for ${itemId}`);
+  });
 
   global.playerState = { merchantProgress: {} };
   loadBrowserScript(root, "src/js/shop-economy.js");
@@ -458,6 +474,11 @@ function run() {
       .map((row) => row.recipe && row.recipe.output ? row.recipe.output.itemId : null)
       .filter((itemId) => typeof itemId === "string" && /_arrowheads$/.test(itemId))
   );
+  smithArrowheadOutputIds.forEach((itemId) => {
+    const itemDef = itemDefs[itemId];
+    assert(!!itemDef, `smithing arrowhead output missing in item catalog: ${itemId}`);
+    assert(/ x15$/.test(itemDef.name), `smithing arrowhead bundle should advertise x15 output: ${itemId}`);
+  });
   const finishedArrowRows = fletchRows.filter((row) => row.recipe && row.recipe.recipeFamily === "finished_arrows");
   assert(finishedArrowRows.length >= 6, "expected full finished-arrow fletching chain");
   finishedArrowRows.forEach((row) => {
@@ -516,6 +537,7 @@ function run() {
 
   loadBrowserScript(root, "src/js/skills/fletching/index.js");
   loadBrowserScript(root, "src/js/skills/crafting/index.js");
+  loadBrowserScript(root, "src/js/skills/runecrafting/index.js");
   loadBrowserScript(root, "src/js/skills/firemaking/index.js");
   loadBrowserScript(root, "src/js/skills/smithing/index.js");
   loadBrowserScript(root, "src/js/skills/mining/index.js");
@@ -523,6 +545,7 @@ function run() {
   const skillModules = window.SkillModules || {};
   assert(!!skillModules.fletching && typeof skillModules.fletching.onUseItem === "function", "fletching runtime module missing onUseItem");
   assert(!!skillModules.crafting && typeof skillModules.crafting.onUseItem === "function", "crafting runtime module missing onUseItem");
+  assert(!!skillModules.runecrafting && typeof skillModules.runecrafting.onAnimate === "function", "runecrafting runtime module missing onAnimate");
   assert(!!skillModules.firemaking && typeof skillModules.firemaking.onUseItem === "function", "firemaking runtime module missing onUseItem");
   assert(!!skillModules.smithing && typeof skillModules.smithing.onAnimate === "function", "smithing runtime module missing onAnimate");
   assert(!!skillModules.mining && typeof skillModules.mining.onStart === "function", "mining runtime module missing onStart");
@@ -760,6 +783,24 @@ function run() {
   assert(fletchingAnimationHandled === false, "fletching should defer body motion to clip-driven animation");
   assert(skillModules.fletching.getAnimationSuppressEquipmentVisual(fletchingAnimateContext) === true, "fletching should hide equipped gear until explicit held-item logic is authored");
 
+  const craftingAnimateContext = {
+    playerState: {
+      action: "SKILLING: CRAFTING"
+    }
+  };
+  const craftingAnimationHandled = skillModules.crafting.onAnimate(craftingAnimateContext);
+  assert(craftingAnimationHandled === false, "crafting should defer body motion to clip-driven animation");
+  assert(skillModules.crafting.getAnimationSuppressEquipmentVisual(craftingAnimateContext) === true, "crafting should hide equipped gear while its empty-hand clip is active");
+
+  const runecraftingAnimateContext = {
+    playerState: {
+      action: "SKILLING: ALTAR_CANDIDATE"
+    }
+  };
+  const runecraftingAnimationHandled = skillModules.runecrafting.onAnimate(runecraftingAnimateContext);
+  assert(runecraftingAnimationHandled === false, "runecrafting should defer body motion to clip-driven animation");
+  assert(skillModules.runecrafting.getAnimationSuppressEquipmentVisual(runecraftingAnimateContext) === true, "runecrafting should hide equipped gear while its empty-hand clip is active");
+
   function makeMiningContext(unlocked) {
     const messages = [];
     let started = false;
@@ -877,6 +918,12 @@ function run() {
   assert(starterTownWorld.skillRoutes.cooking.some((entry) => entry.routeId === "deep_water_dock_fire_line"), "deep-water cooking route missing");
   assert(worldScript.includes("window.getFishingTrainingLocations = function getFishingTrainingLocations()"), "fishing training location getter missing");
   assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
+  assert(worldScript.includes("function addAshesGroundVisual(group, itemData)"), "ashes ground-item visual helper missing");
+  assert(worldScript.includes("function resolveFishGroundVisual(itemData)"), "fish ground-item visual resolver missing");
+  assert(worldScript.includes("function addFishGroundVisual(group, itemData, visual)"), "fish ground-item visual helper missing");
+  assert(worldScript.includes("function buildFishPixelGroundVisualMeshes(pixelSource, visual)"), "fish ground-item silhouette builder missing");
+  assert(worldScript.includes("function queueFishGroundVisualMeshes(group, itemData, visual)"), "fish ground-item pixel-source queue missing");
+  assert(worldScript.includes("addGroundItemSprite(group, spritePath, 0.17, 0.42);"), "ashes ground items should preview the pixel icon above the mound");
   assert(!worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should not seed on renderer init");
   assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");
   assert(worldScript.includes("SkillSpecRegistry.getRecipeSet('firemaking')"), "fire lifetime resolver should read firemaking recipe data");
@@ -925,6 +972,8 @@ function run() {
   assert(inputRenderScript.includes("'player/mining1'"), "input render should route mining through the studio clip");
   assert(inputRenderScript.includes("'player/woodcutting1'"), "input render should route woodcutting through the studio clip");
   assert(inputRenderScript.includes("'player/cooking1'"), "input render should route cooking through the studio clip");
+  assert(inputRenderScript.includes("'player/crafting1'"), "input render should route crafting through the studio clip");
+  assert(inputRenderScript.includes("'player/runecrafting1'"), "input render should route runecrafting through the studio clip");
   assert(inputRenderScript.includes("'player/fletching1'"), "input render should route fletching through the studio clip");
   assert(inputRenderScript.includes("'player/smithing_smelting1'"), "input render should route furnace smithing through the smelting studio clip");
   assert(inputRenderScript.includes("'player/smithing_forging1'"), "input render should route anvil smithing through the forging studio clip");
@@ -974,11 +1023,15 @@ function run() {
   assert(skillRuntimeScript.includes("getSkillAnimationHeldItemSlot"), "skill runtime should expose held-item hand overrides");
   assert(skillRuntimeScript.includes("getSkillAnimationSuppressEquipmentVisual"), "skill runtime should expose animation equipment-visibility overrides");
   const fishingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/fishing/index.js"), "utf8");
+  const playerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
   assert(fishingRuntimeScript.includes("getAnimationHeldItemId(context)"), "fishing runtime should still resolve held-tool visuals");
+  assert(playerModelSource.includes("window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes;"), "player-model should expose pixel-source visual mesh builder");
   assert(!fishingRuntimeScript.includes("alignTorsoToUpperLegFrontHinge"), "fishing runtime should remove the legacy procedural fishing pose");
   const cookingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/cooking/index.js"), "utf8");
   assert(cookingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "cooking runtime should request empty hands during clip playback");
   assert(!cookingRuntimeScript.includes("applyCookingStylePose"), "cooking runtime should remove the legacy procedural cooking pose");
+  const craftingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/crafting/index.js"), "utf8");
+  assert(craftingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "crafting runtime should request empty hands during clip playback");
   const firemakingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/firemaking/index.js"), "utf8");
   assert(firemakingRuntimeScript.includes("getAnimationHeldItemId"), "firemaking runtime should surface the tinderbox prop during clip playback");
   assert(firemakingRuntimeScript.includes("getAnimationHeldItemSlot"), "firemaking runtime should request the left-hand prop slot");
@@ -991,6 +1044,7 @@ function run() {
   const rcRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runecrafting/index.js"), "utf8");
   assert(rcRuntimeScript.includes("function tryFillPouchFromInventory"), "runecrafting pouch fill handler missing");
   assert(rcRuntimeScript.includes("function tryEmptyPouchToInventory"), "runecrafting pouch empty handler missing");
+  assert(rcRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "runecrafting runtime should hide equipped gear during clip playback");
 
   const weightedPick = SkillSpecRegistry.resolveWeighted([
     { id: "a", weight: 0 },

@@ -15,7 +15,7 @@ function run() {
 
   const schema = schemaModule.PLAYER_HUMANOID_V1_RIG;
   const descriptors = registry.listAnimationClipDescriptors();
-  assert(descriptors.length >= 17, "expected animation clip descriptors");
+  assert(descriptors.length >= 18, "expected animation clip descriptors");
   assert(!!registry.getAnimationClip("player/mining1"), "expected mining1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_net1"), "expected fishing_net1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_rod_hold1"), "expected fishing_rod_hold1 clip to be registered");
@@ -24,6 +24,8 @@ function run() {
   assert(!!registry.getAnimationClip("player/fishing_harpoon_strike1"), "expected fishing_harpoon_strike1 clip to be registered");
   assert(!!registry.getAnimationClip("player/woodcutting1"), "expected woodcutting1 clip to be registered");
   assert(!!registry.getAnimationClip("player/cooking1"), "expected cooking1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/crafting1"), "expected crafting1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/runecrafting1"), "expected runecrafting1 clip to be registered");
   assert(!!registry.getAnimationClip("player/firemaking1"), "expected firemaking1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fletching1"), "expected fletching1 clip to be registered");
   assert(!!registry.getAnimationClip("player/smithing_smelting1"), "expected smithing_smelting1 clip to be registered");
@@ -36,6 +38,8 @@ function run() {
   assert(registry.getAnimationClip("player/fishing_harpoon_hold1").heldItemId === "harpoon", "expected fishing_harpoon_hold1 to default its held item");
   assert(registry.getAnimationClip("player/fishing_harpoon_strike1").heldItemId === "harpoon", "expected fishing_harpoon_strike1 to default its held item");
   assert(!registry.getAnimationClip("player/woodcutting1").heldItemId, "expected woodcutting1 to rely on runtime-held-item selection");
+  assert(!registry.getAnimationClip("player/crafting1").heldItemId, "expected crafting1 to stay empty-handed until recipe-specific props are authored");
+  assert(!registry.getAnimationClip("player/runecrafting1").heldItemId, "expected runecrafting1 to stay empty-handed until altar-specific props are authored");
   assert(!registry.getAnimationClip("player/fletching1").heldItemId, "expected fletching1 to stay prop-neutral until runtime logic adds held items");
   assert(!registry.getAnimationClip("player/smithing_smelting1").heldItemId, "expected smithing_smelting1 to rely on runtime-held-item selection");
   assert(!registry.getAnimationClip("player/smithing_forging1").heldItemId, "expected smithing_forging1 to rely on runtime-held-item selection");
@@ -71,6 +75,14 @@ function run() {
   assert(
     !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/cooking1.json"),
     "expected to resolve cooking1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/crafting1.json"),
+    "expected to resolve crafting1 descriptors by source path"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/runecrafting1.json"),
+    "expected to resolve runecrafting1 descriptors by source path"
   );
   assert(
     !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/firemaking1.json"),

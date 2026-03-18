@@ -1,0 +1,154 @@
+{
+  "clipId": "player/runecrafting1",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 1800,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "ready": {
+      "torso": {
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -6
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -18,
+          "y": -22,
+          "z": -10
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -42,
+          "y": -4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -22,
+          "y": 24,
+          "z": 12
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -46,
+          "y": 8,
+          "z": 6
+        }
+      }
+    },
+    "channel": {
+      "root": {
+        "position": {
+          "y": 0.016
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 18
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -12
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -40,
+          "y": -18,
+          "z": -18
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -82,
+          "y": -10,
+          "z": -6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -44,
+          "y": 20,
+          "z": 18
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -84,
+          "y": 16,
+          "z": 10
+        }
+      }
+    },
+    "release": {
+      "torso": {
+        "rotationDeg": {
+          "x": 10
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -4
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -12,
+          "y": -18,
+          "z": -6
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -34
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -16,
+          "y": 18,
+          "z": 8
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -36,
+          "y": 6,
+          "z": 4
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "ready",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "channel",
+      "atMs": 760,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "release",
+      "atMs": 1320,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "ready",
+      "atMs": 1800,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": []
+}

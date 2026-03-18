@@ -108,6 +108,7 @@ export interface SkillProgressViewModel {
   icon: string;
   level: number;
   xpText: string;
+  remainingText: string;
   nextText: string;
   progressPercentText: string;
   progressWidth: string;

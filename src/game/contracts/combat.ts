@@ -39,6 +39,8 @@ export interface CombatEnemyAppearance {
   kind: EnemyAppearanceKind;
   npcType?: number;
   facingYaw?: number;
+  modelPresetId?: string;
+  animationSetId?: string;
 }
 
 export interface EnemyCombatStats {
@@ -115,6 +117,7 @@ export interface EnemyRuntimeState extends Point3 {
   respawnAtTick: number | null;
   lastDamagerId: string | null;
   attackTriggerAt: number;
+  hitReactionTriggerAt: number;
 }
 
 export interface PlayerCombatStateShape {

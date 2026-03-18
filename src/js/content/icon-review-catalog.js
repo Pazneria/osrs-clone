@@ -1,14 +1,40 @@
 (function () {
     window.IconReviewCatalog = {
-        version: '2026.03.m15',
-        activeBatchId: 'icon_review_20260317_log_bundles_a',
-        label: 'Log Bundles',
+        version: '2026.03.m17d',
+        activeBatchId: 'icon_review_20260317_all_armor_sets_a',
+        label: 'All Armor Sets',
+        replaceInventory: true,
         itemIds: [
-            'logs',
-            'oak_logs',
-            'willow_logs',
-            'maple_logs',
-            'yew_logs'
+            'bronze_boots',
+            'bronze_helmet',
+            'bronze_shield',
+            'bronze_platelegs',
+            'bronze_platebody',
+            'iron_boots',
+            'iron_helmet',
+            'iron_shield',
+            'iron_platelegs',
+            'iron_platebody',
+            'steel_boots',
+            'steel_helmet',
+            'steel_shield',
+            'steel_platelegs',
+            'steel_platebody',
+            'mithril_boots',
+            'mithril_helmet',
+            'mithril_shield',
+            'mithril_platelegs',
+            'mithril_platebody',
+            'adamant_boots',
+            'adamant_helmet',
+            'adamant_shield',
+            'adamant_platelegs',
+            'adamant_platebody',
+            'rune_boots',
+            'rune_helmet',
+            'rune_shield',
+            'rune_platelegs',
+            'rune_platebody'
         ]
     };
 })();

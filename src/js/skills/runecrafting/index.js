@@ -463,6 +463,14 @@
             context.stopAction();
         },
 
+        onAnimate() {
+            return false;
+        },
+
+        getAnimationSuppressEquipmentVisual() {
+            return true;
+        },
+
         getTooltip(context) {
             const recipeId = resolveRecipeIdFromContext(context);
             const recipe = getRecipeById(context, recipeId);

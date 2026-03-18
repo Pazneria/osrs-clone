@@ -43,6 +43,8 @@ declare global {
   interface Window {
     createPlayerRigFromCurrentAppearance?: () => THREE.Group;
     createPlayerRigForAnimationStudio?: () => THREE.Group;
+    createAnimationStudioPreviewRig?: (actorId?: string | null) => THREE.Group | null;
+    listAnimationStudioPreviewActors?: () => Array<{ actorId: string; label: string }>;
     setPlayerRigToolVisuals?: (
       rigRoot: THREE.Group,
       heldItems: AnimationHeldItemMap | null,
@@ -67,6 +69,7 @@ type CameraPresetId = "front" | "side" | "threeQuarter";
 type ManipulatorModeId = "translate" | "rotate";
 type SelectionAxis = { channel: AnimationChannelId; axis: AxisId; value: number };
 type StudioHeldItemOption = { itemId: string; label: string };
+type StudioPreviewActorOption = { actorId: string; label: string };
 type StudioPoseClipboard = {
   sourceClipId: string;
   sourcePoseId: string;
@@ -124,6 +127,7 @@ interface StudioState {
   durationInput: HTMLInputElement | null;
   durationHandle: HTMLDivElement | null;
   easeSelect: HTMLSelectElement | null;
+  previewActorSelect: HTMLSelectElement | null;
   nodeSelect: HTMLSelectElement | null;
   heldItemSelect: HTMLSelectElement | null;
   leftHeldItemSelect: HTMLSelectElement | null;
@@ -176,6 +180,7 @@ interface StudioState {
   jointMarker: THREE.Mesh | null;
   axisGizmo: THREE.Group | null;
   transformControls: TransformControls | null;
+  selectedPreviewActorId: string;
   selectedHeldItems: Record<AnimationHeldItemSlot, string>;
   selectedHeldItemSlot: AnimationHeldItemSlot;
   poseClipboard: StudioPoseClipboard | null;
@@ -217,6 +222,7 @@ const state: StudioState = {
   durationInput: null,
   durationHandle: null,
   easeSelect: null,
+  previewActorSelect: null,
   nodeSelect: null,
   heldItemSelect: null,
   leftHeldItemSelect: null,
@@ -269,6 +275,7 @@ const state: StudioState = {
   jointMarker: null,
   axisGizmo: null,
   transformControls: null,
+  selectedPreviewActorId: "player",
   selectedHeldItems: {
     rightHand: "",
     leftHand: ""
@@ -284,7 +291,10 @@ const state: StudioState = {
 const inspectorInputs = new Map<string, HTMLInputElement>();
 const previewPickRaycaster = new THREE.Raycaster();
 const previewPickPointer = new THREE.Vector2();
+const DEFAULT_PREVIEW_ACTOR_ID = "player";
+const DEFAULT_GOBLIN_PREVIEW_ACTOR_ID = "goblin";
 const DEFAULT_NEW_CLIP_ID = "player/new_clip";
+const DEFAULT_GOBLIN_NEW_CLIP_ID = "npc/goblin/new_clip";
 const DEFAULT_NEW_CLIP_DURATION_MS = 1000;
 const DEFAULT_STUDIO_HELD_ITEM_SLOT: AnimationHeldItemSlot = "rightHand";
 const MAX_STUDIO_UNDO_ENTRIES = 80;
@@ -306,8 +316,8 @@ function normalizeStudioClipId(rawClipId: string): string {
     .replace(/[^a-z0-9/_-]/g, "")
     .replace(/\/{2,}/g, "/")
     .replace(/^\/+|\/+$/g, "");
-  if (!normalized) return DEFAULT_NEW_CLIP_ID;
-  return normalized.includes("/") ? normalized : `player/${normalized}`;
+  if (!normalized) return getDefaultNewClipIdForSelectedPreviewActor();
+  return normalized.includes("/") ? normalized : `${getDefaultClipNamespaceForSelectedPreviewActor()}/${normalized}`;
 }
 
 function buildStudioSourcePath(clipId: string): string {
@@ -342,6 +352,85 @@ function buildFreshClip(clipId: string): AnimationClip {
     ],
     markers: []
   };
+}
+
+function getDefaultClipNamespaceForSelectedPreviewActor(): string {
+  return state.selectedPreviewActorId === DEFAULT_GOBLIN_PREVIEW_ACTOR_ID
+    ? "npc/goblin"
+    : "player";
+}
+
+function getDefaultNewClipIdForSelectedPreviewActor(): string {
+  return state.selectedPreviewActorId === DEFAULT_GOBLIN_PREVIEW_ACTOR_ID
+    ? DEFAULT_GOBLIN_NEW_CLIP_ID
+    : DEFAULT_NEW_CLIP_ID;
+}
+
+function listStudioPreviewActorOptions(): StudioPreviewActorOption[] {
+  const rawOptions = typeof window.listAnimationStudioPreviewActors === "function"
+    ? window.listAnimationStudioPreviewActors()
+    : [];
+  const options: StudioPreviewActorOption[] = [];
+  const seenActorIds = new Set<string>();
+  rawOptions.forEach((option) => {
+    const actorId = String(option?.actorId || "").trim().toLowerCase();
+    if (!actorId || seenActorIds.has(actorId)) return;
+    seenActorIds.add(actorId);
+    options.push({
+      actorId,
+      label: String(option?.label || actorId).trim() || actorId
+    });
+  });
+  if (!seenActorIds.has(DEFAULT_PREVIEW_ACTOR_ID)) {
+    options.unshift({
+      actorId: DEFAULT_PREVIEW_ACTOR_ID,
+      label: "Player"
+    });
+  }
+  return options.length > 0
+    ? options
+    : [{ actorId: DEFAULT_PREVIEW_ACTOR_ID, label: "Player" }];
+}
+
+function syncNewClipNameDefault(force = false): void {
+  if (!state.newClipName) return;
+  const defaultClipId = getDefaultNewClipIdForSelectedPreviewActor();
+  state.newClipName.placeholder = defaultClipId;
+  const currentValue = String(state.newClipName.value || "").trim();
+  if (
+    force
+    || currentValue.length === 0
+    || currentValue === DEFAULT_NEW_CLIP_ID
+    || currentValue === DEFAULT_GOBLIN_NEW_CLIP_ID
+  ) {
+    state.newClipName.value = defaultClipId;
+  }
+}
+
+function refreshPreviewActorSelect(): void {
+  const options = listStudioPreviewActorOptions();
+  if (!options.some((option) => option.actorId === state.selectedPreviewActorId)) {
+    state.selectedPreviewActorId = options[0]?.actorId || DEFAULT_PREVIEW_ACTOR_ID;
+  }
+  if (!state.previewActorSelect) {
+    syncNewClipNameDefault();
+    return;
+  }
+  state.previewActorSelect.innerHTML = "";
+  options.forEach((optionDef) => {
+    const option = document.createElement("option");
+    option.value = optionDef.actorId;
+    option.innerText = optionDef.label;
+    state.previewActorSelect?.appendChild(option);
+  });
+  state.previewActorSelect.value = state.selectedPreviewActorId;
+  syncNewClipNameDefault();
+}
+
+function resolvePreviewActorIdForClip(clip: AnimationClip | null): string {
+  const clipId = String(clip?.clipId || "").trim().toLowerCase();
+  if (clipId.startsWith("npc/goblin/")) return DEFAULT_GOBLIN_PREVIEW_ACTOR_ID;
+  return DEFAULT_PREVIEW_ACTOR_ID;
 }
 
 function humanizeStudioItemId(itemId: string): string {
@@ -728,6 +817,42 @@ function refreshHeldItemSlotSelect(): void {
   if (!state.heldItemSlotSelect) return;
   state.selectedHeldItemSlot = normalizeStudioHeldItemSlot(state.selectedHeldItemSlot);
   state.heldItemSlotSelect.value = state.selectedHeldItemSlot;
+}
+
+function rebuildPreviewRig(actorId?: string | null): void {
+  if (!state.scene) return;
+  const options = listStudioPreviewActorOptions();
+  const normalizedActorId = String(actorId || state.selectedPreviewActorId || DEFAULT_PREVIEW_ACTOR_ID).trim().toLowerCase();
+  const nextActorId = options.some((option) => option.actorId === normalizedActorId)
+    ? normalizedActorId
+    : (options[0]?.actorId || DEFAULT_PREVIEW_ACTOR_ID);
+  let nextRig: THREE.Group | null = null;
+  if (typeof window.createAnimationStudioPreviewRig === "function") {
+    nextRig = window.createAnimationStudioPreviewRig(nextActorId);
+  } else if (nextActorId === DEFAULT_PREVIEW_ACTOR_ID && typeof window.createPlayerRigForAnimationStudio === "function") {
+    nextRig = window.createPlayerRigForAnimationStudio();
+  }
+  if (!nextRig) {
+    setStatus(`Preview rig unavailable for ${nextActorId}.`);
+    return;
+  }
+  if (state.previewRig && state.previewRig.parent) state.previewRig.parent.remove(state.previewRig);
+  state.selectedPreviewActorId = nextActorId;
+  state.previewRig = nextRig;
+  state.previewRig.userData.animationStudioActorId = nextActorId;
+  state.scene.add(state.previewRig);
+  state.bindPose = captureRigBindPose(state.previewRig, state.clip?.rigId || "player_humanoid_v1");
+  refreshPreviewActorSelect();
+  refreshHeldItemSelect();
+  refreshHeldItemSlotSelect();
+  applyHeldItemSelectionToPreview();
+  const livePose = resolveStudioPreviewPose();
+  if (livePose) applyPreviewPose(state.previewRig, livePose);
+  attachManipulatorToSelectedNode();
+  refreshManipulatorButtons();
+  refreshDecoupleButton();
+  refreshIsolationButton();
+  applyNodeIsolationToPreview();
 }
 
 function refreshWeaponNodeBindingAfterHeldItemChange(): void {
@@ -1224,9 +1349,14 @@ function ensureClip(clipId: string): void {
   state.clip = clip;
   state.descriptor = descriptor;
   state.schema = schema;
-  state.draftDirty = false;
   state.selectedPoseId = Object.keys(clip.poses)[0] || null;
   state.timeMs = Math.max(0, Math.min(state.timeMs, clip.durationMs));
+  const desiredPreviewActorId = resolvePreviewActorIdForClip(clip);
+  const previewActorChanged = desiredPreviewActorId !== state.selectedPreviewActorId;
+  state.selectedPreviewActorId = desiredPreviewActorId;
+  refreshPreviewActorSelect();
+  if (previewActorChanged && state.scene) rebuildPreviewRig(desiredPreviewActorId);
+  state.draftDirty = false;
   if (state.timeline) {
     state.timeline.max = String(clip.durationMs);
     state.timeline.value = String(Math.floor(state.timeMs));
@@ -1488,6 +1618,10 @@ function createOverlay(): HTMLDivElement {
         </div>
         <div class="min-h-0 rounded border border-[#3a444c] bg-[#0d1318] p-3 flex flex-col gap-3">
           <div class="rounded border border-[#39434c] bg-[#10161b] p-2">
+            <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8aa6e]">Preview Actor</div>
+            <select id="animation-studio-preview-actor-select" class="w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100"></select>
+          </div>
+          <div class="rounded border border-[#39434c] bg-[#10161b] p-2">
             <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#c8aa6e]">Inspector</div>
             <select id="animation-studio-node-select" class="w-full rounded border border-[#39434c] bg-[#0a0f13] px-2 py-1 text-[11px] text-gray-100"></select>
           </div>
@@ -1548,7 +1682,7 @@ function refreshClipList(): void {
 
 function createNewClip(): void {
   const requestedName = state.newClipName?.value || "";
-  const clipId = buildUniqueClipId(requestedName || DEFAULT_NEW_CLIP_ID);
+  const clipId = buildUniqueClipId(requestedName || getDefaultNewClipIdForSelectedPreviewActor());
   const descriptor: AnimationClipDescriptor = {
     clipId,
     rigId: "player_humanoid_v1",
@@ -1559,6 +1693,7 @@ function createNewClip(): void {
   selectNode(null);
   refreshClipList();
   if (state.newClipName) state.newClipName.value = clipId;
+  syncNewClipNameDefault();
   state.draftDirty = true;
   if (state.renamePose) state.renamePose.value = state.selectedPoseId || "neutral";
   setReadyStatus();
@@ -2850,21 +2985,11 @@ function ensureScene(): void {
   applyCameraPreset("threeQuarter");
   resizeRenderer();
 
-  if (!window.createPlayerRigForAnimationStudio) {
+  if (!window.createAnimationStudioPreviewRig && !window.createPlayerRigForAnimationStudio) {
     setStatus("Preview rig unavailable.");
     return;
   }
-  state.previewRig = window.createPlayerRigForAnimationStudio();
-  state.scene.add(state.previewRig);
-  state.bindPose = captureRigBindPose(state.previewRig, "player_humanoid_v1");
-  refreshHeldItemSelect();
-  refreshHeldItemSlotSelect();
-  applyHeldItemSelectionToPreview();
-  attachManipulatorToSelectedNode();
-  refreshManipulatorButtons();
-  refreshDecoupleButton();
-  refreshIsolationButton();
-  applyNodeIsolationToPreview();
+  rebuildPreviewRig(state.selectedPreviewActorId);
 }
 
 function applyPreviewPose(rig: THREE.Group | null, pose: AnimationResolvedPose | null): void {
@@ -3019,6 +3144,7 @@ function bindUI(): void {
   state.durationInput = overlay.querySelector<HTMLInputElement>("#animation-studio-duration");
   state.durationHandle = overlay.querySelector<HTMLDivElement>("#animation-studio-duration-handle");
   state.easeSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-ease");
+  state.previewActorSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-preview-actor-select");
   state.nodeSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-node-select");
   state.heldItemSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-held-item-select");
   state.leftHeldItemSelect = overlay.querySelector<HTMLSelectElement>("#animation-studio-held-item-left-select");
@@ -3038,7 +3164,7 @@ function bindUI(): void {
     inspector.appendChild(createInspectorSection("Rotation (deg)", "rotationDeg"));
     inspector.appendChild(createInspectorSection("Scale", "scale"));
   }
-  if (state.newClipName) state.newClipName.value = DEFAULT_NEW_CLIP_ID;
+  refreshPreviewActorSelect();
   refreshPoseClipboardButtons();
 
   overlay.querySelector<HTMLButtonElement>("#animation-studio-close")?.addEventListener("click", () => toggleAnimationStudio(false));
@@ -3113,6 +3239,12 @@ function bindUI(): void {
   state.durationHandle?.addEventListener("pointerup", endDurationDrag);
   state.durationHandle?.addEventListener("pointercancel", endDurationDrag);
   state.easeSelect?.addEventListener("change", updateKeyEaseAtPlayhead);
+  state.previewActorSelect?.addEventListener("change", () => {
+    state.selectedPreviewActorId = String(state.previewActorSelect?.value || DEFAULT_PREVIEW_ACTOR_ID).trim().toLowerCase() || DEFAULT_PREVIEW_ACTOR_ID;
+    refreshPreviewActorSelect();
+    if (state.scene) rebuildPreviewRig(state.selectedPreviewActorId);
+    setStatus(`Preview actor set to ${state.selectedPreviewActorId}.`);
+  });
   state.nodeSelect?.addEventListener("change", () => {
     selectNode(state.nodeSelect?.value || null);
   });
@@ -3183,6 +3315,7 @@ function bindUI(): void {
   refreshDecoupleButton();
   refreshIsolationButton();
   refreshSnapButton();
+  refreshPreviewActorSelect();
   refreshHeldItemSelect();
   refreshHeldItemSlotSelect();
   refreshNodeClipboardButtons();

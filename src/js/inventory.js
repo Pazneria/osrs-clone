@@ -904,40 +904,8 @@
 
         let activeSkillPanelSkill = null;
         let activeSkillTile = null;
-        const SKILL_PANEL_TIER_COLLAPSED = -1;
-        let activeSkillPanelTierLevel = null;
         let activeSkillPanelUnlockKey = null;
         const SKILL_PANEL_RECIPE_UNLOCK_TYPE = 'recipe';
-        const SKILL_PANEL_FOCUS_BY_SKILL = {
-            attack: 'Improve melee accuracy so your attacks connect more reliably.',
-            strength: 'Raise melee max hit to speed up kill times and training routes.',
-            defense: 'Increase damage mitigation for safer skilling and combat loops.',
-            hitpoints: 'Grow your health pool to survive harder fights and mistakes.',
-            woodcutting: 'Cut higher-tier trees for stronger logs, value, and XP rates.',
-            mining: 'Mine tougher rock tiers to unlock better ores and gem routes.',
-            fishing: 'Unlock better methods and fish tiers for stronger food chains.',
-            firemaking: 'Burn stronger logs for faster training and utility fire access.',
-            cooking: 'Cook higher-tier fish with better XP and fewer burns over time.',
-            runecrafting: 'Craft stronger runes and pouches to scale rune output.',
-            smithing: 'Forge better metal outputs for tools, gear, and progression.',
-            crafting: 'Craft tools, jewelry, and equipment upgrades across multiple skills.',
-            fletching: 'Convert logs into bows, arrows, and handles for ranged progression.'
-        };
-        const SKILL_PANEL_TIER_NAMES_BY_SKILL = {
-            attack: ['Novice Combat', 'Apprentice Combat', 'Adept Combat', 'Veteran Combat'],
-            strength: ['Novice Power', 'Apprentice Power', 'Adept Power', 'Veteran Power'],
-            defense: ['Novice Defense', 'Apprentice Defense', 'Adept Defense', 'Veteran Defense'],
-            hitpoints: ['Novice Vitality', 'Apprentice Vitality', 'Adept Vitality', 'Veteran Vitality'],
-            woodcutting: ['Normal and Oak', 'Willow Focus', 'Maple Focus', 'Yew and Beyond'],
-            mining: ['Starter Ores', 'Iron Route', 'Coal Route', 'Silver and Beyond'],
-            fishing: ['Net and Rod Basics', 'River Rod Route', 'Harpoon Route', 'Deep-Water Route'],
-            firemaking: ['Starter Logs', 'Oak Fires', 'Willow Fires', 'Maple and Yew Fires'],
-            cooking: ['Shrimp Cooking', 'Trout Cooking', 'Salmon Cooking', 'Tuna and Swordfish Cooking'],
-            runecrafting: ['Elemental Basics', 'Water and Output Scaling', 'Earth and Output Scaling', 'Air and Combination'],
-            crafting: ['Starter Crafting', 'Tier Two Crafting', 'Tier Three Crafting', 'Advanced Crafting'],
-            fletching: ['Starter Fletching', 'Oak Fletching', 'Willow Fletching', 'Maple and Yew Fletching'],
-            smithing: ['Bronze and Iron', 'Steel Forging', 'Mithril Forging', 'Adamant and Rune']
-        };
 
         const COMBAT_SKILL_MILESTONES = {
             attack: [
@@ -1192,80 +1160,6 @@
             return null;
         }
 
-        function getSkillPanelTierStarts(skillName) {
-            const fallbackStarts = [1, 10, 20, 30];
-            const spec = resolveSkillPanelSpec(skillName);
-            if (!spec || !Array.isArray(spec.levelBands)) return fallbackStarts.slice();
-
-            const normalized = spec.levelBands
-                .filter((value) => Number.isFinite(value))
-                .map((value) => Math.max(1, Math.floor(value)))
-                .sort((a, b) => a - b)
-                .filter((value, index, arr) => arr.indexOf(value) === index);
-
-            if (!normalized.length) return fallbackStarts.slice();
-
-            const starts = normalized.slice(0, 4);
-            while (starts.length < 4) {
-                const last = starts.length ? starts[starts.length - 1] : 1;
-                starts.push(last + 10);
-            }
-            return starts.slice(0, 4);
-        }
-
-        function formatSkillPanelTierLabel(skillName, index, start, end) {
-            const names = SKILL_PANEL_TIER_NAMES_BY_SKILL[skillName];
-            const fallback = `Tier ${index + 1}`;
-            const tierName = (Array.isArray(names) && typeof names[index] === 'string' && names[index].trim())
-                ? names[index].trim()
-                : fallback;
-            if (!Number.isFinite(end)) return `${tierName} (Lv ${start}+)`;
-            return `${tierName} (Lv ${start}-${end})`;
-        }
-
-        function buildSkillPanelTierGroups(skillName, entries) {
-            const starts = getSkillPanelTierStarts(skillName);
-            const tiers = [];
-            for (let i = 0; i < starts.length; i++) {
-                const start = starts[i];
-                const end = i < (starts.length - 1) ? (starts[i + 1] - 1) : null;
-                tiers.push({
-                    id: i,
-                    index: i,
-                    start,
-                    end,
-                    label: formatSkillPanelTierLabel(skillName, i, start, end),
-                    entries: []
-                });
-            }
-
-            for (let i = 0; i < entries.length; i++) {
-                const entry = entries[i];
-                let assigned = false;
-                for (let j = 0; j < tiers.length; j++) {
-                    const tier = tiers[j];
-                    const inRange = entry.level >= tier.start && (tier.end === null || entry.level <= tier.end);
-                    if (!inRange) continue;
-                    tier.entries.push(entry);
-                    assigned = true;
-                    break;
-                }
-                if (!assigned && tiers.length) tiers[tiers.length - 1].entries.push(entry);
-            }
-
-            return tiers;
-        }
-
-        function getTierUnlockCount(tier) {
-            if (!tier || !Array.isArray(tier.entries)) return 0;
-            let total = 0;
-            for (let i = 0; i < tier.entries.length; i++) {
-                const entry = tier.entries[i];
-                if (entry && Array.isArray(entry.unlocks)) total += entry.unlocks.length;
-            }
-            return total;
-        }
-
         function addSkillPanelDetailSection(container, title, rows) {
             if (!container || !Array.isArray(rows) || rows.length === 0) return;
             const section = document.createElement('div');
@@ -1410,11 +1304,6 @@
         }
 
         function renderSkillPanelTimeline(skillName, currentLevel) {
-            const focusEl = document.getElementById('skill-panel-focus');
-            if (focusEl) {
-                focusEl.innerText = SKILL_PANEL_FOCUS_BY_SKILL[skillName] || 'Train this skill to unlock new gameplay options.';
-            }
-
             const timelineEl = document.getElementById('skill-panel-unlocks');
             if (!timelineEl) return;
             timelineEl.innerHTML = '';
@@ -1428,135 +1317,90 @@
                 return;
             }
 
-            const tiers = buildSkillPanelTierGroups(skillName, entries);
             const nextEntry = entries.find((entry) => entry.level > currentLevel) || entries[entries.length - 1];
+            const hasSelectedUnlock = !!entries.find((entry) => Array.isArray(entry.unlocks) && entry.unlocks.find((unlock) => unlock.key === activeSkillPanelUnlockKey));
+            if (!hasSelectedUnlock) activeSkillPanelUnlockKey = null;
 
-            if (activeSkillPanelTierLevel === null) {
-                activeSkillPanelTierLevel = SKILL_PANEL_TIER_COLLAPSED;
-                activeSkillPanelUnlockKey = null;
-            } else if (activeSkillPanelTierLevel !== SKILL_PANEL_TIER_COLLAPSED && !tiers.some((tier) => tier.id === activeSkillPanelTierLevel)) {
-                activeSkillPanelTierLevel = SKILL_PANEL_TIER_COLLAPSED;
-                activeSkillPanelUnlockKey = null;
-            }
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                const isLevelUnlocked = entry.level <= currentLevel;
+                const isLevelNext = entry.level > currentLevel && nextEntry && entry.level === nextEntry.level;
 
-            if (activeSkillPanelTierLevel === SKILL_PANEL_TIER_COLLAPSED) {
-                activeSkillPanelUnlockKey = null;
-            } else if (activeSkillPanelTierLevel !== null && activeSkillPanelUnlockKey) {
-                const activeTier = tiers.find((tier) => tier.id === activeSkillPanelTierLevel) || null;
-                if (!activeTier || !activeTier.entries.length) {
-                    activeSkillPanelUnlockKey = null;
-                } else {
-                    let hasSelectedUnlock = false;
-                    for (let i = 0; i < activeTier.entries.length && !hasSelectedUnlock; i++) {
-                        const entry = activeTier.entries[i];
-                        hasSelectedUnlock = !!entry.unlocks.find((unlock) => unlock.key === activeSkillPanelUnlockKey);
+                const levelWrap = document.createElement('div');
+                levelWrap.className = 'border border-[#3e3529] bg-[#120e0b]';
+
+                const levelHeader = document.createElement('div');
+                levelHeader.className = isLevelUnlocked
+                    ? 'px-2 py-1.5 flex items-center justify-between text-[#9fdc8f] text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]'
+                    : (isLevelNext
+                        ? 'px-2 py-1.5 flex items-center justify-between text-[#ffd27d] text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]'
+                        : 'px-2 py-1.5 flex items-center justify-between text-gray-400 text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]');
+
+                const levelLabel = document.createElement('span');
+                levelLabel.innerText = `Lv ${entry.level}`;
+
+                const levelCount = document.createElement('span');
+                levelCount.innerText = `${entry.unlocks.length} unlock${entry.unlocks.length === 1 ? '' : 's'}`;
+
+                levelHeader.appendChild(levelLabel);
+                levelHeader.appendChild(levelCount);
+                levelWrap.appendChild(levelHeader);
+
+                const levelBody = document.createElement('div');
+                levelBody.className = 'px-2 py-1 space-y-1';
+
+                for (let j = 0; j < entry.unlocks.length; j++) {
+                    const unlock = entry.unlocks[j];
+                    const isRecipe = unlock.unlockType === SKILL_PANEL_RECIPE_UNLOCK_TYPE && unlock.recipe;
+                    const isSelected = activeSkillPanelUnlockKey === unlock.key;
+
+                    const unlockBtn = document.createElement('button');
+                    unlockBtn.type = 'button';
+                    unlockBtn.className = isSelected
+                        ? 'w-full text-left px-1.5 py-1 border border-[#6b5733] bg-[#2b2115] text-[#ffd27d] hover:bg-[#352718] transition-colors'
+                        : 'w-full text-left px-1.5 py-1 border border-[#3e3529] text-gray-200 hover:bg-[#241d17] transition-colors';
+
+                    const unlockRow = document.createElement('div');
+                    unlockRow.className = 'flex items-start gap-2';
+
+                    const statusIcon = document.createElement('span');
+                    statusIcon.className = isLevelUnlocked
+                        ? 'text-[#9fdc8f] text-[11px] leading-4'
+                        : (isLevelNext
+                            ? 'text-[#ffd27d] text-[11px] leading-4'
+                            : 'text-gray-500 text-[11px] leading-4');
+                    statusIcon.innerText = isLevelUnlocked ? '●' : (isLevelNext ? '◆' : '○');
+
+                    const unlockText = document.createElement('div');
+                    unlockText.className = 'min-w-0 flex-1';
+
+                    const label = document.createElement('div');
+                    label.innerText = unlock.label;
+
+                    const badge = document.createElement('div');
+                    badge.className = 'text-[10px] uppercase tracking-wide text-[#c8aa6e]';
+                    if (isSelected) badge.innerText = 'Hide Details';
+                    else badge.innerText = isRecipe ? 'View Recipe' : 'View Details';
+
+                    unlockText.appendChild(label);
+                    unlockText.appendChild(badge);
+                    unlockRow.appendChild(statusIcon);
+                    unlockRow.appendChild(unlockText);
+                    unlockBtn.appendChild(unlockRow);
+                    unlockBtn.onclick = () => {
+                        activeSkillPanelUnlockKey = isSelected ? null : unlock.key;
+                        renderSkillPanelTimeline(skillName, currentLevel);
+                    };
+                    levelBody.appendChild(unlockBtn);
+
+                    if (isSelected) {
+                        const detailsEl = buildSkillPanelUnlockDetailsElement(skillName, entry.level, unlock);
+                        if (detailsEl) levelBody.appendChild(detailsEl);
                     }
-                    if (!hasSelectedUnlock) activeSkillPanelUnlockKey = null;
-                }
-            }
-
-            for (let i = 0; i < tiers.length; i++) {
-                const tier = tiers[i];
-                const isTierExpanded = activeSkillPanelTierLevel === tier.id;
-                const tierUnlockCount = getTierUnlockCount(tier);
-                const tierUnlocked = currentLevel >= tier.start;
-                const tierHasNext = nextEntry.level >= tier.start && (tier.end === null || nextEntry.level <= tier.end);
-
-                const tierWrap = document.createElement('div');
-                tierWrap.className = 'border border-[#3e3529] bg-[#120e0b]';
-
-                const tierBtn = document.createElement('button');
-                tierBtn.type = 'button';
-                tierBtn.className = tierUnlocked
-                    ? 'w-full text-left px-2 py-1.5 flex items-center justify-between text-[#9fdc8f] hover:bg-[#1f1914] transition-colors'
-                    : (tierHasNext
-                        ? 'w-full text-left px-2 py-1.5 flex items-center justify-between text-[#ffd27d] hover:bg-[#1f1914] transition-colors'
-                        : 'w-full text-left px-2 py-1.5 flex items-center justify-between text-gray-300 hover:bg-[#1f1914] transition-colors');
-
-                const tierLabel = document.createElement('span');
-                tierLabel.className = 'font-bold';
-                tierLabel.innerText = `${tier.label} - ${tierUnlockCount} unlock${tierUnlockCount === 1 ? '' : 's'}`;
-
-                const tierCaret = document.createElement('span');
-                tierCaret.className = 'text-[10px]';
-                tierCaret.innerText = isTierExpanded ? '^' : 'v';
-
-                tierBtn.appendChild(tierLabel);
-                tierBtn.appendChild(tierCaret);
-                tierBtn.onclick = () => {
-                    if (activeSkillPanelTierLevel === tier.id) {
-                        activeSkillPanelTierLevel = SKILL_PANEL_TIER_COLLAPSED;
-                        activeSkillPanelUnlockKey = null;
-                    } else {
-                        activeSkillPanelTierLevel = tier.id;
-                        activeSkillPanelUnlockKey = null;
-                    }
-                    renderSkillPanelTimeline(skillName, currentLevel);
-                };
-                tierWrap.appendChild(tierBtn);
-
-                if (isTierExpanded) {
-                    const tierBody = document.createElement('div');
-                    tierBody.className = 'border-t border-[#3e3529] px-2 py-1 space-y-1';
-
-                    if (!tier.entries.length) {
-                        const emptyTierRow = document.createElement('div');
-                        emptyTierRow.className = 'text-gray-500 px-1.5 py-1';
-                        emptyTierRow.innerText = 'No tracked unlocks in this tier yet.';
-                        tierBody.appendChild(emptyTierRow);
-                    } else {
-                        for (let j = 0; j < tier.entries.length; j++) {
-                            const entry = tier.entries[j];
-                            const isLevelUnlocked = entry.level <= currentLevel;
-                            const isLevelNext = entry.level > currentLevel && entry.level === nextEntry.level;
-
-                            const levelHeader = document.createElement('div');
-                            levelHeader.className = isLevelUnlocked
-                                ? 'px-1.5 py-1 text-[#9fdc8f] text-[10px] uppercase tracking-wide font-bold'
-                                : (isLevelNext
-                                    ? 'px-1.5 py-1 text-[#ffd27d] text-[10px] uppercase tracking-wide font-bold'
-                                    : 'px-1.5 py-1 text-gray-400 text-[10px] uppercase tracking-wide font-bold');
-                            levelHeader.innerText = `Lv ${entry.level} - ${entry.unlocks.length} unlock${entry.unlocks.length === 1 ? '' : 's'}`;
-                            tierBody.appendChild(levelHeader);
-
-                            for (let k = 0; k < entry.unlocks.length; k++) {
-                                const unlock = entry.unlocks[k];
-                                const isRecipe = unlock.unlockType === SKILL_PANEL_RECIPE_UNLOCK_TYPE && unlock.recipe;
-                                const isSelected = activeSkillPanelUnlockKey === unlock.key;
-                                const unlockBtn = document.createElement('button');
-                                unlockBtn.type = 'button';
-                                unlockBtn.className = isSelected
-                                    ? 'w-full text-left px-1.5 py-1 border border-[#6b5733] bg-[#2b2115] text-[#ffd27d] hover:bg-[#352718] transition-colors'
-                                    : 'w-full text-left px-1.5 py-1 border border-[#3e3529] text-gray-200 hover:bg-[#241d17] transition-colors';
-
-                                const label = document.createElement('div');
-                                label.innerText = unlock.label;
-
-                                const badge = document.createElement('div');
-                                badge.className = 'text-[10px] uppercase tracking-wide text-[#c8aa6e]';
-                                if (isSelected) badge.innerText = 'Hide Details';
-                                else badge.innerText = isRecipe ? 'View Recipe' : 'View Details';
-
-                                unlockBtn.appendChild(label);
-                                unlockBtn.appendChild(badge);
-                                unlockBtn.onclick = () => {
-                                    activeSkillPanelUnlockKey = isSelected ? null : unlock.key;
-                                    renderSkillPanelTimeline(skillName, currentLevel);
-                                };
-                                tierBody.appendChild(unlockBtn);
-
-                                if (isSelected) {
-                                    const detailsEl = buildSkillPanelUnlockDetailsElement(skillName, entry.level, unlock);
-                                    if (detailsEl) tierBody.appendChild(detailsEl);
-                                }
-                            }
-                        }
-                    }
-
-                    tierWrap.appendChild(tierBody);
                 }
 
-                timelineEl.appendChild(tierWrap);
+                levelWrap.appendChild(levelBody);
+                timelineEl.appendChild(levelWrap);
             }
         }
 
@@ -1597,6 +1441,72 @@
             return null;
         }
 
+        function buildSkillProgressUiViewModel(skillName, tileOverride = null) {
+            if (!skillName || !playerSkills[skillName]) return null;
+
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.buildSkillProgressViewModel !== 'function') return null;
+
+            const tile = tileOverride || document.querySelector(`.skill-tile[data-skill="${skillName}"]`);
+            const tileMeta = getSkillTileMeta(skillName) || {};
+            return runtime.buildSkillProgressViewModel({
+                skillId: skillName,
+                playerSkills,
+                skillMeta: {
+                    icon: tile ? tile.dataset.skillIcon : (tileMeta.icon || '?'),
+                    displayName: tile ? tile.dataset.skillName : (tileMeta.displayName || skillName)
+                },
+                getXpForLevel,
+                maxSkillLevel: MAX_SKILL_LEVEL
+            });
+        }
+
+        function buildSkillTileTooltipHtml(skillName, tileOverride = null) {
+            const progressViewModel = buildSkillProgressUiViewModel(skillName, tileOverride);
+            if (!progressViewModel) return '';
+
+            const nextLevelText = progressViewModel.nextText === 'Maxed'
+                ? 'Max level reached'
+                : `Next level at ${progressViewModel.nextText}`;
+
+            return `<div class="min-w-[210px]">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="text-[#ffcf8b] text-[11px] font-bold leading-4">${escapeTooltipHtml(progressViewModel.icon)} ${escapeTooltipHtml(progressViewModel.name)}</div>
+                    <div class="text-white text-[10px] font-bold">Lv ${escapeTooltipHtml(progressViewModel.level)}</div>
+                </div>
+                <div class="mt-1 flex items-center justify-between gap-3 text-[10px] leading-4">
+                    <span class="text-gray-300">Current XP</span>
+                    <span class="text-white">${escapeTooltipHtml(progressViewModel.xpText)}</span>
+                </div>
+                <div class="mt-1 flex items-center justify-between gap-3 text-[10px] leading-4">
+                    <span class="text-gray-300">To next</span>
+                    <span class="text-white">${escapeTooltipHtml(progressViewModel.remainingText)}</span>
+                </div>
+                <div class="mt-2 h-2.5 bg-[#0e0b09] border border-[#3e3529] overflow-hidden">
+                    <div class="h-full bg-[#c8aa6e]" style="width: ${escapeTooltipHtml(progressViewModel.progressWidth)};"></div>
+                </div>
+                <div class="mt-1 flex items-center justify-between gap-3 text-[10px] leading-4">
+                    <span class="text-gray-300">${escapeTooltipHtml(progressViewModel.progressPercentText)}</span>
+                    <span class="text-white">${escapeTooltipHtml(nextLevelText)}</span>
+                </div>
+            </div>`;
+        }
+
+        function bindSkillTileTooltip(tile, skillName) {
+            if (!tile) return;
+            const tooltipText = tile.dataset.skillName || skillName || '';
+            tile.title = '';
+            tile.onmouseenter = null;
+            tile.onmousemove = null;
+            tile.onmouseleave = null;
+            tile.onblur = null;
+            tile.setAttribute('aria-label', tooltipText);
+            tile.onmouseenter = (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY, buildSkillTileTooltipHtml(skillName, tile));
+            tile.onmousemove = (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY, buildSkillTileTooltipHtml(skillName, tile));
+            tile.onmouseleave = hideInventoryHoverTooltip;
+            tile.onblur = hideInventoryHoverTooltip;
+        }
+
         function renderSkillTilesFromManifest() {
             const container = document.getElementById('view-stats');
             if (!container) return;
@@ -1622,7 +1532,6 @@
                 tile.dataset.skill = skillId;
                 tile.dataset.skillName = displayName;
                 tile.dataset.skillIcon = icon;
-                tile.title = displayName;
 
                 const iconSpan = document.createElement('span');
                 iconSpan.className = 'text-sm';
@@ -1637,6 +1546,7 @@
                 tile.appendChild(iconSpan);
                 tile.appendChild(breakEl);
                 tile.appendChild(levelSpan);
+                bindSkillTileTooltip(tile, skillId);
                 container.appendChild(tile);
             }
         }
@@ -1646,7 +1556,6 @@
             if (!panel) return;
             panel.classList.add('hidden');
             activeSkillPanelSkill = null;
-            activeSkillPanelTierLevel = null;
             activeSkillPanelUnlockKey = null;
             if (activeSkillTile) activeSkillTile.classList.remove('skill-tile-active');
             activeSkillTile = null;
@@ -1660,30 +1569,11 @@
             const panel = document.getElementById('skill-panel');
             if (!panel) return;
 
-            const tile = document.querySelector(`.skill-tile[data-skill="${skillName}"]`);
-            const tileMeta = getSkillTileMeta(skillName) || {};
-            const runtime = getUiDomainRuntime();
-            const progressViewModel = runtime && typeof runtime.buildSkillProgressViewModel === 'function'
-                ? runtime.buildSkillProgressViewModel({
-                    skillId: skillName,
-                    playerSkills,
-                    skillMeta: {
-                        icon: tile ? tile.dataset.skillIcon : (tileMeta.icon || '?'),
-                        displayName: tile ? tile.dataset.skillName : (tileMeta.displayName || skillName)
-                    },
-                    getXpForLevel,
-                    maxSkillLevel: MAX_SKILL_LEVEL
-                })
-                : null;
+            const progressViewModel = buildSkillProgressUiViewModel(skillName);
             if (!progressViewModel) return;
 
-            document.getElementById('skill-panel-icon').innerText = progressViewModel.icon;
-            document.getElementById('skill-panel-title').innerText = progressViewModel.name;
-            document.getElementById('skill-panel-level').innerText = progressViewModel.level;
-            document.getElementById('skill-panel-xp').innerText = progressViewModel.xpText;
-            document.getElementById('skill-panel-next').innerText = progressViewModel.nextText;
-            document.getElementById('skill-panel-progress').style.width = progressViewModel.progressWidth;
-            document.getElementById('skill-panel-percent').innerText = progressViewModel.progressPercentText;
+            const titleEl = document.getElementById('skill-panel-title');
+            if (titleEl) titleEl.innerText = progressViewModel.name;
             renderSkillPanelTimeline(skillName, progressViewModel.level);
         }
 
@@ -1694,7 +1584,6 @@
             activeSkillTile = tileEl || null;
             if (activeSkillTile) activeSkillTile.classList.add('skill-tile-active');
 
-            activeSkillPanelTierLevel = SKILL_PANEL_TIER_COLLAPSED;
             activeSkillPanelUnlockKey = null;
             activeSkillPanelSkill = skillName;
             updateSkillProgressPanel(skillName, { force: true });
@@ -1734,7 +1623,10 @@
             bindCombatStyleButtons();
             const skillTiles = Array.from(document.querySelectorAll('.skill-tile'));
             skillTiles.forEach(tile => {
-                tile.onclick = () => openSkillProgressPanel(tile.dataset.skill, tile);
+                tile.onclick = () => {
+                    hideInventoryHoverTooltip();
+                    openSkillProgressPanel(tile.dataset.skill, tile);
+                };
             });
 
             const closeSkillBtn = document.getElementById('skill-panel-close');

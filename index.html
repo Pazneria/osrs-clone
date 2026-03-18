@@ -286,26 +286,14 @@
                 <input id="chat-input" type="text" class="flex-1 bg-[#0e0b09] border border-[#3e3529] text-gray-400 text-xs px-2 py-1 outline-none" placeholder="Press Enter to chat">
             </div>
         </div>
-        <div id="skill-panel" class="hidden pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] max-w-[calc(100vw-2rem)] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[260]">
-            <div class="flex items-center justify-between px-3 py-1 bg-[#2c241c] border-b border-[#3e3529]">
-                <div class="text-[#ff981f] font-bold text-sm"><span id="skill-panel-icon">*</span> <span id="skill-panel-title">Skill</span></div>
-                <button id="skill-panel-close" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
+        <div id="skill-panel" class="hidden pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-[384px] max-w-[calc(100vw-2rem)] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[260] flex flex-col">
+            <div class="relative px-3 py-1 bg-[#2c241c] border-b border-[#3e3529]">
+                <div id="skill-panel-title" class="text-[#ff981f] font-bold text-sm text-center">Skill</div>
+                <button id="skill-panel-close" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
             </div>
-            <div class="p-3 text-xs text-gray-200 space-y-2">
-                <div class="flex justify-between"><span class="text-[#c8aa6e]">Level</span><span id="skill-panel-level" class="font-bold text-white">1</span></div>
-                <div class="flex justify-between"><span class="text-[#c8aa6e]">XP</span><span id="skill-panel-xp" class="font-bold text-white">0</span></div>
-                <div class="flex justify-between"><span class="text-[#c8aa6e]">Next level</span><span id="skill-panel-next" class="font-bold text-white">83</span></div>
-                <div class="h-3 bg-[#0e0b09] border border-[#3e3529] mt-2">
-                    <div id="skill-panel-progress" class="h-full bg-[#c8aa6e]" style="width: 0%;"></div>
-                </div>
-                <div id="skill-panel-percent" class="text-center text-[11px] text-gray-300">0%</div>
-                <div class="mt-2 border border-[#3e3529] bg-[#15110d] p-2 space-y-1">
-                    <div class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Progression Focus</div>
-                    <div id="skill-panel-focus" class="text-[11px] leading-4 text-gray-300">Train this skill to unlock new gameplay options.</div>
-                </div>
-                <div class="border border-[#3e3529] bg-[#15110d] p-2 space-y-1">
-                    <div class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Unlock Timeline</div>
-                    <div id="skill-panel-unlocks" class="max-h-40 overflow-y-auto custom-scrollbar pr-1 space-y-1 text-[11px]"></div>
+            <div class="p-3 text-xs text-gray-200 flex-1 min-h-0">
+                <div class="border border-[#3e3529] bg-[#15110d] p-2 h-full flex flex-col">
+                    <div id="skill-panel-unlocks" class="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-1 text-[11px]"></div>
                 </div>
             </div>
         </div>

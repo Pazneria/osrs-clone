@@ -16,6 +16,7 @@
     "tool:pixel:build:all": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/pixel/build-pixel-assets.js --all",
     "tool:pixel:spec": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/pixel/render-pixel-spec.js",
     "tool:pixel:adopt-shape": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/pixel/adopt-pixel-shape.js",
+    "tool:pixel:armor-sync": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/pixel/sync-armor-icons-from-appearance.js",
     "tool:pixel:normalize": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/pixel/normalize-pixel-sources.js",
     "tool:sim:loot": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/sim/loot-sim.js",
     "tool:model:render-icon": "powershell -ExecutionPolicy Bypass -File ./tools/model/render-icon.ps1",

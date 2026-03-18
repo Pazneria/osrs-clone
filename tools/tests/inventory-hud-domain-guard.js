@@ -55,6 +55,14 @@ assert.ok(
   "inventory.js should render skill HUD data from view models"
 );
 assert.ok(
+  inventorySource.includes("buildSkillTileTooltipHtml"),
+  "inventory.js should build rich skill hover tooltips from shared progress data"
+);
+assert.ok(
+  !inventorySource.includes("buildSkillPanelTierGroups"),
+  "inventory.js should render skill popup unlocks as a flat scroll list instead of tier dropdowns"
+);
+assert.ok(
   inventorySource.includes("bindCombatStyleButtons"),
   "inventory.js should wire combat-style tab controls"
 );
@@ -90,6 +98,42 @@ assert.ok(
 assert.ok(
   indexSource.includes("inventory-hitpoints-bar-fill"),
   "index.html should mount the inventory hitpoints bar"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-level"),
+  "index.html should remove the redundant clicked-skill level row"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-xp"),
+  "index.html should remove the redundant clicked-skill xp row"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-next"),
+  "index.html should remove the redundant clicked-skill next-level row"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-progress"),
+  "index.html should remove the redundant clicked-skill progress bar"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-percent"),
+  "index.html should remove the redundant clicked-skill percent label"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-focus"),
+  "index.html should remove the redundant clicked-skill focus block"
+);
+assert.ok(
+  !indexSource.includes("skill-panel-icon"),
+  "index.html should remove the clicked-skill shorthand icon from the title"
+);
+assert.ok(
+  indexSource.includes('id="skill-panel" class="hidden pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-[384px]'),
+  "index.html should size the clicked-skill popup to the inventory shell"
+);
+assert.ok(
+  !indexSource.includes("Unlock Timeline"),
+  "index.html should remove the unlock timeline heading so the list can sit higher"
 );
 assert.ok(
   worldSource.includes("updateInventoryHitpointsHud"),

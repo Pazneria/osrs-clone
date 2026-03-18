@@ -1616,11 +1616,14 @@
             return { group, flame, hitMeshes: [logA, logB, flame] };
         }
 
+        const GROUND_ITEM_ICON_ASSET_VERSION = '20260317j';
+        const GROUND_PIXEL_SOURCE_ASSET_VERSION = '20260317j';
+
         function getItemIconSpritePath(itemData) {
             if (!itemData || !itemData.icon || itemData.icon.kind !== 'pixel' || typeof itemData.icon.assetId !== 'string' || !itemData.icon.assetId) {
                 return null;
             }
-            return `./assets/pixel/${itemData.icon.assetId}.png?v=20260313a`;
+            return `./assets/pixel/${itemData.icon.assetId}.png?v=${GROUND_ITEM_ICON_ASSET_VERSION}`;
         }
 
         function createFiremakingLogPreviewAt(x, y, z, itemId) {
@@ -2212,6 +2215,267 @@
             return sprite;
         }
 
+        function addAshesGroundVisual(group, itemData) {
+            const spritePath = getItemIconSpritePath(itemData);
+            const base = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.24, 0.28, 0.05, 12),
+                new THREE.MeshLambertMaterial({ color: 0x5c5c5c })
+            );
+            base.position.set(0, -0.05, 0);
+
+            const mound = new THREE.Mesh(
+                new THREE.SphereGeometry(0.16, 14, 10),
+                new THREE.MeshLambertMaterial({ color: 0x7a7a7a })
+            );
+            mound.scale.set(1.35, 0.55, 1.15);
+            mound.position.set(0, -0.005, 0);
+
+            const crest = new THREE.Mesh(
+                new THREE.SphereGeometry(0.09, 12, 8),
+                new THREE.MeshLambertMaterial({ color: 0xaaaaaa })
+            );
+            crest.scale.set(1.2, 0.4, 1.05);
+            crest.position.set(0, 0.055, 0);
+
+            group.add(base, mound, crest);
+
+            if (spritePath) {
+                addGroundItemSprite(group, spritePath, 0.17, 0.42);
+            }
+        }
+
+        const FISH_GROUND_SPECIES_PROFILES = Object.freeze({
+            shrimp: { scaleMultiplier: 0.34, depthMultiplier: 0.8, spriteY: 0.16, spriteScale: 0.38, pitch: -0.78 },
+            trout: { scaleMultiplier: 0.35, depthMultiplier: 0.82, spriteY: 0.18, spriteScale: 0.42, pitch: -0.82 },
+            salmon: { scaleMultiplier: 0.34, depthMultiplier: 0.84, spriteY: 0.19, spriteScale: 0.45, pitch: -0.84 },
+            tuna: { scaleMultiplier: 0.33, depthMultiplier: 0.86, spriteY: 0.2, spriteScale: 0.47, pitch: -0.87 },
+            swordfish: { scaleMultiplier: 0.31, depthMultiplier: 0.84, spriteY: 0.21, spriteScale: 0.5, pitch: -0.9 }
+        });
+        const ARMOR_GROUND_VISUAL_PROFILES = Object.freeze({
+            boots: { scaleMultiplier: 0.32, depthMultiplier: 0.82, spriteY: 0.16, spriteScale: 0.38, pitch: -0.92, yOffset: 0.03, shadowRadius: 0.16 },
+            helmet: { scaleMultiplier: 0.34, depthMultiplier: 0.88, spriteY: 0.18, spriteScale: 0.42, pitch: -0.52, yOffset: 0.05, shadowRadius: 0.16 },
+            shield: { scaleMultiplier: 0.31, depthMultiplier: 0.92, spriteY: 0.2, spriteScale: 0.47, pitch: -0.18, yOffset: 0.055, shadowRadius: 0.18 },
+            platelegs: { scaleMultiplier: 0.3, depthMultiplier: 0.88, spriteY: 0.2, spriteScale: 0.48, pitch: -0.72, yOffset: 0.045, shadowRadius: 0.18 },
+            platebody: { scaleMultiplier: 0.29, depthMultiplier: 0.86, spriteY: 0.22, spriteScale: 0.5, pitch: -0.62, yOffset: 0.05, shadowRadius: 0.19 }
+        });
+
+        const fishGroundPixelVisualCache = Object.create(null);
+        const fishGroundPixelVisualPending = Object.create(null);
+        const armorGroundPixelVisualCache = Object.create(null);
+        const armorGroundPixelVisualPending = Object.create(null);
+
+        function cloneGroundVisualMesh(mesh) {
+            if (!mesh || typeof mesh.clone !== 'function') return null;
+            const clone = mesh.clone();
+            clone.geometry = mesh.geometry;
+            clone.material = mesh.material;
+            return clone;
+        }
+
+        function clearFishGroundFallback(group) {
+            if (!group || !Array.isArray(group.children)) return;
+            for (let i = group.children.length - 1; i >= 0; i--) {
+                const child = group.children[i];
+                if (!child || !child.userData || !child.userData.groundFishFallback) continue;
+                group.remove(child);
+            }
+        }
+
+        function applyFishPixelGroundVisual(group, meshes) {
+            if (!group || !Array.isArray(meshes) || !meshes.length) return;
+            clearFishGroundFallback(group);
+            for (let i = 0; i < meshes.length; i++) {
+                const clone = cloneGroundVisualMesh(meshes[i]);
+                if (!clone) continue;
+                clone.userData = Object.assign({}, clone.userData, { groundFishPixelVisual: true });
+                group.add(clone);
+            }
+        }
+
+        function clearArmorGroundFallback(group) {
+            if (!group || !Array.isArray(group.children)) return;
+            for (let i = group.children.length - 1; i >= 0; i--) {
+                const child = group.children[i];
+                if (!child || !child.userData || !child.userData.groundArmorFallback) continue;
+                group.remove(child);
+            }
+        }
+
+        function applyArmorPixelGroundVisual(group, meshes) {
+            if (!group || !Array.isArray(meshes) || !meshes.length) return;
+            clearArmorGroundFallback(group);
+            for (let i = 0; i < meshes.length; i++) {
+                const clone = cloneGroundVisualMesh(meshes[i]);
+                if (!clone) continue;
+                clone.userData = Object.assign({}, clone.userData, { groundArmorPixelVisual: true });
+                group.add(clone);
+            }
+        }
+
+        function buildFishPixelGroundVisualMeshes(pixelSource, visual) {
+            if (!pixelSource || typeof window.createPixelSourceVisualMeshes !== 'function') return [];
+            const assetScale = Number.isFinite(pixelSource && pixelSource.model && pixelSource.model.scale)
+                ? pixelSource.model.scale
+                : 0.05;
+            const meshes = window.createPixelSourceVisualMeshes(pixelSource, {
+                scaleMultiplier: visual.scaleMultiplier,
+                depthMultiplier: visual.depthMultiplier,
+                rotation: [visual.pitch, 0, 0],
+                offset: [0, 0.045, 0],
+                origin: [pixelSource.width / 2, pixelSource.height / 2],
+                depthBySymbol: {
+                    e: assetScale * visual.scaleMultiplier * 0.7
+                }
+            });
+            for (let i = 0; i < meshes.length; i++) {
+                meshes[i].userData = Object.assign({}, meshes[i].userData, { groundFishPixelVisual: true });
+            }
+            return meshes;
+        }
+
+        function buildArmorPixelGroundVisualMeshes(pixelSource, visual) {
+            if (!pixelSource || typeof window.createPixelSourceVisualMeshes !== 'function') return [];
+            const meshes = window.createPixelSourceVisualMeshes(pixelSource, {
+                scaleMultiplier: visual.scaleMultiplier,
+                depthMultiplier: visual.depthMultiplier,
+                rotation: [visual.pitch || 0, visual.yaw || 0, visual.roll || 0],
+                offset: [0, Number.isFinite(visual.yOffset) ? visual.yOffset : 0.05, 0],
+                origin: [pixelSource.width / 2, pixelSource.height / 2]
+            });
+            for (let i = 0; i < meshes.length; i++) {
+                meshes[i].userData = Object.assign({}, meshes[i].userData, { groundArmorPixelVisual: true });
+            }
+            return meshes;
+        }
+
+        function queueFishGroundVisualMeshes(group, itemData, visual) {
+            const assetId = visual && typeof visual.assetId === 'string' ? visual.assetId : null;
+            if (!assetId || !group) return;
+            if (Array.isArray(fishGroundPixelVisualCache[assetId])) {
+                applyFishPixelGroundVisual(group, fishGroundPixelVisualCache[assetId]);
+                return;
+            }
+            if (!fishGroundPixelVisualPending[assetId]) {
+                fishGroundPixelVisualPending[assetId] = fetch(`./assets/pixel-src/${assetId}.json?v=${GROUND_PIXEL_SOURCE_ASSET_VERSION}`)
+                    .then((response) => {
+                        if (!response.ok) throw new Error(`failed to load ${assetId} pixel source`);
+                        return response.json();
+                    })
+                    .then((pixelSource) => {
+                        const meshes = buildFishPixelGroundVisualMeshes(pixelSource, visual);
+                        fishGroundPixelVisualCache[assetId] = meshes;
+                        return meshes;
+                    })
+                    .catch((error) => {
+                        console.warn('Failed to build fish ground visual from pixel source:', assetId, error);
+                        fishGroundPixelVisualCache[assetId] = null;
+                        return null;
+                    });
+            }
+            fishGroundPixelVisualPending[assetId].then((meshes) => {
+                if (Array.isArray(meshes) && meshes.length) applyFishPixelGroundVisual(group, meshes);
+            });
+        }
+
+        function queueArmorGroundVisualMeshes(group, itemData, visual) {
+            const assetId = visual && typeof visual.assetId === 'string' ? visual.assetId : null;
+            if (!assetId || !group) return;
+            if (Array.isArray(armorGroundPixelVisualCache[assetId])) {
+                applyArmorPixelGroundVisual(group, armorGroundPixelVisualCache[assetId]);
+                return;
+            }
+            if (!armorGroundPixelVisualPending[assetId]) {
+                armorGroundPixelVisualPending[assetId] = fetch(`./assets/pixel-src/${assetId}.json?v=${GROUND_PIXEL_SOURCE_ASSET_VERSION}`)
+                    .then((response) => {
+                        if (!response.ok) throw new Error(`failed to load ${assetId} pixel source`);
+                        return response.json();
+                    })
+                    .then((pixelSource) => {
+                        const meshes = buildArmorPixelGroundVisualMeshes(pixelSource, visual);
+                        armorGroundPixelVisualCache[assetId] = meshes;
+                        return meshes;
+                    })
+                    .catch((error) => {
+                        console.warn('Failed to build armor ground visual from pixel source:', assetId, error);
+                        armorGroundPixelVisualCache[assetId] = null;
+                        return null;
+                    });
+            }
+            armorGroundPixelVisualPending[assetId].then((meshes) => {
+                if (Array.isArray(meshes) && meshes.length) applyArmorPixelGroundVisual(group, meshes);
+            });
+        }
+
+        function resolveFishGroundVisual(itemData) {
+            const itemId = itemData && typeof itemData.id === 'string' ? itemData.id : '';
+            const match = /^(raw|cooked|burnt)_(shrimp|trout|salmon|tuna|swordfish)$/.exec(itemId);
+            if (!match) return null;
+            const species = match[2];
+            const profile = FISH_GROUND_SPECIES_PROFILES[species] || null;
+            const assetId = itemData && itemData.icon && itemData.icon.kind === 'pixel' && typeof itemData.icon.assetId === 'string'
+                ? itemData.icon.assetId
+                : itemId;
+            if (!profile || !assetId) return null;
+            return Object.assign({ state: match[1], species, assetId }, profile);
+        }
+
+        function resolveArmorGroundVisual(itemData) {
+            const assetId = itemData && itemData.icon && itemData.icon.kind === 'pixel' && typeof itemData.icon.assetId === 'string'
+                ? itemData.icon.assetId
+                : (itemData && typeof itemData.id === 'string' ? itemData.id : '');
+            const match = /_(boots|helmet|shield|platelegs|platebody)$/.exec(assetId);
+            if (!match) return null;
+            const profile = ARMOR_GROUND_VISUAL_PROFILES[match[1]] || null;
+            if (!profile || !assetId) return null;
+            const resolved = Object.assign({ assetId, category: match[1] }, profile);
+            if (/^rune_/.test(assetId)) {
+                resolved.scaleMultiplier *= 1.08;
+                resolved.depthMultiplier *= 1.04;
+                resolved.spriteScale += 0.03;
+                resolved.spriteY += 0.01;
+                resolved.yOffset += 0.005;
+                resolved.shadowRadius += 0.015;
+            }
+            return resolved;
+        }
+
+        function addFishGroundVisual(group, itemData, visual) {
+            if (!group || !itemData || !visual) return;
+            const spritePath = getItemIconSpritePath(itemData);
+            const shadow = new THREE.Mesh(
+                new THREE.CircleGeometry(0.17, 18),
+                new THREE.MeshLambertMaterial({ color: 0x2f2f2f, transparent: true, opacity: 0.28 })
+            );
+            shadow.rotation.x = -Math.PI / 2;
+            shadow.position.set(0, -0.045, 0);
+            shadow.userData = { groundFishFallback: true };
+            group.add(shadow);
+            if (spritePath) {
+                const sprite = addGroundItemSprite(group, spritePath, visual.spriteY, visual.spriteScale);
+                sprite.userData = Object.assign({}, sprite.userData, { groundFishFallback: true });
+            }
+            queueFishGroundVisualMeshes(group, itemData, visual);
+        }
+
+        function addArmorGroundVisual(group, itemData, visual) {
+            if (!group || !itemData || !visual) return;
+            const spritePath = getItemIconSpritePath(itemData);
+            const shadowRadius = Number.isFinite(visual.shadowRadius) ? visual.shadowRadius : 0.17;
+            const shadow = new THREE.Mesh(
+                new THREE.CircleGeometry(shadowRadius, 18),
+                new THREE.MeshLambertMaterial({ color: 0x2f2f2f, transparent: true, opacity: 0.24 })
+            );
+            shadow.rotation.x = -Math.PI / 2;
+            shadow.position.set(0, -0.045, 0);
+            shadow.userData = { groundArmorFallback: true };
+            group.add(shadow);
+            if (spritePath) {
+                const sprite = addGroundItemSprite(group, spritePath, visual.spriteY, visual.spriteScale);
+                sprite.userData = Object.assign({}, sprite.userData, { groundArmorFallback: true });
+            }
+            queueArmorGroundVisualMeshes(group, itemData, visual);
+        }
+
         function dropItem(invIndex) {
             const invSlot = inventory[invIndex];
             if (!invSlot) return;
@@ -2244,11 +2508,17 @@
             const equipmentMeshes = (itemData && typeof itemData.id === 'string' && typeof window.createEquipmentVisualMeshes === 'function')
                 ? window.createEquipmentVisualMeshes(itemData.id, 'axe', [0, 0, 0, 0, 0])
                 : [];
+            const fishGroundVisual = resolveFishGroundVisual(itemData);
+            const armorGroundVisual = resolveArmorGroundVisual(itemData);
             if (equipmentMeshes.length > 0) {
                 equipmentMeshes.forEach((mesh) => {
                     mesh.position.y += 0.06;
                     group.add(mesh);
                 });
+            } else if (fishGroundVisual) {
+                addFishGroundVisual(group, itemData, fishGroundVisual);
+            } else if (armorGroundVisual) {
+                addArmorGroundVisual(group, itemData, armorGroundVisual);
             } else if (itemData.id === 'iron_axe') {
                 const handleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8); handleGeo.rotateX(Math.PI / 2);
                 const handle = new THREE.Mesh(handleGeo, new THREE.MeshLambertMaterial({color: 0x5c4033}));
@@ -2270,12 +2540,7 @@
                 const coinMesh = new THREE.Mesh(coinGeo, coinMat); coinMesh.position.set(0, 0, 0);
                 group.add(coinMesh);
             } else if (itemData.id === 'ashes') {
-                const ashesPile = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.17, 0.22, 0.05, 10),
-                    new THREE.MeshLambertMaterial({ color: 0x7a7a7a })
-                );
-                ashesPile.position.set(0, -0.03, 0);
-                group.add(ashesPile);
+                addAshesGroundVisual(group, itemData);
             } else if (itemData.id === 'copper_ore' || itemData.id === 'tin_ore') {
                 const oreColor = itemData.id === 'copper_ore' ? 0xb56b3a : 0xcfd6dd;
                 const oreMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), new THREE.MeshLambertMaterial({color: 0x7c838c}));

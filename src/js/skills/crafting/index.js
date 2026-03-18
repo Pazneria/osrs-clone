@@ -649,6 +649,14 @@
                 session.nextTick = context.currentTick + (session.intervalTicks || DEFAULT_ACTION_TICKS);
                 return resolution;
             });
+        },
+
+        onAnimate(context) {
+            return false;
+        },
+
+        getAnimationSuppressEquipmentVisual() {
+            return true;
         }
     };
 

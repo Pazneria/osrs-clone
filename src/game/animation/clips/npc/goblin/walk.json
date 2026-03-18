@@ -1,0 +1,246 @@
+{
+  "clipId": "npc/goblin/walk",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 560,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "contact_left": {
+      "root": {
+        "position": {
+          "y": 0.01
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 13,
+          "y": -4
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -10
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 26,
+          "z": 10
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -12,
+          "z": -10
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -18
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -24
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -24
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": 24
+        }
+      },
+      "rightLowerLeg": {
+        "rotationDeg": {
+          "x": 22
+        }
+      }
+    },
+    "passing_left": {
+      "root": {
+        "position": {
+          "y": 0.05
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 15,
+          "y": -1
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 10,
+          "z": 6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 4,
+          "z": -6
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "rightLowerLeg": {
+        "rotationDeg": {
+          "x": 8
+        }
+      }
+    },
+    "contact_right": {
+      "root": {
+        "position": {
+          "y": 0.01
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 13,
+          "y": 4
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -10
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -12,
+          "z": 10
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 26,
+          "z": -10
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -24
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -18
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": 24
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -24
+        }
+      },
+      "leftLowerLeg": {
+        "rotationDeg": {
+          "x": 22
+        }
+      }
+    },
+    "passing_right": {
+      "root": {
+        "position": {
+          "y": 0.05
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 15,
+          "y": 1
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 4,
+          "z": 6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 10,
+          "z": -6
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": 8
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -8
+        }
+      },
+      "leftLowerLeg": {
+        "rotationDeg": {
+          "x": 8
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "contact_left",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "passing_left",
+      "atMs": 140,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "contact_right",
+      "atMs": 280,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "passing_right",
+      "atMs": 420,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "contact_left",
+      "atMs": 560,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "left_contact",
+      "atMs": 0
+    },
+    {
+      "markerId": "right_contact",
+      "atMs": 280
+    }
+  ]
+}

@@ -38,6 +38,16 @@ function run() {
   assert(catalogScript.includes("knife"), "player appearance catalog should define knife held fragments");
   assert(catalogScript.includes("oak_logs"), "player appearance catalog should define log-bundle held fragments");
   assert(catalogScript.includes("yew_logs"), "player appearance catalog should define high-tier log-bundle held fragments");
+  assert(catalogScript.includes("bronze_helmet"), "player appearance catalog should define bronze helmet head fragments");
+  assert(catalogScript.includes("rune_helmet"), "player appearance catalog should define rune helmet head fragments");
+  assert(catalogScript.includes("bronze_shield"), "player appearance catalog should define bronze shield left-hand fragments");
+  assert(catalogScript.includes("rune_shield"), "player appearance catalog should define rune shield left-hand fragments");
+  assert(catalogScript.includes("bronze_platebody"), "player appearance catalog should define bronze platebody body fragments");
+  assert(catalogScript.includes("rune_platebody"), "player appearance catalog should define rune platebody body fragments");
+  assert(catalogScript.includes("bronze_platelegs"), "player appearance catalog should define bronze platelegs leg fragments");
+  assert(catalogScript.includes("rune_platelegs"), "player appearance catalog should define rune platelegs leg fragments");
+  assert(catalogScript.includes("bronze_boots"), "player appearance catalog should define bronze boots feet fragments");
+  assert(catalogScript.includes("rune_boots"), "player appearance catalog should define rune boots feet fragments");
 
   assert(
     playerModelScript.includes("window.PlayerAppearanceCatalog"),
@@ -62,6 +72,18 @@ function run() {
   assert(
     playerModelScript.includes("PlayerAppearanceCatalog missing"),
     "player model should fail fast when catalog script is not loaded"
+  );
+  assert(
+    playerModelScript.includes("femaleFragments") && playerModelScript.includes("maleFragments"),
+    "player model should support gender-specific appearance fragments"
+  );
+  assert(
+    !playerModelScript.includes("modelIds.every((id) => id === -1)"),
+    "player model should not gate fragment-backed items on legacy model ids"
+  );
+  assert(
+    playerModelScript.includes("nodes.leftTool.visible = hasBaseToolVisual(nodes.leftTool)"),
+    "player model should restore left-hand base visuals for fragment-backed shields"
   );
 
   console.log("Player appearance catalog guard passed.");

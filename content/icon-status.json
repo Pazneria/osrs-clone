@@ -1,16 +1,16 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-17T17:22:50.262Z",
+  "generatedAt": "2026-03-17T22:14:45.826Z",
   "items": {
     "adamant_arrowheads": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_arrowheads",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_axe": {
       "assetId": "adamant_axe",
@@ -19,9 +19,9 @@
       "treatment": "bespoke"
     },
     "adamant_axe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_axe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_bar": {
       "assetId": "adamant_bar",
@@ -30,14 +30,14 @@
       "treatment": "bespoke"
     },
     "adamant_boots": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_boots",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_helmet": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_helmet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_ore": {
       "assetId": "tin_ore",
@@ -50,24 +50,24 @@
       "treatment": "bespoke"
     },
     "adamant_pickaxe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_pickaxe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_platebody": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_platebody",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_platelegs": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_platelegs",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_shield": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_shield",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "adamant_sword": {
       "assetId": "adamant_sword",
@@ -75,9 +75,9 @@
       "treatment": "bespoke"
     },
     "adamant_sword_blade": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "adamant_sword_blade",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "air_rune": {
       "assetId": "air_rune",
@@ -96,13 +96,13 @@
     },
     "ashes": {
       "assetId": "ashes",
-      "status": "todo",
+      "status": "done",
       "treatment": "bespoke"
     },
     "bait": {
       "assetId": "raw_shrimp",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "bear_leather": {
       "assetId": "tin_ore",
@@ -110,19 +110,19 @@
       "treatment": "shared"
     },
     "bow_string": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bow_string",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_arrowheads": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_arrowheads",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_axe": {
       "assetId": "bronze_axe",
@@ -131,9 +131,9 @@
       "treatment": "bespoke"
     },
     "bronze_axe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_axe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_bar": {
       "assetId": "bronze_bar",
@@ -142,14 +142,14 @@
       "treatment": "bespoke"
     },
     "bronze_boots": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_boots",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_helmet": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_helmet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_pickaxe": {
       "assetId": "bronze_pickaxe",
@@ -157,24 +157,24 @@
       "treatment": "bespoke"
     },
     "bronze_pickaxe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_pickaxe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_platebody": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_platebody",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_platelegs": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_platelegs",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_shield": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_shield",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bronze_sword": {
       "assetId": "bronze_sword",
@@ -182,14 +182,14 @@
       "treatment": "bespoke"
     },
     "bronze_sword_blade": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "bronze_sword_blade",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "burnt_salmon": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_salmon",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "burnt_shrimp": {
       "assetId": "burnt_shrimp",
@@ -198,19 +198,19 @@
       "treatment": "bespoke"
     },
     "burnt_swordfish": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_swordfish",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "burnt_trout": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_trout",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "burnt_tuna": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_tuna",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "chisel": {
       "assetId": "knife",
@@ -233,9 +233,9 @@
       "treatment": "shared"
     },
     "cooked_salmon": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_salmon",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "cooked_shrimp": {
       "assetId": "cooked_shrimp",
@@ -244,19 +244,19 @@
       "treatment": "bespoke"
     },
     "cooked_swordfish": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_swordfish",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "cooked_trout": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_trout",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "cooked_tuna": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_tuna",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "copper_ore": {
       "assetId": "copper_ore",
@@ -334,9 +334,9 @@
       "treatment": "shared"
     },
     "feathers_bundle": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "feathers_bundle",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "fire_staff": {
       "assetId": "fire_staff",
@@ -349,9 +349,9 @@
       "treatment": "bespoke"
     },
     "gold_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "gold_amulet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "gold_bar": {
       "assetId": "gold_bar",
@@ -365,14 +365,14 @@
       "treatment": "shared"
     },
     "gold_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "gold_ring",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "gold_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "gold_tiara",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "hammer": {
       "assetId": "hammer",
@@ -385,25 +385,25 @@
       "treatment": "bespoke"
     },
     "iron_arrowheads": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_arrowheads",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_axe": {
       "assetId": "iron_axe",
       "notes": "Tiered axe family silhouette.",
       "status": "done",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "iron_axe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_axe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_bar": {
       "assetId": "iron_bar",
@@ -412,14 +412,14 @@
       "treatment": "bespoke"
     },
     "iron_boots": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_boots",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_helmet": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_helmet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_ore": {
       "assetId": "copper_ore",
@@ -432,24 +432,24 @@
       "treatment": "bespoke"
     },
     "iron_pickaxe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_pickaxe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_platebody": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_platebody",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_platelegs": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_platelegs",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_shield": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_shield",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "iron_sword": {
       "assetId": "iron_sword",
@@ -457,9 +457,9 @@
       "treatment": "bespoke"
     },
     "iron_sword_blade": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "iron_sword_blade",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "knife": {
       "assetId": "knife",
@@ -484,9 +484,9 @@
       "treatment": "bespoke"
     },
     "maple_handle": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_handle",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_handle_strapped": {
       "assetId": "knife",
@@ -494,9 +494,9 @@
       "treatment": "shared"
     },
     "maple_headless_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_headless_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_logs": {
       "assetId": "maple_logs",
@@ -505,29 +505,29 @@
       "treatment": "bespoke"
     },
     "maple_longbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_longbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_longbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_longbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_shafts": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_shafts",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_shortbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_shortbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "maple_shortbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "maple_shortbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "medium_pouch": {
       "assetId": "medium_pouch",
@@ -540,14 +540,14 @@
       "treatment": "bespoke"
     },
     "mithril_arrowheads": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_arrowheads",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_axe": {
       "assetId": "mithril_axe",
@@ -556,9 +556,9 @@
       "treatment": "bespoke"
     },
     "mithril_axe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_axe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_bar": {
       "assetId": "mithril_bar",
@@ -567,14 +567,14 @@
       "treatment": "bespoke"
     },
     "mithril_boots": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_boots",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_helmet": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_helmet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_ore": {
       "assetId": "tin_ore",
@@ -587,24 +587,24 @@
       "treatment": "bespoke"
     },
     "mithril_pickaxe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_pickaxe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_platebody": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_platebody",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_platelegs": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_platelegs",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_shield": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_shield",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mithril_sword": {
       "assetId": "mithril_sword",
@@ -612,9 +612,9 @@
       "treatment": "bespoke"
     },
     "mithril_sword_blade": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "mithril_sword_blade",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "mud_rune": {
       "assetId": "mud_rune",
@@ -632,29 +632,29 @@
       "treatment": "shared"
     },
     "normal_longbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "normal_longbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "normal_longbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "normal_longbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "normal_shortbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "normal_shortbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "normal_shortbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "normal_shortbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_handle": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_handle",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_handle_strapped": {
       "assetId": "knife",
@@ -662,9 +662,9 @@
       "treatment": "shared"
     },
     "oak_headless_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_headless_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_logs": {
       "assetId": "oak_logs",
@@ -673,59 +673,59 @@
       "treatment": "bespoke"
     },
     "oak_longbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_longbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_longbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_longbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_shafts": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_shafts",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_shortbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_shortbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "oak_shortbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "oak_shortbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "plain_staff_maple": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "plain_staff_maple",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "plain_staff_oak": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "plain_staff_oak",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "plain_staff_willow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "plain_staff_willow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "plain_staff_wood": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "plain_staff_wood",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "plain_staff_yew": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "plain_staff_yew",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "raw_salmon": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "raw_salmon",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "raw_shrimp": {
       "assetId": "shrimp",
@@ -734,19 +734,19 @@
       "treatment": "bespoke"
     },
     "raw_swordfish": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "raw_swordfish",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "raw_trout": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "raw_trout",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "raw_tuna": {
-      "assetId": "raw_shrimp",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "raw_tuna",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ring_mould": {
       "assetId": "small_pouch",
@@ -784,14 +784,14 @@
       "treatment": "shared"
     },
     "rune_arrowheads": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_arrowheads",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_axe": {
       "assetId": "rune_axe",
@@ -800,9 +800,9 @@
       "treatment": "bespoke"
     },
     "rune_axe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_axe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_bar": {
       "assetId": "rune_bar",
@@ -811,9 +811,9 @@
       "treatment": "bespoke"
     },
     "rune_boots": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_boots",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_essence": {
       "assetId": "rune_essence",
@@ -826,9 +826,9 @@
       "treatment": "bespoke"
     },
     "rune_helmet": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_helmet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_ore": {
       "assetId": "rune_essence",
@@ -841,24 +841,24 @@
       "treatment": "bespoke"
     },
     "rune_pickaxe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_pickaxe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_platebody": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_platebody",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_platelegs": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_platelegs",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_shield": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_shield",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_sword": {
       "assetId": "rune_sword",
@@ -866,9 +866,9 @@
       "treatment": "bespoke"
     },
     "rune_sword_blade": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "rune_sword_blade",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "sapphire_gold_amulet": {
       "assetId": "coins",
@@ -901,9 +901,9 @@
       "treatment": "shared"
     },
     "silver_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "silver_amulet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "silver_bar": {
       "assetId": "silver_bar",
@@ -917,14 +917,14 @@
       "treatment": "shared"
     },
     "silver_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "silver_ring",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "silver_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "silver_tiara",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "small_net": {
       "assetId": "small_net",
@@ -952,14 +952,14 @@
       "treatment": "bespoke"
     },
     "steel_arrowheads": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_arrowheads",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_axe": {
       "assetId": "steel_axe",
@@ -968,9 +968,9 @@
       "treatment": "bespoke"
     },
     "steel_axe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_axe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_bar": {
       "assetId": "steel_bar",
@@ -979,14 +979,14 @@
       "treatment": "bespoke"
     },
     "steel_boots": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_boots",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_helmet": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_helmet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_pickaxe": {
       "assetId": "steel_pickaxe",
@@ -994,24 +994,24 @@
       "treatment": "bespoke"
     },
     "steel_pickaxe_head": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_pickaxe_head",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_platebody": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_platebody",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_platelegs": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_platelegs",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_shield": {
-      "assetId": "iron_axe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_shield",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "steel_sword": {
       "assetId": "steel_sword",
@@ -1019,9 +1019,9 @@
       "treatment": "bespoke"
     },
     "steel_sword_blade": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "steel_sword_blade",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "thread": {
       "assetId": "tin_ore",
@@ -1075,9 +1075,9 @@
       "treatment": "bespoke"
     },
     "willow_handle": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_handle",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_handle_strapped": {
       "assetId": "knife",
@@ -1085,9 +1085,9 @@
       "treatment": "shared"
     },
     "willow_headless_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_headless_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_logs": {
       "assetId": "willow_logs",
@@ -1096,29 +1096,29 @@
       "treatment": "bespoke"
     },
     "willow_longbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_longbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_longbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_longbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_shafts": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_shafts",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_shortbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_shortbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "willow_shortbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "willow_shortbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "wolf_leather": {
       "assetId": "tin_ore",
@@ -1126,9 +1126,9 @@
       "treatment": "shared"
     },
     "wooden_handle": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "wooden_handle",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "wooden_handle_strapped": {
       "assetId": "knife",
@@ -1136,19 +1136,19 @@
       "treatment": "shared"
     },
     "wooden_headless_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "wooden_headless_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "wooden_shafts": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "wooden_shafts",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_handle": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_handle",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_handle_strapped": {
       "assetId": "knife",
@@ -1156,9 +1156,9 @@
       "treatment": "shared"
     },
     "yew_headless_arrows": {
-      "assetId": "tin_ore",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_headless_arrows",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_logs": {
       "assetId": "yew_logs",
@@ -1167,29 +1167,29 @@
       "treatment": "bespoke"
     },
     "yew_longbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_longbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_longbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_longbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_shafts": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_shafts",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_shortbow": {
-      "assetId": "pickaxe",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_shortbow",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "yew_shortbow_u": {
-      "assetId": "knife",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "yew_shortbow_u",
+      "status": "done",
+      "treatment": "bespoke"
     }
   }
 }

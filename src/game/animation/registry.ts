@@ -15,10 +15,16 @@ import fishingHarpoonHold1ClipJson from "./clips/player/fishing_harpoon_hold1.js
 import fishingHarpoonStrike1ClipJson from "./clips/player/fishing_harpoon_strike1.json";
 import woodcutting1ClipJson from "./clips/player/woodcutting1.json";
 import cooking1ClipJson from "./clips/player/cooking1.json";
+import crafting1ClipJson from "./clips/player/crafting1.json";
+import runecrafting1ClipJson from "./clips/player/runecrafting1.json";
 import firemaking1ClipJson from "./clips/player/firemaking1.json";
 import fletching1ClipJson from "./clips/player/fletching1.json";
 import smithingSmelting1ClipJson from "./clips/player/smithing_smelting1.json";
 import smithingForging1ClipJson from "./clips/player/smithing_forging1.json";
+import goblinIdleClipJson from "./clips/npc/goblin/idle.json";
+import goblinWalkClipJson from "./clips/npc/goblin/walk.json";
+import goblinAttackClipJson from "./clips/npc/goblin/attack.json";
+import goblinHitClipJson from "./clips/npc/goblin/hit.json";
 
 interface AnimationClipRecord {
   descriptor: AnimationClipDescriptor;
@@ -132,6 +138,22 @@ const clipRecords: AnimationClipRecord[] = [
   },
   {
     descriptor: {
+      clipId: "player/crafting1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/crafting1.json"
+    },
+    clip: crafting1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/runecrafting1",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/runecrafting1.json"
+    },
+    clip: runecrafting1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
       clipId: "player/firemaking1",
       rigId: "player_humanoid_v1",
       sourcePath: "src/game/animation/clips/player/firemaking1.json"
@@ -161,6 +183,38 @@ const clipRecords: AnimationClipRecord[] = [
       sourcePath: "src/game/animation/clips/player/smithing_forging1.json"
     },
     clip: smithingForging1ClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/goblin/idle",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/goblin/idle.json"
+    },
+    clip: goblinIdleClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/goblin/walk",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/goblin/walk.json"
+    },
+    clip: goblinWalkClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/goblin/attack",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/goblin/attack.json"
+    },
+    clip: goblinAttackClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/goblin/hit",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/goblin/hit.json"
+    },
+    clip: goblinHitClipJson as AnimationClip
   }
 ];
 

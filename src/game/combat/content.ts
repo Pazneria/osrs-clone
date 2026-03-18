@@ -148,7 +148,9 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 3,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "goblin",
+      animationSetId: "goblin_basic"
     },
     stats: {
       hitpoints: 8,
@@ -777,6 +779,7 @@ export function createEnemyRuntimeState(
       : (Number.isFinite(definition.appearance.facingYaw) ? Number(definition.appearance.facingYaw) : Math.PI),
     respawnAtTick: currentTick > 0 ? currentTick : null,
     lastDamagerId: null,
-    attackTriggerAt: 0
+    attackTriggerAt: 0,
+    hitReactionTriggerAt: 0
   };
 }
