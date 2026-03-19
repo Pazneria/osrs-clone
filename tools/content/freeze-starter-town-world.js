@@ -210,6 +210,15 @@ function buildFrozenStarterTownWorld(root) {
   const frozenServices = [];
   const dynamicMerchantIds = new Set(freezeConfig.runecraftingMerchants.map((entry) => String(entry.merchantId || "").trim().toLowerCase()).filter(Boolean));
   const sourceServices = Array.isArray(world.services) ? world.services : [];
+  const authoredServicesById = new Map();
+  const authoredServicesByMerchantId = new Map();
+  for (let i = 0; i < sourceServices.length; i++) {
+    const service = sourceServices[i];
+    if (!service || !service.serviceId) continue;
+    authoredServicesById.set(String(service.serviceId).trim().toLowerCase(), service);
+    const merchantId = String(service.merchantId || "").trim().toLowerCase();
+    if (merchantId) authoredServicesByMerchantId.set(merchantId, service);
+  }
   for (let i = 0; i < sourceServices.length; i++) {
     const service = sourceServices[i];
     const merchantId = String(service && service.merchantId || "").trim().toLowerCase();
@@ -221,9 +230,15 @@ function buildFrozenStarterTownWorld(root) {
   }
   for (let i = 0; i < skillWorldArtifacts.runtimeMerchantServices.length; i++) {
     const service = skillWorldArtifacts.runtimeMerchantServices[i];
+    const authoredService = authoredServicesById.get(String(service && service.serviceId || "").trim().toLowerCase())
+      || authoredServicesByMerchantId.get(String(service && service.merchantId || "").trim().toLowerCase())
+      || null;
     frozenServices.push({
       ...service,
-      tags: Array.isArray(service.tags) ? service.tags.slice() : []
+      ...(authoredService ? authoredService : null),
+      tags: Array.isArray(authoredService && authoredService.tags)
+        ? authoredService.tags.slice()
+        : (Array.isArray(service.tags) ? service.tags.slice() : [])
     });
   }
 

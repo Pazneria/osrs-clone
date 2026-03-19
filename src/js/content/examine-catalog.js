@@ -158,6 +158,13 @@
         return String(name || '').replace(/\s+\(\d+\)\s*$/, '').trim();
     }
 
+    function formatEnemyLabel(name, combatLevel) {
+        const enemyName = cleanName(name) || 'Enemy';
+        const level = Number.isFinite(combatLevel) ? Math.max(1, Math.floor(combatLevel)) : null;
+        if (level === null) return enemyName;
+        return `Lv ${level} ${enemyName}`;
+    }
+
     function findItemIdByName(name) {
         const targetName = cleanName(name).toLowerCase();
         if (!targetName || !window.ItemCatalog || !window.ItemCatalog.ITEM_DEFS) return null;
@@ -200,6 +207,19 @@
         return DEFAULT_TARGET_EXAMINE;
     }
 
+    function getEnemyExamine(options = {}) {
+        const enemyName = cleanName(options.name) || 'Enemy';
+        const enemyKey = enemyName.toLowerCase();
+        const enemyLevel = Number.isFinite(options.combatLevel) ? Math.max(1, Math.floor(options.combatLevel)) : null;
+        const enemyLabel = formatEnemyLabel(enemyName, enemyLevel);
+        const enemyFlavor = enemyKey && EXAMINE_TEXT_BY_ENEMY_NAME[enemyKey]
+            ? EXAMINE_TEXT_BY_ENEMY_NAME[enemyKey]
+            : null;
+
+        if (enemyFlavor) return `${enemyLabel}. ${enemyFlavor}`;
+        return `${enemyLabel} looks ready for a fight.`;
+    }
+
     function getTargetExamine(targetType, options = {}) {
         const type = String(targetType || '').toUpperCase();
         if (type === 'NPC') return getNpcExamine(options.name);
@@ -209,8 +229,7 @@
             return 'An elemental altar humming with energy.';
         }
         if (type === 'ENEMY') {
-            const enemyKey = cleanName(options.name).toLowerCase();
-            if (enemyKey && EXAMINE_TEXT_BY_ENEMY_NAME[enemyKey]) return EXAMINE_TEXT_BY_ENEMY_NAME[enemyKey];
+            return getEnemyExamine(options);
         }
         if (type === 'ROCK') {
             const oreKey = String(options.oreType || '').toLowerCase();

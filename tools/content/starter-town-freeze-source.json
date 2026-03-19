@@ -167,6 +167,7 @@
       "name": "Rune Tutor",
       "npcType": 3,
       "action": "Trade",
+      "dialogueId": "rune_tutor",
       "anchorRouteId": "water_altar",
       "tags": ["merchant", "runecrafting", "starter"]
     },
@@ -179,6 +180,7 @@
       "name": "Combination Sage",
       "npcType": 6,
       "action": "Trade",
+      "dialogueId": "combination_sage",
       "anchorRouteId": "air_altar",
       "tags": ["merchant", "runecrafting", "starter"]
     }

@@ -9,6 +9,8 @@ import type {
   ProgressSavePayload,
   ProgressSaveReadResult,
   ProgressSaveWriteResult,
+  QuestProgressState,
+  QuestStatus,
   SaveAppearanceState,
   SerializedItemSlot,
   StorageLike
@@ -18,7 +20,8 @@ import {
   cloneAppearanceState,
   cloneContentGrantState,
   clonePlayerProfileState,
-  clonePlayerSkillsState
+  clonePlayerSkillsState,
+  cloneQuestProgressState
 } from "./progress";
 
 function cloneUnlockFlags(unlockFlags: PlayerUnlockFlags): PlayerUnlockFlags {
@@ -45,6 +48,7 @@ export function buildProgressSavePayload(options: {
   equipment: Record<string, string | null>;
   userItemPrefs: Record<string, string>;
   contentGrants: ContentGrantState;
+  quests: QuestProgressState;
   profile: PlayerProfileState;
   appearance: SaveAppearanceState | null;
 }): ProgressSavePayload {
@@ -80,6 +84,7 @@ export function buildProgressSavePayload(options: {
       equipment: cloneEquipmentState(options.equipment),
       userItemPrefs: { ...options.userItemPrefs },
       contentGrants: cloneContentGrantState(options.contentGrants),
+      quests: cloneQuestProgressState(options.quests),
       runMode: !!session.ui.runMode,
       profile: clonePlayerProfileState(options.profile),
       appearance: cloneAppearanceState(options.appearance)
@@ -202,5 +207,78 @@ export function sanitizeUnlockFlags(
     if ((savedFlags as Record<string, unknown>)[key] === undefined) continue;
     restored[key] = !!(savedFlags as Record<string, unknown>)[key];
   }
+  return restored;
+}
+
+function sanitizeQuestStatus(value: unknown): QuestStatus {
+  if (value === "active" || value === "ready_to_complete" || value === "completed") return value;
+  return "not_started";
+}
+
+export function sanitizeQuestProgressState(savedQuests: unknown): QuestProgressState {
+  const restored: QuestProgressState = {};
+  if (!savedQuests || typeof savedQuests !== "object") return restored;
+
+  const questIds = Object.keys(savedQuests as Record<string, unknown>);
+  for (let i = 0; i < questIds.length; i++) {
+    const rawQuestId = String(questIds[i] || "").trim();
+    if (!rawQuestId) continue;
+
+    const entry = (savedQuests as Record<string, unknown>)[questIds[i]];
+    if (!entry || typeof entry !== "object") continue;
+
+    const objectiveStates: Record<string, { current: number; target: number; completed: boolean } | undefined> = {};
+    const savedObjectiveStates = (entry as { objectiveStates?: unknown }).objectiveStates;
+    if (savedObjectiveStates && typeof savedObjectiveStates === "object") {
+      const objectiveIds = Object.keys(savedObjectiveStates as Record<string, unknown>);
+      for (let j = 0; j < objectiveIds.length; j++) {
+        const rawObjectiveId = String(objectiveIds[j] || "").trim();
+        if (!rawObjectiveId) continue;
+
+        const objective = (savedObjectiveStates as Record<string, unknown>)[objectiveIds[j]];
+        if (!objective || typeof objective !== "object") continue;
+
+        objectiveStates[rawObjectiveId] = {
+          current: Number.isFinite((objective as { current?: unknown }).current)
+            ? Math.max(0, Math.floor(Number((objective as { current?: unknown }).current)))
+            : 0,
+          target: Number.isFinite((objective as { target?: unknown }).target)
+            ? Math.max(0, Math.floor(Number((objective as { target?: unknown }).target)))
+            : 0,
+          completed: !!(objective as { completed?: unknown }).completed
+        };
+      }
+    }
+
+    const flags: Record<string, boolean | undefined> = {};
+    const savedFlags = (entry as { flags?: unknown }).flags;
+    if (savedFlags && typeof savedFlags === "object") {
+      const flagIds = Object.keys(savedFlags as Record<string, unknown>);
+      for (let j = 0; j < flagIds.length; j++) {
+        const rawFlagId = String(flagIds[j] || "").trim();
+        if (!rawFlagId) continue;
+        flags[rawFlagId] = !!(savedFlags as Record<string, unknown>)[flagIds[j]];
+      }
+    }
+
+    restored[rawQuestId] = {
+      status: sanitizeQuestStatus((entry as { status?: unknown }).status),
+      startedAt: Number.isFinite((entry as { startedAt?: unknown }).startedAt)
+        ? Math.max(0, Math.floor(Number((entry as { startedAt?: unknown }).startedAt)))
+        : null,
+      updatedAt: Number.isFinite((entry as { updatedAt?: unknown }).updatedAt)
+        ? Math.max(0, Math.floor(Number((entry as { updatedAt?: unknown }).updatedAt)))
+        : null,
+      completedAt: Number.isFinite((entry as { completedAt?: unknown }).completedAt)
+        ? Math.max(0, Math.floor(Number((entry as { completedAt?: unknown }).completedAt)))
+        : null,
+      activeStepId: typeof (entry as { activeStepId?: unknown }).activeStepId === "string"
+        ? String((entry as { activeStepId?: unknown }).activeStepId).trim() || null
+        : null,
+      objectiveStates,
+      flags
+    };
+  }
+
   return restored;
 }

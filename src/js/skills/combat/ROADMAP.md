@@ -2,7 +2,7 @@
 
 ## Canonical Runtime Source
 
-Combat runtime contracts live in `src/game/contracts/combat.ts`, enemy/drop/spawn content currently lives in `src/game/combat/content.ts`, and the shared melee formulas live in `src/game/combat/formulas.ts`.
+Combat runtime contracts live in `src/game/contracts/combat.ts`, the world-authored spawn topology is treated as the source of truth for encounter placement, and the combat content layer mirrors that authored layout through `src/game/combat/content.ts` and the shared melee formulas in `src/game/combat/formulas.ts`.
 The imported spec copies in this folder are the canonical design references for the current melee rollout.
 
 ## Purpose
@@ -19,7 +19,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | --- | --- |
 | Combat Core | Shared tick timing, target validation, cooldown countdown, same-tick batch resolution, damage/heal application, death interruption |
 | Melee | Player melee formulas, item attack profiles, melee style selection, melee equipment requirements |
-| Enemy Runtime | Enemy type definitions, spawn nodes, aggro/chase/reset behavior, drops, respawns, world-instance runtime state |
+| Enemy Runtime | Enemy type definitions, world-authored spawn nodes, aggro/chase/reset behavior, drops, respawns, world-instance runtime state |
 | Encounter Content | Enemy placement, spawn-group layout, safe-route spacing, region-by-region combat population, encounter readability |
 | Loot / Drop Authoring | Drop-table structure, drop-rate bands, item/coin value alignment, region-specific progression rewards |
 | Combat UI / Feedback | Current target surfacing, hitpoint state, hitsplats, attack timing clarity, player combat-state messaging |
@@ -35,11 +35,11 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Passive rat + aggressive goblin enemy content | Complete |
 | Placeholder combat removal (`DUMMY`, `owie`, old combat sim) | Complete |
 | Combat-focused tests and rollout guards | Complete |
-| Starter-town encounter authoring pass | Now |
+| Starter-town encounter authoring pass | Complete |
 | First-pass melee-only enemy template rollout beyond rat/goblin | Complete |
 | Loot-table and drop-band authoring pass | Now |
-| Spawn-node / spawn-group authoring pass | Now |
-| Combat content validation and perf-gate pass | Now |
+| Spawn-node / spawn-group authoring pass | Complete |
+| Combat content validation and perf-gate pass | Complete |
 | Combat HUD/target feedback pass | Complete |
 
 ## Data Contracts
@@ -64,7 +64,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 
 ### Encounter Authoring
 
-- Combat content is authored into the world through explicit spawn nodes and spawn groups rather than piggybacking on merchant/travel NPC descriptors.
+- Combat content is authored into the world through explicit spawn nodes and spawn groups, with the world region layer acting as the source of truth for encounter topology rather than piggybacking on merchant/travel NPC descriptors.
 - The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, respawn ticks, facing yaw, enabled state, and spawn-group id.
 - The roadmap leaves room to extend encounter authoring later with patrol routes, density caps, safe-distance-from-route rules, and local drop overrides where needed.
 - In the first pass, spawn groups are organizational/content-authoring helpers only and do not automatically imply shared aggro, ally assist, shared respawn, or formation logic.
@@ -255,6 +255,7 @@ They should:
 - Passive spawns can sit closer to safe paths, but should still avoid cluttering the main readability of town hubs.
 - Multi-enemy pockets need enough separation that one pull does not accidentally become an unreadable dogpile.
 - Home tiles and chase ranges should be authored with the surrounding terrain in mind, not left at arbitrary defaults.
+- Starter-town encounter pockets should stay within the world-authored route buffers and the combat topology/perf guard should catch unsafe spacing before the layout drifts.
 
 ### Spawn Group Plan
 
@@ -356,8 +357,9 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 - Combat tick cost should stay stable when enemies are idle, pursuing, and attacking.
 - Enemy occupancy and minimap/world updates should only invalidate when combat actors actually move or change state.
-- Every authored combat spawn should validate required fields and resolve to a known enemy type.
+- Every authored combat spawn should validate required fields, resolve to a known enemy type, and stay inside the authored world encounter topology.
 - Starter-town encounter layouts should be manually checked for safe-routing, aggro readability, and pathing edge cases.
+- The encounter topology/perf guard should cover spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, and local path-budget estimates.
 - Same-tick combat rules should remain covered by automated tests as the enemy roster expands.
 - Manual-movement lock break, auto-retaliate choice rules, hit-aggro cooldown = `1`, and temporary-occupancy-vs-hard-no-path behavior should remain explicitly regression-tested.
 - Combat/eating interaction should remain regression-tested against the shared same-tick restriction rules.

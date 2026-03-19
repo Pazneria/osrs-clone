@@ -149,6 +149,26 @@
             </div>
         </div>
 
+        <!-- NPC Dialogue Overlay -->
+        <div id="npc-dialogue-overlay" class="hidden pointer-events-auto absolute inset-0 z-[255] bg-black/45 flex items-center justify-center p-3">
+            <div class="w-[500px] max-w-[calc(100vw-1.5rem)] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.85)] flex flex-col">
+                <div class="flex items-center justify-between px-3 py-2 bg-[#2c241c] border-b border-[#3e3529]">
+                    <div>
+                        <div id="npc-dialogue-title" class="text-[#ff981f] font-bold text-sm uppercase tracking-wide">Conversation</div>
+                        <div class="text-[10px] text-[#c8aa6e] uppercase tracking-[0.18em]">Talk-to</div>
+                    </div>
+                    <button id="npc-dialogue-close" type="button" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
+                </div>
+                <div class="p-3 text-sm text-[#f3e4c3] space-y-3">
+                    <div id="npc-dialogue-body" class="min-h-[64px] leading-6">They do not have much to say right now.</div>
+                    <div id="npc-dialogue-options" class="grid gap-2"></div>
+                </div>
+                <div class="px-3 py-2 border-t border-[#3e3529] text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">
+                    Press Esc or click outside to close.
+                </div>
+            </div>
+        </div>
+
         <!-- Bottom Right Container (Tabbed Inventory / Equipment) -->
         <div id="main-ui-container" data-active-tab="inv" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
             <button id="runToggleBtn" class="absolute -left-16 bottom-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-50 text-gray-200" title="Run Mode: OFF" aria-label="Run toggle">
@@ -177,6 +197,7 @@
                 <button id="tab-equip" title="Equipment" aria-label="Equipment" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M5 4L8 2l3 2 2 1v3l-2 1v5H5V9L3 8V5l2-1z"></path></svg></button>
                 <button id="tab-combat" title="Combat" aria-label="Combat" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="square" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 2 2-4 4-1 4 4-1 4-4 2 2"></path><path d="m9 3 4 4"></path></svg></button>
                 <button id="tab-stats" title="Stats" aria-label="Stats" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true"><path d="M2 13.5h12"></path><rect x="3" y="9" width="2.2" height="4"></rect><rect x="6.8" y="7" width="2.2" height="6"></rect><rect x="10.6" y="4" width="2.2" height="9"></rect></svg></button>
+                <button id="tab-quests" title="Quests" aria-label="Quests" class="tab-icon-btn flex-1 py-1.5 text-xs font-bold text-gray-500 bg-[#1e2328] hover:bg-[#2a3138] transition-colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square" stroke-linejoin="round" aria-hidden="true"><path d="M4 2.5h6.5L13 5v8.5H4z"></path><path d="M10.5 2.5V5H13"></path><path d="M6 8h5"></path><path d="M6 10.5h5"></path><path d="M6 13h3.5"></path></svg></button>
                 <button id="btn-expand" class="px-2 bg-[#111418] text-[#c8aa6e] hover:bg-[#1a1f24] transition-colors text-sm font-bold border-l border-[#c8aa6e]" title="Toggle UI Size">?</button>
             </div>
 
@@ -269,6 +290,9 @@
                 <div id="view-stats" class="hidden grid-cols-3 gap-1 place-items-center w-full content-start h-full">
                     <!-- Skill tiles are rendered from SkillManifest in inventory.js -->
                 </div>
+
+                <!-- View: Quests -->
+                <div id="view-quests" class="hidden flex-col h-full w-full gap-3 text-[11px] text-gray-200"></div>
             </div>
         </div>
         <!-- Chat Box -->

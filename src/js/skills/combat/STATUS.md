@@ -7,15 +7,15 @@
 - [x] COMBAT-002: Shipped the first player melee slice with saved combat state, melee-style persistence, and equip/use gating from explicit combat item data.
 - [x] COMBAT-003: Shipped the first melee-only enemy slice with passive/aggressive enemy templates, chase/reset behavior, respawns, loot, combat-driven render hooks, and starter-town rat/goblin world placements.
 - [x] COMBAT-004: Removed the placeholder combat path entirely (`DUMMY`, `owie`, and the old combat simulator/tooling) so the new melee runtime is the only live combat route.
+- [x] COMBAT-005: Finished the starter-town combat encounter pass so safe pockets, readable enemy spacing, and route buffers are now authored directly in world content.
 - [x] COMBAT-006: Expanded first-pass melee enemy runtime content to include `Chicken`, `Boar`, `Wolf`, `Guard`, `Bear`, `Heavy Brute`, and `Fast Striker` with authored combat stats, behavior, respawn timing, and weighted drop tables.
+- [x] COMBAT-008: Authored starter-town spawn nodes and spawn groups as the world-facing source of truth for encounter placement.
+- [x] COMBAT-009: Added combat content validation and perf gates for spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, pathfinding load, and tick hitching.
 - [x] COMBAT-012: Added a live combat-status HUD panel that surfaces player/target HP, focus, range, and both swing cooldowns directly from the typed UI/combat runtime.
 - [x] COMBAT-010A: Added regression guard coverage for same-tick eat restrictions and stale eat-cooldown sanitization so persisted cooldown ticks cannot lock food usage across session reloads.
 
 ## Now
-- [ ] COMBAT-005: Run a starter-town combat encounter pass so enemy pockets, aggro spacing, and safe non-combat routes are clearly authored in-world.
 - [ ] COMBAT-007: Lock first-pass loot table bands and drop authoring rules so enemy drops support melee progression, economy pacing, and downstream item loops.
-- [ ] COMBAT-008: Author spawn nodes and spawn groups for starter-town and first outer-road combat spaces, including safe-route spacing, encounter pockets, and leash/home placement.
-- [ ] COMBAT-009: Add combat content validation and perf gates for spawn density, pathfinding load, tick hitching, loot-table sanity, and authored combat-region coverage.
 - [ ] COMBAT-010: Run a combat-core parity pass for target-lock edge cases and shared rules that the specs treat as non-optional, including manual-movement lock break, cooldown persistence on break, hard-no-path vs temporary occupancy, auto-retaliate rules, hit-aggro cooldown = 1, and same-tick eat restrictions.
 
 ## Next

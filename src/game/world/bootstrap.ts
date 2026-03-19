@@ -7,6 +7,7 @@ import type {
 
 import { getWorldDefinition, getWorldStamps } from "./authoring";
 import {
+  cloneCombatSpawnNode,
   cloneMiningNodePlacement,
   cloneNpcDescriptor,
   cloneRouteDescriptor,
@@ -61,6 +62,7 @@ function buildStaticBootstrap(worldId: string, definition: WorldDefinition): Wor
       waterBodies: waterBodies.map(cloneWaterBodyDefinition),
       generalStoreService: staticServices.find((service) => service.merchantId === "general_store") || null,
       staticMerchants: staticServices.filter((service) => service.type === "MERCHANT"),
+      combatSpawnNodes: definition.combatSpawns.map(cloneCombatSpawnNode),
       smithingStations: staticServices.filter((service) => service.type === "FURNACE" || service.type === "ANVIL"),
       fishingRoutes: definition.skillRoutes.fishing.map(cloneRouteDescriptor),
       cookingRoutes: definition.skillRoutes.cooking.map(cloneSkillRouteWithFireTiles),

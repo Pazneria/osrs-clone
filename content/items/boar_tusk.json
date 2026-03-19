@@ -1,0 +1,18 @@
+{
+  "id": "boar_tusk",
+  "name": "Boar Tusk",
+  "type": "resource",
+  "stackable": false,
+  "value": 10,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/boar_tusk.png",
+    "model": "assets/models/boar_tusk.obj",
+    "groundModel": "assets/models/boar_tusk-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

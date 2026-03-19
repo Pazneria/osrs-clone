@@ -1,0 +1,18 @@
+{
+  "id": "goblin_club",
+  "name": "Goblin Club",
+  "type": "resource",
+  "stackable": false,
+  "value": 8,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/goblin_club.png",
+    "model": "assets/models/goblin_club.obj",
+    "groundModel": "assets/models/goblin_club-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

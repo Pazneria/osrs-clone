@@ -44,6 +44,8 @@ function renderPlacementToNpcDescriptor(entry: LegacyNpcRenderPlacement, index: 
     y: entry.y,
     z: entry.z,
     merchantId: entry.merchantId,
+    appearanceId: typeof entry.appearanceId === "string" ? entry.appearanceId.trim().toLowerCase() || null : null,
+    dialogueId: typeof entry.dialogueId === "string" ? entry.dialogueId.trim() || null : null,
     action: entry.action || "Trade",
     facingYaw: entry.facingYaw,
     tags: Array.isArray(entry.tags) ? entry.tags.slice() : []
@@ -71,6 +73,8 @@ export function createRuntimePublishResult(
       y: generalStoreService.y,
       z: generalStoreZ,
       merchantId: generalStoreService.merchantId,
+      appearanceId: typeof generalStoreService.appearanceId === "string" ? generalStoreService.appearanceId.trim().toLowerCase() || null : null,
+      dialogueId: typeof generalStoreService.dialogueId === "string" ? generalStoreService.dialogueId.trim() || null : null,
       action: generalStoreService.action || "Trade",
       tags: Array.isArray(generalStoreService.tags) ? generalStoreService.tags.slice() : []
     });

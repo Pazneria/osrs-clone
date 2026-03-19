@@ -1,6 +1,7 @@
 const DEFAULT_CODEX_BASE_PATH = "/osrs-clone-codex/";
 
 const ENTITY_SEGMENTS = Object.freeze({
+  enemy: "enemies",
   item: "items",
   skill: "skills",
   world: "world"
@@ -21,6 +22,7 @@ function normalizeCodexBasePath(basePath = DEFAULT_CODEX_BASE_PATH) {
 
 function normalizeCodexEntityType(entityType) {
   const normalized = String(entityType || "").trim().toLowerCase();
+  if (normalized === "enemy" || normalized === "enemies") return "enemy";
   if (normalized === "item" || normalized === "items") return "item";
   if (normalized === "skill" || normalized === "skills") return "skill";
   if (normalized === "world" || normalized === "worlds") return "world";
@@ -69,6 +71,7 @@ function getCodexRouteTemplates(basePath = DEFAULT_CODEX_BASE_PATH) {
   const normalizedBasePath = normalizeCodexBasePath(basePath);
   return {
     home: normalizedBasePath,
+    enemy: `${normalizedBasePath}${ENTITY_SEGMENTS.enemy}/:enemyId`,
     item: `${normalizedBasePath}${ENTITY_SEGMENTS.item}/:itemId`,
     skill: `${normalizedBasePath}${ENTITY_SEGMENTS.skill}/:skillId`,
     world: `${normalizedBasePath}${ENTITY_SEGMENTS.world}/:worldId`

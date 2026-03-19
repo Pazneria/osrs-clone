@@ -6,6 +6,7 @@ import type {
   MeleeStyleId,
   PlayerCombatStateShape
 } from "../contracts/combat";
+import { buildWorldBootstrapResult } from "../world/bootstrap";
 
 export const COMBAT_SPEC_VERSION = "2026.03.c1";
 export const DEFAULT_MELEE_STYLE: MeleeStyleId = "attack";
@@ -36,6 +37,10 @@ function cloneSpawnNode(definition: EnemySpawnNodeDefinition): EnemySpawnNodeDef
       : null
   };
 }
+
+type AuthoredCombatWorldDefinition = {
+  combatSpawns?: EnemySpawnNodeDefinition[] | null;
+};
 
 const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
   enemy_rat: {
@@ -77,8 +82,15 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     respawnTicks: 20,
     dropTable: [
       {
+        kind: "item",
+        itemId: "rat_tail",
+        weight: 35,
+        minAmount: 1,
+        maxAmount: 1
+      },
+      {
         kind: "nothing",
-        weight: 100
+        weight: 65
       }
     ]
   },
@@ -87,7 +99,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Chicken",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "chicken",
       facingYaw: Math.PI
     },
     stats: {
@@ -120,10 +132,9 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     },
     respawnTicks: 20,
     dropTable: [
-      // TODO(COMBAT-007): replace shared raw_shrimp placeholders with dedicated raw_chicken/raw_meat drops once those item IDs exist.
       {
         kind: "item",
-        itemId: "raw_shrimp",
+        itemId: "raw_chicken",
         weight: 55,
         minAmount: 1,
         maxAmount: 1
@@ -184,9 +195,16 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     dropTable: [
       {
         kind: "coins",
-        weight: 50,
+        weight: 45,
         minAmount: 2,
         maxAmount: 5
+      },
+      {
+        kind: "item",
+        itemId: "goblin_club",
+        weight: 12,
+        minAmount: 1,
+        maxAmount: 1
       },
       {
         kind: "item",
@@ -211,7 +229,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
       },
       {
         kind: "nothing",
-        weight: 25
+        weight: 18
       }
     ]
   },
@@ -255,21 +273,21 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     dropTable: [
       {
         kind: "item",
-        itemId: "raw_shrimp",
-        weight: 55,
+        itemId: "raw_boar_meat",
+        weight: 60,
         minAmount: 1,
         maxAmount: 1
       },
       {
         kind: "item",
-        itemId: "normal_leather",
-        weight: 30,
+        itemId: "boar_tusk",
+        weight: 20,
         minAmount: 1,
         maxAmount: 1
       },
       {
         kind: "nothing",
-        weight: 15
+        weight: 20
       }
     ]
   },
@@ -313,21 +331,21 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     dropTable: [
       {
         kind: "item",
-        itemId: "raw_shrimp",
-        weight: 45,
+        itemId: "raw_wolf_meat",
+        weight: 55,
         minAmount: 1,
         maxAmount: 1
       },
       {
         kind: "item",
-        itemId: "wolf_leather",
-        weight: 40,
+        itemId: "wolf_fang",
+        weight: 20,
         minAmount: 1,
         maxAmount: 1
       },
       {
         kind: "nothing",
-        weight: 15
+        weight: 25
       }
     ]
   },
@@ -338,7 +356,9 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 2,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "guard",
+      animationSetId: "guard_basic"
     },
     stats: {
       hitpoints: 14,
@@ -372,21 +392,35 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     dropTable: [
       {
         kind: "coins",
-        weight: 45,
+        weight: 40,
         minAmount: 5,
         maxAmount: 10
       },
       {
         kind: "item",
+        itemId: "guard_spear",
+        weight: 8,
+        minAmount: 1,
+        maxAmount: 1
+      },
+      {
+        kind: "item",
+        itemId: "guard_crest",
+        weight: 5,
+        minAmount: 1,
+        maxAmount: 1
+      },
+      {
+        kind: "item",
         itemId: "bronze_sword",
-        weight: 12,
+        weight: 10,
         minAmount: 1,
         maxAmount: 1
       },
       {
         kind: "item",
         itemId: "bronze_axe",
-        weight: 8,
+        weight: 10,
         minAmount: 1,
         maxAmount: 1
       },
@@ -420,7 +454,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
       },
       {
         kind: "nothing",
-        weight: 12
+        weight: 4
       }
     ]
   },
@@ -673,77 +707,6 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
   }
 };
 
-const WORLD_ENEMY_SPAWNS: Record<string, EnemySpawnNodeDefinition[]> = {
-  starter_town: [
-    {
-      spawnNodeId: "enemy_spawn_rat_south_field",
-      enemyId: "enemy_rat",
-      spawnTile: { x: 194, y: 220, z: 0 },
-      homeTileOverride: null,
-      roamingRadiusOverride: 15,
-      respawnTicks: 20,
-      spawnEnabled: true,
-      facingYaw: Math.PI,
-      spawnGroupId: "starter_field"
-    },
-    {
-      spawnNodeId: "enemy_spawn_goblin_east_path",
-      enemyId: "enemy_goblin_grunt",
-      spawnTile: { x: 240, y: 200, z: 0 },
-      homeTileOverride: null,
-      roamingRadiusOverride: 15,
-      respawnTicks: 34,
-      spawnEnabled: true,
-      facingYaw: Math.PI,
-      spawnGroupId: "starter_road"
-    },
-    {
-      spawnNodeId: "enemy_spawn_training_dummy_hub",
-      enemyId: "enemy_training_dummy",
-      spawnTile: { x: 210, y: 211, z: 0 },
-      homeTileOverride: null,
-      roamingRadiusOverride: 0,
-      respawnTicks: 8,
-      spawnEnabled: true,
-      facingYaw: Math.PI,
-      spawnGroupId: "starter_training"
-    },
-    {
-      spawnNodeId: "enemy_spawn_guard_east_outpost_northwest",
-      enemyId: "enemy_guard",
-      spawnTile: { x: 361, y: 248, z: 0 },
-      homeTileOverride: null,
-      roamingRadiusOverride: 0,
-      respawnTicks: 42,
-      spawnEnabled: true,
-      facingYaw: Math.PI,
-      spawnGroupId: "starter_east_outpost_guard_post"
-    },
-    {
-      spawnNodeId: "enemy_spawn_guard_east_outpost_north",
-      enemyId: "enemy_guard",
-      spawnTile: { x: 364, y: 246, z: 0 },
-      homeTileOverride: null,
-      roamingRadiusOverride: 0,
-      respawnTicks: 42,
-      spawnEnabled: true,
-      facingYaw: Math.PI,
-      spawnGroupId: "starter_east_outpost_guard_post"
-    },
-    {
-      spawnNodeId: "enemy_spawn_guard_east_outpost_northeast",
-      enemyId: "enemy_guard",
-      spawnTile: { x: 367, y: 248, z: 0 },
-      homeTileOverride: null,
-      roamingRadiusOverride: 0,
-      respawnTicks: 42,
-      spawnEnabled: true,
-      facingYaw: Math.PI,
-      spawnGroupId: "starter_east_outpost_guard_post"
-    }
-  ]
-};
-
 export function createDefaultPlayerCombatState(maxHitpoints = 10): PlayerCombatStateShape {
   const resolvedMaxHitpoints = Number.isFinite(maxHitpoints) ? Math.max(1, Math.floor(maxHitpoints)) : 10;
   return {
@@ -771,8 +734,14 @@ export function listEnemyTypes(): EnemyTypeDefinition[] {
 }
 
 export function listEnemySpawnNodesForWorld(worldId: string): EnemySpawnNodeDefinition[] {
-  const rows = WORLD_ENEMY_SPAWNS[String(worldId || "").trim()] || [];
-  return rows.map(cloneSpawnNode);
+  try {
+    const bootstrap = buildWorldBootstrapResult(String(worldId || "").trim());
+    const definition = bootstrap.definition as AuthoredCombatWorldDefinition;
+    const rows = Array.isArray(definition.combatSpawns) ? definition.combatSpawns : [];
+    return rows.map(cloneSpawnNode);
+  } catch {
+    return [];
+  }
 }
 
 export function createEnemyRuntimeState(

@@ -235,6 +235,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     emitExamineFallback(fallbackText);
                 },
                 formatGroundItemDisplayName,
+                formatEnemyDisplayName: (enemyHitData = hitData) => formatEnemyDisplayName(enemyHitData),
+                combatLevel: getEnemyCombatLevel(hitData),
                 getGroundItemByUid: (uid) => {
                     if (!Array.isArray(groundItems)) return null;
                     return groundItems.find((entry) => entry && entry.uid === uid) || null;
@@ -1249,6 +1251,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     if (hitData.uid && typeof hitData.uid === 'object') targetData = Object.assign({}, hitData.uid);
                     else if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade', merchantId: 'general_store' };
                     else targetData = { name: hitData.name, action: 'Talk-to' };
+                    if (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function') {
+                        targetData.action = window.QuestRuntime.resolveNpcPrimaryAction(targetData);
+                    }
                 }
                 queueAction('INTERACT', hitData.gridX, hitData.gridY, hitData.type, targetData); 
                 spawnClickMarker(hitData.point, true); 
@@ -1311,13 +1316,26 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return tileStackCount > 1 ? `${baseName} (${tileStackCount})` : baseName;
         }
 
-        function formatEnemyTooltipDisplayName(hitData) {
-            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
-                ? hitData.name
-                : 'Enemy';
-            const combatLevel = hitData && Number.isFinite(hitData.combatLevel)
+        function getEnemyCombatLevel(hitData) {
+            return hitData && Number.isFinite(hitData.combatLevel)
                 ? Math.max(1, Math.floor(hitData.combatLevel))
                 : null;
+        }
+
+        function formatEnemyDisplayName(hitData) {
+            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+                ? hitData.name.trim()
+                : 'Enemy';
+            const combatLevel = getEnemyCombatLevel(hitData);
+            if (combatLevel === null) return baseName;
+            return `Lv ${combatLevel} ${baseName}`;
+        }
+
+        function formatEnemyTooltipDisplayName(hitData) {
+            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+                ? hitData.name.trim()
+                : 'Enemy';
+            const combatLevel = getEnemyCombatLevel(hitData);
             if (combatLevel === null) return baseName;
             return `${baseName} (Level ${combatLevel})`;
         }
@@ -1790,6 +1808,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                             });
                                         }
                                     }
+                                } else if (playerState.targetObj === 'NPC' && playerState.targetUid && (playerState.targetUid.action === 'Talk-to' || !playerState.targetUid.action)) {
+                                    if (typeof window.openNpcDialogue === 'function') {
+                                        window.openNpcDialogue(playerState.targetUid);
+                                    }
                                 }
                             } else if (playerState.targetObj === 'BANK_BOOTH') {
                                 playerState.action = 'IDLE';
@@ -2058,7 +2080,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'NPC') {
-                        const npcAction = (hitData.uid && hitData.uid.action) ? hitData.uid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
+                        const baseNpcAction = (hitData.uid && hitData.uid.action) ? hitData.uid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
+                        const npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
+                            ? window.QuestRuntime.resolveNpcPrimaryAction((hitData.uid && typeof hitData.uid === 'object')
+                                ? hitData.uid
+                                : { name: hitData.name, action: baseNpcAction })
+                            : baseNpcAction;
                         if (npcAction === 'Trade') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else if (npcAction === 'Travel') actionText = `<span class="text-gray-300">Travel</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
@@ -2569,6 +2596,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (!hasPlayerRig) {
                 updateCombatAnimationDebugPanel(null, null, frameNow);
                 if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
+                if (typeof window.updateWorldNpcRuntime === 'function') window.updateWorldNpcRuntime(frameNowMs);
                 renderer.render(scene, camera);
                 if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
                 return;
@@ -2738,6 +2766,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const shadowFocusY = isFreeCam ? freeCamTarget.y : baseVisualY;
             maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z, frameNowMs);
             if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
+            if (typeof window.updateWorldNpcRuntime === 'function') window.updateWorldNpcRuntime(frameNowMs);
             renderer.render(scene, camera); updateMinimap(frameNowMs);
             if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
             if (uiPlayerRig && !document.getElementById('view-equip').classList.contains('hidden')) uiRenderer.render(uiScene, uiCamera);

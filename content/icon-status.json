@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-17T22:14:45.826Z",
+  "generatedAt": "2026-03-19T01:48:55.905Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "adamant_arrowheads",
@@ -108,6 +108,11 @@
       "assetId": "tin_ore",
       "status": "todo",
       "treatment": "shared"
+    },
+    "boar_tusk": {
+      "assetId": "boar_tusk",
+      "status": "todo",
+      "treatment": "bespoke"
     },
     "bow_string": {
       "assetId": "bow_string",
@@ -348,6 +353,11 @@
       "status": "done",
       "treatment": "bespoke"
     },
+    "goblin_club": {
+      "assetId": "goblin_club",
+      "status": "todo",
+      "treatment": "bespoke"
+    },
     "gold_amulet": {
       "assetId": "gold_amulet",
       "status": "done",
@@ -372,6 +382,16 @@
     "gold_tiara": {
       "assetId": "gold_tiara",
       "status": "done",
+      "treatment": "bespoke"
+    },
+    "guard_crest": {
+      "assetId": "guard_crest",
+      "status": "todo",
+      "treatment": "bespoke"
+    },
+    "guard_spear": {
+      "assetId": "guard_spear",
+      "status": "todo",
       "treatment": "bespoke"
     },
     "hammer": {
@@ -722,6 +742,21 @@
       "status": "done",
       "treatment": "bespoke"
     },
+    "rat_tail": {
+      "assetId": "rat_tail",
+      "status": "todo",
+      "treatment": "bespoke"
+    },
+    "raw_boar_meat": {
+      "assetId": "raw_boar_meat",
+      "status": "todo",
+      "treatment": "bespoke"
+    },
+    "raw_chicken": {
+      "assetId": "raw_chicken",
+      "status": "todo",
+      "treatment": "bespoke"
+    },
     "raw_salmon": {
       "assetId": "raw_salmon",
       "status": "done",
@@ -746,6 +781,11 @@
     "raw_tuna": {
       "assetId": "raw_tuna",
       "status": "done",
+      "treatment": "bespoke"
+    },
+    "raw_wolf_meat": {
+      "assetId": "raw_wolf_meat",
+      "status": "todo",
       "treatment": "bespoke"
     },
     "ring_mould": {
@@ -1118,6 +1158,11 @@
     "willow_shortbow_u": {
       "assetId": "willow_shortbow_u",
       "status": "done",
+      "treatment": "bespoke"
+    },
+    "wolf_fang": {
+      "assetId": "wolf_fang",
+      "status": "todo",
       "treatment": "bespoke"
     },
     "wolf_leather": {

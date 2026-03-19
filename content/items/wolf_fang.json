@@ -1,0 +1,18 @@
+{
+  "id": "wolf_fang",
+  "name": "Wolf Fang",
+  "type": "resource",
+  "stackable": false,
+  "value": 12,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/wolf_fang.png",
+    "model": "assets/models/wolf_fang.obj",
+    "groundModel": "assets/models/wolf_fang-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

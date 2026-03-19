@@ -1460,9 +1460,97 @@
 
         return defs;
     }
+    function createCreatureLootItemDefs() {
+        const defs = {
+            rat_tail: {
+                name: 'Rat Tail',
+                type: 'resource',
+                value: 5,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'rat_tail' }
+            },
+            raw_chicken: {
+                name: 'Raw Chicken',
+                type: 'resource',
+                value: 4,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'raw_chicken' }
+            },
+            goblin_club: {
+                name: 'Goblin Club',
+                type: 'resource',
+                value: 8,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'goblin_club' }
+            },
+            raw_boar_meat: {
+                name: 'Raw Boar Meat',
+                type: 'resource',
+                value: 6,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'raw_boar_meat' }
+            },
+            boar_tusk: {
+                name: 'Boar Tusk',
+                type: 'resource',
+                value: 10,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'boar_tusk' }
+            },
+            raw_wolf_meat: {
+                name: 'Raw Wolf Meat',
+                type: 'resource',
+                value: 8,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'raw_wolf_meat' }
+            },
+            wolf_fang: {
+                name: 'Wolf Fang',
+                type: 'resource',
+                value: 12,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'wolf_fang' }
+            },
+            guard_spear: {
+                name: 'Guard Spear',
+                type: 'resource',
+                value: 20,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'guard_spear' }
+            },
+            guard_crest: {
+                name: 'Guard Crest',
+                type: 'resource',
+                value: 24,
+                stackable: false,
+                actions: ['Use', 'Drop'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'guard_crest' }
+            }
+        };
+
+        return defs;
+    }
     Object.assign(ITEM_DEFS, createFletchingItemDefs());
     Object.assign(ITEM_DEFS, createSmithingItemDefs());
     Object.assign(ITEM_DEFS, createCraftingAssemblyItemDefs());
+    Object.assign(ITEM_DEFS, createCreatureLootItemDefs());
 
     function createMeleeCombatProfile(options) {
         const accuracyBonus = Number.isFinite(options && options.meleeAccuracyBonus) ? Math.floor(options.meleeAccuracyBonus) : 0;

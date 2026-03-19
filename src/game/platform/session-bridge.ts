@@ -4,6 +4,7 @@ import type {
   ProgressSavePayload,
   ProgressSaveReadResult,
   ProgressSaveWriteResult,
+  QuestProgressState,
   SaveAppearanceState,
   SerializedItemSlot,
   StorageLike
@@ -16,6 +17,7 @@ import {
   migrateProgressSavePayload,
   saveProgressPayloadToStorage,
   sanitizeMerchantProgress,
+  sanitizeQuestProgressState,
   sanitizeUnlockFlags
 } from "../session/save";
 import { getQaFlag, setQaFlag } from "../session/qa";
@@ -38,6 +40,7 @@ declare global {
         equipment: Record<string, string | null>;
         userItemPrefs: Record<string, string>;
         contentGrants: Record<string, Record<string, boolean> | undefined>;
+        quests: QuestProgressState;
         profile: {
           name: string;
           creationCompleted: boolean;
@@ -59,6 +62,7 @@ declare global {
       }) => ProgressSaveReadResult;
       sanitizeUnlockFlags: (savedFlags: unknown, defaultUnlockFlags: PlayerUnlockFlags) => PlayerUnlockFlags;
       sanitizeMerchantProgress: (savedProgress: unknown) => Record<string, unknown>;
+      sanitizeQuestProgressState: (savedQuests: unknown) => QuestProgressState;
       getQaFlag: (flagId: string, fallback?: boolean) => boolean;
       setQaFlag: (flagId: string, enabled: boolean) => boolean;
       bindWindowQaBooleanFlag: (windowKey: string, flagId: string, fallback?: boolean) => void;
@@ -127,6 +131,7 @@ export function exposeSessionBridge(): void {
     loadProgressPayloadFromStorage,
     sanitizeUnlockFlags,
     sanitizeMerchantProgress,
+    sanitizeQuestProgressState,
     getQaFlag: getActiveQaFlag,
     setQaFlag: setActiveQaFlag,
     bindWindowQaBooleanFlag

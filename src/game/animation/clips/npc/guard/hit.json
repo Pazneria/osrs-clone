@@ -1,0 +1,103 @@
+{
+  "clipId": "npc/guard/hit",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 460,
+  "loopMode": "once",
+  "maskId": "upperBody",
+  "poses": {
+    "neutral": {
+      "torso": {
+        "rotationDeg": {
+          "x": 4
+        }
+      }
+    },
+    "guard_recoil": {
+      "root": {
+        "position": {
+          "z": -0.03
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": -6,
+          "y": -4
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": 4,
+          "y": -5
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -6,
+          "z": 8
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -5,
+          "z": -8
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -10
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -10
+        }
+      }
+    },
+    "guard_recover": {
+      "torso": {
+        "rotationDeg": {
+          "x": 4,
+          "y": -1
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -2,
+          "y": -1
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeOut"
+    },
+    {
+      "poseId": "guard_recoil",
+      "atMs": 120,
+      "ease": "easeOut"
+    },
+    {
+      "poseId": "guard_recover",
+      "atMs": 280,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 460,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "impact",
+      "atMs": 120
+    },
+    {
+      "markerId": "recover",
+      "atMs": 280
+    }
+  ]
+}

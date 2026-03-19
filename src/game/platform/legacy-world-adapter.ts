@@ -11,6 +11,7 @@ import type {
 import { getWorldManifest, getWorldManifestEntry } from "../world/authoring";
 import { buildWorldBootstrapResult } from "../world/bootstrap";
 import {
+  cloneCombatSpawnNode,
   cloneDoorLandmark,
   cloneMiningNodePlacement,
   clonePoint3,
@@ -75,6 +76,7 @@ interface LegacyWorldPayload {
   stampedStructures: WorldBootstrapResult["legacy"]["stampedStructures"];
   stampMap: WorldBootstrapResult["legacy"]["stampMap"];
   smithingStations: ServiceDescriptor[];
+  combatSpawnNodes: WorldBootstrapResult["legacy"]["combatSpawnNodes"];
   fishingTrainingRouteDefs: RouteDescriptor[];
   cookingRouteSpecs: SkillRouteWithFireTiles[];
   miningTrainingRouteDefs: RouteDescriptor[];
@@ -120,6 +122,15 @@ function normalizeWorldId(worldId?: string | null): string {
 
 function normalizeLabel(label: unknown): string {
   return typeof label === "string" ? label.trim() : "";
+}
+
+function resolveNpcAppearanceId(service: ServiceDescriptor): string | null {
+  const explicitAppearanceId = typeof service.appearanceId === "string" ? service.appearanceId.trim().toLowerCase() : "";
+  if (explicitAppearanceId) return explicitAppearanceId;
+  const merchantId = typeof service.merchantId === "string" ? service.merchantId.trim().toLowerCase() : "";
+  const name = typeof service.name === "string" ? service.name.trim().toLowerCase() : "";
+  if (merchantId === "tanner_rusk" || name === "tanner rusk") return "tanner_rusk";
+  return null;
 }
 
 function clampAxis(value: number, size: number | undefined): number {
@@ -316,6 +327,8 @@ function toMerchantRenderPlacement(
     z: Number.isFinite(service.z) ? Number(service.z) : 0,
     name: service.name,
     merchantId: service.merchantId || null,
+    appearanceId: resolveNpcAppearanceId(service),
+    dialogueId: typeof service.dialogueId === "string" ? service.dialogueId.trim() || null : null,
     action: normalizeLabel(service.action) || "Trade",
     facingYaw: service.facingYaw,
     tags: Array.isArray(service.tags) ? service.tags.slice() : [],
@@ -349,6 +362,7 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
       Object.entries(legacy.stampMap || {}).map(([stampId, rows]) => [stampId, Array.isArray(rows) ? rows.slice() : []])
     ),
     smithingStations: legacy.smithingStations.map(cloneServiceDescriptor),
+    combatSpawnNodes: legacy.combatSpawnNodes.map(cloneCombatSpawnNode),
     fishingTrainingRouteDefs: legacy.fishingRoutes.map(cloneRouteDescriptor),
     cookingRouteSpecs: legacy.cookingRoutes.map(cloneSkillRouteWithFireTiles),
     miningTrainingRouteDefs: legacy.miningRoutes.map(cloneRouteDescriptor),

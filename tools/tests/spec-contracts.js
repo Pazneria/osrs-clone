@@ -34,6 +34,21 @@ function replaceOnce(source, from, to, label) {
   return next;
 }
 
+const STARTER_TOWN_NAMED_NPC_DIALOGUES = Object.freeze({
+  "merchant:general_store": "shopkeeper",
+  "merchant:starter_caravan_guide": "road_guide",
+  "merchant:east_outpost_caravan_guide": "outpost_guide",
+  "merchant:fishing_teacher": "fishing_teacher",
+  "merchant:fishing_supplier": "fishing_supplier",
+  "merchant:borin_ironvein": "borin_ironvein",
+  "merchant:thrain_deepforge": "thrain_deepforge",
+  "merchant:elira_gemhand": "elira_gemhand",
+  "merchant:crafting_teacher": "crafting_teacher",
+  "merchant:tanner_rusk": "tanner_rusk",
+  "merchant:rune_tutor": "rune_tutor",
+  "merchant:combination_sage": "combination_sage"
+});
+
 
 function expectMutatedSpecsFailure(root, mutate, expectedMessageRegex, label) {
   const abs = path.join(root, "src/js/skills/specs.js");
@@ -65,6 +80,8 @@ function run() {
   global.SkillSpecRegistry = global.window.SkillSpecRegistry;
   loadBrowserScript(root, "src/js/skills/shared/action-resolution.js");
   global.SkillActionResolution = global.window.SkillActionResolution;
+  loadBrowserScript(root, "src/js/content/npc-dialogue-catalog.js");
+  global.NpcDialogueCatalog = global.window.NpcDialogueCatalog;
 
   assert(/^2026\.03\.m/.test(SkillSpecRegistry.getVersion()), "registry version mismatch");
 
@@ -947,10 +964,44 @@ function run() {
   fishingAnimateContext.playerState.fishingActiveMethodId = "deep_rune_harpoon";
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
+  const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
+  const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
+  const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
   const miningRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/mining-runtime.ts"), "utf8");
   const runecraftingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/runecrafting-runtime.ts"), "utf8");
   const woodcuttingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/woodcutting-runtime.ts"), "utf8");
+  const inputRenderSource = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
+  const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src/js/content/npc-dialogue-catalog.js"), "utf8");
+  const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src/js/npc-dialogue-runtime.js"), "utf8");
+  const npcPlayerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
   const starterTownWorld = JSON.parse(fs.readFileSync(path.join(root, "content/world/regions/starter_town.json"), "utf8"));
+  assert(!!NpcDialogueCatalog && typeof NpcDialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
+  assert(worldContractsSource.includes("appearanceId?: string | null;"), "world contracts should expose appearanceId on NPC/service descriptors");
+  assert(worldContractsSource.includes("dialogueId?: string | null;"), "world contracts should expose dialogueId on NPC/service descriptors");
+  assert(runtimePublishSource.includes("appearanceId: typeof entry.appearanceId === \"string\""), "runtime publish should preserve appearanceId");
+  assert(runtimePublishSource.includes("dialogueId: typeof entry.dialogueId === \"string\""), "runtime publish should preserve dialogueId");
+  assert(cloneSource.includes("appearanceId: resolveServiceAppearanceId(service)"), "merchant NPC descriptors should resolve appearanceId");
+  assert(cloneSource.includes("dialogueId: typeof service.dialogueId === \"string\" ? service.dialogueId.trim() || null : null"), "merchant NPC descriptors should preserve dialogueId");
+  assert(worldScript.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "world NPC hitboxes should preserve appearanceId");
+  assert(worldScript.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "world NPC hitboxes should preserve dialogueId");
+  assert(inputRenderSource.includes("playerState.targetUid.action === 'Talk-to'"), "input renderer should route Talk-to actions");
+  assert(inputRenderSource.includes("window.openNpcDialogue(playerState.targetUid);"), "input renderer should open NPC dialogue from Talk-to");
+  assert(npcDialogueCatalogSource.includes("const DIALOGUE_ENTRIES = {"), "npc dialogue catalog should define dialogue entries");
+  assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.getDialogueEntryByNpc(npc)"), "npc dialogue runtime should resolve dialogue entries through the catalog helper");
+  assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.resolveDialogueIdFromNpc(normalizedNpc)"), "npc dialogue runtime should preserve the resolved dialogue id from full NPC metadata");
+  assert(npcDialogueRuntimeSource.includes("window.openNpcDialogue = openNpcDialogue;"), "npc dialogue runtime should expose openNpcDialogue");
+  assert(npcPlayerModelSource.includes("normalizedPresetId !== 'goblin' && normalizedPresetId !== 'guard' && normalizedPresetId !== 'tanner_rusk' && normalizedPresetId !== 'tanner'"), "player model should allow the Tanner NPC preset");
+  Object.entries(STARTER_TOWN_NAMED_NPC_DIALOGUES).forEach(([serviceId, expectedDialogueId]) => {
+    const service = (starterTownWorld.services || []).find((entry) => entry && entry.serviceId === serviceId);
+    assert(!!service, `starter-town named NPC service missing: ${serviceId}`);
+    const dialogueId = service && typeof service.dialogueId === "string" ? service.dialogueId.trim() : "";
+    assert(dialogueId, `${serviceId} should define dialogueId`);
+    assert(NpcDialogueCatalog.resolveDialogueId(dialogueId) === expectedDialogueId, `${serviceId} dialogueId should resolve to ${expectedDialogueId}`);
+  });
+  assert(
+    starterTownWorld.services.some((entry) => entry && entry.merchantId === "tanner_rusk" && String(entry.appearanceId || "").trim().toLowerCase() === "tanner_rusk"),
+    "tanner world placement should keep the exact tanner_rusk appearance id when authored"
+  );
   assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
   assert(runecraftingRuntimeSource.includes("for (let by = placed.y - 1; by <= placed.y + 2; by++)"), "runecrafting altar collision footprint regression");
   assert(Array.isArray(starterTownWorld.skillRoutes.runecrafting) && starterTownWorld.skillRoutes.runecrafting.length === 4, "runecrafting authored routes missing");
@@ -958,8 +1009,8 @@ function run() {
   assert(starterTownWorld.terrainPatches.castleRouteAnchor.x === 205 && starterTownWorld.terrainPatches.castleRouteAnchor.y === 205, "runecrafting castle route anchor missing");
   assert(runecraftingRuntimeSource.includes("const altarOrder = draft.authored.runecraftingAltarOrder;"), "runecrafting altar order wiring missing");
   assert(!starterTownWorld.dynamicServices, "starter-town should not keep dynamic runecrafting merchants after freeze");
-  assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "rune_tutor" && entry.x === 203 && entry.y === 96), "rune tutor authored service placement missing");
-  assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "combination_sage" && entry.x === 91 && entry.y === 23), "combination sage authored service placement missing");
+  assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "rune_tutor"), "rune tutor authored service placement missing");
+  assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "combination_sage"), "combination sage authored service placement missing");
   assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "fishing_teacher"), "fishing teacher world placement missing");
   assert(Array.isArray(starterTownWorld.services) && starterTownWorld.services.some((entry) => entry.merchantId === "fishing_supplier"), "fishing supplier world placement missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.cooking) && starterTownWorld.skillRoutes.cooking.length === 4, "cooking route specs missing");
@@ -987,6 +1038,35 @@ function run() {
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "elira_gemhand"), "elira world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "crafting_teacher"), "crafting teacher world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "tanner_rusk"), "tanner world placement missing");
+  assert(Array.isArray(starterTownWorld.combatSpawns) && starterTownWorld.combatSpawns.length === 50, "starter combat spawns missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_training_dummy_hub" && entry.enemyId === "enemy_training_dummy"), "training dummy combat spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_rat_south_field" && entry.spawnTile.x === 194 && entry.spawnTile.y === 220), "rat combat spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_chicken_south_field" && entry.enemyId === "enemy_chicken"), "chicken combat spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_goblin_east_path" && entry.spawnTile.x === 240 && entry.spawnTile.y === 200), "goblin combat spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_goblin_east_field_north" && entry.spawnTile.x === 276 && entry.spawnTile.y === 188), "east-field north goblin spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_goblin_east_field_center" && entry.spawnTile.x === 295 && entry.spawnTile.y === 206), "east-field center goblin spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_goblin_east_field_south" && entry.spawnTile.x === 278 && entry.spawnTile.y === 226), "east-field south goblin spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_east_field_west" && entry.spawnTile.x === 326 && entry.spawnTile.y === 244), "east-field west boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_east_field_center" && entry.spawnTile.x === 334 && entry.spawnTile.y === 256), "east-field center boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_east_field_east" && entry.spawnTile.x === 342 && entry.spawnTile.y === 248), "east-field east boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_north" && entry.spawnTile.x === 44 && entry.spawnTile.y === 128), "outer west north boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south" && entry.spawnTile.x === 56 && entry.spawnTile.y === 468), "outer west south boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north" && entry.spawnTile.x === 468 && entry.spawnTile.y === 132), "outer east north boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_north" && entry.spawnTile.x === 44 && entry.spawnTile.y === 128), "outer west north boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south" && entry.spawnTile.x === 56 && entry.spawnTile.y === 468), "outer west south boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north" && entry.spawnTile.x === 468 && entry.spawnTile.y === 132), "outer east north boar spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_wolf_outer_northwest" && entry.spawnTile.x === 60 && entry.spawnTile.y === 70), "outer northwest wolf spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_wolf_outer_north" && entry.spawnTile.x === 72 && entry.spawnTile.y === 82), "outer north wolf spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_wolf_outer_northeast" && entry.spawnTile.x === 84 && entry.spawnTile.y === 96), "outer northeast wolf spawn missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnGroupId === "starter_outer_wolf_southwest" && entry.spawnNodeId === "enemy_spawn_wolf_outer_southwest_1"), "outer southwest wolf cluster missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnGroupId === "starter_outer_wolf_south" && entry.spawnNodeId === "enemy_spawn_wolf_outer_south_2"), "outer south wolf cluster missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnGroupId === "starter_outer_wolf_southeast" && entry.spawnNodeId === "enemy_spawn_wolf_outer_southeast_3"), "outer southeast wolf cluster missing");
+  assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_far_southern_goblins").length === 4, "far southern goblin group missing");
+  assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_far_eastern_goblins").length === 4, "far eastern goblin group missing");
+  assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_outer_rats_southwest").length === 4, "outer southwest rat group missing");
+  assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_outer_chickens_southwest").length === 5, "outer southwest chicken group missing");
+  assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_outer_chickens_southeast").length === 5, "outer southeast chicken group missing");
+  assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_guard_east_outpost_north" && entry.spawnGroupId === "starter_east_outpost_guard_post" && entry.roamingRadiusOverride === 5), "guard post combat spawn missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.mining) && starterTownWorld.skillRoutes.mining.length === 6, "authored mining routes missing");
   assert(Array.isArray(starterTownWorld.resourceNodes.mining) && starterTownWorld.resourceNodes.mining.length === 114, "authored mining nodes missing");
   assert(starterTownWorld.resourceNodes.mining.some((entry) => entry.routeId === "gem_mine" && entry.areaGateFlag === "gemMineUnlocked"), "gem mine authored gate flag missing");
@@ -1014,7 +1094,7 @@ function run() {
   assert(smithRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "smithing runtime should hide equipped visuals during clip playback");
   assert(!smithRuntimeScript.includes("applyCookingStylePose"), "smithing runtime should remove the old shared procedural smithing pose");
 
-  const inputRenderScript = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
+  const inputRenderScript = inputRenderSource;
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
   assert(inputRenderScript.includes("function getActiveSkillAnimationHeldItems()"), "input render should resolve dual-hand skill props");
   assert(inputRenderScript.includes("function resolveInteractionFacingRotation("), "input render should expose station-aware interaction facing");

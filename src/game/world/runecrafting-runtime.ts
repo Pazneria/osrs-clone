@@ -195,6 +195,8 @@ export function materializeRunecraftingRuntime(
     if (!anchor) continue;
     const spot = findMerchantSpotNearAltar(draft, anchor, occupiedNpcs);
     if (!spot) continue;
+    const appearanceId = typeof spawn.appearanceId === "string" ? spawn.appearanceId.trim().toLowerCase() || null : null;
+    const dialogueId = typeof spawn.dialogueId === "string" ? spawn.dialogueId.trim() || null : null;
 
     draft.writers.setTile(spot.x, spot.y, spot.z, draft.tileIds.SOLID_NPC);
 
@@ -205,6 +207,8 @@ export function materializeRunecraftingRuntime(
       z: spot.z,
       name: spawn.name,
       merchantId: spawn.merchantId,
+      ...(appearanceId ? { appearanceId } : {}),
+      ...(dialogueId ? { dialogueId } : {}),
       action: spawn.action || "Trade",
       tags: Array.isArray(spawn.tags) ? spawn.tags.slice() : []
     };
@@ -216,6 +220,8 @@ export function materializeRunecraftingRuntime(
       y: spot.y,
       z: spot.z,
       merchantId: spawn.merchantId,
+      ...(appearanceId ? { appearanceId } : {}),
+      ...(dialogueId ? { dialogueId } : {}),
       action: spawn.action || "Trade",
       tags: Array.isArray(spawn.tags) ? spawn.tags.slice() : []
     };
@@ -231,6 +237,8 @@ export function materializeRunecraftingRuntime(
       y: spot.y,
       z: spot.z,
       action: spawn.action || "Trade",
+      ...(appearanceId ? { appearanceId } : {}),
+      ...(dialogueId ? { dialogueId } : {}),
       tags: Array.isArray(spawn.tags) ? spawn.tags.slice() : []
     };
 

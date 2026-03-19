@@ -27,6 +27,28 @@ export interface ContentGrantState {
   [grantId: string]: Record<string, boolean> | undefined;
 }
 
+export type QuestStatus = "not_started" | "active" | "ready_to_complete" | "completed";
+
+export interface QuestObjectiveProgressState {
+  current: number;
+  target: number;
+  completed: boolean;
+}
+
+export interface QuestEntryProgressState {
+  status: QuestStatus;
+  startedAt: number | null;
+  updatedAt: number | null;
+  completedAt: number | null;
+  activeStepId: string | null;
+  objectiveStates: Record<string, QuestObjectiveProgressState | undefined>;
+  flags: Record<string, boolean | undefined>;
+}
+
+export interface QuestProgressState {
+  [questId: string]: QuestEntryProgressState | undefined;
+}
+
 export interface GameSessionPlayerState extends Point3 {
   prevX: number;
   prevY: number;
@@ -105,6 +127,7 @@ export interface GameSessionProgressState {
   equipment: Record<string, unknown>;
   userItemPrefs: Record<string, string>;
   contentGrants: ContentGrantState;
+  quests: QuestProgressState;
   appearance: SaveAppearanceState | null;
 }
 
@@ -146,6 +169,7 @@ export interface ProgressSaveState {
   equipment: Record<string, string | null>;
   userItemPrefs: Record<string, string>;
   contentGrants: ContentGrantState;
+  quests: QuestProgressState;
   runMode: boolean;
   profile: PlayerProfileState;
   appearance: SaveAppearanceState | null;

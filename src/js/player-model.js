@@ -784,6 +784,111 @@ function createGoblinHumanoidFragments() {
     ];
 }
 
+function createGuardHumanoidFragments() {
+    const steel = '#8e98a2';
+    const steelDark = '#5e6871';
+    const steelTrim = '#d0b05a';
+    const tabard = '#274f86';
+    const tabardDark = '#17365e';
+    const cloth = '#6d5c3c';
+    const leather = '#4b3f2e';
+    const wood = '#6b4a2e';
+    const boot = '#2f261c';
+    return [
+        createLiteralRgbFragment('head', 'box', [0.5, 0.4, 0.42], [0, 0.08, 0], steel),
+        createLiteralRgbFragment('head', 'box', [0.38, 0.12, 0.2], [0, 0.05, 0.18], steelDark),
+        createLiteralRgbFragment('head', 'box', [0.18, 0.08, 0.16], [0, 0.16, 0.2], steelTrim),
+        createLiteralRgbFragment('head', 'box', [0.12, 0.16, 0.08], [0.18, 0.08, -0.02], steelTrim, {
+            rotation: [0, 0, -0.28]
+        }),
+        createLiteralRgbFragment('head', 'box', [0.12, 0.16, 0.08], [-0.18, 0.08, -0.02], steelTrim, {
+            rotation: [0, 0, 0.28]
+        }),
+        createLiteralRgbFragment('torso', 'box', [0.64, 0.5, 0.38], [0, 0.01, 0], steel),
+        createLiteralRgbFragment('torso', 'box', [0.46, 0.36, 0.2], [0, 0, 0.08], tabard),
+        createLiteralRgbFragment('torso', 'box', [0.34, 0.1, 0.12], [0, -0.18, 0.08], tabardDark),
+        createLiteralRgbFragment('torso', 'box', [0.22, 0.08, 0.16], [0, -0.28, 0.08], leather),
+        createLiteralRgbFragment('torso', 'box', [0.52, 0.1, 0.16], [0, 0.2, 0.05], steelTrim),
+        createLiteralRgbFragment('leftArm', 'box', [0.26, 0.2, 0.26], [0.03, 0.08, 0.01], steel),
+        createLiteralRgbFragment('rightArm', 'box', [0.26, 0.2, 0.26], [-0.03, 0.08, 0.01], steel),
+        createLiteralRgbFragment('leftLowerArm', 'box', [0.2, 0.3, 0.18], [0, -0.08, 0], leather),
+        createLiteralRgbFragment('rightLowerArm', 'box', [0.2, 0.3, 0.18], [0, -0.08, 0], leather),
+        createLiteralRgbFragment('leftLowerArm', 'box', [0.46, 0.52, 0.08], [0.22, -0.01, 0.03], wood, {
+            rotation: [0, 0, 0.14]
+        }),
+        createLiteralRgbFragment('leftLowerArm', 'box', [0.28, 0.34, 0.04], [0.2, 0, 0.08], steel, {
+            rotation: [0, 0, 0.12]
+        }),
+        createLiteralRgbFragment('rightLowerArm', 'box', [0.08, 0.64, 0.08], [0.14, -0.02, 0], wood, {
+            rotation: [0, 0, 0.24]
+        }),
+        createLiteralRgbFragment('rightLowerArm', 'box', [0.1, 0.16, 0.1], [0.15, -0.3, 0], steelTrim, {
+            rotation: [0, 0, 0.24]
+        }),
+        createLiteralRgbFragment('leftLeg', 'box', [0.22, 0.34, 0.24], [0.01, -0.12, 0], cloth),
+        createLiteralRgbFragment('rightLeg', 'box', [0.22, 0.34, 0.24], [-0.01, -0.12, 0], cloth),
+        createLiteralRgbFragment('leftLowerLeg', 'box', [0.2, 0.26, 0.2], [0, -0.12, 0], steelDark),
+        createLiteralRgbFragment('rightLowerLeg', 'box', [0.2, 0.26, 0.2], [0, -0.12, 0], steelDark),
+        createLiteralRgbFragment('leftLowerLeg', 'box', [0.22, 0.1, 0.3], [0, -0.26, 0.05], boot),
+        createLiteralRgbFragment('rightLowerLeg', 'box', [0.22, 0.1, 0.3], [0, -0.26, 0.05], boot)
+    ];
+}
+
+function createTannerHumanoidFragments() {
+    const skin = '#d6a37a';
+    const skinDark = '#8e5f44';
+    const hair = '#5a3926';
+    const beard = '#4a2f20';
+    const shirt = '#6f8b5e';
+    const shirtDark = '#4d6341';
+    const apron = '#9d6b3c';
+    const apronDark = '#6f4726';
+    const trousers = '#53483d';
+    const boot = '#34281f';
+    const glove = '#7b5632';
+    return [
+        createLiteralRgbFragment('head', 'box', [0.46, 0.42, 0.38], [0, 0.01, 0], skin),
+        createLiteralRgbFragment('head', 'box', [0.38, 0.12, 0.24], [0, 0.14, 0.05], hair),
+        createLiteralRgbFragment('head', 'box', [0.14, 0.08, 0.18], [0, -0.1, 0.18], beard),
+        createLiteralRgbFragment('head', 'box', [0.1, 0.06, 0.08], [0.15, 0.06, 0.16], skinDark),
+        createLiteralRgbFragment('head', 'box', [0.1, 0.06, 0.08], [-0.15, 0.06, 0.16], skinDark),
+        createLiteralRgbFragment('torso', 'box', [0.6, 0.48, 0.34], [0, 0, 0], shirt),
+        createLiteralRgbFragment('torso', 'box', [0.46, 0.24, 0.18], [0, -0.02, 0.09], shirtDark),
+        createLiteralRgbFragment('torso', 'box', [0.42, 0.42, 0.28], [0, -0.04, 0.04], apron),
+        createLiteralRgbFragment('torso', 'box', [0.3, 0.14, 0.14], [0, 0.16, 0.08], apronDark),
+        createLiteralRgbFragment('torso', 'box', [0.16, 0.08, 0.1], [0, -0.2, 0.12], glove),
+        createLiteralRgbFragment('leftArm', 'box', [0.22, 0.3, 0.2], [0.02, -0.03, 0], shirt),
+        createLiteralRgbFragment('rightArm', 'box', [0.22, 0.3, 0.2], [-0.02, -0.03, 0], shirt),
+        createLiteralRgbFragment('leftLowerArm', 'box', [0.18, 0.28, 0.18], [0, -0.1, 0], skin),
+        createLiteralRgbFragment('rightLowerArm', 'box', [0.18, 0.28, 0.18], [0, -0.1, 0], skin),
+        createLiteralRgbFragment('leftLowerArm', 'box', [0.12, 0.18, 0.12], [0.01, -0.26, 0.02], glove),
+        createLiteralRgbFragment('rightLowerArm', 'box', [0.12, 0.18, 0.12], [-0.01, -0.26, 0.02], glove),
+        createLiteralRgbFragment('leftLeg', 'box', [0.22, 0.34, 0.24], [0.01, -0.1, 0], trousers),
+        createLiteralRgbFragment('rightLeg', 'box', [0.22, 0.34, 0.24], [-0.01, -0.1, 0], trousers),
+        createLiteralRgbFragment('leftLowerLeg', 'box', [0.18, 0.28, 0.18], [0, -0.12, 0], skinDark),
+        createLiteralRgbFragment('rightLowerLeg', 'box', [0.18, 0.28, 0.18], [0, -0.12, 0], skinDark),
+        createLiteralRgbFragment('leftLowerLeg', 'box', [0.22, 0.1, 0.3], [0, -0.26, 0.05], boot),
+        createLiteralRgbFragment('rightLowerLeg', 'box', [0.22, 0.1, 0.3], [0, -0.26, 0.05], boot)
+    ];
+}
+
+function applyTannerRigBasePose(rigRoot) {
+    const nodes = rigNodeMap(rigRoot);
+    if (!nodes.torso || !nodes.head || !nodes.leftArm || !nodes.rightArm || !nodes.leftLeg || !nodes.rightLeg) return;
+    rigRoot.position.set(0, 0, 0);
+    rigRoot.scale.set(0.99, 0.99, 0.99);
+    nodes.torso.position.set(0, 1.01, 0);
+    nodes.head.position.set(0, 0.5, 0);
+    nodes.leftArm.position.set(0.36, 0.25, 0.02);
+    nodes.rightArm.position.set(-0.36, 0.25, 0.02);
+    if (nodes.leftLowerArm) nodes.leftLowerArm.position.set(0, -0.27, -0.02);
+    if (nodes.rightLowerArm) nodes.rightLowerArm.position.set(0, -0.27, -0.02);
+    nodes.leftLeg.position.set(0.16, 0.69, 0);
+    nodes.rightLeg.position.set(-0.16, 0.69, 0);
+    if (nodes.leftLowerLeg) nodes.leftLowerLeg.position.set(0, -0.31, 0);
+    if (nodes.rightLowerLeg) nodes.rightLowerLeg.position.set(0, -0.31, 0);
+}
+
 function applyGoblinRigBasePose(rigRoot) {
     const nodes = rigNodeMap(rigRoot);
     if (!nodes.torso || !nodes.head || !nodes.leftArm || !nodes.rightArm || !nodes.leftLeg || !nodes.rightLeg) return;
@@ -801,9 +906,26 @@ function applyGoblinRigBasePose(rigRoot) {
     if (nodes.rightLowerLeg) nodes.rightLowerLeg.position.set(0, -0.31, 0);
 }
 
+function applyGuardRigBasePose(rigRoot) {
+    const nodes = rigNodeMap(rigRoot);
+    if (!nodes.torso || !nodes.head || !nodes.leftArm || !nodes.rightArm || !nodes.leftLeg || !nodes.rightLeg) return;
+    rigRoot.position.set(0, 0, 0);
+    rigRoot.scale.set(1.01, 1.01, 1.01);
+    nodes.torso.position.set(0, 1.03, 0);
+    nodes.head.position.set(0, 0.48, 0);
+    nodes.leftArm.position.set(0.37, 0.28, 0.01);
+    nodes.rightArm.position.set(-0.37, 0.28, 0.01);
+    if (nodes.leftLowerArm) nodes.leftLowerArm.position.set(0, -0.28, -0.01);
+    if (nodes.rightLowerArm) nodes.rightLowerArm.position.set(0, -0.28, -0.01);
+    nodes.leftLeg.position.set(0.15, 0.69, 0);
+    nodes.rightLeg.position.set(-0.15, 0.69, 0);
+    if (nodes.leftLowerLeg) nodes.leftLowerLeg.position.set(0, -0.3, 0);
+    if (nodes.rightLowerLeg) nodes.rightLowerLeg.position.set(0, -0.3, 0);
+}
+
 function buildNpcHumanoidRigTemplate(presetId) {
     const normalizedPresetId = typeof presetId === 'string' ? presetId.trim().toLowerCase() : '';
-    if (normalizedPresetId !== 'goblin') return null;
+    if (normalizedPresetId !== 'goblin' && normalizedPresetId !== 'guard' && normalizedPresetId !== 'tanner_rusk' && normalizedPresetId !== 'tanner') return null;
     const rigRoot = createRigBones({
         elbowPivot: {
             x: 0,
@@ -811,8 +933,16 @@ function buildNpcHumanoidRigTemplate(presetId) {
             z: -0.06
         }
     });
-    applyGoblinRigBasePose(rigRoot);
-    addFragmentsToRig(rigRoot, createGoblinHumanoidFragments(), [0, 0, 0, 0, 0], []);
+    if (normalizedPresetId === 'goblin') {
+        applyGoblinRigBasePose(rigRoot);
+        addFragmentsToRig(rigRoot, createGoblinHumanoidFragments(), [0, 0, 0, 0, 0], []);
+    } else if (normalizedPresetId === 'guard') {
+        applyGuardRigBasePose(rigRoot);
+        addFragmentsToRig(rigRoot, createGuardHumanoidFragments(), [0, 0, 0, 0, 0], []);
+    } else {
+        applyTannerRigBasePose(rigRoot);
+        addFragmentsToRig(rigRoot, createTannerHumanoidFragments(), [0, 0, 0, 0, 0], []);
+    }
     const nodes = rigNodeMap(rigRoot);
     if (nodes.axe) nodes.axe.visible = false;
     if (nodes.leftTool) nodes.leftTool.visible = false;
@@ -838,13 +968,17 @@ function createNpcHumanoidRigFromPreset(presetId) {
 function listAnimationStudioPreviewActors() {
     return [
         { actorId: 'player', label: 'Player' },
-        { actorId: 'goblin', label: 'Goblin' }
+        { actorId: 'goblin', label: 'Goblin' },
+        { actorId: 'guard', label: 'Guard' },
+        { actorId: 'tanner_rusk', label: 'Tanner Rusk' }
     ];
 }
 
 function createAnimationStudioPreviewRig(actorId) {
     const normalizedActorId = typeof actorId === 'string' ? actorId.trim().toLowerCase() : '';
     if (normalizedActorId === 'goblin') return createNpcHumanoidRigFromPreset('goblin');
+    if (normalizedActorId === 'guard') return createNpcHumanoidRigFromPreset('guard');
+    if (normalizedActorId === 'tanner_rusk' || normalizedActorId === 'tanner') return createNpcHumanoidRigFromPreset('tanner_rusk');
     return createPlayerRigForAnimationStudio();
 }
 

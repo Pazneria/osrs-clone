@@ -1,0 +1,155 @@
+{
+  "clipId": "npc/guard/attack",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 900,
+  "loopMode": "once",
+  "maskId": "upperBody",
+  "poses": {
+    "neutral": {
+      "torso": {
+        "rotationDeg": {
+          "x": 4
+        }
+      }
+    },
+    "guard_windup": {
+      "torso": {
+        "rotationDeg": {
+          "x": 7,
+          "y": -8
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -4,
+          "y": -4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -34,
+          "y": -10,
+          "z": -8
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -20
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 12,
+          "z": 6
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -10
+        }
+      }
+    },
+    "guard_thrust": {
+      "root": {
+        "position": {
+          "y": 0.01
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": 14
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3,
+          "y": 4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 12,
+          "y": -4,
+          "z": 5
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -4
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 5,
+          "z": -3
+        }
+      }
+    },
+    "guard_recover": {
+      "torso": {
+        "rotationDeg": {
+          "x": 4,
+          "y": 3
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -2
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 4,
+          "z": -2
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -6
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "guard_windup",
+      "atMs": 140,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "guard_thrust",
+      "atMs": 360,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "guard_recover",
+      "atMs": 660,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 900,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "windup",
+      "atMs": 140
+    },
+    {
+      "markerId": "contact",
+      "atMs": 390
+    },
+    {
+      "markerId": "recover",
+      "atMs": 660
+    }
+  ]
+}

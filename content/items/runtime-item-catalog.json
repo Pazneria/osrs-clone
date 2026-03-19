@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-18T04:59:46.028Z",
+  "generatedAt": "2026-03-19T01:48:55.904Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -539,6 +539,21 @@
       "stackable": false,
       "type": "resource",
       "value": 60
+    },
+    "boar_tusk": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "boar_tusk",
+        "kind": "pixel"
+      },
+      "name": "Boar Tusk",
+      "stackable": false,
+      "type": "resource",
+      "value": 10
     },
     "bow_string": {
       "actions": [
@@ -1498,6 +1513,21 @@
       "value": 45,
       "weaponClass": "fishing_rod"
     },
+    "goblin_club": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "goblin_club",
+        "kind": "pixel"
+      },
+      "name": "Goblin Club",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
+    },
     "gold_amulet": {
       "actions": [
         "Use",
@@ -1571,6 +1601,36 @@
       "stackable": false,
       "type": "component",
       "value": 100
+    },
+    "guard_crest": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "guard_crest",
+        "kind": "pixel"
+      },
+      "name": "Guard Crest",
+      "stackable": false,
+      "type": "resource",
+      "value": 24
+    },
+    "guard_spear": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "guard_spear",
+        "kind": "pixel"
+      },
+      "name": "Guard Spear",
+      "stackable": false,
+      "type": "resource",
+      "value": 20
     },
     "hammer": {
       "actions": [
@@ -3068,6 +3128,51 @@
       "type": "component",
       "value": 50
     },
+    "rat_tail": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "rat_tail",
+        "kind": "pixel"
+      },
+      "name": "Rat Tail",
+      "stackable": false,
+      "type": "resource",
+      "value": 5
+    },
+    "raw_boar_meat": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "raw_boar_meat",
+        "kind": "pixel"
+      },
+      "name": "Raw Boar Meat",
+      "stackable": false,
+      "type": "resource",
+      "value": 6
+    },
+    "raw_chicken": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "raw_chicken",
+        "kind": "pixel"
+      },
+      "name": "Raw Chicken",
+      "stackable": false,
+      "type": "resource",
+      "value": 4
+    },
     "raw_salmon": {
       "actions": [
         "Use",
@@ -3153,6 +3258,21 @@
       "stackable": false,
       "type": "resource",
       "value": 28
+    },
+    "raw_wolf_meat": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "raw_wolf_meat",
+        "kind": "pixel"
+      },
+      "name": "Raw Wolf Meat",
+      "stackable": false,
+      "type": "resource",
+      "value": 8
     },
     "ring_mould": {
       "actions": [
@@ -4720,6 +4840,21 @@
       "stackable": false,
       "type": "component",
       "value": 28
+    },
+    "wolf_fang": {
+      "actions": [
+        "Use",
+        "Drop"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "wolf_fang",
+        "kind": "pixel"
+      },
+      "name": "Wolf Fang",
+      "stackable": false,
+      "type": "resource",
+      "value": 12
     },
     "wolf_leather": {
       "actions": [

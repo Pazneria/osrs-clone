@@ -605,11 +605,21 @@
         }
 
         function openShop(merchantId = 'general_store') {
+            if (window.QuestRuntime && typeof window.QuestRuntime.canOpenMerchantShop === 'function') {
+                const access = window.QuestRuntime.canOpenMerchantShop(merchantId);
+                if (!access || !access.ok) {
+                    if (typeof addChatMessage === 'function' && access && access.messageText) {
+                        addChatMessage(access.messageText, 'info');
+                    }
+                    return false;
+                }
+            }
             ensureMerchantShopInventory(merchantId);
             isShopOpen = true;
             setInterfaceOpenState('shop-interface', true);
             renderShop();
             renderInventory();
+            return true;
         }
 
         function closeShop() {
@@ -863,6 +873,87 @@
                 } else slot.oncontextmenu = (e) => e.preventDefault();
                 container.appendChild(slot);
             }
+            if (window.QuestRuntime && typeof window.QuestRuntime.refreshAllQuestStates === 'function') {
+                window.QuestRuntime.refreshAllQuestStates({ silent: true, persist: false, render: false });
+            }
+            if (typeof renderQuestLog === 'function') renderQuestLog();
+            if (window.NpcDialogueRuntime && typeof window.NpcDialogueRuntime.refreshActiveDialogue === 'function' && window.NpcDialogueRuntime.isOpen()) {
+                window.NpcDialogueRuntime.refreshActiveDialogue();
+            }
+        }
+
+        function getQuestStatusBadgeClass(status) {
+            if (status === 'ready_to_complete') return 'border-[#3f6b37] bg-[#1c2d18] text-[#98d08a]';
+            if (status === 'active') return 'border-[#6a5531] bg-[#2c2315] text-[#f0c97a]';
+            if (status === 'completed') return 'border-[#3a444c] bg-[#111418] text-[#9fb0bf]';
+            return 'border-[#3a444c] bg-[#111418] text-[#9fb0bf]';
+        }
+
+        function getQuestStatusLabel(status) {
+            if (status === 'ready_to_complete') return 'Ready';
+            if (status === 'active') return 'In Progress';
+            if (status === 'completed') return 'Completed';
+            return 'Available';
+        }
+
+        function renderQuestLog() {
+            const container = document.getElementById('view-quests');
+            if (!container) return;
+
+            const questEntries = window.QuestRuntime && typeof window.QuestRuntime.getQuestLogEntries === 'function'
+                ? window.QuestRuntime.getQuestLogEntries()
+                : [];
+
+            if (!Array.isArray(questEntries) || questEntries.length === 0) {
+                container.innerHTML = `
+                    <div class="flex h-full min-h-[220px] items-center justify-center rounded border border-[#3a444c] bg-[#0f1215] px-4 text-center text-[11px] leading-5 text-gray-400 shadow-inner">
+                        No quests are defined yet.
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = questEntries.map((entry) => {
+                const objectives = Array.isArray(entry.objectives) ? entry.objectives : [];
+                const objectiveRows = objectives.length > 0
+                    ? objectives.map((objective) => `
+                    <div class="flex items-start justify-between gap-3 text-[11px] leading-5 ${objective.completed ? 'text-[#98d08a]' : 'text-[#f3e4c3]'}">
+                        <span>${escapeTooltipHtml(objective.label)}</span>
+                        <span class="shrink-0 font-mono text-[10px] ${objective.completed ? 'text-[#98d08a]' : 'text-gray-300'}">${escapeTooltipHtml(objective.progressText)}</span>
+                    </div>`).join('')
+                    : '<div class="text-[11px] leading-5 text-gray-400">No objectives listed yet.</div>';
+                const guidanceLabel = entry.status === 'not_started' ? 'How To Start' : 'Next Step';
+                const guidanceText = entry.status === 'not_started'
+                    ? (entry.startText || 'Talk to the quest giver to begin.')
+                    : (entry.nextStepText || entry.progressText || 'No next step is available right now.');
+
+                return `
+                    <div class="rounded border border-[#3a444c] bg-[#0f1215] px-3 py-3 shadow-inner">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-[10px] uppercase tracking-[0.18em] text-[#c8aa6e]">${escapeTooltipHtml(entry.questGiverName || 'Quest')}</div>
+                                <div class="mt-1 text-sm font-bold text-[#ffcf8b]">${escapeTooltipHtml(entry.title)}</div>
+                            </div>
+                            <div class="rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] ${getQuestStatusBadgeClass(entry.status)}">${escapeTooltipHtml(getQuestStatusLabel(entry.status))}</div>
+                        </div>
+                        <div class="mt-2 text-[11px] leading-5 text-gray-300">${escapeTooltipHtml(entry.summary)}</div>
+                        <div class="mt-3 border-t border-[#2a3138] pt-2">
+                            <div class="text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">${escapeTooltipHtml(guidanceLabel)}</div>
+                            <div class="mt-2 text-[11px] leading-5 text-gray-300">${escapeTooltipHtml(guidanceText)}</div>
+                        </div>
+                        <div class="mt-3 border-t border-[#2a3138] pt-2">
+                            <div class="text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">Progress</div>
+                            <div class="mt-2 text-[11px] leading-5 text-gray-300">${escapeTooltipHtml(entry.progressText || 'No quest progress yet.')}</div>
+                        </div>
+                        <div class="mt-3 border-t border-[#2a3138] pt-2">
+                            <div class="text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">Objectives</div>
+                            <div class="mt-2 grid gap-1">${objectiveRows}</div>
+                        </div>
+                        <div class="mt-3 border-t border-[#2a3138] pt-2">
+                            <div class="text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">Rewards</div>
+                            <div class="mt-2 text-[11px] leading-5 text-gray-300">${escapeTooltipHtml(entry.rewardsText || 'No rewards listed')}</div>
+                        </div>
+                    </div>`;
+            }).join('');
         }
 
         function renderEquipment() {
@@ -1601,7 +1692,8 @@
                 { id: 'inv', displayClass: 'grid' },
                 { id: 'equip', displayClass: 'flex' },
                 { id: 'combat', displayClass: 'flex' },
-                { id: 'stats', displayClass: 'grid' }
+                { id: 'stats', displayClass: 'grid' },
+                { id: 'quests', displayClass: 'flex' }
             ];
             const mainContainer = document.getElementById('main-ui-container');
             if (mainContainer) mainContainer.dataset.activeTab = 'inv';
@@ -1648,6 +1740,8 @@
 
             Object.keys(playerSkills).forEach(skill => { if (typeof window.refreshSkillUi === 'function') window.refreshSkillUi(skill); });
             renderInventory(); renderEquipment();
+            renderQuestLog();
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
+        window.renderQuestLog = renderQuestLog;

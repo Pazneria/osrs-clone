@@ -12,6 +12,9 @@ const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const combatSource = read("src/js/combat.js");
+const combatContentSource = read("src/game/combat/content.ts");
+const combatContractSource = read("src/game/contracts/combat.ts");
+const playerModelSource = read("src/js/player-model.js");
 const targetRegistrySource = read("src/js/interactions/target-interaction-registry.js");
 const examineCatalogSource = read("src/js/content/examine-catalog.js");
 const packageJson = read("package.json");
@@ -50,6 +53,42 @@ assert.ok(
   combatSource.includes("window.updateCombatEnemyOverlays = updateCombatEnemyOverlays;") &&
     combatSource.includes("window.getCombatEnemyOccupiedBaseTileId = getCombatEnemyOccupiedBaseTileId;"),
   "combat runtime should expose the enemy overlay refresh hook and occupied-base-tile helper"
+);
+assert.ok(
+  combatSource.includes("guard_basic: {") &&
+    combatSource.includes("npc/guard/idle") &&
+    combatSource.includes("npc/guard/walk") &&
+    combatSource.includes("npc/guard/attack") &&
+    combatSource.includes("npc/guard/hit"),
+  "combat runtime should wire a dedicated guard animation set"
+);
+assert.ok(
+  combatSource.includes("function createChickenRenderer(enemyState, enemyType)") &&
+    combatSource.includes("renderer.kind === 'chicken'") &&
+    combatSource.includes("updateChickenRenderer(enemyState, renderer"),
+  "combat runtime should provide a dedicated chicken renderer and motion path"
+);
+assert.ok(
+  combatSource.includes("function createBoarRenderer(enemyState, enemyType)") &&
+    combatSource.includes("function updateBoarRenderer(enemyState, renderer, frameNow") &&
+    combatSource.includes("function createWolfRenderer(enemyState, enemyType)") &&
+    combatSource.includes("function updateWolfRenderer(enemyState, renderer, frameNow") &&
+    combatSource.includes("if (enemyState.enemyId === 'enemy_boar') renderer = createBoarRenderer(enemyState, enemyType);") &&
+    combatSource.includes("else if (enemyState.enemyId === 'enemy_wolf') renderer = createWolfRenderer(enemyState, enemyType);"),
+  "combat runtime should give boars and wolves dedicated quadruped renderers"
+);
+assert.ok(
+  combatContentSource.includes('modelPresetId: "guard"') &&
+    combatContentSource.includes('animationSetId: "guard_basic"') &&
+    combatContentSource.includes('kind: "chicken"') &&
+    combatContractSource.includes('EnemyAppearanceKind = "rat" | "humanoid" | "chicken"'),
+  "combat content/contracts should expose the guard presentation wiring and chicken appearance kind"
+);
+assert.ok(
+  playerModelSource.includes("function createGuardHumanoidFragments()") &&
+    playerModelSource.includes("normalizedPresetId !== 'goblin' && normalizedPresetId !== 'guard'") &&
+    playerModelSource.includes("{ actorId: 'guard', label: 'Guard' }"),
+  "player-model should expose a dedicated guard humanoid preset and preview actor"
 );
 assert.ok(
   inputRenderSource.includes("else if (hitData.type === 'ENEMY') {") &&

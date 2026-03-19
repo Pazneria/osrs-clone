@@ -10,7 +10,12 @@
         "castle_floor1",
         "general_store",
         "smithing_hall",
-        "road_outpost"
+        "road_outpost",
+        "timber_cottage",
+        "timber_longhouse",
+        "timber_shack",
+        "timber_workshop",
+        "timber_hut"
       ],
       "defaultSpawn": {
         "x": 205,

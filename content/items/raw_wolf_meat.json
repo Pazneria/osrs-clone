@@ -1,0 +1,18 @@
+{
+  "id": "raw_wolf_meat",
+  "name": "Raw Wolf Meat",
+  "type": "resource",
+  "stackable": false,
+  "value": 8,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/raw_wolf_meat.png",
+    "model": "assets/models/raw_wolf_meat.obj",
+    "groundModel": "assets/models/raw_wolf_meat-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

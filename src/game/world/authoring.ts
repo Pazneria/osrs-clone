@@ -13,6 +13,11 @@ import castleFloor1 from "../../../content/world/stamps/castle_floor1.json";
 import generalStore from "../../../content/world/stamps/general_store.json";
 import roadOutpost from "../../../content/world/stamps/road_outpost.json";
 import smithingHall from "../../../content/world/stamps/smithing_hall.json";
+import timberCottage from "../../../content/world/stamps/timber_cottage.json";
+import timberHut from "../../../content/world/stamps/timber_hut.json";
+import timberLonghouse from "../../../content/world/stamps/timber_longhouse.json";
+import timberShack from "../../../content/world/stamps/timber_shack.json";
+import timberWorkshop from "../../../content/world/stamps/timber_workshop.json";
 import northRoadCamp from "../../../content/world/regions/north_road_camp.json";
 import starterTown from "../../../content/world/regions/starter_town.json";
 
@@ -21,7 +26,12 @@ const allStamps: Record<string, WorldStamp> = {
   [castleFloor1.stampId]: castleFloor1,
   [generalStore.stampId]: generalStore,
   [roadOutpost.stampId]: roadOutpost,
-  [smithingHall.stampId]: smithingHall
+  [smithingHall.stampId]: smithingHall,
+  [timberCottage.stampId]: timberCottage,
+  [timberHut.stampId]: timberHut,
+  [timberLonghouse.stampId]: timberLonghouse,
+  [timberShack.stampId]: timberShack,
+  [timberWorkshop.stampId]: timberWorkshop
 };
 
 const manifest = worldManifestJson as WorldManifest;
@@ -232,6 +242,21 @@ function applyStructureLocalAlignment(
       y: mapped.y,
       z: mapped.z,
       travelSpawn: mappedTravelSpawn || null
+    };
+  });
+
+  const rawCombatSpawns = Array.isArray(rawDefinition.combatSpawns) ? rawDefinition.combatSpawns : [];
+  const scaledCombatSpawns = Array.isArray(scaledDefinition.combatSpawns) ? scaledDefinition.combatSpawns : [];
+  scaledDefinition.combatSpawns = rawCombatSpawns.map((rawSpawn, index) => {
+    const scaledSpawn = scaledCombatSpawns[index] || rawSpawn;
+    const mappedSpawnTile = remapPoint3WithStructureShift(structureShiftBounds, rawSpawn.spawnTile);
+    const mappedHomeTile = rawSpawn.homeTileOverride
+      ? remapPoint3WithStructureShift(structureShiftBounds, rawSpawn.homeTileOverride)
+      : scaledSpawn.homeTileOverride;
+    return {
+      ...scaledSpawn,
+      spawnTile: mappedSpawnTile,
+      homeTileOverride: mappedHomeTile || null
     };
   });
 

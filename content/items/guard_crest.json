@@ -1,0 +1,18 @@
+{
+  "id": "guard_crest",
+  "name": "Guard Crest",
+  "type": "resource",
+  "stackable": false,
+  "value": 24,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/guard_crest.png",
+    "model": "assets/models/guard_crest.obj",
+    "groundModel": "assets/models/guard_crest-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "raw_chicken",
+  "name": "Raw Chicken",
+  "type": "resource",
+  "stackable": false,
+  "value": 4,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/raw_chicken.png",
+    "model": "assets/models/raw_chicken.obj",
+    "groundModel": "assets/models/raw_chicken-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

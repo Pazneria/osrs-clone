@@ -67,6 +67,383 @@
     }
   },
   "npcSpawns": [],
+  "combatSpawns": [
+    {
+      "spawnNodeId": "enemy_spawn_rat_north_road_verge_west",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 223,
+        "y": 205,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_lane_passive"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_rat_north_road_verge_east",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 225,
+        "y": 209,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_lane_passive"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_lane_west",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 231,
+        "y": 205,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 3,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_lane_aggressive"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_lane_east",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 236,
+        "y": 209,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 3,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_lane_aggressive"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_west",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 243,
+        "y": 202,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_roaming_goblins_west"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_mid",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 250,
+        "y": 214,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_roaming_goblins_mid"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_east",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 258,
+        "y": 206,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 4,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_roaming_goblins_east"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_north_road_outer_west",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 286,
+        "y": 185,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 4,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_band_boars"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_north_road_outer_east",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 294,
+        "y": 194,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 4,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_band_boars"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_north_road_far_northwest",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 344,
+        "y": 88,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_boars_northwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_north_road_far_southwest",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 90,
+        "y": 485,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_boars_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_north_road_far_east",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 458,
+        "y": 196,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_boars_east"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_outer_north",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 304,
+        "y": 208,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_band_wolves"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_outer_south",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 312,
+        "y": 224,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_outer_band_wolves"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_far_east_north_1",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 460,
+        "y": 96,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_east_wolves_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_far_east_north_2",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 468,
+        "y": 104,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_east_wolves_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_far_east_north_3",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 476,
+        "y": 112,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_east_wolves_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_far_east_south_1",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 460,
+        "y": 280,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_east_wolves_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_far_east_south_2",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 468,
+        "y": 288,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_east_wolves_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_north_road_far_east_south_3",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 476,
+        "y": 296,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_east_wolves_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_east_1",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 420,
+        "y": 208,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_east_2",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 428,
+        "y": 208,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_east_3",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 420,
+        "y": 216,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_north_road_far_east_4",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 428,
+        "y": 216,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_guard_north_road_threshold",
+      "enemyId": "enemy_guard",
+      "spawnTile": {
+        "x": 236,
+        "y": 220,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 3,
+      "respawnTicks": 42,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "north_road_threshold_guard"
+    }
+  ],
   "services": [
     {
       "serviceId": "merchant:north_road_shopkeeper",

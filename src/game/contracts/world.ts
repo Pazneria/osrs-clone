@@ -1,3 +1,5 @@
+import type { EnemySpawnNodeDefinition } from "./combat";
+
 export interface Point2 {
   x: number;
   y: number;
@@ -23,6 +25,7 @@ export interface ServiceDescriptor extends Point3 {
   merchantId?: string | null;
   name?: string;
   npcType?: number;
+  appearanceId?: string | null;
   action?: string;
   travelToWorldId?: string | null;
   travelSpawn?: Point3 | null;
@@ -39,6 +42,8 @@ export interface NpcDescriptor extends Point3 {
   name: string;
   npcType: number;
   merchantId?: string | null;
+  appearanceId?: string | null;
+  dialogueId?: string | null;
   action?: string;
   travelToWorldId?: string | null;
   travelSpawn?: Point3 | null;
@@ -232,6 +237,8 @@ export interface DynamicMerchantSpawn {
   merchantId: string;
   name: string;
   npcType: number;
+  appearanceId?: string | null;
+  dialogueId?: string | null;
   action?: string;
   anchorRouteId: string;
   tags?: string[];
@@ -291,6 +298,7 @@ export interface WorldDefinition {
   };
   npcSpawns: NpcDescriptor[];
   services: ServiceDescriptor[];
+  combatSpawns: EnemySpawnNodeDefinition[];
   resourceNodes: {
     mining: MiningNodePlacement[];
     woodcutting: WoodcuttingNodePlacement[];
@@ -350,6 +358,7 @@ export interface WorldLegacyView {
   stampedStructures: StructurePlacement[];
   generalStoreService: ServiceDescriptor | null;
   staticMerchants: ServiceDescriptor[];
+  combatSpawnNodes: EnemySpawnNodeDefinition[];
   smithingStations: ServiceDescriptor[];
   fishingRoutes: RouteDescriptor[];
   cookingRoutes: SkillRouteWithFireTiles[];
@@ -436,6 +445,8 @@ export interface LegacyNpcRenderPlacement extends Point3 {
   type: number;
   name?: string;
   merchantId?: string | null;
+  appearanceId?: string | null;
+  dialogueId?: string | null;
   action?: string;
   facingYaw?: number;
   tags?: string[];

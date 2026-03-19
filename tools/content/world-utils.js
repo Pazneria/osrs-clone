@@ -173,6 +173,8 @@ function applyStamp(map, stamp, startX, startY, z) {
       if (ch === "W") map[z][mapY][mapX] = TileId.WALL;
       else if (ch === "C") map[z][mapY][mapX] = TileId.TOWER;
       else if (ch === "F") map[z][mapY][mapX] = TileId.FLOOR_STONE;
+      else if (ch === "L") map[z][mapY][mapX] = TileId.FLOOR_WOOD;
+      else if (ch === "T") map[z][mapY][mapX] = TileId.FLOOR_WOOD;
       else if (ch === "U") map[z][mapY][mapX] = TileId.STAIRS_UP;
       else if (ch === "D") map[z][mapY][mapX] = TileId.STAIRS_DOWN;
       else if (ch === "s" || ch === "S") map[z][mapY][mapX] = TileId.STAIRS_RAMP;
@@ -318,6 +320,55 @@ function hasAdjacentWalkableTile(map, x, y, z) {
   return false;
 }
 
+function getChebyshevDistance(a, b) {
+  if (!a || !b) return null;
+  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) return null;
+  return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+}
+
+function findShortestPathLength(map, start, goal, options = {}) {
+  if (!start || !goal) return null;
+  if (!Number.isFinite(start.x) || !Number.isFinite(start.y) || !Number.isFinite(start.z)) return null;
+  if (!Number.isFinite(goal.x) || !Number.isFinite(goal.y) || !Number.isFinite(goal.z)) return null;
+  if (start.z !== goal.z) return null;
+  if (!isWalkable(map, start.x, start.y, start.z) || !isWalkable(map, goal.x, goal.y, goal.z)) return null;
+
+  const maxDistance = Number.isFinite(options.maxDistance) ? Math.max(0, Math.floor(options.maxDistance)) : 64;
+  const maxVisited = Number.isFinite(options.maxVisited) ? Math.max(1, Math.floor(options.maxVisited)) : 4096;
+  const queue = [{ x: start.x, y: start.y, distance: 0 }];
+  const visited = new Set([`${start.x}:${start.y}:${start.z}`]);
+  const directions = [
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+    { x: 1, y: 1 },
+    { x: 1, y: -1 },
+    { x: -1, y: 1 },
+    { x: -1, y: -1 }
+  ];
+
+  for (let i = 0; i < queue.length; i++) {
+    const current = queue[i];
+    if (current.x === goal.x && current.y === goal.y) return current.distance;
+    if (current.distance >= maxDistance) continue;
+
+    for (let j = 0; j < directions.length; j++) {
+      const nextX = current.x + directions[j].x;
+      const nextY = current.y + directions[j].y;
+      if (nextX < 0 || nextY < 0 || nextX >= MAP_SIZE || nextY >= MAP_SIZE) continue;
+      const key = `${nextX}:${nextY}:${start.z}`;
+      if (visited.has(key)) continue;
+      if (!isWalkable(map, nextX, nextY, start.z)) continue;
+      visited.add(key);
+      queue.push({ x: nextX, y: nextY, distance: current.distance + 1 });
+      if (visited.size >= maxVisited) return null;
+    }
+  }
+
+  return null;
+}
+
 function collectAdjacencyViolations(world, map) {
   const violations = [];
   const services = world.services || [];
@@ -381,5 +432,8 @@ module.exports = {
   buildWorldGameplayMap,
   buildStarterTownLogicalMap,
   buildStarterTownGameplayMap,
-  collectAdjacencyViolations
+  findShortestPathLength,
+  collectAdjacencyViolations,
+  getChebyshevDistance,
+  isWalkable
 };

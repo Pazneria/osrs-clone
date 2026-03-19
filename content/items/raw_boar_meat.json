@@ -1,0 +1,18 @@
+{
+  "id": "raw_boar_meat",
+  "name": "Raw Boar Meat",
+  "type": "resource",
+  "stackable": false,
+  "value": 6,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/raw_boar_meat.png",
+    "model": "assets/models/raw_boar_meat.obj",
+    "groundModel": "assets/models/raw_boar_meat-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

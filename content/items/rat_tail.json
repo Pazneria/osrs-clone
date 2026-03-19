@@ -1,0 +1,18 @@
+{
+  "id": "rat_tail",
+  "name": "Rat Tail",
+  "type": "resource",
+  "stackable": false,
+  "value": 5,
+  "actions": [
+    "Use",
+    "Drop"
+  ],
+  "equipSlot": null,
+  "assets": {
+    "icon": "assets/pixel/rat_tail.png",
+    "model": "assets/models/rat_tail.obj",
+    "groundModel": "assets/models/rat_tail-ground.obj"
+  },
+  "notes": "Draft metadata aligned to the pixel source pipeline"
+}

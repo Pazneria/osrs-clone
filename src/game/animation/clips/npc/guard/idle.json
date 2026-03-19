@@ -1,0 +1,141 @@
+{
+  "clipId": "npc/guard/idle",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 1600,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "neutral": {
+      "torso": {
+        "rotationDeg": {
+          "x": 4
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -2
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 4,
+          "z": 3
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 6,
+          "z": -3
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -2
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -2
+        }
+      }
+    },
+    "guard_breathe_left": {
+      "root": {
+        "position": {
+          "y": 0.01
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": -3
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3,
+          "y": -4
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 6,
+          "z": 6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 2,
+          "z": -2
+        }
+      }
+    },
+    "guard_breathe_right": {
+      "root": {
+        "position": {
+          "y": 0.015
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": 3
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3,
+          "y": 4
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 2,
+          "z": 2
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 6,
+          "z": -6
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "neutral",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "guard_breathe_left",
+      "atMs": 520,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "guard_breathe_right",
+      "atMs": 1120,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "neutral",
+      "atMs": 1600,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "settle",
+      "atMs": 0
+    },
+    {
+      "markerId": "breath_left",
+      "atMs": 520
+    },
+    {
+      "markerId": "breath_right",
+      "atMs": 1120
+    }
+  ]
+}

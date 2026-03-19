@@ -2,6 +2,10 @@ import itemCatalogScript from "../../js/content/item-catalog.js?raw";
 import iconReviewCatalogScript from "../../js/content/icon-review-catalog.js?raw";
 import playerAppearanceCatalogScript from "../../js/content/player-appearance-catalog.js?raw";
 import examineCatalogScript from "../../js/content/examine-catalog.js?raw";
+import npcDialogueCatalogScript from "../../js/content/npc-dialogue-catalog.js?raw";
+import questCatalogScript from "../../js/content/quest-catalog.js?raw";
+import questRuntimeScript from "../../js/quest-runtime.js?raw";
+import npcDialogueRuntimeScript from "../../js/npc-dialogue-runtime.js?raw";
 import coreScript from "../../js/core.js?raw";
 import skillSpecsScript from "../../js/skills/specs.js?raw";
 import skillSpecRegistryScript from "../../js/skills/spec-registry.js?raw";
@@ -39,6 +43,10 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "icon-review-catalog", filename: "src/js/content/icon-review-catalog.js", code: iconReviewCatalogScript },
   { id: "player-appearance-catalog", filename: "src/js/content/player-appearance-catalog.js", code: playerAppearanceCatalogScript },
   { id: "examine-catalog", filename: "src/js/content/examine-catalog.js", code: examineCatalogScript },
+  { id: "npc-dialogue-catalog", filename: "src/js/content/npc-dialogue-catalog.js", code: npcDialogueCatalogScript },
+  { id: "quest-catalog", filename: "src/js/content/quest-catalog.js", code: questCatalogScript },
+  { id: "quest-runtime", filename: "src/js/quest-runtime.js", code: questRuntimeScript },
+  { id: "npc-dialogue-runtime", filename: "src/js/npc-dialogue-runtime.js", code: npcDialogueRuntimeScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },
   { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },
   { id: "skills-spec-registry", filename: "src/js/skills/spec-registry.js", code: skillSpecRegistryScript },

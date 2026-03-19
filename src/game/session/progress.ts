@@ -3,6 +3,7 @@ import type {
   GameSessionProgressState,
   PlayerProfileState,
   PlayerSkillMap,
+  QuestProgressState,
   SaveAppearanceState
 } from "../contracts/session";
 
@@ -90,6 +91,40 @@ export function cloneContentGrantState(contentGrants: ContentGrantState): Conten
   return cloned;
 }
 
+export function cloneQuestProgressState(quests: QuestProgressState): QuestProgressState {
+  const cloned: QuestProgressState = {};
+  const questIds = Object.keys(quests || {});
+  for (let i = 0; i < questIds.length; i++) {
+    const questId = questIds[i];
+    const entry = quests[questId];
+    if (!entry) continue;
+
+    const objectiveStates: Record<string, { current: number; target: number; completed: boolean } | undefined> = {};
+    const objectiveIds = Object.keys(entry.objectiveStates || {});
+    for (let j = 0; j < objectiveIds.length; j++) {
+      const objectiveId = objectiveIds[j];
+      const objective = entry.objectiveStates[objectiveId];
+      if (!objective) continue;
+      objectiveStates[objectiveId] = {
+        current: Number.isFinite(objective.current) ? Math.max(0, Math.floor(objective.current)) : 0,
+        target: Number.isFinite(objective.target) ? Math.max(0, Math.floor(objective.target)) : 0,
+        completed: !!objective.completed
+      };
+    }
+
+    cloned[questId] = {
+      status: entry.status,
+      startedAt: typeof entry.startedAt === "number" && Number.isFinite(entry.startedAt) ? Math.floor(entry.startedAt) : null,
+      updatedAt: typeof entry.updatedAt === "number" && Number.isFinite(entry.updatedAt) ? Math.floor(entry.updatedAt) : null,
+      completedAt: typeof entry.completedAt === "number" && Number.isFinite(entry.completedAt) ? Math.floor(entry.completedAt) : null,
+      activeStepId: typeof entry.activeStepId === "string" ? entry.activeStepId : null,
+      objectiveStates,
+      flags: { ...(entry.flags || {}) }
+    };
+  }
+  return cloned;
+}
+
 export function cloneAppearanceState(appearance: SaveAppearanceState | null): SaveAppearanceState | null {
   if (!appearance) return null;
   return {
@@ -110,6 +145,7 @@ export function createDefaultProgressState(options: {
     equipment: createDefaultEquipmentState(),
     userItemPrefs: {},
     contentGrants: {},
+    quests: {},
     appearance: null
   };
 }

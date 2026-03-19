@@ -41,6 +41,102 @@
       "x": 360,
       "y": 250,
       "z": 0
+    },
+    {
+      "structureId": "shopkeeper_house",
+      "stampId": "timber_longhouse",
+      "label": "Shopkeeper's Rowhouse",
+      "x": 166,
+      "y": 232,
+      "z": 0
+    },
+    {
+      "structureId": "crafting_teacher_cottage",
+      "stampId": "timber_cottage",
+      "label": "Crafting Teacher Cottage",
+      "x": 176,
+      "y": 243,
+      "z": 0
+    },
+    {
+      "structureId": "fishing_teacher_shack",
+      "stampId": "timber_shack",
+      "label": "Fishing Teacher Shack",
+      "x": 167,
+      "y": 216,
+      "z": 0
+    },
+    {
+      "structureId": "road_guide_hut",
+      "stampId": "timber_hut",
+      "label": "Road Guide Hut",
+      "x": 221,
+      "y": 216,
+      "z": 0
+    },
+    {
+      "structureId": "fishing_supplier_shack",
+      "stampId": "timber_shack",
+      "label": "Fishing Supplier Shack",
+      "x": 231,
+      "y": 216,
+      "z": 0
+    },
+    {
+      "structureId": "elira_gemhand_cottage",
+      "stampId": "timber_cottage",
+      "label": "Elira's Gemcutter Cottage",
+      "x": 167,
+      "y": 188,
+      "z": 0
+    },
+    {
+      "structureId": "borin_ironvein_house",
+      "stampId": "timber_longhouse",
+      "label": "Borin's Forgehouse",
+      "x": 242,
+      "y": 220,
+      "z": 0
+    },
+    {
+      "structureId": "tanner_rusk_tannery",
+      "stampId": "timber_workshop",
+      "label": "Rusk Tannery",
+      "x": 242,
+      "y": 230,
+      "z": 0
+    },
+    {
+      "structureId": "outpost_guide_house",
+      "stampId": "timber_cottage",
+      "label": "Outpost Guide Cottage",
+      "x": 257,
+      "y": 250,
+      "z": 0
+    },
+    {
+      "structureId": "thrain_deepforge_house",
+      "stampId": "timber_longhouse",
+      "label": "Deepforge House",
+      "x": 268,
+      "y": 250,
+      "z": 0
+    },
+    {
+      "structureId": "rune_tutor_hut",
+      "stampId": "timber_hut",
+      "label": "Rune Tutor Hut",
+      "x": 216,
+      "y": 176,
+      "z": 0
+    },
+    {
+      "structureId": "combination_sage_hut",
+      "stampId": "timber_hut",
+      "label": "Combination Sage Hut",
+      "x": 146,
+      "y": 176,
+      "z": 0
     }
   ],
   "terrainPatches": {
@@ -111,6 +207,758 @@
     }
   },
   "npcSpawns": [],
+  "combatSpawns": [
+    {
+      "spawnNodeId": "enemy_spawn_training_dummy_hub",
+      "enemyId": "enemy_training_dummy",
+      "spawnTile": {
+        "x": 210,
+        "y": 211,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 0,
+      "respawnTicks": 8,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_training"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_rat_south_field",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 194,
+        "y": 220,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 15,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_field"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_south_field",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 190,
+        "y": 228,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 4,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_field"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_east_path",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 240,
+        "y": 200,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 15,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_road"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_east_field_north",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 276,
+        "y": 188,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 10,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_field_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_east_field_center",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 295,
+        "y": 206,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 10,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_field_center"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_east_field_south",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 278,
+        "y": 226,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 10,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_field_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_east_field_west",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 326,
+        "y": 244,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_far_boar_west"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_east_field_center",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 334,
+        "y": 256,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_far_boar_center"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_east_field_east",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 342,
+        "y": 248,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_far_boar_east"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_outer_west_north",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 44,
+        "y": 128,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_boars_west_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_outer_west_south",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 56,
+        "y": 468,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_boars_west_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_boar_outer_east_north",
+      "enemyId": "enemy_boar",
+      "spawnTile": {
+        "x": 468,
+        "y": 132,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 30,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_boars_east_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_northwest",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 60,
+        "y": 70,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_northwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_north",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 72,
+        "y": 82,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_north"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_northeast",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 84,
+        "y": 96,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_northeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_southwest_1",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 20,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_southwest_2",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 28,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_southwest_3",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 36,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_south_1",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 156,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_south_2",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 164,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_south_3",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 172,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_south"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_southeast_1",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 420,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_southeast_2",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 428,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_wolf_outer_southeast_3",
+      "enemyId": "enemy_wolf",
+      "spawnTile": {
+        "x": 436,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 7,
+      "respawnTicks": 32,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_wolf_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_south_1",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 280,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_southern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_south_2",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 288,
+        "y": 420,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_southern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_south_3",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 280,
+        "y": 428,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_southern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_south_4",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 288,
+        "y": 428,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_southern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_east_1",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 420,
+        "y": 320,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_east_2",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 428,
+        "y": 320,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_east_3",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 420,
+        "y": 328,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_goblin_far_east_4",
+      "enemyId": "enemy_goblin_grunt",
+      "spawnTile": {
+        "x": 428,
+        "y": 328,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 34,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_far_eastern_goblins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_rat_outer_southwest_1",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 100,
+        "y": 400,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_rats_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_rat_outer_southwest_2",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 108,
+        "y": 400,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_rats_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_rat_outer_southwest_3",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 100,
+        "y": 408,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_rats_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_rat_outer_southwest_4",
+      "enemyId": "enemy_rat",
+      "spawnTile": {
+        "x": 108,
+        "y": 408,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 6,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_rats_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_south_1",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 240,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_south_2",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 244,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_south_3",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 248,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_south_4",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 252,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_south_5",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 256,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southwest"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_southeast_1",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 344,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_southeast_2",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 348,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_southeast_3",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 352,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_southeast_4",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 356,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_chicken_outer_southeast_5",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 360,
+        "y": 452,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_outer_chickens_southeast"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_guard_east_outpost_northwest",
+      "enemyId": "enemy_guard",
+      "spawnTile": {
+        "x": 361,
+        "y": 248,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 42,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_outpost_guard_post"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_guard_east_outpost_north",
+      "enemyId": "enemy_guard",
+      "spawnTile": {
+        "x": 364,
+        "y": 246,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 42,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_outpost_guard_post"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_guard_east_outpost_northeast",
+      "enemyId": "enemy_guard",
+      "spawnTile": {
+        "x": 367,
+        "y": 248,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 5,
+      "respawnTicks": 42,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "starter_east_outpost_guard_post"
+    }
+  ],
   "services": [
     {
       "serviceId": "merchant:general_store",
@@ -120,10 +968,11 @@
       "merchantId": "general_store",
       "name": "Shopkeeper",
       "npcType": 2,
-      "x": 181,
-      "y": 235,
+      "x": 170,
+      "y": 239,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "shopkeeper",
       "tags": [
         "merchant",
         "shop",
@@ -137,8 +986,8 @@
       "interactionTarget": "NPC",
       "name": "Road Guide",
       "npcType": 3,
-      "x": 205,
-      "y": 216,
+      "x": 223,
+      "y": 221,
       "z": 0,
       "action": "Travel",
       "travelToWorldId": "starter_town",
@@ -147,6 +996,7 @@
         "y": 262,
         "z": 0
       },
+      "dialogueId": "road_guide",
       "tags": [
         "travel",
         "starter",
@@ -160,8 +1010,8 @@
       "interactionTarget": "NPC",
       "name": "Outpost Guide",
       "npcType": 3,
-      "x": 363,
-      "y": 262,
+      "x": 260,
+      "y": 257,
       "z": 0,
       "action": "Travel",
       "travelToWorldId": "starter_town",
@@ -170,6 +1020,7 @@
         "y": 210,
         "z": 0
       },
+      "dialogueId": "outpost_guide",
       "tags": [
         "travel",
         "east",
@@ -248,10 +1099,11 @@
       "merchantId": "fishing_teacher",
       "name": "Fishing Teacher",
       "npcType": 3,
-      "x": 201,
-      "y": 223,
+      "x": 170,
+      "y": 221,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "fishing_teacher",
       "tags": [
         "merchant",
         "fishing",
@@ -266,10 +1118,11 @@
       "merchantId": "fishing_supplier",
       "name": "Fishing Supplier",
       "npcType": 2,
-      "x": 206,
-      "y": 224,
+      "x": 234,
+      "y": 221,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "fishing_supplier",
       "tags": [
         "merchant",
         "fishing",
@@ -284,11 +1137,12 @@
       "merchantId": "borin_ironvein",
       "name": "Borin Ironvein",
       "npcType": 2,
-      "x": 224,
-      "y": 230,
+      "x": 246,
+      "y": 227,
       "z": 0,
       "facingYaw": -1.5707963267948966,
       "action": "Trade",
+      "dialogueId": "borin_ironvein",
       "tags": [
         "merchant",
         "smithing",
@@ -303,10 +1157,11 @@
       "merchantId": "thrain_deepforge",
       "name": "Thrain Deepforge",
       "npcType": 6,
-      "x": 366,
-      "y": 252,
+      "x": 272,
+      "y": 257,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "thrain_deepforge",
       "tags": [
         "merchant",
         "smithing",
@@ -321,10 +1176,11 @@
       "merchantId": "elira_gemhand",
       "name": "Elira Gemhand",
       "npcType": 3,
-      "x": 198,
-      "y": 205,
+      "x": 170,
+      "y": 195,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "elira_gemhand",
       "tags": [
         "merchant",
         "smithing",
@@ -339,11 +1195,12 @@
       "merchantId": "crafting_teacher",
       "name": "Crafting Teacher",
       "npcType": 2,
-      "x": 183,
-      "y": 237,
+      "x": 179,
+      "y": 250,
       "z": 0,
       "facingYaw": 1.5707963267948966,
       "action": "Trade",
+      "dialogueId": "crafting_teacher",
       "tags": [
         "merchant",
         "crafting",
@@ -358,10 +1215,12 @@
       "merchantId": "tanner_rusk",
       "name": "Tanner Rusk",
       "npcType": 6,
-      "x": 219,
-      "y": 240,
+      "x": 247,
+      "y": 237,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "tanner_rusk",
+      "appearanceId": "tanner_rusk",
       "tags": [
         "merchant",
         "crafting",
@@ -376,10 +1235,11 @@
       "merchantId": "rune_tutor",
       "name": "Rune Tutor",
       "npcType": 3,
-      "x": 203,
-      "y": 96,
+      "x": 218,
+      "y": 181,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "rune_tutor",
       "tags": [
         "merchant",
         "runecrafting",
@@ -394,10 +1254,11 @@
       "merchantId": "combination_sage",
       "name": "Combination Sage",
       "npcType": 6,
-      "x": 91,
-      "y": 23,
+      "x": 148,
+      "y": 181,
       "z": 0,
       "action": "Trade",
+      "dialogueId": "combination_sage",
       "tags": [
         "merchant",
         "runecrafting",
@@ -3013,6 +3874,150 @@
           {
             "x": 186,
             "y": 236,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "shopkeeper_house_stairs",
+        "tiles": [
+          {
+            "x": 170,
+            "y": 240,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "crafting_teacher_cottage_stairs",
+        "tiles": [
+          {
+            "x": 179,
+            "y": 251,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "fishing_teacher_shack_stairs",
+        "tiles": [
+          {
+            "x": 170,
+            "y": 222,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "road_guide_hut_stairs",
+        "tiles": [
+          {
+            "x": 223,
+            "y": 222,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "fishing_supplier_shack_stairs",
+        "tiles": [
+          {
+            "x": 234,
+            "y": 222,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "elira_gemhand_cottage_stairs",
+        "tiles": [
+          {
+            "x": 170,
+            "y": 196,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "borin_ironvein_house_stairs",
+        "tiles": [
+          {
+            "x": 246,
+            "y": 228,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "tanner_rusk_tannery_stairs",
+        "tiles": [
+          {
+            "x": 247,
+            "y": 238,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "outpost_guide_house_stairs",
+        "tiles": [
+          {
+            "x": 260,
+            "y": 258,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "thrain_deepforge_house_stairs",
+        "tiles": [
+          {
+            "x": 272,
+            "y": 258,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "rune_tutor_hut_stairs",
+        "tiles": [
+          {
+            "x": 218,
+            "y": 182,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "combination_sage_hut_stairs",
+        "tiles": [
+          {
+            "x": 148,
+            "y": 182,
             "z": 0,
             "tileId": "STAIRS_RAMP",
             "height": 0.25

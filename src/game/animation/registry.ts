@@ -25,6 +25,10 @@ import goblinIdleClipJson from "./clips/npc/goblin/idle.json";
 import goblinWalkClipJson from "./clips/npc/goblin/walk.json";
 import goblinAttackClipJson from "./clips/npc/goblin/attack.json";
 import goblinHitClipJson from "./clips/npc/goblin/hit.json";
+import guardIdleClipJson from "./clips/npc/guard/idle.json";
+import guardWalkClipJson from "./clips/npc/guard/walk.json";
+import guardAttackClipJson from "./clips/npc/guard/attack.json";
+import guardHitClipJson from "./clips/npc/guard/hit.json";
 
 interface AnimationClipRecord {
   descriptor: AnimationClipDescriptor;
@@ -215,6 +219,38 @@ const clipRecords: AnimationClipRecord[] = [
       sourcePath: "src/game/animation/clips/npc/goblin/hit.json"
     },
     clip: goblinHitClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/guard/idle",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/guard/idle.json"
+    },
+    clip: guardIdleClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/guard/walk",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/guard/walk.json"
+    },
+    clip: guardWalkClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/guard/attack",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/guard/attack.json"
+    },
+    clip: guardAttackClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "npc/guard/hit",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/npc/guard/hit.json"
+    },
+    clip: guardHitClipJson as AnimationClip
   }
 ];
 

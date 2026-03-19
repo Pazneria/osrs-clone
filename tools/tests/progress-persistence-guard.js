@@ -47,12 +47,20 @@ function run() {
     "core should build progress payloads through the session runtime"
   );
   assert(
+    coreScript.includes("quests: questProgressState"),
+    "core should include quest progress in the save payload"
+  );
+  assert(
     coreScript.includes("gameSessionRuntime.saveProgressPayloadToStorage"),
     "core should write progress through the session runtime"
   );
   assert(
     coreScript.includes("gameSessionRuntime.loadProgressPayloadFromStorage"),
     "core should read progress through the session runtime"
+  );
+  assert(
+    coreScript.includes("gameSessionRuntime.sanitizeQuestProgressState(state.quests)"),
+    "core should restore saved quest progress through the session runtime"
   );
   assert(
     !coreScript.includes("function migrateProgressPayload(payload)"),

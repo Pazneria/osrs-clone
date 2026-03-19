@@ -2,6 +2,28 @@
     const DEFAULT_PRIORITY = 100;
     const DEFAULT_EXAMINE_TEXT = 'Nothing unusual.';
 
+    function getEnemyCombatLevel(context) {
+        const hitData = context && context.hitData ? context.hitData : null;
+        return hitData && Number.isFinite(hitData.combatLevel)
+            ? Math.max(1, Math.floor(hitData.combatLevel))
+            : null;
+    }
+
+    function formatEnemyDisplayName(context) {
+        if (context && typeof context.formatEnemyDisplayName === 'function') {
+            const formatted = context.formatEnemyDisplayName(context.hitData);
+            if (typeof formatted === 'string' && formatted.trim()) return formatted;
+        }
+
+        const hitData = context && context.hitData ? context.hitData : {};
+        const enemyName = typeof hitData.name === 'string' && hitData.name.trim()
+            ? hitData.name.trim()
+            : 'Enemy';
+        const enemyLevel = getEnemyCombatLevel(context);
+        if (enemyLevel === null) return enemyName;
+        return `Lv ${enemyLevel} ${enemyName}`;
+    }
+
     const TARGET_INTERACTION_SPECS = {
         TREE: {
             priority: 100,
@@ -112,7 +134,7 @@
             guards: [hasGridHit],
             actions: [
                 function resolveEnemyAction(context) {
-                    const enemyName = context.hitData && context.hitData.name ? context.hitData.name : 'Enemy';
+                    const enemyName = formatEnemyDisplayName(context);
                     const enemyId = context.hitData ? context.hitData.uid : null;
                     return createOption(
                         `Attack <span class="text-white">${enemyName}</span>`,
@@ -120,16 +142,20 @@
                             enemyId,
                             enemyX: context.hitData.gridX,
                             enemyY: context.hitData.gridY,
-                            name: enemyName
+                            name: context.hitData && context.hitData.name ? context.hitData.name : 'Enemy'
                         })
                     );
                 }
             ],
             examine: function resolveEnemyExamine(context) {
-                const enemyName = context.hitData && context.hitData.name ? context.hitData.name : 'Enemy';
+                const enemyName = formatEnemyDisplayName(context);
+                const enemyLevel = getEnemyCombatLevel(context);
                 return createOption(
                     `Examine <span class="text-white">${enemyName}</span>`,
-                    () => context.examineTarget('ENEMY', 'It looks ready for a fight.', { name: enemyName })
+                    () => context.examineTarget('ENEMY', `${enemyName} looks ready for a fight.`, {
+                        name: context.hitData && context.hitData.name ? context.hitData.name : 'Enemy',
+                        combatLevel: enemyLevel
+                    })
                 );
             }
         },
@@ -183,41 +209,60 @@
             priority: 100,
             guards: [hasGridHit],
             actions: [
-                function resolveNpcPrimaryAction(context) {
+                function resolveNpcActions(context) {
                     const hitData = context.hitData || {};
                     const npcUid = hitData.uid && typeof hitData.uid === 'object' ? hitData.uid : null;
                     const npcName = typeof hitData.name === 'string' ? hitData.name : 'NPC';
-                    const npcAction = (npcUid && typeof npcUid.action === 'string')
+                    const baseNpcAction = (npcUid && typeof npcUid.action === 'string')
                         ? npcUid.action
                         : (npcName === 'Shopkeeper' ? 'Trade' : 'Talk-to');
+                    const npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
+                        ? window.QuestRuntime.resolveNpcPrimaryAction(npcUid || { name: npcName, action: baseNpcAction })
+                        : baseNpcAction;
+                    const talkTarget = npcUid
+                        ? Object.assign({}, npcUid, { action: 'Talk-to' })
+                        : { name: npcName, action: 'Talk-to' };
+                    const talkOption = createOption(
+                        `Talk-to <span class="text-yellow-400">${npcName}</span>`,
+                        () => context.queueInteract('NPC', talkTarget),
+                        100.5
+                    );
 
                     if (npcAction === 'Trade') {
                         if (npcName === 'Shopkeeper' && !(npcUid && npcUid.merchantId)) {
-                            return createOption(
-                                `Trade <span class="text-yellow-400">${npcName}</span> (General Store)`,
-                                () => context.queueInteract('NPC', { name: npcName, action: 'Trade', merchantId: 'general_store' })
-                            );
+                            return [
+                                createOption(
+                                    `Trade <span class="text-yellow-400">${npcName}</span> (General Store)`,
+                                    () => context.queueInteract('NPC', { name: npcName, action: 'Trade', merchantId: 'general_store' }),
+                                    100
+                                ),
+                                talkOption
+                            ];
                         }
-                        const tradeTarget = npcUid ? Object.assign({}, npcUid) : { name: npcName, action: 'Trade' };
-                        return createOption(
-                            `Trade <span class="text-yellow-400">${npcName}</span>`,
-                            () => context.queueInteract('NPC', tradeTarget)
-                        );
+                        const tradeTarget = npcUid ? Object.assign({}, npcUid, { action: 'Trade' }) : { name: npcName, action: 'Trade' };
+                        return [
+                            createOption(
+                                `Trade <span class="text-yellow-400">${npcName}</span>`,
+                                () => context.queueInteract('NPC', tradeTarget),
+                                100
+                            ),
+                            talkOption
+                        ];
                     }
 
                     if (npcAction === 'Travel') {
                         const travelTarget = npcUid ? Object.assign({}, npcUid) : { name: npcName, action: 'Travel' };
-                        return createOption(
-                            `Travel <span class="text-yellow-400">${npcName}</span>`,
-                            () => context.queueInteract('NPC', travelTarget)
-                        );
+                        return [
+                            createOption(
+                                `Travel <span class="text-yellow-400">${npcName}</span>`,
+                                () => context.queueInteract('NPC', travelTarget),
+                                100
+                            ),
+                            talkOption
+                        ];
                     }
 
-                    const talkTarget = npcUid ? Object.assign({}, npcUid) : { name: npcName, action: 'Talk-to' };
-                    return createOption(
-                        `Talk-to <span class="text-yellow-400">${npcName}</span>`,
-                        () => context.queueInteract('NPC', talkTarget)
-                    );
+                    return talkOption;
                 }
             ],
             examine: function resolveNpcExamine(context) {

@@ -1,3 +1,4 @@
+import type { EnemySpawnNodeDefinition } from "../contracts/combat";
 import type {
   DoorLandmark,
   MiningNodePlacement,
@@ -82,6 +83,15 @@ export function cloneNpcDescriptor(npc: NpcDescriptor): NpcDescriptor {
   };
 }
 
+function resolveServiceAppearanceId(service: ServiceDescriptor): string | null {
+  const explicitAppearanceId = typeof service.appearanceId === "string" ? service.appearanceId.trim().toLowerCase() : "";
+  if (explicitAppearanceId) return explicitAppearanceId;
+  const merchantId = typeof service.merchantId === "string" ? service.merchantId.trim().toLowerCase() : "";
+  const name = typeof service.name === "string" ? service.name.trim().toLowerCase() : "";
+  if (merchantId === "tanner_rusk" || name === "tanner rusk") return "tanner_rusk";
+  return null;
+}
+
 export function createMerchantNpcDescriptor(service: ServiceDescriptor): NpcDescriptor | null {
   if (!service || service.type !== "MERCHANT" || !service.spawnId) return null;
   return {
@@ -92,11 +102,21 @@ export function createMerchantNpcDescriptor(service: ServiceDescriptor): NpcDesc
     y: service.y,
     z: service.z,
     merchantId: service.merchantId || null,
+    appearanceId: resolveServiceAppearanceId(service),
+    dialogueId: typeof service.dialogueId === "string" ? service.dialogueId.trim() || null : null,
     action: service.action,
     travelToWorldId: service.travelToWorldId || null,
     travelSpawn: cloneTravelSpawn(service.travelSpawn),
     facingYaw: service.facingYaw,
     tags: Array.isArray(service.tags) ? service.tags.slice() : []
+  };
+}
+
+export function cloneCombatSpawnNode(spawnNode: EnemySpawnNodeDefinition): EnemySpawnNodeDefinition {
+  return {
+    ...spawnNode,
+    spawnTile: clonePoint3(spawnNode.spawnTile),
+    homeTileOverride: spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : null
   };
 }
 

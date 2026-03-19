@@ -6,7 +6,7 @@ export type MeleeStyleId = "attack" | "strength" | "defense";
 export type CombatTargetKind = "enemy";
 export type EnemyAggroType = "passive" | "aggressive";
 export type EnemyRuntimeStateId = "idle" | "aggroed" | "returning" | "dead";
-export type EnemyAppearanceKind = "rat" | "humanoid";
+export type EnemyAppearanceKind = "rat" | "humanoid" | "chicken";
 export type EnemyDropKind = "nothing" | "item" | "coins";
 
 export interface CombatAttackProfile {

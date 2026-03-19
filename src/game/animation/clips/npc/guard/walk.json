@@ -1,0 +1,241 @@
+{
+  "clipId": "npc/guard/walk",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 640,
+  "loopMode": "loop",
+  "maskId": "fullBody",
+  "poses": {
+    "step_left": {
+      "root": {
+        "position": {
+          "y": 0.01
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": -4
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 14,
+          "z": 6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": -4,
+          "z": -6
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -12
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -14
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -18
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": 18
+        }
+      },
+      "rightLowerLeg": {
+        "rotationDeg": {
+          "x": 14
+        }
+      }
+    },
+    "mid_left": {
+      "root": {
+        "position": {
+          "y": 0.055
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": -3
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 8,
+          "z": 4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 0,
+          "z": -4
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": -7
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": 7
+        }
+      }
+    },
+    "step_right": {
+      "root": {
+        "position": {
+          "y": 0.01
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": 4
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": -4,
+          "z": 6
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 14,
+          "z": -6
+        }
+      },
+      "leftLowerArm": {
+        "rotationDeg": {
+          "x": -14
+        }
+      },
+      "rightLowerArm": {
+        "rotationDeg": {
+          "x": -12
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": 18
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -18
+        }
+      },
+      "leftLowerLeg": {
+        "rotationDeg": {
+          "x": 14
+        }
+      }
+    },
+    "mid_right": {
+      "root": {
+        "position": {
+          "y": 0.055
+        }
+      },
+      "torso": {
+        "rotationDeg": {
+          "x": 5,
+          "y": 3
+        }
+      },
+      "head": {
+        "rotationDeg": {
+          "x": -3
+        }
+      },
+      "leftArm": {
+        "rotationDeg": {
+          "x": 0,
+          "z": 4
+        }
+      },
+      "rightArm": {
+        "rotationDeg": {
+          "x": 8,
+          "z": -4
+        }
+      },
+      "leftLeg": {
+        "rotationDeg": {
+          "x": 7
+        }
+      },
+      "rightLeg": {
+        "rotationDeg": {
+          "x": -7
+        }
+      },
+      "rightLowerLeg": {
+        "rotationDeg": {
+          "x": 14
+        }
+      }
+    }
+  },
+  "keys": [
+    {
+      "poseId": "step_left",
+      "atMs": 0,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "mid_left",
+      "atMs": 160,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "step_right",
+      "atMs": 320,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "mid_right",
+      "atMs": 480,
+      "ease": "easeInOut"
+    },
+    {
+      "poseId": "step_left",
+      "atMs": 640,
+      "ease": "easeInOut"
+    }
+  ],
+  "markers": [
+    {
+      "markerId": "left_step",
+      "atMs": 0
+    },
+    {
+      "markerId": "right_step",
+      "atMs": 320
+    }
+  ]
+}

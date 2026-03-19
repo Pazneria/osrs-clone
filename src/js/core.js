@@ -475,6 +475,9 @@
             createdAt: null,
             lastStartedAt: null
         };
+        let questProgressState = gameSession && gameSession.progress && gameSession.progress.quests
+            ? gameSession.progress.quests
+            : {};
         window.playerProfileState = playerProfileState;
         const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
         let RUNE_ESSENCE_ROCKS = [];
@@ -1826,6 +1829,7 @@
             activeSession.progress.equipment = equipment;
             activeSession.progress.userItemPrefs = userItemPrefs;
             activeSession.progress.contentGrants = progressContentGrants;
+            activeSession.progress.quests = questProgressState;
             activeSession.ui.runMode = !!isRunning;
             activeSession.runtime.playerEntryFlow = playerEntryFlowState;
             window.playerProfileState = playerProfileState;
@@ -2043,6 +2047,7 @@
                 equipment: serializeEquipmentState(),
                 userItemPrefs: sanitizeUserItemPrefs(userItemPrefs),
                 contentGrants: cloneContentGrantState(),
+                quests: questProgressState,
                 profile: serializePlayerProfile(),
                 appearance: window.playerAppearanceState
                     ? {
@@ -2156,6 +2161,9 @@
             equipment = deserializeEquipmentState(state.equipment);
             userItemPrefs = sanitizeUserItemPrefs(state.userItemPrefs);
             progressContentGrants = sanitizeContentGrantState(state.contentGrants);
+            questProgressState = gameSessionRuntime && typeof gameSessionRuntime.sanitizeQuestProgressState === 'function'
+                ? gameSessionRuntime.sanitizeQuestProgressState(state.quests)
+                : {};
             isRunning = !!state.runMode;
             const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');
             playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: true });
@@ -2169,6 +2177,9 @@
             }
 
             syncGameSessionState();
+            if (window.QuestRuntime && typeof window.QuestRuntime.refreshAllQuestStates === 'function') {
+                window.QuestRuntime.refreshAllQuestStates({ silent: true, persist: false });
+            }
             return { loaded: true, savedAt: loaded.payload.savedAt, legacyProfile: !hasSavedProfile };
         }
 
@@ -3244,6 +3255,10 @@
             if (typeof window.initMinimap === 'function') window.initMinimap();
             if (typeof window.initUIPreview === 'function') window.initUIPreview(); 
             initInventoryUI(); 
+            if (window.QuestRuntime && typeof window.QuestRuntime.refreshAllQuestStates === 'function') {
+                window.QuestRuntime.refreshAllQuestStates({ silent: true, persist: false });
+            }
+            if (typeof renderQuestLog === 'function') renderQuestLog();
             initChatInput();
             initChatControls();
             if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.init === 'function') {
