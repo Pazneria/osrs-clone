@@ -33,9 +33,10 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 
 | Equation | Formula | Purpose |
 | -------- | ------- | ------- |
-| Cooking Success Score | Cooking Success Score = Player Cooking Level | Represents the player's effective cooking power for the success check |
-| Cooking Success Chance | Cooking Success Chance = Cooking Success Score / (Cooking Success Score + Burn Difficulty) | Determines the chance that a cooking action succeeds |
-| Burn Chance | Burn Chance = 1 - Cooking Success Chance | Determines the chance that a cooking action produces burnt food |
+| Level Delta | Level Delta = Player Cooking Level - Required Level | Measures how far above the recipe unlock the player currently is |
+| Clamped Level Delta | Clamped Level Delta = clamp(Level Delta, 0, 30) | Caps the shared burn curve to the intended unlock-to-+30 window |
+| Burn Chance | Burn Chance = clamp(0, 0.33 - (0.038 x Clamped Level Delta) + (0.0018 x Clamped Level Delta^2) - (0.00003 x Clamped Level Delta^3), 0.33) | Determines the chance that a cooking action produces burnt food |
+| Cooking Success Chance | Cooking Success Chance = 1 - Burn Chance | Determines the chance that a cooking action succeeds |
 | Expected Successes per Action | Expected Successes per Action = Cooking Success Chance | Estimates average cooked-food output rate while actively cooking |
 | Expected XP per Action | Expected XP per Action = Cooking Success Chance x XP per Success | Estimates average experience gain rate |
 | Expected Gold per Action | Expected Gold per Action = (Cooking Success Chance x Cooked Sell Value) + (Burn Chance x Burnt Sell Value) - Raw Sell Value | Estimates average value change from cooking one raw item |
@@ -45,8 +46,9 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Variable | Meaning |
 | -------- | ------- |
 | Player Cooking Level | The player's current cooking level |
-| Cooking Success Score | The player's effective success power for the check |
-| Burn Difficulty | The difficulty value for the selected raw food |
+| Required Level | The unlock level of the selected raw food |
+| Level Delta | The player's current cooking level minus the recipe's required level |
+| Clamped Level Delta | Level Delta clamped into the inclusive `0..30` range |
 | Cooking Success Chance | The probability that a cooking action produces cooked food |
 | Burn Chance | The probability that a cooking action produces burnt food |
 | XP per Success | The experience granted when the cooking action succeeds |
@@ -81,25 +83,22 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 
 ### Cooking Stats
 
-| Food | Required Level | Burn Difficulty | XP per Success | Raw Item | Cooked Item | Burnt Item | Healing | Eat Delay Ticks | Raw Sell Value | Cooked Sell Value | Burnt Sell Value |
-| ---- | -------------- | --------------- | -------------- | -------- | ----------- | ---------- | ------- | --------------- | -------------- | ----------------- | ---------------- |
-| Shrimp | 1 | 9 | 30 | Raw Shrimp | Cooked Shrimp | Burnt Shrimp | 3 | 4 | 3 | 8 | 1 |
-| Trout | 10 | 24 | 70 | Raw Trout | Cooked Trout | Burnt Trout | 5 | 4 | 18 | 24 | 1 |
-| Salmon | 20 | 48 | 90 | Raw Salmon | Cooked Salmon | Burnt Salmon | 7 | 4 | 24 | 32 | 1 |
-| Tuna | 30 | 84 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 28 | 40 | 1 |
-| Swordfish | 40 | 144 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 40 | 56 | 1 |
+| Food | Required Level | XP per Success | Raw Item | Cooked Item | Burnt Item | Healing | Eat Delay Ticks | Raw Sell Value | Cooked Sell Value | Burnt Sell Value |
+| ---- | -------------- | -------------- | -------- | ----------- | ---------- | ------- | --------------- | -------------- | ----------------- | ---------------- |
+| Shrimp | 1 | 30 | Raw Shrimp | Cooked Shrimp | Burnt Shrimp | 3 | 4 | 3 | 8 | 1 |
+| Trout | 10 | 70 | Raw Trout | Cooked Trout | Burnt Trout | 5 | 4 | 18 | 24 | 1 |
+| Salmon | 20 | 90 | Raw Salmon | Cooked Salmon | Burnt Salmon | 7 | 4 | 24 | 32 | 1 |
+| Tuna | 30 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 28 | 40 | 1 |
+| Swordfish | 40 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 40 | 56 | 1 |
 
-### Standardized Success Chance Comparison
+### Shared Burn Curve Summary
 
-**Using level 40 cooking**
-
-| Food | Cooking Success Score | Calculation | Cooking Success Chance |
-| ---- | --------------------- | ----------- | ---------------------- |
-| Shrimp | 40 | 40 / (40 + 9) | 81.6327% |
-| Trout | 40 | 40 / (40 + 24) | 62.5000% |
-| Salmon | 40 | 40 / (40 + 48) | 45.4545% |
-| Tuna | 40 | 40 / (40 + 84) | 32.2581% |
-| Swordfish | 40 | 40 / (40 + 144) | 21.7391% |
+| Relative Level Band | Clamped Level Delta | Burn Chance | Cooking Success Chance |
+| ------------------- | ------------------- | ----------- | ---------------------- |
+| Unlock | 0 | 33% | 67% |
+| Unlock +10 | 10 | 10% | 90% |
+| Unlock +20 | 20 | 5% | 95% |
+| Unlock +30 | 30 | 0% | 100% |
 
 ## Runtime State
 
@@ -135,7 +134,7 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Success Output | A successful attempt removes 1 raw food and adds 1 cooked food directly into the same inventory slot flow. Inventory overflow does not occur because the raw item being consumed creates the available space |
 | Burn Output | A failed attempt removes 1 raw food and adds 1 burnt food directly into inventory. Inventory overflow does not occur because the raw item being consumed creates the available space |
 | Batch Completion | When Remaining Quantity reaches 0, the cooking session ends |
-| Interruption | Any movement, facing change away from the fire, using another item on something, or any other action input immediately ends the cooking session. If the player uses a different raw fish on the same fire while already cooking, the current cooking session is replaced immediately with no extra delay |
+| Interruption | Any movement, facing change away from the fire, using another item on something, or any other action input immediately ends the cooking session. If the player uses a different raw fish on the same fire while already cooking, the current cooking session is replaced immediately and keeps the active attempt cadence so the swap does not introduce a dead tick |
 
 ## Eating Mechanics
 
@@ -202,6 +201,7 @@ The general store buys everything at half price, rounded down.
 - Cooking can be performed on any currently lit fire.
 - Under the base model, fires are the only cooking source.
 - Cooking success improves as cooking level rises because higher skill increases cooking success chance.
+- All cookable foods share the same unlock-relative burn curve: 33% at unlock, 10% at +10 levels, 5% at +20 levels, and 0% at +30 levels.
 - Higher-tier food progression depends entirely on access to higher-tier raw food from gathering, shops, or other content.
 - Raw food, cooked food, and burnt food are all non-stackable and have distinct item identities.
 - Eating a cooked fish consumes it immediately and heals immediately, both in and out of combat.
@@ -224,7 +224,7 @@ The general store buys everything at half price, rounded down.
 - The player must be adjacent to the fire, stationary, and facing it while cooking.
 - The normal cooking animation plays on every attempt, whether the result is success or burn.
 - Cooking ends immediately if the player gives movement, uses another item on something, or gives any other action input.
-- While cooking one fish type, the player may interrupt it at any time by using a different raw fish on the same fire to begin cooking that new fish type immediately, with no extra delay.
+- While cooking one fish type, the player may interrupt it at any time by using a different raw fish on the same fire to begin cooking that new fish type immediately, keeping the live tick cadence instead of resetting the timer.
 - All cooked fish currently use the same 4-tick eat delay.
 - Cooking ends immediately and cleanly if the targeted fire expires before the next cooking attempt resolves.
 - Any lit fire can be used as a cooking source, regardless of who created it.

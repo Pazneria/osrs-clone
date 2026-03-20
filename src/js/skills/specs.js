@@ -335,8 +335,8 @@
             skillId: 'cooking',
             levelBands: [1, 10, 20, 30, 40],
             formulas: {
-                success: 'level_over_level_plus_burn_difficulty',
-                burn: 'one_minus_success'
+                success: 'one_minus_unlock_relative_cubic_burn_curve',
+                burn: 'unlock_relative_cubic_burn_curve'
             },
             timing: {
                 actionTicks: 1
@@ -347,7 +347,6 @@
                     cookedItemId: 'cooked_shrimp',
                     burntItemId: 'burnt_shrimp',
                     requiredLevel: 1,
-                    burnDifficulty: 9,
                     xpPerSuccess: 30,
                     sourceTarget: 'FIRE'
                 },
@@ -356,7 +355,6 @@
                     cookedItemId: 'cooked_trout',
                     burntItemId: 'burnt_trout',
                     requiredLevel: 10,
-                    burnDifficulty: 24,
                     xpPerSuccess: 70,
                     sourceTarget: 'FIRE'
                 },
@@ -365,7 +363,6 @@
                     cookedItemId: 'cooked_salmon',
                     burntItemId: 'burnt_salmon',
                     requiredLevel: 20,
-                    burnDifficulty: 48,
                     xpPerSuccess: 90,
                     sourceTarget: 'FIRE'
                 },
@@ -374,7 +371,6 @@
                     cookedItemId: 'cooked_tuna',
                     burntItemId: 'burnt_tuna',
                     requiredLevel: 30,
-                    burnDifficulty: 84,
                     xpPerSuccess: 120,
                     sourceTarget: 'FIRE'
                 },
@@ -383,7 +379,6 @@
                     cookedItemId: 'cooked_swordfish',
                     burntItemId: 'burnt_swordfish',
                     requiredLevel: 40,
-                    burnDifficulty: 144,
                     xpPerSuccess: 140,
                     sourceTarget: 'FIRE'
                 }

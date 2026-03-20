@@ -14,11 +14,11 @@
 - [x] MINING-009: Merchant/value-table alignment pass for ores/gems (including uncut-gem naming consistency and off-band item handling).
 - [x] MINING-010: Training-location placement pass across mining progression bands.
 - [x] MINING-011: Gem Mine quest gate and Elira access-flow integration (unlock flag wiring, gated world metadata, runtime enforcement, QA toggle coverage).
+- [x] MINING-012: Thrain late-ore off-band progression integration (authored `Proof of the Deepforge` merchant-unlock quest, late-band ore turn-in requirements, and quest-runtime guard coverage).
 
 ## Now
 
 ## Next
-- [ ] MINING-012: Thrain late-ore off-band progression integration.
+- [ ] MINING-013: Balance pass using expected yield/xp/gold-per-tick targets.
 
 ## Later
-- [ ] MINING-013: Balance pass using expected yield/xp/gold-per-tick targets.

@@ -3,11 +3,11 @@
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
 | Combat | In Progress | Melee-v1 feel polish for the new rat/goblin slice | Attack-style UI + rebuilt combat sim | None |
-| Mining | In Progress | Thrain late-ore off-band progression integration | Yield/xp/gold-per-tick balance pass | Quest content |
+| Mining | In Progress | Yield/xp/gold-per-tick balance pass after Thrain gate integration | Lock balance targets across the ore/gem bands | None |
 | Woodcutting | In Progress | Logs/xp/gold-per-tick balance targets locked across tree tiers | Progression expansion for later tree bands and gating | None |
 | Fishing | In Progress | Teacher quest + rune-harpoon reward/replacement flow | Method/level economic balance pass | Quest content |
 | Firemaking | In Progress | Cross-skill log-demand balancing with woodcutting/cooking | Failure/interruption polish + expansion | None |
-| Cooking | In Progress | UX polish for interruption/switching and animation consistency | 1-40 food-band economy/XP balance | None |
+| Cooking | In Progress | Remaining 1-40 food-band economy/XP balance after burn-curve pass | Progression expansion for additional cookable families | None |
 | Runecrafting | In Progress | Cross-skill magic demand + mining essence loop integration | Buy/sell parity and route pacing balance | Quest/dependency design |
 | Smithing | In Progress | Merchant/value alignment follow-up after assembly+mould integration | Rune-material quest gating + advanced forge progression | Quest gating |
 | Crafting | In Progress | Merchant/value alignment follow-up after jewelry+mould integration | Elira mould-making quest flow integration | Quest gating |

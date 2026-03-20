@@ -301,7 +301,9 @@ Thrain is an experienced master-smith who deals in advanced metals and high-end 
 
 **Location:** Deep in a separate smithing district or forge workshop away from the main castle.
 
-**Associated Quests:** Locked behind Thrain's Quest before he will sell rune-related materials.
+**Associated Quests:** Locked behind Thrain's quest before he will sell rune-related materials.
+
+Current implementation uses the merchant-unlock quest `Proof of the Deepforge`: bring Thrain 6 coal, 2 gold ore, and 1 uncut emerald to unlock his advanced ore stock.
 
 | Item            | Buys | Sells |
 | --------------- | ---- | ----- |

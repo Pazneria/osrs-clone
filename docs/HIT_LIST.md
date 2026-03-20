@@ -953,6 +953,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-048 - Thrain late-ore stock lacks the documented quest gate
+- Status: Fixed
+- Severity: S2
+- Area: MNG
+- Source: Manual
+- Links: `src/js/content/quest-catalog.js`, `tools/tests/quest-tanner-runtime-guard.js`, `src/js/skills/mining/STATUS.md`, `src/js/skills/mining/ROADMAP.md`, `src/js/skills/smithing/ROADMAP.md`
+- Repro:
+  1. Talk to Thrain Deepforge.
+  2. Attempt to trade with his advanced ore shop immediately.
+  3. Check the mining/smithing docs for the intended Thrain quest gate.
+- Expected: Thrain's advanced ore stock should stay locked until the player completes a dedicated unlock quest that proves late-band mining readiness.
+- Actual: Thrain had merchant placement and stock rules, but no authored quest existed to implement the documented gate.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Author a Thrain quest that unlocks `thrain_deepforge` through the existing merchant-lock quest runtime.
+  2. Use current 1-40 mining outputs as the turn-in proof for the unlock.
+  3. Add runtime regression coverage and sync the mining/smithing docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added the authored quest `Proof of the Deepforge`, which auto-starts from Thrain dialogue and unlocks `thrain_deepforge` after a `coal` + `gold_ore` + `uncut_emerald` turn-in.
+  - Reused the existing merchant-lock quest runtime, so Thrain now routes from `Talk-to` to `Trade` only after quest completion without adding one-off shop logic.
+  - Extended the quest runtime guard coverage to verify the full Thrain lifecycle: locked access, auto-start, ready-to-complete state, merchant unlock, and smithing XP reward.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-043 - Eat cooldown can lock for hundreds/thousands of ticks after reload
 - Status: Fixed
 - Severity: S1
@@ -1149,6 +1179,35 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1.
 - Verification:
   - [ ] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-047 - Cooking same-fire switch cadence and level gate
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/cooking/index.js`, `tools/tests/cooking-runtime-tests.js`, `src/js/skills/cooking/STATUS.md`, `src/js/skills/cooking/ROADMAP.md`
+- Repro:
+  1. Try to use a higher-tier raw fish on a fire while below that fish's required cooking level.
+  2. Start cooking one fish type on a fire, then use a different raw fish on that same fire just before the next attempt tick.
+- Expected: Under-level foods cannot begin cooking, and same-fire switching replaces the active cooking recipe without adding a dead tick.
+- Actual: The runtime allowed under-level cooking starts, and same-fire switching re-entered the generic interact/start flow, which could reset the cooking timer.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Add per-recipe cooking level gates to both the use-item and start paths.
+  2. Hot-swap active same-fire cooking sessions directly instead of queueing a fresh interact/start.
+  3. Add targeted runtime regression coverage and sync the cooking docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - `src/js/skills/cooking/index.js` now enforces per-fish cooking level requirements before queuing or starting a cooking action.
+  - Same-fire recipe swaps now mutate the live cooking processing session in place and preserve the active `nextTick` cadence instead of restarting from a fresh timer.
+  - Added `tools/tests/cooking-runtime-tests.js` and wired it into `npm test` with level-gate, same-tick swap, blocked swap, and animation-contract coverage.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 

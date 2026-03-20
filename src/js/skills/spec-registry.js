@@ -253,10 +253,29 @@
         return Math.max(0, Math.min(cap, raw));
     }
 
+    function clamp(value, minValue, maxValue) {
+        const next = Number.isFinite(value) ? value : minValue;
+        return Math.max(minValue, Math.min(maxValue, next));
+    }
+
     function computeSuccessChanceFromDifficulty(level, difficulty) {
         const lvl = Math.max(1, Number.isFinite(level) ? level : 1);
         const diff = Math.max(1, Number.isFinite(difficulty) ? difficulty : 1);
         return lvl / (lvl + diff);
+    }
+
+    function computeCookingBurnChance(level, requiredLevel) {
+        const lvl = Number.isFinite(level) ? level : 1;
+        const unlock = Number.isFinite(requiredLevel) ? requiredLevel : 1;
+        const delta = clamp(lvl - unlock, 0, 30);
+        if (delta <= 0) return 0.33;
+        if (delta >= 30) return 0;
+        const raw = 0.33 - (0.038 * delta) + (0.0018 * delta * delta) - (0.00003 * delta * delta * delta);
+        return clamp(raw, 0, 0.33);
+    }
+
+    function computeCookingSuccessChance(level, requiredLevel) {
+        return 1 - computeCookingBurnChance(level, requiredLevel);
     }
 
     function computeRuneOutputPerEssence(level, scalingStartLevel) {
@@ -301,6 +320,8 @@
         computeIntervalTicks,
         computeLinearCatchChance,
         computeSuccessChanceFromDifficulty,
+        computeCookingBurnChance,
+        computeCookingSuccessChance,
         computeRuneOutputPerEssence,
         resolveWeighted
     };

@@ -56,6 +56,43 @@
                 completedGreeting: 'You did right by me. The tannery finally feels alive again.',
                 completedResponse: 'You brought me exactly what I needed. Come back any time you want leatherwork or a bit of practical advice.'
             }
+        },
+        thrain_deepforge_proof_of_the_deepforge: {
+            questId: 'thrain_deepforge_proof_of_the_deepforge',
+            kind: 'turn_in_items',
+            title: 'Proof of the Deepforge',
+            category: 'starter_town',
+            questGiverName: 'Thrain Deepforge',
+            startNpcDialogueId: 'thrain_deepforge',
+            startMerchantId: 'thrain_deepforge',
+            startInstructions: 'Talk to Thrain Deepforge at Deepforge House on the western smithing lane in Starter Town.',
+            autoStartOnFirstInteraction: true,
+            unlocksMerchantId: 'thrain_deepforge',
+            summary: 'Thrain Deepforge wants proof that you can handle late-band mining work before he opens his advanced ore stock.',
+            journal: {
+                offer: 'Thrain wants proof-grade ore before he opens his late-metal stock to you.',
+                active: 'Bring Thrain 6 coal, 2 gold ore, and 1 uncut emerald.',
+                ready: 'I have the materials Thrain asked for. I should return to Deepforge House.',
+                completed: 'Thrain accepted my shipment and opened his advanced ore stock.'
+            },
+            objectives: [
+                createTurnInObjective('coal', 'Coal', 'coal', 6),
+                createTurnInObjective('gold_ore', 'Gold ore', 'gold_ore', 2),
+                createTurnInObjective('uncut_emerald', 'Uncut emerald', 'uncut_emerald', 1)
+            ],
+            rewards: {
+                skillXp: [
+                    { skillId: 'smithing', amount: 200 }
+                ]
+            },
+            dialogue: {
+                offerGreeting: 'I do not open the deepforge stock for tourists. Bring me proof that you can work a serious vein and we can speak like professionals.',
+                offerResponse: 'Bring me 6 coal, 2 gold ore, and 1 uncut emerald. If you can put that on my bench, I will open the advanced stock.',
+                activeGreeting: 'You want late metal, earn it. I am still waiting on that coal, gold ore, and emerald.',
+                readyGreeting: 'That looks closer to real work. If you brought the full order, I will treat you like a proper customer.',
+                completedGreeting: 'You brought me something worth looking at. The deepforge stock is open to you now.',
+                completedResponse: 'Good. You know the difference between shiny rock and useful metal. My advanced ore stock is yours to trade with now.'
+            }
         }
     };
 

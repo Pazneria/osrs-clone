@@ -116,8 +116,36 @@ function run() {
   const runeFish = deepRune.fishByLevel && deepRune.fishByLevel[0] ? deepRune.fishByLevel[0].fish : [];
   assert(Array.isArray(runeFish) && runeFish.length === 1 && runeFish[0].itemId === "raw_swordfish", "rune deep-water table mismatch");
 
-  const cookSuccess = SkillSpecRegistry.computeSuccessChanceFromDifficulty(1, 4);
-  assert(approxEq(cookSuccess, 1 / 5), "cooking success formula mismatch");
+  const difficultySuccess = SkillSpecRegistry.computeSuccessChanceFromDifficulty(1, 4);
+  assert(approxEq(difficultySuccess, 1 / 5), "difficulty success formula mismatch");
+
+  const cookingBurnAtUnlock = SkillSpecRegistry.computeCookingBurnChance(10, 10);
+  assert(approxEq(cookingBurnAtUnlock, 0.33), "cooking burn chance at unlock mismatch");
+
+  const cookingBurnAtPlus10 = SkillSpecRegistry.computeCookingBurnChance(20, 10);
+  assert(approxEq(cookingBurnAtPlus10, 0.1), "cooking burn chance at +10 mismatch");
+
+  const cookingBurnAtPlus20 = SkillSpecRegistry.computeCookingBurnChance(30, 10);
+  assert(approxEq(cookingBurnAtPlus20, 0.05), "cooking burn chance at +20 mismatch");
+
+  const cookingBurnAtPlus30 = SkillSpecRegistry.computeCookingBurnChance(40, 10);
+  assert(approxEq(cookingBurnAtPlus30, 0), "cooking burn chance at +30 mismatch");
+
+  const cookingBurnBelowUnlock = SkillSpecRegistry.computeCookingBurnChance(1, 10);
+  assert(approxEq(cookingBurnBelowUnlock, 0.33), "cooking burn chance should clamp below unlock");
+
+  const cookingBurnAboveCap = SkillSpecRegistry.computeCookingBurnChance(99, 1);
+  assert(approxEq(cookingBurnAboveCap, 0), "cooking burn chance should clamp above +30");
+
+  const cookingSuccessAtUnlock = SkillSpecRegistry.computeCookingSuccessChance(10, 10);
+  assert(approxEq(cookingSuccessAtUnlock, 0.67), "cooking success chance at unlock mismatch");
+
+  let previousCookingBurn = SkillSpecRegistry.computeCookingBurnChance(10, 10);
+  for (let delta = 1; delta <= 30; delta++) {
+    const nextCookingBurn = SkillSpecRegistry.computeCookingBurnChance(10 + delta, 10);
+    assert(nextCookingBurn <= previousCookingBurn + 1e-9, "cooking burn curve should be monotonic");
+    previousCookingBurn = nextCookingBurn;
+  }
 
   const emberRuneOutput = SkillSpecRegistry.computeRuneOutputPerEssence(10, 0);
   assert(emberRuneOutput === 2, "runecrafting ember scaling mismatch");

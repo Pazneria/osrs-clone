@@ -1366,7 +1366,25 @@
             if (Number.isFinite(recipe.actionTicks)) meta.push(`Action ticks: ${Math.max(1, Math.floor(recipe.actionTicks))}`);
             if (Number.isFinite(recipe.fireLifetimeTicks)) meta.push(`Fire lifetime ticks: ${Math.max(1, Math.floor(recipe.fireLifetimeTicks))}`);
             if (Number.isFinite(recipe.ignitionDifficulty)) meta.push(`Ignition difficulty: ${Math.max(1, Math.floor(recipe.ignitionDifficulty))}`);
-            if (Number.isFinite(recipe.burnDifficulty)) meta.push(`Burn difficulty: ${Math.max(1, Math.floor(recipe.burnDifficulty))}`);
+            if (skillName === 'cooking' && Number.isFinite(recipe.requiredLevel)) {
+                const cookingLevel = (playerSkills && playerSkills.cooking && Number.isFinite(playerSkills.cooking.level))
+                    ? playerSkills.cooking.level
+                    : 1;
+                let burnChance = null;
+                if (window.SkillSpecRegistry && typeof window.SkillSpecRegistry.computeCookingBurnChance === 'function') {
+                    burnChance = window.SkillSpecRegistry.computeCookingBurnChance(cookingLevel, recipe.requiredLevel);
+                } else {
+                    const delta = Math.max(0, Math.min(30, cookingLevel - recipe.requiredLevel));
+                    if (delta <= 0) burnChance = 0.33;
+                    else if (delta >= 30) burnChance = 0;
+                    else {
+                        const raw = 0.33 - (0.038 * delta) + (0.0018 * delta * delta) - (0.00003 * delta * delta * delta);
+                        burnChance = Math.max(0, Math.min(0.33, raw));
+                    }
+                }
+                const burnPercent = (burnChance * 100).toFixed(1).replace(/\.0$/, '');
+                meta.push(`Burn chance: ${burnPercent}%`);
+            }
             if (typeof recipe.requiredUnlockFlag === 'string' && recipe.requiredUnlockFlag) {
                 meta.push(`Unlock flag: ${formatSkillPanelText(recipe.requiredUnlockFlag)}`);
             }

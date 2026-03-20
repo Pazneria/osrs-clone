@@ -339,7 +339,6 @@
             defaultAction: 'Use',
             cookResultId: 'cooked_shrimp',
             burnResultId: 'burnt_shrimp',
-            burnChance: 0.28,
             icon: { kind: 'pixel', assetId: 'shrimp' }
         },
         cooked_shrimp: {
@@ -1784,7 +1783,6 @@
             if (Number.isFinite(def.requiredDefenseLevel)) db[id].requiredDefenseLevel = Math.max(1, Math.floor(def.requiredDefenseLevel));
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;
             if (def.burnResultId) db[id].burnResultId = def.burnResultId;
-            if (Number.isFinite(def.burnChance)) db[id].burnChance = def.burnChance;
             if (Number.isFinite(def.healAmount)) db[id].healAmount = def.healAmount;
             if (Number.isFinite(def.eatDelayTicks)) db[id].eatDelayTicks = def.eatDelayTicks;
         }

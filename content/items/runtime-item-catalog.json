@@ -3195,7 +3195,6 @@
         "Use",
         "Drop"
       ],
-      "burnChance": 0.28,
       "burnResultId": "burnt_shrimp",
       "cookResultId": "cooked_shrimp",
       "defaultAction": "Use",

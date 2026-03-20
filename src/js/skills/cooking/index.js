@@ -8,12 +8,69 @@
         return recipes[itemId] || null;
     }
 
+    function getCookingActionTicks(context) {
+        const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
+        return skillSpec && skillSpec.timing && Number.isFinite(skillSpec.timing.actionTicks)
+            ? Math.max(1, Math.floor(skillSpec.timing.actionTicks))
+            : 1;
+    }
+
+    function canCookRecipeLevel(context, recipe) {
+        if (!recipe) return false;
+        if (typeof context.requireSkillLevel !== 'function') return true;
+        const requiredLevel = Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1;
+        return context.requireSkillLevel(requiredLevel, {
+            skillId: SKILL_ID,
+            action: 'cook that',
+            message: `You need Cooking level ${requiredLevel} to cook that.`
+        });
+    }
+
+    function getActiveCookingSession(context) {
+        if (!(window.SkillActionResolution && typeof SkillActionResolution.getSkillSession === 'function')) return null;
+        const session = SkillActionResolution.getSkillSession(context.playerState, SKILL_ID);
+        return session && session.kind === 'processing' ? session : null;
+    }
+
+    function isSameFireTarget(sessionTarget, fireTarget) {
+        if (!sessionTarget || !fireTarget) return false;
+        return sessionTarget.x === fireTarget.x
+            && sessionTarget.y === fireTarget.y
+            && sessionTarget.z === fireTarget.z;
+    }
+
+    function canHotSwapCookingSession(context, session, fireTarget) {
+        if (!session || context.playerState.action !== 'SKILLING: FIRE') return false;
+        if (!isSameFireTarget(session.target, fireTarget)) return false;
+
+        const dx = Math.abs(fireTarget.x - context.playerState.x);
+        const dy = Math.abs(fireTarget.y - context.playerState.y);
+        return fireTarget.z === context.playerState.z && dx <= 1 && dy <= 1;
+    }
+
+    function hotSwapCookingSession(context, session, recipe, fireTarget) {
+        if (!session || !recipe || !fireTarget) return false;
+        session.recipeId = recipe.sourceItemId;
+        session.target = { x: fireTarget.x, y: fireTarget.y, z: fireTarget.z };
+        session.intervalTicks = Number.isFinite(session.intervalTicks) ? Math.max(1, session.intervalTicks) : getCookingActionTicks(context);
+        session.nextTick = Number.isFinite(session.nextTick)
+            ? Math.max(context.currentTick, session.nextTick)
+            : context.currentTick;
+        return true;
+    }
+
     function computeBurnChance(context, recipe) {
         const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
-        const successChance = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeSuccessChanceFromDifficulty === 'function')
-            ? SkillSpecRegistry.computeSuccessChanceFromDifficulty(level, recipe.burnDifficulty)
-            : Math.max(0, 1 - (Number.isFinite(recipe.burnChance) ? recipe.burnChance : 0.3));
-        return Math.max(0, Math.min(1, 1 - successChance));
+        const requiredLevel = Number.isFinite(recipe && recipe.requiredLevel) ? recipe.requiredLevel : 1;
+        if (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeCookingBurnChance === 'function') {
+            return SkillSpecRegistry.computeCookingBurnChance(level, requiredLevel);
+        }
+
+        const delta = Math.max(0, Math.min(30, level - requiredLevel));
+        if (delta <= 0) return 0.33;
+        if (delta >= 30) return 0;
+        const raw = 0.33 - (0.038 * delta) + (0.0018 * delta * delta) - (0.00003 * delta * delta * delta);
+        return Math.max(0, Math.min(0.33, raw));
     }
 
     function cookOne(context, recipe) {
@@ -85,6 +142,20 @@
                 return true;
             }
 
+            if (!canCookRecipeLevel(context, recipe)) {
+                debugCooking(context, `onUseItem blocked: level gate for ${recipe.sourceItemId}`);
+                return true;
+            }
+
+            const activeSession = getActiveCookingSession(context);
+            if (canHotSwapCookingSession(context, activeSession, fireTarget)) {
+                if (activeSession.recipeId !== recipe.sourceItemId) {
+                    hotSwapCookingSession(context, activeSession, recipe, fireTarget);
+                }
+                debugCooking(context, `onUseItem hot-swap: source=${recipe.sourceItemId}, fire=(${fireTarget.x},${fireTarget.y},${fireTarget.z})`);
+                return true;
+            }
+
             context.playerState.pendingSkillStart = {
                 skillId: SKILL_ID,
                 targetObj: 'FIRE',
@@ -113,6 +184,11 @@
                 return false;
             }
 
+            if (!canCookRecipeLevel(context, recipe)) {
+                debugCooking(context, `onStart blocked: level gate for ${recipe.sourceItemId}`);
+                return false;
+            }
+
             if (context.getInventoryCount(recipe.sourceItemId) <= 0) {
                 context.addChatMessage('You do not have anything to cook.', 'warn');
                 return false;
@@ -128,11 +204,7 @@
             }
 
             if (!window.SkillActionResolution || typeof SkillActionResolution.startProcessingSession !== 'function') return false;
-
-            const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
-            const actionTicks = skillSpec && skillSpec.timing && Number.isFinite(skillSpec.timing.actionTicks)
-                ? skillSpec.timing.actionTicks
-                : 1;
+            const actionTicks = getCookingActionTicks(context);
 
             SkillActionResolution.startProcessingSession(context, SKILL_ID, {
                 recipeId: recipe.sourceItemId,

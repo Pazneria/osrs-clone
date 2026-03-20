@@ -185,6 +185,28 @@ function runFishingChecks(roadmap, spec, itemDefs) {
 
 function runCookingChecks(roadmap, spec, itemDefs) {
   const lines = roadmap.split(/\r?\n/);
+  assertRegex(
+    roadmap,
+    /\|\s*Burn Chance\s*\|\s*Burn Chance = clamp\(0,\s*0\.33 - \(0\.038 x Clamped Level Delta\) \+ \(0\.0018 x Clamped Level Delta\^2\) - \(0\.00003 x Clamped Level Delta\^3\),\s*0\.33\)\s*\|/,
+    "cooking roadmap burn-curve formula mismatch"
+  );
+  assertRegex(
+    roadmap,
+    /\|\s*Cooking Success Chance\s*\|\s*Cooking Success Chance = 1 - Burn Chance\s*\|/,
+    "cooking roadmap success formula mismatch"
+  );
+
+  const anchorRows = [
+    { label: "Unlock", delta: 0, burn: "33%", success: "67%" },
+    { label: "Unlock +10", delta: 10, burn: "10%", success: "90%" },
+    { label: "Unlock +20", delta: 20, burn: "5%", success: "95%" },
+    { label: "Unlock +30", delta: 30, burn: "0%", success: "100%" }
+  ];
+  for (const row of anchorRows) {
+    const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.delta}\\s*\\|\\s*${escapeRegex(row.burn)}\\s*\\|\\s*${escapeRegex(row.success)}\\s*\\|`).test(entry));
+    assert(!!line, `cooking burn-curve summary row mismatch for ${row.label}`);
+  }
+
   const rows = [
     { label: "Shrimp", recipeId: "raw_shrimp" },
     { label: "Trout", recipeId: "raw_trout" },
@@ -199,7 +221,7 @@ function runCookingChecks(roadmap, spec, itemDefs) {
     const cookedValue = itemDefs[recipe.cookedItemId].value;
     const burntValue = itemDefs[recipe.burntItemId].value;
 
-    const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${recipe.requiredLevel}\\s*\\|\\s*${recipe.burnDifficulty}\\s*\\|\\s*${recipe.xpPerSuccess}\\s*\\|`).test(entry));
+    const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${recipe.requiredLevel}\\s*\\|\\s*${recipe.xpPerSuccess}\\s*\\|\\s*${escapeRegex(toTitleCaseId(recipe.sourceItemId))}\\s*\\|\\s*${escapeRegex(toTitleCaseId(recipe.cookedItemId))}\\s*\\|\\s*${escapeRegex(toTitleCaseId(recipe.burntItemId))}\\s*\\|`).test(entry));
     assert(!!line, `cooking roadmap row mismatch for ${row.label}`);
     assert(new RegExp(`\\|\\s*${rawValue}\\s*\\|\\s*${cookedValue}\\s*\\|\\s*${burntValue}\\s*\\|\\s*$`).test(line), `cooking sell-value mismatch for ${row.label}`);
   }

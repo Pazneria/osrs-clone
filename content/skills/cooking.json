@@ -5,8 +5,8 @@
     "primaryResource": "raw_shrimp"
   },
   "formulas": {
-    "burn": "one_minus_success",
-    "success": "level_over_level_plus_burn_difficulty"
+    "burn": "unlock_relative_cubic_burn_curve",
+    "success": "one_minus_unlock_relative_cubic_burn_curve"
   },
   "levelBands": [
     1,
@@ -17,7 +17,6 @@
   ],
   "recipeSet": {
     "raw_salmon": {
-      "burnDifficulty": 48,
       "burntItemId": "burnt_salmon",
       "cookedItemId": "cooked_salmon",
       "requiredLevel": 20,
@@ -26,7 +25,6 @@
       "xpPerSuccess": 90
     },
     "raw_shrimp": {
-      "burnDifficulty": 9,
       "burntItemId": "burnt_shrimp",
       "cookedItemId": "cooked_shrimp",
       "requiredLevel": 1,
@@ -35,7 +33,6 @@
       "xpPerSuccess": 30
     },
     "raw_swordfish": {
-      "burnDifficulty": 144,
       "burntItemId": "burnt_swordfish",
       "cookedItemId": "cooked_swordfish",
       "requiredLevel": 40,
@@ -44,7 +41,6 @@
       "xpPerSuccess": 140
     },
     "raw_trout": {
-      "burnDifficulty": 24,
       "burntItemId": "burnt_trout",
       "cookedItemId": "cooked_trout",
       "requiredLevel": 10,
@@ -53,7 +49,6 @@
       "xpPerSuccess": 70
     },
     "raw_tuna": {
-      "burnDifficulty": 84,
       "burntItemId": "burnt_tuna",
       "cookedItemId": "cooked_tuna",
       "requiredLevel": 30,

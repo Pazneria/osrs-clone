@@ -12,12 +12,13 @@
 - [x] COOKING-008: Merchant/economy alignment completed for raw-cooked-burnt fish sell behavior (explicit fish-merchant sell values plus unchanged general-store half-price fallback).
 - [x] COOKING-009: Training-location placement pass completed for starter campfire, riverbank fire line, dockside fire line, and deep-water dock fire line (with world getters and QA teleports).
 - [x] COOKING-010: Cross-skill integration pass completed for fishing raw-fish stock ownership and firemaking fire-lifecycle interactions (fishing-owned merchant unlock coverage + fire-lifecycle tick wiring synced to firemaking spec lifetime data).
+- [x] COOKING-011: UX polish pass completed for interruption/switching and animation consistency (per-fish level gates now block under-level cooking in both use-item and start flows, same-fire fish swaps preserve the active tick cadence instead of resetting it, and dedicated runtime tests cover the clip/suppress-equipment contract).
+- [x] COOKING-012A: Burn-rate rebalance completed with a shared unlock-relative cubic burn curve (33% at unlock, 10% at +10, 5% at +20, 0% at +30), removal of legacy burn-difficulty/item burn fields, and live UI burn-chance display.
 
 ## Now
-- [ ] COOKING-011: UX polish for cooking interruption/switching flows and outcome animation consistency.
 
 ## Next
+- [ ] COOKING-012: Remaining balance pass using expected XP/value-per-action targets across the 1-40 food bands beyond the burn-curve rebalance.
 
 ## Later
-- [ ] COOKING-012: Balance pass using expected XP/value-per-action targets across the 1-40 food bands.
 - [ ] COOKING-013: Progression expansion pass for additional cookable families beyond early fish baseline.

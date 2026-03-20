@@ -224,6 +224,8 @@ Thrain is an advanced smithing merchant who deals in the highest-tier metals and
 
 **Associated Quests:** Locked behind Thrain's quest before rune material access is granted.
 
+Current implementation shares the mining-side `Proof of the Deepforge` unlock: Thrain opens his advanced ore stock after the player turns in 6 coal, 2 gold ore, and 1 uncut emerald.
+
 | Item        | Buys | Sells |
 | ----------- | ---- | ----- |
 | Adamant Ore | 150  | 300   |
