@@ -59,6 +59,8 @@
 
         session.nextAttemptTick = context.currentTick + Math.max(1, session.intervalTicks);
 
+        if (typeof options.onAttempt === 'function') options.onAttempt(context);
+
         const rollChance = window.SkillSharedUtils && typeof SkillSharedUtils.rollChance === 'function'
             ? SkillSharedUtils.rollChance
             : ((chance, rng) => (typeof rng === 'function' ? rng() : Math.random()) < chance);

@@ -3,7 +3,7 @@
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
 | Combat | In Progress | Melee-v1 feel polish for the new rat/goblin slice | Attack-style UI + rebuilt combat sim | None |
-| Mining | In Progress | Yield/xp/gold-per-tick balance pass after Thrain gate integration | Lock balance targets across the ore/gem bands | None |
+| Mining | In Progress | Ore/gem throughput targets locked across the current 1-40 band | Off-band ore/gem expansion beyond the current route set | None |
 | Woodcutting | In Progress | Logs/xp/gold-per-tick balance targets locked across tree tiers | Progression expansion for later tree bands and gating | None |
 | Fishing | In Progress | Teacher quest + rune-harpoon reward/replacement flow | Method/level economic balance pass | Quest content |
 | Firemaking | In Progress | Cross-skill log-demand balancing with woodcutting/cooking | Failure/interruption polish + expansion | None |

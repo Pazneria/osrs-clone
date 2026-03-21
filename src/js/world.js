@@ -3217,6 +3217,8 @@
                             rebuilt[key] = {
                                 oreType: prev && prev.oreType ? prev.oreType : oreTypeForTile(x, y, z),
                                 depletedUntilTick: prev && prev.depletedUntilTick ? prev.depletedUntilTick : 0,
+                                successfulYields: prev && Number.isFinite(prev.successfulYields) ? Math.max(0, Math.floor(prev.successfulYields)) : 0,
+                                lastInteractionTick: prev && Number.isFinite(prev.lastInteractionTick) ? Math.max(0, Math.floor(prev.lastInteractionTick)) : 0,
                                 areaGateFlag: prev && prev.areaGateFlag ? prev.areaGateFlag : (gateOverride && gateOverride.areaGateFlag ? gateOverride.areaGateFlag : null),
                                 areaName: prev && prev.areaName ? prev.areaName : (gateOverride && gateOverride.areaName ? gateOverride.areaName : null),
                                 areaGateMessage: prev && prev.areaGateMessage ? prev.areaGateMessage : (gateOverride && gateOverride.areaGateMessage ? gateOverride.areaGateMessage : null)
@@ -3237,6 +3239,8 @@
                 rockNodes[key] = {
                     oreType: oreTypeForTile(x, y, z),
                     depletedUntilTick: 0,
+                    successfulYields: 0,
+                    lastInteractionTick: 0,
                     areaGateFlag: gateOverride && gateOverride.areaGateFlag ? gateOverride.areaGateFlag : null,
                     areaName: gateOverride && gateOverride.areaName ? gateOverride.areaName : null,
                     areaGateMessage: gateOverride && gateOverride.areaGateMessage ? gateOverride.areaGateMessage : null
@@ -3266,6 +3270,8 @@
             const node = getRockNodeAt(x, y, z);
             if (!node) return;
             node.depletedUntilTick = currentTick + Math.max(1, respawnTicks);
+            node.successfulYields = 0;
+            node.lastInteractionTick = 0;
             refreshChunkAtTile(x, y);
         }
 
@@ -3275,6 +3281,8 @@
                 if (!node || !node.depletedUntilTick) continue;
                 if (currentTick < node.depletedUntilTick) continue;
                 node.depletedUntilTick = 0;
+                node.successfulYields = 0;
+                node.lastInteractionTick = 0;
                 const parts = key.split(':');
                 const xy = parts[1].split(',');
                 const x = parseInt(xy[0], 10);

@@ -953,6 +953,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-049 - Mining gem-route balance tables drift from live runtime targets
+- Status: Fixed
+- Severity: S2
+- Area: MNG
+- Source: Manual
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/mining/index.js`, `tools/tests/mining-runtime-tests.js`, `src/js/skills/mining/ROADMAP.md`
+- Repro:
+  1. Review the mining roadmap's yield/xp/gold-per-tick sections and compare them against the live runtime behavior for depletion, respawn, and sell values.
+  2. Mine sapphire and emerald routes and compare their sustained value against the intended ore/gem band roles.
+  3. Inspect the canonical mining skill mirror for economy/balance coverage.
+- Expected: Mining should expose canonical balance/economy data, the runtime should honor the documented per-rock yield-session rules, and sapphire/emerald routes should hit the intended sustained throughput targets.
+- Actual: Mining still lacked canonical economy/balance helpers, live depletion ignored the documented minimum/cap session rules, and gem-route sustained throughput fell behind the intended lane targets.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical mining economy/balance metadata and runtime helpers for expected yields plus tier-entry/sustained throughput summaries.
+  2. Implement the documented per-rock yield-session rules in the mining runtime (minimum yields, hard caps, idle expiry).
+  3. Rebalance the gem routes, add focused mining QA coverage, and sync the mining docs/status files.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added canonical mining economy value tables plus spec-registry helpers for expected per-node yields and tier-entry/sustained mining throughput.
+  - Updated mining runtime depletion to honor per-rock minimum/cap yield sessions with 50-tick idle expiry while keeping rune essence persistent.
+  - Rebalanced sapphire and emerald downtime so the gem lane now hits the intended sustained-value targets, then synced roadmap/status/index docs and added dedicated mining runtime QA coverage.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-048 - Thrain late-ore stock lacks the documented quest gate
 - Status: Fixed
 - Severity: S2

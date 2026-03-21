@@ -1,6 +1,92 @@
 {
   "economy": {
-    "primaryResource": "copper_ore"
+    "primaryResource": "copper_ore",
+    "valueTable": {
+      "adamant_ore": {
+        "buy": 300,
+        "sell": 150
+      },
+      "adamant_pickaxe": {
+        "buy": 2200,
+        "sell": 750
+      },
+      "bronze_pickaxe": {
+        "buy": 40,
+        "sell": 10
+      },
+      "clay": {
+        "buy": 4,
+        "sell": 1
+      },
+      "coal": {
+        "buy": 30,
+        "sell": 12
+      },
+      "copper_ore": {
+        "buy": 8,
+        "sell": 3
+      },
+      "gold_ore": {
+        "buy": 70,
+        "sell": 28
+      },
+      "iron_ore": {
+        "buy": 18,
+        "sell": 7
+      },
+      "iron_pickaxe": {
+        "buy": 120,
+        "sell": 35
+      },
+      "mithril_ore": {
+        "buy": 120,
+        "sell": 60
+      },
+      "mithril_pickaxe": {
+        "buy": 900,
+        "sell": 300
+      },
+      "rune_essence": {
+        "buy": 12,
+        "sell": 4
+      },
+      "rune_ore": {
+        "buy": 1200,
+        "sell": 600
+      },
+      "rune_pickaxe": {
+        "buy": null,
+        "sell": 2500
+      },
+      "silver_ore": {
+        "buy": 45,
+        "sell": 18
+      },
+      "steel_pickaxe": {
+        "buy": 350,
+        "sell": 110
+      },
+      "tin_ore": {
+        "buy": 8,
+        "sell": 3
+      },
+      "uncut_diamond": {
+        "buy": 150,
+        "sell": 50
+      },
+      "uncut_emerald": {
+        "buy": 90,
+        "sell": 30
+      },
+      "uncut_ruby": {
+        "buy": 20,
+        "sell": 6
+      },
+      "uncut_sapphire": {
+        "buy": 50,
+        "sell": 16
+      }
+    }
   },
   "formulas": {
     "interval": "max(min_ticks, base_ticks - speed_bonus)",
@@ -17,6 +103,8 @@
     "clay_rock": {
       "depletionChance": 1,
       "difficulty": 6,
+      "maximumYields": 1,
+      "minimumYields": 1,
       "oreType": "clay",
       "requiredLevel": 1,
       "respawnTicks": 5,
@@ -27,6 +115,8 @@
     "coal_rock": {
       "depletionChance": 0.35,
       "difficulty": 26,
+      "maximumYields": 5,
+      "minimumYields": 2,
       "oreType": "coal",
       "requiredLevel": 20,
       "respawnTicks": 12,
@@ -37,6 +127,8 @@
     "copper_rock": {
       "depletionChance": 1,
       "difficulty": 8,
+      "maximumYields": 1,
+      "minimumYields": 1,
       "oreType": "copper",
       "requiredLevel": 1,
       "respawnTicks": 6,
@@ -47,9 +139,11 @@
     "emerald_rock": {
       "depletionChance": 0.3,
       "difficulty": 56,
+      "maximumYields": 4,
+      "minimumYields": 2,
       "oreType": "emerald",
       "requiredLevel": 40,
-      "respawnTicks": 48,
+      "respawnTicks": 18,
       "rewardItemId": "uncut_emerald",
       "tileId": 2,
       "xpPerSuccess": 72
@@ -57,6 +151,8 @@
     "gold_rock": {
       "depletionChance": 0.25,
       "difficulty": 50,
+      "maximumYields": 5,
+      "minimumYields": 2,
       "oreType": "gold",
       "requiredLevel": 40,
       "respawnTicks": 21,
@@ -67,6 +163,8 @@
     "iron_rock": {
       "depletionChance": 0.5,
       "difficulty": 16,
+      "maximumYields": 3,
+      "minimumYields": 1,
       "oreType": "iron",
       "requiredLevel": 10,
       "respawnTicks": 9,
@@ -84,11 +182,13 @@
       "xpPerSuccess": 2
     },
     "sapphire_rock": {
-      "depletionChance": 0.35,
+      "depletionChance": 0.3,
       "difficulty": 42,
+      "maximumYields": 4,
+      "minimumYields": 2,
       "oreType": "sapphire",
       "requiredLevel": 30,
-      "respawnTicks": 36,
+      "respawnTicks": 18,
       "rewardItemId": "uncut_sapphire",
       "tileId": 2,
       "xpPerSuccess": 52
@@ -96,6 +196,8 @@
     "silver_rock": {
       "depletionChance": 0.3,
       "difficulty": 36,
+      "maximumYields": 5,
+      "minimumYields": 2,
       "oreType": "silver",
       "requiredLevel": 30,
       "respawnTicks": 15,
@@ -106,6 +208,8 @@
     "tin_rock": {
       "depletionChance": 1,
       "difficulty": 8,
+      "maximumYields": 1,
+      "minimumYields": 1,
       "oreType": "tin",
       "requiredLevel": 1,
       "respawnTicks": 6,

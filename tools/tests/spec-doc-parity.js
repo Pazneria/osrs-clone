@@ -60,6 +60,49 @@ function computeWoodcuttingOutputs(spec, node, options) {
   };
 }
 
+function computeMiningOutputs(spec, node, options) {
+  const level = options.level;
+  const toolPower = options.toolPower;
+  const speedBonusTicks = options.speedBonusTicks;
+  const successChance = (level + toolPower) / ((level + toolPower) + node.difficulty);
+  const intervalTicks = Math.max(spec.timing.minimumAttemptTicks, spec.timing.baseAttemptTicks - speedBonusTicks);
+  const activeYieldsPerTick = successChance / intervalTicks;
+  const sellValue = spec.economy.valueTable[node.rewardItemId].sell;
+  const activeXpPerTick = activeYieldsPerTick * node.xpPerSuccess;
+  const activeGoldPerTick = activeYieldsPerTick * sellValue;
+
+  if (node.persistent) {
+    return {
+      expectedYieldsPerNode: null,
+      activeYieldsPerTick,
+      activeXpPerTick,
+      activeGoldPerTick,
+      sustainedYieldsPerTick: activeYieldsPerTick,
+      sustainedXpPerTick: activeXpPerTick,
+      sustainedGoldPerTick: activeGoldPerTick
+    };
+  }
+
+  let expectedYieldsPerNode = node.minimumYields;
+  for (let yieldCount = node.minimumYields + 1; yieldCount <= node.maximumYields; yieldCount++) {
+    expectedYieldsPerNode += Math.pow(1 - node.depletionChance, yieldCount - node.minimumYields);
+  }
+  const activeTicksPerNode = expectedYieldsPerNode / activeYieldsPerTick;
+  const sustainedYieldsPerTick = expectedYieldsPerNode / (activeTicksPerNode + node.respawnTicks);
+  const sustainedXpPerTick = sustainedYieldsPerTick * node.xpPerSuccess;
+  const sustainedGoldPerTick = sustainedYieldsPerTick * sellValue;
+
+  return {
+    expectedYieldsPerNode,
+    activeYieldsPerTick,
+    activeXpPerTick,
+    activeGoldPerTick,
+    sustainedYieldsPerTick,
+    sustainedXpPerTick,
+    sustainedGoldPerTick
+  };
+}
+
 function loadItemDefs(projectRoot) {
   const itemCatalogPath = path.join(projectRoot, "src", "js", "content", "item-catalog.js");
   const code = fs.readFileSync(itemCatalogPath, "utf8");
@@ -287,12 +330,85 @@ function runMiningChecks(roadmap, spec) {
     const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(label)}\\s*\\|\\s*${node.requiredLevel}\\s*\\|\\s*${node.xpPerSuccess}\\s*\\|\\s*${node.difficulty}\\s*\\|`).test(entry));
     assert(!!line, `mining roadmap row mismatch for ${label}`);
 
+    if (Number.isFinite(node.minimumYields)) {
+      assert(new RegExp(`\\|\\s*${node.minimumYields}\\s*\\|\\s*${node.maximumYields}\\s*\\|`).test(line), `mining yield-cap mismatch for ${label}`);
+    } else {
+      assert(/\|\s*null\s*\|\s*null\s*\|/.test(line), `mining persistent-yield mismatch for ${label}`);
+    }
     if (Number.isFinite(node.depletionChance)) {
       assert(new RegExp(`\\|\\s*${Number(node.depletionChance).toFixed(2)}\\s*\\|`).test(line), `mining depletion mismatch for ${label}`);
+    } else {
+      assert(/\|\s*0\.00\s*\|/.test(line), `mining persistent depletion mismatch for ${label}`);
     }
     if (Number.isFinite(node.respawnTicks)) {
       assert(new RegExp(`\\|\\s*${node.respawnTicks}\\s*\\|`).test(line), `mining respawn mismatch for ${label}`);
+    } else {
+      assert(/\|\s*0\s*\|/.test(line), `mining persistent respawn mismatch for ${label}`);
     }
+  }
+
+  const valueRows = [
+    { label: "Clay", itemId: "clay" },
+    { label: "Copper Ore", itemId: "copper_ore" },
+    { label: "Tin Ore", itemId: "tin_ore" },
+    { label: "Iron Ore", itemId: "iron_ore" },
+    { label: "Coal", itemId: "coal" },
+    { label: "Silver Ore", itemId: "silver_ore" },
+    { label: "Uncut Sapphire", itemId: "uncut_sapphire" },
+    { label: "Gold Ore", itemId: "gold_ore" },
+    { label: "Uncut Emerald", itemId: "uncut_emerald" },
+    { label: "Rune Essence", itemId: "rune_essence" }
+  ];
+  for (const row of valueRows) {
+    const value = spec.economy.valueTable[row.itemId];
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*(Resource|Gem)\\s*\\|\\s*${value.buy}\\s*\\|\\s*${value.sell}\\s*\\|`),
+      `mining value row mismatch for ${row.label}`
+    );
+  }
+
+  const tierEntryRows = [
+    { label: "Clay Rock", nodeId: "clay_rock", level: 1, pickaxeLabel: "Iron Pickaxe", toolPower: 6, speedBonusTicks: 1 },
+    { label: "Copper Rock", nodeId: "copper_rock", level: 1, pickaxeLabel: "Iron Pickaxe", toolPower: 6, speedBonusTicks: 1 },
+    { label: "Tin Rock", nodeId: "tin_rock", level: 1, pickaxeLabel: "Iron Pickaxe", toolPower: 6, speedBonusTicks: 1 },
+    { label: "Iron Rock", nodeId: "iron_rock", level: 10, pickaxeLabel: "Steel Pickaxe", toolPower: 10, speedBonusTicks: 2 },
+    { label: "Coal Rock", nodeId: "coal_rock", level: 20, pickaxeLabel: "Mithril Pickaxe", toolPower: 15, speedBonusTicks: 3 },
+    { label: "Silver Rock", nodeId: "silver_rock", level: 30, pickaxeLabel: "Adamant Pickaxe", toolPower: 21, speedBonusTicks: 4 },
+    { label: "Sapphire Rock", nodeId: "sapphire_rock", level: 30, pickaxeLabel: "Adamant Pickaxe", toolPower: 21, speedBonusTicks: 4 },
+    { label: "Gold Rock", nodeId: "gold_rock", level: 40, pickaxeLabel: "Rune Pickaxe", toolPower: 28, speedBonusTicks: 5 },
+    { label: "Emerald Rock", nodeId: "emerald_rock", level: 40, pickaxeLabel: "Rune Pickaxe", toolPower: 28, speedBonusTicks: 5 },
+    { label: "Rune Essence Rock", nodeId: "rune_essence", level: 1, pickaxeLabel: "Iron Pickaxe", toolPower: 6, speedBonusTicks: 1 }
+  ];
+  for (const row of tierEntryRows) {
+    const node = spec.nodeTable[row.nodeId];
+    const metrics = computeMiningOutputs(spec, node, row);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${escapeRegex(row.pickaxeLabel)}\\s*\\|\\s*${formatMetric(metrics.activeYieldsPerTick)}\\s*\\|\\s*${formatMetric(metrics.activeXpPerTick)}\\s*\\|\\s*${formatMetric(metrics.activeGoldPerTick)}\\s*\\|`),
+      `mining tier-entry output mismatch for ${row.label}`
+    );
+  }
+
+  const sustainedRows = [
+    { label: "Clay Rock", nodeId: "clay_rock", level: 1, toolPower: 6, speedBonusTicks: 1 },
+    { label: "Copper Rock", nodeId: "copper_rock", level: 1, toolPower: 6, speedBonusTicks: 1 },
+    { label: "Tin Rock", nodeId: "tin_rock", level: 1, toolPower: 6, speedBonusTicks: 1 },
+    { label: "Iron Rock", nodeId: "iron_rock", level: 10, toolPower: 10, speedBonusTicks: 2 },
+    { label: "Coal Rock", nodeId: "coal_rock", level: 20, toolPower: 15, speedBonusTicks: 3 },
+    { label: "Silver Rock", nodeId: "silver_rock", level: 30, toolPower: 21, speedBonusTicks: 4 },
+    { label: "Sapphire Rock", nodeId: "sapphire_rock", level: 30, toolPower: 21, speedBonusTicks: 4 },
+    { label: "Gold Rock", nodeId: "gold_rock", level: 40, toolPower: 28, speedBonusTicks: 5 },
+    { label: "Emerald Rock", nodeId: "emerald_rock", level: 40, toolPower: 28, speedBonusTicks: 5 }
+  ];
+  for (const row of sustainedRows) {
+    const node = spec.nodeTable[row.nodeId];
+    const metrics = computeMiningOutputs(spec, node, row);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${formatMetric(metrics.expectedYieldsPerNode)}\\s*\\|\\s*${formatMetric(metrics.sustainedYieldsPerTick)}\\s*\\|\\s*${formatMetric(metrics.sustainedXpPerTick)}\\s*\\|\\s*${formatMetric(metrics.sustainedGoldPerTick)}\\s*\\|`),
+      `mining sustained output mismatch for ${row.label}`
+    );
   }
 }
 

@@ -271,6 +271,38 @@ function run() {
     assert(ctx.playerState.action === null, "expected cooking to stop after the swapped input is exhausted");
   });
 
+  test("Cooking same-fire re-click keeps the current recipe session untouched", () => {
+    const ctx = createSkillContext({
+      sourceItemId: "raw_shrimp",
+      counts: { raw_shrimp: 2 },
+      levels: { cooking: 99 },
+      currentTick: 110,
+      action: "SKILLING: FIRE"
+    });
+
+    SkillActionResolution.startProcessingSession(ctx, "cooking", {
+      recipeId: "raw_shrimp",
+      target: { x: 11, y: 10, z: 0 },
+      intervalTicks: 1,
+      nextTick: 110
+    });
+
+    const handled = cooking.onUseItem(ctx);
+    assert(handled, "expected same-fish re-click to be handled during active cooking");
+    assert(ctx._queued.length === 0, "same-fish re-click should not queue a replacement interact");
+
+    const session = SkillActionResolution.getSkillSession(ctx.playerState, "cooking");
+    assert(!!session, "expected the active cooking session to remain present");
+    assert(session.recipeId === "raw_shrimp", "expected same-fish re-click to keep the active recipe");
+    assert(session.nextTick === 110, "expected same-fish re-click not to disturb the ready attempt tick");
+    assert(session.target && session.target.x === 11 && session.target.y === 10 && session.target.z === 0, "expected same-fish re-click to keep the current fire target");
+
+    cooking.onTick(ctx);
+    assert((ctx._counts.raw_shrimp || 0) === 1, "expected the current shrimp attempt to still consume one input on schedule");
+    assert((ctx._counts.cooked_shrimp || 0) === 1, "expected the current shrimp attempt to still produce cooked output");
+    assert((ctx._xpBySkill.cooking || 0) === 30, "expected same-fish re-click not to alter the scheduled XP gain");
+  });
+
   test("Cooking same-fire hot-swap keeps the current session when the new fish is under-level", () => {
     const ctx = createSkillContext({
       sourceItemId: "raw_swordfish",

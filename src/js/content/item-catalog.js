@@ -179,7 +179,7 @@
             toolTier: 6,
             speedBonusTicks: 1,
             stats: { atk: 8, def: 0, str: 10 },
-            value: 150,
+            value: 120,
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',

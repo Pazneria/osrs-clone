@@ -401,18 +401,43 @@
                 minimumAttemptTicks: 1
             },
             nodeTable: {
-                clay_rock: { tileId: 2, oreType: 'clay', requiredLevel: 1, difficulty: 6, xpPerSuccess: 8, rewardItemId: 'clay', depletionChance: 1.0, respawnTicks: 5 },
-                copper_rock: { tileId: 2, oreType: 'copper', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'copper_ore', depletionChance: 1.0, respawnTicks: 6 },
-                tin_rock: { tileId: 2, oreType: 'tin', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'tin_ore', depletionChance: 1.0, respawnTicks: 6 },
+                clay_rock: { tileId: 2, oreType: 'clay', requiredLevel: 1, difficulty: 6, xpPerSuccess: 8, rewardItemId: 'clay', minimumYields: 1, maximumYields: 1, depletionChance: 1.0, respawnTicks: 5 },
+                copper_rock: { tileId: 2, oreType: 'copper', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'copper_ore', minimumYields: 1, maximumYields: 1, depletionChance: 1.0, respawnTicks: 6 },
+                tin_rock: { tileId: 2, oreType: 'tin', requiredLevel: 1, difficulty: 8, xpPerSuccess: 10, rewardItemId: 'tin_ore', minimumYields: 1, maximumYields: 1, depletionChance: 1.0, respawnTicks: 6 },
                 rune_essence: { tileId: 2, oreType: 'rune_essence', requiredLevel: 1, difficulty: 6, xpPerSuccess: 2, rewardItemId: 'rune_essence', persistent: true },
-                iron_rock: { tileId: 2, oreType: 'iron', requiredLevel: 10, difficulty: 16, xpPerSuccess: 18, rewardItemId: 'iron_ore', depletionChance: 0.5, respawnTicks: 9 },
-                coal_rock: { tileId: 2, oreType: 'coal', requiredLevel: 20, difficulty: 26, xpPerSuccess: 28, rewardItemId: 'coal', depletionChance: 0.35, respawnTicks: 12 },
-                silver_rock: { tileId: 2, oreType: 'silver', requiredLevel: 30, difficulty: 36, xpPerSuccess: 40, rewardItemId: 'silver_ore', depletionChance: 0.3, respawnTicks: 15 },
-                sapphire_rock: { tileId: 2, oreType: 'sapphire', requiredLevel: 30, difficulty: 42, xpPerSuccess: 52, rewardItemId: 'uncut_sapphire', depletionChance: 0.35, respawnTicks: 36 },
-                gold_rock: { tileId: 2, oreType: 'gold', requiredLevel: 40, difficulty: 50, xpPerSuccess: 60, rewardItemId: 'gold_ore', depletionChance: 0.25, respawnTicks: 21 },
-                emerald_rock: { tileId: 2, oreType: 'emerald', requiredLevel: 40, difficulty: 56, xpPerSuccess: 72, rewardItemId: 'uncut_emerald', depletionChance: 0.3, respawnTicks: 48 }
+                iron_rock: { tileId: 2, oreType: 'iron', requiredLevel: 10, difficulty: 16, xpPerSuccess: 18, rewardItemId: 'iron_ore', minimumYields: 1, maximumYields: 3, depletionChance: 0.5, respawnTicks: 9 },
+                coal_rock: { tileId: 2, oreType: 'coal', requiredLevel: 20, difficulty: 26, xpPerSuccess: 28, rewardItemId: 'coal', minimumYields: 2, maximumYields: 5, depletionChance: 0.35, respawnTicks: 12 },
+                silver_rock: { tileId: 2, oreType: 'silver', requiredLevel: 30, difficulty: 36, xpPerSuccess: 40, rewardItemId: 'silver_ore', minimumYields: 2, maximumYields: 5, depletionChance: 0.3, respawnTicks: 15 },
+                sapphire_rock: { tileId: 2, oreType: 'sapphire', requiredLevel: 30, difficulty: 42, xpPerSuccess: 52, rewardItemId: 'uncut_sapphire', minimumYields: 2, maximumYields: 4, depletionChance: 0.3, respawnTicks: 18 },
+                gold_rock: { tileId: 2, oreType: 'gold', requiredLevel: 40, difficulty: 50, xpPerSuccess: 60, rewardItemId: 'gold_ore', minimumYields: 2, maximumYields: 5, depletionChance: 0.25, respawnTicks: 21 },
+                emerald_rock: { tileId: 2, oreType: 'emerald', requiredLevel: 40, difficulty: 56, xpPerSuccess: 72, rewardItemId: 'uncut_emerald', minimumYields: 2, maximumYields: 4, depletionChance: 0.3, respawnTicks: 18 }
             },
-            economy: { primaryResource: 'copper_ore' }
+            economy: {
+                primaryResource: 'copper_ore',
+                valueTable: {
+                    bronze_pickaxe: { buy: 40, sell: 10 },
+                    iron_pickaxe: { buy: 120, sell: 35 },
+                    steel_pickaxe: { buy: 350, sell: 110 },
+                    mithril_pickaxe: { buy: 900, sell: 300 },
+                    adamant_pickaxe: { buy: 2200, sell: 750 },
+                    rune_pickaxe: { buy: null, sell: 2500 },
+                    clay: { buy: 4, sell: 1 },
+                    copper_ore: { buy: 8, sell: 3 },
+                    tin_ore: { buy: 8, sell: 3 },
+                    iron_ore: { buy: 18, sell: 7 },
+                    coal: { buy: 30, sell: 12 },
+                    silver_ore: { buy: 45, sell: 18 },
+                    uncut_sapphire: { buy: 50, sell: 16 },
+                    gold_ore: { buy: 70, sell: 28 },
+                    uncut_emerald: { buy: 90, sell: 30 },
+                    rune_essence: { buy: 12, sell: 4 },
+                    uncut_ruby: { buy: 20, sell: 6 },
+                    uncut_diamond: { buy: 150, sell: 50 },
+                    mithril_ore: { buy: 120, sell: 60 },
+                    adamant_ore: { buy: 300, sell: 150 },
+                    rune_ore: { buy: 1200, sell: 600 }
+                }
+            }
         },
         runecrafting: {
             skillId: 'runecrafting',
@@ -1841,7 +1866,225 @@
         }
     }
 
+    function computeExpectedDepletingYieldCount(node) {
+        const minimumYields = Number.isFinite(node && node.minimumYields) ? Math.max(1, Math.floor(node.minimumYields)) : null;
+        const maximumYields = Number.isFinite(node && node.maximumYields) ? Math.max(minimumYields || 1, Math.floor(node.maximumYields)) : null;
+        const depletionChance = Number.isFinite(node && node.depletionChance)
+            ? Math.max(0, Math.min(1, node.depletionChance))
+            : null;
+        if (!Number.isFinite(minimumYields) || !Number.isFinite(maximumYields) || depletionChance === null) return null;
+
+        let expectedYields = minimumYields;
+        for (let yieldCount = minimumYields + 1; yieldCount <= maximumYields; yieldCount++) {
+            expectedYields += Math.pow(1 - depletionChance, yieldCount - minimumYields);
+        }
+        return expectedYields;
+    }
+
+    function computeMiningBalanceMetrics(miningSpec, nodeId, benchmark) {
+        const nodeTable = miningSpec && miningSpec.nodeTable && typeof miningSpec.nodeTable === 'object'
+            ? miningSpec.nodeTable
+            : {};
+        const node = nodeTable[nodeId];
+        if (!node || typeof node !== 'object') return null;
+
+        const timing = miningSpec && miningSpec.timing && typeof miningSpec.timing === 'object'
+            ? miningSpec.timing
+            : {};
+        const valueTable = miningSpec && miningSpec.economy && miningSpec.economy.valueTable && typeof miningSpec.economy.valueTable === 'object'
+            ? miningSpec.economy.valueTable
+            : {};
+        const rewardValueRow = valueTable[node.rewardItemId] && typeof valueTable[node.rewardItemId] === 'object'
+            ? valueTable[node.rewardItemId]
+            : {};
+        const level = Number.isFinite(benchmark && benchmark.level) ? benchmark.level : 1;
+        const toolPower = Number.isFinite(benchmark && benchmark.toolPower) ? benchmark.toolPower : 0;
+        const speedBonusTicks = Number.isFinite(benchmark && benchmark.speedBonusTicks) ? benchmark.speedBonusTicks : 0;
+        const difficulty = Math.max(1, Number.isFinite(node.difficulty) ? node.difficulty : 1);
+        const successScore = Math.max(1, level + toolPower);
+        const successChance = successScore / (successScore + difficulty);
+        const intervalTicks = Math.max(
+            Number.isFinite(timing.minimumAttemptTicks) ? timing.minimumAttemptTicks : 1,
+            (Number.isFinite(timing.baseAttemptTicks) ? timing.baseAttemptTicks : 1) - speedBonusTicks
+        );
+        const activeYieldsPerTick = successChance / intervalTicks;
+        const sellValue = Number.isFinite(rewardValueRow.sell) ? rewardValueRow.sell : 0;
+        const activeXpPerTick = activeYieldsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const activeGoldPerTick = activeYieldsPerTick * sellValue;
+        const expectedYieldsPerNode = node.persistent ? null : computeExpectedDepletingYieldCount(node);
+        const activeTicksPerNode = expectedYieldsPerNode && activeYieldsPerTick > 0
+            ? expectedYieldsPerNode / activeYieldsPerTick
+            : null;
+        const respawnTicks = Number.isFinite(node.respawnTicks) ? node.respawnTicks : 0;
+        const sustainedYieldsPerTick = expectedYieldsPerNode && activeTicksPerNode !== null
+            ? expectedYieldsPerNode / (activeTicksPerNode + Math.max(0, respawnTicks))
+            : activeYieldsPerTick;
+        const sustainedXpPerTick = sustainedYieldsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const sustainedGoldPerTick = sustainedYieldsPerTick * sellValue;
+
+        return {
+            nodeId,
+            activeXpPerTick,
+            activeGoldPerTick,
+            sustainedXpPerTick,
+            sustainedGoldPerTick,
+            sellValue,
+            expectedYieldsPerNode
+        };
+    }
+
+    function validateMiningBalanceCurve(skillSpecs) {
+        const miningSpec = skillSpecs && skillSpecs.mining ? skillSpecs.mining : null;
+        if (!miningSpec || !miningSpec.nodeTable) {
+            throw new Error('Mining balance curve mismatch\n- missing mining node table');
+        }
+
+        const nodeTable = miningSpec.nodeTable || {};
+        const valueTable = miningSpec.economy && miningSpec.economy.valueTable && typeof miningSpec.economy.valueTable === 'object'
+            ? miningSpec.economy.valueTable
+            : null;
+        if (!valueTable) {
+            throw new Error('Mining balance curve mismatch\n- missing mining value table');
+        }
+
+        const errors = [];
+        const requiredNodes = ['clay_rock', 'copper_rock', 'tin_rock', 'rune_essence', 'iron_rock', 'coal_rock', 'silver_rock', 'sapphire_rock', 'gold_rock', 'emerald_rock'];
+        for (let i = 0; i < requiredNodes.length; i++) {
+            if (!nodeTable[requiredNodes[i]]) errors.push('missing mining node ' + requiredNodes[i]);
+        }
+
+        const fixedNodeIds = ['clay_rock', 'copper_rock', 'tin_rock'];
+        for (let i = 0; i < fixedNodeIds.length; i++) {
+            const nodeId = fixedNodeIds[i];
+            const node = nodeTable[nodeId] || {};
+            if (!(node.minimumYields === 1 && node.maximumYields === 1)) {
+                errors.push(nodeId + ' should remain a one-yield fixed rock');
+            }
+            if (node.depletionChance !== 1) {
+                errors.push(nodeId + ' should always deplete after one yield');
+            }
+        }
+
+        const variableNodeIds = ['iron_rock', 'coal_rock', 'silver_rock', 'sapphire_rock', 'gold_rock', 'emerald_rock'];
+        for (let i = 0; i < variableNodeIds.length; i++) {
+            const nodeId = variableNodeIds[i];
+            const node = nodeTable[nodeId] || {};
+            if (!Number.isFinite(node.minimumYields)) errors.push(nodeId + ' missing minimumYields');
+            if (!Number.isFinite(node.maximumYields)) errors.push(nodeId + ' missing maximumYields');
+            if (Number.isFinite(node.minimumYields) && Number.isFinite(node.maximumYields) && node.maximumYields < node.minimumYields) {
+                errors.push(nodeId + ' maximumYields must be >= minimumYields');
+            }
+            if (!Number.isFinite(node.depletionChance)) errors.push(nodeId + ' missing depletionChance');
+            if (!Number.isFinite(node.respawnTicks)) errors.push(nodeId + ' missing respawnTicks');
+        }
+
+        const runeEssence = nodeTable.rune_essence || {};
+        if (!runeEssence.persistent) {
+            errors.push('rune_essence should remain persistent');
+        }
+
+        const oreBenchmarks = [
+            { nodeId: 'clay_rock', level: 1, toolPower: 6, speedBonusTicks: 1 },
+            { nodeId: 'copper_rock', level: 1, toolPower: 6, speedBonusTicks: 1 },
+            { nodeId: 'iron_rock', level: 10, toolPower: 10, speedBonusTicks: 2 },
+            { nodeId: 'coal_rock', level: 20, toolPower: 15, speedBonusTicks: 3 },
+            { nodeId: 'silver_rock', level: 30, toolPower: 21, speedBonusTicks: 4 },
+            { nodeId: 'gold_rock', level: 40, toolPower: 28, speedBonusTicks: 5 }
+        ];
+        let prevOre = null;
+        for (let i = 0; i < oreBenchmarks.length; i++) {
+            const benchmark = oreBenchmarks[i];
+            const node = nodeTable[benchmark.nodeId] || {};
+            const metrics = computeMiningBalanceMetrics(miningSpec, benchmark.nodeId, benchmark);
+            if (!metrics) {
+                errors.push('missing mining balance metrics for ' + benchmark.nodeId);
+                continue;
+            }
+            if (!Number.isFinite(metrics.sellValue) || metrics.sellValue <= 0) {
+                errors.push(benchmark.nodeId + ' missing positive sell value');
+            }
+            if (prevOre) {
+                if (!(node.requiredLevel >= prevOre.node.requiredLevel)) {
+                    errors.push(benchmark.nodeId + ' requiredLevel must not fall across the ore lane');
+                }
+                if (!(node.difficulty > prevOre.node.difficulty)) {
+                    errors.push(benchmark.nodeId + ' difficulty must increase across the ore lane');
+                }
+                if (!(node.xpPerSuccess > prevOre.node.xpPerSuccess)) {
+                    errors.push(benchmark.nodeId + ' xpPerSuccess must increase across the ore lane');
+                }
+                if (!(metrics.sellValue > prevOre.metrics.sellValue)) {
+                    errors.push(benchmark.nodeId + ' sell value must increase across the ore lane');
+                }
+                if (!(metrics.activeXpPerTick > prevOre.metrics.activeXpPerTick)) {
+                    errors.push(benchmark.nodeId + ' active xp/tick must increase across the ore lane');
+                }
+                if (!(metrics.activeGoldPerTick > prevOre.metrics.activeGoldPerTick)) {
+                    errors.push(benchmark.nodeId + ' active gold/tick must increase across the ore lane');
+                }
+                if (!(metrics.sustainedXpPerTick > prevOre.metrics.sustainedXpPerTick)) {
+                    errors.push(benchmark.nodeId + ' sustained xp/tick must increase across the ore lane');
+                }
+                if (!(metrics.sustainedGoldPerTick > prevOre.metrics.sustainedGoldPerTick)) {
+                    errors.push(benchmark.nodeId + ' sustained gold/tick must increase across the ore lane');
+                }
+            }
+            prevOre = { node, metrics };
+        }
+
+        const copperMetrics = computeMiningBalanceMetrics(miningSpec, 'copper_rock', { level: 1, toolPower: 6, speedBonusTicks: 1 });
+        const tinMetrics = computeMiningBalanceMetrics(miningSpec, 'tin_rock', { level: 1, toolPower: 6, speedBonusTicks: 1 });
+        if (!copperMetrics || !tinMetrics) {
+            errors.push('copper/tin metrics missing');
+        } else {
+            if (!(copperMetrics.activeXpPerTick === tinMetrics.activeXpPerTick && copperMetrics.activeGoldPerTick === tinMetrics.activeGoldPerTick)) {
+                errors.push('copper_rock and tin_rock should remain identical starter-band peers');
+            }
+        }
+
+        const silverMetrics = computeMiningBalanceMetrics(miningSpec, 'silver_rock', { level: 30, toolPower: 21, speedBonusTicks: 4 });
+        const sapphireMetrics = computeMiningBalanceMetrics(miningSpec, 'sapphire_rock', { level: 30, toolPower: 21, speedBonusTicks: 4 });
+        const coalMetrics = computeMiningBalanceMetrics(miningSpec, 'coal_rock', { level: 20, toolPower: 15, speedBonusTicks: 3 });
+        if (!silverMetrics || !sapphireMetrics || !coalMetrics) {
+            errors.push('mid-band gem balance metrics missing');
+        } else {
+            if (!(sapphireMetrics.activeXpPerTick > silverMetrics.activeXpPerTick)) {
+                errors.push('sapphire_rock should beat silver_rock on active xp/tick at the level-30 benchmark');
+            }
+            if (!(sapphireMetrics.sustainedXpPerTick > silverMetrics.sustainedXpPerTick)) {
+                errors.push('sapphire_rock should beat silver_rock on sustained xp/tick at the level-30 benchmark');
+            }
+            if (!(sapphireMetrics.sustainedGoldPerTick > coalMetrics.sustainedGoldPerTick)) {
+                errors.push('sapphire_rock should beat coal_rock on sustained gold/tick at the level-30 benchmark');
+            }
+        }
+
+        const goldMetrics = computeMiningBalanceMetrics(miningSpec, 'gold_rock', { level: 40, toolPower: 28, speedBonusTicks: 5 });
+        const emeraldMetrics = computeMiningBalanceMetrics(miningSpec, 'emerald_rock', { level: 40, toolPower: 28, speedBonusTicks: 5 });
+        if (!goldMetrics || !emeraldMetrics) {
+            errors.push('late-band gem balance metrics missing');
+        } else {
+            if (!(emeraldMetrics.activeXpPerTick > goldMetrics.activeXpPerTick)) {
+                errors.push('emerald_rock should beat gold_rock on active xp/tick at the level-40 benchmark');
+            }
+            if (!(emeraldMetrics.activeGoldPerTick > goldMetrics.activeGoldPerTick)) {
+                errors.push('emerald_rock should beat gold_rock on active gold/tick at the level-40 benchmark');
+            }
+            if (!(emeraldMetrics.sustainedXpPerTick > goldMetrics.sustainedXpPerTick)) {
+                errors.push('emerald_rock should beat gold_rock on sustained xp/tick at the level-40 benchmark');
+            }
+            if (!(emeraldMetrics.sustainedGoldPerTick > goldMetrics.sustainedGoldPerTick)) {
+                errors.push('emerald_rock should beat gold_rock on sustained gold/tick at the level-40 benchmark');
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Mining balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     validateWoodcuttingBalanceCurve(SKILL_SPECS);
+    validateMiningBalanceCurve(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
 

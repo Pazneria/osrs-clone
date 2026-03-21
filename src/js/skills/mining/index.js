@@ -1,5 +1,6 @@
 (function () {
     const SKILL_ID = 'mining';
+    const ROCK_SESSION_EXPIRY_TICKS = 50;
 
     const ORE_TYPE_TO_NODE_KEY = {
         clay: 'clay_rock',
@@ -68,6 +69,74 @@
     function getNodeMeta(context) {
         const node = getMiningNode(context);
         return node && typeof node === 'object' ? node : null;
+    }
+
+    function resetRockSession(nodeMeta) {
+        if (!nodeMeta || typeof nodeMeta !== 'object') return;
+        nodeMeta.successfulYields = 0;
+        nodeMeta.lastInteractionTick = 0;
+    }
+
+    function normalizeRockSession(nodeMeta, currentTick) {
+        if (!nodeMeta || typeof nodeMeta !== 'object') return;
+        if (!Number.isFinite(nodeMeta.successfulYields) || nodeMeta.successfulYields < 0) {
+            nodeMeta.successfulYields = 0;
+        }
+        if (!Number.isFinite(nodeMeta.lastInteractionTick) || nodeMeta.lastInteractionTick < 0) {
+            nodeMeta.lastInteractionTick = 0;
+        }
+
+        if (nodeMeta.depletedUntilTick && Number.isFinite(currentTick) && nodeMeta.depletedUntilTick > currentTick) {
+            resetRockSession(nodeMeta);
+            return;
+        }
+
+        if (
+            Number.isFinite(currentTick)
+            && nodeMeta.lastInteractionTick > 0
+            && (currentTick - nodeMeta.lastInteractionTick) >= ROCK_SESSION_EXPIRY_TICKS
+        ) {
+            resetRockSession(nodeMeta);
+        }
+    }
+
+    function getYieldBounds(nodeSpec) {
+        const minimumYields = Number.isFinite(nodeSpec && nodeSpec.minimumYields)
+            ? Math.max(1, Math.floor(nodeSpec.minimumYields))
+            : 1;
+        const maximumYields = Number.isFinite(nodeSpec && nodeSpec.maximumYields)
+            ? Math.max(minimumYields, Math.floor(nodeSpec.maximumYields))
+            : minimumYields;
+        return { minimumYields, maximumYields };
+    }
+
+    function applyMiningYieldSession(context, nodeSpec) {
+        if (!nodeSpec || nodeSpec.persistent) return;
+
+        const nodeMeta = getNodeMeta(context);
+        if (!nodeMeta) return;
+        normalizeRockSession(nodeMeta, context.currentTick);
+
+        const { minimumYields, maximumYields } = getYieldBounds(nodeSpec);
+        const successfulYields = (Number.isFinite(nodeMeta.successfulYields) ? nodeMeta.successfulYields : 0) + 1;
+        nodeMeta.successfulYields = successfulYields;
+
+        const shouldForceDeplete = successfulYields >= maximumYields;
+        const shouldRollDeplete = !shouldForceDeplete
+            && successfulYields >= minimumYields
+            && window.SkillSharedUtils
+            && typeof SkillSharedUtils.rollChance === 'function'
+            && SkillSharedUtils.rollChance(nodeSpec.depletionChance, context.random);
+
+        if (!shouldForceDeplete && !shouldRollDeplete) return;
+
+        resetRockSession(nodeMeta);
+        context.depleteRockNode(context.targetX, context.targetY, context.targetZ, nodeSpec.respawnTicks || 12);
+        if (window.SkillActionResolution && typeof SkillActionResolution.stopSkill === 'function') {
+            SkillActionResolution.stopSkill(context, SKILL_ID, 'NODE_DEPLETED');
+        } else {
+            context.stopAction();
+        }
     }
 
     function ensureAreaAccess(context, nodeMeta, silent) {
@@ -141,6 +210,8 @@
                 return false;
             }
 
+            normalizeRockSession(nodeMeta, context.currentTick);
+
             if (!this.canStart(context)) return false;
 
             const attempt = getAttemptConfig(context, nodeSpec);
@@ -189,18 +260,13 @@
                 successChance: attempt.successChance,
                 rewardItemId: nodeSpec.rewardItemId,
                 xpPerSuccess: nodeSpec.xpPerSuccess,
-                onSuccess: (ctx) => {
-                    if (nodeSpec.persistent) return;
-                    if (!window.SkillSharedUtils || typeof SkillSharedUtils.rollChance !== 'function') return;
-                    if (SkillSharedUtils.rollChance(nodeSpec.depletionChance, ctx.random)) {
-                        ctx.depleteRockNode(ctx.targetX, ctx.targetY, ctx.targetZ, nodeSpec.respawnTicks || 12);
-                        if (window.SkillActionResolution && typeof SkillActionResolution.stopSkill === 'function') {
-                            SkillActionResolution.stopSkill(ctx, SKILL_ID, 'NODE_DEPLETED');
-                        } else {
-                            ctx.stopAction();
-                        }
-                    }
-                }
+                onAttempt: (ctx) => {
+                    const liveNodeMeta = getNodeMeta(ctx);
+                    if (!liveNodeMeta) return;
+                    normalizeRockSession(liveNodeMeta, ctx.currentTick);
+                    liveNodeMeta.lastInteractionTick = ctx.currentTick;
+                },
+                onSuccess: (ctx) => applyMiningYieldSession(ctx, nodeSpec)
             });
 
             if (resolution.status === 'stopped' && (resolution.reasonCode === 'INVENTORY_FULL' || resolution.reasonCode === 'INVENTORY_FULL_AFTER_GAIN')) {

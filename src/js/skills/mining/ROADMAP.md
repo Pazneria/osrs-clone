@@ -83,18 +83,18 @@ Off-band mining items can still exist in the item economy, merchant ecosystem, q
 
 ### Rock Stats
 
-| Rock          | Required Level | XP per Success | Rock Difficulty | Minimum Rocks | Maximum Rocks | Depletion Chance | Respawn Ticks |
-| ------------- | -------------- | -------------- | --------------- | ------------- | ------------- | ---------------- | ------------- |
-| Clay Rock     | 1              | 8              | 6               | 1             | 1             | 1.00             | 5             |
-| Copper Rock   | 1              | 10             | 8               | 1             | 1             | 1.00             | 6             |
-| Tin Rock      | 1              | 10             | 8               | 1             | 1             | 1.00             | 6             |
-| Rune Essence Rock | 1          | 2              | 6               | null          | null          | 0.00             | 0             |
-| Iron Rock     | 10             | 18             | 16              | 1             | 3             | 0.50             | 9             |
-| Coal Rock     | 20             | 28             | 26              | 2             | 5             | 0.35             | 12            |
-| Silver Rock   | 30             | 40             | 36              | 2             | 5             | 0.30             | 15            |
-| Sapphire Rock | 30             | 52             | 42              | 2             | 4             | 0.35             | 36            |
-| Gold Rock     | 40             | 60             | 50              | 2             | 5             | 0.25             | 21            |
-| Emerald Rock  | 40             | 72             | 56              | 2             | 4             | 0.30             | 48            |
+| Rock          | Required Level | XP per Success | Rock Difficulty | Minimum Yields | Maximum Yields | Depletion Chance | Respawn Ticks |
+| ------------- | -------------- | -------------- | --------------- | -------------- | -------------- | ---------------- | ------------- |
+| Clay Rock     | 1              | 8              | 6               | 1              | 1              | 1.00             | 5             |
+| Copper Rock   | 1              | 10             | 8               | 1              | 1              | 1.00             | 6             |
+| Tin Rock      | 1              | 10             | 8               | 1              | 1              | 1.00             | 6             |
+| Rune Essence Rock | 1          | 2              | 6               | null           | null           | 0.00             | 0             |
+| Iron Rock     | 10             | 18             | 16              | 1              | 3              | 0.50             | 9             |
+| Coal Rock     | 20             | 28             | 26              | 2              | 5              | 0.35             | 12            |
+| Silver Rock   | 30             | 40             | 36              | 2              | 5              | 0.30             | 15            |
+| Sapphire Rock | 30             | 52             | 42              | 2              | 4              | 0.30             | 18            |
+| Gold Rock     | 40             | 60             | 50              | 2              | 5              | 0.25             | 21            |
+| Emerald Rock  | 40             | 72             | 56              | 2              | 4              | 0.30             | 18            |
 
 ### Attempt Timing Examples
 
@@ -134,16 +134,56 @@ These active output values measure mining performance while the player is active
 
 | Rock          | Expected Yield per Tick | Expected XP per Tick | Expected Gold per Tick |
 | ------------- | ----------------------- | -------------------- | ---------------------- |
-| Clay Rock     | 0.9189                  | 7.3512               | 0.9189                 |
-| Copper Rock   | 0.8947                  | 8.9470               | 2.6841                 |
-| Tin Rock      | 0.8947                  | 8.9470               | 2.6841                 |
-| Rune Essence Rock | 0.9189              | 1.8378               | 3.6756                 |
-| Iron Rock     | 0.8095                  | 14.5710              | 5.6665                 |
-| Coal Rock     | 0.7234                  | 20.2552              | 8.6808                 |
-| Silver Rock   | 0.6538                  | 26.1520              | 11.7684                |
-| Sapphire Rock | 0.6182                  | 32.1464              | 27.8190                |
-| Gold Rock     | 0.5763                  | 34.5780              | 16.1364                |
-| Emerald Rock  | 0.5484                  | 39.4848              | 46.6140                |
+| Clay Rock     | 0.9189                  | 7.3514               | 0.9189                 |
+| Copper Rock   | 0.8947                  | 8.9474               | 2.6842                 |
+| Tin Rock      | 0.8947                  | 8.9474               | 2.6842                 |
+| Rune Essence Rock | 0.9189              | 1.8378               | 3.6757                 |
+| Iron Rock     | 0.8095                  | 14.5714              | 5.6667                 |
+| Coal Rock     | 0.7234                  | 20.2553              | 8.6809                 |
+| Silver Rock   | 0.6538                  | 26.1538              | 11.7692                |
+| Sapphire Rock | 0.6182                  | 32.1455              | 9.8909                 |
+| Gold Rock     | 0.5763                  | 34.5763              | 16.1356                |
+| Emerald Rock  | 0.5484                  | 39.4839              | 16.4516                |
+
+### Tier-Entry Mining Output Comparison
+
+These tier-entry benchmarks use the best pickaxe that unlocks inside the same mining band. Because bronze and iron pickaxes are both usable at level 1, the current benchmark uses Iron Pickaxe for the entry band.
+
+| Rock          | Mining Level | Pickaxe         | Expected Yield per Tick | Expected XP per Tick | Expected Gold per Tick |
+| ------------- | ------------ | --------------- | ----------------------- | -------------------- | ---------------------- |
+| Clay Rock     | 1            | Iron Pickaxe    | 0.1077                  | 0.8615               | 0.1077                 |
+| Copper Rock   | 1            | Iron Pickaxe    | 0.0933                  | 0.9333               | 0.2800                 |
+| Tin Rock      | 1            | Iron Pickaxe    | 0.0933                  | 0.9333               | 0.2800                 |
+| Iron Rock     | 10           | Steel Pickaxe   | 0.1389                  | 2.5000               | 0.9722                 |
+| Coal Rock     | 20           | Mithril Pickaxe | 0.1913                  | 5.3552               | 2.2951                 |
+| Silver Rock   | 30           | Adamant Pickaxe | 0.2931                  | 11.7241              | 5.2759                 |
+| Sapphire Rock | 30           | Adamant Pickaxe | 0.2742                  | 14.2581              | 4.3871                 |
+| Gold Rock     | 40           | Rune Pickaxe    | 0.5763                  | 34.5763              | 16.1356                |
+| Emerald Rock  | 40           | Rune Pickaxe    | 0.5484                  | 39.4839              | 16.4516                |
+| Rune Essence Rock | 1        | Iron Pickaxe    | 0.1077                  | 0.2154               | 0.4308                 |
+
+### Sustained Route Output Comparison
+
+These sustained values model the live runtime depletion behavior, including guaranteed minimum yields, hard maximum yields, per-success depletion rolls after the minimum, and respawn downtime. Persistent rune essence is excluded because it has no depletion downtime.
+
+| Rock          | Expected Yields per Node | Sustained Yield per Tick | Sustained XP per Tick | Sustained Gold per Tick |
+| ------------- | ------------------------ | ------------------------ | --------------------- | ----------------------- |
+| Clay Rock     | 1.0000                   | 0.0700                   | 0.5600                | 0.0700                  |
+| Copper Rock   | 1.0000                   | 0.0598                   | 0.5983                | 0.1795                  |
+| Tin Rock      | 1.0000                   | 0.0598                   | 0.5983                | 0.1795                  |
+| Iron Rock     | 1.7500                   | 0.0810                   | 1.4583                | 0.5671                  |
+| Coal Rock     | 3.3471                   | 0.1135                   | 3.1769                | 1.3615                  |
+| Silver Rock   | 3.5330                   | 0.1306                   | 5.2237                | 2.3507                  |
+| Sapphire Rock | 3.1900                   | 0.1076                   | 5.5976                | 1.7223                  |
+| Gold Rock     | 3.7344                   | 0.1359                   | 8.1536                | 3.8050                  |
+| Emerald Rock  | 3.1900                   | 0.1339                   | 9.6435                | 4.0181                  |
+
+### Balance Notes
+
+- Silver and gold remain the steadier ore-economy routes in their unlock bands.
+- Sapphire is the XP-premium gem route at level 30: it beats silver on XP throughput and now beats coal on sustained gold even after respawn downtime.
+- Emerald is the premium level-40 gem route: it now beats gold on both sustained XP and sustained gold while preserving its lower raw catch rate.
+- Rune essence remains a persistent utility lane rather than an XP or gold leader.
 
 
 ## Inventory Capacity Rules
@@ -195,7 +235,7 @@ These active output values measure mining performance while the player is active
 | Iron Rock     | 1              | 3              | 0.50             | Guaranteed one yield, then variable depletion, capped at three |
 | Coal Rock     | 2              | 5              | 0.35             | Guaranteed two yields, then variable depletion, capped at five |
 | Silver Rock   | 2              | 5              | 0.30             | Guaranteed two yields, then variable depletion, capped at five |
-| Sapphire Rock | 2              | 4              | 0.35             | Guaranteed two yields, then variable depletion, capped at four |
+| Sapphire Rock | 2              | 4              | 0.30             | Guaranteed two yields, then variable depletion, capped at four |
 | Gold Rock     | 2              | 5              | 0.25             | Guaranteed two yields, then variable depletion, capped at five |
 | Emerald Rock  | 2              | 4              | 0.30             | Guaranteed two yields, then variable depletion, capped at four |
 

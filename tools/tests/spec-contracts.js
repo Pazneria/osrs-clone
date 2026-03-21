@@ -340,6 +340,107 @@ function run() {
     prevSustainedGold = metrics.sustained.goldPerTick;
   });
 
+  const miningSpec = SkillSpecRegistry.getSkillSpec("mining");
+  assert(!!miningSpec && !!miningSpec.nodeTable, "mining node table missing");
+  assert(!!miningSpec.economy && !!miningSpec.economy.valueTable, "mining value table missing");
+  ["clay_rock", "copper_rock", "tin_rock", "rune_essence", "iron_rock", "coal_rock", "silver_rock", "sapphire_rock", "gold_rock", "emerald_rock"].forEach((nodeId) => {
+    assert(!!miningSpec.nodeTable[nodeId], "mining node missing " + nodeId);
+  });
+  assert(typeof SkillSpecRegistry.computeExpectedDepletingYieldCount === "function", "mining expected-yield helper missing");
+  assert(typeof SkillSpecRegistry.computeMiningNodeMetrics === "function", "mining node metrics helper missing");
+  assert(typeof SkillSpecRegistry.getMiningBalanceSummary === "function", "mining balance summary helper missing");
+
+  const miningBalance = SkillSpecRegistry.getMiningBalanceSummary();
+  assert(!!miningBalance && !!miningBalance.assumptions, "mining balance summary missing assumptions");
+  assert(Array.isArray(miningBalance.rows) && miningBalance.rows.length === 10, "mining balance summary row count mismatch");
+  assert(miningBalance.assumptions.level === 40, "mining default benchmark level mismatch");
+  assert(miningBalance.assumptions.toolPower === 28, "mining default benchmark tool power mismatch");
+  assert(miningBalance.assumptions.speedBonusTicks === 5, "mining default benchmark speed bonus mismatch");
+  assert(miningBalance.rows[0].nodeId === "clay_rock", "mining balance summary should start with clay");
+  assert(miningBalance.rows[miningBalance.rows.length - 1].nodeId === "emerald_rock", "mining balance summary should end with emerald");
+
+  const miningBenchmarks = [
+    { nodeId: "clay_rock", level: 1, toolPower: 6, speedBonusTicks: 1, activeYields: 0.1077, activeXp: 0.8615, activeGold: 0.1077, sustainedXp: 0.56, sustainedGold: 0.07, expectedYields: 1 },
+    { nodeId: "copper_rock", level: 1, toolPower: 6, speedBonusTicks: 1, activeYields: 0.0933, activeXp: 0.9333, activeGold: 0.28, sustainedXp: 0.5983, sustainedGold: 0.1795, expectedYields: 1 },
+    { nodeId: "tin_rock", level: 1, toolPower: 6, speedBonusTicks: 1, activeYields: 0.0933, activeXp: 0.9333, activeGold: 0.28, sustainedXp: 0.5983, sustainedGold: 0.1795, expectedYields: 1 },
+    { nodeId: "iron_rock", level: 10, toolPower: 10, speedBonusTicks: 2, activeYields: 0.1389, activeXp: 2.5, activeGold: 0.9722, sustainedXp: 1.4583, sustainedGold: 0.5671, expectedYields: 1.75 },
+    { nodeId: "coal_rock", level: 20, toolPower: 15, speedBonusTicks: 3, activeYields: 0.1913, activeXp: 5.3552, activeGold: 2.2951, sustainedXp: 3.1769, sustainedGold: 1.3615, expectedYields: 3.3471 },
+    { nodeId: "silver_rock", level: 30, toolPower: 21, speedBonusTicks: 4, activeYields: 0.2931, activeXp: 11.7241, activeGold: 5.2759, sustainedXp: 5.2237, sustainedGold: 2.3507, expectedYields: 3.533 },
+    { nodeId: "sapphire_rock", level: 30, toolPower: 21, speedBonusTicks: 4, activeYields: 0.2742, activeXp: 14.2581, activeGold: 4.3871, sustainedXp: 5.5976, sustainedGold: 1.7223, expectedYields: 3.19 },
+    { nodeId: "gold_rock", level: 40, toolPower: 28, speedBonusTicks: 5, activeYields: 0.5763, activeXp: 34.5763, activeGold: 16.1356, sustainedXp: 8.1536, sustainedGold: 3.805, expectedYields: 3.7344 },
+    { nodeId: "emerald_rock", level: 40, toolPower: 28, speedBonusTicks: 5, activeYields: 0.5484, activeXp: 39.4839, activeGold: 16.4516, sustainedXp: 9.6435, sustainedGold: 4.0181, expectedYields: 3.19 },
+    { nodeId: "rune_essence", level: 1, toolPower: 6, speedBonusTicks: 1, activeYields: 0.1077, activeXp: 0.2154, activeGold: 0.4308, sustainedXp: 0.2154, sustainedGold: 0.4308, expectedYields: null }
+  ];
+  miningBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeMiningNodeMetrics(benchmark.nodeId, benchmark);
+    assert(!!metrics, "mining metrics missing for " + benchmark.nodeId);
+    assert(approxEq(metrics.active.yieldsPerTick, benchmark.activeYields, 1e-4), "mining active yields/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.active.xpPerTick, benchmark.activeXp, 1e-4), "mining active xp/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.active.goldPerTick, benchmark.activeGold, 1e-4), "mining active gold/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.sustained.xpPerTick, benchmark.sustainedXp, 1e-4), "mining sustained xp/tick mismatch for " + benchmark.nodeId);
+    assert(approxEq(metrics.sustained.goldPerTick, benchmark.sustainedGold, 1e-4), "mining sustained gold/tick mismatch for " + benchmark.nodeId);
+    if (benchmark.expectedYields === null) {
+      assert(metrics.expectedYieldsPerNode === null, "persistent mining nodes should not report expected depletion yields");
+    } else {
+      assert(approxEq(metrics.expectedYieldsPerNode, benchmark.expectedYields, 1e-4), "mining expected yields/node mismatch for " + benchmark.nodeId);
+    }
+  });
+
+  const clayMining = SkillSpecRegistry.computeMiningNodeMetrics("clay_rock", { level: 1, toolPower: 6, speedBonusTicks: 1 });
+  const copperMining = SkillSpecRegistry.computeMiningNodeMetrics("copper_rock", { level: 1, toolPower: 6, speedBonusTicks: 1 });
+  const tinMining = SkillSpecRegistry.computeMiningNodeMetrics("tin_rock", { level: 1, toolPower: 6, speedBonusTicks: 1 });
+  const ironMining = SkillSpecRegistry.computeMiningNodeMetrics("iron_rock", { level: 10, toolPower: 10, speedBonusTicks: 2 });
+  const coalMining = SkillSpecRegistry.computeMiningNodeMetrics("coal_rock", { level: 20, toolPower: 15, speedBonusTicks: 3 });
+  const silverMining = SkillSpecRegistry.computeMiningNodeMetrics("silver_rock", { level: 30, toolPower: 21, speedBonusTicks: 4 });
+  const sapphireMining = SkillSpecRegistry.computeMiningNodeMetrics("sapphire_rock", { level: 30, toolPower: 21, speedBonusTicks: 4 });
+  const goldMining = SkillSpecRegistry.computeMiningNodeMetrics("gold_rock", { level: 40, toolPower: 28, speedBonusTicks: 5 });
+  const emeraldMining = SkillSpecRegistry.computeMiningNodeMetrics("emerald_rock", { level: 40, toolPower: 28, speedBonusTicks: 5 });
+  assert(copperMining.active.xpPerTick > clayMining.active.xpPerTick, "mining ore lane should improve from clay to copper");
+  assert(ironMining.active.goldPerTick > copperMining.active.goldPerTick, "mining ore lane should improve from copper to iron");
+  assert(coalMining.sustained.goldPerTick > ironMining.sustained.goldPerTick, "mining ore lane should improve from iron to coal");
+  assert(silverMining.sustained.goldPerTick > coalMining.sustained.goldPerTick, "mining ore lane should improve from coal to silver");
+  assert(goldMining.sustained.goldPerTick > silverMining.sustained.goldPerTick, "mining ore lane should improve from silver to gold");
+  assert(approxEq(copperMining.active.xpPerTick, tinMining.active.xpPerTick, 1e-9), "copper and tin should remain mirrored starter nodes");
+  assert(sapphireMining.active.xpPerTick > silverMining.active.xpPerTick, "sapphire should beat silver on active xp");
+  assert(sapphireMining.sustained.xpPerTick > silverMining.sustained.xpPerTick, "sapphire should beat silver on sustained xp");
+  assert(sapphireMining.sustained.goldPerTick > coalMining.sustained.goldPerTick, "sapphire should beat coal on sustained gold");
+  assert(emeraldMining.active.xpPerTick > goldMining.active.xpPerTick, "emerald should beat gold on active xp");
+  assert(emeraldMining.sustained.xpPerTick > goldMining.sustained.xpPerTick, "emerald should beat gold on sustained xp");
+  assert(emeraldMining.sustained.goldPerTick > goldMining.sustained.goldPerTick, "emerald should beat gold on sustained gold");
+
+  const miningValueIds = ["clay", "copper_ore", "tin_ore", "iron_ore", "coal", "silver_ore", "uncut_sapphire", "gold_ore", "uncut_emerald", "rune_essence", "uncut_ruby", "uncut_diamond", "mithril_ore", "adamant_ore", "rune_ore"];
+  const miningSellValues = {
+    clay: 1,
+    copper_ore: 3,
+    tin_ore: 3,
+    iron_ore: 7,
+    coal: 12,
+    silver_ore: 18,
+    uncut_sapphire: 16,
+    gold_ore: 28,
+    uncut_emerald: 30,
+    rune_essence: 4,
+    uncut_ruby: 6,
+    uncut_diamond: 50,
+    mithril_ore: 60,
+    adamant_ore: 150,
+    rune_ore: 600
+  };
+  miningValueIds.forEach((itemId) => {
+    const specRow = miningSpec.economy.valueTable[itemId];
+    const item = itemDefs[itemId];
+    assert(!!specRow && !!item, "missing mining economy or item row for " + itemId);
+    assert(specRow.buy === item.value, "mining buy value mismatch for " + itemId);
+    assert(specRow.sell === miningSellValues[itemId], "mining sell value mismatch for " + itemId);
+  });
+  assert(miningSpec.economy.valueTable.bronze_pickaxe.buy === itemDefs.bronze_pickaxe.value, "mining bronze pickaxe buy value mismatch");
+  assert(miningSpec.economy.valueTable.iron_pickaxe.buy === itemDefs.iron_pickaxe.value, "mining iron pickaxe buy value mismatch");
+  assert(miningSpec.economy.valueTable.steel_pickaxe.buy === itemDefs.steel_pickaxe.value, "mining steel pickaxe buy value mismatch");
+  assert(miningSpec.economy.valueTable.mithril_pickaxe.buy === itemDefs.mithril_pickaxe.value, "mining mithril pickaxe buy value mismatch");
+  assert(miningSpec.economy.valueTable.adamant_pickaxe.buy === itemDefs.adamant_pickaxe.value, "mining adamant pickaxe buy value mismatch");
+  assert(miningSpec.economy.valueTable.rune_pickaxe.buy === null, "mining rune pickaxe should not have shop buy price");
+  assert(miningSpec.economy.valueTable.rune_pickaxe.sell === 2500, "mining rune pickaxe sell value mismatch");
+
   expectMutatedSpecsFailure(
     root,
     (source) => replaceOnce(
@@ -385,6 +486,17 @@ function run() {
     ),
     /woodcutting balance curve mismatch/i,
     "woodcutting-balance-curve"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "rewardItemId: 'uncut_emerald', minimumYields: 2, maximumYields: 4, depletionChance: 0.3, respawnTicks: 18",
+      "rewardItemId: 'uncut_emerald', minimumYields: 2, maximumYields: 4, depletionChance: 0.3, respawnTicks: 48",
+      "mining-balance-curve"
+    ),
+    /mining balance curve mismatch/i,
+    "mining-balance-curve"
   );
   assert(woodSpec.economy.valueTable.logs.buy === itemDefs.logs.value, "woodcutting logs buy value mismatch");
   assert(woodSpec.economy.valueTable.oak_logs.buy === itemDefs.oak_logs.value, "woodcutting oak logs buy value mismatch");

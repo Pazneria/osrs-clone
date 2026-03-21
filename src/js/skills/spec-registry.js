@@ -136,6 +136,26 @@
         return Math.max(minTicks, base - bonus);
     }
 
+    function computeExpectedDepletingYieldCount(minimumYields, maximumYields, depletionChance) {
+        const min = Number.isFinite(minimumYields) ? Math.max(1, Math.floor(minimumYields)) : null;
+        const max = Number.isFinite(maximumYields) ? Math.max(min || 1, Math.floor(maximumYields)) : null;
+        const chance = Number.isFinite(depletionChance) ? Math.max(0, Math.min(1, depletionChance)) : null;
+        if (!Number.isFinite(min) || !Number.isFinite(max) || chance === null) return null;
+
+        let total = min;
+        for (let yieldCount = min + 1; yieldCount <= max; yieldCount++) {
+            total += Math.pow(1 - chance, yieldCount - min);
+        }
+        return total;
+    }
+
+    function computeSustainedYieldPerTick(activeYieldPerTick, expectedYieldsPerNode, respawnTicks) {
+        if (!Number.isFinite(activeYieldPerTick) || activeYieldPerTick <= 0) return 0;
+        if (!Number.isFinite(expectedYieldsPerNode) || expectedYieldsPerNode <= 0) return activeYieldPerTick;
+        const activeTicksPerNode = expectedYieldsPerNode / activeYieldPerTick;
+        return expectedYieldsPerNode / (activeTicksPerNode + Math.max(0, Number.isFinite(respawnTicks) ? respawnTicks : 0));
+    }
+
     function computeWoodcuttingNodeMetrics(nodeId, options = {}) {
         const woodcuttingSpec = getSkillSpec('woodcutting') || {};
         const nodeTable = woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
@@ -245,6 +265,126 @@
         };
     }
 
+    function computeMiningNodeMetrics(nodeId, options = {}) {
+        const miningSpec = getSkillSpec('mining') || {};
+        const nodeTable = miningSpec.nodeTable && typeof miningSpec.nodeTable === 'object'
+            ? miningSpec.nodeTable
+            : {};
+        const node = nodeTable[nodeId];
+        if (!node || typeof node !== 'object') return null;
+
+        const timing = miningSpec.timing && typeof miningSpec.timing === 'object'
+            ? miningSpec.timing
+            : {};
+        const economy = miningSpec.economy && typeof miningSpec.economy === 'object'
+            ? miningSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const rewardValueRow = valueTable[node.rewardItemId] && typeof valueTable[node.rewardItemId] === 'object'
+            ? valueTable[node.rewardItemId]
+            : {};
+        const levelBands = Array.isArray(miningSpec.levelBands) ? miningSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const defaultLevel = levelBands.length > 0 ? Math.max(...levelBands) : 1;
+
+        const level = Number.isFinite(options.level) ? options.level : defaultLevel;
+        const toolPower = Number.isFinite(options.toolPower) ? options.toolPower : 28;
+        const speedBonusTicks = Number.isFinite(options.speedBonusTicks) ? options.speedBonusTicks : 5;
+        const successChance = computeGatherSuccessChance(level, toolPower, node.difficulty);
+        const intervalTicks = computeIntervalTicks(timing.baseAttemptTicks, timing.minimumAttemptTicks, speedBonusTicks);
+        const activeYieldsPerTick = successChance / intervalTicks;
+        const sellValue = Number.isFinite(rewardValueRow.sell) ? rewardValueRow.sell : 0;
+        const activeXpPerTick = activeYieldsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const activeGoldPerTick = activeYieldsPerTick * sellValue;
+        const minimumYields = Number.isFinite(node.minimumYields) ? Math.max(1, Math.floor(node.minimumYields)) : null;
+        const maximumYields = Number.isFinite(node.maximumYields) ? Math.max(minimumYields || 1, Math.floor(node.maximumYields)) : null;
+        const expectedYieldsPerNode = node.persistent
+            ? null
+            : computeExpectedDepletingYieldCount(minimumYields, maximumYields, node.depletionChance);
+        const respawnTicks = Number.isFinite(node.respawnTicks) ? node.respawnTicks : 0;
+        const sustainedYieldsPerTick = computeSustainedYieldPerTick(activeYieldsPerTick, expectedYieldsPerNode, respawnTicks);
+        const sustainedXpPerTick = sustainedYieldsPerTick * (Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0);
+        const sustainedGoldPerTick = sustainedYieldsPerTick * sellValue;
+
+        return {
+            nodeId,
+            rewardItemId: typeof node.rewardItemId === 'string' ? node.rewardItemId : '',
+            requiredLevel: Number.isFinite(node.requiredLevel) ? node.requiredLevel : 1,
+            difficulty: Number.isFinite(node.difficulty) ? node.difficulty : 1,
+            xpPerSuccess: Number.isFinite(node.xpPerSuccess) ? node.xpPerSuccess : 0,
+            sellValue,
+            minimumYields,
+            maximumYields,
+            depletionChance: Number.isFinite(node.depletionChance) ? node.depletionChance : null,
+            respawnTicks,
+            persistent: !!node.persistent,
+            benchmark: {
+                level,
+                toolPower,
+                speedBonusTicks
+            },
+            successChance: roundMetric(successChance),
+            intervalTicks,
+            active: {
+                yieldsPerTick: roundMetric(activeYieldsPerTick),
+                xpPerTick: roundMetric(activeXpPerTick),
+                goldPerTick: roundMetric(activeGoldPerTick)
+            },
+            sustained: {
+                yieldsPerTick: roundMetric(sustainedYieldsPerTick),
+                xpPerTick: roundMetric(sustainedXpPerTick),
+                goldPerTick: roundMetric(sustainedGoldPerTick)
+            },
+            expectedYieldsPerNode: roundMetric(expectedYieldsPerNode)
+        };
+    }
+
+    function getMiningBalanceSummary(options = {}) {
+        const miningSpec = getSkillSpec('mining') || {};
+        const nodeTable = miningSpec.nodeTable && typeof miningSpec.nodeTable === 'object'
+            ? miningSpec.nodeTable
+            : {};
+        const levelBands = Array.isArray(miningSpec.levelBands) ? miningSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const toolPower = Number.isFinite(options.toolPower) ? options.toolPower : 28;
+        const speedBonusTicks = Number.isFinite(options.speedBonusTicks) ? options.speedBonusTicks : 5;
+        const order = {
+            clay_rock: 0,
+            copper_rock: 1,
+            tin_rock: 2,
+            rune_essence: 3,
+            iron_rock: 4,
+            coal_rock: 5,
+            silver_rock: 6,
+            sapphire_rock: 7,
+            gold_rock: 8,
+            emerald_rock: 9
+        };
+
+        const nodeIds = Object.keys(nodeTable).sort((a, b) => {
+            const aOrder = Number.isFinite(order[a]) ? order[a] : Number.MAX_SAFE_INTEGER;
+            const bOrder = Number.isFinite(order[b]) ? order[b] : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < nodeIds.length; i++) {
+            const row = computeMiningNodeMetrics(nodeIds[i], { level, toolPower, speedBonusTicks });
+            if (row) rows.push(row);
+        }
+
+        return {
+            assumptions: {
+                level,
+                toolPower,
+                speedBonusTicks
+            },
+            rows
+        };
+    }
+
     function computeLinearCatchChance(level, unlockLevel, baseChance, scaling, maxChance) {
         const lvl = Number.isFinite(level) ? level : 1;
         const unlock = Number.isFinite(unlockLevel) ? unlockLevel : 1;
@@ -316,8 +456,11 @@
         getWoodcuttingDemandSummary,
         computeWoodcuttingNodeMetrics,
         getWoodcuttingBalanceSummary,
+        computeMiningNodeMetrics,
+        getMiningBalanceSummary,
         computeGatherSuccessChance,
         computeIntervalTicks,
+        computeExpectedDepletingYieldCount,
         computeLinearCatchChance,
         computeSuccessChanceFromDifficulty,
         computeCookingBurnChance,

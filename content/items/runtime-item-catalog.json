@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-19T01:48:55.904Z",
+  "generatedAt": "2026-03-21T20:47:02.891Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -1938,7 +1938,7 @@
       },
       "toolTier": 6,
       "type": "weapon",
-      "value": 150,
+      "value": 120,
       "weaponClass": "pickaxe"
     },
     "iron_pickaxe_head": {
