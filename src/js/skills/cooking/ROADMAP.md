@@ -39,7 +39,7 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Cooking Success Chance | Cooking Success Chance = 1 - Burn Chance | Determines the chance that a cooking action succeeds |
 | Expected Successes per Action | Expected Successes per Action = Cooking Success Chance | Estimates average cooked-food output rate while actively cooking |
 | Expected XP per Action | Expected XP per Action = Cooking Success Chance x XP per Success | Estimates average experience gain rate |
-| Expected Gold per Action | Expected Gold per Action = (Cooking Success Chance x Cooked Sell Value) + (Burn Chance x Burnt Sell Value) - Raw Sell Value | Estimates average value change from cooking one raw item |
+| Expected Gold Delta per Action | Expected Gold Delta per Action = (Cooking Success Chance x Cooked Sell Value) + (Burn Chance x Burnt Sell Value) - Raw Sell Value | Estimates average sell-value change from cooking one raw item |
 
 ### Equation Variables
 
@@ -57,7 +57,7 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Raw Sell Value | The sell value of the raw food consumed by the action |
 | Expected Successes per Action | Average cooked-food output per action |
 | Expected XP per Action | Average experience gain per action |
-| Expected Gold per Action | Average value change from cooking one raw item |
+| Expected Gold Delta per Action | Average sell-value change from cooking one raw item |
 
 ### Global Constants
 
@@ -85,11 +85,11 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 
 | Food | Required Level | XP per Success | Raw Item | Cooked Item | Burnt Item | Healing | Eat Delay Ticks | Raw Sell Value | Cooked Sell Value | Burnt Sell Value |
 | ---- | -------------- | -------------- | -------- | ----------- | ---------- | ------- | --------------- | -------------- | ----------------- | ---------------- |
-| Shrimp | 1 | 30 | Raw Shrimp | Cooked Shrimp | Burnt Shrimp | 3 | 4 | 3 | 8 | 1 |
-| Trout | 10 | 70 | Raw Trout | Cooked Trout | Burnt Trout | 5 | 4 | 18 | 24 | 1 |
-| Salmon | 20 | 90 | Raw Salmon | Cooked Salmon | Burnt Salmon | 7 | 4 | 24 | 32 | 1 |
-| Tuna | 30 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 28 | 40 | 1 |
-| Swordfish | 40 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 40 | 56 | 1 |
+| Shrimp | 1 | 30 | Raw Shrimp | Cooked Shrimp | Burnt Shrimp | 3 | 4 | 1 | 3 | 1 |
+| Trout | 10 | 70 | Raw Trout | Cooked Trout | Burnt Trout | 5 | 4 | 7 | 9 | 1 |
+| Salmon | 20 | 90 | Raw Salmon | Cooked Salmon | Burnt Salmon | 7 | 4 | 9 | 12 | 1 |
+| Tuna | 30 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 11 | 16 | 1 |
+| Swordfish | 40 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 16 | 22 | 1 |
 
 ### Shared Burn Curve Summary
 
@@ -99,6 +99,49 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Unlock +10 | 10 | 10% | 90% |
 | Unlock +20 | 20 | 5% | 95% |
 | Unlock +30 | 30 | 0% | 100% |
+
+### Tier-Entry Cooking Output Comparison
+
+These per-action values lock the current 1-40 cooking progression at each recipe's unlock level. They use actual merchant sell values, so negative rows represent a deliberate value sink at the moment a band first unlocks.
+
+| Food | Cooking Level | Cooking Success Chance | Expected Successes per Action | Expected XP per Action | Expected Gold Delta per Action |
+| ---- | ------------- | ---------------------- | ----------------------------- | ---------------------- | ------------------------------ |
+| Shrimp | 1 | 67% | 0.6700 | 20.1000 | 1.3400 |
+| Trout | 10 | 67% | 0.6700 | 46.9000 | -0.6400 |
+| Salmon | 20 | 67% | 0.6700 | 60.3000 | -0.6300 |
+| Tuna | 30 | 67% | 0.6700 | 80.4000 | 0.0500 |
+| Swordfish | 40 | 67% | 0.6700 | 93.8000 | -0.9300 |
+
+### Level-40 Cooking Output Comparison
+
+These level-40 values show how the full 1-40 food set compares once the current cap is reached.
+
+| Food | Cooking Level | Cooking Success Chance | Expected Successes per Action | Expected XP per Action | Expected Gold Delta per Action |
+| ---- | ------------- | ---------------------- | ----------------------------- | ---------------------- | ------------------------------ |
+| Shrimp | 40 | 100% | 1.0000 | 30.0000 | 2.0000 |
+| Trout | 40 | 100% | 1.0000 | 70.0000 | 2.0000 |
+| Salmon | 40 | 95% | 0.9500 | 85.5000 | 2.4500 |
+| Tuna | 40 | 90% | 0.9000 | 108.0000 | 3.5000 |
+| Swordfish | 40 | 67% | 0.6700 | 93.8000 | -0.9300 |
+
+### Cooking Value Break-Even Levels
+
+The break-even level is the first Cooking level where the expected sell-value delta for that food becomes non-negative.
+
+| Food | Break-Even Cooking Level |
+| ---- | ------------------------ |
+| Shrimp | 1 |
+| Trout | 13 |
+| Salmon | 22 |
+| Tuna | 30 |
+| Swordfish | 42 |
+
+### Balance Notes
+
+- Shrimp is the safe starter conversion: it is profitable immediately at unlock and stays positive throughout the current cap.
+- Trout and salmon are early/mid-band XP-forward unlocks that start slightly value-negative, then cross into non-negative value at Cooking 13 and 22 respectively.
+- Tuna is the strongest 1-40 cooking route on both XP-per-action and gold-delta-per-action at Cooking 40, and it is already slightly value-positive when it first unlocks.
+- Swordfish is the level-40 inventory-quality unlock, but its sell-value delta stays negative inside the current 1-40 cap and does not break even until Cooking 42.
 
 ## Runtime State
 

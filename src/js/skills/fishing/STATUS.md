@@ -20,11 +20,11 @@
 - [x] FISHING-010: Merchant fish-stock unlock system (per-fish, per-merchant 50-sell thresholds).
 - [x] FISHING-011: Economy and item-value alignment across fish, bait, and fishing tools.
 - [x] FISHING-012: Training-location and world-placement pass across standard/deep-water bands.
+- [x] FISHING-013: Fishing-teacher quest and rune-harpoon reward/replacement flow integration.
+- [x] FISHING-014: 1-40 fishing pacing locked with method-level catch curves, runtime benchmark helpers, and parity/runtime coverage.
 
 ## Now
 
 ## Next
 
 ## Later
-- [ ] FISHING-013: Fishing-teacher quest and rune-harpoon reward/replacement flow integration.
-- [ ] FISHING-014: Balance pass using expected fish/xp/gold-per-tick targets by method and level band.

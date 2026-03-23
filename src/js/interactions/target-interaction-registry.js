@@ -219,33 +219,36 @@
                     const npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
                         ? window.QuestRuntime.resolveNpcPrimaryAction(npcUid || { name: npcName, action: baseNpcAction })
                         : baseNpcAction;
+                    const canTrade = !!(npcUid && npcUid.merchantId && (!window.QuestRuntime || typeof window.QuestRuntime.canOpenMerchantShop !== 'function' || window.QuestRuntime.canOpenMerchantShop(npcUid.merchantId).ok));
                     const talkTarget = npcUid
                         ? Object.assign({}, npcUid, { action: 'Talk-to' })
                         : { name: npcName, action: 'Talk-to' };
+                    const talkPriority = npcAction === 'Talk-to' ? 100 : 100.5;
+                    const secondaryPriority = npcAction === 'Talk-to' ? 100.5 : 100;
                     const talkOption = createOption(
                         `Talk-to <span class="text-yellow-400">${npcName}</span>`,
                         () => context.queueInteract('NPC', talkTarget),
-                        100.5
+                        talkPriority
                     );
-
-                    if (npcAction === 'Trade') {
+                    const buildTradeOption = () => {
                         if (npcName === 'Shopkeeper' && !(npcUid && npcUid.merchantId)) {
-                            return [
-                                createOption(
-                                    `Trade <span class="text-yellow-400">${npcName}</span> (General Store)`,
-                                    () => context.queueInteract('NPC', { name: npcName, action: 'Trade', merchantId: 'general_store' }),
-                                    100
-                                ),
-                                talkOption
-                            ];
+                            return createOption(
+                                `Trade <span class="text-yellow-400">${npcName}</span> (General Store)`,
+                                () => context.queueInteract('NPC', { name: npcName, action: 'Trade', merchantId: 'general_store' }),
+                                secondaryPriority
+                            );
                         }
                         const tradeTarget = npcUid ? Object.assign({}, npcUid, { action: 'Trade' }) : { name: npcName, action: 'Trade' };
+                        return createOption(
+                            `Trade <span class="text-yellow-400">${npcName}</span>`,
+                            () => context.queueInteract('NPC', tradeTarget),
+                            secondaryPriority
+                        );
+                    };
+
+                    if (npcAction === 'Trade') {
                         return [
-                            createOption(
-                                `Trade <span class="text-yellow-400">${npcName}</span>`,
-                                () => context.queueInteract('NPC', tradeTarget),
-                                100
-                            ),
+                            buildTradeOption(),
                             talkOption
                         ];
                     }
@@ -259,6 +262,13 @@
                                 100
                             ),
                             talkOption
+                        ];
+                    }
+
+                    if (npcAction === 'Talk-to' && canTrade) {
+                        return [
+                            talkOption,
+                            buildTradeOption()
                         ];
                     }
 

@@ -116,6 +116,31 @@
         return methodSpec && methodSpec.extraRequirement ? methodSpec.extraRequirement : null;
     }
 
+    function resolveCatchCurveForMethod(waterSpec, methodSpec) {
+        return {
+            unlockLevel: Number.isFinite(methodSpec && methodSpec.unlockLevel)
+                ? methodSpec.unlockLevel
+                : (Number.isFinite(waterSpec && waterSpec.unlockLevel) ? waterSpec.unlockLevel : 1),
+            baseCatchChance: Number.isFinite(methodSpec && methodSpec.baseCatchChance)
+                ? methodSpec.baseCatchChance
+                : (Number.isFinite(waterSpec && waterSpec.baseCatchChance) ? waterSpec.baseCatchChance : 0),
+            levelScaling: Number.isFinite(methodSpec && methodSpec.levelScaling)
+                ? methodSpec.levelScaling
+                : (Number.isFinite(waterSpec && waterSpec.levelScaling) ? waterSpec.levelScaling : 0),
+            maxCatchChance: Number.isFinite(methodSpec && methodSpec.maxCatchChance)
+                ? methodSpec.maxCatchChance
+                : (Number.isFinite(waterSpec && waterSpec.maxCatchChance) ? waterSpec.maxCatchChance : 1)
+        };
+    }
+
+    function computeCatchChanceForMethod(level, waterSpec, methodSpec) {
+        const curve = resolveCatchCurveForMethod(waterSpec, methodSpec);
+        if (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeLinearCatchChance === 'function') {
+            return SkillSpecRegistry.computeLinearCatchChance(level, curve.unlockLevel, curve.baseCatchChance, curve.levelScaling, curve.maxCatchChance);
+        }
+        return curve.baseCatchChance;
+    }
+
     function hasMethodRequirement(context, methodSpec) {
         const requirement = getMethodRequirement(methodSpec);
         if (!requirement || !requirement.itemId) return true;
@@ -322,9 +347,7 @@
                 return false;
             }
 
-            const catchChance = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeLinearCatchChance === 'function')
-                ? SkillSpecRegistry.computeLinearCatchChance(level, waterPlan.waterSpec.unlockLevel, waterPlan.waterSpec.baseCatchChance, waterPlan.waterSpec.levelScaling, waterPlan.waterSpec.maxCatchChance)
-                : (waterPlan.waterSpec.baseCatchChance || 0.2);
+            const catchChance = computeCatchChanceForMethod(level, waterPlan.waterSpec, selectedMethod.methodSpec);
 
             const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
             const intervalTicks = (window.SkillSpecRegistry && typeof SkillSpecRegistry.computeIntervalTicks === 'function')
@@ -440,9 +463,7 @@
 
             const catchChance = Number.isFinite(context.playerState.fishingCatchChance)
                 ? context.playerState.fishingCatchChance
-                : ((window.SkillSpecRegistry && typeof SkillSpecRegistry.computeLinearCatchChance === 'function')
-                    ? SkillSpecRegistry.computeLinearCatchChance(level, waterPlan.waterSpec.unlockLevel, waterPlan.waterSpec.baseCatchChance, waterPlan.waterSpec.levelScaling, waterPlan.waterSpec.maxCatchChance)
-                    : (waterPlan.waterSpec.baseCatchChance || 0.2));
+                : computeCatchChanceForMethod(level, waterPlan.waterSpec, selectedMethod.methodSpec);
 
             const pick = (window.SkillSpecRegistry && typeof SkillSpecRegistry.resolveWeighted === 'function')
                 ? SkillSpecRegistry.resolveWeighted(selectedMethod.fishTable, context.random)

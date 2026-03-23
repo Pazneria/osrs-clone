@@ -101,20 +101,75 @@ function run() {
   assert(!!fishSpec && !!fishSpec.nodeTable, "fishing node table missing");
   assert(!!fishSpec.nodeTable.shallow_water, "shallow water spec missing");
   assert(!!fishSpec.nodeTable.deep_water, "deep water spec missing");
+  assert(typeof SkillSpecRegistry.computeFishingMethodMetrics === "function", "fishing method metrics helper missing");
+  assert(typeof SkillSpecRegistry.getFishingBalanceSummary === "function", "fishing balance summary helper missing");
 
   const rodMethod = fishSpec.nodeTable.shallow_water.methods && fishSpec.nodeTable.shallow_water.methods.rod;
+  const harpoonMethod = fishSpec.nodeTable.shallow_water.methods && fishSpec.nodeTable.shallow_water.methods.harpoon;
   assert(!!rodMethod, "rod method spec missing");
+  assert(!!harpoonMethod, "harpoon method spec missing");
   assert(Array.isArray(rodMethod.toolIds) && rodMethod.toolIds.includes("fishing_rod"), "rod tool requirement missing");
   assert(!!rodMethod.extraRequirement && rodMethod.extraRequirement.itemId === "bait", "rod bait requirement missing");
   assert(rodMethod.extraRequirement.consumeOn === "success", "rod bait consumption rule mismatch");
+  assert(!Object.prototype.hasOwnProperty.call(rodMethod, "baseCatchChance"), "rod should inherit the default catch curve");
+  assert(harpoonMethod.baseCatchChance === 0.32, "harpoon should override its catch base to 32%");
 
   const deepMixed = fishSpec.nodeTable.deep_water.methods && fishSpec.nodeTable.deep_water.methods.deep_harpoon_mixed;
   const deepRune = fishSpec.nodeTable.deep_water.methods && fishSpec.nodeTable.deep_water.methods.deep_rune_harpoon;
   assert(!!deepMixed && !!deepRune, "deep water method split missing");
+  assert(deepMixed.baseCatchChance === 0.36, "deep mixed harpoon should override its catch base to 36%");
+  assert(deepRune.baseCatchChance === 0.36, "deep rune harpoon should override its catch base to 36%");
   const mixedFish = deepMixed.fishByLevel && deepMixed.fishByLevel[0] ? deepMixed.fishByLevel[0].fish : [];
-  assert(Array.isArray(mixedFish) && mixedFish.some((f) => f.itemId === "raw_tuna") && mixedFish.some((f) => f.itemId === "raw_swordfish"), "mixed deep-water table mismatch");
+  assert(Array.isArray(mixedFish) && mixedFish.length === 2 && mixedFish[0].itemId === "raw_tuna" && mixedFish[0].weight === 70 && mixedFish[1].itemId === "raw_swordfish" && mixedFish[1].weight === 30, "mixed deep-water table mismatch");
   const runeFish = deepRune.fishByLevel && deepRune.fishByLevel[0] ? deepRune.fishByLevel[0].fish : [];
   assert(Array.isArray(runeFish) && runeFish.length === 1 && runeFish[0].itemId === "raw_swordfish", "rune deep-water table mismatch");
+  const rodBand20 = rodMethod.fishByLevel && rodMethod.fishByLevel[1] ? rodMethod.fishByLevel[1].fish : [];
+  const rodBand30 = rodMethod.fishByLevel && rodMethod.fishByLevel[2] ? rodMethod.fishByLevel[2].fish : [];
+  assert(Array.isArray(rodBand20) && rodBand20.length === 2 && rodBand20[0].itemId === "raw_trout" && rodBand20[0].weight === 75 && rodBand20[1].itemId === "raw_salmon" && rodBand20[1].weight === 25, "rod level-20 fish weights mismatch");
+  assert(Array.isArray(rodBand30) && rodBand30.length === 2 && rodBand30[0].itemId === "raw_trout" && rodBand30[0].weight === 60 && rodBand30[1].itemId === "raw_salmon" && rodBand30[1].weight === 40, "rod level-30 fish weights mismatch");
+
+  const fishingBalanceSummary = SkillSpecRegistry.getFishingBalanceSummary();
+  assert(!!fishingBalanceSummary && !!fishingBalanceSummary.assumptions, "fishing balance summary missing assumptions");
+  assert(Array.isArray(fishingBalanceSummary.rows) && fishingBalanceSummary.rows.length === 5, "fishing balance summary row count mismatch");
+  assert(fishingBalanceSummary.assumptions.level === 40, "fishing default benchmark level mismatch");
+  assert(fishingBalanceSummary.rows[0].methodId === "net", "fishing balance summary should start with net");
+  assert(fishingBalanceSummary.rows[4].methodId === "deep_rune_harpoon", "fishing balance summary should end with deep rune harpoon");
+
+  const fishingBenchmarks = [
+    { waterId: "shallow_water", methodId: "net", level: 1, fish: 0.28, xp: 5.6, gold: 0.28 },
+    { waterId: "shallow_water", methodId: "rod", level: 10, fish: 0.28, xp: 14, gold: 1.96 },
+    { waterId: "shallow_water", methodId: "rod", level: 20, fish: 0.36, xp: 19.8, gold: 2.7 },
+    { waterId: "shallow_water", methodId: "rod", level: 30, fish: 0.44, xp: 25.52, gold: 3.432 },
+    { waterId: "shallow_water", methodId: "harpoon", level: 30, fish: 0.32, xp: 25.6, gold: 3.52 },
+    { waterId: "deep_water", methodId: "deep_harpoon_mixed", level: 40, fish: 0.36, xp: 30.96, gold: 4.5 },
+    { waterId: "deep_water", methodId: "deep_rune_harpoon", level: 40, fish: 0.36, xp: 36, gold: 5.76 },
+    { waterId: "shallow_water", methodId: "net", level: 40, fish: 0.592, xp: 11.84, gold: 0.592 },
+    { waterId: "shallow_water", methodId: "rod", level: 40, fish: 0.52, xp: 30.16, gold: 4.056 },
+    { waterId: "shallow_water", methodId: "harpoon", level: 40, fish: 0.4, xp: 32, gold: 4.4 }
+  ];
+  const fishingMetricsByKey = {};
+  fishingBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeFishingMethodMetrics(benchmark.waterId, benchmark.methodId, { level: benchmark.level });
+    assert(!!metrics, "fishing metrics missing for " + benchmark.methodId + "@" + benchmark.level);
+    fishingMetricsByKey[benchmark.methodId + "@" + benchmark.level] = metrics;
+    assert(approxEq(metrics.active.fishPerTick, benchmark.fish, 1e-4), "fishing expected fish/tick mismatch for " + benchmark.methodId + "@" + benchmark.level);
+    assert(approxEq(metrics.active.xpPerTick, benchmark.xp, 1e-4), "fishing expected xp/tick mismatch for " + benchmark.methodId + "@" + benchmark.level);
+    assert(approxEq(metrics.active.goldPerTick, benchmark.gold, 1e-4), "fishing expected gold/tick mismatch for " + benchmark.methodId + "@" + benchmark.level);
+  });
+  assert(approxEq(fishingMetricsByKey["rod@10"].catchChance, 0.28, 1e-9), "rod catch chance should start from the method unlock");
+  assert(fishingMetricsByKey["rod@20"].active.xpPerTick > fishingMetricsByKey["rod@10"].active.xpPerTick, "rod 20 should beat rod 10 on gross xp");
+  assert(fishingMetricsByKey["rod@20"].active.goldPerTick > fishingMetricsByKey["rod@10"].active.goldPerTick, "rod 20 should beat rod 10 on gross gold");
+  assert(fishingMetricsByKey["rod@30"].active.xpPerTick > fishingMetricsByKey["rod@20"].active.xpPerTick, "rod 30 should beat rod 20 on gross xp");
+  assert(fishingMetricsByKey["rod@30"].active.goldPerTick > fishingMetricsByKey["rod@20"].active.goldPerTick, "rod 30 should beat rod 20 on gross gold");
+  assert(fishingMetricsByKey["harpoon@30"].active.xpPerTick > fishingMetricsByKey["rod@30"].active.xpPerTick, "harpoon 30 should beat rod 30 on gross xp");
+  assert(fishingMetricsByKey["harpoon@30"].active.goldPerTick > fishingMetricsByKey["rod@30"].active.goldPerTick, "harpoon 30 should beat rod 30 on gross gold");
+  assert(
+    fishingMetricsByKey["deep_harpoon_mixed@40"].active.xpPerTick > fishingMetricsByKey["harpoon@40"].active.xpPerTick
+      || fishingMetricsByKey["deep_harpoon_mixed@40"].active.goldPerTick > fishingMetricsByKey["harpoon@40"].active.goldPerTick,
+    "deep mixed 40 should not lose to harpoon 40 on both metrics"
+  );
+  assert(fishingMetricsByKey["deep_rune_harpoon@40"].active.xpPerTick > fishingMetricsByKey["deep_harpoon_mixed@40"].active.xpPerTick, "deep rune 40 should beat deep mixed 40 on gross xp");
+  assert(fishingMetricsByKey["deep_rune_harpoon@40"].active.goldPerTick > fishingMetricsByKey["deep_harpoon_mixed@40"].active.goldPerTick, "deep rune 40 should beat deep mixed 40 on gross gold");
 
   const difficultySuccess = SkillSpecRegistry.computeSuccessChanceFromDifficulty(1, 4);
   assert(approxEq(difficultySuccess, 1 / 5), "difficulty success formula mismatch");
@@ -139,6 +194,44 @@ function run() {
 
   const cookingSuccessAtUnlock = SkillSpecRegistry.computeCookingSuccessChance(10, 10);
   assert(approxEq(cookingSuccessAtUnlock, 0.67), "cooking success chance at unlock mismatch");
+
+  assert(typeof SkillSpecRegistry.computeCookingRecipeMetrics === "function", "cooking recipe metrics helper missing");
+  assert(typeof SkillSpecRegistry.getCookingBalanceSummary === "function", "cooking balance summary helper missing");
+
+  const cookingBalanceSummary = SkillSpecRegistry.getCookingBalanceSummary();
+  assert(!!cookingBalanceSummary && !!cookingBalanceSummary.assumptions, "cooking balance summary missing assumptions");
+  assert(Array.isArray(cookingBalanceSummary.rows) && cookingBalanceSummary.rows.length === 5, "cooking balance summary row count mismatch");
+  assert(cookingBalanceSummary.assumptions.level === 40, "cooking default benchmark level mismatch");
+  assert(cookingBalanceSummary.rows[0].recipeId === "raw_shrimp", "cooking balance summary should start with shrimp");
+  assert(cookingBalanceSummary.rows[4].recipeId === "raw_swordfish", "cooking balance summary should end with swordfish");
+  assert(cookingBalanceSummary.rows[4].breakEvenLevel === 42, "swordfish break-even level mismatch");
+
+  const cookingBenchmarks = [
+    { recipeId: "raw_shrimp", level: 1, cooked: 0.67, xp: 20.1, gold: 1.34 },
+    { recipeId: "raw_trout", level: 10, cooked: 0.67, xp: 46.9, gold: -0.64 },
+    { recipeId: "raw_salmon", level: 20, cooked: 0.67, xp: 60.3, gold: -0.63 },
+    { recipeId: "raw_tuna", level: 30, cooked: 0.67, xp: 80.4, gold: 0.05 },
+    { recipeId: "raw_swordfish", level: 40, cooked: 0.67, xp: 93.8, gold: -0.93 },
+    { recipeId: "raw_shrimp", level: 40, cooked: 1.0, xp: 30.0, gold: 2.0 },
+    { recipeId: "raw_trout", level: 40, cooked: 1.0, xp: 70.0, gold: 2.0 },
+    { recipeId: "raw_salmon", level: 40, cooked: 0.95, xp: 85.5, gold: 2.45 },
+    { recipeId: "raw_tuna", level: 40, cooked: 0.9, xp: 108.0, gold: 3.5 },
+    { recipeId: "raw_swordfish", level: 40, cooked: 0.67, xp: 93.8, gold: -0.93 }
+  ];
+  const cookingMetricsByKey = {};
+  cookingBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeCookingRecipeMetrics(benchmark.recipeId, { level: benchmark.level });
+    const key = benchmark.recipeId + "@" + benchmark.level;
+    assert(!!metrics, "cooking metrics missing for " + key);
+    cookingMetricsByKey[key] = metrics;
+    assert(approxEq(metrics.expected.cookedPerAction, benchmark.cooked, 1e-4), "cooking expected cooked/action mismatch for " + key);
+    assert(approxEq(metrics.expected.xpPerAction, benchmark.xp, 1e-4), "cooking expected xp/action mismatch for " + key);
+    assert(approxEq(metrics.expected.goldDeltaPerAction, benchmark.gold, 1e-4), "cooking expected gold delta/action mismatch for " + key);
+  });
+  assert(cookingMetricsByKey["raw_salmon@40"].expected.goldDeltaPerAction > cookingMetricsByKey["raw_trout@40"].expected.goldDeltaPerAction, "salmon 40 should beat trout 40 on gold delta");
+  assert(cookingMetricsByKey["raw_tuna@40"].expected.xpPerAction > cookingMetricsByKey["raw_salmon@40"].expected.xpPerAction, "tuna 40 should beat salmon 40 on xp");
+  assert(cookingMetricsByKey["raw_tuna@40"].expected.goldDeltaPerAction > cookingMetricsByKey["raw_salmon@40"].expected.goldDeltaPerAction, "tuna 40 should beat salmon 40 on gold delta");
+  assert(cookingMetricsByKey["raw_swordfish@40"].expected.goldDeltaPerAction < 0, "swordfish 40 should remain negative gold inside the 1-40 cap");
 
   let previousCookingBurn = SkillSpecRegistry.computeCookingBurnChance(10, 10);
   for (let delta = 1; delta <= 30; delta++) {
@@ -209,9 +302,35 @@ function run() {
     assert(itemDefs[itemId] && itemDefs[itemId].icon && itemDefs[itemId].icon.assetId === itemId, `item catalog fish icon should be bespoke for ${itemId}`);
   });
 
-  global.playerState = { merchantProgress: {} };
+  const session = {
+    player: { merchantProgress: {} },
+    progress: {
+      inventory: [],
+      bankItems: [],
+      equipment: {},
+      quests: {},
+      playerSkills: {}
+    }
+  };
+  global.window.GameSessionRuntime = {
+    getSession: () => session
+  };
+  global.playerState = session.player;
   loadBrowserScript(root, "src/js/shop-economy.js");
   const shopEconomy = window.ShopEconomy;
+  function buildOwnedItem(itemId) {
+    const def = itemDefs[itemId];
+    assert(!!def, `missing item def for ${itemId}`);
+    return Object.assign({ id: itemId }, def);
+  }
+
+  function buildOwnedSlot(itemId, amount = 1) {
+    return {
+      itemData: buildOwnedItem(itemId),
+      amount
+    };
+  }
+
   assert(!!shopEconomy, "shop economy API missing");
   assert(typeof shopEconomy.getMerchantSeedStockRows === "function", "shop economy seed-stock resolver missing");
   assert(typeof shopEconomy.hasFallbackStockPolicy === "function", "shop economy fallback-policy resolver missing");
@@ -480,6 +599,28 @@ function run() {
     root,
     (source) => replaceOnce(
       source,
+      "baseCatchChance: 0.32,",
+      "baseCatchChance: 0.2,",
+      "fishing-balance-curve"
+    ),
+    /fishing balance curve mismatch/i,
+    "fishing-balance-curve"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "xpPerSuccess: 140,",
+      "xpPerSuccess: 135,",
+      "cooking-balance-curve"
+    ),
+    /cooking balance curve mismatch/i,
+    "cooking-balance-curve"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
       "depletionChance: 0.1,",
       "depletionChance: 0.95,",
       "woodcutting-balance-curve"
@@ -532,6 +673,7 @@ function run() {
   assert(shopEconomy.resolveSellPrice("plain_staff_oak", "advanced_fletcher") === Math.floor(itemDefs.plain_staff_oak.value * 0.5), "advanced fletcher plain staff fallback price mismatch");
   const cookingSpec = SkillSpecRegistry.getSkillSpec("cooking");
   assert(!!cookingSpec && !!cookingSpec.economy, "cooking economy tables missing");
+  assert(!!cookingSpec.economy.valueTable, "cooking value table missing");
   assert(!cookingSpec.economy.merchantTable, "cooking should not define merchant-stock ownership");
   const fishEconomy = fishSpec.economy;
   assert(!!fishEconomy && !!fishEconomy.valueTable && !!fishEconomy.merchantTable, "fishing economy tables missing");
@@ -543,6 +685,14 @@ function run() {
     assert(specRow.buy === item.value, `buy value mismatch for ${itemId}`);
     assert(specRow.sell === Math.max(1, Math.floor(item.value * 0.4)), `sell value mismatch for ${itemId}`);
   });
+  const cookingValueIds = ["raw_shrimp", "raw_trout", "raw_salmon", "raw_tuna", "raw_swordfish", "cooked_shrimp", "burnt_shrimp", "cooked_trout", "burnt_trout", "cooked_salmon", "burnt_salmon", "cooked_tuna", "burnt_tuna", "cooked_swordfish", "burnt_swordfish"];
+  cookingValueIds.forEach((itemId) => {
+    const cookingRow = cookingSpec.economy.valueTable[itemId];
+    const fishingRow = fishEconomy.valueTable[itemId];
+    assert(!!cookingRow && !!fishingRow, `missing cooking/fishing value row for ${itemId}`);
+    assert(cookingRow.buy === fishingRow.buy, `cooking/fishing buy alignment mismatch for ${itemId}`);
+    assert(cookingRow.sell === fishingRow.sell, `cooking/fishing sell alignment mismatch for ${itemId}`);
+  });
 
   assert(shopEconomy.canMerchantSellItem("small_net", "fishing_supplier"), "supplier should sell small net by default");
   assert(shopEconomy.canMerchantSellItem("fishing_rod", "fishing_supplier"), "supplier should sell fishing rod by default");
@@ -551,8 +701,33 @@ function run() {
   assert(shopEconomy.canMerchantBuyItem("cooked_shrimp", "fishing_supplier"), "supplier should buy cooked fish");
   assert(shopEconomy.canMerchantBuyItem("burnt_shrimp", "fishing_supplier"), "supplier should buy burnt fish");
   assert(!shopEconomy.canMerchantBuyItem("cooked_shrimp", "fishing_teacher"), "teacher should not buy cooked fish");
-  assert(!shopEconomy.canMerchantSellItem("small_net", "fishing_teacher"), "teacher should not sell small net by default");
+  assert(shopEconomy.canMerchantSellItem("small_net", "fishing_teacher"), "teacher should sell small net by default");
+  assert(shopEconomy.canMerchantSellItem("fishing_rod", "fishing_teacher"), "teacher should sell fishing rod by default");
+  assert(shopEconomy.canMerchantSellItem("bait", "fishing_teacher"), "teacher should sell bait by default");
+  assert(!shopEconomy.canMerchantSellItem("harpoon", "fishing_teacher"), "teacher should not sell harpoon by default");
+  assert(!shopEconomy.canMerchantBuyItem("harpoon", "fishing_teacher"), "teacher should not buy harpoon by default");
+  assert(shopEconomy.canMerchantBuyItem("rune_harpoon", "fishing_teacher"), "teacher should buy rune harpoon for recovery flow");
   assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should not sell rune harpoon by default");
+  const teacherSeedBeforeQuest = shopEconomy.getMerchantSeedStockRows("fishing_teacher");
+  const teacherSeedBeforeQuestIds = teacherSeedBeforeQuest.map((row) => row.itemId).sort();
+  assert(JSON.stringify(teacherSeedBeforeQuestIds) === JSON.stringify(["bait", "fishing_rod", "small_net"]), "teacher default stock should only include starter supplies before the quest");
+
+  session.progress.quests.fishing_teacher_from_net_to_harpoon = { status: "completed" };
+  assert(shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should sell rune harpoon after quest completion when the player has none");
+  const teacherSeedAfterQuest = shopEconomy.getMerchantSeedStockRows("fishing_teacher");
+  const runeHarpoonSeed = teacherSeedAfterQuest.find((row) => row && row.itemId === "rune_harpoon");
+  assert(!!runeHarpoonSeed && runeHarpoonSeed.stockAmount === 1, "teacher rune harpoon replacement stock should seed exactly one copy");
+
+  session.progress.inventory = [buildOwnedSlot("rune_harpoon")];
+  assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should stop selling rune harpoon while one is in inventory");
+  session.progress.inventory = [];
+  session.progress.equipment = { weapon: buildOwnedItem("rune_harpoon") };
+  assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should stop selling rune harpoon while one is equipped");
+  session.progress.equipment = {};
+  session.progress.bankItems = [buildOwnedSlot("rune_harpoon")];
+  assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should stop selling rune harpoon while one is banked");
+  session.progress.bankItems = [];
+  assert(shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should resume selling rune harpoon when the player no longer owns one");
 
   const smithSpec = SkillSpecRegistry.getSkillSpec("smithing");
   assert(!!smithSpec && !!smithSpec.recipeSet, "smithing recipe set missing");

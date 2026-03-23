@@ -2,7 +2,69 @@
   "economy": {
     "burntResource": "burnt_shrimp",
     "cookedResource": "cooked_shrimp",
-    "primaryResource": "raw_shrimp"
+    "primaryResource": "raw_shrimp",
+    "valueTable": {
+      "burnt_salmon": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_shrimp": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_swordfish": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_trout": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_tuna": {
+        "buy": 1,
+        "sell": 1
+      },
+      "cooked_salmon": {
+        "buy": 32,
+        "sell": 12
+      },
+      "cooked_shrimp": {
+        "buy": 8,
+        "sell": 3
+      },
+      "cooked_swordfish": {
+        "buy": 56,
+        "sell": 22
+      },
+      "cooked_trout": {
+        "buy": 24,
+        "sell": 9
+      },
+      "cooked_tuna": {
+        "buy": 40,
+        "sell": 16
+      },
+      "raw_salmon": {
+        "buy": 24,
+        "sell": 9
+      },
+      "raw_shrimp": {
+        "buy": 3,
+        "sell": 1
+      },
+      "raw_swordfish": {
+        "buy": 40,
+        "sell": 16
+      },
+      "raw_trout": {
+        "buy": 18,
+        "sell": 7
+      },
+      "raw_tuna": {
+        "buy": 28,
+        "sell": 11
+      }
+    }
   },
   "formulas": {
     "burn": "unlock_relative_cubic_burn_curve",

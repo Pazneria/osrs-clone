@@ -205,10 +205,60 @@ function runWoodcuttingChecks(roadmap, spec) {
 function runFishingChecks(roadmap, spec, itemDefs) {
   const lines = roadmap.split(/\r?\n/);
   const shallow = spec.nodeTable.shallow_water;
+  const deep = spec.nodeTable.deep_water;
 
-  assertRegex(roadmap, new RegExp(`\\|\\s*Base Water-Type Catch Chance\\s*\\|\\s*${toPercent(shallow.baseCatchChance)}\\s*\\|`), "fishing roadmap base catch chance mismatch");
-  assertRegex(roadmap, new RegExp(`\\|\\s*Water-Type Level Scaling\\s*\\|\\s*${toPercent(shallow.levelScaling)}\\s*\\|`), "fishing roadmap level scaling mismatch");
-  assertRegex(roadmap, new RegExp(`\\|\\s*Max Water-Type Catch Chance\\s*\\|\\s*${toPercent(shallow.maxCatchChance)}\\s*\\|`), "fishing roadmap max catch chance mismatch");
+  function getFishingMethodFishTable(methodSpec, level) {
+    const bands = Array.isArray(methodSpec && methodSpec.fishByLevel) ? methodSpec.fishByLevel : [];
+    for (const band of bands) {
+      const minLevel = Number.isFinite(band && band.minLevel) ? band.minLevel : 1;
+      const maxLevel = Number.isFinite(band && band.maxLevel) ? band.maxLevel : Infinity;
+      if (level < minLevel || level > maxLevel) continue;
+      const fish = Array.isArray(band && band.fish) ? band.fish : [];
+      return fish.filter((row) => row && level >= (row.requiredLevel || 1));
+    }
+    return [];
+  }
+
+  function resolveFishingMethodCurve(waterSpec, methodSpec) {
+    return {
+      unlockLevel: Number.isFinite(methodSpec && methodSpec.unlockLevel) ? methodSpec.unlockLevel : (waterSpec.unlockLevel || 1),
+      baseCatchChance: Number.isFinite(methodSpec && methodSpec.baseCatchChance) ? methodSpec.baseCatchChance : (waterSpec.baseCatchChance || 0),
+      levelScaling: Number.isFinite(methodSpec && methodSpec.levelScaling) ? methodSpec.levelScaling : (waterSpec.levelScaling || 0),
+      maxCatchChance: Number.isFinite(methodSpec && methodSpec.maxCatchChance) ? methodSpec.maxCatchChance : (waterSpec.maxCatchChance || 1)
+    };
+  }
+
+  function computeFishingOutputs(waterId, methodId, level) {
+    const waterSpec = spec.nodeTable[waterId];
+    const methodSpec = waterSpec.methods[methodId];
+    const curve = resolveFishingMethodCurve(waterSpec, methodSpec);
+    const catchChance = Math.max(0, Math.min(curve.maxCatchChance, curve.baseCatchChance + ((level - curve.unlockLevel) * curve.levelScaling)));
+    const fishTable = getFishingMethodFishTable(methodSpec, level);
+    const totalWeight = fishTable.reduce((sum, row) => sum + (Number(row && row.weight) || 0), 0);
+    let xpPerTick = 0;
+    let goldPerTick = 0;
+    for (const row of fishTable) {
+      const share = totalWeight > 0 ? row.weight / totalWeight : 0;
+      const fishChance = catchChance * share;
+      const sellValue = spec.economy.valueTable[row.itemId].sell;
+      xpPerTick += fishChance * row.xp;
+      goldPerTick += fishChance * sellValue;
+    }
+    return {
+      catchChance,
+      fishPerTick: catchChance,
+      xpPerTick,
+      goldPerTick
+    };
+  }
+
+  assert(!roadmap.includes("Water-Type Catch Chance"), "fishing roadmap should no longer use water-type catch naming");
+  assert(!roadmap.includes("Water-Type Unlock Level"), "fishing roadmap should no longer use water-type unlock naming");
+  assertRegex(roadmap, /\|\s*Fishing Method Catch Chance\s*\|/, "fishing roadmap method-centric catch formula missing");
+  assertRegex(roadmap, /\|\s*Method Unlock Level\s*\|/, "fishing roadmap method-unlock variable missing");
+  assertRegex(roadmap, new RegExp(`\\|\\s*Default Base Fishing Method Catch Chance\\s*\\|\\s*${toPercent(shallow.baseCatchChance)}\\s*\\|`), "fishing roadmap default base catch chance mismatch");
+  assertRegex(roadmap, new RegExp(`\\|\\s*Default Fishing Method Level Scaling\\s*\\|\\s*${toPercent(shallow.levelScaling)}\\s*\\|`), "fishing roadmap level scaling mismatch");
+  assertRegex(roadmap, new RegExp(`\\|\\s*Default Max Fishing Method Catch Chance\\s*\\|\\s*${toPercent(shallow.maxCatchChance)}\\s*\\|`), "fishing roadmap max catch chance mismatch");
 
   const rows = [
     { name: "Raw Shrimp", level: 1, xp: 20, itemId: "raw_shrimp" },
@@ -224,6 +274,77 @@ function runFishingChecks(roadmap, spec, itemDefs) {
     assert(!!line, `fishing roadmap row mismatch for ${row.name}`);
     assert(new RegExp(`\\|\\s*${sellValue}\\s*\\|\\s*$`).test(line), `fishing sell value mismatch for ${row.name}`);
   }
+
+  const methodRows = [
+    { label: "Net", waterId: "shallow_water", methodId: "net", tool: "Small Net", extra: "None" },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", tool: "Fishing Rod", extra: "Bait" },
+    { label: "Harpoon", waterId: "shallow_water", methodId: "harpoon", tool: "Harpoon", extra: "None" },
+    { label: "Deep Harpoon Mixed", waterId: "deep_water", methodId: "deep_harpoon_mixed", tool: "Harpoon", extra: "None" },
+    { label: "Deep Rune Harpoon", waterId: "deep_water", methodId: "deep_rune_harpoon", tool: "Rune Harpoon", extra: "None" }
+  ];
+  for (const row of methodRows) {
+    const waterSpec = spec.nodeTable[row.waterId];
+    const methodSpec = waterSpec.methods[row.methodId];
+    const curve = resolveFishingMethodCurve(waterSpec, methodSpec);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${curve.unlockLevel}\\s*\\|\\s*${escapeRegex(row.tool)}\\s*\\|\\s*${escapeRegex(row.extra)}\\s*\\|\\s*${toPercent(curve.baseCatchChance)}\\s*\\|\\s*${toPercent(curve.levelScaling)}\\s*\\|\\s*${toPercent(curve.maxCatchChance)}\\s*\\|`),
+      `fishing method stat mismatch for ${row.label}`
+    );
+  }
+
+  const exampleRows = [
+    { label: "Net", waterId: "shallow_water", methodId: "net", level: 1 },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", level: 10 },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", level: 20 },
+    { label: "Harpoon", waterId: "shallow_water", methodId: "harpoon", level: 30 },
+    { label: "Deep Harpoon Mixed", waterId: "deep_water", methodId: "deep_harpoon_mixed", level: 40 }
+  ];
+  for (const row of exampleRows) {
+    const waterSpec = spec.nodeTable[row.waterId];
+    const methodSpec = waterSpec.methods[row.methodId];
+    const curve = resolveFishingMethodCurve(waterSpec, methodSpec);
+    const metrics = computeFishingOutputs(row.waterId, row.methodId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*min\\(${toPercent(curve.maxCatchChance)},\\s*${toPercent(curve.baseCatchChance)} \\+ ${toPercent(curve.levelScaling)} x \\(${row.level} - ${curve.unlockLevel}\\)\\)\\s*\\|\\s*${toPercent(metrics.catchChance)}\\s*\\|`),
+      `fishing catch-chance example mismatch for ${row.label} @ ${row.level}`
+    );
+  }
+
+  const tierEntryRows = [
+    { label: "Net", waterId: "shallow_water", methodId: "net", level: 1 },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", level: 10 },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", level: 20 },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", level: 30 },
+    { label: "Harpoon", waterId: "shallow_water", methodId: "harpoon", level: 30 },
+    { label: "Deep Harpoon Mixed", waterId: "deep_water", methodId: "deep_harpoon_mixed", level: 40 },
+    { label: "Deep Rune Harpoon", waterId: "deep_water", methodId: "deep_rune_harpoon", level: 40 }
+  ];
+  for (const row of tierEntryRows) {
+    const metrics = computeFishingOutputs(row.waterId, row.methodId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${formatMetric(metrics.fishPerTick)}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.goldPerTick)}\\s*\\|`),
+      `fishing tier-entry benchmark mismatch for ${row.label} @ ${row.level}`
+    );
+  }
+
+  const level40Rows = [
+    { label: "Net", waterId: "shallow_water", methodId: "net", level: 40 },
+    { label: "Rod", waterId: "shallow_water", methodId: "rod", level: 40 },
+    { label: "Harpoon", waterId: "shallow_water", methodId: "harpoon", level: 40 },
+    { label: "Deep Harpoon Mixed", waterId: "deep_water", methodId: "deep_harpoon_mixed", level: 40 },
+    { label: "Deep Rune Harpoon", waterId: "deep_water", methodId: "deep_rune_harpoon", level: 40 }
+  ];
+  for (const row of level40Rows) {
+    const metrics = computeFishingOutputs(row.waterId, row.methodId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${formatMetric(metrics.fishPerTick)}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.goldPerTick)}\\s*\\|`),
+      `fishing level-40 benchmark mismatch for ${row.label}`
+    );
+  }
 }
 
 function runCookingChecks(roadmap, spec, itemDefs) {
@@ -237,6 +358,11 @@ function runCookingChecks(roadmap, spec, itemDefs) {
     roadmap,
     /\|\s*Cooking Success Chance\s*\|\s*Cooking Success Chance = 1 - Burn Chance\s*\|/,
     "cooking roadmap success formula mismatch"
+  );
+  assertRegex(
+    roadmap,
+    /\|\s*Expected Gold Delta per Action\s*\|\s*Expected Gold Delta per Action = \(Cooking Success Chance x Cooked Sell Value\) \+ \(Burn Chance x Burnt Sell Value\) - Raw Sell Value\s*\|/,
+    "cooking roadmap gold-delta formula mismatch"
   );
 
   const anchorRows = [
@@ -260,13 +386,97 @@ function runCookingChecks(roadmap, spec, itemDefs) {
 
   for (const row of rows) {
     const recipe = spec.recipeSet[row.recipeId];
-    const rawValue = itemDefs[recipe.sourceItemId].value;
-    const cookedValue = itemDefs[recipe.cookedItemId].value;
-    const burntValue = itemDefs[recipe.burntItemId].value;
+    const rawValue = spec.economy.valueTable[recipe.sourceItemId].sell;
+    const cookedValue = spec.economy.valueTable[recipe.cookedItemId].sell;
+    const burntValue = spec.economy.valueTable[recipe.burntItemId].sell;
 
     const line = findLine(lines, (entry) => new RegExp(`^\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${recipe.requiredLevel}\\s*\\|\\s*${recipe.xpPerSuccess}\\s*\\|\\s*${escapeRegex(toTitleCaseId(recipe.sourceItemId))}\\s*\\|\\s*${escapeRegex(toTitleCaseId(recipe.cookedItemId))}\\s*\\|\\s*${escapeRegex(toTitleCaseId(recipe.burntItemId))}\\s*\\|`).test(entry));
     assert(!!line, `cooking roadmap row mismatch for ${row.label}`);
     assert(new RegExp(`\\|\\s*${rawValue}\\s*\\|\\s*${cookedValue}\\s*\\|\\s*${burntValue}\\s*\\|\\s*$`).test(line), `cooking sell-value mismatch for ${row.label}`);
+  }
+
+  function clamp(value, minValue, maxValue) {
+    const next = Number.isFinite(value) ? value : minValue;
+    return Math.max(minValue, Math.min(maxValue, next));
+  }
+
+  function computeCookingBurnChance(level, requiredLevel) {
+    const delta = clamp(level - requiredLevel, 0, 30);
+    if (delta <= 0) return 0.33;
+    if (delta >= 30) return 0;
+    return clamp(0.33 - (0.038 * delta) + (0.0018 * delta * delta) - (0.00003 * delta * delta * delta), 0, 0.33);
+  }
+
+  function computeCookingOutputs(recipeId, level) {
+    const recipe = spec.recipeSet[recipeId];
+    const burnChance = computeCookingBurnChance(level, recipe.requiredLevel);
+    const successChance = 1 - burnChance;
+    const rawSell = spec.economy.valueTable[recipe.sourceItemId].sell;
+    const cookedSell = spec.economy.valueTable[recipe.cookedItemId].sell;
+    const burntSell = spec.economy.valueTable[recipe.burntItemId].sell;
+    return {
+      successChance,
+      cookedPerAction: successChance,
+      xpPerAction: successChance * recipe.xpPerSuccess,
+      goldDeltaPerAction: (successChance * cookedSell) + (burnChance * burntSell) - rawSell
+    };
+  }
+
+  function computeBreakEvenLevel(recipeId) {
+    const recipe = spec.recipeSet[recipeId];
+    for (let level = recipe.requiredLevel; level <= 99; level++) {
+      const metrics = computeCookingOutputs(recipeId, level);
+      if (metrics.goldDeltaPerAction >= 0) return level;
+    }
+    return null;
+  }
+
+  const tierEntryRows = [
+    { label: "Shrimp", recipeId: "raw_shrimp", level: 1 },
+    { label: "Trout", recipeId: "raw_trout", level: 10 },
+    { label: "Salmon", recipeId: "raw_salmon", level: 20 },
+    { label: "Tuna", recipeId: "raw_tuna", level: 30 },
+    { label: "Swordfish", recipeId: "raw_swordfish", level: 40 }
+  ];
+  for (const row of tierEntryRows) {
+    const metrics = computeCookingOutputs(row.recipeId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${toPercent(metrics.successChance)}\\s*\\|\\s*${formatMetric(metrics.cookedPerAction)}\\s*\\|\\s*${formatMetric(metrics.xpPerAction)}\\s*\\|\\s*${formatMetric(metrics.goldDeltaPerAction)}\\s*\\|`),
+      `cooking tier-entry benchmark mismatch for ${row.label}`
+    );
+  }
+
+  const level40Rows = [
+    { label: "Shrimp", recipeId: "raw_shrimp", level: 40 },
+    { label: "Trout", recipeId: "raw_trout", level: 40 },
+    { label: "Salmon", recipeId: "raw_salmon", level: 40 },
+    { label: "Tuna", recipeId: "raw_tuna", level: 40 },
+    { label: "Swordfish", recipeId: "raw_swordfish", level: 40 }
+  ];
+  for (const row of level40Rows) {
+    const metrics = computeCookingOutputs(row.recipeId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${toPercent(metrics.successChance)}\\s*\\|\\s*${formatMetric(metrics.cookedPerAction)}\\s*\\|\\s*${formatMetric(metrics.xpPerAction)}\\s*\\|\\s*${formatMetric(metrics.goldDeltaPerAction)}\\s*\\|`),
+      `cooking level-40 benchmark mismatch for ${row.label}`
+    );
+  }
+
+  const breakEvenRows = [
+    { label: "Shrimp", recipeId: "raw_shrimp" },
+    { label: "Trout", recipeId: "raw_trout" },
+    { label: "Salmon", recipeId: "raw_salmon" },
+    { label: "Tuna", recipeId: "raw_tuna" },
+    { label: "Swordfish", recipeId: "raw_swordfish" }
+  ];
+  for (const row of breakEvenRows) {
+    const breakEvenLevel = computeBreakEvenLevel(row.recipeId);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${breakEvenLevel}\\s*\\|`),
+      `cooking break-even row mismatch for ${row.label}`
+    );
   }
 }
 

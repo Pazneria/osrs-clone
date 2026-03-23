@@ -385,6 +385,157 @@
         };
     }
 
+    function getFishingMethodFishTable(methodSpec, level) {
+        if (!methodSpec || !Array.isArray(methodSpec.fishByLevel)) return [];
+        for (let i = 0; i < methodSpec.fishByLevel.length; i++) {
+            const band = methodSpec.fishByLevel[i] || {};
+            const minLevel = Number.isFinite(band.minLevel) ? band.minLevel : 1;
+            const maxLevel = Number.isFinite(band.maxLevel) ? band.maxLevel : Infinity;
+            if (level < minLevel || level > maxLevel) continue;
+            const fish = Array.isArray(band.fish) ? band.fish : [];
+            return fish.filter((row) => row && level >= (Number.isFinite(row.requiredLevel) ? row.requiredLevel : 1));
+        }
+        return [];
+    }
+
+    function resolveFishingMethodCurve(waterSpec, methodSpec) {
+        return {
+            unlockLevel: Number.isFinite(methodSpec && methodSpec.unlockLevel)
+                ? methodSpec.unlockLevel
+                : (Number.isFinite(waterSpec && waterSpec.unlockLevel) ? waterSpec.unlockLevel : 1),
+            baseCatchChance: Number.isFinite(methodSpec && methodSpec.baseCatchChance)
+                ? methodSpec.baseCatchChance
+                : (Number.isFinite(waterSpec && waterSpec.baseCatchChance) ? waterSpec.baseCatchChance : 0),
+            levelScaling: Number.isFinite(methodSpec && methodSpec.levelScaling)
+                ? methodSpec.levelScaling
+                : (Number.isFinite(waterSpec && waterSpec.levelScaling) ? waterSpec.levelScaling : 0),
+            maxCatchChance: Number.isFinite(methodSpec && methodSpec.maxCatchChance)
+                ? methodSpec.maxCatchChance
+                : (Number.isFinite(waterSpec && waterSpec.maxCatchChance) ? waterSpec.maxCatchChance : 1)
+        };
+    }
+
+    function computeFishingMethodMetrics(waterId, methodId, options = {}) {
+        const fishingSpec = getSkillSpec('fishing') || {};
+        const nodeTable = fishingSpec.nodeTable && typeof fishingSpec.nodeTable === 'object'
+            ? fishingSpec.nodeTable
+            : {};
+        const waterSpec = nodeTable[waterId];
+        const methodSpec = waterSpec && waterSpec.methods && typeof waterSpec.methods === 'object'
+            ? waterSpec.methods[methodId]
+            : null;
+        if (!waterSpec || !methodSpec) return null;
+
+        const economy = fishingSpec.economy && typeof fishingSpec.economy === 'object'
+            ? fishingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const levelBands = Array.isArray(fishingSpec.levelBands) ? fishingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const curve = resolveFishingMethodCurve(waterSpec, methodSpec);
+        const fishTable = getFishingMethodFishTable(methodSpec, level);
+        const catchChance = computeLinearCatchChance(level, curve.unlockLevel, curve.baseCatchChance, curve.levelScaling, curve.maxCatchChance);
+
+        let totalWeight = 0;
+        for (let i = 0; i < fishTable.length; i++) {
+            const fish = fishTable[i];
+            const weight = Number(fish && fish.weight);
+            if (Number.isFinite(weight) && weight > 0) totalWeight += weight;
+        }
+
+        const rows = [];
+        let activeXpPerTick = 0;
+        let activeGoldPerTick = 0;
+        for (let i = 0; i < fishTable.length; i++) {
+            const fish = fishTable[i] || {};
+            const weight = Number(fish.weight);
+            if (!Number.isFinite(weight) || weight <= 0 || totalWeight <= 0) continue;
+            const valueRow = valueTable[fish.itemId] && typeof valueTable[fish.itemId] === 'object'
+                ? valueTable[fish.itemId]
+                : {};
+            const weightShare = weight / totalWeight;
+            const fishCatchChance = catchChance * weightShare;
+            const sellValue = Number.isFinite(valueRow.sell) ? valueRow.sell : 0;
+            activeXpPerTick += fishCatchChance * (Number.isFinite(fish.xp) ? fish.xp : 0);
+            activeGoldPerTick += fishCatchChance * sellValue;
+            rows.push({
+                itemId: typeof fish.itemId === 'string' ? fish.itemId : '',
+                requiredLevel: Number.isFinite(fish.requiredLevel) ? fish.requiredLevel : 1,
+                weight,
+                weightShare: roundMetric(weightShare),
+                xp: Number.isFinite(fish.xp) ? fish.xp : 0,
+                sellValue,
+                catchChance: roundMetric(fishCatchChance)
+            });
+        }
+
+        return {
+            waterId,
+            methodId,
+            unlockLevel: curve.unlockLevel,
+            baseCatchChance: roundMetric(curve.baseCatchChance),
+            levelScaling: roundMetric(curve.levelScaling),
+            maxCatchChance: roundMetric(curve.maxCatchChance),
+            benchmark: {
+                level
+            },
+            catchChance: roundMetric(catchChance),
+            fishTable: rows,
+            active: {
+                fishPerTick: roundMetric(catchChance),
+                xpPerTick: roundMetric(activeXpPerTick),
+                goldPerTick: roundMetric(activeGoldPerTick)
+            }
+        };
+    }
+
+    function getFishingBalanceSummary(options = {}) {
+        const fishingSpec = getSkillSpec('fishing') || {};
+        const nodeTable = fishingSpec.nodeTable && typeof fishingSpec.nodeTable === 'object'
+            ? fishingSpec.nodeTable
+            : {};
+        const levelBands = Array.isArray(fishingSpec.levelBands) ? fishingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const order = {
+            net: 0,
+            rod: 1,
+            harpoon: 2,
+            deep_harpoon_mixed: 3,
+            deep_rune_harpoon: 4
+        };
+
+        const rows = [];
+        const waterIds = Object.keys(nodeTable);
+        for (let i = 0; i < waterIds.length; i++) {
+            const waterId = waterIds[i];
+            const methods = nodeTable[waterId] && nodeTable[waterId].methods && typeof nodeTable[waterId].methods === 'object'
+                ? nodeTable[waterId].methods
+                : {};
+            const methodIds = Object.keys(methods);
+            for (let j = 0; j < methodIds.length; j++) {
+                const row = computeFishingMethodMetrics(waterId, methodIds[j], { level });
+                if (row) rows.push(row);
+            }
+        }
+
+        rows.sort((a, b) => {
+            const aOrder = Number.isFinite(order[a.methodId]) ? order[a.methodId] : Number.MAX_SAFE_INTEGER;
+            const bOrder = Number.isFinite(order[b.methodId]) ? order[b.methodId] : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            if (a.waterId !== b.waterId) return a.waterId.localeCompare(b.waterId);
+            return a.methodId.localeCompare(b.methodId);
+        });
+
+        return {
+            assumptions: {
+                level
+            },
+            rows
+        };
+    }
+
     function computeLinearCatchChance(level, unlockLevel, baseChance, scaling, maxChance) {
         const lvl = Number.isFinite(level) ? level : 1;
         const unlock = Number.isFinite(unlockLevel) ? unlockLevel : 1;
@@ -416,6 +567,110 @@
 
     function computeCookingSuccessChance(level, requiredLevel) {
         return 1 - computeCookingBurnChance(level, requiredLevel);
+    }
+
+    function computeCookingRecipeMetrics(recipeId, options = {}) {
+        const cookingSpec = getSkillSpec('cooking') || {};
+        const recipeSet = cookingSpec.recipeSet && typeof cookingSpec.recipeSet === 'object'
+            ? cookingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const economy = cookingSpec.economy && typeof cookingSpec.economy === 'object'
+            ? cookingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const levelBands = Array.isArray(cookingSpec.levelBands) ? cookingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const burnChance = computeCookingBurnChance(level, recipe.requiredLevel);
+        const successChance = 1 - burnChance;
+        const rawValueRow = valueTable[recipe.sourceItemId] && typeof valueTable[recipe.sourceItemId] === 'object'
+            ? valueTable[recipe.sourceItemId]
+            : {};
+        const cookedValueRow = valueTable[recipe.cookedItemId] && typeof valueTable[recipe.cookedItemId] === 'object'
+            ? valueTable[recipe.cookedItemId]
+            : {};
+        const burntValueRow = valueTable[recipe.burntItemId] && typeof valueTable[recipe.burntItemId] === 'object'
+            ? valueTable[recipe.burntItemId]
+            : {};
+        const rawSellValue = Number.isFinite(rawValueRow.sell) ? rawValueRow.sell : 0;
+        const cookedSellValue = Number.isFinite(cookedValueRow.sell) ? cookedValueRow.sell : 0;
+        const burntSellValue = Number.isFinite(burntValueRow.sell) ? burntValueRow.sell : 0;
+
+        return {
+            recipeId,
+            sourceItemId: typeof recipe.sourceItemId === 'string' ? recipe.sourceItemId : '',
+            cookedItemId: typeof recipe.cookedItemId === 'string' ? recipe.cookedItemId : '',
+            burntItemId: typeof recipe.burntItemId === 'string' ? recipe.burntItemId : '',
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            xpPerSuccess: Number.isFinite(recipe.xpPerSuccess) ? recipe.xpPerSuccess : 0,
+            benchmark: {
+                level
+            },
+            successChance: roundMetric(successChance),
+            burnChance: roundMetric(burnChance),
+            sellValues: {
+                raw: rawSellValue,
+                cooked: cookedSellValue,
+                burnt: burntSellValue
+            },
+            expected: {
+                cookedPerAction: roundMetric(successChance),
+                xpPerAction: roundMetric(successChance * (Number.isFinite(recipe.xpPerSuccess) ? recipe.xpPerSuccess : 0)),
+                goldDeltaPerAction: roundMetric((successChance * cookedSellValue) + (burnChance * burntSellValue) - rawSellValue)
+            }
+        };
+    }
+
+    function findCookingBreakEvenLevel(recipeId) {
+        const cookingSpec = getSkillSpec('cooking') || {};
+        const recipeSet = cookingSpec.recipeSet && typeof cookingSpec.recipeSet === 'object'
+            ? cookingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        for (let level = recipe.requiredLevel; level <= 99; level++) {
+            const metrics = computeCookingRecipeMetrics(recipeId, { level });
+            if (metrics && Number.isFinite(metrics.expected.goldDeltaPerAction) && metrics.expected.goldDeltaPerAction >= 0) {
+                return level;
+            }
+        }
+        return null;
+    }
+
+    function getCookingBalanceSummary(options = {}) {
+        const cookingSpec = getSkillSpec('cooking') || {};
+        const recipeSet = cookingSpec.recipeSet && typeof cookingSpec.recipeSet === 'object'
+            ? cookingSpec.recipeSet
+            : {};
+        const levelBands = Array.isArray(cookingSpec.levelBands) ? cookingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+
+        const recipeIds = Object.keys(recipeSet).sort((a, b) => {
+            const aLevel = Number.isFinite(recipeSet[a] && recipeSet[a].requiredLevel) ? recipeSet[a].requiredLevel : Number.MAX_SAFE_INTEGER;
+            const bLevel = Number.isFinite(recipeSet[b] && recipeSet[b].requiredLevel) ? recipeSet[b].requiredLevel : Number.MAX_SAFE_INTEGER;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < recipeIds.length; i++) {
+            const row = computeCookingRecipeMetrics(recipeIds[i], { level });
+            if (!row) continue;
+            row.breakEvenLevel = findCookingBreakEvenLevel(recipeIds[i]);
+            rows.push(row);
+        }
+
+        return {
+            assumptions: {
+                level
+            },
+            rows
+        };
     }
 
     function computeRuneOutputPerEssence(level, scalingStartLevel) {
@@ -456,6 +711,8 @@
         getWoodcuttingDemandSummary,
         computeWoodcuttingNodeMetrics,
         getWoodcuttingBalanceSummary,
+        computeFishingMethodMetrics,
+        getFishingBalanceSummary,
         computeMiningNodeMetrics,
         getMiningBalanceSummary,
         computeGatherSuccessChance,
@@ -465,6 +722,8 @@
         computeSuccessChanceFromDifficulty,
         computeCookingBurnChance,
         computeCookingSuccessChance,
+        computeCookingRecipeMetrics,
+        getCookingBalanceSummary,
         computeRuneOutputPerEssence,
         resolveWeighted
     };

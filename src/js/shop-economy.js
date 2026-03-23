@@ -44,6 +44,14 @@
         return null;
     }
 
+    function normalizeQuestKey(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+    }
+
     function ensureMerchantProgressRoot() {
         const state = getPlayerState();
         if (!state.merchantProgress || typeof state.merchantProgress !== 'object') {
@@ -189,6 +197,86 @@
         };
     }
 
+    function getConditionalSellConfig(merchantConfig, itemId) {
+        if (!merchantConfig || !merchantConfig.conditionalSells || !itemId) return null;
+        const conditionalSells = merchantConfig.conditionalSells;
+        if (typeof conditionalSells !== 'object') return null;
+        const config = conditionalSells[itemId];
+        return config && typeof config === 'object' ? config : null;
+    }
+
+    function getConditionalSellItemIds(merchantConfig) {
+        const conditionalSells = merchantConfig && merchantConfig.conditionalSells && typeof merchantConfig.conditionalSells === 'object'
+            ? merchantConfig.conditionalSells
+            : null;
+        return conditionalSells ? Object.keys(conditionalSells) : [];
+    }
+
+    function slotContainsItem(slot, itemId) {
+        return !!(slot && slot.itemData && slot.itemData.id === itemId && Number(slot.amount) > 0);
+    }
+
+    function arrayContainsItem(slots, itemId) {
+        if (!Array.isArray(slots) || !itemId) return false;
+        for (let i = 0; i < slots.length; i++) {
+            if (slotContainsItem(slots[i], itemId)) return true;
+        }
+        return false;
+    }
+
+    function equipmentContainsItem(equipment, itemId) {
+        if (!equipment || typeof equipment !== 'object' || !itemId) return false;
+        const slotNames = Object.keys(equipment);
+        for (let i = 0; i < slotNames.length; i++) {
+            const equipped = equipment[slotNames[i]];
+            if (!equipped || typeof equipped !== 'object') continue;
+            if (equipped.id === itemId) return true;
+        }
+        return false;
+    }
+
+    function doesPlayerOwnItem(itemId) {
+        if (!itemId) return false;
+        const progress = getProgressState();
+        const inventorySlots = progress && Array.isArray(progress.inventory)
+            ? progress.inventory
+            : (typeof inventory !== 'undefined' ? inventory : []);
+        const bankSlots = progress && Array.isArray(progress.bankItems)
+            ? progress.bankItems
+            : (typeof bankItems !== 'undefined' ? bankItems : []);
+        const equipmentState = progress && progress.equipment && typeof progress.equipment === 'object'
+            ? progress.equipment
+            : (typeof equipment !== 'undefined' ? equipment : null);
+
+        return arrayContainsItem(inventorySlots, itemId)
+            || arrayContainsItem(bankSlots, itemId)
+            || equipmentContainsItem(equipmentState, itemId);
+    }
+
+    function isQuestCompleted(questId) {
+        const normalizedQuestId = normalizeQuestKey(questId);
+        if (!normalizedQuestId) return false;
+
+        if (window.QuestRuntime && typeof window.QuestRuntime.isQuestCompleted === 'function') {
+            return !!window.QuestRuntime.isQuestCompleted(normalizedQuestId);
+        }
+
+        const progress = getProgressState();
+        const quests = progress && progress.quests && typeof progress.quests === 'object' ? progress.quests : null;
+        const entry = quests ? quests[normalizedQuestId] : null;
+        return !!(entry && entry.status === 'completed');
+    }
+
+    function isConditionalSellEligible(itemId, merchantId) {
+        const meta = getMerchantEconomyMeta(merchantId);
+        const merchantConfig = meta && meta.merchantConfig ? meta.merchantConfig : null;
+        const conditionalConfig = getConditionalSellConfig(merchantConfig, itemId);
+        if (!conditionalConfig) return false;
+        if (conditionalConfig.requiresQuestCompleted && !isQuestCompleted(conditionalConfig.requiresQuestCompleted)) return false;
+        if (conditionalConfig.requiresMissingItem && doesPlayerOwnItem(conditionalConfig.requiresMissingItem)) return false;
+        return true;
+    }
+
     function isItemUnlockedForMerchant(itemId, merchantId) {
         if (!itemId) return false;
         const progress = ensureMerchantProgress(merchantId);
@@ -240,6 +328,7 @@
         const merchantConfig = meta.merchantConfig || {};
         const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells : [];
         const unlockConfig = getUnlockConfig(merchantConfig, itemId);
+        const conditionalConfig = getConditionalSellConfig(merchantConfig, itemId);
         const pouchUnlocks = merchantConfig.pouchUnlocks && typeof merchantConfig.pouchUnlocks === 'object'
             ? merchantConfig.pouchUnlocks
             : null;
@@ -248,6 +337,7 @@
             : null;
 
         if (unlockConfig) return isItemUnlockedForMerchant(itemId, id);
+        if (conditionalConfig) return isConditionalSellEligible(itemId, id);
         if (!sells.includes(itemId)) return false;
         if (pouchRequiredLevel === null) return true;
         return getSkillLevel(meta.skillId) >= pouchRequiredLevel;
@@ -319,9 +409,14 @@
         const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells.slice() : [];
         const unlocks = merchantConfig.unlocks;
         const unlockItems = Array.isArray(unlocks && unlocks.itemIds) ? unlocks.itemIds : [];
+        const conditionalItems = getConditionalSellItemIds(merchantConfig);
         for (let i = 0; i < unlockItems.length; i++) {
             const itemId = unlockItems[i];
             if (isItemUnlockedForMerchant(itemId, id)) sells.push(itemId);
+        }
+        for (let i = 0; i < conditionalItems.length; i++) {
+            const itemId = conditionalItems[i];
+            if (isConditionalSellEligible(itemId, id)) sells.push(itemId);
         }
 
         const unique = Array.from(new Set(sells));
@@ -335,9 +430,12 @@
 
     function getUnlockedStockAmount(itemId, merchantId) {
         const meta = getMerchantEconomyMeta(merchantId);
-        const unlockConfig = getUnlockConfig(meta && meta.merchantConfig, itemId);
-        if (!unlockConfig) return 0;
-        return unlockConfig.stockAmount;
+        const merchantConfig = meta && meta.merchantConfig ? meta.merchantConfig : null;
+        const unlockConfig = getUnlockConfig(merchantConfig, itemId);
+        if (unlockConfig) return unlockConfig.stockAmount;
+        const conditionalConfig = getConditionalSellConfig(merchantConfig, itemId);
+        if (!conditionalConfig) return 0;
+        return normalizeStockAmount(conditionalConfig.stockAmount, 1);
     }
 
     function getMerchantSeedStockRows(merchantId) {
@@ -367,7 +465,8 @@
         const sells = Array.isArray(merchantConfig.sells) ? merchantConfig.sells : [];
         const unlocks = merchantConfig.unlocks;
         const unlockItems = Array.isArray(unlocks && unlocks.itemIds) ? unlocks.itemIds : [];
-        const known = Array.from(new Set([].concat(buys, sells, unlockItems))).sort();
+        const conditionalItems = getConditionalSellItemIds(merchantConfig);
+        const known = Array.from(new Set([].concat(buys, sells, unlockItems, conditionalItems))).sort();
 
         const rows = [];
         for (let i = 0; i < known.length; i++) {

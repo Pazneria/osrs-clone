@@ -11,8 +11,11 @@ function createHarness() {
   const session = {
     progress: {
       inventory: [],
+      bankItems: [],
+      equipment: {},
       quests: {}
-    }
+    },
+    player: {}
   };
   const saveReasons = [];
   const chatLog = [];
@@ -97,7 +100,13 @@ sandbox.window.ITEM_DB = {
   wolf_fang: { id: "wolf_fang", name: "Wolf Fang" },
   coal: { id: "coal", name: "Coal" },
   gold_ore: { id: "gold_ore", name: "Gold ore" },
-  uncut_emerald: { id: "uncut_emerald", name: "Uncut emerald" }
+  uncut_emerald: { id: "uncut_emerald", name: "Uncut emerald" },
+  raw_shrimp: { id: "raw_shrimp", name: "Raw Shrimp" },
+  raw_trout: { id: "raw_trout", name: "Raw Trout" },
+  raw_salmon: { id: "raw_salmon", name: "Raw Salmon" },
+  raw_tuna: { id: "raw_tuna", name: "Raw Tuna" },
+  raw_swordfish: { id: "raw_swordfish", name: "Raw Swordfish" },
+  rune_harpoon: { id: "rune_harpoon", name: "Rune Harpoon" }
 };
   sandbox.window.GameSessionRuntime = {
     getSession: () => session
@@ -416,6 +425,183 @@ assert.strictEqual(
   thrainCompletedDialogueView.options[0].label,
   "Ask about the delivery",
   "completed Thrain dialogue should switch to the delivery follow-up option"
+);
+
+const fishingHarness = createHarness();
+const {
+  runtime: fishingRuntime,
+  session: fishingSession,
+  saveReasons: fishingSaveReasons,
+  chatLog: fishingChatLog,
+  rewardItems: fishingRewardItems,
+  rewardXp: fishingRewardXp,
+  uiHooks: fishingUiHooks
+} = fishingHarness;
+const fishingNpc = {
+  name: "Fishing Teacher",
+  dialogueId: "fishing_teacher",
+  merchantId: "fishing_teacher"
+};
+const fishingQuestId = "fishing_teacher_from_net_to_harpoon";
+
+assert.strictEqual(
+  fishingRuntime.resolveNpcPrimaryAction(fishingNpc),
+  "Talk-to",
+  "fishing teacher should stay dialogue-first before quest completion"
+);
+
+const fishingLockedAccess = fishingRuntime.canOpenMerchantShop("fishing_teacher");
+assert.strictEqual(fishingLockedAccess.ok, true, "fishing teacher shop should remain open before quest completion");
+assert.strictEqual(
+  fishingRuntime.isQuestCompleted(fishingQuestId),
+  false,
+  "fishing teacher quest should start incomplete"
+);
+
+const fishingStarted = fishingRuntime.handleNpcDialogueOpened(fishingNpc);
+assert.ok(fishingStarted && fishingStarted.ok, "opening fishing teacher dialogue should auto-start the quest");
+assert.strictEqual(fishingStarted.state.status, "active", "auto-start should persist an active fishing teacher quest state");
+assert.deepStrictEqual(fishingSaveReasons, ["quest_started"], "starting the fishing teacher quest should persist progress once");
+assert.deepStrictEqual(
+  fishingChatLog,
+  [{ message: "Quest started: From Net to Harpoon.", tone: "info" }],
+  "starting the fishing teacher quest should emit a quest-start chat message"
+);
+assert.deepStrictEqual(
+  fishingUiHooks,
+  {
+    renderQuestLog: 1,
+    refreshActiveDialogue: 1,
+    renderInventory: 0
+  },
+  "starting the fishing teacher quest should refresh the quest UI but not inventory"
+);
+
+const fishingActiveDialogueView = fishingRuntime.buildNpcDialogueView(fishingNpc, {
+  title: "Fishing Teacher",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  fishingActiveDialogueView.greeting,
+  "A good fisher learns every stretch of water, not just the easy one. I am still waiting on that full sampler.",
+  "active fishing teacher dialogue should use the quest-specific active greeting"
+);
+assert.strictEqual(
+  fishingActiveDialogueView.options[0].label,
+  "Ask about the order",
+  "active fishing teacher dialogue should offer a progress option first"
+);
+assert.ok(
+  fishingActiveDialogueView.options.some((option) => option && option.kind === "trade" && option.label === "Trade"),
+  "fishing teacher dialogue should still expose a trade option while the quest is active"
+);
+
+fishingSession.progress.inventory = [
+  { itemData: { id: "raw_shrimp", name: "Raw Shrimp" }, amount: 1 },
+  { itemData: { id: "raw_trout", name: "Raw Trout" }, amount: 1 },
+  { itemData: { id: "raw_salmon", name: "Raw Salmon" }, amount: 1 },
+  { itemData: { id: "raw_tuna", name: "Raw Tuna" }, amount: 1 },
+  { itemData: { id: "raw_swordfish", name: "Raw Swordfish" }, amount: 1 }
+];
+
+const fishingRefreshed = fishingRuntime.refreshAllQuestStates({ persist: true, touch: true, render: false });
+assert.strictEqual(fishingRefreshed.length, 1, "refresh should return the fishing teacher quest state");
+assert.strictEqual(fishingRefreshed[0].status, "ready_to_complete", "carrying the required fish should mark the fishing teacher quest ready to complete");
+const fishingReadyAccess = fishingRuntime.canOpenMerchantShop("fishing_teacher");
+assert.strictEqual(fishingReadyAccess.ok, true, "fishing teacher shop should stay open while the quest is ready to complete");
+
+const fishingCompleted = fishingRuntime.completeQuest(fishingQuestId);
+assert.ok(fishingCompleted && fishingCompleted.ok, "turning in the fishing sampler should complete the quest");
+assert.strictEqual(fishingCompleted.state.status, "completed", "completed fishing teacher quest should persist completed state");
+assert.strictEqual(
+  fishingRuntime.resolveNpcPrimaryAction(fishingNpc),
+  "Talk-to",
+  "fishing teacher should stay dialogue-first after quest completion"
+);
+const fishingUnlockedAccess = fishingRuntime.canOpenMerchantShop("fishing_teacher");
+assert.strictEqual(fishingUnlockedAccess.ok, true, "fishing teacher shop should stay open after quest completion");
+assert.strictEqual(
+  fishingRuntime.isQuestCompleted(fishingQuestId),
+  true,
+  "fishing teacher quest should report completed after turn-in"
+);
+assert.strictEqual(
+  fishingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "raw_shrimp"),
+  false,
+  "quest completion should remove turned-in shrimp"
+);
+assert.strictEqual(
+  fishingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "raw_trout"),
+  false,
+  "quest completion should remove turned-in trout"
+);
+assert.strictEqual(
+  fishingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "raw_salmon"),
+  false,
+  "quest completion should remove turned-in salmon"
+);
+assert.strictEqual(
+  fishingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "raw_tuna"),
+  false,
+  "quest completion should remove turned-in tuna"
+);
+assert.strictEqual(
+  fishingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "raw_swordfish"),
+  false,
+  "quest completion should remove turned-in swordfish"
+);
+assert.deepStrictEqual(
+  fishingRewardItems,
+  [{ itemId: "rune_harpoon", amount: 1 }],
+  "fishing teacher quest should grant the authored rune harpoon reward"
+);
+assert.deepStrictEqual(
+  fishingRewardXp,
+  [{ skillId: "fishing", amount: 250 }],
+  "fishing teacher quest should grant the authored fishing XP reward"
+);
+assert.deepStrictEqual(
+  fishingSaveReasons,
+  ["quest_started", "quest_refresh", "quest_completed"],
+  "fishing teacher quest lifecycle should persist start, refresh, and completion updates"
+);
+assert.deepStrictEqual(
+  fishingChatLog,
+  [
+    { message: "Quest started: From Net to Harpoon.", tone: "info" },
+    { message: "Quest complete: From Net to Harpoon.", tone: "info" }
+  ],
+  "fishing teacher quest lifecycle should emit start and completion chat messages"
+);
+assert.deepStrictEqual(
+  fishingUiHooks,
+  {
+    renderQuestLog: 2,
+    refreshActiveDialogue: 2,
+    renderInventory: 1
+  },
+  "fishing teacher quest completion should refresh the quest UI and inventory once"
+);
+
+const fishingCompletedDialogueView = fishingRuntime.buildNpcDialogueView(fishingNpc, {
+  title: "Fishing Teacher",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  fishingCompletedDialogueView.greeting,
+  "You worked every band I asked for. That is enough proof for me.",
+  "completed fishing teacher dialogue should use the completed greeting"
+);
+assert.strictEqual(
+  fishingCompletedDialogueView.options[0].label,
+  "Ask about the delivery",
+  "completed fishing teacher dialogue should switch to the delivery follow-up option"
+);
+assert.ok(
+  fishingCompletedDialogueView.options.some((option) => option && option.kind === "trade" && option.label === "Trade"),
+  "completed fishing teacher dialogue should still expose a trade option"
 );
 
 console.log("Quest runtime guards passed.");

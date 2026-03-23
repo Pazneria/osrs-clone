@@ -93,6 +93,48 @@
                 completedGreeting: 'You brought me something worth looking at. The deepforge stock is open to you now.',
                 completedResponse: 'Good. You know the difference between shiny rock and useful metal. My advanced ore stock is yours to trade with now.'
             }
+        },
+        fishing_teacher_from_net_to_harpoon: {
+            questId: 'fishing_teacher_from_net_to_harpoon',
+            kind: 'turn_in_items',
+            title: 'From Net to Harpoon',
+            category: 'starter_town',
+            questGiverName: 'Fishing Teacher',
+            startNpcDialogueId: 'fishing_teacher',
+            startMerchantId: 'fishing_teacher',
+            startInstructions: 'Talk to the Fishing Teacher beside the castle pond bank in Starter Town.',
+            autoStartOnFirstInteraction: true,
+            primaryActionPolicy: 'dialogue_first',
+            summary: 'The Fishing Teacher wants proof that you can work every fishing band before trusting you with a rune harpoon.',
+            journal: {
+                offer: 'The Fishing Teacher wants a clean sampler from every fishing band before handing over a rune harpoon.',
+                active: 'Bring the Fishing Teacher 1 raw shrimp, 1 raw trout, 1 raw salmon, 1 raw tuna, and 1 raw swordfish.',
+                ready: 'I have the full fishing sampler. I should return to the Fishing Teacher.',
+                completed: 'I proved I could fish every band and earned the Fishing Teacher\'s rune harpoon.'
+            },
+            objectives: [
+                createTurnInObjective('raw_shrimp', 'Raw shrimp', 'raw_shrimp', 1),
+                createTurnInObjective('raw_trout', 'Raw trout', 'raw_trout', 1),
+                createTurnInObjective('raw_salmon', 'Raw salmon', 'raw_salmon', 1),
+                createTurnInObjective('raw_tuna', 'Raw tuna', 'raw_tuna', 1),
+                createTurnInObjective('raw_swordfish', 'Raw swordfish', 'raw_swordfish', 1)
+            ],
+            rewards: {
+                items: [
+                    { itemId: 'rune_harpoon', amount: 1 }
+                ],
+                skillXp: [
+                    { skillId: 'fishing', amount: 250 }
+                ]
+            },
+            dialogue: {
+                offerGreeting: 'Patience gets you started, but range is what proves you understand the water. Want to earn something better than starter gear?',
+                offerResponse: 'Bring me one clean catch from every band I teach: shrimp, trout, salmon, tuna, and swordfish. Do that, and I will trust you with a rune harpoon.',
+                activeGreeting: 'A good fisher learns every stretch of water, not just the easy one. I am still waiting on that full sampler.',
+                readyGreeting: 'That bundle looks like real practice, not luck. If you brought every catch I named, I can finish your lesson properly.',
+                completedGreeting: 'You worked every band I asked for. That is enough proof for me.',
+                completedResponse: 'You earned this rune harpoon. If you ever sell it or lose it, come back when you are carrying none and I will sell you another for the normal price.'
+            }
         }
     };
 

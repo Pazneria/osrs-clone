@@ -37,6 +37,13 @@
         return null;
     }
 
+    function findQuestDefinitionsByNpc(npc) {
+        const catalog = getQuestCatalog();
+        if (!catalog || typeof catalog.findQuestsByNpc !== 'function') return [];
+        const questDefs = catalog.findQuestsByNpc(npc);
+        return Array.isArray(questDefs) ? questDefs : [];
+    }
+
     function listQuestDefinitions() {
         const catalog = getQuestCatalog();
         if (!catalog || typeof catalog.listQuestDefinitions !== 'function') return [];
@@ -78,6 +85,11 @@
         const store = ensureQuestStore();
         if (!store) return null;
         return store[questId] || null;
+    }
+
+    function isQuestCompleted(questId) {
+        const resolvedState = resolveQuestState(questId, { persist: false, touch: false });
+        return !!(resolvedState && resolvedState.status === 'completed');
     }
 
     function ensureStoredQuestEntry(questId) {
@@ -276,6 +288,16 @@
         return questDef.journal.active || 'Finish the quest to unlock this shop.';
     }
 
+    function hasDialogueFirstPrimaryAction(npc) {
+        const questDefs = findQuestDefinitionsByNpc(npc);
+        for (let i = 0; i < questDefs.length; i++) {
+            const questDef = questDefs[i];
+            if (!questDef || questDef.primaryActionPolicy !== 'dialogue_first') continue;
+            return true;
+        }
+        return false;
+    }
+
     function resolveNpcPrimaryAction(npc) {
         const safeNpc = npc && typeof npc === 'object' ? npc : {};
         const merchantId = typeof safeNpc.merchantId === 'string' ? safeNpc.merchantId.trim() : '';
@@ -285,6 +307,7 @@
 
         if (baseAction === 'Travel') return 'Travel';
         if (merchantId) {
+            if (hasDialogueFirstPrimaryAction(safeNpc)) return 'Talk-to';
             return isMerchantShopUnlocked(merchantId) ? 'Trade' : 'Talk-to';
         }
         return baseAction;
@@ -517,10 +540,7 @@
     }
 
     function buildNpcDialogueView(npc, baseView) {
-        const catalog = getQuestCatalog();
-        if (!catalog || typeof catalog.findQuestsByNpc !== 'function') return baseView;
-
-        const questDefs = catalog.findQuestsByNpc(npc);
+        const questDefs = findQuestDefinitionsByNpc(npc);
         if (!Array.isArray(questDefs) || questDefs.length === 0) return baseView;
 
         let nextView = {
@@ -643,9 +663,7 @@
     }
 
     function handleNpcDialogueOpened(npc) {
-        const catalog = getQuestCatalog();
-        if (!catalog || typeof catalog.findQuestsByNpc !== 'function') return null;
-        const questDefs = catalog.findQuestsByNpc(npc);
+        const questDefs = findQuestDefinitionsByNpc(npc);
         if (!Array.isArray(questDefs) || questDefs.length === 0) return null;
 
         for (let i = 0; i < questDefs.length; i++) {
@@ -670,6 +688,7 @@
         createDefaultQuestEntry: createDefaultQuestEntry,
         getQuestDefinition: getQuestDefinition,
         getStoredQuestEntry: getStoredQuestEntry,
+        isQuestCompleted: isQuestCompleted,
         resolveNpcPrimaryAction: resolveNpcPrimaryAction,
         resolveQuestState: resolveQuestState,
         refreshAllQuestStates: refreshAllQuestStates,

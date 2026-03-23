@@ -340,6 +340,15 @@ export function ensureUnlockedMerchantStock(options: {
   if (!economy || typeof economy.getMerchantDefaultSellItemIds !== "function") return shopInventory;
 
   const defaults = economy.getMerchantDefaultSellItemIds(options.merchantId);
+  const defaultSet = new Set(defaults);
+  for (let index = 0; index < shopInventory.length; index += 1) {
+    const slot = shopInventory[index];
+    if (!slot || !slot.itemData || !slot.normalStock) continue;
+    if (!defaultSet.has(slot.itemData.id)) {
+      shopInventory[index] = null;
+    }
+  }
+
   for (let index = 0; index < defaults.length; index += 1) {
     const itemId = defaults[index];
     const itemData = options.itemDb[itemId];

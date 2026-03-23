@@ -34,43 +34,43 @@ The player catches raw fish items that feed into other systems, especially cooki
 
 ### Core Equations
 
-| Equation                | Formula                                                                                                                                                         | Purpose                                                                                            |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Water-Type Catch Chance | Water-Type Catch Chance = min(Max Water-Type Catch Chance, Base Water-Type Catch Chance + Water-Type Level Scaling x (Fishing Level - Water-Type Unlock Level)) | Determines the probability that the player catches something from the current water type on a tick |
-| Fish Catch Chance       | Fish Catch Chance = Water-Type Catch Chance x Fish Weight Share                                                                                                 | Determines the effective probability of catching a specific fish from a mixed water type           |
-| Fish Weight Share       | Fish Weight Share = Fish Weight / Total Eligible Fish Weight                                                                                                    | Determines how likely a successful catch is to become a specific fish                              |
-| Expected Fish per Tick  | Expected Fish per Tick = Water-Type Catch Chance                                                                                                                | Estimates average fishing output rate while actively fishing                                       |
-| Expected XP per Tick    | Expected XP per Tick = Sum(Fish Catch Chance x XP per Catch)                                                                                                      | Estimates average experience gain rate for the current water type                                  |
-| Expected Gold per Tick  | Expected Gold per Tick = Sum(Fish Catch Chance x Fish Sell Value)                                                                                                 | Estimates average gold gain rate for the current water type                                        |
+| Equation | Formula | Purpose |
+| -------- | ------- | ------- |
+| Fishing Method Catch Chance | Fishing Method Catch Chance = min(Max Fishing Method Catch Chance, Base Fishing Method Catch Chance + Fishing Method Level Scaling x (Fishing Level - Method Unlock Level)) | Determines the probability that the selected fishing method yields a catch on a tick |
+| Fish Catch Chance | Fish Catch Chance = Fishing Method Catch Chance x Fish Weight Share | Determines the effective probability of catching a specific fish from a mixed fishing method |
+| Fish Weight Share | Fish Weight Share = Fish Weight / Total Eligible Fish Weight | Determines how likely a successful catch is to become a specific fish |
+| Expected Fish per Tick | Expected Fish per Tick = Fishing Method Catch Chance | Estimates average fishing output rate while actively fishing |
+| Expected XP per Tick | Expected XP per Tick = Sum(Fish Catch Chance x XP per Catch) | Estimates average experience gain rate for the selected fishing method |
+| Expected Gold per Tick | Expected Gold per Tick = Sum(Fish Catch Chance x Fish Sell Value) | Estimates average gross gold gain rate for the selected fishing method |
 
 ### Equation Variables
 
-| Variable                     | Meaning                                                                       |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| Fishing Level                | The player's current fishing level                                            |
-| Water-Type Unlock Level      | The level when this fishing method in this water type first becomes available |
-| Base Water-Type Catch Chance | The catch chance when the water type first becomes available                  |
-| Water-Type Level Scaling     | The amount the water-type catch chance increases per level above unlock       |
-| Max Water-Type Catch Chance  | The upper cap on the water type's overall catch chance                        |
-| Water-Type Catch Chance      | The probability of catching something from the current water type on a tick   |
-| Fish Weight                  | The relative weight of a fish in the current eligible fish table              |
-| Total Eligible Fish Weight   | The sum of all weights for fish the player can currently catch                |
-| Fish Weight Share            | The share of successful catches assigned to one fish                          |
-| Fish Catch Chance            | The effective probability of catching a specific fish on a tick               |
-| XP per Catch                 | The experience granted for catching one fish                                  |
-| Fish Sell Value              | The sell value of one fish                                                    |
-| Expected Fish per Tick       | Average fishing output rate while actively fishing                            |
-| Expected XP per Tick         | Average experience gain rate                                                  |
-| Expected Gold per Tick       | Average gold gain rate                                                        |
+| Variable | Meaning |
+| -------- | ------- |
+| Fishing Level | The player's current fishing level |
+| Method Unlock Level | The level when the selected fishing method first becomes available |
+| Base Fishing Method Catch Chance | The catch chance when the selected fishing method first becomes available |
+| Fishing Method Level Scaling | The amount the fishing-method catch chance increases per level above unlock |
+| Max Fishing Method Catch Chance | The upper cap on the selected method's overall catch chance |
+| Fishing Method Catch Chance | The probability that the selected fishing method yields any catch on a tick |
+| Fish Weight | The relative weight of a fish in the current eligible fish table |
+| Total Eligible Fish Weight | The sum of all weights for fish the player can currently catch |
+| Fish Weight Share | The share of successful catches assigned to one fish |
+| Fish Catch Chance | The effective probability of catching a specific fish on a tick |
+| XP per Catch | The experience granted for catching one fish |
+| Fish Sell Value | The sell value of one fish |
+| Expected Fish per Tick | Average fishing output rate while actively fishing |
+| Expected XP per Tick | Average experience gain rate |
+| Expected Gold per Tick | Average gross gold gain rate |
 
 ### Global Constants
 
-| Constant                     | Value |
-| ---------------------------- | ----- |
-| Tick Duration Seconds        | 0.6   |
-| Base Water-Type Catch Chance | 28%   |
-| Water-Type Level Scaling     | 0.8%  |
-| Max Water-Type Catch Chance  | 62%   |
+| Constant | Value |
+| -------- | ----- |
+| Tick Duration Seconds | 0.6 |
+| Default Base Fishing Method Catch Chance | 28% |
+| Default Fishing Method Level Scaling | 0.8% |
+| Default Max Fishing Method Catch Chance | 62% |
 
 ### Fish Stats
 
@@ -82,26 +82,27 @@ The player catches raw fish items that feed into other systems, especially cooki
 | Raw Tuna      | 30             | 80           | Harpoon                   | None              | Standard Water    | 11         |
 | Raw Swordfish | 40             | 100          | Harpoon or Rune Harpoon   | None              | Deep Water        | 16         |
 
-### Water-Type Stats
+### Fishing Method Stats
 
-| Water Type           | Unlock Level | Tool Needed             | Extra Requirement | Base Water-Type Catch Chance | Water-Type Level Scaling | Max Water-Type Catch Chance |
-| -------------------- | ------------ | ----------------------- | ----------------- | ---------------------------- | ------------------------ | --------------------------- |
-| Net Fishing          | 1            | Small Net               | None              | 28%                          | 0.8%                     | 62%                         |
-| Rod Fishing          | 10           | Fishing Rod             | Bait              | 28%                          | 0.8%                     | 62%                         |
-| Harpoon Fishing      | 30           | Harpoon                 | None              | 28%                          | 0.8%                     | 62%                         |
-| Deep Harpoon Fishing | 40           | Harpoon or Rune Harpoon | None              | 28%                          | 0.8%                     | 62%                         |
+| Fishing Method | Unlock Level | Tool Needed | Extra Requirement | Base Fishing Method Catch Chance | Fishing Method Level Scaling | Max Fishing Method Catch Chance |
+| -------------- | ------------ | ----------- | ----------------- | -------------------------------- | ---------------------------- | ------------------------------- |
+| Net | 1 | Small Net | None | 28% | 0.8% | 62% |
+| Rod | 10 | Fishing Rod | Bait | 28% | 0.8% | 62% |
+| Harpoon | 30 | Harpoon | None | 32% | 0.8% | 62% |
+| Deep Harpoon Mixed | 40 | Harpoon | None | 36% | 0.8% | 62% |
+| Deep Rune Harpoon | 40 | Rune Harpoon | None | 36% | 0.8% | 62% |
 
-### Water-Type Catch Chance Examples
+### Fishing Method Catch Chance Examples
 
-**Water-Type Catch Chance = min(Max Water-Type Catch Chance, Base Water-Type Catch Chance + Water-Type Level Scaling x (Fishing Level - Water-Type Unlock Level))**
+**Fishing Method Catch Chance = min(Max Fishing Method Catch Chance, Base Fishing Method Catch Chance + Fishing Method Level Scaling x (Fishing Level - Method Unlock Level))**
 
-| Water Type           | Fishing Level | Calculation                      | Water-Type Catch Chance |
-| -------------------- | ------------- | -------------------------------- | ----------------------- |
-| Net Fishing          | 1             | min(62%, 28% + 0.8% x (1 - 1))   | 28%                     |
-| Net Fishing          | 10            | min(62%, 28% + 0.8% x (10 - 1))  | 35.2%                   |
-| Rod Fishing          | 10            | min(62%, 28% + 0.8% x (10 - 10)) | 28%                     |
-| Rod Fishing          | 20            | min(62%, 28% + 0.8% x (20 - 10)) | 36%                     |
-| Deep Harpoon Fishing | 40            | min(62%, 28% + 0.8% x (40 - 40)) | 28%                     |
+| Fishing Method | Fishing Level | Calculation | Fishing Method Catch Chance |
+| -------------- | ------------- | ----------- | --------------------------- |
+| Net | 1 | min(62%, 28% + 0.8% x (1 - 1)) | 28% |
+| Rod | 10 | min(62%, 28% + 0.8% x (10 - 10)) | 28% |
+| Rod | 20 | min(62%, 28% + 0.8% x (20 - 10)) | 36% |
+| Harpoon | 30 | min(62%, 32% + 0.8% x (30 - 30)) | 32% |
+| Deep Harpoon Mixed | 40 | min(62%, 36% + 0.8% x (40 - 40)) | 36% |
 
 ### Rod Bait Note
 
@@ -111,6 +112,8 @@ Rod fishing requires bait to start fishing and continue fishing.
 
 One bait is consumed only when a trout or salmon catch succeeds.
 
+Gross fishing gold benchmarks use fish sell values only. Bait cost remains a supporting economic consideration and is not subtracted from the headline gold-per-tick tables in this pass.
+
 ### Deep-Water Harpoon Note
 
 Raw swordfish requires deep water and Fishing Level 40.
@@ -119,41 +122,61 @@ In deep water, a normal harpoon uses the mixed deep-water table and can catch bo
 
 In deep water, a rune harpoon uses the swordfish-only table and catches only swordfish.
 
-### Water-Type Fish Tables
+### Fishing Method Fish Tables
 
-Successful catches are assigned to fish using weighted tables. The player rolls once to determine whether a catch happens. If it succeeds, the fish is chosen from the eligible weighted table for the current fishing method and water type.
+Successful catches are assigned to fish using weighted tables. The player rolls once to determine whether a catch happens. If it succeeds, the fish is chosen from the eligible weighted table for the current fishing method.
 
 | Fishing Method       | Fishing Level Range | Water Requirement | Eligible Fish Weights |
 | -------------------- | ------------------- | ----------------- | --------------------- |
-| Net Fishing          | 1+                  | Standard Water    | Raw Shrimp 100 |
-| Rod Fishing          | 10-19               | Standard Water    | Raw Trout 100 |
-| Rod Fishing          | 20-29               | Standard Water    | Raw Trout 75, Raw Salmon 25 |
-| Rod Fishing          | 30+                 | Standard Water    | Raw Trout 60, Raw Salmon 40 |
-| Harpoon Fishing      | 30-39               | Standard Water    | Raw Tuna 100 |
-| Harpoon Fishing      | 40+                 | Standard Water    | Raw Tuna 100 |
-| Deep Harpoon Fishing | 40+                 | Deep Water        | Raw Tuna 70, Raw Swordfish 30 when using Harpoon |
-| Deep Harpoon Fishing | 40+                 | Deep Water        | Raw Swordfish 100 when using Rune Harpoon |
+| Net | 1+ | Standard Water | Raw Shrimp 100 |
+| Rod | 10-19 | Standard Water | Raw Trout 100 |
+| Rod | 20-29 | Standard Water | Raw Trout 75, Raw Salmon 25 |
+| Rod | 30+ | Standard Water | Raw Trout 60, Raw Salmon 40 |
+| Harpoon | 30+ | Standard Water | Raw Tuna 100 |
+| Deep Harpoon Mixed | 40+ | Deep Water | Raw Tuna 70, Raw Swordfish 30 |
+| Deep Rune Harpoon | 40+ | Deep Water | Raw Swordfish 100 |
 
-### Mixed Water-Type Example
+### Mixed Fishing Method Example
 
 **Rod Fishing at Fishing Level 20**
 
-- Water-Type Catch Chance = 36%
+- Fishing Method Catch Chance = 36%
 - Eligible Fish Weights = Raw Trout 75, Raw Salmon 25
 - Raw Trout Fish Catch Chance = 36% x 75% = 27%
 - Raw Salmon Fish Catch Chance = 36% x 25% = 9%
 
-### Standardized Active Fishing Output Comparison
+### Tier-Entry Active Fishing Output Comparison
 
-These active output values measure fishing performance while the player is actively fishing valid water and do not include walking time, inventory management, or banking time.
+These active output values lock the 1-40 progression pacing while the player is actively fishing valid water. They do not include walking time, inventory management, or banking time.
 
-| Fishing Method       | Fishing Level | Water Requirement | Water-Type Catch Chance | Expected Fish per Tick |
-| -------------------- | ------------- | ----------------- | ----------------------- | ---------------------- |
-| Net Fishing          | 1             | Standard Water    | 28%                     | 0.2800                 |
-| Rod Fishing          | 10            | Standard Water    | 28%                     | 0.2800                 |
-| Rod Fishing          | 20            | Standard Water    | 36%                     | 0.3600                 |
-| Harpoon Fishing      | 30            | Standard Water    | 28%                     | 0.2800                 |
-| Deep Harpoon Fishing | 40            | Deep Water        | 28%                     | 0.2800                 |
+| Fishing Method | Fishing Level | Expected Fish per Tick | Expected XP per Tick | Expected Gold per Tick |
+| -------------- | ------------- | ---------------------- | -------------------- | ---------------------- |
+| Net | 1 | 0.2800 | 5.6000 | 0.2800 |
+| Rod | 10 | 0.2800 | 14.0000 | 1.9600 |
+| Rod | 20 | 0.3600 | 19.8000 | 2.7000 |
+| Rod | 30 | 0.4400 | 25.5200 | 3.4320 |
+| Harpoon | 30 | 0.3200 | 25.6000 | 3.5200 |
+| Deep Harpoon Mixed | 40 | 0.3600 | 30.9600 | 4.5000 |
+| Deep Rune Harpoon | 40 | 0.3600 | 36.0000 | 5.7600 |
+
+### Level-40 Active Fishing Output Comparison
+
+These level-40 values show how the authored methods compare once the full 1-40 route is unlocked.
+
+| Fishing Method | Fishing Level | Expected Fish per Tick | Expected XP per Tick | Expected Gold per Tick |
+| -------------- | ------------- | ---------------------- | -------------------- | ---------------------- |
+| Net | 40 | 0.5920 | 11.8400 | 0.5920 |
+| Rod | 40 | 0.5200 | 30.1600 | 4.0560 |
+| Harpoon | 40 | 0.4000 | 32.0000 | 4.4000 |
+| Deep Harpoon Mixed | 40 | 0.3600 | 30.9600 | 4.5000 |
+| Deep Rune Harpoon | 40 | 0.3600 | 36.0000 | 5.7600 |
+
+### Balance Notes
+
+- Rod cleanly ramps through its 10/20/30 bands on both gross XP and gross gold.
+- Harpoon at level 30 is an actual progression step over rod at level 30 rather than a sideways unlock.
+- Deep Harpoon Mixed is the first-swordfish bridge and must stay competitive enough that it does not lose to Harpoon at level 40 on both XP and gold.
+- Deep Rune Harpoon is the premium level-40 fishing route on both gross XP and gross gold.
 
 ## Continuous Fishing Model
 
@@ -190,7 +213,7 @@ These active output values measure fishing performance while the player is activ
 | Fishing Method          | The active fishing method, such as net, rod, or harpoon                           |
 | Water Type              | The type of water being fished, such as standard water or deep water              |
 | Tool Equipped           | The fishing tool currently being used                                             |
-| Water-Type Catch Chance | The current overall chance that the method and water type yield a catch on a tick |
+| Fishing Method Catch Chance | The current overall chance that the active fishing method yields a catch on a tick |
 | Eligible Fish Table     | The weighted table of fish currently available from the method and water type     |
 | Inventory Space Left    | Number of free inventory slots remaining                                          |
 | Action Active           | Whether the player is currently fishing                                           |
@@ -204,7 +227,7 @@ These active output values measure fishing performance while the player is activ
 | 1    | Check that the fishing action is active and the target water is still valid                                        |
 | 2    | Check that the player still has the required tool, any extra requirement such as bait, and the required water type |
 | 3    | Check that the player has at least one free inventory slot before rolling this tick                                                         |
-| 4    | Calculate the current Water-Type Catch Chance using the fishing method and water-type formula                      |
+| 4    | Calculate the current Fishing Method Catch Chance using the fishing-method formula                                  |
 | 5    | Roll once to determine whether the current water yields a catch on this tick                                       |
 | 6    | If the catch succeeds, choose the fish from the eligible weighted fish table                                       |
 | 7    | Add one fish to inventory and award XP for that fish                                                               |
@@ -231,7 +254,7 @@ These active output values measure fishing performance while the player is activ
 | Water Type              | The type of water currently being fished                                          |
 | Tool Type               | The tool currently being used                                                     |
 | Extra Requirement       | Any required bait or consumable                                                   |
-| Water-Type Catch Chance | The current overall chance that the method and water type yield a catch on a tick |
+| Fishing Method Catch Chance | The current overall chance that the active fishing method yields a catch on a tick |
 | Eligible Fish Table     | The weighted table of fish currently available from the method and water type     |
 | Last Attempt Tick       | The tick of the last fishing roll                                                 |
 | Fishing State           | Whether the player is idle, fishing, or stopped                                   |
@@ -241,7 +264,7 @@ These active output values measure fishing performance while the player is activ
 | Rule             | Description                                                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Action Creation  | When the player clicks valid water and has at least one free inventory slot, create a fishing action with Fishing State = Fishing                                                |
-| Action Update    | On each tick, update Last Attempt Tick and recalculate the current water-type catch chance and eligible fish table based on water type and tool |
+| Action Update    | On each tick, update Last Attempt Tick and recalculate the current fishing-method catch chance and eligible fish table based on method and tool |
 | Deep-Water Split | In deep water at level 40+, the eligible fish table depends on whether the player is using a Harpoon or Rune Harpoon |
 | Action Success   | On a successful catch, choose one eligible fish, add it to inventory, and award XP                                                      |
 | Bait Consumption | If bait is required, consume one bait only when a fish is successfully caught                                                           |
@@ -286,7 +309,7 @@ The fishing teacher introduces the basics of fishing. This NPC helps new players
 
 **Location:** Near the starter shoreline or dock.
 
-**Associated Quests:** Introductory fishing task. The fishing teacher can provide starter bait early and awards the rune harpoon after the player completes the teacher's fish-delivery quest. If the player later sells or loses the rune harpoon, the fishing teacher will sell a replacement rune harpoon for its normal buy value.
+**Associated Quests:** `From Net to Harpoon`. The fishing teacher keeps starter-supply trade open from the start, but left-click interaction remains `Talk-to` so the quest stays the default path. The quest requires `1 raw_shrimp`, `1 raw_trout`, `1 raw_salmon`, `1 raw_tuna`, and `1 raw_swordfish`; completion grants `1 rune_harpoon` and `250 Fishing XP`. If the player later sells or loses the rune harpoon, the fishing teacher will sell a replacement rune harpoon for its normal buy value only while the player owns none in inventory, equipment, or bank.
 
 | Item        | Buys | Sells |
 | ----------- | ---- | ----- |
@@ -332,9 +355,9 @@ The general store buys everything at half price.
 
 Rune Harpoon is not normal shop stock.
 
-The first rune harpoon is obtained from the fishing teacher quest reward.
+The first rune harpoon is obtained from the `From Net to Harpoon` fishing-teacher quest reward.
 
-If the player sells or loses that rune harpoon, the fishing teacher becomes the dedicated replacement source and will sell one replacement rune harpoon for its normal buy value.
+If the player sells or loses that rune harpoon, the fishing teacher becomes the dedicated replacement source and will sell one replacement rune harpoon for its normal buy value only while the player owns none in inventory, equipment, or bank.
 
 ### Fish Sales Note
 

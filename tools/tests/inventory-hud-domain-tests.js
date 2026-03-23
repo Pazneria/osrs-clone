@@ -102,6 +102,26 @@ const ITEM_DB = {
 }
 
 {
+  const result = inventoryDomain.ensureUnlockedMerchantStock({
+    shopInventory: [
+      { itemData: ITEM_DB.shrimp, amount: 1, normalStock: true },
+      { itemData: ITEM_DB.sword, amount: 2, normalStock: false },
+      null
+    ],
+    merchantId: "conditional_teacher",
+    itemDb: ITEM_DB,
+    economy: {
+      getMerchantDefaultSellItemIds: () => ["sword"],
+      getUnlockedStockAmount: () => 1
+    }
+  });
+  assert.strictEqual(result[0], null, "stale normal stock should be removed when the default list changes");
+  assert.strictEqual(result[1].itemData.id, "sword", "existing conditional stock should stay in place");
+  assert.strictEqual(result[1].normalStock, true, "eligible sold-back stock should be promoted to normal stock");
+  assert.strictEqual(result[1].amount, 2, "eligible stock should preserve larger sold-back quantities");
+}
+
+{
   const result = inventoryDomain.buyShopItem({
     inventory: [{ itemData: ITEM_DB.coins, amount: 100 }, null, null, null],
     shopInventory: [{ itemData: ITEM_DB.shrimp, amount: 5, normalStock: true }, null],

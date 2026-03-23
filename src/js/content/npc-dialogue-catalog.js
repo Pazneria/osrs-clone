@@ -52,6 +52,7 @@
             options: [
                 createTextOption('Ask about fishing', 'Keep your stance relaxed and let the water tell you when to pull.'),
                 createTextOption('Ask about tools', 'Small nets and rods are the best way to start before you chase bigger catches.'),
+                createActionOption('Trade', 'trade'),
                 createActionOption('Goodbye', 'close')
             ]
         },

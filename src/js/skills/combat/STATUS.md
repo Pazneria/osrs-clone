@@ -13,10 +13,10 @@
 - [x] COMBAT-009: Added combat content validation and perf gates for spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, pathfinding load, and tick hitching.
 - [x] COMBAT-012: Added a live combat-status HUD panel that surfaces player/target HP, focus, range, and both swing cooldowns directly from the typed UI/combat runtime.
 - [x] COMBAT-010A: Added regression guard coverage for same-tick eat restrictions and stale eat-cooldown sanitization so persisted cooldown ticks cannot lock food usage across session reloads.
+- [x] COMBAT-010: Locked combat-core parity for manual lock breaks, cooldown persistence across breaks/retargets, temporary-occupancy vs hard-no-path pursuit handling, deterministic auto-retaliate order, explicit hit-aggro opening cooldown = `1`, and QA/runtime regression coverage for those shared rules.
 
 ## Now
 - [ ] COMBAT-007: Lock first-pass loot table bands and drop authoring rules so enemy drops support melee progression, economy pacing, and downstream item loops.
-- [ ] COMBAT-010: Run a combat-core parity pass for target-lock edge cases and shared rules that the specs treat as non-optional, including manual-movement lock break, cooldown persistence on break, hard-no-path vs temporary occupancy, auto-retaliate rules, hit-aggro cooldown = 1, and same-tick eat restrictions.
 
 ## Next
 - [ ] COMBAT-011: Add melee attack-style UI so the player can switch Attack / Strength / Defence in-game.

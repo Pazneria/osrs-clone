@@ -1,5 +1,22 @@
 (function () {
     const SPEC_VERSION = '2026.03.m6';
+    const CANONICAL_FISH_FOOD_VALUE_TABLE = Object.freeze({
+        raw_shrimp: { buy: 3, sell: 1 },
+        raw_trout: { buy: 18, sell: 7 },
+        raw_salmon: { buy: 24, sell: 9 },
+        raw_tuna: { buy: 28, sell: 11 },
+        raw_swordfish: { buy: 40, sell: 16 },
+        cooked_shrimp: { buy: 8, sell: 3 },
+        burnt_shrimp: { buy: 1, sell: 1 },
+        cooked_trout: { buy: 24, sell: 9 },
+        burnt_trout: { buy: 1, sell: 1 },
+        cooked_salmon: { buy: 32, sell: 12 },
+        burnt_salmon: { buy: 1, sell: 1 },
+        cooked_tuna: { buy: 40, sell: 16 },
+        burnt_tuna: { buy: 1, sell: 1 },
+        cooked_swordfish: { buy: 56, sell: 22 },
+        burnt_swordfish: { buy: 1, sell: 1 }
+    });
 
     const SKILL_SPECS = {
         woodcutting: {
@@ -99,7 +116,7 @@
             skillId: 'fishing',
             levelBands: [1, 10, 20, 30, 40],
             formulas: {
-                success: 'water_base_plus_scaling_clamped',
+                success: 'method_base_plus_scaling_clamped',
                 selection: 'weighted_fish_table'
             },
             timing: {
@@ -168,6 +185,7 @@
                             toolIds: ['harpoon', 'rune_harpoon'],
                             priority: 30,
                             unlockLevel: 30,
+                            baseCatchChance: 0.32,
                             fishByLevel: [
                                 {
                                     minLevel: 30,
@@ -191,6 +209,7 @@
                             toolIds: ['harpoon'],
                             priority: 40,
                             unlockLevel: 40,
+                            baseCatchChance: 0.36,
                             fishByLevel: [
                                 {
                                     minLevel: 40,
@@ -206,6 +225,7 @@
                             toolIds: ['rune_harpoon'],
                             priority: 50,
                             unlockLevel: 40,
+                            baseCatchChance: 0.36,
                             fishByLevel: [
                                 {
                                     minLevel: 40,
@@ -226,21 +246,7 @@
                     harpoon: { buy: 110, sell: 44 },
                     rune_harpoon: { buy: 2500, sell: 1000 },
                     bait: { buy: 2, sell: 1 },
-                    raw_shrimp: { buy: 3, sell: 1 },
-                    raw_trout: { buy: 18, sell: 7 },
-                    raw_salmon: { buy: 24, sell: 9 },
-                    raw_tuna: { buy: 28, sell: 11 },
-                    raw_swordfish: { buy: 40, sell: 16 },
-                    cooked_shrimp: { buy: 8, sell: 3 },
-                    burnt_shrimp: { buy: 1, sell: 1 },
-                    cooked_trout: { buy: 24, sell: 9 },
-                    burnt_trout: { buy: 1, sell: 1 },
-                    cooked_salmon: { buy: 32, sell: 12 },
-                    burnt_salmon: { buy: 1, sell: 1 },
-                    cooked_tuna: { buy: 40, sell: 16 },
-                    burnt_tuna: { buy: 1, sell: 1 },
-                    cooked_swordfish: { buy: 56, sell: 22 },
-                    burnt_swordfish: { buy: 1, sell: 1 }
+                    ...CANONICAL_FISH_FOOD_VALUE_TABLE
                 },
                 merchantTable: {
                     fishing_supplier: {
@@ -255,8 +261,15 @@
                     },
                     fishing_teacher: {
                         strictBuys: true,
-                        buys: ['small_net', 'fishing_rod', 'harpoon', 'rune_harpoon'],
-                        sells: []
+                        buys: ['small_net', 'fishing_rod', 'bait', 'rune_harpoon'],
+                        sells: ['small_net', 'fishing_rod', 'bait'],
+                        conditionalSells: {
+                            rune_harpoon: {
+                                requiresQuestCompleted: 'fishing_teacher_from_net_to_harpoon',
+                                requiresMissingItem: 'rune_harpoon',
+                                stockAmount: 1
+                            }
+                        }
                     }
                 },
                 generalStoreFallback: {
@@ -386,7 +399,8 @@
             economy: {
                 primaryResource: 'raw_shrimp',
                 cookedResource: 'cooked_shrimp',
-                burntResource: 'burnt_shrimp'
+                burntResource: 'burnt_shrimp',
+                valueTable: CANONICAL_FISH_FOOD_VALUE_TABLE
             }
         },
         mining: {
@@ -1733,6 +1747,450 @@
         }
     }
 
+    function roundBalanceMetric(value) {
+        if (!Number.isFinite(value)) return null;
+        return Math.round(value * 10000) / 10000;
+    }
+
+    function clampBalanceValue(value, minValue, maxValue) {
+        const next = Number.isFinite(value) ? value : minValue;
+        return Math.max(minValue, Math.min(maxValue, next));
+    }
+
+    function computeCookingBurnChance(level, requiredLevel) {
+        const lvl = Number.isFinite(level) ? level : 1;
+        const unlock = Number.isFinite(requiredLevel) ? requiredLevel : 1;
+        const delta = clampBalanceValue(lvl - unlock, 0, 30);
+        if (delta <= 0) return 0.33;
+        if (delta >= 30) return 0;
+        const raw = 0.33 - (0.038 * delta) + (0.0018 * delta * delta) - (0.00003 * delta * delta * delta);
+        return clampBalanceValue(raw, 0, 0.33);
+    }
+
+    function computeCookingBalanceMetrics(cookingSpec, recipeId, benchmark) {
+        const recipeSet = cookingSpec && cookingSpec.recipeSet && typeof cookingSpec.recipeSet === 'object'
+            ? cookingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const valueTable = cookingSpec && cookingSpec.economy && cookingSpec.economy.valueTable && typeof cookingSpec.economy.valueTable === 'object'
+            ? cookingSpec.economy.valueTable
+            : {};
+        const levelBands = Array.isArray(cookingSpec.levelBands) ? cookingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(benchmark && benchmark.level) ? benchmark.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const burnChance = computeCookingBurnChance(level, recipe.requiredLevel);
+        const successChance = 1 - burnChance;
+        const rawValueRow = valueTable[recipe.sourceItemId] && typeof valueTable[recipe.sourceItemId] === 'object'
+            ? valueTable[recipe.sourceItemId]
+            : {};
+        const cookedValueRow = valueTable[recipe.cookedItemId] && typeof valueTable[recipe.cookedItemId] === 'object'
+            ? valueTable[recipe.cookedItemId]
+            : {};
+        const burntValueRow = valueTable[recipe.burntItemId] && typeof valueTable[recipe.burntItemId] === 'object'
+            ? valueTable[recipe.burntItemId]
+            : {};
+        const rawSellValue = Number.isFinite(rawValueRow.sell) ? rawValueRow.sell : 0;
+        const cookedSellValue = Number.isFinite(cookedValueRow.sell) ? cookedValueRow.sell : 0;
+        const burntSellValue = Number.isFinite(burntValueRow.sell) ? burntValueRow.sell : 0;
+        const expectedGoldDeltaPerAction = (successChance * cookedSellValue) + (burnChance * burntSellValue) - rawSellValue;
+
+        return {
+            recipeId,
+            level,
+            successChance,
+            burnChance,
+            expectedCookedPerAction: successChance,
+            expectedXpPerAction: successChance * (Number.isFinite(recipe.xpPerSuccess) ? recipe.xpPerSuccess : 0),
+            expectedGoldDeltaPerAction,
+            rawSellValue,
+            cookedSellValue,
+            burntSellValue
+        };
+    }
+
+    function computeFishingCatchChance(level, unlockLevel, baseCatchChance, levelScaling, maxCatchChance) {
+        const lvl = Number.isFinite(level) ? level : 1;
+        const unlock = Number.isFinite(unlockLevel) ? unlockLevel : 1;
+        const raw = (Number.isFinite(baseCatchChance) ? baseCatchChance : 0) + ((lvl - unlock) * (Number.isFinite(levelScaling) ? levelScaling : 0));
+        const cap = Number.isFinite(maxCatchChance) ? maxCatchChance : 1;
+        return Math.max(0, Math.min(cap, raw));
+    }
+
+    function getFishingMethodFishTable(methodSpec, level) {
+        if (!methodSpec || !Array.isArray(methodSpec.fishByLevel)) return [];
+        for (let i = 0; i < methodSpec.fishByLevel.length; i++) {
+            const band = methodSpec.fishByLevel[i] || {};
+            const minLevel = Number.isFinite(band.minLevel) ? band.minLevel : 1;
+            const maxLevel = Number.isFinite(band.maxLevel) ? band.maxLevel : Infinity;
+            if (level < minLevel || level > maxLevel) continue;
+            const fish = Array.isArray(band.fish) ? band.fish : [];
+            return fish.filter((row) => row && level >= (Number.isFinite(row.requiredLevel) ? row.requiredLevel : 1));
+        }
+        return [];
+    }
+
+    function resolveFishingMethodCurve(waterSpec, methodSpec) {
+        return {
+            unlockLevel: Number.isFinite(methodSpec && methodSpec.unlockLevel)
+                ? methodSpec.unlockLevel
+                : (Number.isFinite(waterSpec && waterSpec.unlockLevel) ? waterSpec.unlockLevel : 1),
+            baseCatchChance: Number.isFinite(methodSpec && methodSpec.baseCatchChance)
+                ? methodSpec.baseCatchChance
+                : (Number.isFinite(waterSpec && waterSpec.baseCatchChance) ? waterSpec.baseCatchChance : 0),
+            levelScaling: Number.isFinite(methodSpec && methodSpec.levelScaling)
+                ? methodSpec.levelScaling
+                : (Number.isFinite(waterSpec && waterSpec.levelScaling) ? waterSpec.levelScaling : 0),
+            maxCatchChance: Number.isFinite(methodSpec && methodSpec.maxCatchChance)
+                ? methodSpec.maxCatchChance
+                : (Number.isFinite(waterSpec && waterSpec.maxCatchChance) ? waterSpec.maxCatchChance : 1)
+        };
+    }
+
+    function computeFishingBalanceMetrics(fishingSpec, waterId, methodId, benchmark) {
+        const nodeTable = fishingSpec && fishingSpec.nodeTable && typeof fishingSpec.nodeTable === 'object'
+            ? fishingSpec.nodeTable
+            : {};
+        const waterSpec = nodeTable[waterId];
+        const methodSpec = waterSpec && waterSpec.methods && typeof waterSpec.methods === 'object'
+            ? waterSpec.methods[methodId]
+            : null;
+        if (!waterSpec || !methodSpec) return null;
+
+        const valueTable = fishingSpec && fishingSpec.economy && fishingSpec.economy.valueTable && typeof fishingSpec.economy.valueTable === 'object'
+            ? fishingSpec.economy.valueTable
+            : {};
+        const levelBands = Array.isArray(fishingSpec.levelBands) ? fishingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const level = Number.isFinite(benchmark && benchmark.level) ? benchmark.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const curve = resolveFishingMethodCurve(waterSpec, methodSpec);
+        const fishTable = getFishingMethodFishTable(methodSpec, level);
+        const catchChance = computeFishingCatchChance(level, curve.unlockLevel, curve.baseCatchChance, curve.levelScaling, curve.maxCatchChance);
+
+        let totalWeight = 0;
+        for (let i = 0; i < fishTable.length; i++) {
+            const fish = fishTable[i];
+            const weight = Number(fish && fish.weight);
+            if (Number.isFinite(weight) && weight > 0) totalWeight += weight;
+        }
+
+        let activeXpPerTick = 0;
+        let activeGoldPerTick = 0;
+        for (let i = 0; i < fishTable.length; i++) {
+            const fish = fishTable[i] || {};
+            const weight = Number(fish.weight);
+            if (!Number.isFinite(weight) || weight <= 0 || totalWeight <= 0) continue;
+            const share = weight / totalWeight;
+            const fishChance = catchChance * share;
+            const valueRow = valueTable[fish.itemId] && typeof valueTable[fish.itemId] === 'object'
+                ? valueTable[fish.itemId]
+                : {};
+            const sellValue = Number.isFinite(valueRow.sell) ? valueRow.sell : 0;
+            activeXpPerTick += fishChance * (Number.isFinite(fish.xp) ? fish.xp : 0);
+            activeGoldPerTick += fishChance * sellValue;
+        }
+
+        return {
+            waterId,
+            methodId,
+            level,
+            catchChance,
+            activeFishPerTick: catchChance,
+            activeXpPerTick,
+            activeGoldPerTick
+        };
+    }
+
+    function validateFishingBalanceCurve(skillSpecs) {
+        const fishingSpec = skillSpecs && skillSpecs.fishing ? skillSpecs.fishing : null;
+        if (!fishingSpec || !fishingSpec.nodeTable) {
+            throw new Error('Fishing balance curve mismatch\n- missing fishing node table');
+        }
+
+        const nodeTable = fishingSpec.nodeTable || {};
+        const shallowWater = nodeTable.shallow_water || null;
+        const deepWater = nodeTable.deep_water || null;
+        const valueTable = fishingSpec.economy && fishingSpec.economy.valueTable && typeof fishingSpec.economy.valueTable === 'object'
+            ? fishingSpec.economy.valueTable
+            : null;
+        if (!valueTable) {
+            throw new Error('Fishing balance curve mismatch\n- missing fishing value table');
+        }
+
+        const errors = [];
+        if (!shallowWater || !shallowWater.methods) errors.push('missing shallow_water fishing methods');
+        if (!deepWater || !deepWater.methods) errors.push('missing deep_water fishing methods');
+
+        const requiredMethods = [
+            ['shallow_water', 'net'],
+            ['shallow_water', 'rod'],
+            ['shallow_water', 'harpoon'],
+            ['deep_water', 'deep_harpoon_mixed'],
+            ['deep_water', 'deep_rune_harpoon']
+        ];
+        for (let i = 0; i < requiredMethods.length; i++) {
+            const row = requiredMethods[i];
+            const waterSpec = nodeTable[row[0]] || {};
+            const methods = waterSpec.methods && typeof waterSpec.methods === 'object' ? waterSpec.methods : {};
+            if (!methods[row[1]]) errors.push('missing fishing method ' + row[0] + '.' + row[1]);
+        }
+
+        const rod = shallowWater && shallowWater.methods ? shallowWater.methods.rod || {} : {};
+        const harpoon = shallowWater && shallowWater.methods ? shallowWater.methods.harpoon || {} : {};
+        const deepMixed = deepWater && deepWater.methods ? deepWater.methods.deep_harpoon_mixed || {} : {};
+        const deepRune = deepWater && deepWater.methods ? deepWater.methods.deep_rune_harpoon || {} : {};
+
+        const rodBands = Array.isArray(rod.fishByLevel) ? rod.fishByLevel : [];
+        if (rodBands.length < 3) {
+            errors.push('rod method must define three level bands');
+        } else {
+            const rod20Fish = Array.isArray(rodBands[1].fish) ? rodBands[1].fish : [];
+            const rod30Fish = Array.isArray(rodBands[2].fish) ? rodBands[2].fish : [];
+            if (!(rod20Fish.length === 2 && rod20Fish[0].itemId === 'raw_trout' && rod20Fish[0].weight === 75 && rod20Fish[1].itemId === 'raw_salmon' && rod20Fish[1].weight === 25)) {
+                errors.push('rod level-20 band must remain trout/salmon at 75/25');
+            }
+            if (!(rod30Fish.length === 2 && rod30Fish[0].itemId === 'raw_trout' && rod30Fish[0].weight === 60 && rod30Fish[1].itemId === 'raw_salmon' && rod30Fish[1].weight === 40)) {
+                errors.push('rod level-30 band must remain trout/salmon at 60/40');
+            }
+        }
+
+        const deepMixedFish = Array.isArray(deepMixed.fishByLevel) && deepMixed.fishByLevel[0] && Array.isArray(deepMixed.fishByLevel[0].fish)
+            ? deepMixed.fishByLevel[0].fish
+            : [];
+        if (!(deepMixedFish.length === 2 && deepMixedFish[0].itemId === 'raw_tuna' && deepMixedFish[0].weight === 70 && deepMixedFish[1].itemId === 'raw_swordfish' && deepMixedFish[1].weight === 30)) {
+            errors.push('deep_harpoon_mixed must remain tuna/swordfish at 70/30');
+        }
+
+        if (Number.isFinite(harpoon.baseCatchChance) && harpoon.baseCatchChance !== 0.32) {
+            errors.push('harpoon baseCatchChance must remain 0.32');
+        }
+        if (Number.isFinite(deepMixed.baseCatchChance) && deepMixed.baseCatchChance !== 0.36) {
+            errors.push('deep_harpoon_mixed baseCatchChance must remain 0.36');
+        }
+        if (Number.isFinite(deepRune.baseCatchChance) && deepRune.baseCatchChance !== 0.36) {
+            errors.push('deep_rune_harpoon baseCatchChance must remain 0.36');
+        }
+
+        const benchmarkRows = [
+            { waterId: 'shallow_water', methodId: 'net', level: 1, fish: 0.28, xp: 5.6, gold: 0.28 },
+            { waterId: 'shallow_water', methodId: 'rod', level: 10, fish: 0.28, xp: 14.0, gold: 1.96 },
+            { waterId: 'shallow_water', methodId: 'rod', level: 20, fish: 0.36, xp: 19.8, gold: 2.7 },
+            { waterId: 'shallow_water', methodId: 'rod', level: 30, fish: 0.44, xp: 25.52, gold: 3.432 },
+            { waterId: 'shallow_water', methodId: 'harpoon', level: 30, fish: 0.32, xp: 25.6, gold: 3.52 },
+            { waterId: 'deep_water', methodId: 'deep_harpoon_mixed', level: 40, fish: 0.36, xp: 30.96, gold: 4.5 },
+            { waterId: 'deep_water', methodId: 'deep_rune_harpoon', level: 40, fish: 0.36, xp: 36.0, gold: 5.76 },
+            { waterId: 'shallow_water', methodId: 'net', level: 40, fish: 0.592, xp: 11.84, gold: 0.592 },
+            { waterId: 'shallow_water', methodId: 'rod', level: 40, fish: 0.52, xp: 30.16, gold: 4.056 },
+            { waterId: 'shallow_water', methodId: 'harpoon', level: 40, fish: 0.4, xp: 32.0, gold: 4.4 }
+        ];
+
+        const metricsByKey = {};
+        for (let i = 0; i < benchmarkRows.length; i++) {
+            const benchmark = benchmarkRows[i];
+            const metrics = computeFishingBalanceMetrics(fishingSpec, benchmark.waterId, benchmark.methodId, benchmark);
+            const key = benchmark.methodId + '@' + benchmark.level;
+            metricsByKey[key] = metrics;
+            if (!metrics) {
+                errors.push('missing fishing balance metrics for ' + benchmark.waterId + '.' + benchmark.methodId + '@' + benchmark.level);
+                continue;
+            }
+            if (roundBalanceMetric(metrics.activeFishPerTick) !== benchmark.fish) {
+                errors.push(benchmark.methodId + '@' + benchmark.level + ' expected fish/tick mismatch');
+            }
+            if (roundBalanceMetric(metrics.activeXpPerTick) !== benchmark.xp) {
+                errors.push(benchmark.methodId + '@' + benchmark.level + ' expected xp/tick mismatch');
+            }
+            if (roundBalanceMetric(metrics.activeGoldPerTick) !== benchmark.gold) {
+                errors.push(benchmark.methodId + '@' + benchmark.level + ' expected gold/tick mismatch');
+            }
+        }
+
+        const rod10 = metricsByKey['rod@10'];
+        const rod20 = metricsByKey['rod@20'];
+        const rod30 = metricsByKey['rod@30'];
+        const harpoon30 = metricsByKey['harpoon@30'];
+        const harpoon40 = metricsByKey['harpoon@40'];
+        const deepMixed40 = metricsByKey['deep_harpoon_mixed@40'];
+        const deepRune40 = metricsByKey['deep_rune_harpoon@40'];
+
+        if (rod10 && rod20) {
+            if (!(rod20.activeXpPerTick > rod10.activeXpPerTick)) errors.push('rod@20 must beat rod@10 on gross xp/tick');
+            if (!(rod20.activeGoldPerTick > rod10.activeGoldPerTick)) errors.push('rod@20 must beat rod@10 on gross gold/tick');
+        }
+        if (rod20 && rod30) {
+            if (!(rod30.activeXpPerTick > rod20.activeXpPerTick)) errors.push('rod@30 must beat rod@20 on gross xp/tick');
+            if (!(rod30.activeGoldPerTick > rod20.activeGoldPerTick)) errors.push('rod@30 must beat rod@20 on gross gold/tick');
+        }
+        if (rod30 && harpoon30) {
+            if (!(harpoon30.activeXpPerTick > rod30.activeXpPerTick)) errors.push('harpoon@30 must beat rod@30 on gross xp/tick');
+            if (!(harpoon30.activeGoldPerTick > rod30.activeGoldPerTick)) errors.push('harpoon@30 must beat rod@30 on gross gold/tick');
+        }
+        if (harpoon40 && deepMixed40) {
+            const losesXp = deepMixed40.activeXpPerTick <= harpoon40.activeXpPerTick;
+            const losesGold = deepMixed40.activeGoldPerTick <= harpoon40.activeGoldPerTick;
+            if (losesXp && losesGold) {
+                errors.push('deep_harpoon_mixed@40 must not lose to harpoon@40 on both gross xp/tick and gross gold/tick');
+            }
+        }
+        if (deepMixed40 && deepRune40) {
+            if (!(deepRune40.activeXpPerTick > deepMixed40.activeXpPerTick)) errors.push('deep_rune_harpoon@40 must beat deep_harpoon_mixed@40 on gross xp/tick');
+            if (!(deepRune40.activeGoldPerTick > deepMixed40.activeGoldPerTick)) errors.push('deep_rune_harpoon@40 must beat deep_harpoon_mixed@40 on gross gold/tick');
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Fishing balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
+    function validateCookingBalanceCurve(skillSpecs) {
+        const cookingSpec = skillSpecs && skillSpecs.cooking ? skillSpecs.cooking : null;
+        if (!cookingSpec || !cookingSpec.recipeSet) {
+            throw new Error('Cooking balance curve mismatch\n- missing cooking recipe set');
+        }
+
+        const fishingSpec = skillSpecs && skillSpecs.fishing ? skillSpecs.fishing : null;
+        const fishingValueTable = fishingSpec && fishingSpec.economy && fishingSpec.economy.valueTable && typeof fishingSpec.economy.valueTable === 'object'
+            ? fishingSpec.economy.valueTable
+            : null;
+        const cookingValueTable = cookingSpec && cookingSpec.economy && cookingSpec.economy.valueTable && typeof cookingSpec.economy.valueTable === 'object'
+            ? cookingSpec.economy.valueTable
+            : null;
+        if (!cookingValueTable) {
+            throw new Error('Cooking balance curve mismatch\n- missing cooking value table');
+        }
+
+        const rows = Object.entries(cookingSpec.recipeSet || {})
+            .map(([recipeId, recipe]) => ({ recipeId, recipe }))
+            .sort((a, b) => {
+                const aLevel = Number.isFinite(a.recipe && a.recipe.requiredLevel) ? a.recipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+                const bLevel = Number.isFinite(b.recipe && b.recipe.requiredLevel) ? b.recipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+                if (aLevel !== bLevel) return aLevel - bLevel;
+                return a.recipeId.localeCompare(b.recipeId);
+            });
+        const levelBands = Array.isArray(cookingSpec.levelBands) ? cookingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const benchmarkLevel = levelBands.length > 0 ? Math.max(...levelBands) : 1;
+        const errors = [];
+        let prev = null;
+
+        const benchmarkRows = [
+            { recipeId: 'raw_shrimp', level: 1, cooked: 0.67, xp: 20.1, gold: 1.34 },
+            { recipeId: 'raw_trout', level: 10, cooked: 0.67, xp: 46.9, gold: -0.64 },
+            { recipeId: 'raw_salmon', level: 20, cooked: 0.67, xp: 60.3, gold: -0.63 },
+            { recipeId: 'raw_tuna', level: 30, cooked: 0.67, xp: 80.4, gold: 0.05 },
+            { recipeId: 'raw_swordfish', level: 40, cooked: 0.67, xp: 93.8, gold: -0.93 },
+            { recipeId: 'raw_shrimp', level: 40, cooked: 1.0, xp: 30.0, gold: 2.0 },
+            { recipeId: 'raw_trout', level: 40, cooked: 1.0, xp: 70.0, gold: 2.0 },
+            { recipeId: 'raw_salmon', level: 40, cooked: 0.95, xp: 85.5, gold: 2.45 },
+            { recipeId: 'raw_tuna', level: 40, cooked: 0.9, xp: 108.0, gold: 3.5 },
+            { recipeId: 'raw_swordfish', level: 40, cooked: 0.67, xp: 93.8, gold: -0.93 }
+        ];
+
+        const metricsByKey = {};
+        for (let i = 0; i < benchmarkRows.length; i++) {
+            const benchmark = benchmarkRows[i];
+            const metrics = computeCookingBalanceMetrics(cookingSpec, benchmark.recipeId, benchmark);
+            const key = benchmark.recipeId + '@' + benchmark.level;
+            metricsByKey[key] = metrics;
+            if (!metrics) {
+                errors.push('missing cooking balance metrics for ' + key);
+                continue;
+            }
+            if (roundBalanceMetric(metrics.expectedCookedPerAction) !== benchmark.cooked) {
+                errors.push(key + ' expected cooked/action mismatch');
+            }
+            if (roundBalanceMetric(metrics.expectedXpPerAction) !== benchmark.xp) {
+                errors.push(key + ' expected xp/action mismatch');
+            }
+            if (roundBalanceMetric(metrics.expectedGoldDeltaPerAction) !== benchmark.gold) {
+                errors.push(key + ' expected gold delta/action mismatch');
+            }
+        }
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const recipe = row.recipe || {};
+            if (recipe.sourceItemId === 'logs' || /_logs$/.test(String(recipe.sourceItemId || ''))) {
+                errors.push(row.recipeId + ' should not consume logs directly');
+            }
+            const valueIds = [recipe.sourceItemId, recipe.cookedItemId, recipe.burntItemId];
+            if (!Number.isFinite(recipe.requiredLevel)) errors.push(row.recipeId + ' missing requiredLevel');
+            if (!Number.isFinite(recipe.xpPerSuccess)) errors.push(row.recipeId + ' missing xpPerSuccess');
+            if (recipe.sourceTarget !== 'FIRE') errors.push(row.recipeId + ' should remain fire-source based');
+            for (let j = 0; j < valueIds.length; j++) {
+                const itemId = typeof valueIds[j] === 'string' ? valueIds[j] : '';
+                const valueRow = itemId && cookingValueTable[itemId] && typeof cookingValueTable[itemId] === 'object'
+                    ? cookingValueTable[itemId]
+                    : null;
+                if (!valueRow) {
+                    errors.push(row.recipeId + ' missing cooking value row for ' + (itemId || 'unknown item'));
+                    continue;
+                }
+                if (!Number.isFinite(valueRow.sell) || valueRow.sell < 0) {
+                    errors.push(row.recipeId + ' missing valid sell value for ' + itemId);
+                }
+                if (fishingValueTable && fishingValueTable[itemId]) {
+                    const fishingRow = fishingValueTable[itemId];
+                    if (valueRow.buy !== fishingRow.buy || valueRow.sell !== fishingRow.sell) {
+                        errors.push(row.recipeId + ' value row for ' + itemId + ' must stay aligned with fishing');
+                    }
+                }
+            }
+
+            const unlockMetrics = computeCookingBalanceMetrics(cookingSpec, row.recipeId, { level: recipe.requiredLevel });
+            const benchmarkMetrics = computeCookingBalanceMetrics(cookingSpec, row.recipeId, { level: benchmarkLevel });
+            if (!unlockMetrics || !benchmarkMetrics) {
+                errors.push('missing cooking metrics for ' + row.recipeId);
+                continue;
+            }
+
+            if (prev) {
+                if (!(recipe.requiredLevel > prev.recipe.requiredLevel)) {
+                    errors.push(row.recipeId + ' requiredLevel must increase by tier');
+                }
+                if (!(recipe.xpPerSuccess > prev.recipe.xpPerSuccess)) {
+                    errors.push(row.recipeId + ' xpPerSuccess must increase by tier');
+                }
+                if (!(unlockMetrics.expectedXpPerAction > prev.unlockMetrics.expectedXpPerAction)) {
+                    errors.push(row.recipeId + ' unlock expected xp/action must increase by tier');
+                }
+            }
+
+            prev = {
+                recipe,
+                unlockMetrics,
+                benchmarkMetrics
+            };
+        }
+
+        const shrimp40 = metricsByKey['raw_shrimp@40'];
+        const trout40 = metricsByKey['raw_trout@40'];
+        const salmon40 = metricsByKey['raw_salmon@40'];
+        const tuna40 = metricsByKey['raw_tuna@40'];
+        const swordfish40 = metricsByKey['raw_swordfish@40'];
+
+        if (shrimp40 && !(shrimp40.expectedGoldDeltaPerAction > 0)) {
+            errors.push('raw_shrimp@40 should remain positive gold delta');
+        }
+        if (trout40 && !(trout40.expectedGoldDeltaPerAction > 0)) {
+            errors.push('raw_trout@40 should remain positive gold delta');
+        }
+        if (salmon40 && !(salmon40.expectedGoldDeltaPerAction > trout40.expectedGoldDeltaPerAction)) {
+            errors.push('raw_salmon@40 should beat raw_trout@40 on gold delta');
+        }
+        if (tuna40 && salmon40 && !(tuna40.expectedXpPerAction > salmon40.expectedXpPerAction)) {
+            errors.push('raw_tuna@40 should beat raw_salmon@40 on xp/action');
+        }
+        if (tuna40 && salmon40 && !(tuna40.expectedGoldDeltaPerAction > salmon40.expectedGoldDeltaPerAction)) {
+            errors.push('raw_tuna@40 should beat raw_salmon@40 on gold delta');
+        }
+        if (swordfish40 && !(swordfish40.expectedGoldDeltaPerAction < 0)) {
+            errors.push('raw_swordfish@40 should remain a negative-gold unlock inside the 1-40 cap');
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Cooking balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     function computeWoodcuttingBalanceMetrics(woodcuttingSpec, nodeId, benchmark) {
         const nodeTable = woodcuttingSpec && woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
             ? woodcuttingSpec.nodeTable
@@ -2083,6 +2541,8 @@
         }
     }
 
+    validateFishingBalanceCurve(SKILL_SPECS);
+    validateCookingBalanceCurve(SKILL_SPECS);
     validateWoodcuttingBalanceCurve(SKILL_SPECS);
     validateMiningBalanceCurve(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);

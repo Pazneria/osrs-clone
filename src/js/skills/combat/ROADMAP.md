@@ -35,6 +35,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Passive rat + aggressive goblin enemy content | Complete |
 | Placeholder combat removal (`DUMMY`, `owie`, old combat sim) | Complete |
 | Combat-focused tests and rollout guards | Complete |
+| Combat-core parity pass for shared lock/cooldown/retaliate rules | Complete |
 | Starter-town encounter authoring pass | Complete |
 | First-pass melee-only enemy template rollout beyond rat/goblin | Complete |
 | Loot-table and drop-band authoring pass | Now |
@@ -89,15 +90,16 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 ### Target-Lock Edge Cases
 
 - Manual player movement input clears the player combat target immediately.
-- Breaking or replacing a locked target does not reset or shorten an already-active attack cooldown.
-- Hard no-path failures should break target lock immediately; temporary occupancy blockage should keep lock and retry pathing.
-- Auto-retaliate should only replace the player's target when the player lacks a currently valid lock/path under the shared combat rules.
+- Manual non-enemy interactions also clear the player combat target immediately.
+- Breaking or replacing a locked target does not reset or shorten an already-active attack cooldown; the cooldown keeps ticking even after the lock is gone.
+- Hard no-path failures break target lock immediately; temporary occupancy blockage keeps the lock, stops stale pursuit movement, and retries pathing on later ticks.
+- Auto-retaliate only replaces the player's target when the player lacks a currently valid lock/path under the shared combat rules.
 - Same-tick attack batching should keep honoring fizzle rules when a target becomes invalid before the batch forms.
 
 ### Shared Combat Interaction Rules
 
 - Universal hit-aggro should remain explicit: an idle enemy hit by the player becomes aggressive on that same tick and sets Remaining Attack Cooldown to `1`.
-- Auto-retaliate target choice should stay deterministic when multiple valid attackers exist: first attacker, then closest attacker, then weakest-to-strongest tie-break order.
+- Auto-retaliate target choice is locked to a deterministic order when multiple valid attackers exist: first attacker, then closest attacker, then weakest-to-strongest, then stable runtime id.
 - Eating interaction remains a combat-core concern, not a melee-only concern.
 - Same-tick eat restrictions from the shared combat/cooking rules should stay aligned as combat content expands.
 
@@ -361,7 +363,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - Starter-town encounter layouts should be manually checked for safe-routing, aggro readability, and pathing edge cases.
 - The encounter topology/perf guard should cover spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, and local path-budget estimates.
 - Same-tick combat rules should remain covered by automated tests as the enemy roster expands.
-- Manual-movement lock break, auto-retaliate choice rules, hit-aggro cooldown = `1`, and temporary-occupancy-vs-hard-no-path behavior should remain explicitly regression-tested.
+- Manual-movement lock break, non-enemy interaction lock break, cooldown persistence after break, auto-retaliate choice rules, hit-aggro cooldown = `1`, and temporary-occupancy-vs-hard-no-path behavior should remain explicitly regression-tested.
 - Combat/eating interaction should remain regression-tested against the shared same-tick restriction rules.
 - Loot tables should validate weights, quantity bands, item ids, and progression-band sanity.
 - Spawn groups should validate spacing, enabled-state consistency, and region ownership.
@@ -370,9 +372,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Finish the starter-town encounter pass so combat feels intentionally placed in the world, not merely spawned.
-2. Roll out the rest of the first-pass melee-only enemy templates with spec-aligned loot and respawn data.
-3. Lock in first-pass loot table rules so drops support the economy and combat progression instead of fighting them.
-4. Add melee style selection UI and keep combat HUD state aligned as encounter complexity grows.
-5. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
-6. Rebuild the combat simulator from the canonical formulas and content contracts.
+1. Lock in first-pass loot table rules so drops support the economy and combat progression instead of fighting them.
+2. Add melee style selection UI and keep combat HUD state aligned as encounter complexity grows.
+3. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
+4. Rebuild the combat simulator from the canonical formulas and content contracts.

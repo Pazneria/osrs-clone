@@ -3,6 +3,9 @@
     const PLAYER_TARGET_ID = 'player';
     const PLAYER_TARGET_KIND = 'enemy';
     const PLAYER_DEFEAT_MESSAGE = 'You were defeated and return to safety.';
+    const PLAYER_PURSUIT_STATE_VALID = 'valid-path';
+    const PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK = 'temporary-occupancy-block';
+    const PLAYER_PURSUIT_STATE_HARD_NO_PATH = 'hard-no-path';
     const ENEMY_IDLE_WANDER_PAUSE_MIN_TICKS = 2;
     const ENEMY_IDLE_WANDER_PAUSE_MAX_TICKS = 5;
     const ENEMY_IDLE_WANDER_PICK_ATTEMPTS = 12;
@@ -39,6 +42,7 @@
     let combatEnemyRenderersById = Object.create(null);
     let combatEnemyOccupiedTiles = new Map();
     let combatEnemyOccupancyDirty = true;
+    let combatAutoRetaliateAggressorOrdinal = 1;
 
     function clonePoint(point) {
         return {
@@ -252,6 +256,9 @@
         combatEnemySpawnNodesById = Object.create(null);
         combatEnemyStateById = Object.create(null);
         combatEnemyStates = [];
+        combatAutoRetaliateAggressorOrdinal = 1;
+        window.__qaCombatDebugLastPlayerPursuitState = null;
+        window.__qaCombatDebugLastAutoRetaliateSelection = null;
     }
 
     function shouldPreservePreEngagementTargetLock() {
@@ -268,7 +275,6 @@
         if (playerState.combatTargetKind === PLAYER_TARGET_KIND) return true;
         if (playerState.targetObj === 'ENEMY') return true;
         if (playerState.inCombat) return true;
-        if (Number.isFinite(playerState.remainingAttackCooldown) && playerState.remainingAttackCooldown > 0) return true;
         return false;
     }
 
@@ -281,11 +287,43 @@
         if (clearEvents.length > 40) clearEvents.splice(0, clearEvents.length - 40);
     }
 
+    function recordPlayerPursuitDebug(enemyState, pursuitState, pursuitPath = null, occupancyIgnoredPath = null) {
+        window.__qaCombatDebugLastPlayerPursuitState = {
+            tick: Number.isFinite(currentTick) ? currentTick : null,
+            runtimeId: enemyState && enemyState.runtimeId ? String(enemyState.runtimeId) : null,
+            enemyId: enemyState && enemyState.enemyId ? String(enemyState.enemyId) : null,
+            state: pursuitState || PLAYER_PURSUIT_STATE_HARD_NO_PATH,
+            pathLength: Array.isArray(pursuitPath) ? pursuitPath.length : null,
+            occupancyIgnoredPathLength: Array.isArray(occupancyIgnoredPath) ? occupancyIgnoredPath.length : null
+        };
+    }
+
+    function recordAutoRetaliateSelection(enemyState) {
+        if (!enemyState) {
+            window.__qaCombatDebugLastAutoRetaliateSelection = null;
+            return;
+        }
+        const enemyType = getEnemyDefinition(enemyState.enemyId);
+        window.__qaCombatDebugLastAutoRetaliateSelection = {
+            tick: Number.isFinite(currentTick) ? currentTick : null,
+            runtimeId: enemyState.runtimeId,
+            enemyId: enemyState.enemyId,
+            displayName: enemyType && enemyType.displayName ? enemyType.displayName : enemyState.enemyId,
+            distance: getChebyshevDistance(playerState, enemyState),
+            combatLevel: getEnemyCombatLevel(enemyType),
+            aggressorOrder: Number.isFinite(enemyState.autoRetaliateAggressorOrder)
+                ? Math.floor(enemyState.autoRetaliateAggressorOrder)
+                : null
+        };
+    }
+
     function clearPlayerCombatTarget(options = null) {
-        if (!hasActivePlayerCombatSelection()) return false;
         const opts = options && typeof options === 'object' ? options : null;
         const forced = !!(opts && opts.force);
+        const shouldResetCooldown = !!(opts && opts.resetCooldown);
         const reason = opts && typeof opts.reason === 'string' && opts.reason ? opts.reason : 'generic';
+        const hasCombatSelection = hasActivePlayerCombatSelection();
+        if (!hasCombatSelection && !forced) return false;
         const shouldRecordClearDebug = !!window.QA_COMBAT_DEBUG;
         const combatClearEvent = shouldRecordClearDebug
             ? {
@@ -305,18 +343,23 @@
             recordCombatClearEvent(combatClearEvent);
             return false;
         }
+        const hadEnemyTarget =
+            !!playerState.lockedTargetId
+            || playerState.combatTargetKind === PLAYER_TARGET_KIND
+            || playerState.targetObj === 'ENEMY';
         window.__qaCombatDebugLastClearReason = reason;
         window.__qaCombatDebugLastClearTick = Number.isFinite(currentTick) ? currentTick : null;
         recordCombatClearEvent(combatClearEvent);
         playerState.lockedTargetId = null;
         playerState.combatTargetKind = null;
-        playerState.remainingAttackCooldown = 0;
+        if (hadEnemyTarget) playerState.path = [];
+        if (shouldResetCooldown) playerState.remainingAttackCooldown = 0;
         playerState.inCombat = false;
         if (playerState.targetObj === 'ENEMY') {
             playerState.targetObj = null;
             playerState.targetUid = null;
         }
-        if (playerState.action === 'COMBAT: MELEE') playerState.action = 'IDLE';
+        if (playerState.action === 'COMBAT: MELEE' || (hadEnemyTarget && playerState.action === 'WALKING')) playerState.action = 'IDLE';
         return true;
     }
 
@@ -347,6 +390,25 @@
         if (!a || !b) return null;
         if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) return null;
         return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+    }
+
+    function clearEnemyAutoRetaliateAggressorOrder(enemyState) {
+        if (!enemyState) return;
+        enemyState.autoRetaliateAggressorOrder = null;
+    }
+
+    function markEnemyAutoRetaliateAggressor(enemyState) {
+        if (!enemyState) return null;
+        if (Number.isFinite(enemyState.autoRetaliateAggressorOrder) && enemyState.autoRetaliateAggressorOrder > 0) {
+            return enemyState.autoRetaliateAggressorOrder;
+        }
+        enemyState.autoRetaliateAggressorOrder = combatAutoRetaliateAggressorOrdinal++;
+        return enemyState.autoRetaliateAggressorOrder;
+    }
+
+    function getAutoRetaliateCandidateCombatLevel(enemyState) {
+        if (!enemyState) return Number.MAX_SAFE_INTEGER;
+        return getEnemyCombatLevel(getEnemyDefinition(enemyState.enemyId));
     }
 
     function resolveCombatHudFocusEnemy() {
@@ -417,7 +479,7 @@
         clearCombatEnemyOccupancy();
         resetCombatStateCollections();
         combatEnemyOccupancyDirty = true;
-        clearPlayerCombatTarget({ force: true, reason: 'init-world-state' });
+        clearPlayerCombatTarget({ force: true, reason: 'init-world-state', resetCooldown: true });
         playerState.lastDamagerEnemyId = null;
 
         if (!combatRuntime || typeof combatRuntime.listEnemySpawnNodesForWorld !== 'function' || typeof combatRuntime.createEnemyRuntimeState !== 'function') {
@@ -440,6 +502,7 @@
             enemyState.prevY = enemyState.y;
             enemyState.moveTriggerAt = 0;
             enemyState.homeReachedAt = 0;
+            enemyState.autoRetaliateAggressorOrder = null;
             clearEnemyLocomotionIntent(enemyState);
             scheduleEnemyIdleWanderPause(enemyState, 1, 3);
             combatEnemyStates.push(enemyState);
@@ -533,21 +596,29 @@
         return path.length > 0 ? path : null;
     }
 
-    function resolvePathToEnemy(enemyState) {
+    function resolvePathToEnemy(enemyState, pathOptions = null) {
         if (!enemyState || !isEnemyAlive(enemyState)) return null;
         if (enemyState.z !== playerState.z) return null;
         if (isWithinMeleeRange(playerState, enemyState)) return [];
         if (typeof findPath !== 'function') return null;
-        const path = findPath(playerState.x, playerState.y, enemyState.x, enemyState.y, true, 'ENEMY');
+        const path = findPath(playerState.x, playerState.y, enemyState.x, enemyState.y, true, 'ENEMY', pathOptions);
         return path.length > 0 ? path : null;
     }
 
-    function resolvePathToPlayer(enemyState) {
+    function resolvePathToPlayer(enemyState, pathOptions = null) {
         if (!enemyState || !isEnemyAlive(enemyState) || !isPlayerAlive()) return null;
         if (enemyState.z !== playerState.z) return null;
         if (isWithinMeleeRange(enemyState, playerState)) return [];
         if (typeof findPath !== 'function') return null;
-        const path = findPath(enemyState.x, enemyState.y, playerState.x, playerState.y, true, 'ENEMY');
+        const path = findPath(
+            enemyState.x,
+            enemyState.y,
+            playerState.x,
+            playerState.y,
+            true,
+            'ENEMY',
+            Object.assign({ z: enemyState.z }, pathOptions && typeof pathOptions === 'object' ? pathOptions : null)
+        );
         return path.length > 0 ? path : null;
     }
 
@@ -688,6 +759,7 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyAutoRetaliateAggressorOrder(enemyState);
         clearEnemyIdleWanderState(enemyState);
         clearEnemyLocomotionIntent(enemyState);
     }
@@ -706,6 +778,7 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
         enemyState.homeReachedAt = Date.now();
@@ -754,6 +827,7 @@
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.pendingDefeatAtTick = null;
         enemyState.pendingDefeatFacingYaw = null;
         clearEnemyLocomotionIntent(enemyState);
@@ -800,6 +874,7 @@
         enemyState.pendingDefeatAtTick = null;
         enemyState.pendingDefeatFacingYaw = null;
         enemyState.lastDamagerId = null;
+        clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
         enemyState.moveTriggerAt = 0;
@@ -848,6 +923,7 @@
     function validatePlayerTargetLock() {
         const lockedEnemy = getPlayerLockedEnemy();
         if (!lockedEnemy) {
+            recordPlayerPursuitDebug(null, PLAYER_PURSUIT_STATE_HARD_NO_PATH, null, null);
             const hasCombatSelection =
                 !!playerState.lockedTargetId
                 || playerState.combatTargetKind === PLAYER_TARGET_KIND
@@ -856,22 +932,78 @@
             return null;
         }
         if (!isEnemyAlive(lockedEnemy)) {
+            recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_HARD_NO_PATH, null, null);
             clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-not-alive' });
             return null;
         }
         playerState.targetX = lockedEnemy.x;
         playerState.targetY = lockedEnemy.y;
         const pursuitPath = resolvePathToEnemy(lockedEnemy);
-        if (pursuitPath === null) {
+        if (pursuitPath !== null) {
+            recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_VALID, pursuitPath, pursuitPath);
             return {
                 enemyState: lockedEnemy,
-                pursuitPath: null
+                pursuitPath,
+                pursuitState: PLAYER_PURSUIT_STATE_VALID,
+                occupancyIgnoredPursuitPath: pursuitPath
             };
         }
-        return {
-            enemyState: lockedEnemy,
-            pursuitPath
-        };
+        const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {
+            z: playerState.z,
+            ignoreCombatEnemyOccupancy: true
+        });
+        if (occupancyIgnoredPursuitPath !== null) {
+            recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK, null, occupancyIgnoredPursuitPath);
+            return {
+                enemyState: lockedEnemy,
+                pursuitPath: null,
+                pursuitState: PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK,
+                occupancyIgnoredPursuitPath
+            };
+        }
+        recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_HARD_NO_PATH, null, null);
+        clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-hard-no-path' });
+        return null;
+    }
+
+    function hasValidPlayerCombatLock() {
+        const lockedEnemy = getPlayerLockedEnemy();
+        if (!lockedEnemy || !isEnemyAlive(lockedEnemy)) return false;
+        const pursuitPath = resolvePathToEnemy(lockedEnemy);
+        if (pursuitPath !== null) return true;
+        const occupancyIgnoredPath = resolvePathToEnemy(lockedEnemy, {
+            z: playerState.z,
+            ignoreCombatEnemyOccupancy: true
+        });
+        return occupancyIgnoredPath !== null;
+    }
+
+    function isValidAutoRetaliateCandidate(enemyState) {
+        if (!isEnemyAlive(enemyState)) return false;
+        if (!isPlayerAlive()) return false;
+        if (enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID) return false;
+        if (enemyState.z !== playerState.z) return false;
+        const playerTile = { x: playerState.x, y: playerState.y, z: playerState.z };
+        const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
+        return !!homeTile && getSquareRange(homeTile, playerTile, enemyState.resolvedChaseRange);
+    }
+
+    function pickAutoRetaliateTarget() {
+        const candidates = combatEnemyStates.filter((enemyState) => isValidAutoRetaliateCandidate(enemyState));
+        if (candidates.length === 0) return null;
+        candidates.sort((left, right) => {
+            const leftOrder = Number.isFinite(left.autoRetaliateAggressorOrder) ? left.autoRetaliateAggressorOrder : Number.MAX_SAFE_INTEGER;
+            const rightOrder = Number.isFinite(right.autoRetaliateAggressorOrder) ? right.autoRetaliateAggressorOrder : Number.MAX_SAFE_INTEGER;
+            if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+            const leftDistance = getChebyshevDistance(playerState, left);
+            const rightDistance = getChebyshevDistance(playerState, right);
+            if (leftDistance !== rightDistance) return leftDistance - rightDistance;
+            const leftLevel = getAutoRetaliateCandidateCombatLevel(left);
+            const rightLevel = getAutoRetaliateCandidateCombatLevel(right);
+            if (leftLevel !== rightLevel) return leftLevel - rightLevel;
+            return String(left.runtimeId || '').localeCompare(String(right.runtimeId || ''));
+        });
+        return candidates[0] || null;
     }
 
     function validateEnemyTargetLock(enemyState) {
@@ -962,7 +1094,7 @@
     function resolveAttackBatch(attacks) {
         const results = [];
         let playerDamageTotal = 0;
-        const playerAttackers = [];
+        let attackedPlayerThisTick = false;
 
         for (let i = 0; i < attacks.length; i++) {
             const attack = attacks[i];
@@ -998,7 +1130,6 @@
                 ? 0
                 : (landed ? combatRuntime.rollDamage(attack.snapshot.maxHit) : 0);
             playerDamageTotal += damage;
-            playerAttackers.push(enemyState.runtimeId);
             window.__qaCombatDebugLastEnemyAttackResult = {
                 tick: Number.isFinite(currentTick) ? currentTick : null,
                 attackerId: enemyState.runtimeId,
@@ -1062,6 +1193,8 @@
                 enemyState.currentState = 'aggroed';
                 enemyState.lockedTargetId = PLAYER_TARGET_ID;
                 enemyState.lastDamagerId = PLAYER_TARGET_ID;
+                markEnemyAutoRetaliateAggressor(enemyState);
+                attackedPlayerThisTick = true;
                 clearEnemyIdleWanderState(enemyState);
                 playerState.lastDamagerEnemyId = enemyState.runtimeId;
                 playerState.inCombat = true;
@@ -1077,8 +1210,12 @@
 
         if (!isPlayerAlive()) {
             applyPlayerDefeat();
-        } else if (!getPlayerLockedEnemy() && playerState.autoRetaliateEnabled && playerAttackers.length > 0) {
-            lockPlayerCombatTarget(playerAttackers[0]);
+        } else if (attackedPlayerThisTick && playerState.autoRetaliateEnabled && !hasValidPlayerCombatLock()) {
+            const autoRetaliateTarget = pickAutoRetaliateTarget();
+            if (autoRetaliateTarget) {
+                lockPlayerCombatTarget(autoRetaliateTarget.runtimeId);
+                recordAutoRetaliateSelection(autoRetaliateTarget);
+            }
         }
 
         return results;
@@ -1087,6 +1224,11 @@
     function movePlayerTowardLockedTarget(playerLockState, attackedThisTick) {
         if (!playerLockState || attackedThisTick) return;
         if (playerState.action === 'SKILLING: FLETCHING') return;
+        if (playerLockState.pursuitState === PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK) {
+            playerState.path = [];
+            playerState.action = 'COMBAT: MELEE';
+            return;
+        }
         if (playerLockState.pursuitPath && playerLockState.pursuitPath.length > 0) {
             playerState.path = playerLockState.pursuitPath;
             playerState.action = 'WALKING';
@@ -1222,11 +1364,7 @@
             return;
         }
 
-        if (!playerState.inCombat) {
-            playerState.remainingAttackCooldown = 0;
-        } else {
-            playerState.remainingAttackCooldown = combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);
-        }
+        playerState.remainingAttackCooldown = combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);
 
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];

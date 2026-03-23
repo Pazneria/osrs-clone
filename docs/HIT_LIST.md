@@ -953,6 +953,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-050 - Cooking 1-40 balance targets missing after burn-curve pass
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `src/js/skills/cooking/ROADMAP.md`, `src/js/skills/cooking/STATUS.md`, `src/js/skills/_index.md`, `content/skills/cooking.json`
+- Repro:
+  1. Review the cooking roadmap after the burn-curve rebalance and compare it against the live runtime spec.
+  2. Try to answer the expected cooked-output, XP-per-action, and value-per-action targets for each 1-40 food band.
+  3. Check whether cooking exposes canonical balance helpers and sell-value tables like the other matured skill specs.
+- Expected: Cooking should publish explicit 1-40 benchmark targets, expose canonical per-recipe balance helpers, and keep its fish sell values aligned with fishing.
+- Actual: Cooking still lacked a dedicated value table and registry summary helpers, and the roadmap's sell-value columns still mirrored base item values instead of the live merchant sell values.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical cooking value-table coverage aligned to fishing for raw/cooked/burnt fish.
+  2. Add per-recipe cooking balance helpers and validation for unlock and level-40 benchmarks.
+  3. Sync the roadmap/status/mirror docs with explicit XP/value-per-action targets and break-even levels.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a shared canonical fish-food value table in `src/js/skills/specs.js` so fishing and cooking now reuse the same raw/cooked/burnt buy/sell rows instead of drifting copies.
+  - Added cooking balance validation in the runtime spec plus registry helpers for expected cooked output, XP/action, gold-delta/action, and break-even level summaries.
+  - Updated the cooking roadmap with live sell values plus tier-entry, level-40, and break-even benchmark tables, then synced the cooking status/index and runtime mirror docs.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-049 - Mining gem-route balance tables drift from live runtime targets
 - Status: Fixed
 - Severity: S2

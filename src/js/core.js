@@ -202,6 +202,41 @@
                 && typeof animationBridge.getLegacyControllerDebugState === 'function')
                 ? animationBridge.getLegacyControllerDebugState(playerRig, animationRigId, Date.now())
                 : null;
+            const pursuitDebugState = window.__qaCombatDebugLastPlayerPursuitState
+                ? {
+                    tick: Number.isFinite(window.__qaCombatDebugLastPlayerPursuitState.tick)
+                        ? Math.floor(window.__qaCombatDebugLastPlayerPursuitState.tick)
+                        : null,
+                    runtimeId: window.__qaCombatDebugLastPlayerPursuitState.runtimeId || null,
+                    enemyId: window.__qaCombatDebugLastPlayerPursuitState.enemyId || null,
+                    state: window.__qaCombatDebugLastPlayerPursuitState.state || null,
+                    pathLength: Number.isFinite(window.__qaCombatDebugLastPlayerPursuitState.pathLength)
+                        ? Math.floor(window.__qaCombatDebugLastPlayerPursuitState.pathLength)
+                        : null,
+                    occupancyIgnoredPathLength: Number.isFinite(window.__qaCombatDebugLastPlayerPursuitState.occupancyIgnoredPathLength)
+                        ? Math.floor(window.__qaCombatDebugLastPlayerPursuitState.occupancyIgnoredPathLength)
+                        : null
+                }
+                : null;
+            const autoRetaliateDebugState = window.__qaCombatDebugLastAutoRetaliateSelection
+                ? {
+                    tick: Number.isFinite(window.__qaCombatDebugLastAutoRetaliateSelection.tick)
+                        ? Math.floor(window.__qaCombatDebugLastAutoRetaliateSelection.tick)
+                        : null,
+                    runtimeId: window.__qaCombatDebugLastAutoRetaliateSelection.runtimeId || null,
+                    enemyId: window.__qaCombatDebugLastAutoRetaliateSelection.enemyId || null,
+                    displayName: window.__qaCombatDebugLastAutoRetaliateSelection.displayName || null,
+                    distance: Number.isFinite(window.__qaCombatDebugLastAutoRetaliateSelection.distance)
+                        ? Math.floor(window.__qaCombatDebugLastAutoRetaliateSelection.distance)
+                        : null,
+                    combatLevel: Number.isFinite(window.__qaCombatDebugLastAutoRetaliateSelection.combatLevel)
+                        ? Math.floor(window.__qaCombatDebugLastAutoRetaliateSelection.combatLevel)
+                        : null,
+                    aggressorOrder: Number.isFinite(window.__qaCombatDebugLastAutoRetaliateSelection.aggressorOrder)
+                        ? Math.floor(window.__qaCombatDebugLastAutoRetaliateSelection.aggressorOrder)
+                        : null
+                }
+                : null;
 
             return {
                 tick: Number.isFinite(currentTick) ? currentTick : 0,
@@ -270,6 +305,8 @@
                         : 0,
                     animation: lockedEnemyAnimation
                 } : null,
+                pursuit: pursuitDebugState,
+                autoRetaliate: autoRetaliateDebugState,
                 hud: hudSnapshot && typeof hudSnapshot === 'object'
                     ? {
                         inCombat: !!hudSnapshot.inCombat,
@@ -301,6 +338,8 @@
             const animation = state.animation || {};
             const controller = animation.controller || null;
             const enemy = state.enemy || null;
+            const pursuit = state.pursuit || null;
+            const autoRetaliate = state.autoRetaliate || null;
             const hudTarget = state.hud && state.hud.target ? state.hud.target : null;
             const hud = state.hud || null;
             return [
@@ -322,6 +361,12 @@
                 hud ? (hud.inCombat ? 1 : 0) : -1,
                 lastEnemyAttack
                     ? `${Number.isFinite(lastEnemyAttack.tick) ? lastEnemyAttack.tick : -1}:${lastEnemyAttack.enemyId || '-'}:${lastEnemyAttack.landed ? 1 : 0}:${Number.isFinite(lastEnemyAttack.damage) ? lastEnemyAttack.damage : 0}`
+                    : 'none',
+                pursuit
+                    ? `${pursuit.state || '-'}:${pursuit.runtimeId || '-'}:${Number.isFinite(pursuit.pathLength) ? pursuit.pathLength : -1}:${Number.isFinite(pursuit.occupancyIgnoredPathLength) ? pursuit.occupancyIgnoredPathLength : -1}`
+                    : 'none',
+                autoRetaliate
+                    ? `${autoRetaliate.runtimeId || '-'}:${autoRetaliate.enemyId || '-'}:${Number.isFinite(autoRetaliate.distance) ? autoRetaliate.distance : -1}:${Number.isFinite(autoRetaliate.combatLevel) ? autoRetaliate.combatLevel : -1}:${Number.isFinite(autoRetaliate.aggressorOrder) ? autoRetaliate.aggressorOrder : -1}`
                     : 'none',
                 Number.isFinite(animation.attackTick) ? animation.attackTick : -1,
                 Number.isFinite(animation.hitReactionTick) ? animation.hitReactionTick : -1,
@@ -362,6 +407,8 @@
             const animation = snapshot.animation || {};
             const controller = animation.controller || null;
             const enemy = snapshot.enemy || null;
+            const pursuit = snapshot.pursuit || null;
+            const autoRetaliate = snapshot.autoRetaliate || null;
             const hud = snapshot.hud || null;
             const hudTarget = hud && hud.target ? hud.target : null;
 
@@ -378,6 +425,14 @@
                     'info'
                 );
             }
+            addChatMessage(
+                `[QA combatdbg] pursuit state=${pursuit && pursuit.state ? pursuit.state : 'none'} lock=${pursuit && pursuit.runtimeId ? pursuit.runtimeId : 'none'} path=${pursuit && Number.isFinite(pursuit.pathLength) ? pursuit.pathLength : 'none'} occIgnored=${pursuit && Number.isFinite(pursuit.occupancyIgnoredPathLength) ? pursuit.occupancyIgnoredPathLength : 'none'}`,
+                'info'
+            );
+            addChatMessage(
+                `[QA combatdbg] autoRetaliate target=${autoRetaliate && autoRetaliate.runtimeId ? autoRetaliate.runtimeId : 'none'} enemy=${autoRetaliate && autoRetaliate.enemyId ? autoRetaliate.enemyId : 'none'} dist=${autoRetaliate && Number.isFinite(autoRetaliate.distance) ? autoRetaliate.distance : 'none'} level=${autoRetaliate && Number.isFinite(autoRetaliate.combatLevel) ? autoRetaliate.combatLevel : 'none'} order=${autoRetaliate && Number.isFinite(autoRetaliate.aggressorOrder) ? autoRetaliate.aggressorOrder : 'none'}`,
+                'info'
+            );
             addChatMessage(
                 `[QA combatdbg] anim atkTick=${Number.isFinite(animation.attackTick) ? animation.attackTick : 'none'} atkStart=${Number.isFinite(animation.attackStartedAtMs) ? animation.attackStartedAtMs : 'none'} hitTick=${Number.isFinite(animation.hitReactionTick) ? animation.hitReactionTick : 'none'} hitStart=${Number.isFinite(animation.hitReactionStartedAtMs) ? animation.hitReactionStartedAtMs : 'none'} base=${controller && controller.baseClipId ? controller.baseClipId : 'none'} action=${controller && controller.actionClipId ? controller.actionClipId : 'none'} winner=${controller && controller.winningRequest ? controller.winningRequest.clipId : 'none'} requests=${controller && controller.requestedActions && controller.requestedActions.length ? controller.requestedActions.map((request) => `${request.clipId}@p${request.priority}`).join(',') : 'none'}`,
                 'info'

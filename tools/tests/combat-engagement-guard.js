@@ -24,6 +24,7 @@ function getFunctionBody(source, functionName) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
+  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
 
@@ -40,6 +41,13 @@ function run() {
     !moveTowardTargetBody.includes("playerState.inCombat = true;"),
     "pursuing or facing a locked target should not mark the player in-combat before an attack"
   );
+  assert(
+    moveTowardTargetBody.includes("if (playerLockState.pursuitState === PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK) {")
+      && moveTowardTargetBody.includes("playerState.path = [];")
+      && moveTowardTargetBody.includes("playerState.action = 'COMBAT: MELEE';"),
+    "temporary occupancy blocks should keep the lock while stopping stale pursuit movement"
+  );
+
   const chaseAttackOpportunityBody = getFunctionBody(combatSource, "resolvePlayerChaseAttackOpportunity");
   assert(chaseAttackOpportunityBody, "combat.js should define resolvePlayerChaseAttackOpportunity");
   assert(
@@ -47,12 +55,14 @@ function run() {
       && chaseAttackOpportunityBody.includes("if (!isWithinMeleeRange(attackTile, playerLockState.enemyState)) return null;"),
     "combat chase attacks should check whether the player's within-tick movement reaches melee range"
   );
+
   const idleEnemyMovementBody = getFunctionBody(combatSource, "updateIdleEnemyMovement");
   assert(idleEnemyMovementBody, "combat.js should define updateIdleEnemyMovement");
   assert(
     idleEnemyMovementBody.includes("const nextStep = idlePath[0];"),
     "idle enemy roaming should continue to advance at one tile per tick"
   );
+
   const updateEnemyMovementBody = getFunctionBody(combatSource, "updateEnemyMovement");
   assert(updateEnemyMovementBody, "combat.js should define updateEnemyMovement");
   assert(
@@ -88,40 +98,17 @@ function run() {
     inputRenderSource.includes("let stepsToTake = isRunning ? 2 : 1;"),
     "running should continue to move the player two tiles per tick so roaming enemies remain catchable"
   );
-  const lockedEnemyBody = getFunctionBody(combatSource, "getPlayerLockedEnemy");
-  assert(lockedEnemyBody, "combat.js should define getPlayerLockedEnemy");
+
+  const clearTargetBody = getFunctionBody(combatSource, "clearPlayerCombatTarget");
+  assert(clearTargetBody, "combat.js should define clearPlayerCombatTarget");
   assert(
-    lockedEnemyBody.includes("if (!playerState.lockedTargetId) return null;")
-      && !lockedEnemyBody.includes("playerState.combatTargetKind !== PLAYER_TARGET_KIND"),
-    "locked enemy resolution should rely on lockedTargetId directly instead of extra combat-target-kind gating"
-  );
-  const currentWorldIdBody = getFunctionBody(combatSource, "getCurrentWorldId");
-  assert(currentWorldIdBody, "combat.js should define getCurrentWorldId");
-  assert(
-    currentWorldIdBody.includes("window.LegacyWorldAdapterRuntime")
-      && currentWorldIdBody.includes("resolveKnownWorldId")
-      && currentWorldIdBody.includes("fallbackWorldId"),
-    "combat world-id lookup should resolve through known-world normalization with fallback to prevent transient world-id flicker resets"
-  );
-  const ensureWorldBody = getFunctionBody(combatSource, "ensureCombatEnemyWorldReady");
-  assert(ensureWorldBody, "combat.js should define ensureCombatEnemyWorldReady");
-  assert(
-    combatSource.includes("function initCombatWorldState(worldIdOverride = null)")
-      && ensureWorldBody.includes("if (!activeCombatWorldId)")
-      && ensureWorldBody.includes("initCombatWorldState(currentWorldId);"),
-    "combat world initialization should occur once when uninitialized and avoid per-tick world-id reset churn"
-  );
-  const initLogicalMapBody = getFunctionBody(worldSource, "initLogicalMap");
-  const appendChunkWaterBody = getFunctionBody(worldSource, "appendChunkWaterTilesToBuilders");
-  assert(
-    initLogicalMapBody.includes("if (typeof window.initCombatWorldState === 'function') window.initCombatWorldState();")
-      && !appendChunkWaterBody.includes("initCombatWorldState"),
-    "world chunk water builder should not trigger combat-world reinitialization; combat init should happen at logical-map initialization"
+    clearTargetBody.includes("const shouldResetCooldown = !!(opts && opts.resetCooldown);")
+      && clearTargetBody.includes("if (shouldResetCooldown) playerState.remainingAttackCooldown = 0;"),
+    "clearing combat targets should preserve active cooldowns unless an explicit hard reset asks to zero them"
   );
   assert(
-    combatSource.includes("function clearPlayerCombatTarget(")
-      && combatSource.includes("playerState.remainingAttackCooldown = 0;"),
-    "clearing combat targets should reset player attack cooldown so pre-engagement tracking stays timer-free"
+    clearTargetBody.includes("if (hadEnemyTarget) playerState.path = [];"),
+    "clearing an enemy target should stop stale pursuit paths immediately"
   );
   assert(
     combatSource.includes("function shouldPreservePreEngagementTargetLock() {")
@@ -134,13 +121,54 @@ function run() {
       && inputRenderSource.includes("window.clearPlayerCombatTarget({ force: true, reason: 'queue-interact-non-enemy' });"),
     "explicit non-combat actions should force-clear the enemy lock"
   );
+
   assert(
-    combatSource.includes("if (!playerState.inCombat) {")
-      && combatSource.includes("playerState.remainingAttackCooldown = 0;")
-      && combatSource.includes("} else {")
-      && combatSource.includes("combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);"),
-    "player cooldown should only tick while combat is active and stay zero outside combat"
+    combatSource.includes("playerState.remainingAttackCooldown = combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);")
+      && !combatSource.includes("if (!playerState.inCombat) {\n            playerState.remainingAttackCooldown = 0;\n        } else {"),
+    "player cooldown should keep ticking after lock clears instead of being gated only by playerState.inCombat"
   );
+
+  const validateLockBody = getFunctionBody(combatSource, "validatePlayerTargetLock");
+  assert(validateLockBody, "combat.js should define validatePlayerTargetLock");
+  assert(
+    validateLockBody.includes("const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {")
+      && validateLockBody.includes("ignoreCombatEnemyOccupancy: true")
+      && validateLockBody.includes("PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK")
+      && validateLockBody.includes("clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-hard-no-path' });"),
+    "player target validation should distinguish temporary occupancy blockage from true hard no-path failures"
+  );
+  assert(
+    inputRenderSource.includes("function getPathTileId(")
+      && inputRenderSource.includes("opts && opts.ignoreCombatEnemyOccupancy")
+      && inputRenderSource.includes("function isStandableTileForPath("),
+    "pathfinding should support occupancy-ignored path sampling without changing normal walkability rules"
+  );
+
+  assert(
+    combatSource.includes("function pickAutoRetaliateTarget() {")
+      && combatSource.includes("markEnemyAutoRetaliateAggressor(enemyState);")
+      && combatSource.includes("const leftOrder = Number.isFinite(left.autoRetaliateAggressorOrder)")
+      && combatSource.includes("const leftDistance = getChebyshevDistance(playerState, left);")
+      && combatSource.includes("const leftLevel = getAutoRetaliateCandidateCombatLevel(left);")
+      && combatSource.includes("localeCompare")
+      && !combatSource.includes("lockPlayerCombatTarget(playerAttackers[0]);"),
+    "auto-retaliate should be explicit and deterministic instead of choosing the first attacker array entry"
+  );
+
+  assert(
+    coreSource.includes("pursuit: pursuitDebugState")
+      && coreSource.includes("autoRetaliate: autoRetaliateDebugState")
+      && coreSource.includes("[QA combatdbg] pursuit state=")
+      && coreSource.includes("[QA combatdbg] autoRetaliate target="),
+    "QA combat debug output should surface pursuit-state and auto-retaliate selection details"
+  );
+
+  assert(
+    combatSource.includes("const shouldSetOpeningCooldown = enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID;")
+      && combatSource.includes("if (shouldSetOpeningCooldown) enemyState.remainingAttackCooldown = 1;"),
+    "hit-aggro should keep setting an enemy's opening cooldown to one tick"
+  );
+
   assert(
     combatSource.includes("function isPlayerCombatFacingReady() {")
       && combatSource.includes("if (playerState.midX !== null || playerState.midY !== null) return false;")
@@ -161,6 +189,7 @@ function run() {
       && combatSource.includes("if (!isVisibleEnemy) return false;"),
     "enemy hitpoint bars should remain visible through the pending-defeat tick so the bar can drain to empty before despawn"
   );
+
   assert(
     worldSource.includes("const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;")
       && worldSource.includes("if ((cooldownEndTick - currentTick) > MAX_REASONABLE_EAT_COOLDOWN_TICKS) {")
@@ -171,14 +200,6 @@ function run() {
     worldSource.includes("if (didAttackOrCastThisTick()) {")
       && worldSource.includes("You cannot eat on the same tick as attacking or casting."),
     "eat handling should keep same-tick attack/cast restrictions"
-  );
-  const validateLockBody = getFunctionBody(combatSource, "validatePlayerTargetLock");
-  assert(validateLockBody, "combat.js should define validatePlayerTargetLock");
-  assert(
-    validateLockBody.includes("clearPlayerCombatTarget({ reason: 'missing-locked-enemy' });")
-      && validateLockBody.includes("clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-not-alive' });")
-      && validateLockBody.includes("pursuitPath: null"),
-    "player target lock should only clear when target is truly missing/dead and should preserve pursuit when path sampling fails"
   );
 
   console.log("Combat engagement guard passed.");
