@@ -62,6 +62,9 @@
             renderInventory();
         }
 
+        window.openBank = openBank;
+        window.closeBank = closeBank;
+
         function formatStackSize(num, placementClass = '') {
             if (num <= 1) return '';
             let text = num.toString();
@@ -391,7 +394,9 @@
         }
 
         window.clearItemSwapLeftClickUI = clearItemSwapLeftClickUI;
+        window.appendSwapLeftClickControl = appendSwapLeftClickControl;
         window.getItemMenuPreferenceKey = getItemMenuPreferenceKey;
+        window.getPreferredMenuAction = getPreferredMenuAction;
         window.hideInventoryHoverTooltip = hideInventoryHoverTooltip;
 
         let rememberedDepositXAmount = null;

@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-21T20:47:02.892Z",
+  "generatedAt": "2026-03-23T18:46:36.964Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "adamant_arrowheads",
@@ -191,6 +191,16 @@
       "status": "done",
       "treatment": "bespoke"
     },
+    "burnt_boar_meat": {
+      "assetId": "raw_boar_meat",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "burnt_chicken": {
+      "assetId": "raw_chicken",
+      "status": "todo",
+      "treatment": "shared"
+    },
     "burnt_salmon": {
       "assetId": "burnt_salmon",
       "status": "done",
@@ -217,6 +227,11 @@
       "status": "done",
       "treatment": "bespoke"
     },
+    "burnt_wolf_meat": {
+      "assetId": "raw_wolf_meat",
+      "status": "todo",
+      "treatment": "shared"
+    },
     "chisel": {
       "assetId": "knife",
       "status": "todo",
@@ -234,6 +249,16 @@
     },
     "coins": {
       "assetId": "coins",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "cooked_boar_meat": {
+      "assetId": "raw_boar_meat",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "cooked_chicken": {
+      "assetId": "raw_chicken",
       "status": "todo",
       "treatment": "shared"
     },
@@ -262,6 +287,11 @@
       "assetId": "cooked_tuna",
       "status": "done",
       "treatment": "bespoke"
+    },
+    "cooked_wolf_meat": {
+      "assetId": "raw_wolf_meat",
+      "status": "todo",
+      "treatment": "shared"
     },
     "copper_ore": {
       "assetId": "copper_ore",
@@ -750,12 +780,12 @@
     "raw_boar_meat": {
       "assetId": "raw_boar_meat",
       "status": "todo",
-      "treatment": "bespoke"
+      "treatment": "shared"
     },
     "raw_chicken": {
       "assetId": "raw_chicken",
       "status": "todo",
-      "treatment": "bespoke"
+      "treatment": "shared"
     },
     "raw_salmon": {
       "assetId": "raw_salmon",
@@ -786,7 +816,7 @@
     "raw_wolf_meat": {
       "assetId": "raw_wolf_meat",
       "status": "todo",
-      "treatment": "bespoke"
+      "treatment": "shared"
     },
     "ring_mould": {
       "assetId": "small_pouch",

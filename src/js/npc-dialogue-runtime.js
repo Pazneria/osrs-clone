@@ -72,6 +72,9 @@
 
     function shouldShowActionOption(option, npc) {
         if (!option || typeof option !== 'object') return false;
+        if (option.kind === 'bank') {
+            return !!(npc && (npc.action === 'Bank' || npc.name === 'Banker'));
+        }
         if (option.kind === 'trade') {
             if (!(npc && (npc.merchantId || npc.action === 'Trade'))) return false;
             if (window.QuestRuntime && typeof window.QuestRuntime.canOpenMerchantShop === 'function') {
@@ -99,6 +102,10 @@
         if (typeof window.openShopForMerchant === 'function') {
             window.openShopForMerchant(merchantId);
         }
+    }
+
+    function performBank() {
+        if (typeof window.openBank === 'function') window.openBank();
     }
 
     function performTravel(npc) {
@@ -168,6 +175,11 @@
                     performTrade(activeNpc);
                     return;
                 }
+                if (option.kind === 'bank') {
+                    closeNpcDialogue();
+                    performBank();
+                    return;
+                }
                 if (option.kind === 'travel') {
                     closeNpcDialogue();
                     performTravel(activeNpc);
@@ -183,6 +195,7 @@
                         closeDialogue: closeNpcDialogue,
                         refreshDialogue: refreshActiveDialogue,
                         updateBodyText: updateBodyText,
+                        performBank: performBank,
                         performTrade: () => performTrade(activeNpc),
                         performTravel: () => performTravel(activeNpc)
                     }) || null;

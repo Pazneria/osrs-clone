@@ -1317,6 +1317,8 @@
 
         function chooseTownNpcNextStep(actor, occupiedTiles, frameNowMs) {
             if (!actor || !actor.roamEnabled) return null;
+            const roamingRadius = Number.isFinite(actor.roamingRadius) ? Math.max(0, Math.floor(actor.roamingRadius)) : 0;
+            if (roamingRadius <= 0) return null;
             const currentKey = occupiedTileKey(actor.x, actor.y, actor.z);
             const seed = (Number.isFinite(actor.animationSeed) ? actor.animationSeed : 0) + Math.floor((Number.isFinite(frameNowMs) ? frameNowMs : 0) / 600);
             const candidateSteps = TOWN_NPC_STEP_DIRS
@@ -4996,7 +4998,8 @@
             const resolveTownNpcRoamingRadius = (npc, roamBounds) => {
                 const npcName = npc && typeof npc.name === 'string' ? npc.name : '';
                 const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
-                if (npcName === 'Banker' || /^King\b/i.test(npcName) || /^Queen\b/i.test(npcName)) return 1;
+                if (npcName === 'Banker') return 0;
+                if (/^King\b/i.test(npcName) || /^Queen\b/i.test(npcName)) return 1;
                 if (npc && npc.action === 'Travel') return dialogueId ? 2 : 1;
                 if (dialogueId) {
                     if (roamBounds) {
@@ -5022,6 +5025,7 @@
                     || `npc:${String(npc && npc.name ? npc.name : 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_')}:${Number.isFinite(npc.x) ? npc.x : index}:${Number.isFinite(npc.y) ? npc.y : 0}:${Number.isFinite(npc.z) ? npc.z : 0}`;
                 const roamBounds = resolveTownNpcRoamBounds(npc);
                 const facingYaw = resolveTownNpcDefaultFacingYaw(npc);
+                const roamingRadius = resolveTownNpcRoamingRadius(npc, roamBounds);
                 const baseHeight = getTileHeightSafe(npc.x, npc.y, Number.isFinite(npc.z) ? npc.z : 0);
                 return Object.assign({}, npc, {
                     actorId: npcActorId,
@@ -5033,8 +5037,8 @@
                     homeY: npc.y,
                     homeZ: Number.isFinite(npc.z) ? npc.z : 0,
                     roamBounds,
-                    roamingRadius: resolveTownNpcRoamingRadius(npc, roamBounds),
-                    roamEnabled: true,
+                    roamingRadius,
+                    roamEnabled: roamingRadius > 0,
                     facingYaw,
                     targetFacingYaw: facingYaw,
                     visualFacingYaw: facingYaw,
@@ -6730,7 +6734,10 @@
                         // Add interactive hitbox to NPCs
                         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), sharedMaterials.hiddenHitbox);
                         hitbox.position.y = 1.0;
-                        const npcUid = { name: npc.name, action: npc.action || (npc.name === 'Shopkeeper' ? 'Trade' : 'Talk-to') };
+                        const npcUid = {
+                            name: npc.name,
+                            action: npc.action || (npc.name === 'Shopkeeper' ? 'Trade' : (npc.name === 'Banker' ? 'Talk-to' : 'Talk-to'))
+                        };
                         npcUid.gridX = npc.x;
                         npcUid.gridY = npc.y;
                         if (npc.spawnId) npcUid.spawnId = npc.spawnId;

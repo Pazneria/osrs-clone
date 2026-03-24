@@ -15,6 +15,10 @@
         return { kind, label };
     }
 
+    function createBankActionOption(label = 'Bank') {
+        return { kind: 'bank', label };
+    }
+
     const DIALOGUE_ENTRIES = {
         shopkeeper: {
             title: 'Shopkeeper',
@@ -63,6 +67,15 @@
                 createTextOption('Ask about bait', 'Good bait does not need to look impressive. It only needs to work.'),
                 createTextOption('Ask about stock', 'I keep the essentials ready for anyone who wants to fish properly.'),
                 createActionOption('Trade', 'trade'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        banker: {
+            title: 'Banker',
+            greeting: 'Your valuables are safer in the bank than in your pockets. How can I help?',
+            options: [
+                createTextOption('Ask about the bank', 'We keep your items secure and ready whenever you need them.'),
+                createBankActionOption('Bank'),
                 createActionOption('Goodbye', 'close')
             ]
         },
@@ -147,6 +160,7 @@
         east_outpost_caravan_guide: 'outpost_guide',
         fishing_teacher: 'fishing_teacher',
         fishing_supplier: 'fishing_supplier',
+        banker: 'banker',
         borin_ironvein: 'borin_ironvein',
         thrain_deepforge: 'thrain_deepforge',
         elira_gemhand: 'elira_gemhand',

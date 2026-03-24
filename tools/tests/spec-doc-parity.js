@@ -376,13 +376,17 @@ function runCookingChecks(roadmap, spec, itemDefs) {
     assert(!!line, `cooking burn-curve summary row mismatch for ${row.label}`);
   }
 
-  const rows = [
-    { label: "Shrimp", recipeId: "raw_shrimp" },
-    { label: "Trout", recipeId: "raw_trout" },
-    { label: "Salmon", recipeId: "raw_salmon" },
-    { label: "Tuna", recipeId: "raw_tuna" },
-    { label: "Swordfish", recipeId: "raw_swordfish" }
-  ];
+  const rows = Object.keys(spec.recipeSet)
+    .sort((a, b) => {
+      const aLevel = Number.isFinite(spec.recipeSet[a] && spec.recipeSet[a].requiredLevel) ? spec.recipeSet[a].requiredLevel : Number.MAX_SAFE_INTEGER;
+      const bLevel = Number.isFinite(spec.recipeSet[b] && spec.recipeSet[b].requiredLevel) ? spec.recipeSet[b].requiredLevel : Number.MAX_SAFE_INTEGER;
+      if (aLevel !== bLevel) return aLevel - bLevel;
+      return a.localeCompare(b);
+    })
+    .map((recipeId) => ({
+      label: toTitleCaseId(spec.recipeSet[recipeId].sourceItemId).replace(/^Raw /, ""),
+      recipeId
+    }));
 
   for (const row of rows) {
     const recipe = spec.recipeSet[row.recipeId];
@@ -431,13 +435,11 @@ function runCookingChecks(roadmap, spec, itemDefs) {
     return null;
   }
 
-  const tierEntryRows = [
-    { label: "Shrimp", recipeId: "raw_shrimp", level: 1 },
-    { label: "Trout", recipeId: "raw_trout", level: 10 },
-    { label: "Salmon", recipeId: "raw_salmon", level: 20 },
-    { label: "Tuna", recipeId: "raw_tuna", level: 30 },
-    { label: "Swordfish", recipeId: "raw_swordfish", level: 40 }
-  ];
+  const tierEntryRows = rows.map((row) => ({
+    label: row.label,
+    recipeId: row.recipeId,
+    level: spec.recipeSet[row.recipeId].requiredLevel
+  }));
   for (const row of tierEntryRows) {
     const metrics = computeCookingOutputs(row.recipeId, row.level);
     assertRegex(
@@ -447,13 +449,11 @@ function runCookingChecks(roadmap, spec, itemDefs) {
     );
   }
 
-  const level40Rows = [
-    { label: "Shrimp", recipeId: "raw_shrimp", level: 40 },
-    { label: "Trout", recipeId: "raw_trout", level: 40 },
-    { label: "Salmon", recipeId: "raw_salmon", level: 40 },
-    { label: "Tuna", recipeId: "raw_tuna", level: 40 },
-    { label: "Swordfish", recipeId: "raw_swordfish", level: 40 }
-  ];
+  const level40Rows = rows.map((row) => ({
+    label: row.label,
+    recipeId: row.recipeId,
+    level: 40
+  }));
   for (const row of level40Rows) {
     const metrics = computeCookingOutputs(row.recipeId, row.level);
     assertRegex(
@@ -463,13 +463,7 @@ function runCookingChecks(roadmap, spec, itemDefs) {
     );
   }
 
-  const breakEvenRows = [
-    { label: "Shrimp", recipeId: "raw_shrimp" },
-    { label: "Trout", recipeId: "raw_trout" },
-    { label: "Salmon", recipeId: "raw_salmon" },
-    { label: "Tuna", recipeId: "raw_tuna" },
-    { label: "Swordfish", recipeId: "raw_swordfish" }
-  ];
+  const breakEvenRows = rows;
   for (const row of breakEvenRows) {
     const breakEvenLevel = computeBreakEvenLevel(row.recipeId);
     assertRegex(

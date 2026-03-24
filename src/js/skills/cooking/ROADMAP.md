@@ -9,15 +9,18 @@ Where a skill defers market values to item data, value rows mirror `src/js/conte
 
 Cooking is the processing skill for turning raw food into usable food.
 
-Under the base model, cooking primarily converts raw fish from fishing into cooked fish for healing, selling, and progression.
+Under the base model, cooking primarily converts raw fish from fishing and raw meat from combat into cooked food for healing, selling, and progression.
 
 ## Core Progression
 
 | Food | Required Level |
 | ---- | -------------- |
 | Shrimp | 1 |
+| Chicken | 5 |
 | Trout | 10 |
+| Boar Meat | 15 |
 | Salmon | 20 |
+| Wolf Meat | 25 |
 | Tuna | 30 |
 | Swordfish | 40 |
 
@@ -69,14 +72,14 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 
 | Rule | Description |
 | ---- | ----------- |
-| Inputs | Cooking one item requires exactly 1 raw food item. The player selects Use on that raw fish in inventory and then clicks a valid fire. If the player's cooking level is below that fish's required level, the action cannot begin |
+| Inputs | Cooking one item requires exactly 1 raw food item. The player selects Use on that raw fish or raw meat in inventory and then clicks a valid fire. If the player's cooking level is below that food's required level, the action cannot begin |
 | Source Requirement | A cooking action requires access to any currently lit fire |
 | Source Ownership | Any player may use any valid fire |
 | Success Result | On success, consume 1 raw food, create 1 standard cooked food result, and grant the listed XP |
 | Burn Result | On failure, consume 1 raw food, create 1 burnt food, play the normal cooking animation, and grant no XP |
 | Attempt Timing | Cooking attempts resolve once per tick while the action continues. If the player starts cooking partway through a tick, the first attempt resolves on the next tick |
-| Batch Cooking | Cooking continuously processes all inventory items of the selected raw fish type |
-| Batch Resolution | Cooking processes one raw fish at a time. Each fish resolves once as either cooked or burnt, then cooking proceeds to the next fish of that same type until none remain or the action is interrupted |
+| Batch Cooking | Cooking continuously processes all inventory items of the selected raw food type |
+| Batch Resolution | Cooking processes one raw food item at a time. Each item resolves once as either cooked or burnt, then cooking proceeds to the next item of that same type until none remain or the action is interrupted |
 | Action Stop Conditions | Cooking stops immediately if the player runs out of raw food, loses adjacency to the fire, is no longer facing the fire, moves, uses another item on something, or gives any other action input |
 | Item Identity | Raw, cooked, and burnt versions are distinct non-stackable items with distinct item identities |
 | Eating Result | Eating a cooked fish consumes it immediately, heals immediately, and applies that fish's Eat Delay Ticks value |
@@ -86,8 +89,11 @@ Under the base model, cooking primarily converts raw fish from fishing into cook
 | Food | Required Level | XP per Success | Raw Item | Cooked Item | Burnt Item | Healing | Eat Delay Ticks | Raw Sell Value | Cooked Sell Value | Burnt Sell Value |
 | ---- | -------------- | -------------- | -------- | ----------- | ---------- | ------- | --------------- | -------------- | ----------------- | ---------------- |
 | Shrimp | 1 | 30 | Raw Shrimp | Cooked Shrimp | Burnt Shrimp | 3 | 4 | 1 | 3 | 1 |
+| Chicken | 5 | 45 | Raw Chicken | Cooked Chicken | Burnt Chicken | 4 | 4 | 1 | 4 | 1 |
 | Trout | 10 | 70 | Raw Trout | Cooked Trout | Burnt Trout | 5 | 4 | 7 | 9 | 1 |
+| Boar Meat | 15 | 80 | Raw Boar Meat | Cooked Boar Meat | Burnt Boar Meat | 6 | 4 | 2 | 8 | 1 |
 | Salmon | 20 | 90 | Raw Salmon | Cooked Salmon | Burnt Salmon | 7 | 4 | 9 | 12 | 1 |
+| Wolf Meat | 25 | 105 | Raw Wolf Meat | Cooked Wolf Meat | Burnt Wolf Meat | 8 | 4 | 3 | 12 | 1 |
 | Tuna | 30 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 11 | 16 | 1 |
 | Swordfish | 40 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 16 | 22 | 1 |
 
@@ -107,8 +113,11 @@ These per-action values lock the current 1-40 cooking progression at each recipe
 | Food | Cooking Level | Cooking Success Chance | Expected Successes per Action | Expected XP per Action | Expected Gold Delta per Action |
 | ---- | ------------- | ---------------------- | ----------------------------- | ---------------------- | ------------------------------ |
 | Shrimp | 1 | 67% | 0.6700 | 20.1000 | 1.3400 |
+| Chicken | 5 | 67% | 0.6700 | 30.1500 | 2.0100 |
 | Trout | 10 | 67% | 0.6700 | 46.9000 | -0.6400 |
+| Boar Meat | 15 | 67% | 0.6700 | 53.6000 | 3.6900 |
 | Salmon | 20 | 67% | 0.6700 | 60.3000 | -0.6300 |
+| Wolf Meat | 25 | 67% | 0.6700 | 70.3500 | 5.3700 |
 | Tuna | 30 | 67% | 0.6700 | 80.4000 | 0.0500 |
 | Swordfish | 40 | 67% | 0.6700 | 93.8000 | -0.9300 |
 
@@ -119,8 +128,11 @@ These level-40 values show how the full 1-40 food set compares once the current 
 | Food | Cooking Level | Cooking Success Chance | Expected Successes per Action | Expected XP per Action | Expected Gold Delta per Action |
 | ---- | ------------- | ---------------------- | ----------------------------- | ---------------------- | ------------------------------ |
 | Shrimp | 40 | 100% | 1.0000 | 30.0000 | 2.0000 |
+| Chicken | 40 | 100% | 1.0000 | 45.0000 | 3.0000 |
 | Trout | 40 | 100% | 1.0000 | 70.0000 | 2.0000 |
+| Boar Meat | 40 | 96.4% | 0.9637 | 77.1000 | 5.7462 |
 | Salmon | 40 | 95% | 0.9500 | 85.5000 | 2.4500 |
+| Wolf Meat | 40 | 93.6% | 0.9363 | 98.3062 | 8.2988 |
 | Tuna | 40 | 90% | 0.9000 | 108.0000 | 3.5000 |
 | Swordfish | 40 | 67% | 0.6700 | 93.8000 | -0.9300 |
 
@@ -131,15 +143,20 @@ The break-even level is the first Cooking level where the expected sell-value de
 | Food | Break-Even Cooking Level |
 | ---- | ------------------------ |
 | Shrimp | 1 |
+| Chicken | 5 |
 | Trout | 13 |
+| Boar Meat | 15 |
 | Salmon | 22 |
+| Wolf Meat | 25 |
 | Tuna | 30 |
 | Swordfish | 42 |
 
 ### Balance Notes
 
 - Shrimp is the safe starter conversion: it is profitable immediately at unlock and stays positive throughout the current cap.
+- Chicken is the first combat-fed meat lane: it slots cleanly between shrimp and trout as a low-risk wilderness food upgrade.
 - Trout and salmon are early/mid-band XP-forward unlocks that start slightly value-negative, then cross into non-negative value at Cooking 13 and 22 respectively.
+- Boar meat and wolf meat are combat-fed off-band lanes that stay profitable at unlock and reward players who pivot between combat and fire-based cooking.
 - Tuna is the strongest 1-40 cooking route on both XP-per-action and gold-delta-per-action at Cooking 40, and it is already slightly value-positive when it first unlocks.
 - Swordfish is the level-40 inventory-quality unlock, but its sell-value delta stays negative inside the current 1-40 cap and does not break even until Cooking 42.
 
@@ -158,7 +175,7 @@ The break-even level is the first Cooking level where the expected sell-value de
 | Cooking Source ID | The fire currently being used |
 | Source Type | Fire |
 | Food Type | The raw food currently selected for cooking |
-| Remaining Quantity | How many items of the selected raw fish type remain in the current cooking session |
+| Remaining Quantity | How many items of the selected raw food type remain in the current cooking session |
 | Created At Tick | The tick when the cooking action began |
 | Last Attempt Tick | The tick when the most recent cooking attempt resolved |
 | Cooking State | Whether the player is actively cooking or the action has ended |
@@ -169,7 +186,7 @@ The break-even level is the first Cooking level where the expected sell-value de
 | ---- | ----------- |
 | Eat Action | Eating a cooked fish consumes it immediately, heals immediately, and sets the player's eating cooldown based on that fish's Eat Delay Ticks value. Eating grants no XP |
 | Eat Cooldown | While an eating cooldown is active, the player cannot eat any food until the cooldown expires |
-| Action Start | Starting a cooking action creates a cooking session tied to the selected fire and food type. The player selects Use on a raw fish in inventory and then clicks a fire. The player may begin from any adjacent side of the fire, but must be adjacent to the fire, stationary, and facing it when the action begins. All inventory items of that raw fish type are queued automatically |
+| Action Start | Starting a cooking action creates a cooking session tied to the selected fire and food type. The player selects Use on a raw fish or raw meat in inventory and then clicks a fire. The player may begin from any adjacent side of the fire, but must be adjacent to the fire, stationary, and facing it when the action begins. All inventory items of that raw food type are queued automatically |
 | Tick Resolution | While the action remains active, one cooking attempt resolves each tick. If the action begins partway through a tick, the first attempt resolves on the next tick. The same cooking animation plays on every attempt, whether the result is success or burn |
 | Source Validation | Before each attempt resolves, confirm the fire is still valid and usable and that the player is still adjacent to it and facing it |
 | Fire Expiry Interaction | If the targeted fire expires before the next attempt resolves, the cooking action ends immediately and cleanly with no partial resolution on that tick |
@@ -177,7 +194,7 @@ The break-even level is the first Cooking level where the expected sell-value de
 | Success Output | A successful attempt removes 1 raw food and adds 1 cooked food directly into the same inventory slot flow. Inventory overflow does not occur because the raw item being consumed creates the available space |
 | Burn Output | A failed attempt removes 1 raw food and adds 1 burnt food directly into inventory. Inventory overflow does not occur because the raw item being consumed creates the available space |
 | Batch Completion | When Remaining Quantity reaches 0, the cooking session ends |
-| Interruption | Any movement, facing change away from the fire, using another item on something, or any other action input immediately ends the cooking session. If the player uses a different raw fish on the same fire while already cooking, the current cooking session is replaced immediately and keeps the active attempt cadence so the swap does not introduce a dead tick |
+| Interruption | Any movement, facing change away from the fire, using another item on something, or any other action input immediately ends the cooking session. If the player uses a different raw food item on the same fire while already cooking, the current cooking session is replaced immediately and keeps the active attempt cadence so the swap does not introduce a dead tick |
 
 ## Eating Mechanics
 
@@ -197,26 +214,29 @@ Burnt fish are not edible.
 
 ## Economy Role
 
-Cooking adds value by converting raw fish into more useful and more valuable cooked food, with burn risk acting as the main sink.
+Cooking adds value by converting raw fish and raw meat into more useful and more valuable cooked food, with burn risk acting as the main sink.
 
 | Input / Output | Use |
 | -------------- | --- |
 | Raw Fish | Primary cooking input gathered from fishing |
+| Raw Meat | Secondary cooking input gathered from combat drops |
 | Cooked Fish | Main successful output for healing, selling, and progression |
+| Cooked Meat | Combat-fed cooked-food outputs for healing and selling |
 | Burnt Fish | Failed output with no value and no use under the base model |
+| Burnt Meat | Failed meat output with no value and no use under the base model |
 | Fires | Temporary world cooking source created by firemaking |
 
 ## Merchant / NPC Structure
 
-Cooking does not require cooking-specific merchants under the base model, but it interacts directly with fish-buying and fish-selling merchants from the fishing economy.
+Cooking does not require cooking-specific merchants under the base model, but it interacts directly with fish-buying merchants from the fishing economy and with the broader shop flow that already handles combat-fed drops.
 
 Under the base model, there are no ranges yet. All cooking is performed on fires.
 
-Raw fish, cooked fish, and burnt fish are distinct item states with distinct item identities and normal shop behavior.
+Raw food, cooked food, and burnt food are distinct item states with distinct item identities and normal shop behavior.
 
-Raw fish merchant stock and unlock behavior are defined by fishing. Cooking does not define or override raw fish merchant-unlock rules.
+Raw fish merchant stock and unlock behavior are defined by fishing. Raw meat enters through combat drops. Cooking does not define or override those upstream acquisition rules.
 
-Cooked fish can be sold to the obvious fish-buying merchants using their cooked sell values.
+Cooked fish can be sold to the obvious fish-buying merchants using their cooked sell values, while cooked meats fall back to normal shop behavior.
 
 Burnt fish can be sold to shops at their configured low sell values from the canonical item table.
 
@@ -226,14 +246,15 @@ The general store buys everything at half price, rounded down.
 
 | Location Type | Purpose |
 | ------------- | ------- |
-| Starter campfire | Entry-level shrimp cooking near early fishing |
-| Riverbank fire line | Mid-band trout and salmon cooking near rod fishing spots |
+| Starter campfire | Entry-level shrimp and chicken cooking near early fishing and starter combat |
+| Riverbank fire line | Mid-band trout, boar, and salmon cooking near rod fishing spots and field combat |
 | Dockside fire line | Tuna cooking near harpoon progression |
-| Deep-water dock fire line | Swordfish cooking near late early-game fishing progression |
+| Deep-water dock fire line | Wolf meat, tuna, and swordfish cooking near late early-game progression |
 
 ## Dependencies
 
 - Fishing
+- Combat
 - Firemaking
 - Shops / economy
 
@@ -261,17 +282,17 @@ The general store buys everything at half price, rounded down.
 - The player starts cooking by selecting Use on a raw fish in inventory and then clicking a fire.
 - Cooking cannot begin if the selected raw fish requires a higher cooking level than the player currently has.
 - Cooking is initiated strictly through Use raw fish -> fire; fires do not provide direct cooking options from their own click menu.
-- Cooking continuously processes all inventory items of the selected raw fish type, including continuing through burns until that fish type is exhausted or the action is interrupted.
+- Cooking continuously processes all inventory items of the selected raw food type, including continuing through burns until that food type is exhausted or the action is interrupted.
 - Cooking processes one item per tick while the action continues. If the player starts cooking partway through a tick, the first attempt resolves on the next tick.
 - The player may begin cooking from any adjacent side of the fire.
 - The player must be adjacent to the fire, stationary, and facing it while cooking.
 - The normal cooking animation plays on every attempt, whether the result is success or burn.
 - Cooking ends immediately if the player gives movement, uses another item on something, or gives any other action input.
-- While cooking one fish type, the player may interrupt it at any time by using a different raw fish on the same fire to begin cooking that new fish type immediately, keeping the live tick cadence instead of resetting the timer.
+- While cooking one food type, the player may interrupt it at any time by using a different raw food item on the same fire to begin cooking that new food type immediately, keeping the live tick cadence instead of resetting the timer.
 - All cooked fish currently use the same 4-tick eat delay.
 - Cooking ends immediately and cleanly if the targeted fire expires before the next cooking attempt resolves.
 - Any lit fire can be used as a cooking source, regardless of who created it.
-- All raw fish can be cooked on all fires.
+- All raw food items can be cooked on all fires.
 - Cooking is primarily a value-adding processing skill rather than a direct gathering skill.
 - Raw fish merchant stock and unlock behavior are defined by fishing; cooking does not define or override raw fish merchant-unlock rules.
 - Cooked fish can be sold to the obvious fish-buying merchants using their cooked sell values.
@@ -285,12 +306,21 @@ The general store buys everything at half price, rounded down.
 | Raw Shrimp | Resource | 3 | 1 | null | null | Distinct raw-fish item used as shrimp cooking input; raw-fish merchant rules are defined by fishing |
 | Cooked Shrimp | Food | 8 | 3 | 3 | 4 | Cooked shrimp |
 | Burnt Shrimp | Burnt Food | 1 | 1 | null | null | Failed shrimp cooking output; inert junk item, not consumable |
+| Raw Chicken | Resource | 4 | 1 | null | null | Combat-drop meat used as the first non-fish cooking input |
+| Cooked Chicken | Food | 10 | 4 | 4 | 4 | Cooked chicken |
+| Burnt Chicken | Burnt Food | 1 | 1 | null | null | Failed chicken cooking output; inert junk item, not consumable |
 | Raw Trout | Resource | 18 | 7 | null | null | Distinct raw-fish item used as trout cooking input; raw-fish merchant rules are defined by fishing |
 | Cooked Trout | Food | 24 | 9 | 5 | 4 | Cooked trout |
 | Burnt Trout | Burnt Food | 1 | 1 | null | null | Failed trout cooking output; inert junk item, not consumable |
+| Raw Boar Meat | Resource | 6 | 2 | null | null | Combat-drop meat from boars used as a mid-band cooking input |
+| Cooked Boar Meat | Food | 20 | 8 | 6 | 4 | Cooked boar meat |
+| Burnt Boar Meat | Burnt Food | 1 | 1 | null | null | Failed boar-meat cooking output; inert junk item, not consumable |
 | Raw Salmon | Resource | 24 | 9 | null | null | Distinct raw-fish item used as salmon cooking input; raw-fish merchant rules are defined by fishing |
 | Cooked Salmon | Food | 32 | 12 | 7 | 4 | Cooked salmon |
 | Burnt Salmon | Burnt Food | 1 | 1 | null | null | Failed salmon cooking output; inert junk item, not consumable |
+| Raw Wolf Meat | Resource | 8 | 3 | null | null | Combat-drop meat from wolves used as the highest early meat cooking input |
+| Cooked Wolf Meat | Food | 30 | 12 | 8 | 4 | Cooked wolf meat |
+| Burnt Wolf Meat | Burnt Food | 1 | 1 | null | null | Failed wolf-meat cooking output; inert junk item, not consumable |
 | Raw Tuna | Resource | 28 | 11 | null | null | Distinct raw-fish item used as tuna cooking input; raw-fish merchant rules are defined by fishing |
 | Cooked Tuna | Food | 40 | 16 | 9 | 4 | Cooked tuna |
 | Burnt Tuna | Burnt Food | 1 | 1 | null | null | Failed tuna cooking output; inert junk item, not consumable |

@@ -1477,6 +1477,28 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
+                cookResultId: 'cooked_chicken',
+                burnResultId: 'burnt_chicken',
+                icon: { kind: 'pixel', assetId: 'raw_chicken' }
+            },
+            cooked_chicken: {
+                name: 'Cooked Chicken',
+                type: 'food',
+                value: 10,
+                stackable: false,
+                actions: ['Eat', 'Drop'],
+                defaultAction: 'Eat',
+                healAmount: 4,
+                eatDelayTicks: 4,
+                icon: { kind: 'pixel', assetId: 'raw_chicken' }
+            },
+            burnt_chicken: {
+                name: 'Burnt Chicken',
+                type: 'resource',
+                value: 1,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
                 icon: { kind: 'pixel', assetId: 'raw_chicken' }
             },
             goblin_club: {
@@ -1495,6 +1517,28 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
+                cookResultId: 'cooked_boar_meat',
+                burnResultId: 'burnt_boar_meat',
+                icon: { kind: 'pixel', assetId: 'raw_boar_meat' }
+            },
+            cooked_boar_meat: {
+                name: 'Cooked Boar Meat',
+                type: 'food',
+                value: 20,
+                stackable: false,
+                actions: ['Eat', 'Drop'],
+                defaultAction: 'Eat',
+                healAmount: 6,
+                eatDelayTicks: 4,
+                icon: { kind: 'pixel', assetId: 'raw_boar_meat' }
+            },
+            burnt_boar_meat: {
+                name: 'Burnt Boar Meat',
+                type: 'resource',
+                value: 1,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
                 icon: { kind: 'pixel', assetId: 'raw_boar_meat' }
             },
             boar_tusk: {
@@ -1513,6 +1557,28 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
+                cookResultId: 'cooked_wolf_meat',
+                burnResultId: 'burnt_wolf_meat',
+                icon: { kind: 'pixel', assetId: 'raw_wolf_meat' }
+            },
+            cooked_wolf_meat: {
+                name: 'Cooked Wolf Meat',
+                type: 'food',
+                value: 30,
+                stackable: false,
+                actions: ['Eat', 'Drop'],
+                defaultAction: 'Eat',
+                healAmount: 8,
+                eatDelayTicks: 4,
+                icon: { kind: 'pixel', assetId: 'raw_wolf_meat' }
+            },
+            burnt_wolf_meat: {
+                name: 'Burnt Wolf Meat',
+                type: 'resource',
+                value: 1,
+                stackable: false,
+                actions: ['Drop'],
+                defaultAction: 'Drop',
                 icon: { kind: 'pixel', assetId: 'raw_wolf_meat' }
             },
             wolf_fang: {

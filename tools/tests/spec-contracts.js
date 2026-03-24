@@ -200,21 +200,33 @@ function run() {
 
   const cookingBalanceSummary = SkillSpecRegistry.getCookingBalanceSummary();
   assert(!!cookingBalanceSummary && !!cookingBalanceSummary.assumptions, "cooking balance summary missing assumptions");
-  assert(Array.isArray(cookingBalanceSummary.rows) && cookingBalanceSummary.rows.length === 5, "cooking balance summary row count mismatch");
+  assert(Array.isArray(cookingBalanceSummary.rows) && cookingBalanceSummary.rows.length === 8, "cooking balance summary row count mismatch");
   assert(cookingBalanceSummary.assumptions.level === 40, "cooking default benchmark level mismatch");
   assert(cookingBalanceSummary.rows[0].recipeId === "raw_shrimp", "cooking balance summary should start with shrimp");
-  assert(cookingBalanceSummary.rows[4].recipeId === "raw_swordfish", "cooking balance summary should end with swordfish");
-  assert(cookingBalanceSummary.rows[4].breakEvenLevel === 42, "swordfish break-even level mismatch");
+  assert(cookingBalanceSummary.rows[1].recipeId === "raw_chicken", "cooking balance summary should include chicken after shrimp");
+  assert(cookingBalanceSummary.rows[3].recipeId === "raw_boar_meat", "cooking balance summary should include boar after trout");
+  assert(cookingBalanceSummary.rows[5].recipeId === "raw_wolf_meat", "cooking balance summary should include wolf after salmon");
+  assert(cookingBalanceSummary.rows[7].recipeId === "raw_swordfish", "cooking balance summary should end with swordfish");
+  assert(cookingBalanceSummary.rows[1].breakEvenLevel === 5, "chicken break-even level mismatch");
+  assert(cookingBalanceSummary.rows[3].breakEvenLevel === 15, "boar break-even level mismatch");
+  assert(cookingBalanceSummary.rows[5].breakEvenLevel === 25, "wolf break-even level mismatch");
+  assert(cookingBalanceSummary.rows[7].breakEvenLevel === 42, "swordfish break-even level mismatch");
 
   const cookingBenchmarks = [
     { recipeId: "raw_shrimp", level: 1, cooked: 0.67, xp: 20.1, gold: 1.34 },
+    { recipeId: "raw_chicken", level: 5, cooked: 0.67, xp: 30.15, gold: 2.01 },
     { recipeId: "raw_trout", level: 10, cooked: 0.67, xp: 46.9, gold: -0.64 },
+    { recipeId: "raw_boar_meat", level: 15, cooked: 0.67, xp: 53.6, gold: 3.69 },
     { recipeId: "raw_salmon", level: 20, cooked: 0.67, xp: 60.3, gold: -0.63 },
+    { recipeId: "raw_wolf_meat", level: 25, cooked: 0.67, xp: 70.35, gold: 5.37 },
     { recipeId: "raw_tuna", level: 30, cooked: 0.67, xp: 80.4, gold: 0.05 },
     { recipeId: "raw_swordfish", level: 40, cooked: 0.67, xp: 93.8, gold: -0.93 },
     { recipeId: "raw_shrimp", level: 40, cooked: 1.0, xp: 30.0, gold: 2.0 },
+    { recipeId: "raw_chicken", level: 40, cooked: 1.0, xp: 45.0, gold: 3.0 },
     { recipeId: "raw_trout", level: 40, cooked: 1.0, xp: 70.0, gold: 2.0 },
+    { recipeId: "raw_boar_meat", level: 40, cooked: 0.9637, xp: 77.1, gold: 5.7462 },
     { recipeId: "raw_salmon", level: 40, cooked: 0.95, xp: 85.5, gold: 2.45 },
+    { recipeId: "raw_wolf_meat", level: 40, cooked: 0.9363, xp: 98.3062, gold: 8.2988 },
     { recipeId: "raw_tuna", level: 40, cooked: 0.9, xp: 108.0, gold: 3.5 },
     { recipeId: "raw_swordfish", level: 40, cooked: 0.67, xp: 93.8, gold: -0.93 }
   ];
@@ -228,6 +240,9 @@ function run() {
     assert(approxEq(metrics.expected.xpPerAction, benchmark.xp, 1e-4), "cooking expected xp/action mismatch for " + key);
     assert(approxEq(metrics.expected.goldDeltaPerAction, benchmark.gold, 1e-4), "cooking expected gold delta/action mismatch for " + key);
   });
+  assert(cookingMetricsByKey["raw_chicken@5"].expected.goldDeltaPerAction > cookingMetricsByKey["raw_shrimp@1"].expected.goldDeltaPerAction, "chicken unlock should beat shrimp unlock on gold delta");
+  assert(cookingMetricsByKey["raw_boar_meat@15"].expected.xpPerAction > cookingMetricsByKey["raw_trout@10"].expected.xpPerAction, "boar unlock should beat trout unlock on xp");
+  assert(cookingMetricsByKey["raw_wolf_meat@40"].expected.goldDeltaPerAction > cookingMetricsByKey["raw_boar_meat@40"].expected.goldDeltaPerAction, "wolf 40 should beat boar 40 on gold delta");
   assert(cookingMetricsByKey["raw_salmon@40"].expected.goldDeltaPerAction > cookingMetricsByKey["raw_trout@40"].expected.goldDeltaPerAction, "salmon 40 should beat trout 40 on gold delta");
   assert(cookingMetricsByKey["raw_tuna@40"].expected.xpPerAction > cookingMetricsByKey["raw_salmon@40"].expected.xpPerAction, "tuna 40 should beat salmon 40 on xp");
   assert(cookingMetricsByKey["raw_tuna@40"].expected.goldDeltaPerAction > cookingMetricsByKey["raw_salmon@40"].expected.goldDeltaPerAction, "tuna 40 should beat salmon 40 on gold delta");
@@ -286,6 +301,12 @@ function run() {
   assert(itemDefs.rune_harpoon.value === 2500, "item catalog rune harpoon missing");
   assert(itemDefs.raw_swordfish.value === 40, "item catalog swordfish missing");
   [
+    "raw_chicken",
+    "cooked_chicken",
+    "burnt_chicken",
+    "raw_boar_meat",
+    "cooked_boar_meat",
+    "burnt_boar_meat",
     "raw_trout",
     "cooked_trout",
     "burnt_trout",
@@ -297,9 +318,12 @@ function run() {
     "burnt_tuna",
     "raw_swordfish",
     "cooked_swordfish",
-    "burnt_swordfish"
+    "burnt_swordfish",
+    "raw_wolf_meat",
+    "cooked_wolf_meat",
+    "burnt_wolf_meat"
   ].forEach((itemId) => {
-    assert(itemDefs[itemId] && itemDefs[itemId].icon && itemDefs[itemId].icon.assetId === itemId, `item catalog fish icon should be bespoke for ${itemId}`);
+    assert(itemDefs[itemId] && itemDefs[itemId].icon, `item catalog cooking item missing icon for ${itemId}`);
   });
 
   const session = {
@@ -717,6 +741,19 @@ function run() {
   const teacherSeedAfterQuest = shopEconomy.getMerchantSeedStockRows("fishing_teacher");
   const runeHarpoonSeed = teacherSeedAfterQuest.find((row) => row && row.itemId === "rune_harpoon");
   assert(!!runeHarpoonSeed && runeHarpoonSeed.stockAmount === 1, "teacher rune harpoon replacement stock should seed exactly one copy");
+  delete session.progress.quests.fishing_teacher_from_net_to_harpoon;
+
+  let lastQuestRuntimeLookup = null;
+  window.QuestRuntime = {
+    isQuestCompleted(questId) {
+      lastQuestRuntimeLookup = questId;
+      return questId === "fishing_teacher_from_net_to_harpoon";
+    }
+  };
+  assert(shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should consult QuestRuntime for conditional replacement stock");
+  assert(lastQuestRuntimeLookup === "fishing_teacher_from_net_to_harpoon", "teacher conditional stock should normalize quest ids before consulting QuestRuntime");
+  window.QuestRuntime = null;
+  session.progress.quests.fishing_teacher_from_net_to_harpoon = { status: "completed" };
 
   session.progress.inventory = [buildOwnedSlot("rune_harpoon")];
   assert(!shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should stop selling rune harpoon while one is in inventory");

@@ -7,7 +7,7 @@
 | Woodcutting | In Progress | Logs/xp/gold-per-tick balance targets locked across tree tiers | Progression expansion for later tree bands and gating | None |
 | Fishing | In Progress | Route/value tuning after the 1-40 balance lock | Later-band expansion beyond the current 1-40 route | None |
 | Firemaking | In Progress | Cross-skill log-demand balancing with woodcutting/cooking | Failure/interruption polish + expansion | None |
-| Cooking | In Progress | 1-40 food-band XP/value-per-action targets locked after the burn-curve pass | Progression expansion for additional cookable families | None |
+| Cooking | In Progress | Combat-fed chicken/boar/wolf meat families integrated into the fire-cooking progression lane | Art/presentation pass for non-fish cooked and burnt food states | None |
 | Runecrafting | In Progress | Cross-skill magic demand + mining essence loop integration | Buy/sell parity and route pacing balance | Quest/dependency design |
 | Smithing | In Progress | Merchant/value alignment follow-up after assembly+mould integration | Rune-material quest gating + advanced forge progression | Quest gating |
 | Crafting | In Progress | Merchant/value alignment follow-up after jewelry+mould integration | Elira mould-making quest flow integration | Quest gating |

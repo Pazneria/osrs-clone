@@ -17,6 +17,18 @@
         cooked_swordfish: { buy: 56, sell: 22 },
         burnt_swordfish: { buy: 1, sell: 1 }
     });
+    const CANONICAL_COOKING_VALUE_TABLE = Object.freeze({
+        ...CANONICAL_FISH_FOOD_VALUE_TABLE,
+        raw_chicken: { buy: 4, sell: 1 },
+        cooked_chicken: { buy: 10, sell: 4 },
+        burnt_chicken: { buy: 1, sell: 1 },
+        raw_boar_meat: { buy: 6, sell: 2 },
+        cooked_boar_meat: { buy: 20, sell: 8 },
+        burnt_boar_meat: { buy: 1, sell: 1 },
+        raw_wolf_meat: { buy: 8, sell: 3 },
+        cooked_wolf_meat: { buy: 30, sell: 12 },
+        burnt_wolf_meat: { buy: 1, sell: 1 }
+    });
 
     const SKILL_SPECS = {
         woodcutting: {
@@ -346,7 +358,7 @@
         },
         cooking: {
             skillId: 'cooking',
-            levelBands: [1, 10, 20, 30, 40],
+            levelBands: [1, 5, 10, 15, 20, 25, 30, 40],
             formulas: {
                 success: 'one_minus_unlock_relative_cubic_burn_curve',
                 burn: 'unlock_relative_cubic_burn_curve'
@@ -363,6 +375,14 @@
                     xpPerSuccess: 30,
                     sourceTarget: 'FIRE'
                 },
+                raw_chicken: {
+                    sourceItemId: 'raw_chicken',
+                    cookedItemId: 'cooked_chicken',
+                    burntItemId: 'burnt_chicken',
+                    requiredLevel: 5,
+                    xpPerSuccess: 45,
+                    sourceTarget: 'FIRE'
+                },
                 raw_trout: {
                     sourceItemId: 'raw_trout',
                     cookedItemId: 'cooked_trout',
@@ -371,12 +391,28 @@
                     xpPerSuccess: 70,
                     sourceTarget: 'FIRE'
                 },
+                raw_boar_meat: {
+                    sourceItemId: 'raw_boar_meat',
+                    cookedItemId: 'cooked_boar_meat',
+                    burntItemId: 'burnt_boar_meat',
+                    requiredLevel: 15,
+                    xpPerSuccess: 80,
+                    sourceTarget: 'FIRE'
+                },
                 raw_salmon: {
                     sourceItemId: 'raw_salmon',
                     cookedItemId: 'cooked_salmon',
                     burntItemId: 'burnt_salmon',
                     requiredLevel: 20,
                     xpPerSuccess: 90,
+                    sourceTarget: 'FIRE'
+                },
+                raw_wolf_meat: {
+                    sourceItemId: 'raw_wolf_meat',
+                    cookedItemId: 'cooked_wolf_meat',
+                    burntItemId: 'burnt_wolf_meat',
+                    requiredLevel: 25,
+                    xpPerSuccess: 105,
                     sourceTarget: 'FIRE'
                 },
                 raw_tuna: {
@@ -400,7 +436,7 @@
                 primaryResource: 'raw_shrimp',
                 cookedResource: 'cooked_shrimp',
                 burntResource: 'burnt_shrimp',
-                valueTable: CANONICAL_FISH_FOOD_VALUE_TABLE
+                valueTable: CANONICAL_COOKING_VALUE_TABLE
             }
         },
         mining: {
@@ -2173,7 +2209,7 @@
         if (trout40 && !(trout40.expectedGoldDeltaPerAction > 0)) {
             errors.push('raw_trout@40 should remain positive gold delta');
         }
-        if (salmon40 && !(salmon40.expectedGoldDeltaPerAction > trout40.expectedGoldDeltaPerAction)) {
+        if (salmon40 && trout40 && !(salmon40.expectedGoldDeltaPerAction > trout40.expectedGoldDeltaPerAction)) {
             errors.push('raw_salmon@40 should beat raw_trout@40 on gold delta');
         }
         if (tuna40 && salmon40 && !(tuna40.expectedXpPerAction > salmon40.expectedXpPerAction)) {

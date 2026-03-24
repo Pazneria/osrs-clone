@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-21T20:47:02.891Z",
+  "generatedAt": "2026-03-23T18:46:36.963Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -1006,6 +1006,34 @@
       "type": "component",
       "value": 12
     },
+    "burnt_boar_meat": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "assetId": "raw_boar_meat",
+        "kind": "pixel"
+      },
+      "name": "Burnt Boar Meat",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
+    "burnt_chicken": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "assetId": "raw_chicken",
+        "kind": "pixel"
+      },
+      "name": "Burnt Chicken",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
     "burnt_salmon": {
       "actions": [
         "Drop"
@@ -1076,6 +1104,20 @@
       "type": "resource",
       "value": 1
     },
+    "burnt_wolf_meat": {
+      "actions": [
+        "Drop"
+      ],
+      "defaultAction": "Drop",
+      "icon": {
+        "assetId": "raw_wolf_meat",
+        "kind": "pixel"
+      },
+      "name": "Burnt Wolf Meat",
+      "stackable": false,
+      "type": "resource",
+      "value": 1
+    },
     "chisel": {
       "actions": [
         "Use",
@@ -1132,6 +1174,40 @@
       "stackable": true,
       "type": "currency",
       "value": 1
+    },
+    "cooked_boar_meat": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 6,
+      "icon": {
+        "assetId": "raw_boar_meat",
+        "kind": "pixel"
+      },
+      "name": "Cooked Boar Meat",
+      "stackable": false,
+      "type": "food",
+      "value": 20
+    },
+    "cooked_chicken": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 4,
+      "icon": {
+        "assetId": "raw_chicken",
+        "kind": "pixel"
+      },
+      "name": "Cooked Chicken",
+      "stackable": false,
+      "type": "food",
+      "value": 10
     },
     "cooked_salmon": {
       "actions": [
@@ -1217,6 +1293,23 @@
       "stackable": false,
       "type": "food",
       "value": 40
+    },
+    "cooked_wolf_meat": {
+      "actions": [
+        "Eat",
+        "Drop"
+      ],
+      "defaultAction": "Eat",
+      "eatDelayTicks": 4,
+      "healAmount": 8,
+      "icon": {
+        "assetId": "raw_wolf_meat",
+        "kind": "pixel"
+      },
+      "name": "Cooked Wolf Meat",
+      "stackable": false,
+      "type": "food",
+      "value": 30
     },
     "copper_ore": {
       "actions": [
@@ -3148,6 +3241,8 @@
         "Use",
         "Drop"
       ],
+      "burnResultId": "burnt_boar_meat",
+      "cookResultId": "cooked_boar_meat",
       "defaultAction": "Use",
       "icon": {
         "assetId": "raw_boar_meat",
@@ -3163,6 +3258,8 @@
         "Use",
         "Drop"
       ],
+      "burnResultId": "burnt_chicken",
+      "cookResultId": "cooked_chicken",
       "defaultAction": "Use",
       "icon": {
         "assetId": "raw_chicken",
@@ -3263,6 +3360,8 @@
         "Use",
         "Drop"
       ],
+      "burnResultId": "burnt_wolf_meat",
+      "cookResultId": "cooked_wolf_meat",
       "defaultAction": "Use",
       "icon": {
         "assetId": "raw_wolf_meat",

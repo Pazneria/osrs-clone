@@ -283,6 +283,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 }
             }
 
+            const bankerHit = hitResults.find((entry) => entry && entry.type === 'NPC' && entry.name === 'Banker');
+            if (bankerHit && window.appendSwapLeftClickControl && window.getItemMenuPreferenceKey) {
+                const bankerUid = bankerHit.uid && typeof bankerHit.uid === 'object' ? bankerHit.uid : null;
+                const prefKey = window.getItemMenuPreferenceKey('npc', (bankerUid && (bankerUid.spawnId || bankerUid.merchantId || bankerUid.name)) || 'Banker');
+                window.appendSwapLeftClickControl(prefKey, ['Talk-to', 'Bank'], () => {});
+            }
+
             const walkHit = hitResults[hitResults.length - 1];
             addContextMenuOption('Walk here', () => { queueAction('WALK', walkHit.gridX, walkHit.gridY, null); spawnClickMarker(walkHit.point, false); });
             showContextMenuAt(event.clientX, event.clientY);
@@ -1247,12 +1254,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     };
                 }
 
-                                else if (hitData.type === 'NPC') {
+                else if (hitData.type === 'NPC') {
                     if (hitData.uid && typeof hitData.uid === 'object') targetData = Object.assign({}, hitData.uid);
                     else if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade', merchantId: 'general_store' };
                     else targetData = { name: hitData.name, action: 'Talk-to' };
                     if (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function') {
                         targetData.action = window.QuestRuntime.resolveNpcPrimaryAction(targetData);
+                    }
+                    if (targetData && targetData.name === 'Banker' && window.getItemMenuPreferenceKey && window.getPreferredMenuAction) {
+                        const prefKey = window.getItemMenuPreferenceKey('npc', targetData.spawnId || targetData.merchantId || targetData.name);
+                        targetData.action = window.getPreferredMenuAction(prefKey, ['Talk-to', 'Bank']) || targetData.action;
                     }
                 }
                 queueAction('INTERACT', hitData.gridX, hitData.gridY, hitData.type, targetData); 
@@ -1827,6 +1838,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 
                                 if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade') {
                                     openShop(playerState.targetUid.merchantId || 'general_store');
+                                } else if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Bank') {
+                                    openBank();
                                 } else if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Travel') {
                                     if (typeof window.travelToWorld === 'function') {
                                         const explicitWorldId = playerState.targetUid.travelToWorldId || null;
@@ -2116,12 +2129,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
                     else if (hitData.type === 'NPC') {
                         const baseNpcAction = (hitData.uid && hitData.uid.action) ? hitData.uid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
-                        const npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
+                        let npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
                             ? window.QuestRuntime.resolveNpcPrimaryAction((hitData.uid && typeof hitData.uid === 'object')
                                 ? hitData.uid
                                 : { name: hitData.name, action: baseNpcAction })
                             : baseNpcAction;
+                        if (hitData.name === 'Banker' && window.getItemMenuPreferenceKey && window.getPreferredMenuAction) {
+                            const prefKey = window.getItemMenuPreferenceKey('npc', (hitData.uid && (hitData.uid.spawnId || hitData.uid.merchantId || hitData.uid.name)) || hitData.name);
+                            npcAction = window.getPreferredMenuAction(prefKey, ['Talk-to', 'Bank']) || npcAction;
+                        }
                         if (npcAction === 'Trade') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
+                        else if (npcAction === 'Bank') actionText = `<span class="text-gray-300">Bank</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else if (npcAction === 'Travel') actionText = `<span class="text-gray-300">Travel</span> <span class="text-yellow-400">${hitData.name}</span>`;
                         else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
                 }

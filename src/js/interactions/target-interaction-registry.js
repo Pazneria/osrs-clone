@@ -213,23 +213,40 @@
                     const hitData = context.hitData || {};
                     const npcUid = hitData.uid && typeof hitData.uid === 'object' ? hitData.uid : null;
                     const npcName = typeof hitData.name === 'string' ? hitData.name : 'NPC';
+                    const isBanker = npcName === 'Banker' || (npcUid && npcUid.name === 'Banker');
                     const baseNpcAction = (npcUid && typeof npcUid.action === 'string')
                         ? npcUid.action
                         : (npcName === 'Shopkeeper' ? 'Trade' : 'Talk-to');
+                    const npcPrefKey = (window.getItemMenuPreferenceKey && (npcUid || npcName))
+                        ? window.getItemMenuPreferenceKey('npc', (npcUid && (npcUid.spawnId || npcUid.merchantId || npcUid.name)) || npcName)
+                        : null;
+                    const bankerActions = ['Talk-to', 'Bank'];
+                    const preferredBankerAction = (isBanker && window.getPreferredMenuAction && npcPrefKey)
+                        ? window.getPreferredMenuAction(npcPrefKey, bankerActions)
+                        : null;
                     const npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
                         ? window.QuestRuntime.resolveNpcPrimaryAction(npcUid || { name: npcName, action: baseNpcAction })
                         : baseNpcAction;
+                    const resolvedNpcAction = preferredBankerAction || npcAction;
                     const canTrade = !!(npcUid && npcUid.merchantId && (!window.QuestRuntime || typeof window.QuestRuntime.canOpenMerchantShop !== 'function' || window.QuestRuntime.canOpenMerchantShop(npcUid.merchantId).ok));
                     const talkTarget = npcUid
                         ? Object.assign({}, npcUid, { action: 'Talk-to' })
                         : { name: npcName, action: 'Talk-to' };
-                    const talkPriority = npcAction === 'Talk-to' ? 100 : 100.5;
-                    const secondaryPriority = npcAction === 'Talk-to' ? 100.5 : 100;
+                    const talkPriority = resolvedNpcAction === 'Talk-to' ? 100 : 100.5;
+                    const secondaryPriority = resolvedNpcAction === 'Talk-to' ? 100.5 : 100;
                     const talkOption = createOption(
                         `Talk-to <span class="text-yellow-400">${npcName}</span>`,
                         () => context.queueInteract('NPC', talkTarget),
                         talkPriority
                     );
+                    const buildBankOption = () => {
+                        const bankTarget = npcUid ? Object.assign({}, npcUid, { action: 'Bank' }) : { name: npcName, action: 'Bank' };
+                        return createOption(
+                            `Bank <span class="text-yellow-400">${npcName}</span>`,
+                            () => context.queueInteract('NPC', bankTarget),
+                            secondaryPriority
+                        );
+                    };
                     const buildTradeOption = () => {
                         if (npcName === 'Shopkeeper' && !(npcUid && npcUid.merchantId)) {
                             return createOption(
@@ -246,14 +263,21 @@
                         );
                     };
 
-                    if (npcAction === 'Trade') {
+                    if (isBanker) {
+                        return [
+                            resolvedNpcAction === 'Bank' ? buildBankOption() : talkOption,
+                            resolvedNpcAction === 'Bank' ? talkOption : buildBankOption()
+                        ];
+                    }
+
+                    if (resolvedNpcAction === 'Trade') {
                         return [
                             buildTradeOption(),
                             talkOption
                         ];
                     }
 
-                    if (npcAction === 'Travel') {
+                    if (resolvedNpcAction === 'Travel') {
                         const travelTarget = npcUid ? Object.assign({}, npcUid) : { name: npcName, action: 'Travel' };
                         return [
                             createOption(
@@ -265,7 +289,7 @@
                         ];
                     }
 
-                    if (npcAction === 'Talk-to' && canTrade) {
+                    if (resolvedNpcAction === 'Talk-to' && canTrade) {
                         return [
                             talkOption,
                             buildTradeOption()

@@ -15,10 +15,11 @@
 - [x] COOKING-011: UX polish pass completed for interruption/switching and animation consistency (per-fish level gates now block under-level cooking in both use-item and start flows, same-fire fish swaps preserve the active tick cadence instead of resetting it, and dedicated runtime tests cover the clip/suppress-equipment contract).
 - [x] COOKING-012A: Burn-rate rebalance completed with a shared unlock-relative cubic burn curve (33% at unlock, 10% at +10, 5% at +20, 0% at +30), removal of legacy burn-difficulty/item burn fields, and live UI burn-chance display.
 - [x] COOKING-012: 1-40 food-band balance targets are now locked with shared fish/cooking sell-value tables, per-recipe registry summary helpers, and documented tier-entry, level-40, and break-even value-per-action benchmarks.
+- [x] COOKING-013: Progression expansion completed for additional cookable families beyond the early fish baseline (combat-fed chicken, boar, and wolf meat now cook on fires with canonical cooked/burnt outputs, heal values, sell-value rows, and roadmap/spec coverage).
 
 ## Now
 
 ## Next
-- [ ] COOKING-013: Progression expansion pass for additional cookable families beyond early fish baseline.
+- [ ] COOKING-014: Art-and-presentation pass for non-fish cooked/burnt food states so new meat families no longer rely on shared placeholder icons.
 
 ## Later

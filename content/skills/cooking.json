@@ -4,6 +4,14 @@
     "cookedResource": "cooked_shrimp",
     "primaryResource": "raw_shrimp",
     "valueTable": {
+      "burnt_boar_meat": {
+        "buy": 1,
+        "sell": 1
+      },
+      "burnt_chicken": {
+        "buy": 1,
+        "sell": 1
+      },
       "burnt_salmon": {
         "buy": 1,
         "sell": 1
@@ -23,6 +31,18 @@
       "burnt_tuna": {
         "buy": 1,
         "sell": 1
+      },
+      "burnt_wolf_meat": {
+        "buy": 1,
+        "sell": 1
+      },
+      "cooked_boar_meat": {
+        "buy": 20,
+        "sell": 8
+      },
+      "cooked_chicken": {
+        "buy": 10,
+        "sell": 4
       },
       "cooked_salmon": {
         "buy": 32,
@@ -44,6 +64,18 @@
         "buy": 40,
         "sell": 16
       },
+      "cooked_wolf_meat": {
+        "buy": 30,
+        "sell": 12
+      },
+      "raw_boar_meat": {
+        "buy": 6,
+        "sell": 2
+      },
+      "raw_chicken": {
+        "buy": 4,
+        "sell": 1
+      },
       "raw_salmon": {
         "buy": 24,
         "sell": 9
@@ -63,6 +95,10 @@
       "raw_tuna": {
         "buy": 28,
         "sell": 11
+      },
+      "raw_wolf_meat": {
+        "buy": 8,
+        "sell": 3
       }
     }
   },
@@ -72,12 +108,31 @@
   },
   "levelBands": [
     1,
+    5,
     10,
+    15,
     20,
+    25,
     30,
     40
   ],
   "recipeSet": {
+    "raw_boar_meat": {
+      "burntItemId": "burnt_boar_meat",
+      "cookedItemId": "cooked_boar_meat",
+      "requiredLevel": 15,
+      "sourceItemId": "raw_boar_meat",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 80
+    },
+    "raw_chicken": {
+      "burntItemId": "burnt_chicken",
+      "cookedItemId": "cooked_chicken",
+      "requiredLevel": 5,
+      "sourceItemId": "raw_chicken",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 45
+    },
     "raw_salmon": {
       "burntItemId": "burnt_salmon",
       "cookedItemId": "cooked_salmon",
@@ -117,6 +172,14 @@
       "sourceItemId": "raw_tuna",
       "sourceTarget": "FIRE",
       "xpPerSuccess": 120
+    },
+    "raw_wolf_meat": {
+      "burntItemId": "burnt_wolf_meat",
+      "cookedItemId": "cooked_wolf_meat",
+      "requiredLevel": 25,
+      "sourceItemId": "raw_wolf_meat",
+      "sourceTarget": "FIRE",
+      "xpPerSuccess": 105
     }
   },
   "skillId": "cooking",
