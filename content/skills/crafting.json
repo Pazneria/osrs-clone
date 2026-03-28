@@ -126,6 +126,10 @@
         "buy": 2200,
         "sell": 750
       },
+      "air_staff": {
+        "buy": null,
+        "sell": 150
+      },
       "amulet_mould": {
         "buy": null,
         "sell": null
@@ -168,27 +172,35 @@
       },
       "diamond_gold_amulet": {
         "buy": null,
-        "sell": 332
+        "sell": 132
       },
       "diamond_gold_ring": {
         "buy": null,
-        "sell": 332
+        "sell": 132
       },
       "diamond_gold_tiara": {
         "buy": null,
-        "sell": 332
+        "sell": 132
+      },
+      "earth_staff": {
+        "buy": null,
+        "sell": 92
       },
       "emerald_gold_amulet": {
         "buy": null,
-        "sell": 212
+        "sell": 92
       },
       "emerald_gold_ring": {
         "buy": null,
-        "sell": 212
+        "sell": 92
       },
       "emerald_gold_tiara": {
         "buy": null,
-        "sell": 212
+        "sell": 92
+      },
+      "fire_staff": {
+        "buy": null,
+        "sell": 24
       },
       "gold_amulet": {
         "buy": null,
@@ -254,21 +266,41 @@
         "buy": 50,
         "sell": 16
       },
+      "plain_staff_maple": {
+        "buy": null,
+        "sell": 32
+      },
+      "plain_staff_oak": {
+        "buy": null,
+        "sell": 12
+      },
+      "plain_staff_willow": {
+        "buy": null,
+        "sell": 20
+      },
+      "plain_staff_wood": {
+        "buy": null,
+        "sell": 6
+      },
+      "plain_staff_yew": {
+        "buy": null,
+        "sell": 50
+      },
       "ring_mould": {
         "buy": null,
         "sell": null
       },
       "ruby_gold_amulet": {
         "buy": null,
-        "sell": 80
+        "sell": 44
       },
       "ruby_gold_ring": {
         "buy": null,
-        "sell": 80
+        "sell": 44
       },
       "ruby_gold_tiara": {
         "buy": null,
-        "sell": 80
+        "sell": 44
       },
       "ruby_silver_amulet": {
         "buy": null,
@@ -296,27 +328,27 @@
       },
       "sapphire_gold_amulet": {
         "buy": null,
-        "sell": 128
+        "sell": 64
       },
       "sapphire_gold_ring": {
         "buy": null,
-        "sell": 128
+        "sell": 64
       },
       "sapphire_gold_tiara": {
         "buy": null,
-        "sell": 128
+        "sell": 64
       },
       "sapphire_silver_amulet": {
         "buy": null,
-        "sell": 64
+        "sell": 52
       },
       "sapphire_silver_ring": {
         "buy": null,
-        "sell": 64
+        "sell": 52
       },
       "sapphire_silver_tiara": {
         "buy": null,
-        "sell": 64
+        "sell": 52
       },
       "silver_amulet": {
         "buy": null,
@@ -333,6 +365,10 @@
       "silver_tiara": {
         "buy": null,
         "sell": 20
+      },
+      "soft_clay": {
+        "buy": null,
+        "sell": 1
       },
       "steel_axe": {
         "buy": 350,
@@ -369,6 +405,10 @@
       "uncut_sapphire": {
         "buy": 50,
         "sell": 16
+      },
+      "water_staff": {
+        "buy": null,
+        "sell": 52
       },
       "willow_handle": {
         "buy": null,
@@ -1291,6 +1331,23 @@
       "stationType": "INVENTORY",
       "xpPerAction": 8
     },
+    "craft_soft_clay": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "clay"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "soft_clay"
+      },
+      "recipeFamily": "soft_clay",
+      "requiredLevel": 1,
+      "stationType": "WATER",
+      "xpPerAction": 1
+    },
     "craft_water_staff": {
       "actionTicks": 3,
       "inputs": [
@@ -1454,6 +1511,123 @@
       ],
       "stationType": "INVENTORY",
       "xpPerAction": 8
+    },
+    "fire_imprinted_amulet_mould": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "imprinted_amulet_mould"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "amulet_mould"
+      },
+      "recipeFamily": "mould_firing",
+      "requiredLevel": 1,
+      "stationType": "FIRE",
+      "xpPerAction": 3
+    },
+    "fire_imprinted_ring_mould": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "imprinted_ring_mould"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "ring_mould"
+      },
+      "recipeFamily": "mould_firing",
+      "requiredLevel": 1,
+      "stationType": "FIRE",
+      "xpPerAction": 3
+    },
+    "fire_imprinted_tiara_mould": {
+      "actionTicks": 3,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "imprinted_tiara_mould"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "tiara_mould"
+      },
+      "recipeFamily": "mould_firing",
+      "requiredLevel": 1,
+      "stationType": "FIRE",
+      "xpPerAction": 3
+    },
+    "imprint_amulet_mould": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "soft_clay"
+        },
+        {
+          "amount": 1,
+          "consume": false,
+          "itemId": "borrowed_amulet"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "imprinted_amulet_mould"
+      },
+      "recipeFamily": "mould_imprint",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 1
+    },
+    "imprint_ring_mould": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "soft_clay"
+        },
+        {
+          "amount": 1,
+          "consume": false,
+          "itemId": "borrowed_ring"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "imprinted_ring_mould"
+      },
+      "recipeFamily": "mould_imprint",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 1
+    },
+    "imprint_tiara_mould": {
+      "actionTicks": 1,
+      "inputs": [
+        {
+          "amount": 1,
+          "itemId": "soft_clay"
+        },
+        {
+          "amount": 1,
+          "consume": false,
+          "itemId": "borrowed_tiara"
+        }
+      ],
+      "output": {
+        "amount": 1,
+        "itemId": "imprinted_tiara_mould"
+      },
+      "recipeFamily": "mould_imprint",
+      "requiredLevel": 1,
+      "stationType": "INVENTORY",
+      "xpPerAction": 1
     }
   },
   "skillId": "crafting",

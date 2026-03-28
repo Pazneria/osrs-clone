@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-23T18:46:36.963Z",
+  "generatedAt": "2026-03-26T17:48:49.153Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -483,8 +483,7 @@
     },
     "amulet_mould": {
       "actions": [
-        "Use",
-        "Drop"
+        "Use"
       ],
       "defaultAction": "Use",
       "icon": {
@@ -554,6 +553,48 @@
       "stackable": false,
       "type": "resource",
       "value": 10
+    },
+    "borrowed_amulet": {
+      "actions": [
+        "Use"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "silver_amulet",
+        "kind": "pixel"
+      },
+      "name": "Borrowed Amulet",
+      "stackable": false,
+      "type": "resource",
+      "value": 0
+    },
+    "borrowed_ring": {
+      "actions": [
+        "Use"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "silver_ring",
+        "kind": "pixel"
+      },
+      "name": "Borrowed Ring",
+      "stackable": false,
+      "type": "resource",
+      "value": 0
+    },
+    "borrowed_tiara": {
+      "actions": [
+        "Use"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "silver_tiara",
+        "kind": "pixel"
+      },
+      "name": "Borrowed Tiara",
+      "stackable": false,
+      "type": "resource",
+      "value": 0
     },
     "bow_string": {
       "actions": [
@@ -1783,6 +1824,48 @@
       "type": "weapon",
       "value": 110,
       "weaponClass": "harpoon"
+    },
+    "imprinted_amulet_mould": {
+      "actions": [
+        "Use"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "small_pouch",
+        "kind": "pixel"
+      },
+      "name": "Imprinted Amulet Mould",
+      "stackable": false,
+      "type": "resource",
+      "value": 0
+    },
+    "imprinted_ring_mould": {
+      "actions": [
+        "Use"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "small_pouch",
+        "kind": "pixel"
+      },
+      "name": "Imprinted Ring Mould",
+      "stackable": false,
+      "type": "resource",
+      "value": 0
+    },
+    "imprinted_tiara_mould": {
+      "actions": [
+        "Use"
+      ],
+      "defaultAction": "Use",
+      "icon": {
+        "assetId": "small_pouch",
+        "kind": "pixel"
+      },
+      "name": "Imprinted Tiara Mould",
+      "stackable": false,
+      "type": "resource",
+      "value": 0
     },
     "iron_arrowheads": {
       "actions": [
@@ -3374,8 +3457,7 @@
     },
     "ring_mould": {
       "actions": [
-        "Use",
-        "Drop"
+        "Use"
       ],
       "defaultAction": "Use",
       "icon": {
@@ -4675,8 +4757,7 @@
     },
     "tiara_mould": {
       "actions": [
-        "Use",
-        "Drop"
+        "Use"
       ],
       "defaultAction": "Use",
       "icon": {

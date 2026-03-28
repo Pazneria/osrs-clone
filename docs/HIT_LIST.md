@@ -953,6 +953,155 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-055 - Crafting throughput targets and jewelry sell values drifted from the authored balance rules
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `src/js/skills/crafting/ROADMAP.md`, `src/js/skills/crafting/STATUS.md`, `src/js/skills/_index.md`, `content/skills/crafting.json`
+- Repro:
+  1. Review the crafting roadmap/status docs after the over-tier handle work and compare them against the live crafting spec.
+  2. Try to answer the canonical XP-per-tick and sell-value-per-tick targets for strapped handles, gem cutting, staffs, and jewelry attachment from runtime-backed helpers or roadmap tables.
+  3. Compare the documented gemmed-jewelry value rule against the crafting economy sell rows, especially for `sapphire_silver_*` and the gold gemmed jewelry outputs.
+- Expected: Crafting should expose runtime-backed throughput/value benchmarks for its main lanes, and gemmed-jewelry sell values should equal matching jewelry-base sell value plus matching cut-gem sell value.
+- Actual: Crafting still lacked benchmark helpers/tables for the main balance lanes, and several gemmed-jewelry sell rows had drifted above the documented base-plus-gem sell composition rule.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical crafting balance helpers plus spec-level benchmark validation for the core handle, gem, staff, and jewelry lanes.
+  2. Correct the gemmed-jewelry sell rows to match the documented base-plus-gem sell composition rule.
+  3. Sync the crafting roadmap/status/index and mirrored skill JSON with explicit throughput/value benchmark tables.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Corrected the crafting economy sell rows for sapphire-silver and all gold gemmed jewelry outputs so they now equal base jewelry sell value plus cut-gem sell value.
+  - Added crafting balance helpers in the registry plus spec-level curve validation to lock the handle, gem-cutting, staff, and gemmed-jewelry lanes against future drift.
+  - Added explicit crafting throughput/value benchmark tables in the roadmap and marked `CRAFTING-012` complete across the crafting status/index and mirrored skill JSON.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-054 - Over-tier strapped handles still stop at exact-tier recipes
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/crafting/index.js`, `src/js/skills/runtime.js`, `tools/tests/fletching-crafting-interactions.js`, `src/js/skills/crafting/ROADMAP.md`, `src/js/skills/crafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Read the crafting roadmap section on strapped handles and lower-tier compatibility.
+  2. Try a higher-tier strapped handle on a lower-tier smithing part, such as `bronze_axe_head + oak_handle_strapped`.
+  3. Observe whether the runtime offers a confirmation and produces the normal lower-tier output.
+- Expected: Higher-tier strapped handles can assemble lower-tier sword/axe/pickaxe parts after a yes/no confirmation, and the result stays the standard lower-tier item with no stat bonus or disassembly path.
+- Actual: Crafting only matched the exact-tier strapped-handle input from the recipe table, so over-tier handle combinations were rejected as mismatches.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Detect lower-tier metal-part + higher-tier strapped-handle pairs from the existing assembly recipe data.
+  2. Reuse the lower-tier output recipe with the provided higher-tier handle input behind a confirmation prompt.
+  3. Add focused regression coverage and sync the crafting docs/status board.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - `src/js/skills/crafting/index.js` now adapts the matching lower-tier assembly recipe when the supplied strapped handle is higher-tier than the recipe's normal requirement.
+  - The immediate confirmation prompt explicitly warns that the result is the normal lower-tier item with no stat bonus and no later disassembly path.
+  - Added accept/decline/undertier coverage in `tools/tests/fletching-crafting-interactions.js` and marked `CRAFTING-011` complete across the crafting docs/index.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-053 - Elira mould-making quest was still a roadmap-only gate
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/content/quest-catalog.js`, `src/js/quest-runtime.js`, `src/js/content/item-catalog.js`, `src/js/skills/specs.js`, `src/js/skills/crafting/index.js`, `tools/tests/quest-tanner-runtime-guard.js`, `tools/tests/fletching-crafting-interactions.js`, `src/js/skills/crafting/ROADMAP.md`, `src/js/skills/crafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the crafting roadmap/status docs and the live crafting + quest runtime.
+  2. Try to start Elira's mould-making flow or create moulds from borrowed examples.
+  3. Check whether ring/amulet/tiara mould unlocks are actually earned through a quest-backed runtime path.
+- Expected: Elira should start a real mould-making quest that grants borrowed examples, tracks finished mould ownership, and unlocks the ring/amulet/tiara mould families when completed.
+- Actual: The mould-making flow was documented but not implemented as a live quest/runtime slice, so the borrowed-item imprinting path and quest-backed unlock handoff were still missing.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add Elira's mould-making quest definition with borrowed-item start rewards and completion unlock flags.
+  2. Implement crafting-side clay-on-water, borrowed-item imprinting, and fire-firing recipes/runtime handling.
+  3. Add focused quest/crafting regression coverage and update the crafting docs/status board.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added the `Moulds of the Trade` quest for Elira, including borrowed example start rewards, non-consumed mould-ownership objectives, completion cleanup for borrowed items, and permanent mould unlock flags.
+  - Added `borrowed_*` and `imprinted_*` item definitions plus crafting recipes/runtime support for soft clay creation, borrowed-item imprinting, and active-fire mould firing.
+  - Extended the focused quest/crafting guards and updated the crafting roadmap/status/index to reflect the now-live quest-gated mould flow.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-052 - Fletching throughput targets are not locked to runtime data
+- Status: Fixed
+- Severity: S2
+- Area: FLT
+- Source: Manual
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `src/js/skills/fletching/ROADMAP.md`, `src/js/skills/fletching/STATUS.md`, `src/js/skills/_index.md`, `content/skills/fletching.json`
+- Repro:
+  1. Review the fletching roadmap after the merchant/value-table pass and compare it against the live runtime spec.
+  2. Try to answer the canonical XP-per-tick and sell-value-per-tick targets for the handle, finished-arrow, and finished-bow lanes.
+  3. Check whether fletching exposes runtime-backed balance helpers like the other matured skill specs.
+- Expected: Fletching should publish explicit throughput targets for its core recipe lanes and expose canonical registry helpers that stay aligned with the live runtime values.
+- Actual: Fletching still lacked balance summary helpers, spec-level curve validation, and roadmap benchmark tables for the core handle, arrow, and bow branches.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical fletching value coverage plus registry helpers for per-recipe XP/value throughput.
+  2. Add spec-level balance validation for the handle, arrow, and bow lanes.
+  3. Sync the roadmap/status/index and runtime skill mirror with explicit throughput tables.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Benchmarked the existing recipe numbers and kept the live values unchanged; the pass codifies the current curve instead of silently retuning it.
+  - Added fletching balance helpers in the registry plus spec-level curve validation that locks the handle, arrow, and bow throughput lanes.
+  - Filled the remaining plain-staff sell-value rows in the fletching economy table and updated the roadmap/status/index plus the mirrored skill JSON.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-051 - Combat-fed cooked/burnt meats still reuse raw placeholder icons
+- Status: Fixed
+- Severity: S3
+- Area: Other
+- Source: Manual
+- Links: `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `content/icon-status.json`, `assets/pixel-src/cooked_chicken.json`, `assets/pixel-src/burnt_chicken.json`, `assets/pixel-src/cooked_boar_meat.json`, `assets/pixel-src/burnt_boar_meat.json`, `assets/pixel-src/cooked_wolf_meat.json`, `assets/pixel-src/burnt_wolf_meat.json`, `src/js/skills/cooking/ROADMAP.md`, `src/js/skills/cooking/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Compare the inventory icons for `raw_chicken`, `cooked_chicken`, and `burnt_chicken`, then repeat for the boar and wolf meat families.
+  2. Check the current icon asset mapping in `src/js/content/item-catalog.js` or `content/icon-status.json`.
+- Expected: Cooked and burnt versions of the combat-fed meat families should use distinct inventory art instead of reusing the raw-meat icon.
+- Actual: `cooked_*` and `burnt_*` chicken/boar/wolf outputs still pointed at the raw-meat pixel assets, so the new non-fish cooking states were visually indistinct.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Audit the cooked/burnt meat icon mappings and confirm the missing dedicated asset IDs.
+  2. Author/build bespoke cooked and burnt pixel assets for chicken, boar meat, and wolf meat.
+  3. Rewire the item catalog and sync the item/icon/doc mirrors.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added dedicated cooked and burnt pixel-source assets for the chicken, boar meat, and wolf meat cooking-result families and built their icon/model artifacts through the pixel pipeline.
+  - Updated `src/js/content/item-catalog.js` so each cooked/burnt meat output now points at its own bespoke pixel asset instead of the raw-meat placeholder art.
+  - Synced the runtime item mirror and icon-status manifest, then updated the cooking roadmap/status/index docs to record the completed presentation pass.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-050 - Cooking 1-40 balance targets missing after burn-curve pass
 - Status: Fixed
 - Severity: S2

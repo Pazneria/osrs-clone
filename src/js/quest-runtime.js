@@ -120,10 +120,32 @@
         return total;
     }
 
-    function buildObjectiveState(objectiveDef, forceComplete) {
-        const target = Number.isFinite(objectiveDef && objectiveDef.amount)
+    function ensurePlayerUnlockFlags() {
+        const session = getGameSession();
+        if (!session || !session.player || typeof session.player !== 'object') return null;
+        if (!session.player.unlockFlags || typeof session.player.unlockFlags !== 'object') {
+            session.player.unlockFlags = {};
+        }
+        return session.player.unlockFlags;
+    }
+
+    function getObjectiveRequiredAmount(objectiveDef) {
+        return Number.isFinite(objectiveDef && objectiveDef.amount)
             ? Math.max(1, Math.floor(objectiveDef.amount))
             : 1;
+    }
+
+    function getObjectiveKind(objectiveDef) {
+        const kind = String(objectiveDef && objectiveDef.kind || '').trim().toLowerCase();
+        return kind === 'has_item' ? 'has_item' : 'turn_in_item';
+    }
+
+    function objectiveConsumesItems(objectiveDef) {
+        return getObjectiveKind(objectiveDef) !== 'has_item';
+    }
+
+    function buildObjectiveState(objectiveDef, forceComplete) {
+        const target = getObjectiveRequiredAmount(objectiveDef);
         const current = forceComplete
             ? target
             : Math.min(target, getInventoryCountByItemId(objectiveDef && objectiveDef.itemId));
@@ -365,6 +387,17 @@
         }
 
         if (entry.status !== 'active' && entry.status !== 'ready_to_complete') {
+            const startGrant = grantRewardBundle(questDef.startRewards, {
+                requireAllItems: true,
+                failureMessage: questDef.startRewardFailureText
+            });
+            if (!startGrant.ok) {
+                return {
+                    ok: false,
+                    messageText: startGrant.messageText
+                };
+            }
+
             const startedAt = Date.now();
             entry.status = 'active';
             entry.startedAt = entry.startedAt || startedAt;
@@ -372,6 +405,7 @@
             entry.completedAt = null;
             entry.activeStepId = 'collect_items';
             entry.objectiveStates = {};
+            if (startGrant.inventoryChanged && typeof renderInventory === 'function') renderInventory();
             addQuestChat('Quest started: ' + questDef.title + '.', 'info');
             saveQuestProgress('quest_started');
         }
@@ -387,25 +421,96 @@
         };
     }
 
-    function grantQuestRewards(questDef) {
-        const rewards = questDef && questDef.rewards ? questDef.rewards : {};
+    function rollbackGrantedItems(grantedItems) {
+        if (!Array.isArray(grantedItems) || typeof removeItemsById !== 'function') return;
+        for (let i = 0; i < grantedItems.length; i++) {
+            const granted = grantedItems[i];
+            if (!granted || !granted.itemId) continue;
+            const amount = Number.isFinite(granted.amount) ? Math.max(1, Math.floor(granted.amount)) : 1;
+            removeItemsById(granted.itemId, amount);
+        }
+    }
 
-        if (Array.isArray(rewards.items) && window.ITEM_DB && typeof giveItem === 'function') {
-            for (let i = 0; i < rewards.items.length; i++) {
-                const reward = rewards.items[i];
-                if (!reward || !reward.itemId || !window.ITEM_DB[reward.itemId]) continue;
+    function grantRewardBundle(bundle, options) {
+        const rewardData = bundle && typeof bundle === 'object' ? bundle : {};
+        const opts = options && typeof options === 'object' ? options : {};
+        const grantedItems = [];
+        const grantedSkillXp = [];
+        const grantedUnlockFlags = [];
+
+        if (Array.isArray(rewardData.items)) {
+            for (let i = 0; i < rewardData.items.length; i++) {
+                const reward = rewardData.items[i];
+                const itemId = reward && reward.itemId ? reward.itemId : '';
+                if (!itemId) continue;
+
                 const amount = Number.isFinite(reward.amount) ? Math.max(1, Math.floor(reward.amount)) : 1;
-                giveItem(window.ITEM_DB[reward.itemId], amount);
+                const itemData = window.ITEM_DB && window.ITEM_DB[itemId] ? window.ITEM_DB[itemId] : null;
+                const granted = itemData && typeof giveItem === 'function'
+                    ? Number(giveItem(itemData, amount))
+                    : 0;
+
+                if (Number.isFinite(granted) && granted > 0) {
+                    grantedItems.push({ itemId, amount: granted });
+                }
+
+                if (opts.requireAllItems && granted < amount) {
+                    rollbackGrantedItems(grantedItems);
+                    return {
+                        ok: false,
+                        messageText: opts.failureMessage || 'You need more free inventory space first.',
+                        itemsGranted: [],
+                        skillXpGranted: [],
+                        unlockFlagsGranted: [],
+                        inventoryChanged: false
+                    };
+                }
             }
         }
 
-        if (Array.isArray(rewards.skillXp) && typeof addSkillXp === 'function') {
-            for (let i = 0; i < rewards.skillXp.length; i++) {
-                const reward = rewards.skillXp[i];
+        if (Array.isArray(rewardData.skillXp) && typeof addSkillXp === 'function') {
+            for (let i = 0; i < rewardData.skillXp.length; i++) {
+                const reward = rewardData.skillXp[i];
                 if (!reward || !reward.skillId) continue;
                 const amount = Number.isFinite(reward.amount) ? Math.max(0, Math.floor(reward.amount)) : 0;
-                if (amount > 0) addSkillXp(reward.skillId, amount);
+                if (amount <= 0) continue;
+                addSkillXp(reward.skillId, amount);
+                grantedSkillXp.push({ skillId: reward.skillId, amount });
             }
+        }
+
+        if (Array.isArray(rewardData.unlockFlags)) {
+            const flags = ensurePlayerUnlockFlags();
+            if (flags) {
+                for (let i = 0; i < rewardData.unlockFlags.length; i++) {
+                    const reward = rewardData.unlockFlags[i];
+                    const flagId = typeof reward === 'string'
+                        ? reward
+                        : (reward && typeof reward.flagId === 'string' ? reward.flagId : '');
+                    if (!flagId) continue;
+                    flags[flagId] = true;
+                    grantedUnlockFlags.push(flagId);
+                }
+            }
+        }
+
+        return {
+            ok: true,
+            messageText: '',
+            itemsGranted: grantedItems,
+            skillXpGranted: grantedSkillXp,
+            unlockFlagsGranted: grantedUnlockFlags,
+            inventoryChanged: grantedItems.length > 0
+        };
+    }
+
+    function applyCompletionRemovals(removals) {
+        if (!Array.isArray(removals) || typeof removeItemsById !== 'function') return;
+        for (let i = 0; i < removals.length; i++) {
+            const removal = removals[i];
+            if (!removal || !removal.itemId) continue;
+            const amount = Number.isFinite(removal.amount) ? Math.max(1, Math.floor(removal.amount)) : 1;
+            removeItemsById(removal.itemId, amount);
         }
     }
 
@@ -434,7 +539,7 @@
         for (let i = 0; i < objectiveDefs.length; i++) {
             const objectiveDef = objectiveDefs[i];
             if (!objectiveDef || !objectiveDef.itemId) continue;
-            const requiredAmount = Number.isFinite(objectiveDef.amount) ? Math.max(1, Math.floor(objectiveDef.amount)) : 1;
+            const requiredAmount = getObjectiveRequiredAmount(objectiveDef);
             if (getInventoryCountByItemId(objectiveDef.itemId) < requiredAmount) {
                 return {
                     ok: false,
@@ -446,10 +551,11 @@
 
         for (let i = 0; i < objectiveDefs.length; i++) {
             const objectiveDef = objectiveDefs[i];
-            if (!objectiveDef || !objectiveDef.itemId || typeof removeItemsById !== 'function') continue;
-            const requiredAmount = Number.isFinite(objectiveDef.amount) ? Math.max(1, Math.floor(objectiveDef.amount)) : 1;
+            if (!objectiveDef || !objectiveDef.itemId || typeof removeItemsById !== 'function' || !objectiveConsumesItems(objectiveDef)) continue;
+            const requiredAmount = getObjectiveRequiredAmount(objectiveDef);
             removeItemsById(objectiveDef.itemId, requiredAmount);
         }
+        applyCompletionRemovals(questDef.completionRemovals);
 
         entry.status = 'completed';
         entry.completedAt = Date.now();
@@ -462,7 +568,7 @@
             entry.objectiveStates[objectiveDef.objectiveId] = buildObjectiveState(objectiveDef, true);
         }
 
-        grantQuestRewards(questDef);
+        grantRewardBundle(questDef.rewards);
         if (typeof renderInventory === 'function') renderInventory();
 
         addQuestChat('Quest complete: ' + questDef.title + '.', 'info');
@@ -572,6 +678,20 @@
         return nextView;
     }
 
+    function formatUnlockFlagLabel(flagId) {
+        const labels = {
+            ringMouldUnlocked: 'Unlock Ring mould use',
+            amuletMouldUnlocked: 'Unlock Amulet mould use',
+            tiaraMouldUnlocked: 'Unlock Tiara mould use'
+        };
+        if (labels[flagId]) return labels[flagId];
+        return String(flagId || '')
+            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (match) => match.toUpperCase())
+            .trim();
+    }
+
     function buildRewardText(questDef) {
         const rewards = [];
         const rewardData = questDef && questDef.rewards ? questDef.rewards : {};
@@ -595,6 +715,17 @@
                 const amount = Number.isFinite(reward.amount) ? Math.max(0, Math.floor(reward.amount)) : 0;
                 const skillName = String(reward.skillId).charAt(0).toUpperCase() + String(reward.skillId).slice(1);
                 rewards.push(amount + ' ' + skillName + ' XP');
+            }
+        }
+
+        if (Array.isArray(rewardData.unlockFlags)) {
+            for (let i = 0; i < rewardData.unlockFlags.length; i++) {
+                const reward = rewardData.unlockFlags[i];
+                const flagId = typeof reward === 'string'
+                    ? reward
+                    : (reward && typeof reward.flagId === 'string' ? reward.flagId : '');
+                if (!flagId) continue;
+                rewards.push(formatUnlockFlagLabel(flagId));
             }
         }
 

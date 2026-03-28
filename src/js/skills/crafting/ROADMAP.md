@@ -62,6 +62,7 @@ Smithing supplies unfinished silver and gold jewelry bases, but crafting owns th
 | --------------- | --------------------------------------------------------- | -------------------------------------- |
 | Output per Tick | Output per Tick = 1 / 3 | Estimates average crafting output rate for standard non-instant crafting actions |
 | XP per Tick     | XP per Tick = XP per Action / 3 | Estimates average experience gain rate for standard non-instant crafting actions |
+| Sell Value per Tick | Sell Value per Tick = Sell Value / Action Ticks | Estimates direct-sale value throughput for crafting outputs with a defined merchant sell row |
 
 ## Core Recipe Structure
 
@@ -115,6 +116,8 @@ Shared handles can be used with any matching sword blade, axe head, or pickaxe h
 Strapped handles can also be used with lower-tier matching metal parts across all three categories: swords, axes, and pickaxes. If the player tries to use a strapped handle on a lower-tier metal part, the game shows an "are you sure?" confirmation before completing the assembly.
 
 Confirming the action produces the normal lower-tier finished item. The item is not renamed, gains no stat bonus, and cannot be disassembled.
+
+Current implementation uses an immediate yes/no confirmation that explicitly warns about the no-bonus and no-disassembly tradeoff before consuming the higher-tier handle.
 
 ### Initial Strapped Handle Recipes
 
@@ -188,6 +191,8 @@ The player then:
 1. Makes soft clay by using clay on water.
 2. Uses soft clay on the borrowed jewelry piece to create an imprinted clay mould.
 3. Fires the imprinted clay mould to create the finished jewelry mould.
+
+Current implementation uses Elira's borrowed ring/amulet/tiara examples, immediate clay-on-water conversion, immediate inventory imprinting, and active-fire firing for the mould-finishing step.
 
 Once the relevant mould is unlocked, that jewelry family can be produced normally.
 
@@ -384,6 +389,58 @@ Crafting is the canonical source of truth for plain staff and elemental staff it
 | Amulet Mould | null | null |
 | Tiara Mould | null | null |
 
+## Balance Benchmarks
+
+Immediate crafting outputs use `Action Ticks = 1`, so their XP-per-tick and sell-value-per-tick match their per-action numbers. Timed gem, staff, and jewelry recipes use the standard 3-tick crafting cadence.
+
+### Strapped Handle Throughput by Tier
+
+| Output | Required Level | Action Ticks | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------ | -------------- | ------------ | ------------- | ---------- | ----------- | ------------------- |
+| Wooden Handle w/ Strap | 1 | 1 | 2 | 10 | 2 | 10 |
+| Oak Handle w/ Strap | 10 | 1 | 4 | 16 | 4 | 16 |
+| Willow Handle w/ Strap | 20 | 1 | 8 | 32 | 8 | 32 |
+| Maple Handle w/ Strap | 30 | 1 | 12 | 44 | 12 | 44 |
+| Yew Handle w/ Strap | 40 | 1 | 18 | 76 | 18 | 76 |
+
+### Gem Cutting Throughput by Tier
+
+| Output | Required Level | Action Ticks | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------ | -------------- | ------------ | ------------- | ---------- | ----------- | ------------------- |
+| Cut Ruby | 10 | 3 | 4 | 12 | 1.3333 | 4 |
+| Cut Sapphire | 20 | 3 | 8 | 32 | 2.6667 | 10.6667 |
+| Cut Emerald | 30 | 3 | 14 | 60 | 4.6667 | 20 |
+| Cut Diamond | 40 | 3 | 22 | 100 | 7.3333 | 33.3333 |
+
+### Elemental Staff Throughput by Tier
+
+| Output | Required Level | Action Ticks | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------ | -------------- | ------------ | ------------- | ---------- | ----------- | ------------------- |
+| Fire Staff | 10 | 3 | 4 | 24 | 1.3333 | 8 |
+| Water Staff | 20 | 3 | 8 | 52 | 2.6667 | 17.3333 |
+| Earth Staff | 30 | 3 | 14 | 92 | 4.6667 | 30.6667 |
+| Air Staff | 40 | 3 | 22 | 150 | 7.3333 | 50 |
+
+### Gemmed Jewelry Attachment Throughput by Family
+
+All three jewelry shapes share the same attachment benchmarks within a metal/gem family because ring, amulet, and tiara bases intentionally use mirrored sell values inside each metal band.
+
+| Output Family | Required Level | Action Ticks | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------------- | -------------- | ------------ | ------------- | ---------- | ----------- | ------------------- |
+| Ruby Silver Jewelry (Ring/Amulet/Tiara) | 10 | 3 | 4 | 32 | 1.3333 | 10.6667 |
+| Sapphire Silver Jewelry (Ring/Amulet/Tiara) | 20 | 3 | 8 | 52 | 2.6667 | 17.3333 |
+| Ruby Gold Jewelry (Ring/Amulet/Tiara) | 40 | 3 | 4 | 44 | 1.3333 | 14.6667 |
+| Sapphire Gold Jewelry (Ring/Amulet/Tiara) | 40 | 3 | 8 | 64 | 2.6667 | 21.3333 |
+| Emerald Gold Jewelry (Ring/Amulet/Tiara) | 40 | 3 | 14 | 92 | 4.6667 | 30.6667 |
+| Diamond Gold Jewelry (Ring/Amulet/Tiara) | 40 | 3 | 22 | 132 | 7.3333 | 44 |
+
+### Balance Notes
+
+- Strapped handles are the fast immediate component lane; every tier improves both XP and direct-sale throughput without needing a station.
+- Gem cutting, elemental staffs, and gemmed jewelry now share the same gem-tier XP ladder (`ruby=4`, `sapphire=8`, `emerald=14`, `diamond=22`) so the 10/20/30/40 unlock band stays readable across the full jewelry-and-magic branch.
+- Elemental staff sell values equal plain-staff sell value plus the matching cut-gem sell value.
+- Gemmed jewelry sell values equal matching jewelry-base sell value plus the attached cut-gem sell value.
+
 ## Merchant / NPC Structure
 
 ### Crafting Teacher
@@ -549,7 +606,7 @@ The general store buys everything at half price.
 | Topic                                                             | Current Best Guess                                                        |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Binding material for held-item assembly                           | Resolved as leather-based strapped handles                                |
-| Whether clay is fired at kiln/furnace or generic crafting station | TBD                                                                       |
+| Whether clay is fired at kiln/furnace or generic crafting station | Implemented as active-fire firing for the current mould-making quest slice |
 | Exact jewelry progression and gem sockets | Crafting owns the canonical finished jewelry progression: silver jewelry is the lower-tier family and can use the first two gems only; gold jewelry is the higher-tier family and can use all four gems |
 | Jewelry base creation method | Jewelry bases are created in smithing using a bar and the matching mould, then passed into crafting as unfinished jewelry bases for finished jewelry progression |
 | Gem attachment step | Cut gems are attached in a separate step after the base jewelry piece is made. All three jewelry categories-rings, amulets, and tiaras-use the same gem attachment rules. |

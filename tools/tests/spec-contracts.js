@@ -257,6 +257,8 @@ function run() {
 
   assert(typeof SkillSpecRegistry.computeFletchingRecipeMetrics === "function", "fletching recipe metrics helper missing");
   assert(typeof SkillSpecRegistry.getFletchingBalanceSummary === "function", "fletching balance summary helper missing");
+  assert(typeof SkillSpecRegistry.computeCraftingRecipeMetrics === "function", "crafting recipe metrics helper missing");
+  assert(typeof SkillSpecRegistry.getCraftingBalanceSummary === "function", "crafting balance summary helper missing");
 
   const fletchingBalanceSummary = SkillSpecRegistry.getFletchingBalanceSummary();
   assert(!!fletchingBalanceSummary && !!fletchingBalanceSummary.assumptions, "fletching balance summary missing assumptions");
@@ -320,6 +322,65 @@ function run() {
   const level11Rows = fletchingBalanceSummary.rows.filter((row) => row.requiredLevel === 11);
   assert(level11Rows.length === 2, "level-11 fletching summary rows should include oak staff and oak shafts");
   assert(level11Rows[0].recipeId === "fletch_plain_staff_oak" && level11Rows[1].recipeId === "fletch_oak_shafts", "level-11 fletching summary ordering mismatch");
+
+  const craftingBalanceSummary = SkillSpecRegistry.getCraftingBalanceSummary();
+  assert(!!craftingBalanceSummary && !!craftingBalanceSummary.assumptions, "crafting balance summary missing assumptions");
+  assert(Array.isArray(craftingBalanceSummary.rows) && craftingBalanceSummary.rows.length === 56, "crafting balance summary row count mismatch");
+  assert(craftingBalanceSummary.assumptions.actionTicks === 3, "crafting default action ticks mismatch");
+  assert(craftingBalanceSummary.rows.some((row) => row.recipeId === "craft_soft_clay"), "crafting summary should include soft clay");
+  assert(craftingBalanceSummary.rows.some((row) => row.recipeId === "craft_diamond_gold_tiara"), "crafting summary should include the diamond-gold tiara attachment");
+
+  const craftingBenchmarks = [
+    { recipeId: "craft_wooden_handle_strapped", level: 1, xp: 2, sell: 10, xpPerTick: 2, sellPerTick: 10 },
+    { recipeId: "craft_oak_handle_strapped", level: 10, xp: 4, sell: 16, xpPerTick: 4, sellPerTick: 16 },
+    { recipeId: "craft_willow_handle_strapped", level: 20, xp: 8, sell: 32, xpPerTick: 8, sellPerTick: 32 },
+    { recipeId: "craft_maple_handle_strapped", level: 30, xp: 12, sell: 44, xpPerTick: 12, sellPerTick: 44 },
+    { recipeId: "craft_yew_handle_strapped", level: 40, xp: 18, sell: 76, xpPerTick: 18, sellPerTick: 76 },
+    { recipeId: "cut_ruby", level: 10, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
+    { recipeId: "cut_sapphire", level: 20, xp: 8, sell: 32, xpPerTick: 2.6667, sellPerTick: 10.6667 },
+    { recipeId: "cut_emerald", level: 30, xp: 14, sell: 60, xpPerTick: 4.6667, sellPerTick: 20 },
+    { recipeId: "cut_diamond", level: 40, xp: 22, sell: 100, xpPerTick: 7.3333, sellPerTick: 33.3333 },
+    { recipeId: "craft_fire_staff", level: 10, xp: 4, sell: 24, xpPerTick: 1.3333, sellPerTick: 8 },
+    { recipeId: "craft_water_staff", level: 20, xp: 8, sell: 52, xpPerTick: 2.6667, sellPerTick: 17.3333 },
+    { recipeId: "craft_earth_staff", level: 30, xp: 14, sell: 92, xpPerTick: 4.6667, sellPerTick: 30.6667 },
+    { recipeId: "craft_air_staff", level: 40, xp: 22, sell: 150, xpPerTick: 7.3333, sellPerTick: 50 },
+    { recipeId: "craft_ruby_silver_ring", level: 10, xp: 4, sell: 32, xpPerTick: 1.3333, sellPerTick: 10.6667 },
+    { recipeId: "craft_sapphire_silver_ring", level: 20, xp: 8, sell: 52, xpPerTick: 2.6667, sellPerTick: 17.3333 },
+    { recipeId: "craft_ruby_gold_ring", level: 40, xp: 4, sell: 44, xpPerTick: 1.3333, sellPerTick: 14.6667 },
+    { recipeId: "craft_sapphire_gold_ring", level: 40, xp: 8, sell: 64, xpPerTick: 2.6667, sellPerTick: 21.3333 },
+    { recipeId: "craft_emerald_gold_ring", level: 40, xp: 14, sell: 92, xpPerTick: 4.6667, sellPerTick: 30.6667 },
+    { recipeId: "craft_diamond_gold_ring", level: 40, xp: 22, sell: 132, xpPerTick: 7.3333, sellPerTick: 44 }
+  ];
+  const craftingMetricsById = {};
+  craftingBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeCraftingRecipeMetrics(benchmark.recipeId);
+    assert(!!metrics, "crafting metrics missing for " + benchmark.recipeId);
+    craftingMetricsById[benchmark.recipeId] = metrics;
+    assert(metrics.requiredLevel === benchmark.level, "crafting required level mismatch for " + benchmark.recipeId);
+    assert(metrics.throughput.xpPerAction === benchmark.xp, "crafting xp/action mismatch for " + benchmark.recipeId);
+    assert(metrics.output.sellValuePerAction === benchmark.sell, "crafting sell/action mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.xpPerTick, benchmark.xpPerTick, 1e-4), "crafting xp/tick mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.sellValuePerTick, benchmark.sellPerTick, 1e-4), "crafting sell/tick mismatch for " + benchmark.recipeId);
+  });
+  assert(craftingMetricsById["craft_yew_handle_strapped"].throughput.sellValuePerTick > craftingMetricsById["craft_maple_handle_strapped"].throughput.sellValuePerTick, "yew strapped handle should beat maple on sell/tick");
+  assert(craftingMetricsById["cut_diamond"].throughput.sellValuePerTick > craftingMetricsById["cut_emerald"].throughput.sellValuePerTick, "diamond gem cutting should beat emerald on sell/tick");
+  assert(craftingMetricsById["craft_air_staff"].throughput.sellValuePerTick > craftingMetricsById["craft_earth_staff"].throughput.sellValuePerTick, "air staff should beat earth staff on sell/tick");
+  assert(craftingMetricsById["craft_diamond_gold_ring"].throughput.sellValuePerTick > craftingMetricsById["craft_emerald_gold_ring"].throughput.sellValuePerTick, "diamond gold jewelry should beat emerald gold jewelry on sell/tick");
+
+  const craftingSpecForComposition = SkillSpecRegistry.getSkillSpec("crafting");
+  const craftingValueTableForComposition = craftingSpecForComposition.economy.valueTable;
+  const craftingCompositionRows = Object.keys(craftingSpecForComposition.recipeSet)
+    .map((recipeId) => ({ recipeId, recipe: craftingSpecForComposition.recipeSet[recipeId] }))
+    .filter((row) => row.recipe && (row.recipe.recipeFamily === "staff_attachment" || row.recipe.recipeFamily === "jewelry_gem_attachment"));
+  craftingCompositionRows.forEach((row) => {
+    const recipe = row.recipe;
+    const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
+    assert(inputs.length === 2, "crafting composition recipe should keep exactly two inputs: " + row.recipeId);
+    const outputId = recipe.output && recipe.output.itemId;
+    const expectedSell = craftingValueTableForComposition[inputs[0].itemId].sell + craftingValueTableForComposition[inputs[1].itemId].sell;
+    assert(craftingValueTableForComposition[outputId].sell === expectedSell, "crafting sell composition mismatch for " + outputId);
+  });
+
   const emberRuneOutput = SkillSpecRegistry.computeRuneOutputPerEssence(10, 0);
   assert(emberRuneOutput === 2, "runecrafting ember scaling mismatch");
 
@@ -389,6 +450,39 @@ function run() {
     "burnt_wolf_meat"
   ].forEach((itemId) => {
     assert(itemDefs[itemId] && itemDefs[itemId].icon, `item catalog cooking item missing icon for ${itemId}`);
+  });
+  [
+    ["cooked_chicken", "cooked_chicken"],
+    ["burnt_chicken", "burnt_chicken"],
+    ["cooked_boar_meat", "cooked_boar_meat"],
+    ["burnt_boar_meat", "burnt_boar_meat"],
+    ["cooked_wolf_meat", "cooked_wolf_meat"],
+    ["burnt_wolf_meat", "burnt_wolf_meat"]
+  ].forEach(([itemId, assetId]) => {
+    assert(
+      itemDefs[itemId].icon.kind === "pixel" && itemDefs[itemId].icon.assetId === assetId,
+      `item catalog cooking icon asset mismatch for ${itemId}`
+    );
+  });
+  const iconStatusPath = path.join(root, "content", "icon-status.json");
+  assert(fs.existsSync(iconStatusPath), "icon-status report missing");
+  const iconStatus = JSON.parse(fs.readFileSync(iconStatusPath, "utf8"));
+  [
+    ["raw_chicken", "raw_chicken", "todo", "bespoke"],
+    ["cooked_chicken", "cooked_chicken", "done", "bespoke"],
+    ["burnt_chicken", "burnt_chicken", "done", "bespoke"],
+    ["raw_boar_meat", "raw_boar_meat", "todo", "bespoke"],
+    ["cooked_boar_meat", "cooked_boar_meat", "done", "bespoke"],
+    ["burnt_boar_meat", "burnt_boar_meat", "done", "bespoke"],
+    ["raw_wolf_meat", "raw_wolf_meat", "todo", "bespoke"],
+    ["cooked_wolf_meat", "cooked_wolf_meat", "done", "bespoke"],
+    ["burnt_wolf_meat", "burnt_wolf_meat", "done", "bespoke"]
+  ].forEach(([itemId, assetId, status, treatment]) => {
+    const entry = iconStatus.items && iconStatus.items[itemId];
+    assert(!!entry, `icon-status entry missing for ${itemId}`);
+    assert(entry.assetId === assetId, `icon-status asset mismatch for ${itemId}`);
+    assert(entry.status === status, `icon-status status mismatch for ${itemId}`);
+    assert(entry.treatment === treatment, `icon-status treatment mismatch for ${itemId}`);
   });
 
   const session = {
@@ -710,6 +804,17 @@ function run() {
     root,
     (source) => replaceOnce(
       source,
+      "yew_shortbow: { buy: null, sell: 110 },",
+      "yew_shortbow: { buy: null, sell: 90 },",
+      "fletching-balance-curve"
+    ),
+    /fletching balance curve mismatch/i,
+    "fletching-balance-curve"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
       "depletionChance: 0.1,",
       "depletionChance: 0.95,",
       "woodcutting-balance-curve"
@@ -802,17 +907,6 @@ function run() {
   const teacherSeedBeforeQuestIds = teacherSeedBeforeQuest.map((row) => row.itemId).sort();
   assert(JSON.stringify(teacherSeedBeforeQuestIds) === JSON.stringify(["bait", "fishing_rod", "small_net"]), "teacher default stock should only include starter supplies before the quest");
 
-  expectMutatedSpecsFailure(
-    root,
-    (source) => replaceOnce(
-      source,
-      "yew_shortbow: { buy: null, sell: 110 },",
-      "yew_shortbow: { buy: null, sell: 90 },",
-      "fletching-balance-curve"
-    ),
-    /fletching balance curve mismatch/i,
-    "fletching-balance-curve"
-  );
   session.progress.quests.fishing_teacher_from_net_to_harpoon = { status: "completed" };
   assert(shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should sell rune harpoon after quest completion when the player has none");
   const teacherSeedAfterQuest = shopEconomy.getMerchantSeedStockRows("fishing_teacher");
@@ -900,7 +994,7 @@ function run() {
   assert(shopEconomy.resolveSellPrice("silver_ore", "elira_gemhand") === 18, "elira silver ore sell price mismatch");
   assert(shopEconomy.resolveSellPrice("uncut_sapphire", "elira_gemhand") === 16, "elira uncut sapphire sell price mismatch");
   assert(shopEconomy.resolveSellPrice("cut_diamond", "elira_gemhand") === 100, "elira cut diamond sell price mismatch");
-  assert(shopEconomy.resolveSellPrice("ruby_gold_ring", "elira_gemhand") === 80, "elira ruby gold ring sell price mismatch");
+  assert(shopEconomy.resolveSellPrice("ruby_gold_ring", "elira_gemhand") === 44, "elira ruby gold ring sell price mismatch");
   const craftingTeacherDiag = shopEconomy.getMerchantDiagnosticSummary("crafting_teacher");
   assert(Array.isArray(craftingTeacherDiag) && craftingTeacherDiag.length >= 3, "crafting teacher diagnostics should include stock rows");
   const teacherChiselRow = craftingTeacherDiag.find((row) => row.itemId === "chisel");
@@ -917,8 +1011,8 @@ function run() {
   const smithRows = Object.keys(smithSpec.recipeSet).map((id) => ({ recipeId: id, recipe: smithSpec.recipeSet[id] }));
   const craftingRows = Object.keys(craftingSpec.recipeSet).map((id) => ({ recipeId: id, recipe: craftingSpec.recipeSet[id] }));
 
-  const standardCraftingFamilies = new Set(["gem_cutting", "staff_attachment", "jewelry_gem_attachment"]);
-  const immediateCraftingFamilies = new Set(["strapped_handle", "tool_weapon_assembly"]);
+  const standardCraftingFamilies = new Set(["gem_cutting", "staff_attachment", "jewelry_gem_attachment", "mould_firing"]);
+  const immediateCraftingFamilies = new Set(["strapped_handle", "tool_weapon_assembly", "soft_clay", "mould_imprint"]);
 
   craftingRows.forEach((row) => {
     const recipe = row.recipe;
@@ -961,7 +1055,7 @@ function run() {
     }
   });
 
-  ["gem_cutting", "staff_attachment", "jewelry_gem_attachment"].forEach((family) => {
+  ["gem_cutting", "staff_attachment", "jewelry_gem_attachment", "soft_clay", "mould_imprint", "mould_firing"].forEach((family) => {
     const familyRows = craftingRows.filter((row) => row.recipe && row.recipe.recipeFamily === family);
     assert(familyRows.length > 0, "expected crafting data-model rows for family: " + family);
   });

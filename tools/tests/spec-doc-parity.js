@@ -671,6 +671,7 @@ function runRunecraftingChecks(roadmap, spec) {
 
 function runCraftingChecks(roadmap, spec, itemDefs) {
   assertRegex(roadmap, new RegExp(`\\|\\s*Fixed Crafting Action Ticks\\s*\\|\\s*${spec.timing.actionTicks}\\s*\\|`), "crafting fixed action ticks mismatch");
+  assertRegex(roadmap, /\|\s*Sell Value per Tick\s*\|\s*Sell Value per Tick = Sell Value \/ Action Ticks\s*\|/, "crafting sell-value-per-tick formula mismatch");
 
   const checks = [
     ["Chisel", itemDefs.chisel.value, Math.max(1, Math.floor(itemDefs.chisel.value * 0.4))],
@@ -686,6 +687,28 @@ function runCraftingChecks(roadmap, spec, itemDefs) {
     const label = toTitleCaseId(mouldId);
     assertRegex(roadmap, new RegExp(`\\|\\s*${escapeRegex(label)}\\s*\\|\\s*Quest unlock\\s*\\|\\s*null\\s*\\|\\s*null\\s*\\|`), `crafting mould table mismatch for ${label}`);
   }
+
+  assertRegex(roadmap, /\|\s*Yew Handle w\/ Strap\s*\|\s*40\s*\|\s*1\s*\|\s*18\s*\|\s*76\s*\|\s*18\s*\|\s*76\s*\|/, "crafting strapped-handle throughput row mismatch");
+  assertRegex(roadmap, /\|\s*Cut Diamond\s*\|\s*40\s*\|\s*3\s*\|\s*22\s*\|\s*100\s*\|\s*7\.3333\s*\|\s*33\.3333\s*\|/, "crafting gem-cutting throughput row mismatch");
+  assertRegex(roadmap, /\|\s*Air Staff\s*\|\s*40\s*\|\s*3\s*\|\s*22\s*\|\s*150\s*\|\s*7\.3333\s*\|\s*50\s*\|/, "crafting staff throughput row mismatch");
+
+  const sapphireSilverSell = spec.economy.valueTable.silver_ring.sell + spec.economy.valueTable.cut_sapphire.sell;
+  const sapphireSilverXpPerTick = String(roundMetric(8 / spec.timing.actionTicks));
+  const sapphireSilverSellPerTick = String(roundMetric(sapphireSilverSell / spec.timing.actionTicks));
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*Sapphire Silver Jewelry \\(Ring/Amulet/Tiara\\)\\s*\\|\\s*20\\s*\\|\\s*${spec.timing.actionTicks}\\s*\\|\\s*8\\s*\\|\\s*${sapphireSilverSell}\\s*\\|\\s*${escapeRegex(sapphireSilverXpPerTick)}\\s*\\|\\s*${escapeRegex(sapphireSilverSellPerTick)}\\s*\\|`),
+    "crafting sapphire-silver jewelry throughput row mismatch"
+  );
+
+  const diamondGoldSell = spec.economy.valueTable.gold_ring.sell + spec.economy.valueTable.cut_diamond.sell;
+  const diamondGoldXpPerTick = String(roundMetric(22 / spec.timing.actionTicks));
+  const diamondGoldSellPerTick = String(roundMetric(diamondGoldSell / spec.timing.actionTicks));
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*Diamond Gold Jewelry \\(Ring/Amulet/Tiara\\)\\s*\\|\\s*40\\s*\\|\\s*${spec.timing.actionTicks}\\s*\\|\\s*22\\s*\\|\\s*${diamondGoldSell}\\s*\\|\\s*${escapeRegex(diamondGoldXpPerTick)}\\s*\\|\\s*${escapeRegex(diamondGoldSellPerTick)}\\s*\\|`),
+    "crafting diamond-gold jewelry throughput row mismatch"
+  );
 }
 
 function runFletchingChecks(roadmap, spec) {

@@ -11,13 +11,15 @@
 - [x] CRAFTING-007: Jewelry and staff integration pass with smithing, mining, and fletching upstream inputs.
 - [x] CRAFTING-008: Mould-unlock and jewelry-family restriction wiring (silver: ruby/sapphire; gold: ruby/sapphire/emerald/diamond).
 - [x] CRAFTING-009: Merchant/NPC stock behavior and value-table alignment for crafting outputs and tools.
+- [x] CRAFTING-010: Quest-gate integration for Elira's mould-making flow and borrowed-item imprinting steps.
+- [x] CRAFTING-011: Over-tier strapped-handle assembly now supports confirmed lower-tier output crafting without creating bonus or disassembly variants.
+- [x] CRAFTING-012: Runtime-backed throughput/value targets are locked across strapped handles, gem cutting, staffs, and gemmed jewelry; gemmed-jewelry sell values now follow the documented base-plus-gem composition rule.
 
 ## Now
 (empty)
 
 ## Next
-- [ ] CRAFTING-010: Quest-gate integration for Elira's mould-making flow and borrowed-item imprinting steps.
+(empty)
 
 ## Later
-- [ ] CRAFTING-011: Advanced progression rules for over-tier handle confirmation UX and non-disassembly constraints.
-- [ ] CRAFTING-012: Balance and polish pass using output-per-tick, XP-per-tick, and economy target tuning.
+(empty)

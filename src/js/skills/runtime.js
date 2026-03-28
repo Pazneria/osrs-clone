@@ -327,6 +327,15 @@
                 }
                 return false;
             },
+            confirmAction: (message) => {
+                if (typeof overrides.confirmAction === 'function') {
+                    return !!overrides.confirmAction(message);
+                }
+                if (typeof window.confirm === 'function') {
+                    return !!window.confirm(message);
+                }
+                return false;
+            },
             haltMovement: () => {
                 currentPlayerState.path = [];
                 currentPlayerState.midX = null;

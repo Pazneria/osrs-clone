@@ -902,7 +902,7 @@
                 type: 'tool',
                 value: 0,
                 stackable: false,
-                actions: ['Use', 'Drop'],
+                actions: ['Use'],
                 defaultAction: 'Use',
                 icon: { kind: 'pixel', assetId: 'small_pouch' }
             },
@@ -911,7 +911,7 @@
                 type: 'tool',
                 value: 0,
                 stackable: false,
-                actions: ['Use', 'Drop'],
+                actions: ['Use'],
                 defaultAction: 'Use',
                 icon: { kind: 'pixel', assetId: 'small_pouch' }
             },
@@ -920,7 +920,7 @@
                 type: 'tool',
                 value: 0,
                 stackable: false,
-                actions: ['Use', 'Drop'],
+                actions: ['Use'],
                 defaultAction: 'Use',
                 icon: { kind: 'pixel', assetId: 'small_pouch' }
             },
@@ -1270,6 +1270,60 @@
                 defaultAction: 'Use',
                 icon: { kind: 'pixel', assetId: 'tin_ore' }
             },
+            borrowed_ring: {
+                name: 'Borrowed Ring',
+                type: 'resource',
+                value: 0,
+                stackable: false,
+                actions: ['Use'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'silver_ring' }
+            },
+            borrowed_amulet: {
+                name: 'Borrowed Amulet',
+                type: 'resource',
+                value: 0,
+                stackable: false,
+                actions: ['Use'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'silver_amulet' }
+            },
+            borrowed_tiara: {
+                name: 'Borrowed Tiara',
+                type: 'resource',
+                value: 0,
+                stackable: false,
+                actions: ['Use'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'silver_tiara' }
+            },
+            imprinted_ring_mould: {
+                name: 'Imprinted Ring Mould',
+                type: 'resource',
+                value: 0,
+                stackable: false,
+                actions: ['Use'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'small_pouch' }
+            },
+            imprinted_amulet_mould: {
+                name: 'Imprinted Amulet Mould',
+                type: 'resource',
+                value: 0,
+                stackable: false,
+                actions: ['Use'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'small_pouch' }
+            },
+            imprinted_tiara_mould: {
+                name: 'Imprinted Tiara Mould',
+                type: 'resource',
+                value: 0,
+                stackable: false,
+                actions: ['Use'],
+                defaultAction: 'Use',
+                icon: { kind: 'pixel', assetId: 'small_pouch' }
+            },
             uncut_ruby: {
                 name: 'Uncut ruby',
                 type: 'resource',
@@ -1490,7 +1544,7 @@
                 defaultAction: 'Eat',
                 healAmount: 4,
                 eatDelayTicks: 4,
-                icon: { kind: 'pixel', assetId: 'burnt_chicken' }
+                icon: { kind: 'pixel', assetId: 'cooked_chicken' }
             },
             burnt_chicken: {
                 name: 'Burnt Chicken',
@@ -1499,7 +1553,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'pixel', assetId: 'cooked_chicken' }
+                icon: { kind: 'pixel', assetId: 'burnt_chicken' }
             },
             goblin_club: {
                 name: 'Goblin Club',
@@ -1530,7 +1584,7 @@
                 defaultAction: 'Eat',
                 healAmount: 6,
                 eatDelayTicks: 4,
-                icon: { kind: 'pixel', assetId: 'burnt_boar_meat' }
+                icon: { kind: 'pixel', assetId: 'cooked_boar_meat' }
             },
             burnt_boar_meat: {
                 name: 'Burnt Boar Meat',
@@ -1539,7 +1593,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'pixel', assetId: 'cooked_boar_meat' }
+                icon: { kind: 'pixel', assetId: 'burnt_boar_meat' }
             },
             boar_tusk: {
                 name: 'Boar Tusk',
@@ -1570,7 +1624,7 @@
                 defaultAction: 'Eat',
                 healAmount: 8,
                 eatDelayTicks: 4,
-                icon: { kind: 'pixel', assetId: 'burnt_wolf_meat' }
+                icon: { kind: 'pixel', assetId: 'cooked_wolf_meat' }
             },
             burnt_wolf_meat: {
                 name: 'Burnt Wolf Meat',
@@ -1579,7 +1633,7 @@
                 stackable: false,
                 actions: ['Drop'],
                 defaultAction: 'Drop',
-                icon: { kind: 'pixel', assetId: 'cooked_wolf_meat' }
+                icon: { kind: 'pixel', assetId: 'burnt_wolf_meat' }
             },
             wolf_fang: {
                 name: 'Wolf Fang',

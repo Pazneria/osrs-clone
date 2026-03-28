@@ -1,7 +1,16 @@
 (function () {
     const SKILL_ID = 'crafting';
+    const FIRE_TARGET = 'FIRE';
     const INVENTORY_TARGET = 'INVENTORY';
+    const WATER_TARGET = 'WATER';
     const DEFAULT_ACTION_TICKS = 3;
+    const STRAPPED_HANDLE_TIER_RANKS = Object.freeze({
+        wooden_handle_strapped: 0,
+        oak_handle_strapped: 1,
+        willow_handle_strapped: 2,
+        maple_handle_strapped: 3,
+        yew_handle_strapped: 4
+    });
 
     function getRecipeSet(context) {
         return typeof context.getRecipeSet === 'function' ? context.getRecipeSet(SKILL_ID) : null;
@@ -34,15 +43,21 @@
         return Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
     }
 
-    function buildMaterialRequirements(recipe) {
+    function shouldConsumeInput(input) {
+        return !(input && input.consume === false);
+    }
+
+    function buildMaterialRequirements(recipe, options = {}) {
         const inputs = Array.isArray(recipe && recipe.inputs) ? recipe.inputs : [];
         const requirementMap = Object.create(null);
         const orderedItemIds = [];
+        const includeNonConsumed = options.includeNonConsumed !== false;
 
         for (let i = 0; i < inputs.length; i++) {
             const input = inputs[i];
             const itemId = input && typeof input.itemId === 'string' ? input.itemId : null;
             if (!itemId) continue;
+            if (!includeNonConsumed && !shouldConsumeInput(input)) continue;
             const needed = normalizeInputAmount(input.amount);
             if (!Object.prototype.hasOwnProperty.call(requirementMap, itemId)) {
                 requirementMap[itemId] = 0;
@@ -61,7 +76,7 @@
     }
 
     function hasMaterials(context, recipe) {
-        const requirements = buildMaterialRequirements(recipe);
+        const requirements = buildMaterialRequirements(recipe, { includeNonConsumed: true });
         for (let i = 0; i < requirements.length; i++) {
             const req = requirements[i];
             if ((context.getInventoryCount(req.itemId) || 0) < req.amount) return false;
@@ -94,7 +109,7 @@
     }
 
     function removeMaterials(context, recipe) {
-        const requirements = buildMaterialRequirements(recipe);
+        const requirements = buildMaterialRequirements(recipe, { includeNonConsumed: false });
         for (let i = 0; i < requirements.length; i++) {
             const req = requirements[i];
             if ((context.getInventoryCount(req.itemId) || 0) < req.amount) return null;
@@ -165,7 +180,7 @@
         const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
         for (let i = 0; i < inputs.length; i++) {
             const input = inputs[i];
-            if (!input || !input.itemId) continue;
+            if (!input || !input.itemId || !shouldConsumeInput(input)) continue;
             const needed = Number.isFinite(input.amount) ? Math.max(1, Math.floor(input.amount)) : 1;
             if (!consumeFromSlots(slots, input.itemId, needed)) return false;
         }
@@ -197,9 +212,9 @@
         const recipes = getAllRecipes(context);
         return recipes.filter((recipe) => {
             if (!recipe) return false;
-            if (!(recipe.recipeFamily === 'tool_weapon_assembly' || recipe.recipeFamily === 'strapped_handle')) return false;
             const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
             if (inputs.length !== 2) return false;
+            if (recipe.stationType !== INVENTORY_TARGET) return false;
             const actionTicks = Number.isFinite(recipe.actionTicks) ? recipe.actionTicks : 1;
             return actionTicks <= 1;
         });
@@ -211,6 +226,7 @@
             if (!recipe) return false;
             const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
             if (inputs.length !== 2) return false;
+            if (recipe.stationType !== INVENTORY_TARGET) return false;
             const actionTicks = Number.isFinite(recipe.actionTicks) ? Math.max(1, Math.floor(recipe.actionTicks)) : DEFAULT_ACTION_TICKS;
             return actionTicks > 1;
         });
@@ -223,6 +239,7 @@
             const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
             const tools = Array.isArray(recipe.requiredToolIds) ? recipe.requiredToolIds : [];
             if (inputs.length !== 1 || tools.length === 0) return false;
+            if (recipe.stationType !== INVENTORY_TARGET) return false;
             const actionTicks = Number.isFinite(recipe.actionTicks) ? Math.max(1, Math.floor(recipe.actionTicks)) : DEFAULT_ACTION_TICKS;
             return actionTicks > 1;
         });
@@ -269,6 +286,81 @@
         return /^(silver|gold)_(ring|amulet|tiara)$/.test(String(itemId || ''));
     }
 
+    function getStrappedHandleTierRank(itemId) {
+        if (!itemId || !Object.prototype.hasOwnProperty.call(STRAPPED_HANDLE_TIER_RANKS, itemId)) return null;
+        return STRAPPED_HANDLE_TIER_RANKS[itemId];
+    }
+
+    function getToolWeaponAssemblyRecipes(context) {
+        return getImmediatePairRecipes(context).filter((recipe) => recipe && recipe.recipeFamily === 'tool_weapon_assembly');
+    }
+
+    function getAssemblyPartInputId(recipe) {
+        const inputs = Array.isArray(recipe && recipe.inputs) ? recipe.inputs : [];
+        const partInput = inputs.find((input) => isMetalAssemblyPartItemId(input && input.itemId));
+        return partInput && partInput.itemId ? partInput.itemId : null;
+    }
+
+    function getAssemblyHandleInputId(recipe) {
+        const inputs = Array.isArray(recipe && recipe.inputs) ? recipe.inputs : [];
+        const handleInput = inputs.find((input) => isStrappedHandleItemId(input && input.itemId));
+        return handleInput && handleInput.itemId ? handleInput.itemId : null;
+    }
+
+    function buildOvertierAssemblyRecipe(context, partItemId, providedHandleItemId) {
+        if (!partItemId || !providedHandleItemId) return null;
+
+        const assemblyRecipes = getToolWeaponAssemblyRecipes(context);
+        for (let i = 0; i < assemblyRecipes.length; i++) {
+            const recipe = assemblyRecipes[i];
+            if (getAssemblyPartInputId(recipe) !== partItemId) continue;
+
+            const requiredHandleItemId = getAssemblyHandleInputId(recipe);
+            if (!requiredHandleItemId || requiredHandleItemId === providedHandleItemId) return null;
+
+            const requiredRank = getStrappedHandleTierRank(requiredHandleItemId);
+            const providedRank = getStrappedHandleTierRank(providedHandleItemId);
+            if (!Number.isFinite(requiredRank) || !Number.isFinite(providedRank) || providedRank <= requiredRank) {
+                return null;
+            }
+
+            return Object.assign({}, recipe, {
+                recipeId: `${recipe.recipeId}__overtier__${providedHandleItemId}`,
+                inputs: recipe.inputs.map((input) => {
+                    if (!input || input.itemId !== requiredHandleItemId) return input ? Object.assign({}, input) : input;
+                    return Object.assign({}, input, { itemId: providedHandleItemId });
+                }),
+                overtierAssembly: {
+                    baseRecipeId: recipe.recipeId,
+                    requiredHandleItemId,
+                    providedHandleItemId
+                }
+            });
+        }
+
+        return null;
+    }
+
+    function getSingleInputRecipesForStation(context, stationType) {
+        const recipes = getAllRecipes(context);
+        return recipes.filter((recipe) => {
+            if (!recipe || recipe.stationType !== stationType) return false;
+            const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
+            return inputs.length === 1;
+        });
+    }
+
+    function findSingleInputRecipe(context, stationType, sourceItemId) {
+        if (!sourceItemId) return null;
+        const recipes = getSingleInputRecipesForStation(context, stationType);
+        for (let i = 0; i < recipes.length; i++) {
+            const recipe = recipes[i];
+            const inputItemId = recipe.inputs[0] && recipe.inputs[0].itemId;
+            if (inputItemId === sourceItemId) return recipe;
+        }
+        return null;
+    }
+
     function resolveInventoryPairRecipe(context) {
         const useData = resolveInventoryUseData(context);
         const sourceItemId = useData.sourceItemId;
@@ -280,6 +372,19 @@
             const recipe = immediateRecipes[i];
             if (matchesInputPair(recipe, sourceItemId, targetItemId)) {
                 return { recipe, recognized: true, message: '', mode: 'immediate', sourceItemId };
+            }
+        }
+
+        const metalPartItemId = isMetalAssemblyPartItemId(sourceItemId)
+            ? sourceItemId
+            : (isMetalAssemblyPartItemId(targetItemId) ? targetItemId : null);
+        const strappedHandleItemId = isStrappedHandleItemId(sourceItemId)
+            ? sourceItemId
+            : (isStrappedHandleItemId(targetItemId) ? targetItemId : null);
+        if (metalPartItemId && strappedHandleItemId) {
+            const overtierRecipe = buildOvertierAssemblyRecipe(context, metalPartItemId, strappedHandleItemId);
+            if (overtierRecipe) {
+                return { recipe: overtierRecipe, recognized: true, message: '', mode: 'immediate_confirm', sourceItemId };
             }
         }
 
@@ -345,6 +450,39 @@
         return null;
     }
 
+    function resolveWorldTargetRecipe(context) {
+        if (!context || !context.sourceItemId) return null;
+
+        if (context.targetObj === WATER_TARGET) {
+            const recipe = findSingleInputRecipe(context, WATER_TARGET, context.sourceItemId);
+            if (!recipe) return null;
+            return { recipe, recognized: true, mode: 'immediate' };
+        }
+
+        if (!(context.targetObj === 'GROUND' || context.targetObj === FIRE_TARGET)) return null;
+        const recipe = findSingleInputRecipe(context, FIRE_TARGET, context.sourceItemId);
+        if (!recipe) return null;
+
+        const fireTarget = typeof context.resolveFireTargetFromHit === 'function'
+            ? context.resolveFireTargetFromHit(context.hitData)
+            : null;
+        if (!fireTarget) {
+            return {
+                recipe,
+                recognized: true,
+                mode: 'blocked',
+                message: 'You need an active fire to finish that mould.'
+            };
+        }
+
+        return {
+            recipe,
+            recognized: true,
+            mode: 'queued_fire',
+            fireTarget
+        };
+    }
+
     function humanizeId(itemId) {
         return String(itemId || '').replace(/_/g, ' ').replace(/\b\w/g, (match) => match.toUpperCase());
     }
@@ -354,6 +492,53 @@
         const item = (typeof context.getItemDataById === 'function' ? context.getItemDataById(itemId) : null)
             || (window.ITEM_DB && window.ITEM_DB[itemId] ? window.ITEM_DB[itemId] : null);
         return item && item.name ? item.name : humanizeId(itemId);
+    }
+
+    function buildImmediateCraftMessage(context, recipe, outItemId) {
+        if (recipe && recipe.recipeFamily === 'soft_clay') return 'You soften the clay.';
+        if (recipe && recipe.recipeFamily === 'mould_imprint') return 'You press the borrowed piece into the clay.';
+        return `You assemble the ${getItemName(context, outItemId)}.`;
+    }
+
+    function requestConfirmation(context, message) {
+        if (context && typeof context.confirmAction === 'function') return !!context.confirmAction(message);
+        if (typeof window.confirm === 'function') return !!window.confirm(message);
+        return false;
+    }
+
+    function buildOvertierAssemblyConfirmationMessage(context, recipe) {
+        const meta = recipe && recipe.overtierAssembly ? recipe.overtierAssembly : null;
+        if (!meta) return '';
+        const handleName = getItemName(context, meta.providedHandleItemId);
+        const outputItemId = recipe.output && recipe.output.itemId ? recipe.output.itemId : null;
+        const outputName = getItemName(context, outputItemId);
+        return `Use ${handleName} to assemble ${outputName}? This makes the normal ${outputName} with no stat bonus, and you cannot disassemble it later.`;
+    }
+
+    function confirmImmediateCraft(context, recipe) {
+        if (!(recipe && recipe.overtierAssembly)) return true;
+        const message = buildOvertierAssemblyConfirmationMessage(context, recipe);
+        if (requestConfirmation(context, message)) return true;
+        context.addChatMessage('You decide not to assemble that with the higher-tier handle.', 'info');
+        return false;
+    }
+
+    function validateFireTargetRuntime(context, target) {
+        if (!target) {
+            return { ok: false, reasonCode: 'TARGET_MISSING', message: 'You need an active fire to continue.' };
+        }
+
+        if (typeof context.hasActiveFireAt === 'function' && !context.hasActiveFireAt(target.x, target.y, target.z)) {
+            return { ok: false, reasonCode: 'FIRE_GONE', message: 'The fire has gone out.' };
+        }
+
+        const dx = Math.abs(target.x - context.playerState.x);
+        const dy = Math.abs(target.y - context.playerState.y);
+        if (target.z !== context.playerState.z || dx > 1 || dy > 1) {
+            return { ok: false, reasonCode: 'MOVED_AWAY', message: 'You move away from the fire.' };
+        }
+
+        return { ok: true };
     }
 
     function validateImmediateCraft(context, recipe) {
@@ -490,7 +675,7 @@
         if (xp > 0) context.addSkillXp(SKILL_ID, xp);
         if (typeof context.renderInventory === 'function') context.renderInventory();
 
-        context.addChatMessage(`You assemble the ${getItemName(context, outItemId)}.`, 'game');
+        context.addChatMessage(buildImmediateCraftMessage(context, recipe, outItemId), 'game');
         return true;
     }
 
@@ -557,35 +742,95 @@
         return true;
     }
 
+    function queueFireCrafting(context, recipe, fireTarget) {
+        if (!context || !recipe || !fireTarget) return false;
+        if (!validateQueuedCraftStart(context, recipe)) return true;
+
+        context.playerState.pendingSkillStart = {
+            skillId: SKILL_ID,
+            targetObj: FIRE_TARGET,
+            targetX: fireTarget.x,
+            targetY: fireTarget.y,
+            targetZ: fireTarget.z,
+            sourceInvIndex: Number.isInteger(context.sourceInvIndex) ? context.sourceInvIndex : null,
+            sourceItemId: context.sourceItemId,
+            recipeId: recipe.recipeId,
+            quantityMode: 'all'
+        };
+
+        if (typeof context.queueInteractAt === 'function') {
+            context.queueInteractAt(FIRE_TARGET, fireTarget.x, fireTarget.y, {
+                skillId: SKILL_ID,
+                recipeId: recipe.recipeId,
+                quantityMode: 'all'
+            });
+        } else if (typeof context.queueInteract === 'function') {
+            context.queueInteract();
+        }
+
+        return true;
+    }
+
     const craftingModule = {
         canStart(context) {
             if (!context) return false;
-            return context.targetObj === INVENTORY_TARGET && !!context.recipeId;
+            return !!context.recipeId && (context.targetObj === INVENTORY_TARGET || context.targetObj === FIRE_TARGET);
         },
 
         onUseItem(context) {
-            if (!context || context.targetObj !== INVENTORY_TARGET) return false;
+            if (!context) return false;
 
-            const pairUse = resolveInventoryPairRecipe(context);
-            if (!pairUse || !pairUse.recognized) return false;
+            if (context.targetObj === INVENTORY_TARGET) {
+                const pairUse = resolveInventoryPairRecipe(context);
+                if (!pairUse || !pairUse.recognized) return false;
 
-            if (pairUse.recipe) {
-                if (pairUse.mode === 'immediate') {
-                    if (!validateImmediateCraft(context, pairUse.recipe)) return true;
-                    craftOneImmediate(context, pairUse.recipe);
-                    return true;
+                if (pairUse.recipe) {
+                    if (pairUse.mode === 'immediate' || pairUse.mode === 'immediate_confirm') {
+                        if (!validateImmediateCraft(context, pairUse.recipe)) return true;
+                        if (!confirmImmediateCraft(context, pairUse.recipe)) return true;
+                        craftOneImmediate(context, pairUse.recipe);
+                        return true;
+                    }
+
+                    return startQueuedCrafting(context, pairUse.recipe, 'all', null, pairUse.sourceItemId);
                 }
 
-                return startQueuedCrafting(context, pairUse.recipe, 'all', null, pairUse.sourceItemId);
+                if (pairUse.message) context.addChatMessage(pairUse.message, 'warn');
+                return true;
             }
 
-            if (pairUse.message) context.addChatMessage(pairUse.message, 'warn');
-            return true;
+            const worldUse = resolveWorldTargetRecipe(context);
+            if (!worldUse || !worldUse.recognized) return false;
+            if (worldUse.mode === 'blocked') {
+                if (worldUse.message) context.addChatMessage(worldUse.message, 'warn');
+                return true;
+            }
+            if (worldUse.mode === 'immediate') {
+                if (!validateImmediateCraft(context, worldUse.recipe)) return true;
+                craftOneImmediate(context, worldUse.recipe);
+                return true;
+            }
+            if (worldUse.mode === 'queued_fire') {
+                return queueFireCrafting(context, worldUse.recipe, worldUse.fireTarget);
+            }
+
+            return false;
         },
 
         onStart(context) {
             const recipe = resolveRecipeById(context, context.recipeId);
             if (!validateQueuedCraftStart(context, recipe)) return false;
+
+            const target = recipe && recipe.stationType === FIRE_TARGET
+                ? { x: context.targetX, y: context.targetY, z: context.targetZ }
+                : null;
+            if (target) {
+                const fireValidation = validateFireTargetRuntime(context, target);
+                if (!fireValidation.ok) {
+                    if (fireValidation.message) context.addChatMessage(fireValidation.message, 'warn');
+                    return false;
+                }
+            }
 
             const quantityMode = (typeof context.quantityMode === 'string' && context.quantityMode) ? context.quantityMode : 'all';
             const quantityCount = Number.isFinite(context.quantityCount) ? Math.max(1, Math.floor(context.quantityCount)) : null;
@@ -593,6 +838,7 @@
 
             SkillActionResolution.startProcessingSession(context, SKILL_ID, {
                 recipeId: recipe.recipeId,
+                target,
                 quantityMode,
                 quantityRemaining: quantityMode === 'count' ? quantityCount : null,
                 intervalTicks: actionTicks,
@@ -600,7 +846,7 @@
             });
 
             context.playerState.action = 'SKILLING: CRAFTING';
-            context.addChatMessage('You begin crafting.', 'info');
+            context.addChatMessage(target ? 'You begin firing the mould.' : 'You begin crafting.', 'info');
             return true;
         },
 
@@ -614,6 +860,15 @@
 
             SkillActionResolution.tickProcessingSession(context, SKILL_ID, (session) => {
                 const recipe = resolveRecipeById(context, session.recipeId);
+                if (recipe && recipe.stationType === FIRE_TARGET) {
+                    const fireValidation = validateFireTargetRuntime(context, session.target);
+                    if (!fireValidation.ok) {
+                        if (fireValidation.message) context.addChatMessage(fireValidation.message, 'warn');
+                        if (typeof context.renderInventory === 'function') context.renderInventory();
+                        return SkillActionResolution.stopSkill(context, SKILL_ID, fireValidation.reasonCode || 'FIRE_INVALID');
+                    }
+                }
+
                 const validation = validateQueuedCraftRuntime(context, recipe);
                 if (!validation.ok) {
                     if (validation.message) context.addChatMessage(validation.message, validation.reasonCode === 'INPUT_EMPTY' ? 'info' : 'warn');
@@ -644,6 +899,13 @@
                         context.addChatMessage(canContinue.message, 'info');
                     }
                     return SkillActionResolution.stopSkill(context, SKILL_ID, canContinue.reasonCode);
+                }
+                if (recipe && recipe.stationType === FIRE_TARGET) {
+                    const continueFire = validateFireTargetRuntime(context, session.target);
+                    if (!continueFire.ok) {
+                        if (continueFire.message) context.addChatMessage(continueFire.message, 'warn');
+                        return SkillActionResolution.stopSkill(context, SKILL_ID, continueFire.reasonCode || 'FIRE_INVALID');
+                    }
                 }
 
                 session.nextTick = context.currentTick + (session.intervalTicks || DEFAULT_ACTION_TICKS);

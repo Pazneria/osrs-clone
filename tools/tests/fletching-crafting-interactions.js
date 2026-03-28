@@ -175,14 +175,17 @@ function createSkillContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});
   const messages = [];
   const xpBySkill = {};
+  const queuedInteractions = [];
   const canAccept = typeof options.canAcceptItemById === "function"
     ? options.canAcceptItemById
     : () => (options.canAccept !== false);
   const customGive = typeof options.giveItemById === "function" ? options.giveItemById : null;
+  const customQueueInteractAt = typeof options.queueInteractAt === "function" ? options.queueInteractAt : null;
 
   const context = {
     targetObj: options.targetObj || "INVENTORY",
     sourceItemId: options.sourceItemId || null,
+    hitData: options.hitData || null,
     targetUid: {
       sourceItemId: options.sourceItemId || null,
       targetItemId: options.targetItemId || null
@@ -220,6 +223,9 @@ function createSkillContext(options = {}) {
     canAcceptItemById: (itemId, amount) => canAccept(itemId, amount),
     getItemDataById: (itemId) => (window.ItemCatalog && window.ItemCatalog.ITEM_DEFS ? window.ItemCatalog.ITEM_DEFS[itemId] : null),
     hasItem: (itemId) => (counts[itemId] || 0) > 0,
+    hasActiveFireAt: typeof options.hasActiveFireAt === "function"
+      ? options.hasActiveFireAt
+      : () => false,
     hasUnlockFlag: (flagId) => {
       const unlockFlags = options.unlockFlags || {};
       return !!unlockFlags[flagId];
@@ -245,12 +251,34 @@ function createSkillContext(options = {}) {
       context.stopActionCount += 1;
       context.playerState.action = null;
     },
+    queueInteract: () => {
+      queuedInteractions.push({ obj: context.targetObj, x: context.targetX, y: context.targetY, targetUid: null });
+    },
+    queueInteractAt: (obj, x, y, targetUid) => {
+      if (customQueueInteractAt) {
+        return customQueueInteractAt(obj, x, y, targetUid);
+      }
+      queuedInteractions.push({ obj, x, y, targetUid: targetUid || null });
+    },
+    resolveFireTargetFromHit: typeof options.resolveFireTargetFromHit === "function"
+      ? options.resolveFireTargetFromHit
+      : () => null,
     startSkillingAction: () => {
       context.playerState.action = context.targetObj === "FURNACE" ? "SKILLING: FURNACE" : (context.targetObj === "ANVIL" ? "SKILLING: ANVIL" : "SKILLING: UNKNOWN");
     },
     promptAmount: () => false,
+    confirmAction: (message) => {
+      if (typeof options.confirmAction === "function") {
+        return !!options.confirmAction(message);
+      }
+      if (typeof window.confirm === "function") {
+        return !!window.confirm(message);
+      }
+      return false;
+    },
     _counts: counts,
     _messages: messages,
+    _queuedInteractions: queuedInteractions,
     _xpBySkill: xpBySkill
   };
 
@@ -268,6 +296,7 @@ function run() {
   global.window = {};
   global.document = createDomShim();
   window.prompt = () => null;
+  window.confirm = () => true;
 
   loadBrowserScript(root, "src/js/skills/specs.js");
   loadBrowserScript(root, "src/js/skills/spec-registry.js");
@@ -510,6 +539,44 @@ function run() {
     assert((ctx._counts.wooden_handle_strapped || 0) === 0, "expected strapped handle consumed");
   });
 
+  test("Crafting confirms overtier handle assembly before producing lower-tier output", () => {
+    const confirmations = [];
+    const ctx = createSkillContext({
+      sourceItemId: "bronze_axe_head",
+      targetItemId: "oak_handle_strapped",
+      counts: { bronze_axe_head: 1, oak_handle_strapped: 1 },
+      confirmAction: (message) => {
+        confirmations.push(message);
+        return true;
+      }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected overtier assembly pair to be handled");
+    assert(confirmations.length === 1, "expected one overtier confirmation prompt");
+    assert(confirmations[0].includes("no stat bonus"), "expected confirmation to explain no stat bonus");
+    assert(confirmations[0].includes("cannot disassemble"), "expected confirmation to explain non-disassembly");
+    assert((ctx._counts.bronze_axe || 0) === 1, "expected lower-tier bronze axe output");
+    assert((ctx._counts.bronze_axe_head || 0) === 0, "expected bronze axe head consumed");
+    assert((ctx._counts.oak_handle_strapped || 0) === 0, "expected provided higher-tier handle consumed");
+  });
+
+  test("Crafting leaves inputs untouched when overtier handle confirmation is declined", () => {
+    const ctx = createSkillContext({
+      sourceItemId: "bronze_axe_head",
+      targetItemId: "oak_handle_strapped",
+      counts: { bronze_axe_head: 1, oak_handle_strapped: 1 },
+      confirmAction: () => false
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected overtier assembly pair to be recognized");
+    assert((ctx._counts.bronze_axe || 0) === 0, "expected no crafted output after declined confirmation");
+    assert((ctx._counts.bronze_axe_head || 0) === 1, "expected bronze axe head to remain after declined confirmation");
+    assert((ctx._counts.oak_handle_strapped || 0) === 1, "expected higher-tier handle to remain after declined confirmation");
+    expectMessage(ctx, "You decide not to assemble that with the higher-tier handle.", "overtier decline");
+  });
+
   test("Crafting blocks metal part with base handle and explains dependency", () => {
     const ctx = createSkillContext({
       sourceItemId: "bronze_axe_head",
@@ -537,9 +604,9 @@ function run() {
 
   test("Crafting mismatched strapped handle combination warns", () => {
     const ctx = createSkillContext({
-      sourceItemId: "bronze_axe_head",
-      targetItemId: "oak_handle_strapped",
-      counts: { bronze_axe_head: 1, oak_handle_strapped: 1 }
+      sourceItemId: "steel_axe_head",
+      targetItemId: "wooden_handle_strapped",
+      counts: { steel_axe_head: 1, wooden_handle_strapped: 1 }
     });
 
     const used = crafting.onUseItem(ctx);
@@ -654,6 +721,78 @@ function run() {
     assert((ctx._counts.plain_staff_wood || 0) === 1, "plain wood staff should remain on invalid pair");
     assert((ctx._counts.cut_ruby || 0) === 1, "gem should remain on invalid pair");
     expectMessage(ctx, "These don't match.", "wood staff mismatch");
+  });
+
+  test("Crafting makes soft clay from clay on water", () => {
+    const ctx = createSkillContext({
+      targetObj: "WATER",
+      sourceItemId: "clay",
+      counts: { clay: 1 }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected clay-on-water to be handled by crafting");
+    assert((ctx._counts.soft_clay || 0) === 1, "expected soft clay output");
+    assert((ctx._counts.clay || 0) === 0, "expected clay input consumed");
+    assert((ctx._xpBySkill.crafting || 0) === 1, "expected soft clay XP grant");
+  });
+
+  test("Crafting imprinting keeps borrowed jewellery while consuming soft clay", () => {
+    const ctx = createSkillContext({
+      sourceItemId: "soft_clay",
+      targetItemId: "borrowed_ring",
+      counts: { soft_clay: 1, borrowed_ring: 1 }
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected soft clay + borrowed ring to be handled by crafting");
+    assert((ctx._counts.imprinted_ring_mould || 0) === 1, "expected imprinted ring mould output");
+    assert((ctx._counts.soft_clay || 0) === 0, "expected soft clay consumed");
+    assert((ctx._counts.borrowed_ring || 0) === 1, "expected borrowed ring to remain in inventory");
+    assert((ctx._xpBySkill.crafting || 0) === 1, "expected imprinting XP grant");
+  });
+
+  test("Crafting queues mould firing on an active fire target", () => {
+    const ctx = createSkillContext({
+      targetObj: "GROUND",
+      sourceItemId: "imprinted_ring_mould",
+      counts: { imprinted_ring_mould: 1 },
+      hitData: { gridX: 10, gridY: 11, point: { x: 10.5, z: 11.5 } },
+      resolveFireTargetFromHit: () => ({ x: 10, y: 11, z: 0 })
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected imprinted mould on fire to be handled by crafting");
+    assert(ctx.playerState.pendingSkillStart && ctx.playerState.pendingSkillStart.recipeId === "fire_imprinted_ring_mould", "expected pending fire-crafting recipe");
+    assert(ctx.playerState.pendingSkillStart && ctx.playerState.pendingSkillStart.targetObj === "FIRE", "expected pending fire target");
+    assert(ctx._queuedInteractions.length === 1, "expected one queued fire interaction");
+    assert(ctx._queuedInteractions[0].obj === "FIRE", "expected queued interaction against FIRE");
+  });
+
+  test("Crafting fires imprinted moulds into permanent mould tools", () => {
+    const ctx = createSkillContext({
+      targetObj: "FIRE",
+      sourceItemId: "imprinted_ring_mould",
+      recipeId: "fire_imprinted_ring_mould",
+      counts: { imprinted_ring_mould: 1 },
+      currentTick: 700,
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 11,
+      targetZ: 0,
+      hasActiveFireAt: (x, y, z) => x === 10 && y === 11 && z === 0
+    });
+
+    assert(crafting.onStart(ctx), "expected fire-based mould crafting to start");
+    ctx.currentTick = 703;
+    crafting.onTick(ctx);
+
+    assert((ctx._counts.ring_mould || 0) === 1, "expected final ring mould output");
+    assert((ctx._counts.imprinted_ring_mould || 0) === 0, "expected imprinted mould consumed");
+    assert((ctx._xpBySkill.crafting || 0) === 3, "expected mould firing XP grant");
+    assert(ctx.playerState.action === null, "expected fire-crafting action to stop once inputs are exhausted");
   });
 
   test("Crafting onStart/onTick count mode crafts exact quantity", () => {

@@ -7,8 +7,8 @@
 | Woodcutting | In Progress | Logs/xp/gold-per-tick balance targets locked across tree tiers | Progression expansion for later tree bands and gating | None |
 | Fishing | In Progress | Route/value tuning after the 1-40 balance lock | Later-band expansion beyond the current 1-40 route | None |
 | Firemaking | In Progress | Cross-skill log-demand balancing with woodcutting/cooking | Failure/interruption polish + expansion | None |
-| Cooking | In Progress | Combat-fed chicken/boar/wolf meat families integrated into the fire-cooking progression lane | Art/presentation pass for non-fish cooked and burnt food states | None |
+| Cooking | In Progress | Combat-fed chicken/boar/wolf meat families now have bespoke cooked/burnt inventory icon coverage | Next cooking milestone pending reprioritization after COOKING-014 | None |
 | Runecrafting | In Progress | Cross-skill magic demand + mining essence loop integration | Buy/sell parity and route pacing balance | Quest/dependency design |
 | Smithing | In Progress | Merchant/value alignment follow-up after assembly+mould integration | Rune-material quest gating + advanced forge progression | Quest gating |
-| Crafting | In Progress | Merchant/value alignment follow-up after jewelry+mould integration | Elira mould-making quest flow integration | Quest gating |
-| Fletching | In Progress | XP/value throughput balance across logs/arrows/bows | World/training-flow polish + late-tier gating | None |
+| Crafting | In Progress | Runtime-backed throughput/value targets are locked across handles, gem cutting, staffs, and gemmed jewelry | Station-based crafting expansion beyond the current inventory/fire lanes | None |
+| Fletching | In Progress | Runtime-backed throughput targets locked across handles, arrows, and finished bows | World/training-flow polish + late-tier gating | None |

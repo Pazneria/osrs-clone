@@ -615,6 +615,11 @@
                     { recipeId: 'craft_diamond_gold_amulet', requiredLevel: 40, baseItemId: 'gold_amulet', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_amulet', xp: 22, mouldUnlockFlag: 'amuletMouldUnlocked' },
                     { recipeId: 'craft_diamond_gold_tiara', requiredLevel: 40, baseItemId: 'gold_tiara', gemItemId: 'cut_diamond', outputItemId: 'diamond_gold_tiara', xp: 22, mouldUnlockFlag: 'tiaraMouldUnlocked' }
                 ];
+                const mouldImprintDefs = [
+                    { recipeId: 'imprint_ring_mould', borrowedItemId: 'borrowed_ring', outputItemId: 'imprinted_ring_mould', finalItemId: 'ring_mould' },
+                    { recipeId: 'imprint_amulet_mould', borrowedItemId: 'borrowed_amulet', outputItemId: 'imprinted_amulet_mould', finalItemId: 'amulet_mould' },
+                    { recipeId: 'imprint_tiara_mould', borrowedItemId: 'borrowed_tiara', outputItemId: 'imprinted_tiara_mould', finalItemId: 'tiara_mould' }
+                ];
 
                 for (let i = 0; i < strappedHandleDefs.length; i++) {
                     const def = strappedHandleDefs[i];
@@ -665,6 +670,41 @@
                     };
                 }
 
+                recipes.craft_soft_clay = {
+                    recipeFamily: 'soft_clay',
+                    requiredLevel: 1,
+                    inputs: [{ itemId: 'clay', amount: 1 }],
+                    output: { itemId: 'soft_clay', amount: 1 },
+                    xpPerAction: 1,
+                    actionTicks: 1,
+                    stationType: 'WATER'
+                };
+
+                for (let i = 0; i < mouldImprintDefs.length; i++) {
+                    const def = mouldImprintDefs[i];
+                    recipes[def.recipeId] = {
+                        recipeFamily: 'mould_imprint',
+                        requiredLevel: 1,
+                        inputs: [
+                            { itemId: 'soft_clay', amount: 1 },
+                            { itemId: def.borrowedItemId, amount: 1, consume: false }
+                        ],
+                        output: { itemId: def.outputItemId, amount: 1 },
+                        xpPerAction: 1,
+                        actionTicks: 1,
+                        stationType: 'INVENTORY'
+                    };
+                    recipes['fire_' + def.outputItemId] = {
+                        recipeFamily: 'mould_firing',
+                        requiredLevel: 1,
+                        inputs: [{ itemId: def.outputItemId, amount: 1 }],
+                        output: { itemId: def.finalItemId, amount: 1 },
+                        xpPerAction: 3,
+                        actionTicks: 3,
+                        stationType: 'FIRE'
+                    };
+                }
+
                 for (let i = 0; i < staffAttachDefs.length; i++) {
                     const def = staffAttachDefs[i];
                     recipes[def.recipeId] = {
@@ -706,6 +746,7 @@
                     chisel: { buy: 4, sell: 1 },
                     needle: { buy: 4, sell: 1 },
                     thread: { buy: 2, sell: 1 },
+                    soft_clay: { buy: null, sell: 1 },
                     ring_mould: { buy: null, sell: null },
                     amulet_mould: { buy: null, sell: null },
                     tiara_mould: { buy: null, sell: null },
@@ -719,6 +760,15 @@
                     cut_emerald: { buy: 180, sell: 60 },
                     uncut_diamond: { buy: 150, sell: 50 },
                     cut_diamond: { buy: 300, sell: 100 },
+                    plain_staff_wood: { buy: null, sell: 6 },
+                    plain_staff_oak: { buy: null, sell: 12 },
+                    plain_staff_willow: { buy: null, sell: 20 },
+                    plain_staff_maple: { buy: null, sell: 32 },
+                    plain_staff_yew: { buy: null, sell: 50 },
+                    fire_staff: { buy: null, sell: 24 },
+                    water_staff: { buy: null, sell: 52 },
+                    earth_staff: { buy: null, sell: 92 },
+                    air_staff: { buy: null, sell: 150 },
                     silver_ring: { buy: null, sell: 20 },
                     silver_amulet: { buy: null, sell: 20 },
                     silver_tiara: { buy: null, sell: 20 },
@@ -728,21 +778,21 @@
                     ruby_silver_ring: { buy: null, sell: 32 },
                     ruby_silver_amulet: { buy: null, sell: 32 },
                     ruby_silver_tiara: { buy: null, sell: 32 },
-                    sapphire_silver_ring: { buy: null, sell: 64 },
-                    sapphire_silver_amulet: { buy: null, sell: 64 },
-                    sapphire_silver_tiara: { buy: null, sell: 64 },
-                    ruby_gold_ring: { buy: null, sell: 80 },
-                    ruby_gold_amulet: { buy: null, sell: 80 },
-                    ruby_gold_tiara: { buy: null, sell: 80 },
-                    sapphire_gold_ring: { buy: null, sell: 128 },
-                    sapphire_gold_amulet: { buy: null, sell: 128 },
-                    sapphire_gold_tiara: { buy: null, sell: 128 },
-                    emerald_gold_ring: { buy: null, sell: 212 },
-                    emerald_gold_amulet: { buy: null, sell: 212 },
-                    emerald_gold_tiara: { buy: null, sell: 212 },
-                    diamond_gold_ring: { buy: null, sell: 332 },
-                    diamond_gold_amulet: { buy: null, sell: 332 },
-                    diamond_gold_tiara: { buy: null, sell: 332 },
+                    sapphire_silver_ring: { buy: null, sell: 52 },
+                    sapphire_silver_amulet: { buy: null, sell: 52 },
+                    sapphire_silver_tiara: { buy: null, sell: 52 },
+                    ruby_gold_ring: { buy: null, sell: 44 },
+                    ruby_gold_amulet: { buy: null, sell: 44 },
+                    ruby_gold_tiara: { buy: null, sell: 44 },
+                    sapphire_gold_ring: { buy: null, sell: 64 },
+                    sapphire_gold_amulet: { buy: null, sell: 64 },
+                    sapphire_gold_tiara: { buy: null, sell: 64 },
+                    emerald_gold_ring: { buy: null, sell: 92 },
+                    emerald_gold_amulet: { buy: null, sell: 92 },
+                    emerald_gold_tiara: { buy: null, sell: 92 },
+                    diamond_gold_ring: { buy: null, sell: 132 },
+                    diamond_gold_amulet: { buy: null, sell: 132 },
+                    diamond_gold_tiara: { buy: null, sell: 132 },
                     normal_leather: { buy: 8, sell: 2 },
                     wolf_leather: { buy: 24, sell: 8 },
                     bear_leather: { buy: 60, sell: 20 },
@@ -1339,8 +1389,8 @@
         }
 
         const craftingRows = gatherRecipeRows(craftingRecipes);
-        const standardCraftingFamilies = new Set(['gem_cutting', 'staff_attachment', 'jewelry_gem_attachment']);
-        const immediateCraftingFamilies = new Set(['strapped_handle', 'tool_weapon_assembly']);
+        const standardCraftingFamilies = new Set(['gem_cutting', 'staff_attachment', 'jewelry_gem_attachment', 'mould_firing']);
+        const immediateCraftingFamilies = new Set(['strapped_handle', 'tool_weapon_assembly', 'soft_clay', 'mould_imprint']);
         for (let i = 0; i < craftingRows.length; i++) {
             const row = craftingRows[i];
             const recipe = row && row.recipe;
@@ -2554,6 +2604,238 @@
         }
     }
 
+    function computeCraftingBalanceMetrics(craftingSpec, recipeId) {
+        const recipeSet = craftingSpec && craftingSpec.recipeSet && typeof craftingSpec.recipeSet === 'object'
+            ? craftingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const timing = craftingSpec && craftingSpec.timing && typeof craftingSpec.timing === 'object'
+            ? craftingSpec.timing
+            : {};
+        const valueTable = craftingSpec && craftingSpec.economy && craftingSpec.economy.valueTable && typeof craftingSpec.economy.valueTable === 'object'
+            ? craftingSpec.economy.valueTable
+            : {};
+        const outputItemId = recipe.output && typeof recipe.output.itemId === 'string'
+            ? recipe.output.itemId
+            : '';
+        const outputAmount = Number.isFinite(recipe.output && recipe.output.amount)
+            ? recipe.output.amount
+            : 1;
+        const valueRow = outputItemId && valueTable[outputItemId] && typeof valueTable[outputItemId] === 'object'
+            ? valueTable[outputItemId]
+            : {};
+        const sellValuePerUnit = Number.isFinite(valueRow.sell) ? valueRow.sell : null;
+        const sellValuePerAction = sellValuePerUnit === null ? null : sellValuePerUnit * outputAmount;
+        const actionTicks = Number.isFinite(recipe.actionTicks)
+            ? recipe.actionTicks
+            : (Number.isFinite(timing.actionTicks) ? timing.actionTicks : 1);
+        const xpPerAction = Number.isFinite(recipe.xpPerAction) ? recipe.xpPerAction : 0;
+
+        return {
+            recipeId,
+            recipeFamily: typeof recipe.recipeFamily === 'string' ? recipe.recipeFamily : '',
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            actionTicks,
+            outputItemId,
+            outputAmount,
+            xpPerAction,
+            sellValuePerAction,
+            xpPerTick: actionTicks > 0 ? xpPerAction / actionTicks : 0,
+            sellValuePerTick: sellValuePerAction === null || actionTicks <= 0 ? null : sellValuePerAction / actionTicks
+        };
+    }
+
+    function validateCraftingBalanceCurve(skillSpecs) {
+        const craftingSpec = skillSpecs && skillSpecs.crafting ? skillSpecs.crafting : null;
+        if (!craftingSpec || !craftingSpec.recipeSet) {
+            throw new Error('Crafting balance curve mismatch\n- missing crafting recipe set');
+        }
+
+        const valueTable = craftingSpec.economy && craftingSpec.economy.valueTable && typeof craftingSpec.economy.valueTable === 'object'
+            ? craftingSpec.economy.valueTable
+            : null;
+        if (!valueTable) {
+            throw new Error('Crafting balance curve mismatch\n- missing crafting value table');
+        }
+
+        const errors = [];
+        const requiredRecipes = [
+            'craft_soft_clay',
+            'craft_wooden_handle_strapped',
+            'craft_oak_handle_strapped',
+            'craft_willow_handle_strapped',
+            'craft_maple_handle_strapped',
+            'craft_yew_handle_strapped',
+            'cut_ruby',
+            'cut_sapphire',
+            'cut_emerald',
+            'cut_diamond',
+            'craft_fire_staff',
+            'craft_water_staff',
+            'craft_earth_staff',
+            'craft_air_staff',
+            'craft_ruby_silver_ring',
+            'craft_sapphire_silver_ring',
+            'craft_ruby_gold_ring',
+            'craft_sapphire_gold_ring',
+            'craft_emerald_gold_ring',
+            'craft_diamond_gold_ring'
+        ];
+        for (let i = 0; i < requiredRecipes.length; i++) {
+            if (!craftingSpec.recipeSet[requiredRecipes[i]]) {
+                errors.push('missing crafting recipe ' + requiredRecipes[i]);
+            }
+        }
+
+        const metricsById = {};
+        function getMetrics(recipeId) {
+            if (!metricsById[recipeId]) {
+                metricsById[recipeId] = computeCraftingBalanceMetrics(craftingSpec, recipeId);
+            }
+            return metricsById[recipeId];
+        }
+
+        const benchmarkRows = [
+            { recipeId: 'craft_wooden_handle_strapped', requiredLevel: 1, xp: 2, sell: 10, xpPerTick: 2, sellPerTick: 10 },
+            { recipeId: 'craft_oak_handle_strapped', requiredLevel: 10, xp: 4, sell: 16, xpPerTick: 4, sellPerTick: 16 },
+            { recipeId: 'craft_willow_handle_strapped', requiredLevel: 20, xp: 8, sell: 32, xpPerTick: 8, sellPerTick: 32 },
+            { recipeId: 'craft_maple_handle_strapped', requiredLevel: 30, xp: 12, sell: 44, xpPerTick: 12, sellPerTick: 44 },
+            { recipeId: 'craft_yew_handle_strapped', requiredLevel: 40, xp: 18, sell: 76, xpPerTick: 18, sellPerTick: 76 },
+            { recipeId: 'cut_ruby', requiredLevel: 10, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
+            { recipeId: 'cut_sapphire', requiredLevel: 20, xp: 8, sell: 32, xpPerTick: 2.6667, sellPerTick: 10.6667 },
+            { recipeId: 'cut_emerald', requiredLevel: 30, xp: 14, sell: 60, xpPerTick: 4.6667, sellPerTick: 20 },
+            { recipeId: 'cut_diamond', requiredLevel: 40, xp: 22, sell: 100, xpPerTick: 7.3333, sellPerTick: 33.3333 },
+            { recipeId: 'craft_fire_staff', requiredLevel: 10, xp: 4, sell: 24, xpPerTick: 1.3333, sellPerTick: 8 },
+            { recipeId: 'craft_water_staff', requiredLevel: 20, xp: 8, sell: 52, xpPerTick: 2.6667, sellPerTick: 17.3333 },
+            { recipeId: 'craft_earth_staff', requiredLevel: 30, xp: 14, sell: 92, xpPerTick: 4.6667, sellPerTick: 30.6667 },
+            { recipeId: 'craft_air_staff', requiredLevel: 40, xp: 22, sell: 150, xpPerTick: 7.3333, sellPerTick: 50 },
+            { recipeId: 'craft_ruby_silver_ring', requiredLevel: 10, xp: 4, sell: 32, xpPerTick: 1.3333, sellPerTick: 10.6667 },
+            { recipeId: 'craft_sapphire_silver_ring', requiredLevel: 20, xp: 8, sell: 52, xpPerTick: 2.6667, sellPerTick: 17.3333 },
+            { recipeId: 'craft_ruby_gold_ring', requiredLevel: 40, xp: 4, sell: 44, xpPerTick: 1.3333, sellPerTick: 14.6667 },
+            { recipeId: 'craft_sapphire_gold_ring', requiredLevel: 40, xp: 8, sell: 64, xpPerTick: 2.6667, sellPerTick: 21.3333 },
+            { recipeId: 'craft_emerald_gold_ring', requiredLevel: 40, xp: 14, sell: 92, xpPerTick: 4.6667, sellPerTick: 30.6667 },
+            { recipeId: 'craft_diamond_gold_ring', requiredLevel: 40, xp: 22, sell: 132, xpPerTick: 7.3333, sellPerTick: 44 }
+        ];
+
+        for (let i = 0; i < benchmarkRows.length; i++) {
+            const benchmark = benchmarkRows[i];
+            const metrics = getMetrics(benchmark.recipeId);
+            if (!metrics) {
+                errors.push('missing crafting balance metrics for ' + benchmark.recipeId);
+                continue;
+            }
+            if (metrics.requiredLevel !== benchmark.requiredLevel) {
+                errors.push(benchmark.recipeId + ' requiredLevel mismatch');
+            }
+            if (metrics.xpPerAction !== benchmark.xp) {
+                errors.push(benchmark.recipeId + ' xp/action mismatch');
+            }
+            if (metrics.sellValuePerAction !== benchmark.sell) {
+                errors.push(benchmark.recipeId + ' sell value/action mismatch');
+            }
+            if (roundBalanceMetric(metrics.xpPerTick) !== benchmark.xpPerTick) {
+                errors.push(benchmark.recipeId + ' xp/tick mismatch');
+            }
+            if (roundBalanceMetric(metrics.sellValuePerTick) !== benchmark.sellPerTick) {
+                errors.push(benchmark.recipeId + ' sell value/tick mismatch');
+            }
+        }
+
+        function validateIncreasingLane(recipeIds, label, options = {}) {
+            let prev = null;
+            const requireLevelIncrease = options.requireLevelIncrease !== false;
+            for (let i = 0; i < recipeIds.length; i++) {
+                const metrics = getMetrics(recipeIds[i]);
+                if (!metrics) {
+                    errors.push('missing ' + label + ' metrics for ' + recipeIds[i]);
+                    continue;
+                }
+                if (prev) {
+                    if (requireLevelIncrease && !(metrics.requiredLevel > prev.requiredLevel)) {
+                        errors.push(label + ' requiredLevel must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.xpPerAction > prev.xpPerAction)) {
+                        errors.push(label + ' xp/action must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.sellValuePerAction > prev.sellValuePerAction)) {
+                        errors.push(label + ' sell value/action must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.xpPerTick > prev.xpPerTick)) {
+                        errors.push(label + ' xp/tick must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.sellValuePerTick > prev.sellValuePerTick)) {
+                        errors.push(label + ' sell value/tick must increase at ' + recipeIds[i]);
+                    }
+                }
+                prev = metrics;
+            }
+        }
+
+        validateIncreasingLane([
+            'craft_wooden_handle_strapped',
+            'craft_oak_handle_strapped',
+            'craft_willow_handle_strapped',
+            'craft_maple_handle_strapped',
+            'craft_yew_handle_strapped'
+        ], 'strapped handle lane');
+
+        validateIncreasingLane([
+            'cut_ruby',
+            'cut_sapphire',
+            'cut_emerald',
+            'cut_diamond'
+        ], 'gem cutting lane');
+
+        validateIncreasingLane([
+            'craft_fire_staff',
+            'craft_water_staff',
+            'craft_earth_staff',
+            'craft_air_staff'
+        ], 'elemental staff lane');
+
+        validateIncreasingLane([
+            'craft_ruby_silver_ring',
+            'craft_sapphire_silver_ring'
+        ], 'silver jewelry lane');
+
+        validateIncreasingLane([
+            'craft_ruby_gold_ring',
+            'craft_sapphire_gold_ring',
+            'craft_emerald_gold_ring',
+            'craft_diamond_gold_ring'
+        ], 'gold jewelry lane', { requireLevelIncrease: false });
+
+        const compositionFamilies = new Set(['staff_attachment', 'jewelry_gem_attachment']);
+        const craftingRecipeIds = Object.keys(craftingSpec.recipeSet);
+        for (let i = 0; i < craftingRecipeIds.length; i++) {
+            const recipeId = craftingRecipeIds[i];
+            const recipe = craftingSpec.recipeSet[recipeId];
+            if (!recipe || !compositionFamilies.has(recipe.recipeFamily)) continue;
+            const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
+            if (inputs.length !== 2) {
+                errors.push(recipeId + ' must keep exactly two inputs for value composition');
+                continue;
+            }
+            const firstValue = valueTable[inputs[0].itemId];
+            const secondValue = valueTable[inputs[1].itemId];
+            const outputValue = recipe.output && valueTable[recipe.output.itemId];
+            if (!firstValue || !secondValue || !outputValue) {
+                errors.push(recipeId + ' is missing value-table coverage for composition checks');
+                continue;
+            }
+            const expectedSell = firstValue.sell + secondValue.sell;
+            if (outputValue.sell !== expectedSell) {
+                errors.push(recipe.output.itemId + ' sell value should equal ' + inputs[0].itemId + ' + ' + inputs[1].itemId);
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Crafting balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     function computeWoodcuttingBalanceMetrics(woodcuttingSpec, nodeId, benchmark) {
         const nodeTable = woodcuttingSpec && woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
             ? woodcuttingSpec.nodeTable
@@ -2911,6 +3193,7 @@
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
     validateFletchingBalanceCurve(SKILL_SPECS);
+    validateCraftingBalanceCurve(SKILL_SPECS);
 
     window.SkillSpecs = {
         version: SPEC_VERSION,

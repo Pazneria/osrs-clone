@@ -17,6 +17,16 @@
         };
     }
 
+    function createHasItemObjective(objectiveId, label, itemId, amount) {
+        return {
+            objectiveId,
+            kind: 'has_item',
+            label,
+            itemId,
+            amount: Math.max(1, Math.floor(amount || 1))
+        };
+    }
+
     const QUESTS = {
         tanner_rusk_hides_of_the_frontier: {
             questId: 'tanner_rusk_hides_of_the_frontier',
@@ -134,6 +144,61 @@
                 readyGreeting: 'That bundle looks like real practice, not luck. If you brought every catch I named, I can finish your lesson properly.',
                 completedGreeting: 'You worked every band I asked for. That is enough proof for me.',
                 completedResponse: 'You earned this rune harpoon. If you ever sell it or lose it, come back when you are carrying none and I will sell you another for the normal price.'
+            }
+        },
+        elira_gemhand_moulds_of_the_trade: {
+            questId: 'elira_gemhand_moulds_of_the_trade',
+            kind: 'mould_unlock',
+            title: 'Moulds of the Trade',
+            category: 'starter_town',
+            questGiverName: 'Elira Gemhand',
+            startNpcDialogueId: 'elira_gemhand',
+            startMerchantId: 'elira_gemhand',
+            startInstructions: 'Talk to Elira Gemhand in the town jewelry workshop.',
+            autoStartOnFirstInteraction: true,
+            primaryActionPolicy: 'dialogue_first',
+            startRewardFailureText: 'You need 3 free inventory spaces before borrowing Elira\'s examples.',
+            summary: 'Elira wants you to learn mould-making properly by borrowing three example pieces, imprinting them into soft clay, and firing the finished moulds yourself.',
+            journal: {
+                offer: 'Elira is willing to lend me ring, amulet, and tiara examples so I can learn how jewellery moulds are made.',
+                active: 'Use clay on water for soft clay, press it onto Elira\'s borrowed examples, then fire the imprinted moulds.',
+                ready: 'I have all three finished moulds. I should return to Elira in the jewelry workshop.',
+                completed: 'Elira approved my mould-making work and permanently unlocked the ring, amulet, and tiara mould families for me.'
+            },
+            startRewards: {
+                items: [
+                    { itemId: 'borrowed_ring', amount: 1 },
+                    { itemId: 'borrowed_amulet', amount: 1 },
+                    { itemId: 'borrowed_tiara', amount: 1 }
+                ]
+            },
+            objectives: [
+                createHasItemObjective('ring_mould', 'Ring mould', 'ring_mould', 1),
+                createHasItemObjective('amulet_mould', 'Amulet mould', 'amulet_mould', 1),
+                createHasItemObjective('tiara_mould', 'Tiara mould', 'tiara_mould', 1)
+            ],
+            completionRemovals: [
+                { itemId: 'borrowed_ring', amount: 1 },
+                { itemId: 'borrowed_amulet', amount: 1 },
+                { itemId: 'borrowed_tiara', amount: 1 }
+            ],
+            rewards: {
+                skillXp: [
+                    { skillId: 'crafting', amount: 150 }
+                ],
+                unlockFlags: [
+                    'ringMouldUnlocked',
+                    'amuletMouldUnlocked',
+                    'tiaraMouldUnlocked'
+                ]
+            },
+            dialogue: {
+                offerGreeting: 'If you want proper jewellery tools, you should learn how the moulds are made instead of buying shortcuts.',
+                offerResponse: 'Take these three examples. Soften clay in water, press each piece into it, then fire the imprinted moulds and bring the finished set back to me.',
+                activeGreeting: 'Soft clay first, then a clean imprint from each borrowed piece, then a careful firing. Do not skip the order.',
+                readyGreeting: 'That looks like a proper mould set. If you truly finished all three, I can mark the whole family as yours to use.',
+                completedGreeting: 'Good. You made the moulds yourself, so you understand what they are for now.',
+                completedResponse: 'Keep the moulds and use them well. You can shape rings, amulets, and tiaras properly from here on.'
             }
         }
     };

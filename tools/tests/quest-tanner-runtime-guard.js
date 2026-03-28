@@ -7,7 +7,7 @@ function read(relPath) {
   return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
 }
 
-function createHarness() {
+function createHarness(options = {}) {
   const session = {
     progress: {
       inventory: [],
@@ -42,6 +42,7 @@ function createHarness() {
   function removeItemsById(itemId, amount) {
     let remaining = Math.max(0, Number(amount) || 0);
     const nextSlots = [];
+    const requested = remaining;
     const targetId = String(itemId || "").trim();
     const slots = getInventorySlots();
     for (let i = 0; i < slots.length; i += 1) {
@@ -62,19 +63,36 @@ function createHarness() {
       remaining = 0;
     }
     session.progress.inventory = nextSlots;
+    return requested - remaining;
   }
 
   function giveItem(itemData, amount) {
-    rewardItems.push({ itemId: itemData.id, amount });
+    if (typeof options.giveItem === "function") {
+      const granted = Number(options.giveItem(itemData, amount, session));
+      if (granted > 0) rewardItems.push({ itemId: itemData.id, amount: granted });
+      return granted;
+    }
+
     const existingSlot = getInventorySlots().find((slot) => slot && slot.itemData && slot.itemData.id === itemData.id);
     if (existingSlot) {
       existingSlot.amount += amount;
-      return;
+      rewardItems.push({ itemId: itemData.id, amount });
+      return amount;
     }
+
+    const maxInventorySlots = Number.isFinite(options.maxInventorySlots)
+      ? Math.max(0, Math.floor(options.maxInventorySlots))
+      : null;
+    if (maxInventorySlots !== null && getInventorySlots().length >= maxInventorySlots) {
+      return 0;
+    }
+
     session.progress.inventory.push({
       itemData,
       amount
     });
+    rewardItems.push({ itemId: itemData.id, amount });
+    return amount;
   }
 
   const sandbox = {
@@ -106,7 +124,13 @@ sandbox.window.ITEM_DB = {
   raw_salmon: { id: "raw_salmon", name: "Raw Salmon" },
   raw_tuna: { id: "raw_tuna", name: "Raw Tuna" },
   raw_swordfish: { id: "raw_swordfish", name: "Raw Swordfish" },
-  rune_harpoon: { id: "rune_harpoon", name: "Rune Harpoon" }
+  rune_harpoon: { id: "rune_harpoon", name: "Rune Harpoon" },
+  borrowed_ring: { id: "borrowed_ring", name: "Borrowed Ring" },
+  borrowed_amulet: { id: "borrowed_amulet", name: "Borrowed Amulet" },
+  borrowed_tiara: { id: "borrowed_tiara", name: "Borrowed Tiara" },
+  ring_mould: { id: "ring_mould", name: "Ring mould" },
+  amulet_mould: { id: "amulet_mould", name: "Amulet mould" },
+  tiara_mould: { id: "tiara_mould", name: "Tiara mould" }
 };
   sandbox.window.GameSessionRuntime = {
     getSession: () => session
@@ -602,6 +626,239 @@ assert.strictEqual(
 assert.ok(
   fishingCompletedDialogueView.options.some((option) => option && option.kind === "trade" && option.label === "Trade"),
   "completed fishing teacher dialogue should still expose a trade option"
+);
+
+const eliraHarness = createHarness();
+const {
+  runtime: eliraRuntime,
+  session: eliraSession,
+  saveReasons: eliraSaveReasons,
+  chatLog: eliraChatLog,
+  rewardItems: eliraRewardItems,
+  rewardXp: eliraRewardXp,
+  uiHooks: eliraUiHooks
+} = eliraHarness;
+const eliraNpc = {
+  name: "Elira Gemhand",
+  dialogueId: "elira_gemhand",
+  merchantId: "elira_gemhand"
+};
+const eliraQuestId = "elira_gemhand_moulds_of_the_trade";
+
+const eliraStartFailHarness = createHarness({ maxInventorySlots: 2 });
+const {
+  runtime: eliraStartFailRuntime,
+  session: eliraStartFailSession,
+  saveReasons: eliraStartFailSaveReasons,
+  chatLog: eliraStartFailChatLog,
+  rewardItems: eliraStartFailRewardItems,
+  uiHooks: eliraStartFailUiHooks
+} = eliraStartFailHarness;
+const eliraStartFail = eliraStartFailRuntime.handleNpcDialogueOpened(eliraNpc);
+assert.strictEqual(eliraStartFail.ok, false, "Elira quest start should fail when borrowed items do not fully fit");
+assert.strictEqual(
+  eliraStartFail.messageText,
+  "You need 3 free inventory spaces before borrowing Elira's examples.",
+  "Elira quest start should surface the authored inventory-space warning"
+);
+assert.deepStrictEqual(
+  eliraStartFailSession.progress.inventory,
+  [],
+  "Elira quest start should roll back partially granted borrowed items"
+);
+assert.deepStrictEqual(
+  eliraStartFailRewardItems,
+  [
+    { itemId: "borrowed_ring", amount: 1 },
+    { itemId: "borrowed_amulet", amount: 1 }
+  ],
+  "Elira quest start failure should only record the attempted grants before rollback"
+);
+assert.strictEqual(
+  eliraStartFailRuntime.resolveQuestState(eliraQuestId, { persist: false, touch: false }).status,
+  "not_started",
+  "Elira quest should remain not started after failed borrowed-item grant"
+);
+assert.deepStrictEqual(eliraStartFailSaveReasons, [], "failed Elira quest start should not persist progress");
+assert.deepStrictEqual(eliraStartFailChatLog, [], "failed Elira quest start should not emit quest chat");
+assert.deepStrictEqual(
+  eliraStartFailUiHooks,
+  {
+    renderQuestLog: 0,
+    refreshActiveDialogue: 0,
+    renderInventory: 0
+  },
+  "failed Elira quest start should not refresh UI"
+);
+
+assert.strictEqual(
+  eliraRuntime.resolveNpcPrimaryAction(eliraNpc),
+  "Talk-to",
+  "Elira should stay dialogue-first before the mould quest is completed"
+);
+
+const eliraAccessBefore = eliraRuntime.canOpenMerchantShop("elira_gemhand");
+assert.strictEqual(eliraAccessBefore.ok, true, "Elira's shop should remain open before the quest starts");
+
+const eliraStarted = eliraRuntime.handleNpcDialogueOpened(eliraNpc);
+assert.ok(eliraStarted && eliraStarted.ok, "opening Elira dialogue should auto-start the mould quest");
+assert.strictEqual(eliraStarted.state.status, "active", "auto-start should persist an active Elira quest state");
+assert.deepStrictEqual(
+  eliraRewardItems,
+  [
+    { itemId: "borrowed_ring", amount: 1 },
+    { itemId: "borrowed_amulet", amount: 1 },
+    { itemId: "borrowed_tiara", amount: 1 }
+  ],
+  "starting the Elira quest should grant the borrowed example items"
+);
+assert.deepStrictEqual(eliraSaveReasons, ["quest_started"], "starting the Elira quest should persist progress once");
+assert.deepStrictEqual(
+  eliraChatLog,
+  [{ message: "Quest started: Moulds of the Trade.", tone: "info" }],
+  "starting the Elira quest should emit a quest-start chat message"
+);
+assert.deepStrictEqual(
+  eliraUiHooks,
+  {
+    renderQuestLog: 1,
+    refreshActiveDialogue: 1,
+    renderInventory: 1
+  },
+  "starting the Elira quest should refresh the quest UI and inventory once"
+);
+
+const eliraActiveDialogueView = eliraRuntime.buildNpcDialogueView(eliraNpc, {
+  title: "Elira Gemhand",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  eliraActiveDialogueView.greeting,
+  "Soft clay first, then a clean imprint from each borrowed piece, then a careful firing. Do not skip the order.",
+  "active Elira dialogue should use the quest-specific active greeting"
+);
+assert.strictEqual(
+  eliraActiveDialogueView.options[0].label,
+  "Ask about the order",
+  "active Elira dialogue should offer a progress option first"
+);
+assert.ok(
+  eliraActiveDialogueView.options.some((option) => option && option.kind === "trade" && option.label === "Trade"),
+  "Elira dialogue should still expose a trade option while the quest is active"
+);
+
+const eliraQuestLogEntry = eliraRuntime.getQuestLogEntries().find((entry) => entry.questId === eliraQuestId);
+assert.ok(eliraQuestLogEntry, "Elira quest should appear in the quest log");
+assert.strictEqual(
+  eliraQuestLogEntry.rewardsText,
+  "150 Crafting XP | Unlock Ring mould use | Unlock Amulet mould use | Unlock Tiara mould use",
+  "Elira quest log should describe the crafting XP reward and mould unlocks"
+);
+
+eliraSession.progress.inventory = [
+  { itemData: { id: "borrowed_ring", name: "Borrowed Ring" }, amount: 1 },
+  { itemData: { id: "borrowed_amulet", name: "Borrowed Amulet" }, amount: 1 },
+  { itemData: { id: "borrowed_tiara", name: "Borrowed Tiara" }, amount: 1 },
+  { itemData: { id: "ring_mould", name: "Ring mould" }, amount: 1 },
+  { itemData: { id: "amulet_mould", name: "Amulet mould" }, amount: 1 },
+  { itemData: { id: "tiara_mould", name: "Tiara mould" }, amount: 1 }
+];
+
+const eliraRefreshed = eliraRuntime.refreshAllQuestStates({ persist: true, touch: true, render: false });
+assert.strictEqual(eliraRefreshed.length, 1, "refresh should return the Elira quest state");
+assert.strictEqual(eliraRefreshed[0].status, "ready_to_complete", "carrying the finished moulds should mark Elira's quest ready to complete");
+const eliraReadyAccess = eliraRuntime.canOpenMerchantShop("elira_gemhand");
+assert.strictEqual(eliraReadyAccess.ok, true, "Elira's shop should stay open while the quest is ready to complete");
+
+const eliraCompleted = eliraRuntime.completeQuest(eliraQuestId);
+assert.ok(eliraCompleted && eliraCompleted.ok, "turning in the finished mould set should complete Elira's quest");
+assert.strictEqual(eliraCompleted.state.status, "completed", "completed Elira quest should persist completed state");
+assert.strictEqual(
+  eliraRuntime.resolveNpcPrimaryAction(eliraNpc),
+  "Talk-to",
+  "Elira should stay dialogue-first after quest completion"
+);
+assert.strictEqual(
+  !!(eliraSession.player.unlockFlags && eliraSession.player.unlockFlags.ringMouldUnlocked),
+  true,
+  "Elira quest completion should unlock ring mould usage"
+);
+assert.strictEqual(
+  !!(eliraSession.player.unlockFlags && eliraSession.player.unlockFlags.amuletMouldUnlocked),
+  true,
+  "Elira quest completion should unlock amulet mould usage"
+);
+assert.strictEqual(
+  !!(eliraSession.player.unlockFlags && eliraSession.player.unlockFlags.tiaraMouldUnlocked),
+  true,
+  "Elira quest completion should unlock tiara mould usage"
+);
+assert.strictEqual(
+  eliraSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "borrowed_ring"),
+  false,
+  "Elira quest completion should remove the borrowed ring"
+);
+assert.strictEqual(
+  eliraSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "borrowed_amulet"),
+  false,
+  "Elira quest completion should remove the borrowed amulet"
+);
+assert.strictEqual(
+  eliraSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "borrowed_tiara"),
+  false,
+  "Elira quest completion should remove the borrowed tiara"
+);
+assert.ok(
+  eliraSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "ring_mould"),
+  "Elira quest completion should leave the crafted ring mould in inventory"
+);
+assert.deepStrictEqual(
+  eliraRewardXp,
+  [{ skillId: "crafting", amount: 150 }],
+  "Elira quest should grant the authored crafting XP reward"
+);
+assert.deepStrictEqual(
+  eliraSaveReasons,
+  ["quest_started", "quest_refresh", "quest_completed"],
+  "Elira quest lifecycle should persist start, refresh, and completion updates"
+);
+assert.deepStrictEqual(
+  eliraChatLog,
+  [
+    { message: "Quest started: Moulds of the Trade.", tone: "info" },
+    { message: "Quest complete: Moulds of the Trade.", tone: "info" }
+  ],
+  "Elira quest lifecycle should emit start and completion chat messages"
+);
+assert.deepStrictEqual(
+  eliraUiHooks,
+  {
+    renderQuestLog: 2,
+    refreshActiveDialogue: 2,
+    renderInventory: 2
+  },
+  "Elira quest completion should refresh the quest UI and inventory once more"
+);
+
+const eliraCompletedDialogueView = eliraRuntime.buildNpcDialogueView(eliraNpc, {
+  title: "Elira Gemhand",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  eliraCompletedDialogueView.greeting,
+  "Good. You made the moulds yourself, so you understand what they are for now.",
+  "completed Elira dialogue should use the completed greeting"
+);
+assert.strictEqual(
+  eliraCompletedDialogueView.options[0].label,
+  "Ask about the delivery",
+  "completed Elira dialogue should switch to the delivery follow-up option"
+);
+assert.ok(
+  eliraCompletedDialogueView.options.some((option) => option && option.kind === "trade" && option.label === "Trade"),
+  "completed Elira dialogue should still expose a trade option"
 );
 
 console.log("Quest runtime guards passed.");
