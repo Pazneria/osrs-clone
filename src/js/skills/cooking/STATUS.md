@@ -16,10 +16,11 @@
 - [x] COOKING-012A: Burn-rate rebalance completed with a shared unlock-relative cubic burn curve (33% at unlock, 10% at +10, 5% at +20, 0% at +30), removal of legacy burn-difficulty/item burn fields, and live UI burn-chance display.
 - [x] COOKING-012: 1-40 food-band balance targets are now locked with shared fish/cooking sell-value tables, per-recipe registry summary helpers, and documented tier-entry, level-40, and break-even value-per-action benchmarks.
 - [x] COOKING-013: Progression expansion completed for additional cookable families beyond the early fish baseline (combat-fed chicken, boar, and wolf meat now cook on fires with canonical cooked/burnt outputs, heal values, sell-value rows, and roadmap/spec coverage).
+- [x] COOKING-014: Art-and-presentation pass completed for non-fish cooked/burnt food states (dedicated pixel assets now cover cooked/burnt chicken, boar, and wolf meat so the combat-fed food lane no longer reuses raw-meat placeholder icons).
 
 ## Now
 
 ## Next
-- [ ] COOKING-014: Art-and-presentation pass for non-fish cooked/burnt food states so new meat families no longer rely on shared placeholder icons.
+(empty)
 
 ## Later

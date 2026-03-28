@@ -97,6 +97,12 @@ Under the base model, cooking primarily converts raw fish from fishing and raw m
 | Tuna | 30 | 120 | Raw Tuna | Cooked Tuna | Burnt Tuna | 9 | 4 | 11 | 16 | 1 |
 | Swordfish | 40 | 140 | Raw Swordfish | Cooked Swordfish | Burnt Swordfish | 12 | 4 | 16 | 22 | 1 |
 
+### Presentation Coverage
+
+The combat-fed meat lane now has dedicated cooked and burnt inventory pixel assets for chicken, boar meat, and wolf meat.
+
+These cooked/burnt outputs no longer reuse the raw-meat placeholder icons, so the non-fish cooking states now read distinctly at a glance in inventory and chat-driven loot/cooking loops.
+
 ### Shared Burn Curve Summary
 
 | Relative Level Band | Clamped Level Delta | Burn Chance | Cooking Success Chance |

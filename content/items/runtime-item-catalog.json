@@ -1012,7 +1012,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_boar_meat",
+        "assetId": "burnt_boar_meat",
         "kind": "pixel"
       },
       "name": "Burnt Boar Meat",
@@ -1026,7 +1026,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_chicken",
+        "assetId": "burnt_chicken",
         "kind": "pixel"
       },
       "name": "Burnt Chicken",
@@ -1110,7 +1110,7 @@
       ],
       "defaultAction": "Drop",
       "icon": {
-        "assetId": "raw_wolf_meat",
+        "assetId": "burnt_wolf_meat",
         "kind": "pixel"
       },
       "name": "Burnt Wolf Meat",
@@ -1184,7 +1184,7 @@
       "eatDelayTicks": 4,
       "healAmount": 6,
       "icon": {
-        "assetId": "raw_boar_meat",
+        "assetId": "cooked_boar_meat",
         "kind": "pixel"
       },
       "name": "Cooked Boar Meat",
@@ -1201,7 +1201,7 @@
       "eatDelayTicks": 4,
       "healAmount": 4,
       "icon": {
-        "assetId": "raw_chicken",
+        "assetId": "cooked_chicken",
         "kind": "pixel"
       },
       "name": "Cooked Chicken",
@@ -1303,7 +1303,7 @@
       "eatDelayTicks": 4,
       "healAmount": 8,
       "icon": {
-        "assetId": "raw_wolf_meat",
+        "assetId": "cooked_wolf_meat",
         "kind": "pixel"
       },
       "name": "Cooked Wolf Meat",

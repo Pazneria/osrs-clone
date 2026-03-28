@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-23T18:46:36.964Z",
+  "generatedAt": "2026-03-26T17:48:49.153Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "adamant_arrowheads",
@@ -114,6 +114,21 @@
       "status": "todo",
       "treatment": "bespoke"
     },
+    "borrowed_amulet": {
+      "assetId": "silver_amulet",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "borrowed_ring": {
+      "assetId": "silver_ring",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "borrowed_tiara": {
+      "assetId": "silver_tiara",
+      "status": "todo",
+      "treatment": "shared"
+    },
     "bow_string": {
       "assetId": "bow_string",
       "status": "done",
@@ -192,14 +207,14 @@
       "treatment": "bespoke"
     },
     "burnt_boar_meat": {
-      "assetId": "raw_boar_meat",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_boar_meat",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "burnt_chicken": {
-      "assetId": "raw_chicken",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_chicken",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "burnt_salmon": {
       "assetId": "burnt_salmon",
@@ -228,9 +243,9 @@
       "treatment": "bespoke"
     },
     "burnt_wolf_meat": {
-      "assetId": "raw_wolf_meat",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "burnt_wolf_meat",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "chisel": {
       "assetId": "knife",
@@ -253,14 +268,14 @@
       "treatment": "shared"
     },
     "cooked_boar_meat": {
-      "assetId": "raw_boar_meat",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_boar_meat",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "cooked_chicken": {
-      "assetId": "raw_chicken",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_chicken",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "cooked_salmon": {
       "assetId": "cooked_salmon",
@@ -289,9 +304,9 @@
       "treatment": "bespoke"
     },
     "cooked_wolf_meat": {
-      "assetId": "raw_wolf_meat",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "cooked_wolf_meat",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "copper_ore": {
       "assetId": "copper_ore",
@@ -433,6 +448,21 @@
       "assetId": "harpoon",
       "status": "done",
       "treatment": "bespoke"
+    },
+    "imprinted_amulet_mould": {
+      "assetId": "small_pouch",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "imprinted_ring_mould": {
+      "assetId": "small_pouch",
+      "status": "todo",
+      "treatment": "shared"
+    },
+    "imprinted_tiara_mould": {
+      "assetId": "small_pouch",
+      "status": "todo",
+      "treatment": "shared"
     },
     "iron_arrowheads": {
       "assetId": "iron_arrowheads",
@@ -780,12 +810,12 @@
     "raw_boar_meat": {
       "assetId": "raw_boar_meat",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "raw_chicken": {
       "assetId": "raw_chicken",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "raw_salmon": {
       "assetId": "raw_salmon",
@@ -816,7 +846,7 @@
     "raw_wolf_meat": {
       "assetId": "raw_wolf_meat",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "ring_mould": {
       "assetId": "small_pouch",
@@ -973,7 +1003,7 @@
     "silver_amulet": {
       "assetId": "silver_amulet",
       "status": "done",
-      "treatment": "bespoke"
+      "treatment": "shared"
     },
     "silver_bar": {
       "assetId": "silver_bar",
@@ -989,12 +1019,12 @@
     "silver_ring": {
       "assetId": "silver_ring",
       "status": "done",
-      "treatment": "bespoke"
+      "treatment": "shared"
     },
     "silver_tiara": {
       "assetId": "silver_tiara",
       "status": "done",
-      "treatment": "bespoke"
+      "treatment": "shared"
     },
     "small_net": {
       "assetId": "small_net",
