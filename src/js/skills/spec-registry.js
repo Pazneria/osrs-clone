@@ -673,6 +673,100 @@
         };
     }
 
+    function computeFletchingRecipeMetrics(recipeId) {
+        const fletchingSpec = getSkillSpec('fletching') || {};
+        const recipeSet = fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
+            ? fletchingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const economy = fletchingSpec.economy && typeof fletchingSpec.economy === 'object'
+            ? fletchingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const outputItemId = recipe.output && typeof recipe.output.itemId === 'string'
+            ? recipe.output.itemId
+            : '';
+        const outputAmount = Number.isFinite(recipe.output && recipe.output.amount)
+            ? recipe.output.amount
+            : 1;
+        const valueRow = outputItemId && valueTable[outputItemId] && typeof valueTable[outputItemId] === 'object'
+            ? valueTable[outputItemId]
+            : {};
+        const sellValuePerUnit = Number.isFinite(valueRow.sell) ? valueRow.sell : null;
+        const sellValuePerAction = sellValuePerUnit === null ? null : sellValuePerUnit * outputAmount;
+        const actionTicks = Number.isFinite(recipe.actionTicks)
+            ? recipe.actionTicks
+            : (Number.isFinite(fletchingSpec.timing && fletchingSpec.timing.actionTicks) ? fletchingSpec.timing.actionTicks : 1);
+        const xpPerAction = Number.isFinite(recipe.xpPerAction) ? recipe.xpPerAction : 0;
+
+        return {
+            recipeId,
+            recipeFamily: typeof recipe.recipeFamily === 'string' ? recipe.recipeFamily : '',
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            actionTicks,
+            output: {
+                itemId: outputItemId,
+                amount: outputAmount,
+                sellValuePerUnit,
+                sellValuePerAction
+            },
+            throughput: {
+                xpPerAction,
+                sellValuePerAction,
+                xpPerTick: roundMetric(actionTicks > 0 ? xpPerAction / actionTicks : 0),
+                sellValuePerTick: sellValuePerAction === null || actionTicks <= 0
+                    ? null
+                    : roundMetric(sellValuePerAction / actionTicks)
+            }
+        };
+    }
+
+    function getFletchingBalanceSummary() {
+        const fletchingSpec = getSkillSpec('fletching') || {};
+        const recipeSet = fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
+            ? fletchingSpec.recipeSet
+            : {};
+        const familyOrder = {
+            handle: 0,
+            staff: 1,
+            shafts: 2,
+            headless_arrows: 3,
+            bow_unstrung: 4,
+            bow_strung: 5,
+            finished_arrows: 6
+        };
+        const recipeIds = Object.keys(recipeSet).sort((a, b) => {
+            const aRecipe = recipeSet[a] || {};
+            const bRecipe = recipeSet[b] || {};
+            const aLevel = Number.isFinite(aRecipe.requiredLevel) ? aRecipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+            const bLevel = Number.isFinite(bRecipe.requiredLevel) ? bRecipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            const aFamily = Number.isFinite(familyOrder[aRecipe.recipeFamily]) ? familyOrder[aRecipe.recipeFamily] : Number.MAX_SAFE_INTEGER;
+            const bFamily = Number.isFinite(familyOrder[bRecipe.recipeFamily]) ? familyOrder[bRecipe.recipeFamily] : Number.MAX_SAFE_INTEGER;
+            if (aFamily !== bFamily) return aFamily - bFamily;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < recipeIds.length; i++) {
+            const row = computeFletchingRecipeMetrics(recipeIds[i]);
+            if (row) rows.push(row);
+        }
+
+        return {
+            assumptions: {
+                actionTicks: Number.isFinite(fletchingSpec.timing && fletchingSpec.timing.actionTicks)
+                    ? fletchingSpec.timing.actionTicks
+                    : 1
+            },
+            rows
+        };
+    }
+
     function computeRuneOutputPerEssence(level, scalingStartLevel) {
         const lvl = Number.isFinite(level) ? level : 1;
         const start = Number.isFinite(scalingStartLevel) ? scalingStartLevel : 1;
@@ -724,6 +818,8 @@
         computeCookingSuccessChance,
         computeCookingRecipeMetrics,
         getCookingBalanceSummary,
+        computeFletchingRecipeMetrics,
+        getFletchingBalanceSummary,
         computeRuneOutputPerEssence,
         resolveWeighted
     };

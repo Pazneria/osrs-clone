@@ -172,6 +172,26 @@
         "buy": null,
         "sell": 15
       },
+      "plain_staff_maple": {
+        "buy": null,
+        "sell": 32
+      },
+      "plain_staff_oak": {
+        "buy": null,
+        "sell": 12
+      },
+      "plain_staff_willow": {
+        "buy": null,
+        "sell": 20
+      },
+      "plain_staff_wood": {
+        "buy": null,
+        "sell": 6
+      },
+      "plain_staff_yew": {
+        "buy": null,
+        "sell": 50
+      },
       "rune_arrows": {
         "buy": null,
         "sell": 80

@@ -255,6 +255,71 @@ function run() {
     previousCookingBurn = nextCookingBurn;
   }
 
+  assert(typeof SkillSpecRegistry.computeFletchingRecipeMetrics === "function", "fletching recipe metrics helper missing");
+  assert(typeof SkillSpecRegistry.getFletchingBalanceSummary === "function", "fletching balance summary helper missing");
+
+  const fletchingBalanceSummary = SkillSpecRegistry.getFletchingBalanceSummary();
+  assert(!!fletchingBalanceSummary && !!fletchingBalanceSummary.assumptions, "fletching balance summary missing assumptions");
+  assert(Array.isArray(fletchingBalanceSummary.rows) && fletchingBalanceSummary.rows.length === 46, "fletching balance summary row count mismatch");
+  assert(fletchingBalanceSummary.assumptions.actionTicks === 3, "fletching default action ticks mismatch");
+  assert(fletchingBalanceSummary.rows[0].recipeId === "fletch_wooden_handle", "fletching balance summary should start with wooden handle");
+  assert(fletchingBalanceSummary.rows[fletchingBalanceSummary.rows.length - 1].recipeId === "fletch_rune_arrows", "fletching balance summary should end with rune arrows");
+
+  const fletchingBenchmarks = [
+    { recipeId: "fletch_wooden_handle", level: 1, xp: 6, sell: 6, xpPerTick: 2, sellPerTick: 2 },
+    { recipeId: "fletch_oak_handle", level: 10, xp: 9, sell: 12, xpPerTick: 3, sellPerTick: 4 },
+    { recipeId: "fletch_willow_handle", level: 20, xp: 16, sell: 20, xpPerTick: 5.3333, sellPerTick: 6.6667 },
+    { recipeId: "fletch_maple_handle", level: 30, xp: 24, sell: 32, xpPerTick: 8, sellPerTick: 10.6667 },
+    { recipeId: "fletch_yew_handle", level: 40, xp: 36, sell: 50, xpPerTick: 12, sellPerTick: 16.6667 },
+    { recipeId: "fletch_bronze_arrows", level: 1, xp: 2, sell: 8, xpPerTick: 0.6667, sellPerTick: 2.6667 },
+    { recipeId: "fletch_iron_arrows", level: 5, xp: 3, sell: 12, xpPerTick: 1, sellPerTick: 4 },
+    { recipeId: "fletch_steel_arrows", level: 12, xp: 5, sell: 20, xpPerTick: 1.6667, sellPerTick: 6.6667 },
+    { recipeId: "fletch_mithril_arrows", level: 23, xp: 10, sell: 32, xpPerTick: 3.3333, sellPerTick: 10.6667 },
+    { recipeId: "fletch_adamant_arrows", level: 34, xp: 15, sell: 50, xpPerTick: 5, sellPerTick: 16.6667 },
+    { recipeId: "fletch_rune_arrows", level: 45, xp: 23, sell: 80, xpPerTick: 7.6667, sellPerTick: 26.6667 },
+    { recipeId: "fletch_normal_longbow", level: 3, xp: 3, sell: 10, xpPerTick: 1, sellPerTick: 3.3333 },
+    { recipeId: "fletch_oak_longbow", level: 12, xp: 5, sell: 20, xpPerTick: 1.6667, sellPerTick: 6.6667 },
+    { recipeId: "fletch_willow_longbow", level: 22, xp: 8, sell: 36, xpPerTick: 2.6667, sellPerTick: 12 },
+    { recipeId: "fletch_maple_longbow", level: 32, xp: 12, sell: 62, xpPerTick: 4, sellPerTick: 20.6667 },
+    { recipeId: "fletch_yew_longbow", level: 42, xp: 18, sell: 100, xpPerTick: 6, sellPerTick: 33.3333 },
+    { recipeId: "fletch_normal_shortbow", level: 5, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
+    { recipeId: "fletch_oak_shortbow", level: 14, xp: 6, sell: 22, xpPerTick: 2, sellPerTick: 7.3333 },
+    { recipeId: "fletch_willow_shortbow", level: 24, xp: 11, sell: 40, xpPerTick: 3.6667, sellPerTick: 13.3333 },
+    { recipeId: "fletch_maple_shortbow", level: 34, xp: 16, sell: 68, xpPerTick: 5.3333, sellPerTick: 22.6667 },
+    { recipeId: "fletch_yew_shortbow", level: 44, xp: 24, sell: 110, xpPerTick: 8, sellPerTick: 36.6667 }
+  ];
+  const fletchingMetricsById = {};
+  fletchingBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeFletchingRecipeMetrics(benchmark.recipeId);
+    assert(!!metrics, "fletching metrics missing for " + benchmark.recipeId);
+    fletchingMetricsById[benchmark.recipeId] = metrics;
+    assert(metrics.requiredLevel === benchmark.level, "fletching required level mismatch for " + benchmark.recipeId);
+    assert(metrics.throughput.xpPerAction === benchmark.xp, "fletching xp/action mismatch for " + benchmark.recipeId);
+    assert(metrics.output.sellValuePerAction === benchmark.sell, "fletching sell/action mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.xpPerTick, benchmark.xpPerTick, 1e-4), "fletching xp/tick mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.sellValuePerTick, benchmark.sellPerTick, 1e-4), "fletching sell/tick mismatch for " + benchmark.recipeId);
+  });
+  assert(fletchingMetricsById["fletch_yew_handle"].throughput.sellValuePerTick > fletchingMetricsById["fletch_maple_handle"].throughput.sellValuePerTick, "yew handle should beat maple handle on sell/tick");
+  assert(fletchingMetricsById["fletch_rune_arrows"].throughput.sellValuePerTick > fletchingMetricsById["fletch_adamant_arrows"].throughput.sellValuePerTick, "rune arrows should beat adamant arrows on sell/tick");
+  assert(fletchingMetricsById["fletch_yew_shortbow"].throughput.xpPerTick > fletchingMetricsById["fletch_yew_longbow"].throughput.xpPerTick, "yew shortbow should beat yew longbow on xp/tick");
+  assert(fletchingMetricsById["fletch_yew_shortbow"].throughput.sellValuePerTick > fletchingMetricsById["fletch_rune_arrows"].throughput.sellValuePerTick, "yew shortbow should remain the top sell/tick finished-bow lane");
+  assert(fletchingMetricsById["fletch_rune_arrows"].output.itemId === "rune_arrows", "rune arrows output item mismatch");
+  assert(fletchingMetricsById["fletch_rune_arrows"].output.amount === 1, "rune arrows output amount mismatch");
+  assert(fletchingMetricsById["fletch_rune_arrows"].output.sellValuePerUnit === 80, "rune arrows sell/unit mismatch");
+  assert(fletchingMetricsById["fletch_rune_arrows"].output.sellValuePerAction === fletchingMetricsById["fletch_rune_arrows"].output.sellValuePerUnit, "rune arrows sell/action should match the single-output recipe");
+  const plainOakStaffMetrics = SkillSpecRegistry.computeFletchingRecipeMetrics("fletch_plain_staff_oak");
+  assert(!!plainOakStaffMetrics, "plain oak staff metrics missing");
+  assert(plainOakStaffMetrics.recipeFamily === "staff", "plain oak staff family mismatch");
+  assert(plainOakStaffMetrics.requiredLevel === 11, "plain oak staff level mismatch");
+  assert(plainOakStaffMetrics.output.itemId === "plain_staff_oak", "plain oak staff output item mismatch");
+  assert(plainOakStaffMetrics.output.amount === 1, "plain oak staff should remain single-output");
+  assert(plainOakStaffMetrics.output.sellValuePerUnit === 12, "plain oak staff sell/unit mismatch");
+  assert(plainOakStaffMetrics.output.sellValuePerAction === fletchingMetricsById["fletch_oak_handle"].output.sellValuePerAction, "plain oak staff sell/action should match oak handle");
+  assert(plainOakStaffMetrics.throughput.xpPerTick === 3, "plain oak staff xp/tick mismatch");
+  assert(plainOakStaffMetrics.throughput.sellValuePerTick === 4, "plain oak staff sell/tick mismatch");
+  const level11Rows = fletchingBalanceSummary.rows.filter((row) => row.requiredLevel === 11);
+  assert(level11Rows.length === 2, "level-11 fletching summary rows should include oak staff and oak shafts");
+  assert(level11Rows[0].recipeId === "fletch_plain_staff_oak" && level11Rows[1].recipeId === "fletch_oak_shafts", "level-11 fletching summary ordering mismatch");
   const emberRuneOutput = SkillSpecRegistry.computeRuneOutputPerEssence(10, 0);
   assert(emberRuneOutput === 2, "runecrafting ember scaling mismatch");
 
@@ -690,11 +755,12 @@ function run() {
   assert(!shopEconomy.canMerchantBuyItem("yew_logs", "fletching_supplier"), "fletching supplier should not buy logs");
   assert(shopEconomy.resolveBuyPrice("knife", "fletching_supplier") === itemDefs.knife.value, "fletching supplier knife buy price mismatch");
   assert(shopEconomy.resolveSellPrice("knife", "fletching_supplier") === 2, "fletching supplier knife sell price mismatch");
+  assert(fletchEconomySpec.economy.valueTable.plain_staff_oak.sell === 12, "fletching plain oak staff sell value mismatch");
   assert(shopEconomy.canMerchantBuyItem("yew_longbow", "advanced_fletcher"), "advanced fletcher should buy yew longbow");
   assert(shopEconomy.canMerchantBuyItem("plain_staff_oak", "advanced_fletcher"), "advanced fletcher should buy plain oak staff");
   assert(!shopEconomy.canMerchantSellItem("yew_longbow", "advanced_fletcher"), "advanced fletcher should not sell stock");
   assert(shopEconomy.resolveSellPrice("yew_longbow", "advanced_fletcher") === 100, "advanced fletcher yew longbow sell price mismatch");
-  assert(shopEconomy.resolveSellPrice("plain_staff_oak", "advanced_fletcher") === Math.floor(itemDefs.plain_staff_oak.value * 0.5), "advanced fletcher plain staff fallback price mismatch");
+  assert(shopEconomy.resolveSellPrice("plain_staff_oak", "advanced_fletcher") === fletchEconomySpec.economy.valueTable.plain_staff_oak.sell, "advanced fletcher plain staff sell price mismatch");
   const cookingSpec = SkillSpecRegistry.getSkillSpec("cooking");
   assert(!!cookingSpec && !!cookingSpec.economy, "cooking economy tables missing");
   assert(!!cookingSpec.economy.valueTable, "cooking value table missing");
@@ -736,6 +802,17 @@ function run() {
   const teacherSeedBeforeQuestIds = teacherSeedBeforeQuest.map((row) => row.itemId).sort();
   assert(JSON.stringify(teacherSeedBeforeQuestIds) === JSON.stringify(["bait", "fishing_rod", "small_net"]), "teacher default stock should only include starter supplies before the quest");
 
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "yew_shortbow: { buy: null, sell: 110 },",
+      "yew_shortbow: { buy: null, sell: 90 },",
+      "fletching-balance-curve"
+    ),
+    /fletching balance curve mismatch/i,
+    "fletching-balance-curve"
+  );
   session.progress.quests.fishing_teacher_from_net_to_harpoon = { status: "completed" };
   assert(shopEconomy.canMerchantSellItem("rune_harpoon", "fishing_teacher"), "teacher should sell rune harpoon after quest completion when the player has none");
   const teacherSeedAfterQuest = shopEconomy.getMerchantSeedStockRows("fishing_teacher");

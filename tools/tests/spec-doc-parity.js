@@ -690,14 +690,19 @@ function runCraftingChecks(roadmap, spec, itemDefs) {
 
 function runFletchingChecks(roadmap, spec) {
   assertRegex(roadmap, new RegExp(`\\|\\s*Fixed Fletching Action Ticks\\s*\\|\\s*${spec.timing.actionTicks}\\s*\\|`), "fletching fixed action ticks mismatch");
+  assertRegex(roadmap, /\|\s*Sell Value per Tick\s*\|\s*Sell Value per Tick = Sell Value \/ 3\s*\|/, "fletching sell-value-per-tick formula mismatch");
 
   const values = spec.economy.valueTable;
   assertRegex(roadmap, new RegExp(`\\|\\s*Knife\\s*\\|\\s*1\\s*\\|\\s*${values.knife.buy}\\s*\\|\\s*${values.knife.sell}\\s*\\|`), "fletching knife table mismatch");
   assertRegex(roadmap, new RegExp(`\\|\\s*Feathers x15\\s*\\|\\s*1\\s*\\|\\s*${values.feathers_bundle.buy}\\s*\\|\\s*${values.feathers_bundle.sell}\\s*\\|`), "fletching feathers table mismatch");
   assertRegex(roadmap, new RegExp(`\\|\\s*Bow String\\s*\\|\\s*1\\s*\\|\\s*${values.bow_string.buy}\\s*\\|\\s*${values.bow_string.sell}\\s*\\|`), "fletching bow string table mismatch");
 
+  assertRegex(roadmap, new RegExp(`\\|\\s*Plain Staff \\(Oak\\)\\s*\\|\\s*Magic Equipment\\s*\\|\\s*null\\s*\\|\\s*${values.plain_staff_oak.sell}\\s*\\|`), "fletching plain oak staff sell value mismatch");
   assertRegex(roadmap, new RegExp(`\\|\\s*Yew Handle\\s*\\|[^\\n]*\\|\\s*${values.yew_handle.sell}\\s*\\|`), "fletching yew handle sell value mismatch");
   assertRegex(roadmap, new RegExp(`\\|\\s*Yew Longbow\\s*\\|[^\\n]*\\|\\s*${values.yew_longbow.sell}\\s*\\|`), "fletching yew longbow sell value mismatch");
+  assertRegex(roadmap, /\|\s*Yew Handle\s*\|\s*40\s*\|\s*36\s*\|\s*50\s*\|\s*12\s*\|\s*16\.6667\s*\|/, "fletching handle throughput row mismatch");
+  assertRegex(roadmap, /\|\s*Rune Arrows x15\s*\|\s*45\s*\|\s*23\s*\|\s*80\s*\|\s*7\.6667\s*\|\s*26\.6667\s*\|/, "fletching finished-arrow throughput row mismatch");
+  assertRegex(roadmap, /\|\s*Yew Shortbow\s*\|\s*44\s*\|\s*24\s*\|\s*110\s*\|\s*8\s*\|\s*36\.6667\s*\|/, "fletching finished-bow throughput row mismatch");
 }
 
 function runSmithingChecks(roadmap, spec) {

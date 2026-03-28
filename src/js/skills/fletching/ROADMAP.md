@@ -55,6 +55,7 @@ The player uses fletching to convert woodcutting outputs into downstream items t
 | --------------- | ------------------------------- | ---------------------------------------- |
 | Output per Tick | Output per Tick = 1 / 3         | Estimates average fletching output rate  |
 | XP per Tick     | XP per Tick = XP per Action / 3 | Estimates average experience gain rate   |
+| Sell Value per Tick | Sell Value per Tick = Sell Value / 3 | Estimates direct-sale value throughput per fletching action |
 
 ## Core Recipe Structure
 
@@ -231,6 +232,11 @@ Fletching creates value by converting logs into more specialized items and by su
 | Willow Handle | Component | null | 20 |
 | Maple Handle | Component | null | 32 |
 | Yew Handle | Component | null | 50 |
+| Plain Staff (Wood) | Magic Equipment | null | 6 |
+| Plain Staff (Oak) | Magic Equipment | null | 12 |
+| Plain Staff (Willow) | Magic Equipment | null | 20 |
+| Plain Staff (Maple) | Magic Equipment | null | 32 |
+| Plain Staff (Yew) | Magic Equipment | null | 50 |
 | Wooden Shafts x15 | Component | null | 4 |
 | Oak Shafts x15 | Component | null | 6 |
 | Willow Shafts x15 | Component | null | 10 |
@@ -267,6 +273,48 @@ Fletching creates value by converting logs into more specialized items and by su
 | Willow Longbow | Bow | null | 36 |
 | Maple Longbow | Bow | null | 62 |
 | Yew Longbow | Bow | null | 100 |
+
+### Handle Throughput by Tier
+
+| Output | Required Level | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------ | -------------- | ------------- | ---------- | ----------- | ------------------- |
+| Wooden Handle | 1 | 6 | 6 | 2 | 2 |
+| Oak Handle | 10 | 9 | 12 | 3 | 4 |
+| Willow Handle | 20 | 16 | 20 | 5.3333 | 6.6667 |
+| Maple Handle | 30 | 24 | 32 | 8 | 10.6667 |
+| Yew Handle | 40 | 36 | 50 | 12 | 16.6667 |
+
+### Finished Arrow Throughput by Tier
+
+| Output | Required Level | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------ | -------------- | ------------- | ---------- | ----------- | ------------------- |
+| Bronze Arrows x15 | 1 | 2 | 8 | 0.6667 | 2.6667 |
+| Iron Arrows x15 | 5 | 3 | 12 | 1 | 4 |
+| Steel Arrows x15 | 12 | 5 | 20 | 1.6667 | 6.6667 |
+| Mithril Arrows x15 | 23 | 10 | 32 | 3.3333 | 10.6667 |
+| Adamant Arrows x15 | 34 | 15 | 50 | 5 | 16.6667 |
+| Rune Arrows x15 | 45 | 23 | 80 | 7.6667 | 26.6667 |
+
+### Finished Bow Throughput by Tier
+
+| Output | Required Level | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
+| ------ | -------------- | ------------- | ---------- | ----------- | ------------------- |
+| Normal Longbow | 3 | 3 | 10 | 1 | 3.3333 |
+| Normal Shortbow | 5 | 4 | 12 | 1.3333 | 4 |
+| Oak Longbow | 12 | 5 | 20 | 1.6667 | 6.6667 |
+| Oak Shortbow | 14 | 6 | 22 | 2 | 7.3333 |
+| Willow Longbow | 22 | 8 | 36 | 2.6667 | 12 |
+| Willow Shortbow | 24 | 11 | 40 | 3.6667 | 13.3333 |
+| Maple Longbow | 32 | 12 | 62 | 4 | 20.6667 |
+| Maple Shortbow | 34 | 16 | 68 | 5.3333 | 22.6667 |
+| Yew Longbow | 42 | 18 | 100 | 6 | 33.3333 |
+| Yew Shortbow | 44 | 24 | 110 | 8 | 36.6667 |
+
+### Balance Notes
+
+- Handles and plain staffs share the same XP/value ladder; shafts stay below that direct-log baseline while headless arrows preserve shaft XP and add value.
+- Finished arrows scale more aggressively on sell value per tick than the direct log-cut outputs, which keeps the ammunition lane meaningful even before late-tier bows unlock.
+- Longbows remain the lower XP/value finished-bow branch inside each tier, while shortbows stay the faster-rising branch on both XP and sell throughput.
 
 ## Merchant / NPC Structure
 
@@ -305,11 +353,11 @@ This merchant buys fletching outputs across all tiers, including shafts, headles
 | Willow Handle | 20 | null |
 | Maple Handle | 32 | null |
 | Yew Handle | 50 | null |
-| Plain Staff (Wood) | See crafting | null |
-| Plain Staff (Oak) | See crafting | null |
-| Plain Staff (Willow) | See crafting | null |
-| Plain Staff (Maple) | See crafting | null |
-| Plain Staff (Yew) | See crafting | null |
+| Plain Staff (Wood) | 6 | null |
+| Plain Staff (Oak) | 12 | null |
+| Plain Staff (Willow) | 20 | null |
+| Plain Staff (Maple) | 32 | null |
+| Plain Staff (Yew) | 50 | null |
 | Wooden Shafts x15 | 4 | null |
 | Oak Shafts x15 | 6 | null |
 | Willow Shafts x15 | 10 | null |
@@ -372,7 +420,7 @@ The general store buys everything at half price.
 - Specialty merchants buy and sell only goods relevant to their role.
 - Fletching suppliers sell tools and supplies rather than raw logs.
 - Plain staffs are core fletching outputs for later magic-equipment crafting progression.
-- Crafting is the canonical owner of plain staff buy and sell values.
+- Plain staff sell values stay mirrored from the shared item/crafting data so the fletching balance tables remain aligned.
 - Fletcher-type merchants can buy shafts, headless arrows, unstrung bows, and finished bows across all tiers.
 - Bow strings are shop supplies for now and can later be reassigned to crafting if that system needs more internal production.
 - Feathers are purchased supplies for now.
@@ -390,11 +438,11 @@ The general store buys everything at half price.
 | Willow Handle | Component | 20 | null | 20 | Uses 1 willow log; used in crafting assembly |
 | Maple Handle | Component | 30 | null | 32 | Uses 1 maple log; used in crafting assembly |
 | Yew Handle | Component | 40 | null | 50 | Uses 1 yew log; used in crafting assembly |
-| Plain Staff (Wood) | Magic Equipment | 2 | See crafting | See crafting | Made from 1 normal log; plain-only staff |
-| Plain Staff (Oak) | Magic Equipment | 11 | See crafting | See crafting | Made from 1 oak log; later used for fire staff creation |
-| Plain Staff (Willow) | Magic Equipment | 21 | See crafting | See crafting | Made from 1 willow log; later used for water staff creation |
-| Plain Staff (Maple) | Magic Equipment | 31 | See crafting | See crafting | Made from 1 maple log; later used for earth staff creation |
-| Plain Staff (Yew) | Magic Equipment | 41 | See crafting | See crafting | Made from 1 yew log; later used for air staff creation |
+| Plain Staff (Wood) | Magic Equipment | 2 | null | 6 | Made from 1 normal log; plain-only staff |
+| Plain Staff (Oak) | Magic Equipment | 11 | null | 12 | Made from 1 oak log; later used for fire staff creation |
+| Plain Staff (Willow) | Magic Equipment | 21 | null | 20 | Made from 1 willow log; later used for water staff creation |
+| Plain Staff (Maple) | Magic Equipment | 31 | null | 32 | Made from 1 maple log; later used for earth staff creation |
+| Plain Staff (Yew) | Magic Equipment | 41 | null | 50 | Made from 1 yew log; later used for air staff creation |
 | Wooden Shafts x15 | Component | 2 | null | 4 | Made from 1 normal log; used for bronze and iron arrows |
 | Oak Shafts x15 | Component | 11 | null | 6 | Made from 1 oak log; used for steel arrows |
 | Willow Shafts x15 | Component | 21 | null | 10 | Made from 1 willow log; used for mithril arrows |

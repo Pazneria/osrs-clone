@@ -1080,6 +1080,11 @@
                     willow_handle: { buy: null, sell: 20 },
                     maple_handle: { buy: null, sell: 32 },
                     yew_handle: { buy: null, sell: 50 },
+                    plain_staff_wood: { buy: null, sell: 6 },
+                    plain_staff_oak: { buy: null, sell: 12 },
+                    plain_staff_willow: { buy: null, sell: 20 },
+                    plain_staff_maple: { buy: null, sell: 32 },
+                    plain_staff_yew: { buy: null, sell: 50 },
                     wooden_shafts: { buy: null, sell: 4 },
                     oak_shafts: { buy: null, sell: 6 },
                     willow_shafts: { buy: null, sell: 10 },
@@ -2227,6 +2232,328 @@
         }
     }
 
+    function computeFletchingBalanceMetrics(fletchingSpec, recipeId) {
+        const recipeSet = fletchingSpec && fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
+            ? fletchingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const timing = fletchingSpec && fletchingSpec.timing && typeof fletchingSpec.timing === 'object'
+            ? fletchingSpec.timing
+            : {};
+        const valueTable = fletchingSpec && fletchingSpec.economy && fletchingSpec.economy.valueTable && typeof fletchingSpec.economy.valueTable === 'object'
+            ? fletchingSpec.economy.valueTable
+            : {};
+        const outputItemId = recipe.output && typeof recipe.output.itemId === 'string'
+            ? recipe.output.itemId
+            : '';
+        const outputAmount = Number.isFinite(recipe.output && recipe.output.amount)
+            ? recipe.output.amount
+            : 1;
+        const valueRow = outputItemId && valueTable[outputItemId] && typeof valueTable[outputItemId] === 'object'
+            ? valueTable[outputItemId]
+            : {};
+        const sellValuePerUnit = Number.isFinite(valueRow.sell) ? valueRow.sell : null;
+        const sellValuePerAction = sellValuePerUnit === null ? null : sellValuePerUnit * outputAmount;
+        const actionTicks = Number.isFinite(recipe.actionTicks)
+            ? recipe.actionTicks
+            : (Number.isFinite(timing.actionTicks) ? timing.actionTicks : 1);
+        const xpPerAction = Number.isFinite(recipe.xpPerAction) ? recipe.xpPerAction : 0;
+
+        return {
+            recipeId,
+            recipeFamily: typeof recipe.recipeFamily === 'string' ? recipe.recipeFamily : '',
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            actionTicks,
+            outputItemId,
+            outputAmount,
+            xpPerAction,
+            sellValuePerAction,
+            xpPerTick: actionTicks > 0 ? xpPerAction / actionTicks : 0,
+            sellValuePerTick: sellValuePerAction === null || actionTicks <= 0 ? null : sellValuePerAction / actionTicks
+        };
+    }
+
+    function validateFletchingBalanceCurve(skillSpecs) {
+        const fletchingSpec = skillSpecs && skillSpecs.fletching ? skillSpecs.fletching : null;
+        if (!fletchingSpec || !fletchingSpec.recipeSet) {
+            throw new Error('Fletching balance curve mismatch\n- missing fletching recipe set');
+        }
+
+        const valueTable = fletchingSpec.economy && fletchingSpec.economy.valueTable && typeof fletchingSpec.economy.valueTable === 'object'
+            ? fletchingSpec.economy.valueTable
+            : null;
+        if (!valueTable) {
+            throw new Error('Fletching balance curve mismatch\n- missing fletching value table');
+        }
+
+        const errors = [];
+        const requiredRecipes = [
+            'fletch_wooden_handle',
+            'fletch_oak_handle',
+            'fletch_willow_handle',
+            'fletch_maple_handle',
+            'fletch_yew_handle',
+            'fletch_plain_staff_wood',
+            'fletch_plain_staff_oak',
+            'fletch_plain_staff_willow',
+            'fletch_plain_staff_maple',
+            'fletch_plain_staff_yew',
+            'fletch_wooden_shafts',
+            'fletch_oak_shafts',
+            'fletch_willow_shafts',
+            'fletch_maple_shafts',
+            'fletch_yew_shafts',
+            'fletch_wooden_headless_arrows',
+            'fletch_oak_headless_arrows',
+            'fletch_willow_headless_arrows',
+            'fletch_maple_headless_arrows',
+            'fletch_yew_headless_arrows',
+            'fletch_normal_longbow_u',
+            'fletch_oak_longbow_u',
+            'fletch_willow_longbow_u',
+            'fletch_maple_longbow_u',
+            'fletch_yew_longbow_u',
+            'fletch_normal_shortbow_u',
+            'fletch_oak_shortbow_u',
+            'fletch_willow_shortbow_u',
+            'fletch_maple_shortbow_u',
+            'fletch_yew_shortbow_u',
+            'fletch_normal_longbow',
+            'fletch_oak_longbow',
+            'fletch_willow_longbow',
+            'fletch_maple_longbow',
+            'fletch_yew_longbow',
+            'fletch_normal_shortbow',
+            'fletch_oak_shortbow',
+            'fletch_willow_shortbow',
+            'fletch_maple_shortbow',
+            'fletch_yew_shortbow',
+            'fletch_bronze_arrows',
+            'fletch_iron_arrows',
+            'fletch_steel_arrows',
+            'fletch_mithril_arrows',
+            'fletch_adamant_arrows',
+            'fletch_rune_arrows'
+        ];
+        for (let i = 0; i < requiredRecipes.length; i++) {
+            if (!fletchingSpec.recipeSet[requiredRecipes[i]]) {
+                errors.push('missing fletching recipe ' + requiredRecipes[i]);
+            }
+        }
+
+        const metricsById = {};
+        function getMetrics(recipeId) {
+            if (!metricsById[recipeId]) {
+                metricsById[recipeId] = computeFletchingBalanceMetrics(fletchingSpec, recipeId);
+            }
+            return metricsById[recipeId];
+        }
+
+        const benchmarkRows = [
+            { recipeId: 'fletch_wooden_handle', requiredLevel: 1, xp: 6, sell: 6, xpPerTick: 2, sellPerTick: 2 },
+            { recipeId: 'fletch_oak_handle', requiredLevel: 10, xp: 9, sell: 12, xpPerTick: 3, sellPerTick: 4 },
+            { recipeId: 'fletch_willow_handle', requiredLevel: 20, xp: 16, sell: 20, xpPerTick: 5.3333, sellPerTick: 6.6667 },
+            { recipeId: 'fletch_maple_handle', requiredLevel: 30, xp: 24, sell: 32, xpPerTick: 8, sellPerTick: 10.6667 },
+            { recipeId: 'fletch_yew_handle', requiredLevel: 40, xp: 36, sell: 50, xpPerTick: 12, sellPerTick: 16.6667 },
+            { recipeId: 'fletch_bronze_arrows', requiredLevel: 1, xp: 2, sell: 8, xpPerTick: 0.6667, sellPerTick: 2.6667 },
+            { recipeId: 'fletch_iron_arrows', requiredLevel: 5, xp: 3, sell: 12, xpPerTick: 1, sellPerTick: 4 },
+            { recipeId: 'fletch_steel_arrows', requiredLevel: 12, xp: 5, sell: 20, xpPerTick: 1.6667, sellPerTick: 6.6667 },
+            { recipeId: 'fletch_mithril_arrows', requiredLevel: 23, xp: 10, sell: 32, xpPerTick: 3.3333, sellPerTick: 10.6667 },
+            { recipeId: 'fletch_adamant_arrows', requiredLevel: 34, xp: 15, sell: 50, xpPerTick: 5, sellPerTick: 16.6667 },
+            { recipeId: 'fletch_rune_arrows', requiredLevel: 45, xp: 23, sell: 80, xpPerTick: 7.6667, sellPerTick: 26.6667 },
+            { recipeId: 'fletch_normal_longbow', requiredLevel: 3, xp: 3, sell: 10, xpPerTick: 1, sellPerTick: 3.3333 },
+            { recipeId: 'fletch_oak_longbow', requiredLevel: 12, xp: 5, sell: 20, xpPerTick: 1.6667, sellPerTick: 6.6667 },
+            { recipeId: 'fletch_willow_longbow', requiredLevel: 22, xp: 8, sell: 36, xpPerTick: 2.6667, sellPerTick: 12 },
+            { recipeId: 'fletch_maple_longbow', requiredLevel: 32, xp: 12, sell: 62, xpPerTick: 4, sellPerTick: 20.6667 },
+            { recipeId: 'fletch_yew_longbow', requiredLevel: 42, xp: 18, sell: 100, xpPerTick: 6, sellPerTick: 33.3333 },
+            { recipeId: 'fletch_normal_shortbow', requiredLevel: 5, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
+            { recipeId: 'fletch_oak_shortbow', requiredLevel: 14, xp: 6, sell: 22, xpPerTick: 2, sellPerTick: 7.3333 },
+            { recipeId: 'fletch_willow_shortbow', requiredLevel: 24, xp: 11, sell: 40, xpPerTick: 3.6667, sellPerTick: 13.3333 },
+            { recipeId: 'fletch_maple_shortbow', requiredLevel: 34, xp: 16, sell: 68, xpPerTick: 5.3333, sellPerTick: 22.6667 },
+            { recipeId: 'fletch_yew_shortbow', requiredLevel: 44, xp: 24, sell: 110, xpPerTick: 8, sellPerTick: 36.6667 }
+        ];
+
+        for (let i = 0; i < benchmarkRows.length; i++) {
+            const benchmark = benchmarkRows[i];
+            const metrics = getMetrics(benchmark.recipeId);
+            if (!metrics) {
+                errors.push('missing fletching balance metrics for ' + benchmark.recipeId);
+                continue;
+            }
+            if (metrics.requiredLevel !== benchmark.requiredLevel) {
+                errors.push(benchmark.recipeId + ' requiredLevel mismatch');
+            }
+            if (metrics.xpPerAction !== benchmark.xp) {
+                errors.push(benchmark.recipeId + ' xp/action mismatch');
+            }
+            if (metrics.sellValuePerAction !== benchmark.sell) {
+                errors.push(benchmark.recipeId + ' sell value/action mismatch');
+            }
+            if (roundBalanceMetric(metrics.xpPerTick) !== benchmark.xpPerTick) {
+                errors.push(benchmark.recipeId + ' xp/tick mismatch');
+            }
+            if (roundBalanceMetric(metrics.sellValuePerTick) !== benchmark.sellPerTick) {
+                errors.push(benchmark.recipeId + ' sell value/tick mismatch');
+            }
+        }
+
+        function validateIncreasingLane(recipeIds, label) {
+            let prev = null;
+            for (let i = 0; i < recipeIds.length; i++) {
+                const metrics = getMetrics(recipeIds[i]);
+                if (!metrics) {
+                    errors.push('missing ' + label + ' metrics for ' + recipeIds[i]);
+                    continue;
+                }
+                if (prev) {
+                    if (!(metrics.requiredLevel > prev.requiredLevel)) {
+                        errors.push(label + ' requiredLevel must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.xpPerAction > prev.xpPerAction)) {
+                        errors.push(label + ' xp/action must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.sellValuePerAction > prev.sellValuePerAction)) {
+                        errors.push(label + ' sell value/action must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.xpPerTick > prev.xpPerTick)) {
+                        errors.push(label + ' xp/tick must increase at ' + recipeIds[i]);
+                    }
+                    if (!(metrics.sellValuePerTick > prev.sellValuePerTick)) {
+                        errors.push(label + ' sell value/tick must increase at ' + recipeIds[i]);
+                    }
+                }
+                prev = metrics;
+            }
+        }
+
+        const tierPairs = [
+            {
+                label: 'wooden',
+                handle: 'fletch_wooden_handle',
+                staff: 'fletch_plain_staff_wood',
+                shafts: 'fletch_wooden_shafts',
+                headless: 'fletch_wooden_headless_arrows',
+                longbowU: 'fletch_normal_longbow_u',
+                shortbowU: 'fletch_normal_shortbow_u',
+                longbow: 'fletch_normal_longbow',
+                shortbow: 'fletch_normal_shortbow'
+            },
+            {
+                label: 'oak',
+                handle: 'fletch_oak_handle',
+                staff: 'fletch_plain_staff_oak',
+                shafts: 'fletch_oak_shafts',
+                headless: 'fletch_oak_headless_arrows',
+                longbowU: 'fletch_oak_longbow_u',
+                shortbowU: 'fletch_oak_shortbow_u',
+                longbow: 'fletch_oak_longbow',
+                shortbow: 'fletch_oak_shortbow'
+            },
+            {
+                label: 'willow',
+                handle: 'fletch_willow_handle',
+                staff: 'fletch_plain_staff_willow',
+                shafts: 'fletch_willow_shafts',
+                headless: 'fletch_willow_headless_arrows',
+                longbowU: 'fletch_willow_longbow_u',
+                shortbowU: 'fletch_willow_shortbow_u',
+                longbow: 'fletch_willow_longbow',
+                shortbow: 'fletch_willow_shortbow'
+            },
+            {
+                label: 'maple',
+                handle: 'fletch_maple_handle',
+                staff: 'fletch_plain_staff_maple',
+                shafts: 'fletch_maple_shafts',
+                headless: 'fletch_maple_headless_arrows',
+                longbowU: 'fletch_maple_longbow_u',
+                shortbowU: 'fletch_maple_shortbow_u',
+                longbow: 'fletch_maple_longbow',
+                shortbow: 'fletch_maple_shortbow'
+            },
+            {
+                label: 'yew',
+                handle: 'fletch_yew_handle',
+                staff: 'fletch_plain_staff_yew',
+                shafts: 'fletch_yew_shafts',
+                headless: 'fletch_yew_headless_arrows',
+                longbowU: 'fletch_yew_longbow_u',
+                shortbowU: 'fletch_yew_shortbow_u',
+                longbow: 'fletch_yew_longbow',
+                shortbow: 'fletch_yew_shortbow'
+            }
+        ];
+
+        for (let i = 0; i < tierPairs.length; i++) {
+            const pair = tierPairs[i];
+            const handle = getMetrics(pair.handle);
+            const staff = getMetrics(pair.staff);
+            const shafts = getMetrics(pair.shafts);
+            const headless = getMetrics(pair.headless);
+            const longbowU = getMetrics(pair.longbowU);
+            const shortbowU = getMetrics(pair.shortbowU);
+            const longbow = getMetrics(pair.longbow);
+            const shortbow = getMetrics(pair.shortbow);
+            if (!handle || !staff || !shafts || !headless || !longbowU || !shortbowU || !longbow || !shortbow) {
+                errors.push(pair.label + ' tier metrics incomplete');
+                continue;
+            }
+
+            if (!(staff.xpPerAction === handle.xpPerAction)) {
+                errors.push(pair.label + ' staff XP must match handle XP');
+            }
+            if (!(staff.sellValuePerAction === handle.sellValuePerAction)) {
+                errors.push(pair.label + ' staff sell value must match handle sell value');
+            }
+            if (!(headless.xpPerAction === shafts.xpPerAction)) {
+                errors.push(pair.label + ' headless arrows XP must match shafts XP');
+            }
+            if (!(headless.sellValuePerAction > shafts.sellValuePerAction)) {
+                errors.push(pair.label + ' headless arrows must beat shafts on sell value');
+            }
+            if (!(shortbowU.xpPerAction > longbowU.xpPerAction)) {
+                errors.push(pair.label + ' shortbow (u) must beat longbow (u) on XP');
+            }
+            if (!(shortbowU.sellValuePerAction > longbowU.sellValuePerAction)) {
+                errors.push(pair.label + ' shortbow (u) must beat longbow (u) on sell value');
+            }
+            if (!(shortbow.xpPerAction > longbow.xpPerAction)) {
+                errors.push(pair.label + ' shortbow must beat longbow on XP');
+            }
+            if (!(shortbow.sellValuePerAction > longbow.sellValuePerAction)) {
+                errors.push(pair.label + ' shortbow must beat longbow on sell value');
+            }
+            if (!(shortbowU.xpPerAction > shortbow.xpPerAction)) {
+                errors.push(pair.label + ' shortbow (u) must stay the higher-XP bow-cut step');
+            }
+            if (!(longbowU.xpPerAction > longbow.xpPerAction)) {
+                errors.push(pair.label + ' longbow (u) must stay the higher-XP bow-cut step');
+            }
+            if (!(shortbow.sellValuePerAction > shortbowU.sellValuePerAction)) {
+                errors.push(pair.label + ' shortbow must add sell value over shortbow (u)');
+            }
+            if (!(longbow.sellValuePerAction > longbowU.sellValuePerAction)) {
+                errors.push(pair.label + ' longbow must add sell value over longbow (u)');
+            }
+        }
+
+        validateIncreasingLane(['fletch_wooden_handle', 'fletch_oak_handle', 'fletch_willow_handle', 'fletch_maple_handle', 'fletch_yew_handle'], 'handle lane');
+        validateIncreasingLane(['fletch_plain_staff_wood', 'fletch_plain_staff_oak', 'fletch_plain_staff_willow', 'fletch_plain_staff_maple', 'fletch_plain_staff_yew'], 'staff lane');
+        validateIncreasingLane(['fletch_wooden_shafts', 'fletch_oak_shafts', 'fletch_willow_shafts', 'fletch_maple_shafts', 'fletch_yew_shafts'], 'shafts lane');
+        validateIncreasingLane(['fletch_wooden_headless_arrows', 'fletch_oak_headless_arrows', 'fletch_willow_headless_arrows', 'fletch_maple_headless_arrows', 'fletch_yew_headless_arrows'], 'headless lane');
+        validateIncreasingLane(['fletch_normal_longbow_u', 'fletch_oak_longbow_u', 'fletch_willow_longbow_u', 'fletch_maple_longbow_u', 'fletch_yew_longbow_u'], 'longbow (u) lane');
+        validateIncreasingLane(['fletch_normal_shortbow_u', 'fletch_oak_shortbow_u', 'fletch_willow_shortbow_u', 'fletch_maple_shortbow_u', 'fletch_yew_shortbow_u'], 'shortbow (u) lane');
+        validateIncreasingLane(['fletch_normal_longbow', 'fletch_oak_longbow', 'fletch_willow_longbow', 'fletch_maple_longbow', 'fletch_yew_longbow'], 'longbow lane');
+        validateIncreasingLane(['fletch_normal_shortbow', 'fletch_oak_shortbow', 'fletch_willow_shortbow', 'fletch_maple_shortbow', 'fletch_yew_shortbow'], 'shortbow lane');
+        validateIncreasingLane(['fletch_bronze_arrows', 'fletch_iron_arrows', 'fletch_steel_arrows', 'fletch_mithril_arrows', 'fletch_adamant_arrows', 'fletch_rune_arrows'], 'finished arrow lane');
+
+        if (errors.length > 0) {
+            throw new Error('Fletching balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     function computeWoodcuttingBalanceMetrics(woodcuttingSpec, nodeId, benchmark) {
         const nodeTable = woodcuttingSpec && woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
             ? woodcuttingSpec.nodeTable
@@ -2583,6 +2910,7 @@
     validateMiningBalanceCurve(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
+    validateFletchingBalanceCurve(SKILL_SPECS);
 
     window.SkillSpecs = {
         version: SPEC_VERSION,
