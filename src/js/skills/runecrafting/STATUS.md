@@ -14,12 +14,12 @@
 - [x] RUNECRAFTING-QA-001: Runtime/spec alignment validated for Ember starter-rune output scaling breakpoints (level 10 => 2x, then +1x every 10 levels).
 - [x] RUNECRAFTING-010: Merchant runtime behavior alignment for rune trading, pouch unlock availability, and general-store fallback behavior.
 - [x] RUNECRAFTING-011: Altar route/training-location placement pass across elemental progression bands.
+- [x] RUNECRAFTING-013: Economy pass completed for runtime buy/sell parity with the authored rune/pouch tables (strict rune-merchant buy lists, pouch unlock-level coverage, and registry/contract guards).
 
 ## Now
 
 ## Next
 - [ ] RUNECRAFTING-012: Cross-skill integration pass for magic rune demand and mining essence supply loops.
-- [ ] RUNECRAFTING-013: Economy pass for runtime buy/sell behavior parity with spec tables.
 
 ## Later
 - [ ] RUNECRAFTING-014: Balance pass for XP/value per action and travel-time-adjusted progression pacing.

@@ -255,6 +255,78 @@ function run() {
     previousCookingBurn = nextCookingBurn;
   }
 
+  assert(typeof SkillSpecRegistry.computeFiremakingRecipeMetrics === "function", "firemaking recipe metrics helper missing");
+  assert(typeof SkillSpecRegistry.getFiremakingBalanceSummary === "function", "firemaking balance summary helper missing");
+
+  const firemakingBalanceSummary = SkillSpecRegistry.getFiremakingBalanceSummary();
+  assert(!!firemakingBalanceSummary && !!firemakingBalanceSummary.assumptions, "firemaking balance summary missing assumptions");
+  assert(Array.isArray(firemakingBalanceSummary.rows) && firemakingBalanceSummary.rows.length === 5, "firemaking balance summary row count mismatch");
+  assert(firemakingBalanceSummary.assumptions.level === 40, "firemaking default benchmark level mismatch");
+  assert(firemakingBalanceSummary.assumptions.ignitionAttemptTicks === 1, "firemaking ignition attempt tick mismatch");
+  assert(firemakingBalanceSummary.assumptions.cookingActionTicks === 1, "firemaking cooking action tick mismatch");
+  assert(firemakingBalanceSummary.assumptions.woodcuttingBenchmark.level === 40, "firemaking woodcutting benchmark level mismatch");
+  assert(firemakingBalanceSummary.assumptions.woodcuttingBenchmark.toolPower === 28, "firemaking woodcutting benchmark tool power mismatch");
+  assert(firemakingBalanceSummary.assumptions.woodcuttingBenchmark.speedBonusTicks === 5, "firemaking woodcutting benchmark speed bonus mismatch");
+  assert(firemakingBalanceSummary.rows[0].recipeId === "logs", "firemaking balance summary should start with logs");
+  assert(firemakingBalanceSummary.rows[firemakingBalanceSummary.rows.length - 1].recipeId === "yew_logs", "firemaking balance summary should end with yew logs");
+
+  const firemakingTierEntryBenchmarks = [
+    { recipeId: "logs", level: 1, success: 0.0625, expectedTicks: 16, xpPerTick: 2.5, goldSinkPerTick: 0.125, cookingActionsPerFire: 90 },
+    { recipeId: "oak_logs", level: 10, success: 0.2857, expectedTicks: 3.5, xpPerTick: 17.1429, goldSinkPerTick: 1.7143, cookingActionsPerFire: 90 },
+    { recipeId: "willow_logs", level: 20, success: 0.3636, expectedTicks: 2.75, xpPerTick: 32.7273, goldSinkPerTick: 5.0909, cookingActionsPerFire: 90 },
+    { recipeId: "maple_logs", level: 30, success: 0.375, expectedTicks: 2.6667, xpPerTick: 50.625, goldSinkPerTick: 12, cookingActionsPerFire: 90 },
+    { recipeId: "yew_logs", level: 40, success: 0.381, expectedTicks: 2.625, xpPerTick: 76.1905, goldSinkPerTick: 27.4286, cookingActionsPerFire: 90 }
+  ];
+  let previousFiremakingTierXp = 0;
+  let previousFiremakingTierGold = 0;
+  firemakingTierEntryBenchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeFiremakingRecipeMetrics(benchmark.recipeId, { level: benchmark.level });
+    assert(!!metrics, "firemaking metrics missing for " + benchmark.recipeId + "@" + benchmark.level);
+    assert(metrics.requiredLevel === benchmark.level, "firemaking required level mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.successChance, benchmark.success, 1e-4), "firemaking success chance mismatch for " + benchmark.recipeId + "@" + benchmark.level);
+    assert(approxEq(metrics.expectedTicksPerSuccess, benchmark.expectedTicks, 1e-4), "firemaking expected ticks mismatch for " + benchmark.recipeId + "@" + benchmark.level);
+    assert(approxEq(metrics.burnRate.xpPerTick, benchmark.xpPerTick, 1e-4), "firemaking xp/tick mismatch for " + benchmark.recipeId + "@" + benchmark.level);
+    assert(approxEq(metrics.burnRate.goldSinkPerTick, benchmark.goldSinkPerTick, 1e-4), "firemaking gold sink/tick mismatch for " + benchmark.recipeId + "@" + benchmark.level);
+    assert(metrics.cookingSupport.actionsPerFire === benchmark.cookingActionsPerFire, "firemaking cooking-actions-per-fire mismatch for " + benchmark.recipeId + "@" + benchmark.level);
+    assert(metrics.burnRate.xpPerTick > previousFiremakingTierXp, "firemaking tier-entry xp/tick should increase by tier");
+    assert(metrics.burnRate.goldSinkPerTick > previousFiremakingTierGold, "firemaking tier-entry gold sink/tick should increase by tier");
+    previousFiremakingTierXp = metrics.burnRate.xpPerTick;
+    previousFiremakingTierGold = metrics.burnRate.goldSinkPerTick;
+  });
+
+  const firemakingLevel40Benchmarks = [
+    { recipeId: "logs", nodeId: "normal_tree", success: 0.7273, expectedTicks: 1.375, xpPerTick: 29.0909, goldSinkPerTick: 1.4545, sustainedCoverageRatio: 0.0931 },
+    { recipeId: "oak_logs", nodeId: "oak_tree", success: 0.6154, expectedTicks: 1.625, xpPerTick: 36.9231, goldSinkPerTick: 3.6923, sustainedCoverageRatio: 0.1028 },
+    { recipeId: "willow_logs", nodeId: "willow_tree", success: 0.5333, expectedTicks: 1.875, xpPerTick: 48, goldSinkPerTick: 7.4667, sustainedCoverageRatio: 0.1175 },
+    { recipeId: "maple_logs", nodeId: "maple_tree", success: 0.4444, expectedTicks: 2.25, xpPerTick: 60, goldSinkPerTick: 14.2222, sustainedCoverageRatio: 0.1506 },
+    { recipeId: "yew_logs", nodeId: "yew_tree", success: 0.381, expectedTicks: 2.625, xpPerTick: 76.1905, goldSinkPerTick: 27.4286, sustainedCoverageRatio: 0.3306 }
+  ];
+  let previousFiremaking40Xp = 0;
+  let previousFiremaking40Gold = 0;
+  let previousFiremaking40Ticks = 0;
+  let previousFiremakingCoverage = 0;
+  firemakingLevel40Benchmarks.forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeFiremakingRecipeMetrics(benchmark.recipeId, { level: 40 });
+    assert(!!metrics, "firemaking level-40 metrics missing for " + benchmark.recipeId);
+    assert(approxEq(metrics.successChance, benchmark.success, 1e-4), "firemaking level-40 success chance mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.expectedTicksPerSuccess, benchmark.expectedTicks, 1e-4), "firemaking level-40 expected ticks mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.burnRate.xpPerTick, benchmark.xpPerTick, 1e-4), "firemaking level-40 xp/tick mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.burnRate.goldSinkPerTick, benchmark.goldSinkPerTick, 1e-4), "firemaking level-40 gold sink/tick mismatch for " + benchmark.recipeId);
+    assert(metrics.cookingSupport.actionsPerFire === 90, "firemaking level-40 cooking-actions-per-fire mismatch for " + benchmark.recipeId);
+    assert(!!metrics.woodcuttingSupply, "firemaking woodcutting supply summary missing for " + benchmark.recipeId);
+    assert(metrics.woodcuttingSupply.nodeId === benchmark.nodeId, "firemaking woodcutting node mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.woodcuttingSupply.sustainedCoverageRatio, benchmark.sustainedCoverageRatio, 1e-4), "firemaking sustained coverage mismatch for " + benchmark.recipeId);
+    assert(metrics.burnRate.xpPerTick > previousFiremaking40Xp, "firemaking level-40 xp/tick should increase by tier");
+    assert(metrics.burnRate.goldSinkPerTick > previousFiremaking40Gold, "firemaking level-40 gold sink/tick should increase by tier");
+    assert(metrics.expectedTicksPerSuccess > previousFiremaking40Ticks, "firemaking level-40 expected ticks should increase by tier");
+    assert(metrics.woodcuttingSupply.sustainedCoverageRatio > previousFiremakingCoverage, "firemaking same-log coverage should improve by tier at level 40");
+    assert(metrics.woodcuttingSupply.sustainedCoverageRatio < 1, "firemaking should remain a net log sink against a single maxed same-log woodcutting lane");
+    previousFiremaking40Xp = metrics.burnRate.xpPerTick;
+    previousFiremaking40Gold = metrics.burnRate.goldSinkPerTick;
+    previousFiremaking40Ticks = metrics.expectedTicksPerSuccess;
+    previousFiremakingCoverage = metrics.woodcuttingSupply.sustainedCoverageRatio;
+  });
+
   assert(typeof SkillSpecRegistry.computeFletchingRecipeMetrics === "function", "fletching recipe metrics helper missing");
   assert(typeof SkillSpecRegistry.getFletchingBalanceSummary === "function", "fletching balance summary helper missing");
   assert(typeof SkillSpecRegistry.computeCraftingRecipeMetrics === "function", "crafting recipe metrics helper missing");
@@ -404,6 +476,9 @@ function run() {
   assert(rc.economy.valueTable.steam_rune.buy === 160, "runecrafting combo value mismatch");
   assert(rc.economy.valueTable.small_pouch.buy === 500, "runecrafting pouch value mismatch");
   assert(!!rc.economy.merchantTable && !!rc.economy.merchantTable.combination_sage, "runecrafting merchant table missing");
+  assert(rc.economy.merchantTable.rune_tutor.strictBuys === true, "rune tutor should use strict buy coverage");
+  assert(rc.economy.merchantTable.combination_sage.strictBuys === true, "combination sage should use strict buy coverage");
+  assert(typeof SkillSpecRegistry.getRunecraftingEconomySummary === "function", "runecrafting economy summary helper missing");
 
   loadBrowserScript(root, "src/js/content/item-catalog.js");
   const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS;
@@ -421,6 +496,30 @@ function run() {
   assert(itemDefs.air_rune.value === 80, "item catalog air value mismatch");
   assert(itemDefs.steam_rune.value === 160, "item catalog combo value mismatch");
   assert(itemDefs.small_pouch.value === 500, "item catalog pouch value mismatch");
+  const runecraftingValueIds = ["rune_essence", "ember_rune", "water_rune", "earth_rune", "air_rune", "steam_rune", "smoke_rune", "lava_rune", "mud_rune", "mist_rune", "dust_rune", "small_pouch", "medium_pouch", "large_pouch"];
+  const runecraftingSellValues = {
+    rune_essence: 4,
+    ember_rune: 4,
+    water_rune: 8,
+    earth_rune: 16,
+    air_rune: 32,
+    steam_rune: 64,
+    smoke_rune: 64,
+    lava_rune: 64,
+    mud_rune: 64,
+    mist_rune: 64,
+    dust_rune: 64,
+    small_pouch: 200,
+    medium_pouch: 800,
+    large_pouch: 3200
+  };
+  runecraftingValueIds.forEach((itemId) => {
+    const specRow = rc.economy.valueTable[itemId];
+    const item = itemDefs[itemId];
+    assert(!!specRow && !!item, "missing runecrafting economy or item row for " + itemId);
+    assert(specRow.buy === item.value, "runecrafting buy value mismatch for " + itemId);
+    assert(specRow.sell === runecraftingSellValues[itemId], "runecrafting sell value mismatch for " + itemId);
+  });
   assert(itemDefs.bait.value === 2, "item catalog bait value mismatch");
   assert(itemDefs.fishing_rod.value === 45, "item catalog fishing rod missing");
   assert(itemDefs.harpoon.value === 110, "item catalog harpoon missing");
@@ -804,6 +903,17 @@ function run() {
     root,
     (source) => replaceOnce(
       source,
+      "xpPerSuccess: 200,",
+      "xpPerSuccess: 190,",
+      "firemaking-balance-curve"
+    ),
+    /firemaking balance curve mismatch/i,
+    "firemaking-balance-curve"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
       "yew_shortbow: { buy: null, sell: 110 },",
       "yew_shortbow: { buy: null, sell: 90 },",
       "fletching-balance-curve"
@@ -832,6 +942,39 @@ function run() {
     ),
     /mining balance curve mismatch/i,
     "mining-balance-curve"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "rune_tutor: {\n                        strictBuys: true,",
+      "rune_tutor: {",
+      "runecrafting-strict-buys"
+    ),
+    /runecrafting economy parity mismatch/i,
+    "runecrafting-strict-buys"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "pouchUnlocks: { small_pouch: 10, medium_pouch: 20, large_pouch: 30 }",
+      "pouchUnlocks: { small_pouch: 10, medium_pouch: 20, large_pouch: 29 }",
+      "runecrafting-pouch-unlock-mismatch"
+    ),
+    /runecrafting economy parity mismatch/i,
+    "runecrafting-pouch-unlock-mismatch"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "pouchUnlocks: { small_pouch: 10, medium_pouch: 20, large_pouch: 30 }",
+      "pouchUnlocks: { small_pouch: 10, medium_pouch: 20, large_pouch: 30, giant_pouch: 40 }",
+      "runecrafting-extra-pouch-unlock"
+    ),
+    /runecrafting economy parity mismatch/i,
+    "runecrafting-extra-pouch-unlock"
   );
   assert(woodSpec.economy.valueTable.logs.buy === itemDefs.logs.value, "woodcutting logs buy value mismatch");
   assert(woodSpec.economy.valueTable.oak_logs.buy === itemDefs.oak_logs.value, "woodcutting oak logs buy value mismatch");
@@ -1006,6 +1149,35 @@ function run() {
   assert(shopEconomy.resolveSellPrice("ruby_gold_ring", "general_store") === Math.floor((itemDefs.ruby_gold_ring && itemDefs.ruby_gold_ring.value ? itemDefs.ruby_gold_ring.value : 0) * 0.5), "general store fallback should remain half-price floor");
   assert(shopEconomy.resolveBuyPrice("steam_rune", "combination_sage") === 160, "runecrafting combination buy price mismatch");
   assert(shopEconomy.resolveSellPrice("steam_rune", "combination_sage") === 64, "runecrafting combination sell price mismatch");
+  assert(shopEconomy.canMerchantBuyItem("ember_rune", "rune_tutor"), "rune tutor should buy elemental runes");
+  assert(!shopEconomy.canMerchantBuyItem("bronze_axe", "rune_tutor"), "rune tutor should reject unrelated items");
+  assert(shopEconomy.resolveSellPrice("bronze_axe", "rune_tutor") === 0, "rune tutor unrelated item sell price should be blocked");
+  assert(!shopEconomy.canMerchantBuyItem("cooked_shrimp", "combination_sage"), "combination sage should reject unrelated cooked goods");
+  assert(shopEconomy.resolveSellPrice("cooked_shrimp", "combination_sage") === 0, "combination sage unrelated item sell price should be blocked");
+  assert(!shopEconomy.canMerchantSellItem("small_pouch", "combination_sage"), "combination sage small pouch should stay locked below level 10");
+  session.progress.playerSkills.runecrafting = { level: 10 };
+  assert(shopEconomy.canMerchantSellItem("small_pouch", "combination_sage"), "combination sage should unlock small pouch at level 10");
+  assert(!shopEconomy.canMerchantSellItem("medium_pouch", "combination_sage"), "combination sage medium pouch should stay locked below level 20");
+  session.progress.playerSkills.runecrafting = { level: 20 };
+  assert(shopEconomy.canMerchantSellItem("medium_pouch", "combination_sage"), "combination sage should unlock medium pouch at level 20");
+  assert(!shopEconomy.canMerchantSellItem("large_pouch", "combination_sage"), "combination sage large pouch should stay locked below level 30");
+  session.progress.playerSkills.runecrafting = { level: 30 };
+  assert(shopEconomy.canMerchantSellItem("large_pouch", "combination_sage"), "combination sage should unlock large pouch at level 30");
+  const runecraftingEconomySummary = SkillSpecRegistry.getRunecraftingEconomySummary();
+  assert(!!runecraftingEconomySummary && Array.isArray(runecraftingEconomySummary.valueRows), "runecrafting economy summary rows missing");
+  assert(Array.isArray(runecraftingEconomySummary.merchants) && runecraftingEconomySummary.merchants.length === 2, "runecrafting economy summary merchant coverage mismatch");
+  const steamRuneSummaryRow = runecraftingEconomySummary.valueRows.find((row) => row && row.itemId === "steam_rune");
+  assert(!!steamRuneSummaryRow, "runecrafting economy summary missing steam rune row");
+  assert(steamRuneSummaryRow.buy === 160 && steamRuneSummaryRow.sell === 64, "runecrafting economy summary steam rune price mismatch");
+  assert(steamRuneSummaryRow.itemValue === 160 && steamRuneSummaryRow.buyMatchesItemValue === true, "runecrafting economy summary steam rune item-value parity mismatch");
+  const runeTutorSummary = runecraftingEconomySummary.merchants.find((row) => row && row.merchantId === "rune_tutor");
+  assert(!!runeTutorSummary && runeTutorSummary.strictBuys === true, "runecrafting economy summary rune tutor strict-buy mismatch");
+  const combinationSageSummary = runecraftingEconomySummary.merchants.find((row) => row && row.merchantId === "combination_sage");
+  assert(!!combinationSageSummary && combinationSageSummary.strictBuys === true, "runecrafting economy summary combination sage strict-buy mismatch");
+  const largePouchUnlockSummary = combinationSageSummary.pouchUnlocks.find((row) => row && row.itemId === "large_pouch");
+  assert(!!largePouchUnlockSummary, "runecrafting economy summary missing large pouch unlock row");
+  assert(largePouchUnlockSummary.unlockLevel === 30 && largePouchUnlockSummary.matchesPouchLevel === true, "runecrafting economy summary pouch unlock mismatch");
+  session.progress.playerSkills = {};
 
   const fletchRows = Object.keys(fletchSpec.recipeSet).map((id) => ({ recipeId: id, recipe: fletchSpec.recipeSet[id] }));
   const smithRows = Object.keys(smithSpec.recipeSet).map((id) => ({ recipeId: id, recipe: smithSpec.recipeSet[id] }));

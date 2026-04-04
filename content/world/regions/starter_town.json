@@ -980,6 +980,27 @@
       ]
     },
     {
+      "serviceId": "merchant:fletching_supplier",
+      "spawnId": "npc:fletching_supplier",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "fletching_supplier",
+      "name": "Fletching Supplier",
+      "npcType": 2,
+      "x": 183,
+      "y": 238,
+      "z": 0,
+      "action": "Trade",
+      "dialogueId": "fletching_supplier",
+      "tags": [
+        "merchant",
+        "fletching",
+        "starter",
+        "bank",
+        "processing"
+      ]
+    },
+    {
       "serviceId": "merchant:starter_caravan_guide",
       "spawnId": "npc:starter_caravan_guide",
       "type": "MERCHANT",

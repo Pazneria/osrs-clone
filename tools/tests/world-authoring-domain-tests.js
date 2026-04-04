@@ -64,6 +64,7 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
 
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:general_store": { x: 170, y: 239, z: 0, dialogueId: "shopkeeper", scaledX: 225, scaledY: 316 },
+  "merchant:fletching_supplier": { x: 183, y: 238, z: 0, dialogueId: "fletching_supplier", scaledX: 242, scaledY: 315 },
   "merchant:starter_caravan_guide": { x: 223, y: 221, z: 0, dialogueId: "road_guide", scaledX: 297, scaledY: 293 },
   "merchant:east_outpost_caravan_guide": { x: 260, y: 257, z: 0, dialogueId: "outpost_guide", scaledX: 346, scaledY: 340 },
   "merchant:fishing_teacher": { x: 170, y: 221, z: 0, dialogueId: "fishing_teacher", scaledX: 226, scaledY: 293 },

@@ -673,6 +673,193 @@
         };
     }
 
+    function resolveWoodcuttingBenchmarkOptions(options = {}) {
+        const woodcuttingSpec = getSkillSpec('woodcutting') || {};
+        const levelBands = Array.isArray(woodcuttingSpec.levelBands) ? woodcuttingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        return {
+            level: Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1),
+            toolPower: Number.isFinite(options.toolPower) ? options.toolPower : 28,
+            speedBonusTicks: Number.isFinite(options.speedBonusTicks) ? options.speedBonusTicks : 5
+        };
+    }
+
+    function findWoodcuttingNodeIdByLogItemId(logItemId) {
+        const woodcuttingSpec = getSkillSpec('woodcutting') || {};
+        const nodeTable = woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const nodeIds = Object.keys(nodeTable);
+        for (let i = 0; i < nodeIds.length; i++) {
+            const nodeId = nodeIds[i];
+            const node = nodeTable[nodeId];
+            if (!node || typeof node !== 'object') continue;
+            if (node.rewardItemId === logItemId) return nodeId;
+        }
+        return null;
+    }
+
+    function computeFiremakingRecipeMetrics(recipeId, options = {}) {
+        const firemakingSpec = getSkillSpec('firemaking') || {};
+        const recipeSet = firemakingSpec.recipeSet && typeof firemakingSpec.recipeSet === 'object'
+            ? firemakingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const levelBands = Array.isArray(firemakingSpec.levelBands) ? firemakingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const timing = firemakingSpec.timing && typeof firemakingSpec.timing === 'object'
+            ? firemakingSpec.timing
+            : {};
+        const economy = firemakingSpec.economy && typeof firemakingSpec.economy === 'object'
+            ? firemakingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const cookingSpec = getSkillSpec('cooking') || {};
+        const cookingTiming = cookingSpec.timing && typeof cookingSpec.timing === 'object'
+            ? cookingSpec.timing
+            : {};
+
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const ignitionAttemptTicks = Number.isFinite(timing.ignitionAttemptTicks) ? timing.ignitionAttemptTicks : 1;
+        const cookingActionTicks = Number.isFinite(options.cookingActionTicks)
+            ? options.cookingActionTicks
+            : (Number.isFinite(cookingTiming.actionTicks) ? cookingTiming.actionTicks : 1);
+        const successChance = computeSuccessChanceFromDifficulty(level, recipe.ignitionDifficulty);
+        const expectedAttemptsPerSuccess = successChance > 0 ? 1 / successChance : null;
+        const expectedTicksPerSuccess = expectedAttemptsPerSuccess === null ? null : expectedAttemptsPerSuccess * ignitionAttemptTicks;
+        const logsConsumedPerTick = expectedTicksPerSuccess && expectedTicksPerSuccess > 0 ? 1 / expectedTicksPerSuccess : 0;
+        const xpPerTick = logsConsumedPerTick * (Number.isFinite(recipe.xpPerSuccess) ? recipe.xpPerSuccess : 0);
+        const logValueRow = valueTable[recipe.sourceItemId] && typeof valueTable[recipe.sourceItemId] === 'object'
+            ? valueTable[recipe.sourceItemId]
+            : {};
+        const logSellValue = Number.isFinite(logValueRow.sell) ? logValueRow.sell : 0;
+        const goldSinkPerTick = logsConsumedPerTick * logSellValue;
+        const cookingActionsPerFire = cookingActionTicks > 0 && Number.isFinite(recipe.fireLifetimeTicks)
+            ? recipe.fireLifetimeTicks / cookingActionTicks
+            : null;
+
+        const woodcuttingSpec = getSkillSpec('woodcutting') || {};
+        const woodcuttingNodeTable = woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const woodcuttingTiming = woodcuttingSpec.timing && typeof woodcuttingSpec.timing === 'object'
+            ? woodcuttingSpec.timing
+            : {};
+        const woodcuttingBenchmark = resolveWoodcuttingBenchmarkOptions(options.woodcuttingBenchmark || {});
+        const woodcuttingNodeId = findWoodcuttingNodeIdByLogItemId(recipe.sourceItemId);
+        const woodcuttingNode = woodcuttingNodeId ? woodcuttingNodeTable[woodcuttingNodeId] : null;
+        const woodcuttingMetrics = woodcuttingNodeId
+            ? computeWoodcuttingNodeMetrics(woodcuttingNodeId, woodcuttingBenchmark)
+            : null;
+        const rawWoodcuttingSuccessChance = woodcuttingNode
+            ? computeGatherSuccessChance(woodcuttingBenchmark.level, woodcuttingBenchmark.toolPower, woodcuttingNode.difficulty)
+            : null;
+        const rawWoodcuttingIntervalTicks = woodcuttingNode
+            ? computeIntervalTicks(woodcuttingTiming.baseAttemptTicks, woodcuttingTiming.minimumAttemptTicks, woodcuttingBenchmark.speedBonusTicks)
+            : null;
+        const rawActiveLogsPerTick = rawWoodcuttingSuccessChance !== null && rawWoodcuttingIntervalTicks && rawWoodcuttingIntervalTicks > 0
+            ? rawWoodcuttingSuccessChance / rawWoodcuttingIntervalTicks
+            : null;
+        const rawExpectedLogsPerNode = woodcuttingNode && Number.isFinite(woodcuttingNode.depletionChance) && woodcuttingNode.depletionChance > 0
+            ? 1 / woodcuttingNode.depletionChance
+            : null;
+        const rawActiveTicksPerNode = rawExpectedLogsPerNode && rawActiveLogsPerTick && rawActiveLogsPerTick > 0
+            ? rawExpectedLogsPerNode / rawActiveLogsPerTick
+            : null;
+        const rawSustainedLogsPerTick = rawExpectedLogsPerNode && rawActiveTicksPerNode !== null
+            ? rawExpectedLogsPerNode / (rawActiveTicksPerNode + Math.max(0, Number.isFinite(woodcuttingNode.respawnTicks) ? woodcuttingNode.respawnTicks : 0))
+            : rawActiveLogsPerTick;
+        const activeCoverageRatio = rawActiveLogsPerTick !== null && logsConsumedPerTick > 0
+            ? roundMetric(rawActiveLogsPerTick / logsConsumedPerTick)
+            : null;
+        const sustainedCoverageRatio = rawSustainedLogsPerTick !== null && logsConsumedPerTick > 0
+            ? roundMetric(rawSustainedLogsPerTick / logsConsumedPerTick)
+            : null;
+
+        return {
+            recipeId,
+            sourceItemId: typeof recipe.sourceItemId === 'string' ? recipe.sourceItemId : '',
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            ignitionDifficulty: Number.isFinite(recipe.ignitionDifficulty) ? recipe.ignitionDifficulty : 1,
+            xpPerSuccess: Number.isFinite(recipe.xpPerSuccess) ? recipe.xpPerSuccess : 0,
+            fireLifetimeTicks: Number.isFinite(recipe.fireLifetimeTicks) ? recipe.fireLifetimeTicks : 0,
+            benchmark: {
+                level,
+                ignitionAttemptTicks,
+                cookingActionTicks,
+                woodcuttingBenchmark
+            },
+            successChance: roundMetric(successChance),
+            expectedAttemptsPerSuccess: roundMetric(expectedAttemptsPerSuccess),
+            expectedTicksPerSuccess: roundMetric(expectedTicksPerSuccess),
+            burnRate: {
+                logsConsumedPerTick: roundMetric(logsConsumedPerTick),
+                xpPerTick: roundMetric(xpPerTick),
+                goldSinkPerTick: roundMetric(goldSinkPerTick),
+                logSellValue
+            },
+            cookingSupport: {
+                actionsPerFire: roundMetric(cookingActionsPerFire)
+            },
+            woodcuttingSupply: woodcuttingMetrics ? {
+                nodeId: woodcuttingNodeId,
+                activeLogsPerTick: woodcuttingMetrics.active ? woodcuttingMetrics.active.logsPerTick : null,
+                sustainedLogsPerTick: woodcuttingMetrics.sustained ? woodcuttingMetrics.sustained.logsPerTick : null,
+                activeCoverageRatio,
+                sustainedCoverageRatio
+            } : null
+        };
+    }
+
+    function getFiremakingBalanceSummary(options = {}) {
+        const firemakingSpec = getSkillSpec('firemaking') || {};
+        const recipeSet = firemakingSpec.recipeSet && typeof firemakingSpec.recipeSet === 'object'
+            ? firemakingSpec.recipeSet
+            : {};
+        const levelBands = Array.isArray(firemakingSpec.levelBands) ? firemakingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const cookingSpec = getSkillSpec('cooking') || {};
+        const cookingTiming = cookingSpec.timing && typeof cookingSpec.timing === 'object'
+            ? cookingSpec.timing
+            : {};
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const ignitionAttemptTicks = Number.isFinite(firemakingSpec.timing && firemakingSpec.timing.ignitionAttemptTicks)
+            ? firemakingSpec.timing.ignitionAttemptTicks
+            : 1;
+        const cookingActionTicks = Number.isFinite(options.cookingActionTicks)
+            ? options.cookingActionTicks
+            : (Number.isFinite(cookingTiming.actionTicks) ? cookingTiming.actionTicks : 1);
+        const woodcuttingBenchmark = resolveWoodcuttingBenchmarkOptions(options.woodcuttingBenchmark || {});
+
+        const recipeIds = Object.keys(recipeSet).sort((a, b) => {
+            const aLevel = Number.isFinite(recipeSet[a] && recipeSet[a].requiredLevel) ? recipeSet[a].requiredLevel : Number.MAX_SAFE_INTEGER;
+            const bLevel = Number.isFinite(recipeSet[b] && recipeSet[b].requiredLevel) ? recipeSet[b].requiredLevel : Number.MAX_SAFE_INTEGER;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < recipeIds.length; i++) {
+            const row = computeFiremakingRecipeMetrics(recipeIds[i], {
+                level,
+                cookingActionTicks,
+                woodcuttingBenchmark
+            });
+            if (row) rows.push(row);
+        }
+
+        return {
+            assumptions: {
+                level,
+                ignitionAttemptTicks,
+                cookingActionTicks,
+                woodcuttingBenchmark
+            },
+            rows
+        };
+    }
+
     function computeCraftingRecipeMetrics(recipeId) {
         const craftingSpec = getSkillSpec('crafting') || {};
         const recipeSet = craftingSpec.recipeSet && typeof craftingSpec.recipeSet === 'object'
@@ -765,6 +952,107 @@
                     : null
             },
             rows
+        };
+    }
+
+    function getRunecraftingEconomySummary() {
+        const runecraftingSpec = getSkillSpec('runecrafting') || {};
+        const economy = runecraftingSpec.economy && typeof runecraftingSpec.economy === 'object'
+            ? runecraftingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const merchantTable = economy.merchantTable && typeof economy.merchantTable === 'object'
+            ? economy.merchantTable
+            : {};
+        const pouchTable = runecraftingSpec.pouchTable && typeof runecraftingSpec.pouchTable === 'object'
+            ? runecraftingSpec.pouchTable
+            : {};
+        const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS && typeof window.ItemCatalog.ITEM_DEFS === 'object'
+            ? window.ItemCatalog.ITEM_DEFS
+            : null;
+        const valueOrder = {
+            rune_essence: 0,
+            ember_rune: 1,
+            water_rune: 2,
+            earth_rune: 3,
+            air_rune: 4,
+            steam_rune: 5,
+            smoke_rune: 6,
+            lava_rune: 7,
+            mud_rune: 8,
+            mist_rune: 9,
+            dust_rune: 10,
+            small_pouch: 11,
+            medium_pouch: 12,
+            large_pouch: 13
+        };
+        const merchantOrder = {
+            rune_tutor: 0,
+            combination_sage: 1
+        };
+
+        const valueRows = Object.keys(valueTable).sort((a, b) => {
+            const aOrder = Number.isFinite(valueOrder[a]) ? valueOrder[a] : Number.MAX_SAFE_INTEGER;
+            const bOrder = Number.isFinite(valueOrder[b]) ? valueOrder[b] : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return a.localeCompare(b);
+        }).map((itemId) => {
+            const row = valueTable[itemId] || {};
+            const itemValue = itemDefs && itemDefs[itemId] && Number.isFinite(itemDefs[itemId].value)
+                ? Math.max(0, Math.floor(itemDefs[itemId].value))
+                : null;
+            return {
+                itemId,
+                buy: Number.isFinite(row.buy) ? Math.max(0, Math.floor(row.buy)) : null,
+                sell: Number.isFinite(row.sell) ? Math.max(0, Math.floor(row.sell)) : null,
+                itemValue,
+                buyMatchesItemValue: itemValue === null || !Number.isFinite(row.buy)
+                    ? null
+                    : itemValue === Math.max(0, Math.floor(row.buy))
+            };
+        });
+
+        const merchants = Object.keys(merchantTable).sort((a, b) => {
+            const aOrder = Number.isFinite(merchantOrder[a]) ? merchantOrder[a] : Number.MAX_SAFE_INTEGER;
+            const bOrder = Number.isFinite(merchantOrder[b]) ? merchantOrder[b] : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return a.localeCompare(b);
+        }).map((merchantId) => {
+            const config = merchantTable[merchantId] || {};
+            const rawPouchUnlocks = config.pouchUnlocks && typeof config.pouchUnlocks === 'object'
+                ? config.pouchUnlocks
+                : {};
+            const pouchUnlocks = Object.keys(rawPouchUnlocks).sort((a, b) => {
+                const aLevel = Number.isFinite(rawPouchUnlocks[a]) ? rawPouchUnlocks[a] : Number.MAX_SAFE_INTEGER;
+                const bLevel = Number.isFinite(rawPouchUnlocks[b]) ? rawPouchUnlocks[b] : Number.MAX_SAFE_INTEGER;
+                if (aLevel !== bLevel) return aLevel - bLevel;
+                return a.localeCompare(b);
+            }).map((itemId) => {
+                const unlockLevel = Number.isFinite(rawPouchUnlocks[itemId]) ? Math.max(1, Math.floor(rawPouchUnlocks[itemId])) : null;
+                const pouchRequiredLevel = Number.isFinite(pouchTable[itemId] && pouchTable[itemId].requiredLevel)
+                    ? Math.max(1, Math.floor(pouchTable[itemId].requiredLevel))
+                    : null;
+                return {
+                    itemId,
+                    unlockLevel,
+                    pouchRequiredLevel,
+                    matchesPouchLevel: unlockLevel === null || pouchRequiredLevel === null ? null : unlockLevel === pouchRequiredLevel
+                };
+            });
+            return {
+                merchantId,
+                strictBuys: !!config.strictBuys,
+                buys: Array.isArray(config.buys) ? config.buys.slice() : [],
+                sells: Array.isArray(config.sells) ? config.sells.slice() : [],
+                pouchUnlocks
+            };
+        });
+
+        return {
+            valueRows,
+            merchants
         };
     }
 
@@ -909,10 +1197,13 @@
         computeExpectedDepletingYieldCount,
         computeLinearCatchChance,
         computeSuccessChanceFromDifficulty,
+        computeFiremakingRecipeMetrics,
+        getFiremakingBalanceSummary,
         computeCookingBurnChance,
         computeCookingSuccessChance,
         computeCookingRecipeMetrics,
         getCookingBalanceSummary,
+        getRunecraftingEconomySummary,
         computeCraftingRecipeMetrics,
         getCraftingBalanceSummary,
         computeFletchingRecipeMetrics,

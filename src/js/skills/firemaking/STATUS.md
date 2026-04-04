@@ -13,13 +13,13 @@
 - [x] FIREMAKING-QA-001: Ignition attempt loop behavior aligned and validated (continuous per-tick attempts until success or manual/invalid stop; consume-on-success only).
 - [x] FIREMAKING-009: Merchant and item-value alignment for logs, tinderbox, and ashes with general-store half-price rules.
 - [x] FIREMAKING-010: Interaction polish pass for repeated firemaking flow and usability.
+- [x] FIREMAKING-011: Runtime-backed log-burn benchmarks are now locked against same-log woodcutting supply and cooking-source demand via registry helpers, balance validation, and roadmap tables.
 - [x] FIREMAKING-014: Multi-tier firemaking progression now supports all canonical log tiers in runtime/spec data with woodcutting-demand guard coverage.
 
 ## Now
 
 ## Next
-- [ ] FIREMAKING-011: Cross-skill balance pass for log-supply pressure against woodcutting and cooking demand.
+- [ ] FIREMAKING-012: Progression and polish pass for failure feedback, interruption behavior, and utility pacing.
 
 ## Later
-- [ ] FIREMAKING-012: Progression and polish pass for failure feedback, interruption behavior, and utility pacing.
 - [ ] FIREMAKING-013: World-content expansion pass for higher-tier firemaking progression.

@@ -33,7 +33,8 @@
           "small_pouch",
           "medium_pouch",
           "large_pouch"
-        ]
+        ],
+        "strictBuys": true
       },
       "rune_tutor": {
         "buys": [
@@ -49,7 +50,8 @@
           "water_rune",
           "earth_rune",
           "air_rune"
-        ]
+        ],
+        "strictBuys": true
       }
     },
     "primaryResource": "ember_rune",

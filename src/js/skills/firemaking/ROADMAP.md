@@ -144,6 +144,49 @@ Firemaking creates value indirectly by consuming logs to unlock utility rather t
 | Ashes     | Resource | 4         | 1          |
 | Tinderbox | Tool     | 8         | 2          |
 
+## Cross-Skill Balance Benchmarks
+
+These tables lock how firemaking pressure sits against same-log woodcutting supply and cooking-source demand.
+
+- Firemaking benchmark level uses the level shown in each table row.
+- Cooking support assumes the current `1`-tick cooking action cadence.
+- Same-log woodcutting coverage uses the current maxed 1-40 woodcutting benchmark (`level = 40`, `toolPower = 28`, `speedBonusTicks = 5`).
+
+### Tier-Entry Firemaking Benchmarks
+
+| Log Type | Level | Success Chance | Expected Ticks per Lit Fire | XP per Tick | Log Sell Sink per Tick | Cooking Actions per Fire |
+| -------- | ----- | -------------- | --------------------------- | ----------- | ---------------------- | ------------------------ |
+| Logs | 1 | 6.3% | 16.0000 | 2.5000 | 0.1250 | 90.0000 |
+| Oak Logs | 10 | 28.6% | 3.5000 | 17.1429 | 1.7143 | 90.0000 |
+| Willow Logs | 20 | 36.4% | 2.7500 | 32.7273 | 5.0909 | 90.0000 |
+| Maple Logs | 30 | 37.5% | 2.6667 | 50.6250 | 12.0000 | 90.0000 |
+| Yew Logs | 40 | 38.1% | 2.6250 | 76.1905 | 27.4286 | 90.0000 |
+
+### Level-40 Firemaking Benchmarks
+
+| Log Type | Level | Success Chance | Expected Ticks per Lit Fire | XP per Tick | Log Sell Sink per Tick | Cooking Actions per Fire |
+| -------- | ----- | -------------- | --------------------------- | ----------- | ---------------------- | ------------------------ |
+| Logs | 40 | 72.7% | 1.3750 | 29.0909 | 1.4545 | 90.0000 |
+| Oak Logs | 40 | 61.5% | 1.6250 | 36.9231 | 3.6923 | 90.0000 |
+| Willow Logs | 40 | 53.3% | 1.8750 | 48.0000 | 7.4667 | 90.0000 |
+| Maple Logs | 40 | 44.4% | 2.2500 | 60.0000 | 14.2222 | 90.0000 |
+| Yew Logs | 40 | 38.1% | 2.6250 | 76.1905 | 27.4286 | 90.0000 |
+
+### Maxed Same-Log Woodcutting Coverage
+
+| Log Type | Level-40 Firemaking Logs Burned per Tick | Maxed Same-Log Woodcutting Sustained Logs per Tick | Coverage Ratio |
+| -------- | ---------------------------------------- | -------------------------------------------------- | -------------- |
+| Logs | 0.7273 | 0.0677 | 0.0931 |
+| Oak Logs | 0.6154 | 0.0632 | 0.1028 |
+| Willow Logs | 0.5333 | 0.0627 | 0.1175 |
+| Maple Logs | 0.4444 | 0.0670 | 0.1506 |
+| Yew Logs | 0.3810 | 0.1259 | 0.3306 |
+
+### Balance Notes
+
+- Firemaking remains a deliberate log sink: uninterrupted same-log chain-lighting consumes logs faster than one maxed same-log woodcutting lane replenishes them across the current 1-40 band.
+- Each successful fire still supports `90` cooking actions at the current 1-tick cooking cadence, so cooking demand stays much lighter than dedicated firemaking-training demand on the log supply.
+
 ## Merchant / NPC Structure
 
 No firemaking-specific NPCs or quests are required under the base model.

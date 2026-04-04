@@ -70,6 +70,26 @@
                 createActionOption('Goodbye', 'close')
             ]
         },
+        fletching_supplier: {
+            title: 'Fletching Supplier',
+            greeting: 'Strings, feathers, knives. If it keeps wood moving, I can probably hand it over.',
+            options: [
+                createTextOption('Ask about bow strings', 'A bowstring should be tight enough to trust and plain enough to replace without drama.'),
+                createTextOption('Ask about feathers', 'Bad fletching wastes the shot before it leaves the string. Good feathers make the rest look easy.'),
+                createActionOption('Trade', 'trade'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        advanced_fletcher: {
+            title: 'Advanced Fletcher',
+            greeting: 'Straight grain, clean fletching, honest balance. The rest is just repetition.',
+            options: [
+                createTextOption('Ask about bows', 'A good bow should feel calm in the hand before it ever feels powerful.'),
+                createTextOption('Ask about arrows', 'If the shaft wobbles or the feathers fight each other, the shot was lost before release.'),
+                createActionOption('Trade', 'trade'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
         banker: {
             title: 'Banker',
             greeting: 'Your valuables are safer in the bank than in your pockets. How can I help?',
@@ -160,6 +180,8 @@
         east_outpost_caravan_guide: 'outpost_guide',
         fishing_teacher: 'fishing_teacher',
         fishing_supplier: 'fishing_supplier',
+        fletching_supplier: 'fletching_supplier',
+        advanced_fletcher: 'advanced_fletcher',
         banker: 'banker',
         borin_ironvein: 'borin_ironvein',
         thrain_deepforge: 'thrain_deepforge',

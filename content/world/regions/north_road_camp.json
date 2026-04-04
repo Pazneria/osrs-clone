@@ -505,6 +505,26 @@
       ]
     },
     {
+      "serviceId": "merchant:advanced_fletcher",
+      "spawnId": "npc:advanced_fletcher",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "advanced_fletcher",
+      "name": "Advanced Fletcher",
+      "npcType": 3,
+      "x": 207,
+      "y": 210,
+      "z": 0,
+      "action": "Trade",
+      "dialogueId": "advanced_fletcher",
+      "tags": [
+        "merchant",
+        "fletching",
+        "proof",
+        "ranged"
+      ]
+    },
+    {
       "serviceId": "station:north_road_furnace",
       "spawnId": "station:north_road_furnace",
       "type": "FURNACE",

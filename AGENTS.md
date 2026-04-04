@@ -1,5 +1,17 @@
 # AGENTS Instructions (Project)
 
+## Preferred Skills
+
+If the custom OSRS Clone skill pack is installed, prefer these skills for this repo:
+
+- `$osrs-clone` for general repo routing when the right seam is not obvious yet.
+- `$osrs-clone-platform-bridges` for Vite bootstrap, `src/game/platform/*`, `window.*Runtime` surfaces, and typed-to-legacy integration work.
+- `$osrs-clone-content-contracts` for canonical sources, sync or validate flows, world authoring, and codex export.
+- `$osrs-clone-pixel-appearance` for inventory icons, pixel assets, appearance catalog work, and held or dropped visual alignment.
+- `$osrs-clone-test-routing` for review, QA, and choosing the smallest relevant checks before widening to broader coverage.
+
+If a skill conflicts with this file, follow `AGENTS.md`.
+
 ## Inventory Icon Requests
 
 Treat requests like "make", "design", "create", "update", or "redo" an inventory icon as implement-now tasks, not planning or brainstorming, unless the user explicitly asks for brainstorming first.

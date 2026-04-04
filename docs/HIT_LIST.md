@@ -915,7 +915,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-046 - Skills menu needs logical organization and full tier-by-tier coverage
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: HUD
 - Source: Manual
@@ -932,14 +932,17 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1. Audit the current skills-menu information architecture and identify where tier coverage is missing, unclear, or inconsistent by skill.
   2. Define a shared per-tier presentation model for skill menus so unlocks, methods, outputs, and progression notes render in a predictable structure.
   3. Implement the menu improvements incrementally and, when a partial pass leaves meaningful gaps, add follow-up hits for the remaining skills or menu sections.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added a typed skill-reference panel view model in the UI domain so the skills panel now groups authored unlocks by canonical level bands instead of only by raw unlock level rows.
+  - The live skills panel now renders a compact band summary plus tier sections for every authored level band, including empty/current/next bands, so coverage stays complete even when a band has no new unlock rows.
+  - Added inventory/HUD regression coverage for spec-backed band grouping and combat-skill fallback bands, and verified the inventory/HUD guard plus repo `check` pass after wiring the new panel path.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ## Ready to Hunt
 <!-- Triaged, scoped, ready for implementation -->
@@ -952,6 +955,96 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
+
+### HIT-058 - Fletching world-training loop existed only in docs and economy tables
+- Status: Fixed
+- Severity: S2
+- Area: FLT
+- Source: Manual
+- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/content/npc-dialogue-catalog.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-authoring-domain-tests.js`, `src/js/skills/fletching/ROADMAP.md`, `src/js/skills/fletching/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the fletching roadmap/status docs and compare their merchant/training-flow notes against the authored world region files.
+  2. Inspect the current merchant services in `starter_town` and `north_road_camp`, or use QA merchant discovery in those worlds.
+  3. Look for reachable `fletching_supplier` and `advanced_fletcher` NPC placements in the playable world.
+- Expected: The bank-adjacent processing loop and the deeper fletching sell path should exist as reachable authored merchants, not just as spec or economy rows.
+- Actual: Fletching merchant IDs and economy rules existed in the skill data, but the authored world had no supplier or advanced-fletcher placements, so the documented training flow was not actually reachable.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical authored merchant placements for the early supplier loop and the deeper advanced-fletcher loop.
+  2. Add dialogue coverage for any new merchant IDs so the world interaction path remains consistent.
+  3. Extend the world parity checks and sync the fletching docs to the authored placements.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a starter-town `fletching_supplier` merchant placement inside the bank and general-store block so early log processing and restock flow now live in authored world content.
+  - Added an `advanced_fletcher` merchant placement at the north-road outpost plus a dedicated dialogue entry, so the deeper road now has a reachable buyer for finished fletching outputs.
+  - Updated the fletching roadmap/status/index and extended the world bootstrap and authoring parity tests to lock the new placements and dialogue bindings.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-057 - Firemaking log-pressure benchmarks were missing against woodcutting and cooking
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/spec-registry.js`, `src/js/skills/specs.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `src/js/skills/firemaking/ROADMAP.md`, `src/js/skills/firemaking/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the firemaking roadmap/status docs after the multi-log progression pass and compare them against the live runtime spec.
+  2. Try to answer the canonical burn-rate, log-sink, and cooking-support benchmarks for each firemaking log tier from runtime-backed helpers or roadmap tables.
+  3. Compare continuous same-log firemaking demand against current same-log woodcutting supply and verify whether the docs preserve that pressure explicitly.
+- Expected: Firemaking should expose runtime-backed burn-rate benchmarks, document its cooking support per fire, and make the same-log woodcutting-vs-firemaking supply pressure explicit.
+- Actual: Firemaking still only exposed raw recipe/value rows, so the repo lacked canonical benchmark helpers and roadmap tables for log-burn pressure against woodcutting and cooking demand.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical firemaking balance helpers for ignition throughput, log burn rate, cooking support per fire, and same-log woodcutting coverage.
+  2. Add spec-level balance validation so those cross-skill benchmarks cannot drift silently.
+  3. Sync the firemaking roadmap/status/index with explicit tier-entry, level-40, and woodcutting-coverage tables.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added firemaking balance helpers in `SkillSpecRegistry` so the runtime now exposes ignition throughput, log sink per tick, cooking actions per fire, and same-log woodcutting coverage for every canonical log tier.
+  - Added a firemaking balance validator in `src/js/skills/specs.js` plus contract coverage, which locks the tier-entry and level-40 benchmark rows and preserves the intended "firemaking stays a log sink" rule.
+  - Updated the firemaking roadmap/status/index with explicit cross-skill benchmark tables and notes, including the current `90` cooking-actions-per-fire support and maxed same-log woodcutting coverage ratios.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-056 - Runecrafting merchants buy unrelated items outside the authored tables
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `tools/tests/spec-contracts.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`, `content/skills/runecrafting.json`
+- Repro:
+  1. Inspect the authored rune-tutor and combination-sage buy/sell tables in the runecrafting roadmap or skill spec.
+  2. Offer an unrelated item such as `bronze_axe` or `cooked_shrimp` to one of those merchants through the shop runtime.
+  3. Observe whether the merchant accepts the unrelated item at a fallback sell price.
+- Expected: The rune tutor and combination sage should only buy the authored rune/pouch goods listed in the runecrafting spec and roadmap.
+- Actual: Their merchant configs lacked `strictBuys`, so the runtime treated them as willing to buy unrelated items outside the authored tables.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Audit the runecrafting merchant tables against the authored buy/sell rows and pouch unlock levels.
+  2. Make the rune merchants strict to those authored buy lists and add summary/contract coverage for the value and unlock tables.
+  3. Sync the runecrafting roadmap/status/index and mirrored skill JSON, then run targeted shop/spec checks.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `strictBuys: true` to both `rune_tutor` and `combination_sage`, so the shop runtime no longer buys unrelated items through those runecrafting merchants.
+  - Added a runecrafting economy summary helper plus contract coverage for value-table parity, strict merchant buy enforcement, and pouch unlock-level gating.
+  - Synced the runecrafting roadmap/status/index and regenerated `content/skills/runecrafting.json` so the mirrored skill contract matches the authored source.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-055 - Crafting throughput targets and jewelry sell values drifted from the authored balance rules
 - Status: Fixed

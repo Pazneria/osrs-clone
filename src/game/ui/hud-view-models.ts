@@ -10,6 +10,9 @@ import type {
   CombatStatsViewModel,
   EquipmentSlotViewModel,
   PlayerProfileSummaryViewModel,
+  SkillReferencePanelViewModel,
+  SkillReferenceTierViewModel,
+  SkillReferenceUnlockViewModel,
   SkillProgressViewModel,
   SkillTileDefinition,
   SkillTileViewModel,
@@ -270,6 +273,473 @@ export function buildSkillProgressViewModel(options: {
     nextText: level >= maxSkillLevel ? "Maxed" : `${nextLevelXp.toLocaleString()} XP`,
     progressPercentText: `${percent.toFixed(1)}% to next level`,
     progressWidth: `${percent.toFixed(1)}%`
+  };
+}
+
+const SKILL_REFERENCE_RECIPE_UNLOCK_TYPE = "recipe";
+
+const FISHING_METHOD_LABELS: Record<string, string> = {
+  net: "Net fishing",
+  rod: "Rod fishing",
+  harpoon: "Harpoon fishing",
+  deep_harpoon_mixed: "Deep-water harpoon (mixed)",
+  deep_rune_harpoon: "Deep-water rune harpoon"
+};
+
+const COMBAT_SKILL_REFERENCE_MILESTONES: Record<string, Array<{ level: number; label: string }>> = {
+  attack: [
+    { level: 1, label: "Starter melee accuracy baseline" },
+    { level: 10, label: "Early melee consistency bump" },
+    { level: 20, label: "Mid-band melee accuracy bump" },
+    { level: 30, label: "Advanced melee accuracy bump" },
+    { level: 40, label: "High-band melee accuracy bump" }
+  ],
+  strength: [
+    { level: 1, label: "Starter max-hit baseline" },
+    { level: 10, label: "Early max-hit bump" },
+    { level: 20, label: "Mid-band max-hit bump" },
+    { level: 30, label: "Advanced max-hit bump" },
+    { level: 40, label: "High-band max-hit bump" }
+  ],
+  defense: [
+    { level: 1, label: "Starter mitigation baseline" },
+    { level: 10, label: "Early defense scaling bump" },
+    { level: 20, label: "Mid-band defense scaling bump" },
+    { level: 30, label: "Advanced defense scaling bump" },
+    { level: 40, label: "High-band defense scaling bump" }
+  ],
+  hitpoints: [
+    { level: 10, label: "Starter health pool baseline" },
+    { level: 20, label: "Early survivability bump" },
+    { level: 30, label: "Mid-band survivability bump" },
+    { level: 40, label: "Advanced survivability bump" }
+  ]
+};
+
+interface SkillReferenceUnlockSeed {
+  key: string;
+  label: string;
+  unlockType: string;
+  requiredLevel: number;
+  recipeId: string | null;
+  recipe: Record<string, unknown> | null;
+}
+
+function formatSkillReferenceText(value: string): string {
+  return String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function resolveSkillReferenceItemName(itemId: string, resolver?: ((itemId: string) => string) | null): string {
+  const normalizedItemId = typeof itemId === "string" ? itemId.trim() : "";
+  if (!normalizedItemId) return "";
+  if (typeof resolver === "function") {
+    const resolved = resolver(normalizedItemId);
+    if (typeof resolved === "string" && resolved.trim()) return resolved.trim();
+  }
+  return formatSkillReferenceText(normalizedItemId);
+}
+
+function addSkillReferenceUnlock(
+  milestonesByLevel: Record<number, Map<string, SkillReferenceUnlockSeed>>,
+  level: number,
+  label: string,
+  options: {
+    unlockType?: string;
+    key?: string;
+    recipeId?: string | null;
+    recipe?: Record<string, unknown> | null;
+  } = {}
+): void {
+  const requiredLevel = Number.isFinite(level) ? Math.max(1, Math.floor(level)) : 1;
+  const text = typeof label === "string" ? label.trim() : "";
+  if (!text) return;
+  if (!milestonesByLevel[requiredLevel]) milestonesByLevel[requiredLevel] = new Map();
+
+  const unlockType = typeof options.unlockType === "string" && options.unlockType.trim()
+    ? options.unlockType.trim()
+    : "unlock";
+  const rawKey = typeof options.key === "string" && options.key.trim()
+    ? options.key.trim()
+    : `${unlockType}:${text.toLowerCase()}`;
+  const key = rawKey.toLowerCase();
+  if (milestonesByLevel[requiredLevel].has(key)) return;
+
+  milestonesByLevel[requiredLevel].set(key, {
+    key,
+    label: text,
+    unlockType,
+    requiredLevel,
+    recipeId: typeof options.recipeId === "string" && options.recipeId.trim() ? options.recipeId.trim() : null,
+    recipe: options.recipe && typeof options.recipe === "object" ? options.recipe : null
+  });
+}
+
+function getSkillReferenceVerb(skillId: string): string {
+  if (skillId === "woodcutting") return "Chop";
+  if (skillId === "mining") return "Mine";
+  if (skillId === "fishing") return "Catch";
+  if (skillId === "firemaking") return "Burn";
+  if (skillId === "cooking") return "Cook";
+  if (skillId === "runecrafting") return "Craft";
+  if (skillId === "smithing") return "Forge";
+  if (skillId === "crafting") return "Craft";
+  if (skillId === "fletching") return "Fletch";
+  return "Unlock";
+}
+
+function collectSkillReferenceNodeUnlocks(
+  skillId: string,
+  nodeTable: Record<string, any>,
+  milestonesByLevel: Record<number, Map<string, SkillReferenceUnlockSeed>>,
+  resolveItemName?: ((itemId: string) => string) | null
+): void {
+  const nodeIds = Object.keys(nodeTable || {});
+  for (let index = 0; index < nodeIds.length; index += 1) {
+    const nodeId = nodeIds[index];
+    const node = nodeTable[nodeId];
+    if (!node || typeof node !== "object") continue;
+
+    if (skillId === "fishing" && node.methods && typeof node.methods === "object") {
+      if (Number.isFinite(node.unlockLevel)) {
+        addSkillReferenceUnlock(milestonesByLevel, node.unlockLevel, `Access ${formatSkillReferenceText(nodeId)}`, {
+          key: `node:${nodeId}:access`
+        });
+      }
+
+      const methodIds = Object.keys(node.methods);
+      for (let methodIndex = 0; methodIndex < methodIds.length; methodIndex += 1) {
+        const methodId = methodIds[methodIndex];
+        const method = node.methods[methodId];
+        if (!method || typeof method !== "object") continue;
+        const methodUnlockLevel = Number.isFinite(method.unlockLevel)
+          ? method.unlockLevel
+          : (Number.isFinite(node.unlockLevel) ? node.unlockLevel : 1);
+        const methodLabel = FISHING_METHOD_LABELS[methodId] || formatSkillReferenceText(methodId);
+        addSkillReferenceUnlock(milestonesByLevel, methodUnlockLevel, `Method: ${methodLabel}`, {
+          key: `method:${methodId}`
+        });
+
+        const bands = Array.isArray(method.fishByLevel) ? method.fishByLevel : [];
+        for (let bandIndex = 0; bandIndex < bands.length; bandIndex += 1) {
+          const band = bands[bandIndex];
+          if (!band || typeof band !== "object") continue;
+          const fishRows = Array.isArray(band.fish) ? band.fish : [];
+          for (let fishIndex = 0; fishIndex < fishRows.length; fishIndex += 1) {
+            const fish = fishRows[fishIndex];
+            if (!fish || typeof fish !== "object") continue;
+            const fishLevel = Number.isFinite(fish.requiredLevel)
+              ? fish.requiredLevel
+              : (Number.isFinite(band.minLevel) ? band.minLevel : methodUnlockLevel);
+            const fishName = resolveSkillReferenceItemName(fish.itemId, resolveItemName);
+            addSkillReferenceUnlock(milestonesByLevel, fishLevel, `Catch ${fishName}`, {
+              key: `fish:${fish.itemId}`
+            });
+          }
+        }
+      }
+      continue;
+    }
+
+    const unlockLevel = Number.isFinite(node.requiredLevel)
+      ? node.requiredLevel
+      : (Number.isFinite(node.unlockLevel) ? node.unlockLevel : 1);
+    if (typeof node.rewardItemId === "string" && node.rewardItemId) {
+      const verb = getSkillReferenceVerb(skillId);
+      addSkillReferenceUnlock(
+        milestonesByLevel,
+        unlockLevel,
+        `${verb} ${resolveSkillReferenceItemName(node.rewardItemId, resolveItemName)}`,
+        { key: `node:${nodeId}:reward` }
+      );
+      continue;
+    }
+
+    addSkillReferenceUnlock(milestonesByLevel, unlockLevel, `Unlock ${formatSkillReferenceText(nodeId)}`, {
+      key: `node:${nodeId}`
+    });
+  }
+}
+
+function resolveSkillReferenceRecipeLabel(
+  skillId: string,
+  recipeId: string,
+  recipe: Record<string, any>,
+  resolveItemName?: ((itemId: string) => string) | null
+): string {
+  const verb = getSkillReferenceVerb(skillId);
+  if (recipe.output && typeof recipe.output === "object" && typeof recipe.output.itemId === "string") {
+    return `${verb} ${resolveSkillReferenceItemName(recipe.output.itemId, resolveItemName)}`;
+  }
+  if (typeof recipe.outputItemId === "string" && recipe.outputItemId) {
+    if (skillId === "runecrafting" && typeof recipe.altarName === "string" && recipe.altarName.trim()) {
+      return `Craft ${resolveSkillReferenceItemName(recipe.outputItemId, resolveItemName)} (${recipe.altarName.trim()})`;
+    }
+    return `${verb} ${resolveSkillReferenceItemName(recipe.outputItemId, resolveItemName)}`;
+  }
+  if (typeof recipe.cookedItemId === "string" && recipe.cookedItemId) {
+    return `Cook ${resolveSkillReferenceItemName(recipe.cookedItemId, resolveItemName)}`;
+  }
+  if (skillId === "firemaking" && typeof recipe.sourceItemId === "string" && recipe.sourceItemId) {
+    return `Burn ${resolveSkillReferenceItemName(recipe.sourceItemId, resolveItemName)}`;
+  }
+  if (typeof recipe.sourceItemId === "string" && recipe.sourceItemId) {
+    return `${verb} ${resolveSkillReferenceItemName(recipe.sourceItemId, resolveItemName)}`;
+  }
+  if (recipeId) return `Unlock ${formatSkillReferenceText(recipeId)}`;
+  return "";
+}
+
+function collectSkillReferenceRecipeUnlocks(
+  skillId: string,
+  recipeSet: Record<string, any>,
+  milestonesByLevel: Record<number, Map<string, SkillReferenceUnlockSeed>>,
+  resolveItemName?: ((itemId: string) => string) | null
+): void {
+  const recipeIds = Object.keys(recipeSet || {});
+  for (let index = 0; index < recipeIds.length; index += 1) {
+    const recipeId = recipeIds[index];
+    const recipe = recipeSet[recipeId];
+    if (!recipe || typeof recipe !== "object") continue;
+    const requiredLevel = Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1;
+    const label = resolveSkillReferenceRecipeLabel(skillId, recipeId, recipe, resolveItemName);
+    addSkillReferenceUnlock(milestonesByLevel, requiredLevel, label, {
+      unlockType: SKILL_REFERENCE_RECIPE_UNLOCK_TYPE,
+      key: `recipe:${recipeId}`,
+      recipeId,
+      recipe
+    });
+  }
+}
+
+function collectSkillReferenceUnlocks(options: {
+  skillId: string;
+  skillSpec?: Record<string, any> | null;
+  resolveItemName?: ((itemId: string) => string) | null;
+}): Record<number, Map<string, SkillReferenceUnlockSeed>> {
+  const milestonesByLevel: Record<number, Map<string, SkillReferenceUnlockSeed>> = {};
+  const combatMilestones = COMBAT_SKILL_REFERENCE_MILESTONES[options.skillId];
+  if (Array.isArray(combatMilestones) && combatMilestones.length > 0) {
+    for (let index = 0; index < combatMilestones.length; index += 1) {
+      const row = combatMilestones[index];
+      addSkillReferenceUnlock(milestonesByLevel, row.level, row.label, {
+        key: `combat:${options.skillId}:${row.level}`
+      });
+    }
+    return milestonesByLevel;
+  }
+
+  const skillSpec = options.skillSpec && typeof options.skillSpec === "object" ? options.skillSpec : null;
+  if (!skillSpec) return milestonesByLevel;
+
+  if (skillSpec.nodeTable && typeof skillSpec.nodeTable === "object") {
+    collectSkillReferenceNodeUnlocks(options.skillId, skillSpec.nodeTable, milestonesByLevel, options.resolveItemName);
+  }
+  if (skillSpec.recipeSet && typeof skillSpec.recipeSet === "object") {
+    collectSkillReferenceRecipeUnlocks(options.skillId, skillSpec.recipeSet, milestonesByLevel, options.resolveItemName);
+  }
+  if (options.skillId === "runecrafting" && skillSpec.pouchTable && typeof skillSpec.pouchTable === "object") {
+    const pouchIds = Object.keys(skillSpec.pouchTable);
+    for (let index = 0; index < pouchIds.length; index += 1) {
+      const pouchId = pouchIds[index];
+      const pouch = skillSpec.pouchTable[pouchId];
+      if (!pouch || typeof pouch !== "object") continue;
+      const requiredLevel = Number.isFinite(pouch.requiredLevel) ? pouch.requiredLevel : 1;
+      addSkillReferenceUnlock(milestonesByLevel, requiredLevel, `Use ${resolveSkillReferenceItemName(pouchId, options.resolveItemName)}`, {
+        key: `pouch:${pouchId}`
+      });
+    }
+  }
+
+  return milestonesByLevel;
+}
+
+function normalizeLevelBandStarts(levelBands: unknown, fallbackBandStarts: number[]): number[] {
+  const source = Array.isArray(levelBands) && levelBands.length > 0 ? levelBands : fallbackBandStarts;
+  const deduped = new Set<number>();
+  const normalized: number[] = [];
+
+  for (let index = 0; index < source.length; index += 1) {
+    const rawLevel = Number(source[index]);
+    if (!Number.isFinite(rawLevel)) continue;
+    const level = Math.max(1, Math.floor(rawLevel));
+    if (deduped.has(level)) continue;
+    deduped.add(level);
+    normalized.push(level);
+  }
+
+  if (!normalized.length) normalized.push(1);
+  normalized.sort((a, b) => a - b);
+  return normalized;
+}
+
+function buildSkillReferenceBandLabel(startLevel: number, endLevel: number | null): string {
+  if (endLevel === null) return `Lv ${startLevel}+`;
+  if (endLevel <= startLevel) return `Lv ${startLevel}`;
+  return `Lv ${startLevel}-${endLevel}`;
+}
+
+function resolveSkillReferenceUnlockTypeLabel(unlock: SkillReferenceUnlockSeed): string {
+  if (unlock.unlockType === SKILL_REFERENCE_RECIPE_UNLOCK_TYPE) return "Recipe Unlock";
+  if (unlock.key.startsWith("node:")) return "Node Unlock";
+  if (unlock.key.startsWith("method:")) return "Method Unlock";
+  if (unlock.key.startsWith("fish:")) return "Catch Unlock";
+  if (unlock.key.startsWith("pouch:")) return "Pouch Unlock";
+  if (unlock.key.startsWith("combat:")) return "Combat Milestone";
+  return "Unlock";
+}
+
+function toSkillReferenceUnlockViewModel(unlock: SkillReferenceUnlockSeed): SkillReferenceUnlockViewModel {
+  return {
+    key: unlock.key,
+    label: unlock.label,
+    unlockType: unlock.unlockType,
+    unlockTypeLabel: resolveSkillReferenceUnlockTypeLabel(unlock),
+    requiredLevel: unlock.requiredLevel,
+    recipeId: unlock.recipeId,
+    recipe: unlock.recipe
+  };
+}
+
+function buildSkillReferenceEmptyStateText(
+  status: SkillReferenceTierViewModel["status"],
+  bandLabel: string,
+  nextBandLabel: string | null
+): string {
+  if (status === "current" && nextBandLabel) {
+    return `No new unlocks are authored inside ${bandLabel}; keep training toward ${nextBandLabel}.`;
+  }
+  if (status === "next") {
+    return `No unlocks are currently recorded in ${bandLabel}.`;
+  }
+  return `No new unlocks are tracked in ${bandLabel}.`;
+}
+
+function buildSkillReferenceTierViewModels(options: {
+  bandStarts: number[];
+  milestonesByLevel: Record<number, Map<string, SkillReferenceUnlockSeed>>;
+  currentLevel: number;
+}): SkillReferenceTierViewModel[] {
+  const nextBandStart = options.bandStarts.find((bandStart) => bandStart > options.currentLevel) ?? null;
+  const tiers: SkillReferenceTierViewModel[] = [];
+
+  for (let index = 0; index < options.bandStarts.length; index += 1) {
+    const startLevel = options.bandStarts[index];
+    const nextStartLevel = options.bandStarts[index + 1];
+    const endLevel = Number.isFinite(nextStartLevel) ? Math.max(startLevel, nextStartLevel - 1) : null;
+    const bandLabel = buildSkillReferenceBandLabel(startLevel, endLevel);
+    const unlocks: SkillReferenceUnlockViewModel[] = [];
+
+    const levelKeys = Object.keys(options.milestonesByLevel);
+    for (let levelIndex = 0; levelIndex < levelKeys.length; levelIndex += 1) {
+      const requiredLevel = Number(levelKeys[levelIndex]);
+      if (!Number.isFinite(requiredLevel)) continue;
+      if (requiredLevel < startLevel) continue;
+      if (endLevel !== null && requiredLevel > endLevel) continue;
+
+      const levelUnlocks = Array.from(options.milestonesByLevel[requiredLevel].values())
+        .sort((a, b) => a.label.localeCompare(b.label))
+        .map(toSkillReferenceUnlockViewModel);
+      for (let unlockIndex = 0; unlockIndex < levelUnlocks.length; unlockIndex += 1) {
+        unlocks.push(levelUnlocks[unlockIndex]);
+      }
+    }
+
+    unlocks.sort((a, b) => {
+      if (a.requiredLevel !== b.requiredLevel) return a.requiredLevel - b.requiredLevel;
+      return a.label.localeCompare(b.label);
+    });
+
+    let status: SkillReferenceTierViewModel["status"] = "locked";
+    if (options.currentLevel >= startLevel && (endLevel === null || options.currentLevel <= endLevel)) status = "current";
+    else if (endLevel !== null && options.currentLevel > endLevel) status = "unlocked";
+    else if (nextBandStart !== null && startLevel === nextBandStart) status = "next";
+
+    tiers.push({
+      tierIndex: index,
+      bandLabel,
+      startLevel,
+      endLevel,
+      status,
+      unlockCount: unlocks.length,
+      emptyStateText: buildSkillReferenceEmptyStateText(
+        status,
+        bandLabel,
+        Number.isFinite(nextStartLevel) ? buildSkillReferenceBandLabel(nextStartLevel, (options.bandStarts[index + 2] || 0) > 0 ? options.bandStarts[index + 2] - 1 : null) : null
+      ),
+      unlocks
+    });
+  }
+
+  return tiers;
+}
+
+export function buildSkillReferencePanelViewModel(options: {
+  skillId: string;
+  playerSkills: PlayerSkillMap;
+  skillSpec?: Record<string, unknown> | null;
+  resolveItemName?: (itemId: string) => string;
+}): SkillReferencePanelViewModel | null {
+  const skillId = typeof options.skillId === "string" ? options.skillId.trim() : "";
+  if (!skillId) return null;
+
+  const currentLevel = getSkillLevel(options.playerSkills, skillId, skillId === "hitpoints" ? 10 : 1);
+  const skillSpec = options.skillSpec && typeof options.skillSpec === "object"
+    ? options.skillSpec as Record<string, any>
+    : null;
+  const fallbackBandStarts = Array.isArray(COMBAT_SKILL_REFERENCE_MILESTONES[skillId])
+    ? COMBAT_SKILL_REFERENCE_MILESTONES[skillId].map((entry) => entry.level)
+    : [];
+  const milestonesByLevel = collectSkillReferenceUnlocks({
+    skillId,
+    skillSpec,
+    resolveItemName: options.resolveItemName
+  });
+  const milestoneLevels = Object.keys(milestonesByLevel)
+    .map((levelKey) => Number(levelKey))
+    .filter((level) => Number.isFinite(level))
+    .sort((a, b) => a - b);
+  const bandStarts = normalizeLevelBandStarts(
+    skillSpec ? skillSpec.levelBands : null,
+    milestoneLevels.length ? milestoneLevels : fallbackBandStarts
+  );
+  const tiers = buildSkillReferenceTierViewModels({
+    bandStarts,
+    milestonesByLevel,
+    currentLevel
+  });
+  if (!tiers.length) return null;
+
+  const currentTier = tiers.find((tier) => tier.status === "current") || tiers[0];
+  const nextTier = tiers.find((tier) => tier.status === "next") || null;
+
+  let nextUnlockText = "No further authored unlocks are tracked.";
+  outer:
+  for (let tierIndex = 0; tierIndex < tiers.length; tierIndex += 1) {
+    const tier = tiers[tierIndex];
+    for (let unlockIndex = 0; unlockIndex < tier.unlocks.length; unlockIndex += 1) {
+      const unlock = tier.unlocks[unlockIndex];
+      if (unlock.requiredLevel <= currentLevel) continue;
+      nextUnlockText = `Lv ${unlock.requiredLevel}: ${unlock.label}`;
+      break outer;
+    }
+  }
+
+  if (nextUnlockText === "No further authored unlocks are tracked." && nextTier) {
+    nextUnlockText = `Next band: ${nextTier.bandLabel}`;
+  }
+
+  return {
+    skillId,
+    currentLevel,
+    currentBandLabel: currentTier.bandLabel,
+    nextBandLabel: nextTier ? nextTier.bandLabel : null,
+    nextUnlockText,
+    tierCount: tiers.length,
+    tiers
   };
 }
 

@@ -115,6 +115,37 @@ export interface SkillProgressViewModel {
   progressWidth: string;
 }
 
+export interface SkillReferenceUnlockViewModel {
+  key: string;
+  label: string;
+  unlockType: string;
+  unlockTypeLabel: string;
+  requiredLevel: number;
+  recipeId: string | null;
+  recipe: Record<string, unknown> | null;
+}
+
+export interface SkillReferenceTierViewModel {
+  tierIndex: number;
+  bandLabel: string;
+  startLevel: number;
+  endLevel: number | null;
+  status: "unlocked" | "current" | "next" | "locked";
+  unlockCount: number;
+  emptyStateText: string;
+  unlocks: SkillReferenceUnlockViewModel[];
+}
+
+export interface SkillReferencePanelViewModel {
+  skillId: string;
+  currentLevel: number;
+  currentBandLabel: string;
+  nextBandLabel: string | null;
+  nextUnlockText: string;
+  tierCount: number;
+  tiers: SkillReferenceTierViewModel[];
+}
+
 export interface CombatStatsViewModel {
   attack: number;
   defense: number;

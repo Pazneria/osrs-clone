@@ -769,6 +769,22 @@ function run() {
     assert(ctx._queuedInteractions[0].obj === "FIRE", "expected queued interaction against FIRE");
   });
 
+  test("Crafting blocks mould firing when no active fire is found", () => {
+    const ctx = createSkillContext({
+      targetObj: "GROUND",
+      sourceItemId: "imprinted_ring_mould",
+      counts: { imprinted_ring_mould: 1 },
+      hitData: { gridX: 10, gridY: 11, point: { x: 10.5, z: 11.5 } },
+      resolveFireTargetFromHit: () => null
+    });
+
+    const used = crafting.onUseItem(ctx);
+    assert(used, "expected imprinted mould ground use to be recognized");
+    assert(!ctx.playerState.pendingSkillStart, "expected no queued fire craft without an active fire");
+    assert(ctx._queuedInteractions.length === 0, "expected no queued interaction without an active fire");
+    expectMessage(ctx, "You need an active fire to finish that mould.", "missing active fire");
+  });
+
   test("Crafting fires imprinted moulds into permanent mould tools", () => {
     const ctx = createSkillContext({
       targetObj: "FIRE",
@@ -793,6 +809,61 @@ function run() {
     assert((ctx._counts.imprinted_ring_mould || 0) === 0, "expected imprinted mould consumed");
     assert((ctx._xpBySkill.crafting || 0) === 3, "expected mould firing XP grant");
     assert(ctx.playerState.action === null, "expected fire-crafting action to stop once inputs are exhausted");
+  });
+
+  test("Crafting fire sessions stop cleanly when the fire goes out", () => {
+    let fireActive = true;
+    const ctx = createSkillContext({
+      targetObj: "FIRE",
+      sourceItemId: "imprinted_ring_mould",
+      recipeId: "fire_imprinted_ring_mould",
+      counts: { imprinted_ring_mould: 1 },
+      currentTick: 710,
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 11,
+      targetZ: 0,
+      hasActiveFireAt: () => fireActive
+    });
+
+    assert(crafting.onStart(ctx), "expected fire-based mould crafting to start before the fire expires");
+    fireActive = false;
+    ctx.currentTick = 713;
+    crafting.onTick(ctx);
+
+    assert((ctx._counts.ring_mould || 0) === 0, "expected no mould output after the fire goes out");
+    assert((ctx._counts.imprinted_ring_mould || 0) === 1, "expected imprinted mould to remain when no craft occurs");
+    assert(ctx.playerState.action === null, "expected fire-crafting action to stop when the fire expires");
+    expectMessage(ctx, "The fire has gone out.", "fire expired");
+  });
+
+  test("Crafting fire sessions stop when the player moves away from the fire", () => {
+    const ctx = createSkillContext({
+      targetObj: "FIRE",
+      sourceItemId: "imprinted_ring_mould",
+      recipeId: "fire_imprinted_ring_mould",
+      counts: { imprinted_ring_mould: 1 },
+      currentTick: 720,
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 11,
+      targetZ: 0,
+      hasActiveFireAt: () => true
+    });
+
+    assert(crafting.onStart(ctx), "expected fire-based mould crafting to start before moving away");
+    ctx.playerState.x = 13;
+    ctx.currentTick = 723;
+    crafting.onTick(ctx);
+
+    assert((ctx._counts.ring_mould || 0) === 0, "expected no mould output after moving away from the fire");
+    assert((ctx._counts.imprinted_ring_mould || 0) === 1, "expected imprinted mould to remain when no craft occurs");
+    assert(ctx.playerState.action === null, "expected fire-crafting action to stop when the player leaves the fire");
+    expectMessage(ctx, "You move away from the fire.", "fire moved away");
   });
 
   test("Crafting onStart/onTick count mode crafts exact quantity", () => {

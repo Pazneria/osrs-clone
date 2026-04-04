@@ -1262,6 +1262,18 @@
             return null;
         }
 
+        function buildSkillReferencePanelUiViewModel(skillName) {
+            if (!skillName || !playerSkills[skillName]) return null;
+            const runtime = getUiDomainRuntime();
+            if (!runtime || typeof runtime.buildSkillReferencePanelViewModel !== 'function') return null;
+            return runtime.buildSkillReferencePanelViewModel({
+                skillId: skillName,
+                playerSkills,
+                skillSpec: resolveSkillPanelSpec(skillName),
+                resolveItemName: resolveSkillPanelItemName
+            });
+        }
+
         function addSkillPanelDetailSection(container, title, rows) {
             if (!container || !Array.isArray(rows) || rows.length === 0) return;
             const section = document.createElement('div');
@@ -1284,6 +1296,9 @@
 
         function getSkillPanelUnlockTypeLabel(unlockEntry) {
             if (!unlockEntry || typeof unlockEntry !== 'object') return 'Unlock';
+            if (typeof unlockEntry.unlockTypeLabel === 'string' && unlockEntry.unlockTypeLabel.trim()) {
+                return unlockEntry.unlockTypeLabel.trim();
+            }
             if (unlockEntry.unlockType === SKILL_PANEL_RECIPE_UNLOCK_TYPE) return 'Recipe Unlock';
             const key = typeof unlockEntry.key === 'string' ? unlockEntry.key : '';
             if (key.startsWith('node:')) return 'Node Unlock';
@@ -1423,7 +1438,7 @@
             return detailsEl;
         }
 
-        function renderSkillPanelTimeline(skillName, currentLevel) {
+        function renderSkillPanelTimelineLegacy(skillName, currentLevel) {
             const timelineEl = document.getElementById('skill-panel-unlocks');
             if (!timelineEl) return;
             timelineEl.innerHTML = '';
@@ -1509,7 +1524,7 @@
                     unlockBtn.appendChild(unlockRow);
                     unlockBtn.onclick = () => {
                         activeSkillPanelUnlockKey = isSelected ? null : unlock.key;
-                        renderSkillPanelTimeline(skillName, currentLevel);
+                        renderSkillPanelTimelineLegacy(skillName, currentLevel);
                     };
                     levelBody.appendChild(unlockBtn);
 
@@ -1521,6 +1536,155 @@
 
                 levelWrap.appendChild(levelBody);
                 timelineEl.appendChild(levelWrap);
+            }
+        }
+
+        function renderSkillPanelSummary(progressViewModel, referenceViewModel) {
+            const summaryEl = document.getElementById('skill-panel-summary');
+            if (!summaryEl) return;
+            if (!progressViewModel || !referenceViewModel) {
+                summaryEl.innerHTML = '<div class="text-gray-400">Structured tier-band data is not available yet for this skill.</div>';
+                return;
+            }
+
+            const nextBandText = referenceViewModel.nextBandLabel || 'Top band';
+            summaryEl.innerHTML = `<div class="flex items-center justify-between gap-2">
+                    <div class="text-[#ffcf8b] font-bold">${escapeTooltipHtml(progressViewModel.icon)} ${escapeTooltipHtml(progressViewModel.name)}</div>
+                    <div class="text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">Lv ${escapeTooltipHtml(progressViewModel.level)}</div>
+                </div>
+                <div class="mt-2 grid gap-1 text-[10px] leading-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-gray-400">Current band</span>
+                        <span class="text-white">${escapeTooltipHtml(referenceViewModel.currentBandLabel)}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-gray-400">Next band</span>
+                        <span class="text-white">${escapeTooltipHtml(nextBandText)}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-gray-400">To next level</span>
+                        <span class="text-white">${escapeTooltipHtml(progressViewModel.remainingText)}</span>
+                    </div>
+                    <div class="pt-1 text-gray-300">${escapeTooltipHtml(referenceViewModel.nextUnlockText)}</div>
+                </div>`;
+        }
+
+        function renderSkillPanelTimeline(skillName, referenceViewModel) {
+            const timelineEl = document.getElementById('skill-panel-unlocks');
+            if (!timelineEl) return;
+            timelineEl.innerHTML = '';
+
+            const tiers = referenceViewModel && Array.isArray(referenceViewModel.tiers) ? referenceViewModel.tiers : [];
+            if (!tiers.length) {
+                const empty = document.createElement('div');
+                empty.className = 'text-gray-400';
+                empty.innerText = 'No tracked tier data is available yet for this skill.';
+                timelineEl.appendChild(empty);
+                return;
+            }
+
+            const hasSelectedUnlock = !!tiers.find((tier) => Array.isArray(tier.unlocks) && tier.unlocks.find((unlock) => unlock.key === activeSkillPanelUnlockKey));
+            if (!hasSelectedUnlock) activeSkillPanelUnlockKey = null;
+
+            for (let i = 0; i < tiers.length; i++) {
+                const tier = tiers[i];
+                const tierWrap = document.createElement('div');
+                tierWrap.className = 'border border-[#3e3529] bg-[#120e0b]';
+
+                const tierHeader = document.createElement('div');
+                tierHeader.className = tier.status === 'unlocked'
+                    ? 'px-2 py-1.5 flex items-center justify-between gap-2 text-[#9fdc8f] text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]'
+                    : (tier.status === 'current'
+                        ? 'px-2 py-1.5 flex items-center justify-between gap-2 text-[#ffcf8b] text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]'
+                        : (tier.status === 'next'
+                            ? 'px-2 py-1.5 flex items-center justify-between gap-2 text-[#ffd27d] text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]'
+                            : 'px-2 py-1.5 flex items-center justify-between gap-2 text-gray-400 text-[10px] uppercase tracking-wide font-bold border-b border-[#3e3529]'));
+
+                const tierLabel = document.createElement('span');
+                tierLabel.innerText = tier.bandLabel;
+
+                const tierMeta = document.createElement('span');
+                const statusLabel = tier.status === 'current'
+                    ? 'Current'
+                    : (tier.status === 'next'
+                        ? 'Next'
+                        : (tier.status === 'unlocked' ? 'Cleared' : 'Later'));
+                const unlockCountText = tier.unlockCount === 0
+                    ? 'No unlocks'
+                    : `${tier.unlockCount} unlock${tier.unlockCount === 1 ? '' : 's'}`;
+                tierMeta.innerText = `${statusLabel} / ${unlockCountText}`;
+
+                tierHeader.appendChild(tierLabel);
+                tierHeader.appendChild(tierMeta);
+                tierWrap.appendChild(tierHeader);
+
+                const tierBody = document.createElement('div');
+                tierBody.className = 'px-2 py-1 space-y-1';
+
+                if (!tier.unlocks.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'px-1.5 py-1 text-[10px] leading-4 text-gray-400';
+                    empty.innerText = tier.emptyStateText || 'No unlocks are tracked in this band yet.';
+                    tierBody.appendChild(empty);
+                    tierWrap.appendChild(tierBody);
+                    timelineEl.appendChild(tierWrap);
+                    continue;
+                }
+
+                for (let j = 0; j < tier.unlocks.length; j++) {
+                    const unlock = tier.unlocks[j];
+                    const isSelected = activeSkillPanelUnlockKey === unlock.key;
+
+                    const unlockBtn = document.createElement('button');
+                    unlockBtn.type = 'button';
+                    unlockBtn.className = isSelected
+                        ? 'w-full text-left px-1.5 py-1 border border-[#6b5733] bg-[#2b2115] text-[#ffd27d] hover:bg-[#352718] transition-colors'
+                        : 'w-full text-left px-1.5 py-1 border border-[#3e3529] text-gray-200 hover:bg-[#241d17] transition-colors';
+
+                    const unlockRow = document.createElement('div');
+                    unlockRow.className = 'flex items-start gap-2';
+
+                    const statusIcon = document.createElement('span');
+                    statusIcon.className = tier.status === 'unlocked'
+                        ? 'text-[#9fdc8f] text-[11px] leading-4'
+                        : (tier.status === 'current'
+                            ? 'text-[#ffcf8b] text-[11px] leading-4'
+                            : (tier.status === 'next'
+                                ? 'text-[#ffd27d] text-[11px] leading-4'
+                                : 'text-gray-500 text-[11px] leading-4'));
+                    statusIcon.innerText = tier.status === 'unlocked'
+                        ? '+'
+                        : (tier.status === 'current' ? '>' : (tier.status === 'next' ? '~' : '-'));
+
+                    const unlockText = document.createElement('div');
+                    unlockText.className = 'min-w-0 flex-1';
+
+                    const label = document.createElement('div');
+                    label.innerText = unlock.label;
+
+                    const meta = document.createElement('div');
+                    meta.className = 'text-[10px] uppercase tracking-wide text-[#c8aa6e]';
+                    meta.innerText = `Lv ${unlock.requiredLevel} / ${getSkillPanelUnlockTypeLabel(unlock)}${isSelected ? ' / Hide Details' : ''}`;
+
+                    unlockText.appendChild(label);
+                    unlockText.appendChild(meta);
+                    unlockRow.appendChild(statusIcon);
+                    unlockRow.appendChild(unlockText);
+                    unlockBtn.appendChild(unlockRow);
+                    unlockBtn.onclick = () => {
+                        activeSkillPanelUnlockKey = isSelected ? null : unlock.key;
+                        renderSkillPanelTimeline(skillName, referenceViewModel);
+                    };
+                    tierBody.appendChild(unlockBtn);
+
+                    if (isSelected) {
+                        const detailsEl = buildSkillPanelUnlockDetailsElement(skillName, unlock.requiredLevel, unlock);
+                        if (detailsEl) tierBody.appendChild(detailsEl);
+                    }
+                }
+
+                tierWrap.appendChild(tierBody);
+                timelineEl.appendChild(tierWrap);
             }
         }
 
@@ -1691,10 +1855,12 @@
 
             const progressViewModel = buildSkillProgressUiViewModel(skillName);
             if (!progressViewModel) return;
+            const referenceViewModel = buildSkillReferencePanelUiViewModel(skillName);
 
             const titleEl = document.getElementById('skill-panel-title');
             if (titleEl) titleEl.innerText = progressViewModel.name;
-            renderSkillPanelTimeline(skillName, progressViewModel.level);
+            renderSkillPanelSummary(progressViewModel, referenceViewModel);
+            renderSkillPanelTimeline(skillName, referenceViewModel);
         }
 
         function openSkillProgressPanel(skillName, tileEl) {

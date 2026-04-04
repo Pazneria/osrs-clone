@@ -31,6 +31,7 @@ import {
   buildCombatStatsViewModel,
   buildEquipmentSlotViewModels,
   buildPlayerProfileSummaryViewModel,
+  buildSkillReferencePanelViewModel,
   buildSkillProgressViewModel,
   buildSkillTileViewModels
 } from "../ui/hud-view-models";
@@ -76,6 +77,7 @@ declare global {
         playerSkills: Record<string, { xp: number; level: number } | undefined>;
       }) => ReturnType<typeof buildSkillTileViewModels>;
       buildSkillProgressViewModel: typeof buildSkillProgressViewModel;
+      buildSkillReferencePanelViewModel: typeof buildSkillReferencePanelViewModel;
       buildPlayerProfileSummaryViewModel: (options: {
         profile: PlayerProfileState;
         playerEntryFlow: {
@@ -114,6 +116,7 @@ export function exposeUiDomainBridge(): void {
     buildEquipmentSlotViewModels,
     buildSkillTileViewModels,
     buildSkillProgressViewModel,
+    buildSkillReferencePanelViewModel,
     buildPlayerProfileSummaryViewModel
   };
 }

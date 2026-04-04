@@ -536,10 +536,12 @@
                 },
                 merchantTable: {
                     rune_tutor: {
+                        strictBuys: true,
                         buys: ['rune_essence', 'ember_rune', 'water_rune', 'earth_rune', 'air_rune'],
                         sells: ['rune_essence', 'ember_rune', 'water_rune', 'earth_rune', 'air_rune']
                     },
                     combination_sage: {
+                        strictBuys: true,
                         buys: ['rune_essence', 'steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune', 'small_pouch', 'medium_pouch', 'large_pouch'],
                         sells: ['rune_essence', 'steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune', 'small_pouch', 'medium_pouch', 'large_pouch'],
                         pouchUnlocks: { small_pouch: 10, medium_pouch: 20, large_pouch: 30 }
@@ -1838,6 +1840,123 @@
         }
     }
 
+    function validateRunecraftingEconomyParity(skillSpecs) {
+        const runecraftingSpec = skillSpecs && skillSpecs.runecrafting ? skillSpecs.runecrafting : null;
+        if (!runecraftingSpec || !runecraftingSpec.economy || !runecraftingSpec.economy.valueTable) {
+            throw new Error('Runecrafting economy parity mismatch\n- missing runecrafting economy tables');
+        }
+
+        const errors = [];
+        const valueTable = runecraftingSpec.economy.valueTable || {};
+        const merchantTable = runecraftingSpec.economy.merchantTable && typeof runecraftingSpec.economy.merchantTable === 'object'
+            ? runecraftingSpec.economy.merchantTable
+            : null;
+        const pouchTable = runecraftingSpec.pouchTable && typeof runecraftingSpec.pouchTable === 'object'
+            ? runecraftingSpec.pouchTable
+            : {};
+        const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS && typeof window.ItemCatalog.ITEM_DEFS === 'object'
+            ? window.ItemCatalog.ITEM_DEFS
+            : null;
+        const requiredValueIds = ['rune_essence', 'ember_rune', 'water_rune', 'earth_rune', 'air_rune', 'steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune', 'small_pouch', 'medium_pouch', 'large_pouch'];
+        const expectedMerchants = {
+            rune_tutor: {
+                buys: ['rune_essence', 'ember_rune', 'water_rune', 'earth_rune', 'air_rune'],
+                sells: ['rune_essence', 'ember_rune', 'water_rune', 'earth_rune', 'air_rune'],
+                strictBuys: true
+            },
+            combination_sage: {
+                buys: ['rune_essence', 'steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune', 'small_pouch', 'medium_pouch', 'large_pouch'],
+                sells: ['rune_essence', 'steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune', 'small_pouch', 'medium_pouch', 'large_pouch'],
+                strictBuys: true
+            }
+        };
+
+        for (let i = 0; i < requiredValueIds.length; i++) {
+            const itemId = requiredValueIds[i];
+            const row = valueTable[itemId];
+            if (!row || typeof row !== 'object') {
+                errors.push('runecrafting value table missing row for ' + itemId);
+                continue;
+            }
+            if (!Number.isFinite(row.buy)) errors.push('runecrafting buy value must be numeric for ' + itemId);
+            if (!Number.isFinite(row.sell)) errors.push('runecrafting sell value must be numeric for ' + itemId);
+            if (itemDefs) {
+                const item = itemDefs[itemId];
+                if (!item) {
+                    errors.push('runecrafting value row references missing item catalog entry ' + itemId);
+                } else if (Number.isFinite(row.buy) && item.value !== row.buy) {
+                    errors.push('runecrafting buy value must mirror item catalog value for ' + itemId);
+                }
+            }
+        }
+
+        if (!merchantTable) {
+            errors.push('runecrafting merchant table missing');
+        } else {
+            const expectedMerchantIds = Object.keys(expectedMerchants);
+            for (let i = 0; i < expectedMerchantIds.length; i++) {
+                const merchantId = expectedMerchantIds[i];
+                const expected = expectedMerchants[merchantId];
+                const config = merchantTable[merchantId];
+                if (!config || typeof config !== 'object') {
+                    errors.push('runecrafting merchant config missing for ' + merchantId);
+                    continue;
+                }
+
+                const buys = Array.isArray(config.buys) ? config.buys.slice().sort() : [];
+                const sells = Array.isArray(config.sells) ? config.sells.slice().sort() : [];
+                const expectedBuys = expected.buys.slice().sort();
+                const expectedSells = expected.sells.slice().sort();
+                if (!!config.strictBuys !== expected.strictBuys) {
+                    errors.push('runecrafting merchant ' + merchantId + ' must set strictBuys');
+                }
+                if (JSON.stringify(buys) !== JSON.stringify(expectedBuys)) {
+                    errors.push('runecrafting merchant ' + merchantId + ' buy table must match authored economy rows');
+                }
+                if (JSON.stringify(sells) !== JSON.stringify(expectedSells)) {
+                    errors.push('runecrafting merchant ' + merchantId + ' sell table must match authored economy rows');
+                }
+
+                const listed = new Set([].concat(buys, sells));
+                for (const itemId of listed) {
+                    if (!valueTable[itemId]) {
+                        errors.push('runecrafting merchant ' + merchantId + ' references missing value-table row ' + itemId);
+                    }
+                }
+            }
+
+            const combinationPouchUnlocks = merchantTable.combination_sage && merchantTable.combination_sage.pouchUnlocks && typeof merchantTable.combination_sage.pouchUnlocks === 'object'
+                ? merchantTable.combination_sage.pouchUnlocks
+                : {};
+            const pouchIds = Object.keys(pouchTable).sort();
+            for (let i = 0; i < pouchIds.length; i++) {
+                const pouchId = pouchIds[i];
+                const expectedLevel = Number.isFinite(pouchTable[pouchId] && pouchTable[pouchId].requiredLevel)
+                    ? Math.max(1, Math.floor(pouchTable[pouchId].requiredLevel))
+                    : null;
+                const unlockLevel = Number.isFinite(combinationPouchUnlocks[pouchId])
+                    ? Math.max(1, Math.floor(combinationPouchUnlocks[pouchId]))
+                    : null;
+                if (unlockLevel === null) {
+                    errors.push('runecrafting combination_sage is missing pouch unlock level for ' + pouchId);
+                    continue;
+                }
+                if (expectedLevel !== null && unlockLevel !== expectedLevel) {
+                    errors.push('runecrafting pouch unlock mismatch for ' + pouchId);
+                }
+            }
+
+            const extraPouchIds = Object.keys(combinationPouchUnlocks).filter((pouchId) => !Object.prototype.hasOwnProperty.call(pouchTable, pouchId));
+            for (let i = 0; i < extraPouchIds.length; i++) {
+                errors.push('runecrafting combination_sage has unexpected pouch unlock entry ' + extraPouchIds[i]);
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Runecrafting economy parity mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     function roundBalanceMetric(value) {
         if (!Number.isFinite(value)) return null;
         return Math.round(value * 10000) / 10000;
@@ -2279,6 +2398,218 @@
 
         if (errors.length > 0) {
             throw new Error('Cooking balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
+    function findWoodcuttingNodeIdByLogItemId(woodcuttingSpec, logItemId) {
+        const nodeTable = woodcuttingSpec && woodcuttingSpec.nodeTable && typeof woodcuttingSpec.nodeTable === 'object'
+            ? woodcuttingSpec.nodeTable
+            : {};
+        const nodeIds = Object.keys(nodeTable);
+        for (let i = 0; i < nodeIds.length; i++) {
+            const nodeId = nodeIds[i];
+            const node = nodeTable[nodeId];
+            if (!node || typeof node !== 'object') continue;
+            if (node.rewardItemId === logItemId) return nodeId;
+        }
+        return null;
+    }
+
+    function computeFiremakingBalanceMetrics(skillSpecs, recipeId, options = {}) {
+        const firemakingSpec = skillSpecs && skillSpecs.firemaking ? skillSpecs.firemaking : null;
+        const recipeSet = firemakingSpec && firemakingSpec.recipeSet && typeof firemakingSpec.recipeSet === 'object'
+            ? firemakingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const cookingSpec = skillSpecs && skillSpecs.cooking ? skillSpecs.cooking : null;
+        const woodcuttingSpec = skillSpecs && skillSpecs.woodcutting ? skillSpecs.woodcutting : null;
+        const levelBands = Array.isArray(firemakingSpec && firemakingSpec.levelBands) ? firemakingSpec.levelBands.filter((value) => Number.isFinite(value)) : [];
+        const timing = firemakingSpec && firemakingSpec.timing && typeof firemakingSpec.timing === 'object'
+            ? firemakingSpec.timing
+            : {};
+        const valueTable = firemakingSpec && firemakingSpec.economy && firemakingSpec.economy.valueTable && typeof firemakingSpec.economy.valueTable === 'object'
+            ? firemakingSpec.economy.valueTable
+            : {};
+        const cookingTiming = cookingSpec && cookingSpec.timing && typeof cookingSpec.timing === 'object'
+            ? cookingSpec.timing
+            : {};
+
+        const level = Number.isFinite(options.level) ? options.level : (levelBands.length > 0 ? Math.max(...levelBands) : 1);
+        const ignitionAttemptTicks = Number.isFinite(timing.ignitionAttemptTicks) ? timing.ignitionAttemptTicks : 1;
+        const cookingActionTicks = Number.isFinite(options.cookingActionTicks)
+            ? options.cookingActionTicks
+            : (Number.isFinite(cookingTiming.actionTicks) ? cookingTiming.actionTicks : 1);
+        const difficulty = Math.max(1, Number.isFinite(recipe.ignitionDifficulty) ? recipe.ignitionDifficulty : 1);
+        const successChance = level / (level + difficulty);
+        const expectedAttemptsPerSuccess = successChance > 0 ? 1 / successChance : null;
+        const expectedTicksPerSuccess = expectedAttemptsPerSuccess === null ? null : expectedAttemptsPerSuccess * ignitionAttemptTicks;
+        const logsConsumedPerTick = expectedTicksPerSuccess && expectedTicksPerSuccess > 0 ? 1 / expectedTicksPerSuccess : 0;
+        const xpPerTick = logsConsumedPerTick * (Number.isFinite(recipe.xpPerSuccess) ? recipe.xpPerSuccess : 0);
+        const logValueRow = valueTable[recipe.sourceItemId] && typeof valueTable[recipe.sourceItemId] === 'object'
+            ? valueTable[recipe.sourceItemId]
+            : {};
+        const logSellValue = Number.isFinite(logValueRow.sell) ? logValueRow.sell : 0;
+        const goldSinkPerTick = logsConsumedPerTick * logSellValue;
+        const cookingActionsPerFire = cookingActionTicks > 0 && Number.isFinite(recipe.fireLifetimeTicks)
+            ? recipe.fireLifetimeTicks / cookingActionTicks
+            : null;
+
+        const woodcuttingBenchmark = {
+            level: Number.isFinite(options.woodcuttingLevel) ? options.woodcuttingLevel : 40,
+            toolPower: Number.isFinite(options.woodcuttingToolPower) ? options.woodcuttingToolPower : 28,
+            speedBonusTicks: Number.isFinite(options.woodcuttingSpeedBonusTicks) ? options.woodcuttingSpeedBonusTicks : 5
+        };
+        const woodcuttingNodeId = findWoodcuttingNodeIdByLogItemId(woodcuttingSpec, recipe.sourceItemId);
+        const woodcuttingMetrics = woodcuttingNodeId
+            ? computeWoodcuttingBalanceMetrics(woodcuttingSpec, woodcuttingNodeId, woodcuttingBenchmark)
+            : null;
+        const sustainedCoverageRatio = woodcuttingMetrics && logsConsumedPerTick > 0 && Number.isFinite(woodcuttingMetrics.sustainedLogsPerTick)
+            ? woodcuttingMetrics.sustainedLogsPerTick / logsConsumedPerTick
+            : null;
+
+        return {
+            recipeId,
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            successChance,
+            expectedAttemptsPerSuccess,
+            expectedTicksPerSuccess,
+            logsConsumedPerTick,
+            xpPerTick,
+            goldSinkPerTick,
+            cookingActionsPerFire,
+            woodcuttingNodeId,
+            sustainedCoverageRatio
+        };
+    }
+
+    function validateFiremakingBalanceCurve(skillSpecs) {
+        const firemakingSpec = skillSpecs && skillSpecs.firemaking ? skillSpecs.firemaking : null;
+        if (!firemakingSpec || !firemakingSpec.recipeSet) {
+            throw new Error('Firemaking balance curve mismatch\n- missing firemaking recipe set');
+        }
+
+        const valueTable = firemakingSpec.economy && firemakingSpec.economy.valueTable && typeof firemakingSpec.economy.valueTable === 'object'
+            ? firemakingSpec.economy.valueTable
+            : null;
+        if (!valueTable) {
+            throw new Error('Firemaking balance curve mismatch\n- missing firemaking value table');
+        }
+
+        const errors = [];
+        const requiredRecipes = ['logs', 'oak_logs', 'willow_logs', 'maple_logs', 'yew_logs'];
+        for (let i = 0; i < requiredRecipes.length; i++) {
+            if (!firemakingSpec.recipeSet[requiredRecipes[i]]) {
+                errors.push('missing firemaking recipe ' + requiredRecipes[i]);
+            }
+        }
+
+        const tierEntryBenchmarks = [
+            { recipeId: 'logs', requiredLevel: 1, success: 0.0625, expectedTicks: 16, xpPerTick: 2.5, goldSinkPerTick: 0.125, cookingActionsPerFire: 90 },
+            { recipeId: 'oak_logs', requiredLevel: 10, success: 0.2857, expectedTicks: 3.5, xpPerTick: 17.1429, goldSinkPerTick: 1.7143, cookingActionsPerFire: 90 },
+            { recipeId: 'willow_logs', requiredLevel: 20, success: 0.3636, expectedTicks: 2.75, xpPerTick: 32.7273, goldSinkPerTick: 5.0909, cookingActionsPerFire: 90 },
+            { recipeId: 'maple_logs', requiredLevel: 30, success: 0.375, expectedTicks: 2.6667, xpPerTick: 50.625, goldSinkPerTick: 12, cookingActionsPerFire: 90 },
+            { recipeId: 'yew_logs', requiredLevel: 40, success: 0.381, expectedTicks: 2.625, xpPerTick: 76.1905, goldSinkPerTick: 27.4286, cookingActionsPerFire: 90 }
+        ];
+
+        const level40Benchmarks = [
+            { recipeId: 'logs', level: 40, success: 0.7273, expectedTicks: 1.375, xpPerTick: 29.0909, goldSinkPerTick: 1.4545, cookingActionsPerFire: 90, sustainedCoverageRatio: 0.0931 },
+            { recipeId: 'oak_logs', level: 40, success: 0.6154, expectedTicks: 1.625, xpPerTick: 36.9231, goldSinkPerTick: 3.6923, cookingActionsPerFire: 90, sustainedCoverageRatio: 0.1028 },
+            { recipeId: 'willow_logs', level: 40, success: 0.5333, expectedTicks: 1.875, xpPerTick: 48, goldSinkPerTick: 7.4667, cookingActionsPerFire: 90, sustainedCoverageRatio: 0.1175 },
+            { recipeId: 'maple_logs', level: 40, success: 0.4444, expectedTicks: 2.25, xpPerTick: 60, goldSinkPerTick: 14.2222, cookingActionsPerFire: 90, sustainedCoverageRatio: 0.1506 },
+            { recipeId: 'yew_logs', level: 40, success: 0.381, expectedTicks: 2.625, xpPerTick: 76.1905, goldSinkPerTick: 27.4286, cookingActionsPerFire: 90, sustainedCoverageRatio: 0.3306 }
+        ];
+
+        let previousTierEntryXp = 0;
+        let previousTierEntryGold = 0;
+        for (let i = 0; i < tierEntryBenchmarks.length; i++) {
+            const benchmark = tierEntryBenchmarks[i];
+            const metrics = computeFiremakingBalanceMetrics(skillSpecs, benchmark.recipeId, { level: benchmark.requiredLevel });
+            if (!metrics) {
+                errors.push('missing firemaking balance metrics for ' + benchmark.recipeId);
+                continue;
+            }
+            if (metrics.requiredLevel !== benchmark.requiredLevel) {
+                errors.push(benchmark.recipeId + ' requiredLevel mismatch');
+            }
+            if (roundBalanceMetric(metrics.successChance) !== benchmark.success) {
+                errors.push(benchmark.recipeId + ' success chance mismatch at tier entry');
+            }
+            if (roundBalanceMetric(metrics.expectedTicksPerSuccess) !== benchmark.expectedTicks) {
+                errors.push(benchmark.recipeId + ' expected ticks mismatch at tier entry');
+            }
+            if (roundBalanceMetric(metrics.xpPerTick) !== benchmark.xpPerTick) {
+                errors.push(benchmark.recipeId + ' xp/tick mismatch at tier entry');
+            }
+            if (roundBalanceMetric(metrics.goldSinkPerTick) !== benchmark.goldSinkPerTick) {
+                errors.push(benchmark.recipeId + ' gold sink/tick mismatch at tier entry');
+            }
+            if (roundBalanceMetric(metrics.cookingActionsPerFire) !== benchmark.cookingActionsPerFire) {
+                errors.push(benchmark.recipeId + ' cooking-actions-per-fire mismatch at tier entry');
+            }
+            if (!(metrics.xpPerTick > previousTierEntryXp)) {
+                errors.push(benchmark.recipeId + ' should beat the previous tier on tier-entry xp/tick');
+            }
+            if (!(metrics.goldSinkPerTick > previousTierEntryGold)) {
+                errors.push(benchmark.recipeId + ' should beat the previous tier on tier-entry gold sink/tick');
+            }
+            previousTierEntryXp = metrics.xpPerTick;
+            previousTierEntryGold = metrics.goldSinkPerTick;
+        }
+
+        let previousLevel40Xp = 0;
+        let previousLevel40Gold = 0;
+        let previousLevel40Ticks = 0;
+        let previousCoverage = 0;
+        for (let i = 0; i < level40Benchmarks.length; i++) {
+            const benchmark = level40Benchmarks[i];
+            const metrics = computeFiremakingBalanceMetrics(skillSpecs, benchmark.recipeId, { level: benchmark.level });
+            if (!metrics) {
+                errors.push('missing firemaking level-40 metrics for ' + benchmark.recipeId);
+                continue;
+            }
+            if (roundBalanceMetric(metrics.successChance) !== benchmark.success) {
+                errors.push(benchmark.recipeId + ' success chance mismatch at level 40');
+            }
+            if (roundBalanceMetric(metrics.expectedTicksPerSuccess) !== benchmark.expectedTicks) {
+                errors.push(benchmark.recipeId + ' expected ticks mismatch at level 40');
+            }
+            if (roundBalanceMetric(metrics.xpPerTick) !== benchmark.xpPerTick) {
+                errors.push(benchmark.recipeId + ' xp/tick mismatch at level 40');
+            }
+            if (roundBalanceMetric(metrics.goldSinkPerTick) !== benchmark.goldSinkPerTick) {
+                errors.push(benchmark.recipeId + ' gold sink/tick mismatch at level 40');
+            }
+            if (roundBalanceMetric(metrics.cookingActionsPerFire) !== benchmark.cookingActionsPerFire) {
+                errors.push(benchmark.recipeId + ' cooking-actions-per-fire mismatch at level 40');
+            }
+            if (roundBalanceMetric(metrics.sustainedCoverageRatio) !== benchmark.sustainedCoverageRatio) {
+                errors.push(benchmark.recipeId + ' sustained woodcutting coverage mismatch at level 40');
+            }
+            if (!(metrics.xpPerTick > previousLevel40Xp)) {
+                errors.push(benchmark.recipeId + ' should beat the previous tier on level-40 xp/tick');
+            }
+            if (!(metrics.goldSinkPerTick > previousLevel40Gold)) {
+                errors.push(benchmark.recipeId + ' should beat the previous tier on level-40 gold sink/tick');
+            }
+            if (!(metrics.expectedTicksPerSuccess > previousLevel40Ticks)) {
+                errors.push(benchmark.recipeId + ' should take longer to light than the previous tier at level 40');
+            }
+            if (!(metrics.sustainedCoverageRatio > previousCoverage)) {
+                errors.push(benchmark.recipeId + ' should improve same-log woodcutting coverage over the previous tier at level 40');
+            }
+            if (!(metrics.sustainedCoverageRatio < 1)) {
+                errors.push(benchmark.recipeId + ' should remain a net log sink against one maxed same-log woodcutting lane');
+            }
+            previousLevel40Xp = metrics.xpPerTick;
+            previousLevel40Gold = metrics.goldSinkPerTick;
+            previousLevel40Ticks = metrics.expectedTicksPerSuccess;
+            previousCoverage = metrics.sustainedCoverageRatio;
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Firemaking balance curve mismatch\n- ' + errors.join('\n- '));
         }
     }
 
@@ -2881,8 +3212,10 @@
 
         return {
             nodeId,
+            activeLogsPerTick,
             activeXpPerTick,
             activeGoldPerTick,
+            sustainedLogsPerTick,
             sustainedXpPerTick,
             sustainedGoldPerTick,
             sellValue
@@ -3190,8 +3523,10 @@
     validateCookingBalanceCurve(SKILL_SPECS);
     validateWoodcuttingBalanceCurve(SKILL_SPECS);
     validateMiningBalanceCurve(SKILL_SPECS);
+    validateRunecraftingEconomyParity(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
+    validateFiremakingBalanceCurve(SKILL_SPECS);
     validateFletchingBalanceCurve(SKILL_SPECS);
     validateCraftingBalanceCurve(SKILL_SPECS);
 

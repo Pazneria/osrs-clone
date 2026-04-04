@@ -474,7 +474,7 @@ function runCookingChecks(roadmap, spec, itemDefs) {
   }
 }
 
-function runFiremakingChecks(roadmap, spec) {
+function runFiremakingChecks(roadmap, spec, runtimeSkills) {
   const lines = roadmap.split(/\r?\n/);
   assertRegex(roadmap, /\|\s*Ignition Attempt Interval Ticks\s*\|\s*1\s*\|/, "firemaking roadmap ignition tick mismatch");
 
@@ -509,6 +509,80 @@ function runFiremakingChecks(roadmap, spec) {
 
   const ashesLine = findLine(lines, (entry) => /^\|\s*Ashes\s*\|\s*Resource\s*\|/.test(entry));
   assert(!!ashesLine && new RegExp(`\\|\\s*${values.ashes.buy}\\s*\\|\\s*${values.ashes.sell}\\s*\\|`).test(ashesLine), "firemaking ashes value row mismatch");
+
+  const woodcuttingSpec = runtimeSkills.woodcutting;
+  const cookingSpec = runtimeSkills.cooking;
+  const woodcuttingNodeByLog = {
+    logs: "normal_tree",
+    oak_logs: "oak_tree",
+    willow_logs: "willow_tree",
+    maple_logs: "maple_tree",
+    yew_logs: "yew_tree"
+  };
+
+  function computeFiremakingOutputs(recipeId, level) {
+    const recipe = spec.recipeSet[recipeId];
+    const successChance = level / (level + recipe.ignitionDifficulty);
+    const expectedTicksPerFire = 1 / successChance;
+    const logSellValue = spec.economy.valueTable[recipe.sourceItemId].sell;
+    const nodeId = woodcuttingNodeByLog[recipe.sourceItemId];
+    const woodcuttingOutputs = computeWoodcuttingOutputs(woodcuttingSpec, woodcuttingSpec.nodeTable[nodeId], {
+      level: 40,
+      toolPower: 28,
+      speedBonusTicks: 5
+    });
+
+    return {
+      successChance,
+      expectedTicksPerFire,
+      xpPerTick: successChance * recipe.xpPerSuccess,
+      goldSinkPerTick: successChance * logSellValue,
+      cookingActionsPerFire: recipe.fireLifetimeTicks / cookingSpec.timing.actionTicks,
+      sustainedCoverageRatio: woodcuttingOutputs.sustainedLogsPerTick / successChance
+    };
+  }
+
+  const tierEntryRows = recipeRows.map((row) => ({
+    label: row.label,
+    recipeId: row.recipeId,
+    level: spec.recipeSet[row.recipeId].requiredLevel
+  }));
+  for (const row of tierEntryRows) {
+    const metrics = computeFiremakingOutputs(row.recipeId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${toPercent(metrics.successChance)}\\s*\\|\\s*${formatMetric(metrics.expectedTicksPerFire)}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.goldSinkPerTick)}\\s*\\|\\s*${formatMetric(metrics.cookingActionsPerFire)}\\s*\\|`),
+      `firemaking tier-entry benchmark mismatch for ${row.label}`
+    );
+  }
+
+  const level40Rows = recipeRows.map((row) => ({
+    label: row.label,
+    recipeId: row.recipeId,
+    level: 40
+  }));
+  for (const row of level40Rows) {
+    const metrics = computeFiremakingOutputs(row.recipeId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${toPercent(metrics.successChance)}\\s*\\|\\s*${formatMetric(metrics.expectedTicksPerFire)}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.goldSinkPerTick)}\\s*\\|\\s*${formatMetric(metrics.cookingActionsPerFire)}\\s*\\|`),
+      `firemaking level-40 benchmark mismatch for ${row.label}`
+    );
+  }
+
+  for (const row of recipeRows) {
+    const metrics = computeFiremakingOutputs(row.recipeId, 40);
+    const woodcuttingOutputs = computeWoodcuttingOutputs(woodcuttingSpec, woodcuttingSpec.nodeTable[woodcuttingNodeByLog[spec.recipeSet[row.recipeId].sourceItemId]], {
+      level: 40,
+      toolPower: 28,
+      speedBonusTicks: 5
+    });
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${formatMetric(metrics.successChance)}\\s*\\|\\s*${formatMetric(woodcuttingOutputs.sustainedLogsPerTick)}\\s*\\|\\s*${formatMetric(metrics.sustainedCoverageRatio)}\\s*\\|`),
+      `firemaking woodcutting-coverage mismatch for ${row.label}`
+    );
+  }
 }
 
 function runMiningChecks(roadmap, spec) {
@@ -756,7 +830,7 @@ function run() {
   runWoodcuttingChecks(roadmaps.woodcutting, runtime.skills.woodcutting);
   runFishingChecks(roadmaps.fishing, runtime.skills.fishing, itemDefs);
   runCookingChecks(roadmaps.cooking, runtime.skills.cooking, itemDefs);
-  runFiremakingChecks(roadmaps.firemaking, runtime.skills.firemaking);
+  runFiremakingChecks(roadmaps.firemaking, runtime.skills.firemaking, runtime.skills);
   runMiningChecks(roadmaps.mining, runtime.skills.mining);
   runRunecraftingChecks(roadmaps.runecrafting, runtime.skills.runecrafting);
   runCraftingChecks(roadmaps.crafting, runtime.skills.crafting, itemDefs);

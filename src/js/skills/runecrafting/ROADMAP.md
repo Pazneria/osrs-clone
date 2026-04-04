@@ -246,6 +246,8 @@ The rune tutor introduces the basics of runecrafting. This NPC helps new players
 | Earth Rune   | 16   | 40    |
 | Air Rune     | 32   | 80    |
 
+The rune tutor shop is strict to the listed essence and elemental rune rows at runtime; unrelated goods are not bought through this merchant.
+
 ### Combination Sage
 
 The combination sage represents the late end of the 1-40 runecrafting band, introduces combination rune crafting, and sells runecrafting pouches as progression unlocks.
@@ -271,6 +273,8 @@ The combination sage represents the late end of the 1-40 runecrafting band, intr
 | Small Pouch  | 200  | 500   |
 | Medium Pouch | 800  | 2000  |
 | Large Pouch  | 3200 | 8000  |
+
+The combination sage shop is strict to the listed essence, combination rune, and pouch rows at runtime, with pouch sales unlocking exactly at the documented level thresholds.
 
 ### General Store
 

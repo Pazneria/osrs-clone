@@ -346,6 +346,198 @@ const ITEM_DB = {
 }
 
 {
+  const skillReference = hudViewModels.buildSkillReferencePanelViewModel({
+    skillId: "woodcutting",
+    playerSkills: {
+      woodcutting: { xp: 0, level: 12 }
+    },
+    skillSpec: {
+      levelBands: [1, 10, 20, 30],
+      nodeTable: {
+        normal_tree: { requiredLevel: 1, rewardItemId: "logs" },
+        yew_tree: { requiredLevel: 30, rewardItemId: "yew_logs" }
+      }
+    },
+    resolveItemName: (itemId) => ({
+      logs: "Logs",
+      yew_logs: "Yew Logs"
+    }[itemId] || itemId)
+  });
+
+  assert.ok(skillReference, "skill reference panel should build for spec-backed skills");
+  assert.strictEqual(skillReference.currentBandLabel, "Lv 10-19", "current band should resolve from authored level bands");
+  assert.strictEqual(skillReference.nextBandLabel, "Lv 20-29", "next band should preserve empty authored tiers");
+  assert.strictEqual(skillReference.nextUnlockText, "Lv 30: Chop Yew Logs", "next unlock text should point at the next authored unlock");
+  assert.strictEqual(skillReference.tiers.length, 4, "all authored level bands should render");
+  assert.strictEqual(skillReference.tiers[1].status, "current", "matching band should be marked current");
+  assert.strictEqual(skillReference.tiers[1].unlockCount, 0, "empty current tiers should still render");
+  assert.ok(skillReference.tiers[1].emptyStateText.includes("Lv 10-19"), "empty tier copy should stay band-specific");
+  assert.strictEqual(skillReference.tiers[2].status, "next", "next tier should be called out separately");
+  assert.strictEqual(skillReference.tiers[2].unlockCount, 0, "empty next tiers should remain visible");
+  assert.strictEqual(skillReference.tiers[3].unlocks[0].unlockTypeLabel, "Node Unlock", "node-based milestones should preserve type labeling");
+}
+
+{
+  const combatReference = hudViewModels.buildSkillReferencePanelViewModel({
+    skillId: "attack",
+    playerSkills: {
+      attack: { xp: 0, level: 18 }
+    }
+  });
+
+  assert.ok(combatReference, "combat skills should build a reference panel without a skill spec");
+  assert.strictEqual(combatReference.currentBandLabel, "Lv 10-19", "combat fallback bands should use the canonical combat milestones");
+  assert.strictEqual(combatReference.nextUnlockText, "Lv 20: Mid-band melee accuracy bump", "combat reference should expose the next milestone");
+  assert.strictEqual(combatReference.tiers[0].status, "unlocked", "earlier combat bands should be marked unlocked");
+  assert.strictEqual(combatReference.tiers[1].status, "current", "matching combat band should be current");
+}
+
+{
+  const fishingReference = hudViewModels.buildSkillReferencePanelViewModel({
+    skillId: "fishing",
+    playerSkills: {
+      fishing: { xp: 0, level: 1 }
+    },
+    skillSpec: {
+      levelBands: [1, 5, 10],
+      nodeTable: {
+        shrimp_spot: {
+          unlockLevel: 1,
+          methods: {
+            net: {
+              unlockLevel: 1,
+              fishByLevel: [
+                {
+                  minLevel: 1,
+                  fish: [{ itemId: "shrimp", requiredLevel: 1 }, { itemId: "anchovies", requiredLevel: 5 }]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    resolveItemName: (itemId) => ({
+      shrimp: "Shrimp",
+      anchovies: "Anchovies"
+    }[itemId] || itemId)
+  });
+
+  assert.ok(fishingReference, "fishing skills should build a reference panel from method unlock data");
+  assert.strictEqual(fishingReference.currentBandLabel, "Lv 1-4", "fishing current band should honor authored level bands");
+  assert.strictEqual(fishingReference.nextBandLabel, "Lv 5-9", "fishing next band should stay aligned to authored tiers");
+  assert.strictEqual(fishingReference.nextUnlockText, "Lv 5: Catch Anchovies", "fishing next unlock text should surface future fish unlocks");
+  assert.strictEqual(fishingReference.tiers[0].status, "current", "opening fishing tier should be current at level 1");
+  assert.strictEqual(fishingReference.tiers[0].unlockCount, 3, "fishing tier should include access, method, and fish unlocks");
+  assert.deepStrictEqual(
+    fishingReference.tiers[0].unlocks.map((unlock) => unlock.label),
+    ["Access Shrimp Spot", "Catch Shrimp", "Method: Net fishing"],
+    "fishing tier labels should include access, fish, and method unlocks"
+  );
+  assert.deepStrictEqual(
+    fishingReference.tiers[0].unlocks.map((unlock) => unlock.unlockTypeLabel),
+    ["Node Unlock", "Catch Unlock", "Method Unlock"],
+    "fishing unlock type labels should reflect the specialized fishing unlock categories"
+  );
+}
+
+{
+  const runecraftingReference = hudViewModels.buildSkillReferencePanelViewModel({
+    skillId: "runecrafting",
+    playerSkills: {
+      runecrafting: { xp: 0, level: 5 }
+    },
+    skillSpec: {
+      levelBands: [1, 10, 20],
+      recipeSet: {
+        air_rune: { requiredLevel: 1, outputItemId: "air_rune", altarName: "Air altar" },
+        steam_rune: { requiredLevel: 5, outputItemId: "steam_rune", altarName: "Steam altar" }
+      },
+      pouchTable: {
+        small_pouch: { requiredLevel: 10 }
+      }
+    },
+    resolveItemName: (itemId) => ({
+      air_rune: "Air Rune",
+      steam_rune: "Steam Rune",
+      small_pouch: "Small Pouch"
+    }[itemId] || itemId)
+  });
+
+  assert.ok(runecraftingReference, "runecrafting should build a reference panel from recipes and pouch unlocks");
+  assert.strictEqual(runecraftingReference.currentBandLabel, "Lv 1-9", "runecrafting current band should honor authored level bands");
+  assert.strictEqual(runecraftingReference.nextBandLabel, "Lv 10-19", "runecrafting next band should honor authored level bands");
+  assert.strictEqual(runecraftingReference.nextUnlockText, "Lv 10: Use Small Pouch", "runecrafting next unlock text should surface pouch unlocks");
+  assert.deepStrictEqual(
+    runecraftingReference.tiers[0].unlocks.map((unlock) => unlock.label),
+    ["Craft Air Rune (Air altar)", "Craft Steam Rune (Steam altar)"],
+    "runecrafting recipe unlock labels should preserve altar names"
+  );
+  assert.deepStrictEqual(
+    runecraftingReference.tiers[0].unlocks.map((unlock) => unlock.unlockTypeLabel),
+    ["Recipe Unlock", "Recipe Unlock"],
+    "runecrafting recipes should use recipe unlock labeling"
+  );
+  assert.strictEqual(
+    runecraftingReference.tiers[1].unlocks[0].unlockTypeLabel,
+    "Pouch Unlock",
+    "runecrafting pouches should use pouch unlock labeling"
+  );
+}
+
+{
+  const emptyFutureBandReference = hudViewModels.buildSkillReferencePanelViewModel({
+    skillId: "mining",
+    playerSkills: {
+      mining: { xp: 0, level: 5 }
+    },
+    skillSpec: {
+      levelBands: [1, 10],
+      nodeTable: {
+        copper_rock: { requiredLevel: 1, rewardItemId: "copper_ore" }
+      }
+    },
+    resolveItemName: (itemId) => ({
+      copper_ore: "Copper Ore"
+    }[itemId] || itemId)
+  });
+
+  assert.ok(emptyFutureBandReference, "skills with authored future bands should still build a reference panel");
+  assert.strictEqual(emptyFutureBandReference.nextBandLabel, "Lv 10+", "future empty bands should remain visible");
+  assert.strictEqual(
+    emptyFutureBandReference.nextUnlockText,
+    "Next band: Lv 10+",
+    "empty future bands should fall back to the next-band summary text"
+  );
+}
+
+{
+  const exhaustedReference = hudViewModels.buildSkillReferencePanelViewModel({
+    skillId: "mining",
+    playerSkills: {
+      mining: { xp: 0, level: 20 }
+    },
+    skillSpec: {
+      levelBands: [1],
+      nodeTable: {
+        copper_rock: { requiredLevel: 1, rewardItemId: "copper_ore" }
+      }
+    },
+    resolveItemName: (itemId) => ({
+      copper_ore: "Copper Ore"
+    }[itemId] || itemId)
+  });
+
+  assert.ok(exhaustedReference, "single-band skills should still build a reference panel");
+  assert.strictEqual(exhaustedReference.nextBandLabel, null, "terminal skill references should not invent a next band");
+  assert.strictEqual(
+    exhaustedReference.nextUnlockText,
+    "No further authored unlocks are tracked.",
+    "terminal skill references should preserve the no-further-unlocks copy"
+  );
+}
+
+{
   const profile = hudViewModels.buildPlayerProfileSummaryViewModel({
     profile: {
       name: "Ava",

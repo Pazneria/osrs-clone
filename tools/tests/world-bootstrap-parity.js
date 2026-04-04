@@ -68,6 +68,14 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
     z: 0,
     dialogueId: "shopkeeper"
   },
+  "merchant:fletching_supplier": {
+    spawnId: "npc:fletching_supplier",
+    merchantId: "fletching_supplier",
+    x: 183,
+    y: 238,
+    z: 0,
+    dialogueId: "fletching_supplier"
+  },
   "merchant:starter_caravan_guide": {
     spawnId: "npc:starter_caravan_guide",
     x: 223,
@@ -179,7 +187,7 @@ function assertStarterTown(root) {
   assert(manifestEntry.stampIds.join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town stamp kit mismatch");
   assert(Object.keys(stamps).join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town loaded stamps should match manifest kit");
   assert(Array.isArray(world.structures) && world.structures.length === Object.keys(STARTER_TOWN_STRUCTURE_LAYOUT).length, "expected 17 starter-town structures");
-  assert(Array.isArray(world.services) && world.services.length === 16, "expected 16 authored starter-town services");
+  assert(Array.isArray(world.services) && world.services.length === 17, "expected 17 authored starter-town services");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 114, "expected 114 authored mining nodes");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 82, "expected 82 authored woodcutting nodes");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 3, "expected 3 fishing routes");
@@ -312,7 +320,7 @@ function assertNorthRoadCamp(root) {
   assert(manifestEntry.defaultSpawn.x === 204 && manifestEntry.defaultSpawn.y === 216 && manifestEntry.defaultSpawn.z === 0, "north_road_camp default spawn mismatch");
   assert(Object.keys(stamps).length === 1, "expected 1 north-road stamp");
   assert(Array.isArray(world.structures) && world.structures.length === 1, "expected 1 north-road structure");
-  assert(Array.isArray(world.services) && world.services.length === 5, "expected 5 north-road services");
+  assert(Array.isArray(world.services) && world.services.length === 6, "expected 6 north-road services");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 1, "expected 1 north-road fishing route");
   assert(Array.isArray(world.skillRoutes.cooking) && world.skillRoutes.cooking.length === 1, "expected 1 north-road cooking route");
   assert(Array.isArray(world.skillRoutes.mining) && world.skillRoutes.mining.length === 2, "expected 2 north-road mining routes");
@@ -357,6 +365,9 @@ function assertNorthRoadCamp(root) {
   assert(servicesById["merchant:north_road_shopkeeper"].x === 203 && servicesById["merchant:north_road_shopkeeper"].y === 209, "north-road shopkeeper placement mismatch");
   assert(servicesById["merchant:north_road_caravan_guide"].travelToWorldId === "starter_town", "north-road caravan travel target mismatch");
   assert(servicesById["merchant:prospector_dain"].merchantId === "borin_ironvein", "north-road prospector merchant mismatch");
+  assert(servicesById["merchant:advanced_fletcher"].merchantId === "advanced_fletcher", "north-road advanced fletcher merchant mismatch");
+  assert(servicesById["merchant:advanced_fletcher"].x === 207 && servicesById["merchant:advanced_fletcher"].y === 210, "north-road advanced fletcher placement mismatch");
+  assert(servicesById["merchant:advanced_fletcher"].dialogueId === "advanced_fletcher", "north-road advanced fletcher dialogue mismatch");
   assert(servicesById["station:north_road_furnace"].footprintW === 2 && servicesById["station:north_road_furnace"].footprintD === 2, "north-road furnace footprint mismatch");
 
   const miningIds = world.skillRoutes.mining.map((entry) => entry.routeId).join(",");

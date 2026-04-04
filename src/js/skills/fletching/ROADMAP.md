@@ -393,6 +393,12 @@ This merchant buys fletching outputs across all tiers, including shafts, headles
 
 The general store buys everything at half price.
 
+### Implementation Note (World Placement)
+
+Current world authoring now anchors the fletching supplier inside the starter-town bank and general-store block so early log processing stays close to banking and restock flow.
+
+The advanced fletcher now lives at the north-road outpost, which gives the deeper combat road a dedicated buyer for finished bows, arrows, handles, and staffs.
+
 ## Training Location Structure
 
 | Location Type | Purpose |
@@ -400,6 +406,8 @@ The general store buys everything at half price.
 | Anywhere with inventory space | Core fletching training |
 | Bank-adjacent town area | Fast processing of logs into handles, staffs, shafts, and bows |
 | Ranged-adjacent shop area | Easy resupply for feathers and bow strings |
+
+Current implementation uses the starter-town supplier for the bank-adjacent processing loop and the north-road outpost buyer as the deeper sell path for completed fletching outputs.
 
 ## Dependencies
 

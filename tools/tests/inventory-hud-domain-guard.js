@@ -112,6 +112,10 @@ assert.ok(
   bridgeSource.includes("buildCombatTabViewModel"),
   "ui-domain bridge should expose combat-tab HUD builders"
 );
+assert.ok(
+  bridgeSource.includes("buildSkillReferencePanelViewModel"),
+  "ui-domain bridge should expose skill-reference HUD builders"
+);
 
 assert.ok(
   inventorySource.includes("getUiDomainRuntime"),
@@ -136,6 +140,10 @@ assert.ok(
 assert.ok(
   inventorySource.includes("runtime.buildSkillProgressViewModel"),
   "inventory.js should render skill HUD data from view models"
+);
+assert.ok(
+  inventorySource.includes("runtime.buildSkillReferencePanelViewModel"),
+  "inventory.js should render structured skill-reference data from the UI domain bridge"
 );
 assert.ok(
   inventorySource.includes("buildSkillTileTooltipHtml"),
@@ -178,6 +186,7 @@ vm.runInNewContext(
   ${extractFunction(inventorySource, "formatSkillPanelText")}
   ${extractFunction(inventorySource, "resolveSkillPanelItemName")}
   ${extractFunction(inventorySource, "formatSkillPanelItemAmount")}
+  ${extractFunction(inventorySource, "getSkillPanelUnlockTypeLabel")}
   ${extractFunction(inventorySource, "buildSkillPanelRecipeDetails")}
 
   function runRecipeDetailsTest(options) {
@@ -188,10 +197,25 @@ vm.runInNewContext(
     return buildSkillPanelRecipeDetails(options.skillName, options.unlockEntry);
   }
 
+  function runUnlockTypeLabelTest(unlockEntry) {
+    return getSkillPanelUnlockTypeLabel(unlockEntry);
+  }
+
   globalThis.runRecipeDetailsTest = runRecipeDetailsTest;
+  globalThis.runUnlockTypeLabelTest = runUnlockTypeLabelTest;
   `,
   tooltipSandbox,
   { filename: "inventory-tooltip-extract.js" }
+);
+
+assert.strictEqual(
+  tooltipSandbox.runUnlockTypeLabelTest({
+    key: "pouch:small_pouch",
+    unlockType: "unlock",
+    unlockTypeLabel: "Pouch Unlock"
+  }),
+  "Pouch Unlock",
+  "skill-panel unlock labels should preserve the view-model-provided unlock type label"
 );
 
 {
@@ -306,6 +330,10 @@ assert.ok(
 assert.ok(
   !indexSource.includes("skill-panel-icon"),
   "index.html should remove the clicked-skill shorthand icon from the title"
+);
+assert.ok(
+  indexSource.includes('id="skill-panel-summary"'),
+  "index.html should mount the structured skill-panel summary container"
 );
 assert.ok(
   indexSource.includes('id="skill-panel" class="hidden pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-[384px]'),
