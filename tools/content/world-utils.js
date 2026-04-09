@@ -416,6 +416,14 @@ function collectAdjacencyViolations(world, map) {
     }
   }
 
+  const firemakingRoutes = world.skillRoutes && Array.isArray(world.skillRoutes.firemaking) ? world.skillRoutes.firemaking : [];
+  for (let i = 0; i < firemakingRoutes.length; i++) {
+    const route = firemakingRoutes[i];
+    if (!isWalkable(map, route.x, route.y, route.z)) {
+      violations.push(`Firemaking route ${route.routeId} anchor is not walkable`);
+    }
+  }
+
   return violations;
 }
 

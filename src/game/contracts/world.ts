@@ -306,6 +306,7 @@ export interface WorldDefinition {
   skillRoutes: {
     fishing: RouteDescriptor[];
     cooking: SkillRouteWithFireTiles[];
+    firemaking: RouteDescriptor[];
     mining: RouteDescriptor[];
     runecrafting: RouteDescriptor[];
     woodcutting: RouteDescriptor[];
@@ -362,6 +363,7 @@ export interface WorldLegacyView {
   smithingStations: ServiceDescriptor[];
   fishingRoutes: RouteDescriptor[];
   cookingRoutes: SkillRouteWithFireTiles[];
+  firemakingRoutes: RouteDescriptor[];
   miningRoutes: RouteDescriptor[];
   runecraftingRoutes: RouteDescriptor[];
   woodcuttingRoutes: RouteDescriptor[];
@@ -481,6 +483,7 @@ export interface LegacyWorldRuntimeDraft {
   staticRouteGroups: {
     fishing: RouteDescriptor[];
     cooking: SkillRouteWithFireTiles[];
+    firemaking: RouteDescriptor[];
   };
   generalStoreService: ServiceDescriptor | null;
   staticMerchantRenderPlacements: LegacyNpcRenderPlacement[];

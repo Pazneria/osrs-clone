@@ -26,6 +26,7 @@ export function createStaticRouteGroups(definition: WorldDefinition): Record<str
   return {
     fishing: definition.skillRoutes.fishing.map(cloneRouteDescriptor),
     cooking: definition.skillRoutes.cooking.map(cloneRouteDescriptor),
+    firemaking: definition.skillRoutes.firemaking.map(cloneRouteDescriptor),
     mining: definition.skillRoutes.mining.map(cloneRouteDescriptor),
     runecrafting: definition.skillRoutes.runecrafting.map(cloneRouteDescriptor),
     woodcutting: definition.skillRoutes.woodcutting.map(cloneRouteDescriptor)

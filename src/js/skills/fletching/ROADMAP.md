@@ -338,7 +338,7 @@ This merchant buys fletching outputs across all tiers, including shafts, headles
 
 **Location:** Deeper in the world or in a more specialized ranged district.
 
-**Associated Quests:** Can be tied to later progression if needed.
+**Associated Quests:** `Proof of the Yew` unlocks the merchant after a yew-tier proof turn-in.
 
 | Item | Buys | Sells |
 | ---- | ---- | ----- |
@@ -397,7 +397,7 @@ The general store buys everything at half price.
 
 Current world authoring now anchors the fletching supplier inside the starter-town bank and general-store block so early log processing stays close to banking and restock flow.
 
-The advanced fletcher now lives at the north-road outpost, which gives the deeper combat road a dedicated buyer for finished bows, arrows, handles, and staffs.
+The advanced fletcher now lives at the north-road outpost, and the merchant-unlock quest `Proof of the Yew` gates that deeper buyer until the player turns in 1 yew handle, 1 yew longbow, and 1 yew shortbow.
 
 ## Training Location Structure
 
@@ -407,7 +407,7 @@ The advanced fletcher now lives at the north-road outpost, which gives the deepe
 | Bank-adjacent town area | Fast processing of logs into handles, staffs, shafts, and bows |
 | Ranged-adjacent shop area | Easy resupply for feathers and bow strings |
 
-Current implementation uses the starter-town supplier for the bank-adjacent processing loop and the north-road outpost buyer as the deeper sell path for completed fletching outputs.
+Current implementation uses the starter-town supplier for the bank-adjacent processing loop and the north-road outpost buyer as the deeper sell path for completed fletching outputs once `Proof of the Yew` is complete.
 
 ## Dependencies
 
@@ -427,6 +427,7 @@ Current implementation uses the starter-town supplier for the bank-adjacent proc
 - The general store buys all fletching-related items at half price, rounded down.
 - Specialty merchants buy and sell only goods relevant to their role.
 - Fletching suppliers sell tools and supplies rather than raw logs.
+- Advanced Fletcher access is quest-gated by a yew proof turn-in: 1 Yew Handle, 1 Yew Longbow, and 1 Yew Shortbow.
 - Plain staffs are core fletching outputs for later magic-equipment crafting progression.
 - Plain staff sell values stay mirrored from the shared item/crafting data so the fletching balance tables remain aligned.
 - Fletcher-type merchants can buy shafts, headless arrows, unstrung bows, and finished bows across all tiers.

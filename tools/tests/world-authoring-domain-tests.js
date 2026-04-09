@@ -8,6 +8,7 @@ const { loadTsModule } = require("./ts-module-loader");
 const root = path.resolve(__dirname, "..", "..");
 const authoring = loadTsModule(path.join(root, "src", "game", "world", "authoring.ts"));
 const manifest = require(path.join(root, "content", "world", "manifest.json"));
+const northRoadCamp = require(path.join(root, "content", "world", "regions", "north_road_camp.json"));
 const starterTown = require(path.join(root, "content", "world", "regions", "starter_town.json"));
 
 const WORLD_COORD_SCALE = 648 / 486;
@@ -132,6 +133,7 @@ function loadNpcDialogueCatalog() {
   assert.strictEqual(starterTown.structures.length, Object.keys(STARTER_TOWN_STRUCTURE_LAYOUT).length, "raw starter_town should include the full homestead structure layout");
   assert.strictEqual(starterTown.landmarks.staircases.length, Object.keys(STARTER_TOWN_STAIRCASE_LAYOUT).length, "raw starter_town should include the full staircase access layout");
   assert.ok(Array.isArray(rawCombatSpawns) && rawCombatSpawns.length === 50, "raw starter_town data should include 50 combat spawns");
+  assert.ok(Array.isArray(starterTown.skillRoutes.firemaking) && starterTown.skillRoutes.firemaking.length === 5, "raw starter_town should include 5 authored firemaking routes");
 
   const rawTrainingDummy = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_training_dummy_hub");
   const rawChicken = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_chicken_south_field");
@@ -203,6 +205,19 @@ function loadNpcDialogueCatalog() {
     "world definition lakes should scale center axes and radii"
   );
   assert.strictEqual(starterDefinition.structures.length, starterTown.structures.length, "scaled starter_town should preserve structure count");
+  const rawFiremakingRoutesById = Object.fromEntries(starterTown.skillRoutes.firemaking.map((entry) => [entry.routeId, entry]));
+  const scaledFiremakingRoutesById = Object.fromEntries(starterDefinition.skillRoutes.firemaking.map((entry) => [entry.routeId, entry]));
+  ["starter_fire_lane", "oak_fire_lane", "willow_fire_lane", "maple_fire_lane", "yew_fire_lane"].forEach((routeId) => {
+    const rawRoute = rawFiremakingRoutesById[routeId];
+    const scaledRoute = scaledFiremakingRoutesById[routeId];
+    assert.ok(rawRoute, `raw starter_town should include firemaking route ${routeId}`);
+    assert.ok(scaledRoute, `scaled starter_town should include firemaking route ${routeId}`);
+    assert.deepStrictEqual(
+      { x: scaledRoute.x, y: scaledRoute.y, z: scaledRoute.z, alias: scaledRoute.alias },
+      { x: scaleAxis(rawRoute.x), y: scaleAxis(rawRoute.y), z: rawRoute.z, alias: rawRoute.alias },
+      `${routeId} should preserve its firemaking alias while scaling its anchor`
+    );
+  });
   assert.ok(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog should expose resolveDialogueId");
   Object.entries(STARTER_TOWN_NAMED_NPC_LAYOUT).forEach(([serviceId, expected]) => {
     const rawService = rawServicesById[serviceId];
@@ -286,6 +301,19 @@ function loadNpcDialogueCatalog() {
       z: rawBoarEastNorth.spawnTile.z
     },
     "world definition combat spawns should keep east-north boar pocket alignment"
+  );
+}
+
+{
+  const northRoadDefinition = authoring.getWorldDefinition("north_road_camp");
+  assert.ok(Array.isArray(northRoadCamp.skillRoutes.firemaking) && northRoadCamp.skillRoutes.firemaking.length === 1, "raw north_road_camp should include 1 authored firemaking route");
+  assert.ok(Array.isArray(northRoadDefinition.skillRoutes.firemaking) && northRoadDefinition.skillRoutes.firemaking.length === 1, "scaled north_road_camp should include 1 firemaking route");
+  const rawRoute = northRoadCamp.skillRoutes.firemaking[0];
+  const scaledRoute = northRoadDefinition.skillRoutes.firemaking[0];
+  assert.deepStrictEqual(
+    { routeId: scaledRoute.routeId, alias: scaledRoute.alias, x: scaledRoute.x, y: scaledRoute.y, z: scaledRoute.z },
+    { routeId: rawRoute.routeId, alias: rawRoute.alias, x: scaleAxis(rawRoute.x), y: scaleAxis(rawRoute.y), z: rawRoute.z },
+    "north_road_camp firemaking route should preserve identity while scaling its anchor"
   );
 }
 

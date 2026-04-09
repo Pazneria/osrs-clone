@@ -1519,11 +1519,12 @@ function run() {
 
   firemakingAction.context.currentTick = firemakingAction.context.playerState.firemakingSession.finishTick;
   skillModules.firemaking.onTick(firemakingAction.context);
-  assert(firemakingAction.context.playerState.action === "IDLE", "firemaking should stop cleanly after the success delay");
-  assert(firemakingAction.context.playerState.firemakingSession === null, "firemaking should clear the session after the success delay");
-  assert(firemakingAction.context.playerState.turnLock === false, "firemaking should release turn lock after finishing");
-  assert(firemakingAction.getStopActionCalls() >= 1, "firemaking should stop the active action when finished");
-  assert(firemakingAction.getStepAfterCalls() === 0, "firemaking cleanup should not step after lighting the fire");
+  assert(firemakingAction.context.playerState.action === "IDLE", "firemaking should stop cleanly after the success delay when no logs remain");
+  assert(firemakingAction.context.playerState.firemakingSession === null, "firemaking should clear the session after the chained supply check fails");
+  assert(firemakingAction.context.playerState.turnLock === false, "firemaking should release turn lock after the chained supply failure stops the action");
+  assert(firemakingAction.getStopActionCalls() >= 1, "firemaking should stop the active action when the chained supply check fails");
+  assert(firemakingAction.getStepAfterCalls() === 1, "firemaking should attempt the follow-up step before checking chained supplies");
+  assert(firemakingAction.messages.some((entry) => entry.message === "You have run out of logs."), "firemaking should explain chained log exhaustion after the success clip");
 
   const smithingAnimateContext = {
     playerState: {
@@ -1713,8 +1714,15 @@ function run() {
   assert(starterTownWorld.skillRoutes.cooking.some((entry) => entry.routeId === "riverbank_fire_line"), "riverbank cooking route missing");
   assert(starterTownWorld.skillRoutes.cooking.some((entry) => entry.routeId === "dockside_fire_line"), "dockside cooking route missing");
   assert(starterTownWorld.skillRoutes.cooking.some((entry) => entry.routeId === "deep_water_dock_fire_line"), "deep-water cooking route missing");
+  assert(Array.isArray(starterTownWorld.skillRoutes.firemaking) && starterTownWorld.skillRoutes.firemaking.length === 5, "firemaking route specs missing");
+  assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "starter_fire_lane"), "starter fire lane missing");
+  assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "oak_fire_lane"), "oak fire lane missing");
+  assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "willow_fire_lane"), "willow fire lane missing");
+  assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "maple_fire_lane"), "maple fire lane missing");
+  assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "yew_fire_lane"), "yew fire lane missing");
   assert(worldScript.includes("window.getFishingTrainingLocations = function getFishingTrainingLocations()"), "fishing training location getter missing");
   assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
+  assert(worldScript.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "firemaking training location getter missing");
   assert(worldScript.includes("function addAshesGroundVisual(group, itemData)"), "ashes ground-item visual helper missing");
   assert(worldScript.includes("function resolveFishGroundVisual(itemData)"), "fish ground-item visual resolver missing");
   assert(worldScript.includes("function addFishGroundVisual(group, itemData, visual)"), "fish ground-item visual helper missing");

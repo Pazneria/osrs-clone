@@ -54,8 +54,16 @@ function run() {
     "legacy world adapter should expose the legacy-ready world payload"
   );
   assert(
+    adapterSource.includes("firemakingTrainingRouteDefs"),
+    "legacy world adapter payload should carry authored firemaking routes"
+  );
+  assert(
     worldSource.includes("getCurrentWorldPayload"),
     "world.js should consume authored world config through the typed world adapter"
+  );
+  assert(
+    worldSource.includes("firemakingTrainingRouteDefs"),
+    "world.js should consume authored firemaking routes through the typed world adapter"
   );
   assert(
     !worldSource.includes("loadStarterTownWorld"),
@@ -68,6 +76,10 @@ function run() {
   assert(
     !worldSource.includes("getWorldLegacyConfig"),
     "world.js should not reach into the bootstrap bridge for legacy payload shaping"
+  );
+  assert(
+    bridgeSource.includes("getFiremakingTrainingLocations"),
+    "legacy bridge should expose the firemaking compatibility getter"
   );
   assert(
     !worldDefinitionSection.includes("miningZones:"),

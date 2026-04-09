@@ -36,12 +36,14 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Valid Action Requirements | A firemaking action can begin only if the player meets the level requirement, has a tinderbox, has the correct logs, and is standing on a tile that does not already contain a lit fire. |
 | Attempt-Based Action Time | Firemaking uses ignition attempts instead of a fixed action time. Each attempt occurs once per tick, and the action stays active until ignition succeeds or the player cancels/invalidates the action. |
 | Success Logic | Each ignition attempt has a success chance based on the player's firemaking level and the log's ignition difficulty. The action succeeds when one attempt passes the success check. If an attempt fails, no fire is created, no log is consumed, no XP is awarded, and the action continues into the next tick attempt unless cancelled or invalidated. |
+| Failure Feedback | The first failed ignition attempt for the current target tile emits a brief failure line, then silent retries continue until success or interruption. |
 | Input Consumption | When a firemaking action succeeds, exactly 1 log is consumed. |
 | Fire Creation | When a firemaking action succeeds, 1 temporary fire is created on the target tile. |
 | XP Award | When a firemaking action succeeds, the player gains the XP listed for that log type. |
 | Tile Occupancy | A lit fire blocks additional firemaking on the same tile until it expires. |
 | Cooking Support | A lit fire counts as a valid cooking source for any cooking recipes that allow fire-based cooking. |
-| Repeated Firemaking Flow | After successfully lighting a fire, the player automatically steps in a globally fixed eastward direction as part of the same firemaking flow. If that direction is blocked, the player instead steps west. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
+| Repeated Firemaking Flow | After successfully lighting a fire, the player finishes a short success clip, then automatically steps in a globally fixed eastward direction as part of the same firemaking flow. If that direction is blocked, the player instead steps west. If neither step is available, the chain stops without consuming another log. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
+| Interruption | Firemaking stops immediately if the player moves away from the current stand tile, gives other movement or action input, loses required supplies, or cannot continue the repeated east/west stepping flow. |
 
 ### Global Constants
 
@@ -119,7 +121,7 @@ The player uses firemaking to consume logs, gain experience, create temporary gr
 | Fire Movement / Standing | Lit fires do not block movement or standing. Players can move onto and stand on lit fire tiles normally. |
 | Fire Hazard | Lit fires do not deal damage and are not treated as hazards. |
 | Cooking Check   | Cooking actions that allow a fire may target any currently lit fire, regardless of who created it |
-| Fire Follow-up Movement | During repeated firemaking, the player automatically attempts to step in a globally fixed eastward direction after each successful fire. If normal pathfinding fails for that direction because the tile is not walkable, the player steps west instead. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
+| Fire Follow-up Movement | During repeated firemaking, the player waits out the short success clip, then automatically attempts to step in a globally fixed eastward direction after each successful fire. If normal pathfinding fails for that direction because the tile is not walkable, the player steps west instead. If both follow-up steps fail, the chain stops cleanly without consuming another log. The player can light the next log only after moving onto a tile that does not already contain a lit fire. |
 
 ## Economy Role
 
@@ -195,6 +197,19 @@ The general store buys everything at half price.
 
 Ashes are not normally stocked by shops, but if a player sells ashes to a shop, they can be bought back through the normal shop interface.
 
+## Training Location Structure
+
+| Location Type | Role |
+| ------------- | ---- |
+| Starter grove fire lane | Entry-level `logs` practice beside the first woodcutting band and general-store loop |
+| Oak path fire lane | Level-10 oak-fire progression near the oak band |
+| Willow bend fire lane | Level-20 willow-fire progression beside the willow route |
+| Maple ridge fire lane | Level-30 maple-fire progression near the higher-tier ridge loop |
+| Yew frontier fire lane | Level-40 yew-fire progression at the late-band frontier |
+| North-road pine loop fire lane | Secondary proof lane for early roadside firemaking checks |
+
+Current world pass anchors these authored fire lanes in `starter_town` and `north_road_camp`, and QA exposes them through `/qa firespots` plus `/qa gotofire <starter|oak|willow|maple|yew>`.
+
 ## Dependencies
 
 - Woodcutting
@@ -206,6 +221,7 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 - Firemaking is available at level 1 with a tinderbox.
 - Firemaking uses ignition attempts rather than a fixed action time.
 - If an ignition attempt fails, no fire is created, no log is consumed, no XP is awarded, and the next attempt occurs on the next tick while the action remains active.
+- The first failed ignition attempt for a given target tile emits a brief feedback line, then the skill retries silently until success or interruption.
 - Firemaking always consumes exactly one log per successful action.
 - Fires are temporary world objects rather than inventory items.
 - When a fire expires, it leaves exactly 1 lootable ashes item on the tile.
@@ -223,8 +239,8 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 - Ashes are not normally stocked by shops, but sold ashes can still be bought back from the shop that bought them.
 - Ashes have no additional use for now.
 - Firemaking animation plays only on successful fire creation.
-- Repeated firemaking movement happens automatically as part of the same firemaking flow.
-- Repeated firemaking stops immediately if the player gives other movement or action input.
+- Repeated firemaking movement happens automatically after the short success clip as part of the same firemaking flow.
+- Repeated firemaking stops immediately if the player gives other movement or action input, moves away from the stand tile, loses supplies, or cannot make the next east/west follow-up step.
 
 ## Items
 

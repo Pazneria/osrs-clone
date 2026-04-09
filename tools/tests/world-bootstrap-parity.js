@@ -192,6 +192,7 @@ function assertStarterTown(root) {
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 82, "expected 82 authored woodcutting nodes");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 3, "expected 3 fishing routes");
   assert(Array.isArray(world.skillRoutes.cooking) && world.skillRoutes.cooking.length === 4, "expected 4 cooking routes");
+  assert(Array.isArray(world.skillRoutes.firemaking) && world.skillRoutes.firemaking.length === 5, "expected 5 firemaking routes");
   assert(Array.isArray(world.skillRoutes.mining) && world.skillRoutes.mining.length === 6, "expected 6 mining routes");
   assert(Array.isArray(world.skillRoutes.runecrafting) && world.skillRoutes.runecrafting.length === 4, "expected 4 runecrafting routes");
   assert(Array.isArray(world.skillRoutes.woodcutting) && world.skillRoutes.woodcutting.length === 5, "expected 5 woodcutting routes");
@@ -231,6 +232,12 @@ function assertStarterTown(root) {
   assert(cookingById.starter_campfire.x === 199 && cookingById.starter_campfire.y === 224, "campfire anchor mismatch");
   assert(cookingById.riverbank_fire_line.fireTiles.length === 3, "river fire line tile count mismatch");
   assert(cookingById.deep_water_dock_fire_line.x === 205 && cookingById.deep_water_dock_fire_line.y === 229, "deep dock anchor mismatch");
+  const firemakingById = Object.fromEntries(world.skillRoutes.firemaking.map((entry) => [entry.routeId, entry]));
+  assert(firemakingById.starter_fire_lane.alias === "starter", "starter firemaking alias mismatch");
+  assert(firemakingById.oak_fire_lane.x === 205 && firemakingById.oak_fire_lane.y === 299, "oak fire lane anchor mismatch");
+  assert(firemakingById.willow_fire_lane.x === 239 && firemakingById.willow_fire_lane.y === 62, "willow fire lane anchor mismatch");
+  assert(firemakingById.maple_fire_lane.x === 402 && firemakingById.maple_fire_lane.y === 206, "maple fire lane anchor mismatch");
+  assert(firemakingById.yew_fire_lane.x === 51 && firemakingById.yew_fire_lane.y === 8, "yew fire lane anchor mismatch");
 
   const servicesById = Object.fromEntries(world.services.map((entry) => [entry.serviceId, entry]));
   assert(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
@@ -303,6 +310,8 @@ function assertStarterTown(root) {
   assert(miningIds === "starter_mine,iron_mine,coal_mine,precious_mine,gem_mine,rune_essence_mine", "starter mining route order mismatch");
   const altarIds = world.skillRoutes.runecrafting.map((entry) => entry.routeId).join(",");
   assert(altarIds === "ember_altar,water_altar,earth_altar,air_altar", "starter runecrafting route order mismatch");
+  const firemakingIds = world.skillRoutes.firemaking.map((entry) => entry.routeId).join(",");
+  assert(firemakingIds === "starter_fire_lane,oak_fire_lane,willow_fire_lane,maple_fire_lane,yew_fire_lane", "starter firemaking route order mismatch");
   const woodcuttingIds = world.skillRoutes.woodcutting.map((entry) => entry.routeId).join(",");
   assert(woodcuttingIds === "starter_grove,oak_path,willow_bend,maple_ridge,yew_frontier", "starter woodcutting route order mismatch");
 
@@ -323,6 +332,7 @@ function assertNorthRoadCamp(root) {
   assert(Array.isArray(world.services) && world.services.length === 6, "expected 6 north-road services");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 1, "expected 1 north-road fishing route");
   assert(Array.isArray(world.skillRoutes.cooking) && world.skillRoutes.cooking.length === 1, "expected 1 north-road cooking route");
+  assert(Array.isArray(world.skillRoutes.firemaking) && world.skillRoutes.firemaking.length === 1, "expected 1 north-road firemaking route");
   assert(Array.isArray(world.skillRoutes.mining) && world.skillRoutes.mining.length === 2, "expected 2 north-road mining routes");
   assert(Array.isArray(world.skillRoutes.runecrafting) && world.skillRoutes.runecrafting.length === 1, "expected 1 north-road runecrafting route");
   assert(Array.isArray(world.skillRoutes.woodcutting) && world.skillRoutes.woodcutting.length === 1, "expected 1 north-road woodcutting route");
@@ -374,6 +384,8 @@ function assertNorthRoadCamp(root) {
   assert(miningIds === "outpost_quarry,crystal_seam", "north-road mining route order mismatch");
   const altarIds = world.skillRoutes.runecrafting.map((entry) => entry.routeId).join(",");
   assert(altarIds === "breeze_shrine", "north-road runecrafting route order mismatch");
+  const firemakingIds = world.skillRoutes.firemaking.map((entry) => entry.routeId).join(",");
+  assert(firemakingIds === "pine_fire_lane", "north-road firemaking route order mismatch");
   const woodcuttingIds = world.skillRoutes.woodcutting.map((entry) => entry.routeId).join(",");
   assert(woodcuttingIds === "pine_loop", "north-road woodcutting route order mismatch");
 }

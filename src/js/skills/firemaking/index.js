@@ -90,7 +90,8 @@
             standAt: { x: standAt.x, y: standAt.y, z: standAt.z },
             sourceItemId: recipe.sourceItemId,
             attemptInterval,
-            nextAttemptTick: context.currentTick
+            nextAttemptTick: context.currentTick,
+            failureFeedbackShown: false
         };
 
         context.playerState.action = 'SKILLING: FIREMAKING';
@@ -135,6 +136,50 @@
         context.playerState.targetRotation = Math.atan2(dx, dy);
         context.playerState.turnLock = true;
         context.playerState.actionVisualReady = true;
+    }
+
+    function getSupplyFailureMessage(context, recipe) {
+        if (context.getInventoryCount('tinderbox') <= 0) return 'You need logs and a tinderbox.';
+        if (context.getInventoryCount(recipe.sourceItemId) <= 0) return 'You have run out of logs.';
+        return null;
+    }
+
+    function scheduleNextFiremakingAttempt(context, session, delayTicks = 0) {
+        if (!context || !session) return;
+        session.phase = 'attempting';
+        session.failureFeedbackShown = false;
+        session.finishTick = null;
+        session.nextAttemptTick = context.currentTick + Math.max(0, Math.floor(delayTicks));
+    }
+
+    function continueFiremakingChain(context, session, recipe) {
+        if (!context || !session || !recipe) return false;
+
+        const stepResult = normalizeStepResult(context.tryStepAfterFire());
+        if (!stepResult.stepped) {
+            stopFiremaking(context, getBlockedStepMessage(stepResult.reason), 'info');
+            return false;
+        }
+
+        const supplyFailureMessage = getSupplyFailureMessage(context, recipe);
+        if (supplyFailureMessage) {
+            stopFiremaking(context, supplyFailureMessage, 'warn');
+            return false;
+        }
+
+        session.target = {
+            x: session.standAt.x,
+            y: session.standAt.y,
+            z: session.standAt.z
+        };
+        session.standAt = {
+            x: context.playerState.x,
+            y: context.playerState.y,
+            z: context.playerState.z
+        };
+        scheduleNextFiremakingAttempt(context, session, session.attemptInterval || 1);
+        faceTile(context, session.target);
+        return true;
     }
 
     const firemakingModule = {
@@ -207,14 +252,15 @@
 
             if (session.phase === 'post_success') {
                 if (context.currentTick < (session.finishTick || 0)) return;
-                stopFiremaking(context);
+                continueFiremakingChain(context, session, recipe);
                 return;
             }
 
             if (context.currentTick < (session.nextAttemptTick || 0)) return;
 
-            if (context.getInventoryCount('tinderbox') <= 0 || context.getInventoryCount(recipe.sourceItemId) <= 0) {
-                stopFiremaking(context, 'You need logs and a tinderbox.', 'warn');
+            const supplyFailureMessage = getSupplyFailureMessage(context, recipe);
+            if (supplyFailureMessage) {
+                stopFiremaking(context, supplyFailureMessage, 'warn');
                 return;
             }
 
@@ -248,6 +294,10 @@
             faceTile(context, target);
 
             if (!rollChance(successChance, context.random)) {
+                if (!session.failureFeedbackShown) {
+                    session.failureFeedbackShown = true;
+                    context.addChatMessage('The logs fail to catch.', 'info');
+                }
                 return;
             }
 
@@ -266,6 +316,7 @@
             context.renderInventory();
 
             session.phase = 'post_success';
+            session.failureFeedbackShown = false;
             session.finishTick = context.currentTick + 3;
         },
 

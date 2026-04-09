@@ -119,6 +119,9 @@ sandbox.window.ITEM_DB = {
   coal: { id: "coal", name: "Coal" },
   gold_ore: { id: "gold_ore", name: "Gold ore" },
   uncut_emerald: { id: "uncut_emerald", name: "Uncut emerald" },
+  yew_handle: { id: "yew_handle", name: "Yew Handle" },
+  yew_longbow: { id: "yew_longbow", name: "Yew Longbow" },
+  yew_shortbow: { id: "yew_shortbow", name: "Yew Shortbow" },
   raw_shrimp: { id: "raw_shrimp", name: "Raw Shrimp" },
   raw_trout: { id: "raw_trout", name: "Raw Trout" },
   raw_salmon: { id: "raw_salmon", name: "Raw Salmon" },
@@ -449,6 +452,159 @@ assert.strictEqual(
   thrainCompletedDialogueView.options[0].label,
   "Ask about the delivery",
   "completed Thrain dialogue should switch to the delivery follow-up option"
+);
+
+const fletchingHarness = createHarness();
+const {
+  runtime: fletchingRuntime,
+  session: fletchingSession,
+  saveReasons: fletchingSaveReasons,
+  chatLog: fletchingChatLog,
+  rewardItems: fletchingRewardItems,
+  rewardXp: fletchingRewardXp,
+  uiHooks: fletchingUiHooks
+} = fletchingHarness;
+const fletchingNpc = {
+  name: "Advanced Fletcher",
+  dialogueId: "advanced_fletcher",
+  merchantId: "advanced_fletcher"
+};
+const fletchingQuestId = "advanced_fletcher_proof_of_the_yew";
+
+assert.strictEqual(
+  fletchingRuntime.resolveNpcPrimaryAction(fletchingNpc),
+  "Talk-to",
+  "locked Advanced Fletcher merchant should route primary interaction through dialogue"
+);
+
+const fletchingLockedAccess = fletchingRuntime.canOpenMerchantShop("advanced_fletcher");
+assert.strictEqual(fletchingLockedAccess.ok, false, "locked Advanced Fletcher merchant should deny shop access");
+assert.strictEqual(
+  fletchingLockedAccess.messageText,
+  "Talk to the Advanced Fletcher at the north-road outpost.",
+  "locked Advanced Fletcher merchant should surface the quest start instructions"
+);
+
+const fletchingStarted = fletchingRuntime.handleNpcDialogueOpened(fletchingNpc);
+assert.ok(fletchingStarted && fletchingStarted.ok, "opening Advanced Fletcher dialogue should auto-start the quest");
+assert.strictEqual(fletchingStarted.state.status, "active", "auto-start should persist an active Advanced Fletcher quest state");
+assert.deepStrictEqual(fletchingSaveReasons, ["quest_started"], "starting the Advanced Fletcher quest should persist progress once");
+assert.deepStrictEqual(
+  fletchingChatLog,
+  [{ message: "Quest started: Proof of the Yew.", tone: "info" }],
+  "starting the Advanced Fletcher quest should emit a quest-start chat message"
+);
+assert.deepStrictEqual(
+  fletchingUiHooks,
+  {
+    renderQuestLog: 1,
+    refreshActiveDialogue: 1,
+    renderInventory: 0
+  },
+  "starting the Advanced Fletcher quest should refresh the quest UI but not inventory"
+);
+
+const fletchingActiveDialogueView = fletchingRuntime.buildNpcDialogueView(fletchingNpc, {
+  title: "Advanced Fletcher",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  fletchingActiveDialogueView.greeting,
+  "Yew tells the truth about your hands. I am still waiting on that handle, longbow, and shortbow.",
+  "active Advanced Fletcher dialogue should use the quest-specific active greeting"
+);
+assert.strictEqual(
+  fletchingActiveDialogueView.options[0].label,
+  "Ask about the order",
+  "active Advanced Fletcher dialogue should offer a progress option first"
+);
+
+fletchingSession.progress.inventory = [
+  { itemData: { id: "yew_handle", name: "Yew Handle" }, amount: 1 },
+  { itemData: { id: "yew_longbow", name: "Yew Longbow" }, amount: 1 },
+  { itemData: { id: "yew_shortbow", name: "Yew Shortbow" }, amount: 1 }
+];
+
+const fletchingRefreshed = fletchingRuntime.refreshAllQuestStates({ persist: true, touch: true, render: false });
+assert.strictEqual(fletchingRefreshed.length, 1, "refresh should return the Advanced Fletcher quest state");
+assert.strictEqual(fletchingRefreshed[0].status, "ready_to_complete", "carrying the required yew items should mark the Advanced Fletcher quest ready to complete");
+const fletchingReadyAccess = fletchingRuntime.canOpenMerchantShop("advanced_fletcher");
+assert.strictEqual(fletchingReadyAccess.ok, false, "Advanced Fletcher merchant access should stay locked until quest completion");
+assert.strictEqual(
+  fletchingReadyAccess.messageText,
+  "I have the full yew proof set. I should return to the Advanced Fletcher.",
+  "Advanced Fletcher merchant access should surface the ready-to-complete reminder"
+);
+
+const fletchingCompleted = fletchingRuntime.completeQuest(fletchingQuestId);
+assert.ok(fletchingCompleted && fletchingCompleted.ok, "turning in the yew proof set should complete the Advanced Fletcher quest");
+assert.strictEqual(fletchingCompleted.state.status, "completed", "completed Advanced Fletcher quest should persist completed state");
+assert.strictEqual(fletchingRuntime.resolveNpcPrimaryAction(fletchingNpc), "Trade", "completed Advanced Fletcher quest should unlock the merchant action");
+const fletchingUnlockedAccess = fletchingRuntime.canOpenMerchantShop("advanced_fletcher");
+assert.strictEqual(fletchingUnlockedAccess.ok, true, "completed Advanced Fletcher quest should unlock the merchant shop");
+assert.strictEqual(
+  fletchingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "yew_handle"),
+  false,
+  "quest completion should remove the turned-in yew handle"
+);
+assert.strictEqual(
+  fletchingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "yew_longbow"),
+  false,
+  "quest completion should remove the turned-in yew longbow"
+);
+assert.strictEqual(
+  fletchingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "yew_shortbow"),
+  false,
+  "quest completion should remove the turned-in yew shortbow"
+);
+assert.deepStrictEqual(
+  fletchingRewardItems,
+  [],
+  "Advanced Fletcher quest should not grant authored item rewards"
+);
+assert.deepStrictEqual(
+  fletchingRewardXp,
+  [{ skillId: "fletching", amount: 250 }],
+  "Advanced Fletcher quest should grant the authored fletching XP reward"
+);
+assert.deepStrictEqual(
+  fletchingSaveReasons,
+  ["quest_started", "quest_refresh", "quest_completed"],
+  "Advanced Fletcher quest lifecycle should persist start, refresh, and completion updates"
+);
+assert.deepStrictEqual(
+  fletchingChatLog,
+  [
+    { message: "Quest started: Proof of the Yew.", tone: "info" },
+    { message: "Quest complete: Proof of the Yew.", tone: "info" }
+  ],
+  "Advanced Fletcher quest lifecycle should emit start and completion chat messages"
+);
+assert.deepStrictEqual(
+  fletchingUiHooks,
+  {
+    renderQuestLog: 2,
+    refreshActiveDialogue: 2,
+    renderInventory: 1
+  },
+  "Advanced Fletcher quest completion should refresh the quest UI and inventory once"
+);
+
+const fletchingCompletedDialogueView = fletchingRuntime.buildNpcDialogueView(fletchingNpc, {
+  title: "Advanced Fletcher",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  fletchingCompletedDialogueView.greeting,
+  "That is proper yew work. My full buyer ledger is open to you now.",
+  "completed Advanced Fletcher dialogue should use the completed greeting"
+);
+assert.strictEqual(
+  fletchingCompletedDialogueView.options[0].label,
+  "Ask about the delivery",
+  "completed Advanced Fletcher dialogue should switch to the delivery follow-up option"
 );
 
 const fishingHarness = createHarness();

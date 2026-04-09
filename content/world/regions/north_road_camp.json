@@ -755,6 +755,21 @@
         ]
       }
     ],
+    "firemaking": [
+      {
+        "routeId": "pine_fire_lane",
+        "alias": "pine",
+        "label": "Pine Loop Fire Lane",
+        "x": 177,
+        "y": 206,
+        "z": 0,
+        "tags": [
+          "firemaking",
+          "qa",
+          "proof"
+        ]
+      }
+    ],
     "mining": [
       {
         "routeId": "outpost_quarry",

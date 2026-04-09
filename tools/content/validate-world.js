@@ -30,7 +30,7 @@ function hasManifestWorld(manifest, worldId) {
 function collectRouteIds(world) {
   const ids = [];
   const groups = world.skillRoutes || {};
-  ["fishing", "cooking", "mining", "runecrafting", "woodcutting"].forEach((key) => {
+  ["fishing", "cooking", "firemaking", "mining", "runecrafting", "woodcutting"].forEach((key) => {
     const rows = Array.isArray(groups[key]) ? groups[key] : [];
     for (let i = 0; i < rows.length; i++) {
       if (rows[i] && rows[i].routeId) ids.push(rows[i].routeId);
@@ -569,7 +569,7 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   }
 
   const groups = world.skillRoutes || {};
-  ["fishing", "cooking", "mining", "runecrafting", "woodcutting"].forEach((groupKey) => {
+  ["fishing", "cooking", "firemaking", "mining", "runecrafting", "woodcutting"].forEach((groupKey) => {
     const rows = Array.isArray(groups[groupKey]) ? groups[groupKey] : [];
     assert(rows.length > 0, `${worldId}: missing routes for ${groupKey}`);
     for (let i = 0; i < rows.length; i++) {

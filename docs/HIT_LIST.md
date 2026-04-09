@@ -956,6 +956,125 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-062 - Smithing tracker still treated Thrain gate as open
+- Status: Fixed
+- Severity: S3
+- Area: DOCS
+- Source: Manual
+- Links: `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`, `src/js/skills/smithing/ROADMAP.md`, `tools/tests/quest-tanner-runtime-guard.js`
+- Repro:
+  1. Review the smithing roadmap and quest coverage after `HIT-048`.
+  2. Compare the live Thrain quest gate against the smithing status board and shared skills index.
+- Expected: Once `Proof of the Deepforge` is live and guarded, smithing tracking docs should mark `SMITHING-010` complete and advance to the next milestone.
+- Actual: The roadmap and runtime tests already described the Thrain quest gate as shipped, but `src/js/skills/smithing/STATUS.md` and `src/js/skills/_index.md` still showed the milestone as open and blocked on quest gating.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Verify the Thrain gate is implemented in canonical quest/spec coverage.
+  2. Sync the smithing status board and shared skills index to the shipped state.
+  3. Run narrow regression coverage to confirm the quest gate remains live.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Marked `SMITHING-010` complete in the smithing status board because Thrain's advanced ore access already ships through the shared `Proof of the Deepforge` quest gate.
+  - Advanced the shared smithing row in the skills index to `SMITHING-011` and cleared the stale quest-gating blocker.
+  - Left the smithing roadmap untouched because it was already the accurate source describing the live quest-gated progression.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-061 - Advanced Fletcher opened before any late-band yew proof existed
+- Status: Fixed
+- Severity: S2
+- Area: FLT
+- Source: Manual
+- Links: `src/js/content/quest-catalog.js`, `tools/tests/quest-tanner-runtime-guard.js`, `src/js/skills/fletching/ROADMAP.md`, `src/js/skills/fletching/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review `FLETCHING-012` in the fletching roadmap/status docs after the world-training pass.
+  2. Talk to the Advanced Fletcher at the north-road outpost and compare the live merchant access path against the "later progression" notes.
+  3. Try to open the deeper fletching buyer before making any yew-tier outputs.
+- Expected: The deeper fletching buyer should stay locked until the player proves top-band yew work, so late-tier outputs have a concrete progression and economy gate.
+- Actual: Yew handles and bows already existed in runtime/spec data, but the Advanced Fletcher opened immediately and no quest tied late-band fletching to the deeper sell path.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Reuse the existing merchant-unlock quest runtime for the Advanced Fletcher instead of inventing a new shop gate.
+  2. Require a yew proof set that exercises the late-band handle and finished-bow lanes.
+  3. Add runtime guard coverage and sync the fletching docs/status board to the new gate.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added the authored quest `Proof of the Yew`, which auto-starts from the Advanced Fletcher and unlocks `advanced_fletcher` after a `yew_handle` + `yew_longbow` + `yew_shortbow` turn-in.
+  - Reused the merchant-lock quest runtime, so the Advanced Fletcher now routes from `Talk-to` to `Trade` only after the yew proof set is delivered.
+  - Synced the fletching roadmap/status/index so the north-road buyer is documented as the gated late-band sell path instead of an always-open merchant.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-060 - Firemaking higher-tier world lanes existed only in docs and specs
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/core.js`, `tools/content/validate-world.js`, `tools/tests/world-bootstrap-parity.js`, `src/js/skills/firemaking/ROADMAP.md`, `src/js/skills/firemaking/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the firemaking roadmap/status docs after the multi-tier log progression pass.
+  2. Compare those docs against the authored world route groups and current QA helpers.
+  3. Try to find a direct, tier-specific firemaking lane for oak, willow, maple, or yew progression in normal gameplay or via `/qa`.
+- Expected: Higher-tier firemaking progression should have reachable authored training lanes and QA helpers instead of living only in specs and the generic logs-only preset.
+- Actual: Firemaking supported all log tiers in runtime/spec data, but the world content still lacked authored firemaking route anchors and QA only exposed a generic `fm_full` loadout with no tier-specific travel helpers.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a canonical `firemaking` route group to the authored world contract and place tiered fire lanes beside the matching woodcutting bands.
+  2. Expose the new lanes through the QA surface (`/qa firespots`, `/qa gotofire`, broader `fm_full`, and `setlevel firemaking`).
+  3. Extend world/QA parity checks and sync the firemaking docs/status board.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added authored firemaking lanes for `starter`, `oak`, `willow`, `maple`, and `yew` in `starter_town`, plus a `pine` proof lane in `north_road_camp`, all on clear east/west-friendly tiles near the matching woodcutting bands.
+  - Routed the new `firemaking` group through the typed world contracts, bootstrap bridge, world payload, and QA chat commands so the lanes are reachable in normal tooling instead of living only in docs.
+  - Updated the firemaking roadmap/status/index and extended world validation/parity coverage so the new authored lanes stay locked.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-059 - Firemaking repeat-chain still ended after one successful fire
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/firemaking/index.js`, `tools/tests/firemaking-runtime-tests.js`, `src/js/skills/firemaking/STATUS.md`, `src/js/skills/firemaking/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Start a firemaking action with multiple logs and compare the live runtime against the repeated-flow notes in the firemaking roadmap.
+  2. Successfully light one fire, wait through the success clip, and observe whether the action chains into the next tile or simply ends.
+  3. Force a failed ignition attempt or a blocked follow-up step and inspect whether the player gets clear feedback without extra log consumption.
+- Expected: Firemaking should continue into the next tile after a successful fire while the lane remains valid, failed attempts should surface brief feedback, and blocked follow-up pacing should stop cleanly.
+- Actual: The runtime always stopped after the first successful fire, failed ignition attempts were silent, and the repeated east/west pacing path was not locked by dedicated regression coverage.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Reuse the existing `tryStepAfterFire()` seam so firemaking chains into the next tile after the success clip.
+  2. Add bounded failed-attempt feedback and clean blocked-follow-up messaging.
+  3. Add dedicated firemaking runtime QA and sync the firemaking docs/status tracking.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - `src/js/skills/firemaking/index.js` now carries successful fires into the next tile after the success clip instead of always stopping after one lit log.
+  - Failed ignition attempts now emit a brief first-failure feedback line per target tile, and blocked follow-up steps stop the chain with a specific pacing message instead of silently ending.
+  - Added `tools/tests/firemaking-runtime-tests.js` and wired it into the repo scripts so repeat-chain continuation, interruption, and blocked-lane behavior stay covered.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-058 - Fletching world-training loop existed only in docs and economy tables
 - Status: Fixed
 - Severity: S2

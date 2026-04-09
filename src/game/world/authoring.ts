@@ -292,6 +292,11 @@ function applyStructureLocalAlignment(
         )
       };
     }),
+    firemaking: rawDefinition.skillRoutes.firemaking.map((rawRoute, index) => {
+      const scaledRoute = scaledDefinition.skillRoutes.firemaking[index] || rawRoute;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);
+      return { ...scaledRoute, x: mapped.x, y: mapped.y, z: mapped.z };
+    }),
     mining: rawDefinition.skillRoutes.mining.map((rawRoute, index) => {
       const scaledRoute = scaledDefinition.skillRoutes.mining[index] || rawRoute;
       const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoute);

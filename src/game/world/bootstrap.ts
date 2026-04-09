@@ -66,6 +66,7 @@ function buildStaticBootstrap(worldId: string, definition: WorldDefinition): Wor
       smithingStations: staticServices.filter((service) => service.type === "FURNACE" || service.type === "ANVIL"),
       fishingRoutes: definition.skillRoutes.fishing.map(cloneRouteDescriptor),
       cookingRoutes: definition.skillRoutes.cooking.map(cloneSkillRouteWithFireTiles),
+      firemakingRoutes: definition.skillRoutes.firemaking.map(cloneRouteDescriptor),
       miningRoutes: definition.skillRoutes.mining.map(cloneRouteDescriptor),
       runecraftingRoutes: definition.skillRoutes.runecrafting.map(cloneRouteDescriptor),
       woodcuttingRoutes: definition.skillRoutes.woodcutting.map(cloneRouteDescriptor),

@@ -14,12 +14,13 @@
 - [x] FIREMAKING-009: Merchant and item-value alignment for logs, tinderbox, and ashes with general-store half-price rules.
 - [x] FIREMAKING-010: Interaction polish pass for repeated firemaking flow and usability.
 - [x] FIREMAKING-011: Runtime-backed log-burn benchmarks are now locked against same-log woodcutting supply and cooking-source demand via registry helpers, balance validation, and roadmap tables.
+- [x] FIREMAKING-012: Progression and polish pass completed for failure feedback, interruption behavior, and repeat-chain utility pacing (first-failure feedback, blocked follow-up messaging, and dedicated runtime QA now lock the live flow).
 - [x] FIREMAKING-014: Multi-tier firemaking progression now supports all canonical log tiers in runtime/spec data with woodcutting-demand guard coverage.
+- [x] FIREMAKING-013: World-content expansion completed for higher-tier firemaking progression (authored starter-town fire lanes now cover every log tier, north-road keeps a proof lane, and QA route helpers expose the training anchors directly).
 
 ## Now
 
 ## Next
-- [ ] FIREMAKING-012: Progression and polish pass for failure feedback, interruption behavior, and utility pacing.
+(empty)
 
 ## Later
-- [ ] FIREMAKING-013: World-content expansion pass for higher-tier firemaking progression.

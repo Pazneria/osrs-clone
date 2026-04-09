@@ -79,6 +79,7 @@ interface LegacyWorldPayload {
   combatSpawnNodes: WorldBootstrapResult["legacy"]["combatSpawnNodes"];
   fishingTrainingRouteDefs: RouteDescriptor[];
   cookingRouteSpecs: SkillRouteWithFireTiles[];
+  firemakingTrainingRouteDefs: RouteDescriptor[];
   miningTrainingRouteDefs: RouteDescriptor[];
   runecraftingRouteDefs: RouteDescriptor[];
   woodcuttingTrainingRouteDefs: RouteDescriptor[];
@@ -365,6 +366,7 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     combatSpawnNodes: legacy.combatSpawnNodes.map(cloneCombatSpawnNode),
     fishingTrainingRouteDefs: legacy.fishingRoutes.map(cloneRouteDescriptor),
     cookingRouteSpecs: legacy.cookingRoutes.map(cloneSkillRouteWithFireTiles),
+    firemakingTrainingRouteDefs: legacy.firemakingRoutes.map(cloneRouteDescriptor),
     miningTrainingRouteDefs: legacy.miningRoutes.map(cloneRouteDescriptor),
     runecraftingRouteDefs: legacy.runecraftingRoutes.map(cloneRouteDescriptor),
     woodcuttingTrainingRouteDefs: legacy.woodcuttingRoutes.map(cloneRouteDescriptor),

@@ -49,6 +49,7 @@ declare global {
     getMiningTrainingLocations?: () => RouteDescriptor[];
     getFishingTrainingLocations?: () => RouteDescriptor[];
     getCookingTrainingLocations?: () => RouteDescriptor[];
+    getFiremakingTrainingLocations?: () => RouteDescriptor[];
     getRunecraftingAltarLocations?: () => RouteDescriptor[];
     getRunecraftingAltarNameAt?: (x: number, y: number, z: number) => string | null;
   }
@@ -77,6 +78,7 @@ function exposeCompatibilityHooks(): void {
   window.getWorldGameContext = () => activeContext;
   window.getFishingTrainingLocations = () => activeContext.queries.getRouteGroup("fishing").map(cloneRouteDescriptor);
   window.getCookingTrainingLocations = () => activeContext.queries.getRouteGroup("cooking").map(cloneRouteDescriptor);
+  window.getFiremakingTrainingLocations = () => activeContext.queries.getRouteGroup("firemaking").map(cloneRouteDescriptor);
   window.getMiningTrainingLocations = () => activeContext.queries.getRouteGroup("mining").map(cloneRouteDescriptor);
   window.getWoodcuttingTrainingLocations = () => activeContext.queries.getRouteGroup("woodcutting").map(cloneRouteDescriptor);
   window.getRunecraftingAltarLocations = () => activeContext.queries.getRouteGroup("runecrafting").map(cloneRouteDescriptor);

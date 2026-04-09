@@ -13,11 +13,13 @@ function run() {
   assert(coreSource.includes("function getWorldGameContext()"), "core.js missing world game-context helper");
   assert(coreSource.includes("getWorldRouteGroup('fishing')"), "core.js fishing QA should use world route registry");
   assert(coreSource.includes("getWorldRouteGroup('cooking')"), "core.js cooking QA should use world route registry");
+  assert(coreSource.includes("getWorldRouteGroup('firemaking')"), "core.js firemaking QA should use world route registry");
   assert(coreSource.includes("getWorldMerchantServices()"), "core.js merchant QA should use service registry");
   assert(!coreSource.includes("const routeToKey = {\n                castle_pond_bank"), "legacy fishing routeToKey map should be removed");
   assert(!coreSource.includes("const routeToKey = {\n                starter_campfire"), "legacy cooking routeToKey map should be removed");
 
   assert(bridgeSource.includes("getWoodcuttingTrainingLocations"), "legacy bridge missing woodcutting compatibility hook");
+  assert(bridgeSource.includes("getFiremakingTrainingLocations"), "legacy bridge missing firemaking compatibility hook");
   assert(bridgeSource.includes("registerRuntimeWorldState"), "legacy bridge missing runtime world-state registration");
 
   console.log("QA registry parity guard passed.");

@@ -3593,6 +3593,73 @@
         ]
       }
     ],
+    "firemaking": [
+      {
+        "routeId": "starter_fire_lane",
+        "alias": "starter",
+        "label": "Starter Grove Fire Lane",
+        "x": 182,
+        "y": 170,
+        "z": 0,
+        "tags": [
+          "firemaking",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "oak_fire_lane",
+        "alias": "oak",
+        "label": "Oak Path Fire Lane",
+        "x": 205,
+        "y": 299,
+        "z": 0,
+        "tags": [
+          "firemaking",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "willow_fire_lane",
+        "alias": "willow",
+        "label": "Willow Bend Fire Lane",
+        "x": 239,
+        "y": 62,
+        "z": 0,
+        "tags": [
+          "firemaking",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "maple_fire_lane",
+        "alias": "maple",
+        "label": "Maple Ridge Fire Lane",
+        "x": 402,
+        "y": 206,
+        "z": 0,
+        "tags": [
+          "firemaking",
+          "qa",
+          "starter"
+        ]
+      },
+      {
+        "routeId": "yew_fire_lane",
+        "alias": "yew",
+        "label": "Yew Frontier Fire Lane",
+        "x": 51,
+        "y": 8,
+        "z": 0,
+        "tags": [
+          "firemaking",
+          "qa",
+          "starter"
+        ]
+      }
+    ],
     "mining": [
       {
         "routeId": "starter_mine",

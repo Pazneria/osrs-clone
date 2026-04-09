@@ -375,7 +375,7 @@ function chebyshevDistance(a, b) {
 }
 
 function buildRouteAnchors(world) {
-  const routeGroups = ["fishing", "cooking", "mining", "runecrafting", "woodcutting"];
+  const routeGroups = ["fishing", "cooking", "firemaking", "mining", "runecrafting", "woodcutting"];
   const anchors = [];
   for (let i = 0; i < routeGroups.length; i += 1) {
     const groupName = routeGroups[i];

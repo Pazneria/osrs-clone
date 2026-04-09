@@ -17,6 +17,7 @@
 - [x] FLETCHING-009: Merchant/value-table alignment for suppliers, advanced-fletcher buy lists, and general-store half-price behavior.
 - [x] FLETCHING-010: Runtime-backed throughput targets locked for the handle, finished-arrow, and finished-bow lanes via registry helpers, spec validation, and roadmap benchmark tables.
 - [x] FLETCHING-011: World/training-flow polish completed with authored starter-town supplier placement, north-road advanced-fletcher placement, and reachable merchant dialogue hooks.
+- [x] FLETCHING-012: Quest/progression gating and late-tier content pass completed with the `Proof of the Yew` buyer unlock, yew-output turn-in requirements, and quest-runtime guard coverage.
 
 ## Later
-- [ ] FLETCHING-012: Quest/progression gating and late-tier content pass (including top-band yew outputs and economy impact).
+(empty)

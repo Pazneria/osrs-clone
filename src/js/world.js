@@ -3342,6 +3342,7 @@
             const smithingStations = worldPayload.smithingStations;
             const fishingTrainingRouteDefs = worldPayload.fishingTrainingRouteDefs;
             const cookingRouteSpecs = worldPayload.cookingRouteSpecs;
+            const firemakingTrainingRouteDefs = worldPayload.firemakingTrainingRouteDefs;
             const miningTrainingRouteDefs = worldPayload.miningTrainingRouteDefs;
             const runecraftingRouteDefs = worldPayload.runecraftingRouteDefs;
             const woodcuttingTrainingRouteDefs = worldPayload.woodcuttingTrainingRouteDefs;
@@ -3597,6 +3598,10 @@
             const fishingTrainingLocations = fishingTrainingRouteDefs.slice();
             window.getFishingTrainingLocations = function getFishingTrainingLocations() {
                 return fishingTrainingLocations.slice();
+            };
+            const firemakingTrainingLocations = firemakingTrainingRouteDefs.slice();
+            window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations() {
+                return firemakingTrainingLocations.slice();
             };
 
             // Fishing-012 world placement: dedicated fishing merchants near the training water.

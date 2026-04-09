@@ -104,6 +104,43 @@
                 completedResponse: 'Good. You know the difference between shiny rock and useful metal. My advanced ore stock is yours to trade with now.'
             }
         },
+        advanced_fletcher_proof_of_the_yew: {
+            questId: 'advanced_fletcher_proof_of_the_yew',
+            kind: 'turn_in_items',
+            title: 'Proof of the Yew',
+            category: 'north_road_camp',
+            questGiverName: 'Advanced Fletcher',
+            startNpcDialogueId: 'advanced_fletcher',
+            startMerchantId: 'advanced_fletcher',
+            startInstructions: 'Talk to the Advanced Fletcher at the north-road outpost.',
+            autoStartOnFirstInteraction: true,
+            unlocksMerchantId: 'advanced_fletcher',
+            summary: 'The Advanced Fletcher wants proof that you can finish the top-band yew work before he opens his deeper buyer ledger.',
+            journal: {
+                offer: 'The Advanced Fletcher wants a yew-grade proof set before he opens his deeper buyer ledger.',
+                active: 'Bring the Advanced Fletcher 1 yew handle, 1 yew longbow, and 1 yew shortbow.',
+                ready: 'I have the full yew proof set. I should return to the Advanced Fletcher.',
+                completed: 'The Advanced Fletcher accepted my yew work and opened his full buyer ledger.'
+            },
+            objectives: [
+                createTurnInObjective('yew_handle', 'Yew handle', 'yew_handle', 1),
+                createTurnInObjective('yew_longbow', 'Yew longbow', 'yew_longbow', 1),
+                createTurnInObjective('yew_shortbow', 'Yew shortbow', 'yew_shortbow', 1)
+            ],
+            rewards: {
+                skillXp: [
+                    { skillId: 'fletching', amount: 250 }
+                ]
+            },
+            dialogue: {
+                offerGreeting: 'Plenty of people can shave logs. Fewer can keep yew straight all the way through the final cut.',
+                offerResponse: 'Bring me 1 yew handle, 1 yew longbow, and 1 yew shortbow. Show me clean work across the whole yew band, and I will open my full buyer ledger.',
+                activeGreeting: 'Yew tells the truth about your hands. I am still waiting on that handle, longbow, and shortbow.',
+                readyGreeting: 'That bundle looks close to proper work. If you brought the full yew set, I can treat you like a serious supplier.',
+                completedGreeting: 'That is proper yew work. My full buyer ledger is open to you now.',
+                completedResponse: 'Good grain, clean balance, and no wasted cuts. I will buy your full fletching stock from here on.'
+            }
+        },
         fishing_teacher_from_net_to_harpoon: {
             questId: 'fishing_teacher_from_net_to_harpoon',
             kind: 'turn_in_items',

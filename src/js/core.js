@@ -1078,7 +1078,13 @@
                     { itemId: 'small_pouch', amount: 1 }
                 ]);
             } else if (name === 'fm_full') {
-                slots = makeFilledSlots(tools, 'logs');
+                slots = tools.concat([
+                    { itemId: 'logs', amount: 5 },
+                    { itemId: 'oak_logs', amount: 5 },
+                    { itemId: 'willow_logs', amount: 5 },
+                    { itemId: 'maple_logs', amount: 4 },
+                    { itemId: 'yew_logs', amount: 4 }
+                ]);
             } else if (name === 'smith_smelt') {
                 slots = [
                     { itemId: 'hammer', amount: 1 },
@@ -1462,6 +1468,98 @@
                 deep: 'deep',
                 deepwater: 'deep',
                 'deep-water': 'deep'
+            };
+            const key = aliases[raw] || raw;
+            if (spots[key]) {
+                const exact = spots[key];
+                return qaTeleportTo(exact.x, exact.y, exact.z, exact.label);
+            }
+
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                if (!id.includes(key)) continue;
+                const spot = spots[id];
+                return qaTeleportTo(spot.x, spot.y, spot.z, spot.label);
+            }
+            return false;
+        }
+
+        function getQaFiremakingSpots() {
+            const fallback = {
+                starter: { x: 182, y: 170, z: 0, label: 'starter grove fire lane' },
+                oak: { x: 205, y: 299, z: 0, label: 'oak path fire lane' },
+                willow: { x: 239, y: 62, z: 0, label: 'willow bend fire lane' },
+                maple: { x: 402, y: 206, z: 0, label: 'maple ridge fire lane' },
+                yew: { x: 51, y: 8, z: 0, label: 'yew frontier fire lane' }
+            };
+            const routes = getWorldRouteGroup('firemaking');
+            if (Array.isArray(routes) && routes.length > 0) {
+                const spots = {};
+                for (let i = 0; i < routes.length; i++) {
+                    const route = routes[i];
+                    if (!route) continue;
+                    const key = typeof route.alias === 'string' && route.alias.trim()
+                        ? route.alias.trim().toLowerCase()
+                        : String(route.routeId || '').trim().toLowerCase();
+                    if (!key) continue;
+                    spots[key] = {
+                        x: Number.isFinite(route.x) ? route.x : 0,
+                        y: Number.isFinite(route.y) ? route.y : 0,
+                        z: Number.isFinite(route.z) ? route.z : 0,
+                        label: route.label || key
+                    };
+                }
+                if (Object.keys(spots).length > 0) return spots;
+            }
+            if (typeof getFiremakingTrainingLocations === 'function') {
+                const legacyRoutes = getFiremakingTrainingLocations();
+                if (Array.isArray(legacyRoutes) && legacyRoutes.length > 0) {
+                    const spots = {};
+                    for (let i = 0; i < legacyRoutes.length; i++) {
+                        const route = legacyRoutes[i];
+                        if (!route) continue;
+                        const key = typeof route.alias === 'string' && route.alias.trim()
+                            ? route.alias.trim().toLowerCase()
+                            : String(route.routeId || '').trim().toLowerCase();
+                        if (!key) continue;
+                        spots[key] = {
+                            x: Number.isFinite(route.x) ? route.x : 0,
+                            y: Number.isFinite(route.y) ? route.y : 0,
+                            z: Number.isFinite(route.z) ? route.z : 0,
+                            label: route.label || key
+                        };
+                    }
+                    if (Object.keys(spots).length > 0) return spots;
+                }
+            }
+            return fallback;
+        }
+
+        function qaListFiremakingSpots() {
+            const spots = getQaFiremakingSpots();
+            const ids = Object.keys(spots);
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                const spot = spots[id];
+                addChatMessage(`[QA fire] ${id} @ (${spot.x},${spot.y},${spot.z})`, 'info');
+            }
+        }
+
+        function qaGotoFiremakingSpot(nameLike) {
+            const raw = String(nameLike || '').trim().toLowerCase();
+            if (!raw) return false;
+            const spots = getQaFiremakingSpots();
+            const aliases = {
+                starter: 'starter',
+                logs: 'starter',
+                regular: 'starter',
+                normal: 'starter',
+                oak: 'oak',
+                willow: 'willow',
+                maple: 'maple',
+                yew: 'yew',
+                pine: 'pine'
             };
             const key = aliases[raw] || raw;
             if (spots[key]) {
@@ -2914,7 +3012,7 @@
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
-                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
+                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
                     addChatMessage(formatQaOpenShopUsage(), 'info');
                     return;
                 }
@@ -2933,12 +3031,12 @@
                     const skill = String(parts[1] || '').toLowerCase();
                     const lvl = parseInt(parts[2], 10);
                     if (!Number.isFinite(lvl)) {
-                        addChatMessage('Usage: /qa setlevel <fishing|mining|runecrafting|smithing> <1-99>', 'warn');
+                        addChatMessage('Usage: /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>', 'warn');
                         return;
                     }
                     const ok = setQaSkillLevel(skill, lvl);
                     if (!ok) {
-                        addChatMessage('Unknown skill for /qa setlevel. Use fishing, mining, runecrafting, or smithing.', 'warn');
+                        addChatMessage('Unknown skill for /qa setlevel. Use fishing, firemaking, mining, runecrafting, or smithing.', 'warn');
                         return;
                     }
                     addChatMessage(`QA set level: ${skill}=${Math.max(1, Math.min(99, Math.floor(lvl)))}`, 'info');
@@ -3005,6 +3103,10 @@
                     qaListCookingSpots();
                     return;
                 }
+                if (cmd === 'firespots') {
+                    qaListFiremakingSpots();
+                    return;
+                }
 
                 
                 if (cmd === 'gotofish' && parts.length >= 2) {
@@ -3017,6 +3119,12 @@
                     const target = String(parts[1] || '').toLowerCase();
                     const ok = qaGotoCookingSpot(target);
                     if (!ok) addChatMessage('Usage: /qa gotocook <camp|river|dock|deep>', 'warn');
+                    return;
+                }
+                if (cmd === 'gotofire' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoFiremakingSpot(target);
+                    if (!ok) addChatMessage('Usage: /qa gotofire <starter|oak|willow|maple|yew>', 'warn');
                     return;
                 }
 
