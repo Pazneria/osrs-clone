@@ -28,12 +28,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
         const inputControllerRuntime = window.InputControllerRuntime || null;
         const animationRuntimeBridge = window.AnimationRuntimeBridge || null;
-        const animationStudioBridge = window.AnimationStudioBridge || null;
 
         function isAnimationStudioActive() {
-            return !!(animationStudioBridge
-                && typeof animationStudioBridge.isStudioActive === 'function'
-                && animationStudioBridge.isStudioActive());
+            const bridge = window.AnimationStudioBridge || null;
+            return !!(bridge
+                && typeof bridge.isStudioActive === 'function'
+                && bridge.isStudioActive());
         }
 
         function buildInputControllerContext() {
