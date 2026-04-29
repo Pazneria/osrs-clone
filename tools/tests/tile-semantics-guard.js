@@ -6,6 +6,7 @@ function assert(condition, message) {
 }
 
 const FILES_TO_SCAN = [
+  "src/js/world/tile-runtime.js",
   "src/js/core.js",
   "src/js/world.js",
   "src/js/input-render.js"
@@ -30,6 +31,15 @@ function hasTileLiteralComparison(line) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const violations = [];
+  const manifestSource = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
+  const coreSource = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
+
+  assert(
+    manifestSource.indexOf("world-tile-runtime") >= 0
+      && manifestSource.indexOf("world-tile-runtime") < manifestSource.indexOf("{ id: \"core\""),
+    "legacy script manifest should load world tile runtime before core.js"
+  );
+  assert(!coreSource.includes("const TileId = Object.freeze"), "core.js should not own canonical tile IDs");
 
   for (let i = 0; i < FILES_TO_SCAN.length; i++) {
     const relPath = FILES_TO_SCAN[i];
