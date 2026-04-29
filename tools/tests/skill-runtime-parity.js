@@ -4,6 +4,10 @@ const freezeSource = require("../content/starter-town-freeze-source.json");
 const {
   MAP_SIZE,
   TileId,
+  isNaturalTileId,
+  isTreeTileId,
+  isWalkableTileId,
+  isWaterTileId,
   buildWorldLogicalMap,
   loadWorldContent
 } = require("../content/world-utils");
@@ -24,25 +28,6 @@ function inTownCore(x, y) {
   const inStore = x >= 177 && x <= 185 && y >= 232 && y <= 240;
   const inSmithyApron = x >= 217 && x <= 233 && y >= 224 && y <= 244;
   return inCastle || inStore || inSmithyApron;
-}
-
-function isTreeTileId(tileId) {
-  return tileId === TileId.TREE || tileId === TileId.STUMP;
-}
-
-function isWaterTileId(tileId) {
-  return tileId === TileId.WATER_SHALLOW || tileId === TileId.WATER_DEEP;
-}
-
-function isNaturalTileId(tileId) {
-  return tileId === TileId.GRASS
-    || tileId === TileId.DIRT
-    || tileId === TileId.TREE
-    || tileId === TileId.ROCK
-    || tileId === TileId.STUMP
-    || tileId === TileId.SHORE
-    || tileId === TileId.WATER_SHALLOW
-    || tileId === TileId.WATER_DEEP;
 }
 
 function cloneRoute(route) {
@@ -171,7 +156,8 @@ function run() {
       inTownCore,
       isTreeTileId,
       isWaterTileId,
-      isNaturalTileId
+      isNaturalTileId,
+      isWalkableTileId
     },
     writers: {
       setMiningRock: (placement) => {

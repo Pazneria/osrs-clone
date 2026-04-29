@@ -528,6 +528,7 @@ export interface LegacyWorldRuntimeDraft {
     isTreeTileId: (tileId: number) => boolean;
     isWaterTileId: (tileId: number) => boolean;
     isNaturalTileId: (tileId: number) => boolean;
+    isWalkableTileId: (tileId: number) => boolean;
   };
   writers: {
     setMiningRock: (placement: MiningRockPlacement) => boolean;

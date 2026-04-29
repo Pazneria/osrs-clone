@@ -57,13 +57,7 @@ function isRunecraftingMerchantWalkable(draft: LegacyWorldRuntimeDraft, x: numbe
   const row = draft.logicalMap[z]?.[y];
   if (!row) return false;
   const tile = row[x];
-  return tile === draft.tileIds.GRASS
-    || tile === draft.tileIds.SHORE
-    || tile === draft.tileIds.FLOOR_WOOD
-    || tile === draft.tileIds.FLOOR_STONE
-    || tile === draft.tileIds.FLOOR_BRICK
-    || tile === draft.tileIds.STAIRS_RAMP
-    || tile === draft.tileIds.DOOR_OPEN;
+  return draft.helpers.isWalkableTileId(tile);
 }
 
 function findMerchantSpotNearAltar(

@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
+const { loadTsModule } = require("./ts-module-loader");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -10,6 +12,15 @@ const FILES_TO_SCAN = [
   "src/js/core.js",
   "src/js/world.js",
   "src/js/input-render.js"
+];
+
+const DUPLICATE_SCAN_FILES = [
+  "src/js/core.js",
+  "src/js/world.js",
+  "src/js/input-render.js",
+  "tools/content/world-utils.js",
+  "tools/content/freeze-starter-town-world.js",
+  "tools/tests/skill-runtime-parity.js"
 ];
 
 const TILE_COMPARISON_PATTERNS = [
@@ -33,6 +44,11 @@ function run() {
   const violations = [];
   const manifestSource = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
+  const canonical = loadTsModule(path.join(root, "src/game/world/tile-ids.ts"));
+  const toolTileRuntime = require("../content/tile-ids");
+  const legacySandbox = { window: {} };
+  const legacySource = fs.readFileSync(path.join(root, "src/js/world/tile-runtime.js"), "utf8");
+  vm.runInNewContext(legacySource, legacySandbox, { filename: "src/js/world/tile-runtime.js" });
 
   assert(
     manifestSource.indexOf("world-tile-runtime") >= 0
@@ -40,6 +56,49 @@ function run() {
     "legacy script manifest should load world tile runtime before core.js"
   );
   assert(!coreSource.includes("const TileId = Object.freeze"), "core.js should not own canonical tile IDs");
+  assert(JSON.stringify(legacySandbox.window.TileId) === JSON.stringify(canonical.TileId), "legacy tile runtime TileId should match canonical typed TileId");
+  assert(JSON.stringify(toolTileRuntime.TileId) === JSON.stringify(canonical.TileId), "tool tile adapter TileId should match canonical typed TileId");
+
+  const tileValues = Object.values(canonical.TileId).filter((value) => Number.isFinite(value));
+  const helperNames = [
+    "isWaterTileId",
+    "isNaturalTileId",
+    "isTreeTileId",
+    "isWalkableTileId",
+    "isDoorTileId",
+    "isWoodenGateTileId"
+  ];
+  for (let i = 0; i < helperNames.length; i++) {
+    const helperName = helperNames[i];
+    for (let j = 0; j < tileValues.length; j++) {
+      const value = tileValues[j];
+      assert(
+        legacySandbox.window[helperName](value) === canonical[helperName](value),
+        `legacy ${helperName}(${value}) should match canonical helper`
+      );
+      assert(
+        toolTileRuntime[helperName](value) === canonical[helperName](value),
+        `tool ${helperName}(${value}) should match canonical helper`
+      );
+    }
+  }
+
+  const duplicatePatterns = [
+    "const TileId = Object.freeze",
+    "function isWaterTileId(",
+    "function isNaturalTileId(",
+    "function isTreeTileId(",
+    "function isWalkableTileId(",
+    "function isDoorTileId(",
+    "function isWoodenGateTileId("
+  ];
+  for (let i = 0; i < DUPLICATE_SCAN_FILES.length; i++) {
+    const relPath = DUPLICATE_SCAN_FILES[i];
+    const source = fs.readFileSync(path.join(root, relPath), "utf8");
+    for (let j = 0; j < duplicatePatterns.length; j++) {
+      assert(!source.includes(duplicatePatterns[j]), `${relPath} should import/delegate canonical tile semantics instead of redefining ${duplicatePatterns[j]}`);
+    }
+  }
 
   for (let i = 0; i < FILES_TO_SCAN.length; i++) {
     const relPath = FILES_TO_SCAN[i];

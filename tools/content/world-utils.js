@@ -1,51 +1,20 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const {
+  TileId,
+  WALKABLE_TILE_SET,
+  isDoorTileId,
+  isNaturalTileId,
+  isTreeTileId,
+  isWalkableTileId,
+  isWaterTileId,
+  isWoodenGateTileId
+} = require("./tile-ids");
 
 const MAP_SIZE = 648;
 const PLANES = 2;
-
-const TileId = Object.freeze({
-  GRASS: 0,
-  TREE: 1,
-  ROCK: 2,
-  DIRT: 3,
-  STUMP: 4,
-  OBSTACLE: 5,
-  FLOOR_WOOD: 6,
-  FLOOR_STONE: 7,
-  FLOOR_BRICK: 8,
-  BANK_BOOTH: 9,
-  WALL: 11,
-  TOWER: 12,
-  STAIRS_UP: 13,
-  STAIRS_DOWN: 14,
-  STAIRS_RAMP: 15,
-  SOLID_NPC: 16,
-  SHOP_COUNTER: 17,
-  DOOR_CLOSED: 18,
-  DOOR_OPEN: 19,
-  SHORE: 20,
-  WATER_SHALLOW: 21,
-  WATER_DEEP: 22,
-  FENCE: 23,
-  WOODEN_GATE_CLOSED: 24,
-  WOODEN_GATE_OPEN: 25
-});
-
-const WALKABLE = new Set([
-  TileId.GRASS,
-  TileId.DIRT,
-  TileId.FLOOR_WOOD,
-  TileId.FLOOR_STONE,
-  TileId.FLOOR_BRICK,
-  TileId.STAIRS_UP,
-  TileId.STAIRS_DOWN,
-  TileId.STAIRS_RAMP,
-  TileId.DOOR_OPEN,
-  TileId.WOODEN_GATE_OPEN,
-  TileId.SHORE
-]);
+const WALKABLE = WALKABLE_TILE_SET;
 
 function loadJson(absPath) {
   return JSON.parse(fs.readFileSync(absPath, "utf8"));
@@ -332,7 +301,7 @@ function buildStarterTownGameplayMap(world, stamps) {
 
 function isWalkable(map, x, y, z) {
   if (!map[z] || !map[z][y]) return false;
-  return WALKABLE.has(map[z][y][x]);
+  return isWalkableTileId(map[z][y][x]);
 }
 
 function hasAdjacentWalkableTile(map, x, y, z) {
@@ -487,6 +456,12 @@ module.exports = {
   MAP_SIZE,
   TileId,
   WALKABLE,
+  isDoorTileId,
+  isNaturalTileId,
+  isTreeTileId,
+  isWalkableTileId,
+  isWaterTileId,
+  isWoodenGateTileId,
   loadWorldManifest,
   getWorldManifestEntry,
   loadWorldContent,
