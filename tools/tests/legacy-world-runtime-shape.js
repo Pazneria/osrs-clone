@@ -106,6 +106,14 @@ function run() {
     "world.js should not own world-map pan and zoom state"
   );
   assert(
+    !worldSource.includes("minimapZoom"),
+    "world.js should not own minimap zoom state"
+  );
+  assert(
+    !worldSource.includes("minimapDestination"),
+    "world.js should not own minimap destination state"
+  );
+  assert(
     worldSource.includes("firemakingTrainingRouteDefs"),
     "world.js should consume authored firemaking routes through the typed world adapter"
   );

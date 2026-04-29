@@ -1378,14 +1378,19 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return true;
         }
         function setMinimapDestination(gridX, gridY, z = playerState.z) {
-            if (!Number.isInteger(gridX) || !Number.isInteger(gridY) || !Number.isInteger(z)) {
-                minimapDestination = null;
-                return;
-            }
-            minimapDestination = { x: gridX, y: gridY, z };
+            const runtime = window.WorldMapHudRuntime || null;
+            if (runtime && typeof runtime.setMinimapDestination === 'function') runtime.setMinimapDestination(gridX, gridY, z);
         }
         function clearMinimapDestination() {
-            minimapDestination = null;
+            const runtime = window.WorldMapHudRuntime || null;
+            if (runtime && typeof runtime.clearMinimapDestination === 'function') runtime.clearMinimapDestination();
+        }
+        function clearMinimapDestinationIfReached() {
+            const runtime = window.WorldMapHudRuntime || null;
+            if (runtime && typeof runtime.clearMinimapDestinationIfReached === 'function') {
+                return runtime.clearMinimapDestinationIfReached(playerState);
+            }
+            return false;
         }
         function getGroundTileStackCount(gridX, gridY, z = playerState.z) {
             if (!Array.isArray(groundItems) || !Number.isInteger(gridX) || !Number.isInteger(gridY)) return 1;
@@ -2010,21 +2015,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     }
                 } else if (playerState.action === 'WALKING') {
                     playerState.action = 'IDLE';
-                    if (minimapDestination
-                        && minimapDestination.z === playerState.z
-                        && minimapDestination.x === playerState.x
-                        && minimapDestination.y === playerState.y) {
-                        clearMinimapDestination();
-                    }
+                    clearMinimapDestinationIfReached();
                 }
             }
 
-            if (minimapDestination
-                && minimapDestination.z === playerState.z
-                && minimapDestination.x === playerState.x
-                && minimapDestination.y === playerState.y) {
-                clearMinimapDestination();
-            }
+            clearMinimapDestinationIfReached();
 
             if (playerState.action === 'IDLE' || playerState.action === 'WALKING' || playerState.action === 'WALKING_TO_INTERACT') {
                 playerState.turnLock = false;
@@ -2830,7 +2825,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             playerRig.position.set(currentVisualX, baseVisualY, currentVisualY);
             
-            if (minimapLocked && !isFreeCam) { minimapTargetX = currentVisualX; minimapTargetY = currentVisualY; }
+            if (window.WorldMapHudRuntime && typeof window.WorldMapHudRuntime.syncLockedMinimapTarget === 'function') {
+                window.WorldMapHudRuntime.syncLockedMinimapTarget(currentVisualX, currentVisualY, isFreeCam);
+            }
             const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
             if (!rig) {
                 updateCombatAnimationDebugPanel(null, playerRig, frameNow);

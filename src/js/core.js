@@ -589,20 +589,15 @@
         let isBankOpen = false;
         let bankItems = gameSession ? gameSession.progress.bankItems : Array(200).fill(null);
 
-        // Minimap State
-        let minimapZoom = 1.0; 
-        let minimapLocked = true;
-        let minimapTargetX = DEFAULT_WORLD_SPAWN.x;
-        let minimapTargetY = DEFAULT_WORLD_SPAWN.y;
-        let offscreenMapCanvas, offscreenMapCtx;
-        let isMinimapDragging = false;
-        let minimapDragStart = { x: 0, y: 0 };
-        let minimapDragEnd = { x: 0, y: 0 };
-        let minimapDestination = null;
-        let lastMinimapRenderFrameMs = 0;
+        if (window.WorldMapHudRuntime && typeof window.WorldMapHudRuntime.resetMinimapState === 'function') {
+            window.WorldMapHudRuntime.resetMinimapState({
+                locked: true,
+                targetX: DEFAULT_WORLD_SPAWN.x,
+                targetY: DEFAULT_WORLD_SPAWN.y
+            });
+        }
         let lastVisibleChunkPlaneZ = null;
         let playerOverheadText = { text: '', expiresAt: 0 };
-        const MINIMAP_RENDER_INTERVAL_MS = 75;
         const TARGET_FPS = 50;
         const FRAME_INTERVAL_MS = 1000 / TARGET_FPS;
         let frameLimiterPrev = 0;
@@ -1639,10 +1634,13 @@
             playerState.firemakingSession = null;
             playerState.pendingSkillStart = null;
 
-            minimapLocked = true;
-            minimapTargetX = spawn.x;
-            minimapTargetY = spawn.y;
-            minimapDestination = null;
+            if (window.WorldMapHudRuntime && typeof window.WorldMapHudRuntime.resetMinimapState === 'function') {
+                window.WorldMapHudRuntime.resetMinimapState({
+                    locked: true,
+                    targetX: spawn.x,
+                    targetY: spawn.y
+                });
+            }
 
             if (typeof window.reloadActiveWorldScene === 'function') {
                 window.reloadActiveWorldScene();
@@ -4076,10 +4074,13 @@
                 playerState.action = 'IDLE';
                 playerState.targetObj = null;
                 playerState.targetUid = null;
-                minimapLocked = true;
-                minimapTargetX = fallbackSpawn.x;
-                minimapTargetY = fallbackSpawn.y;
-                minimapDestination = null;
+                if (window.WorldMapHudRuntime && typeof window.WorldMapHudRuntime.resetMinimapState === 'function') {
+                    window.WorldMapHudRuntime.resetMinimapState({
+                        locked: true,
+                        targetX: fallbackSpawn.x,
+                        targetY: fallbackSpawn.y
+                    });
+                }
             }
             if (typeof window.initLogicalMap === 'function') window.initLogicalMap();
             if (typeof window.initThreeJS === 'function') window.initThreeJS();

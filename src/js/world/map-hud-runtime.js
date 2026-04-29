@@ -11,6 +11,14 @@
     let minimapDragEnd = { x: 0, y: 0 };
     let lastMinimapRenderFrameMs = 0;
 
+    const minimapState = {
+        zoom: 1,
+        locked: true,
+        targetX: 0,
+        targetY: 0,
+        destination: null
+    };
+
     const worldMapState = {
         zoom: 1,
         minZoom: 1,
@@ -59,18 +67,69 @@
         return (context && context.tileIds) || {};
     }
 
-    function getMinimapState(context) {
-        const state = callHook(context, 'getMinimapState', null) || {};
+    function getMinimapState() {
         return {
-            zoom: Number.isFinite(state.zoom) ? state.zoom : 1,
-            targetX: Number.isFinite(state.targetX) ? state.targetX : 0,
-            targetY: Number.isFinite(state.targetY) ? state.targetY : 0,
-            locked: state.locked !== false
+            zoom: Number.isFinite(minimapState.zoom) ? minimapState.zoom : 1,
+            targetX: Number.isFinite(minimapState.targetX) ? minimapState.targetX : 0,
+            targetY: Number.isFinite(minimapState.targetY) ? minimapState.targetY : 0,
+            locked: minimapState.locked !== false
         };
     }
 
-    function setMinimapState(context, patch) {
-        if (context && typeof context.setMinimapState === 'function') context.setMinimapState(patch || {});
+    function setMinimapState(patch) {
+        if (!patch || typeof patch !== 'object') return getMinimapState();
+        if (Number.isFinite(patch.zoom)) minimapState.zoom = Math.max(1, Math.min(20, patch.zoom));
+        if (typeof patch.locked === 'boolean') minimapState.locked = patch.locked;
+        if (Number.isFinite(patch.targetX)) minimapState.targetX = patch.targetX;
+        if (Number.isFinite(patch.targetY)) minimapState.targetY = patch.targetY;
+        return getMinimapState();
+    }
+
+    function resetMinimapState(options = {}) {
+        minimapState.zoom = Number.isFinite(options.zoom) ? Math.max(1, Math.min(20, options.zoom)) : 1;
+        minimapState.locked = options.locked !== false;
+        minimapState.targetX = Number.isFinite(options.targetX) ? options.targetX : 0;
+        minimapState.targetY = Number.isFinite(options.targetY) ? options.targetY : 0;
+        minimapState.destination = options.destination || null;
+        isMinimapDragging = false;
+        minimapDragStart = { x: 0, y: 0 };
+        minimapDragEnd = { x: 0, y: 0 };
+        lastMinimapRenderFrameMs = 0;
+        return getMinimapState();
+    }
+
+    function setMinimapDestination(gridX, gridY, z) {
+        if (!Number.isInteger(gridX) || !Number.isInteger(gridY) || !Number.isInteger(z)) {
+            minimapState.destination = null;
+            return null;
+        }
+        minimapState.destination = { x: gridX, y: gridY, z };
+        return Object.assign({}, minimapState.destination);
+    }
+
+    function clearMinimapDestination() {
+        minimapState.destination = null;
+    }
+
+    function getMinimapDestination() {
+        return minimapState.destination ? Object.assign({}, minimapState.destination) : null;
+    }
+
+    function clearMinimapDestinationIfReached(playerState) {
+        const destination = minimapState.destination;
+        if (!destination || !playerState) return false;
+        if (destination.z === playerState.z && destination.x === playerState.x && destination.y === playerState.y) {
+            clearMinimapDestination();
+            return true;
+        }
+        return false;
+    }
+
+    function syncLockedMinimapTarget(x, y, isFreeCam = false) {
+        if (!minimapState.locked || isFreeCam) return false;
+        if (Number.isFinite(x)) minimapState.targetX = x;
+        if (Number.isFinite(y)) minimapState.targetY = y;
+        return true;
     }
 
     function getPlayerMapPosition(context) {
@@ -292,7 +351,7 @@
         const player = getPlayerMapPosition(context);
         const clickMarkerEntries = callHook(context, 'getClickMarkers', []) || [];
         const groundItemEntries = callHook(context, 'getGroundItems', []) || [];
-        const destination = callHook(context, 'getMinimapDestination', null);
+        const destination = getMinimapDestination();
         const minimapDestination = destination
             && Number.isFinite(destination.x)
             && Number.isFinite(destination.y)
@@ -509,12 +568,12 @@
         minimapCanvas.addEventListener('contextmenu', (event) => event.preventDefault());
         minimapCanvas.addEventListener('wheel', (event) => {
             event.preventDefault();
-            const state = getMinimapState(context);
+            const state = getMinimapState();
             const inputRuntime = getInputControllerRuntime(context);
             const zoom = inputRuntime && typeof inputRuntime.resolveZoomStep === 'function'
                 ? inputRuntime.resolveZoomStep(state.zoom, event.deltaY, { step: -0.2, min: 1.0, max: 20.0 })
                 : Math.max(1.0, Math.min(20.0, state.zoom + (Math.sign(event.deltaY) * -0.2)));
-            setMinimapState(context, { zoom });
+            setMinimapState({ zoom });
         });
         minimapCanvas.addEventListener('mousedown', (event) => {
             const rect = minimapCanvas.getBoundingClientRect();
@@ -532,7 +591,7 @@
                     if (context && typeof context.clearSelectedUse === 'function') context.clearSelectedUse();
                     return;
                 }
-                const state = getMinimapState(context);
+                const state = getMinimapState();
                 const inputRuntime = getInputControllerRuntime(context);
                 const walkTarget = inputRuntime && typeof inputRuntime.resolveMinimapWalkTarget === 'function'
                     ? inputRuntime.resolveMinimapWalkTarget({
@@ -565,7 +624,7 @@
         minimapCanvas.addEventListener('mouseup', (event) => {
             if (event.button === 2 && isMinimapDragging) {
                 isMinimapDragging = false;
-                const state = getMinimapState(context);
+                const state = getMinimapState();
                 const inputRuntime = getInputControllerRuntime(context);
                 if (inputRuntime && typeof inputRuntime.resolveMinimapDragResolution === 'function') {
                     const resolution = inputRuntime.resolveMinimapDragResolution({
@@ -576,7 +635,7 @@
                         dragStart: minimapDragStart,
                         dragEnd: minimapDragEnd
                     });
-                    setMinimapState(context, {
+                    setMinimapState({
                         targetX: resolution.targetX,
                         targetY: resolution.targetY,
                         zoom: resolution.zoom,
@@ -586,11 +645,11 @@
                     const dx = minimapDragEnd.x - minimapDragStart.x;
                     const dy = minimapDragEnd.y - minimapDragStart.y;
                     if (Math.sqrt(dx * dx + dy * dy) < 5) {
-                        setMinimapState(context, { locked: true, zoom: 1.0 });
+                        setMinimapState({ locked: true, zoom: 1.0 });
                     } else {
                         const canvasCenter = minimapCanvas.width / 2;
                         const ppt = (minimapCanvas.width / 100) * state.zoom;
-                        setMinimapState(context, {
+                        setMinimapState({
                             targetX: state.targetX + (((minimapDragStart.x + minimapDragEnd.x) / 2) - canvasCenter) / ppt,
                             targetY: state.targetY + (((minimapDragStart.y + minimapDragEnd.y) / 2) - canvasCenter) / ppt,
                             locked: false,
@@ -618,7 +677,7 @@
         if (!canvas) return;
         if (!offscreenMapCanvas) updateMinimapCanvas(context);
         const ctx = canvas.getContext('2d');
-        const state = getMinimapState(context);
+        const state = getMinimapState();
         const renderSnapshot = buildHudRenderSnapshot(context);
         const renderRuntime = getRenderRuntime(context);
         const player = getPlayerMapPosition(context);
@@ -715,6 +774,14 @@
         initMinimap,
         updateMinimap,
         resetWorldMapState,
+        getMinimapState,
+        setMinimapState,
+        resetMinimapState,
+        setMinimapDestination,
+        clearMinimapDestination,
+        getMinimapDestination,
+        clearMinimapDestinationIfReached,
+        syncLockedMinimapTarget,
         getWorldMapSourceRect,
         resolveWorldMapViewport,
         getOffscreenMapCanvas: () => offscreenMapCanvas,

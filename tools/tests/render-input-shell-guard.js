@@ -10,6 +10,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const renderContracts = fs.readFileSync(path.join(root, "src", "game", "contracts", "render.ts"), "utf8");
   const renderInputBridge = fs.readFileSync(path.join(root, "src", "game", "platform", "render-input-bridge.ts"), "utf8");
+  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
@@ -23,9 +24,18 @@ function run() {
   assert(mapHudSource.includes("buildWorldMapSnapshot"), "world map HUD runtime should consume the world-map render snapshot bridge");
   assert(mapHudSource.includes("buildMinimapSnapshot"), "world map HUD runtime should consume the minimap render snapshot bridge");
   assert(mapHudSource.includes("worldMapState"), "world map HUD runtime should own world-map pan and zoom state");
+  assert(mapHudSource.includes("const minimapState"), "world map HUD runtime should own minimap zoom, lock, target, and destination state");
+  assert(mapHudSource.includes("syncLockedMinimapTarget"), "world map HUD runtime should own locked-target following");
+  assert(mapHudSource.includes("clearMinimapDestinationIfReached"), "world map HUD runtime should own destination cleanup");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD orchestration through the map HUD runtime");
   assert(worldSource.includes("buildMapHudRuntimeContext"), "world.js should provide map HUD runtime context callbacks");
   assert(!worldSource.includes("const worldMapState ="), "world.js should no longer own world-map pan and zoom state");
+  assert(!worldSource.includes("minimapZoom"), "world.js should not read minimap zoom state directly");
+  assert(!worldSource.includes("minimapDestination"), "world.js should not read minimap destination state directly");
+  assert(!worldSource.includes("minimapLocked"), "world.js should not read minimap lock state directly");
+  assert(!coreSource.includes("let minimapZoom"), "core.js should not own minimap zoom state");
+  assert(!coreSource.includes("let minimapDestination"), "core.js should not own minimap destination state");
+  assert(!inputSource.includes("minimapLocked &&"), "input-render.js should not read minimap lock state directly");
   assert(worldSource.includes("shadowFocusRevision"), "world.js should track shadow focus revision changes across scene reloads");
   assert(worldSource.includes("function initSkyRuntime"), "world.js should initialize a static sky runtime");
   assert(worldSource.includes("function updateSkyRuntime"), "world.js should expose a sky update helper");

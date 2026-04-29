@@ -7185,19 +7185,6 @@
                 queueWalk: (x, y) => queueAction('WALK', x, y, null),
                 getSelectedUseItem,
                 clearSelectedUse,
-                getMinimapState: () => ({
-                    zoom: minimapZoom,
-                    locked: minimapLocked,
-                    targetX: minimapTargetX,
-                    targetY: minimapTargetY
-                }),
-                setMinimapState: (patch) => {
-                    if (!patch || typeof patch !== 'object') return;
-                    if (Number.isFinite(patch.zoom)) minimapZoom = patch.zoom;
-                    if (typeof patch.locked === 'boolean') minimapLocked = patch.locked;
-                    if (Number.isFinite(patch.targetX)) minimapTargetX = patch.targetX;
-                    if (Number.isFinite(patch.targetY)) minimapTargetY = patch.targetY;
-                },
                 getPlayerMapPosition: () => {
                     const playerX = (playerRig && playerRig.position && Number.isFinite(playerRig.position.x)) ? playerRig.position.x : playerState.x;
                     const playerY = (playerRig && playerRig.position && Number.isFinite(playerRig.position.z)) ? playerRig.position.z : playerState.y;
@@ -7222,7 +7209,6 @@
                         uid: item.uid
                     }))
                     : [],
-                getMinimapDestination: () => minimapDestination
             };
         }
 
