@@ -462,6 +462,7 @@ module.exports = {
   isWalkableTileId,
   isWaterTileId,
   isWoodenGateTileId,
+  inTownCore,
   loadWorldManifest,
   getWorldManifestEntry,
   loadWorldContent,
