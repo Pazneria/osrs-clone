@@ -1,7 +1,7 @@
 const path = require("path");
 
 const { loadRuntimeItemCatalog } = require("../content/runtime-item-catalog");
-const { loadTsModule } = require("../tests/ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 function printUsage() {
   console.error([

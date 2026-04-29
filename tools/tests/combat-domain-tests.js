@@ -1,7 +1,7 @@
 const assert = require("assert");
 const path = require("path");
 
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 const combatContent = loadTsModule(path.resolve(__dirname, "../../src/game/combat/content.ts"));
 const combatFormulas = loadTsModule(path.resolve(__dirname, "../../src/game/combat/formulas.ts"));

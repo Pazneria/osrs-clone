@@ -1,7 +1,7 @@
 const assert = require("assert");
 const path = require("path");
 
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 const inventoryDomain = loadTsModule(path.resolve(__dirname, "../../src/game/ui/inventory-domain.ts"));
 const hudViewModels = loadTsModule(path.resolve(__dirname, "../../src/game/ui/hud-view-models.ts"));

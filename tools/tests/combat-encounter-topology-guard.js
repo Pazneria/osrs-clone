@@ -1,6 +1,6 @@
 const path = require("path");
 
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 const { WALKABLE_TILE_SET: WALKABLE } = require("../content/tile-ids");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 

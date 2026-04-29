@@ -2,7 +2,7 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 const { loadRuntimeItemCatalog } = require("../content/runtime-item-catalog");
 
 const root = path.resolve(__dirname, "..", "..");

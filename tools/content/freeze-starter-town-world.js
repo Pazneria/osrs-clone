@@ -7,7 +7,7 @@ const {
   cloneCookingRoute,
   cloneRoute
 } = require("./starter-town-skill-runtime-draft");
-const { loadTsModule } = require("../tests/ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 function buildFrozenStarterTownWorld(root) {
   const { materializeSkillWorldRuntime } = loadTsModule(path.join(root, "src", "game", "world", "freeze-runtime.ts"));

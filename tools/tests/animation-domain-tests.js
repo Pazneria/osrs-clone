@@ -1,6 +1,6 @@
 const path = require("path");
 const THREE = require("three");
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

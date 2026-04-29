@@ -4,7 +4,7 @@ const { execSync } = require("child_process");
 
 const { loadRuntimeItemCatalog } = require("./runtime-item-catalog");
 const { loadWorldContent, loadWorldManifest } = require("./world-content");
-const { loadTsModule } = require("../tests/ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 const {
   DEFAULT_CODEX_BASE_PATH,
   buildCodexEntityPath,

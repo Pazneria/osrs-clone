@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 const { TileId } = require("../content/tile-ids");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 const { findShortestPathLength, isWalkable } = require("../content/world-pathing");

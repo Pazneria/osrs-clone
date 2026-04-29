@@ -1,47 +1,9 @@
-const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
-const ts = require("typescript");
 const { loadWorldContent } = require("../content/world-content");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function createLocalRequire(baseDir) {
-  return function localRequire(specifier) {
-    if (!specifier.startsWith(".")) return require(specifier);
-    const direct = path.resolve(baseDir, specifier);
-    const candidates = [direct, `${direct}.js`, `${direct}.json`];
-    for (let i = 0; i < candidates.length; i++) {
-      if (fs.existsSync(candidates[i])) return require(candidates[i]);
-    }
-    throw new Error(`Unable to resolve ${specifier} from ${baseDir}`);
-  };
-}
-
-function loadTsModule(absPath) {
-  const source = fs.readFileSync(absPath, "utf8");
-  const result = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2020,
-      esModuleInterop: true
-    },
-    fileName: absPath
-  });
-  const module = { exports: {} };
-  const dirname = path.dirname(absPath);
-  const sandbox = {
-    module,
-    exports: module.exports,
-    require: createLocalRequire(dirname),
-    __dirname: dirname,
-    __filename: absPath,
-    console
-  };
-  vm.runInNewContext(result.outputText, sandbox, { filename: absPath });
-  return module.exports;
 }
 
 function assertDeepWaterPreserved(world, bodies) {

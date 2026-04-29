@@ -3,7 +3,7 @@ const path = require("path");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 const { findShortestPathLength, isWalkable } = require("../content/world-pathing");
 const { loadWorldContent } = require("../content/world-content");
-const { loadTsModule } = require("./ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 const vm = require("vm");
 
 function assert(condition, message) {

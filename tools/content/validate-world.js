@@ -14,7 +14,7 @@ const {
   loadWorldManifest
 } = require("./world-content");
 const path = require("path");
-const { loadTsModule } = require("../tests/ts-module-loader");
+const { loadTsModule } = require("../lib/ts-module-loader");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
