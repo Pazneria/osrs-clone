@@ -13,6 +13,7 @@ function run() {
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
+  const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -47,17 +48,22 @@ function run() {
 
   const sceneStateIndex = legacyManifestSource.indexOf('id: "world-scene-state"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
+  const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const worldIndex = legacyManifestSource.indexOf('id: "world"');
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
+  assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(sceneStateSource.includes("window.LegacyWorldAdapterRuntime"), "world scene state should resolve the typed legacy world adapter runtime");
   assert(sceneStateSource.includes("getCurrentWorldScenePayload"), "world scene state should expose current scene payload lookup");
   assert(sceneStateSource.includes("resolveRenderWorldId"), "world scene state should own render-world-id fallback resolution");
   assert(sceneLifecycleSource.includes("window.WorldSceneLifecycleRuntime"), "world scene lifecycle should expose a runtime");
   assert(sceneLifecycleSource.includes("reloadActiveWorldScene"), "world scene lifecycle should own active-scene reload orchestration");
+  assert(chunkRuntimeSource.includes("window.WorldChunkSceneRuntime"), "world chunk scene runtime should expose a runtime");
+  assert(chunkRuntimeSource.includes("manageChunks"), "world chunk scene runtime should own chunk manage orchestration");
   assert(worldSource.includes("WorldSceneStateRuntime"), "world.js should resolve authored scene state through the scene-state runtime");
   assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the current scene payload through the scene-state runtime");
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-scene reload lifecycle");
+  assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk scene state");
   assert(worldSource.includes("waterRenderPayload"), "world.js should consume the typed water render payload");
   assert(worldSource.includes("firemakingTrainingRouteDefs"), "world.js should read firemaking training routes from the legacy-ready world payload");
   assert(!worldSource.includes("getWorldLegacyConfig"), "world.js should not shape bootstrap payloads inline");
@@ -82,14 +88,17 @@ function run() {
   exposeLegacyWorldAdapter();
   vm.runInThisContext(sceneStateSource, { filename: path.join(root, "src", "js", "world", "scene-state.js") });
   vm.runInThisContext(sceneLifecycleSource, { filename: path.join(root, "src", "js", "world", "scene-lifecycle.js") });
+  vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
   const runtime = window.WorldBootstrapRuntime;
   const adapterRuntime = window.LegacyWorldAdapterRuntime;
   const sceneStateRuntime = window.WorldSceneStateRuntime;
   const sceneLifecycleRuntime = window.WorldSceneLifecycleRuntime;
+  const chunkSceneRuntime = window.WorldChunkSceneRuntime;
   assert(runtime, "legacy bridge should expose the world bootstrap runtime");
   assert(adapterRuntime, "legacy world adapter should expose its runtime");
   assert(sceneStateRuntime, "world scene state should expose its runtime");
   assert(sceneLifecycleRuntime, "world scene lifecycle should expose its runtime");
+  assert(chunkSceneRuntime, "world chunk scene runtime should expose its runtime");
   assert(runtime.getCurrentWorldId() === "main_overworld", "legacy bridge should start on the canonical authored world");
   assert(sceneStateRuntime.getCurrentWorldScenePayload().worldId === "main_overworld", "world scene state should resolve the current canonical world payload");
   assert(sceneStateRuntime.getWorldScenePayload("starter_town").worldId === "main_overworld", "world scene state should canonicalize legacy world payload lookup");
@@ -98,20 +107,14 @@ function run() {
   const fakeScene = { remove: (mesh) => lifecycleEvents.push(`remove:${mesh}`) };
   sceneLifecycleRuntime.reloadActiveWorldScene({
     scene: fakeScene,
-    loadedChunks: new Set(["0,0", "1,0"]),
-    loadedChunkInteractionState: new Map([["0,0", true]]),
     clickMarkers: [{ mesh: "marker" }],
     activeHitsplats: [{ el: { remove: () => lifecycleEvents.push("hitsplat") } }],
     environmentMeshes: ["mesh"],
     hasScene: () => true,
     hasPlayerRig: () => true,
     initLogicalMap: () => lifecycleEvents.push("init"),
-    unloadChunk: (key) => lifecycleEvents.push(`unload:${key}`),
-    clearChunkTierGroups: () => lifecycleEvents.push("clear-tiers"),
+    resetChunkSceneState: () => lifecycleEvents.push("reset-chunks"),
     clearCombatEnemyRenderers: () => lifecycleEvents.push("clear-combat"),
-    resetChunkGroups: () => lifecycleEvents.push("reset-chunks"),
-    resetChunkPolicyRevision: () => lifecycleEvents.push("reset-policy"),
-    bumpShadowFocusRevision: () => lifecycleEvents.push("bump-shadow"),
     syncPlayerRigToState: () => lifecycleEvents.push("sync-player"),
     syncFreeCamTargetToState: () => lifecycleEvents.push("sync-freecam"),
     updateMinimapCanvas: () => lifecycleEvents.push("minimap"),
@@ -119,8 +122,8 @@ function run() {
     updateWorldMapPanel: (force) => lifecycleEvents.push(`world-map:${force}`)
   });
   assert(lifecycleEvents[0] === "clear-combat", "world scene lifecycle should clear combat renderers before scene reload work");
-  assert(lifecycleEvents.includes("unload:0,0") && lifecycleEvents.includes("unload:1,0"), "world scene lifecycle should unload active chunks");
-  assert(lifecycleEvents.indexOf("init") > lifecycleEvents.indexOf("bump-shadow"), "world scene lifecycle should rebuild the logical map after clearing old scene state");
+  assert(lifecycleEvents.includes("reset-chunks"), "world scene lifecycle should delegate chunk resets through the chunk scene runtime hook");
+  assert(lifecycleEvents.indexOf("init") > lifecycleEvents.indexOf("reset-chunks"), "world scene lifecycle should rebuild the logical map after clearing old scene state");
   assert(lifecycleEvents.includes("chunks:true") && lifecycleEvents.includes("world-map:true"), "world scene lifecycle should refresh chunk and world-map presentation after reload");
   assert(adapterRuntime.resolveKnownWorldId("starter_town") === "main_overworld", "legacy adapter should canonicalize starter_town");
   assert(adapterRuntime.matchQaWorld("starter_town").worldId === "main_overworld", "QA world matching should accept legacy starter_town input");

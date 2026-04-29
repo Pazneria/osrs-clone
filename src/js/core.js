@@ -559,9 +559,6 @@
         function getChunkRenderPolicyRevision() {
             return chunkRenderPolicyRevision;
         }
-        let loadedChunks = new Set();
-        let loadedChunkInteractionState = new Map();
-        let chunkGroups = {}; 
         let sharedGeometries = {};
         let sharedMaterials = {};
 

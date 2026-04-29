@@ -13,10 +13,6 @@
         return hook;
     }
 
-    function clearCollection(collection) {
-        if (collection && typeof collection.clear === 'function') collection.clear();
-    }
-
     function clearArray(arrayLike) {
         if (Array.isArray(arrayLike)) arrayLike.length = 0;
     }
@@ -40,16 +36,7 @@
     }
 
     function resetChunkSceneState(context) {
-        const loadedChunks = context.loadedChunks;
-        if (loadedChunks && typeof loadedChunks[Symbol.iterator] === 'function') {
-            Array.from(loadedChunks).forEach((chunkKey) => callHook(context, 'unloadChunk', chunkKey));
-        }
-        clearCollection(loadedChunks);
-        clearCollection(context.loadedChunkInteractionState);
-        callHook(context, 'resetChunkGroups');
-        callHook(context, 'clearChunkTierGroups');
-        callHook(context, 'resetChunkPolicyRevision');
-        callHook(context, 'bumpShadowFocusRevision');
+        callHook(context, 'resetChunkSceneState');
     }
 
     function clearTransientSceneArtifacts(context) {

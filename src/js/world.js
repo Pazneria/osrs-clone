@@ -2047,8 +2047,9 @@
             if (preferChunkParent) {
                 const cx = Math.floor(x / CHUNK_SIZE);
                 const cy = Math.floor(y / CHUNK_SIZE);
-                if (chunkGroups[`${cx},${cy}`]) {
-                    const pGroup = chunkGroups[`${cx},${cy}`].children.find((pg) => pg.userData.z === z);
+                const chunkGroup = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
+                if (chunkGroup) {
+                    const pGroup = chunkGroup.children.find((pg) => pg.userData.z === z);
                     if (pGroup) {
                         pGroup.add(group);
                         return;
@@ -2956,8 +2957,9 @@
                 environmentMeshes.push(c);
             });
             let cx = Math.floor(x / CHUNK_SIZE); let cy = Math.floor(y / CHUNK_SIZE);
-            if (chunkGroups[`${cx},${cy}`]) {
-                let pGroup = chunkGroups[`${cx},${cy}`].children.find(pg => pg.userData.z === z);
+            const chunkGroup = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
+            if (chunkGroup) {
+                let pGroup = chunkGroup.children.find(pg => pg.userData.z === z);
                 if (pGroup) pGroup.add(group); else scene.add(group);
             } else scene.add(group);
             
@@ -3375,11 +3377,11 @@
             const cx = Math.floor(x / CHUNK_SIZE);
             const cy = Math.floor(y / CHUNK_SIZE);
             const key = cx + ',' + cy;
-            if (loadedChunks.has(key)) {
-                const wasInteractive = loadedChunkInteractionState.has(key) ? !!loadedChunkInteractionState.get(key) : true;
+            const chunkRuntime = getWorldChunkSceneRuntime();
+            if (chunkRuntime.isNearChunkLoaded(key)) {
+                const wasInteractive = chunkRuntime.getChunkInteractionState(key);
                 unloadChunk(key);
                 loadChunk(cx, cy, wasInteractive);
-                loadedChunks.add(key);
             }
         }
 
@@ -3407,14 +3409,14 @@
                 chunksToRefresh.add(Math.floor(x / CHUNK_SIZE) + ',' + Math.floor(y / CHUNK_SIZE));
             }
             chunksToRefresh.forEach((chunkKey) => {
-                if (!loadedChunks.has(chunkKey)) return;
+                const chunkRuntime = getWorldChunkSceneRuntime();
+                if (!chunkRuntime.isNearChunkLoaded(chunkKey)) return;
                 const parts = chunkKey.split(',');
                 const cx = parseInt(parts[0], 10);
                 const cy = parseInt(parts[1], 10);
-                const wasInteractive = loadedChunkInteractionState.has(chunkKey) ? !!loadedChunkInteractionState.get(chunkKey) : true;
+                const wasInteractive = chunkRuntime.getChunkInteractionState(chunkKey);
                 unloadChunk(chunkKey);
                 loadChunk(cx, cy, wasInteractive);
-                loadedChunks.add(chunkKey);
             });
         }
         function initLogicalMap() {
@@ -5925,126 +5927,74 @@
             }
         }
 
-        const CHUNK_TIER_NEAR = 'near';
-        const CHUNK_TIER_MID = 'mid';
-        const CHUNK_TIER_FAR = 'far';
-        const CHUNK_AUTO_QUALITY_WINDOW_MS = 3000;
-        const CHUNK_AUTO_QUALITY_COOLDOWN_MS = 10000;
-        const CHUNK_AUTO_QUALITY_LOW_FPS = 43;
-        const CHUNK_AUTO_QUALITY_HIGH_FPS = 48;
-        let chunkMidGroups = {};
-        let chunkFarGroups = {};
-        const chunkTierStateByKey = new Map();
-        const chunkInteractionMeshes = new Map();
-        const pendingNearChunkBuilds = new Map();
-        let pendingNearChunkBuildSequence = 0;
-        let chunkPolicyDirty = true;
-        let lastChunkPolicyCenterX = null;
-        let lastChunkPolicyCenterY = null;
-        let lastChunkPolicyRevision = -1;
-        let chunkAutoQualityState = {
-            windowStartMs: 0,
-            accumulatedFps: 0,
-            sampleCount: 0,
-            lowWindows: 0,
-            highWindows: 0,
-            lastPresetChangeMs: 0
-        };
-
-        function markChunkPolicyDirty() {
-            chunkPolicyDirty = true;
-            lastChunkPolicyCenterX = null;
-            lastChunkPolicyCenterY = null;
+        function getWorldChunkSceneRuntime() {
+            const runtime = window.WorldChunkSceneRuntime || null;
+            if (!runtime) throw new Error('WorldChunkSceneRuntime is unavailable.');
+            return runtime;
         }
 
-        function resolveActiveChunkRenderPolicy() {
-            const fallback = { preset: 'balanced', nearRadius: 1, midRadius: 3, interactionRadius: 1, farMode: 'all' };
-            const policy = (typeof window.getChunkRenderPolicy === 'function')
-                ? window.getChunkRenderPolicy()
-                : fallback;
-            const nearRadius = Math.max(0, Math.floor(Number.isFinite(policy && policy.nearRadius) ? policy.nearRadius : fallback.nearRadius));
-            const midRadius = Math.max(nearRadius, Math.floor(Number.isFinite(policy && policy.midRadius) ? policy.midRadius : fallback.midRadius));
-            const interactionRadius = Math.max(0, Math.min(nearRadius, Math.floor(Number.isFinite(policy && policy.interactionRadius) ? policy.interactionRadius : fallback.interactionRadius)));
+        const CHUNK_TIER_NEAR = getWorldChunkSceneRuntime().CHUNK_TIER_NEAR;
+        const CHUNK_TIER_MID = getWorldChunkSceneRuntime().CHUNK_TIER_MID;
+        const CHUNK_TIER_FAR = getWorldChunkSceneRuntime().CHUNK_TIER_FAR;
+
+        function setChunkInteractionMeshesActive(interactionMeshes, targetState) {
+            const meshes = Array.isArray(interactionMeshes) ? interactionMeshes : [];
+            if (targetState) {
+                const existing = new Set(environmentMeshes);
+                for (let i = 0; i < meshes.length; i++) {
+                    const mesh = meshes[i];
+                    if (!mesh || existing.has(mesh)) continue;
+                    environmentMeshes.push(mesh);
+                    existing.add(mesh);
+                }
+            } else if (meshes.length > 0) {
+                const removeSet = new Set(meshes);
+                environmentMeshes = environmentMeshes.filter((mesh) => !removeSet.has(mesh));
+            }
+        }
+
+        function getChunkCenterPosition() {
+            if (!playerRig) return null;
+            const pX = isFreeCam ? freeCamTarget.x : playerRig.position.x;
+            const pZ = isFreeCam ? freeCamTarget.z : playerRig.position.z;
+            return { x: pX, z: pZ, visiblePlane: playerState.z };
+        }
+
+        function buildChunkSceneRuntimeContext() {
             return {
-                preset: (policy && typeof policy.preset === 'string') ? policy.preset : fallback.preset,
-                nearRadius,
-                midRadius,
-                interactionRadius,
-                farMode: 'all'
+                worldChunksX: WORLD_CHUNKS_X,
+                worldChunksY: WORLD_CHUNKS_Y,
+                chunkSize: CHUNK_SIZE,
+                getChunkCenterPosition,
+                hasPlayerRig: () => !!playerRig,
+                getChunkRenderPolicy: () => (typeof window.getChunkRenderPolicy === 'function')
+                    ? window.getChunkRenderPolicy()
+                    : null,
+                getChunkRenderPolicyPresetOrder: () => (typeof window.getChunkRenderPolicyPresetOrder === 'function')
+                    ? window.getChunkRenderPolicyPresetOrder()
+                    : null,
+                applyChunkRenderPolicyPreset: (preset) => (typeof window.applyChunkRenderPolicyPreset === 'function')
+                    ? window.applyChunkRenderPolicyPreset(preset)
+                    : false,
+                getChunkRenderPolicyRevision: () => (typeof window.getChunkRenderPolicyRevision === 'function')
+                    ? window.getChunkRenderPolicyRevision()
+                    : 0,
+                removeChunkGroupFromScene: (group) => {
+                    if (scene && group) scene.remove(group);
+                },
+                setChunkGroupPlaneVisibility,
+                ensureFarChunkBackdropBuilt,
+                ensureFarChunkGroup,
+                ensureMidChunkGroup,
+                loadNearChunk: loadChunk,
+                unloadNearChunkGroup: unloadChunkGroup,
+                setChunkInteractionMeshesActive,
+                bumpShadowFocusRevision: () => {
+                    sharedMaterials.shadowFocusRevision = Number.isFinite(sharedMaterials.shadowFocusRevision)
+                        ? sharedMaterials.shadowFocusRevision + 1
+                        : 1;
+                }
             };
-        }
-
-        function getChunkPresetOrder() {
-            const fallback = ['safe', 'balanced', 'high'];
-            const order = (typeof window.getChunkRenderPolicyPresetOrder === 'function')
-                ? window.getChunkRenderPolicyPresetOrder()
-                : fallback;
-            if (!Array.isArray(order) || order.length === 0) return fallback;
-            return order.slice();
-        }
-
-        function getChunkPresetIndex(order, preset) {
-            if (!Array.isArray(order) || order.length === 0) return -1;
-            return order.indexOf(preset);
-        }
-
-        function stepChunkRenderPolicyPreset(direction, nowMs) {
-            if (typeof window.applyChunkRenderPolicyPreset !== 'function') return false;
-            const policy = resolveActiveChunkRenderPolicy();
-            const order = getChunkPresetOrder();
-            const currentIndex = getChunkPresetIndex(order, policy.preset);
-            if (currentIndex === -1) return false;
-            const targetIndex = Math.max(0, Math.min(order.length - 1, currentIndex + direction));
-            if (targetIndex === currentIndex) return false;
-            const changed = window.applyChunkRenderPolicyPreset(order[targetIndex]);
-            if (changed) {
-                chunkAutoQualityState.lastPresetChangeMs = nowMs;
-                markChunkPolicyDirty();
-            }
-            return !!changed;
-        }
-
-        function reportChunkPerformanceSample(fps, nowMs = performance.now()) {
-            if (!Number.isFinite(fps) || fps <= 0) return;
-            const now = Number.isFinite(nowMs) ? nowMs : performance.now();
-            if (!chunkAutoQualityState.windowStartMs) chunkAutoQualityState.windowStartMs = now;
-            chunkAutoQualityState.accumulatedFps += fps;
-            chunkAutoQualityState.sampleCount += 1;
-            if ((now - chunkAutoQualityState.windowStartMs) < CHUNK_AUTO_QUALITY_WINDOW_MS) return;
-
-            const avgFps = chunkAutoQualityState.accumulatedFps / Math.max(1, chunkAutoQualityState.sampleCount);
-            chunkAutoQualityState.windowStartMs = now;
-            chunkAutoQualityState.accumulatedFps = 0;
-            chunkAutoQualityState.sampleCount = 0;
-
-            if (avgFps < CHUNK_AUTO_QUALITY_LOW_FPS) {
-                chunkAutoQualityState.lowWindows += 1;
-                chunkAutoQualityState.highWindows = 0;
-            } else if (avgFps > CHUNK_AUTO_QUALITY_HIGH_FPS) {
-                chunkAutoQualityState.highWindows += 1;
-                chunkAutoQualityState.lowWindows = 0;
-            } else {
-                chunkAutoQualityState.lowWindows = 0;
-                chunkAutoQualityState.highWindows = 0;
-                return;
-            }
-
-            if ((now - chunkAutoQualityState.lastPresetChangeMs) < CHUNK_AUTO_QUALITY_COOLDOWN_MS) return;
-
-            if (chunkAutoQualityState.lowWindows >= 2) {
-                if (stepChunkRenderPolicyPreset(-1, now)) {
-                    chunkAutoQualityState.lowWindows = 0;
-                    chunkAutoQualityState.highWindows = 0;
-                }
-                return;
-            }
-
-            if (chunkAutoQualityState.highWindows >= 3) {
-                if (stepChunkRenderPolicyPreset(1, now)) {
-                    chunkAutoQualityState.lowWindows = 0;
-                    chunkAutoQualityState.highWindows = 0;
-                }
-            }
         }
 
         function setChunkGroupPlaneVisibility(group, maxVisiblePlane) {
@@ -6056,35 +6006,12 @@
             });
         }
 
-        function removeChunkGroupsFromScene(groupMap) {
-            if (!groupMap || !scene) return {};
-            Object.keys(groupMap).forEach((key) => {
-                const group = groupMap[key];
-                if (group) scene.remove(group);
-            });
-            return {};
-        }
-
         function clearPendingNearChunkBuilds(key = null) {
-            if (typeof key === 'string' && key) {
-                pendingNearChunkBuilds.delete(key);
-                return;
-            }
-            pendingNearChunkBuilds.clear();
+            getWorldChunkSceneRuntime().clearPendingNearChunkBuilds(key);
         }
 
         function clearChunkTierGroups() {
-            chunkMidGroups = removeChunkGroupsFromScene(chunkMidGroups);
-            chunkFarGroups = removeChunkGroupsFromScene(chunkFarGroups);
-            chunkTierStateByKey.clear();
-            chunkInteractionMeshes.clear();
-            clearPendingNearChunkBuilds();
-            chunkAutoQualityState.windowStartMs = 0;
-            chunkAutoQualityState.accumulatedFps = 0;
-            chunkAutoQualityState.sampleCount = 0;
-            chunkAutoQualityState.lowWindows = 0;
-            chunkAutoQualityState.highWindows = 0;
-            markChunkPolicyDirty();
+            getWorldChunkSceneRuntime().clearChunkTierGroups(buildChunkSceneRuntimeContext());
         }
 
         function ensureChunkTierRenderAssets() {
@@ -6263,22 +6190,24 @@
 
         function ensureFarChunkGroup(cx, cy) {
             const key = `${cx},${cy}`;
-            if (chunkFarGroups[key]) return chunkFarGroups[key];
+            const runtime = getWorldChunkSceneRuntime();
+            const existing = runtime.getFarChunkGroup(key);
+            if (existing) return existing;
             const group = createSimplifiedChunkGroup(cx, cy, CHUNK_TIER_FAR);
             group.visible = false;
             scene.add(group);
-            chunkFarGroups[key] = group;
-            return group;
+            return runtime.setFarChunkGroup(key, group);
         }
 
         function ensureMidChunkGroup(cx, cy) {
             const key = `${cx},${cy}`;
-            if (chunkMidGroups[key]) return chunkMidGroups[key];
+            const runtime = getWorldChunkSceneRuntime();
+            const existing = runtime.getMidChunkGroup(key);
+            if (existing) return existing;
             const group = createSimplifiedChunkGroup(cx, cy, CHUNK_TIER_MID);
             group.visible = false;
             scene.add(group);
-            chunkMidGroups[key] = group;
-            return group;
+            return runtime.setMidChunkGroup(key, group);
         }
 
         function ensureFarChunkBackdropBuilt() {
@@ -6291,41 +6220,7 @@
         }
 
         function setChunkInteractionState(key, shouldRegisterInteraction) {
-            const targetState = !!shouldRegisterInteraction;
-            const currentState = loadedChunkInteractionState.has(key)
-                ? !!loadedChunkInteractionState.get(key)
-                : false;
-            if (currentState === targetState) return;
-
-            const interactionMeshes = chunkInteractionMeshes.get(key) || [];
-            if (targetState) {
-                const existing = new Set(environmentMeshes);
-                for (let i = 0; i < interactionMeshes.length; i++) {
-                    const mesh = interactionMeshes[i];
-                    if (!mesh || existing.has(mesh)) continue;
-                    environmentMeshes.push(mesh);
-                    existing.add(mesh);
-                }
-            } else if (interactionMeshes.length > 0) {
-                const removeSet = new Set(interactionMeshes);
-                environmentMeshes = environmentMeshes.filter((mesh) => !removeSet.has(mesh));
-            }
-
-            loadedChunkInteractionState.set(key, targetState);
-        }
-
-        function collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, nearRadius, midRadius) {
-            const assignments = new Map();
-            for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
-                for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
-                    const dist = Math.max(Math.abs(cx - centerChunkX), Math.abs(cy - centerChunkY));
-                    let tier = CHUNK_TIER_FAR;
-                    if (dist <= nearRadius) tier = CHUNK_TIER_NEAR;
-                    else if (dist <= midRadius) tier = CHUNK_TIER_MID;
-                    assignments.set(`${cx},${cy}`, tier);
-                }
-            }
-            return assignments;
+            getWorldChunkSceneRuntime().setChunkInteractionState(key, shouldRegisterInteraction, buildChunkSceneRuntimeContext());
         }
 
         function loadChunk(cx, cy, registerInteraction = true) {
@@ -7133,30 +7028,21 @@
             scene.add(group);
             const key = `${cx},${cy}`;
             const interactionMeshes = environmentMeshes.slice(environmentMeshStartIndex);
-            chunkInteractionMeshes.set(key, interactionMeshes);
             loadedChunkNpcActors.set(key, renderedNpcActors);
             if (!registerInteraction && environmentMeshes.length > environmentMeshStartIndex) {
                 environmentMeshes.length = environmentMeshStartIndex;
             }
-            loadedChunkInteractionState.set(key, !!registerInteraction);
-            chunkGroups[key] = group;
-            loadedChunks.add(key);
+            getWorldChunkSceneRuntime().registerNearChunk(key, group, {
+                interactionMeshes,
+                registerInteraction
+            });
         }
 
         function setLoadedChunkPlaneVisibility(maxVisiblePlane) {
-            Object.values(chunkGroups).forEach((group) => {
-                setChunkGroupPlaneVisibility(group, maxVisiblePlane);
-            });
-            Object.values(chunkMidGroups).forEach((group) => {
-                setChunkGroupPlaneVisibility(group, maxVisiblePlane);
-            });
-            Object.values(chunkFarGroups).forEach((group) => {
-                setChunkGroupPlaneVisibility(group, maxVisiblePlane);
-            });
+            getWorldChunkSceneRuntime().setLoadedChunkPlaneVisibility(maxVisiblePlane, buildChunkSceneRuntimeContext());
         }
 
-        function unloadChunk(key) {
-            const group = chunkGroups[key];
+        function unloadChunkGroup(key, group) {
             if (group) {
                 scene.remove(group);
                 activeRoofVisuals = activeRoofVisuals.filter((roofGroup) => {
@@ -7175,226 +7061,38 @@
                     }
                     return true;
                 });
-                delete chunkGroups[key];
             }
             const chunkNpcActors = loadedChunkNpcActors.get(key) || [];
             for (let i = 0; i < chunkNpcActors.length; i++) {
                 clearTownNpcRenderBindings(chunkNpcActors[i]);
             }
             loadedChunkNpcActors.delete(key);
-            chunkInteractionMeshes.delete(key);
-            loadedChunks.delete(key);
-            loadedChunkInteractionState.delete(key);
         }
 
-        function collectDesiredChunks(centerChunkX, centerChunkY, xMinOffset, xMaxOffset, yMinOffset, yMaxOffset) {
-            const desired = new Set();
-            for (let dy = yMinOffset; dy <= yMaxOffset; dy++) {
-                for (let dx = xMinOffset; dx <= xMaxOffset; dx++) {
-                    const cx = centerChunkX + dx;
-                    const cy = centerChunkY + dy;
-                    if (cx < 0 || cy < 0 || cx >= WORLD_CHUNKS_X || cy >= WORLD_CHUNKS_Y) continue;
-                    desired.add(`${cx},${cy}`);
-                }
-            }
-            return desired;
-        }
-
-        function buildCurrentChunkPolicyState() {
-            if (!playerRig) return null;
-            const pX = isFreeCam ? freeCamTarget.x : playerRig.position.x;
-            const pZ = isFreeCam ? freeCamTarget.z : playerRig.position.z;
-            const centerChunkX = Math.max(0, Math.min(WORLD_CHUNKS_X - 1, Math.floor(pX / CHUNK_SIZE)));
-            const centerChunkY = Math.max(0, Math.min(WORLD_CHUNKS_Y - 1, Math.floor(pZ / CHUNK_SIZE)));
-            const policy = resolveActiveChunkRenderPolicy();
-            return {
-                centerChunkX,
-                centerChunkY,
-                visiblePlane: playerState.z,
-                policy,
-                desiredTierByKey: collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, policy.nearRadius, policy.midRadius),
-                desiredInteractionChunks: collectDesiredChunks(
-                    centerChunkX,
-                    centerChunkY,
-                    -policy.interactionRadius,
-                    policy.interactionRadius,
-                    -policy.interactionRadius,
-                    policy.interactionRadius
-                )
-            };
-        }
-
-        function enqueuePendingNearChunkBuild(cx, cy, key, shouldRegisterInteraction, maxVisiblePlane) {
-            const existingRequest = pendingNearChunkBuilds.get(key);
-            if (existingRequest) {
-                existingRequest.shouldRegisterInteraction = !!shouldRegisterInteraction;
-                existingRequest.maxVisiblePlane = Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0;
-                existingRequest.cx = cx;
-                existingRequest.cy = cy;
-                return existingRequest;
-            }
-
-            const request = {
-                key,
-                cx,
-                cy,
-                shouldRegisterInteraction: !!shouldRegisterInteraction,
-                maxVisiblePlane: Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0,
-                sequence: pendingNearChunkBuildSequence++
-            };
-            pendingNearChunkBuilds.set(key, request);
-            return request;
-        }
-
-        function showPendingNearChunkFallback(cx, cy, key, maxVisiblePlane) {
-            const midGroup = chunkMidGroups[key];
-            if (midGroup) {
-                midGroup.visible = true;
-                setChunkGroupPlaneVisibility(midGroup, maxVisiblePlane);
-                if (chunkFarGroups[key]) chunkFarGroups[key].visible = false;
-                return;
-            }
-
-            const farGroup = chunkFarGroups[key] || ensureFarChunkGroup(cx, cy);
-            farGroup.visible = true;
-            setChunkGroupPlaneVisibility(farGroup, maxVisiblePlane);
+        function unloadChunk(key) {
+            getWorldChunkSceneRuntime().unregisterNearChunk(key, buildChunkSceneRuntimeContext());
         }
 
         function processPendingNearChunkBuilds(maxBuilds = 1) {
-            if (!playerRig || pendingNearChunkBuilds.size === 0) return 0;
-            const buildLimit = Math.max(0, Math.floor(Number.isFinite(maxBuilds) ? maxBuilds : 1));
-            if (buildLimit <= 0) return 0;
-
-            const policyState = buildCurrentChunkPolicyState();
-            if (!policyState) return 0;
-
-            const requests = Array.from(pendingNearChunkBuilds.values()).sort((left, right) => {
-                const leftDistance = Math.max(
-                    Math.abs(left.cx - policyState.centerChunkX),
-                    Math.abs(left.cy - policyState.centerChunkY)
-                );
-                const rightDistance = Math.max(
-                    Math.abs(right.cx - policyState.centerChunkX),
-                    Math.abs(right.cy - policyState.centerChunkY)
-                );
-                if (leftDistance !== rightDistance) return leftDistance - rightDistance;
-                return left.sequence - right.sequence;
+            return getWorldChunkSceneRuntime().processPendingNearChunkBuilds({
+                maxBuilds,
+                context: buildChunkSceneRuntimeContext()
             });
-
-            let processed = 0;
-            for (let i = 0; i < requests.length && processed < buildLimit; i++) {
-                const request = requests[i];
-                if (!request) continue;
-
-                const key = request.key;
-                if (chunkGroups[key]) {
-                    clearPendingNearChunkBuilds(key);
-                    continue;
-                }
-
-                const targetTier = policyState.desiredTierByKey.get(key) || CHUNK_TIER_FAR;
-                if (targetTier !== CHUNK_TIER_NEAR) {
-                    clearPendingNearChunkBuilds(key);
-                    continue;
-                }
-
-                const shouldRegisterInteraction = policyState.desiredInteractionChunks.has(key);
-                loadChunk(request.cx, request.cy, shouldRegisterInteraction);
-
-                const loadedNearGroup = chunkGroups[key];
-                if (loadedNearGroup) {
-                    loadedNearGroup.visible = true;
-                    setChunkGroupPlaneVisibility(loadedNearGroup, policyState.visiblePlane);
-                }
-                if (chunkMidGroups[key]) chunkMidGroups[key].visible = false;
-                if (chunkFarGroups[key]) chunkFarGroups[key].visible = false;
-                setChunkInteractionState(key, shouldRegisterInteraction);
-                chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
-                clearPendingNearChunkBuilds(key);
-                processed += 1;
-            }
-
-            return processed;
-        }
-
-        function applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, maxVisiblePlane) {
-            const nearGroup = chunkGroups[key];
-            const midGroup = chunkMidGroups[key];
-            const farGroup = chunkFarGroups[key];
-
-            if (targetTier === CHUNK_TIER_NEAR) {
-                if (nearGroup) {
-                    clearPendingNearChunkBuilds(key);
-                    if (midGroup) midGroup.visible = false;
-                    if (farGroup) farGroup.visible = false;
-                    nearGroup.visible = true;
-                    setChunkInteractionState(key, shouldRegisterInteraction);
-                    setChunkGroupPlaneVisibility(nearGroup, maxVisiblePlane);
-                    chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
-                    return;
-                }
-
-                enqueuePendingNearChunkBuild(cx, cy, key, shouldRegisterInteraction, maxVisiblePlane);
-                showPendingNearChunkFallback(cx, cy, key, maxVisiblePlane);
-                chunkTierStateByKey.set(key, midGroup ? CHUNK_TIER_MID : CHUNK_TIER_FAR);
-                return;
-            }
-
-            clearPendingNearChunkBuilds(key);
-            if (nearGroup) unloadChunk(key);
-
-            if (targetTier === CHUNK_TIER_MID) {
-                if (farGroup) farGroup.visible = false;
-                const nextMidGroup = ensureMidChunkGroup(cx, cy);
-                nextMidGroup.visible = true;
-                setChunkGroupPlaneVisibility(nextMidGroup, maxVisiblePlane);
-                chunkTierStateByKey.set(key, CHUNK_TIER_MID);
-                return;
-            }
-
-            if (midGroup) midGroup.visible = false;
-            const nextFarGroup = ensureFarChunkGroup(cx, cy);
-            nextFarGroup.visible = true;
-            setChunkGroupPlaneVisibility(nextFarGroup, maxVisiblePlane);
-            chunkTierStateByKey.set(key, CHUNK_TIER_FAR);
         }
 
         function manageChunks(forceRefresh = false) {
-            const policyState = buildCurrentChunkPolicyState();
-            if (!policyState) return;
-            const pCX = policyState.centerChunkX;
-            const pCY = policyState.centerChunkY;
-            const policyRevision = (typeof window.getChunkRenderPolicyRevision === 'function')
-                ? window.getChunkRenderPolicyRevision()
-                : 0;
-            if (forceRefresh) clearPendingNearChunkBuilds();
+            getWorldChunkSceneRuntime().manageChunks(Object.assign(
+                { forceRefresh: !!forceRefresh },
+                buildChunkSceneRuntimeContext()
+            ));
+        }
 
-            if (
-                !forceRefresh
-                && !chunkPolicyDirty
-                && lastChunkPolicyCenterX === pCX
-                && lastChunkPolicyCenterY === pCY
-                && lastChunkPolicyRevision === policyRevision
-            ) {
-                return;
-            }
+        function reportChunkPerformanceSample(fps, nowMs = performance.now()) {
+            getWorldChunkSceneRuntime().reportChunkPerformanceSample(fps, nowMs, buildChunkSceneRuntimeContext());
+        }
 
-            ensureFarChunkBackdropBuilt();
-            const visiblePlane = policyState.visiblePlane;
-
-            for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
-                for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
-                    const key = `${cx},${cy}`;
-                    const targetTier = policyState.desiredTierByKey.get(key) || CHUNK_TIER_FAR;
-                    const shouldRegisterInteraction = targetTier === CHUNK_TIER_NEAR && policyState.desiredInteractionChunks.has(key);
-                    applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, visiblePlane);
-                }
-            }
-
-            lastChunkPolicyCenterX = pCX;
-            lastChunkPolicyCenterY = pCY;
-            lastChunkPolicyRevision = policyRevision;
-            chunkPolicyDirty = false;
+        function markChunkPolicyDirty() {
+            getWorldChunkSceneRuntime().markChunkPolicyDirty();
         }
 
         function build3DEnvironment() {
@@ -7411,29 +7109,17 @@
             }
             lifecycleRuntime.reloadActiveWorldScene({
                 scene,
-                loadedChunks,
-                loadedChunkInteractionState,
                 clickMarkers,
                 activeHitsplats,
                 environmentMeshes,
                 hasScene: () => !!scene,
                 hasPlayerRig: () => !!playerRig,
                 initLogicalMap,
-                unloadChunk,
-                clearChunkTierGroups,
+                resetChunkSceneState: () => {
+                    getWorldChunkSceneRuntime().resetForWorldReload(buildChunkSceneRuntimeContext());
+                },
                 clearCombatEnemyRenderers: () => {
                     if (typeof window.clearCombatEnemyRenderers === 'function') window.clearCombatEnemyRenderers();
-                },
-                resetChunkGroups: () => {
-                    chunkGroups = {};
-                },
-                resetChunkPolicyRevision: () => {
-                    lastChunkPolicyRevision = -1;
-                },
-                bumpShadowFocusRevision: () => {
-                    sharedMaterials.shadowFocusRevision = Number.isFinite(sharedMaterials.shadowFocusRevision)
-                        ? sharedMaterials.shadowFocusRevision + 1
-                        : 1;
                 },
                 syncPlayerRigToState: () => {
                     if (!playerRig) return;
@@ -8053,7 +7739,7 @@
         function chopDownTree(gridX, gridY, z) {
             let cx = Math.floor(gridX / CHUNK_SIZE);
             let cy = Math.floor(gridY / CHUNK_SIZE);
-            let group = chunkGroups[`${cx},${cy}`];
+            let group = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
             const respawnTicks = resolveTreeRespawnTicks(gridX, gridY, z);
 
             if (group) {
@@ -8082,7 +7768,7 @@
         function respawnTree(gridX, gridY, z) {
             let cx = Math.floor(gridX / CHUNK_SIZE);
             let cy = Math.floor(gridY / CHUNK_SIZE);
-            let group = chunkGroups[`${cx},${cy}`];
+            let group = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
 
             if (group) {
                 let planeGroup = group.children.find(c => c.userData.z === z);
