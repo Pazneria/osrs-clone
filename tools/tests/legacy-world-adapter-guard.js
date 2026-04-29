@@ -10,6 +10,7 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
+  const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
@@ -36,7 +37,7 @@ function run() {
 
   assert(coreSource.includes("const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;"), "core should resolve the typed legacy world adapter runtime");
   assert(coreSource.includes("worldAdapterRuntime.resolveTravelTarget"), "core should delegate travel target resolution");
-  assert(coreSource.includes("worldAdapterRuntime.matchQaWorld"), "core should delegate QA world matching");
+  assert(qaToolsSource.includes("worldAdapterRuntime.matchQaWorld"), "QA tools runtime should delegate QA world matching");
   assert(!coreSource.includes("function getWorldManifest()"), "core should not own world-manifest helpers");
   assert(!coreSource.includes("function getKnownWorldEntries()"), "core should not own world-entry enumeration");
   assert(!coreSource.includes("function getWorldManifestEntry(worldId)"), "core should not own manifest entry lookup");
@@ -48,11 +49,13 @@ function run() {
   assert(!coreSource.includes("function activateWorldContext(worldId, fallbackWorldId = null)"), "core should not own active-world activation");
 
   const sceneStateIndex = legacyManifestSource.indexOf('id: "world-scene-state"');
+  const qaToolsIndex = legacyManifestSource.indexOf('id: "qa-tools-runtime"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const mapHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-map-hud-runtime"');
   const worldIndex = legacyManifestSource.indexOf('id: "world"');
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
+  assert(qaToolsIndex !== -1 && worldIndex !== -1 && qaToolsIndex < worldIndex, "legacy script manifest should load QA tools before core/world runtime consumers");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(mapHudRuntimeIndex !== -1 && worldIndex !== -1 && mapHudRuntimeIndex < worldIndex, "legacy script manifest should load world map HUD runtime before world.js");

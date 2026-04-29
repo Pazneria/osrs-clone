@@ -28,16 +28,17 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
+  const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
 
   assert(coreSource.includes("function getWorldGameContext()"), "core.js missing world game-context helper");
-  assert(coreSource.includes("getWorldRouteGroup('fishing')"), "core.js fishing QA should use world route registry");
-  assert(coreSource.includes("getWorldRouteGroup('cooking')"), "core.js cooking QA should use world route registry");
-  assert(coreSource.includes("getWorldRouteGroup('firemaking')"), "core.js firemaking QA should use world route registry");
-  assert(coreSource.includes("getWorldMerchantServices()"), "core.js merchant QA should use service registry");
+  assert(qaToolsSource.includes("getWorldRouteGroup(context, 'fishing')"), "QA tools fishing discovery should use world route registry");
+  assert(qaToolsSource.includes("getWorldRouteGroup(context, 'cooking')"), "QA tools cooking discovery should use world route registry");
+  assert(qaToolsSource.includes("getWorldRouteGroup(context, 'firemaking')"), "QA tools firemaking discovery should use world route registry");
+  assert(qaToolsSource.includes("getWorldMerchantServices(context)"), "QA tools merchant discovery should use service registry");
   assert(!coreSource.includes("const routeToKey = {\n                castle_pond_bank"), "legacy fishing routeToKey map should be removed");
   assert(!coreSource.includes("const routeToKey = {\n                starter_campfire"), "legacy cooking routeToKey map should be removed");
-  assert(!coreSource.includes("pine: 'pine'"), "deleted north-road pine firemaking QA alias should stay removed");
+  assert(!qaToolsSource.includes("pine: 'pine'"), "deleted north-road pine firemaking QA alias should stay removed");
   assert(!qaCommandSource.includes("/qa gotofire <starter|oak|willow|maple|yew|pine>"), "QA firemaking usage should not advertise deleted pine route");
 
   assert(bridgeSource.includes("getWoodcuttingTrainingLocations"), "legacy bridge missing woodcutting compatibility hook");
@@ -46,7 +47,11 @@ function run() {
   assert(qaCommandSource.includes("window.QaCommandRuntime"), "QA command runtime should expose a window runtime");
   assert(qaCommandSource.includes("handleQaCommand"), "QA command runtime should own QA command dispatch");
   assert(coreSource.includes("buildQaCommandContext"), "core should adapt gameplay callbacks into the QA command runtime");
+  assert(coreSource.includes("buildQaToolsContext"), "core should adapt live state into the QA tools runtime");
+  assert(qaToolsSource.includes("window.QaToolsRuntime"), "QA tools runtime should expose a window runtime");
+  assert(qaToolsSource.includes("createCommandHandlers"), "QA tools runtime should provide command callbacks");
   assert(!coreSource.includes("if (cmd === 'gotofire'"), "core should not own QA command dispatch branches");
+  assert(!coreSource.includes("function qaGotoFiremakingSpot"), "core should not own QA tool implementations");
 
   const qaCommandSandbox = { window: {} };
   vm.runInNewContext(qaCommandSource, qaCommandSandbox, { filename: "src/js/qa-command-runtime.js" });
@@ -76,33 +81,37 @@ function run() {
   assert(qaMessages.some((entry) => entry.message === "hello there" && entry.type === "game"), "QA command runtime should pass normal chat through");
   assert(qaCalls.includes("overhead:hello there"), "QA command runtime should keep normal overhead chat behavior");
 
+  const qaToolsSandbox = { window: {} };
+  vm.runInNewContext(qaToolsSource, qaToolsSandbox, { filename: "src/js/qa-tools-runtime.js" });
+  const qaToolsRuntime = qaToolsSandbox.window.QaToolsRuntime;
+  assert(qaToolsRuntime, "QA tools runtime should execute in isolation");
+
   const firemakingHarness = {
     typedRoutes: [],
     legacyRoutes: [],
-    teleports: [],
-    getWorldRouteGroup(groupId) {
-      assert(groupId === "firemaking", "firemaking QA should only ask for firemaking routes");
-      return firemakingHarness.typedRoutes;
+    messages: [],
+    playerState: { x: 0, y: 0, z: 0 },
+    windowRef: {},
+    addChatMessage(message, type) {
+      firemakingHarness.messages.push({ message, type });
+    },
+    getPlayerState() {
+      return firemakingHarness.playerState;
+    },
+    getWorldGameContext() {
+      return {
+        queries: {
+          getRouteGroup(groupId) {
+            assert(groupId === "firemaking", "firemaking QA should only ask for firemaking routes");
+            return firemakingHarness.typedRoutes;
+          }
+        }
+      };
     },
     getFiremakingTrainingLocations() {
       return firemakingHarness.legacyRoutes;
-    },
-    qaTeleportTo(x, y, z, label) {
-      firemakingHarness.teleports.push({ x, y, z, label });
-      return true;
     }
   };
-
-  vm.runInNewContext(
-    [
-      extractFunctionSource(coreSource, "getQaFiremakingSpots"),
-      extractFunctionSource(coreSource, "qaGotoFiremakingSpot"),
-      "this.getQaFiremakingSpots = getQaFiremakingSpots;",
-      "this.qaGotoFiremakingSpot = qaGotoFiremakingSpot;"
-    ].join("\n\n"),
-    firemakingHarness,
-    { filename: "qa-firemaking-snippet.js" }
-  );
 
   firemakingHarness.typedRoutes = [
     { routeId: "oak_fire_lane", alias: "oak", x: 205, y: 299, z: 0, label: "oak path fire lane" }
@@ -110,7 +119,7 @@ function run() {
   firemakingHarness.legacyRoutes = [
     { routeId: "starter_fire_lane", alias: "starter", x: 1, y: 2, z: 0, label: "legacy starter lane" }
   ];
-  const typedSpots = firemakingHarness.getQaFiremakingSpots();
+  const typedSpots = qaToolsRuntime.getQaFiremakingSpots(firemakingHarness);
   assert(typedSpots.oak && typedSpots.oak.x === 205 && typedSpots.oak.y === 299, "typed firemaking routes should drive QA spot discovery before legacy fallback");
   assert(!typedSpots.starter, "typed firemaking routes should not merge legacy fallback spots when typed data exists");
 
@@ -118,12 +127,12 @@ function run() {
   firemakingHarness.legacyRoutes = [
     { routeId: "yew_fire_lane", x: 51, y: 8, z: 0, label: "yew frontier fire lane" }
   ];
-  const legacySpots = firemakingHarness.getQaFiremakingSpots();
+  const legacySpots = qaToolsRuntime.getQaFiremakingSpots(firemakingHarness);
   assert(legacySpots.yew_fire_lane && legacySpots.yew_fire_lane.label === "yew frontier fire lane", "legacy firemaking routes should backfill QA spots when typed world routes are absent");
 
   firemakingHarness.typedRoutes = [];
   firemakingHarness.legacyRoutes = [];
-  const fallbackSpots = firemakingHarness.getQaFiremakingSpots();
+  const fallbackSpots = qaToolsRuntime.getQaFiremakingSpots(firemakingHarness);
   assert(fallbackSpots.starter && fallbackSpots.starter.x === 182 && fallbackSpots.yew && fallbackSpots.yew.y === 8, "firemaking QA should keep the authored hardcoded fallback spots");
 
   firemakingHarness.typedRoutes = [
@@ -131,13 +140,13 @@ function run() {
     { routeId: "yew_fire_lane", alias: "yew", x: 51, y: 8, z: 0, label: "yew frontier fire lane" }
   ];
   firemakingHarness.legacyRoutes = [];
-  firemakingHarness.teleports = [];
-  assert(firemakingHarness.qaGotoFiremakingSpot("regular"), "regular should resolve to the starter firemaking QA alias");
-  assert(firemakingHarness.teleports.length === 1 && firemakingHarness.teleports[0].label === "starter grove fire lane", "starter alias teleport should target the typed starter fire lane");
-  assert(firemakingHarness.qaGotoFiremakingSpot("yew"), "yew should resolve to the typed frontier firemaking alias");
-  assert(firemakingHarness.teleports.length === 2 && firemakingHarness.teleports[1].x === 51 && firemakingHarness.teleports[1].y === 8, "yew alias teleport should use the authored frontier fire lane anchor");
-  assert(!firemakingHarness.qaGotoFiremakingSpot("pine"), "deleted north-road pine alias should not teleport from current firemaking routes");
-  assert(firemakingHarness.teleports.length === 2, "failed pine lookup should not add a QA teleport");
+  const firemakingHandlers = qaToolsRuntime.createCommandHandlers(firemakingHarness);
+  assert(firemakingHandlers.qaGotoFiremakingSpot("regular"), "regular should resolve to the starter firemaking QA alias");
+  assert(firemakingHarness.playerState.x === 182 && firemakingHarness.playerState.y === 170, "starter alias teleport should target the typed starter fire lane");
+  assert(firemakingHandlers.qaGotoFiremakingSpot("yew"), "yew should resolve to the typed frontier firemaking alias");
+  assert(firemakingHarness.playerState.x === 51 && firemakingHarness.playerState.y === 8, "yew alias teleport should use the authored frontier fire lane anchor");
+  assert(!firemakingHandlers.qaGotoFiremakingSpot("pine"), "deleted north-road pine alias should not teleport from current firemaking routes");
+  assert(firemakingHarness.playerState.x === 51 && firemakingHarness.playerState.y === 8, "failed pine lookup should not move the player");
 
   console.log("QA registry parity guard passed.");
 }

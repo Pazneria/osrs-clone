@@ -1885,12 +1885,13 @@ function run() {
   assert(!fs.existsSync(path.join(root, "src/js/skills/shared/animations.js")), "unused shared skill animations script should be deleted");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
   const qaCommandScript = fs.readFileSync(path.join(root, "src/js/qa-command-runtime.js"), "utf8");
+  const qaToolsScript = fs.readFileSync(path.join(root, "src/js/qa-tools-runtime.js"), "utf8");
   assert(coreScript.includes("typeof window.resolveInteractionFacingRotation === 'function'"), "core facing turns should consult station-aware interaction facing");
-  assert(coreScript.includes("function getQaDiscoveredMerchants()"), "core QA merchant discovery helper missing");
-  assert(coreScript.includes("getWorldRouteGroup('fishing')"), "core QA fishing-spot discovery should read world registry");
-  assert(coreScript.includes("function getQaOpenableMerchantIds()"), "core QA openable-merchant resolver missing");
-  assert(coreScript.includes("getConfiguredMerchantIds === 'function'"), "core QA openable-merchant resolver should read ShopEconomy merchant config");
-  assert(coreScript.includes("function formatQaOpenShopUsage()"), "core QA openshop usage formatter missing");
+  assert(qaToolsScript.includes("function getQaDiscoveredMerchants(context)"), "QA tools merchant discovery helper missing");
+  assert(qaToolsScript.includes("getWorldRouteGroup(context, 'fishing')"), "QA tools fishing-spot discovery should read world registry");
+  assert(qaToolsScript.includes("function getQaOpenableMerchantIds(context)"), "QA tools openable-merchant resolver missing");
+  assert(qaToolsScript.includes("getConfiguredMerchantIds === 'function'"), "QA tools openable-merchant resolver should read ShopEconomy merchant config");
+  assert(qaToolsScript.includes("function formatQaOpenShopUsage(context)"), "QA tools openshop usage formatter missing");
   assert(!coreScript.includes("const qaOpenableMerchants = ['general_store'"), "core QA openshop should not hard-code merchant id list");
   assert(qaCommandScript.includes("/qa cookspots"), "QA cookspots command help missing");
   assert(qaCommandScript.includes("/qa gotocook <camp|river|dock|deep>"), "QA gotocook command help missing");
