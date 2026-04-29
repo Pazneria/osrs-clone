@@ -6,6 +6,28 @@
     const CHUNK_AUTO_QUALITY_COOLDOWN_MS = 10000;
     const CHUNK_AUTO_QUALITY_LOW_FPS = 43;
     const CHUNK_AUTO_QUALITY_HIGH_FPS = 48;
+    const CHUNK_RENDER_POLICY_PRESETS = Object.freeze({
+        high: Object.freeze({
+            nearRadius: 2,
+            midRadius: 4,
+            interactionRadius: 1,
+            farMode: 'all'
+        }),
+        balanced: Object.freeze({
+            nearRadius: 1,
+            midRadius: 3,
+            interactionRadius: 1,
+            farMode: 'all'
+        }),
+        safe: Object.freeze({
+            nearRadius: 1,
+            midRadius: 2,
+            interactionRadius: 1,
+            farMode: 'all'
+        })
+    });
+    const CHUNK_RENDER_POLICY_ORDER = Object.freeze(['safe', 'balanced', 'high']);
+    const CHUNK_RENDER_DEFAULT_PRESET = 'balanced';
 
     const nearGroups = {};
     const midGroups = {};
@@ -20,6 +42,8 @@
     let lastChunkPolicyCenterX = null;
     let lastChunkPolicyCenterY = null;
     let lastChunkPolicyRevision = -1;
+    let activeChunkRenderPolicyPreset = CHUNK_RENDER_DEFAULT_PRESET;
+    let chunkRenderPolicyRevision = 0;
     const chunkAutoQualityState = {
         windowStartMs: 0,
         accumulatedFps: 0,
@@ -43,6 +67,45 @@
         chunkPolicyDirty = true;
         lastChunkPolicyCenterX = null;
         lastChunkPolicyCenterY = null;
+    }
+
+    function resolveChunkRenderPolicyPresetName(presetName) {
+        if (typeof presetName === 'string' && CHUNK_RENDER_POLICY_PRESETS[presetName]) return presetName;
+        if (CHUNK_RENDER_POLICY_PRESETS[CHUNK_RENDER_DEFAULT_PRESET]) return CHUNK_RENDER_DEFAULT_PRESET;
+        return 'balanced';
+    }
+
+    function getActiveChunkRenderPolicyPreset() {
+        return resolveChunkRenderPolicyPresetName(activeChunkRenderPolicyPreset);
+    }
+
+    function getChunkRenderPolicy(presetName = null) {
+        const resolvedName = resolveChunkRenderPolicyPresetName(presetName || activeChunkRenderPolicyPreset);
+        const preset = CHUNK_RENDER_POLICY_PRESETS[resolvedName] || CHUNK_RENDER_POLICY_PRESETS.balanced;
+        return {
+            preset: resolvedName,
+            nearRadius: Math.max(0, Math.floor(Number.isFinite(preset.nearRadius) ? preset.nearRadius : 1)),
+            midRadius: Math.max(0, Math.floor(Number.isFinite(preset.midRadius) ? preset.midRadius : 3)),
+            interactionRadius: Math.max(0, Math.floor(Number.isFinite(preset.interactionRadius) ? preset.interactionRadius : 1)),
+            farMode: preset.farMode === 'all' ? 'all' : 'window'
+        };
+    }
+
+    function getChunkRenderPolicyPresetOrder() {
+        return CHUNK_RENDER_POLICY_ORDER.slice();
+    }
+
+    function applyChunkRenderPolicyPreset(nextPreset) {
+        const resolvedNextPreset = resolveChunkRenderPolicyPresetName(nextPreset);
+        if (resolvedNextPreset === activeChunkRenderPolicyPreset) return false;
+        activeChunkRenderPolicyPreset = resolvedNextPreset;
+        chunkRenderPolicyRevision += 1;
+        markChunkPolicyDirty();
+        return true;
+    }
+
+    function getChunkRenderPolicyRevision() {
+        return chunkRenderPolicyRevision;
     }
 
     function resetAutoQualityWindow() {
@@ -179,7 +242,7 @@
     }
 
     function resolveActiveChunkRenderPolicy(context = {}) {
-        const fallback = { preset: 'balanced', nearRadius: 1, midRadius: 3, interactionRadius: 1, farMode: 'all' };
+        const fallback = getChunkRenderPolicy();
         const policy = callHook(context, 'getChunkRenderPolicy') || fallback;
         const nearRadius = Math.max(0, Math.floor(Number.isFinite(policy && policy.nearRadius) ? policy.nearRadius : fallback.nearRadius));
         const midRadius = Math.max(nearRadius, Math.floor(Number.isFinite(policy && policy.midRadius) ? policy.midRadius : fallback.midRadius));
@@ -194,7 +257,7 @@
     }
 
     function getChunkPresetOrder(context = {}) {
-        const fallback = ['safe', 'balanced', 'high'];
+        const fallback = getChunkRenderPolicyPresetOrder();
         const order = callHook(context, 'getChunkRenderPolicyPresetOrder') || fallback;
         if (!Array.isArray(order) || order.length === 0) return fallback;
         return order.slice();
@@ -207,7 +270,10 @@
         if (currentIndex === -1) return false;
         const targetIndex = Math.max(0, Math.min(order.length - 1, currentIndex + direction));
         if (targetIndex === currentIndex) return false;
-        const changed = callHook(context, 'applyChunkRenderPolicyPreset', order[targetIndex]);
+        const contextChanged = callHook(context, 'applyChunkRenderPolicyPreset', order[targetIndex]);
+        const changed = typeof contextChanged === 'boolean'
+            ? contextChanged
+            : applyChunkRenderPolicyPreset(order[targetIndex]);
         if (changed) {
             chunkAutoQualityState.lastPresetChangeMs = nowMs;
             markChunkPolicyDirty();
@@ -439,9 +505,10 @@
         if (!policyState) return;
         const pCX = policyState.centerChunkX;
         const pCY = policyState.centerChunkY;
-        const policyRevision = Number.isFinite(callHook(context, 'getChunkRenderPolicyRevision'))
-            ? callHook(context, 'getChunkRenderPolicyRevision')
-            : 0;
+        const contextPolicyRevision = callHook(context, 'getChunkRenderPolicyRevision');
+        const policyRevision = Number.isFinite(contextPolicyRevision)
+            ? contextPolicyRevision
+            : getChunkRenderPolicyRevision();
         if (forceRefresh) clearPendingNearChunkBuilds();
 
         if (
@@ -484,6 +551,11 @@
         CHUNK_TIER_NEAR,
         CHUNK_TIER_MID,
         CHUNK_TIER_FAR,
+        getChunkRenderPolicy,
+        getActiveChunkRenderPolicyPreset,
+        applyChunkRenderPolicyPreset,
+        getChunkRenderPolicyRevision,
+        getChunkRenderPolicyPresetOrder,
         manageChunks,
         processPendingNearChunkBuilds,
         reportChunkPerformanceSample,
@@ -503,4 +575,10 @@
         setChunkInteractionState,
         setLoadedChunkPlaneVisibility
     };
+
+    window.getChunkRenderPolicy = getChunkRenderPolicy;
+    window.getActiveChunkRenderPolicyPreset = getActiveChunkRenderPolicyPreset;
+    window.applyChunkRenderPolicyPreset = applyChunkRenderPolicyPreset;
+    window.getChunkRenderPolicyRevision = getChunkRenderPolicyRevision;
+    window.getChunkRenderPolicyPresetOrder = getChunkRenderPolicyPresetOrder;
 })();

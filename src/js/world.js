@@ -5967,18 +5967,6 @@
                 chunkSize: CHUNK_SIZE,
                 getChunkCenterPosition,
                 hasPlayerRig: () => !!playerRig,
-                getChunkRenderPolicy: () => (typeof window.getChunkRenderPolicy === 'function')
-                    ? window.getChunkRenderPolicy()
-                    : null,
-                getChunkRenderPolicyPresetOrder: () => (typeof window.getChunkRenderPolicyPresetOrder === 'function')
-                    ? window.getChunkRenderPolicyPresetOrder()
-                    : null,
-                applyChunkRenderPolicyPreset: (preset) => (typeof window.applyChunkRenderPolicyPreset === 'function')
-                    ? window.applyChunkRenderPolicyPreset(preset)
-                    : false,
-                getChunkRenderPolicyRevision: () => (typeof window.getChunkRenderPolicyRevision === 'function')
-                    ? window.getChunkRenderPolicyRevision()
-                    : 0,
                 removeChunkGroupFromScene: (group) => {
                     if (scene && group) scene.remove(group);
                 },

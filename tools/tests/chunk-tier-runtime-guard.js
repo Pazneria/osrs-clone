@@ -13,9 +13,11 @@ function run() {
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
-  assert(coreSource.includes("CHUNK_RENDER_POLICY_PRESETS"), "core.js should define chunk render policy presets");
-  assert(coreSource.includes("applyChunkRenderPolicyPreset"), "core.js should expose chunk policy preset mutation");
-  assert(coreSource.includes("getChunkRenderPolicyRevision"), "core.js should expose chunk policy revision tracking");
+  assert(chunkRuntimeSource.includes("CHUNK_RENDER_POLICY_PRESETS"), "chunk scene runtime should define chunk render policy presets");
+  assert(chunkRuntimeSource.includes("applyChunkRenderPolicyPreset"), "chunk scene runtime should expose chunk policy preset mutation");
+  assert(chunkRuntimeSource.includes("getChunkRenderPolicyRevision"), "chunk scene runtime should expose chunk policy revision tracking");
+  assert(!coreSource.includes("CHUNK_RENDER_POLICY_PRESETS"), "core.js should not own chunk render policy presets");
+  assert(!worldSource.includes("getChunkRenderPolicy: () =>"), "world.js should not broker chunk render policy through context callbacks");
 
   assert(chunkRuntimeSource.includes("collectDesiredChunkTierAssignments"), "chunk scene runtime should build tier assignments for chunks");
   assert(worldSource.includes("ensureFarChunkBackdropBuilt"), "world.js should prebuild far chunk backdrops");
@@ -49,6 +51,11 @@ function run() {
   vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
   const runtime = window.WorldChunkSceneRuntime;
   assert(runtime, "chunk scene runtime should expose a window runtime");
+  assert(window.getChunkRenderPolicy().preset === "balanced", "chunk scene runtime should expose balanced default policy through legacy window API");
+  assert(window.applyChunkRenderPolicyPreset("high") === true, "chunk scene runtime should mutate policy through legacy window API");
+  assert(window.getChunkRenderPolicy().preset === "high", "chunk scene runtime should report updated active policy");
+  assert(window.getChunkRenderPolicyRevision() === 1, "chunk scene runtime should track policy revisions");
+  assert(window.applyChunkRenderPolicyPreset("balanced") === true, "chunk scene runtime should support resetting policy for guard scenarios");
 
   const interactionEvents = [];
   runtime.registerNearChunk("0,0", { id: "near-a" }, { interactionMeshes: ["mesh-a"], registerInteraction: true });
