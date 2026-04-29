@@ -38,10 +38,12 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Combat-core parity pass for shared lock/cooldown/retaliate rules | Complete |
 | Starter-town encounter authoring pass | Complete |
 | First-pass melee-only enemy template rollout beyond rat/goblin | Complete |
-| Loot-table and drop-band authoring pass | Now |
+| Loot-table and drop-band authoring pass | Complete |
 | Spawn-node / spawn-group authoring pass | Complete |
 | Combat content validation and perf-gate pass | Complete |
 | Combat HUD/target feedback pass | Complete |
+| Progression-band contract for enemy difficulty, drops, and placement | Complete |
+| First-pass guarded threshold and camp-threat encounter coverage | Complete |
 
 ## Data Contracts
 
@@ -138,14 +140,14 @@ These are the spec-aligned first-pass melee-only enemy templates that should dri
 | Enemy Template | World Role | Current Priority |
 | --- | --- | --- |
 | Rat | True low-threat starter pest | Live |
-| Chicken | Harmless utility wildlife and opt-in low-risk target | Now |
+| Chicken | Harmless utility wildlife and opt-in low-risk target | Live |
 | Goblin Grunt | Baseline early aggressive humanoid | Live |
-| Boar | Early animal resource enemy | Now |
-| Wolf | Fast early natural predator | Now |
-| Guard | Sturdier zone-control melee enemy | Next |
-| Bear | Slow, durable natural threat | Next |
-| Heavy Brute | Slower heavy-damage melee enemy | Next |
-| Fast Striker | High-pressure accuracy/speed enemy | Next |
+| Boar | Early animal resource enemy | Live |
+| Wolf | Fast early natural predator | Live |
+| Guard | Sturdier zone-control melee enemy | Live |
+| Bear | Slow, durable natural threat | Live |
+| Heavy Brute | Slower heavy-damage melee enemy | Live |
+| Fast Striker | High-pressure accuracy/speed enemy | Live |
 
 Rule: the roadmap should exhaust this first-pass roster before it assumes more advanced behaviors like patrol logic, assist logic, or dynamic spawning.
 
@@ -203,6 +205,59 @@ They should:
 - Duplicate tables should be deliberate, not accidental copy-paste.
 - Drops should be checked in aggregate against kill-time so value-per-tick stays sensible.
 - First-pass tables should total `100%` and remain intentionally small/readable.
+
+### Current First-Pass Loot Benchmarks
+
+These benchmarks use the current live drop tables in `src/game/combat/content.ts`.
+Expected sell value per kill treats coin entries at their average stack size and item entries at the general-store half-price fallback (`floor(item.value x 0.5)`), which gives combat a stable direct-sale baseline even before later-region specialist buyers or richer drop rules exist.
+
+| Enemy | Encounter Role | Empty Weight | Coin Weight | Notable Drops | Expected Sell Value / Kill |
+| --- | --- | --- | --- | --- | --- |
+| Rat | Passive critter | 65% | 0% | Rat Tail x1 | 0.70 |
+| Chicken | Passive critter | 10% | 0% | Raw Chicken, Feathers x15 | 2.50 |
+| Boar | Resource aggressor | 20% | 0% | Raw Boar Meat, Boar Tusk | 2.80 |
+| Wolf | Resource aggressor | 25% | 0% | Raw Wolf Meat, Wolf Fang | 3.40 |
+| Goblin Grunt | Roadside aggressor | 18% | 45% | Bronze sword/axe/pickaxe ladder | 7.05 |
+| Bear | Durable bruiser | 15% | 0% | Bear Leather spike | 11.00 |
+| Guard | Gatekeeper | 4% | 40% | Bronze-to-iron weapon/tool ladder | 20.20 |
+| Fast Striker | Camp striker | 23% | 45% | Iron sword bias | 21.90 |
+| Heavy Brute | Camp bruiser | 16% | 50% | Iron weapon/tool ladder | 26.15 |
+
+These live benchmarks keep passive/resource enemies below the humanoid payout bands, keep goblins well below the cost of buying a full bronze weapon, and keep the first iron-dropping enemies below the cost of buying a full iron weapon.
+
+### Current Melee Simulator
+
+`tools/sim/melee-sim.js` is the canonical first-pass combat simulator. It loads typed enemy data from `src/game/combat/content.ts`, player/enemy formula helpers from `src/game/combat/formulas.ts`, and weapon combat profiles from `src/js/content/item-catalog.js`.
+
+Use `npm.cmd run tool:sim:melee -- --enemy enemy_goblin_grunt --weapon bronze_sword --runs 1000 --seed baseline` to produce deterministic matchup summaries. The simulator reports player/enemy snapshots, win rates, average fight length, damage, and swing counts so combat tuning can compare authored enemies and item profiles without reintroducing the removed dummy simulator path.
+
+### Current Combat Progression Bands
+
+The live progression-band contract is authored in `src/game/combat/content.ts` and exposed through `listCombatProgressionBands()`, `getCombatProgressionBandForEnemy()`, and `listCombatProgressionBandWorldSummaries(worldId)`.
+It exists to keep enemy difficulty, drop ceilings, and placement guidance aligned before the next encounter rollout adds outer-road, camp, and guarded-threshold coverage.
+
+| Band | Stage | Player Level Band | Enemy Templates | Placement Role | Loot Ceiling |
+| --- | --- | --- | --- | --- | --- |
+| Starter Opt-In | Starter | 1-3 | Training Dummy, Rat, Chicken | Safe optional starter targets | <= 2.50 gp/kill |
+| Starter Roadside | Starter | 4-10 | Goblin Grunt | Avoidable early humanoid aggro | <= 7.05 gp/kill |
+| Resource Outskirts | Starter | 8-16 | Boar, Wolf | Combat pressure near richer resources | <= 3.40 gp/kill |
+| Guarded Threshold | Mid | 15-25 | Guard | Deliberate gate or outpost pressure | <= 20.20 gp/kill |
+| Camp Threat | Mid | 20-35 | Bear, Fast Striker, Heavy Brute | Clustered optional camps or ruins | <= 26.15 gp/kill |
+| Later Region Anchor | Later | 35+ | Deferred | Named anchors and later-region objectives | Deferred |
+
+Rule: every live enemy template must belong to exactly one progression band, and current world summaries should make it clear which bands are placed versus still available for future authored regions.
+
+### Current Combat World Coverage
+
+The current authored `starter_town` world now covers every live first-pass progression band. Starter-safe, roadside, resource-outskirts, guarded-threshold, and camp-threat spawns all flow through the same `combatSpawns` source of truth and are locked by the combat content, topology, and world parity guards.
+
+| World | Progression Band | Spawn Groups | Spawn Count |
+| --- | --- | --- | --- |
+| Starter Town | Starter Opt-In | `starter_training`, `starter_field`, `starter_outer_rats_southwest`, `starter_outer_chickens_southwest`, `starter_outer_chickens_southeast` | 17 |
+| Starter Town | Starter Roadside | `starter_road`, `starter_east_field_*`, `starter_far_*_goblins` | 12 |
+| Starter Town | Resource Outskirts | `starter_east_far_boar_*`, `starter_outer_boars_*`, `starter_outer_wolf_*` | 18 |
+| Starter Town | Guarded Threshold | `starter_east_outpost_guard_post` | 3 |
+| Starter Town | Camp Threat | `camp_southeast_ruins` | 3 |
 
 ## Spawn / Respawn Model
 
@@ -372,7 +427,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Lock in first-pass loot table rules so drops support the economy and combat progression instead of fighting them.
-2. Add melee style selection UI and keep combat HUD state aligned as encounter complexity grows.
-3. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
-4. Rebuild the combat simulator from the canonical formulas and content contracts.
+1. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
+2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
+3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
+4. Revisit later-region anchors only after authored region context exists.

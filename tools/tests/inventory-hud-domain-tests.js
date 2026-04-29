@@ -540,10 +540,39 @@ const ITEM_DB = {
 {
   const profile = hudViewModels.buildPlayerProfileSummaryViewModel({
     profile: {
+      name: "",
+      creationCompleted: false,
+      createdAt: null,
+      lastStartedAt: null,
+      tutorialStep: 0,
+      tutorialCompletedAt: null
+    },
+    playerEntryFlow: {
+      hasLoadedSave: false,
+      saveWasLegacyProfile: false,
+      loadReason: "startup",
+      savedAt: null
+    },
+    playerAppearance: { gender: 0 },
+    formatTimestamp: (timestamp) => `T${timestamp}`
+  });
+  assert.strictEqual(profile.titleText, "Create Your Adventurer");
+  assert.strictEqual(profile.primaryActionText, "Start Adventure");
+  assert.strictEqual(profile.subtitleText, "Choose a starter identity before you arrive on Tutorial Island.");
+  assert.strictEqual(profile.noteText, "Progress will begin autosaving locally in this browser once you arrive.");
+  assert.strictEqual(profile.statusText, "Fresh character profile");
+  assert.strictEqual(profile.bodyTypeLabel, "Male");
+}
+
+{
+  const profile = hudViewModels.buildPlayerProfileSummaryViewModel({
+    profile: {
       name: "Ava",
       creationCompleted: true,
       createdAt: 1000,
-      lastStartedAt: 2000
+      lastStartedAt: 2000,
+      tutorialStep: 6,
+      tutorialCompletedAt: 2500
     },
     playerEntryFlow: {
       hasLoadedSave: true,

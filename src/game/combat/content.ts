@@ -1,5 +1,8 @@
 import type { Point3 } from "../contracts/world";
 import type {
+  CombatProgressionBandDefinition,
+  CombatProgressionBandId,
+  CombatProgressionBandWorldSummary,
   EnemySpawnNodeDefinition,
   EnemyTypeDefinition,
   EnemyRuntimeState,
@@ -41,6 +44,148 @@ function cloneSpawnNode(definition: EnemySpawnNodeDefinition): EnemySpawnNodeDef
 type AuthoredCombatWorldDefinition = {
   combatSpawns?: EnemySpawnNodeDefinition[] | null;
 };
+
+const COMBAT_PROGRESSION_BAND_ORDER: CombatProgressionBandId[] = [
+  "starter_opt_in",
+  "starter_roadside",
+  "resource_outskirts",
+  "guarded_threshold",
+  "camp_threat",
+  "later_region"
+];
+
+const COMBAT_PROGRESSION_BANDS: Record<CombatProgressionBandId, CombatProgressionBandDefinition> = {
+  starter_opt_in: {
+    bandId: "starter_opt_in",
+    displayName: "Starter Opt-In",
+    worldStage: "starter",
+    routeDepth: 0,
+    targetPlayerLevels: { min: 1, max: 3 },
+    enemyIds: ["enemy_training_dummy", "enemy_rat", "enemy_chicken"],
+    spawnGroupPrefixes: ["starter_training", "starter_field", "starter_outer_rats", "starter_outer_chickens"],
+    placementGuidance: [
+      "Safe optional targets near starter spaces",
+      "No unavoidable aggro on economy or tutorial routes"
+    ],
+    lootGuidance: [
+      "No meaningful coin pressure",
+      "Low-value flavor, food, or supply drops only"
+    ],
+    maxExpectedSellValuePerKill: 2.5
+  },
+  starter_roadside: {
+    bandId: "starter_roadside",
+    displayName: "Starter Roadside",
+    worldStage: "starter",
+    routeDepth: 1,
+    targetPlayerLevels: { min: 4, max: 10 },
+    enemyIds: ["enemy_goblin_grunt"],
+    spawnGroupPrefixes: ["starter_road", "starter_east_field", "starter_far"],
+    placementGuidance: [
+      "Readable avoidable aggro before the bubble starts",
+      "Basic humanoid pressure without blocking town services"
+    ],
+    lootGuidance: [
+      "Small coin drops and bronze ladder pressure",
+      "Expected value remains below buying a bronze sword"
+    ],
+    maxExpectedSellValuePerKill: 7.05
+  },
+  resource_outskirts: {
+    bandId: "resource_outskirts",
+    displayName: "Resource Outskirts",
+    worldStage: "starter",
+    routeDepth: 2,
+    targetPlayerLevels: { min: 8, max: 16 },
+    enemyIds: ["enemy_boar", "enemy_wolf"],
+    spawnGroupPrefixes: ["starter_east_far_boar", "starter_outer_boars", "starter_outer_wolf"],
+    placementGuidance: [
+      "Combat pressure near richer resource outskirts",
+      "Safe bypass space remains visible before resource-route commitment"
+    ],
+    lootGuidance: [
+      "Animal resources should matter more than raw coins",
+      "Direct-sale value stays below the humanoid loot bands"
+    ],
+    maxExpectedSellValuePerKill: 3.4
+  },
+  guarded_threshold: {
+    bandId: "guarded_threshold",
+    displayName: "Guarded Threshold",
+    worldStage: "mid",
+    routeDepth: 3,
+    targetPlayerLevels: { min: 15, max: 25 },
+    enemyIds: ["enemy_guard"],
+    spawnGroupPrefixes: ["starter_east_outpost_guard"],
+    placementGuidance: [
+      "Deliberate gate or outpost pressure",
+      "Leash and spacing should make the danger boundary legible"
+    ],
+    lootGuidance: [
+      "Bronze-to-iron transition drops are allowed",
+      "Expected value remains below buying an iron sword"
+    ],
+    maxExpectedSellValuePerKill: 20.2
+  },
+  camp_threat: {
+    bandId: "camp_threat",
+    displayName: "Camp Threat",
+    worldStage: "mid",
+    routeDepth: 4,
+    targetPlayerLevels: { min: 20, max: 35 },
+    enemyIds: ["enemy_bear", "enemy_fast_striker", "enemy_heavy_brute"],
+    spawnGroupPrefixes: ["camp", "ruin", "outpost_camp"],
+    placementGuidance: [
+      "Clustered danger pockets, ruins, or optional camps",
+      "Single-pull edges should exist until assist behavior is authored"
+    ],
+    lootGuidance: [
+      "Higher first-pass value with iron-biased drops",
+      "Still bounded below full iron weapon purchase cost"
+    ],
+    maxExpectedSellValuePerKill: 26.15
+  },
+  later_region: {
+    bandId: "later_region",
+    displayName: "Later Region Anchor",
+    worldStage: "later",
+    routeDepth: 5,
+    targetPlayerLevels: { min: 35, max: null },
+    enemyIds: [],
+    spawnGroupPrefixes: ["later", "named", "gatekeeper"],
+    placementGuidance: [
+      "Named anchors, denser ecosystems, and later-region objectives",
+      "Requires authored region context before adding live templates"
+    ],
+    lootGuidance: [
+      "Unique or regional drop identity only after the base bands hold",
+      "No live table until a later-region encounter spec exists"
+    ],
+    maxExpectedSellValuePerKill: null
+  }
+};
+
+const ENEMY_PROGRESSION_BAND_IDS = COMBAT_PROGRESSION_BAND_ORDER.reduce<Record<string, CombatProgressionBandId>>(
+  (lookup, bandId) => {
+    const band = COMBAT_PROGRESSION_BANDS[bandId];
+    for (let i = 0; i < band.enemyIds.length; i += 1) {
+      lookup[band.enemyIds[i]] = bandId;
+    }
+    return lookup;
+  },
+  {}
+);
+
+function cloneCombatProgressionBand(definition: CombatProgressionBandDefinition): CombatProgressionBandDefinition {
+  return {
+    ...definition,
+    targetPlayerLevels: { ...definition.targetPlayerLevels },
+    enemyIds: definition.enemyIds.slice(),
+    spawnGroupPrefixes: definition.spawnGroupPrefixes.slice(),
+    placementGuidance: definition.placementGuidance.slice(),
+    lootGuidance: definition.lootGuidance.slice()
+  };
+}
 
 const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
   enemy_rat: {
@@ -731,6 +876,61 @@ export function getEnemyTypeDefinition(enemyId: string): EnemyTypeDefinition | n
 
 export function listEnemyTypes(): EnemyTypeDefinition[] {
   return Object.keys(ENEMY_TYPES).sort().map((enemyId) => cloneEnemyTypeDefinition(ENEMY_TYPES[enemyId]));
+}
+
+export function listCombatProgressionBands(): CombatProgressionBandDefinition[] {
+  return COMBAT_PROGRESSION_BAND_ORDER.map((bandId) => cloneCombatProgressionBand(COMBAT_PROGRESSION_BANDS[bandId]));
+}
+
+export function getCombatProgressionBandForEnemy(enemyId: string): CombatProgressionBandDefinition | null {
+  const bandId = ENEMY_PROGRESSION_BAND_IDS[String(enemyId || "").trim()];
+  return bandId ? cloneCombatProgressionBand(COMBAT_PROGRESSION_BANDS[bandId]) : null;
+}
+
+export function listCombatProgressionBandWorldSummaries(worldId: string): CombatProgressionBandWorldSummary[] {
+  const resolvedWorldId = String(worldId || "").trim();
+  const summaries = new Map<CombatProgressionBandId, CombatProgressionBandWorldSummary>();
+  for (let i = 0; i < COMBAT_PROGRESSION_BAND_ORDER.length; i += 1) {
+    const bandId = COMBAT_PROGRESSION_BAND_ORDER[i];
+    summaries.set(bandId, {
+      bandId,
+      worldId: resolvedWorldId,
+      enemyIds: [],
+      spawnGroupIds: [],
+      spawnCount: 0
+    });
+  }
+
+  const spawns = listEnemySpawnNodesForWorld(resolvedWorldId);
+  for (let i = 0; i < spawns.length; i += 1) {
+    const spawn = spawns[i];
+    const bandId = ENEMY_PROGRESSION_BAND_IDS[spawn.enemyId];
+    if (!bandId) continue;
+    const summary = summaries.get(bandId);
+    if (!summary) continue;
+    summary.spawnCount += 1;
+    if (!summary.enemyIds.includes(spawn.enemyId)) summary.enemyIds.push(spawn.enemyId);
+    const spawnGroupId = String(spawn.spawnGroupId || "").trim();
+    if (spawnGroupId && !summary.spawnGroupIds.includes(spawnGroupId)) summary.spawnGroupIds.push(spawnGroupId);
+  }
+
+  return COMBAT_PROGRESSION_BAND_ORDER.map((bandId) => {
+    const summary = summaries.get(bandId);
+    if (!summary) {
+      return {
+        bandId,
+        worldId: resolvedWorldId,
+        enemyIds: [],
+        spawnGroupIds: [],
+        spawnCount: 0
+      };
+    }
+    return {
+      ...summary,
+      enemyIds: summary.enemyIds.slice().sort(),
+      spawnGroupIds: summary.spawnGroupIds.slice().sort()
+    };
+  });
 }
 
 export function listEnemySpawnNodesForWorld(worldId: string): EnemySpawnNodeDefinition[] {

@@ -16,6 +16,7 @@
 - [x] MINING-011: Gem Mine quest gate and Elira access-flow integration (unlock flag wiring, gated world metadata, runtime enforcement, QA toggle coverage).
 - [x] MINING-012: Thrain late-ore off-band progression integration (authored `Proof of the Deepforge` merchant-unlock quest, late-band ore turn-in requirements, and quest-runtime guard coverage).
 - [x] MINING-013: Balance pass completed with runtime-backed per-rock yield sessions (minimum/cap depletion rules, 50-tick session expiry), canonical mining economy tables, and locked tier-entry/sustained ore-gem throughput targets.
+- [x] MINING-014: Runtime rock/gem visual identity pass completed with distinct per-type geometry/material/scale profiles for clay, copper, tin, iron, coal, silver, sapphire, gold, emerald, rune essence, and depleted rocks.
 
 ## Now
 

@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-03-26T17:48:49.153Z",
+  "generatedAt": "2026-04-12T18:00:47.928Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -3572,7 +3572,7 @@
       "name": "Rune Arrowheads x15",
       "stackable": false,
       "type": "component",
-      "value": 1
+      "value": 500
     },
     "rune_arrows": {
       "actions": [
@@ -3648,7 +3648,7 @@
       "name": "Rune Axe Head",
       "stackable": false,
       "type": "component",
-      "value": 1
+      "value": 750
     },
     "rune_bar": {
       "actions": [
@@ -3705,7 +3705,7 @@
         "str": 0
       },
       "type": "feet",
-      "value": 1
+      "value": 1000
     },
     "rune_essence": {
       "actions": [
@@ -3805,7 +3805,7 @@
         "str": 0
       },
       "type": "head",
-      "value": 1
+      "value": 1250
     },
     "rune_ore": {
       "actions": [
@@ -3880,7 +3880,7 @@
       "name": "Rune Pickaxe Head",
       "stackable": false,
       "type": "component",
-      "value": 1
+      "value": 750
     },
     "rune_platebody": {
       "actions": [
@@ -3922,7 +3922,7 @@
         "str": 0
       },
       "type": "body",
-      "value": 1
+      "value": 2000
     },
     "rune_platelegs": {
       "actions": [
@@ -3964,7 +3964,7 @@
         "str": 0
       },
       "type": "legs",
-      "value": 1
+      "value": 1625
     },
     "rune_shield": {
       "actions": [
@@ -4006,7 +4006,7 @@
         "str": 0
       },
       "type": "shield",
-      "value": 1
+      "value": 1375
     },
     "rune_sword": {
       "actions": [
@@ -4065,7 +4065,7 @@
       "name": "Rune Sword Blade",
       "stackable": false,
       "type": "component",
-      "value": 1
+      "value": 750
     },
     "sapphire_gold_amulet": {
       "actions": [

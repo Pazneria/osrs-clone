@@ -108,11 +108,11 @@
             questId: 'advanced_fletcher_proof_of_the_yew',
             kind: 'turn_in_items',
             title: 'Proof of the Yew',
-            category: 'north_road_camp',
+            category: 'starter_town',
             questGiverName: 'Advanced Fletcher',
             startNpcDialogueId: 'advanced_fletcher',
             startMerchantId: 'advanced_fletcher',
-            startInstructions: 'Talk to the Advanced Fletcher at the north-road outpost.',
+            startInstructions: 'Talk to the Advanced Fletcher at the east outpost in Starter Town.',
             autoStartOnFirstInteraction: true,
             unlocksMerchantId: 'advanced_fletcher',
             summary: 'The Advanced Fletcher wants proof that you can finish the top-band yew work before he opens his deeper buyer ledger.',
@@ -139,6 +139,43 @@
                 readyGreeting: 'That bundle looks close to proper work. If you brought the full yew set, I can treat you like a serious supplier.',
                 completedGreeting: 'That is proper yew work. My full buyer ledger is open to you now.',
                 completedResponse: 'Good grain, clean balance, and no wasted cuts. I will buy your full fletching stock from here on.'
+            }
+        },
+        advanced_woodsman_proof_of_the_grain: {
+            questId: 'advanced_woodsman_proof_of_the_grain',
+            kind: 'turn_in_items',
+            title: 'Proof of the Grain',
+            category: 'starter_town',
+            questGiverName: 'Advanced Woodsman',
+            startNpcDialogueId: 'advanced_woodsman',
+            startMerchantId: 'advanced_woodsman',
+            startInstructions: 'Talk to the Advanced Woodsman at the east outpost in Starter Town.',
+            autoStartOnFirstInteraction: true,
+            unlocksMerchantId: 'advanced_woodsman',
+            summary: 'The Advanced Woodsman wants proof that you can cut the deeper log bands before he opens his full axe-and-log ledger.',
+            journal: {
+                offer: 'The Advanced Woodsman wants a deeper-band log sampler before he opens his full stock.',
+                active: 'Bring the Advanced Woodsman 1 willow log, 1 maple log, and 1 yew log.',
+                ready: 'I have the deeper-band log sampler. I should return to the Advanced Woodsman.',
+                completed: 'The Advanced Woodsman accepted my log sampler and opened his full axe-and-log ledger.'
+            },
+            objectives: [
+                createTurnInObjective('willow_logs', 'Willow logs', 'willow_logs', 1),
+                createTurnInObjective('maple_logs', 'Maple logs', 'maple_logs', 1),
+                createTurnInObjective('yew_logs', 'Yew logs', 'yew_logs', 1)
+            ],
+            rewards: {
+                skillXp: [
+                    { skillId: 'woodcutting', amount: 200 }
+                ]
+            },
+            dialogue: {
+                offerGreeting: 'Plenty of cutters can bully a starter tree. Fewer can bring me clean timber from every serious band.',
+                offerResponse: 'Bring me 1 willow log, 1 maple log, and 1 yew log. Show me you can cut the full deeper run, and I will open my full axe-and-log ledger.',
+                activeGreeting: 'Willow, maple, and yew all leave different marks on the cut. I am still waiting on that full sampler.',
+                readyGreeting: 'That bundle looks closer to proper work. If you brought all three logs, I can treat you like a real woodsman.',
+                completedGreeting: 'Those cuts speak for themselves. My full woodsman ledger is open to you now.',
+                completedResponse: 'Good. You know the difference between easy timber and useful timber. I will trade the full woodcutting stock with you from here on.'
             }
         },
         fishing_teacher_from_net_to_harpoon: {

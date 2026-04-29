@@ -23,6 +23,26 @@
         const PLAYER_NAME_MIN_LENGTH = 2;
         const PLAYER_NAME_MAX_LENGTH = 12;
         const PLAYER_CREATION_COLOR_LABELS = ['Hair', 'Torso', 'Legs', 'Feet', 'Skin'];
+        const TUTORIAL_WORLD_ID = 'tutorial_island';
+        const STARTER_WORLD_ID = 'starter_town';
+        const TUTORIAL_EXIT_STEP = 7;
+        const TUTORIAL_ACTIVE_BOUNDS = Object.freeze({
+            xMin: 140,
+            xMax: 255,
+            yMin: 135,
+            yMax: 195,
+            z: 0
+        });
+        const TUTORIAL_RECOVERY_SPAWNS = Object.freeze([
+            { x: 157, y: 157, z: 0 },
+            { x: 171, y: 157, z: 0 },
+            { x: 187, y: 156, z: 0 },
+            { x: 205, y: 175, z: 0 },
+            { x: 229, y: 183, z: 0 },
+            { x: 237, y: 159, z: 0 },
+            { x: 215, y: 149, z: 0 },
+            { x: 200, y: 148, z: 0 }
+        ]);
 
         // --- Game State (Logical & Terrain) ---
         let currentTick = 0;
@@ -49,7 +69,10 @@
             DOOR_OPEN: 19,
             SHORE: 20,
             WATER_SHALLOW: 21,
-            WATER_DEEP: 22
+            WATER_DEEP: 22,
+            FENCE: 23,
+            WOODEN_GATE_CLOSED: 24,
+            WOODEN_GATE_OPEN: 25
         });
         const WALKABLE_TILES = [
             TileId.GRASS,
@@ -61,6 +84,7 @@
             TileId.STAIRS_DOWN,
             TileId.STAIRS_RAMP,
             TileId.DOOR_OPEN,
+            TileId.WOODEN_GATE_OPEN,
             TileId.SHORE
         ];
         const WATER_TILE_SET = new Set([TileId.WATER_SHALLOW, TileId.WATER_DEEP]);
@@ -94,7 +118,13 @@
         }
 
         function isDoorTileId(tileId) {
-            return tileId === TileId.DOOR_CLOSED || tileId === TileId.DOOR_OPEN;
+            return tileId === TileId.DOOR_CLOSED
+                || tileId === TileId.DOOR_OPEN
+                || isWoodenGateTileId(tileId);
+        }
+
+        function isWoodenGateTileId(tileId) {
+            return tileId === TileId.WOODEN_GATE_CLOSED || tileId === TileId.WOODEN_GATE_OPEN;
         }
 
         const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;
@@ -178,6 +208,7 @@
         window.isTreeTileId = isTreeTileId;
         window.isWalkableTileId = isWalkableTileId;
         window.isDoorTileId = isDoorTileId;
+        window.isWoodenGateTileId = isWoodenGateTileId;
 
         function getQaCombatDebugSnapshot() {
             const hudSnapshot = (typeof window.getCombatHudSnapshot === 'function')
@@ -528,7 +559,11 @@
             name: '',
             creationCompleted: false,
             createdAt: null,
-            lastStartedAt: null
+            lastStartedAt: null,
+            tutorialStep: 0,
+            tutorialCompletedAt: null,
+            tutorialBankDepositSource: null,
+            tutorialBankWithdrawSource: null
         };
         let questProgressState = gameSession && gameSession.progress && gameSession.progress.quests
             ? gameSession.progress.quests
@@ -836,17 +871,6 @@
         window.ITEM_DB = ITEM_DB;
 
         let inventory = gameSession ? gameSession.progress.inventory : Array(28).fill(null);
-        inventory[0] = { itemData: ITEM_DB['iron_axe'], amount: 1 }; 
-        inventory[1] = { itemData: ITEM_DB['logs'], amount: 1 }; 
-        inventory[2] = { itemData: ITEM_DB['coins'], amount: 1000 };
-        inventory[3] = { itemData: ITEM_DB['small_net'], amount: 1 };
-        inventory[4] = { itemData: ITEM_DB['iron_pickaxe'], amount: 1 };
-        inventory[5] = { itemData: ITEM_DB['tinderbox'], amount: 1 };
-        inventory[6] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
-        inventory[7] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
-        inventory[8] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
-        inventory[9] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
-        inventory[10] = { itemData: ITEM_DB['raw_shrimp'], amount: 1 };
         let progressContentGrants = gameSession ? gameSession.progress.contentGrants : {};
 
                         function setInventorySlots(slotDefs) {
@@ -950,7 +974,442 @@
             return inventory.some((slot) => slot && slot.itemData && slot.itemData.id === safeItemId);
         }
 
+        function getInventoryItemCount(itemId) {
+            const safeItemId = sanitizeItemId(itemId);
+            if (!safeItemId) return 0;
+            return inventory.reduce((sum, slot) => {
+                if (!slot || !slot.itemData || slot.itemData.id !== safeItemId) return sum;
+                return sum + (Number.isFinite(slot.amount) ? Math.max(0, Math.floor(slot.amount)) : 0);
+            }, 0);
+        }
+
+        function grantInventoryItem(itemId, amount = 1) {
+            const safeItemId = sanitizeItemId(itemId);
+            const itemData = safeItemId ? ITEM_DB[safeItemId] : null;
+            if (!itemData) return 0;
+            const requestedAmount = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+
+            if (itemData.stackable) {
+                const existingIdx = inventory.findIndex((slot) => slot && slot.itemData && slot.itemData.id === safeItemId);
+                if (existingIdx !== -1) {
+                    inventory[existingIdx].amount += requestedAmount;
+                    syncGameSessionState();
+                    if (typeof renderInventory === 'function') renderInventory();
+                    return requestedAmount;
+                }
+                const emptyIdx = inventory.indexOf(null);
+                if (emptyIdx === -1) return 0;
+                inventory[emptyIdx] = { itemData, amount: requestedAmount };
+                syncGameSessionState();
+                if (typeof renderInventory === 'function') renderInventory();
+                return requestedAmount;
+            }
+
+            let given = 0;
+            for (let i = 0; i < requestedAmount; i++) {
+                const emptyIdx = inventory.indexOf(null);
+                if (emptyIdx === -1) break;
+                inventory[emptyIdx] = { itemData, amount: 1 };
+                given++;
+            }
+            if (given > 0) {
+                syncGameSessionState();
+                if (typeof renderInventory === 'function') renderInventory();
+            }
+            return given;
+        }
+
+        function isTutorialWorldActive() {
+            const currentWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
+                ? gameSessionRuntime.resolveCurrentWorldId()
+                : ((window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function')
+                    ? window.WorldBootstrapRuntime.getCurrentWorldId()
+                    : '');
+            return currentWorldId === TUTORIAL_WORLD_ID;
+        }
+
+        function getTutorialStep() {
+            if (!playerProfileState || !Number.isFinite(playerProfileState.tutorialStep)) return 0;
+            return Math.max(0, Math.floor(playerProfileState.tutorialStep));
+        }
+
+        function setTutorialStep(step, reason = 'tutorial_progress') {
+            if (!playerProfileState) return 0;
+            const nextStep = Math.max(0, Math.min(TUTORIAL_EXIT_STEP, Math.floor(Number(step) || 0)));
+            if (!Number.isFinite(playerProfileState.tutorialStep) || playerProfileState.tutorialStep < nextStep) {
+                playerProfileState.tutorialStep = nextStep;
+                saveProgressToStorage(reason);
+                if (window.refreshTutorialGateStates && typeof window.refreshTutorialGateStates === 'function') {
+                    window.refreshTutorialGateStates();
+                }
+            }
+            return getTutorialStep();
+        }
+
+        function ensureTutorialItem(itemId, amount = 1) {
+            if (getInventoryItemCount(itemId) >= amount) return true;
+            const granted = grantInventoryItem(itemId, amount - getInventoryItemCount(itemId));
+            if (granted > 0) {
+                const itemName = ITEM_DB[itemId] && ITEM_DB[itemId].name ? ITEM_DB[itemId].name : itemId;
+                addChatMessage(`Received ${itemName}.`, 'info');
+                saveProgressToStorage('tutorial_supply_grant');
+            }
+            return getInventoryItemCount(itemId) >= amount;
+        }
+
+        function getSkillXp(skillId) {
+            const skill = playerSkills && playerSkills[skillId] ? playerSkills[skillId] : null;
+            return skill && Number.isFinite(skill.xp) ? skill.xp : 0;
+        }
+
+        function hasTutorialBankProof() {
+            if (!playerProfileState) return false;
+            const depositSource = typeof playerProfileState.tutorialBankDepositSource === 'string'
+                ? playerProfileState.tutorialBankDepositSource
+                : '';
+            const withdrawSource = typeof playerProfileState.tutorialBankWithdrawSource === 'string'
+                ? playerProfileState.tutorialBankWithdrawSource
+                : '';
+            return !!depositSource && !!withdrawSource && depositSource !== withdrawSource && getInventoryItemCount('coins') > 0;
+        }
+
+        function recordTutorialBankAction(kind, sourceKey, itemId, amountChanged) {
+            if (!isTutorialWorldActive() || !playerProfileState || getTutorialStep() !== 6) return false;
+            if (itemId !== 'coins' || !Number.isFinite(amountChanged) || amountChanged <= 0) return false;
+            const safeSourceKey = typeof sourceKey === 'string' && sourceKey ? sourceKey : 'unknown_bank';
+            if (kind === 'deposit') {
+                playerProfileState.tutorialBankDepositSource = safeSourceKey;
+                playerProfileState.tutorialBankWithdrawSource = null;
+                saveProgressToStorage('tutorial_bank_deposit');
+                return true;
+            }
+            if (kind === 'withdraw') {
+                const depositSource = typeof playerProfileState.tutorialBankDepositSource === 'string'
+                    ? playerProfileState.tutorialBankDepositSource
+                    : '';
+                if (depositSource && depositSource !== safeSourceKey) {
+                    playerProfileState.tutorialBankWithdrawSource = safeSourceKey;
+                    saveProgressToStorage('tutorial_bank_withdraw');
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function makeTutorialTextOption(label, response) {
+            return { kind: 'text', label, response };
+        }
+
+        function makeTutorialStepOption(label, response, step, items = []) {
+            return {
+                kind: 'tutorial',
+                label,
+                onSelect: ({ refreshDialogue }) => {
+                    for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        ensureTutorialItem(item.itemId, item.amount || 1);
+                    }
+                    setTutorialStep(step);
+                    if (typeof refreshDialogue === 'function') {
+                        return { refresh: true, bodyText: response };
+                    }
+                    return { bodyText: response };
+                }
+            };
+        }
+
+        function makeTutorialCheckOption(label, response, check, nextStep, missingResponse, items = []) {
+            return {
+                kind: 'tutorial',
+                label,
+                onSelect: ({ refreshDialogue }) => {
+                    for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        ensureTutorialItem(item.itemId, item.amount || 1);
+                    }
+                    if (typeof check === 'function' && check()) {
+                        setTutorialStep(nextStep);
+                        return { refresh: true, bodyText: response };
+                    }
+                    if (typeof refreshDialogue === 'function') {
+                        return { refresh: true, bodyText: missingResponse };
+                    }
+                    return { bodyText: missingResponse };
+                }
+            };
+        }
+
+        function makeTutorialTravelOption() {
+            return {
+                kind: 'travel',
+                label: 'Leave for Starter Town',
+                travelToWorldId: STARTER_WORLD_ID,
+                travelSpawn: { x: 205, y: 210, z: 0 }
+            };
+        }
+
+        function buildTutorialDialogueView(npc, baseView) {
+            if (!isTutorialWorldActive()) return null;
+            const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
+            const nameKey = npc && typeof npc.name === 'string' ? npc.name.trim().toLowerCase() : '';
+            const step = getTutorialStep();
+            const hasLogs = getInventoryItemCount('logs') > 0;
+            const hasRawShrimp = getInventoryItemCount('raw_shrimp') > 0;
+            const hasCookedOrBurntShrimp = getInventoryItemCount('cooked_shrimp') > 0 || getInventoryItemCount('burnt_shrimp') > 0;
+            const hasBronzeBar = getInventoryItemCount('bronze_bar') > 0;
+            const hasBronzeSmithingOutput = getInventoryItemCount('bronze_arrowheads') > 0
+                || getInventoryItemCount('bronze_sword_blade') > 0
+                || getInventoryItemCount('bronze_axe_head') > 0
+                || getInventoryItemCount('bronze_pickaxe_head') > 0;
+            const hasCombatPractice = getSkillXp('attack') > 0 || getSkillXp('strength') > 0 || getSkillXp('defense') > 0;
+            const miningStarted = getInventoryItemCount('copper_ore') > 0 || getInventoryItemCount('tin_ore') > 0 || hasBronzeBar || hasBronzeSmithingOutput;
+
+            if (dialogueId === 'tutorial_guide' || nameKey === 'tutorial guide') {
+                if (step >= TUTORIAL_EXIT_STEP) {
+                    return {
+                        title: 'Tutorial Guide',
+                        greeting: 'You have the shape of it now. Starter Town is open when you are ready.',
+                        options: [
+                            makeTutorialTextOption('Ask about what comes next', 'Starter Town has shops, trainers, banks, and longer routes. Keep practicing one loop at a time.'),
+                            makeTutorialTravelOption(),
+                            { kind: 'close', label: 'Stay on the island' }
+                        ]
+                    };
+                }
+                if (step === 0) {
+                    ensureTutorialItem('bronze_axe', 1);
+                    setTutorialStep(1, 'tutorial_arrival_welcome');
+                    return {
+                        title: 'Tutorial Guide',
+                        greeting: 'Ah, there you are. Welcome to Tutorial Island. Take a breath: nobody expects you to know the shape of this place yet. This house is only the start. Outside, the fences keep the lessons in order so you can learn one thing at a time. I have put a bronze axe in your pack; step through the front door, follow the path to the grove, and speak with the Woodcutting Instructor.',
+                        options: [
+                            makeTutorialTextOption('Ask about movement', 'Left-click the ground to walk there. Right-click people, doors, resources, and objects when you want to see the actions they offer.'),
+                            makeTutorialTextOption('Ask about the island', 'You will learn the basic loops in order: woodcutting, fishing, firemaking and cooking, mining and smithing, combat, banking, then the trip to Starter Town.'),
+                            { kind: 'close', label: 'I am ready' }
+                        ]
+                    };
+                }
+                return {
+                    title: 'Tutorial Guide',
+                    greeting: 'Keep moving through the courtyard stations. I will not send you to Starter Town until the instructors are satisfied.',
+                    options: [
+                        makeTutorialTextOption('Ask what to do', 'Follow the fences: woodcutting, fishing, firemaking and cooking, mining and smithing, chickens, bank, then the exit.'),
+                        { kind: 'close', label: 'Goodbye' }
+                    ]
+                };
+            }
+
+            if (dialogueId === 'tutorial_woodcutting_instructor' || nameKey === 'woodcutting instructor') {
+                if (step <= 1) ensureTutorialItem('bronze_axe', 1);
+                const options = [
+                    makeTutorialTextOption('Ask about chopping', 'Use the bronze axe on a normal tree. Logs are your first raw material, and many other skills consume them.')
+                ];
+                if (step <= 1) {
+                    options.push(makeTutorialCheckOption(
+                        'I have cut some logs',
+                        'Good. Logs are the input for several skills. The next gate is open; take the path to the Fishing Instructor.',
+                        () => hasLogs,
+                        2,
+                        'Not yet. Chop one of the nearby trees until you have logs in your inventory.',
+                        [{ itemId: 'bronze_axe', amount: 1 }]
+                    ));
+                } else {
+                    options.push(makeTutorialTextOption('Ask about the next station', 'You are done here. The Fishing Instructor is by the pond.'));
+                }
+                options.push({ kind: 'close', label: 'Goodbye' });
+                return {
+                    title: 'Woodcutting Instructor',
+                    greeting: step <= 1
+                        ? 'Trees first. Take the axe, cut logs, then come back.'
+                        : 'The grove is for gathering. Once you have logs, take them to the fire lane.',
+                    options
+                };
+            }
+
+            if (dialogueId === 'tutorial_fishing_instructor' || nameKey === 'fishing instructor') {
+                if (step === 2) ensureTutorialItem('small_net', 1);
+                const options = [
+                    makeTutorialTextOption('Ask about fishing', 'Fishing is gathering from water. Use the small net on the pond, then bring the catch back to me.')
+                ];
+                if (step < 2) {
+                    options.push(makeTutorialTextOption('Ask what to do', 'The grove gate comes first. Cut logs and speak to the Woodcutting Instructor.'));
+                } else if (step === 2) {
+                    options.push(makeTutorialCheckOption(
+                        'I caught a fish',
+                        'Nice catch. The next pen teaches how logs and food work together.',
+                        () => hasRawShrimp || hasCookedOrBurntShrimp,
+                        3,
+                        'Use the small net on the pond until you catch raw shrimp.',
+                        [{ itemId: 'small_net', amount: 1 }]
+                    ));
+                } else {
+                    options.push(makeTutorialTextOption('Ask about the next station', 'You are done here. Take your fish to the firemaking and cooking lane.'));
+                }
+                options.push({ kind: 'close', label: 'Goodbye' });
+                return {
+                    title: 'Fishing Instructor',
+                    greeting: step < 2
+                        ? 'The pond waits until you have learned the grove.'
+                        : 'Here is a small net if you need one. Catch shrimp from the pond and come back.',
+                    options
+                };
+            }
+
+            if (dialogueId === 'tutorial_firemaking_instructor' || nameKey === 'firemaking instructor') {
+                if (step === 3) {
+                    ensureTutorialItem('tinderbox', 1);
+                    ensureTutorialItem('logs', 1);
+                }
+                const options = [
+                    makeTutorialTextOption('Ask about fires and cooking', 'Use a tinderbox with logs to make a fire. Then cook your raw shrimp on the fire. Burnt shrimp still proves the loop.')
+                ];
+                if (step < 3) {
+                    options.push(makeTutorialTextOption('Ask what to do', 'Catch a fish first. A fire matters more when you have something to cook.'));
+                } else if (step === 3) {
+                    options.push(makeTutorialCheckOption(
+                        'I cooked the fish',
+                        'Good. You gathered wood, gathered food, spent the wood, and processed the food. The mine gate is open.',
+                        () => hasCookedOrBurntShrimp,
+                        4,
+                        hasRawShrimp
+                            ? 'Use your tinderbox with logs, then cook the raw shrimp on the fire. Burnt shrimp counts.'
+                            : 'You need raw shrimp to cook. Go back to the pond if you lost yours.',
+                        [{ itemId: 'tinderbox', amount: 1 }, { itemId: 'logs', amount: 1 }]
+                    ));
+                } else {
+                    options.push(makeTutorialTextOption('Ask about the next station', 'You are done here. The Mining and Smithing Instructor is beyond the next gate.'));
+                }
+                options.push({ kind: 'close', label: 'Goodbye' });
+                return {
+                    title: 'Firemaking Instructor',
+                    greeting: step < 3
+                        ? 'This lane is for turning gathered resources into utility.'
+                        : 'I will replace your tinderbox or a log if you lost them. Light a fire, cook the shrimp, then report back.',
+                    options
+                };
+            }
+
+            if (dialogueId === 'tutorial_mining_smithing_instructor' || nameKey === 'mining and smithing instructor') {
+                if (step === 4) {
+                    ensureTutorialItem('bronze_pickaxe', 1);
+                    ensureTutorialItem('hammer', 1);
+                }
+                const options = [
+                    makeTutorialTextOption('Ask about mining and smithing', 'Mine copper and tin, smelt them into a bronze bar at the furnace, then forge bronze arrowheads at the anvil.')
+                ];
+                if (step < 4) {
+                    options.push(makeTutorialTextOption('Ask what to do', 'Finish the fire and cooking lesson first. Metal comes after food.'));
+                } else if (step === 4) {
+                    options.push(makeTutorialCheckOption(
+                        'I forged bronze',
+                        'That is the metal loop: mine ore, smelt bars, forge parts. The chicken pen is open.',
+                        () => hasBronzeSmithingOutput,
+                        5,
+                        miningStarted
+                            ? 'Keep going: copper plus tin makes a bronze bar, and one bronze bar can become bronze arrowheads at the anvil.'
+                            : 'Mine one copper ore and one tin ore, then use the furnace and anvil.',
+                        [{ itemId: 'bronze_pickaxe', amount: 1 }, { itemId: 'hammer', amount: 1 }]
+                    ));
+                } else {
+                    options.push(makeTutorialTextOption('Ask about the next station', 'You are done here. The Combat Instructor is waiting by the chicken pen.'));
+                }
+                options.push({ kind: 'close', label: 'Goodbye' });
+                return {
+                    title: 'Mining and Smithing Instructor',
+                    greeting: step < 4
+                        ? 'Metal work waits until you can feed yourself.'
+                        : 'Take a pickaxe and hammer if you need them. Mine, smelt, forge, then come back.',
+                    options
+                };
+            }
+
+            if (dialogueId === 'tutorial_combat_instructor' || nameKey === 'combat instructor') {
+                if (step === 5) {
+                    ensureTutorialItem('bronze_sword', 1);
+                    ensureTutorialItem('cooked_shrimp', 2);
+                }
+                const options = [
+                    makeTutorialTextOption('Ask about combat', 'Attack a chicken, watch your combat tab, and eat food if you need it. Chickens are weak, but they still teach targeting.')
+                ];
+                if (step < 5) {
+                    options.push(makeTutorialTextOption('Ask what to do', 'Finish the mining and smithing lesson first. Tools before trouble.'));
+                } else if (step === 5) {
+                    options.push(makeTutorialCheckOption(
+                        'I fought a chicken',
+                        'Good enough for your first day. The bank pen is open.',
+                        () => hasCombatPractice,
+                        6,
+                        'Fight one of the chickens until you gain a little combat XP, then come back.',
+                        [{ itemId: 'bronze_sword', amount: 1 }, { itemId: 'cooked_shrimp', amount: 2 }]
+                    ));
+                } else {
+                    options.push(makeTutorialTextOption('Ask about the next station', 'You are done here. The Bank Tutor is past the next gate.'));
+                }
+                options.push({ kind: 'close', label: 'Goodbye' });
+                return {
+                    title: 'Combat Instructor',
+                    greeting: step < 5
+                        ? 'Do the metal work first. Then we will talk about hitting things properly.'
+                        : 'Take a sword and a little food if you need them. Defeat a chicken, then report back.',
+                    options
+                };
+            }
+
+            if (dialogueId === 'tutorial_bank_tutor' || nameKey === 'bank tutor') {
+                if (step === 6) ensureTutorialItem('coins', 1);
+                const options = [
+                    makeTutorialTextOption('Ask about the bank', 'Bank booths are linked. Put a coin in one booth, then take it out from the other booth.')
+                ];
+                if (step < 6) {
+                    options.push(makeTutorialTextOption('Ask what to do', 'Finish the chicken combat lesson first. Then I will teach you banking.'));
+                } else if (step === 6) {
+                    options.push(makeTutorialCheckOption(
+                        'I used both bank booths',
+                        'Exactly. Your bank follows you. The exit gate is open; speak to the Tutorial Guide when you are ready.',
+                        () => hasTutorialBankProof(),
+                        TUTORIAL_EXIT_STEP,
+                        'Deposit the coin at one booth, withdraw it from the other booth, then talk to me again.',
+                        [{ itemId: 'coins', amount: 1 }]
+                    ));
+                } else {
+                    options.push(makeTutorialTextOption('Ask about leaving', 'You are cleared. The Tutorial Guide can send you to Starter Town.'));
+                }
+                options.push({ kind: 'close', label: 'Goodbye' });
+                return {
+                    title: 'Bank Tutor',
+                    greeting: step < 6
+                        ? 'Banks come after you know how to gather and fight.'
+                        : 'Here is a coin if you need one. Deposit it in one booth, withdraw it from the other, and come back.',
+                    options
+                };
+            }
+
+            return baseView || null;
+        }
+
+        window.TutorialRuntime = {
+            buildNpcDialogueView: buildTutorialDialogueView,
+            getStep: getTutorialStep,
+            setStep: setTutorialStep,
+            recordBankAction: recordTutorialBankAction,
+            isExitUnlocked: () => getTutorialStep() >= TUTORIAL_EXIT_STEP
+        };
+
         function applyInventoryIconReviewGrant() {
+            const params = new URLSearchParams(window.location.search || '');
+            if (!['1', 'true', 'yes'].includes(String(params.get('iconReview') || '').trim().toLowerCase())) {
+                return {
+                    batchId: '',
+                    batchLabel: '',
+                    added: [],
+                    acknowledged: [],
+                    blocked: [],
+                    changed: false,
+                    replaced: false,
+                    placed: 0
+                };
+            }
+
             const reviewBatch = getActiveIconReviewBatch();
             const added = [];
             const acknowledged = [];
@@ -1211,10 +1670,15 @@
         }
         function travelToWorld(worldId, options = {}) {
             if (!worldAdapterRuntime || typeof worldAdapterRuntime.resolveTravelTarget !== 'function') return false;
+            const sourceWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
+                ? gameSessionRuntime.resolveCurrentWorldId()
+                : ((window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function')
+                    ? window.WorldBootstrapRuntime.getCurrentWorldId()
+                    : STARTER_WORLD_ID);
             const travelTarget = worldAdapterRuntime.resolveTravelTarget(worldId, {
                 spawn: options && options.spawn,
                 label: options && options.label,
-                fallbackWorldId: 'starter_town',
+                fallbackWorldId: STARTER_WORLD_ID,
                 mapSize: MAP_SIZE,
                 planes: PLANES,
                 activate: true
@@ -1223,6 +1687,19 @@
 
             const resolvedWorldId = travelTarget.worldId;
             const spawn = travelTarget.spawn;
+            if (
+                sourceWorldId === TUTORIAL_WORLD_ID
+                && resolvedWorldId === STARTER_WORLD_ID
+                && (!window.TutorialRuntime || typeof window.TutorialRuntime.isExitUnlocked !== 'function' || !window.TutorialRuntime.isExitUnlocked())
+            ) {
+                addChatMessage('Finish the Tutorial Island instructors before leaving for Starter Town.', 'warn');
+                return false;
+            }
+            const completedTutorial = sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === STARTER_WORLD_ID;
+            if (completedTutorial && playerProfileState && !playerProfileState.tutorialCompletedAt) {
+                playerProfileState.tutorialStep = TUTORIAL_EXIT_STEP;
+                playerProfileState.tutorialCompletedAt = Date.now();
+            }
 
             pendingAction = null;
             groundItems = [];
@@ -1269,6 +1746,10 @@
             if (typeof updateCameraNow === 'function') updateCameraNow();
             const destinationLabel = travelTarget.label || String(resolvedWorldId || 'Unknown World');
             addChatMessage(`Travelled to ${destinationLabel}.`, 'info');
+            if (completedTutorial) {
+                addChatMessage('Tutorial complete. Your progress will resume from here next time.', 'info');
+                saveProgressToStorage('tutorial_complete');
+            }
             return true;
         }
         window.travelToWorld = travelToWorld;
@@ -1318,6 +1799,122 @@
                 addChatMessage(`[QA world] ${summary.worldId}${activeLabel} - ${summary.label} @ (${summary.defaultSpawn.x},${summary.defaultSpawn.y},${summary.defaultSpawn.z})`, 'info');
             }
         }
+
+        function qaListCombatTargets() {
+            const enemies = (typeof window.listQaCombatEnemyStates === 'function')
+                ? window.listQaCombatEnemyStates()
+                : [];
+            if (!Array.isArray(enemies) || enemies.length === 0) {
+                addChatMessage('[QA combat target] no active combat enemies', 'warn');
+                return;
+            }
+            for (let i = 0; i < enemies.length; i++) {
+                const enemy = enemies[i];
+                if (!enemy) continue;
+                const enemyName = String(enemy.displayName || enemy.enemyId || '').toLowerCase();
+                const projectionHeight = enemyName.includes('chicken') || enemyName.includes('rat') ? 0.5 : 1.0;
+                const projection = (typeof window.projectWorldTileToScreen === 'function')
+                    ? window.projectWorldTileToScreen(enemy.x, enemy.y, enemy.z, projectionHeight)
+                    : null;
+                const screenText = projection
+                    ? ` screen=(${projection.x},${projection.y}) depth=${projection.depth} visible=${projection.visible ? 'yes' : 'no'}`
+                    : ' screen=unavailable';
+                addChatMessage(`[QA combat target] ${enemy.runtimeId || 'none'} ${enemy.displayName || enemy.enemyId || 'enemy'} state=${enemy.state || 'unknown'} hp=${Number.isFinite(enemy.hp) ? enemy.hp : 'unknown'} rendered=${enemy.rendered ? 'yes' : 'no'} tile=(${enemy.x},${enemy.y},${enemy.z})${screenText}`, 'info');
+            }
+        }
+
+        function qaProjectTile(parts) {
+            if (parts.length < 3 || typeof window.projectWorldTileToScreen !== 'function') {
+                addChatMessage('Usage: /qa projecttile <x> <y> [z] [height]', 'warn');
+                return;
+            }
+            const x = parseInt(parts[1], 10);
+            const y = parseInt(parts[2], 10);
+            const z = parts.length >= 4 ? parseInt(parts[3], 10) : playerState.z;
+            const height = parts.length >= 5 ? Number(parts[4]) : 1.0;
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+                addChatMessage('Usage: /qa projecttile <x> <y> [z] [height]', 'warn');
+                return;
+            }
+            const projection = window.projectWorldTileToScreen(x, y, z, height);
+            if (!projection) {
+                addChatMessage(`[QA project] tile=(${x},${y},${z}) unavailable`, 'warn');
+                return;
+            }
+            addChatMessage(`[QA project] tile=(${x},${y},${z}) height=${Number.isFinite(height) ? height : 1} screen=(${projection.x},${projection.y}) depth=${projection.depth} visible=${projection.visible ? 'yes' : 'no'}`, 'info');
+        }
+
+        function qaRaycast(parts) {
+            if (parts.length < 3 || typeof window.listQaRaycastHitsAt !== 'function') {
+                addChatMessage('Usage: /qa raycast <screenX> <screenY> [maxHits]', 'warn');
+                return;
+            }
+            const x = Number(parts[1]);
+            const y = Number(parts[2]);
+            const maxHits = parts.length >= 4 ? Number(parts[3]) : 12;
+            if (!Number.isFinite(x) || !Number.isFinite(y)) {
+                addChatMessage('Usage: /qa raycast <screenX> <screenY> [maxHits]', 'warn');
+                return;
+            }
+            const hits = window.listQaRaycastHitsAt(x, y, maxHits);
+            if (!Array.isArray(hits) || hits.length === 0) {
+                addChatMessage(`[QA raycast] screen=(${x},${y}) no hits`, 'warn');
+                return;
+            }
+            hits.forEach((hit) => {
+                addChatMessage(`[QA raycast] #${hit.index} type=${hit.type || 'unknown'} name=${hit.name || 'none'} uid=${hit.uid || 'none'} tile=(${Number.isFinite(hit.gridX) ? hit.gridX : '?'},${Number.isFinite(hit.gridY) ? hit.gridY : '?'}) priority=${Number.isFinite(hit.priority) ? hit.priority : '?'}`, 'info');
+            });
+        }
+
+        function qaFindHit(parts) {
+            if (parts.length < 5 || typeof window.findQaRaycastHitNear !== 'function') {
+                addChatMessage('Usage: /qa findhit <screenX> <screenY> <type> [name] [radius] [step]', 'warn');
+                return;
+            }
+            const x = Number(parts[1]);
+            const y = Number(parts[2]);
+            const type = String(parts[3] || '').trim();
+            const name = String(parts[4] || '').trim();
+            const radius = parts.length >= 6 ? Number(parts[5]) : 80;
+            const step = parts.length >= 7 ? Number(parts[6]) : 8;
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !type) {
+                addChatMessage('Usage: /qa findhit <screenX> <screenY> <type> [name] [radius] [step]', 'warn');
+                return;
+            }
+            const hit = window.findQaRaycastHitNear(x, y, type, name, radius, step);
+            if (!hit) {
+                addChatMessage(`[QA findhit] no ${type} hit near (${x},${y})`, 'warn');
+                return;
+            }
+            addChatMessage(`[QA findhit] screen=(${hit.x},${hit.y}) dist=${hit.distance} type=${hit.type || 'unknown'} name=${hit.name || 'none'} uid=${hit.uid || 'none'} tile=(${Number.isFinite(hit.gridX) ? hit.gridX : '?'},${Number.isFinite(hit.gridY) ? hit.gridY : '?'})`, 'info');
+        }
+
+        function qaListNpcTargets(query = '') {
+            const npcs = (typeof window.listQaNpcTargets === 'function') ? window.listQaNpcTargets() : [];
+            const needle = String(query || '').trim().toLowerCase();
+            const matches = npcs.filter((npc) => {
+                if (!needle) return true;
+                return String(npc.name || '').toLowerCase().includes(needle)
+                    || String(npc.actorId || '').toLowerCase().includes(needle)
+                    || String(npc.spawnId || '').toLowerCase().includes(needle)
+                    || String(npc.dialogueId || '').toLowerCase().includes(needle);
+            });
+            if (!matches.length) {
+                addChatMessage('[QA npc target] no matching NPCs', 'warn');
+                return;
+            }
+            for (let i = 0; i < matches.length; i++) {
+                const npc = matches[i];
+                const projection = (typeof window.projectWorldTileToScreen === 'function')
+                    ? window.projectWorldTileToScreen(npc.visualX, npc.visualY, npc.z, 1.4)
+                    : null;
+                const screenText = projection
+                    ? ` screen=(${projection.x},${projection.y}) depth=${projection.depth} visible=${projection.visible ? 'yes' : 'no'}`
+                    : ' screen=unavailable';
+                addChatMessage(`[QA npc target] ${npc.name || npc.actorId || 'NPC'} actor=${npc.actorId || 'none'} tile=(${npc.x},${npc.y},${npc.z}) visual=(${npc.visualX},${npc.visualY}) rendered=${npc.rendered ? 'yes' : 'no'}${screenText}`, 'info');
+            }
+        }
+
         function qaTravelWorld(worldIdLike) {
             const match = (worldAdapterRuntime && typeof worldAdapterRuntime.matchQaWorld === 'function')
                 ? worldAdapterRuntime.matchQaWorld(worldIdLike)
@@ -1340,7 +1937,12 @@
             playerState.targetY = playerState.y;
             playerState.path = [];
             playerState.action = 'IDLE';
-            if (typeof updateCameraNow === 'function') updateCameraNow();
+            if (typeof window.syncQaRenderToPlayerState === 'function') window.syncQaRenderToPlayerState();
+            if (typeof window.manageChunks === 'function') window.manageChunks(true);
+            if (typeof window.processPendingNearChunkBuilds === 'function') {
+                let guard = 12;
+                while (guard > 0 && window.processPendingNearChunkBuilds(4) > 0) guard--;
+            }
             addChatMessage(`Teleported to ${label || 'target'}.`, 'info');
             return true;
         }
@@ -1362,6 +1964,25 @@
 
             // Keep QA teleports outside the altar's 4x4 collision footprint.
             return qaTeleportTo(match.x, Math.max(0, match.y - 3), match.z, `near ${match.label}`);
+        }
+
+        function qaGotoTutorialStation(labelLike) {
+            const key = String(labelLike || '').trim().toLowerCase();
+            const stations = {
+                arrival: { x: 157, y: 157, z: 0, label: 'tutorial arrival' },
+                woodcutting: { x: 171, y: 157, z: 0, label: 'tutorial woodcutting' },
+                fishing: { x: 187, y: 156, z: 0, label: 'tutorial fishing' },
+                firemaking: { x: 205, y: 175, z: 0, label: 'tutorial firemaking' },
+                cooking: { x: 205, y: 175, z: 0, label: 'tutorial cooking' },
+                mining: { x: 229, y: 183, z: 0, label: 'tutorial mining' },
+                smithing: { x: 229, y: 183, z: 0, label: 'tutorial smithing' },
+                combat: { x: 237, y: 159, z: 0, label: 'tutorial combat' },
+                bank: { x: 215, y: 149, z: 0, label: 'tutorial bank' },
+                exit: { x: 200, y: 148, z: 0, label: 'tutorial exit' }
+            };
+            const station = stations[key];
+            if (!station) return false;
+            return qaTeleportTo(station.x, station.y, station.z, station.label);
         }
 
         function getQaFishingSpots() {
@@ -1558,8 +2179,7 @@
                 oak: 'oak',
                 willow: 'willow',
                 maple: 'maple',
-                yew: 'yew',
-                pine: 'pine'
+                yew: 'yew'
             };
             const key = aliases[raw] || raw;
             if (spots[key]) {
@@ -2121,7 +2741,11 @@
                 name: '',
                 creationCompleted: false,
                 createdAt: null,
-                lastStartedAt: null
+                lastStartedAt: null,
+                tutorialStep: 0,
+                tutorialCompletedAt: null,
+                tutorialBankDepositSource: null,
+                tutorialBankWithdrawSource: null
             };
         }
 
@@ -2137,10 +2761,23 @@
             playerProfileState.lastStartedAt = Number.isFinite(safeProfile.lastStartedAt)
                 ? Math.max(0, Math.floor(safeProfile.lastStartedAt))
                 : null;
+            playerProfileState.tutorialStep = Number.isFinite(safeProfile.tutorialStep)
+                ? Math.max(0, Math.floor(safeProfile.tutorialStep))
+                : 0;
+            playerProfileState.tutorialCompletedAt = Number.isFinite(safeProfile.tutorialCompletedAt)
+                ? Math.max(0, Math.floor(safeProfile.tutorialCompletedAt))
+                : null;
+            playerProfileState.tutorialBankDepositSource = typeof safeProfile.tutorialBankDepositSource === 'string'
+                ? safeProfile.tutorialBankDepositSource
+                : null;
+            playerProfileState.tutorialBankWithdrawSource = typeof safeProfile.tutorialBankWithdrawSource === 'string'
+                ? safeProfile.tutorialBankWithdrawSource
+                : null;
         }
 
         function sanitizePlayerProfile(savedProfile, options = {}) {
             const allowLegacyFallback = !!(options && options.allowLegacyFallback);
+            const savedWorldId = typeof options.savedWorldId === 'string' ? options.savedWorldId : '';
             const restored = createEmptyPlayerProfile();
             if (savedProfile && typeof savedProfile === 'object') {
                 restored.name = sanitizePlayerName(savedProfile.name);
@@ -2151,13 +2788,56 @@
                 restored.lastStartedAt = Number.isFinite(savedProfile.lastStartedAt)
                     ? Math.max(0, Math.floor(savedProfile.lastStartedAt))
                     : null;
+                restored.tutorialStep = Number.isFinite(savedProfile.tutorialStep)
+                    ? Math.max(0, Math.floor(savedProfile.tutorialStep))
+                    : 0;
+                restored.tutorialCompletedAt = Number.isFinite(savedProfile.tutorialCompletedAt)
+                    ? Math.max(0, Math.floor(savedProfile.tutorialCompletedAt))
+                    : null;
+                restored.tutorialBankDepositSource = typeof savedProfile.tutorialBankDepositSource === 'string'
+                    ? savedProfile.tutorialBankDepositSource
+                    : null;
+                restored.tutorialBankWithdrawSource = typeof savedProfile.tutorialBankWithdrawSource === 'string'
+                    ? savedProfile.tutorialBankWithdrawSource
+                    : null;
             }
 
             if (allowLegacyFallback && !restored.name) restored.name = PLAYER_PROFILE_DEFAULT_NAME;
             if (allowLegacyFallback && !restored.creationCompleted) restored.creationCompleted = true;
             if (allowLegacyFallback && !restored.createdAt) restored.createdAt = Date.now();
+            if (
+                allowLegacyFallback
+                && restored.creationCompleted
+                && savedWorldId
+                && savedWorldId !== TUTORIAL_WORLD_ID
+                && !restored.tutorialCompletedAt
+            ) {
+                restored.tutorialCompletedAt = restored.lastStartedAt || restored.createdAt || Date.now();
+            }
+            if (restored.tutorialCompletedAt) restored.tutorialStep = TUTORIAL_EXIT_STEP;
 
             return restored;
+        }
+
+        function isInsideTutorialActiveBounds(x, y, z) {
+            return z === TUTORIAL_ACTIVE_BOUNDS.z
+                && x >= TUTORIAL_ACTIVE_BOUNDS.xMin
+                && x <= TUTORIAL_ACTIVE_BOUNDS.xMax
+                && y >= TUTORIAL_ACTIVE_BOUNDS.yMin
+                && y <= TUTORIAL_ACTIVE_BOUNDS.yMax;
+        }
+
+        function isTutorialWalkTileAllowed(x, y, z) {
+            if (!isTutorialWorldActive() || (playerProfileState && playerProfileState.tutorialCompletedAt)) return true;
+            return isInsideTutorialActiveBounds(x, y, z);
+        }
+
+        window.isTutorialWalkTileAllowed = isTutorialWalkTileAllowed;
+
+        function getTutorialRecoverySpawnForStep(step) {
+            const safeStep = Math.max(0, Math.min(TUTORIAL_EXIT_STEP, Math.floor(Number(step) || 0)));
+            const spawn = TUTORIAL_RECOVERY_SPAWNS[safeStep] || TUTORIAL_RECOVERY_SPAWNS[0];
+            return { x: spawn.x, y: spawn.y, z: spawn.z };
         }
 
         function serializePlayerProfile() {
@@ -2169,6 +2849,18 @@
                     : null,
                 lastStartedAt: Number.isFinite(playerProfileState.lastStartedAt)
                     ? Math.max(0, Math.floor(playerProfileState.lastStartedAt))
+                    : null,
+                tutorialStep: Number.isFinite(playerProfileState.tutorialStep)
+                    ? Math.max(0, Math.floor(playerProfileState.tutorialStep))
+                    : 0,
+                tutorialCompletedAt: Number.isFinite(playerProfileState.tutorialCompletedAt)
+                    ? Math.max(0, Math.floor(playerProfileState.tutorialCompletedAt))
+                    : null,
+                tutorialBankDepositSource: typeof playerProfileState.tutorialBankDepositSource === 'string'
+                    ? playerProfileState.tutorialBankDepositSource
+                    : null,
+                tutorialBankWithdrawSource: typeof playerProfileState.tutorialBankWithdrawSource === 'string'
+                    ? playerProfileState.tutorialBankWithdrawSource
                     : null
             };
         }
@@ -2319,7 +3011,23 @@
                 : {};
             isRunning = !!state.runMode;
             const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');
-            playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: true });
+            playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: true, savedWorldId: loadedWorldId });
+            if (
+                loadedWorldId === TUTORIAL_WORLD_ID
+                && !playerProfileState.tutorialCompletedAt
+                && !isInsideTutorialActiveBounds(playerState.x, playerState.y, playerState.z)
+            ) {
+                const recoverySpawn = getTutorialRecoverySpawnForStep(playerProfileState.tutorialStep);
+                playerState.x = recoverySpawn.x;
+                playerState.y = recoverySpawn.y;
+                playerState.z = recoverySpawn.z;
+                playerState.prevX = recoverySpawn.x;
+                playerState.prevY = recoverySpawn.y;
+                playerState.targetX = recoverySpawn.x;
+                playerState.targetY = recoverySpawn.y;
+                playerState.path = [];
+                addChatMessage('Recovered your tutorial position at the current lesson.', 'info');
+            }
             selectedUse.invIndex = null;
             selectedUse.itemId = null;
 
@@ -2856,7 +3564,7 @@
             const isContinueFlow = profileSummaryViewModel ? profileSummaryViewModel.isContinueFlow : (!!playerEntryFlowState.hasLoadedSave && !!playerProfileState.creationCompleted);
 
             if (title) title.textContent = profileSummaryViewModel ? profileSummaryViewModel.titleText : (isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer');
-            if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before the prototype lets you into the world.';
+            if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before you arrive on Tutorial Island.';
 
             if (nameInput) {
                 if (document.activeElement !== nameInput && nameInput.value !== playerProfileState.name) {
@@ -2869,7 +3577,7 @@
                 primary.textContent = profileSummaryViewModel ? profileSummaryViewModel.primaryActionText : (isContinueFlow ? 'Continue Adventure' : 'Start Adventure');
                 primary.disabled = !nameValidation.ok;
             }
-            if (note) note.textContent = profileSummaryViewModel ? profileSummaryViewModel.noteText : 'Progress will begin autosaving locally in this browser once you enter the world.';
+            if (note) note.textContent = profileSummaryViewModel ? profileSummaryViewModel.noteText : 'Progress will begin autosaving locally in this browser once you arrive.';
 
             updatePlayerEntryGenderButtons();
             renderPlayerEntryColorRows();
@@ -3012,12 +3720,50 @@
 
                 if (cmd === 'help' || !cmd) {
                     addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
-                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
+                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
                     addChatMessage(formatQaOpenShopUsage(), 'info');
                     return;
                 }
                 if (cmd === 'worlds') {
                     qaListWorlds();
+                    return;
+                }
+                if (cmd === 'combattargets') {
+                    qaListCombatTargets();
+                    return;
+                }
+                if (cmd === 'npctargets') {
+                    qaListNpcTargets(parts.slice(1).join(' '));
+                    return;
+                }
+                if (cmd === 'projecttile') {
+                    qaProjectTile(parts);
+                    return;
+                }
+                if (cmd === 'raycast') {
+                    qaRaycast(parts);
+                    return;
+                }
+                if (cmd === 'findhit') {
+                    qaFindHit(parts);
+                    return;
+                }
+                if (cmd === 'camera' && String(parts[1] || '').toLowerCase() === 'reset') {
+                    const cameraState = (typeof window.resetQaCameraView === 'function') ? window.resetQaCameraView() : null;
+                    if (cameraState) addChatMessage(`[QA camera] reset yaw=${cameraState.yaw} pitch=${cameraState.pitch} dist=${cameraState.distance}`, 'info');
+                    else addChatMessage('[QA camera] reset unavailable', 'warn');
+                    return;
+                }
+                if (cmd === 'camera' && String(parts[1] || '').toLowerCase() === 'set') {
+                    const yaw = Number(parts[2]);
+                    const pitch = parts.length >= 4 ? Number(parts[3]) : undefined;
+                    const dist = parts.length >= 5 ? Number(parts[4]) : undefined;
+                    if (!Number.isFinite(yaw) || typeof window.setQaCameraView !== 'function') {
+                        addChatMessage('Usage: /qa camera set <yaw> [pitch] [dist]', 'warn');
+                        return;
+                    }
+                    const cameraState = window.setQaCameraView(yaw, pitch, dist);
+                    addChatMessage(`[QA camera] set yaw=${cameraState.yaw} pitch=${cameraState.pitch} dist=${cameraState.distance}`, 'info');
                     return;
                 }
                 if (cmd === 'travel' && parts.length >= 2) {
@@ -3140,6 +3886,13 @@
                     const target = String(parts[1] || '').toLowerCase();
                     const ok = qaGotoMerchant(target);
                     if (!ok) addChatMessage('Usage: /qa gotomerchant <merchantId|alias>', 'warn');
+                    return;
+                }
+
+                if (cmd === 'gototutorial' && parts.length >= 2) {
+                    const target = String(parts[1] || '').toLowerCase();
+                    const ok = qaGotoTutorialStation(target);
+                    if (!ok) addChatMessage('Usage: /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>', 'warn');
                     return;
                 }
 
@@ -3381,13 +4134,16 @@
         window.onload = function() {
             const forcedFreshSession = consumeFreshSessionRequest();
             const loadProgressResult = loadProgressFromStorage();
-            const startupRequestedWorldId = (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
+            const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);
+            const startupRequestedWorldId = isFreshProfileStartup
+                ? TUTORIAL_WORLD_ID
+                : (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                 ? gameSessionRuntime.resolveCurrentWorldId()
-                : 'starter_town';
+                : STARTER_WORLD_ID;
             const startupWorldId = (worldAdapterRuntime && typeof worldAdapterRuntime.activateWorldContext === 'function')
-                ? worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, 'starter_town')
-                : 'starter_town';
-            if (startupWorldId !== startupRequestedWorldId) {
+                ? worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, STARTER_WORLD_ID)
+                : STARTER_WORLD_ID;
+            if (startupWorldId !== startupRequestedWorldId || isFreshProfileStartup) {
                 const fallbackSpawn = (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldDefaultSpawn === 'function')
                     ? worldAdapterRuntime.getWorldDefaultSpawn(startupWorldId, {
                         mapSize: MAP_SIZE,

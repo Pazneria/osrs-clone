@@ -18,8 +18,9 @@ import timberHut from "../../../content/world/stamps/timber_hut.json";
 import timberLonghouse from "../../../content/world/stamps/timber_longhouse.json";
 import timberShack from "../../../content/world/stamps/timber_shack.json";
 import timberWorkshop from "../../../content/world/stamps/timber_workshop.json";
-import northRoadCamp from "../../../content/world/regions/north_road_camp.json";
+import tutorialStartCabin from "../../../content/world/stamps/tutorial_start_cabin.json";
 import starterTown from "../../../content/world/regions/starter_town.json";
+import tutorialIsland from "../../../content/world/regions/tutorial_island.json";
 
 const allStamps: Record<string, WorldStamp> = {
   [castleFloor0.stampId]: castleFloor0,
@@ -31,7 +32,8 @@ const allStamps: Record<string, WorldStamp> = {
   [timberHut.stampId]: timberHut,
   [timberLonghouse.stampId]: timberLonghouse,
   [timberShack.stampId]: timberShack,
-  [timberWorkshop.stampId]: timberWorkshop
+  [timberWorkshop.stampId]: timberWorkshop,
+  [tutorialStartCabin.stampId]: tutorialStartCabin
 };
 
 const manifest = worldManifestJson as WorldManifest;
@@ -331,6 +333,29 @@ function applyStructureLocalAlignment(
       const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawDoor, 1);
       return { ...scaledDoor, x: mapped.x, y: mapped.y, z: mapped.z };
     }),
+    fences: (rawDefinition.landmarks.fences || []).map((rawFence, index) => {
+      const scaledFence = (scaledDefinition.landmarks.fences || [])[index] || rawFence;
+      return {
+        ...scaledFence,
+        points: rawFence.points.map((rawPoint) =>
+          remapPoint2WithStructureShift(structureShiftBounds, rawPoint, rawFence.z, 1)
+        )
+      };
+    }),
+    roofs: (rawDefinition.landmarks.roofs || []).map((rawRoof, index) => {
+      const scaledRoof = (scaledDefinition.landmarks.roofs || [])[index] || rawRoof;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawRoof, 1);
+      const mappedHideBounds = rawRoof.hideBounds
+        ? {
+            xMin: scaleAxis(rawRoof.hideBounds.xMin),
+            xMax: scaleAxis(rawRoof.hideBounds.xMax),
+            yMin: scaleAxis(rawRoof.hideBounds.yMin),
+            yMax: scaleAxis(rawRoof.hideBounds.yMax),
+            z: rawRoof.hideBounds.z
+          }
+        : scaledRoof.hideBounds;
+      return { ...scaledRoof, x: mapped.x, y: mapped.y, z: mapped.z, hideBounds: mappedHideBounds };
+    }),
     altars: rawDefinition.landmarks.altars.map((rawAltar, index) => {
       const scaledAltar = scaledDefinition.landmarks.altars[index] || rawAltar;
       const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawAltar);
@@ -352,8 +377,8 @@ function buildScaledWorldDefinition(rawDefinition: WorldDefinition): WorldDefini
 }
 
 const worldDefinitions: Record<string, WorldDefinition> = {
-  [northRoadCamp.worldId]: buildScaledWorldDefinition(northRoadCamp as WorldDefinition),
-  [starterTown.worldId]: buildScaledWorldDefinition(starterTown as WorldDefinition)
+  [starterTown.worldId]: buildScaledWorldDefinition(starterTown as WorldDefinition),
+  [tutorialIsland.worldId]: buildScaledWorldDefinition(tutorialIsland as WorldDefinition)
 };
 
 function cloneSpawn(spawn: Point3): Point3 {

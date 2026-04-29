@@ -1,4 +1,6 @@
 import type {
+  CombatProgressionBandDefinition,
+  CombatProgressionBandWorldSummary,
   EnemyRuntimeState,
   EnemySpawnNodeDefinition,
   EnemyTypeDefinition,
@@ -23,7 +25,10 @@ import {
   createDefaultPlayerCombatState,
   createEnemyRuntimeState,
   DEFAULT_MELEE_STYLE,
+  getCombatProgressionBandForEnemy,
   getEnemyTypeDefinition,
+  listCombatProgressionBands,
+  listCombatProgressionBandWorldSummaries,
   listEnemySpawnNodesForWorld as listLegacyEnemySpawnNodesForWorld,
   listEnemyTypes
 } from "../combat/content";
@@ -58,6 +63,9 @@ declare global {
       isWithinSquareRange: typeof isWithinSquareRange;
       isWithinMeleeRange: typeof isWithinMeleeRange;
       pickDropEntry: typeof pickDropEntry;
+      listCombatProgressionBands: () => CombatProgressionBandDefinition[];
+      getCombatProgressionBandForEnemy: (enemyId: string) => CombatProgressionBandDefinition | null;
+      listCombatProgressionBandWorldSummaries: (worldId: string) => CombatProgressionBandWorldSummary[];
       listEnemyTypes: () => EnemyTypeDefinition[];
       getEnemyTypeDefinition: (enemyId: string) => EnemyTypeDefinition | null;
       listEnemySpawnNodesForWorld: (worldId: string) => EnemySpawnNodeDefinition[];
@@ -183,6 +191,54 @@ function getWorldCombatSpawnNodes(worldId: string): EnemySpawnNodeDefinition[] {
   return normalizeSpawnNodes(listLegacyEnemySpawnNodesForWorld(resolvedWorldId));
 }
 
+function listRuntimeCombatProgressionBandWorldSummaries(worldId: string): CombatProgressionBandWorldSummary[] {
+  const resolvedWorldId = normalizeWorldId(worldId);
+  const summaries = new Map<string, CombatProgressionBandWorldSummary>();
+  const progressionBands = listCombatProgressionBands();
+  for (let i = 0; i < progressionBands.length; i += 1) {
+    const band = progressionBands[i];
+    summaries.set(band.bandId, {
+      bandId: band.bandId,
+      worldId: resolvedWorldId,
+      enemyIds: [],
+      spawnGroupIds: [],
+      spawnCount: 0
+    });
+  }
+
+  const spawnNodes = getWorldCombatSpawnNodes(resolvedWorldId);
+  for (let i = 0; i < spawnNodes.length; i += 1) {
+    const spawnNode = spawnNodes[i];
+    const band = getCombatProgressionBandForEnemy(spawnNode.enemyId);
+    if (!band) continue;
+    const summary = summaries.get(band.bandId);
+    if (!summary) continue;
+    summary.spawnCount += 1;
+    if (!summary.enemyIds.includes(spawnNode.enemyId)) summary.enemyIds.push(spawnNode.enemyId);
+    if (spawnNode.spawnGroupId && !summary.spawnGroupIds.includes(spawnNode.spawnGroupId)) {
+      summary.spawnGroupIds.push(spawnNode.spawnGroupId);
+    }
+  }
+
+  return progressionBands.map((band) => {
+    const summary = summaries.get(band.bandId);
+    if (!summary) {
+      return {
+        bandId: band.bandId,
+        worldId: resolvedWorldId,
+        enemyIds: [],
+        spawnGroupIds: [],
+        spawnCount: 0
+      };
+    }
+    return {
+      ...summary,
+      enemyIds: summary.enemyIds.slice().sort(),
+      spawnGroupIds: summary.spawnGroupIds.slice().sort()
+    };
+  });
+}
+
 export function exposeCombatBridge(): void {
   window.CombatRuntime = {
     getSpecVersion: () => COMBAT_SPEC_VERSION,
@@ -198,6 +254,9 @@ export function exposeCombatBridge(): void {
     isWithinSquareRange,
     isWithinMeleeRange,
     pickDropEntry,
+    listCombatProgressionBands,
+    getCombatProgressionBandForEnemy,
+    listCombatProgressionBandWorldSummaries: listRuntimeCombatProgressionBandWorldSummaries,
     listEnemyTypes,
     getEnemyTypeDefinition,
     listEnemySpawnNodesForWorld: getWorldCombatSpawnNodes,

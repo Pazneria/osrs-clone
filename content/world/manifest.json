@@ -24,15 +24,15 @@
       }
     },
     {
-      "worldId": "north_road_camp",
-      "label": "North Road Camp",
-      "regionFile": "north_road_camp.json",
+      "worldId": "tutorial_island",
+      "label": "Tutorial Island",
+      "regionFile": "tutorial_island.json",
       "stampIds": [
-        "road_outpost"
+        "tutorial_start_cabin"
       ],
       "defaultSpawn": {
-        "x": 204,
-        "y": 216,
+        "x": 118,
+        "y": 118,
         "z": 0
       }
     }

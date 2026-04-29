@@ -130,8 +130,7 @@ function assertWorld(worldId) {
 
 function run() {
   assertWorld("starter_town");
-  assertWorld("north_road_camp");
-  console.log("Mining layout guard passed for starter_town and north_road_camp.");
+  console.log("Mining layout guard passed for starter_town.");
 }
 
 try {

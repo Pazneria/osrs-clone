@@ -20,10 +20,12 @@
 - [x] WOODCUTTING-017: Gameplay-zoom silhouette readability tuning completed for willow/maple/yew with stronger willow drape framing, broader maple crowns, and tighter yew spires.
 - [x] WOODCUTTING-018: Dedicated inventory icon coverage completed for oak/maple/yew log bundles so each canonical log tier now has its own bespoke asset.
 - [x] WOODCUTTING-012: Logs/xp/gold-per-tick balance targets are now locked with canonical tier-entry + sustained throughput tables, runtime summary helpers, and full mirror-validation coverage.
+- [x] WOODCUTTING-013: Progression expansion completed with a live starter-town forester, an east-outpost Advanced Woodsman, and a deeper-band `Proof of the Grain` merchant gate.
 
 ## Now
+(empty)
 
 ## Next
-- [ ] WOODCUTTING-013: Progression expansion pass for additional tree tiers and gating content.
+(empty)
 
 ## Later

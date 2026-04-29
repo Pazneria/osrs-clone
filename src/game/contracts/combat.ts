@@ -8,6 +8,14 @@ export type EnemyAggroType = "passive" | "aggressive";
 export type EnemyRuntimeStateId = "idle" | "aggroed" | "returning" | "dead";
 export type EnemyAppearanceKind = "rat" | "humanoid" | "chicken";
 export type EnemyDropKind = "nothing" | "item" | "coins";
+export type CombatProgressionBandId =
+  | "starter_opt_in"
+  | "starter_roadside"
+  | "resource_outskirts"
+  | "guarded_threshold"
+  | "camp_threat"
+  | "later_region";
+export type CombatProgressionWorldStage = "starter" | "mid" | "later";
 
 export interface CombatAttackProfile {
   styleFamily: CombatStyleFamily;
@@ -84,6 +92,30 @@ export interface EnemyTypeDefinition {
   behavior: EnemyBehaviorProfile;
   respawnTicks: number;
   dropTable: EnemyDropEntry[];
+}
+
+export interface CombatProgressionBandDefinition {
+  bandId: CombatProgressionBandId;
+  displayName: string;
+  worldStage: CombatProgressionWorldStage;
+  routeDepth: number;
+  targetPlayerLevels: {
+    min: number;
+    max: number | null;
+  };
+  enemyIds: string[];
+  spawnGroupPrefixes: string[];
+  placementGuidance: string[];
+  lootGuidance: string[];
+  maxExpectedSellValuePerKill: number | null;
+}
+
+export interface CombatProgressionBandWorldSummary {
+  bandId: CombatProgressionBandId;
+  worldId: string;
+  enemyIds: string[];
+  spawnGroupIds: string[];
+  spawnCount: number;
 }
 
 export interface EnemySpawnNodeDefinition {

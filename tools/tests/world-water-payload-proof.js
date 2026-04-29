@@ -80,7 +80,6 @@ function run() {
   const { getWorldWaterBodies, buildWaterRenderPayload } = waterModule;
 
   const starterTown = loadWorldContent(root, "starter_town").world;
-  const northRoadCamp = loadWorldContent(root, "north_road_camp").world;
 
   const starterBodies = getWorldWaterBodies(starterTown);
   assert(starterBodies.length === 7, "starter_town should normalize 5 lakes, 1 pond, and 1 river water body");
@@ -88,12 +87,7 @@ function run() {
   assertDeepWaterPreserved(starterTown, starterBodies);
   assertRenderPayloadDeterministic(buildWaterRenderPayload, starterTown);
 
-  const northBodies = getWorldWaterBodies(northRoadCamp);
-  assert(northBodies.length === 5, "north_road_camp should normalize 3 lakes, 1 pond, and 1 river water body");
-  assertDeepWaterPreserved(northRoadCamp, northBodies);
-  assertRenderPayloadDeterministic(buildWaterRenderPayload, northRoadCamp);
-
-  console.log("World water payload proof passed for starter_town and north_road_camp.");
+  console.log("World water payload proof passed for starter_town.");
 }
 
 try {

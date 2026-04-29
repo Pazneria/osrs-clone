@@ -8,14 +8,19 @@ import type {
   WorldBootstrapResult,
   WorldManifestEntry
 } from "../contracts/world";
-import { getWorldManifest, getWorldManifestEntry } from "../world/authoring";
 import { buildWorldBootstrapResult } from "../world/bootstrap";
+import {
+  getWorldManifest,
+  getWorldManifestEntry
+} from "../world/authoring";
 import {
   cloneCombatSpawnNode,
   cloneDoorLandmark,
+  cloneFenceLandmark,
   cloneMiningNodePlacement,
   clonePoint3,
   cloneRouteDescriptor,
+  cloneRoofLandmark,
   cloneRunecraftingAltarPlacement,
   cloneServiceDescriptor,
   cloneShowcaseTree,
@@ -88,6 +93,8 @@ interface LegacyWorldPayload {
   woodcuttingNodePlacements: WorldBootstrapResult["legacy"]["woodcuttingNodePlacements"];
   staircaseLandmarks: WorldBootstrapResult["legacy"]["staircases"];
   doorLandmarks: WorldBootstrapResult["legacy"]["doors"];
+  fenceLandmarks: WorldBootstrapResult["legacy"]["fences"];
+  roofLandmarks: WorldBootstrapResult["legacy"]["roofs"];
   showcaseTreeDefs: WorldBootstrapResult["legacy"]["showcaseTrees"];
   fishingMerchantSpots: LegacyNpcRenderPlacement[];
   staticMerchantSpots: LegacyMerchantNpcRenderPlacement[];
@@ -150,10 +157,8 @@ function clampSpawn(spawn: Point3, bounds?: LegacyWorldBounds): Point3 {
 }
 
 function getSafeWorldManifestEntry(worldId?: string | null): WorldManifestEntry | null {
-  const normalizedWorldId = normalizeWorldId(worldId);
-  if (!normalizedWorldId) return null;
   try {
-    return cloneWorldManifestEntry(getWorldManifestEntry(normalizedWorldId));
+    return cloneWorldManifestEntry(getWorldManifestEntry(normalizeWorldId(worldId)));
   } catch (error) {
     return null;
   }
@@ -161,8 +166,7 @@ function getSafeWorldManifestEntry(worldId?: string | null): WorldManifestEntry 
 
 function getKnownWorldEntries(): WorldManifestEntry[] {
   const manifest = getWorldManifest();
-  const worlds = manifest && Array.isArray(manifest.worlds) ? manifest.worlds : [];
-  return worlds.map(cloneWorldManifestEntry);
+  return Array.isArray(manifest.worlds) ? manifest.worlds.map(cloneWorldManifestEntry) : [];
 }
 
 function isKnownWorldId(worldId?: string | null): boolean {
@@ -186,7 +190,7 @@ function resolveKnownWorldId(worldId?: string | null, fallbackWorldId: string | 
   const fallbackKey = normalizeWorldId(fallbackWorldId);
   if (fallbackKey && isKnownWorldId(fallbackKey)) return fallbackKey;
 
-  const currentWorldId = getCurrentWorldId();
+  const currentWorldId = normalizeWorldId(getCurrentWorldId());
   if (currentWorldId && isKnownWorldId(currentWorldId)) return currentWorldId;
 
   const worlds = getKnownWorldEntries();
@@ -280,7 +284,7 @@ function createQaWorldSummary(entry: WorldManifestEntry, activeWorldId: string):
 }
 
 function getQaWorldSummaries(): QaWorldSummary[] {
-  const activeWorldId = resolveKnownWorldId(null, "starter_town");
+  const activeWorldId = resolveKnownWorldId(getCurrentWorldId(), "starter_town");
   return getKnownWorldEntries().map((entry) => createQaWorldSummary(entry, activeWorldId));
 }
 
@@ -375,6 +379,8 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     woodcuttingNodePlacements: legacy.woodcuttingNodePlacements.map(cloneWoodcuttingNodePlacement),
     staircaseLandmarks: legacy.staircases.map(cloneStaircaseLandmark),
     doorLandmarks: legacy.doors.map(cloneDoorLandmark),
+    fenceLandmarks: legacy.fences.map(cloneFenceLandmark),
+    roofLandmarks: legacy.roofs.map(cloneRoofLandmark),
     showcaseTreeDefs: legacy.showcaseTrees.map(cloneShowcaseTree),
     fishingMerchantSpots: staticMerchantServices
       .filter((service) => Array.isArray(service.tags) && service.tags.includes("fishing"))

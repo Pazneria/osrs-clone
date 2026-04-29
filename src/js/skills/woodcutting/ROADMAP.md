@@ -258,7 +258,7 @@ Woodcutting creates value by supplying logs.
 
 The forester teacher introduces the basics of woodcutting. This NPC helps new players understand trees, axes, and early log progression.
 
-**Location:** Near the starter area or close to the town edge.
+**Location:** Starter Town woodline beside the starter grove approach.
 
 **Associated Quests:** None.
 
@@ -274,9 +274,9 @@ The forester teacher introduces the basics of woodcutting. This NPC helps new pl
 
 The advanced woodsman handles better axes and higher-tier log trading. Players come here when they are ready for stronger tools and more valuable woodcutting progression.
 
-**Location:** Deeper in the world, closer to stronger tree zones.
+**Location:** North-road outpost.
 
-**Associated Quests:** Can be tied to area access or later progression if needed.
+**Associated Quests:** `Proof of the Grain` unlocks the full axe-and-log ledger after a `willow_logs` + `maple_logs` + `yew_logs` turn-in.
 
 | Item         | Buys | Sells |
 | ------------ | ---- | ----- |

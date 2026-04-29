@@ -5,6 +5,7 @@ const { loadTsModule } = require("./ts-module-loader");
 
 const combatContent = loadTsModule(path.resolve(__dirname, "../../src/game/combat/content.ts"));
 const combatFormulas = loadTsModule(path.resolve(__dirname, "../../src/game/combat/formulas.ts"));
+const combatBridge = loadTsModule(path.resolve(__dirname, "../../src/game/platform/combat-bridge.ts"));
 
 function makeWeapon(overrides = {}) {
   return {
@@ -113,6 +114,63 @@ function makeWeapon(overrides = {}) {
       attackTickCycle: 5
     },
     "enemy melee snapshots should derive from the authored enemy data"
+  );
+}
+
+{
+  global.window = {
+    WorldBootstrapRuntime: {
+      getBootstrapResult(worldId) {
+        if (worldId !== "qa_runtime_world") return null;
+        return {
+          combatSpawns: [
+            {
+              spawnNodeId: "qa-guard",
+              enemyId: "enemy_guard",
+              spawnTile: { x: 10, y: 10, z: 0 },
+              spawnGroupId: "starter_east_outpost_guard_alpha"
+            },
+            {
+              spawnNodeId: "qa-bear",
+              enemyId: "enemy_bear",
+              spawnTile: { x: 12, y: 12, z: 0 },
+              spawnGroupId: "camp_southeast_ruins_alpha"
+            }
+          ]
+        };
+      }
+    }
+  };
+
+  combatBridge.exposeCombatBridge();
+  const summaries = new Map(
+    window.CombatRuntime.listCombatProgressionBandWorldSummaries("qa_runtime_world").map((summary) => [summary.bandId, summary])
+  );
+
+  assert.strictEqual(
+    summaries.get("guarded_threshold").spawnCount,
+    1,
+    "combat bridge band summaries should include bootstrap guard spawns for runtime worlds"
+  );
+  assert.deepStrictEqual(
+    summaries.get("guarded_threshold").enemyIds,
+    ["enemy_guard"],
+    "combat bridge guard summaries should keep runtime enemy ids"
+  );
+  assert.deepStrictEqual(
+    summaries.get("guarded_threshold").spawnGroupIds,
+    ["starter_east_outpost_guard_alpha"],
+    "combat bridge guard summaries should keep runtime spawn group ids"
+  );
+  assert.strictEqual(
+    summaries.get("camp_threat").spawnCount,
+    1,
+    "combat bridge band summaries should include bootstrap camp-threat spawns for runtime worlds"
+  );
+  assert.deepStrictEqual(
+    summaries.get("camp_threat").enemyIds,
+    ["enemy_bear"],
+    "combat bridge camp summaries should keep runtime enemy ids"
   );
 }
 

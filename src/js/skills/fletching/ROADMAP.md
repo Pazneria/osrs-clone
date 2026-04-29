@@ -397,7 +397,7 @@ The general store buys everything at half price.
 
 Current world authoring now anchors the fletching supplier inside the starter-town bank and general-store block so early log processing stays close to banking and restock flow.
 
-The advanced fletcher now lives at the north-road outpost, and the merchant-unlock quest `Proof of the Yew` gates that deeper buyer until the player turns in 1 yew handle, 1 yew longbow, and 1 yew shortbow.
+The advanced fletcher now lives at Starter Town's east outpost, and the merchant-unlock quest `Proof of the Yew` gates that deeper buyer until the player turns in 1 yew handle, 1 yew longbow, and 1 yew shortbow.
 
 ## Training Location Structure
 
@@ -407,7 +407,7 @@ The advanced fletcher now lives at the north-road outpost, and the merchant-unlo
 | Bank-adjacent town area | Fast processing of logs into handles, staffs, shafts, and bows |
 | Ranged-adjacent shop area | Easy resupply for feathers and bow strings |
 
-Current implementation uses the starter-town supplier for the bank-adjacent processing loop and the north-road outpost buyer as the deeper sell path for completed fletching outputs once `Proof of the Yew` is complete.
+Current implementation uses the starter-town supplier for the bank-adjacent processing loop and the east-outpost buyer as the deeper sell path for completed fletching outputs once `Proof of the Yew` is complete.
 
 ## Dependencies
 

@@ -957,6 +957,51 @@
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,
       "spawnGroupId": "starter_east_outpost_guard_post"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_bear_southeast_camp_west",
+      "enemyId": "enemy_bear",
+      "spawnTile": {
+        "x": 444,
+        "y": 468,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 4,
+      "respawnTicks": 50,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "camp_southeast_ruins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_heavy_brute_southeast_camp_anchor",
+      "enemyId": "enemy_heavy_brute",
+      "spawnTile": {
+        "x": 450,
+        "y": 456,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 3,
+      "respawnTicks": 50,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "camp_southeast_ruins"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_fast_striker_southeast_camp_east",
+      "enemyId": "enemy_fast_striker",
+      "spawnTile": {
+        "x": 456,
+        "y": 468,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 3,
+      "respawnTicks": 40,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "camp_southeast_ruins"
     }
   ],
   "services": [
@@ -1044,6 +1089,46 @@
       "dialogueId": "outpost_guide",
       "tags": [
         "travel",
+        "east",
+        "settlement"
+      ]
+    },
+    {
+      "serviceId": "merchant:advanced_fletcher",
+      "spawnId": "npc:advanced_fletcher",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "advanced_fletcher",
+      "name": "Advanced Fletcher",
+      "npcType": 3,
+      "x": 365,
+      "y": 253,
+      "z": 0,
+      "action": "Trade",
+      "dialogueId": "advanced_fletcher",
+      "tags": [
+        "merchant",
+        "fletching",
+        "east",
+        "settlement"
+      ]
+    },
+    {
+      "serviceId": "merchant:advanced_woodsman",
+      "spawnId": "npc:advanced_woodsman",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "advanced_woodsman",
+      "name": "Advanced Woodsman",
+      "npcType": 6,
+      "x": 366,
+      "y": 255,
+      "z": 0,
+      "action": "Trade",
+      "dialogueId": "advanced_woodsman",
+      "tags": [
+        "merchant",
+        "woodcutting",
         "east",
         "settlement"
       ]
@@ -1147,6 +1232,25 @@
       "tags": [
         "merchant",
         "fishing",
+        "starter"
+      ]
+    },
+    {
+      "serviceId": "merchant:forester_teacher",
+      "spawnId": "npc:forester_teacher",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "merchantId": "forester_teacher",
+      "name": "Forester Teacher",
+      "npcType": 3,
+      "x": 219,
+      "y": 205,
+      "z": 0,
+      "action": "Trade",
+      "dialogueId": "forester_teacher",
+      "tags": [
+        "merchant",
+        "woodcutting",
         "starter"
       ]
     },

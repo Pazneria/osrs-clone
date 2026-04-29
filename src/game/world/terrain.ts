@@ -16,6 +16,8 @@ export function createLegacyTerrainView(
   | "stampMap"
   | "staircases"
   | "doors"
+  | "fences"
+  | "roofs"
   | "showcaseTrees"
 > {
   return {
@@ -33,6 +35,14 @@ export function createLegacyTerrainView(
       tiles: landmark.tiles.map((tile) => ({ ...tile }))
     })),
     doors: definition.landmarks.doors.map((door) => ({ ...door })),
+    fences: (definition.landmarks.fences || []).map((fence) => ({
+      ...fence,
+      points: Array.isArray(fence.points) ? fence.points.map((point) => ({ ...point })) : []
+    })),
+    roofs: (definition.landmarks.roofs || []).map((roof) => ({
+      ...roof,
+      hideBounds: roof.hideBounds ? { ...roof.hideBounds } : undefined
+    })),
     showcaseTrees: definition.landmarks.showcaseTrees.map((tree) => ({ ...tree }))
   };
 }

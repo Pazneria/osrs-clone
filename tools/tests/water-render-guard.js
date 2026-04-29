@@ -56,6 +56,8 @@ function run() {
   assert(inputRenderSource.includes("pierStepDescend = true;"), "input-render.js should mark pier-descend walk intents when stair hits are normalized");
   assert(inputRenderSource.includes("pendingAction.obj === 'PIER_STEP_DESCEND'"), "input-render.js should carry pier-descend walk intents into movement resolution");
   assert(inputRenderSource.includes("stair fallback step"), "input-render.js should provide a stair fallback move when pathfinding cannot bridge dock seam tiles");
+  assert(inputRenderSource.includes("candidateY === stairDeckY"), "pier step fallback should not treat the first deck row as the shore row");
+  assert(inputRenderSource.includes("isPierDeckHeightTransition"), "normal walking should bridge the small height seam between pier deck and shore");
   assert(inputRenderSource.includes("source=${data.isPierStep ? 'step' : 'water'}"), "input-render.js should tag stair descend snaps for QA pier-debug traces");
   assert(inputRenderSource.includes("restrictPierFishingToDeck"), "input-render.js should prevent fishing pathing from stepping off the pier into shallow water");
 

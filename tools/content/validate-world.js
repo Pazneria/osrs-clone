@@ -247,6 +247,8 @@ function collectAuthoredStairTiles(world) {
 function isStructureInteriorAccessTile(logicalMap, x, y, z) {
   const tileId = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
   return tileId === TileId.DOOR_CLOSED
+    || tileId === TileId.FENCE
+    || tileId === TileId.WOODEN_GATE_CLOSED
     || tileId === TileId.SOLID_NPC
     || tileId === TileId.BANK_BOOTH
     || tileId === TileId.SHOP_COUNTER

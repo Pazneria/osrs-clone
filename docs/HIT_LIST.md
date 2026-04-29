@@ -152,29 +152,34 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-005 - Dock/coastline pass for dark-water fishing access
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `content/world/regions/starter_town.json`, `src/js/world.js`, `src/js/input-render.js`, `src/js/skills/fishing/ROADMAP.md`, `src/js/skills/fishing/STATUS.md`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-water-payload-proof.js`, `tools/tests/water-render-guard.js`, `tools/tests/fishing-runtime-tests.js`
 - Repro:
-  1. Inspect coastline and dark-water fishing access.
+  1. Inspect the authored fishing and cooking route anchors in `content/world/regions/starter_town.json`.
+  2. Follow the active pier and dock access flow in `src/js/world.js` and `src/js/input-render.js`.
+  3. Compare the live fishing tracker and focused world/water/fishing guards against this hit card.
 - Expected: Docks are visibly elevated with support pillars, and dark-water rod/harpoon fishing is performed from docks only.
-- Actual: Dock visual/access rules are incomplete.
+- Actual: The repo already ships an authored castle-pond pier and deep-water edge route, renders that dock as a raised structure with deck, stairs, tip platform, and support posts, and restricts deep-water fishing clicks to pier-approach tiles instead of arbitrary shoreline access.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Design dock prefab with elevated deck + pillars.
   2. Assign dark-water fishing nodes to dock access points only.
   3. Validate interaction rules from dock tiles.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `starter_town` now authors the dock loop explicitly through `skillRoutes.fishing` (`castle_pond_bank`, `castle_pond_pier`, `castle_pond_deep_edge`) plus matching dock/deep cooking anchors, so the world data already distinguishes shoreline, pier, and deep-water access points.
+  - `src/js/world.js` consumes the published `pierConfig` to build the raised pier deck, stairs, widened tip, and repeated support-post rows while preserving nearby deep-water coverage for fishing targets.
+  - `src/js/input-render.js` already enforces the intended access contract with pier-specific boarding, descend, and fishing-approach helpers, and `src/js/skills/fishing/STATUS.md` already marks `FISHING-012` complete for the training-location/world-placement pass.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-006 - Terrain shaping pass for mining depressions/quarries
 - Status: Fixed
@@ -209,29 +214,34 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-008 - Player creation menu
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `index.html`, `src/js/core.js`, `src/game/ui/hud-view-models.ts`, `tools/tests/inventory-hud-domain-tests.js`, `tools/tests/inventory-hud-domain-guard.js`
 - Repro:
-  1. Start game from fresh state.
+  1. Start the game from a fresh state and confirm the world is blocked behind the player-entry overlay.
+  2. Inspect the live overlay and verify it exposes name entry, body-type toggles, color rows, and a primary start/continue action.
+  3. Check the focused HUD-domain tests/guards to ensure the player-entry flow copy and gating stay locked.
 - Expected: Player creation flow/menu exists.
-- Actual: No dedicated player creation flow.
+- Actual: The repo already ships a dedicated player-entry flow with create/continue copy, starter name validation, body-type and color customization, save-aware hydration, and world-entry gating until the profile is completed.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Define player creation fields and defaults.
   2. Implement UI flow and state hydration.
   3. Gate game start behind successful creation.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `index.html` already mounts a dedicated `player-entry-overlay` with name entry, body-type toggles, color customization rows, summary copy, and a primary start/continue action.
+  - `src/js/core.js` already owns the full player-entry lifecycle: validation, save-aware create/continue copy, appearance preview refresh, completion persistence, and world gating until `creationCompleted` is set.
+  - Added focused `inventory-hud-domain` coverage so the player-entry summary copy, overlay structure, and completion-gated startup flow cannot drift silently from this hit card again.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-009 - Account/progress persistence across logins
 - Status: Fixed
@@ -312,29 +322,34 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-015 - Unique tree models per type
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WC
 - Source: Manual
-- Links:
+- Links: `src/js/world.js`, `src/js/skills/woodcutting/STATUS.md`, `tools/tests/world-bootstrap-parity.js`
 - Repro:
-  1. Compare tree visuals across types.
+  1. Compare `TREE_VISUAL_PROFILES` in `src/js/world.js` across normal, oak, willow, maple, and yew tree nodes.
+  2. Inspect the starter-pond showcase lineup and live woodcutting tracker notes for per-tree silhouette/polish coverage.
+  3. Run the focused world bootstrap guard to confirm every woodcutting tree node keeps a distinct visual profile.
 - Expected: Each tree type has immediately distinguishable model identity.
-- Actual: Visual differentiation is insufficient.
+- Actual: The runtime already assigns node-specific tree visual profiles with distinct trunk/canopy/branch/drape/stump silhouettes, and the woodcutting tracker now records the baseline, polish, and gameplay-zoom readability passes as complete.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Define silhouette/color goals per tree type.
   2. Produce/import unique models.
   3. Hook type-to-model mapping and verify rendering/perf.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `src/js/world.js` now keeps explicit visual profiles for `normal_tree`, `oak_tree`, `willow_tree`, `maple_tree`, and `yew_tree` instead of rendering every tree through one shared silhouette.
+  - The profiles preserve recognizable identities: normal as the simple baseline, oak as a broad heavy trunk/crown, willow with hanging drapes, maple with the widest crown, and yew with the tallest stacked spire profile.
+  - Extended `tools/tests/world-bootstrap-parity.js` to parse `TREE_VISUAL_PROFILES`, require one unique profile per woodcutting tree node type, and verify the chunk tree renderer feeds node IDs into the visual-profile path.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-016 - Tree habitat placement rules
 - Status: Fixed
@@ -365,54 +380,64 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-017 - Unique rock/gem models
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: MNG
 - Source: Manual
-- Links:
+- Links: `src/js/world.js`, `src/js/skills/mining/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/world-bootstrap-parity.js`
 - Repro:
-  1. Compare rock/gem node visuals across types.
+  1. Compare `ROCK_VISUAL_PROFILES` in `src/js/world.js` across clay, copper, tin, iron, coal, silver, sapphire, gold, emerald, rune essence, and depleted rocks.
+  2. Inspect the mining-node render path and confirm it creates per-profile instanced meshes instead of collapsing most ore types into one colored rock mesh.
+  3. Run the focused world bootstrap parity guard to confirm the full profile set and renderer wiring stay locked.
 - Expected: Each rock/gem type is immediately distinguishable.
-- Actual: Visual identity overlap is too high.
+- Actual: Runtime mining rocks now use explicit per-type visual profiles with distinct geometry/material/scale signatures for every current 1-40 ore/gem type plus rune essence and depleted rocks.
 - Frequency: Always
-- Owner: Pair
+- Owner: Codex
 - Plan v1:
   1. Define model language per ore/gem tier.
   2. Produce/import unique node models.
   3. Map nodes and validate recognition in playtests.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added `ROCK_VISUAL_PROFILES` in `src/js/world.js` so clay, copper, tin, iron, coal, silver, sapphire, gold, emerald, rune essence, and depleted rocks each own a named geometry/material/scale profile.
+  - Reworked chunk rock rendering to bucket counts by visual profile and create one instanced mesh per rock/gem profile while preserving the existing `type: 'ROCK'`, `oreType`, display name, and instance-map interaction metadata.
+  - Extended `tools/tests/world-bootstrap-parity.js` to parse and validate the rock visual profile set, uniqueness signatures, crystal height relationship, and renderer profile-bucketing path.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-018 - Runecrafting altar placement pass
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: RC
 - Source: Manual
-- Links:
+- Links: `content/world/regions/starter_town.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, `src/game/platform/legacy-bridge.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/skills/runecrafting/STATUS.md`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/skill-runtime-parity.js`, `tools/tests/spec-contracts.js`
 - Repro:
-  1. Survey altar spawn behavior.
+  1. Inspect the canonical runecrafting world content in `content/world/regions/starter_town.json`.
+  2. Follow the authored altar data through `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, and the legacy bridge adapters.
+  3. Compare the live runecrafting status board and focused world/runtime guards against this hit card.
 - Expected: Altars exist at designated intentional world locations.
-- Actual: Altar placement is random/procedural.
+- Actual: The repo already ships four authored altar routes plus four authored altar landmarks in canonical world content, and that placement is published through the typed world bootstrap, runecrafting runtime, and legacy route surfaces instead of coming from random/procedural spawning.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Define fixed altar location set.
   2. Remove random altar generation.
   3. Validate access paths and progression pacing.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `starter_town` now authors the elemental altar path explicitly through `skillRoutes.runecrafting` and `landmarks.altars`, with the route order locked to `ember_altar`, `water_altar`, `earth_altar`, and `air_altar`.
+  - `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, `src/game/platform/legacy-bridge.ts`, and `src/game/platform/legacy-world-adapter.ts` publish those authored altar placements into both the typed runtime and legacy QA/runtime surfaces instead of deriving them from random world generation.
+  - `src/js/skills/runecrafting/STATUS.md` already marks `RUNECRAFTING-011` complete, and the focused world/runecrafting guards already lock authored altar count, route order, and route publication.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-020 - Smithing item level requirement rebalance
 - Status: Fixed
@@ -647,58 +672,64 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-034 - World layout and service placement are embedded in `initLogicalMap`
-- Status: Backlog
+- Status: Fixed
 - Severity: S1
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/world.js`
+- Links: `content/world/manifest.json`, `content/world/regions/starter_town.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/world.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
 - Repro:
-  1. Inspect `initLogicalMap` and surrounding world setup code.
-  2. Note inline ASCII blueprints (`castleFloor0`, `generalStoreBlueprint`, `smithingHallBlueprint`) and hard-coded stamp coordinates.
-  3. Note direct arrays for merchant/service placements and one-off tile mutations.
+  1. Inspect the canonical world files in `content/world/manifest.json` and `content/world/regions/starter_town.json`.
+  2. Follow that authored data through `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, and `src/game/platform/legacy-world-adapter.ts`.
+  3. Compare the current `worldPayload` flow in `src/js/world.js` against this hit card.
 - Expected: Building layouts, NPC/service spawns, and tile edits should come from structured world data files/manifests.
-- Actual: World authoring data is tightly coupled to procedural/init code in one large function.
+- Actual: The repo already ships structured world authoring for stamps, structures, services, staircases, routes, combat spawns, and landmarks in canonical `content/world/*` files. `initLogicalMap` still applies the published payload into the legacy tile map, but the primary layout/service truth is now loaded by the typed authoring/bootstrap pipeline and exposed through `LegacyWorldAdapterRuntime`.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Define a world layout schema (buildings, stamps, objects, post-stamp edits).
   2. Move current inline layout/spawn definitions into content data files.
   3. Implement a loader/applier and validate parity against current map.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `content/world/manifest.json` plus `content/world/regions/starter_town.json` now own the authored structure kit, service placements, staircases, routes, combat spawns, and other world landmarks instead of leaving those as inline source-of-truth arrays in `initLogicalMap`.
+  - `src/game/world/authoring.ts` and `src/game/world/bootstrap.ts` load that canonical content into typed world definitions, registries, and legacy render/bootstrap payloads.
+  - `src/game/platform/legacy-world-adapter.ts` publishes the current `worldPayload`, and `src/js/world.js` consumes that payload to stamp/apply the already-authored data into the legacy tile map rather than owning the world/service layout itself.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-035 - Training route tuning lives in hard-coded zone/band arrays
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/world.js`, `src/js/core.js`
+- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/game/world/authoring.ts`, `src/game/world/placements.ts`, `src/game/platform/legacy-bridge.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/core.js`, `tools/tests/qa-registry-parity.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/legacy-world-runtime-shape.js`
 - Repro:
-  1. Inspect `miningZoneSpecs`, `runecraftingAltarBandSpecs`, `woodcuttingZoneSpecs`, and `cookingRouteSpecs` in `src/js/world.js`.
-  2. Inspect QA fallback route mappings in `src/js/core.js`.
-  3. Observe distances, counts, spacing, and labels are manually tuned in code.
+  1. Inspect canonical skill-route authoring in `content/world/regions/starter_town.json` and `content/world/regions/north_road_camp.json`.
+  2. Follow the world bootstrap/legacy bridge path through `src/game/world/authoring.ts`, `src/game/world/placements.ts`, `src/game/platform/legacy-bridge.ts`, and `src/game/platform/legacy-world-adapter.ts`.
+  3. Compare QA route lookups in `src/js/core.js` against those runtime route registries.
 - Expected: Route/ring/zone progression tuning should be data-driven with centralized authoring.
-- Actual: Tuning constants are spread across runtime files, making balancing changes code-heavy.
+- Actual: Skill-route tuning already ships from canonical world `skillRoutes` authoring, flows through the typed world bootstrap/route registry, and is consumed by QA helpers via runtime route discovery before falling back to emergency hard-coded anchors.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Create skill route config files for zone bands, counts, spacing, and labels.
   2. Refactor placement logic to read and validate those configs.
   3. Update QA route lookups to consume runtime-generated route metadata only.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Route tuning no longer lives in `src/js/world.js`; canonical route/ring/zone metadata is authored under each world's `skillRoutes` block in `content/world/regions/*.json`, then scaled/aligned in `src/game/world/authoring.ts`.
+  - `src/game/world/placements.ts`, `src/game/platform/legacy-bridge.ts`, and `src/game/platform/legacy-world-adapter.ts` now publish those authored route groups through the typed route registry and legacy compatibility payloads instead of relying on runtime-owned zone/band arrays.
+  - QA route lookups in `src/js/core.js` read world route groups first (`getWorldRouteGroup(...)`) and only fall back to hard-coded anchors when no runtime route data is available, so the original duplication risk described by this hit has already been retired.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-036 - Context menu behavior is a monolithic hard-coded branch
 - Status: Fixed
@@ -955,6 +986,245 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
+
+### HIT-070 - Camp-threat combat band had no live authored spawns
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `content/world/regions/starter_town.json`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
+- Repro:
+  1. Review the live combat progression-band summaries after `COMBAT-014`.
+  2. Compare `Camp Threat` enemies against authored `starter_town` combat spawn nodes.
+  3. Check whether bear, heavy brute, and fast striker have any live camp placement.
+- Expected: The first-pass melee rollout should include at least one optional camp-threat pocket using the same authored spawn-node model as starter, roadside, resource-outskirts, and guard-threshold coverage.
+- Actual: The camp-threat band mapped bear, heavy brute, and fast striker enemy templates but still had zero live authored spawns.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a small optional camp-threat pocket in the authored world content without resurrecting the removed `north_road_camp` region.
+  2. Lock its spawn topology, world parity, and progression-band summary counts with focused guards.
+  3. Sync combat status, roadmap, and shared skill index docs to advance the tracker beyond `COMBAT-015`.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added the `camp_southeast_ruins` spawn group in `starter_town` with one bear, one heavy brute, and one fast striker placed on the southeast edge away from protected training/resource route anchors.
+  - Extended combat topology coverage to enforce the camp count, route clearance, local spawn budget, and same-group spacing.
+  - Updated combat content/world parity guards so the camp-threat band now reports three live starter-town spawns and the authored spawn order/count cannot drift silently.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-069 - Combat progression bands lacked an authored contract
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `src/game/platform/combat-bridge.ts`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-simulator-guard.js`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/combat/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-014` milestone and combat roadmap follow-up.
+  2. Compare live enemy templates, first-pass loot benchmarks, and authored starter-town spawn groups.
+  3. Try to answer which enemies belong to starter, mid-band, camp, or later-region rollout bands from code.
+- Expected: Combat content should expose a stable progression-band contract so enemy difficulty, drop ceilings, and placement guidance scale cleanly before adding more regions.
+- Actual: Enemy templates, loot benchmarks, and spawn groups existed, but the progression-band mapping lived only as roadmap intent rather than typed content data or focused guard coverage.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a typed progression-band contract around live enemy templates and future region anchors.
+  2. Expose enemy/world summary helpers for QA and future encounter authoring.
+  3. Lock the contract with focused combat guards and sync the combat tracker docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added typed combat progression-band definitions for starter opt-in, starter roadside, resource outskirts, guarded threshold, camp threat, and deferred later-region anchors.
+  - Exposed `listCombatProgressionBands()`, `getCombatProgressionBandForEnemy()`, and `listCombatProgressionBandWorldSummaries(worldId)` through typed combat content and the legacy combat bridge.
+  - Extended combat content/simulator guards to verify exact enemy-to-band assignments, starter-town band spawn counts, cloned API results, roadmap table coverage, and tracker advancement to `COMBAT-015`.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-068 - Combat simulator missing after dummy path removal
+- Status: Fixed
+- Severity: S2
+- Area: BUG
+- Source: Manual
+- Links: `tools/sim/melee-sim.js`, `tools/tests/combat-simulator-guard.js`, `package.json`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/combat/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-013` status item and the combat roadmap recommendation to rebuild the simulator.
+  2. Check `tools/sim/` and `package.json` after the old dummy simulator path was removed.
+  3. Try to run a deterministic combat matchup against typed enemy/item data.
+- Expected: A simulator should exercise canonical melee formulas, typed enemy content, and runtime item combat profiles without restoring the old dummy combat route.
+- Actual: Only the loot simulator existed; there was no canonical melee matchup simulator or guard for formula/content wiring.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a deterministic melee simulator that loads typed combat content, shared formulas, and runtime item profiles.
+  2. Expose it through a non-legacy package script and guard it with focused regression coverage.
+  3. Update the combat roadmap/status/index once the simulator is live.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `tools/sim/melee-sim.js`, which simulates player-vs-enemy melee matchups using `computePlayerMeleeCombatSnapshot`, `computeEnemyMeleeCombatSnapshot`, `rollOpposedHitCheck`, and `rollDamage`.
+  - Added `npm.cmd run tool:sim:melee` plus `npm.cmd run test:combat:sim`; the guard verifies the simulator uses typed combat sources and keeps the removed `tool:sim:combat` path absent.
+  - Documented the simulator usage in the combat roadmap and advanced combat tracking from `COMBAT-013` to `COMBAT-014`.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-067 - Woodcutting merchant progression still lived only in specs and roadmap notes
+- Status: Fixed
+- Severity: S2
+- Area: WC
+- Source: Manual
+- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/content/npc-dialogue-catalog.js`, `src/js/content/quest-catalog.js`, `src/js/skills/woodcutting/ROADMAP.md`, `src/js/skills/woodcutting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/quest-tanner-runtime-guard.js`
+- Repro:
+  1. Review the open `WOODCUTTING-013` milestone and the merchant/NPC section in the woodcutting roadmap.
+  2. Search the authored world and dialogue content for `forester_teacher` or `advanced_woodsman`.
+  3. Try to find a live deeper-band woodcutting buyer or open the Advanced Woodsman shop before proving any later log progression.
+- Expected: Woodcutting should expose its documented starter mentor and deeper woodsman in authored world content, and the later axe-and-log ledger should have a concrete progression gate instead of opening only by spec assumption.
+- Actual: The woodcutting skill spec already defined `forester_teacher` and `advanced_woodsman` merchant stock, and QA aliases already anticipated both IDs, but neither NPC existed in authored world/dialogue content and no live quest gate tied the deeper woodsman ledger to late-band log progression.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add the missing woodcutting merchants to the authored starter-town and north-road world services with real dialogue IDs.
+  2. Reuse the merchant-unlock quest runtime for the Advanced Woodsman instead of inventing a bespoke shop lock.
+  3. Add focused world/quest regression coverage and sync the woodcutting roadmap/status/index once the progression path is live.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a live `forester_teacher` merchant in Starter Town plus an `advanced_woodsman` merchant at the north-road outpost, both wired through the existing authored world-service and dialogue surfaces.
+  - Added the authored quest `Proof of the Grain`, which auto-starts from the Advanced Woodsman and unlocks his full ledger after a `willow_logs` + `maple_logs` + `yew_logs` turn-in.
+  - Updated the woodcutting roadmap/status/index and extended the focused world/bootstrap/quest guards so the merchant layer and its progression gate stay locked.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-066 - Combat loot pass lacked a benchmark lock for progression pacing
+- Status: Fixed
+- Severity: S2
+- Area: BUG
+- Source: Manual
+- Links: `src/game/combat/content.ts`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/combat/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/combat-enemy-content-guard.js`
+- Repro:
+  1. Review the open `COMBAT-007` milestone against the live first-pass enemy drop tables in `src/game/combat/content.ts`.
+  2. Compare passive/resource/humanoid/gatekeeper enemy payouts and gear bands using the current item values.
+  3. Check whether the combat docs and regression suite lock those direct-sale benchmarks and progression assumptions.
+- Expected: The first-pass combat loot pass should publish runtime-backed benchmark rows for the live drop tables, keep roadside goblins in the bronze band, keep the first gatekeeper/camp enemies in the iron band, and lock those assumptions in focused guard coverage before `COMBAT-007` is marked complete.
+- Actual: Exact drop tables already existed, but the roadmap only carried prose rules, there was no explicit benchmark table for direct-sale pacing, and the combat tracker still treated `COMBAT-007` as open because the economy/progression assumptions were not regression-locked anywhere.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Derive direct-sale benchmark rows from the live first-pass enemy tables and current item values.
+  2. Extend the combat enemy content guard to lock expected sell value per kill, empty/coin weights, payout ordering, and merchant-ladder sanity.
+  3. Sync the combat roadmap/status/index once the loot-band lock is explicit.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added live loot benchmark rows to the combat roadmap using the current enemy drop tables plus the general-store half-price fallback as the direct-sale baseline.
+  - Extended `tools/tests/combat-enemy-content-guard.js` so combat loot is now locked against expected sell value per kill, empty-drop/coin weights, payout ordering across the first-pass roster, and the bronze/iron merchant-ladder sanity checks.
+  - Marked `COMBAT-007` complete in the combat status board and advanced the shared skills index to the simulator rebuild as the next combat milestone.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-065 - Smithing balance pass lacked runtime benchmarks and valid rune output values
+- Status: Fixed
+- Severity: S2
+- Area: SMI
+- Source: Manual
+- Links: `src/js/content/item-catalog.js`, `src/js/skills/spec-registry.js`, `src/js/skills/smithing/ROADMAP.md`, `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
+- Repro:
+  1. Review the open `SMITHING-012` roadmap/status milestone and compare it against the live smithing registry helpers and roadmap benchmark tables.
+  2. Inspect late-band smithing outputs such as `rune_sword_blade`, `rune_arrowheads`, or `rune_platebody` in the canonical item catalog.
+  3. Compare their direct-sale values against the intended smithing economy progression.
+- Expected: Smithing should publish runtime-backed throughput/economy benchmarks for smelting, forged outputs, and jewelry bases, and rune-tier forged outputs should keep meaningful sell values instead of collapsing to placeholder numbers.
+- Actual: The smithing roadmap had no locked throughput/value-delta tables, the registry exposed no smithing balance summary, and the canonical rune-tier forged outputs all inherited value `1` because the smithing item factory still used a zeroed rune `gearValue`.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Fix the canonical rune smithing output values in the item catalog.
+  2. Add smithing balance-summary helpers plus contract/parity coverage for output-per-tick, XP-per-tick, and direct-sale value-delta metrics.
+  3. Sync the smithing roadmap/status/index and generated item mirror once the runtime-backed numbers are locked.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Corrected the canonical smithing item factory so rune-tier forged outputs now derive from the same late-band gear-value baseline as the finished rune tools/weapons instead of collapsing to placeholder `1`-value items.
+  - Added smithing balance-summary helpers in `SkillSpecRegistry` that compute output-per-tick, XP-per-tick, output sell value, input sell value, and direct-sale value delta for every smithing recipe using the authored smithing/value sources.
+  - Expanded the smithing roadmap with explicit smelting, forged-output, and jewelry-base benchmark tables, then locked them with spec contract/doc parity tests before marking `SMITHING-012` complete in the status board and skills index.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-064 - Smithing station UX lacked queue-state messaging coverage
+- Status: Fixed
+- Severity: S3
+- Area: SMI
+- Source: Manual
+- Links: `src/js/skills/smithing/index.js`, `tools/tests/fletching-crafting-interactions.js`, `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Queue repeated smithing work from the furnace or anvil.
+  2. Let the queue stop because the requested quantity completes, the player moves away, a required tool disappears, or the next input set is no longer available.
+  3. Compare the live chat feedback and tracker docs against the intended `SMITHING-011` station UX milestone.
+- Expected: Smithing should announce what batch starts, explain why the queue stops, and have focused runtime coverage for quantity completion plus interruption/failure states before the milestone is treated as complete.
+- Actual: The smithing runtime could already queue repeated work, but the player-facing copy stayed generic (`You begin smithing at the anvil.`, `You stop smithing.`), quantity-complete endings were silent, and the shared interaction QA only covered jewellery unlock/output rollback cases.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add recipe-aware start/stop/failure messaging around queued smithing sessions.
+  2. Extend focused runtime coverage for exact-count queues, material exhaustion, move-away interruption, and tool-loss stops.
+  3. Sync the smithing tracker docs once the UX milestone is actually landed.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Updated the smithing runtime to announce the queued batch up front, emit explicit completion copy for counted batches, and name the active recipe/station when queues stop because of movement, missing tools/moulds, missing materials, or no output space.
+  - Tightened smithing recipe issue text in the station UI so missing tool, mould, and material requirements surface as specific requirements instead of generic placeholders.
+  - Extended the shared interaction/runtime QA with dedicated smithing coverage for exact-count batches, material-driven queue stops, move-away interruption, tool-loss interruption, and the updated output-space rollback copy.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-063 - Combat tracker still treated melee style UI as open
+- Status: Fixed
+- Severity: S3
+- Area: DOCS
+- Source: Manual
+- Links: `src/js/skills/combat/STATUS.md`, `src/js/skills/_index.md`, `index.html`, `src/js/inventory.js`, `src/js/world.js`, `src/game/ui/hud-view-models.ts`, `tools/tests/inventory-hud-domain-tests.js`, `tools/tests/combat-domain-tests.js`
+- Repro:
+  1. Review the combat status board and shared skills index after the live combat HUD pass.
+  2. Compare the open `COMBAT-011` tracker entry against the actual combat tab UI, click wiring, style-aware HUD view models, and the existing combat HUD/domain tests.
+- Expected: Once the melee style selector is live in the combat tab and covered by focused tests, combat tracking docs should mark `COMBAT-011` complete and advance to the next true open milestone.
+- Actual: The combat tab already exposed Attack / Strength / Defense buttons, runtime selection wiring, persisted style state, and focused view-model coverage, but `src/js/skills/combat/STATUS.md` and `src/js/skills/_index.md` still treated the attack-style UI as unfinished.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Verify the attack-style UI is live in the combat tab and backed by runtime state updates.
+  2. Confirm focused regression coverage already locks the view-model and combat-style math behavior.
+  3. Sync the combat status board and shared skills index to the shipped state.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Marked `COMBAT-011` complete in the combat status board because the combat tab already ships melee style buttons, selection wiring, HUD updates, and saved `selectedMeleeStyle` state.
+  - Advanced the shared combat row in the skills index so combat now points at the simulator rebuild as the next milestone after the current loot/drop authoring pass.
+  - Left the runtime untouched because the existing implementation and targeted tests already matched the documented milestone.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-062 - Smithing tracker still treated Thrain gate as open
 - Status: Fixed

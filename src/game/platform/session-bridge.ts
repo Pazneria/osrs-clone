@@ -46,6 +46,10 @@ declare global {
           creationCompleted: boolean;
           createdAt: number | null;
           lastStartedAt: number | null;
+          tutorialStep: number;
+          tutorialCompletedAt: number | null;
+          tutorialBankDepositSource: string | null;
+          tutorialBankWithdrawSource: string | null;
         };
         appearance: SaveAppearanceState | null;
       }) => ProgressSavePayload;

@@ -304,6 +304,26 @@ assert.ok(
   "index.html should mount the inventory hitpoints bar"
 );
 assert.ok(
+  indexSource.includes('id="player-entry-overlay"'),
+  "index.html should mount the player-entry overlay"
+);
+assert.ok(
+  indexSource.includes('id="player-entry-name"'),
+  "index.html should mount the player-entry name field"
+);
+assert.ok(
+  indexSource.includes('id="player-entry-gender-0"') && indexSource.includes('id="player-entry-gender-1"'),
+  "index.html should mount both player-entry body-type toggles"
+);
+assert.ok(
+  indexSource.includes('id="player-entry-color-rows"'),
+  "index.html should mount the player-entry color rows container"
+);
+assert.ok(
+  indexSource.includes('id="player-entry-primary"'),
+  "index.html should mount the player-entry primary action"
+);
+assert.ok(
   !indexSource.includes("skill-panel-level"),
   "index.html should remove the redundant clicked-skill level row"
 );
@@ -358,6 +378,34 @@ assert.ok(
 assert.ok(
   coreSource.includes("buildPlayerProfileSummaryViewModel"),
   "core.js should source player profile flow copy from the UI domain bridge"
+);
+assert.ok(
+  coreSource.includes("function setPlayerEntryFlowOpen(isOpen)"),
+  "core.js should expose player-entry overlay gating"
+);
+assert.ok(
+  coreSource.includes("function completePlayerEntryFlow()"),
+  "core.js should complete the player-entry flow"
+);
+assert.ok(
+  coreSource.includes("function initPlayerEntryFlow(loadProgressResult)"),
+  "core.js should initialize the player-entry flow from save state"
+);
+assert.ok(
+  coreSource.includes("playerProfileState.creationCompleted = true;"),
+  "core.js should mark the player profile as created when the entry flow completes"
+);
+assert.ok(
+  coreSource.includes("!playerProfileState.creationCompleted ||"),
+  "core.js should keep the world blocked until the player-entry flow is completed"
+);
+assert.ok(
+  coreSource.includes("saveProgressToStorage(isReturning ? 'continue_session' : 'player_creation_complete');"),
+  "core.js should persist player-entry completion"
+);
+assert.ok(
+  coreSource.includes("params.get('iconReview')"),
+  "core.js should keep inventory icon review grants opt-in instead of filling normal inventories"
 );
 assert.ok(
   inputSource.includes("if (typeof window.updateStats === 'function') window.updateStats();"),

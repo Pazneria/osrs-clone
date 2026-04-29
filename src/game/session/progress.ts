@@ -25,7 +25,11 @@ export function createDefaultPlayerProfileState(): PlayerProfileState {
     name: "",
     creationCompleted: false,
     createdAt: null,
-    lastStartedAt: null
+    lastStartedAt: null,
+    tutorialStep: 0,
+    tutorialCompletedAt: null,
+    tutorialBankDepositSource: null,
+    tutorialBankWithdrawSource: null
   };
 }
 
@@ -60,7 +64,11 @@ export function clonePlayerProfileState(profile: PlayerProfileState): PlayerProf
     name: profile.name,
     creationCompleted: !!profile.creationCompleted,
     createdAt: Number.isFinite(profile.createdAt) ? Number(profile.createdAt) : null,
-    lastStartedAt: Number.isFinite(profile.lastStartedAt) ? Number(profile.lastStartedAt) : null
+    lastStartedAt: Number.isFinite(profile.lastStartedAt) ? Number(profile.lastStartedAt) : null,
+    tutorialStep: Number.isFinite(profile.tutorialStep) ? Math.max(0, Math.floor(profile.tutorialStep)) : 0,
+    tutorialCompletedAt: Number.isFinite(profile.tutorialCompletedAt) ? Number(profile.tutorialCompletedAt) : null,
+    tutorialBankDepositSource: typeof profile.tutorialBankDepositSource === "string" ? profile.tutorialBankDepositSource : null,
+    tutorialBankWithdrawSource: typeof profile.tutorialBankWithdrawSource === "string" ? profile.tutorialBankWithdrawSource : null
   };
 }
 

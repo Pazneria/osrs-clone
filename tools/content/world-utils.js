@@ -27,7 +27,10 @@ const TileId = Object.freeze({
   DOOR_OPEN: 19,
   SHORE: 20,
   WATER_SHALLOW: 21,
-  WATER_DEEP: 22
+  WATER_DEEP: 22,
+  FENCE: 23,
+  WOODEN_GATE_CLOSED: 24,
+  WOODEN_GATE_OPEN: 25
 });
 
 const WALKABLE = new Set([
@@ -40,6 +43,7 @@ const WALKABLE = new Set([
   TileId.STAIRS_DOWN,
   TileId.STAIRS_RAMP,
   TileId.DOOR_OPEN,
+  TileId.WOODEN_GATE_OPEN,
   TileId.SHORE
 ]);
 
@@ -182,6 +186,32 @@ function applyStamp(map, stamp, startX, startY, z) {
       else if (ch === "B") map[z][mapY][mapX] = TileId.BANK_BOOTH;
       else if (ch === "N" || ch === "K" || ch === "Q" || ch === "$") map[z][mapY][mapX] = TileId.SOLID_NPC;
       else if (ch === "V") map[z][mapY][mapX] = TileId.SHOP_COUNTER;
+      else if (ch === "f") map[z][mapY][mapX] = TileId.FENCE;
+      else if (ch === "g") map[z][mapY][mapX] = TileId.WOODEN_GATE_CLOSED;
+      else if (ch === "G") map[z][mapY][mapX] = TileId.WOODEN_GATE_OPEN;
+    }
+  }
+}
+
+function applyFenceSegment(map, fence) {
+  if (!fence || !Array.isArray(fence.points) || fence.points.length < 2) return;
+  const z = Number.isInteger(fence.z) ? fence.z : 0;
+  for (let i = 1; i < fence.points.length; i++) {
+    const from = fence.points[i - 1];
+    const to = fence.points[i];
+    if (!from || !to) continue;
+    const dx = Math.sign(to.x - from.x);
+    const dy = Math.sign(to.y - from.y);
+    if (dx !== 0 && dy !== 0) continue;
+    let x = from.x;
+    let y = from.y;
+    const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
+    for (let step = 0; step <= steps; step++) {
+      if (map[z] && map[z][y] && x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE) {
+        map[z][y][x] = TileId.FENCE;
+      }
+      x += dx;
+      y += dy;
     }
   }
 }
@@ -197,6 +227,10 @@ function applyStructures(map, world, stamps) {
 }
 
 function applyLandmarks(map, world) {
+  const fences = world.landmarks && Array.isArray(world.landmarks.fences) ? world.landmarks.fences : [];
+  for (let i = 0; i < fences.length; i++) {
+    applyFenceSegment(map, fences[i]);
+  }
   const staircases = world.landmarks && Array.isArray(world.landmarks.staircases) ? world.landmarks.staircases : [];
   for (let i = 0; i < staircases.length; i++) {
     const tiles = staircases[i].tiles || [];
@@ -331,6 +365,19 @@ function findShortestPathLength(map, start, goal, options = {}) {
   if (!Number.isFinite(start.x) || !Number.isFinite(start.y) || !Number.isFinite(start.z)) return null;
   if (!Number.isFinite(goal.x) || !Number.isFinite(goal.y) || !Number.isFinite(goal.z)) return null;
   if (start.z !== goal.z) return null;
+  const allowedBounds = options && options.allowedBounds && typeof options.allowedBounds === "object"
+    ? options.allowedBounds
+    : null;
+  const insideAllowedBounds = (point) => {
+    if (!allowedBounds) return true;
+    if (Number.isFinite(allowedBounds.z) && point.z !== allowedBounds.z) return false;
+    if (Number.isFinite(allowedBounds.xMin) && point.x < allowedBounds.xMin) return false;
+    if (Number.isFinite(allowedBounds.xMax) && point.x > allowedBounds.xMax) return false;
+    if (Number.isFinite(allowedBounds.yMin) && point.y < allowedBounds.yMin) return false;
+    if (Number.isFinite(allowedBounds.yMax) && point.y > allowedBounds.yMax) return false;
+    return true;
+  };
+  if (!insideAllowedBounds(start) || !insideAllowedBounds(goal)) return null;
   if (!isWalkable(map, start.x, start.y, start.z) || !isWalkable(map, goal.x, goal.y, goal.z)) return null;
 
   const maxDistance = Number.isFinite(options.maxDistance) ? Math.max(0, Math.floor(options.maxDistance)) : 64;
@@ -347,6 +394,15 @@ function findShortestPathLength(map, start, goal, options = {}) {
     { x: -1, y: 1 },
     { x: -1, y: -1 }
   ];
+  const canTraverseStep = (current, next) => {
+    if (!insideAllowedBounds({ x: next.x, y: next.y, z: start.z })) return false;
+    if (!isWalkable(map, next.x, next.y, start.z)) return false;
+    const dx = next.x - current.x;
+    const dy = next.y - current.y;
+    if (Math.abs(dx) !== 1 || Math.abs(dy) !== 1) return true;
+    return isWalkable(map, current.x + dx, current.y, start.z)
+      && isWalkable(map, current.x, current.y + dy, start.z);
+  };
 
   for (let i = 0; i < queue.length; i++) {
     const current = queue[i];
@@ -359,7 +415,7 @@ function findShortestPathLength(map, start, goal, options = {}) {
       if (nextX < 0 || nextY < 0 || nextX >= MAP_SIZE || nextY >= MAP_SIZE) continue;
       const key = `${nextX}:${nextY}:${start.z}`;
       if (visited.has(key)) continue;
-      if (!isWalkable(map, nextX, nextY, start.z)) continue;
+      if (!canTraverseStep(current, { x: nextX, y: nextY })) continue;
       visited.add(key);
       queue.push({ x: nextX, y: nextY, distance: current.distance + 1 });
       if (visited.size >= maxVisited) return null;

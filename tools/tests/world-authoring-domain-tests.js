@@ -4,12 +4,13 @@ const path = require("path");
 const vm = require("vm");
 
 const { loadTsModule } = require("./ts-module-loader");
+const { TileId, buildWorldGameplayMap, findShortestPathLength, isWalkable, loadWorldContent } = require("../content/world-utils");
 
 const root = path.resolve(__dirname, "..", "..");
 const authoring = loadTsModule(path.join(root, "src", "game", "world", "authoring.ts"));
 const manifest = require(path.join(root, "content", "world", "manifest.json"));
-const northRoadCamp = require(path.join(root, "content", "world", "regions", "north_road_camp.json"));
 const starterTown = require(path.join(root, "content", "world", "regions", "starter_town.json"));
+const tutorialIsland = require(path.join(root, "content", "world", "regions", "tutorial_island.json"));
 
 const WORLD_COORD_SCALE = 648 / 486;
 const STARTER_TOWN_STAMP_IDS = Object.freeze([
@@ -68,8 +69,11 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:fletching_supplier": { x: 183, y: 238, z: 0, dialogueId: "fletching_supplier", scaledX: 242, scaledY: 315 },
   "merchant:starter_caravan_guide": { x: 223, y: 221, z: 0, dialogueId: "road_guide", scaledX: 297, scaledY: 293 },
   "merchant:east_outpost_caravan_guide": { x: 260, y: 257, z: 0, dialogueId: "outpost_guide", scaledX: 346, scaledY: 340 },
+  "merchant:advanced_fletcher": { x: 365, y: 253, z: 0, dialogueId: "advanced_fletcher", scaledX: 485, scaledY: 336 },
+  "merchant:advanced_woodsman": { x: 366, y: 255, z: 0, dialogueId: "advanced_woodsman", scaledX: 486, scaledY: 338 },
   "merchant:fishing_teacher": { x: 170, y: 221, z: 0, dialogueId: "fishing_teacher", scaledX: 226, scaledY: 293 },
   "merchant:fishing_supplier": { x: 234, y: 221, z: 0, dialogueId: "fishing_supplier", scaledX: 311, scaledY: 293 },
+  "merchant:forester_teacher": { x: 219, y: 205, z: 0, dialogueId: "forester_teacher", scaledX: 282, scaledY: 268 },
   "merchant:borin_ironvein": { x: 246, y: 227, z: 0, dialogueId: "borin_ironvein", scaledX: 327, scaledY: 300 },
   "merchant:thrain_deepforge": { x: 272, y: 257, z: 0, dialogueId: "thrain_deepforge", scaledX: 361, scaledY: 340 },
   "merchant:elira_gemhand": { x: 170, y: 195, z: 0, dialogueId: "elira_gemhand", scaledX: 226, scaledY: 258 },
@@ -95,10 +99,56 @@ function loadNpcDialogueCatalog() {
   return sandbox.window && sandbox.window.NpcDialogueCatalog ? sandbox.window.NpcDialogueCatalog : null;
 }
 
+function makeSparseGameplayMap() {
+  return [
+    [],
+    []
+  ];
+}
+
+function setSparseTile(map, x, y, z, tileId) {
+  if (!map[z]) map[z] = [];
+  if (!map[z][y]) map[z][y] = [];
+  map[z][y][x] = tileId;
+}
+
+{
+  const map = makeSparseGameplayMap();
+  setSparseTile(map, 10, 10, 0, TileId.GRASS);
+  setSparseTile(map, 11, 11, 0, TileId.GRASS);
+  setSparseTile(map, 11, 10, 0, TileId.FENCE);
+  setSparseTile(map, 10, 11, 0, TileId.FENCE);
+
+  assert.strictEqual(
+    findShortestPathLength(map, { x: 10, y: 10, z: 0 }, { x: 11, y: 11, z: 0 }, { maxDistance: 2 }),
+    null,
+    "path helper should not allow diagonal movement through two blocked corner tiles"
+  );
+}
+
+{
+  const map = makeSparseGameplayMap();
+  setSparseTile(map, 20, 20, 0, TileId.GRASS);
+  setSparseTile(map, 21, 20, 0, TileId.GRASS);
+  setSparseTile(map, 22, 20, 0, TileId.GRASS);
+
+  assert.strictEqual(
+    findShortestPathLength(map, { x: 20, y: 20, z: 0 }, { x: 22, y: 20, z: 0 }, {
+      maxDistance: 4,
+      allowedBounds: { xMin: 20, xMax: 21, yMin: 20, yMax: 20, z: 0 }
+    }),
+    null,
+    "path helper should reject tutorial path goals outside the allowed movement bounds"
+  );
+}
+
 {
   const starterManifestEntry = manifest.worlds.find((entry) => entry.worldId === "starter_town");
+  const tutorialManifestEntry = manifest.worlds.find((entry) => entry.worldId === "tutorial_island");
   assert.ok(starterManifestEntry, "starter_town should exist in the raw manifest");
+  assert.ok(tutorialManifestEntry, "tutorial_island should exist in the raw manifest");
   assert.deepStrictEqual(starterManifestEntry.stampIds, STARTER_TOWN_STAMP_IDS, "starter_town manifest should expose the full homestead stamp kit");
+  assert.deepStrictEqual(tutorialManifestEntry.stampIds, ["tutorial_start_cabin"], "tutorial_island should expose the authored starting cabin stamp");
 
   const scaledDefaultSpawn = authoring.getDefaultSpawn("starter_town");
   assert.deepStrictEqual(
@@ -117,6 +167,134 @@ function loadNpcDialogueCatalog() {
     scaledDefaultSpawn,
     "manifest entry lookup and default spawn lookup should stay in sync"
   );
+
+  const scaledTutorialSpawn = authoring.getDefaultSpawn("tutorial_island");
+  assert.deepStrictEqual(
+    scaledTutorialSpawn,
+    {
+      x: scaleAxis(tutorialManifestEntry.defaultSpawn.x),
+      y: scaleAxis(tutorialManifestEntry.defaultSpawn.y),
+      z: tutorialManifestEntry.defaultSpawn.z
+    },
+    "typed authoring should scale tutorial island default spawn"
+  );
+}
+
+{
+  const tutorialDefinition = authoring.getWorldDefinition("tutorial_island");
+  const dialogueCatalog = loadNpcDialogueCatalog();
+  const rawGuide = tutorialIsland.services.find((entry) => entry.serviceId === "merchant:tutorial_guide");
+  const scaledGuide = tutorialDefinition.services.find((entry) => entry.serviceId === "merchant:tutorial_guide");
+  const servicesById = Object.fromEntries(tutorialIsland.services.map((entry) => [entry.serviceId, entry]));
+
+  assert.ok(rawGuide, "raw tutorial island should include the tutorial guide");
+  assert.ok(scaledGuide, "scaled tutorial island should include the tutorial guide");
+  assert.strictEqual(tutorialDefinition.worldId, "tutorial_island", "tutorial island definition id mismatch");
+  assert.strictEqual(tutorialIsland.services.length, 10, "raw tutorial island should include guides, instructors, and smithing stations");
+  const tutorialLessonGates = tutorialIsland.landmarks.doors.filter((door) => Number.isFinite(door.tutorialRequiredStep));
+  assert.strictEqual(tutorialIsland.combatSpawns.length, 2, "raw tutorial island should include tutorial chickens");
+  assert.ok(tutorialIsland.combatSpawns.every((entry) => entry.enemyId === "enemy_chicken"), "tutorial island combat should use chickens instead of a dummy");
+  assert.strictEqual(tutorialIsland.resourceNodes.mining.length, 2, "raw tutorial island should include copper and tin mining nodes");
+  assert.strictEqual(tutorialIsland.resourceNodes.woodcutting.length, 2, "raw tutorial island should include a small tutorial grove");
+  assert.strictEqual(tutorialIsland.structures.length, 1, "raw tutorial island should include the starting cabin structure");
+  assert.strictEqual(tutorialIsland.structures[0].stampId, "tutorial_start_cabin", "raw tutorial island cabin should use the tutorial cabin stamp");
+  assert.strictEqual(tutorialLessonGates.length, 7, "raw tutorial island should include one locked gate per tutorial section transition");
+  assert.ok(tutorialLessonGates.every((door) => door.tileId === "WOODEN_GATE_CLOSED"), "tutorial lesson gates should use wooden gate tiles");
+  const smithingCombatGate = tutorialLessonGates.find((door) => door.landmarkId === "tutorial_gate_smithing_to_combat");
+  assert.ok(smithingCombatGate, "raw tutorial island should include the smithing-to-combat lesson gate");
+  assert.strictEqual(smithingCombatGate.isEW, true, "smithing-to-combat gate should remain authored as an east-west wooden gate");
+  assert.strictEqual(smithingCombatGate.closedRot, 0, "east-west smithing-to-combat gate should render closed across the fence line");
+  assert.strictEqual(smithingCombatGate.openRot, Math.PI / 2, "east-west smithing-to-combat gate should swing open off the fence line");
+  assert.ok(tutorialIsland.landmarks.doors.some((door) => door.landmarkId === "tutorial_start_cabin_door" && door.tileId === "DOOR_OPEN" && door.isOpen === true), "tutorial starting cabin should use an open normal door");
+  assert.ok(Array.isArray(tutorialIsland.landmarks.fences) && tutorialIsland.landmarks.fences.length >= 7, "tutorial island should author real fence landmarks");
+  assert.ok(Array.isArray(tutorialIsland.landmarks.roofs) && tutorialIsland.landmarks.roofs.some((roof) => roof.landmarkId === "tutorial_start_cabin_roof" && roof.hideWhenPlayerInside === true), "tutorial cabin should author a hideable roof");
+  assert.ok(
+    !tutorialIsland.landmarks.staircases.some((landmark) => landmark.landmarkId === "tutorial_fences" || landmark.tiles.some((tile) => tile.tileId === "WALL" && tile.height === 0.2)),
+    "tutorial island should not use WALL landmark tiles as pseudo fences"
+  );
+  assert.strictEqual(tutorialIsland.landmarks.altars.length, 1, "raw tutorial island should include one altar");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(rawGuide.dialogueId), "tutorial_guide", "tutorial guide dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_woodcutting_instructor"].dialogueId), "tutorial_woodcutting_instructor", "woodcutting instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_fishing_instructor"].dialogueId), "tutorial_fishing_instructor", "fishing instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_firemaking_instructor"].dialogueId), "tutorial_firemaking_instructor", "firemaking instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_mining_smithing_instructor"].dialogueId), "tutorial_mining_smithing_instructor", "mining and smithing instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_combat_instructor"].dialogueId), "tutorial_combat_instructor", "combat instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_bank_tutor"].dialogueId), "tutorial_bank_tutor", "bank tutor dialogue should resolve");
+  assert.ok(
+    fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8").includes("!spot.tags.includes('tutorial')"),
+    "tutorial instructors should not inherit raised smithing/crafting merchant floor height"
+  );
+  assert.deepStrictEqual(
+    { x: scaledGuide.x, y: scaledGuide.y, z: scaledGuide.z },
+    {
+      x: tutorialDefinition.structures[0].x + (rawGuide.x - tutorialIsland.structures[0].x),
+      y: tutorialDefinition.structures[0].y + (rawGuide.y - tutorialIsland.structures[0].y),
+      z: rawGuide.z
+    },
+    "tutorial guide placement should preserve its local cabin offset after scaling"
+  );
+  assert.deepStrictEqual(
+    scaledGuide.travelSpawn,
+    { x: scaleAxis(rawGuide.travelSpawn.x), y: scaleAxis(rawGuide.travelSpawn.y), z: rawGuide.travelSpawn.z },
+    "tutorial guide travel spawn should scale through the authoring bridge"
+  );
+  assert.ok(
+    tutorialDefinition.landmarks.fences.every((fence) => fence.points.every((point) => Number.isFinite(point.x) && Number.isFinite(point.y))),
+    "scaled tutorial fences should preserve finite authored points"
+  );
+  assert.ok(
+    tutorialDefinition.landmarks.roofs.some((roof) => roof.landmarkId === "tutorial_start_cabin_roof" && roof.hideBounds && roof.hideWhenPlayerInside === true),
+    "scaled tutorial island should preserve cabin roof hide metadata"
+  );
+
+  const tutorialContent = loadWorldContent(root, "tutorial_island");
+  const gameplayMap = buildWorldGameplayMap(tutorialContent.world, tutorialContent.stamps);
+  assert.strictEqual(gameplayMap[0][112][124], TileId.FENCE, "tutorial fence lines should expand into FENCE tiles");
+  assert.strictEqual(isWalkable(gameplayMap, 124, 112, 0), false, "FENCE tiles should block movement");
+  assert.strictEqual(gameplayMap[0][122][118], TileId.DOOR_OPEN, "tutorial cabin exit should expand into an open normal door tile");
+  assert.strictEqual(isWalkable(gameplayMap, 118, 122, 0), true, "open tutorial cabin doors should be walkable");
+  assert.strictEqual(gameplayMap[0][118][126], TileId.WOODEN_GATE_CLOSED, "tutorial gates should expand into closed wooden gate tiles");
+  assert.strictEqual(isWalkable(gameplayMap, 126, 118, 0), false, "closed wooden gates should block movement");
+  gameplayMap[0][118][126] = TileId.WOODEN_GATE_OPEN;
+  assert.strictEqual(isWalkable(gameplayMap, 126, 118, 0), true, "open wooden gates should be walkable");
+
+  const fishingFireGate = tutorialIsland.landmarks.doors.find((door) => door.landmarkId === "tutorial_gate_fishing_to_firemaking");
+  assert.deepStrictEqual({ x: fishingFireGate.x, y: fishingFireGate.y, z: fishingFireGate.z }, { x: 150, y: 125, z: 0 }, "fishing-to-firemaking gate should sit on the shared fence run, not the blocked corner");
+  gameplayMap[0][fishingFireGate.y][fishingFireGate.x] = TileId.WOODEN_GATE_OPEN;
+  assert.strictEqual(isWalkable(gameplayMap, fishingFireGate.x - 1, fishingFireGate.y, fishingFireGate.z), true, "fishing side of the firemaking gate should stay unobstructed");
+  assert.strictEqual(isWalkable(gameplayMap, fishingFireGate.x + 1, fishingFireGate.y, fishingFireGate.z), true, "firemaking side of the firemaking gate should stay unobstructed");
+  assert.notStrictEqual(
+    findShortestPathLength(gameplayMap, { x: 141, y: 116, z: 0 }, { x: 158, y: 132, z: 0 }, { maxDistance: 48, maxVisited: 2048 }),
+    null,
+    "opened fishing-to-firemaking gate should allow pathing from the pond to the fire lane"
+  );
+
+  const scaledTutorialDefinition = authoring.getWorldDefinition("tutorial_island");
+  const scaledTutorialMap = buildWorldGameplayMap(scaledTutorialDefinition, {
+    tutorial_start_cabin: require(path.join(root, "content", "world", "stamps", "tutorial_start_cabin.json"))
+  });
+  for (const gate of scaledTutorialDefinition.landmarks.doors) {
+    if (Number.isFinite(gate.tutorialRequiredStep) && gate.tutorialRequiredStep <= 4) {
+      scaledTutorialMap[gate.z][gate.y][gate.x] = TileId.WOODEN_GATE_OPEN;
+    }
+  }
+  assert.strictEqual(
+    findShortestPathLength(scaledTutorialMap, { x: 229, y: 183, z: 0 }, { x: 231, y: 235, z: 0 }, {
+      maxDistance: 180,
+      maxVisited: 50000,
+      allowedBounds: { xMin: 140, xMax: 255, yMin: 135, yMax: 195, z: 0 }
+    }),
+    null,
+    "tutorial movement bounds should prevent pathing from the mining yard into open grass"
+  );
+  assert.ok(
+    fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8").includes("if (blockX || blockY) continue;"),
+    "runtime pathing should reject diagonal corner-cutting along fence and gate corners"
+  );
+  assert.ok(
+    fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8").includes("window.isTutorialWalkTileAllowed"),
+    "runtime pathing should keep active tutorial movement inside the authored island route"
+  );
 }
 
 {
@@ -132,7 +310,7 @@ function loadNpcDialogueCatalog() {
   assert.ok(rawPond, "raw starter_town data should include castle_front_pond");
   assert.strictEqual(starterTown.structures.length, Object.keys(STARTER_TOWN_STRUCTURE_LAYOUT).length, "raw starter_town should include the full homestead structure layout");
   assert.strictEqual(starterTown.landmarks.staircases.length, Object.keys(STARTER_TOWN_STAIRCASE_LAYOUT).length, "raw starter_town should include the full staircase access layout");
-  assert.ok(Array.isArray(rawCombatSpawns) && rawCombatSpawns.length === 50, "raw starter_town data should include 50 combat spawns");
+  assert.ok(Array.isArray(rawCombatSpawns) && rawCombatSpawns.length === 53, "raw starter_town data should include 53 combat spawns");
   assert.ok(Array.isArray(starterTown.skillRoutes.firemaking) && starterTown.skillRoutes.firemaking.length === 5, "raw starter_town should include 5 authored firemaking routes");
 
   const rawTrainingDummy = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_training_dummy_hub");
@@ -142,6 +320,7 @@ function loadNpcDialogueCatalog() {
   const rawBoarWestNorth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_north");
   const rawBoarWestSouth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const rawBoarEastNorth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
+  const rawSoutheastCampAnchor = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
 
   const scaledCastle = scaledStructuresById.castle_ground;
   const scaledPond = starterDefinition.terrainPatches.castleFrontPond;
@@ -155,6 +334,7 @@ function loadNpcDialogueCatalog() {
   const scaledBoarWestNorth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_north");
   const scaledBoarWestSouth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const scaledBoarEastNorth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
+  const scaledSoutheastCampAnchor = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
 
   assert.deepStrictEqual(
     { x: scaledCastle.x, y: scaledCastle.y },
@@ -302,18 +482,14 @@ function loadNpcDialogueCatalog() {
     },
     "world definition combat spawns should keep east-north boar pocket alignment"
   );
-}
-
-{
-  const northRoadDefinition = authoring.getWorldDefinition("north_road_camp");
-  assert.ok(Array.isArray(northRoadCamp.skillRoutes.firemaking) && northRoadCamp.skillRoutes.firemaking.length === 1, "raw north_road_camp should include 1 authored firemaking route");
-  assert.ok(Array.isArray(northRoadDefinition.skillRoutes.firemaking) && northRoadDefinition.skillRoutes.firemaking.length === 1, "scaled north_road_camp should include 1 firemaking route");
-  const rawRoute = northRoadCamp.skillRoutes.firemaking[0];
-  const scaledRoute = northRoadDefinition.skillRoutes.firemaking[0];
   assert.deepStrictEqual(
-    { routeId: scaledRoute.routeId, alias: scaledRoute.alias, x: scaledRoute.x, y: scaledRoute.y, z: scaledRoute.z },
-    { routeId: rawRoute.routeId, alias: rawRoute.alias, x: scaleAxis(rawRoute.x), y: scaleAxis(rawRoute.y), z: rawRoute.z },
-    "north_road_camp firemaking route should preserve identity while scaling its anchor"
+    { x: scaledSoutheastCampAnchor.spawnTile.x, y: scaledSoutheastCampAnchor.spawnTile.y, z: scaledSoutheastCampAnchor.spawnTile.z },
+    {
+      x: scaleAxis(rawSoutheastCampAnchor.spawnTile.x),
+      y: scaleAxis(rawSoutheastCampAnchor.spawnTile.y),
+      z: rawSoutheastCampAnchor.spawnTile.z
+    },
+    "world definition combat spawns should keep the southeast camp anchor alignment"
   );
 }
 

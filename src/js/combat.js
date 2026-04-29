@@ -2511,6 +2511,7 @@
         renderer.group.position.set(enemyState.x, 0, enemyState.y);
         renderer.group.rotation.y = enemyState.facingYaw || 0;
         layer.add(renderer.group);
+        renderer.group.updateMatrixWorld(true);
         environmentMeshes.push(renderer.hitbox);
         combatEnemyRenderersById[enemyState.runtimeId] = renderer;
         return renderer;
@@ -2920,6 +2921,7 @@
             const enemyType = getEnemyDefinition(enemyState.enemyId);
             renderer.hitbox.userData.combatLevel = getEnemyCombatLevel(enemyType);
         }
+        renderer.group.updateMatrixWorld(true);
 
         if (renderer.kind === 'rat') {
             const attackAge = frameNow - (enemyState.attackTriggerAt || 0);
@@ -3086,6 +3088,26 @@
         };
     }
 
+    function listQaCombatEnemyStates() {
+        ensureCombatEnemyWorldReady();
+        updateCombatRenderers(Date.now());
+        return combatEnemyStates.map((enemyState) => {
+            const enemyType = getEnemyDefinition(enemyState.enemyId);
+            const renderer = combatEnemyRenderersById[enemyState.runtimeId] || null;
+            return {
+                runtimeId: enemyState.runtimeId || '',
+                enemyId: enemyState.enemyId || '',
+                displayName: enemyType && enemyType.displayName ? enemyType.displayName : enemyState.enemyId || '',
+                state: enemyState.currentState || '',
+                x: Number.isFinite(enemyState.x) ? enemyState.x : 0,
+                y: Number.isFinite(enemyState.y) ? enemyState.y : 0,
+                z: Number.isFinite(enemyState.z) ? enemyState.z : 0,
+                hp: Number.isFinite(enemyState.currentHealth) ? enemyState.currentHealth : null,
+                rendered: !!(renderer && renderer.hitbox)
+            };
+        });
+    }
+
     window.initCombatWorldState = initCombatWorldState;
     window.processCombatTick = processCombatTick;
     window.updateCombatRenderers = updateCombatRenderers;
@@ -3096,5 +3118,6 @@
     window.lockPlayerCombatTarget = lockPlayerCombatTarget;
     window.getCombatEnemyState = getCombatEnemyState;
     window.getCombatEnemyAnimationDebugState = getCombatEnemyAnimationDebugState;
+    window.listQaCombatEnemyStates = listQaCombatEnemyStates;
     window.getCombatHudSnapshot = getCombatHudSnapshot;
 })();

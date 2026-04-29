@@ -12,12 +12,14 @@
 - [x] SMITHING-008: Jewelry-base production integration with crafting-owned mould unlock progression and downstream gem-attachment flow.
 - [x] SMITHING-009: Merchant stock/value alignment pass for Borin, Thrain, Elira, and general-store fallback rules.
 - [x] SMITHING-010: Quest-gate integration completed for rune-material access and advanced-forge progression via Thrain's shared `Proof of the Deepforge` unlock.
+- [x] SMITHING-011: Advanced station UX pass completed with quantity-aware start/finish messaging, clearer queue interruption/failure copy, and focused smithing runtime coverage.
+- [x] SMITHING-012: Runtime-backed smithing balance targets are now locked across smelting, forged outputs, and jewelry bases; rune-tier forged outputs no longer collapse to placeholder sell values.
 
 ## Now
 (empty)
 
 ## Next
-- [ ] SMITHING-011: Advanced station UX pass for quantity selection, queue interruption rules, and failure-state messaging.
+(empty)
 
 ## Later
-- [ ] SMITHING-012: Balance and polish pass using output-per-tick, XP-per-tick, and tier-economy target tuning.
+(empty)

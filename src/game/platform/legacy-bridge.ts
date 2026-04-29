@@ -17,8 +17,8 @@ import {
 } from "../world/bootstrap";
 import { cloneRouteDescriptor } from "../world/clone";
 import {
-  getDefaultSpawn,
   getWorldManifest,
+  getDefaultSpawn,
   getWorldManifestEntry,
   listWorldIds
 } from "../world/authoring";
@@ -66,6 +66,16 @@ function getBaseBootstrap(worldId: string): WorldBootstrapResult {
   return result;
 }
 
+function resolveKnownWorldId(worldId?: string | null): string {
+  const normalizedWorldId = String(worldId || "").trim();
+  if (!normalizedWorldId) return initialWorldId;
+  try {
+    return getWorldManifestEntry(normalizedWorldId).worldId;
+  } catch (error) {
+    return initialWorldId;
+  }
+}
+
 const configuredWorldIds = listWorldIds();
 const initialWorldId = configuredWorldIds[0] || "starter_town";
 let activeWorldId = initialWorldId;
@@ -100,8 +110,8 @@ function registerRuntimeWorldState(state: RuntimeWorldStateInput): GameContext {
 }
 
 function activateWorld(worldId: string): GameContext {
-  const normalizedWorldId = String(worldId || "").trim();
-  activeWorldId = normalizedWorldId || initialWorldId;
+  const normalizedWorldId = resolveKnownWorldId(worldId);
+  activeWorldId = normalizedWorldId;
   activeBaseBootstrap = getBaseBootstrap(activeWorldId);
   activeBootstrap = activeBaseBootstrap;
   activeContext = createGameContext(activeBootstrap);
@@ -116,16 +126,16 @@ export function exposeLegacyBridge(): void {
     listWorldIds: () => listWorldIds(),
     getCurrentWorldId: () => activeWorldId,
     activateWorld,
-    getWorldManifestEntry: (worldId?: string) => getWorldManifestEntry(worldId || activeWorldId),
-    getDefaultSpawn: (worldId?: string) => getDefaultSpawn(worldId || activeWorldId),
-    getWorldDefinition: (worldId?: string) => getBaseBootstrap(worldId || activeWorldId).definition,
+    getWorldManifestEntry: (worldId?: string) => getWorldManifestEntry(resolveKnownWorldId(worldId || activeWorldId)),
+    getDefaultSpawn: (worldId?: string) => getDefaultSpawn(resolveKnownWorldId(worldId || activeWorldId)),
+    getWorldDefinition: (worldId?: string) => getBaseBootstrap(resolveKnownWorldId(worldId || activeWorldId)).definition,
     getBootstrapResult: (worldId?: string) => {
-      const resolvedWorldId = worldId || activeWorldId;
+      const resolvedWorldId = resolveKnownWorldId(worldId || activeWorldId);
       return resolvedWorldId === activeWorldId ? activeBootstrap : getBaseBootstrap(resolvedWorldId);
     },
     getGameContext: () => activeContext,
     getWorldLegacyConfig: (worldId?: string) => {
-      const resolvedWorldId = worldId || activeWorldId;
+      const resolvedWorldId = resolveKnownWorldId(worldId || activeWorldId);
       return resolvedWorldId === activeWorldId ? activeBootstrap.legacy : getBaseBootstrap(resolvedWorldId).legacy;
     },
     getRouteGroup: (groupId: string) => activeContext.queries.getRouteGroup(groupId),

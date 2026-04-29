@@ -438,6 +438,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function getRaycastHits(clientX, clientY, maxHits = 16) {
+            if (camera && typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld(true);
             mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(environmentMeshes);
             const hits = [];
@@ -454,10 +455,86 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return hits;
         }
 
-        function getRaycastHit(clientX, clientY) {
-            const hits = getRaycastHits(clientX, clientY, 1);
-            return hits.length > 0 ? hits[0] : null;
+        function getRaycastHitPriority(hitData) {
+            if (!hitData || !hitData.type) return 100;
+            if (hitData.type === 'ENEMY') return 0;
+            if (hitData.type === 'NPC') return 1;
+            if (hitData.type === 'GROUND_ITEM') return 2;
+            if (hitData.type === 'DOOR') return 3;
+            if (hitData.type === 'BANK_BOOTH' || hitData.type === 'SHOP_COUNTER') return 4;
+            if (hitData.type === 'TREE' || hitData.type === 'ROCK' || hitData.type === 'FISHING_SPOT' || hitData.type === 'WATER' || hitData.type === 'FIRE') return 5;
+            return 20;
         }
+
+        function getRaycastHit(clientX, clientY) {
+            const hits = getRaycastHits(clientX, clientY, 12);
+            if (hits.length <= 1) return hits.length > 0 ? hits[0] : null;
+            let best = hits[0];
+            let bestPriority = getRaycastHitPriority(best);
+            for (let i = 1; i < hits.length; i++) {
+                const priority = getRaycastHitPriority(hits[i]);
+                if (priority < bestPriority) {
+                    best = hits[i];
+                    bestPriority = priority;
+                }
+            }
+            return best;
+        }
+
+        window.listQaRaycastHitsAt = function listQaRaycastHitsAt(clientX, clientY, maxHits = 12) {
+            const x = Number(clientX);
+            const y = Number(clientY);
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return [];
+            const limit = Number.isFinite(maxHits) ? Math.max(1, Math.min(24, Math.floor(maxHits))) : 12;
+            return getRaycastHits(x, y, limit).map((hitData, index) => ({
+                index,
+                type: hitData && hitData.type ? hitData.type : 'UNKNOWN',
+                name: hitData && hitData.name ? hitData.name : '',
+                uid: hitData && hitData.uid !== undefined && hitData.uid !== null ? String(hitData.uid) : '',
+                gridX: hitData && Number.isInteger(hitData.gridX) ? hitData.gridX : null,
+                gridY: hitData && Number.isInteger(hitData.gridY) ? hitData.gridY : null,
+                priority: getRaycastHitPriority(hitData)
+            }));
+        };
+
+        window.findQaRaycastHitNear = function findQaRaycastHitNear(clientX, clientY, type, name = '', radius = 80, step = 8) {
+            const centerX = Number(clientX);
+            const centerY = Number(clientY);
+            if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) return null;
+            const wantedType = String(type || '').trim().toUpperCase();
+            const wantedName = String(name || '').trim().toLowerCase();
+            const searchRadius = Math.max(0, Math.min(180, Math.floor(Number.isFinite(radius) ? radius : 80)));
+            const searchStep = Math.max(2, Math.min(24, Math.floor(Number.isFinite(step) ? step : 8)));
+            let best = null;
+            for (let dy = -searchRadius; dy <= searchRadius; dy += searchStep) {
+                for (let dx = -searchRadius; dx <= searchRadius; dx += searchStep) {
+                    const x = centerX + dx;
+                    const y = centerY + dy;
+                    if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) continue;
+                    const hits = getRaycastHits(x, y, 8);
+                    for (let i = 0; i < hits.length; i++) {
+                        const hit = hits[i];
+                        if (!hit) continue;
+                        if (wantedType && String(hit.type || '').toUpperCase() !== wantedType) continue;
+                        if (wantedName && !String(hit.name || '').toLowerCase().includes(wantedName)) continue;
+                        const dist = Math.sqrt((dx * dx) + (dy * dy));
+                        if (!best || dist < best.distance) {
+                            best = {
+                                x: Math.round(x),
+                                y: Math.round(y),
+                                distance: Number(dist.toFixed(2)),
+                                type: hit.type || 'UNKNOWN',
+                                name: hit.name || '',
+                                uid: hit.uid !== undefined && hit.uid !== null ? String(hit.uid) : '',
+                                gridX: Number.isInteger(hit.gridX) ? hit.gridX : null,
+                                gridY: Number.isInteger(hit.gridY) ? hit.gridY : null
+                            };
+                        }
+                    }
+                }
+            }
+            return best;
+        };
 
         
         function forEachTileInSearchRing(targetX, targetY, radius, visit) {
@@ -605,6 +682,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             for (let i = 0; i < shoreCandidates.length; i++) {
                 const candidateY = shoreCandidates[i];
                 if (!Number.isInteger(candidateY) || candidateY < 0 || candidateY >= MAP_SIZE) continue;
+                if (candidateY === stairDeckY) continue;
                 if (isStandableTile(stairX, candidateY, z)) {
                     shoreY = candidateY;
                     break;
@@ -648,6 +726,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
         function isStandableTile(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
+            if (typeof window.isTutorialWalkTileAllowed === 'function' && !window.isTutorialWalkTileAllowed(x, y, z)) return false;
             const tile = logicalMap[z][y][x];
             if (isWalkableTileId(tile)) return true;
 
@@ -1380,6 +1459,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         function isStandableTileForPath(x, y, z = playerState.z, pathOptions = null) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
+            if (typeof window.isTutorialWalkTileAllowed === 'function' && !window.isTutorialWalkTileAllowed(x, y, z)) return false;
             const tile = getPathTileId(x, y, z, pathOptions);
             if (isWalkableTileId(tile)) return true;
 
@@ -1504,13 +1584,20 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                         if (restrictPierFishingToDeck && isWaterTileId(nextTileId)) continue;
                         let nextHeight = heightMap[resolvedZ][ny][nx]; 
                         let isStairTransition = (nextTileId === TileId.STAIRS_RAMP || currentTileId === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
-                        if (Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition) continue;
+                        const cardinalStep = Math.abs(dir.x) + Math.abs(dir.y) === 1;
+                        const isPierDeckHeightTransition = cardinalStep
+                            && Math.abs(currentHeight - nextHeight) <= 0.6
+                            && (
+                                (isPierDeckTile(currentX, currentY, resolvedZ) && !isWaterTileId(nextTileId))
+                                || (isPierDeckTile(nx, ny, resolvedZ) && !isWaterTileId(currentTileId))
+                            );
+                        if (Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition && !isPierDeckHeightTransition) continue;
                         
                         if (Math.abs(dir.x) === 1 && Math.abs(dir.y) === 1) {
                             let hX = heightMap[resolvedZ][currentY][currentX + dir.x]; let hY = heightMap[resolvedZ][currentY + dir.y][currentX];
                             let blockX = !isStandableTileForPath(currentX + dir.x, currentY, resolvedZ, pathOptions) || Math.abs(hX - currentHeight) > 0.3;
                             let blockY = !isStandableTileForPath(currentX, currentY + dir.y, resolvedZ, pathOptions) || Math.abs(hY - currentHeight) > 0.3;
-                            if (blockX && blockY) continue; 
+                            if (blockX || blockY) continue; 
                         }
                         
                         visitedParents.set(nextKey, currentKey);
@@ -1771,12 +1858,18 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     } else if (playerState.targetObj === 'DOOR') {
                         const door = playerState.targetUid;
                         if (door) {
+                            if (window.isTutorialGateLocked && window.isTutorialGateLocked(door)) {
+                                const message = door.tutorialGateMessage || 'That gate is locked until you finish the current tutorial lesson.';
+                                if (typeof addChatMessage === 'function') addChatMessage(message, 'warn');
+                                playerState.action = 'IDLE';
+                                return;
+                            }
                             // EMERGENCY ANTI-CLIP: Push player off the door tile if they are standing on it
                             if (door.isOpen && playerState.x === door.x && playerState.y === door.y) {
                                 const dirs = [{x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1}];
                                 for (let d of dirs) {
                                     let nx = playerState.x + d.x, ny = playerState.y + d.y;
-                                    if (isStandableTile(nx, ny, playerState.z) && logicalMap[playerState.z][ny][nx] !== TileId.DOOR_OPEN) {
+                                    if (isStandableTile(nx, ny, playerState.z) && !isDoorTileId(logicalMap[playerState.z][ny][nx])) {
                                         playerState.x = nx; playerState.y = ny;
                                         playerState.prevX = nx; playerState.prevY = ny;
                                         break;
@@ -1786,7 +1879,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                             
                             door.isOpen = !door.isOpen;
                             door.targetRotation = door.isOpen ? door.openRot : door.closedRot;
-                            logicalMap[door.z][door.y][door.x] = door.isOpen ? TileId.DOOR_OPEN : TileId.DOOR_CLOSED;
+                            if (door.isWoodenGate) {
+                                logicalMap[door.z][door.y][door.x] = door.isOpen ? TileId.WOODEN_GATE_OPEN : TileId.WOODEN_GATE_CLOSED;
+                            } else {
+                                logicalMap[door.z][door.y][door.x] = door.isOpen ? TileId.DOOR_OPEN : TileId.DOOR_CLOSED;
+                            }
                             updateMinimapCanvas(); // Redraw map to show Walkable state change
                         }
                         playerState.action = 'IDLE';
@@ -1865,6 +1962,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                                 playerState.action = 'IDLE';
                                 const faceDx = playerState.targetX - playerState.x; const faceDy = playerState.targetY - playerState.y; 
                                 if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
+                                if (typeof window.setActiveBankSource === 'function') {
+                                    window.setActiveBankSource(`booth:${playerState.targetX},${playerState.targetY},${playerState.z}`);
+                                }
                                 openBank();
                             } else {
                                 if (playerState.targetObj === 'FURNACE' || playerState.targetObj === 'ANVIL') {
@@ -2206,6 +2306,78 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             bubble.style.transform = 'translate(-50%, -120%)';
             bubble.classList.remove('hidden');
         }
+
+        function projectWorldTileToScreen(x, y, z = 0, heightOffset = 1.0) {
+            const gx = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(Number(x) || 0)));
+            const gy = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(Number(y) || 0)));
+            const gz = Math.max(0, Math.min(PLANES - 1, Math.floor(Number(z) || 0)));
+            if (!camera) return null;
+            if (typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld(true);
+            const pos = new THREE.Vector3(gx, getVisualHeight(gx, gy, gz) + (Number.isFinite(heightOffset) ? heightOffset : 1.0), gy);
+            pos.project(camera);
+            return {
+                x: Math.round((pos.x * 0.5 + 0.5) * window.innerWidth),
+                y: Math.round((pos.y * -0.5 + 0.5) * window.innerHeight),
+                depth: Number.isFinite(pos.z) ? Number(pos.z.toFixed(4)) : null,
+                visible: pos.z < 1 && pos.x >= -1 && pos.x <= 1 && pos.y >= -1 && pos.y <= 1
+            };
+        }
+
+        window.projectWorldTileToScreen = projectWorldTileToScreen;
+
+        function syncQaRenderToPlayerState() {
+            if (!playerRig || !camera) return null;
+            const visualY = getVisualHeight(playerState.x, playerState.y, playerState.z);
+            baseVisualY = visualY;
+            playerRig.position.set(playerState.x, visualY, playerState.y);
+            const cameraFollowY = baseVisualY;
+            camera.position.x = playerRig.position.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
+            camera.position.y = cameraFollowY + 1.0 + cameraDist * Math.cos(cameraPitch);
+            camera.position.z = playerRig.position.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);
+            const followCamGround = getGroundHeightAtWorldPos(camera.position.x, camera.position.z, playerState.z);
+            camera.position.y = Math.max(camera.position.y, followCamGround + 0.3);
+            camera.lookAt(new THREE.Vector3(playerRig.position.x, cameraFollowY + 1.0, playerRig.position.z));
+            camera.updateMatrixWorld(true);
+            return {
+                x: playerState.x,
+                y: playerState.y,
+                z: playerState.z,
+                cameraX: Number(camera.position.x.toFixed(2)),
+                cameraY: Number(camera.position.y.toFixed(2)),
+                cameraZ: Number(camera.position.z.toFixed(2))
+            };
+        }
+
+        window.syncQaRenderToPlayerState = syncQaRenderToPlayerState;
+
+        window.setQaCameraView = function setQaCameraView(nextYaw, nextPitch = cameraPitch, nextDist = cameraDist) {
+            const yaw = Number(nextYaw);
+            const pitch = Number(nextPitch);
+            const dist = Number(nextDist);
+            if (Number.isFinite(yaw)) cameraYaw = yaw;
+            if (Number.isFinite(pitch)) cameraPitch = Math.max(0.1, Math.min(Math.PI - 0.1, pitch));
+            if (Number.isFinite(dist)) cameraDist = Math.max(5, Math.min(30, dist));
+            syncQaRenderToPlayerState();
+            return {
+                yaw: Number(cameraYaw.toFixed(4)),
+                pitch: Number(cameraPitch.toFixed(4)),
+                distance: Number(cameraDist.toFixed(2))
+            };
+        };
+
+        function resetQaCameraView() {
+            cameraYaw = Math.PI * 1.25;
+            cameraPitch = Math.PI / 3.1;
+            cameraDist = 16;
+            syncQaRenderToPlayerState();
+            return {
+                yaw: Number(cameraYaw.toFixed(4)),
+                pitch: Number(cameraPitch.toFixed(4)),
+                distance: Number(cameraDist.toFixed(2))
+            };
+        }
+
+        window.resetQaCameraView = resetQaCameraView;
 
         function initMotionDebugPanel() {
             const panel = document.getElementById('motion-debug-panel');
@@ -2606,6 +2778,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     }
                 }
             });
+
+            if (typeof window.updateTutorialRoofVisibility === 'function') window.updateTutorialRoofVisibility();
 
             if (typeof window.updateCombatRenderers === 'function') window.updateCombatRenderers(frameNow);
 

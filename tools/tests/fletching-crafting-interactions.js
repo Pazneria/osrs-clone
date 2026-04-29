@@ -290,6 +290,20 @@ function expectMessage(context, expectedText, testName) {
   assert(hasMessage, testName + ': expected message "' + expectedText + '"');
 }
 
+function expectMessageContaining(context, expectedFragment, testName) {
+  const hasMessage = context._messages.some(
+    (entry) => entry && typeof entry.message === "string" && entry.message.includes(expectedFragment)
+  );
+  assert(hasMessage, testName + ': expected message containing "' + expectedFragment + '"');
+}
+
+function expectMessageTone(context, expectedText, expectedTone, testName) {
+  const hasTone = context._messages.some(
+    (entry) => entry && entry.message === expectedText && entry.tone === expectedTone
+  );
+  assert(hasTone, testName + ': expected "' + expectedText + '" with tone "' + expectedTone + '"');
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
 
@@ -1063,7 +1077,7 @@ function run() {
       levels: { smithing: 30 }
     });
     assert(!smithing.onStart(locked), "expected smithing jewelry start to fail when mould unlock is missing");
-    expectMessage(locked, "You have not unlocked that mould yet.", "smithing mould unlock");
+    expectMessage(locked, "You have not unlocked the required mould for Silver Ring.", "smithing mould unlock");
   });
 
   test("Smithing jewelry base crafts when unlock is present", () => {
@@ -1087,6 +1101,301 @@ function run() {
     smithing.onTick(ctx);
     assert((ctx._counts.silver_ring || 0) === 1, "expected forged silver ring output");
     assert((ctx._counts.silver_bar || 0) === 0, "expected silver bar consumed");
+  });
+
+  test("Smithing anvil UI lists named tool and material requirements", () => {
+    const ctx = createSkillContext({
+      targetObj: "ANVIL",
+      counts: {},
+      levels: { smithing: 1 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(!smithing.onStart(ctx), "expected smithing UI to open when no recipe is preselected");
+    const recipeList = document.getElementById("smithing-recipe-list");
+    assert(recipeList && recipeList.children.length > 0, "expected smithing anvil recipe rows to render");
+
+    const bronzeSwordBladeRow = recipeList.children[0];
+    assert(bronzeSwordBladeRow && bronzeSwordBladeRow.children.length > 0, "expected bronze smithing recipe row");
+
+    const issueMarkup = bronzeSwordBladeRow.children[0].innerHTML || "";
+    assert(issueMarkup.includes("Needs Hammer"), "expected smithing UI to name the missing hammer requirement");
+    assert(issueMarkup.includes("Needs 1x Bronze Bar"), "expected smithing UI to name the missing bronze bar requirement");
+  });
+
+  test("Smithing furnace UI lists named mould and unlock requirements", () => {
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      counts: { silver_bar: 1 },
+      unlockFlags: { ringMouldUnlocked: false },
+      levels: { smithing: 30 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(!smithing.onStart(ctx), "expected smithing furnace UI to open when no recipe is preselected");
+    const tierList = document.getElementById("smithing-tier-list");
+    assert(tierList && tierList.children.length > 0, "expected smithing furnace tiers to render");
+
+    let silverTierButton = null;
+    for (let i = 0; i < tierList.children.length; i++) {
+      const button = tierList.children[i];
+      if ((button.innerHTML || "").includes("Silver")) {
+        silverTierButton = button;
+        break;
+      }
+    }
+    assert(silverTierButton && typeof silverTierButton.onclick === "function", "expected silver smithing tier button");
+    silverTierButton.onclick();
+
+    const recipeList = document.getElementById("smithing-recipe-list");
+    assert(recipeList && recipeList.children.length > 0, "expected silver smithing recipe rows");
+
+    let silverRingRow = null;
+    for (let i = 0; i < recipeList.children.length; i++) {
+      const row = recipeList.children[i];
+      const infoMarkup = row && row.children && row.children[0] ? (row.children[0].innerHTML || "") : "";
+      if (infoMarkup.includes("Silver Ring")) {
+        silverRingRow = row;
+        break;
+      }
+    }
+    assert(silverRingRow && silverRingRow.children.length > 0, "expected silver ring smithing row");
+
+    const issueMarkup = silverRingRow.children[0].innerHTML || "";
+    assert(issueMarkup.includes("Needs Ring mould"), "expected smithing UI to name the required mould");
+    assert(issueMarkup.includes("Mould quest unlock required"), "expected smithing UI to show the mould unlock gate");
+  });
+
+  test("Smithing count mode crafts the exact queued amount with start/finish messaging", () => {
+    const ctx = createSkillContext({
+      targetObj: "ANVIL",
+      recipeId: "forge_bronze_sword_blade",
+      quantityMode: "count",
+      quantityCount: 2,
+      counts: { bronze_bar: 4, hammer: 1 },
+      currentTick: 240,
+      levels: { smithing: 1 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected queued smithing count-mode start");
+    expectMessage(ctx, "You begin smithing 2x Bronze Sword Blade at the anvil.", "smithing count start");
+
+    ctx.currentTick = 243;
+    smithing.onTick(ctx);
+    assert((ctx._counts.bronze_sword_blade || 0) === 1, "expected first smithing output at tick 243");
+    assert(ctx.playerState.action === "SKILLING: ANVIL", "expected smithing queue to remain active after the first craft");
+
+    ctx.currentTick = 246;
+    smithing.onTick(ctx);
+    assert((ctx._counts.bronze_sword_blade || 0) === 2, "expected second smithing output at tick 246");
+    assert((ctx._counts.bronze_bar || 0) === 0, "expected bronze bars fully consumed by the queued smithing batch");
+    assert((ctx._counts.hammer || 0) === 1, "expected hammer to remain after queued smithing");
+    assert((ctx._xpBySkill.smithing || 0) === 16, "expected smithing XP for two bronze sword blades");
+    assert(ctx.playerState.action === null, "expected smithing action to stop after the requested quantity completes");
+    expectMessage(ctx, "You finish smithing 2x Bronze Sword Blade.", "smithing count finish");
+  });
+
+  test("Smithing all-mode explains why the queue stops when materials run out", () => {
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "smelt_bronze_bar",
+      quantityMode: "all",
+      counts: { copper_ore: 1, tin_ore: 1 },
+      currentTick: 260,
+      levels: { smithing: 1 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing all-mode start");
+    expectMessage(ctx, "You begin smithing Bronze Bar until you run out of materials at the furnace.", "smithing all-mode start");
+
+    ctx.currentTick = 263;
+    smithing.onTick(ctx);
+    assert((ctx._counts.bronze_bar || 0) === 1, "expected one bronze bar output before materials run out");
+    assert(ctx.playerState.action === null, "expected smithing queue to stop after materials are exhausted");
+    expectMessageContaining(ctx, "Copper ore", "smithing all-mode missing copper");
+    expectMessageContaining(ctx, "Tin ore", "smithing all-mode missing tin");
+    expectMessageContaining(ctx, "keep smithing Bronze Bar", "smithing all-mode input-empty");
+    expectMessageTone(ctx, "You need 1x Copper ore and 1x Tin ore to keep smithing Bronze Bar.", "info", "smithing all-mode input-empty tone");
+  });
+
+  test("Smithing start-time output capacity names the blocked recipe", () => {
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "forge_silver_ring",
+      counts: { silver_bar: 1, ring_mould: 1 },
+      unlockFlags: { ringMouldUnlocked: true },
+      currentTick: 270,
+      levels: { smithing: 30 },
+      canAccept: false,
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(!smithing.onStart(ctx), "expected smithing start to fail when the output inventory is full");
+    expectMessage(ctx, "You need more inventory space to smith Silver Ring.", "smithing start output capacity");
+  });
+
+  test("Smithing move-away interruption names the station and recipe", () => {
+    const ctx = createSkillContext({
+      targetObj: "ANVIL",
+      recipeId: "forge_bronze_sword_blade",
+      quantityMode: "all",
+      counts: { bronze_bar: 2, hammer: 1 },
+      currentTick: 280,
+      levels: { smithing: 1 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing start before moving away");
+    ctx.playerState.x = 13;
+    ctx.currentTick = 283;
+    smithing.onTick(ctx);
+
+    assert((ctx._counts.bronze_sword_blade || 0) === 0, "expected no smithing output after moving away before the next action tick");
+    assert(ctx.playerState.action === null, "expected smithing action to stop after moving away from the anvil");
+    expectMessage(ctx, "You move away from the anvil and stop smithing Bronze Sword Blade.", "smithing move-away");
+    expectMessageTone(ctx, "You move away from the anvil and stop smithing Bronze Sword Blade.", "info", "smithing move-away tone");
+  });
+
+  test("Smithing station-change interruption uses info tone and names the prior station", () => {
+    const ctx = createSkillContext({
+      targetObj: "ANVIL",
+      recipeId: "forge_bronze_sword_blade",
+      quantityMode: "all",
+      counts: { bronze_bar: 2, hammer: 1 },
+      currentTick: 290,
+      levels: { smithing: 1 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing start before station change");
+    ctx.targetObj = "FURNACE";
+    ctx.currentTick = 293;
+    smithing.onTick(ctx);
+
+    assert((ctx._counts.bronze_sword_blade || 0) === 0, "expected no smithing output after station change before the next action tick");
+    assert(ctx.playerState.action === null, "expected smithing action to stop after switching stations");
+    expectMessage(ctx, "You leave the anvil and stop smithing Bronze Sword Blade.", "smithing station change");
+    expectMessageTone(ctx, "You leave the anvil and stop smithing Bronze Sword Blade.", "info", "smithing station change tone");
+  });
+
+  test("Smithing tool-loss messaging names the required tool during queued work", () => {
+    const ctx = createSkillContext({
+      targetObj: "ANVIL",
+      recipeId: "forge_bronze_sword_blade",
+      quantityMode: "all",
+      counts: { bronze_bar: 2, hammer: 1 },
+      currentTick: 300,
+      levels: { smithing: 1 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing start before removing the hammer");
+    ctx._counts.hammer = 0;
+    ctx.currentTick = 303;
+    smithing.onTick(ctx);
+
+    assert((ctx._counts.bronze_sword_blade || 0) === 0, "expected no smithing output after the hammer disappears");
+    assert(ctx.playerState.action === null, "expected smithing action to stop when the required tool disappears");
+    expectMessage(ctx, "You need Hammer to keep smithing Bronze Sword Blade.", "smithing missing hammer");
+  });
+
+  test("Smithing mould-loss messaging names the mould during queued work", () => {
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "forge_silver_ring",
+      quantityMode: "all",
+      counts: { silver_bar: 2, ring_mould: 1 },
+      unlockFlags: { ringMouldUnlocked: true },
+      currentTick: 310,
+      levels: { smithing: 30 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing jewelry start before removing the mould");
+    ctx._counts.ring_mould = 0;
+    ctx.currentTick = 313;
+    smithing.onTick(ctx);
+
+    assert((ctx._counts.silver_ring || 0) === 0, "expected no jewelry output after the mould disappears");
+    assert(ctx.playerState.action === null, "expected smithing action to stop when the required mould disappears");
+    expectMessage(ctx, "You need Ring mould to keep smithing Silver Ring.", "smithing missing mould");
+    expectMessageTone(ctx, "You need Ring mould to keep smithing Silver Ring.", "warn", "smithing missing mould tone");
+  });
+
+  test("Smithing unlock-loss messaging explains the queued jewellery stop", () => {
+    const unlockFlags = { ringMouldUnlocked: true };
+    const ctx = createSkillContext({
+      targetObj: "FURNACE",
+      recipeId: "forge_silver_ring",
+      quantityMode: "all",
+      counts: { silver_bar: 2, ring_mould: 1 },
+      unlockFlags,
+      currentTick: 320,
+      levels: { smithing: 30 },
+      x: 10,
+      y: 10,
+      z: 0,
+      targetX: 10,
+      targetY: 10,
+      targetZ: 0
+    });
+
+    assert(smithing.onStart(ctx), "expected smithing jewelry start before removing the unlock");
+    unlockFlags.ringMouldUnlocked = false;
+    ctx.currentTick = 323;
+    smithing.onTick(ctx);
+
+    assert((ctx._counts.silver_ring || 0) === 0, "expected no jewelry output after the mould unlock disappears");
+    assert(ctx.playerState.action === null, "expected smithing action to stop when the mould unlock disappears");
+    expectMessage(ctx, "You have not unlocked the required mould for Silver Ring yet.", "smithing missing unlock");
+    expectMessageTone(ctx, "You have not unlocked the required mould for Silver Ring yet.", "warn", "smithing missing unlock tone");
   });
 
   test("Smithing restores materials when output grant fails", () => {
@@ -1116,7 +1425,7 @@ function run() {
     assert((ctx._counts.silver_ring || 0) === 0, "expected no retained ring output when give fails");
     assert((ctx._counts.silver_bar || 0) === 1, "expected silver bar restored on failed output grant");
     assert(ctx.playerState.action === null, "expected smithing action to stop on output failure");
-    expectMessage(ctx, "You have no inventory space for that output.", "smithing rollback");
+    expectMessage(ctx, "You need more inventory space to keep smithing Silver Ring.", "smithing rollback");
   });
 
   test("Crafting returns false for unrelated inventory pairs", () => {

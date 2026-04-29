@@ -758,7 +758,9 @@ export function buildPlayerProfileSummaryViewModel(options: {
     name: "",
     creationCompleted: false,
     createdAt: null,
-    lastStartedAt: null
+    lastStartedAt: null,
+    tutorialStep: 0,
+    tutorialCompletedAt: null
   };
   const playerEntryFlow = options.playerEntryFlow || {};
   const hasLoadedSave = !!playerEntryFlow.hasLoadedSave;
@@ -767,7 +769,7 @@ export function buildPlayerProfileSummaryViewModel(options: {
   const savedAt = Number.isFinite(playerEntryFlow.savedAt) ? Number(playerEntryFlow.savedAt) : null;
   const isContinueFlow = hasLoadedSave && !!profile.creationCompleted;
 
-  let subtitleText = "Choose a starter identity before the prototype lets you into the world.";
+  let subtitleText = "Choose a starter identity before you arrive on Tutorial Island.";
   if (loadReason === "parse_failed" || loadReason === "invalid_payload") {
     subtitleText = "Previous save data could not be read, so this run starts from fresh defaults.";
   } else if (saveWasLegacyProfile) {
@@ -776,7 +778,7 @@ export function buildPlayerProfileSummaryViewModel(options: {
     subtitleText = "Saved progress is loaded. You can tweak the profile here before stepping back into the world.";
   }
 
-  let noteText = "Progress will begin autosaving locally in this browser once you enter the world.";
+  let noteText = "Progress will begin autosaving locally in this browser once you arrive.";
   if (saveWasLegacyProfile) {
     noteText = "Legacy save note: the old save had no character profile, so a starter profile was generated from your existing progress.";
   } else if (hasLoadedSave && savedAt !== null) {

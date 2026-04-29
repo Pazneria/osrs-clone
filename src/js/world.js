@@ -1,4 +1,6 @@
 // --- Rest of ThreeJS & Engine Init ---
+        let activeRoofVisuals = [];
+
         function applyColorTextureSettings(texture, filter = 'nearest') {
             if (!texture) return texture;
             texture.colorSpace = THREE.SRGBColorSpace;
@@ -562,9 +564,15 @@
             sharedGeometries.willowDrape6 = new THREE.CylinderGeometry(0.055, 0.01, 1.72, 4).rotateZ(-0.06).translate(-0.22, 2.4, -0.96);
             sharedGeometries.willowDrape7 = new THREE.CylinderGeometry(0.058, 0.011, 1.86, 4).rotateZ(0.11).translate(-1.04, 2.18, 0.06);
             sharedGeometries.willowDrape8 = new THREE.CylinderGeometry(0.058, 0.011, 1.9, 4).rotateZ(-0.12).translate(1.06, 2.16, -0.08);
-            sharedGeometries.rock = new THREE.IcosahedronGeometry(0.44, 0).scale(1.0, 0.72, 0.9).translate(0, 0.32, 0);
+            sharedGeometries.rockClay = new THREE.DodecahedronGeometry(0.46, 0).scale(1.18, 0.58, 0.96).translate(0, 0.27, 0);
             sharedGeometries.rockCopper = new THREE.IcosahedronGeometry(0.48, 0).scale(1.08, 0.8, 0.95).translate(0, 0.34, 0);
             sharedGeometries.rockTin = new THREE.DodecahedronGeometry(0.46, 0).scale(1.0, 0.74, 0.92).translate(0, 0.32, 0);
+            sharedGeometries.rockIron = new THREE.BoxGeometry(0.78, 0.58, 0.72).translate(0, 0.29, 0);
+            sharedGeometries.rockCoal = new THREE.TetrahedronGeometry(0.58, 0).scale(1.22, 0.78, 1.04).translate(0, 0.36, 0);
+            sharedGeometries.rockSilver = new THREE.OctahedronGeometry(0.5, 0).scale(1.08, 0.9, 0.92).translate(0, 0.42, 0);
+            sharedGeometries.rockSapphire = new THREE.OctahedronGeometry(0.52, 0).scale(0.82, 1.16, 0.82).translate(0, 0.54, 0);
+            sharedGeometries.rockGold = new THREE.DodecahedronGeometry(0.5, 0).scale(1.22, 0.78, 0.9).translate(0, 0.36, 0);
+            sharedGeometries.rockEmerald = new THREE.OctahedronGeometry(0.52, 0).scale(0.72, 1.28, 0.72).translate(0, 0.58, 0);
             sharedGeometries.rockDepleted = new THREE.IcosahedronGeometry(0.42, 0).scale(0.95, 0.66, 0.9).translate(0, 0.28, 0);
             sharedGeometries.rockRuneEssence = new THREE.IcosahedronGeometry(0.9, 1).scale(1.35, 0.95, 1.35).translate(0, 0.78, 0);
 
@@ -577,14 +585,22 @@
             sharedMaterials.dirtTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
             sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
-            sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
+            sharedMaterials.rockClay = new THREE.MeshLambertMaterial({ color: 0xa78668, flatShading: true });
+            sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xb06a4c, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x9aa5ae, flatShading: true });
+            sharedMaterials.rockIron = new THREE.MeshLambertMaterial({ color: 0x6f7985, flatShading: true });
+            sharedMaterials.rockCoal = new THREE.MeshLambertMaterial({ color: 0x3f444c, flatShading: true });
+            sharedMaterials.rockSilver = new THREE.MeshLambertMaterial({ color: 0xc8ced6, flatShading: true });
+            sharedMaterials.rockSapphire = new THREE.MeshLambertMaterial({ color: 0x3d6ed8, flatShading: true });
+            sharedMaterials.rockGold = new THREE.MeshLambertMaterial({ color: 0xd4a829, flatShading: true });
+            sharedMaterials.rockEmerald = new THREE.MeshLambertMaterial({ color: 0x2aa66f, flatShading: true });
             sharedMaterials.rockDepleted = new THREE.MeshLambertMaterial({ color: 0x5a5f68, flatShading: true });
             sharedMaterials.rockRuneEssence = new THREE.MeshLambertMaterial({ color: 0x7e848c, flatShading: true });
             sharedMaterials.trunk = new THREE.MeshLambertMaterial({ color: 0x6a452a, flatShading: true });
             sharedMaterials.leaves = new THREE.MeshLambertMaterial({ color: 0x2f7f3a, flatShading: true });
-            sharedMaterials.rock = new THREE.MeshLambertMaterial({ color: 0x80858f, flatShading: true });
             sharedMaterials.boothWood = new THREE.MeshLambertMaterial({color: 0x4a3018});
+            sharedMaterials.fenceWood = new THREE.MeshLambertMaterial({ color: 0x6b4424, flatShading: true });
+            sharedMaterials.roofThatch = new THREE.MeshLambertMaterial({ color: 0x8b6f3a, flatShading: true, transparent: true, opacity: 1 });
             
             // Castle & Floor Materials
             sharedMaterials.castleStone = new THREE.MeshLambertMaterial({ color: 0x888a85 }); 
@@ -1104,6 +1120,23 @@
             return Number.isFinite(baseTile) ? baseTile : tileId;
         }
 
+        function isWoodenGateTileIdSafe(tileId) {
+            if (typeof window.isWoodenGateTileId === 'function') return window.isWoodenGateTileId(tileId);
+            return tileId === TileId.WOODEN_GATE_CLOSED || tileId === TileId.WOODEN_GATE_OPEN;
+        }
+
+        function isFenceConnectorTile(tileId) {
+            return tileId === TileId.FENCE || isWoodenGateTileIdSafe(tileId);
+        }
+
+        function getDoorClosedTileId(door) {
+            return door && door.isWoodenGate ? TileId.WOODEN_GATE_CLOSED : TileId.DOOR_CLOSED;
+        }
+
+        function getDoorOpenTileId(door) {
+            return door && door.isWoodenGate ? TileId.WOODEN_GATE_OPEN : TileId.DOOR_OPEN;
+        }
+
         function getTileHeightSafe(x, y, z = 0) {
             if (!heightMap || !heightMap[z] || !heightMap[z][y]) return 0;
             const h = heightMap[z][y][x];
@@ -1155,13 +1188,43 @@
             return null;
         }
 
+        function isTutorialGateUnlocked(door) {
+            if (!door || !Number.isFinite(door.tutorialRequiredStep)) return true;
+            const tutorial = window.TutorialRuntime || null;
+            const step = tutorial && typeof tutorial.getStep === 'function' ? tutorial.getStep() : 0;
+            return step >= door.tutorialRequiredStep;
+        }
+
+        function isTutorialGateLocked(door) {
+            return !!(door && Number.isFinite(door.tutorialRequiredStep) && !isTutorialGateUnlocked(door));
+        }
+
+        function refreshTutorialGateStates() {
+            if (!Array.isArray(doorsToRender)) return;
+            for (let i = 0; i < doorsToRender.length; i++) {
+                const door = doorsToRender[i];
+                if (!door || !Number.isFinite(door.tutorialRequiredStep)) continue;
+                const unlocked = isTutorialGateUnlocked(door);
+                door.isOpen = unlocked;
+                door.targetRotation = unlocked ? door.openRot : door.closedRot;
+                if (logicalMap[door.z] && logicalMap[door.z][door.y]) {
+                    logicalMap[door.z][door.y][door.x] = unlocked ? getDoorOpenTileId(door) : getDoorClosedTileId(door);
+                }
+            }
+            if (typeof updateMinimapCanvas === 'function') updateMinimapCanvas();
+        }
+
+        window.refreshTutorialGateStates = refreshTutorialGateStates;
+        window.isTutorialGateLocked = isTutorialGateLocked;
+
         function openTownNpcDoorAt(x, y, z = 0) {
             const door = findDoorStateAt(x, y, z);
             if (!door || door.isOpen) return false;
+            if (isTutorialGateLocked(door)) return false;
             door.isOpen = true;
             door.targetRotation = door.openRot;
             if (logicalMap[door.z] && logicalMap[door.z][door.y]) {
-                logicalMap[door.z][door.y][door.x] = TileId.DOOR_OPEN;
+                logicalMap[door.z][door.y][door.x] = getDoorOpenTileId(door);
             }
             return true;
         }
@@ -1203,7 +1266,9 @@
             if (!actor || !logicalMap[actor.z] || !logicalMap[actor.z][nextY]) return false;
             if (!isTownNpcStepWithinBounds(actor, nextX, nextY)) return false;
             const nextTile = logicalMap[actor.z][nextY][nextX];
-            const traversableDoorTile = nextTile === TileId.DOOR_CLOSED || nextTile === TileId.DOOR_OPEN;
+            const traversableDoorTile = nextTile === TileId.DOOR_CLOSED
+                || nextTile === TileId.DOOR_OPEN
+                || nextTile === TileId.WOODEN_GATE_OPEN;
             if (!traversableDoorTile && (typeof window.isWalkableTileId !== 'function' || !window.isWalkableTileId(nextTile))) return false;
             const currentTile = logicalMap[actor.z][actor.y][actor.x];
             const currentHeight = getTileHeightSafe(actor.x, actor.y, actor.z);
@@ -3207,6 +3272,56 @@
             return colors[oreType] || 0x8f6b58;
         }
 
+        const ROCK_VISUAL_PROFILES = {
+            clay: { geometryKey: 'rockClay', materialKey: 'rockClay', instanceScale: [1.16, 1.0, 0.96], silhouette: 'low_rounded_mound' },
+            copper: { geometryKey: 'rockCopper', materialKey: 'rockCopper', instanceScale: [1.0, 1.0, 1.0], silhouette: 'medium_faceted_lump' },
+            tin: { geometryKey: 'rockTin', materialKey: 'rockTin', instanceScale: [0.92, 1.0, 1.08], silhouette: 'soft_dodeca_lump' },
+            iron: { geometryKey: 'rockIron', materialKey: 'rockIron', instanceScale: [1.05, 1.08, 0.88], silhouette: 'blocky_slab' },
+            coal: { geometryKey: 'rockCoal', materialKey: 'rockCoal', instanceScale: [1.12, 0.92, 1.08], silhouette: 'jagged_black_shard' },
+            silver: { geometryKey: 'rockSilver', materialKey: 'rockSilver', instanceScale: [0.94, 1.08, 1.04], silhouette: 'bright_octa_lump' },
+            sapphire: { geometryKey: 'rockSapphire', materialKey: 'rockSapphire', instanceScale: [0.82, 1.2, 0.82], silhouette: 'blue_tall_crystal' },
+            gold: { geometryKey: 'rockGold', materialKey: 'rockGold', instanceScale: [1.18, 0.98, 0.92], silhouette: 'wide_gold_nugget' },
+            emerald: { geometryKey: 'rockEmerald', materialKey: 'rockEmerald', instanceScale: [0.72, 1.34, 0.72], silhouette: 'green_needle_crystal' },
+            rune_essence: { geometryKey: 'rockRuneEssence', materialKey: 'rockRuneEssence', instanceScale: [1.0, 1.0, 1.0], silhouette: 'large_persistent_essence_boulder' },
+            depleted: { geometryKey: 'rockDepleted', materialKey: 'rockDepleted', instanceScale: [1.0, 1.0, 1.0], silhouette: 'flattened_depleted_shell' }
+        };
+
+        const ROCK_VISUAL_ORDER = Object.freeze([
+            'clay',
+            'copper',
+            'tin',
+            'iron',
+            'coal',
+            'silver',
+            'sapphire',
+            'gold',
+            'emerald',
+            'rune_essence',
+            'depleted'
+        ]);
+
+        function getRockVisualProfile(visualId) {
+            if (typeof visualId === 'string' && ROCK_VISUAL_PROFILES[visualId]) return ROCK_VISUAL_PROFILES[visualId];
+            return ROCK_VISUAL_PROFILES.copper;
+        }
+
+        function getRockVisualIdForNode(rockNode, depleted) {
+            if (depleted) return 'depleted';
+            const oreType = rockNode && rockNode.oreType ? rockNode.oreType : 'copper';
+            return ROCK_VISUAL_PROFILES[oreType] ? oreType : 'copper';
+        }
+
+        function createRockRenderData() {
+            const rockMapByVisualId = Object.create(null);
+            const rockMeshByVisualId = Object.create(null);
+            for (let i = 0; i < ROCK_VISUAL_ORDER.length; i++) {
+                const visualId = ROCK_VISUAL_ORDER[i];
+                rockMapByVisualId[visualId] = [];
+                rockMeshByVisualId[visualId] = null;
+            }
+            return { rockMapByVisualId, rockMeshByVisualId };
+        }
+
         function rebuildRockNodes() {
             const rebuilt = {};
             for (let z = 0; z < PLANES; z++) {
@@ -3318,6 +3433,7 @@
             npcsToRender = [];
             bankBoothsToRender = [];
             doorsToRender = [];
+            activeRoofVisuals = [];
             fishingSpotsToRender = [];
             cookingFireSpotsToRender = [];
             directionalSignsToRender = [];
@@ -3351,6 +3467,8 @@
             const woodcuttingNodePlacements = worldPayload.woodcuttingNodePlacements;
             const staircaseLandmarks = worldPayload.staircaseLandmarks;
             const doorLandmarks = worldPayload.doorLandmarks;
+            const fenceLandmarks = Array.isArray(worldPayload.fenceLandmarks) ? worldPayload.fenceLandmarks : [];
+            const roofLandmarks = Array.isArray(worldPayload.roofLandmarks) ? worldPayload.roofLandmarks : [];
             const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
 
             function placeStaticNpcOccupancyTile(x, y, z = 0, options = {}) {
@@ -3815,7 +3933,9 @@
             for (let i = 0; i < staticMerchantSpots.length; i++) {
                 const spot = staticMerchantSpots[i];
                 if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
-                const merchantHeight = Array.isArray(spot.tags) && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))
+                const merchantHeight = Array.isArray(spot.tags)
+                    && !spot.tags.includes('tutorial')
+                    && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))
                     ? 0.5
                     : null;
                 placeStaticNpcOccupancyTile(spot.x, spot.y, 0, { height: merchantHeight });
@@ -3846,7 +3966,38 @@
                     if (!Number.isFinite(tileId)) continue;
                     logicalMap[tile.z][tile.y][tile.x] = tileId;
                     heightMap[tile.z][tile.y][tile.x] = Number.isFinite(tile.height) ? tile.height : heightMap[tile.z][tile.y][tile.x];
+                    if (tileId === TileId.BANK_BOOTH && !bankBoothsToRender.some((booth) => booth.x === tile.x && booth.y === tile.y && booth.z === tile.z)) {
+                        bankBoothsToRender.push({ x: tile.x, y: tile.y, z: tile.z });
+                    }
                 }
+            }
+
+            function applyFenceLandmark(fence) {
+                if (!fence || !Array.isArray(fence.points) || fence.points.length < 2) return;
+                const z = Number.isInteger(fence.z) ? fence.z : 0;
+                for (let pointIndex = 1; pointIndex < fence.points.length; pointIndex++) {
+                    const from = fence.points[pointIndex - 1];
+                    const to = fence.points[pointIndex];
+                    if (!from || !to) continue;
+                    const dx = Math.sign(to.x - from.x);
+                    const dy = Math.sign(to.y - from.y);
+                    if (dx !== 0 && dy !== 0) continue;
+                    const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
+                    let x = from.x;
+                    let y = from.y;
+                    for (let step = 0; step <= steps; step++) {
+                        if (logicalMap[z] && logicalMap[z][y] && x > 0 && y > 0 && x < MAP_SIZE - 1 && y < MAP_SIZE - 1) {
+                            logicalMap[z][y][x] = TileId.FENCE;
+                            heightMap[z][y][x] = Number.isFinite(fence.height) ? fence.height : 0.05;
+                        }
+                        x += dx;
+                        y += dy;
+                    }
+                }
+            }
+
+            for (let i = 0; i < fenceLandmarks.length; i++) {
+                applyFenceLandmark(fenceLandmarks[i]);
             }
 
             function resolveNpcAppearanceId(npc) {
@@ -3903,9 +4054,17 @@
                     closedRot: door.closedRot,
                     openRot: door.openRot,
                     currentRotation: door.currentRotation,
-                    targetRotation: door.targetRotation
+                    targetRotation: door.targetRotation,
+                    isWoodenGate: tileId === TileId.WOODEN_GATE_CLOSED || tileId === TileId.WOODEN_GATE_OPEN,
+                    closedTileId: tileId === TileId.WOODEN_GATE_OPEN ? TileId.WOODEN_GATE_CLOSED : tileId,
+                    tutorialRequiredStep: Number.isFinite(door.tutorialRequiredStep) ? door.tutorialRequiredStep : null,
+                    tutorialGateMessage: typeof door.tutorialGateMessage === 'string' ? door.tutorialGateMessage : ''
                 });
             }
+            refreshTutorialGateStates();
+            sharedMaterials.activeRoofLandmarks = roofLandmarks.map((roof) => Object.assign({}, roof, {
+                hideBounds: roof && roof.hideBounds ? Object.assign({}, roof.hideBounds) : null
+            }));
 
             const setMiningRockAt = (placement) => {
                 if (!placement || !placement.oreType) return false;
@@ -5067,6 +5226,24 @@
             if (typeof window.initCombatWorldState === 'function') window.initCombatWorldState();
         }
 
+        function listQaNpcTargets() {
+            if (!Array.isArray(npcsToRender)) return [];
+            return npcsToRender.map((npc) => ({
+                actorId: npc && npc.actorId ? npc.actorId : '',
+                spawnId: npc && npc.spawnId ? npc.spawnId : '',
+                merchantId: npc && npc.merchantId ? npc.merchantId : '',
+                name: npc && npc.name ? npc.name : '',
+                action: npc && npc.action ? npc.action : '',
+                dialogueId: npc && npc.dialogueId ? npc.dialogueId : '',
+                x: Number.isFinite(npc && npc.x) ? npc.x : 0,
+                y: Number.isFinite(npc && npc.y) ? npc.y : 0,
+                z: Number.isFinite(npc && npc.z) ? npc.z : 0,
+                visualX: Number.isFinite(npc && npc.visualX) ? npc.visualX : (Number.isFinite(npc && npc.x) ? npc.x : 0),
+                visualY: Number.isFinite(npc && npc.visualY) ? npc.visualY : (Number.isFinite(npc && npc.y) ? npc.y : 0),
+                rendered: !!(npc && npc.hitbox)
+            }));
+        }
+
         function pointInPolygon(points, x, y) {
             let inside = false;
             for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
@@ -5362,6 +5539,196 @@
             floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
             return floorMesh;
         }
+
+        function createFenceVisualGroup(x, y, z, zOffset, baseHeight) {
+            const group = new THREE.Group();
+            group.position.set(x, zOffset + baseHeight, y);
+            const material = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+
+            const hasNorth = y > 0 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y - 1][x], x, y - 1, z));
+            const hasSouth = y < MAP_SIZE - 1 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y + 1][x], x, y + 1, z));
+            const hasWest = x > 0 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y][x - 1], x - 1, y, z));
+            const hasEast = x < MAP_SIZE - 1 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y][x + 1], x + 1, y, z));
+            const drawX = hasEast || hasWest || (!hasNorth && !hasSouth);
+            const drawZ = hasNorth || hasSouth;
+
+            const postPositions = [];
+            const addPost = (px, pz) => {
+                const key = `${px}:${pz}`;
+                if (postPositions.some((entry) => entry.key === key)) return;
+                postPositions.push({ key, x: px, z: pz });
+            };
+            if (drawX) {
+                addPost(-0.46, 0);
+                addPost(0.46, 0);
+            }
+            if (drawZ) {
+                addPost(0, -0.46);
+                addPost(0, 0.46);
+            }
+            if (!drawX && !drawZ) addPost(0, 0);
+
+            for (let i = 0; i < postPositions.length; i++) {
+                const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.16), material);
+                post.position.set(postPositions[i].x, 0.475, postPositions[i].z);
+                post.castShadow = true;
+                post.receiveShadow = true;
+                group.add(post);
+            }
+
+            const addRail = (isX, railY) => {
+                const rail = new THREE.Mesh(
+                    new THREE.BoxGeometry(isX ? 0.94 : 0.12, 0.12, isX ? 0.12 : 0.94),
+                    material
+                );
+                rail.position.set(0, railY, 0);
+                rail.castShadow = true;
+                rail.receiveShadow = true;
+                group.add(rail);
+            };
+            if (drawX) {
+                addRail(true, 0.42);
+                addRail(true, 0.68);
+            }
+            if (drawZ) {
+                addRail(false, 0.42);
+                addRail(false, 0.68);
+            }
+
+            group.children.forEach((child) => {
+                child.userData = { type: 'WALL', gridX: x, gridY: y, z: z };
+                environmentMeshes.push(child);
+            });
+            return group;
+        }
+
+        function createWoodenGateVisualGroup(door, zOffset, baseHeight) {
+            const group = new THREE.Group();
+            group.position.set(door.x + (door.hingeOffsetX || 0), zOffset + baseHeight, door.y + (door.hingeOffsetY || 0));
+            group.rotation.y = door.currentRotation;
+            const material = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+            const meshOffsetX = door.hingeOffsetX ? -door.hingeOffsetX : 0;
+            const meshOffsetZ = door.hingeOffsetY ? -door.hingeOffsetY : 0;
+            const railW = door.isEW ? door.width : 0.12;
+            const railD = door.isEW ? 0.12 : door.width;
+
+            const uprightA = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.14), material);
+            uprightA.position.set(meshOffsetX + (door.isEW ? -door.width * 0.35 : 0), 0.475, meshOffsetZ + (door.isEW ? 0 : -door.width * 0.35));
+            const uprightB = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.14), material);
+            uprightB.position.set(meshOffsetX + (door.isEW ? door.width * 0.35 : 0), 0.475, meshOffsetZ + (door.isEW ? 0 : door.width * 0.35));
+            const railLower = new THREE.Mesh(new THREE.BoxGeometry(railW, 0.14, railD), material);
+            railLower.position.set(meshOffsetX, 0.38, meshOffsetZ);
+            const railUpper = new THREE.Mesh(new THREE.BoxGeometry(railW, 0.14, railD), material);
+            railUpper.position.set(meshOffsetX, 0.68, meshOffsetZ);
+            [uprightA, uprightB, railLower, railUpper].forEach((mesh) => {
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                group.add(mesh);
+            });
+
+            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(door.isEW ? door.width : 0.6, 1.2, door.isEW ? 0.6 : door.width), sharedMaterials.hiddenHitbox);
+            hitbox.position.set(meshOffsetX, 0.6, meshOffsetZ);
+            group.add(hitbox);
+            return group;
+        }
+
+        function chunkIntersectsRoof(roof, startX, startY, endX, endY, z) {
+            if (!roof || roof.z !== z) return false;
+            const xMin = roof.x;
+            const xMax = roof.x + Math.max(1, roof.width) - 1;
+            const yMin = roof.y;
+            const yMax = roof.y + Math.max(1, roof.depth) - 1;
+            return xMax >= startX && xMin < endX && yMax >= startY && yMin < endY;
+        }
+
+        function createRoofVisualGroup(roof, zOffset) {
+            const width = Math.max(1, Number.isFinite(roof.width) ? roof.width : 1);
+            const depth = Math.max(1, Number.isFinite(roof.depth) ? roof.depth : 1);
+            const height = Number.isFinite(roof.height) ? roof.height : 2.3;
+            const roofMat = (sharedMaterials.roofThatch || sharedMaterials.boothWood).clone();
+            roofMat.transparent = true;
+            roofMat.opacity = 1;
+            roofMat.side = THREE.DoubleSide;
+            const group = new THREE.Group();
+            group.position.set(roof.x + ((width - 1) / 2), zOffset + height, roof.y + ((depth - 1) / 2));
+            group.userData = {
+                roofLandmark: roof,
+                roofMaterial: roofMat,
+                targetOpacity: 1
+            };
+
+            const ridgeAlongX = roof.ridgeAxis !== 'y';
+            const roofWidth = width + 1.2;
+            const roofDepth = depth + 1.2;
+            const halfWidth = roofWidth / 2;
+            const halfDepth = roofDepth / 2;
+            const ridgeRise = Math.max(1.15, Math.min(2.35, (ridgeAlongX ? roofDepth : roofWidth) * 0.22));
+            let vertices = null;
+            let indices = null;
+            if (ridgeAlongX) {
+                vertices = [
+                    -halfWidth, 0, -halfDepth,
+                    halfWidth, 0, -halfDepth,
+                    -halfWidth, 0, halfDepth,
+                    halfWidth, 0, halfDepth,
+                    -halfWidth, ridgeRise, 0,
+                    halfWidth, ridgeRise, 0
+                ];
+                indices = [
+                    0, 1, 5, 0, 5, 4,
+                    4, 5, 3, 4, 3, 2,
+                    0, 4, 2,
+                    1, 3, 5
+                ];
+            } else {
+                vertices = [
+                    -halfWidth, 0, -halfDepth,
+                    -halfWidth, 0, halfDepth,
+                    halfWidth, 0, -halfDepth,
+                    halfWidth, 0, halfDepth,
+                    0, ridgeRise, -halfDepth,
+                    0, ridgeRise, halfDepth
+                ];
+                indices = [
+                    0, 4, 5, 0, 5, 1,
+                    4, 2, 3, 4, 3, 5,
+                    0, 2, 4,
+                    1, 5, 3
+                ];
+            }
+            const roofGeo = new THREE.BufferGeometry();
+            roofGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            roofGeo.setIndex(indices);
+            roofGeo.computeVertexNormals();
+            const roofMesh = new THREE.Mesh(roofGeo, roofMat);
+            roofMesh.castShadow = true;
+            roofMesh.receiveShadow = true;
+            roofMesh.userData = { type: 'ROOF', gridX: roof.x, gridY: roof.y, z: roof.z };
+            group.add(roofMesh);
+            activeRoofVisuals.push(group);
+            return group;
+        }
+
+        function updateTutorialRoofVisibility() {
+            if (!Array.isArray(activeRoofVisuals) || activeRoofVisuals.length === 0 || !playerState) return;
+            for (let i = 0; i < activeRoofVisuals.length; i++) {
+                const group = activeRoofVisuals[i];
+                const roof = group && group.userData ? group.userData.roofLandmark : null;
+                const material = group && group.userData ? group.userData.roofMaterial : null;
+                if (!roof || !material || !roof.hideWhenPlayerInside || !roof.hideBounds) continue;
+                const bounds = roof.hideBounds;
+                const inside = playerState.z === bounds.z
+                    && playerState.x >= bounds.xMin
+                    && playerState.x <= bounds.xMax
+                    && playerState.y >= bounds.yMin
+                    && playerState.y <= bounds.yMax;
+                const targetOpacity = inside ? 0.04 : 1;
+                material.opacity += (targetOpacity - material.opacity) * 0.22;
+                material.visible = material.opacity > 0.03;
+            }
+        }
+
+        window.updateTutorialRoofVisibility = updateTutorialRoofVisibility;
 
         function getActivePierConfig() {
             return sharedMaterials.activePierConfig || null;
@@ -6187,17 +6554,16 @@
                     }
                 }
 
-                let tCount = 0, rCopperCount = 0, rTinCount = 0, rDepletedCount = 0, rRuneEssenceCount = 0, wCount = 0, cCount = 0;
+                let tCount = 0, wCount = 0, cCount = 0;
+                const rockVisualCounts = Object.create(null);
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         let tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
                         if (isTreeTileId(tile)) tCount++;
                         else if (tile === TileId.ROCK) {
                             const rockNode = getRockNodeAt(x, y, z);
-                            if (rockNode && rockNode.depletedUntilTick > currentTick) rDepletedCount++;
-                            else if (rockNode && rockNode.oreType === 'rune_essence') rRuneEssenceCount++;
-                            else if (rockNode && rockNode.oreType === 'tin') rTinCount++;
-                            else rCopperCount++;
+                            const visualId = getRockVisualIdForNode(rockNode, !!(rockNode && rockNode.depletedUntilTick > currentTick));
+                            rockVisualCounts[visualId] = (rockVisualCounts[visualId] || 0) + 1;
                         }
                         else if (tile === TileId.WALL) wCount++;
                         else if (tile === TileId.TOWER) cCount++;
@@ -6228,30 +6594,21 @@
                         planeGroup.add(mesh); environmentMeshes.push(mesh);
                     });
                 }
-                let rData = { rockCopperMap: [], rockTinMap: [], rockDepletedMap: [], rockRuneEssenceMap: [], iRockCopper: null, iRockTin: null, iRockDepleted: null, iRockRuneEssence: null };
-                if (rCopperCount > 0) {
-                    rData.iRockCopper = new THREE.InstancedMesh(sharedGeometries.rockCopper, sharedMaterials.rockCopper, rCopperCount);
-                    rData.iRockCopper.castShadow = false; rData.iRockCopper.matrixAutoUpdate = false;
-                    rData.iRockCopper.userData = { instanceMap: rData.rockCopperMap };
-                    planeGroup.add(rData.iRockCopper); environmentMeshes.push(rData.iRockCopper);
-                }
-                if (rTinCount > 0) {
-                    rData.iRockTin = new THREE.InstancedMesh(sharedGeometries.rockTin, sharedMaterials.rockTin, rTinCount);
-                    rData.iRockTin.castShadow = false; rData.iRockTin.matrixAutoUpdate = false;
-                    rData.iRockTin.userData = { instanceMap: rData.rockTinMap };
-                    planeGroup.add(rData.iRockTin); environmentMeshes.push(rData.iRockTin);
-                }
-                if (rDepletedCount > 0) {
-                    rData.iRockDepleted = new THREE.InstancedMesh(sharedGeometries.rockDepleted, sharedMaterials.rockDepleted, rDepletedCount);
-                    rData.iRockDepleted.castShadow = false; rData.iRockDepleted.matrixAutoUpdate = false;
-                    rData.iRockDepleted.userData = { instanceMap: rData.rockDepletedMap };
-                    planeGroup.add(rData.iRockDepleted); environmentMeshes.push(rData.iRockDepleted);
-                }
-                if (rRuneEssenceCount > 0) {
-                    rData.iRockRuneEssence = new THREE.InstancedMesh(sharedGeometries.rockRuneEssence, sharedMaterials.rockRuneEssence, rRuneEssenceCount);
-                    rData.iRockRuneEssence.castShadow = false; rData.iRockRuneEssence.matrixAutoUpdate = false;
-                    rData.iRockRuneEssence.userData = { instanceMap: rData.rockRuneEssenceMap };
-                    planeGroup.add(rData.iRockRuneEssence); environmentMeshes.push(rData.iRockRuneEssence);
+                let rData = createRockRenderData();
+                for (let i = 0; i < ROCK_VISUAL_ORDER.length; i++) {
+                    const visualId = ROCK_VISUAL_ORDER[i];
+                    const rockCount = rockVisualCounts[visualId] || 0;
+                    if (rockCount <= 0) continue;
+                    const profile = getRockVisualProfile(visualId);
+                    const geometry = sharedGeometries[profile.geometryKey] || sharedGeometries.rockCopper;
+                    const material = sharedMaterials[profile.materialKey] || sharedMaterials.rockCopper;
+                    const mesh = new THREE.InstancedMesh(geometry, material, rockCount);
+                    mesh.castShadow = false;
+                    mesh.matrixAutoUpdate = false;
+                    mesh.userData = { instanceMap: rData.rockMapByVisualId[visualId] };
+                    rData.rockMeshByVisualId[visualId] = mesh;
+                    planeGroup.add(mesh);
+                    environmentMeshes.push(mesh);
                 }
 
                 let castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };
@@ -6269,7 +6626,8 @@
                 }
 
                 const dummyTransform = new THREE.Object3D();
-                let tIdx = 0, rCopperIdx = 0, rTinIdx = 0, rDepletedIdx = 0, rRuneEssenceIdx = 0, wIdx = 0, cIdx = 0;
+                let tIdx = 0, wIdx = 0, cIdx = 0;
+                const rockVisualIndices = Object.create(null);
                 const chunkWaterBuilders = Object.create(null);
                 appendChunkWaterTilesToBuilders(chunkWaterBuilders, waterRenderBodies, z, Z_OFFSET, startX, startY, endX, endY);
                 const sampleGroundTileCenterHeight = (tileX, tileY, layerZ) => {
@@ -6321,37 +6679,33 @@
                             const rockNode = getRockNodeAt(x, y, z);
                             const depleted = !!(rockNode && rockNode.depletedUntilTick > currentTick);
                             const rockGroundY = sampleGroundTileCenterHeight(x, y, z) + Z_OFFSET - 0.01;
+                            const oreType = depleted ? 'depleted' : ((rockNode && rockNode.oreType) ? rockNode.oreType : 'copper');
+                            const visualId = getRockVisualIdForNode(rockNode, depleted);
+                            const profile = getRockVisualProfile(visualId);
+                            const instanceScale = Array.isArray(profile.instanceScale) ? profile.instanceScale : [1, 1, 1];
+                            const mesh = rData.rockMeshByVisualId[visualId];
+                            const map = rData.rockMapByVisualId[visualId];
+                            const rockIndex = rockVisualIndices[visualId] || 0;
                             dummyTransform.position.set(x, rockGroundY, y);
-                            dummyTransform.rotation.set(0, Math.random() * Math.PI, 0);
+                            dummyTransform.rotation.set(0, hash2D(x, y, 702.17) * Math.PI * 2, 0);
+                            dummyTransform.scale.set(instanceScale[0] || 1, instanceScale[1] || 1, instanceScale[2] || 1);
                             dummyTransform.updateMatrix();
 
-                            if (depleted) {
-                                if (rData.iRockDepleted) {
-                                    rData.iRockDepleted.setMatrixAt(rDepletedIdx, dummyTransform.matrix);
-                                    rData.rockDepletedMap[rDepletedIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: 'depleted', name: 'Depleted rock' };
-                                    rDepletedIdx++;
-                                }
-                            } else if (rockNode && rockNode.oreType === 'rune_essence') {
-                                if (rData.iRockRuneEssence) {
-                                    rData.iRockRuneEssence.setMatrixAt(rRuneEssenceIdx, dummyTransform.matrix);
-                                    rData.rockRuneEssenceMap[rRuneEssenceIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: 'rune_essence', name: getRockDisplayName('rune_essence') };
-                                    rRuneEssenceIdx++;
-                                }
-                            } else if (rockNode && rockNode.oreType === 'tin') {
-                                if (rData.iRockTin) {
-                                    rData.iRockTin.setMatrixAt(rTinIdx, dummyTransform.matrix);
-                                    rData.rockTinMap[rTinIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: 'tin', name: getRockDisplayName('tin') };
-                                    rTinIdx++;
-                                }
-                            } else {
-                                if (rData.iRockCopper) {
-                                    const oreType = (rockNode && rockNode.oreType) ? rockNode.oreType : 'copper';
-                                    rData.iRockCopper.setMatrixAt(rCopperIdx, dummyTransform.matrix);
-                                    rData.iRockCopper.setColorAt(rCopperIdx, new THREE.Color(getRockColorHex(oreType)));
-                                    rData.rockCopperMap[rCopperIdx] = { type: 'ROCK', gridX: x, gridY: y, z: z, oreType: oreType, name: getRockDisplayName(oreType) };
-                                    rCopperIdx++;
-                                }
+                            if (mesh && map) {
+                                mesh.setMatrixAt(rockIndex, dummyTransform.matrix);
+                                map[rockIndex] = {
+                                    type: 'ROCK',
+                                    gridX: x,
+                                    gridY: y,
+                                    z: z,
+                                    oreType: oreType,
+                                    name: depleted ? 'Depleted rock' : getRockDisplayName(oreType)
+                                };
+                                rockVisualIndices[visualId] = rockIndex + 1;
                             }
+                        } else if (tile === TileId.FENCE) {
+                            const fenceGroup = createFenceVisualGroup(x, y, z, Z_OFFSET, heightMap[z][y][x]);
+                            planeGroup.add(fenceGroup);
                         } else if (tile === TileId.WALL) { // Wall (Anchored to base)
                             const isCastleTile = (tx, ty) => {
                                 if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return false;
@@ -6471,10 +6825,11 @@
                 flushChunkWaterBuilders(planeGroup, chunkWaterBuilders);
                 
                 if (tCount > 0) markTreeVisualsDirty(tData);
-                if (rCopperCount > 0 && rData.iRockCopper) { rData.iRockCopper.instanceMatrix.needsUpdate = true; if (rData.iRockCopper.instanceColor) rData.iRockCopper.instanceColor.needsUpdate = true; }
-                if (rTinCount > 0 && rData.iRockTin) rData.iRockTin.instanceMatrix.needsUpdate = true;
-                if (rDepletedCount > 0 && rData.iRockDepleted) rData.iRockDepleted.instanceMatrix.needsUpdate = true;
-                if (rRuneEssenceCount > 0 && rData.iRockRuneEssence) rData.iRockRuneEssence.instanceMatrix.needsUpdate = true;
+                for (let i = 0; i < ROCK_VISUAL_ORDER.length; i++) {
+                    const visualId = ROCK_VISUAL_ORDER[i];
+                    const mesh = rData.rockMeshByVisualId[visualId];
+                    if (mesh) mesh.instanceMatrix.needsUpdate = true;
+                }
                 if (wCount > 0) castleData.iWall.instanceMatrix.needsUpdate = true;
                 if (cCount > 0) castleData.iTower.instanceMatrix.needsUpdate = true;
 
@@ -6667,29 +7022,34 @@
                 });
                 doorsToRender.forEach(d => {
                     if (d.x >= startX && d.x < endX && d.y >= startY && d.y < endY && d.z === z) {
-                        const doorGroup = new THREE.Group();
-                        // Place hinge exactly on the requested edge of the tile
-                        doorGroup.position.set(d.x + (d.hingeOffsetX || 0), Z_OFFSET + heightMap[z][d.y][d.x], d.y + (d.hingeOffsetY || 0));
-                        doorGroup.rotation.y = d.currentRotation;
-                        
-                        // Dynamically adjust mesh dimensions depending on orientation
-                        const dw = d.isEW ? d.width : d.thickness;
-                        const dd = d.isEW ? d.thickness : d.width;
-                        const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(dw, 2.0, dd), sharedMaterials.boothWood);
-                        
-                        // Offset the mesh from the hinge so it perfectly centers back over the tile
-                        const meshOffsetX = d.hingeOffsetX ? -d.hingeOffsetX : 0;
-                        const meshOffsetZ = d.hingeOffsetY ? -d.hingeOffsetY : 0;
-                        doorMesh.position.set(meshOffsetX, 1.0, meshOffsetZ);
-                        doorMesh.castShadow = true; doorMesh.receiveShadow = true;
-                        
-                        // Slightly thicker hitbox for easier clicking
-                        const hw = d.isEW ? d.width : 0.6;
-                        const hd = d.isEW ? 0.6 : d.width;
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, 2, hd), sharedMaterials.hiddenHitbox);
-                        hitbox.position.set(meshOffsetX, 1.0, meshOffsetZ);
-                        
-                        doorGroup.add(doorMesh, hitbox);
+                        let doorGroup = null;
+                        if (d.isWoodenGate) {
+                            doorGroup = createWoodenGateVisualGroup(d, Z_OFFSET, heightMap[z][d.y][d.x]);
+                        } else {
+                            doorGroup = new THREE.Group();
+                            // Place hinge exactly on the requested edge of the tile
+                            doorGroup.position.set(d.x + (d.hingeOffsetX || 0), Z_OFFSET + heightMap[z][d.y][d.x], d.y + (d.hingeOffsetY || 0));
+                            doorGroup.rotation.y = d.currentRotation;
+
+                            // Dynamically adjust mesh dimensions depending on orientation
+                            const dw = d.isEW ? d.width : d.thickness;
+                            const dd = d.isEW ? d.thickness : d.width;
+                            const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(dw, 2.0, dd), sharedMaterials.boothWood);
+
+                            // Offset the mesh from the hinge so it perfectly centers back over the tile
+                            const meshOffsetX = d.hingeOffsetX ? -d.hingeOffsetX : 0;
+                            const meshOffsetZ = d.hingeOffsetY ? -d.hingeOffsetY : 0;
+                            doorMesh.position.set(meshOffsetX, 1.0, meshOffsetZ);
+                            doorMesh.castShadow = true; doorMesh.receiveShadow = true;
+
+                            // Slightly thicker hitbox for easier clicking
+                            const hw = d.isEW ? d.width : 0.6;
+                            const hd = d.isEW ? 0.6 : d.width;
+                            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, 2, hd), sharedMaterials.hiddenHitbox);
+                            hitbox.position.set(meshOffsetX, 1.0, meshOffsetZ);
+
+                            doorGroup.add(doorMesh, hitbox);
+                        }
                         d.meshGroup = doorGroup; // Keep track for animation updates
                         
                         doorGroup.children.forEach(c => {
@@ -6708,6 +7068,12 @@
                             planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
                         }
                     }
+                });
+
+                const activeRoofs = Array.isArray(sharedMaterials.activeRoofLandmarks) ? sharedMaterials.activeRoofLandmarks : [];
+                activeRoofs.forEach((roof) => {
+                    if (!chunkIntersectsRoof(roof, startX, startY, endX, endY, z)) return;
+                    planeGroup.add(createRoofVisualGroup(roof, Z_OFFSET));
                 });
 
                 const getNpcAppearanceId = (npc) => {
@@ -6795,6 +7161,14 @@
             const group = chunkGroups[key];
             if (group) {
                 scene.remove(group);
+                activeRoofVisuals = activeRoofVisuals.filter((roofGroup) => {
+                    let parent = roofGroup;
+                    while (parent) {
+                        if (parent === group) return false;
+                        parent = parent.parent;
+                    }
+                    return true;
+                });
                 environmentMeshes = environmentMeshes.filter(m => {
                     let parent = m;
                     while (parent) {
@@ -7114,6 +7488,7 @@
                         else if (tile === TileId.SHORE) offscreenMapCtx.fillStyle = '#9b8a5f'; // Shore
                         else if (tile === TileId.WATER_SHALLOW) offscreenMapCtx.fillStyle = '#2c75a8'; // Shallow Water
                         else if (tile === TileId.WATER_DEEP) offscreenMapCtx.fillStyle = '#184b78'; // Deep Water
+                        else if (tile === TileId.FENCE) offscreenMapCtx.fillStyle = '#7a5732';
                         else if (isDoorTileId(tile)) offscreenMapCtx.fillStyle = '#8b5a2b'; // Door
                         
                         if (tile !== TileId.OBSTACLE && tile !== TileId.GRASS) offscreenMapCtx.fillRect(x, y, 1, 1);
@@ -7750,6 +8125,7 @@
         window.updateWorldNpcRuntime = updateWorldNpcRuntime;
         window.updateMinimap = updateMinimap;
         window.setLoadedChunkPlaneVisibility = setLoadedChunkPlaneVisibility;
+        window.listQaNpcTargets = listQaNpcTargets;
         window.updateWorldMapPanel = updateWorldMapPanel;
         window.updateStats = updateStats;
         window.refreshSkillUi = refreshSkillUi;

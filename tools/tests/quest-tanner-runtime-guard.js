@@ -119,6 +119,9 @@ sandbox.window.ITEM_DB = {
   coal: { id: "coal", name: "Coal" },
   gold_ore: { id: "gold_ore", name: "Gold ore" },
   uncut_emerald: { id: "uncut_emerald", name: "Uncut emerald" },
+  willow_logs: { id: "willow_logs", name: "Willow logs" },
+  maple_logs: { id: "maple_logs", name: "Maple logs" },
+  yew_logs: { id: "yew_logs", name: "Yew logs" },
   yew_handle: { id: "yew_handle", name: "Yew Handle" },
   yew_longbow: { id: "yew_longbow", name: "Yew Longbow" },
   yew_shortbow: { id: "yew_shortbow", name: "Yew Shortbow" },
@@ -481,7 +484,7 @@ const fletchingLockedAccess = fletchingRuntime.canOpenMerchantShop("advanced_fle
 assert.strictEqual(fletchingLockedAccess.ok, false, "locked Advanced Fletcher merchant should deny shop access");
 assert.strictEqual(
   fletchingLockedAccess.messageText,
-  "Talk to the Advanced Fletcher at the north-road outpost.",
+  "Talk to the Advanced Fletcher at the east outpost in Starter Town.",
   "locked Advanced Fletcher merchant should surface the quest start instructions"
 );
 
@@ -605,6 +608,159 @@ assert.strictEqual(
   fletchingCompletedDialogueView.options[0].label,
   "Ask about the delivery",
   "completed Advanced Fletcher dialogue should switch to the delivery follow-up option"
+);
+
+const woodcuttingHarness = createHarness();
+const {
+  runtime: woodcuttingRuntime,
+  session: woodcuttingSession,
+  saveReasons: woodcuttingSaveReasons,
+  chatLog: woodcuttingChatLog,
+  rewardItems: woodcuttingRewardItems,
+  rewardXp: woodcuttingRewardXp,
+  uiHooks: woodcuttingUiHooks
+} = woodcuttingHarness;
+const woodcuttingNpc = {
+  name: "Advanced Woodsman",
+  dialogueId: "advanced_woodsman",
+  merchantId: "advanced_woodsman"
+};
+const woodcuttingQuestId = "advanced_woodsman_proof_of_the_grain";
+
+assert.strictEqual(
+  woodcuttingRuntime.resolveNpcPrimaryAction(woodcuttingNpc),
+  "Talk-to",
+  "locked Advanced Woodsman merchant should route primary interaction through dialogue"
+);
+
+const woodcuttingLockedAccess = woodcuttingRuntime.canOpenMerchantShop("advanced_woodsman");
+assert.strictEqual(woodcuttingLockedAccess.ok, false, "locked Advanced Woodsman merchant should deny shop access");
+assert.strictEqual(
+  woodcuttingLockedAccess.messageText,
+  "Talk to the Advanced Woodsman at the east outpost in Starter Town.",
+  "locked Advanced Woodsman merchant should surface the quest start instructions"
+);
+
+const woodcuttingStarted = woodcuttingRuntime.handleNpcDialogueOpened(woodcuttingNpc);
+assert.ok(woodcuttingStarted && woodcuttingStarted.ok, "opening Advanced Woodsman dialogue should auto-start the quest");
+assert.strictEqual(woodcuttingStarted.state.status, "active", "auto-start should persist an active Advanced Woodsman quest state");
+assert.deepStrictEqual(woodcuttingSaveReasons, ["quest_started"], "starting the Advanced Woodsman quest should persist progress once");
+assert.deepStrictEqual(
+  woodcuttingChatLog,
+  [{ message: "Quest started: Proof of the Grain.", tone: "info" }],
+  "starting the Advanced Woodsman quest should emit a quest-start chat message"
+);
+assert.deepStrictEqual(
+  woodcuttingUiHooks,
+  {
+    renderQuestLog: 1,
+    refreshActiveDialogue: 1,
+    renderInventory: 0
+  },
+  "starting the Advanced Woodsman quest should refresh the quest UI but not inventory"
+);
+
+const woodcuttingActiveDialogueView = woodcuttingRuntime.buildNpcDialogueView(woodcuttingNpc, {
+  title: "Advanced Woodsman",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  woodcuttingActiveDialogueView.greeting,
+  "Willow, maple, and yew all leave different marks on the cut. I am still waiting on that full sampler.",
+  "active Advanced Woodsman dialogue should use the quest-specific active greeting"
+);
+assert.strictEqual(
+  woodcuttingActiveDialogueView.options[0].label,
+  "Ask about the order",
+  "active Advanced Woodsman dialogue should offer a progress option first"
+);
+
+woodcuttingSession.progress.inventory = [
+  { itemData: { id: "willow_logs", name: "Willow logs" }, amount: 1 },
+  { itemData: { id: "maple_logs", name: "Maple logs" }, amount: 1 },
+  { itemData: { id: "yew_logs", name: "Yew logs" }, amount: 1 }
+];
+
+const woodcuttingRefreshed = woodcuttingRuntime.refreshAllQuestStates({ persist: true, touch: true, render: false });
+assert.strictEqual(woodcuttingRefreshed.length, 1, "refresh should return the Advanced Woodsman quest state");
+assert.strictEqual(woodcuttingRefreshed[0].status, "ready_to_complete", "carrying the required logs should mark the Advanced Woodsman quest ready to complete");
+const woodcuttingReadyAccess = woodcuttingRuntime.canOpenMerchantShop("advanced_woodsman");
+assert.strictEqual(woodcuttingReadyAccess.ok, false, "Advanced Woodsman merchant access should stay locked until quest completion");
+assert.strictEqual(
+  woodcuttingReadyAccess.messageText,
+  "I have the deeper-band log sampler. I should return to the Advanced Woodsman.",
+  "Advanced Woodsman merchant access should surface the ready-to-complete reminder"
+);
+
+const woodcuttingCompleted = woodcuttingRuntime.completeQuest(woodcuttingQuestId);
+assert.ok(woodcuttingCompleted && woodcuttingCompleted.ok, "turning in the log sampler should complete the Advanced Woodsman quest");
+assert.strictEqual(woodcuttingCompleted.state.status, "completed", "completed Advanced Woodsman quest should persist completed state");
+assert.strictEqual(woodcuttingRuntime.resolveNpcPrimaryAction(woodcuttingNpc), "Trade", "completed Advanced Woodsman quest should unlock the merchant action");
+const woodcuttingUnlockedAccess = woodcuttingRuntime.canOpenMerchantShop("advanced_woodsman");
+assert.strictEqual(woodcuttingUnlockedAccess.ok, true, "completed Advanced Woodsman quest should unlock the merchant shop");
+assert.strictEqual(
+  woodcuttingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "willow_logs"),
+  false,
+  "quest completion should remove the turned-in willow logs"
+);
+assert.strictEqual(
+  woodcuttingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "maple_logs"),
+  false,
+  "quest completion should remove the turned-in maple logs"
+);
+assert.strictEqual(
+  woodcuttingSession.progress.inventory.some((slot) => slot && slot.itemData && slot.itemData.id === "yew_logs"),
+  false,
+  "quest completion should remove the turned-in yew logs"
+);
+assert.deepStrictEqual(
+  woodcuttingRewardItems,
+  [],
+  "Advanced Woodsman quest should not grant authored item rewards"
+);
+assert.deepStrictEqual(
+  woodcuttingRewardXp,
+  [{ skillId: "woodcutting", amount: 200 }],
+  "Advanced Woodsman quest should grant the authored woodcutting XP reward"
+);
+assert.deepStrictEqual(
+  woodcuttingSaveReasons,
+  ["quest_started", "quest_refresh", "quest_completed"],
+  "Advanced Woodsman quest lifecycle should persist start, refresh, and completion updates"
+);
+assert.deepStrictEqual(
+  woodcuttingChatLog,
+  [
+    { message: "Quest started: Proof of the Grain.", tone: "info" },
+    { message: "Quest complete: Proof of the Grain.", tone: "info" }
+  ],
+  "Advanced Woodsman quest lifecycle should emit start and completion chat messages"
+);
+assert.deepStrictEqual(
+  woodcuttingUiHooks,
+  {
+    renderQuestLog: 2,
+    refreshActiveDialogue: 2,
+    renderInventory: 1
+  },
+  "Advanced Woodsman quest completion should refresh the quest UI and inventory once"
+);
+
+const woodcuttingCompletedDialogueView = woodcuttingRuntime.buildNpcDialogueView(woodcuttingNpc, {
+  title: "Advanced Woodsman",
+  greeting: "Base greeting",
+  options: [{ kind: "trade", label: "Trade" }]
+});
+assert.strictEqual(
+  woodcuttingCompletedDialogueView.greeting,
+  "Those cuts speak for themselves. My full woodsman ledger is open to you now.",
+  "completed Advanced Woodsman dialogue should use the completed greeting"
+);
+assert.strictEqual(
+  woodcuttingCompletedDialogueView.options[0].label,
+  "Ask about the delivery",
+  "completed Advanced Woodsman dialogue should switch to the delivery follow-up option"
 );
 
 const fishingHarness = createHarness();

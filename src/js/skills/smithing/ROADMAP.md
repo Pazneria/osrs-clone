@@ -59,6 +59,10 @@ The player uses smithing to refine mining outputs into bars, combat gear, metal 
 | --------------- | ------------------------------- | --------------------------------------- |
 | Output per Tick | Output per Tick = 1 / 3         | Estimates average smithing output rate  |
 | XP per Tick     | XP per Tick = XP per Action / 3 | Estimates average experience gain rate  |
+| Output Sell Value per Tick | Output Sell Value per Tick = Output Sell Value per Action / 3 | Estimates direct-sale value throughput for smithing outputs |
+| Input Sell Value per Action | Input Sell Value per Action = sum(Input Item Sell Value x Input Amount) | Tracks the sell-value cost of the materials consumed by one smithing action |
+| Value Delta per Action | Value Delta per Action = Output Sell Value per Action - Input Sell Value per Action | Estimates whether a direct-sale smithing action adds or loses value before downstream assembly |
+| Value Delta per Tick | Value Delta per Tick = Value Delta per Action / 3 | Compares direct-sale economy swing across smithing lanes with the fixed 3-tick cadence |
 
 ### Smelting Recipes
 
@@ -121,6 +125,62 @@ Silver jewelry bases are the early jewelry-metal band and gold jewelry bases are
 | Gold Ring     | 40             | 1 Gold Bar   | Ring Mould; permanent crafting-unlock tool | 22            |
 | Gold Tiara    | 40             | 1 Gold Bar   | Tiara Mould; permanent crafting-unlock tool | 22            |
 | Gold Amulet   | 40             | 1 Gold Bar   | Amulet Mould; permanent crafting-unlock tool | 22            |
+
+### Smithing Balance Benchmarks
+
+These balance benchmarks use the authored smithing sell rows for ores and bars, then fall back to the canonical item values in `src/js/content/item-catalog.js` for forged outputs that do not have a separate smithing value-table row.
+
+Direct-sale `Value Delta` is intentionally conservative: it reflects selling the smithing output immediately instead of carrying it into downstream crafting or equipment usage.
+
+### Tier-Entry Smelting Comparison
+
+| Output | Required Level | Output Sell Value per Action | Input Sell Value per Action | Value Delta per Action | Output per Tick | XP per Tick | Output Sell Value per Tick | Value Delta per Tick |
+| ------ | -------------- | ---------------------------- | --------------------------- | ---------------------- | --------------- | ----------- | -------------------------- | -------------------- |
+| Bronze Bar | 1 | 8 | 6 | 2 | 0.3333 | 2.0000 | 2.6667 | 0.6667 |
+| Iron Bar | 1 | 16 | 7 | 9 | 0.3333 | 2.6667 | 5.3333 | 3.0000 |
+| Steel Bar | 10 | 32 | 31 | 1 | 0.3333 | 4.0000 | 10.6667 | 0.3333 |
+| Mithril Bar | 20 | 64 | 108 | -44 | 0.3333 | 6.0000 | 21.3333 | -14.6667 |
+| Silver Bar | 30 | 45 | 18 | 27 | 0.3333 | 4.6667 | 15.0000 | 9.0000 |
+| Adamant Bar | 30 | 128 | 222 | -94 | 0.3333 | 8.0000 | 42.6667 | -31.3333 |
+| Gold Bar | 40 | 70 | 28 | 42 | 0.3333 | 7.3333 | 23.3333 | 14.0000 |
+| Rune Bar | 40 | 256 | 696 | -440 | 0.3333 | 10.6667 | 85.3333 | -146.6667 |
+
+### Component and Ammunition Throughput
+
+| Output | Required Level | Output Sell Value per Action | Input Sell Value per Action | Value Delta per Action | Output per Tick | XP per Tick | Output Sell Value per Tick | Value Delta per Tick |
+| ------ | -------------- | ---------------------------- | --------------------------- | ---------------------- | --------------- | ----------- | -------------------------- | -------------------- |
+| Bronze Sword Blade | 1 | 12 | 16 | -4 | 0.3333 | 2.6667 | 4.0000 | -1.3333 |
+| Iron Sword Blade | 2 | 36 | 32 | 4 | 0.3333 | 3.3333 | 12.0000 | 1.3333 |
+| Steel Sword Blade | 11 | 105 | 64 | 41 | 0.3333 | 4.6667 | 35.0000 | 13.6667 |
+| Mithril Sword Blade | 21 | 270 | 128 | 142 | 0.3333 | 6.6667 | 90.0000 | 47.3333 |
+| Adamant Sword Blade | 31 | 660 | 256 | 404 | 0.3333 | 9.3333 | 220.0000 | 134.6667 |
+| Rune Sword Blade | 41 | 750 | 512 | 238 | 0.3333 | 13.3333 | 250.0000 | 79.3333 |
+| Bronze Arrowheads x15 | 1 | 8 | 8 | 0 | 0.3333 | 1.3333 | 2.6667 | 0.0000 |
+| Iron Arrowheads x15 | 1 | 24 | 16 | 8 | 0.3333 | 1.6667 | 8.0000 | 2.6667 |
+| Steel Arrowheads x15 | 10 | 70 | 32 | 38 | 0.3333 | 2.3333 | 23.3333 | 12.6667 |
+| Mithril Arrowheads x15 | 20 | 180 | 64 | 116 | 0.3333 | 3.3333 | 60.0000 | 38.6667 |
+| Adamant Arrowheads x15 | 30 | 440 | 128 | 312 | 0.3333 | 4.6667 | 146.6667 | 104.0000 |
+| Rune Arrowheads x15 | 40 | 500 | 256 | 244 | 0.3333 | 6.6667 | 166.6667 | 81.3333 |
+
+### Armor and Jewelry Benchmarks
+
+| Output | Required Level | Output Sell Value per Action | Input Sell Value per Action | Value Delta per Action | Output per Tick | XP per Tick | Output Sell Value per Tick | Value Delta per Tick |
+| ------ | -------------- | ---------------------------- | --------------------------- | ---------------------- | --------------- | ----------- | -------------------------- | -------------------- |
+| Bronze Platebody | 1 | 32 | 72 | -40 | 0.3333 | 12.0000 | 10.6667 | -13.3333 |
+| Iron Platebody | 8 | 96 | 144 | -48 | 0.3333 | 15.0000 | 32.0000 | -16.0000 |
+| Steel Platebody | 17 | 280 | 288 | -8 | 0.3333 | 21.0000 | 93.3333 | -2.6667 |
+| Mithril Platebody | 27 | 720 | 576 | 144 | 0.3333 | 30.0000 | 240.0000 | 48.0000 |
+| Adamant Platebody | 37 | 1760 | 1152 | 608 | 0.3333 | 42.0000 | 586.6667 | 202.6667 |
+| Rune Platebody | 47 | 2000 | 2304 | -304 | 0.3333 | 60.0000 | 666.6667 | -101.3333 |
+| Silver Ring | 30 | 40 | 45 | -5 | 0.3333 | 4.6667 | 13.3333 | -1.6667 |
+| Gold Ring | 40 | 100 | 70 | 30 | 0.3333 | 7.3333 | 33.3333 | 10.0000 |
+
+### Balance Notes
+
+- Bronze, iron, silver, and gold smelting remain positive direct-sale conversions, while the coal-heavy mithril, adamant, and rune bars intentionally act as progression sinks for later forging lanes.
+- Forged assembly parts and arrowheads now keep rising into rune without collapsing to placeholder sell values, which preserves the late-band smithing economy instead of making rune outputs look worthless on paper.
+- Platebodies stay the high-XP prestige lane. Mithril and adamant platebodies are profitable direct-sale crafts, while rune platebodies stay slightly negative on direct sale so rune bars still matter as a premium intermediate rather than an always-upgrade flip.
+- Silver Ring remains a low-margin early jewelry base, while Gold Ring becomes the first clearly positive precious-metal jewelry-base lane.
 
 ## Station Structure
 

@@ -14,19 +14,19 @@
 - [x] COMBAT-012: Added a live combat-status HUD panel that surfaces player/target HP, focus, range, and both swing cooldowns directly from the typed UI/combat runtime.
 - [x] COMBAT-010A: Added regression guard coverage for same-tick eat restrictions and stale eat-cooldown sanitization so persisted cooldown ticks cannot lock food usage across session reloads.
 - [x] COMBAT-010: Locked combat-core parity for manual lock breaks, cooldown persistence across breaks/retargets, temporary-occupancy vs hard-no-path pursuit handling, deterministic auto-retaliate order, explicit hit-aggro opening cooldown = `1`, and QA/runtime regression coverage for those shared rules.
+- [x] COMBAT-011: Added melee attack-style UI so the player can switch Attack / Strength / Defence in-game.
+- [x] COMBAT-007: First-pass loot table bands and drop authoring rules are now locked against live enemy tables, general-store direct-sale benchmarks, and focused content-guard coverage.
+- [x] COMBAT-013: Rebuilt the combat simulator around typed combat content, canonical melee formulas, runtime item combat profiles, and deterministic simulator guard coverage.
+- [x] COMBAT-014: Combat progression bands now classify enemy difficulty, loot ceilings, and placement stages across starter, mid-band, and later-region rollout planning.
+- [x] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by topology and world parity guards.
 
 ## Now
-- [ ] COMBAT-007: Lock first-pass loot table bands and drop authoring rules so enemy drops support melee progression, economy pacing, and downstream item loops.
+- [ ] COMBAT-016: Add advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic once the first-pass melee-only foundation is stable.
 
 ## Next
-- [ ] COMBAT-011: Add melee attack-style UI so the player can switch Attack / Strength / Defence in-game.
-- [ ] COMBAT-013: Rebuild the combat simulator around the canonical combat/melee formulas and data contracts.
-- [ ] COMBAT-014: Build progression bands for combat content so enemy difficulty, drops, and placement scale cleanly across starter, mid-band, and later regions.
-- [ ] COMBAT-015: Expand first-pass melee encounter coverage beyond starter-town into outer roads, camps, and guarded thresholds using the same authored spawn-node model.
+- [ ] COMBAT-017: Add ranged combat on top of the shared combat core.
 
 ## Later
-- [ ] COMBAT-016: Add advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic once the first-pass melee-only foundation is stable.
-- [ ] COMBAT-017: Add ranged combat on top of the shared combat core.
 - [ ] COMBAT-018: Add magic combat, rune/resource integration, and staff/spell identity.
 - [ ] COMBAT-019: Add specials, broader balance tooling, and deeper combat build identity.
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.

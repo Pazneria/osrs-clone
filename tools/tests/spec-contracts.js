@@ -38,6 +38,8 @@ const STARTER_TOWN_NAMED_NPC_DIALOGUES = Object.freeze({
   "merchant:general_store": "shopkeeper",
   "merchant:starter_caravan_guide": "road_guide",
   "merchant:east_outpost_caravan_guide": "outpost_guide",
+  "merchant:advanced_fletcher": "advanced_fletcher",
+  "merchant:advanced_woodsman": "advanced_woodsman",
   "merchant:fishing_teacher": "fishing_teacher",
   "merchant:fishing_supplier": "fishing_supplier",
   "merchant:borin_ironvein": "borin_ironvein",
@@ -520,6 +522,11 @@ function run() {
     assert(specRow.buy === item.value, "runecrafting buy value mismatch for " + itemId);
     assert(specRow.sell === runecraftingSellValues[itemId], "runecrafting sell value mismatch for " + itemId);
   });
+  assert(itemDefs.rune_sword_blade.value === 750, "item catalog rune sword blade value mismatch");
+  assert(itemDefs.rune_arrowheads.value === 500, "item catalog rune arrowheads value mismatch");
+  assert(itemDefs.rune_boots.value === 1000, "item catalog rune boots value mismatch");
+  assert(itemDefs.rune_shield.value === 1375, "item catalog rune shield value mismatch");
+  assert(itemDefs.rune_platebody.value === 2000, "item catalog rune platebody value mismatch");
   assert(itemDefs.bait.value === 2, "item catalog bait value mismatch");
   assert(itemDefs.fishing_rod.value === 45, "item catalog fishing rod missing");
   assert(itemDefs.harpoon.value === 110, "item catalog harpoon missing");
@@ -1113,6 +1120,60 @@ function run() {
   assert(shopEconomy.canMerchantBuyItem("rune_ore", "thrain_deepforge"), "thrain should buy rune ore");
   assert(!shopEconomy.canMerchantSellItem("adamant_pickaxe", "thrain_deepforge"), "thrain should not sell adamant pickaxe");
   assert(!shopEconomy.canMerchantBuyItem("ring_mould", "thrain_deepforge"), "thrain should not buy ring mould");
+  assert(typeof SkillSpecRegistry.computeSmithingRecipeMetrics === "function", "smithing recipe metrics helper missing");
+  assert(typeof SkillSpecRegistry.getSmithingBalanceSummary === "function", "smithing balance summary helper missing");
+  assert(SkillSpecRegistry.computeSmithingRecipeMetrics("missing_smithing_recipe") === null, "missing smithing recipes should return null metrics");
+  const smithingBalanceSummary = SkillSpecRegistry.getSmithingBalanceSummary();
+  assert(!!smithingBalanceSummary && !!smithingBalanceSummary.assumptions, "smithing balance summary missing assumptions");
+  assert(Array.isArray(smithingBalanceSummary.rows) && smithingBalanceSummary.rows.length === Object.keys(smithSpec.recipeSet).length, "smithing balance summary row count mismatch");
+  assert(smithingBalanceSummary.assumptions.actionTicks === 3, "smithing balance summary action tick mismatch");
+  const smithingFamilyOrder = {
+    smelting: 0,
+    jewelry_base: 1,
+    assembly_part: 2,
+    ammunition: 3,
+    armor: 4
+  };
+  for (let i = 1; i < smithingBalanceSummary.rows.length; i++) {
+    const prev = smithingBalanceSummary.rows[i - 1];
+    const curr = smithingBalanceSummary.rows[i];
+    assert(prev.requiredLevel <= curr.requiredLevel, "smithing balance summary should stay sorted by required level");
+    if (prev.requiredLevel !== curr.requiredLevel) continue;
+    const prevFamily = Number.isFinite(smithingFamilyOrder[prev.recipeFamily]) ? smithingFamilyOrder[prev.recipeFamily] : Number.MAX_SAFE_INTEGER;
+    const currFamily = Number.isFinite(smithingFamilyOrder[curr.recipeFamily]) ? smithingFamilyOrder[curr.recipeFamily] : Number.MAX_SAFE_INTEGER;
+    assert(prevFamily <= currFamily, "smithing balance summary should stay sorted by recipe family within each level");
+    if (prevFamily !== currFamily) continue;
+    assert(prev.recipeId.localeCompare(curr.recipeId) <= 0, "smithing balance summary should stay alphabetized within each family bucket");
+  }
+  const smithingMetricsById = {};
+  [
+    { recipeId: "smelt_bronze_bar", outputSell: 8, inputSell: 6, delta: 2, xpPerTick: 2, outputSellPerTick: 2.6667, deltaPerTick: 0.6667 },
+    { recipeId: "smelt_mithril_bar", outputSell: 64, inputSell: 108, delta: -44, xpPerTick: 6, outputSellPerTick: 21.3333, deltaPerTick: -14.6667 },
+    { recipeId: "smelt_rune_bar", outputSell: 256, inputSell: 696, delta: -440, xpPerTick: 10.6667, outputSellPerTick: 85.3333, deltaPerTick: -146.6667 },
+    { recipeId: "forge_rune_sword_blade", outputSell: 750, inputSell: 512, delta: 238, xpPerTick: 13.3333, outputSellPerTick: 250, deltaPerTick: 79.3333 },
+    { recipeId: "forge_rune_arrowheads", outputSell: 500, inputSell: 256, delta: 244, xpPerTick: 6.6667, outputSellPerTick: 166.6667, deltaPerTick: 81.3333 },
+    { recipeId: "forge_rune_platebody", outputSell: 2000, inputSell: 2304, delta: -304, xpPerTick: 60, outputSellPerTick: 666.6667, deltaPerTick: -101.3333 },
+    { recipeId: "forge_silver_ring", outputSell: 40, inputSell: 45, delta: -5, xpPerTick: 4.6667, outputSellPerTick: 13.3333, deltaPerTick: -1.6667 },
+    { recipeId: "forge_gold_ring", outputSell: 100, inputSell: 70, delta: 30, xpPerTick: 7.3333, outputSellPerTick: 33.3333, deltaPerTick: 10 }
+  ].forEach((benchmark) => {
+    const metrics = SkillSpecRegistry.computeSmithingRecipeMetrics(benchmark.recipeId);
+    assert(!!metrics, "smithing metrics missing for " + benchmark.recipeId);
+    smithingMetricsById[benchmark.recipeId] = metrics;
+    assert(metrics.throughput.outputSellValuePerAction === benchmark.outputSell, "smithing output sell/action mismatch for " + benchmark.recipeId);
+    assert(metrics.throughput.inputSellValuePerAction === benchmark.inputSell, "smithing input sell/action mismatch for " + benchmark.recipeId);
+    assert(metrics.throughput.valueDeltaPerAction === benchmark.delta, "smithing value delta/action mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.xpPerTick, benchmark.xpPerTick, 1e-4), "smithing xp/tick mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.outputSellValuePerTick, benchmark.outputSellPerTick, 1e-4), "smithing output sell/tick mismatch for " + benchmark.recipeId);
+    assert(approxEq(metrics.throughput.valueDeltaPerTick, benchmark.deltaPerTick, 1e-4), "smithing value delta/tick mismatch for " + benchmark.recipeId);
+  });
+  assert(smithingMetricsById.smelt_bronze_bar.recipeFamily === "smelting", "bronze bar recipe family mismatch");
+  assert(smithingMetricsById.forge_gold_ring.recipeFamily === "jewelry_base", "gold ring recipe family mismatch");
+  assert(smithingMetricsById.forge_rune_sword_blade.recipeFamily === "assembly_part", "rune sword blade recipe family mismatch");
+  assert(smithingMetricsById.forge_rune_arrowheads.recipeFamily === "ammunition", "rune arrowheads recipe family mismatch");
+  assert(smithingMetricsById.forge_rune_platebody.recipeFamily === "armor", "rune platebody recipe family mismatch");
+  assert(smithingMetricsById.forge_gold_ring.throughput.valueDeltaPerAction > smithingMetricsById.forge_silver_ring.throughput.valueDeltaPerAction, "gold ring should beat silver ring on value delta");
+  assert(smithingMetricsById.forge_rune_sword_blade.throughput.outputSellValuePerAction > smithingMetricsById.forge_rune_arrowheads.throughput.outputSellValuePerAction, "rune sword blade should stay above rune arrowheads on direct sell value");
+  assert(smithingMetricsById.forge_rune_platebody.throughput.xpPerTick > smithingMetricsById.forge_rune_sword_blade.throughput.xpPerTick, "rune platebody should remain the top smithing xp/tick lane");
   const fletchSpec = SkillSpecRegistry.getSkillSpec("fletching");
   const craftingSpec = SkillSpecRegistry.getSkillSpec("crafting");
   assert(!!fletchSpec && !!fletchSpec.recipeSet, "fletching recipe set missing");
@@ -1741,7 +1802,7 @@ function run() {
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "elira_gemhand"), "elira world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "crafting_teacher"), "crafting teacher world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "tanner_rusk"), "tanner world placement missing");
-  assert(Array.isArray(starterTownWorld.combatSpawns) && starterTownWorld.combatSpawns.length === 50, "starter combat spawns missing");
+  assert(Array.isArray(starterTownWorld.combatSpawns) && starterTownWorld.combatSpawns.length === 53, "starter combat spawns missing");
   assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_training_dummy_hub" && entry.enemyId === "enemy_training_dummy"), "training dummy combat spawn missing");
   assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_rat_south_field" && entry.spawnTile.x === 194 && entry.spawnTile.y === 220), "rat combat spawn missing");
   assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_chicken_south_field" && entry.enemyId === "enemy_chicken"), "chicken combat spawn missing");

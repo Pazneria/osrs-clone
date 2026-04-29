@@ -248,16 +248,20 @@ function run() {
   assert((skillWorldArtifacts.publishedWorldState.runtimeServices || []).length === 2, "published runtime services mismatch");
 
   const expectedPublishedMerchantIds = [
-    "general_store",
-    "fishing_teacher",
-    "fishing_supplier",
+    "advanced_fletcher",
+    "advanced_woodsman",
     "borin_ironvein",
-    "thrain_deepforge",
-    "elira_gemhand",
+    "combination_sage",
     "crafting_teacher",
+    "elira_gemhand",
+    "fishing_supplier",
+    "fishing_teacher",
+    "fletching_supplier",
+    "forester_teacher",
+    "general_store",
     "tanner_rusk",
     "rune_tutor",
-    "combination_sage"
+    "thrain_deepforge"
   ].sort().join(",");
   assert(
     sortedMerchantIds(skillWorldArtifacts.merchantNpcDescriptors) === expectedPublishedMerchantIds,

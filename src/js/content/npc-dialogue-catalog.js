@@ -11,8 +11,8 @@
         return { kind: 'text', label, response: String(response || '') };
     }
 
-    function createActionOption(label, kind) {
-        return { kind, label };
+    function createActionOption(label, kind, extra = null) {
+        return Object.assign({ kind, label }, extra || {});
     }
 
     function createBankActionOption(label = 'Bank') {
@@ -50,6 +50,63 @@
                 createActionOption('Goodbye', 'close')
             ]
         },
+        tutorial_guide: {
+            title: 'Tutorial Guide',
+            greeting: 'Welcome to Tutorial Island. This place is built to slow the world down: one yard, one instructor, one lesson at a time.',
+            options: [
+                createTextOption('Ask about movement', 'Left-click the ground to walk. Right-click people, doors, resources, and objects when you want the full set of actions.'),
+                createTextOption('Ask about the island', 'You will gather wood, catch fish, light fires, cook, mine, smith, fight chickens, use the bank, then leave for Starter Town.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_woodcutting_instructor: {
+            title: 'Woodcutting Instructor',
+            greeting: 'This grove is for gathering. Trees become logs, and logs feed the rest of the island.',
+            options: [
+                createTextOption('Ask about trees', 'Use an axe on a normal tree to collect logs. Bring one back before you move on.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_firemaking_instructor: {
+            title: 'Firemaking Instructor',
+            greeting: 'This lane is for spending gathered resources. Light a fire, then use it to cook your fish.',
+            options: [
+                createTextOption('Ask about fires', 'Use a tinderbox with logs. Firemaking consumes the logs and creates a cooking spot for a short time.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_fishing_instructor: {
+            title: 'Fishing Instructor',
+            greeting: 'This pond is for learning that water can be a resource node too.',
+            options: [
+                createTextOption('Ask about fishing', 'Use a small net on the pond until you catch raw shrimp, then report back.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_mining_smithing_instructor: {
+            title: 'Mining and Smithing Instructor',
+            greeting: 'Ore becomes bars, and bars become useful parts if you work them in order.',
+            options: [
+                createTextOption('Ask about metal', 'Mine copper and tin, smelt a bronze bar at the furnace, then forge bronze arrowheads at the anvil.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_combat_instructor: {
+            title: 'Combat Instructor',
+            greeting: 'The chicken pen is here to teach targeting, styles, and patience.',
+            options: [
+                createTextOption('Ask about combat', 'Attack a chicken and watch your combat tab. Even a little practice is enough for the first lesson.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_bank_tutor: {
+            title: 'Bank Tutor',
+            greeting: 'A bank is shared storage. Two booths, one bank.',
+            options: [
+                createTextOption('Ask about banking', 'Deposit a coin at one booth, withdraw it at the other, then talk to me.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
         fishing_teacher: {
             title: 'Fishing Teacher',
             greeting: 'A rod in hand is a lesson in patience. What do you want to learn?',
@@ -70,6 +127,16 @@
                 createActionOption('Goodbye', 'close')
             ]
         },
+        forester_teacher: {
+            title: 'Forester Teacher',
+            greeting: 'A clean cut starts before the swing. What do you need to know?',
+            options: [
+                createTextOption('Ask about axes', 'A better axe saves effort, but only if your timing stays steady.'),
+                createTextOption('Ask about trees', 'Start with the easy trunks, then work outward as the grain gets tougher.'),
+                createActionOption('Trade', 'trade'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
         fletching_supplier: {
             title: 'Fletching Supplier',
             greeting: 'Strings, feathers, knives. If it keeps wood moving, I can probably hand it over.',
@@ -86,6 +153,16 @@
             options: [
                 createTextOption('Ask about bows', 'A good bow should feel calm in the hand before it ever feels powerful.'),
                 createTextOption('Ask about arrows', 'If the shaft wobbles or the feathers fight each other, the shot was lost before release.'),
+                createActionOption('Trade', 'trade'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        advanced_woodsman: {
+            title: 'Advanced Woodsman',
+            greeting: 'Good timber tells the truth. Most people are too busy hacking to hear it.',
+            options: [
+                createTextOption('Ask about axes', 'Once the wood turns stubborn, a better edge stops being luxury and starts being survival.'),
+                createTextOption('Ask about grain', 'Willow, maple, and yew all push back in different ways. Learn that, and the rest gets simpler.'),
                 createActionOption('Trade', 'trade'),
                 createActionOption('Goodbye', 'close')
             ]
@@ -178,10 +255,25 @@
         starter_caravan_guide: 'road_guide',
         outpost_guide: 'outpost_guide',
         east_outpost_caravan_guide: 'outpost_guide',
+        tutorial_guide: 'tutorial_guide',
+        woodcutting_instructor: 'tutorial_woodcutting_instructor',
+        tutorial_woodcutting_instructor: 'tutorial_woodcutting_instructor',
+        firemaking_instructor: 'tutorial_firemaking_instructor',
+        tutorial_firemaking_instructor: 'tutorial_firemaking_instructor',
+        fishing_instructor: 'tutorial_fishing_instructor',
+        tutorial_fishing_instructor: 'tutorial_fishing_instructor',
+        mining_smithing_instructor: 'tutorial_mining_smithing_instructor',
+        tutorial_mining_smithing_instructor: 'tutorial_mining_smithing_instructor',
+        combat_instructor: 'tutorial_combat_instructor',
+        tutorial_combat_instructor: 'tutorial_combat_instructor',
+        bank_tutor: 'tutorial_bank_tutor',
+        tutorial_bank_tutor: 'tutorial_bank_tutor',
         fishing_teacher: 'fishing_teacher',
         fishing_supplier: 'fishing_supplier',
+        forester_teacher: 'forester_teacher',
         fletching_supplier: 'fletching_supplier',
         advanced_fletcher: 'advanced_fletcher',
+        advanced_woodsman: 'advanced_woodsman',
         banker: 'banker',
         borin_ironvein: 'borin_ironvein',
         thrain_deepforge: 'thrain_deepforge',

@@ -87,6 +87,10 @@ export interface PlayerProfileState {
   creationCompleted: boolean;
   createdAt: number | null;
   lastStartedAt: number | null;
+  tutorialStep: number;
+  tutorialCompletedAt: number | null;
+  tutorialBankDepositSource: string | null;
+  tutorialBankWithdrawSource: string | null;
 }
 
 export interface SaveAppearanceState {

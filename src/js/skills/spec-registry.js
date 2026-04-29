@@ -955,6 +955,152 @@
         };
     }
 
+    function resolveSmithingItemSellValue(valueTable, itemDefs, itemId) {
+        if (!itemId) return null;
+        const valueRow = valueTable[itemId];
+        if (valueRow && typeof valueRow === 'object' && Number.isFinite(valueRow.sell)) {
+            return Math.max(0, Math.floor(valueRow.sell));
+        }
+        if (itemDefs && itemDefs[itemId] && Number.isFinite(itemDefs[itemId].value)) {
+            return Math.max(0, Math.floor(itemDefs[itemId].value));
+        }
+        return null;
+    }
+
+    function getSmithingRecipeFamily(recipe) {
+        if (!recipe || typeof recipe !== 'object') return '';
+        const outputItemId = recipe.output && typeof recipe.output.itemId === 'string'
+            ? recipe.output.itemId
+            : '';
+        if (Array.isArray(recipe.requiredMouldIds) && recipe.requiredMouldIds.length > 0) return 'jewelry_base';
+        if (/_bar$/.test(outputItemId)) return 'smelting';
+        if (/_arrowheads$/.test(outputItemId)) return 'ammunition';
+        if (/_sword_blade$/.test(outputItemId) || /_(axe_head|pickaxe_head)$/.test(outputItemId)) return 'assembly_part';
+        return 'armor';
+    }
+
+    function computeSmithingRecipeMetrics(recipeId) {
+        const smithingSpec = getSkillSpec('smithing') || {};
+        const recipeSet = smithingSpec.recipeSet && typeof smithingSpec.recipeSet === 'object'
+            ? smithingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const economy = smithingSpec.economy && typeof smithingSpec.economy === 'object'
+            ? smithingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS && typeof window.ItemCatalog.ITEM_DEFS === 'object'
+            ? window.ItemCatalog.ITEM_DEFS
+            : null;
+        const outputItemId = recipe.output && typeof recipe.output.itemId === 'string'
+            ? recipe.output.itemId
+            : '';
+        const outputAmount = Number.isFinite(recipe.output && recipe.output.amount)
+            ? Math.max(1, Math.floor(recipe.output.amount))
+            : 1;
+        const actionTicks = Number.isFinite(recipe.actionTicks)
+            ? recipe.actionTicks
+            : (Number.isFinite(smithingSpec.timing && smithingSpec.timing.actionTicks) ? smithingSpec.timing.actionTicks : 1);
+        const xpPerAction = Number.isFinite(recipe.xpPerAction) ? recipe.xpPerAction : 0;
+        const outputSellValuePerUnit = resolveSmithingItemSellValue(valueTable, itemDefs, outputItemId);
+        const outputSellValuePerAction = outputSellValuePerUnit === null
+            ? null
+            : outputSellValuePerUnit * outputAmount;
+        const inputs = Array.isArray(recipe.inputs) ? recipe.inputs : [];
+        const inputRows = inputs.map((input) => {
+            const itemId = input && typeof input.itemId === 'string' ? input.itemId : '';
+            const amount = Number.isFinite(input && input.amount) ? Math.max(0, Math.floor(input.amount)) : 0;
+            const sellValuePerUnit = resolveSmithingItemSellValue(valueTable, itemDefs, itemId);
+            return {
+                itemId,
+                amount,
+                sellValuePerUnit,
+                sellValuePerAction: sellValuePerUnit === null ? null : sellValuePerUnit * amount
+            };
+        });
+        const inputSellValuePerAction = inputRows.some((row) => row.sellValuePerAction === null)
+            ? null
+            : inputRows.reduce((sum, row) => sum + row.sellValuePerAction, 0);
+        const valueDeltaPerAction = outputSellValuePerAction === null || inputSellValuePerAction === null
+            ? null
+            : outputSellValuePerAction - inputSellValuePerAction;
+
+        return {
+            recipeId,
+            recipeFamily: getSmithingRecipeFamily(recipe),
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            actionTicks,
+            output: {
+                itemId: outputItemId,
+                amount: outputAmount,
+                sellValuePerUnit: outputSellValuePerUnit,
+                sellValuePerAction: outputSellValuePerAction
+            },
+            inputs: inputRows,
+            throughput: {
+                outputPerAction: outputAmount,
+                inputSellValuePerAction,
+                outputSellValuePerAction,
+                valueDeltaPerAction,
+                xpPerAction,
+                outputPerTick: roundMetric(actionTicks > 0 ? outputAmount / actionTicks : 0),
+                xpPerTick: roundMetric(actionTicks > 0 ? xpPerAction / actionTicks : 0),
+                outputSellValuePerTick: outputSellValuePerAction === null || actionTicks <= 0
+                    ? null
+                    : roundMetric(outputSellValuePerAction / actionTicks),
+                valueDeltaPerTick: valueDeltaPerAction === null || actionTicks <= 0
+                    ? null
+                    : roundMetric(valueDeltaPerAction / actionTicks)
+            }
+        };
+    }
+
+    function getSmithingBalanceSummary() {
+        const smithingSpec = getSkillSpec('smithing') || {};
+        const recipeSet = smithingSpec.recipeSet && typeof smithingSpec.recipeSet === 'object'
+            ? smithingSpec.recipeSet
+            : {};
+        const familyOrder = {
+            smelting: 0,
+            jewelry_base: 1,
+            assembly_part: 2,
+            ammunition: 3,
+            armor: 4
+        };
+        const recipeIds = Object.keys(recipeSet).sort((a, b) => {
+            const aRecipe = recipeSet[a] || {};
+            const bRecipe = recipeSet[b] || {};
+            const aLevel = Number.isFinite(aRecipe.requiredLevel) ? aRecipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+            const bLevel = Number.isFinite(bRecipe.requiredLevel) ? bRecipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            const aFamily = familyOrder[getSmithingRecipeFamily(aRecipe)];
+            const bFamily = familyOrder[getSmithingRecipeFamily(bRecipe)];
+            const aOrder = Number.isFinite(aFamily) ? aFamily : Number.MAX_SAFE_INTEGER;
+            const bOrder = Number.isFinite(bFamily) ? bFamily : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < recipeIds.length; i++) {
+            const row = computeSmithingRecipeMetrics(recipeIds[i]);
+            if (row) rows.push(row);
+        }
+
+        return {
+            assumptions: {
+                actionTicks: Number.isFinite(smithingSpec.timing && smithingSpec.timing.actionTicks)
+                    ? smithingSpec.timing.actionTicks
+                    : null
+            },
+            rows
+        };
+    }
+
     function getRunecraftingEconomySummary() {
         const runecraftingSpec = getSkillSpec('runecrafting') || {};
         const economy = runecraftingSpec.economy && typeof runecraftingSpec.economy === 'object'
@@ -1206,6 +1352,8 @@
         getRunecraftingEconomySummary,
         computeCraftingRecipeMetrics,
         getCraftingBalanceSummary,
+        computeSmithingRecipeMetrics,
+        getSmithingBalanceSummary,
         computeFletchingRecipeMetrics,
         getFletchingBalanceSummary,
         computeRuneOutputPerEssence,

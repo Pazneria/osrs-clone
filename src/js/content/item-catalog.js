@@ -1083,7 +1083,7 @@
                 id: 'rune',
                 name: 'Rune',
                 barValue: 256,
-                gearValue: 0,
+                gearValue: 2500,
                 defStats: { boots: 10, helmet: 24, shield: 28, platelegs: 34, platebody: 40 }
             }
         ];

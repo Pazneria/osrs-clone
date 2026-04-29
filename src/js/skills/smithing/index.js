@@ -262,16 +262,116 @@
         return parts.join(', ');
     }
 
+    function formatList(parts) {
+        const items = Array.isArray(parts) ? parts.filter(Boolean) : [];
+        if (!items.length) return '';
+        if (items.length === 1) return items[0];
+        if (items.length === 2) return items[0] + ' and ' + items[1];
+        return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
+    }
+
+    function getRecipeOutputName(context, recipe) {
+        return getItemName(context, recipe && recipe.output && recipe.output.itemId);
+    }
+
+    function getRecipeBatchLabel(context, recipe, quantity) {
+        const outputName = getRecipeOutputName(context, recipe);
+        if (Number.isFinite(quantity) && quantity > 1) return quantity + 'x ' + outputName;
+        return outputName;
+    }
+
+    function getRecipeQueueLabel(context, recipe, quantityMode, quantityCount) {
+        if (quantityMode === 'count' && Number.isFinite(quantityCount)) {
+            return getRecipeBatchLabel(context, recipe, quantityCount);
+        }
+        return getRecipeOutputName(context, recipe) + ' until you run out of materials';
+    }
+
+    function getNamedRequirementList(context, itemIds) {
+        if (!Array.isArray(itemIds)) return [];
+        const names = [];
+        for (let i = 0; i < itemIds.length; i++) {
+            const itemId = itemIds[i];
+            if (!itemId) continue;
+            names.push(getItemName(context, itemId));
+        }
+        return names;
+    }
+
+    function getMissingMaterialLabels(context, recipe) {
+        const inputs = Array.isArray(recipe && recipe.inputs) ? recipe.inputs : [];
+        const missing = [];
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i];
+            if (!input || !input.itemId) continue;
+            const needed = Number.isFinite(input.amount) ? Math.max(1, Math.floor(input.amount)) : 1;
+            if ((context.getInventoryCount(input.itemId) || 0) >= needed) continue;
+            missing.push(needed + 'x ' + getItemName(context, input.itemId));
+        }
+        return missing;
+    }
+
+    function buildToolRequirementMessage(context, recipe, keepSmithing = false) {
+        const tools = formatList(getNamedRequirementList(context, recipe && recipe.requiredToolIds));
+        if (!tools) return keepSmithing ? 'You need the required smithing tool to keep going.' : 'You need the required smithing tool.';
+        return 'You need ' + tools + ' to ' + (keepSmithing ? 'keep smithing ' : 'smith ') + getRecipeOutputName(context, recipe) + '.';
+    }
+
+    function buildMouldRequirementMessage(context, recipe, keepSmithing = false) {
+        const moulds = formatList(getNamedRequirementList(context, recipe && recipe.requiredMouldIds));
+        if (!moulds) return keepSmithing ? 'You need the required mould to keep smithing.' : 'You need the required mould to smith that.';
+        return 'You need ' + moulds + ' to ' + (keepSmithing ? 'keep smithing ' : 'smith ') + getRecipeOutputName(context, recipe) + '.';
+    }
+
+    function buildUnlockRequirementMessage(context, recipe, keepSmithing = false) {
+        const outputName = getRecipeOutputName(context, recipe);
+        if (!outputName || outputName === 'Unknown item') return 'You have not unlocked that mould yet.';
+        return 'You have not unlocked the required mould for ' + outputName + (keepSmithing ? ' yet.' : '.');
+    }
+
+    function buildMaterialRequirementMessage(context, recipe, keepSmithing = false) {
+        const missing = formatList(getMissingMaterialLabels(context, recipe));
+        if (!missing) {
+            return keepSmithing
+                ? 'You run out of smithing materials.'
+                : 'You do not have the required materials.';
+        }
+        return 'You need ' + missing + ' to ' + (keepSmithing ? 'keep smithing ' : 'smith ') + getRecipeOutputName(context, recipe) + '.';
+    }
+
+    function buildOutputCapacityMessage(context, recipe, keepSmithing = false) {
+        const outputName = getRecipeOutputName(context, recipe);
+        if (!outputName || outputName === 'Unknown item') {
+            return keepSmithing
+                ? 'You have no inventory space for that output.'
+                : 'You have no inventory space for that smithing output.';
+        }
+        return 'You need more inventory space to ' + (keepSmithing ? 'keep smithing ' : 'smith ') + outputName + '.';
+    }
+
+    function getRuntimeStopTone(reasonCode) {
+        if (reasonCode === 'INPUT_EMPTY' || reasonCode === 'MOVED_AWAY' || reasonCode === 'STATION_CHANGED') {
+            return 'info';
+        }
+        return 'warn';
+    }
+
     function getRecipeIssues(context, recipe) {
         const issues = [];
         const level = typeof context.getSkillLevel === 'function' ? context.getSkillLevel(SKILL_ID) : 1;
         const required = Number.isFinite(recipe && recipe.requiredLevel) ? recipe.requiredLevel : 1;
         if (level < required) issues.push('Requires Smithing ' + required);
 
-        if (!hasToolRequirements(context, recipe)) issues.push('Missing required tool');
-        if (!hasMouldRequirements(context, recipe)) issues.push('Missing required mould');
-        if (!hasUnlockRequirement(context, recipe)) issues.push('Mould not unlocked');
-        if (!hasMaterials(context, recipe)) issues.push('Missing materials');
+        if (!hasToolRequirements(context, recipe)) {
+            issues.push('Needs ' + formatList(getNamedRequirementList(context, recipe && recipe.requiredToolIds)));
+        }
+        if (!hasMouldRequirements(context, recipe)) {
+            issues.push('Needs ' + formatList(getNamedRequirementList(context, recipe && recipe.requiredMouldIds)));
+        }
+        if (!hasUnlockRequirement(context, recipe)) issues.push('Mould quest unlock required');
+        if (!hasMaterials(context, recipe)) {
+            issues.push('Needs ' + formatList(getMissingMaterialLabels(context, recipe)));
+        }
         return issues;
     }
 
@@ -579,27 +679,27 @@
         }
 
         if (!hasToolRequirements(context, recipe)) {
-            context.addChatMessage('You need the required smithing tool.', 'warn');
+            context.addChatMessage(buildToolRequirementMessage(context, recipe), 'warn');
             return false;
         }
 
         if (!hasMouldRequirements(context, recipe)) {
-            context.addChatMessage('You need the required mould to smith that.', 'warn');
+            context.addChatMessage(buildMouldRequirementMessage(context, recipe), 'warn');
             return false;
         }
 
         if (!hasUnlockRequirement(context, recipe)) {
-            context.addChatMessage('You have not unlocked that mould yet.', 'warn');
+            context.addChatMessage(buildUnlockRequirementMessage(context, recipe), 'warn');
             return false;
         }
 
         if (!hasMaterials(context, recipe)) {
-            context.addChatMessage('You do not have the required materials.', 'warn');
+            context.addChatMessage(buildMaterialRequirementMessage(context, recipe), 'warn');
             return false;
         }
 
         if (!hasOutputCapacity(context, recipe)) {
-            context.addChatMessage('You have no inventory space for that smithing output.', 'warn');
+            context.addChatMessage(buildOutputCapacityMessage(context, recipe), 'warn');
             return false;
         }
 
@@ -610,7 +710,11 @@
         if (!recipe) return { ok: false, reasonCode: 'RECIPE_MISSING', message: 'Smithing recipe is missing.' };
 
         if (session && session.stationType !== context.targetObj) {
-            return { ok: false, reasonCode: 'STATION_CHANGED', message: 'You stop smithing at this station.' };
+            return {
+                ok: false,
+                reasonCode: 'STATION_CHANGED',
+                message: 'You leave the ' + describeStation(session.stationType) + ' and stop smithing ' + getRecipeOutputName(context, recipe) + '.'
+            };
         }
 
         const target = session && session.target ? session.target : null;
@@ -619,28 +723,32 @@
             const dx = Math.abs(target.x - context.playerState.x);
             const dy = Math.abs(target.y - context.playerState.y);
             if (!samePlane || dx > 1 || dy > 1) {
-                return { ok: false, reasonCode: 'MOVED_AWAY', message: 'You stop smithing.' };
+                return {
+                    ok: false,
+                    reasonCode: 'MOVED_AWAY',
+                    message: 'You move away from the ' + describeStation(session.stationType) + ' and stop smithing ' + getRecipeOutputName(context, recipe) + '.'
+                };
             }
         }
 
         if (!hasToolRequirements(context, recipe)) {
-            return { ok: false, reasonCode: 'MISSING_TOOL', message: 'You need the required smithing tool.' };
+            return { ok: false, reasonCode: 'MISSING_TOOL', message: buildToolRequirementMessage(context, recipe, true) };
         }
 
         if (!hasMouldRequirements(context, recipe)) {
-            return { ok: false, reasonCode: 'MISSING_MOULD', message: 'You need the required mould to continue.' };
+            return { ok: false, reasonCode: 'MISSING_MOULD', message: buildMouldRequirementMessage(context, recipe, true) };
         }
 
         if (!hasUnlockRequirement(context, recipe)) {
-            return { ok: false, reasonCode: 'MISSING_UNLOCK', message: 'You have not unlocked that mould yet.' };
+            return { ok: false, reasonCode: 'MISSING_UNLOCK', message: buildUnlockRequirementMessage(context, recipe, true) };
         }
 
         if (!hasMaterials(context, recipe)) {
-            return { ok: false, reasonCode: 'INPUT_EMPTY', message: 'You run out of smithing materials.' };
+            return { ok: false, reasonCode: 'INPUT_EMPTY', message: buildMaterialRequirementMessage(context, recipe, true) };
         }
 
         if (!hasOutputCapacity(context, recipe)) {
-            return { ok: false, reasonCode: 'INVENTORY_FULL', message: 'You have no inventory space for that output.' };
+            return { ok: false, reasonCode: 'INVENTORY_FULL', message: buildOutputCapacityMessage(context, recipe, true) };
         }
 
         return { ok: true };
@@ -743,12 +851,16 @@
                 target: { x: context.targetX, y: context.targetY, z: context.targetZ },
                 quantityMode,
                 quantityRemaining: quantityMode === 'count' ? quantityCount : null,
+                completedCount: 0,
                 intervalTicks: actionTicks,
                 nextTick: context.currentTick + actionTicks
             });
 
             context.startSkillingAction();
-            context.addChatMessage('You begin smithing at the ' + describeStation(context.targetObj) + '.', 'info');
+            context.addChatMessage(
+                'You begin smithing ' + getRecipeQueueLabel(context, recipe, quantityMode, quantityCount) + ' at the ' + describeStation(context.targetObj) + '.',
+                'info'
+            );
             return true;
         },
 
@@ -763,7 +875,7 @@
                 const recipe = resolveRecipeById(context, session.recipeId);
                 const validation = validateRecipeRuntime(context, recipe, session);
                 if (!validation.ok) {
-                    if (validation.message) context.addChatMessage(validation.message, 'warn');
+                    if (validation.message) context.addChatMessage(validation.message, getRuntimeStopTone(validation.reasonCode));
                     if (typeof context.renderInventory === 'function') context.renderInventory();
                     return SkillActionResolution.stopSkill(context, SKILL_ID, validation.reasonCode);
                 }
@@ -771,23 +883,25 @@
                 const resolution = craftOne(context, recipe);
                 if (resolution.status !== 'success') {
                     if (resolution.reasonCode === 'INPUT_EMPTY') {
-                        context.addChatMessage('You run out of smithing materials.', 'info');
+                        context.addChatMessage(buildMaterialRequirementMessage(context, recipe, true), 'info');
                     } else if (resolution.reasonCode === 'INVENTORY_FULL') {
-                        context.addChatMessage('You have no inventory space for that output.', 'warn');
+                        context.addChatMessage(buildOutputCapacityMessage(context, recipe, true), 'warn');
                     }
                     return SkillActionResolution.stopSkill(context, SKILL_ID, resolution.reasonCode || 'FAILED');
                 }
 
+                session.completedCount = Number.isFinite(session.completedCount) ? (session.completedCount + 1) : 1;
                 if (Number.isFinite(session.quantityRemaining)) {
                     session.quantityRemaining = Math.max(0, session.quantityRemaining - 1);
                     if (session.quantityRemaining <= 0) {
+                        context.addChatMessage('You finish smithing ' + getRecipeBatchLabel(context, recipe, session.completedCount) + '.', 'info');
                         return SkillActionResolution.stopSkill(context, SKILL_ID, 'QUANTITY_COMPLETE');
                     }
                 }
 
                 const canContinue = validateRecipeRuntime(context, recipe, session);
                 if (!canContinue.ok) {
-                    if (canContinue.message && canContinue.reasonCode !== 'INPUT_EMPTY') context.addChatMessage(canContinue.message, 'info');
+                    if (canContinue.message) context.addChatMessage(canContinue.message, getRuntimeStopTone(canContinue.reasonCode));
                     return SkillActionResolution.stopSkill(context, SKILL_ID, canContinue.reasonCode);
                 }
 

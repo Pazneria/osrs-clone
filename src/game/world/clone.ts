@@ -1,11 +1,13 @@
 import type { EnemySpawnNodeDefinition } from "../contracts/combat";
 import type {
   DoorLandmark,
+  FenceLandmark,
   MiningNodePlacement,
   NpcDescriptor,
   Point2,
   Point3,
   RouteDescriptor,
+  RoofLandmark,
   RunecraftingAltarPlacement,
   ServiceDescriptor,
   ShowcaseTree,
@@ -226,6 +228,20 @@ function cloneLandmarkTile(tile: StaircaseLandmark["tiles"][number]): StaircaseL
 
 export function cloneDoorLandmark(door: DoorLandmark): DoorLandmark {
   return { ...door };
+}
+
+export function cloneFenceLandmark(fence: FenceLandmark): FenceLandmark {
+  return {
+    ...fence,
+    points: Array.isArray(fence.points) ? fence.points.map(clonePoint2) : []
+  };
+}
+
+export function cloneRoofLandmark(roof: RoofLandmark): RoofLandmark {
+  return {
+    ...roof,
+    hideBounds: roof.hideBounds ? { ...roof.hideBounds } : undefined
+  };
 }
 
 export function cloneShowcaseTree(tree: ShowcaseTree): ShowcaseTree {

@@ -206,9 +206,8 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 | Willow bend fire lane | Level-20 willow-fire progression beside the willow route |
 | Maple ridge fire lane | Level-30 maple-fire progression near the higher-tier ridge loop |
 | Yew frontier fire lane | Level-40 yew-fire progression at the late-band frontier |
-| North-road pine loop fire lane | Secondary proof lane for early roadside firemaking checks |
 
-Current world pass anchors these authored fire lanes in `starter_town` and `north_road_camp`, and QA exposes them through `/qa firespots` plus `/qa gotofire <starter|oak|willow|maple|yew>`.
+Current world pass anchors these authored fire lanes in `starter_town`, and QA exposes them through `/qa firespots` plus `/qa gotofire <starter|oak|willow|maple|yew>`.
 
 ## Dependencies
 

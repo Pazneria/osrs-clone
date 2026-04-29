@@ -802,8 +802,12 @@ function runFletchingChecks(roadmap, spec) {
   assertRegex(roadmap, /\|\s*Yew Shortbow\s*\|\s*44\s*\|\s*24\s*\|\s*110\s*\|\s*8\s*\|\s*36\.6667\s*\|/, "fletching finished-bow throughput row mismatch");
 }
 
-function runSmithingChecks(roadmap, spec) {
+function runSmithingChecks(roadmap, spec, itemDefs) {
   assertRegex(roadmap, new RegExp(`\\|\\s*Fixed Smithing Action Ticks\\s*\\|\\s*${spec.timing.actionTicks}\\s*\\|`), "smithing fixed action ticks mismatch");
+  assertRegex(roadmap, /\|\s*Output Sell Value per Tick\s*\|\s*Output Sell Value per Tick = Output Sell Value per Action \/ 3\s*\|/, "smithing output-sell-per-tick formula mismatch");
+  assertRegex(roadmap, /\|\s*Input Sell Value per Action\s*\|\s*Input Sell Value per Action = sum\(Input Item Sell Value x Input Amount\)\s*\|/, "smithing input-sell formula mismatch");
+  assertRegex(roadmap, /\|\s*Value Delta per Action\s*\|\s*Value Delta per Action = Output Sell Value per Action - Input Sell Value per Action\s*\|/, "smithing value-delta formula mismatch");
+  assertRegex(roadmap, /\|\s*Value Delta per Tick\s*\|\s*Value Delta per Tick = Value Delta per Action \/ 3\s*\|/, "smithing value-delta-per-tick formula mismatch");
 
   const values = spec.economy.valueTable;
   assertRegex(roadmap, new RegExp(`\\|\\s*Hammer\\s*\\|\\s*1\\s*\\|\\s*${values.hammer.buy}\\s*\\|\\s*${values.hammer.sell}\\s*\\|`), "smithing hammer table mismatch");
@@ -813,6 +817,53 @@ function runSmithingChecks(roadmap, spec) {
 
   assertRegex(roadmap, new RegExp(`\\|\\s*Bronze Bar\\s*\\|\\s*Intermediate\\s*\\|\\s*null\\s*\\|\\s*${values.bronze_bar.sell}\\s*\\|`), "smithing bronze bar value mismatch");
   assertRegex(roadmap, new RegExp(`\\|\\s*Rune Bar\\s*\\|\\s*Intermediate\\s*\\|\\s*null\\s*\\|\\s*${values.rune_bar.sell}\\s*\\|`), "smithing rune bar value mismatch");
+
+  function resolveSmithingSellValue(itemId) {
+    const valueRow = values[itemId];
+    if (valueRow && Number.isFinite(valueRow.sell)) return Math.max(0, Math.floor(valueRow.sell));
+    const item = itemDefs[itemId];
+    if (item && Number.isFinite(item.value)) return Math.max(0, Math.floor(item.value));
+    return null;
+  }
+
+  function computeSmithingMetrics(recipeId) {
+    const recipe = spec.recipeSet[recipeId];
+    const outputAmount = recipe.output && Number.isFinite(recipe.output.amount) ? Math.max(1, Math.floor(recipe.output.amount)) : 1;
+    const outputSellValuePerAction = resolveSmithingSellValue(recipe.output.itemId) * outputAmount;
+    const inputSellValuePerAction = recipe.inputs.reduce((sum, input) => sum + (resolveSmithingSellValue(input.itemId) * input.amount), 0);
+    const valueDeltaPerAction = outputSellValuePerAction - inputSellValuePerAction;
+    return {
+      outputSellValuePerAction,
+      inputSellValuePerAction,
+      valueDeltaPerAction,
+      outputPerTick: outputAmount / spec.timing.actionTicks,
+      xpPerTick: recipe.xpPerAction / spec.timing.actionTicks,
+      outputSellValuePerTick: outputSellValuePerAction / spec.timing.actionTicks,
+      valueDeltaPerTick: valueDeltaPerAction / spec.timing.actionTicks
+    };
+  }
+
+  [
+    ["Bronze Bar", "smelt_bronze_bar"],
+    ["Mithril Bar", "smelt_mithril_bar"],
+    ["Rune Bar", "smelt_rune_bar"],
+    ["Bronze Sword Blade", "forge_bronze_sword_blade"],
+    ["Rune Sword Blade", "forge_rune_sword_blade"],
+    ["Bronze Arrowheads x15", "forge_bronze_arrowheads"],
+    ["Rune Arrowheads x15", "forge_rune_arrowheads"],
+    ["Bronze Platebody", "forge_bronze_platebody"],
+    ["Rune Platebody", "forge_rune_platebody"],
+    ["Silver Ring", "forge_silver_ring"],
+    ["Gold Ring", "forge_gold_ring"]
+  ].forEach(([label, recipeId]) => {
+    const recipe = spec.recipeSet[recipeId];
+    const metrics = computeSmithingMetrics(recipeId);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(label)}\\s*\\|\\s*${recipe.requiredLevel}\\s*\\|\\s*${metrics.outputSellValuePerAction}\\s*\\|\\s*${metrics.inputSellValuePerAction}\\s*\\|\\s*${metrics.valueDeltaPerAction}\\s*\\|\\s*${formatMetric(metrics.outputPerTick)}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.outputSellValuePerTick)}\\s*\\|\\s*${formatMetric(metrics.valueDeltaPerTick)}\\s*\\|`),
+      `smithing benchmark row mismatch for ${label}`
+    );
+  });
 }
 
 function run() {
@@ -835,7 +886,7 @@ function run() {
   runRunecraftingChecks(roadmaps.runecrafting, runtime.skills.runecrafting);
   runCraftingChecks(roadmaps.crafting, runtime.skills.crafting, itemDefs);
   runFletchingChecks(roadmaps.fletching, runtime.skills.fletching);
-  runSmithingChecks(roadmaps.smithing, runtime.skills.smithing);
+  runSmithingChecks(roadmaps.smithing, runtime.skills.smithing, itemDefs);
 
   console.log("Spec doc parity checks passed for all 9 skill roadmaps.");
 }

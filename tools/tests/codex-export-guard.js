@@ -66,11 +66,11 @@ function run() {
   const wolf = enemyById.get("enemy_wolf");
   assert(wolf, "wolf enemy should be exported");
   assert(Array.isArray(wolf.relatedItemIds) && wolf.relatedItemIds.includes("raw_wolf_meat") && wolf.relatedItemIds.includes("wolf_fang"), "wolf enemy should link to its drop items");
-  assert(Array.isArray(wolf.relatedWorldIds) && wolf.relatedWorldIds.includes("starter_town") && wolf.relatedWorldIds.includes("north_road_camp"), "wolf enemy should link to authored worlds");
+  assert(Array.isArray(wolf.relatedWorldIds) && wolf.relatedWorldIds.length === 1 && wolf.relatedWorldIds[0] === "starter_town", "wolf enemy should link only to starter_town");
 
   const wolfFang = itemById.get("wolf_fang");
   assert(wolfFang && Array.isArray(wolfFang.relatedEnemyIds) && wolfFang.relatedEnemyIds.includes("enemy_wolf"), "wolf fang should link back to wolves");
-  assert(Array.isArray(wolfFang.relatedWorldIds) && wolfFang.relatedWorldIds.includes("starter_town") && wolfFang.relatedWorldIds.includes("north_road_camp"), "wolf fang should surface authored world presence");
+  assert(Array.isArray(wolfFang.relatedWorldIds) && wolfFang.relatedWorldIds.length === 1 && wolfFang.relatedWorldIds[0] === "starter_town", "wolf fang should surface only starter-town authored presence");
 
   const starterTown = worldById.get("starter_town");
   assert(starterTown && Array.isArray(starterTown.relatedEnemyIds) && starterTown.relatedEnemyIds.includes("enemy_wolf"), "starter town should expose authored enemy presence");

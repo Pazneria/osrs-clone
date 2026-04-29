@@ -57,14 +57,24 @@
         if (window.QuestRuntime && typeof window.QuestRuntime.buildNpcDialogueView === 'function') {
             const questView = window.QuestRuntime.buildNpcDialogueView(npc, baseView);
             if (questView && typeof questView === 'object') {
-                return {
+                const resolvedQuestView = {
                     title: questView.title || baseView.title,
                     greeting: (typeof questView.greeting === 'string' && questView.greeting.trim())
                         ? questView.greeting.trim()
                         : baseView.greeting,
                     options: Array.isArray(questView.options) ? questView.options.slice() : baseView.options
                 };
+                if (window.TutorialRuntime && typeof window.TutorialRuntime.buildNpcDialogueView === 'function') {
+                    const tutorialView = window.TutorialRuntime.buildNpcDialogueView(npc, resolvedQuestView);
+                    if (tutorialView && typeof tutorialView === 'object') return tutorialView;
+                }
+                return resolvedQuestView;
             }
+        }
+
+        if (window.TutorialRuntime && typeof window.TutorialRuntime.buildNpcDialogueView === 'function') {
+            const tutorialView = window.TutorialRuntime.buildNpcDialogueView(npc, baseView);
+            if (tutorialView && typeof tutorialView === 'object') return tutorialView;
         }
 
         return baseView;
@@ -84,7 +94,10 @@
             return true;
         }
         if (option.kind === 'travel') {
-            return !!(npc && (npc.travelToWorldId || npc.travelSpawn || npc.action === 'Travel'));
+            return !!(
+                (option && (option.travelToWorldId || option.travelSpawn))
+                || (npc && (npc.travelToWorldId || npc.travelSpawn || npc.action === 'Travel'))
+            );
         }
         return true;
     }
@@ -108,9 +121,11 @@
         if (typeof window.openBank === 'function') window.openBank();
     }
 
-    function performTravel(npc) {
+    function performTravel(npc, option = null) {
         if (typeof window.travelToWorld !== 'function') return;
-        const explicitWorldId = npc && typeof npc.travelToWorldId === 'string' ? npc.travelToWorldId.trim() : '';
+        const optionWorldId = option && typeof option.travelToWorldId === 'string' ? option.travelToWorldId.trim() : '';
+        const npcWorldId = npc && typeof npc.travelToWorldId === 'string' ? npc.travelToWorldId.trim() : '';
+        const explicitWorldId = optionWorldId || npcWorldId;
         const sessionWorldId = (window.GameSessionRuntime && typeof window.GameSessionRuntime.resolveCurrentWorldId === 'function')
             ? window.GameSessionRuntime.resolveCurrentWorldId()
             : ((window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function')
@@ -118,8 +133,9 @@
                 : '');
         const targetWorldId = explicitWorldId || sessionWorldId;
         if (!targetWorldId) return;
+        const optionSpawn = option && option.travelSpawn ? Object.assign({}, option.travelSpawn) : null;
         window.travelToWorld(targetWorldId, {
-            spawn: npc && npc.travelSpawn ? Object.assign({}, npc.travelSpawn) : null,
+            spawn: optionSpawn || (npc && npc.travelSpawn ? Object.assign({}, npc.travelSpawn) : null),
             label: (npc && (npc.worldLabel || npc.name)) ? (npc.worldLabel || npc.name) : targetWorldId
         });
     }
@@ -182,7 +198,7 @@
                 }
                 if (option.kind === 'travel') {
                     closeNpcDialogue();
-                    performTravel(activeNpc);
+                    performTravel(activeNpc, option);
                     return;
                 }
                 if (option.kind === 'close') {
@@ -197,7 +213,7 @@
                         updateBodyText: updateBodyText,
                         performBank: performBank,
                         performTrade: () => performTrade(activeNpc),
-                        performTravel: () => performTravel(activeNpc)
+                        performTravel: () => performTravel(activeNpc, option)
                     }) || null;
                     if (result && result.close) {
                         closeNpcDialogue();

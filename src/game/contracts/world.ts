@@ -259,6 +259,8 @@ export interface DoorLandmark extends Point3 {
   tileId: string;
   height: number;
   isOpen: boolean;
+  tutorialRequiredStep?: number | null;
+  tutorialGateMessage?: string | null;
   hingeOffsetX: number;
   hingeOffsetY: number;
   thickness: number;
@@ -268,6 +270,23 @@ export interface DoorLandmark extends Point3 {
   openRot: number;
   currentRotation: number;
   targetRotation: number;
+}
+
+export interface FenceLandmark {
+  landmarkId: string;
+  z: number;
+  points: Point2[];
+  height?: number;
+}
+
+export interface RoofLandmark extends Point3 {
+  landmarkId: string;
+  width: number;
+  depth: number;
+  height: number;
+  ridgeAxis: "x" | "y";
+  hideWhenPlayerInside?: boolean;
+  hideBounds?: TerrainBox2D & { z: number };
 }
 
 export interface ShowcaseTree {
@@ -314,6 +333,8 @@ export interface WorldDefinition {
   landmarks: {
     staircases: StaircaseLandmark[];
     doors: DoorLandmark[];
+    fences?: FenceLandmark[];
+    roofs?: RoofLandmark[];
     altars: RunecraftingAltarPlacement[];
     showcaseTrees: ShowcaseTree[];
   };
@@ -372,6 +393,8 @@ export interface WorldLegacyView {
   woodcuttingNodePlacements: WoodcuttingNodePlacement[];
   staircases: StaircaseLandmark[];
   doors: DoorLandmark[];
+  fences: FenceLandmark[];
+  roofs: RoofLandmark[];
   showcaseTrees: ShowcaseTree[];
 }
 
@@ -470,6 +493,9 @@ export interface LegacyWorldTileIds {
   FLOOR_BRICK: number;
   STAIRS_RAMP: number;
   DOOR_OPEN: number;
+  FENCE: number;
+  WOODEN_GATE_CLOSED: number;
+  WOODEN_GATE_OPEN: number;
   SHORE: number;
   SOLID_NPC: number;
 }
