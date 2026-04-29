@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const { buildWorldGameplayMap, findShortestPathLength, isWalkable, loadWorldContent } = require("../content/world-utils");
+const { buildWorldGameplayMap } = require("../content/world-map-builder");
+const { findShortestPathLength, isWalkable } = require("../content/world-pathing");
+const { loadWorldContent } = require("../content/world-content");
 const { loadTsModule } = require("./ts-module-loader");
 const vm = require("vm");
 

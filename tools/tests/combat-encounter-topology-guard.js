@@ -1,7 +1,8 @@
 const path = require("path");
 
 const { loadTsModule } = require("./ts-module-loader");
-const { buildWorldGameplayMap, WALKABLE } = require("../content/world-utils");
+const { WALKABLE_TILE_SET: WALKABLE } = require("../content/tile-ids");
+const { buildWorldGameplayMap } = require("../content/world-map-builder");
 
 const WORLD_RULES = {
   starter_town: {

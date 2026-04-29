@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const ts = require("typescript");
-const { loadWorldContent } = require("../content/world-utils");
+const { loadWorldContent } = require("../content/world-content");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

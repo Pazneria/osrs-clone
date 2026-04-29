@@ -1,6 +1,6 @@
 const path = require("path");
 
-const { loadWorldContent } = require("../content/world-utils");
+const { loadWorldContent } = require("../content/world-content");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

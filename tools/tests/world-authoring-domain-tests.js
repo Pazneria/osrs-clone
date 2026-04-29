@@ -4,7 +4,10 @@ const path = require("path");
 const vm = require("vm");
 
 const { loadTsModule } = require("./ts-module-loader");
-const { TileId, buildWorldGameplayMap, findShortestPathLength, isWalkable, loadWorldContent } = require("../content/world-utils");
+const { TileId } = require("../content/tile-ids");
+const { buildWorldGameplayMap } = require("../content/world-map-builder");
+const { findShortestPathLength, isWalkable } = require("../content/world-pathing");
+const { loadWorldContent } = require("../content/world-content");
 
 const root = path.resolve(__dirname, "..", "..");
 const authoring = loadTsModule(path.join(root, "src", "game", "world", "authoring.ts"));

@@ -1,15 +1,19 @@
 const freezeSource = require("./starter-town-freeze-source.json");
+const { MAP_SIZE } = require("./world-constants");
 const {
-  MAP_SIZE,
+  loadWorldContent
+} = require("./world-content");
+const {
   TileId,
   isNaturalTileId,
   isTreeTileId,
   isWalkableTileId,
-  isWaterTileId,
+  isWaterTileId
+} = require("./tile-ids");
+const {
   inTownCore,
-  buildWorldLogicalMap,
-  loadWorldContent
-} = require("./world-utils");
+  buildWorldLogicalMap
+} = require("./world-map-builder");
 
 const WORLD_ID = "starter_town";
 

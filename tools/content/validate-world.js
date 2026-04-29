@@ -1,16 +1,18 @@
 const fs = require("fs");
 const vm = require("vm");
+const { TileId } = require("./tile-ids");
+const { buildWorldGameplayMap } = require("./world-map-builder");
 const {
-  TileId,
-  buildWorldGameplayMap,
   collectAdjacencyViolations,
   findShortestPathLength,
   getChebyshevDistance,
-  isWalkable,
-  loadShopEconomy,
+  isWalkable
+} = require("./world-pathing");
+const { loadShopEconomy } = require("./shop-economy-loader");
+const {
   loadWorldContent,
   loadWorldManifest
-} = require("./world-utils");
+} = require("./world-content");
 const path = require("path");
 const { loadTsModule } = require("../tests/ts-module-loader");
 

@@ -18,7 +18,6 @@ const DUPLICATE_SCAN_FILES = [
   "src/js/core.js",
   "src/js/world.js",
   "src/js/input-render.js",
-  "tools/content/world-utils.js",
   "tools/content/freeze-starter-town-world.js",
   "tools/tests/skill-runtime-parity.js"
 ];

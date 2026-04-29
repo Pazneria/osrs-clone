@@ -1,10 +1,10 @@
 const path = require("path");
+const { buildWorldGameplayMap } = require("../content/world-map-builder");
+const { collectAdjacencyViolations } = require("../content/world-pathing");
 const {
-  buildWorldGameplayMap,
-  collectAdjacencyViolations,
   loadWorldContent,
   loadWorldManifest
-} = require("../content/world-utils");
+} = require("../content/world-content");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

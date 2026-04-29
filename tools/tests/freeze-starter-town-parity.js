@@ -1,6 +1,6 @@
 const path = require("path");
 
-const { loadWorldContent } = require("../content/world-utils");
+const { loadWorldContent } = require("../content/world-content");
 const { buildFrozenStarterTownWorld } = require("../content/freeze-starter-town-world");
 
 const WORLD_ID = "starter_town";
