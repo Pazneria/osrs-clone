@@ -1,7 +1,11 @@
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
 const { MAP_SIZE, PLANES } = require("./world-constants");
+const {
+  getWorldManifestEntry,
+  loadStarterTownWorld,
+  loadWorldContent,
+  loadWorldManifest
+} = require("./world-content");
+const { loadShopEconomy } = require("./shop-economy-loader");
 const {
   TileId,
   WALKABLE_TILE_SET,
@@ -20,65 +24,6 @@ const {
 } = require("./world-pathing");
 
 const WALKABLE = WALKABLE_TILE_SET;
-
-function loadJson(absPath) {
-  return JSON.parse(fs.readFileSync(absPath, "utf8"));
-}
-
-function loadWorldManifest(root) {
-  return loadJson(path.join(root, "content", "world", "manifest.json"));
-}
-
-function getWorldManifestEntry(manifest, worldId) {
-  const targetWorldId = String(worldId || "").trim();
-  const worlds = manifest && Array.isArray(manifest.worlds) ? manifest.worlds : [];
-  const entry = worlds.find((row) => row && row.worldId === targetWorldId);
-  if (!entry) {
-    throw new Error(`Unknown worldId ${targetWorldId}`);
-  }
-  return entry;
-}
-
-function loadWorldContent(root, worldId) {
-  const manifest = loadWorldManifest(root);
-  const manifestEntry = getWorldManifestEntry(manifest, worldId);
-  const regionPath = path.join(root, "content", "world", "regions", manifestEntry.regionFile);
-  const stampsDir = path.join(root, "content", "world", "stamps");
-  const world = loadJson(regionPath);
-  const stamps = {};
-  const stampIds = Array.isArray(manifestEntry.stampIds) ? manifestEntry.stampIds : [];
-  for (let i = 0; i < stampIds.length; i++) {
-    const stampId = stampIds[i];
-    const stampPath = path.join(stampsDir, `${stampId}.json`);
-    stamps[stampId] = loadJson(stampPath);
-  }
-  return { manifest, manifestEntry, world, stamps };
-}
-
-function loadStarterTownWorld(root) {
-  return loadWorldContent(root, "starter_town");
-}
-
-function loadShopEconomy(root) {
-  const sandbox = {
-    window: {},
-    playerState: { merchantProgress: {} },
-    console
-  };
-  const loadBrowserScript = (relPath) => {
-    const abs = path.join(root, relPath);
-    const code = fs.readFileSync(abs, "utf8");
-    vm.runInNewContext(code, sandbox, { filename: abs });
-  };
-
-  loadBrowserScript(path.join("src", "js", "skills", "specs.js"));
-  sandbox.SkillSpecs = sandbox.window.SkillSpecs;
-  loadBrowserScript(path.join("src", "js", "skills", "spec-registry.js"));
-  sandbox.SkillSpecRegistry = sandbox.window.SkillSpecRegistry;
-  loadBrowserScript(path.join("src", "js", "content", "item-catalog.js"));
-  loadBrowserScript(path.join("src", "js", "shop-economy.js"));
-  return sandbox.window.ShopEconomy || null;
-}
 
 function createEmptyMap() {
   return Array(PLANES).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(TileId.GRASS)));
