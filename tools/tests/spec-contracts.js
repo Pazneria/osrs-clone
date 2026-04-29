@@ -1884,6 +1884,7 @@ function run() {
   assert(!legacyManifestScript.includes("skills-shared-animations"), "legacy manifest should not load the removed shared skill animations script");
   assert(!fs.existsSync(path.join(root, "src/js/skills/shared/animations.js")), "unused shared skill animations script should be deleted");
   const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
+  const qaCommandScript = fs.readFileSync(path.join(root, "src/js/qa-command-runtime.js"), "utf8");
   assert(coreScript.includes("typeof window.resolveInteractionFacingRotation === 'function'"), "core facing turns should consult station-aware interaction facing");
   assert(coreScript.includes("function getQaDiscoveredMerchants()"), "core QA merchant discovery helper missing");
   assert(coreScript.includes("getWorldRouteGroup('fishing')"), "core QA fishing-spot discovery should read world registry");
@@ -1891,14 +1892,14 @@ function run() {
   assert(coreScript.includes("getConfiguredMerchantIds === 'function'"), "core QA openable-merchant resolver should read ShopEconomy merchant config");
   assert(coreScript.includes("function formatQaOpenShopUsage()"), "core QA openshop usage formatter missing");
   assert(!coreScript.includes("const qaOpenableMerchants = ['general_store'"), "core QA openshop should not hard-code merchant id list");
-  assert(coreScript.includes("/qa cookspots"), "core QA cookspots command help missing");
-  assert(coreScript.includes("/qa gotocook <camp|river|dock|deep>"), "core QA gotocook command help missing");
+  assert(qaCommandScript.includes("/qa cookspots"), "QA cookspots command help missing");
+  assert(qaCommandScript.includes("/qa gotocook <camp|river|dock|deep>"), "QA gotocook command help missing");
   assert(coreScript.includes("gemMineUnlocked: false"), "core player unlock flags missing gem mine default");
   assert(coreScript.includes("ringMouldUnlocked: false"), "core player unlock flags missing ring mould default");
   assert(coreScript.includes("amuletMouldUnlocked: false"), "core player unlock flags missing amulet mould default");
   assert(coreScript.includes("tiaraMouldUnlocked: false"), "core player unlock flags missing tiara mould default");
-  assert(coreScript.includes("/qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>"), "core QA unlock help missing mould toggle options");
-  assert(coreScript.includes("setQaUnlockFlag('gemMineUnlocked', value === 'on');"), "core QA gem mine unlock handler missing");
+  assert(qaCommandScript.includes("/qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>"), "QA unlock help missing mould toggle options");
+  assert(qaCommandScript.includes("setQaUnlockFlag', 'gemMineUnlocked', enabled"), "QA gem mine unlock handler missing");
   const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
   assert(manifestScript.includes("CRAFTING: 'crafting'"), "skill manifest missing crafting action mapping");

@@ -35,6 +35,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const dialogueCatalog = loadNpcDialogueCatalog(root);
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
+  const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -55,7 +56,7 @@ function run() {
   assert(coreSource.includes("function qaListWorlds()"), "core should expose QA world listing");
   assert(coreSource.includes("function qaTravelWorld(worldIdLike)"), "core should expose QA world travel");
   assert(coreSource.includes("if (!match) return false;") && coreSource.includes("return true;"), "QA world travel should distinguish unknown world ids from recognized-but-blocked travel");
-  assert(coreSource.includes("/qa worlds, /qa travel <worldId>"), "QA help should document world travel commands");
+  assert(qaCommandSource.includes("/qa worlds, /qa travel <worldId>"), "QA help should document world travel commands");
   assert(adapterSource.includes("matchQaWorld"), "legacy world adapter should expose QA world matching");
 
   const loadCall = coreSource.indexOf("const loadProgressResult = loadProgressFromStorage();");

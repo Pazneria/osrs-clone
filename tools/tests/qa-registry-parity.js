@@ -27,6 +27,7 @@ function extractFunctionSource(source, functionName) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
+  const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
 
   assert(coreSource.includes("function getWorldGameContext()"), "core.js missing world game-context helper");
@@ -37,11 +38,43 @@ function run() {
   assert(!coreSource.includes("const routeToKey = {\n                castle_pond_bank"), "legacy fishing routeToKey map should be removed");
   assert(!coreSource.includes("const routeToKey = {\n                starter_campfire"), "legacy cooking routeToKey map should be removed");
   assert(!coreSource.includes("pine: 'pine'"), "deleted north-road pine firemaking QA alias should stay removed");
-  assert(!coreSource.includes("/qa gotofire <starter|oak|willow|maple|yew|pine>"), "QA firemaking usage should not advertise deleted pine route");
+  assert(!qaCommandSource.includes("/qa gotofire <starter|oak|willow|maple|yew|pine>"), "QA firemaking usage should not advertise deleted pine route");
 
   assert(bridgeSource.includes("getWoodcuttingTrainingLocations"), "legacy bridge missing woodcutting compatibility hook");
   assert(bridgeSource.includes("getFiremakingTrainingLocations"), "legacy bridge missing firemaking compatibility hook");
   assert(bridgeSource.includes("registerRuntimeWorldState"), "legacy bridge missing runtime world-state registration");
+  assert(qaCommandSource.includes("window.QaCommandRuntime"), "QA command runtime should expose a window runtime");
+  assert(qaCommandSource.includes("handleQaCommand"), "QA command runtime should own QA command dispatch");
+  assert(coreSource.includes("buildQaCommandContext"), "core should adapt gameplay callbacks into the QA command runtime");
+  assert(!coreSource.includes("if (cmd === 'gotofire'"), "core should not own QA command dispatch branches");
+
+  const qaCommandSandbox = { window: {} };
+  vm.runInNewContext(qaCommandSource, qaCommandSandbox, { filename: "src/js/qa-command-runtime.js" });
+  const qaRuntime = qaCommandSandbox.window.QaCommandRuntime;
+  assert(qaRuntime, "QA command runtime should execute in isolation");
+  const qaMessages = [];
+  const qaCalls = [];
+  qaRuntime.handleQaCommand("help", {
+    windowRef: qaCommandSandbox.window,
+    addChatMessage: (message, type) => qaMessages.push({ message, type }),
+    formatQaOpenShopUsage: () => "Usage: /qa openshop <general_store>"
+  });
+  assert(qaMessages.some((entry) => entry.message.includes("/qa gotofire <starter|oak|willow|maple|yew>")), "QA command help should live in the QA command runtime");
+  qaRuntime.handleQaCommand("gotofire yew", {
+    windowRef: qaCommandSandbox.window,
+    addChatMessage: (message, type) => qaMessages.push({ message, type }),
+    qaGotoFiremakingSpot: (target) => {
+      qaCalls.push(`gotofire:${target}`);
+      return true;
+    }
+  });
+  assert(qaCalls.includes("gotofire:yew"), "QA command runtime should dispatch gotofire through core-provided callbacks");
+  qaRuntime.handleChatMessage("hello there", {
+    addChatMessage: (message, type) => qaMessages.push({ message, type }),
+    showPlayerOverheadText: (message) => qaCalls.push(`overhead:${message}`)
+  });
+  assert(qaMessages.some((entry) => entry.message === "hello there" && entry.type === "game"), "QA command runtime should pass normal chat through");
+  assert(qaCalls.includes("overhead:hello there"), "QA command runtime should keep normal overhead chat behavior");
 
   const firemakingHarness = {
     typedRoutes: [],

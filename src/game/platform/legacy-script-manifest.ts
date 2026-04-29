@@ -7,6 +7,7 @@ import questCatalogScript from "../../js/content/quest-catalog.js?raw";
 import questRuntimeScript from "../../js/quest-runtime.js?raw";
 import npcDialogueRuntimeScript from "../../js/npc-dialogue-runtime.js?raw";
 import combatQaDebugRuntimeScript from "../../js/combat-qa-debug-runtime.js?raw";
+import qaCommandRuntimeScript from "../../js/qa-command-runtime.js?raw";
 import tileRuntimeScript from "../../js/world/tile-runtime.js?raw";
 import worldSceneStateScript from "../../js/world/scene-state.js?raw";
 import worldSceneLifecycleScript from "../../js/world/scene-lifecycle.js?raw";
@@ -54,6 +55,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "quest-runtime", filename: "src/js/quest-runtime.js", code: questRuntimeScript },
   { id: "npc-dialogue-runtime", filename: "src/js/npc-dialogue-runtime.js", code: npcDialogueRuntimeScript },
   { id: "combat-qa-debug-runtime", filename: "src/js/combat-qa-debug-runtime.js", code: combatQaDebugRuntimeScript },
+  { id: "qa-command-runtime", filename: "src/js/qa-command-runtime.js", code: qaCommandRuntimeScript },
   { id: "world-tile-runtime", filename: "src/js/world/tile-runtime.js", code: tileRuntimeScript },
   { id: "world-scene-state", filename: "src/js/world/scene-state.js", code: worldSceneStateScript },
   { id: "world-scene-lifecycle", filename: "src/js/world/scene-lifecycle.js", code: worldSceneLifecycleScript },

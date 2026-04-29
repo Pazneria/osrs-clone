@@ -3314,310 +3314,62 @@
             }
         }
 
+        function buildQaCommandContext() {
+            return {
+                windowRef: window,
+                addChatMessage,
+                showPlayerOverheadText,
+                formatQaOpenShopUsage,
+                qaListWorlds,
+                qaListCombatTargets,
+                qaListNpcTargets,
+                qaProjectTile,
+                qaRaycast,
+                qaFindHit,
+                resetQaCameraView: (typeof window.resetQaCameraView === 'function') ? window.resetQaCameraView : null,
+                setQaCameraView: (typeof window.setQaCameraView === 'function') ? window.setQaCameraView : null,
+                qaTravelWorld,
+                setQaSkillLevel,
+                setQaUnlockFlag,
+                qaListAltars,
+                qaListFishingSpots,
+                qaListFishingMerchants,
+                qaListCookingSpots,
+                qaListFiremakingSpots,
+                qaGotoFishingSpot,
+                qaGotoCookingSpot,
+                qaGotoFiremakingSpot,
+                qaGotoFishingMerchant,
+                qaGotoMerchant,
+                qaGotoTutorialStation,
+                qaGotoAltar,
+                emitQaCombatDebugSnapshot,
+                emitQaCombatDebugClearHistory,
+                qaDiagShop,
+                getQaOpenableMerchantIds,
+                openShopForMerchant: (typeof window.openShopForMerchant === 'function') ? window.openShopForMerchant : null,
+                qaDiagFishing,
+                qaDiagMining,
+                qaDiagRunecrafting,
+                applyQaInventoryPreset
+            };
+        }
+
+        function getQaCommandRuntime() {
+            return window.QaCommandRuntime || null;
+        }
+
         function sendChatMessage(rawText) {
-            const text = (rawText || '').trim();
-            if (!text) return;
-
-            if (text.toLowerCase().startsWith('/qa ')) {
-                const args = text.slice(4).trim();
-                const parts = args.split(/\s+/).filter(Boolean);
-                const cmd = (parts[0] || '').toLowerCase();
-
-                if (cmd === 'help' || !cmd) {
-                    addChatMessage('QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default', 'info');
-                    addChatMessage('QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]', 'info');
-                    addChatMessage(formatQaOpenShopUsage(), 'info');
-                    return;
-                }
-                if (cmd === 'worlds') {
-                    qaListWorlds();
-                    return;
-                }
-                if (cmd === 'combattargets') {
-                    qaListCombatTargets();
-                    return;
-                }
-                if (cmd === 'npctargets') {
-                    qaListNpcTargets(parts.slice(1).join(' '));
-                    return;
-                }
-                if (cmd === 'projecttile') {
-                    qaProjectTile(parts);
-                    return;
-                }
-                if (cmd === 'raycast') {
-                    qaRaycast(parts);
-                    return;
-                }
-                if (cmd === 'findhit') {
-                    qaFindHit(parts);
-                    return;
-                }
-                if (cmd === 'camera' && String(parts[1] || '').toLowerCase() === 'reset') {
-                    const cameraState = (typeof window.resetQaCameraView === 'function') ? window.resetQaCameraView() : null;
-                    if (cameraState) addChatMessage(`[QA camera] reset yaw=${cameraState.yaw} pitch=${cameraState.pitch} dist=${cameraState.distance}`, 'info');
-                    else addChatMessage('[QA camera] reset unavailable', 'warn');
-                    return;
-                }
-                if (cmd === 'camera' && String(parts[1] || '').toLowerCase() === 'set') {
-                    const yaw = Number(parts[2]);
-                    const pitch = parts.length >= 4 ? Number(parts[3]) : undefined;
-                    const dist = parts.length >= 5 ? Number(parts[4]) : undefined;
-                    if (!Number.isFinite(yaw) || typeof window.setQaCameraView !== 'function') {
-                        addChatMessage('Usage: /qa camera set <yaw> [pitch] [dist]', 'warn');
-                        return;
-                    }
-                    const cameraState = window.setQaCameraView(yaw, pitch, dist);
-                    addChatMessage(`[QA camera] set yaw=${cameraState.yaw} pitch=${cameraState.pitch} dist=${cameraState.distance}`, 'info');
-                    return;
-                }
-                if (cmd === 'travel' && parts.length >= 2) {
-                    const target = parts.slice(1).join(' ');
-                    const ok = qaTravelWorld(target);
-                    if (!ok) addChatMessage('Usage: /qa travel <worldId>', 'warn');
-                    return;
-                }
-
-                if (cmd === 'setlevel' && parts.length >= 3) {
-                    const skill = String(parts[1] || '').toLowerCase();
-                    const lvl = parseInt(parts[2], 10);
-                    if (!Number.isFinite(lvl)) {
-                        addChatMessage('Usage: /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>', 'warn');
-                        return;
-                    }
-                    const ok = setQaSkillLevel(skill, lvl);
-                    if (!ok) {
-                        addChatMessage('Unknown skill for /qa setlevel. Use fishing, firemaking, mining, runecrafting, or smithing.', 'warn');
-                        return;
-                    }
-                    addChatMessage(`QA set level: ${skill}=${Math.max(1, Math.min(99, Math.floor(lvl)))}`, 'info');
-                    return;
-                }
-
-                if (cmd === 'unlock' && parts.length >= 3) {
-                    const subject = String(parts[1] || '').toLowerCase();
-                    const value = String(parts[2] || '').toLowerCase();
-                    if (subject !== 'combo' && subject !== 'gemmine' && subject !== 'gem_mine' && subject !== 'mould' && subject !== 'moulds' && subject !== 'ringmould' && subject !== 'amuletmould' && subject !== 'tiaramould') {
-                        addChatMessage('Usage: /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>', 'warn');
-                        return;
-                    }
-                    if (value !== 'on' && value !== 'off') {
-                        addChatMessage('Usage: /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>', 'warn');
-                        return;
-                    }
-                    if (subject === 'combo') {
-                        setQaUnlockFlag('runecraftingComboUnlocked', value === 'on');
-                        addChatMessage('QA combo unlock: ' + value, 'info');
-                        return;
-                    }
-                    if (subject === 'gemmine' || subject === 'gem_mine') {
-                        setQaUnlockFlag('gemMineUnlocked', value === 'on');
-                        addChatMessage('QA gem mine unlock: ' + value, 'info');
-                        return;
-                    }
-                    if (subject === 'mould' || subject === 'moulds') {
-                        const enabled = value === 'on';
-                        setQaUnlockFlag('ringMouldUnlocked', enabled);
-                        setQaUnlockFlag('amuletMouldUnlocked', enabled);
-                        setQaUnlockFlag('tiaraMouldUnlocked', enabled);
-                        addChatMessage('QA mould unlocks: ' + value, 'info');
-                        return;
-                    }
-                    if (subject === 'ringmould') {
-                        setQaUnlockFlag('ringMouldUnlocked', value === 'on');
-                        addChatMessage('QA ring mould unlock: ' + value, 'info');
-                        return;
-                    }
-                    if (subject === 'amuletmould') {
-                        setQaUnlockFlag('amuletMouldUnlocked', value === 'on');
-                        addChatMessage('QA amulet mould unlock: ' + value, 'info');
-                        return;
-                    }
-                    setQaUnlockFlag('tiaraMouldUnlocked', value === 'on');
-                    addChatMessage('QA tiara mould unlock: ' + value, 'info');
-                    return;
-                }
-
-                if (cmd === 'altars') {
-                    qaListAltars();
-                    return;
-                }
-                if (cmd === 'fishspots') {
-                    qaListFishingSpots();
-                    return;
-                }
-                if (cmd === 'fishshops') {
-                    qaListFishingMerchants();
-                    return;
-                }
-                if (cmd === 'cookspots') {
-                    qaListCookingSpots();
-                    return;
-                }
-                if (cmd === 'firespots') {
-                    qaListFiremakingSpots();
-                    return;
-                }
-
-                
-                if (cmd === 'gotofish' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoFishingSpot(target);
-                    if (!ok) addChatMessage('Usage: /qa gotofish <pond|pier|deep>', 'warn');
-                    return;
-                }
-                if (cmd === 'gotocook' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoCookingSpot(target);
-                    if (!ok) addChatMessage('Usage: /qa gotocook <camp|river|dock|deep>', 'warn');
-                    return;
-                }
-                if (cmd === 'gotofire' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoFiremakingSpot(target);
-                    if (!ok) addChatMessage('Usage: /qa gotofire <starter|oak|willow|maple|yew>', 'warn');
-                    return;
-                }
-
-                if (cmd === 'gotofishshop' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoFishingMerchant(target);
-                    if (!ok) addChatMessage('Usage: /qa gotofishshop <teacher|supplier>', 'warn');
-                    return;
-                }
-                
-
-                if (cmd === 'gotomerchant' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoMerchant(target);
-                    if (!ok) addChatMessage('Usage: /qa gotomerchant <merchantId|alias>', 'warn');
-                    return;
-                }
-
-                if (cmd === 'gototutorial' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoTutorialStation(target);
-                    if (!ok) addChatMessage('Usage: /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>', 'warn');
-                    return;
-                }
-
-
-                if (cmd === 'gotoaltar' && parts.length >= 2) {
-                    const target = String(parts[1] || '').toLowerCase();
-                    const ok = qaGotoAltar(target);
-                    if (!ok) addChatMessage('Usage: /qa gotoaltar <ember|water|earth|air>', 'warn');
-                    return;
-                }
-
-                if (cmd === 'rcdebug' && parts.length >= 2) {
-                    const value = String(parts[1] || '').toLowerCase();
-                    if (value !== 'on' && value !== 'off') {
-                        addChatMessage('Usage: /qa rcdebug <on|off>', 'warn');
-                        return;
-                    }
-                    window.QA_RC_DEBUG = (value === 'on');
-                    addChatMessage(`QA rcdebug: ${value}`, 'info');
-                    return;
-                }
-                if (cmd === 'pierdebug' && parts.length >= 2) {
-                    const value = String(parts[1] || '').toLowerCase();
-                    if (value !== 'on' && value !== 'off') {
-                        addChatMessage('Usage: /qa pierdebug <on|off>', 'warn');
-                        return;
-                    }
-                    window.QA_PIER_DEBUG = (value === 'on');
-                    addChatMessage(`QA pierdebug: ${value}`, 'info');
-                    return;
-                }
-                if (cmd === 'combatdebug') {
-                    const value = String(parts[1] || 'now').toLowerCase();
-                    if (value === 'now') {
-                        if (typeof window.emitQaCombatDebugSnapshot === 'function') {
-                            window.emitQaCombatDebugSnapshot('manual');
-                        } else {
-                            addChatMessage('QA combatdebug unavailable: missing combat snapshot helper.', 'warn');
-                        }
-                        return;
-                    }
-                    if (value === 'clears') {
-                        if (typeof window.emitQaCombatDebugClearHistory === 'function') {
-                            window.emitQaCombatDebugClearHistory();
-                        } else {
-                            addChatMessage('QA combatdebug clear-history unavailable.', 'warn');
-                        }
-                        return;
-                    }
-                    if (value === 'clearreset') {
-                        window.__qaCombatDebugClearEvents = [];
-                        addChatMessage('QA combatdebug clear-history reset.', 'info');
-                        return;
-                    }
-                    if (value !== 'on' && value !== 'off') {
-                        addChatMessage('Usage: /qa combatdebug [on|off|now|clears|clearreset]', 'warn');
-                        return;
-                    }
-                    window.QA_COMBAT_DEBUG = (value === 'on');
-                    window.__qaCombatDebugLastSignature = null;
-                    window.__qaCombatDebugLastEmitTick = null;
-                    addChatMessage(`QA combatdebug: ${value}`, 'info');
-                    if (value === 'on' && typeof window.emitQaCombatDebugSnapshot === 'function') {
-                        window.emitQaCombatDebugSnapshot('watch-on');
-                    }
-                    return;
-                }
-                if (cmd === 'shopdiag') {
-                    qaDiagShop(parts[1]);
-                    return;
-                }
-
-                if (cmd === 'openshop') {
-                    const merchantId = String(parts[1] || '').toLowerCase();
-                    const qaOpenableMerchants = getQaOpenableMerchantIds();
-                    if (!qaOpenableMerchants.includes(merchantId)) {
-                        addChatMessage(formatQaOpenShopUsage(), 'warn');
-                        return;
-                    }
-                    if (typeof window.openShopForMerchant !== 'function') {
-                        addChatMessage('QA openshop unavailable: merchant shop handler missing.', 'warn');
-                        return;
-                    }
-                    window.openShopForMerchant(merchantId);
-                    addChatMessage('QA opened shop for merchant=' + merchantId, 'info');
-                    return;
-                }
-                if (cmd === 'diag' && parts.length >= 2) {
-                    const subject = String(parts[1] || '').toLowerCase();
-                    if (subject === 'fishing' || subject === 'fish') {
-                        qaDiagFishing();
-                        return;
-                    }
-                    if (subject === 'mining') {
-                        qaDiagMining();
-                        return;
-                    }
-                    if (subject === 'rc' || subject === 'runecrafting') {
-                        qaDiagRunecrafting();
-                        return;
-                    }
-                    if (subject === 'shop') {
-                        qaDiagShop(parts[2]);
-                        return;
-                    }
-                    addChatMessage('Usage: /qa diag <fishing|mining|rc|shop>', 'warn');
-                    return;
-                }
-
-                const applied = applyQaInventoryPreset(args);
-                if (!applied) {
-                    addChatMessage(`Unknown QA preset/command: ${args}. Use /qa help`, 'warn');
-                }
+            const runtime = getQaCommandRuntime();
+            if (runtime && typeof runtime.handleChatMessage === 'function') {
+                runtime.handleChatMessage(rawText, buildQaCommandContext());
                 return;
             }
-
+            const text = (rawText || '').trim();
+            if (!text) return;
             addChatMessage(text, 'game');
             showPlayerOverheadText(text);
         }
-
         function initChatInput() {
             const input = document.getElementById('chat-input');
             if (!input) return;
