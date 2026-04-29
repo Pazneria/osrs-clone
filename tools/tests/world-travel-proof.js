@@ -36,6 +36,7 @@ function run() {
   const dialogueCatalog = loadNpcDialogueCatalog(root);
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const inventorySource = fs.readFileSync(path.join(root, "src", "js", "inventory.js"), "utf8");
@@ -75,6 +76,8 @@ function run() {
 
   assert(worldSource.includes("function reloadActiveWorldScene()"), "world.js should define an active-world scene reload hook");
   assert(worldSource.includes("window.reloadActiveWorldScene = reloadActiveWorldScene;"), "world.js should expose the scene reload hook");
+  assert(sceneLifecycleSource.includes("reloadActiveWorldScene"), "world scene lifecycle should own active-world scene reload orchestration");
+  assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-world scene reload orchestration");
   assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the active world payload through the scene-state runtime");
   assert(worldSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "world.js should attach travel world metadata to NPC hitboxes");
   assert(worldSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "world.js should attach appearance metadata to NPC hitboxes");

@@ -8,6 +8,7 @@ import questRuntimeScript from "../../js/quest-runtime.js?raw";
 import npcDialogueRuntimeScript from "../../js/npc-dialogue-runtime.js?raw";
 import tileRuntimeScript from "../../js/world/tile-runtime.js?raw";
 import worldSceneStateScript from "../../js/world/scene-state.js?raw";
+import worldSceneLifecycleScript from "../../js/world/scene-lifecycle.js?raw";
 import coreScript from "../../js/core.js?raw";
 import skillSpecsScript from "../../js/skills/specs.js?raw";
 import skillSpecRegistryScript from "../../js/skills/spec-registry.js?raw";
@@ -51,6 +52,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "npc-dialogue-runtime", filename: "src/js/npc-dialogue-runtime.js", code: npcDialogueRuntimeScript },
   { id: "world-tile-runtime", filename: "src/js/world/tile-runtime.js", code: tileRuntimeScript },
   { id: "world-scene-state", filename: "src/js/world/scene-state.js", code: worldSceneStateScript },
+  { id: "world-scene-lifecycle", filename: "src/js/world/scene-lifecycle.js", code: worldSceneLifecycleScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },
   { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },
   { id: "skills-spec-registry", filename: "src/js/skills/spec-registry.js", code: skillSpecRegistryScript },

@@ -7405,55 +7405,59 @@
         }
 
         function reloadActiveWorldScene() {
-            if (!scene) {
-                initLogicalMap();
-                return;
+            const lifecycleRuntime = window.WorldSceneLifecycleRuntime || null;
+            if (!lifecycleRuntime || typeof lifecycleRuntime.reloadActiveWorldScene !== 'function') {
+                throw new Error('WorldSceneLifecycleRuntime is unavailable.');
             }
-
-            if (typeof window.clearCombatEnemyRenderers === 'function') window.clearCombatEnemyRenderers();
-
-            Array.from(loadedChunks).forEach((chunkKey) => unloadChunk(chunkKey));
-            loadedChunks.clear();
-            loadedChunkInteractionState.clear();
-            chunkGroups = {};
-            clearChunkTierGroups();
-            lastChunkPolicyRevision = -1;
-            sharedMaterials.shadowFocusRevision = Number.isFinite(sharedMaterials.shadowFocusRevision)
-                ? sharedMaterials.shadowFocusRevision + 1
-                : 1;
-
-            for (let i = 0; i < clickMarkers.length; i++) {
-                const marker = clickMarkers[i];
-                if (marker && marker.mesh) scene.remove(marker.mesh);
-            }
-            clickMarkers = [];
-
-            for (let i = 0; i < activeHitsplats.length; i++) {
-                const hitsplat = activeHitsplats[i];
-                if (hitsplat && hitsplat.el && typeof hitsplat.el.remove === 'function') hitsplat.el.remove();
-            }
-            activeHitsplats = [];
-            environmentMeshes = [];
-
-            initLogicalMap();
-
-            if (playerRig) {
-                playerRig.position.set(
-                    playerState.x,
-                    heightMap[playerState.z][playerState.y][playerState.x] + (playerState.z * 3.0),
-                    playerState.y
-                );
-                if (Number.isFinite(playerState.targetRotation)) {
-                    playerRig.rotation.y = playerState.targetRotation;
-                }
-            }
-            if (isFreeCam) {
-                freeCamTarget.set(playerState.x, heightMap[playerState.z][playerState.y][playerState.x] + (playerState.z * 3.0) + 1.0, playerState.y);
-            }
-
-            if (typeof updateMinimapCanvas === 'function') updateMinimapCanvas();
-            if (typeof manageChunks === 'function' && playerRig) manageChunks(true);
-            if (typeof updateWorldMapPanel === 'function') updateWorldMapPanel(true);
+            lifecycleRuntime.reloadActiveWorldScene({
+                scene,
+                loadedChunks,
+                loadedChunkInteractionState,
+                clickMarkers,
+                activeHitsplats,
+                environmentMeshes,
+                hasScene: () => !!scene,
+                hasPlayerRig: () => !!playerRig,
+                initLogicalMap,
+                unloadChunk,
+                clearChunkTierGroups,
+                clearCombatEnemyRenderers: () => {
+                    if (typeof window.clearCombatEnemyRenderers === 'function') window.clearCombatEnemyRenderers();
+                },
+                resetChunkGroups: () => {
+                    chunkGroups = {};
+                },
+                resetChunkPolicyRevision: () => {
+                    lastChunkPolicyRevision = -1;
+                },
+                bumpShadowFocusRevision: () => {
+                    sharedMaterials.shadowFocusRevision = Number.isFinite(sharedMaterials.shadowFocusRevision)
+                        ? sharedMaterials.shadowFocusRevision + 1
+                        : 1;
+                },
+                syncPlayerRigToState: () => {
+                    if (!playerRig) return;
+                    playerRig.position.set(
+                        playerState.x,
+                        heightMap[playerState.z][playerState.y][playerState.x] + (playerState.z * 3.0),
+                        playerState.y
+                    );
+                    if (Number.isFinite(playerState.targetRotation)) {
+                        playerRig.rotation.y = playerState.targetRotation;
+                    }
+                },
+                syncFreeCamTargetToState: () => {
+                    if (!isFreeCam) return;
+                    freeCamTarget.set(
+                        playerState.x,
+                        heightMap[playerState.z][playerState.y][playerState.x] + (playerState.z * 3.0) + 1.0,
+                        playerState.y
+                    );
+                },
+                updateMinimapCanvas,
+                manageChunks,
+                updateWorldMapPanel
+            });
         }
 
         // Modified to render top-down taking planes into account

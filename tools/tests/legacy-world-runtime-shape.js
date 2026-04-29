@@ -9,6 +9,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
+  const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const contractsSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "world.ts"), "utf8");
@@ -63,12 +64,24 @@ function run() {
     "world scene state should consume authored world config through the typed world adapter"
   );
   assert(
+    sceneLifecycleSource.includes("WorldSceneLifecycleRuntime"),
+    "world scene lifecycle should expose active-world reload orchestration"
+  );
+  assert(
+    sceneLifecycleSource.includes("resetChunkSceneState"),
+    "world scene lifecycle should own chunk scene reset orchestration"
+  );
+  assert(
     adapterSource.includes("firemakingTrainingRouteDefs"),
     "legacy world adapter payload should carry authored firemaking routes"
   );
   assert(
     worldSource.includes("getCurrentWorldScenePayload"),
     "world.js should consume authored world config through the scene-state runtime"
+  );
+  assert(
+    worldSource.includes("WorldSceneLifecycleRuntime"),
+    "world.js should delegate active-world reload orchestration through the lifecycle runtime"
   );
   assert(
     worldSource.includes("firemakingTrainingRouteDefs"),
