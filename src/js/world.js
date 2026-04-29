@@ -7146,182 +7146,10 @@
             });
         }
 
-        // Modified to render top-down taking planes into account
-        function updateMinimapCanvas() {
-            if (!offscreenMapCanvas) {
-                offscreenMapCanvas = document.createElement('canvas'); offscreenMapCanvas.width = MAP_SIZE; offscreenMapCanvas.height = MAP_SIZE;
-                offscreenMapCtx = offscreenMapCanvas.getContext('2d');
-            }
-            offscreenMapCtx.fillStyle = '#000';
-            offscreenMapCtx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
-            
-            for (let layer = 0; layer <= playerState.z; layer++) {
-                for (let y = 0; y < MAP_SIZE; y++) {
-                    for (let x = 0; x < MAP_SIZE; x++) {
-                        const tile = getVisualTileId(logicalMap[layer][y][x], x, y, layer);
-                        
-                        if (tile === TileId.GRASS && layer > 0) continue; 
-                        
-                        if (tile === TileId.GRASS && layer === 0) offscreenMapCtx.fillStyle = '#2d4a22'; 
-                        else if (tile === TileId.DIRT) offscreenMapCtx.fillStyle = '#5f4c32';
-                        else if (isTreeTileId(tile)) offscreenMapCtx.fillStyle = '#1e752d'; 
-                        else if (tile === TileId.ROCK) offscreenMapCtx.fillStyle = '#6b7280'; 
-                        else if (tile === TileId.FLOOR_WOOD || tile === TileId.SHOP_COUNTER) offscreenMapCtx.fillStyle = '#654321'; 
-                        else if (tile === TileId.FLOOR_STONE || tile === TileId.STAIRS_RAMP || tile === TileId.SOLID_NPC) offscreenMapCtx.fillStyle = '#666666'; 
-                        else if (tile === TileId.FLOOR_BRICK) offscreenMapCtx.fillStyle = '#800000'; 
-                        else if (tile === TileId.BANK_BOOTH) offscreenMapCtx.fillStyle = '#d4af37'; 
-                        else if (tile === TileId.WALL || tile === TileId.TOWER) offscreenMapCtx.fillStyle = '#4b5563'; 
-                        else if (tile === TileId.STAIRS_UP) offscreenMapCtx.fillStyle = '#aaaaaa'; 
-                        else if (tile === TileId.STAIRS_DOWN) offscreenMapCtx.fillStyle = '#444444'; 
-                        else if (tile === TileId.SHORE) offscreenMapCtx.fillStyle = '#9b8a5f'; // Shore
-                        else if (tile === TileId.WATER_SHALLOW) offscreenMapCtx.fillStyle = '#2c75a8'; // Shallow Water
-                        else if (tile === TileId.WATER_DEEP) offscreenMapCtx.fillStyle = '#184b78'; // Deep Water
-                        else if (tile === TileId.FENCE) offscreenMapCtx.fillStyle = '#7a5732';
-                        else if (isDoorTileId(tile)) offscreenMapCtx.fillStyle = '#8b5a2b'; // Door
-                        
-                        if (tile !== TileId.OBSTACLE && tile !== TileId.GRASS) offscreenMapCtx.fillRect(x, y, 1, 1);
-                        else if (layer === 0) offscreenMapCtx.fillRect(x, y, 1, 1);
-                    }
-                }
-            }
-        }
-
-        const WORLD_MAP_LOCKED_CHUNKS = 5;
-        const WORLD_MAP_BASE_SOURCE_SIZE = CHUNK_SIZE * WORLD_MAP_LOCKED_CHUNKS;
-
-        const worldMapState = {
-            zoom: 1,
-            minZoom: 1,
-            maxZoom: 6,
-            centerX: null,
-            centerY: null,
-            isDragging: false,
-            dragStartMouseX: 0,
-            dragStartMouseY: 0,
-            dragStartCenterX: 0,
-            dragStartCenterY: 0,
-            dragStartSourceSize: Math.min(MAP_SIZE, WORLD_MAP_BASE_SOURCE_SIZE)
-        };
-
-        function syncWorldMapCanvasSize(canvas) {
-            if (!canvas) return;
-            const rect = canvas.getBoundingClientRect();
-            const dpr = Number.isFinite(window.devicePixelRatio) ? Math.max(1, window.devicePixelRatio) : 1;
-            const nextWidth = Math.max(1, Math.round(rect.width * dpr));
-            const nextHeight = Math.max(1, Math.round(rect.height * dpr));
-            if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
-                canvas.width = nextWidth;
-                canvas.height = nextHeight;
-            }
-        }
-
-        function resolveWorldMapViewport(canvas) {
-            const dpr = Number.isFinite(window.devicePixelRatio) ? Math.max(1, window.devicePixelRatio) : 1;
-            const pad = Math.max(2, Math.round(4 * dpr));
-            const size = Math.max(1, Math.min(canvas.width, canvas.height) - (pad * 2));
-            const x = Math.floor((canvas.width - size) / 2);
-            const y = Math.floor((canvas.height - size) / 2);
-            return { x, y, size };
-        }
-
-        function pointInWorldMapViewport(mouseX, mouseY, viewport) {
-            if (!viewport) return false;
-            return mouseX >= viewport.x
-                && mouseY >= viewport.y
-                && mouseX <= (viewport.x + viewport.size)
-                && mouseY <= (viewport.y + viewport.size);
-        }
-
-        function getWorldMapSourceSizeForZoom(zoomValue) {
-            const safeZoom = Number.isFinite(zoomValue)
-                ? Math.max(worldMapState.minZoom, Math.min(worldMapState.maxZoom, zoomValue))
-                : worldMapState.minZoom;
-            const baseSourceSize = Math.min(MAP_SIZE, WORLD_MAP_BASE_SOURCE_SIZE);
-            return Math.max(1, baseSourceSize / safeZoom);
-        }
-
-        function canPanWorldMap(sourceSize = null) {
-            const resolvedSourceSize = Number.isFinite(sourceSize)
-                ? sourceSize
-                : getWorldMapSourceSizeForZoom(worldMapState.zoom);
-            return resolvedSourceSize < (MAP_SIZE - 0.001);
-        }
-
-        function clampWorldMapCenter(center, sourceSize) {
-            if (!Number.isFinite(center)) return MAP_SIZE / 2;
-            if (!Number.isFinite(sourceSize) || sourceSize >= MAP_SIZE) return MAP_SIZE / 2;
-            const half = sourceSize / 2;
-            return Math.max(half, Math.min(MAP_SIZE - half, center));
-        }
-
-        function ensureWorldMapCenter() {
-            if (!Number.isFinite(worldMapState.centerX) || !Number.isFinite(worldMapState.centerY)) {
-                const px = (playerRig && playerRig.position && Number.isFinite(playerRig.position.x))
-                    ? (playerRig.position.x + 0.5)
-                    : (playerState.x + 0.5);
-                const py = (playerRig && playerRig.position && Number.isFinite(playerRig.position.z))
-                    ? (playerRig.position.z + 0.5)
-                    : (playerState.y + 0.5);
-                worldMapState.centerX = Math.max(0, Math.min(MAP_SIZE, px));
-                worldMapState.centerY = Math.max(0, Math.min(MAP_SIZE, py));
-            }
-        }
-
-        function getWorldMapSourceRect() {
-            const safeZoom = Number.isFinite(worldMapState.zoom)
-                ? Math.max(worldMapState.minZoom, Math.min(worldMapState.maxZoom, worldMapState.zoom))
-                : worldMapState.minZoom;
-            worldMapState.zoom = safeZoom;
-            ensureWorldMapCenter();
-
-            const sourceSize = getWorldMapSourceSizeForZoom(safeZoom);
-            worldMapState.centerX = clampWorldMapCenter(worldMapState.centerX, sourceSize);
-            worldMapState.centerY = clampWorldMapCenter(worldMapState.centerY, sourceSize);
-            const sourceX = worldMapState.centerX - (sourceSize / 2);
-            const sourceY = worldMapState.centerY - (sourceSize / 2);
-            return { sourceX, sourceY, sourceSize, centerX: worldMapState.centerX, centerY: worldMapState.centerY };
-        }
-
-        function screenToWorldMap(mouseX, mouseY, viewport, sourceRect) {
-            const ratioX = (mouseX - viewport.x) / viewport.size;
-            const ratioY = (mouseY - viewport.y) / viewport.size;
-            return {
-                ratioX,
-                ratioY,
-                worldX: sourceRect.sourceX + (ratioX * sourceRect.sourceSize),
-                worldY: sourceRect.sourceY + (ratioY * sourceRect.sourceSize)
-            };
-        }
-
-        function setWorldMapZoom(nextZoom, anchor = null) {
-            const oldRect = getWorldMapSourceRect();
-            const resolvedZoom = Math.max(worldMapState.minZoom, Math.min(worldMapState.maxZoom, nextZoom));
-            if (!Number.isFinite(resolvedZoom) || Math.abs(resolvedZoom - worldMapState.zoom) < 0.0001) return;
-
-            if (anchor && pointInWorldMapViewport(anchor.mouseX, anchor.mouseY, anchor.viewport)) {
-                const mapped = screenToWorldMap(anchor.mouseX, anchor.mouseY, anchor.viewport, oldRect);
-                worldMapState.zoom = resolvedZoom;
-                const newSourceSize = getWorldMapSourceSizeForZoom(resolvedZoom);
-                const sourceX = mapped.worldX - (mapped.ratioX * newSourceSize);
-                const sourceY = mapped.worldY - (mapped.ratioY * newSourceSize);
-                worldMapState.centerX = sourceX + (newSourceSize / 2);
-                worldMapState.centerY = sourceY + (newSourceSize / 2);
-            } else {
-                worldMapState.zoom = resolvedZoom;
-            }
-
-            getWorldMapSourceRect();
-        }
-
-        function updateWorldMapCursor(worldMapCanvas) {
-            if (!worldMapCanvas) return;
-            if (worldMapState.isDragging) {
-                worldMapCanvas.style.cursor = 'grabbing';
-            } else if (canPanWorldMap()) {
-                worldMapCanvas.style.cursor = 'grab';
-            } else {
-                worldMapCanvas.style.cursor = 'default';
-            }
+        function getWorldMapHudRuntime() {
+            const runtime = window.WorldMapHudRuntime || null;
+            if (!runtime) throw new Error('WorldMapHudRuntime is unavailable.');
+            return runtime;
         }
 
         function getRenderRuntime() {
@@ -7340,390 +7168,87 @@
             return 'main_overworld';
         }
 
-        function buildHudRenderSnapshot() {
-            const runtime = getRenderRuntime();
-            const playerX = (playerRig && playerRig.position) ? playerRig.position.x : playerState.x;
-            const playerY = (playerRig && playerRig.position) ? playerRig.position.z : playerState.y;
-            const facingYaw = (playerRig && Number.isFinite(playerRig.rotation && playerRig.rotation.y))
-                ? playerRig.rotation.y
-                : (Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0);
-            const clickMarkerEntries = Array.isArray(clickMarkers)
-                ? clickMarkers.map((marker) => ({
-                    x: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.x : 0,
-                    y: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.z : 0,
-                    z: Math.round((((marker && marker.mesh && marker.mesh.position ? marker.mesh.position.y : 0) || 0) / 3.0)),
-                    visualY: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.y : 0
-                }))
-                : [];
-            const groundItemEntries = Array.isArray(groundItems)
-                ? groundItems.map((item) => ({
-                    x: item.x,
-                    y: item.y,
-                    z: item.z,
-                    uid: item.uid
-                }))
-                : [];
-
-            if (runtime && typeof runtime.buildRenderSnapshot === 'function') {
-                return runtime.buildRenderSnapshot({
-                    worldId: resolveRenderWorldId(),
-                    player: {
-                        x: playerX,
-                        y: playerY,
-                        z: playerState.z,
-                        facingYaw
-                    },
-                    clickMarkers: clickMarkerEntries,
-                    groundItems: groundItemEntries,
-                    minimapDestination: minimapDestination && Number.isFinite(minimapDestination.x) && Number.isFinite(minimapDestination.y) && Number.isFinite(minimapDestination.z)
-                        ? {
-                            x: minimapDestination.x,
-                            y: minimapDestination.y,
-                            z: minimapDestination.z
-                        }
-                        : null
-                });
-            }
-
+        function buildMapHudRuntimeContext() {
             return {
-                worldId: resolveRenderWorldId(),
-                player: {
-                    x: playerX,
-                    y: playerY,
-                    z: playerState.z,
-                    facingYaw
+                document,
+                mapSize: MAP_SIZE,
+                chunkSize: CHUNK_SIZE,
+                tileIds: TileId,
+                getRenderRuntime,
+                getInputControllerRuntime,
+                resolveRenderWorldId,
+                getTile: (x, y, z) => (logicalMap[z] && logicalMap[z][y]) ? logicalMap[z][y][x] : TileId.OBSTACLE,
+                getVisualTileId,
+                isTreeTileId,
+                isDoorTileId,
+                isWalkableTile: (x, y, z) => !!(logicalMap[z] && logicalMap[z][y] && isWalkableTileId(logicalMap[z][y][x])),
+                queueWalk: (x, y) => queueAction('WALK', x, y, null),
+                getSelectedUseItem,
+                clearSelectedUse,
+                getMinimapState: () => ({
+                    zoom: minimapZoom,
+                    locked: minimapLocked,
+                    targetX: minimapTargetX,
+                    targetY: minimapTargetY
+                }),
+                setMinimapState: (patch) => {
+                    if (!patch || typeof patch !== 'object') return;
+                    if (Number.isFinite(patch.zoom)) minimapZoom = patch.zoom;
+                    if (typeof patch.locked === 'boolean') minimapLocked = patch.locked;
+                    if (Number.isFinite(patch.targetX)) minimapTargetX = patch.targetX;
+                    if (Number.isFinite(patch.targetY)) minimapTargetY = patch.targetY;
                 },
-                clickMarkers: clickMarkerEntries,
-                groundItems: groundItemEntries,
-                minimapDestination: minimapDestination
+                getPlayerMapPosition: () => {
+                    const playerX = (playerRig && playerRig.position && Number.isFinite(playerRig.position.x)) ? playerRig.position.x : playerState.x;
+                    const playerY = (playerRig && playerRig.position && Number.isFinite(playerRig.position.z)) ? playerRig.position.z : playerState.y;
+                    const facingYaw = (playerRig && Number.isFinite(playerRig.rotation && playerRig.rotation.y))
+                        ? playerRig.rotation.y
+                        : (Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0);
+                    return { x: playerX, y: playerY, z: playerState.z, facingYaw };
+                },
+                getClickMarkers: () => Array.isArray(clickMarkers)
+                    ? clickMarkers.map((marker) => ({
+                        x: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.x : 0,
+                        y: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.z : 0,
+                        z: Math.round((((marker && marker.mesh && marker.mesh.position ? marker.mesh.position.y : 0) || 0) / 3.0)),
+                        visualY: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.y : 0
+                    }))
+                    : [],
+                getGroundItems: () => Array.isArray(groundItems)
+                    ? groundItems.map((item) => ({
+                        x: item.x,
+                        y: item.y,
+                        z: item.z,
+                        uid: item.uid
+                    }))
+                    : [],
+                getMinimapDestination: () => minimapDestination
             };
+        }
+
+        function updateMinimapCanvas() {
+            return getWorldMapHudRuntime().updateMinimapCanvas(buildMapHudRuntimeContext());
+        }
+
+        function buildHudRenderSnapshot() {
+            return getWorldMapHudRuntime().buildHudRenderSnapshot(buildMapHudRuntimeContext());
         }
 
         function initWorldMapPanel() {
-            const worldMapCanvas = document.getElementById('world-map-canvas');
-            if (!worldMapCanvas || worldMapCanvas.dataset.bound === '1') return;
-            worldMapCanvas.dataset.bound = '1';
-            updateWorldMapCursor(worldMapCanvas);
-
-            worldMapCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
-            worldMapCanvas.addEventListener('wheel', (e) => {
-                const rect = worldMapCanvas.getBoundingClientRect();
-                const scaleX = worldMapCanvas.width / rect.width;
-                const scaleY = worldMapCanvas.height / rect.height;
-                const mouseX = (e.clientX - rect.left) * scaleX;
-                const mouseY = (e.clientY - rect.top) * scaleY;
-                const viewport = resolveWorldMapViewport(worldMapCanvas);
-                if (!pointInWorldMapViewport(mouseX, mouseY, viewport)) return;
-                e.preventDefault();
-
-                const inputRuntime = getInputControllerRuntime();
-                const nextZoom = inputRuntime && typeof inputRuntime.resolveZoomFactor === 'function'
-                    ? inputRuntime.resolveZoomFactor(worldMapState.zoom, e.deltaY, {
-                        factor: 1.2,
-                        min: worldMapState.minZoom,
-                        max: worldMapState.maxZoom
-                    })
-                    : (worldMapState.zoom * (e.deltaY < 0 ? 1.2 : (1 / 1.2)));
-                setWorldMapZoom(nextZoom, { mouseX, mouseY, viewport });
-                updateWorldMapCursor(worldMapCanvas);
-            });
-            worldMapCanvas.addEventListener('mousedown', (e) => {
-                if (e.button !== 0) return;
-                const sourceRect = getWorldMapSourceRect();
-                if (!canPanWorldMap(sourceRect.sourceSize)) return;
-
-                const rect = worldMapCanvas.getBoundingClientRect();
-                const scaleX = worldMapCanvas.width / rect.width;
-                const scaleY = worldMapCanvas.height / rect.height;
-                const mouseX = (e.clientX - rect.left) * scaleX;
-                const mouseY = (e.clientY - rect.top) * scaleY;
-                const viewport = resolveWorldMapViewport(worldMapCanvas);
-                if (!pointInWorldMapViewport(mouseX, mouseY, viewport)) return;
-
-                worldMapState.isDragging = true;
-                worldMapState.dragStartMouseX = mouseX;
-                worldMapState.dragStartMouseY = mouseY;
-                worldMapState.dragStartCenterX = sourceRect.centerX;
-                worldMapState.dragStartCenterY = sourceRect.centerY;
-                worldMapState.dragStartSourceSize = sourceRect.sourceSize;
-                updateWorldMapCursor(worldMapCanvas);
-                e.preventDefault();
-            });
-            worldMapCanvas.addEventListener('mousemove', (e) => {
-                if (!worldMapState.isDragging) return;
-
-                const rect = worldMapCanvas.getBoundingClientRect();
-                const scaleX = worldMapCanvas.width / rect.width;
-                const scaleY = worldMapCanvas.height / rect.height;
-                const mouseX = (e.clientX - rect.left) * scaleX;
-                const mouseY = (e.clientY - rect.top) * scaleY;
-                const viewport = resolveWorldMapViewport(worldMapCanvas);
-                const inputRuntime = getInputControllerRuntime();
-                if (inputRuntime && typeof inputRuntime.resolveWorldMapDragCenter === 'function') {
-                    const nextCenter = inputRuntime.resolveWorldMapDragCenter({
-                        dragStartCenterX: worldMapState.dragStartCenterX,
-                        dragStartCenterY: worldMapState.dragStartCenterY,
-                        dragStartMouseX: worldMapState.dragStartMouseX,
-                        dragStartMouseY: worldMapState.dragStartMouseY,
-                        dragStartSourceSize: worldMapState.dragStartSourceSize,
-                        viewportSize: viewport.size,
-                        mouseX,
-                        mouseY
-                    });
-                    worldMapState.centerX = nextCenter.centerX;
-                    worldMapState.centerY = nextCenter.centerY;
-                } else {
-                    const tilesPerPixel = worldMapState.dragStartSourceSize / Math.max(1, viewport.size);
-                    worldMapState.centerX = worldMapState.dragStartCenterX - ((mouseX - worldMapState.dragStartMouseX) * tilesPerPixel);
-                    worldMapState.centerY = worldMapState.dragStartCenterY - ((mouseY - worldMapState.dragStartMouseY) * tilesPerPixel);
-                }
-                getWorldMapSourceRect();
-            });
-
-            const stopDrag = () => {
-                if (!worldMapState.isDragging) return;
-                worldMapState.isDragging = false;
-                updateWorldMapCursor(worldMapCanvas);
-            };
-            worldMapCanvas.addEventListener('mouseup', (e) => {
-                if (e.button === 0) stopDrag();
-            });
-            worldMapCanvas.addEventListener('mouseleave', stopDrag);
+            getWorldMapHudRuntime().initWorldMapPanel(buildMapHudRuntimeContext());
         }
 
         function updateWorldMapPanel(forceCenterOnPlayer = false) {
-            const panel = document.getElementById('world-map-panel');
-            if (!panel || panel.classList.contains('hidden')) {
-                worldMapState.isDragging = false;
-                return;
-            }
-            const worldMapCanvas = document.getElementById('world-map-canvas');
-            if (!worldMapCanvas) return;
-            if (!offscreenMapCanvas) updateMinimapCanvas();
-            syncWorldMapCanvasSize(worldMapCanvas);
-            if (forceCenterOnPlayer) {
-                worldMapState.isDragging = false;
-                worldMapState.centerX = null;
-                worldMapState.centerY = null;
-            }
-
-            const ctx = worldMapCanvas.getContext('2d');
-            const viewport = resolveWorldMapViewport(worldMapCanvas);
-            const sourceRect = getWorldMapSourceRect();
-            const renderSnapshot = buildHudRenderSnapshot();
-            const renderRuntime = getRenderRuntime();
-            const worldMapSnapshot = renderRuntime && typeof renderRuntime.buildWorldMapSnapshot === 'function'
-                ? renderRuntime.buildWorldMapSnapshot({
-                    snapshot: renderSnapshot,
-                    viewport,
-                    sourceRect,
-                    zoom: worldMapState.zoom
-                })
-                : null;
-
-            ctx.imageSmoothingEnabled = false;
-            ctx.fillStyle = '#090b0d';
-            ctx.fillRect(0, 0, worldMapCanvas.width, worldMapCanvas.height);
-            ctx.drawImage(
-                offscreenMapCanvas,
-                sourceRect.sourceX,
-                sourceRect.sourceY,
-                sourceRect.sourceSize,
-                sourceRect.sourceSize,
-                viewport.x,
-                viewport.y,
-                viewport.size,
-                viewport.size
-            );
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(viewport.x + 0.5, viewport.y + 0.5, viewport.size - 1, viewport.size - 1);
-
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
-            const worldMapMarkers = worldMapSnapshot ? worldMapSnapshot.clickMarkers : [];
-            worldMapMarkers.forEach((marker) => {
-                ctx.fillRect(marker.x - (marker.size / 2), marker.y - (marker.size / 2), marker.size, marker.size);
-            });
-
-            ctx.fillStyle = '#ff00aa';
-            const worldMapItems = worldMapSnapshot ? worldMapSnapshot.groundItems : [];
-            worldMapItems.forEach((item) => {
-                ctx.fillRect(item.x - (item.size / 2), item.y - (item.size / 2), item.size, item.size);
-            });
-
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(
-                worldMapSnapshot ? worldMapSnapshot.playerDot.x : 0,
-                worldMapSnapshot ? worldMapSnapshot.playerDot.y : 0,
-                worldMapSnapshot ? worldMapSnapshot.playerDot.radius : 0,
-                0,
-                Math.PI * 2
-            );
-            ctx.fill();
-
-            ctx.strokeStyle = '#ff2f2f';
-            ctx.lineWidth = worldMapSnapshot ? worldMapSnapshot.facingLine.lineWidth : 1.5;
-            ctx.beginPath();
-            ctx.moveTo(
-                worldMapSnapshot ? worldMapSnapshot.facingLine.fromX : 0,
-                worldMapSnapshot ? worldMapSnapshot.facingLine.fromY : 0
-            );
-            ctx.lineTo(
-                worldMapSnapshot ? worldMapSnapshot.facingLine.toX : 0,
-                worldMapSnapshot ? worldMapSnapshot.facingLine.toY : 0
-            );
-            ctx.stroke();
-
-            ctx.fillStyle = 'rgba(255, 230, 176, 0.95)';
-            ctx.font = 'bold 12px monospace';
-            ctx.textBaseline = 'top';
-            ctx.fillText(worldMapSnapshot ? worldMapSnapshot.zoomLabel : `Zoom x${worldMapState.zoom.toFixed(2)}`, viewport.x + 6, viewport.y + 6);
-            updateWorldMapCursor(worldMapCanvas);
+            getWorldMapHudRuntime().updateWorldMapPanel(forceCenterOnPlayer, buildMapHudRuntimeContext());
         }
 
         function initMinimap() {
-            updateMinimapCanvas();
-            initWorldMapPanel();
-            const minimapCanvas = document.getElementById('minimap');
-            minimapCanvas.addEventListener('contextmenu', e => e.preventDefault());
-            minimapCanvas.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const inputRuntime = getInputControllerRuntime();
-                minimapZoom = inputRuntime && typeof inputRuntime.resolveZoomStep === 'function'
-                    ? inputRuntime.resolveZoomStep(minimapZoom, e.deltaY, { step: -0.2, min: 1.0, max: 20.0 })
-                    : Math.max(1.0, Math.min(20.0, minimapZoom + (Math.sign(e.deltaY) * -0.2)));
-            });
-            minimapCanvas.addEventListener('mousedown', (e) => {
-                const rect = minimapCanvas.getBoundingClientRect();
-                const scaleX = minimapCanvas.width / rect.width; const scaleY = minimapCanvas.height / rect.height;
-                const mouseX = (e.clientX - rect.left) * scaleX; const mouseY = (e.clientY - rect.top) * scaleY;
-                if (e.button === 2) { isMinimapDragging = true; minimapDragStart = { x: mouseX, y: mouseY }; minimapDragEnd = { x: mouseX, y: mouseY }; } 
-                else if (e.button === 0) { 
-                    const selected = getSelectedUseItem();
-                    if (selected) {
-                        clearSelectedUse();
-                        return;
-                    }
-                    const inputRuntime = getInputControllerRuntime();
-                    const walkTarget = inputRuntime && typeof inputRuntime.resolveMinimapWalkTarget === 'function'
-                        ? inputRuntime.resolveMinimapWalkTarget({
-                            mouseX,
-                            mouseY,
-                            canvasSize: minimapCanvas.width,
-                            targetX: minimapTargetX,
-                            targetY: minimapTargetY,
-                            zoom: minimapZoom
-                        })
-                        : null;
-                    const gridX = walkTarget ? walkTarget.gridX : Math.floor(minimapTargetX + 0.5 + (mouseX - (minimapCanvas.width / 2)) / ((minimapCanvas.width / 100) * minimapZoom));
-                    const gridY = walkTarget ? walkTarget.gridY : Math.floor(minimapTargetY + 0.5 + (mouseY - (minimapCanvas.width / 2)) / ((minimapCanvas.width / 100) * minimapZoom));
-                    if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
-                        // Ensure we check walkability on the PLAYER'S CURRENT PLANE
-                        if (isWalkableTileId(logicalMap[playerState.z][gridY][gridX])) { queueAction('WALK', gridX, gridY, null); }
-                    }
-                }
-            });
-            minimapCanvas.addEventListener('mousemove', (e) => {
-                if (!isMinimapDragging) return; const rect = minimapCanvas.getBoundingClientRect();
-                minimapDragEnd.x = (e.clientX - rect.left) * (minimapCanvas.width / rect.width); minimapDragEnd.y = (e.clientY - rect.top) * (minimapCanvas.height / rect.height);
-            });
-            minimapCanvas.addEventListener('mouseup', (e) => {
-                if (e.button === 2 && isMinimapDragging) {
-                    isMinimapDragging = false;
-                    const inputRuntime = getInputControllerRuntime();
-                    if (inputRuntime && typeof inputRuntime.resolveMinimapDragResolution === 'function') {
-                        const resolution = inputRuntime.resolveMinimapDragResolution({
-                            canvasSize: minimapCanvas.width,
-                            zoom: minimapZoom,
-                            targetX: minimapTargetX,
-                            targetY: minimapTargetY,
-                            dragStart: minimapDragStart,
-                            dragEnd: minimapDragEnd
-                        });
-                        minimapTargetX = resolution.targetX;
-                        minimapTargetY = resolution.targetY;
-                        minimapZoom = resolution.zoom;
-                        minimapLocked = resolution.minimapLocked;
-                    } else {
-                        const dx = minimapDragEnd.x - minimapDragStart.x; const dy = minimapDragEnd.y - minimapDragStart.y;
-                        if (Math.sqrt(dx*dx + dy*dy) < 5) { minimapLocked = true; minimapZoom = 1.0; } 
-                        else {
-                            const canvasCenter = minimapCanvas.width / 2; const ppt = (minimapCanvas.width / 100) * minimapZoom; 
-                            minimapTargetX = minimapTargetX + (((minimapDragStart.x + minimapDragEnd.x) / 2) - canvasCenter) / ppt;
-                            minimapTargetY = minimapTargetY + (((minimapDragStart.y + minimapDragEnd.y) / 2) - canvasCenter) / ppt;
-                            minimapLocked = false; minimapZoom = Math.max(1.0, Math.min(20.0, minimapZoom * (minimapCanvas.width / Math.max(Math.abs(dx), Math.abs(dy))))); 
-                        }
-                    }
-                }
-            });
-            minimapCanvas.addEventListener('mouseleave', () => { isMinimapDragging = false; });
+            getWorldMapHudRuntime().initMinimap(buildMapHudRuntimeContext());
         }
 
         function updateMinimap(frameNowMs = performance.now(), forceRender = false) {
-            const worldMapPanel = document.getElementById('world-map-panel');
-            const worldMapOpen = !!(worldMapPanel && !worldMapPanel.classList.contains('hidden'));
-            const interactiveRender = forceRender || isMinimapDragging || worldMapState.isDragging || worldMapOpen;
-            const resolvedFrameNowMs = Number.isFinite(frameNowMs) ? frameNowMs : performance.now();
-            if (!interactiveRender && (resolvedFrameNowMs - lastMinimapRenderFrameMs) < MINIMAP_RENDER_INTERVAL_MS) return;
-            lastMinimapRenderFrameMs = resolvedFrameNowMs;
-
-            const canvas = document.getElementById('minimap'); const ctx = canvas.getContext('2d');
-            const renderSnapshot = buildHudRenderSnapshot();
-            const renderRuntime = getRenderRuntime();
-            const minimapSnapshot = renderRuntime && typeof renderRuntime.buildMinimapSnapshot === 'function'
-                ? renderRuntime.buildMinimapSnapshot({
-                    snapshot: renderSnapshot,
-                    canvasSize: canvas.width,
-                    zoom: minimapZoom,
-                    targetX: minimapTargetX,
-                    targetY: minimapTargetY,
-                    isDragging: isMinimapDragging,
-                    dragStart: minimapDragStart,
-                    dragEnd: minimapDragEnd
-                })
-                : null;
-            ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const canvasCenter = minimapSnapshot ? minimapSnapshot.canvasCenter : (canvas.width / 2);
-            const ppt = minimapSnapshot ? minimapSnapshot.pixelsPerTile : ((canvas.width / 100) * minimapZoom);
-            ctx.save(); ctx.translate(canvasCenter, canvasCenter); ctx.scale(ppt, ppt); ctx.translate(-minimapTargetX - 0.5, -minimapTargetY - 0.5); 
-            ctx.drawImage(offscreenMapCanvas, 0, 0);
-            
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.7)'; 
-            const minimapMarkers = minimapSnapshot ? minimapSnapshot.clickMarkers : [];
-            minimapMarkers.forEach((marker) => { ctx.fillRect(marker.x, marker.y, marker.size, marker.size); });
-            ctx.fillStyle = '#ff00aa'; 
-            const minimapItems = minimapSnapshot ? minimapSnapshot.groundItems : [];
-            minimapItems.forEach((item) => { ctx.fillRect(item.x, item.y, item.size, item.size); });
-
-            if (minimapSnapshot && minimapSnapshot.destinationFlag) {
-                const flag = minimapSnapshot.destinationFlag;
-                ctx.strokeStyle = '#3a2a1b';
-                ctx.lineWidth = flag.lineWidth;
-                ctx.beginPath();
-                ctx.moveTo(flag.x, flag.poleBottomY);
-                ctx.lineTo(flag.x, flag.poleTopY);
-                ctx.stroke();
-
-                ctx.fillStyle = '#ff4b4b';
-                ctx.beginPath();
-                ctx.moveTo(flag.x, flag.poleTopY);
-                ctx.lineTo(flag.x + flag.flagWidth, flag.poleTopY + (flag.flagHeight * 0.5));
-                ctx.lineTo(flag.x, flag.poleTopY + flag.flagHeight);
-                ctx.closePath();
-                ctx.fill();
-            }
-             
-            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(minimapSnapshot ? minimapSnapshot.playerDot.x : (playerRig.position.x + 0.5), minimapSnapshot ? minimapSnapshot.playerDot.y : (playerRig.position.z + 0.5), minimapSnapshot ? minimapSnapshot.playerDot.radius : (3 / ppt), 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = minimapSnapshot ? minimapSnapshot.facingLine.lineWidth : (2 / ppt); ctx.beginPath(); ctx.moveTo(minimapSnapshot ? minimapSnapshot.facingLine.fromX : (playerRig.position.x + 0.5), minimapSnapshot ? minimapSnapshot.facingLine.fromY : (playerRig.position.z + 0.5)); ctx.lineTo(minimapSnapshot ? minimapSnapshot.facingLine.toX : (playerRig.position.x + 0.5 + Math.sin(playerRig.rotation.y) * (8 / ppt)), minimapSnapshot ? minimapSnapshot.facingLine.toY : (playerRig.position.z + 0.5 + Math.cos(playerRig.rotation.y) * (8 / ppt))); ctx.stroke(); ctx.restore();
-            if (minimapSnapshot && minimapSnapshot.dragRect) {
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 1; ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.fillRect(minimapSnapshot.dragRect.x, minimapSnapshot.dragRect.y, minimapSnapshot.dragRect.w, minimapSnapshot.dragRect.h); ctx.strokeRect(minimapSnapshot.dragRect.x, minimapSnapshot.dragRect.y, minimapSnapshot.dragRect.w, minimapSnapshot.dragRect.h);
-            }
-            if (worldMapOpen || worldMapState.isDragging) updateWorldMapPanel();
+            getWorldMapHudRuntime().updateMinimap(frameNowMs, forceRender, buildMapHudRuntimeContext());
         }
-
         function resolveTreeRespawnTicks(gridX, gridY, z) {
             const fallbackTicks = 18;
             if (!window.SkillSpecRegistry || typeof SkillSpecRegistry.getNodeTable !== 'function') return fallbackTicks;

@@ -10,6 +10,7 @@ import tileRuntimeScript from "../../js/world/tile-runtime.js?raw";
 import worldSceneStateScript from "../../js/world/scene-state.js?raw";
 import worldSceneLifecycleScript from "../../js/world/scene-lifecycle.js?raw";
 import worldChunkSceneRuntimeScript from "../../js/world/chunk-scene-runtime.js?raw";
+import worldMapHudRuntimeScript from "../../js/world/map-hud-runtime.js?raw";
 import coreScript from "../../js/core.js?raw";
 import skillSpecsScript from "../../js/skills/specs.js?raw";
 import skillSpecRegistryScript from "../../js/skills/spec-registry.js?raw";
@@ -55,6 +56,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-scene-state", filename: "src/js/world/scene-state.js", code: worldSceneStateScript },
   { id: "world-scene-lifecycle", filename: "src/js/world/scene-lifecycle.js", code: worldSceneLifecycleScript },
   { id: "world-chunk-scene-runtime", filename: "src/js/world/chunk-scene-runtime.js", code: worldChunkSceneRuntimeScript },
+  { id: "world-map-hud-runtime", filename: "src/js/world/map-hud-runtime.js", code: worldMapHudRuntimeScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },
   { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },
   { id: "skills-spec-registry", filename: "src/js/skills/spec-registry.js", code: skillSpecRegistryScript },

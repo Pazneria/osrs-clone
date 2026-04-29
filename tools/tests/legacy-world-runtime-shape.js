@@ -11,6 +11,7 @@ function run() {
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
+  const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const contractsSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "world.ts"), "utf8");
@@ -77,6 +78,10 @@ function run() {
     "world chunk scene runtime should expose chunk state and tier orchestration"
   );
   assert(
+    mapHudRuntimeSource.includes("WorldMapHudRuntime"),
+    "world map HUD runtime should expose minimap and world-map orchestration"
+  );
+  assert(
     adapterSource.includes("firemakingTrainingRouteDefs"),
     "legacy world adapter payload should carry authored firemaking routes"
   );
@@ -91,6 +96,14 @@ function run() {
   assert(
     worldSource.includes("WorldChunkSceneRuntime"),
     "world.js should delegate chunk state and tier orchestration through the chunk runtime"
+  );
+  assert(
+    worldSource.includes("WorldMapHudRuntime"),
+    "world.js should delegate map HUD rendering through the map HUD runtime"
+  );
+  assert(
+    !worldSource.includes("const worldMapState ="),
+    "world.js should not own world-map pan and zoom state"
   );
   assert(
     worldSource.includes("firemakingTrainingRouteDefs"),
