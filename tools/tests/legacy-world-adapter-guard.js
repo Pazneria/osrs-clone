@@ -12,6 +12,7 @@ function run() {
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const proceduralRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "procedural-runtime.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
@@ -50,12 +51,14 @@ function run() {
 
   const sceneStateIndex = legacyManifestSource.indexOf('id: "world-scene-state"');
   const qaToolsIndex = legacyManifestSource.indexOf('id: "qa-tools-runtime"');
+  const proceduralRuntimeIndex = legacyManifestSource.indexOf('id: "world-procedural-runtime"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const mapHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-map-hud-runtime"');
   const worldIndex = legacyManifestSource.indexOf('id: "world"');
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
   assert(qaToolsIndex !== -1 && worldIndex !== -1 && qaToolsIndex < worldIndex, "legacy script manifest should load QA tools before core/world runtime consumers");
+  assert(proceduralRuntimeIndex !== -1 && worldIndex !== -1 && proceduralRuntimeIndex < worldIndex, "legacy script manifest should load world procedural runtime before world.js");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(mapHudRuntimeIndex !== -1 && worldIndex !== -1 && mapHudRuntimeIndex < worldIndex, "legacy script manifest should load world map HUD runtime before world.js");
@@ -68,6 +71,12 @@ function run() {
   assert(chunkRuntimeSource.includes("manageChunks"), "world chunk scene runtime should own chunk manage orchestration");
   assert(mapHudRuntimeSource.includes("window.WorldMapHudRuntime"), "world map HUD runtime should expose a runtime");
   assert(mapHudRuntimeSource.includes("updateWorldMapPanel"), "world map HUD runtime should own world-map panel rendering");
+  assert(proceduralRuntimeSource.includes("window.WorldProceduralRuntime"), "world procedural runtime should expose a runtime");
+  assert(proceduralRuntimeSource.includes("buildGrassTextureCanvas"), "world procedural runtime should own generated grass texture canvases");
+  assert(proceduralRuntimeSource.includes("sampleFractalNoise2D"), "world procedural runtime should own deterministic terrain noise helpers");
+  assert(worldSource.includes("WorldProceduralRuntime"), "world.js should resolve procedural helpers through the procedural runtime");
+  assert(!worldSource.includes("function buildGrassTextureCanvas"), "world.js should not own generated texture canvas builders");
+  assert(!worldSource.includes("function sampleFractalNoise2D"), "world.js should not own deterministic noise helpers");
   assert(worldSource.includes("WorldSceneStateRuntime"), "world.js should resolve authored scene state through the scene-state runtime");
   assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the current scene payload through the scene-state runtime");
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-scene reload lifecycle");
