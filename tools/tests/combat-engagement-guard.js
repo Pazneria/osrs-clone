@@ -24,6 +24,7 @@ function getFunctionBody(source, functionName) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
+  const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
@@ -156,10 +157,11 @@ function run() {
   );
 
   assert(
-    coreSource.includes("pursuit: pursuitDebugState")
-      && coreSource.includes("autoRetaliate: autoRetaliateDebugState")
-      && coreSource.includes("[QA combatdbg] pursuit state=")
-      && coreSource.includes("[QA combatdbg] autoRetaliate target="),
+    combatQaDebugSource.includes("pursuit: pursuitDebugState")
+      && combatQaDebugSource.includes("autoRetaliate: autoRetaliateDebugState")
+      && combatQaDebugSource.includes("[QA combatdbg] pursuit state=")
+      && combatQaDebugSource.includes("[QA combatdbg] autoRetaliate target=")
+      && coreSource.includes("buildCombatQaDebugContext"),
     "QA combat debug output should surface pursuit-state and auto-retaliate selection details"
   );
 

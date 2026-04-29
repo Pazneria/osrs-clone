@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
+const vm = require("vm");
 
 function read(relPath) {
   return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
@@ -12,6 +13,7 @@ const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const combatSource = read("src/js/combat.js");
+const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
 const combatContentSource = read("src/game/combat/content.ts");
 const combatContractSource = read("src/game/contracts/combat.ts");
 const playerModelSource = read("src/js/player-model.js");
@@ -26,6 +28,23 @@ assert.ok(
 assert.ok(
   legacyManifest.includes('../../js/combat.js?raw'),
   "legacy script manifest should load src/js/combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-qa-debug-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-qa-debug-runtime"') < legacyManifest.indexOf('id: "core"'),
+  "legacy script manifest should load combat QA debug runtime before core.js"
+);
+assert.ok(
+  combatQaDebugSource.includes("window.CombatQaDebugRuntime") &&
+    combatQaDebugSource.includes("getSnapshot") &&
+    combatQaDebugSource.includes("emitSnapshot"),
+  "combat QA debug runtime should own snapshot and chat emission formatting"
+);
+assert.ok(
+  coreSource.includes("buildCombatQaDebugContext") &&
+    coreSource.includes("window.CombatQaDebugRuntime || null") &&
+    !coreSource.includes("const pursuitDebugState = window.__qaCombatDebugLastPlayerPursuitState"),
+  "core.js should adapt state into the combat QA debug runtime instead of owning debug snapshot formatting"
 );
 assert.ok(
   combatSource.includes("window.processCombatTick = processCombatTick;") &&
@@ -130,5 +149,50 @@ assert.ok(
   !packageJson.includes("tool:sim:combat"),
   "old combat simulator script should be removed from package.json"
 );
+
+const combatQaSandbox = { window: {} };
+vm.runInNewContext(combatQaDebugSource, combatQaSandbox, { filename: "src/js/combat-qa-debug-runtime.js" });
+const combatQaRuntime = combatQaSandbox.window.CombatQaDebugRuntime;
+assert.ok(combatQaRuntime, "combat QA debug runtime should execute in isolation");
+const qaMessages = [];
+const qaSnapshot = combatQaRuntime.getSnapshot({
+  windowRef: {
+    __qaCombatDebugLastPlayerPursuitState: { tick: 12, runtimeId: "enemy-a", enemyId: "enemy_rat", state: "valid-path", pathLength: 3, occupancyIgnoredPathLength: 4 },
+    __qaCombatDebugLastAutoRetaliateSelection: { tick: 12, runtimeId: "enemy-a", enemyId: "enemy_rat", displayName: "Rat", distance: 1, combatLevel: 2, aggressorOrder: 1 },
+    __qaCombatDebugLastEnemyAttackResult: { tick: 11, attackerId: "enemy-a", enemyId: "enemy_rat", landed: true, damage: 1, isTrainingDummyAttack: false },
+    __qaCombatDebugLastClearReason: "test-clear",
+    __qaCombatDebugLastClearTick: 12
+  },
+  currentTick: 12,
+  playerState: {
+    x: 1,
+    y: 2,
+    z: 0,
+    targetX: 3,
+    targetY: 4,
+    action: "FIGHTING",
+    inCombat: true,
+    remainingAttackCooldown: 2,
+    lockedTargetId: "enemy-a",
+    path: [{ x: 1, y: 2 }],
+    lastAttackTick: 10,
+    lastDamagerEnemyId: "enemy-a"
+  },
+  playerRig: { userData: { animationRigId: "player_humanoid_v1", rig: { attackTick: 10 } } },
+  getCombatHudSnapshot: () => ({ inCombat: true, playerRemainingAttackCooldown: 2, target: { label: "Rat", state: "alive", distance: 1, inMeleeRange: true, currentHealth: 2, maxHealth: 3, remainingAttackCooldown: 1 } }),
+  getCombatEnemyState: () => ({ runtimeId: "enemy-a", enemyId: "enemy_rat", x: 3, y: 4, z: 0, currentState: "alive", currentHealth: 2, remainingAttackCooldown: 1 }),
+  getCombatEnemyAnimationDebugState: () => ({ animationSetId: "rat_basic", useWalkBaseClip: false }),
+  addChatMessage: (message, type) => qaMessages.push({ message, type })
+});
+assert.strictEqual(qaSnapshot.player.lockedTargetId, "enemy-a", "combat QA runtime should normalize player lock state");
+assert.strictEqual(qaSnapshot.pursuit.state, "valid-path", "combat QA runtime should include pursuit debug state");
+assert.ok(combatQaRuntime.getSignature({}, qaSnapshot).includes("enemy-a"), "combat QA runtime signatures should include lock identity");
+combatQaRuntime.emitSnapshot({
+  windowRef: {},
+  currentTick: 1,
+  playerState: { action: "IDLE" },
+  addChatMessage: (message, type) => qaMessages.push({ message, type })
+}, "guard");
+assert.ok(qaMessages.some((entry) => entry.message.includes("[QA combatdbg] reason=guard")), "combat QA runtime should emit chat debug summaries");
 
 console.log("Combat rollout guard passed.");
