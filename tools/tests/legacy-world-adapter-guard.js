@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 const { loadTsModule } = require("../lib/ts-module-loader");
 
 function assert(condition, message) {
@@ -10,7 +11,9 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
+  const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
   const placementsSource = fs.readFileSync(path.join(root, "src", "game", "world", "placements.ts"), "utf8");
@@ -41,8 +44,14 @@ function run() {
   assert(!coreSource.includes("function sanitizeWorldSpawn(spawnLike, worldId)"), "core should not own world spawn sanitization");
   assert(!coreSource.includes("function activateWorldContext(worldId, fallbackWorldId = null)"), "core should not own active-world activation");
 
-  assert(worldSource.includes("const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;"), "world.js should resolve the typed legacy world adapter runtime");
-  assert(worldSource.includes("getCurrentWorldPayload"), "world.js should fetch a legacy-ready world payload");
+  const sceneStateIndex = legacyManifestSource.indexOf('id: "world-scene-state"');
+  const worldIndex = legacyManifestSource.indexOf('id: "world"');
+  assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
+  assert(sceneStateSource.includes("window.LegacyWorldAdapterRuntime"), "world scene state should resolve the typed legacy world adapter runtime");
+  assert(sceneStateSource.includes("getCurrentWorldScenePayload"), "world scene state should expose current scene payload lookup");
+  assert(sceneStateSource.includes("resolveRenderWorldId"), "world scene state should own render-world-id fallback resolution");
+  assert(worldSource.includes("WorldSceneStateRuntime"), "world.js should resolve authored scene state through the scene-state runtime");
+  assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the current scene payload through the scene-state runtime");
   assert(worldSource.includes("waterRenderPayload"), "world.js should consume the typed water render payload");
   assert(worldSource.includes("firemakingTrainingRouteDefs"), "world.js should read firemaking training routes from the legacy-ready world payload");
   assert(!worldSource.includes("getWorldLegacyConfig"), "world.js should not shape bootstrap payloads inline");
@@ -65,11 +74,17 @@ function run() {
 
   exposeLegacyBridge();
   exposeLegacyWorldAdapter();
+  vm.runInThisContext(sceneStateSource, { filename: path.join(root, "src", "js", "world", "scene-state.js") });
   const runtime = window.WorldBootstrapRuntime;
   const adapterRuntime = window.LegacyWorldAdapterRuntime;
+  const sceneStateRuntime = window.WorldSceneStateRuntime;
   assert(runtime, "legacy bridge should expose the world bootstrap runtime");
   assert(adapterRuntime, "legacy world adapter should expose its runtime");
+  assert(sceneStateRuntime, "world scene state should expose its runtime");
   assert(runtime.getCurrentWorldId() === "main_overworld", "legacy bridge should start on the canonical authored world");
+  assert(sceneStateRuntime.getCurrentWorldScenePayload().worldId === "main_overworld", "world scene state should resolve the current canonical world payload");
+  assert(sceneStateRuntime.getWorldScenePayload("starter_town").worldId === "main_overworld", "world scene state should canonicalize legacy world payload lookup");
+  assert(sceneStateRuntime.resolveRenderWorldId() === "main_overworld", "world scene state should resolve the render world id through the active bootstrap runtime");
   assert(adapterRuntime.resolveKnownWorldId("starter_town") === "main_overworld", "legacy adapter should canonicalize starter_town");
   assert(adapterRuntime.matchQaWorld("starter_town").worldId === "main_overworld", "QA world matching should accept legacy starter_town input");
   assert(adapterRuntime.resolveTravelTarget("starter_town", { activate: false }).worldId === "main_overworld", "legacy travel resolution should accept starter_town input");

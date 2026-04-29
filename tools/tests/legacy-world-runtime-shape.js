@@ -8,6 +8,7 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const contractsSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "world.ts"), "utf8");
@@ -54,12 +55,20 @@ function run() {
     "legacy world adapter should expose the legacy-ready world payload"
   );
   assert(
+    sceneStateSource.includes("getCurrentWorldScenePayload"),
+    "world scene state should expose current authored scene payload lookup"
+  );
+  assert(
+    sceneStateSource.includes("LegacyWorldAdapterRuntime"),
+    "world scene state should consume authored world config through the typed world adapter"
+  );
+  assert(
     adapterSource.includes("firemakingTrainingRouteDefs"),
     "legacy world adapter payload should carry authored firemaking routes"
   );
   assert(
-    worldSource.includes("getCurrentWorldPayload"),
-    "world.js should consume authored world config through the typed world adapter"
+    worldSource.includes("getCurrentWorldScenePayload"),
+    "world.js should consume authored world config through the scene-state runtime"
   );
   assert(
     worldSource.includes("firemakingTrainingRouteDefs"),

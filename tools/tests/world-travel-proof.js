@@ -75,7 +75,7 @@ function run() {
 
   assert(worldSource.includes("function reloadActiveWorldScene()"), "world.js should define an active-world scene reload hook");
   assert(worldSource.includes("window.reloadActiveWorldScene = reloadActiveWorldScene;"), "world.js should expose the scene reload hook");
-  assert(worldSource.includes("getCurrentWorldPayload"), "world.js should fetch the active world payload through the typed adapter");
+  assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the active world payload through the scene-state runtime");
   assert(worldSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "world.js should attach travel world metadata to NPC hitboxes");
   assert(worldSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "world.js should attach appearance metadata to NPC hitboxes");
   assert(worldSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "world.js should attach dialogue metadata to NPC hitboxes");

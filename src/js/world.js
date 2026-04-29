@@ -3440,18 +3440,16 @@
             altarCandidatesToRender = [];
             furnacesToRender = [];
             anvilsToRender = [];
-            const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;
-            const worldPayload = (worldAdapterRuntime && typeof worldAdapterRuntime.getCurrentWorldPayload === 'function')
-                ? worldAdapterRuntime.getCurrentWorldPayload()
+            const worldSceneStateRuntime = window.WorldSceneStateRuntime || null;
+            const worldPayload = (worldSceneStateRuntime && typeof worldSceneStateRuntime.getCurrentWorldScenePayload === 'function')
+                ? worldSceneStateRuntime.getCurrentWorldScenePayload()
                 : null;
-            if (!worldPayload) {
-                throw new Error('LegacyWorldAdapterRuntime is unavailable.');
-            }
+            if (!worldPayload) throw new Error('WorldSceneStateRuntime is unavailable.');
             const lakeDefs = worldPayload.lakeDefs;
             const castleFrontPond = worldPayload.castleFrontPond;
             const deepWaterCenter = worldPayload.deepWaterCenter;
             const pierConfig = worldPayload.pierConfig;
-            const smithingHallApproach = worldPayload.smithingHallApproach || { shoreX: 220, stairX: 221, yStart: 233, yEnd: 235 };
+            const smithingHallApproach = worldPayload.smithingHallApproach;
             const waterRenderPayload = worldPayload.waterRenderPayload;
             const stampedStructures = worldPayload.stampedStructures;
             const stampMap = worldPayload.stampMap;
@@ -3467,8 +3465,8 @@
             const woodcuttingNodePlacements = worldPayload.woodcuttingNodePlacements;
             const staircaseLandmarks = worldPayload.staircaseLandmarks;
             const doorLandmarks = worldPayload.doorLandmarks;
-            const fenceLandmarks = Array.isArray(worldPayload.fenceLandmarks) ? worldPayload.fenceLandmarks : [];
-            const roofLandmarks = Array.isArray(worldPayload.roofLandmarks) ? worldPayload.roofLandmarks : [];
+            const fenceLandmarks = worldPayload.fenceLandmarks;
+            const roofLandmarks = worldPayload.roofLandmarks;
             const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
 
             function placeStaticNpcOccupancyTile(x, y, z = 0, options = {}) {
@@ -7645,11 +7643,9 @@
         }
 
         function resolveRenderWorldId() {
-            if (window.GameSessionRuntime && typeof window.GameSessionRuntime.resolveCurrentWorldId === 'function') {
-                return window.GameSessionRuntime.resolveCurrentWorldId();
-            }
-            if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function') {
-                return window.WorldBootstrapRuntime.getCurrentWorldId();
+            const worldSceneStateRuntime = window.WorldSceneStateRuntime || null;
+            if (worldSceneStateRuntime && typeof worldSceneStateRuntime.resolveRenderWorldId === 'function') {
+                return worldSceneStateRuntime.resolveRenderWorldId();
             }
             return 'main_overworld';
         }

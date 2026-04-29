@@ -37,7 +37,7 @@ function run() {
   assert(adapterSource.includes("resolveKnownWorldId"), "legacy world adapter should canonicalize world ids");
   assert(!adapterSource.includes("resolveRuntimeWorldId"), "legacy world adapter should not carry deleted runtime world alias logic");
   assert(adapterSource.includes("getCurrentWorldPayload"), "legacy world adapter should expose current-world payload lookup");
-  assert(worldSource.includes("getCurrentWorldPayload"), "world.js should resolve world config through the typed legacy world adapter");
+  assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should resolve world config through the scene-state runtime");
   assert(!worldSource.includes("getStarterTownLegacyConfig"), "world.js should not call starter-town-only config helpers");
 
   console.log("World registry guard passed.");
