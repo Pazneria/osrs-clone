@@ -24,7 +24,7 @@
         const PLAYER_NAME_MAX_LENGTH = 12;
         const PLAYER_CREATION_COLOR_LABELS = ['Hair', 'Torso', 'Legs', 'Feet', 'Skin'];
         const TUTORIAL_WORLD_ID = 'tutorial_island';
-        const STARTER_WORLD_ID = 'starter_town';
+        const MAIN_OVERWORLD_WORLD_ID = 'main_overworld';
         const TUTORIAL_EXIT_STEP = 7;
         const TUTORIAL_ACTIVE_BOUNDS = Object.freeze({
             xMin: 140,
@@ -65,7 +65,7 @@
             ? gameSessionRuntime.createGameSession({
                 currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                     ? gameSessionRuntime.resolveCurrentWorldId()
-                    : 'starter_town',
+                    : MAIN_OVERWORLD_WORLD_ID,
                 defaultSpawn: DEFAULT_WORLD_SPAWN,
                 defaultUnlockFlags: DEFAULT_UNLOCK_FLAGS,
                 inventorySize: 28,
@@ -1055,7 +1055,7 @@
             return {
                 kind: 'travel',
                 label: 'Leave for Starter Town',
-                travelToWorldId: STARTER_WORLD_ID,
+                travelToWorldId: MAIN_OVERWORLD_WORLD_ID,
                 travelSpawn: { x: 205, y: 210, z: 0 }
             };
         }
@@ -1586,11 +1586,11 @@
                 ? gameSessionRuntime.resolveCurrentWorldId()
                 : ((window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function')
                     ? window.WorldBootstrapRuntime.getCurrentWorldId()
-                    : STARTER_WORLD_ID);
+                    : MAIN_OVERWORLD_WORLD_ID);
             const travelTarget = worldAdapterRuntime.resolveTravelTarget(worldId, {
                 spawn: options && options.spawn,
                 label: options && options.label,
-                fallbackWorldId: STARTER_WORLD_ID,
+                fallbackWorldId: MAIN_OVERWORLD_WORLD_ID,
                 mapSize: MAP_SIZE,
                 planes: PLANES,
                 activate: true
@@ -1601,13 +1601,13 @@
             const spawn = travelTarget.spawn;
             if (
                 sourceWorldId === TUTORIAL_WORLD_ID
-                && resolvedWorldId === STARTER_WORLD_ID
+                && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID
                 && (!window.TutorialRuntime || typeof window.TutorialRuntime.isExitUnlocked !== 'function' || !window.TutorialRuntime.isExitUnlocked())
             ) {
                 addChatMessage('Finish the Tutorial Island instructors before leaving for Starter Town.', 'warn');
                 return false;
             }
-            const completedTutorial = sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === STARTER_WORLD_ID;
+            const completedTutorial = sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID;
             if (completedTutorial && playerProfileState && !playerProfileState.tutorialCompletedAt) {
                 playerProfileState.tutorialStep = TUTORIAL_EXIT_STEP;
                 playerProfileState.tutorialCompletedAt = Date.now();
@@ -1832,10 +1832,11 @@
                 ? worldAdapterRuntime.matchQaWorld(worldIdLike)
                 : null;
             if (!match) return false;
-            return travelToWorld(match.worldId, {
+            travelToWorld(match.worldId, {
                 spawn: match.defaultSpawn,
                 label: match.label
             });
+            return true;
         }
 
         function qaTeleportTo(x, y, z, label) {
@@ -2849,9 +2850,12 @@
 
             const state = loaded.payload.state;
             const savedPlayerState = state.playerState && typeof state.playerState === 'object' ? state.playerState : {};
-            const loadedWorldId = typeof state.worldId === 'string' && state.worldId
+            const rawLoadedWorldId = typeof state.worldId === 'string' && state.worldId
                 ? state.worldId
                 : activeSession.currentWorldId;
+            const loadedWorldId = worldAdapterRuntime && typeof worldAdapterRuntime.resolveKnownWorldId === 'function'
+                ? worldAdapterRuntime.resolveKnownWorldId(rawLoadedWorldId, MAIN_OVERWORLD_WORLD_ID)
+                : rawLoadedWorldId;
 
             const safeX = Number.isFinite(savedPlayerState.x) ? Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(savedPlayerState.x))) : playerState.x;
             const safeY = Number.isFinite(savedPlayerState.y) ? Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(savedPlayerState.y))) : playerState.y;
@@ -4051,10 +4055,10 @@
                 ? TUTORIAL_WORLD_ID
                 : (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                 ? gameSessionRuntime.resolveCurrentWorldId()
-                : STARTER_WORLD_ID;
+                : MAIN_OVERWORLD_WORLD_ID;
             const startupWorldId = (worldAdapterRuntime && typeof worldAdapterRuntime.activateWorldContext === 'function')
-                ? worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, STARTER_WORLD_ID)
-                : STARTER_WORLD_ID;
+                ? worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, MAIN_OVERWORLD_WORLD_ID)
+                : MAIN_OVERWORLD_WORLD_ID;
             if (startupWorldId !== startupRequestedWorldId || isFreshProfileStartup) {
                 const fallbackSpawn = (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldDefaultSpawn === 'function')
                     ? worldAdapterRuntime.getWorldDefaultSpawn(startupWorldId, {

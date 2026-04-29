@@ -21,6 +21,7 @@ import {
   sanitizeUnlockFlags
 } from "../session/save";
 import { getQaFlag, setQaFlag } from "../session/qa";
+import { MAIN_OVERWORLD_WORLD_ID, canonicalizeWorldId } from "../world/ids";
 
 declare global {
   interface Window {
@@ -79,12 +80,12 @@ let activeSession: GameSession | null = null;
 
 function resolveCurrentWorldId(): string {
   if (activeSession && typeof activeSession.currentWorldId === "string" && activeSession.currentWorldId) {
-    return activeSession.currentWorldId;
+    return canonicalizeWorldId(activeSession.currentWorldId);
   }
   if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === "function") {
-    return window.WorldBootstrapRuntime.getCurrentWorldId();
+    return canonicalizeWorldId(window.WorldBootstrapRuntime.getCurrentWorldId());
   }
-  return "starter_town";
+  return MAIN_OVERWORLD_WORLD_ID;
 }
 
 function resolveDefaultSpawn(worldId?: string): Point3 {

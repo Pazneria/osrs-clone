@@ -7651,7 +7651,7 @@
             if (window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function') {
                 return window.WorldBootstrapRuntime.getCurrentWorldId();
             }
-            return 'starter_town';
+            return 'main_overworld';
         }
 
         function buildHudRenderSnapshot() {

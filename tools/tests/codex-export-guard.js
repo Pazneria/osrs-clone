@@ -66,14 +66,14 @@ function run() {
   const wolf = enemyById.get("enemy_wolf");
   assert(wolf, "wolf enemy should be exported");
   assert(Array.isArray(wolf.relatedItemIds) && wolf.relatedItemIds.includes("raw_wolf_meat") && wolf.relatedItemIds.includes("wolf_fang"), "wolf enemy should link to its drop items");
-  assert(Array.isArray(wolf.relatedWorldIds) && wolf.relatedWorldIds.length === 1 && wolf.relatedWorldIds[0] === "starter_town", "wolf enemy should link only to starter_town");
+  assert(Array.isArray(wolf.relatedWorldIds) && wolf.relatedWorldIds.length === 1 && wolf.relatedWorldIds[0] === "main_overworld", "wolf enemy should link only to main_overworld");
 
   const wolfFang = itemById.get("wolf_fang");
   assert(wolfFang && Array.isArray(wolfFang.relatedEnemyIds) && wolfFang.relatedEnemyIds.includes("enemy_wolf"), "wolf fang should link back to wolves");
-  assert(Array.isArray(wolfFang.relatedWorldIds) && wolfFang.relatedWorldIds.length === 1 && wolfFang.relatedWorldIds[0] === "starter_town", "wolf fang should surface only starter-town authored presence");
+  assert(Array.isArray(wolfFang.relatedWorldIds) && wolfFang.relatedWorldIds.length === 1 && wolfFang.relatedWorldIds[0] === "main_overworld", "wolf fang should surface only main-overworld authored presence");
 
-  const starterTown = worldById.get("starter_town");
-  assert(starterTown && Array.isArray(starterTown.relatedEnemyIds) && starterTown.relatedEnemyIds.includes("enemy_wolf"), "starter town should expose authored enemy presence");
+  const mainOverworld = worldById.get("main_overworld");
+  assert(mainOverworld && Array.isArray(mainOverworld.relatedEnemyIds) && mainOverworld.relatedEnemyIds.includes("enemy_wolf"), "main_overworld should expose authored enemy presence");
 
   const duplicateIdBundle = cloneJson(bundle);
   duplicateIdBundle.items[1].itemId = duplicateIdBundle.items[0].itemId;

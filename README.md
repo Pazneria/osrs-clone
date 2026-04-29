@@ -55,9 +55,9 @@ Notes:
 
 ## World Authoring
 
-- Canonical starter-town world authoring now lives in `content/world/`
+- Canonical main-overworld world authoring now lives in `content/world/`
 - Reusable blueprint stamps live under `content/world/stamps/`
-- Region/service/route authoring lives in `content/world/regions/starter_town.json`
+- Region/service/route authoring lives in `content/world/regions/main_overworld.json`
 - `npm.cmd run tool:world:validate` validates world authoring, merchant wiring, route aliases, and adjacency rules
 
 ## Codex Export

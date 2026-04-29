@@ -5,7 +5,7 @@ const { WALKABLE_TILE_SET: WALKABLE } = require("../content/tile-ids");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 
 const WORLD_RULES = {
-  starter_town: {
+  main_overworld: {
     groupRules: {
       starter_field: {
         expectedCount: 2,

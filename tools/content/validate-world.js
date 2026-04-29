@@ -310,16 +310,16 @@ function validateElevatedStructureAccess(worldId, world, stamps, logicalMap) {
   }
 }
 
-function isNamedStarterTownNpcService(worldId, service) {
-  if (worldId !== "starter_town") return false;
+function isNamedMainOverworldNpcService(worldId, service) {
+  if (worldId !== "main_overworld") return false;
   if (!service || service.type !== "MERCHANT" || service.interactionTarget !== "NPC") return false;
   const name = normalizeLower(service.name);
   if (!name || name === "shopkeeper") return false;
   return true;
 }
 
-function validateStarterTownNamedNpcServices(worldId, manifestEntry, world, logicalMap, npcMetadataCatalogs) {
-  if (worldId !== "starter_town") return;
+function validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, logicalMap, npcMetadataCatalogs) {
+  if (worldId !== "main_overworld") return;
   const dialogueCatalog = npcMetadataCatalogs && npcMetadataCatalogs.dialogueCatalog
     ? npcMetadataCatalogs.dialogueCatalog
     : null;
@@ -327,7 +327,7 @@ function validateStarterTownNamedNpcServices(worldId, manifestEntry, world, logi
     ? npcMetadataCatalogs.appearancePresetIds
     : new Set();
   const miningOccupancy = collectMiningOccupancy(world);
-  const namedServices = (Array.isArray(world.services) ? world.services : []).filter((service) => isNamedStarterTownNpcService(worldId, service));
+  const namedServices = (Array.isArray(world.services) ? world.services : []).filter((service) => isNamedMainOverworldNpcService(worldId, service));
 
   assert(namedServices.length > 0, `${worldId}: missing named NPC services for dialogue validation`);
 
@@ -627,7 +627,7 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   const logicalMap = buildWorldGameplayMap(world, stamps);
   validateElevatedStructureAccess(worldId, world, stamps, logicalMap);
   validateCombatSpawns(worldId, manifestEntry, world, logicalMap, resolvedCombatCatalog);
-  validateStarterTownNamedNpcServices(worldId, manifestEntry, world, logicalMap, resolvedNpcMetadataCatalogs);
+  validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, logicalMap, resolvedNpcMetadataCatalogs);
   const adjacencyViolations = collectAdjacencyViolations(world, logicalMap);
   assert(adjacencyViolations.length === 0, adjacencyViolations.join("\n"));
 

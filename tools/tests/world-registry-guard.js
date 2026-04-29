@@ -16,8 +16,8 @@ function run() {
   const deletedRegionPath = path.join(root, "content", "world", "regions", "north_road_camp.json");
 
   assert(manifest && Array.isArray(manifest.worlds), "world manifest should define a worlds array");
-  assert(manifest.worlds.length === 2, "world manifest should publish starter town and tutorial island");
-  assert(manifest.worlds[0] && manifest.worlds[0].worldId === "starter_town", "starter_town should remain the canonical authored world");
+  assert(manifest.worlds.length === 2, "world manifest should publish main overworld and tutorial island");
+  assert(manifest.worlds[0] && manifest.worlds[0].worldId === "main_overworld", "main_overworld should remain the canonical authored world");
   assert(manifest.worlds.some((entry) => entry && entry.worldId === "tutorial_island"), "tutorial_island should be registered for fresh-start routing");
   assert(!fs.existsSync(deletedRegionPath), "north_road_camp region file should be deleted");
   assert(authoringSource.includes("worldManifestJson"), "authoring registry should load the manifest");

@@ -12,7 +12,7 @@ const { loadWorldContent } = require("../content/world-content");
 const root = path.resolve(__dirname, "..", "..");
 const authoring = loadTsModule(path.join(root, "src", "game", "world", "authoring.ts"));
 const manifest = require(path.join(root, "content", "world", "manifest.json"));
-const starterTown = require(path.join(root, "content", "world", "regions", "starter_town.json"));
+const starterTown = require(path.join(root, "content", "world", "regions", "main_overworld.json"));
 const tutorialIsland = require(path.join(root, "content", "world", "regions", "tutorial_island.json"));
 
 const WORLD_COORD_SCALE = 648 / 486;
@@ -146,14 +146,14 @@ function setSparseTile(map, x, y, z, tileId) {
 }
 
 {
-  const starterManifestEntry = manifest.worlds.find((entry) => entry.worldId === "starter_town");
+  const starterManifestEntry = manifest.worlds.find((entry) => entry.worldId === "main_overworld");
   const tutorialManifestEntry = manifest.worlds.find((entry) => entry.worldId === "tutorial_island");
   assert.ok(starterManifestEntry, "starter_town should exist in the raw manifest");
   assert.ok(tutorialManifestEntry, "tutorial_island should exist in the raw manifest");
   assert.deepStrictEqual(starterManifestEntry.stampIds, STARTER_TOWN_STAMP_IDS, "starter_town manifest should expose the full homestead stamp kit");
   assert.deepStrictEqual(tutorialManifestEntry.stampIds, ["tutorial_start_cabin"], "tutorial_island should expose the authored starting cabin stamp");
 
-  const scaledDefaultSpawn = authoring.getDefaultSpawn("starter_town");
+  const scaledDefaultSpawn = authoring.getDefaultSpawn("main_overworld");
   assert.deepStrictEqual(
     scaledDefaultSpawn,
     {
@@ -164,11 +164,16 @@ function setSparseTile(map, x, y, z, tileId) {
     "typed authoring default spawn should scale manifest coordinates for the expanded world"
   );
 
-  const scaledManifestEntry = authoring.getWorldManifestEntry("starter_town");
+  const scaledManifestEntry = authoring.getWorldManifestEntry("main_overworld");
   assert.deepStrictEqual(
     scaledManifestEntry.defaultSpawn,
     scaledDefaultSpawn,
     "manifest entry lookup and default spawn lookup should stay in sync"
+  );
+  assert.strictEqual(
+    authoring.getWorldManifestEntry("starter_town").worldId,
+    "main_overworld",
+    "legacy starter_town world id should resolve to main_overworld"
   );
 
   const scaledTutorialSpawn = authoring.getDefaultSpawn("tutorial_island");
@@ -301,7 +306,8 @@ function setSparseTile(map, x, y, z, tileId) {
 }
 
 {
-  const starterDefinition = authoring.getWorldDefinition("starter_town");
+  const starterDefinition = authoring.getWorldDefinition("main_overworld");
+  const legacyStarterDefinition = authoring.getWorldDefinition("starter_town");
   const dialogueCatalog = loadNpcDialogueCatalog();
   const rawStructuresById = Object.fromEntries(starterTown.structures.map((entry) => [entry.structureId, entry]));
   const scaledStructuresById = Object.fromEntries(starterDefinition.structures.map((entry) => [entry.structureId, entry]));
@@ -338,6 +344,13 @@ function setSparseTile(map, x, y, z, tileId) {
   const scaledBoarWestSouth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const scaledBoarEastNorth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
   const scaledSoutheastCampAnchor = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
+
+  assert.strictEqual(legacyStarterDefinition.worldId, "main_overworld", "legacy starter_town lookup should return the main overworld definition");
+  assert.ok(
+    Array.isArray(starterDefinition.areas)
+      && starterDefinition.areas.some((area) => area && area.areaId === "starter_town" && area.label === "Starter Town"),
+    "main_overworld should preserve Starter Town as an authored area"
+  );
 
   assert.deepStrictEqual(
     { x: scaledCastle.x, y: scaledCastle.y },

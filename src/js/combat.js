@@ -34,7 +34,7 @@
     };
 
     let activeCombatWorldId = null;
-    let lastResolvedCombatWorldId = 'starter_town';
+    let lastResolvedCombatWorldId = 'main_overworld';
     let combatEnemySpawnNodesById = Object.create(null);
     let combatEnemyStates = [];
     let combatEnemyStateById = Object.create(null);
@@ -65,7 +65,7 @@
             rawWorldId = normalizeWorldId(window.WorldBootstrapRuntime.getCurrentWorldId());
         }
 
-        const fallbackWorldId = normalizeWorldId(activeCombatWorldId) || normalizeWorldId(lastResolvedCombatWorldId) || 'starter_town';
+        const fallbackWorldId = normalizeWorldId(activeCombatWorldId) || normalizeWorldId(lastResolvedCombatWorldId) || 'main_overworld';
         if (window.LegacyWorldAdapterRuntime && typeof window.LegacyWorldAdapterRuntime.resolveKnownWorldId === 'function') {
             const resolvedWorldId = normalizeWorldId(window.LegacyWorldAdapterRuntime.resolveKnownWorldId(rawWorldId || null, fallbackWorldId));
             if (resolvedWorldId) {
@@ -75,7 +75,7 @@
         }
 
         const resolvedWorldId = rawWorldId || fallbackWorldId;
-        lastResolvedCombatWorldId = resolvedWorldId || 'starter_town';
+        lastResolvedCombatWorldId = resolvedWorldId || 'main_overworld';
         return lastResolvedCombatWorldId;
     }
 

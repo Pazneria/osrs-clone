@@ -118,17 +118,17 @@ function ensureCombatRuntimeLoaded(root) {
 
   window.GameSessionRuntime = {
     resolveCurrentWorldId() {
-      return "starter_town";
+      return "main_overworld";
     }
   };
   window.WorldBootstrapRuntime = {
     getCurrentWorldId() {
-      return "starter_town";
+      return "main_overworld";
     }
   };
   window.LegacyWorldAdapterRuntime = {
     resolveKnownWorldId(rawWorldId, fallbackWorldId) {
-      return rawWorldId || fallbackWorldId || "starter_town";
+      return rawWorldId || fallbackWorldId || "main_overworld";
     },
     getWorldDefaultSpawn() {
       return { x: 5, y: 5, z: 0 };
@@ -294,7 +294,7 @@ function resetCombatEnvironment(options = {}) {
     eatingCooldownEndTick: 0
   }, options.playerState || {});
 
-  window.initCombatWorldState("starter_town");
+  window.initCombatWorldState("main_overworld");
   window.__qaCombatDebugLastClearReason = null;
   window.__qaCombatDebugLastClearTick = null;
 }

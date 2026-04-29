@@ -3,15 +3,15 @@ const path = require("path");
 
 const {
   WORLD_ID,
-  buildStarterTownSkillRuntimeDraft,
+  buildMainOverworldSkillRuntimeDraft,
   cloneCookingRoute,
   cloneRoute
-} = require("./starter-town-skill-runtime-draft");
+} = require("./main-overworld-skill-runtime-draft");
 const { loadTsModule } = require("../lib/ts-module-loader");
 
-function buildFrozenStarterTownWorld(root) {
+function buildFrozenMainOverworld(root) {
   const { materializeSkillWorldRuntime } = loadTsModule(path.join(root, "src", "game", "world", "freeze-runtime.ts"));
-  const { world, freezeConfig, draft } = buildStarterTownSkillRuntimeDraft(root);
+  const { world, freezeConfig, draft } = buildMainOverworldSkillRuntimeDraft(root);
   const skillWorldArtifacts = materializeSkillWorldRuntime(draft);
 
   const frozenServices = [];
@@ -52,6 +52,7 @@ function buildFrozenStarterTownWorld(root) {
   return {
     worldId: world.worldId,
     version: world.version,
+    areas: Array.isArray(world.areas) ? world.areas.map((area) => ({ ...area })) : [],
     structures: Array.isArray(world.structures) ? world.structures.map((structure) => ({ ...structure })) : [],
     terrainPatches: {
       ...world.terrainPatches,
@@ -89,11 +90,11 @@ function buildFrozenStarterTownWorld(root) {
 
 function runCli() {
   const root = path.resolve(__dirname, "..", "..");
-  const nextWorld = buildFrozenStarterTownWorld(root);
+  const nextWorld = buildFrozenMainOverworld(root);
   if (process.argv.includes("--write")) {
-    const targetPath = path.join(root, "content", "world", "regions", "starter_town.json");
+    const targetPath = path.join(root, "content", "world", "regions", "main_overworld.json");
     fs.writeFileSync(targetPath, `${JSON.stringify(nextWorld, null, 2)}\n`, "utf8");
-    console.log(`Wrote frozen starter-town world data to ${targetPath}`);
+    console.log(`Wrote frozen main-overworld world data to ${targetPath}`);
     return;
   }
 
@@ -110,5 +111,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  buildFrozenStarterTownWorld
+  buildFrozenMainOverworld
 };

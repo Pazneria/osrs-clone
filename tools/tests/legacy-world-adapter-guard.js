@@ -17,12 +17,13 @@ function run() {
   const cloneSource = fs.readFileSync(path.join(root, "src", "game", "world", "clone.ts"), "utf8");
   global.window = {};
   const { exposeLegacyBridge } = loadTsModule(path.join(root, "src", "game", "platform", "legacy-bridge.ts"));
+  const { exposeLegacyWorldAdapter } = loadTsModule(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"));
 
   assert(adapterSource.includes("window.LegacyWorldAdapterRuntime"), "legacy world adapter should expose a window runtime");
   assert(adapterSource.includes("resolveTravelTarget"), "legacy world adapter should own travel resolution");
   assert(adapterSource.includes("activateWorldContext"), "legacy world adapter should own active-world activation");
   assert(adapterSource.includes("getQaWorldSummaries"), "legacy world adapter should own QA world summaries");
-  assert(adapterSource.includes('resolveKnownWorldId(getCurrentWorldId(), "starter_town")'), "QA world summaries should mark the real active world instead of hard-coding starter town");
+  assert(adapterSource.includes("resolveKnownWorldId(getCurrentWorldId(), MAIN_OVERWORLD_WORLD_ID)"), "QA world summaries should mark the real active world through the canonical main-overworld constant");
   assert(adapterSource.includes("getCurrentWorldPayload"), "legacy world adapter should expose the legacy-ready world payload");
   assert(adapterSource.includes("waterRenderPayload"), "legacy world adapter should expose typed water render payloads");
   assert(adapterSource.includes("firemakingTrainingRouteDefs"), "legacy world adapter should expose firemaking training routes in the legacy-ready payload");
@@ -63,20 +64,28 @@ function run() {
   assert(cloneSource.includes("createMerchantNpcDescriptor"), "shared world clone helpers should centralize merchant NPC descriptors");
 
   exposeLegacyBridge();
+  exposeLegacyWorldAdapter();
   const runtime = window.WorldBootstrapRuntime;
+  const adapterRuntime = window.LegacyWorldAdapterRuntime;
   assert(runtime, "legacy bridge should expose the world bootstrap runtime");
-  assert(runtime.getCurrentWorldId() === "starter_town", "legacy bridge should start on the canonical authored world");
-  const starterTownSpawn = runtime.getDefaultSpawn("starter_town");
-  const starterTownBootstrap = runtime.getBootstrapResult("starter_town");
-  const starterTownLegacy = runtime.getWorldLegacyConfig("starter_town");
+  assert(adapterRuntime, "legacy world adapter should expose its runtime");
+  assert(runtime.getCurrentWorldId() === "main_overworld", "legacy bridge should start on the canonical authored world");
+  assert(adapterRuntime.resolveKnownWorldId("starter_town") === "main_overworld", "legacy adapter should canonicalize starter_town");
+  assert(adapterRuntime.matchQaWorld("starter_town").worldId === "main_overworld", "QA world matching should accept legacy starter_town input");
+  assert(adapterRuntime.resolveTravelTarget("starter_town", { activate: false }).worldId === "main_overworld", "legacy travel resolution should accept starter_town input");
+  assert(runtime.getWorldManifestEntry("starter_town").worldId === "main_overworld", "legacy starter_town manifest lookup should resolve to main_overworld");
+  assert(runtime.getWorldDefinition("starter_town").worldId === "main_overworld", "legacy starter_town definition lookup should resolve to main_overworld");
+  const starterTownSpawn = runtime.getDefaultSpawn("main_overworld");
+  const starterTownBootstrap = runtime.getBootstrapResult("main_overworld");
+  const starterTownLegacy = runtime.getWorldLegacyConfig("main_overworld");
   runtime.activateWorld("north_road_camp");
   const deletedWorldSpawn = runtime.getDefaultSpawn("north_road_camp");
-  assert(runtime.getCurrentWorldId() === "starter_town", "legacy bridge should fall back when activating a deleted world id");
-  assert(runtime.getWorldManifestEntry("north_road_camp").worldId === "starter_town", "legacy bridge manifest lookup should fall back for deleted world ids");
+  assert(runtime.getCurrentWorldId() === "main_overworld", "legacy bridge should fall back when activating a deleted world id");
+  assert(runtime.getWorldManifestEntry("north_road_camp").worldId === "main_overworld", "legacy bridge manifest lookup should fall back for deleted world ids");
   assert(deletedWorldSpawn.x === starterTownSpawn.x, "deleted world fallback spawn should use starter-town x");
   assert(deletedWorldSpawn.y === starterTownSpawn.y, "deleted world fallback spawn should use starter-town y");
   assert(deletedWorldSpawn.z === starterTownSpawn.z, "deleted world fallback spawn should use starter-town z");
-  assert(runtime.getWorldDefinition("north_road_camp").worldId === "starter_town", "legacy bridge world definition lookup should fall back for deleted world ids");
+  assert(runtime.getWorldDefinition("north_road_camp").worldId === "main_overworld", "legacy bridge world definition lookup should fall back for deleted world ids");
   assert(
     runtime.getBootstrapResult("north_road_camp").definition.worldId === starterTownBootstrap.definition.worldId,
     "legacy bridge bootstrap lookup should fall back for deleted world ids"

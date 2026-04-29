@@ -43,7 +43,7 @@ function run() {
   const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src", "js", "content", "npc-dialogue-catalog.js"), "utf8");
   const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "npc-dialogue-runtime.js"), "utf8");
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
-  const starterTown = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "starter_town.json"), "utf8"));
+  const starterTown = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "main_overworld.json"), "utf8"));
   const tutorialIsland = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "tutorial_island.json"), "utf8"));
 
   assert(Array.isArray(manifest.worlds) && manifest.worlds.length === 2, "proof pass should register starter town and tutorial island");
@@ -53,11 +53,12 @@ function run() {
   assert(coreSource.includes("worldAdapterRuntime.resolveTravelTarget"), "core world travel should delegate target resolution through the typed adapter");
   assert(coreSource.includes("function qaListWorlds()"), "core should expose QA world listing");
   assert(coreSource.includes("function qaTravelWorld(worldIdLike)"), "core should expose QA world travel");
+  assert(coreSource.includes("if (!match) return false;") && coreSource.includes("return true;"), "QA world travel should distinguish unknown world ids from recognized-but-blocked travel");
   assert(coreSource.includes("/qa worlds, /qa travel <worldId>"), "QA help should document world travel commands");
   assert(adapterSource.includes("matchQaWorld"), "legacy world adapter should expose QA world matching");
 
   const loadCall = coreSource.indexOf("const loadProgressResult = loadProgressFromStorage();");
-  const activateCall = coreSource.indexOf("worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, STARTER_WORLD_ID)");
+  const activateCall = coreSource.indexOf("worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, MAIN_OVERWORLD_WORLD_ID)");
   const initCall = coreSource.indexOf("if (typeof window.initLogicalMap === 'function') window.initLogicalMap();");
   assert(loadCall !== -1, "core startup should still load progress");
   assert(activateCall !== -1, "core startup should activate the saved world through the typed adapter before map init");
@@ -67,7 +68,7 @@ function run() {
   assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 7;"), "core should define the tutorial exit gate step");
   assert(coreSource.includes("const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);"), "core should detect fresh profile startup");
   assert(coreSource.includes("? TUTORIAL_WORLD_ID"), "fresh profile startup should route to tutorial island");
-  assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === STARTER_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for starter town");
+  assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for the main overworld");
   assert(coreSource.includes("window.TutorialRuntime = {"), "tutorial progression should be exposed to dialogue runtime");
   assert(coreSource.includes("Finish the Tutorial Island instructors before leaving for Starter Town."), "tutorial travel should be blocked until lessons are complete");
   assert(coreSource.includes("saveProgressToStorage('tutorial_complete')"), "tutorial completion should be persisted immediately");
@@ -97,13 +98,13 @@ function run() {
 
   const starterTravel = (starterTown.services || []).find((service) => service && service.serviceId === "merchant:starter_caravan_guide");
   const eastOutpostTravel = (starterTown.services || []).find((service) => service && service.serviceId === "merchant:east_outpost_caravan_guide");
-  assert(starterTravel && starterTravel.travelToWorldId === "starter_town", "starter town should route to the east outpost through starter_town");
+  assert(starterTravel && starterTravel.travelToWorldId === "main_overworld", "starter town should route to the east outpost through starter_town");
   assert(starterTravel && starterTravel.travelSpawn && starterTravel.travelSpawn.x === 364 && starterTravel.travelSpawn.y === 262, "starter town should route to the east outpost spawn");
-  assert(eastOutpostTravel && eastOutpostTravel.travelToWorldId === "starter_town", "east outpost should route back into starter town");
+  assert(eastOutpostTravel && eastOutpostTravel.travelToWorldId === "main_overworld", "east outpost should route back into starter town");
   assert(eastOutpostTravel && eastOutpostTravel.travelSpawn && eastOutpostTravel.travelSpawn.x === 205 && eastOutpostTravel.travelSpawn.y === 210, "east outpost should route back to the starter-town square");
   const tutorialGuide = (tutorialIsland.services || []).find((service) => service && service.serviceId === "merchant:tutorial_guide");
   assert(tutorialGuide && tutorialGuide.action === "Talk-to", "tutorial guide should require dialogue before travel");
-  assert(tutorialGuide.travelToWorldId === "starter_town", "tutorial guide should send players to starter town");
+  assert(tutorialGuide.travelToWorldId === "main_overworld", "tutorial guide should send players to starter town");
   assert(tutorialGuide.travelSpawn && tutorialGuide.travelSpawn.x === 205 && tutorialGuide.travelSpawn.y === 210, "tutorial guide should target the starter-town square");
   assert(dialogueCatalog.resolveDialogueId(tutorialGuide.dialogueId) === "tutorial_guide", "tutorial guide dialogue id should resolve");
   ["tutorial_woodcutting_instructor", "tutorial_fishing_instructor", "tutorial_firemaking_instructor", "tutorial_mining_smithing_instructor", "tutorial_combat_instructor", "tutorial_bank_tutor"].forEach((dialogueId) => {
@@ -155,7 +156,7 @@ function run() {
   assert(!!tutorialGuideDialogue, "tutorial guide dialogue entry should resolve from NPC name");
   assert(tutorialGuideDialogue.options.map((option) => option && option.kind).join(",") === "text,text,close", "static tutorial guide dialogue should not expose immediate travel");
   assert(coreSource.includes("label: 'Leave for Starter Town'"), "dynamic tutorial guide dialogue should expose exit travel after completion");
-  assert(coreSource.includes("travelToWorldId: STARTER_WORLD_ID"), "dynamic tutorial exit option should carry the starter-town target");
+  assert(coreSource.includes("travelToWorldId: MAIN_OVERWORLD_WORLD_ID"), "dynamic tutorial exit option should carry the main-overworld target");
   assert(coreSource.includes("travelSpawn: { x: 205, y: 210, z: 0 }"), "dynamic tutorial exit option should carry the starter-town spawn");
   assert(!coreSource.includes("makeTutorialStepOption('Open the first gate'"), "tutorial guide should not expose a text option to open the first gate");
   assert(coreSource.includes("setTutorialStep(1, 'tutorial_arrival_welcome')"), "tutorial guide welcome should advance the arrival step naturally");

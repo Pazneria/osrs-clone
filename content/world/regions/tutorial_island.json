@@ -99,7 +99,7 @@
       "y": 118,
       "z": 0,
       "action": "Talk-to",
-      "travelToWorldId": "starter_town",
+      "travelToWorldId": "main_overworld",
       "travelSpawn": {
         "x": 205,
         "y": 210,
@@ -226,7 +226,7 @@
       "y": 109,
       "z": 0,
       "action": "Talk-to",
-      "travelToWorldId": "starter_town",
+      "travelToWorldId": "main_overworld",
       "travelSpawn": {
         "x": 205,
         "y": 210,

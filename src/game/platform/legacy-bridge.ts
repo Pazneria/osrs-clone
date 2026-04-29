@@ -22,6 +22,7 @@ import {
   getWorldManifestEntry,
   listWorldIds
 } from "../world/authoring";
+import { MAIN_OVERWORLD_WORLD_ID, canonicalizeWorldId } from "../world/ids";
 
 declare global {
   interface Window {
@@ -58,7 +59,7 @@ declare global {
 const worldBootstrapCache = new Map<string, WorldBootstrapResult>();
 
 function getBaseBootstrap(worldId: string): WorldBootstrapResult {
-  const normalizedWorldId = String(worldId || "").trim();
+  const normalizedWorldId = canonicalizeWorldId(worldId);
   const cached = worldBootstrapCache.get(normalizedWorldId);
   if (cached) return cached;
   const result = buildWorldBootstrapResult(normalizedWorldId);
@@ -67,7 +68,7 @@ function getBaseBootstrap(worldId: string): WorldBootstrapResult {
 }
 
 function resolveKnownWorldId(worldId?: string | null): string {
-  const normalizedWorldId = String(worldId || "").trim();
+  const normalizedWorldId = canonicalizeWorldId(worldId);
   if (!normalizedWorldId) return initialWorldId;
   try {
     return getWorldManifestEntry(normalizedWorldId).worldId;
@@ -77,7 +78,7 @@ function resolveKnownWorldId(worldId?: string | null): string {
 }
 
 const configuredWorldIds = listWorldIds();
-const initialWorldId = configuredWorldIds[0] || "starter_town";
+const initialWorldId = configuredWorldIds[0] || MAIN_OVERWORLD_WORLD_ID;
 let activeWorldId = initialWorldId;
 let activeBaseBootstrap = getBaseBootstrap(activeWorldId);
 let activeBootstrap = activeBaseBootstrap;

@@ -1731,7 +1731,7 @@ function run() {
   const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src/js/content/npc-dialogue-catalog.js"), "utf8");
   const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src/js/npc-dialogue-runtime.js"), "utf8");
   const npcPlayerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
-  const starterTownWorld = JSON.parse(fs.readFileSync(path.join(root, "content/world/regions/starter_town.json"), "utf8"));
+  const starterTownWorld = JSON.parse(fs.readFileSync(path.join(root, "content/world/regions/main_overworld.json"), "utf8"));
   assert(!!NpcDialogueCatalog && typeof NpcDialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
   assert(worldContractsSource.includes("appearanceId?: string | null;"), "world contracts should expose appearanceId on NPC/service descriptors");
   assert(worldContractsSource.includes("dialogueId?: string | null;"), "world contracts should expose dialogueId on NPC/service descriptors");

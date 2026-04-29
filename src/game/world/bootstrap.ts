@@ -6,6 +6,7 @@ import type {
 } from "../contracts/world";
 
 import { getWorldDefinition, getWorldStamps } from "./authoring";
+import { canonicalizeWorldId } from "./ids";
 import {
   cloneCombatSpawnNode,
   cloneMiningNodePlacement,
@@ -100,7 +101,8 @@ export function createGameContext(result: WorldBootstrapResult): GameContext {
 }
 
 export function buildWorldBootstrapResult(worldId: string): WorldBootstrapResult {
-  return buildStaticBootstrap(worldId, getWorldDefinition(worldId));
+  const canonicalWorldId = canonicalizeWorldId(worldId);
+  return buildStaticBootstrap(canonicalWorldId, getWorldDefinition(canonicalWorldId));
 }
 
 export function applyRuntimeWorldState(

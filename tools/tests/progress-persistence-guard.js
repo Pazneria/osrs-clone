@@ -59,6 +59,10 @@ function run() {
     "core should read progress through the session runtime"
   );
   assert(
+    coreScript.includes("worldAdapterRuntime.resolveKnownWorldId(rawLoadedWorldId, MAIN_OVERWORLD_WORLD_ID)"),
+    "core should canonicalize legacy saved world ids through the typed world adapter on load"
+  );
+  assert(
     coreScript.includes("gameSessionRuntime.sanitizeQuestProgressState(state.quests)"),
     "core should restore saved quest progress through the session runtime"
   );

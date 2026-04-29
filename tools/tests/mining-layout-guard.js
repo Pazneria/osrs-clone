@@ -129,8 +129,8 @@ function assertWorld(worldId) {
 }
 
 function run() {
-  assertWorld("starter_town");
-  console.log("Mining layout guard passed for starter_town.");
+  assertWorld("main_overworld");
+  console.log("Mining layout guard passed for main_overworld.");
 }
 
 try {

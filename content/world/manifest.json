@@ -2,9 +2,9 @@
   "version": "2026.03.m2",
   "worlds": [
     {
-      "worldId": "starter_town",
-      "label": "Starter Town",
-      "regionFile": "starter_town.json",
+      "worldId": "main_overworld",
+      "label": "Main Overworld",
+      "regionFile": "main_overworld.json",
       "stampIds": [
         "castle_floor0",
         "castle_floor1",

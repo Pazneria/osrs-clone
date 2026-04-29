@@ -36,7 +36,7 @@ function run() {
   assert(sessionContractSource.includes("tutorialBankDepositSource: string | null;"), "session profile should persist tutorial bank deposit evidence");
   assert(sessionContractSource.includes("tutorialBankWithdrawSource: string | null;"), "session profile should persist tutorial bank withdraw evidence");
   assert(coreSource.includes("window.TutorialRuntime = {"), "core should expose tutorial progression for dialogue gating");
-  assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === STARTER_WORLD_ID"), "core should mark tutorial completion only when leaving tutorial for starter town");
+  assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "core should mark tutorial completion only when leaving tutorial for the main overworld");
   assert(coreSource.includes("Finish the Tutorial Island instructors before leaving for Starter Town."), "core should block early tutorial departure");
   assert(skillRuntimeSource.includes("window.GameSessionRuntime"), "skill runtime should read through the session bridge");
   assert(shopEconomySource.includes("window.GameSessionRuntime"), "shop economy should read through the session bridge");

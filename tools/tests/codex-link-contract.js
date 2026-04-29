@@ -24,10 +24,10 @@ function run() {
     "game codex item path mismatch"
   );
   assert(
-    codexLinks.buildCodexEntityPath("world", "starter_town", {
+    codexLinks.buildCodexEntityPath("world", "main_overworld", {
       from: "game",
       returnTo: "https://pazneria.github.io/osrs-clone/"
-    }) === "/osrs-clone-codex/world/starter_town?from=game&return=https%3A%2F%2Fpazneria.github.io%2Fosrs-clone%2F",
+    }) === "/osrs-clone-codex/world/main_overworld?from=game&return=https%3A%2F%2Fpazneria.github.io%2Fosrs-clone%2F",
     "game codex world path mismatch"
   );
   assert(

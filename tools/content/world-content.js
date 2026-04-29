@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const worldIdAliases = require("../../content/world/world-id-aliases.json");
+
 function loadJson(absPath) {
   return JSON.parse(fs.readFileSync(absPath, "utf8"));
 }
@@ -9,8 +11,16 @@ function loadWorldManifest(root) {
   return loadJson(path.join(root, "content", "world", "manifest.json"));
 }
 
-function getWorldManifestEntry(manifest, worldId) {
+function canonicalizeWorldId(worldId) {
   const targetWorldId = String(worldId || "").trim();
+  const aliases = worldIdAliases && worldIdAliases.aliases && typeof worldIdAliases.aliases === "object"
+    ? worldIdAliases.aliases
+    : {};
+  return aliases[targetWorldId] || targetWorldId;
+}
+
+function getWorldManifestEntry(manifest, worldId) {
+  const targetWorldId = canonicalizeWorldId(worldId);
   const worlds = manifest && Array.isArray(manifest.worlds) ? manifest.worlds : [];
   const entry = worlds.find((row) => row && row.worldId === targetWorldId);
   if (!entry) {
@@ -35,14 +45,15 @@ function loadWorldContent(root, worldId) {
   return { manifest, manifestEntry, world, stamps };
 }
 
-function loadStarterTownWorld(root) {
-  return loadWorldContent(root, "starter_town");
+function loadMainOverworld(root) {
+  return loadWorldContent(root, "main_overworld");
 }
 
 module.exports = {
+  canonicalizeWorldId,
   getWorldManifestEntry,
   loadJson,
-  loadStarterTownWorld,
+  loadMainOverworld,
   loadWorldContent,
   loadWorldManifest
 };

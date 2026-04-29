@@ -217,18 +217,8 @@ function buildWorldGameplayMap(world, stamps) {
   return map;
 }
 
-function buildStarterTownLogicalMap(world, stamps) {
-  return buildWorldLogicalMap(world, stamps);
-}
-
-function buildStarterTownGameplayMap(world, stamps) {
-  return buildWorldGameplayMap(world, stamps);
-}
-
 module.exports = {
   applyAuthoredTopology,
-  buildStarterTownGameplayMap,
-  buildStarterTownLogicalMap,
   buildWorldGameplayMap,
   buildWorldLogicalMap,
   createEmptyMap,

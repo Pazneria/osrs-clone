@@ -1,0 +1,8 @@
+{
+  "canonicalWorldIds": {
+    "mainOverworld": "main_overworld"
+  },
+  "aliases": {
+    "starter_town": "main_overworld"
+  }
+}

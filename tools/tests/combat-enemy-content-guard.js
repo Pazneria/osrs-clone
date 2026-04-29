@@ -380,12 +380,12 @@ assert.ok(
 );
 
 const starterTownBandSummaries = new Map(
-  combatContent.listCombatProgressionBandWorldSummaries("starter_town").map((summary) => [summary.bandId, summary])
+  combatContent.listCombatProgressionBandWorldSummaries("main_overworld").map((summary) => [summary.bandId, summary])
 );
 for (const expectedBand of EXPECTED_PROGRESSION_BANDS) {
   const summary = starterTownBandSummaries.get(expectedBand.bandId);
   assert.ok(summary, `${expectedBand.bandId} should have a starter-town band summary`);
-  assert.strictEqual(summary.worldId, "starter_town", `${expectedBand.bandId} world summary should keep the requested world id`);
+  assert.strictEqual(summary.worldId, "main_overworld", `${expectedBand.bandId} world summary should keep the requested world id`);
   assert.strictEqual(summary.spawnCount, expectedBand.spawnCount, `${expectedBand.bandId} starter-town spawn count should match current authoring`);
   const expectedWorldEnemyIds = expectedBand.spawnCount > 0 ? expectedBand.enemyIds.slice().sort() : [];
   assert.deepStrictEqual(

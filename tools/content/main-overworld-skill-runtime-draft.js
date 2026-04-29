@@ -1,4 +1,4 @@
-const freezeSource = require("./starter-town-freeze-source.json");
+const freezeSource = require("./main-overworld-freeze-source.json");
 const { MAP_SIZE } = require("./world-constants");
 const {
   loadWorldContent
@@ -15,7 +15,7 @@ const {
   buildWorldLogicalMap
 } = require("./world-map-builder");
 
-const WORLD_ID = "starter_town";
+const WORLD_ID = "main_overworld";
 
 function createHeightMap(planes) {
   return Array(planes).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0)));
@@ -106,7 +106,7 @@ function cloneFreezeSource(source = freezeSource) {
   };
 }
 
-function buildStarterTownSkillRuntimeDraft(root) {
+function buildMainOverworldSkillRuntimeDraft(root) {
   const { world, stamps } = loadWorldContent(root, WORLD_ID);
   const logicalMap = buildWorldLogicalMap(world, stamps);
   const heightMap = createHeightMap(logicalMap.length);
@@ -200,7 +200,7 @@ function buildStarterTownSkillRuntimeDraft(root) {
 
 module.exports = {
   WORLD_ID,
-  buildStarterTownSkillRuntimeDraft,
+  buildMainOverworldSkillRuntimeDraft,
   buildStaticMerchantRenderPlacements,
   buildDeterministicFeatureCandidates,
   cloneCookingRoute,

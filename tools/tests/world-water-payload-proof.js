@@ -41,7 +41,7 @@ function run() {
   const waterModule = loadTsModule(path.join(root, "src", "game", "world", "water.ts"));
   const { getWorldWaterBodies, buildWaterRenderPayload } = waterModule;
 
-  const starterTown = loadWorldContent(root, "starter_town").world;
+  const starterTown = loadWorldContent(root, "main_overworld").world;
 
   const starterBodies = getWorldWaterBodies(starterTown);
   assert(starterBodies.length === 7, "starter_town should normalize 5 lakes, 1 pond, and 1 river water body");
@@ -49,7 +49,7 @@ function run() {
   assertDeepWaterPreserved(starterTown, starterBodies);
   assertRenderPayloadDeterministic(buildWaterRenderPayload, starterTown);
 
-  console.log("World water payload proof passed for starter_town.");
+  console.log("World water payload proof passed for main_overworld.");
 }
 
 try {

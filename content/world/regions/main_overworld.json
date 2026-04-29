@@ -1,6 +1,12 @@
 {
-  "worldId": "starter_town",
+  "worldId": "main_overworld",
   "version": "2026.03.m1",
+  "areas": [
+    {
+      "areaId": "starter_town",
+      "label": "Starter Town"
+    }
+  ],
   "structures": [
     {
       "structureId": "castle_ground",
@@ -1056,7 +1062,7 @@
       "y": 221,
       "z": 0,
       "action": "Travel",
-      "travelToWorldId": "starter_town",
+      "travelToWorldId": "main_overworld",
       "travelSpawn": {
         "x": 364,
         "y": 262,
@@ -1080,7 +1086,7 @@
       "y": 257,
       "z": 0,
       "action": "Travel",
-      "travelToWorldId": "starter_town",
+      "travelToWorldId": "main_overworld",
       "travelSpawn": {
         "x": 205,
         "y": 210,

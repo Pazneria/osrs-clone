@@ -2,8 +2,8 @@ const path = require("path");
 
 const {
   WORLD_ID,
-  buildStarterTownSkillRuntimeDraft
-} = require("../content/starter-town-skill-runtime-draft");
+  buildMainOverworldSkillRuntimeDraft
+} = require("../content/main-overworld-skill-runtime-draft");
 const { loadTsModule } = require("../lib/ts-module-loader");
 
 function assert(condition, message) {
@@ -21,7 +21,7 @@ function sortedMerchantIds(entries) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const { materializeSkillWorldRuntime } = loadTsModule(path.join(root, "src", "game", "world", "freeze-runtime.ts"));
-  const { logicalMap, draft } = buildStarterTownSkillRuntimeDraft(root);
+  const { logicalMap, draft } = buildMainOverworldSkillRuntimeDraft(root);
   const skillWorldArtifacts = materializeSkillWorldRuntime(draft);
 
   const miningIds = skillWorldArtifacts.miningRoutes.map((route) => route.routeId).join(",");

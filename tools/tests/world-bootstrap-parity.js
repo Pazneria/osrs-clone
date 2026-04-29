@@ -310,15 +310,22 @@ function assertRockVisualProfiles(root) {
 }
 
 function assertStarterTown(root) {
-  const { manifestEntry, world, stamps } = loadWorldContent(root, "starter_town");
+  const { manifestEntry, world, stamps } = loadWorldContent(root, "main_overworld");
   const bootstrap = loadTsModule(path.join(root, "src", "game", "world", "bootstrap.ts"));
   const dialogueCatalog = loadNpcDialogueCatalog(root);
-  const starterBootstrap = bootstrap.buildWorldBootstrapResult("starter_town");
+  const starterBootstrap = bootstrap.buildWorldBootstrapResult("main_overworld");
+  const legacyStarterBootstrap = bootstrap.buildWorldBootstrapResult("starter_town");
   const npcBySpawnId = starterBootstrap && starterBootstrap.npcRegistry && starterBootstrap.npcRegistry.bySpawnId
     ? starterBootstrap.npcRegistry.bySpawnId
     : {};
 
-  assert(manifestEntry.worldId === "starter_town", "starter_town manifest world-id mismatch");
+  assert(manifestEntry.worldId === "main_overworld", "starter_town manifest world-id mismatch");
+  assert(legacyStarterBootstrap.definition.worldId === "main_overworld", "legacy starter_town bootstrap should resolve to main_overworld");
+  assert(
+    Array.isArray(world.areas)
+      && world.areas.some((area) => area && area.areaId === "starter_town" && area.label === "Starter Town"),
+    "main_overworld should preserve Starter Town as an area"
+  );
   assert(manifestEntry.defaultSpawn.x === 205 && manifestEntry.defaultSpawn.y === 210 && manifestEntry.defaultSpawn.z === 0, "starter_town default spawn mismatch");
   assert(manifestEntry.stampIds.join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town stamp kit mismatch");
   assert(Object.keys(stamps).join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town loaded stamps should match manifest kit");
@@ -377,9 +384,9 @@ function assertStarterTown(root) {
 
   const servicesById = Object.fromEntries(world.services.map((entry) => [entry.serviceId, entry]));
   assert(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
-  assert(servicesById["merchant:starter_caravan_guide"].travelToWorldId === "starter_town", "starter caravan travel target mismatch");
+  assert(servicesById["merchant:starter_caravan_guide"].travelToWorldId === "main_overworld", "starter caravan travel target mismatch");
   assert(servicesById["merchant:starter_caravan_guide"].travelSpawn.x === 364 && servicesById["merchant:starter_caravan_guide"].travelSpawn.y === 262, "starter caravan travel spawn mismatch");
-  assert(servicesById["merchant:east_outpost_caravan_guide"].travelToWorldId === "starter_town", "east outpost caravan travel target mismatch");
+  assert(servicesById["merchant:east_outpost_caravan_guide"].travelToWorldId === "main_overworld", "east outpost caravan travel target mismatch");
   assert(servicesById["merchant:east_outpost_caravan_guide"].travelSpawn.x === 205 && servicesById["merchant:east_outpost_caravan_guide"].travelSpawn.y === 210, "east outpost caravan travel spawn mismatch");
   assert(servicesById["station:starter_furnace"].footprintW === 2, "furnace footprint mismatch");
   assert(servicesById["station:east_outpost_furnace"].x === 374 && servicesById["station:east_outpost_furnace"].y === 254, "east outpost furnace placement mismatch");
@@ -492,7 +499,7 @@ function assertTutorialIsland(root) {
   const guide = servicesById["merchant:tutorial_guide"];
   assert(guide.serviceId === "merchant:tutorial_guide", "tutorial guide service id mismatch");
   assert(guide.action === "Talk-to", "tutorial guide should require dialogue before travel");
-  assert(guide.travelToWorldId === "starter_town", "tutorial guide travel target mismatch");
+  assert(guide.travelToWorldId === "main_overworld", "tutorial guide travel target mismatch");
   assert(guide.travelSpawn && guide.travelSpawn.x === 205 && guide.travelSpawn.y === 210 && guide.travelSpawn.z === 0, "tutorial guide travel spawn mismatch");
   assert(dialogueCatalog.resolveDialogueId(guide.dialogueId) === "tutorial_guide", "tutorial guide dialogue should resolve");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_woodcutting_instructor"].dialogueId) === "tutorial_woodcutting_instructor", "woodcutting instructor dialogue should resolve");
@@ -531,7 +538,7 @@ function run() {
   assertTutorialIsland(root);
   assertTreeVisualProfiles(root);
   assertRockVisualProfiles(root);
-  console.log("World bootstrap parity checks passed for starter_town, tutorial_island, and visual profiles.");
+  console.log("World bootstrap parity checks passed for main_overworld, tutorial_island, and visual profiles.");
 }
 
 try {

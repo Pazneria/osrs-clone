@@ -70,6 +70,11 @@ export interface WorldManifest {
   worlds: WorldManifestEntry[];
 }
 
+export interface WorldAreaDefinition {
+  areaId: string;
+  label: string;
+}
+
 export interface StructurePlacement extends Point3 {
   structureId: string;
   stampId: string;
@@ -299,6 +304,7 @@ export interface ShowcaseTree {
 export interface WorldDefinition {
   worldId: string;
   version: string;
+  areas?: WorldAreaDefinition[];
   structures: StructurePlacement[];
   waterBodies?: WaterBodyDefinition[];
   terrainPatches: {

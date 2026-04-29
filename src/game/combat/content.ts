@@ -10,6 +10,7 @@ import type {
   PlayerCombatStateShape
 } from "../contracts/combat";
 import { buildWorldBootstrapResult } from "../world/bootstrap";
+import { canonicalizeWorldId } from "../world/ids";
 
 export const COMBAT_SPEC_VERSION = "2026.03.c1";
 export const DEFAULT_MELEE_STYLE: MeleeStyleId = "attack";
@@ -888,7 +889,7 @@ export function getCombatProgressionBandForEnemy(enemyId: string): CombatProgres
 }
 
 export function listCombatProgressionBandWorldSummaries(worldId: string): CombatProgressionBandWorldSummary[] {
-  const resolvedWorldId = String(worldId || "").trim();
+  const resolvedWorldId = canonicalizeWorldId(worldId);
   const summaries = new Map<CombatProgressionBandId, CombatProgressionBandWorldSummary>();
   for (let i = 0; i < COMBAT_PROGRESSION_BAND_ORDER.length; i += 1) {
     const bandId = COMBAT_PROGRESSION_BAND_ORDER[i];
@@ -935,7 +936,7 @@ export function listCombatProgressionBandWorldSummaries(worldId: string): Combat
 
 export function listEnemySpawnNodesForWorld(worldId: string): EnemySpawnNodeDefinition[] {
   try {
-    const bootstrap = buildWorldBootstrapResult(String(worldId || "").trim());
+    const bootstrap = buildWorldBootstrapResult(canonicalizeWorldId(worldId));
     const definition = bootstrap.definition as AuthoredCombatWorldDefinition;
     const rows = Array.isArray(definition.combatSpawns) ? definition.combatSpawns : [];
     return rows.map(cloneSpawnNode);

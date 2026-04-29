@@ -1,9 +1,9 @@
 const path = require("path");
 
 const { loadWorldContent } = require("../content/world-content");
-const { buildFrozenStarterTownWorld } = require("../content/freeze-starter-town-world");
+const { buildFrozenMainOverworld } = require("../content/freeze-main-overworld-world");
 
-const WORLD_ID = "starter_town";
+const WORLD_ID = "main_overworld";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -16,11 +16,11 @@ function stableJson(value) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const { world } = loadWorldContent(root, WORLD_ID);
-  const frozenWorld = buildFrozenStarterTownWorld(root);
+  const frozenWorld = buildFrozenMainOverworld(root);
 
   assert(
     stableJson(world.services) === stableJson(frozenWorld.services),
-    "committed starter-town services do not match freeze output"
+    "committed main-overworld services do not match freeze output"
   );
   assert(
     stableJson(world.skillRoutes.mining) === stableJson(frozenWorld.skillRoutes.mining),
@@ -47,7 +47,7 @@ function run() {
     "committed altar placements do not match freeze output"
   );
 
-  console.log(`Starter-town freeze parity checks passed for ${WORLD_ID}.`);
+  console.log(`Main-overworld freeze parity checks passed for ${WORLD_ID}.`);
 }
 
 try {

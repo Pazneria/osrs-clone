@@ -13,6 +13,7 @@ import {
   getWorldManifest,
   getWorldManifestEntry
 } from "../world/authoring";
+import { MAIN_OVERWORLD_WORLD_ID, canonicalizeWorldId } from "../world/ids";
 import {
   cloneCombatSpawnNode,
   cloneDoorLandmark,
@@ -128,6 +129,10 @@ function normalizeWorldId(worldId?: string | null): string {
   return String(worldId || "").trim();
 }
 
+function normalizeCanonicalWorldId(worldId?: string | null): string {
+  return canonicalizeWorldId(normalizeWorldId(worldId));
+}
+
 function normalizeLabel(label: unknown): string {
   return typeof label === "string" ? label.trim() : "";
 }
@@ -158,7 +163,7 @@ function clampSpawn(spawn: Point3, bounds?: LegacyWorldBounds): Point3 {
 
 function getSafeWorldManifestEntry(worldId?: string | null): WorldManifestEntry | null {
   try {
-    return cloneWorldManifestEntry(getWorldManifestEntry(normalizeWorldId(worldId)));
+    return cloneWorldManifestEntry(getWorldManifestEntry(normalizeCanonicalWorldId(worldId)));
   } catch (error) {
     return null;
   }
@@ -184,19 +189,19 @@ function getCurrentWorldId(): string {
 }
 
 function resolveKnownWorldId(worldId?: string | null, fallbackWorldId: string | null = null): string {
-  const requestedWorldId = normalizeWorldId(worldId);
+  const requestedWorldId = normalizeCanonicalWorldId(worldId);
   if (requestedWorldId && isKnownWorldId(requestedWorldId)) return requestedWorldId;
 
-  const fallbackKey = normalizeWorldId(fallbackWorldId);
+  const fallbackKey = normalizeCanonicalWorldId(fallbackWorldId);
   if (fallbackKey && isKnownWorldId(fallbackKey)) return fallbackKey;
 
-  const currentWorldId = normalizeWorldId(getCurrentWorldId());
+  const currentWorldId = normalizeCanonicalWorldId(getCurrentWorldId());
   if (currentWorldId && isKnownWorldId(currentWorldId)) return currentWorldId;
 
   const worlds = getKnownWorldEntries();
   if (worlds.length > 0 && worlds[0] && worlds[0].worldId) return worlds[0].worldId;
 
-  return "starter_town";
+  return MAIN_OVERWORLD_WORLD_ID;
 }
 
 function getWorldLabel(worldId?: string | null): string {
@@ -251,7 +256,8 @@ function activateWorldContext(worldId?: string | null, fallbackWorldId: string |
 
 function resolveTravelTarget(worldId: unknown, options: TravelResolutionOptions = {}): TravelResolutionResult {
   const requestedWorldId = normalizeWorldId(typeof worldId === "string" ? worldId : "");
-  if (!requestedWorldId || !isKnownWorldId(requestedWorldId)) {
+  const canonicalRequestedWorldId = normalizeCanonicalWorldId(requestedWorldId);
+  if (!requestedWorldId || !isKnownWorldId(canonicalRequestedWorldId)) {
     return {
       ok: false,
       requestedWorldId,
@@ -262,8 +268,8 @@ function resolveTravelTarget(worldId: unknown, options: TravelResolutionOptions 
   }
 
   const resolvedWorldId = options.activate === false
-    ? resolveKnownWorldId(requestedWorldId, options.fallbackWorldId || null)
-    : activateWorldContext(requestedWorldId, options.fallbackWorldId || null);
+    ? resolveKnownWorldId(canonicalRequestedWorldId, options.fallbackWorldId || null)
+    : activateWorldContext(canonicalRequestedWorldId, options.fallbackWorldId || null);
 
   return {
     ok: true,
@@ -284,13 +290,14 @@ function createQaWorldSummary(entry: WorldManifestEntry, activeWorldId: string):
 }
 
 function getQaWorldSummaries(): QaWorldSummary[] {
-  const activeWorldId = resolveKnownWorldId(getCurrentWorldId(), "starter_town");
+  const activeWorldId = resolveKnownWorldId(getCurrentWorldId(), MAIN_OVERWORLD_WORLD_ID);
   return getKnownWorldEntries().map((entry) => createQaWorldSummary(entry, activeWorldId));
 }
 
 function matchQaWorld(query: unknown): QaWorldSummary | null {
   const needle = normalizeLabel(query).toLowerCase();
   if (!needle) return null;
+  const canonicalNeedle = normalizeCanonicalWorldId(needle).toLowerCase();
 
   const summaries = getQaWorldSummaries();
   for (let i = 0; i < summaries.length; i++) {
@@ -298,7 +305,7 @@ function matchQaWorld(query: unknown): QaWorldSummary | null {
     if (!entry) continue;
     const worldKey = String(entry.worldId || "").toLowerCase();
     const labelKey = String(entry.label || "").toLowerCase();
-    if (worldKey === needle || labelKey === needle) return entry;
+    if (worldKey === needle || worldKey === canonicalNeedle || labelKey === needle) return entry;
   }
 
   for (let i = 0; i < summaries.length; i++) {
@@ -306,7 +313,7 @@ function matchQaWorld(query: unknown): QaWorldSummary | null {
     if (!entry) continue;
     const worldKey = String(entry.worldId || "").toLowerCase();
     const labelKey = String(entry.label || "").toLowerCase();
-    if (worldKey.includes(needle) || labelKey.includes(needle)) return entry;
+    if (worldKey.includes(needle) || worldKey.includes(canonicalNeedle) || labelKey.includes(needle)) return entry;
   }
 
   return null;
@@ -403,7 +410,7 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
 }
 
 function getCurrentWorldPayload(): LegacyWorldPayload {
-  return getWorldPayload(resolveKnownWorldId(window.WorldBootstrapRuntime?.getCurrentWorldId?.(), "starter_town"));
+  return getWorldPayload(resolveKnownWorldId(window.WorldBootstrapRuntime?.getCurrentWorldId?.(), MAIN_OVERWORLD_WORLD_ID));
 }
 
 function getWorldGameContext(): GameContext | null {

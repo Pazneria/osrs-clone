@@ -6,6 +6,7 @@ import type {
   WorldRegistry,
   WorldStamp
 } from "../contracts/world";
+import { canonicalizeWorldId } from "./ids";
 
 import worldManifestJson from "../../../content/world/manifest.json";
 import castleFloor0 from "../../../content/world/stamps/castle_floor0.json";
@@ -19,7 +20,7 @@ import timberLonghouse from "../../../content/world/stamps/timber_longhouse.json
 import timberShack from "../../../content/world/stamps/timber_shack.json";
 import timberWorkshop from "../../../content/world/stamps/timber_workshop.json";
 import tutorialStartCabin from "../../../content/world/stamps/tutorial_start_cabin.json";
-import starterTown from "../../../content/world/regions/starter_town.json";
+import mainOverworld from "../../../content/world/regions/main_overworld.json";
 import tutorialIsland from "../../../content/world/regions/tutorial_island.json";
 
 const allStamps: Record<string, WorldStamp> = {
@@ -377,7 +378,7 @@ function buildScaledWorldDefinition(rawDefinition: WorldDefinition): WorldDefini
 }
 
 const worldDefinitions: Record<string, WorldDefinition> = {
-  [starterTown.worldId]: buildScaledWorldDefinition(starterTown as WorldDefinition),
+  [mainOverworld.worldId]: buildScaledWorldDefinition(mainOverworld as WorldDefinition),
   [tutorialIsland.worldId]: buildScaledWorldDefinition(tutorialIsland as WorldDefinition)
 };
 
@@ -396,7 +397,7 @@ function cloneManifestEntry(entry: WorldManifestEntry): WorldManifestEntry {
 }
 
 function findManifestEntry(worldId: string): WorldManifestEntry {
-  const normalizedWorldId = String(worldId || "").trim();
+  const normalizedWorldId = canonicalizeWorldId(worldId);
   const entry = manifest.worlds.find((row) => row.worldId === normalizedWorldId);
   if (!entry) throw new Error(`Unknown worldId: ${normalizedWorldId}`);
   return entry;
