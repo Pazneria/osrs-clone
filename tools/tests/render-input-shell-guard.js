@@ -17,6 +17,7 @@ function run() {
   const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const humanoidModelSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
+  const transientVisualSource = fs.readFileSync(path.join(root, "src", "js", "transient-visual-runtime.js"), "utf8");
   const inputQaCameraSource = fs.readFileSync(path.join(root, "src", "js", "input-qa-camera-runtime.js"), "utf8");
   const inputHoverTooltipSource = fs.readFileSync(path.join(root, "src", "js", "input-hover-tooltip-runtime.js"), "utf8");
   const inputStationInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-station-interaction-runtime.js"), "utf8");
@@ -104,6 +105,19 @@ function run() {
     manifestSource.indexOf('id: "humanoid-model-runtime"') < manifestSource.indexOf('id: "world"')
       && manifestSource.indexOf('id: "humanoid-model-runtime"') < manifestSource.indexOf('id: "combat"'),
     "legacy script manifest should load humanoid model runtime before world/combat consumers"
+  );
+  assert(transientVisualSource.includes("window.TransientVisualRuntime"), "transient visual runtime should expose a window runtime");
+  assert(transientVisualSource.includes("function spawnClickMarker"), "transient visual runtime should own click marker creation");
+  assert(transientVisualSource.includes("function updateTransientVisuals"), "transient visual runtime should own per-frame transient visual updates");
+  assert(inputSource.includes("TransientVisualRuntime"), "input-render.js should delegate transient visual ownership through the transient visual runtime");
+  assert(inputSource.includes("transientVisualRuntime.updateTransientVisuals({"), "input-render.js should delegate transient visual frame updates");
+  assert(!inputSource.includes("const color = isAction ? 0xff0000 : 0xffff00"), "input-render.js should not own click marker material policy");
+  assert(!inputSource.includes("for (let i = activeHitsplats.length - 1; i >= 0; i--)"), "input-render.js should not own hitsplat frame updates");
+  assert(manifestSource.includes('../../js/transient-visual-runtime.js?raw'), "legacy manifest should load transient visual runtime");
+  assert(
+    manifestSource.indexOf('id: "transient-visual-runtime"') < manifestSource.indexOf('id: "world"')
+      && manifestSource.indexOf('id: "transient-visual-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load transient visual runtime before world/input consumers"
   );
   assert(inputStationInteractionSource.includes("window.InputStationInteractionRuntime"), "input station interaction runtime should expose a window runtime");
   assert(inputStationInteractionSource.includes("function getStationApproachPositions"), "input station interaction runtime should own station approach positions");

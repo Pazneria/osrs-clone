@@ -82,6 +82,7 @@ import playerModelScript from "../../js/player-model.js?raw";
 import inventoryScript from "../../js/inventory.js?raw";
 import playerHitpointsRuntimeScript from "../../js/player-hitpoints-runtime.js?raw";
 import humanoidModelRuntimeScript from "../../js/humanoid-model-runtime.js?raw";
+import transientVisualRuntimeScript from "../../js/transient-visual-runtime.js?raw";
 import worldScript from "../../js/world.js?raw";
 import combatScript from "../../js/combat.js?raw";
 import inputQaCameraRuntimeScript from "../../js/input-qa-camera-runtime.js?raw";
@@ -186,6 +187,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "inventory", filename: "src/js/inventory.js", code: inventoryScript },
   { id: "player-hitpoints-runtime", filename: "src/js/player-hitpoints-runtime.js", code: playerHitpointsRuntimeScript },
   { id: "humanoid-model-runtime", filename: "src/js/humanoid-model-runtime.js", code: humanoidModelRuntimeScript },
+  { id: "transient-visual-runtime", filename: "src/js/transient-visual-runtime.js", code: transientVisualRuntimeScript },
   { id: "world", filename: "src/js/world.js", code: worldScript },
   { id: "combat", filename: "src/js/combat.js", code: combatScript },
   { id: "input-qa-camera-runtime", filename: "src/js/input-qa-camera-runtime.js", code: inputQaCameraRuntimeScript },

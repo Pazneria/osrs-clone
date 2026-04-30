@@ -26,6 +26,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputArrivalInteractionRuntime() {
             return window.InputArrivalInteractionRuntime || null;
         }
+        function getTransientVisualRuntime() {
+            return window.TransientVisualRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -915,11 +918,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function spawnClickMarker(position, isAction) {
-            const color = isAction ? 0xff0000 : 0xffff00; const group = new THREE.Group();
-            const mat = new THREE.MeshBasicMaterial({ color: color, depthTest: false, transparent: true }); const geo = new THREE.PlaneGeometry(0.6, 0.15);
-            const mesh1 = new THREE.Mesh(geo, mat); mesh1.rotation.z = Math.PI / 4; const mesh2 = new THREE.Mesh(geo, mat); mesh2.rotation.z = -Math.PI / 4;
-            group.add(mesh1, mesh2); group.position.copy(position); group.position.y += 0.05; group.renderOrder = 999; scene.add(group);
-            clickMarkers.push({ mesh: group, createdAt: Date.now() });
+            const runtime = getTransientVisualRuntime();
+            return runtime && typeof runtime.spawnClickMarker === 'function'
+                ? runtime.spawnClickMarker({ THREE, scene, clickMarkers, position, isAction })
+                : null;
         }
 
         function handleInteractionRaycast(clientX, clientY) {
@@ -1344,31 +1346,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return getVisualHeight(gx, gy, z);
         }
         function updatePlayerOverheadText() {
-            const bubble = document.getElementById('player-overhead-text');
-            if (!bubble || !playerRig) return;
-
-            if (!playerOverheadText.text || Date.now() > playerOverheadText.expiresAt) {
-                bubble.classList.add('hidden');
-                return;
+            const runtime = getTransientVisualRuntime();
+            if (runtime && typeof runtime.updatePlayerOverheadText === 'function') {
+                runtime.updatePlayerOverheadText({
+                    windowRef: window,
+                    documentRef: document,
+                    camera,
+                    playerRig,
+                    playerOverheadText
+                });
             }
-
-            bubble.innerText = playerOverheadText.text;
-
-            const pos = playerRig.position.clone();
-            pos.y += 2.3;
-            pos.project(camera);
-
-            if (pos.z >= 1) {
-                bubble.classList.add('hidden');
-                return;
-            }
-
-            const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
-            const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
-            bubble.style.left = `${x}px`;
-            bubble.style.top = `${y}px`;
-            bubble.style.transform = 'translate(-50%, -120%)';
-            bubble.classList.remove('hidden');
         }
 
         function projectWorldTileToScreen(x, y, z = 0, heightOffset = 1.0) {
@@ -1744,49 +1731,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             updateCombatAnimationDebugPanel(rig, playerRig, frameNow);
             
-            for (let i = clickMarkers.length - 1; i >= 0; i--) {
-                const marker = clickMarkers[i]; const age = frameNow - marker.createdAt;
-                if (age > 400) { scene.remove(marker.mesh); clickMarkers.splice(i, 1); }
-                else { const scale = 1 - (age / 400); marker.mesh.scale.set(scale, scale, scale); marker.mesh.quaternion.copy(camera.quaternion); }
-            }
-            
-            for (let i = activeHitsplats.length - 1; i >= 0; i--) {
-                const hs = activeHitsplats[i];
-                const age = frameNow - hs.createdAt;
-                if (age > 1200) {
-                    hs.el.remove();
-                    activeHitsplats.splice(i, 1);
-                } else {
-                    const pos = hs.worldPos.clone();
-                    pos.y += (age / 1200) * 0.8; 
-                    pos.project(camera);
-                    
-                    if (pos.z < 1) { 
-                        const x = (pos.x * .5 + .5) * window.innerWidth;
-                        const y = (pos.y * -.5 + .5) * window.innerHeight;
-                        hs.el.style.left = (x - 14) + 'px';
-                        hs.el.style.top = (y - 14) + 'px';
-                        hs.el.style.opacity = Math.max(0, 1 - (age / 1200));
-                        hs.el.style.display = 'block';
-                    } else {
-                        hs.el.style.display = 'none';
-                    }
-                }
-            }
-
-            for (let i = levelUpAnimations.length - 1; i >= 0; i--) {
-                const anim = levelUpAnimations[i]; const age = frameNow - anim.start; const lifeTime = 1500; 
-                if (age > lifeTime) { scene.remove(anim.mesh); levelUpAnimations.splice(i, 1); continue; } 
-                if (anim.target) anim.mesh.position.copy(anim.target.position);
-                const t = age / lifeTime; 
-                if (anim.type === 8) { 
-                    anim.mesh.children.forEach((orb, index) => {
-                        const strandIdx = index % 20; const t2 = Math.max(0, t - strandIdx * 0.04); const angle = orb.userData.angleOffset + orb.userData.dir * t2 * Math.PI * 5; 
-                        orb.position.set(Math.cos(angle) * 1.2, t2 * 4, Math.sin(angle) * 1.2);
-                        orb.material.opacity = t2 > 0 ? (1 - t) * (1 - strandIdx/20) : 0; orb.material.transparent = true;
-                        if(t2 === 0) orb.scale.set(0,0,0); else orb.scale.set(1,1,1);
-                    });
-                } 
+            const transientVisualRuntime = getTransientVisualRuntime();
+            if (transientVisualRuntime && typeof transientVisualRuntime.updateTransientVisuals === 'function') {
+                transientVisualRuntime.updateTransientVisuals({
+                    windowRef: window,
+                    scene,
+                    camera,
+                    clickMarkers,
+                    activeHitsplats,
+                    levelUpAnimations,
+                    nowMs: frameNow
+                });
             }
 
             if (keys.arrowleft) cameraYaw += 0.03;

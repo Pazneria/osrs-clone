@@ -285,36 +285,30 @@
         }
 
         function spawnHitsplat(amount, gridX, gridY) {
-            const el = document.createElement('div');
-            el.className = 'hitsplat';
-            
-            const redSplat = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><path d=\"M50 0 L65 30 L100 30 L75 55 L85 100 L50 75 L15 100 L25 55 L0 30 L35 30 Z\" fill=\"%23ef4444\"/></svg>')";
-            const blueShield = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><path d=\"M10 20 L50 0 L90 20 L90 60 L50 100 L10 60 Z\" fill=\"%233b82f6\"/></svg>')";
-            
-            el.style.backgroundImage = amount > 0 ? redSplat : blueShield;
-            el.innerText = amount;
-            document.body.appendChild(el);
-            
-            // Adjust hitsplat visual height for planes
-            const visualZOffset = playerState.z * 3.0;
-            const targetHeight = heightMap[playerState.z] && heightMap[playerState.z][gridY] && heightMap[playerState.z][gridY][gridX] ? heightMap[playerState.z][gridY][gridX] : 0;
-            const worldPos = new THREE.Vector3(gridX, targetHeight + visualZOffset + 1.2, gridY);
-            
-            activeHitsplats.push({ el, worldPos, createdAt: Date.now() });
+            const runtime = window.TransientVisualRuntime || null;
+            if (!runtime || typeof runtime.spawnHitsplat !== 'function') return null;
+            return runtime.spawnHitsplat({
+                THREE,
+                documentRef: document,
+                activeHitsplats,
+                playerState,
+                heightMap,
+                amount,
+                gridX,
+                gridY
+            });
         }
 
         function playLevelUpAnimation(type, target) {
-            if (type === 8) { 
-                const group = new THREE.Group(); group.position.copy(target.position);
-                for(let i=0; i<40; i++) {
-                    const isCW = i < 20;
-                    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({color: isCW ? 0x00ffff : 0xff00ff}));
-                    orb.userData.angleOffset = isCW ? 0 : Math.PI; 
-                    orb.userData.dir = isCW ? 1 : -1;
-                    group.add(orb);
-                }
-                scene.add(group); levelUpAnimations.push({ mesh: group, start: Date.now(), type: 8, target: target });
-            } 
+            const runtime = window.TransientVisualRuntime || null;
+            if (!runtime || typeof runtime.playLevelUpAnimation !== 'function') return null;
+            return runtime.playLevelUpAnimation({
+                THREE,
+                scene,
+                levelUpAnimations,
+                type,
+                target
+            });
         }
 
         function buildPlayerHitpointsRuntimeContext() {
