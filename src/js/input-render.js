@@ -1862,16 +1862,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
                     if (playerState.targetObj === 'GROUND_ITEM') {
                         if (distX === 0 && distY === 0) { 
-                            const itemEntry = groundItems.find(gi => gi.uid === playerState.targetUid);
-                            if (itemEntry && giveItem(itemEntry.itemData, itemEntry.amount) > 0) {
-                                // FIX: Remove from parent chunk instead of global scene
-                                if (itemEntry.mesh.parent) itemEntry.mesh.parent.remove(itemEntry.mesh);
-                                else scene.remove(itemEntry.mesh);
-                                
-                                environmentMeshes = environmentMeshes.filter(m => !itemEntry.mesh.children.includes(m)); 
-                                groundItems = groundItems.filter(gi => gi.uid !== itemEntry.uid);
-                                renderInventory();
-                            }
+                            if (typeof window.takeGroundItemByUid === 'function') window.takeGroundItemByUid(playerState.targetUid);
                             playerState.action = 'IDLE';
                         } else playerState.action = 'IDLE';
                     } else if (playerState.targetObj === 'DOOR') {

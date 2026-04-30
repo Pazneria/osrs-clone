@@ -6,6 +6,7 @@
         const worldSharedAssetsRuntime = window.WorldSharedAssetsRuntime || null;
         const worldWaterRuntime = window.WorldWaterRuntime || null;
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
+        const worldGroundItemLifecycleRuntime = window.WorldGroundItemLifecycleRuntime || null;
         const worldNpcRenderRuntime = window.WorldNpcRenderRuntime || null;
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
         const worldTreeNodeRuntime = window.WorldTreeNodeRuntime || null;
@@ -668,28 +669,43 @@
             worldFireLifecycleRuntime.updateFires(buildFireLifecycleRuntimeContext(), frameNow);
         }
 
+        function buildGroundItemLifecycleRuntimeContext() {
+            return {
+                THREE,
+                activeFires,
+                chunkSize: CHUNK_SIZE,
+                clearSelectedUse,
+                createEquipmentVisualMeshes: typeof window.createEquipmentVisualMeshes === 'function'
+                    ? window.createEquipmentVisualMeshes
+                    : null,
+                createPixelSourceVisualMeshes: typeof window.createPixelSourceVisualMeshes === 'function'
+                    ? window.createPixelSourceVisualMeshes
+                    : null,
+                currentTick,
+                environmentMeshes,
+                fetchImpl: typeof fetch === 'function' ? fetch.bind(window) : null,
+                getWorldChunkSceneRuntime,
+                giveItem,
+                groundItems,
+                heightMap,
+                inventory,
+                now: () => Date.now(),
+                playerState,
+                random: () => Math.random(),
+                renderInventory,
+                scene,
+                selectedUse,
+                sharedMaterials,
+                worldGroundItemRenderRuntime
+            };
+        }
+
         function removeGroundItemEntryAt(index) {
-            const entry = groundItems[index];
-            if (!entry) return false;
-
-            if (entry.mesh && entry.mesh.parent) entry.mesh.parent.remove(entry.mesh);
-            else if (entry.mesh) scene.remove(entry.mesh);
-
-            if (entry.mesh && Array.isArray(entry.mesh.children)) {
-                environmentMeshes = environmentMeshes.filter((m) => !entry.mesh.children.includes(m));
-            }
-
-            groundItems.splice(index, 1);
-            return true;
+            return worldGroundItemLifecycleRuntime.removeGroundItemEntryAt(buildGroundItemLifecycleRuntimeContext(), index);
         }
 
         function updateGroundItems() {
-            for (let i = groundItems.length - 1; i >= 0; i--) {
-                const entry = groundItems[i];
-                if (!entry || !Number.isFinite(entry.despawnTick)) continue;
-                if (currentTick < entry.despawnTick) continue;
-                removeGroundItemEntryAt(i);
-            }
+            worldGroundItemLifecycleRuntime.updateGroundItems(buildGroundItemLifecycleRuntimeContext());
         }
 
         function findFireStepDestination() {
@@ -942,65 +958,19 @@
         }
 
         function addGroundItemVisual(group, itemData) {
-            return worldGroundItemRenderRuntime.addGroundItemVisual({
-                THREE,
-                group,
-                itemData,
-                createEquipmentVisualMeshes: typeof window.createEquipmentVisualMeshes === 'function'
-                    ? window.createEquipmentVisualMeshes
-                    : null,
-                createPixelSourceVisualMeshes: typeof window.createPixelSourceVisualMeshes === 'function'
-                    ? window.createPixelSourceVisualMeshes
-                    : null,
-                fetchImpl: typeof fetch === 'function' ? fetch.bind(window) : null
-            });
+            return worldGroundItemLifecycleRuntime.addGroundItemVisual(buildGroundItemLifecycleRuntimeContext(), group, itemData);
         }
 
         function dropItem(invIndex) {
-            const invSlot = inventory[invIndex];
-            if (!invSlot) return;
-            const amount = invSlot.amount;
-            inventory[invIndex] = null;
-            if (selectedUse.invIndex === invIndex) clearSelectedUse(false);
-            spawnGroundItem(invSlot.itemData, playerState.x, playerState.y, playerState.z, amount);
-            renderInventory();
+            return worldGroundItemLifecycleRuntime.dropItem(buildGroundItemLifecycleRuntimeContext(), invIndex);
         }
 
         function spawnGroundItem(itemData, x, y, z, amount = 1, options = {}) {
-            const despawnTick = Number.isFinite(options.despawnTick)
-                ? options.despawnTick
-                : (Number.isFinite(options.despawnTicks) ? currentTick + Math.max(0, Math.floor(options.despawnTicks)) : null);
+            worldGroundItemLifecycleRuntime.spawnGroundItem(buildGroundItemLifecycleRuntimeContext(), itemData, x, y, z, amount, options);
+        }
 
-            let existing = groundItems.find(gi => gi.x === x && gi.y === y && gi.z === z && gi.itemData.id === itemData.id);
-            if (existing && itemData.stackable) {
-                existing.amount += amount;
-                if (Number.isFinite(despawnTick)) {
-                    existing.despawnTick = Number.isFinite(existing.despawnTick)
-                        ? Math.max(existing.despawnTick, despawnTick)
-                        : despawnTick;
-                }
-                existing.mesh.children.forEach(c => { c.userData.name = `${itemData.name} (${existing.amount})`; });
-                return;
-            }
-            const group = new THREE.Group();
-            const terrainHeight = heightMap[z][y][x] + (z * 3.0);
-            group.position.set(x, terrainHeight + 0.1, y);
-            addGroundItemVisual(group, itemData);
-            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), sharedMaterials.hiddenHitbox);
-            group.add(hitbox);
-            const uid = Date.now() + Math.random();
-            group.children.forEach(c => {
-                c.userData = { type: 'GROUND_ITEM', itemData: itemData, uid: uid, gridX: x, gridY: y, z: z, name: amount > 1 ? `${itemData.name} (${amount})` : itemData.name };
-                environmentMeshes.push(c);
-            });
-            let cx = Math.floor(x / CHUNK_SIZE); let cy = Math.floor(y / CHUNK_SIZE);
-            const chunkGroup = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
-            if (chunkGroup) {
-                let pGroup = chunkGroup.children.find(pg => pg.userData.z === z);
-                if (pGroup) pGroup.add(group); else scene.add(group);
-            } else scene.add(group);
-            
-            groundItems.push({ itemData, x, y, z, mesh: group, uid, amount: amount, despawnTick });
+        function takeGroundItemByUid(uid) {
+            return worldGroundItemLifecycleRuntime.takeGroundItemByUid(buildGroundItemLifecycleRuntimeContext(), uid);
         }
 
         // --- THE MULTI-PLANE ENGINE REWRITE ---
@@ -3899,6 +3869,7 @@
         window.updateSkyRuntime = updateSkyRuntime;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;
+        window.takeGroundItemByUid = takeGroundItemByUid;
         window.reportChunkPerformanceSample = reportChunkPerformanceSample;
         window.markChunkPolicyDirty = markChunkPolicyDirty;
         window.updateMiningPoseReferences = updateMiningPoseReferences;

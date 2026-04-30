@@ -1725,6 +1725,7 @@ function run() {
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-terrain-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-tier-render-runtime.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
+  const groundItemLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-lifecycle-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/npc-render-runtime.js"), "utf8");
   const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/town-npc-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
@@ -1822,6 +1823,15 @@ function run() {
   assert(!worldScript.includes("function createSimplifiedTerrainMesh"), "world.js should not own simplified terrain construction");
   assert(!worldScript.includes("function addSimplifiedChunkFeatures"), "world.js should not own simplified feature rendering");
   assert(worldScript.includes("WorldGroundItemRenderRuntime"), "world.js should delegate ground-item visuals through the render runtime");
+  assert(worldScript.includes("WorldGroundItemLifecycleRuntime"), "world.js should delegate ground-item lifecycle through the lifecycle runtime");
+  assert(groundItemLifecycleRuntimeSource.includes("function spawnGroundItem(context = {}, itemData, x, y, z, amount = 1, options = {})"), "ground-item lifecycle runtime should own ground-item spawning");
+  assert(groundItemLifecycleRuntimeSource.includes("function dropItem(context = {}, invIndex)"), "ground-item lifecycle runtime should own inventory drop flow");
+  assert(groundItemLifecycleRuntimeSource.includes("function updateGroundItems(context = {})"), "ground-item lifecycle runtime should own ground-item despawn ticks");
+  assert(groundItemLifecycleRuntimeSource.includes("function takeGroundItemByUid(context = {}, uid)"), "ground-item lifecycle runtime should own ground-item pickup");
+  assert(inputRenderSource.includes("window.takeGroundItemByUid(playerState.targetUid)"), "input renderer should delegate ground-item pickup through the lifecycle hook");
+  assert(!worldScript.includes("const uid = Date.now() + Math.random();"), "world.js should not own ground-item uid creation");
+  assert(!worldScript.includes("new THREE.BoxGeometry(0.8, 0.8, 0.8)"), "world.js should not own ground-item hitbox construction");
+  assert(!inputRenderSource.includes("groundItems = groundItems.filter(gi => gi.uid !== itemEntry.uid);"), "input renderer should not mutate groundItems directly for pickup");
   assert(!worldScript.includes("function addAshesGroundVisual("), "world.js should not own ashes ground-item visual construction");
   assert(!worldScript.includes("function resolveFishGroundVisual("), "world.js should not own fish ground-item visual resolution");
   assert(groundItemRenderRuntimeSource.includes("function addAshesGroundVisual(options)"), "ashes ground-item visual helper missing");
