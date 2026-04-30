@@ -64,7 +64,8 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
   outpost_guide_house_stairs: { x: 260, y: 258, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   thrain_deepforge_house_stairs: { x: 272, y: 258, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   rune_tutor_hut_stairs: { x: 218, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
-  combination_sage_hut_stairs: { x: 148, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 }
+  combination_sage_hut_stairs: { x: 148, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 }
 });
 
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
@@ -84,6 +85,17 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:tanner_rusk": { x: 247, y: 237, z: 0, dialogueId: "tanner_rusk", appearanceId: "tanner_rusk", scaledX: 328, scaledY: 314 },
   "merchant:rune_tutor": { x: 218, y: 181, z: 0, dialogueId: "rune_tutor", scaledX: 290, scaledY: 240 },
   "merchant:combination_sage": { x: 148, y: 181, z: 0, dialogueId: "combination_sage", scaledX: 197, scaledY: 240 }
+});
+
+const STARTER_TOWN_BANK_LAYOUT = Object.freeze({
+  "bank:east_outpost": { spawnId: "npc:banker_east_outpost", x: 364, y: 252, z: 0, scaledX: 484, scaledY: 335 },
+  "bank:willow_bend": { spawnId: "npc:banker_willow_bend", x: 244, y: 66, z: 0, scaledX: 325, scaledY: 88 },
+  "bank:maple_ridge": { spawnId: "npc:banker_maple_ridge", x: 399, y: 205, z: 0, scaledX: 532, scaledY: 273 },
+  "bank:yew_frontier": { spawnId: "npc:banker_yew_frontier", x: 58, y: 16, z: 0, scaledX: 77, scaledY: 21 },
+  "bank:south_field": { spawnId: "npc:banker_south_field", x: 256, y: 444, z: 0, scaledX: 341, scaledY: 592 },
+  "bank:west_range": { spawnId: "npc:banker_west_range", x: 64, y: 456, z: 0, scaledX: 85, scaledY: 608 },
+  "bank:southeast_camp": { spawnId: "npc:banker_southeast_camp", x: 416, y: 430, z: 0, scaledX: 555, scaledY: 573 },
+  "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0, scaledX: 128, scaledY: 41 }
 });
 
 function scaleAxis(value) {
@@ -438,6 +450,28 @@ function setSparseTile(map, x, y, z, tileId) {
       assert.strictEqual(rawService.appearanceId, expected.appearanceId, `${serviceId} should keep the authored appearanceId`);
       assert.strictEqual(scaledService.appearanceId, expected.appearanceId, `${serviceId} appearanceId should survive authoring scale`);
     }
+  });
+  Object.entries(STARTER_TOWN_BANK_LAYOUT).forEach(([serviceId, expected]) => {
+    const rawService = rawServicesById[serviceId];
+    const scaledService = scaledServicesById[serviceId];
+    assert.ok(rawService, `raw starter_town data should include bank service ${serviceId}`);
+    assert.ok(scaledService, `scaled starter_town data should include bank service ${serviceId}`);
+    assert.deepStrictEqual(
+      { spawnId: rawService.spawnId, name: rawService.name, action: rawService.action, dialogueId: rawService.dialogueId },
+      { spawnId: expected.spawnId, name: "Banker", action: "Bank", dialogueId: "banker" },
+      `${serviceId} should keep the authored banker interaction contract`
+    );
+    assert.deepStrictEqual(
+      { x: rawService.x, y: rawService.y, z: rawService.z },
+      { x: expected.x, y: expected.y, z: expected.z },
+      `${serviceId} should keep the authored bank placement`
+    );
+    assert.deepStrictEqual(
+      { x: scaledService.x, y: scaledService.y, z: scaledService.z },
+      { x: expected.scaledX, y: expected.scaledY, z: expected.z },
+      `${serviceId} should scale with the authored bank placement`
+    );
+    assert.strictEqual(dialogueCatalog.resolveDialogueId(rawService.dialogueId), "banker", `${serviceId} dialogueId should resolve to banker`);
   });
   assert.deepStrictEqual(
     { x: scaledTrainingDummy.spawnTile.x, y: scaledTrainingDummy.spawnTile.y, z: scaledTrainingDummy.spawnTile.z },

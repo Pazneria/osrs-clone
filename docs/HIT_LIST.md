@@ -102,29 +102,32 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-003 - Service distribution pass (add 8+ banks)
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `content/world/regions/main_overworld.json`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/service-adjacency.js`
 - Repro:
   1. Traverse world service points.
 - Expected: Bankers spread throughout the world with at least 8 additional bank locations.
-- Actual: Bank distribution is too sparse.
+- Actual: The main overworld now has eight additional authored banker + bank-booth locations spread across the east outpost, willow bend, maple ridge, yew frontier, south field, west range, southeast camp, and air altar routes.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Identify underserved regions.
   2. Propose 8+ bank placements.
   3. Implement and path-test interactions.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added eight static `Banker` services with the existing `Bank` NPC action and `banker` dialogue, avoiding new runtime-specific bank logic.
+  - Added matching `BANK_BOOTH` landmark tiles through the existing authored landmark flow so booths render through the current bank-booth path.
+  - Updated world authoring/bootstrap parity checks to lock the new banker service contract, booth landmark, service count, NPC publication, and coordinate scaling.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-004 - Road network pass with protected tiles
 - Status: Backlog

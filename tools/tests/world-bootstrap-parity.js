@@ -58,7 +58,8 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
   outpost_guide_house_stairs: { x: 260, y: 258, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   thrain_deepforge_house_stairs: { x: 272, y: 258, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   rune_tutor_hut_stairs: { x: 218, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
-  combination_sage_hut_stairs: { x: 148, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 }
+  combination_sage_hut_stairs: { x: 148, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 }
 });
 
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
@@ -189,6 +190,17 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
     z: 0,
     dialogueId: "combination_sage"
   }
+});
+
+const STARTER_TOWN_BANK_LAYOUT = Object.freeze({
+  "bank:east_outpost": { spawnId: "npc:banker_east_outpost", x: 364, y: 252, z: 0 },
+  "bank:willow_bend": { spawnId: "npc:banker_willow_bend", x: 244, y: 66, z: 0 },
+  "bank:maple_ridge": { spawnId: "npc:banker_maple_ridge", x: 399, y: 205, z: 0 },
+  "bank:yew_frontier": { spawnId: "npc:banker_yew_frontier", x: 58, y: 16, z: 0 },
+  "bank:south_field": { spawnId: "npc:banker_south_field", x: 256, y: 444, z: 0 },
+  "bank:west_range": { spawnId: "npc:banker_west_range", x: 64, y: 456, z: 0 },
+  "bank:southeast_camp": { spawnId: "npc:banker_southeast_camp", x: 416, y: 430, z: 0 },
+  "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0 }
 });
 
 function loadNpcDialogueCatalog(root) {
@@ -346,7 +358,7 @@ function assertStarterTown(root) {
   assert(manifestEntry.stampIds.join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town stamp kit mismatch");
   assert(Object.keys(stamps).join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town loaded stamps should match manifest kit");
   assert(Array.isArray(world.structures) && world.structures.length === Object.keys(STARTER_TOWN_STRUCTURE_LAYOUT).length, "expected 17 starter-town structures");
-  assert(Array.isArray(world.services) && world.services.length === 20, "expected 20 authored starter-town services");
+  assert(Array.isArray(world.services) && world.services.length === 28, "expected 28 authored starter-town services");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 114, "expected 114 authored mining nodes");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 82, "expected 82 authored woodcutting nodes");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 3, "expected 3 fishing routes");
@@ -360,7 +372,7 @@ function assertStarterTown(root) {
   assert(Array.isArray(world.landmarks.altars) && world.landmarks.altars.length === 4, "expected 4 authored altars");
   assert(Array.isArray(world.landmarks.showcaseTrees) && world.landmarks.showcaseTrees.length === 5, "expected 5 showcase trees");
   assert(
-    world.services.filter((entry) => entry.type === "MERCHANT" && entry.name).length === Object.keys(STARTER_TOWN_NAMED_NPC_LAYOUT).length,
+    world.services.filter((entry) => entry.type === "MERCHANT" && entry.name).length === Object.keys(STARTER_TOWN_NAMED_NPC_LAYOUT).length + Object.keys(STARTER_TOWN_BANK_LAYOUT).length,
     "starter-town named NPC service count mismatch"
   );
 
@@ -428,7 +440,25 @@ function assertStarterTown(root) {
       assert(npc.appearanceId === expected.appearanceId, `${serviceId} runtime NPC appearanceId mismatch`);
     }
   });
-  assert(Object.keys(npcBySpawnId).length === Object.keys(STARTER_TOWN_NAMED_NPC_LAYOUT).length, "starter-town runtime NPC registry count mismatch");
+  Object.entries(STARTER_TOWN_BANK_LAYOUT).forEach(([serviceId, expected]) => {
+    const service = servicesById[serviceId];
+    assert(!!service, `starter-town bank service missing: ${serviceId}`);
+    assert(service.spawnId === expected.spawnId, `${serviceId} spawnId mismatch`);
+    assert(service.x === expected.x && service.y === expected.y && service.z === expected.z, `${serviceId} authored placement mismatch`);
+    assert(service.name === "Banker", `${serviceId} should render as a Banker`);
+    assert(service.action === "Bank", `${serviceId} should open the bank directly`);
+    assert(service.dialogueId === "banker", `${serviceId} dialogueId mismatch`);
+    assert(dialogueCatalog.resolveDialogueId(service.dialogueId) === "banker", `${serviceId} dialogueId should resolve to banker`);
+    const npc = npcBySpawnId[expected.spawnId];
+    assert(!!npc, `${serviceId} should publish a runtime Banker descriptor`);
+    assert(npc.name === "Banker", `${serviceId} runtime NPC name mismatch`);
+    assert(npc.action === "Bank", `${serviceId} runtime NPC action mismatch`);
+    assert(String(npc.dialogueId || "").trim() === "banker", `${serviceId} runtime NPC should preserve banker dialogue`);
+  });
+  assert(
+    Object.keys(npcBySpawnId).length === Object.keys(STARTER_TOWN_NAMED_NPC_LAYOUT).length + Object.keys(STARTER_TOWN_BANK_LAYOUT).length,
+    "starter-town runtime NPC registry count mismatch"
+  );
 
   const combatSpawnsById = Object.fromEntries(world.combatSpawns.map((entry) => [entry.spawnNodeId, entry]));
   assert(

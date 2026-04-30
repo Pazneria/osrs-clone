@@ -1140,6 +1140,154 @@
       ]
     },
     {
+      "serviceId": "bank:east_outpost",
+      "spawnId": "npc:banker_east_outpost",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 364,
+      "y": 252,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "east",
+        "settlement"
+      ]
+    },
+    {
+      "serviceId": "bank:willow_bend",
+      "spawnId": "npc:banker_willow_bend",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 244,
+      "y": 66,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "woodcutting",
+        "willow",
+        "north"
+      ]
+    },
+    {
+      "serviceId": "bank:maple_ridge",
+      "spawnId": "npc:banker_maple_ridge",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 399,
+      "y": 205,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "woodcutting",
+        "maple",
+        "east"
+      ]
+    },
+    {
+      "serviceId": "bank:yew_frontier",
+      "spawnId": "npc:banker_yew_frontier",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 58,
+      "y": 16,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "woodcutting",
+        "yew",
+        "northwest"
+      ]
+    },
+    {
+      "serviceId": "bank:south_field",
+      "spawnId": "npc:banker_south_field",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 256,
+      "y": 444,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "combat",
+        "south"
+      ]
+    },
+    {
+      "serviceId": "bank:west_range",
+      "spawnId": "npc:banker_west_range",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 64,
+      "y": 456,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "combat",
+        "west"
+      ]
+    },
+    {
+      "serviceId": "bank:southeast_camp",
+      "spawnId": "npc:banker_southeast_camp",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 416,
+      "y": 430,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "combat",
+        "southeast"
+      ]
+    },
+    {
+      "serviceId": "bank:air_altar",
+      "spawnId": "npc:banker_air_altar",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "x": 96,
+      "y": 31,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "runecrafting",
+        "air",
+        "northwest"
+      ]
+    },
+    {
       "serviceId": "station:starter_furnace",
       "spawnId": "station:starter_furnace",
       "type": "FURNACE",
@@ -4219,6 +4367,67 @@
             "z": 0,
             "tileId": "STAIRS_RAMP",
             "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "distributed_bank_booths",
+        "tiles": [
+          {
+            "x": 362,
+            "y": 252,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 243,
+            "y": 65,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 400,
+            "y": 204,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 57,
+            "y": 15,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 255,
+            "y": 443,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 63,
+            "y": 455,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 415,
+            "y": 429,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 95,
+            "y": 30,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
           }
         ]
       }
