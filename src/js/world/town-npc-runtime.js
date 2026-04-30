@@ -87,6 +87,84 @@
         return Math.PI;
     }
 
+    function distanceToBounds(bounds, x, y) {
+        if (!bounds) return Infinity;
+        const dx = x < bounds.xMin ? (bounds.xMin - x) : (x > bounds.xMax ? (x - bounds.xMax) : 0);
+        const dy = y < bounds.yMin ? (bounds.yMin - y) : (y > bounds.yMax ? (y - bounds.yMax) : 0);
+        return Math.max(dx, dy);
+    }
+
+    function expandTownNpcRoamBounds(bounds, pad, mapSize) {
+        const resolvedMapSize = Number.isFinite(mapSize) ? Math.max(3, Math.floor(mapSize)) : 512;
+        const resolvedPad = Number.isFinite(pad) ? Math.max(0, Math.floor(pad)) : 0;
+        return {
+            xMin: Math.max(1, bounds.xMin - resolvedPad),
+            xMax: Math.min(resolvedMapSize - 2, bounds.xMax + resolvedPad),
+            yMin: Math.max(1, bounds.yMin - resolvedPad),
+            yMax: Math.min(resolvedMapSize - 2, bounds.yMax + resolvedPad)
+        };
+    }
+
+    function resolveTownNpcRoamBounds(options = {}) {
+        const npc = options.npc;
+        if (!npc) return null;
+        const mapSize = Number.isFinite(options.mapSize) ? options.mapSize : 512;
+        const structureBoundsList = Array.isArray(options.structureBoundsList) ? options.structureBoundsList : [];
+        const actorZ = Number.isFinite(npc.z) ? npc.z : 0;
+        const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
+        const roamPad = dialogueId ? 3 : (npc && npc.action === 'Travel' ? 2 : 1);
+        for (let i = 0; i < structureBoundsList.length; i++) {
+            const bounds = structureBoundsList[i];
+            if (!bounds || bounds.z !== actorZ) continue;
+            if (npc.x >= bounds.xMin && npc.x <= bounds.xMax && npc.y >= bounds.yMin && npc.y <= bounds.yMax) {
+                return expandTownNpcRoamBounds(bounds, roamPad, mapSize);
+            }
+        }
+        let nearestBounds = null;
+        let nearestDistance = Infinity;
+        for (let i = 0; i < structureBoundsList.length; i++) {
+            const bounds = structureBoundsList[i];
+            if (!bounds || bounds.z !== actorZ) continue;
+            const distance = distanceToBounds(bounds, npc.x, npc.y);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestBounds = bounds;
+            }
+        }
+        if (nearestBounds && nearestDistance <= Math.max(3, roamPad + 1)) {
+            return expandTownNpcRoamBounds(nearestBounds, roamPad, mapSize);
+        }
+        const fallbackPad = dialogueId ? 4 : 2;
+        return {
+            xMin: Math.max(1, npc.x - fallbackPad),
+            xMax: Math.min(mapSize - 2, npc.x + fallbackPad),
+            yMin: Math.max(1, npc.y - fallbackPad),
+            yMax: Math.min(mapSize - 2, npc.y + fallbackPad)
+        };
+    }
+
+    function resolveTownNpcRoamingRadius(npc, roamBounds) {
+        const npcName = npc && typeof npc.name === 'string' ? npc.name : '';
+        const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
+        if (npcName === 'Banker') return 0;
+        if (/^King\b/i.test(npcName) || /^Queen\b/i.test(npcName)) return 1;
+        if (npc && npc.action === 'Travel') return dialogueId ? 2 : 1;
+        if (dialogueId) {
+            if (roamBounds) {
+                const spanX = roamBounds.xMax - roamBounds.xMin + 1;
+                const spanY = roamBounds.yMax - roamBounds.yMin + 1;
+                return Math.max(3, Math.min(4, Math.floor(Math.min(spanX, spanY) / 2)));
+            }
+            return 3;
+        }
+        if (roamBounds) {
+            const spanX = roamBounds.xMax - roamBounds.xMin + 1;
+            const spanY = roamBounds.yMax - roamBounds.yMin + 1;
+            return Math.max(1, Math.min(2, Math.floor(Math.min(spanX, spanY) / 2)));
+        }
+        return 2;
+    }
+
     function clearTownNpcRenderBindings(actor) {
         if (!actor || typeof actor !== 'object') return;
         actor.mesh = null;
@@ -444,6 +522,8 @@
         chooseTownNpcNextStep,
         clearTownNpcRenderBindings,
         deleteLoadedChunkNpcActors,
+        distanceToBounds,
+        expandTownNpcRoamBounds,
         findDoorStateAt,
         getDoorClosedTileId,
         getDoorOpenTileId,
@@ -467,6 +547,8 @@
         resetStaticNpcBaseTiles,
         resolveSolidNpcBaseTile,
         resolveTownNpcDefaultFacingYaw,
+        resolveTownNpcRoamBounds,
+        resolveTownNpcRoamingRadius,
         setLoadedChunkNpcActors,
         shouldPauseTownNpcRoaming,
         shortestAngleDelta,

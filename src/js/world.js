@@ -1708,83 +1708,19 @@
                 })
                 .filter(Boolean);
 
-            const distanceToBounds = (bounds, x, y) => {
-                const dx = x < bounds.xMin ? (bounds.xMin - x) : (x > bounds.xMax ? (x - bounds.xMax) : 0);
-                const dy = y < bounds.yMin ? (bounds.yMin - y) : (y > bounds.yMax ? (y - bounds.yMax) : 0);
-                return Math.max(dx, dy);
-            };
-
-            const expandNpcRoamBounds = (bounds, pad) => ({
-                xMin: Math.max(1, bounds.xMin - pad),
-                xMax: Math.min(MAP_SIZE - 2, bounds.xMax + pad),
-                yMin: Math.max(1, bounds.yMin - pad),
-                yMax: Math.min(MAP_SIZE - 2, bounds.yMax + pad)
-            });
-
-            const resolveTownNpcRoamBounds = (npc) => {
-                if (!npc) return null;
-                const actorZ = Number.isFinite(npc.z) ? npc.z : 0;
-                const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
-                const roamPad = dialogueId ? 3 : (npc && npc.action === 'Travel' ? 2 : 1);
-                for (let i = 0; i < structureBoundsList.length; i++) {
-                    const bounds = structureBoundsList[i];
-                    if (!bounds || bounds.z !== actorZ) continue;
-                    if (npc.x >= bounds.xMin && npc.x <= bounds.xMax && npc.y >= bounds.yMin && npc.y <= bounds.yMax) {
-                        return expandNpcRoamBounds(bounds, roamPad);
-                    }
-                }
-                let nearestBounds = null;
-                let nearestDistance = Infinity;
-                for (let i = 0; i < structureBoundsList.length; i++) {
-                    const bounds = structureBoundsList[i];
-                    if (!bounds || bounds.z !== actorZ) continue;
-                    const distance = distanceToBounds(bounds, npc.x, npc.y);
-                    if (distance < nearestDistance) {
-                        nearestDistance = distance;
-                        nearestBounds = bounds;
-                    }
-                }
-                if (nearestBounds && nearestDistance <= Math.max(3, roamPad + 1)) return expandNpcRoamBounds(nearestBounds, roamPad);
-                const fallbackPad = dialogueId ? 4 : 2;
-                return {
-                    xMin: Math.max(1, npc.x - fallbackPad),
-                    xMax: Math.min(MAP_SIZE - 2, npc.x + fallbackPad),
-                    yMin: Math.max(1, npc.y - fallbackPad),
-                    yMax: Math.min(MAP_SIZE - 2, npc.y + fallbackPad)
-                };
-            };
-
-            const resolveTownNpcRoamingRadius = (npc, roamBounds) => {
-                const npcName = npc && typeof npc.name === 'string' ? npc.name : '';
-                const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
-                if (npcName === 'Banker') return 0;
-                if (/^King\b/i.test(npcName) || /^Queen\b/i.test(npcName)) return 1;
-                if (npc && npc.action === 'Travel') return dialogueId ? 2 : 1;
-                if (dialogueId) {
-                    if (roamBounds) {
-                        const spanX = roamBounds.xMax - roamBounds.xMin + 1;
-                        const spanY = roamBounds.yMax - roamBounds.yMin + 1;
-                        return Math.max(3, Math.min(4, Math.floor(Math.min(spanX, spanY) / 2)));
-                    }
-                    return 3;
-                }
-                if (roamBounds) {
-                    const spanX = roamBounds.xMax - roamBounds.xMin + 1;
-                    const spanY = roamBounds.yMax - roamBounds.yMin + 1;
-                    return Math.max(1, Math.min(2, Math.floor(Math.min(spanX, spanY) / 2)));
-                }
-                return 2;
-            };
-
             worldTownNpcRuntime.resetLoadedChunkNpcActors();
             const actorNowMs = performance.now();
             npcsToRender = npcsToRender.map((npc, index) => {
                 const npcActorId = (npc && typeof npc.spawnId === 'string' && npc.spawnId)
                     || (npc && typeof npc.merchantId === 'string' && npc.merchantId ? `merchant:${npc.merchantId}` : '')
                     || `npc:${String(npc && npc.name ? npc.name : 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_')}:${Number.isFinite(npc.x) ? npc.x : index}:${Number.isFinite(npc.y) ? npc.y : 0}:${Number.isFinite(npc.z) ? npc.z : 0}`;
-                const roamBounds = resolveTownNpcRoamBounds(npc);
+                const roamBounds = worldTownNpcRuntime.resolveTownNpcRoamBounds({
+                    mapSize: MAP_SIZE,
+                    npc,
+                    structureBoundsList
+                });
                 const facingYaw = resolveTownNpcDefaultFacingYaw(npc);
-                const roamingRadius = resolveTownNpcRoamingRadius(npc, roamBounds);
+                const roamingRadius = worldTownNpcRuntime.resolveTownNpcRoamingRadius(npc, roamBounds);
                 const baseHeight = getTileHeightSafe(npc.x, npc.y, Number.isFinite(npc.z) ? npc.z : 0);
                 return Object.assign({}, npc, {
                     actorId: npcActorId,

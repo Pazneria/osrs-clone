@@ -19,14 +19,21 @@ function run() {
   assert(runtimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC roaming update");
   assert(runtimeSource.includes("function applyTownNpcRigAnimation(actor, frameNowMs, visualBaseY)"), "town NPC runtime should own NPC rig animation");
   assert(runtimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
+  assert(runtimeSource.includes("function resolveTownNpcRoamBounds(options = {})"), "town NPC runtime should own NPC roam bounds resolution");
+  assert(runtimeSource.includes("function resolveTownNpcRoamingRadius(npc, roamBounds)"), "town NPC runtime should own NPC roaming radius resolution");
   assert(runtimeSource.includes("let staticNpcBaseTiles = new Map();"), "town NPC runtime should own static NPC tile state");
   assert(runtimeSource.includes("let loadedChunkNpcActors = new Map();"), "town NPC runtime should own loaded chunk NPC actor state");
   assert(worldSource.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC behavior");
   assert(worldSource.includes("worldTownNpcRuntime.updateWorldNpcRuntime(buildTownNpcRuntimeContext(), frameNowMs);"), "world.js should delegate NPC update ticks");
+  assert(worldSource.includes("worldTownNpcRuntime.resolveTownNpcRoamBounds"), "world.js should delegate NPC roam bounds");
+  assert(worldSource.includes("worldTownNpcRuntime.resolveTownNpcRoamingRadius"), "world.js should delegate NPC roaming radius");
   assert(worldSource.includes("worldTownNpcRuntime.resetStaticNpcBaseTiles();"), "world.js should delegate static NPC tile reset");
   assert(worldSource.includes("worldTownNpcRuntime.setLoadedChunkNpcActors(key, renderedNpcActors);"), "world.js should delegate chunk NPC actor tracking");
   assert(!worldSource.includes("function applyTownNpcRigAnimation("), "world.js should not own town NPC rig animation");
   assert(!worldSource.includes("function chooseTownNpcNextStep("), "world.js should not own town NPC roaming step selection");
+  assert(!worldSource.includes("const distanceToBounds = (bounds, x, y) => {"), "world.js should not own NPC roam bounds distance helpers");
+  assert(!worldSource.includes("const resolveTownNpcRoamBounds = (npc) => {"), "world.js should not own NPC roam bounds resolution");
+  assert(!worldSource.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(!worldSource.includes("let staticNpcBaseTiles = new Map();"), "world.js should not own static NPC tile state");
   assert(!worldSource.includes("let loadedChunkNpcActors = new Map();"), "world.js should not own loaded chunk NPC actor state");
 
@@ -36,6 +43,8 @@ function run() {
   assert(runtime, "town NPC runtime should be available after evaluation");
   assert(typeof runtime.hashTownNpcSeed === "function", "town NPC runtime should expose deterministic NPC seed helper");
   assert(typeof runtime.getVisualTileId === "function", "town NPC runtime should expose visual tile resolver");
+  assert(typeof runtime.resolveTownNpcRoamBounds === "function", "town NPC runtime should expose roam bounds resolver");
+  assert(typeof runtime.resolveTownNpcRoamingRadius === "function", "town NPC runtime should expose roaming radius resolver");
   assert(typeof runtime.updateWorldNpcRuntime === "function", "town NPC runtime should expose NPC update runtime");
 
   const TileId = {
@@ -65,6 +74,21 @@ function run() {
   };
   assert(runtime.isTownNpcStepWithinBounds({ mapSize: 8 }, actor, 3, 2), "NPC step bounds should allow in-range steps");
   assert(!runtime.isTownNpcStepWithinBounds({ mapSize: 8 }, actor, 4, 2), "NPC step bounds should reject out-of-radius steps");
+
+  const structureBoundsList = [
+    { structureId: "shop", z: 0, xMin: 10, xMax: 14, yMin: 20, yMax: 24 },
+    { structureId: "tower", z: 1, xMin: 3, xMax: 4, yMin: 3, yMax: 4 }
+  ];
+  const dialogueNpc = { name: "Guide", x: 12, y: 22, z: 0, dialogueId: "guide_intro" };
+  const dialogueBounds = runtime.resolveTownNpcRoamBounds({ mapSize: 32, npc: dialogueNpc, structureBoundsList });
+  assert(dialogueBounds.xMin === 7 && dialogueBounds.xMax === 17, "dialogue NPCs should get expanded structure roam bounds");
+  assert(runtime.resolveTownNpcRoamingRadius(dialogueNpc, dialogueBounds) === 4, "dialogue NPC radius should scale from structure bounds");
+  const nearbyTravelNpc = { name: "Ferry", x: 15, y: 25, z: 0, action: "Travel" };
+  const travelBounds = runtime.resolveTownNpcRoamBounds({ mapSize: 32, npc: nearbyTravelNpc, structureBoundsList });
+  assert(travelBounds.xMin === 8 && travelBounds.xMax === 16, "nearby travel NPCs should reuse nearest structure bounds");
+  assert(runtime.resolveTownNpcRoamingRadius(nearbyTravelNpc, travelBounds) === 1, "travel NPCs without dialogue should stay tightly anchored");
+  assert(runtime.resolveTownNpcRoamingRadius({ name: "Banker", x: 1, y: 1, z: 0 }, null) === 0, "bankers should not roam");
+  assert(runtime.resolveTownNpcRoamingRadius({ name: "King Arthur", x: 1, y: 1, z: 0 }, null) === 1, "royal NPCs should have minimal pacing");
 
   console.log("Town NPC runtime guard passed.");
 }

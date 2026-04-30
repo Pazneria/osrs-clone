@@ -1765,7 +1765,11 @@ function run() {
   assert(worldScript.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC movement and occupancy behavior");
   assert(townNpcRuntimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC update ticks");
   assert(townNpcRuntimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
+  assert(townNpcRuntimeSource.includes("function resolveTownNpcRoamBounds(options = {})"), "town NPC runtime should own NPC roam bounds resolution");
+  assert(townNpcRuntimeSource.includes("function resolveTownNpcRoamingRadius(npc, roamBounds)"), "town NPC runtime should own NPC roaming radius resolution");
   assert(!worldScript.includes("function applyTownNpcRigAnimation("), "world.js should not own town NPC rig animation");
+  assert(!worldScript.includes("const resolveTownNpcRoamBounds = (npc) => {"), "world.js should not own NPC roam bounds resolution");
+  assert(!worldScript.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime hitboxes should preserve appearanceId");
   assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime hitboxes should preserve dialogueId");
   assert(inputRenderSource.includes("playerState.targetUid.action === 'Talk-to'"), "input renderer should route Talk-to actions");
