@@ -91,6 +91,7 @@ function extractFunction(source, name) {
 
 const bridgeSource = read("src/game/platform/ui-domain-bridge.ts");
 const inventorySource = read("src/js/inventory.js");
+const skillPanelRuntimeSource = read("src/js/skill-panel-runtime.js");
 const worldSource = read("src/js/world.js");
 const statusHudRuntimeSource = read("src/js/world/status-hud-runtime.js");
 const coreSource = read("src/js/core.js");
@@ -147,6 +148,34 @@ assert.ok(
   "inventory.js should render structured skill-reference data from the UI domain bridge"
 );
 assert.ok(
+  skillPanelRuntimeSource.includes("window.SkillPanelRuntime"),
+  "skill panel runtime should expose window.SkillPanelRuntime"
+);
+assert.ok(
+  skillPanelRuntimeSource.includes("function buildSkillPanelRecipeDetails(options = {})"),
+  "skill panel runtime should own skill-panel recipe detail derivation"
+);
+assert.ok(
+  skillPanelRuntimeSource.includes("function buildSkillPanelTimeline(options = {})"),
+  "skill panel runtime should own skill-panel timeline derivation"
+);
+assert.ok(
+  inventorySource.includes("getSkillPanelRuntime"),
+  "inventory.js should read from the skill panel runtime"
+);
+assert.ok(
+  inventorySource.includes("runtime.buildSkillPanelRecipeDetails"),
+  "inventory.js should delegate skill recipe details to the skill panel runtime"
+);
+assert.ok(
+  inventorySource.includes("runtime.buildSkillPanelTimeline"),
+  "inventory.js should delegate skill unlock timelines to the skill panel runtime"
+);
+assert.ok(
+  !inventorySource.includes("function collectSkillPanelMilestones"),
+  "inventory.js should not own skill-panel milestone collection"
+);
+assert.ok(
   inventorySource.includes("buildSkillTileTooltipHtml"),
   "inventory.js should build rich skill hover tooltips from shared progress data"
 );
@@ -167,12 +196,12 @@ assert.ok(
   "inventory.js should bind inventory and equipment tooltip handlers"
 );
 assert.ok(
-  inventorySource.includes("computeCookingBurnChance(cookingLevel, recipe.requiredLevel)"),
-  "inventory.js should derive cooking burn chance from the shared registry helper when present"
+  skillPanelRuntimeSource.includes("computeCookingBurnChance(cookingLevel, recipe.requiredLevel)"),
+  "skill panel runtime should derive cooking burn chance from the shared registry helper when present"
 );
 assert.ok(
-  inventorySource.includes("meta.push(`Burn chance: ${burnPercent}%`)"),
-  "inventory.js should surface a cooking burn chance row in recipe details"
+  skillPanelRuntimeSource.includes("meta.push(`Burn chance: ${burnPercent}%`)"),
+  "skill panel runtime should surface a cooking burn chance row in recipe details"
 );
 
 const tooltipSandbox = {
@@ -182,24 +211,22 @@ const tooltipSandbox = {
 vm.runInNewContext(
   `
   let playerSkills = {};
-  const window = { ITEM_DB: {} };
-  const SKILL_PANEL_RECIPE_UNLOCK_TYPE = "recipe";
-  ${extractFunction(inventorySource, "formatSkillPanelText")}
-  ${extractFunction(inventorySource, "resolveSkillPanelItemName")}
-  ${extractFunction(inventorySource, "formatSkillPanelItemAmount")}
-  ${extractFunction(inventorySource, "getSkillPanelUnlockTypeLabel")}
-  ${extractFunction(inventorySource, "buildSkillPanelRecipeDetails")}
+  const window = {};
+  ${skillPanelRuntimeSource}
 
   function runRecipeDetailsTest(options) {
     playerSkills = options.playerSkills || {};
-    window.ITEM_DB = options.itemDb || {};
-    if (options.skillSpecRegistry) window.SkillSpecRegistry = options.skillSpecRegistry;
-    else delete window.SkillSpecRegistry;
-    return buildSkillPanelRecipeDetails(options.skillName, options.unlockEntry);
+    return window.SkillPanelRuntime.buildSkillPanelRecipeDetails({
+      skillName: options.skillName,
+      unlockEntry: options.unlockEntry,
+      itemDb: options.itemDb || {},
+      playerSkills,
+      skillSpecRegistry: options.skillSpecRegistry || null
+    });
   }
 
   function runUnlockTypeLabelTest(unlockEntry) {
-    return getSkillPanelUnlockTypeLabel(unlockEntry);
+    return window.SkillPanelRuntime.getSkillPanelUnlockTypeLabel(unlockEntry);
   }
 
   globalThis.runRecipeDetailsTest = runRecipeDetailsTest;

@@ -45,6 +45,7 @@ import worldMapHudRuntimeScript from "../../js/world/map-hud-runtime.js?raw";
 import worldTrainingLocationRuntimeScript from "../../js/world/training-location-runtime.js?raw";
 import worldStatusHudRuntimeScript from "../../js/world/status-hud-runtime.js?raw";
 import skillProgressRuntimeScript from "../../js/skill-progress-runtime.js?raw";
+import skillPanelRuntimeScript from "../../js/skill-panel-runtime.js?raw";
 import inventoryItemRuntimeScript from "../../js/inventory-item-runtime.js?raw";
 import equipmentItemRuntimeScript from "../../js/equipment-item-runtime.js?raw";
 import foodItemRuntimeScript from "../../js/food-item-runtime.js?raw";
@@ -135,6 +136,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-training-location-runtime", filename: "src/js/world/training-location-runtime.js", code: worldTrainingLocationRuntimeScript },
   { id: "world-status-hud-runtime", filename: "src/js/world/status-hud-runtime.js", code: worldStatusHudRuntimeScript },
   { id: "skill-progress-runtime", filename: "src/js/skill-progress-runtime.js", code: skillProgressRuntimeScript },
+  { id: "skill-panel-runtime", filename: "src/js/skill-panel-runtime.js", code: skillPanelRuntimeScript },
   { id: "inventory-item-runtime", filename: "src/js/inventory-item-runtime.js", code: inventoryItemRuntimeScript },
   { id: "equipment-item-runtime", filename: "src/js/equipment-item-runtime.js", code: equipmentItemRuntimeScript },
   { id: "food-item-runtime", filename: "src/js/food-item-runtime.js", code: foodItemRuntimeScript },
