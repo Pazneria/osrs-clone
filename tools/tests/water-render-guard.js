@@ -11,6 +11,7 @@ function run() {
   const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(contractsSource.includes("waterBodies?: WaterBodyDefinition[];"), "world contract should expose optional authored water bodies");
@@ -31,10 +32,10 @@ function run() {
   assert(worldSource.includes("isPierSideWaterTile"), "world.js should preserve side-water lanes around raised piers");
   assert(worldSource.includes("const isPierCoveredTile = isPierVisualCoverageTile"), "world.js should keep pier-covered water tiles out of shoreline underlap");
   assert(worldSource.includes("isPierVisualCoverageTile"), "world.js should suppress terrain rendering under the full visual pier footprint");
-  assert(worldSource.includes("const sampleTerrainVertexHeight ="), "world.js should shape terrain edges from nearby renderable land tiles instead of pulling them toward empty water or pier space");
-  assert(worldSource.includes("if (count > 0 && waterCount > 0) {"), "world.js should bend shoreline terrain vertices toward nearby flat water");
+  assert(chunkTerrainRuntimeSource.includes("const sampleTerrainVertexHeight ="), "chunk terrain runtime should shape terrain edges from nearby renderable land tiles instead of pulling them toward empty water or pier space");
+  assert(chunkTerrainRuntimeSource.includes("if (count > 0 && waterCount > 0) {"), "chunk terrain runtime should bend shoreline terrain vertices toward nearby flat water");
   assert(worldSource.includes("if (isPierVisualCoverageTile(pierConfig, tileX, tileY, z)) continue;"), "world.js should ignore pier coverage when computing shoreline intensity so dock water does not artifact");
-  assert(worldSource.includes("terrainGeo.setIndex(filteredTerrainIndices);"), "world.js should filter terrain triangles so grass does not render across water and manmade surfaces");
+  assert(chunkTerrainRuntimeSource.includes("terrainGeo.setIndex(filteredTerrainIndices);"), "chunk terrain runtime should filter terrain triangles so grass does not render across water and manmade surfaces");
   assert(worldSource.includes("createTopAnchoredFloorMesh"), "world.js should build visible floor slabs even when authored floor tiles sit at or below ground height");
   assert(!worldSource.includes("} else if (isWaterTileId(tile)) {"), "world.js should not key primary water rendering directly off the legacy object tile loop");
   assert(!worldSource.includes("sharedGeometries.waterPlane"), "world.js should not rebuild water from one plane per tile");

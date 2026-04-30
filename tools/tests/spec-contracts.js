@@ -1721,6 +1721,7 @@ function run() {
   fishingAnimateContext.playerState.fishingActiveMethodId = "deep_rune_harpoon";
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
+  const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-terrain-runtime.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
   const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
@@ -1790,6 +1791,10 @@ function run() {
   assert(worldScript.includes("window.getFishingTrainingLocations = function getFishingTrainingLocations()"), "fishing training location getter missing");
   assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
   assert(worldScript.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "firemaking training location getter missing");
+  assert(worldScript.includes("WorldChunkTerrainRuntime"), "world.js should delegate chunk terrain mesh construction");
+  assert(chunkTerrainRuntimeSource.includes("function buildChunkGroundMeshes(options = {})"), "chunk terrain runtime should own ground mesh construction");
+  assert(!worldScript.includes("const sampleTerrainVertexHeight = (cornerX, cornerY) => {"), "world.js should not own chunk terrain vertex sampling");
+  assert(!worldScript.includes("new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)"), "world.js should not own chunk ground plane geometry construction");
   assert(worldScript.includes("WorldGroundItemRenderRuntime"), "world.js should delegate ground-item visuals through the render runtime");
   assert(!worldScript.includes("function addAshesGroundVisual("), "world.js should not own ashes ground-item visual construction");
   assert(!worldScript.includes("function resolveFishGroundVisual("), "world.js should not own fish ground-item visual resolution");

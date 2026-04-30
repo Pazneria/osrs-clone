@@ -52,6 +52,7 @@ function run() {
   const sceneStateIndex = legacyManifestSource.indexOf('id: "world-scene-state"');
   const qaToolsIndex = legacyManifestSource.indexOf('id: "qa-tools-runtime"');
   const proceduralRuntimeIndex = legacyManifestSource.indexOf('id: "world-procedural-runtime"');
+  const chunkTerrainRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-terrain-runtime"');
   const structureRuntimeIndex = legacyManifestSource.indexOf('id: "world-structure-render-runtime"');
   const treeNodeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-node-runtime"');
   const treeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-render-runtime"');
@@ -65,6 +66,7 @@ function run() {
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
   assert(qaToolsIndex !== -1 && worldIndex !== -1 && qaToolsIndex < worldIndex, "legacy script manifest should load QA tools before core/world runtime consumers");
   assert(proceduralRuntimeIndex !== -1 && worldIndex !== -1 && proceduralRuntimeIndex < worldIndex, "legacy script manifest should load world procedural runtime before world.js");
+  assert(chunkTerrainRuntimeIndex !== -1 && worldIndex !== -1 && chunkTerrainRuntimeIndex < worldIndex, "legacy script manifest should load world chunk terrain runtime before world.js");
   assert(structureRuntimeIndex !== -1 && worldIndex !== -1 && structureRuntimeIndex < worldIndex, "legacy script manifest should load world structure render runtime before world.js");
   assert(treeNodeRuntimeIndex !== -1 && worldIndex !== -1 && treeNodeRuntimeIndex < worldIndex, "legacy script manifest should load world tree node runtime before world.js");
   assert(treeRuntimeIndex !== -1 && worldIndex !== -1 && treeRuntimeIndex < worldIndex, "legacy script manifest should load world tree render runtime before world.js");
@@ -92,6 +94,7 @@ function run() {
   assert(worldSource.includes("WorldSceneStateRuntime"), "world.js should resolve authored scene state through the scene-state runtime");
   assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the current scene payload through the scene-state runtime");
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-scene reload lifecycle");
+  assert(worldSource.includes("WorldChunkTerrainRuntime"), "world.js should delegate chunk ground mesh construction");
   assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk scene state");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD state");
   assert(worldSource.includes("WorldTreeNodeRuntime"), "world.js should delegate tree metadata helpers through the tree node runtime");

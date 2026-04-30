@@ -8,6 +8,7 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(
@@ -19,42 +20,42 @@ function run() {
     "terrain underlay material should render both sides to remove underside void seams"
   );
   assert(
-    worldSource.includes("const isRenderableUnderlayTile = (tileType) => !isWaterTileId(tileType);"),
+    chunkTerrainRuntimeSource.includes("const isRenderableUnderlayTile = (tileType) => !isWaterTileId(tileType);"),
     "terrain underlay should include all non-water land tiles"
   );
   assert(
-    worldSource.includes("const sampleUnderlayVertexHeight = (cornerX, cornerY) => {"),
-    "world.js should sample per-vertex heights for the terrain underlay"
+    chunkTerrainRuntimeSource.includes("const sampleUnderlayVertexHeight = (cornerX, cornerY) => {"),
+    "chunk terrain runtime should sample per-vertex heights for the terrain underlay"
   );
   assert(
-    worldSource.includes("const underlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);"),
-    "world.js should build underlay geometry at tile resolution"
+    chunkTerrainRuntimeSource.includes("const underlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);"),
+    "chunk terrain runtime should build underlay geometry at tile resolution"
   );
   assert(
-    worldSource.includes("underlayGeo.setIndex(underlayIndices);"),
-    "world.js should filter underlay geometry to land tile indices"
+    chunkTerrainRuntimeSource.includes("underlayGeo.setIndex(underlayIndices);"),
+    "chunk terrain runtime should filter underlay geometry to land tile indices"
   );
   assert(
-    worldSource.includes("if (underlayIndices.length > 0) {"),
-    "world.js should only instantiate underlay meshes when the chunk has land coverage"
+    chunkTerrainRuntimeSource.includes("if (underlayIndices.length > 0) {"),
+    "chunk terrain runtime should only instantiate underlay meshes when the chunk has land coverage"
   );
   assert(
-    worldSource.includes("const isManmadeLandTile = (tileType) => !isNaturalTile(tileType) && !isWaterTileId(tileType);"),
-    "world.js should classify manmade land separately for edge blending"
+    chunkTerrainRuntimeSource.includes("const isManmadeLandTile = (tileType) => !isNaturalTile(tileType) && !isWaterTileId(tileType);"),
+    "chunk terrain runtime should classify manmade land separately for edge blending"
   );
   assert(
-    worldSource.includes("if (count > 0 && manmadeCount > 0) {"),
+    chunkTerrainRuntimeSource.includes("if (count > 0 && manmadeCount > 0) {"),
     "terrain edge blending should occur at natural-to-manmade boundaries"
   );
   assert(
-    worldSource.includes("const TERRAIN_EDGE_BLEND_CAP = 0.28;"),
+    chunkTerrainRuntimeSource.includes("const TERRAIN_EDGE_BLEND_CAP = 0.28;"),
     "terrain edge blending should cap boundary influence to preserve authored shapes"
   );
   assert(
-    worldSource.includes("const TERRAIN_EDGE_BLEND_FACTOR = 0.4;"),
+    chunkTerrainRuntimeSource.includes("const TERRAIN_EDGE_BLEND_FACTOR = 0.4;"),
     "terrain edge blending should remain partial and visual-only"
   );
-  const pierCoverageSkips = worldSource.match(/if \(isPierVisualCoverageTile\(activePierConfig, worldTileX, worldTileY, 0\)\) continue;/g) || [];
+  const pierCoverageSkips = chunkTerrainRuntimeSource.match(/if \(isPierVisualCoverageTile\(activePierConfig, worldTileX, worldTileY, 0\)\) continue;/g) || [];
   assert(
     pierCoverageSkips.length >= 2,
     "both terrain and underlay paths should skip pier visual-coverage tiles"
