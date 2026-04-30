@@ -66,8 +66,10 @@ assert.ok(
     combatQaDebugSource.includes("recordPlayerPursuitDebug") &&
     combatQaDebugSource.includes("recordAutoRetaliateSelection") &&
     combatQaDebugSource.includes("recordEnemyAttackResult") &&
-    combatQaDebugSource.includes("recordClearResult"),
-  "combat QA debug runtime should own snapshot, chat emission, and debug scratch publication"
+    combatQaDebugSource.includes("recordClearResult") &&
+    combatQaDebugSource.includes("buildEnemyAnimationDebugState") &&
+    combatQaDebugSource.includes("listCombatEnemyStates"),
+  "combat QA debug runtime should own snapshot, chat emission, debug scratch publication, and QA enemy debug views"
 );
 assert.ok(
   combatSource.includes("const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;") &&
@@ -81,6 +83,13 @@ assert.ok(
     !combatSource.includes("window.__qaCombatDebugLastClearReason") &&
     !combatSource.includes("window.__qaCombatDebugLastClearTick"),
   "combat.js should delegate QA scratch globals through the combat QA debug runtime"
+);
+assert.ok(
+  combatSource.includes("combatQaDebugRuntime.buildEnemyAnimationDebugState({") &&
+    combatSource.includes("combatQaDebugRuntime.listCombatEnemyStates({") &&
+    !combatSource.includes("const locomotionIntentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt)") &&
+    !combatSource.includes("return combatEnemyStates.map((enemyState) => {"),
+  "combat.js should delegate QA enemy animation and list snapshots through the combat QA debug runtime"
 );
 assert.ok(
   coreSource.includes("buildCombatQaDebugContext") &&
@@ -229,6 +238,45 @@ assert.strictEqual(qaWindow.__qaCombatDebugClearEvents.length, 1, "combat QA run
 combatQaRuntime.resetDebugState({ windowRef: qaWindow });
 assert.strictEqual(qaWindow.__qaCombatDebugLastPlayerPursuitState, null, "combat QA runtime should reset pursuit debug state");
 assert.strictEqual(qaWindow.__qaCombatDebugLastAutoRetaliateSelection, null, "combat QA runtime should reset auto-retaliate debug state");
+const enemyAnimationDebug = combatQaRuntime.buildEnemyAnimationDebugState({
+  enemyId: "enemy-a",
+  frameNow: 125,
+  combatEnemyRenderersById: {
+    "enemy-a": {
+      kind: "rat",
+      animationRigId: "rat_rig",
+      group: { rotation: { y: 1.25 } }
+    }
+  },
+  getCombatEnemyState: () => ({
+    runtimeId: "enemy-a",
+    enemyId: "enemy_rat",
+    currentState: "aggroed",
+    x: 3,
+    y: 4,
+    z: 0,
+    prevX: 2,
+    prevY: 4,
+    facingYaw: 1.2,
+    locomotionIntentUntilAt: 200
+  }),
+  getEnemyDefinition: () => ({ displayName: "Rat" }),
+  getEnemyVisualMoveProgress: () => 0.5,
+  isEnemyVisuallyMoving: () => true,
+  resolveEnemyAnimationSetDef: () => ({ rigId: "rat_rig" }),
+  resolveEnemyAnimationSetId: () => "rat_basic",
+  resolveEnemyModelPresetId: () => "rat",
+  shouldEnemyUseWalkBaseClip: () => true
+});
+assert.strictEqual(enemyAnimationDebug.animationSetId, "rat_basic", "combat QA runtime should build enemy animation debug snapshots");
+assert.strictEqual(enemyAnimationDebug.locomotionIntent.remainingMs, 75, "combat QA runtime should compute locomotion intent remaining time");
+const enemyList = combatQaRuntime.listCombatEnemyStates({
+  combatEnemyStates: [{ runtimeId: "enemy-a", enemyId: "enemy_rat", currentState: "idle", x: 1, y: 2, z: 0, currentHealth: 3 }],
+  combatEnemyRenderersById: { "enemy-a": { hitbox: {} } },
+  getEnemyDefinition: () => ({ displayName: "Rat" })
+});
+assert.strictEqual(enemyList[0].displayName, "Rat", "combat QA runtime should build enemy list snapshots");
+assert.strictEqual(enemyList[0].rendered, true, "combat QA runtime should include render presence in enemy list snapshots");
 const qaMessages = [];
 const qaSnapshot = combatQaRuntime.getSnapshot({
   windowRef: {

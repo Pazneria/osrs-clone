@@ -2946,85 +2946,29 @@
     }
 
     function getCombatEnemyAnimationDebugState(enemyId, frameNow = Date.now()) {
-        const resolvedEnemyId = String(enemyId || '').trim();
-        if (!resolvedEnemyId) return null;
-        const enemyState = getCombatEnemyState(resolvedEnemyId);
-        if (!enemyState) return null;
-        const renderer = combatEnemyRenderersById[resolvedEnemyId] || null;
-        const enemyType = getEnemyDefinition(enemyState.enemyId);
-        const animationSetId = resolveEnemyAnimationSetId(enemyType);
-        const animationSetDef = resolveEnemyAnimationSetDef(enemyType);
-        const animationBridge = window.AnimationRuntimeBridge || null;
-        const animationRigId = renderer && renderer.animationRigId
-            ? renderer.animationRigId
-            : (animationSetDef ? animationSetDef.rigId : null);
-        const controller = (animationBridge
-            && renderer
-            && renderer.group
-            && animationRigId
-            && typeof animationBridge.getLegacyControllerDebugState === 'function')
-            ? animationBridge.getLegacyControllerDebugState(renderer.group, animationRigId, frameNow)
-            : null;
-        const moveProgress = getEnemyVisualMoveProgress(enemyState, frameNow);
-        const visuallyMoving = isEnemyVisuallyMoving(enemyState, frameNow);
-        const useWalkBaseClip = shouldEnemyUseWalkBaseClip(enemyState, frameNow);
-        const locomotionIntentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt)
-            ? Math.floor(enemyState.locomotionIntentUntilAt)
-            : 0;
-        return {
-            runtimeId: resolvedEnemyId,
-            enemyId: enemyState.enemyId || null,
-            displayName: enemyType && enemyType.displayName ? enemyType.displayName : null,
-            currentState: enemyState.currentState || null,
-            kind: renderer ? (renderer.kind || null) : null,
-            modelPresetId: resolveEnemyModelPresetId(enemyType),
-            animationSetId: animationSetId || null,
-            animationRigId: animationRigId || null,
-            position: {
-                x: Number.isFinite(enemyState.x) ? enemyState.x : 0,
-                y: Number.isFinite(enemyState.y) ? enemyState.y : 0,
-                z: Number.isFinite(enemyState.z) ? enemyState.z : 0
-            },
-            previousPosition: {
-                x: Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x,
-                y: Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y
-            },
-            facingYaw: Number.isFinite(enemyState.facingYaw) ? enemyState.facingYaw : null,
-            groupRotationY: renderer && renderer.group && Number.isFinite(renderer.group.rotation.y)
-                ? renderer.group.rotation.y
-                : null,
-            moveProgress: Number.isFinite(moveProgress) ? moveProgress : null,
-            visuallyMoving: !!visuallyMoving,
-            useWalkBaseClip: !!useWalkBaseClip,
-            locomotionIntent: {
-                lastAt: Number.isFinite(enemyState.lastLocomotionIntentAt) ? Math.floor(enemyState.lastLocomotionIntentAt) : 0,
-                untilAt: locomotionIntentUntilAt,
-                remainingMs: locomotionIntentUntilAt > 0 ? Math.max(0, locomotionIntentUntilAt - Math.floor(frameNow)) : 0
-            },
-            moveTriggerAt: Number.isFinite(enemyState.moveTriggerAt) ? Math.floor(enemyState.moveTriggerAt) : 0,
-            attackTriggerAt: Number.isFinite(enemyState.attackTriggerAt) ? Math.floor(enemyState.attackTriggerAt) : 0,
-            hitReactionTriggerAt: Number.isFinite(enemyState.hitReactionTriggerAt) ? Math.floor(enemyState.hitReactionTriggerAt) : 0,
-            controller
-        };
+        return combatQaDebugRuntime.buildEnemyAnimationDebugState({
+            windowRef: window,
+            enemyId,
+            frameNow,
+            combatEnemyRenderersById,
+            getCombatEnemyState,
+            getEnemyDefinition,
+            getEnemyVisualMoveProgress,
+            isEnemyVisuallyMoving,
+            resolveEnemyAnimationSetDef,
+            resolveEnemyAnimationSetId,
+            resolveEnemyModelPresetId,
+            shouldEnemyUseWalkBaseClip
+        });
     }
 
     function listQaCombatEnemyStates() {
         ensureCombatEnemyWorldReady();
         updateCombatRenderers(Date.now());
-        return combatEnemyStates.map((enemyState) => {
-            const enemyType = getEnemyDefinition(enemyState.enemyId);
-            const renderer = combatEnemyRenderersById[enemyState.runtimeId] || null;
-            return {
-                runtimeId: enemyState.runtimeId || '',
-                enemyId: enemyState.enemyId || '',
-                displayName: enemyType && enemyType.displayName ? enemyType.displayName : enemyState.enemyId || '',
-                state: enemyState.currentState || '',
-                x: Number.isFinite(enemyState.x) ? enemyState.x : 0,
-                y: Number.isFinite(enemyState.y) ? enemyState.y : 0,
-                z: Number.isFinite(enemyState.z) ? enemyState.z : 0,
-                hp: Number.isFinite(enemyState.currentHealth) ? enemyState.currentHealth : null,
-                rendered: !!(renderer && renderer.hitbox)
-            };
+        return combatQaDebugRuntime.listCombatEnemyStates({
+            combatEnemyRenderersById,
+            combatEnemyStates,
+            getEnemyDefinition
         });
     }
 

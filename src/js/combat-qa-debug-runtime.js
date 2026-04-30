@@ -81,6 +81,110 @@
         };
     }
 
+    function buildEnemyAnimationDebugState(context = {}) {
+        const resolvedEnemyId = String(context.enemyId || '').trim();
+        if (!resolvedEnemyId) return null;
+        const enemyState = typeof context.getCombatEnemyState === 'function'
+            ? context.getCombatEnemyState(resolvedEnemyId)
+            : null;
+        if (!enemyState) return null;
+        const renderersById = context.combatEnemyRenderersById || {};
+        const renderer = renderersById[resolvedEnemyId] || null;
+        const enemyType = typeof context.getEnemyDefinition === 'function'
+            ? context.getEnemyDefinition(enemyState.enemyId)
+            : null;
+        const animationSetId = typeof context.resolveEnemyAnimationSetId === 'function'
+            ? context.resolveEnemyAnimationSetId(enemyType)
+            : null;
+        const animationSetDef = typeof context.resolveEnemyAnimationSetDef === 'function'
+            ? context.resolveEnemyAnimationSetDef(enemyType)
+            : null;
+        const animationBridge = context.animationBridge || getWindowRef(context).AnimationRuntimeBridge || null;
+        const frameNow = Number.isFinite(context.frameNow) ? context.frameNow : getNowMs(context);
+        const animationRigId = renderer && renderer.animationRigId
+            ? renderer.animationRigId
+            : (animationSetDef ? animationSetDef.rigId : null);
+        const controller = (animationBridge
+            && renderer
+            && renderer.group
+            && animationRigId
+            && typeof animationBridge.getLegacyControllerDebugState === 'function')
+            ? animationBridge.getLegacyControllerDebugState(renderer.group, animationRigId, frameNow)
+            : null;
+        const moveProgress = typeof context.getEnemyVisualMoveProgress === 'function'
+            ? context.getEnemyVisualMoveProgress(enemyState, frameNow)
+            : null;
+        const visuallyMoving = typeof context.isEnemyVisuallyMoving === 'function'
+            ? context.isEnemyVisuallyMoving(enemyState, frameNow)
+            : false;
+        const useWalkBaseClip = typeof context.shouldEnemyUseWalkBaseClip === 'function'
+            ? context.shouldEnemyUseWalkBaseClip(enemyState, frameNow)
+            : false;
+        const locomotionIntentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt)
+            ? Math.floor(enemyState.locomotionIntentUntilAt)
+            : 0;
+        return {
+            runtimeId: resolvedEnemyId,
+            enemyId: enemyState.enemyId || null,
+            displayName: enemyType && enemyType.displayName ? enemyType.displayName : null,
+            currentState: enemyState.currentState || null,
+            kind: renderer ? (renderer.kind || null) : null,
+            modelPresetId: typeof context.resolveEnemyModelPresetId === 'function'
+                ? context.resolveEnemyModelPresetId(enemyType)
+                : null,
+            animationSetId: animationSetId || null,
+            animationRigId: animationRigId || null,
+            position: {
+                x: Number.isFinite(enemyState.x) ? enemyState.x : 0,
+                y: Number.isFinite(enemyState.y) ? enemyState.y : 0,
+                z: Number.isFinite(enemyState.z) ? enemyState.z : 0
+            },
+            previousPosition: {
+                x: Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x,
+                y: Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y
+            },
+            facingYaw: Number.isFinite(enemyState.facingYaw) ? enemyState.facingYaw : null,
+            groupRotationY: renderer && renderer.group && Number.isFinite(renderer.group.rotation.y)
+                ? renderer.group.rotation.y
+                : null,
+            moveProgress: Number.isFinite(moveProgress) ? moveProgress : null,
+            visuallyMoving: !!visuallyMoving,
+            useWalkBaseClip: !!useWalkBaseClip,
+            locomotionIntent: {
+                lastAt: Number.isFinite(enemyState.lastLocomotionIntentAt) ? Math.floor(enemyState.lastLocomotionIntentAt) : 0,
+                untilAt: locomotionIntentUntilAt,
+                remainingMs: locomotionIntentUntilAt > 0 ? Math.max(0, locomotionIntentUntilAt - Math.floor(frameNow)) : 0
+            },
+            moveTriggerAt: Number.isFinite(enemyState.moveTriggerAt) ? Math.floor(enemyState.moveTriggerAt) : 0,
+            attackTriggerAt: Number.isFinite(enemyState.attackTriggerAt) ? Math.floor(enemyState.attackTriggerAt) : 0,
+            hitReactionTriggerAt: Number.isFinite(enemyState.hitReactionTriggerAt) ? Math.floor(enemyState.hitReactionTriggerAt) : 0,
+            controller
+        };
+    }
+
+    function listCombatEnemyStates(context = {}) {
+        const enemyStates = Array.isArray(context.combatEnemyStates) ? context.combatEnemyStates : [];
+        const renderersById = context.combatEnemyRenderersById || {};
+        const getEnemyDefinition = typeof context.getEnemyDefinition === 'function'
+            ? context.getEnemyDefinition
+            : () => null;
+        return enemyStates.map((enemyState) => {
+            const enemyType = getEnemyDefinition(enemyState.enemyId);
+            const renderer = renderersById[enemyState.runtimeId] || null;
+            return {
+                runtimeId: enemyState.runtimeId || '',
+                enemyId: enemyState.enemyId || '',
+                displayName: enemyType && enemyType.displayName ? enemyType.displayName : enemyState.enemyId || '',
+                state: enemyState.currentState || '',
+                x: Number.isFinite(enemyState.x) ? enemyState.x : 0,
+                y: Number.isFinite(enemyState.y) ? enemyState.y : 0,
+                z: Number.isFinite(enemyState.z) ? enemyState.z : 0,
+                hp: Number.isFinite(enemyState.currentHealth) ? enemyState.currentHealth : null,
+                rendered: !!(renderer && renderer.hitbox)
+            };
+        });
+    }
+
     function getSnapshot(context = {}) {
         const windowRef = getWindowRef(context);
         const playerState = context.playerState || {};
@@ -390,6 +494,8 @@
     }
 
     window.CombatQaDebugRuntime = {
+        buildEnemyAnimationDebugState,
+        listCombatEnemyStates,
         resetDebugState,
         recordAutoRetaliateSelection,
         recordClearEvent,
