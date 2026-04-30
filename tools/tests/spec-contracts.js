@@ -1721,6 +1721,7 @@ function run() {
   fishingAnimateContext.playerState.fishingActiveMethodId = "deep_rune_harpoon";
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
+  const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/shared-assets-runtime.js"), "utf8");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-terrain-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-tier-render-runtime.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
@@ -1796,6 +1797,13 @@ function run() {
   assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
   assert(worldScript.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "firemaking training location getter missing");
   assert(worldScript.includes("WorldChunkTerrainRuntime"), "world.js should delegate chunk terrain mesh construction");
+  assert(worldScript.includes("WorldSharedAssetsRuntime"), "world.js should delegate shared asset setup");
+  assert(sharedAssetsRuntimeSource.includes("function initSharedAssets(options = {})"), "shared asset runtime should own shared geometry/material setup");
+  assert(sharedAssetsRuntimeSource.includes("sharedGeometries.ground = new THREE.PlaneGeometry(chunkSize, chunkSize);"), "shared asset runtime should own base ground geometry setup");
+  assert(sharedAssetsRuntimeSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });"), "shared asset runtime should own terrain underlay material setup");
+  assert(sharedAssetsRuntimeSource.includes("const makeNoiseTexture = (baseHex, vMin, vMax, speckleCount, patchCount = 42, patchSize = 5) => {"), "shared asset runtime should own procedural material texture helpers");
+  assert(!worldScript.includes("sharedGeometries.ground = new THREE.PlaneGeometry"), "world.js should not own shared geometry construction");
+  assert(!worldScript.includes("const makeNoiseTexture = (baseHex"), "world.js should not own shared procedural material texture helpers");
   assert(chunkTerrainRuntimeSource.includes("function buildChunkGroundMeshes(options = {})"), "chunk terrain runtime should own ground mesh construction");
   assert(!worldScript.includes("const sampleTerrainVertexHeight = (cornerX, cornerY) => {"), "world.js should not own chunk terrain vertex sampling");
   assert(!worldScript.includes("new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)"), "world.js should not own chunk ground plane geometry construction");

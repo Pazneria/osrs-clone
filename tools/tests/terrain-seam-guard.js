@@ -8,16 +8,21 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(
-    worldSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial"),
-    "world.js should define a dedicated terrain underlay material"
+    sharedAssetsRuntimeSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial"),
+    "shared asset runtime should define a dedicated terrain underlay material"
   );
   assert(
-    worldSource.includes("side: THREE.DoubleSide"),
+    sharedAssetsRuntimeSource.includes("side: THREE.DoubleSide"),
     "terrain underlay material should render both sides to remove underside void seams"
+  );
+  assert(
+    !worldSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial"),
+    "world.js should not own terrain underlay material construction"
   );
   assert(
     chunkTerrainRuntimeSource.includes("const isRenderableUnderlayTile = (tileType) => !isWaterTileId(tileType);"),

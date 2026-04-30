@@ -13,6 +13,7 @@ function run() {
   const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const proceduralRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "procedural-runtime.js"), "utf8");
+  const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
@@ -56,6 +57,7 @@ function run() {
   const sceneStateIndex = legacyManifestSource.indexOf('id: "world-scene-state"');
   const qaToolsIndex = legacyManifestSource.indexOf('id: "qa-tools-runtime"');
   const proceduralRuntimeIndex = legacyManifestSource.indexOf('id: "world-procedural-runtime"');
+  const sharedAssetsRuntimeIndex = legacyManifestSource.indexOf('id: "world-shared-assets-runtime"');
   const waterRuntimeIndex = legacyManifestSource.indexOf('id: "world-water-runtime"');
   const chunkTerrainRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-terrain-runtime"');
   const chunkTierRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-tier-render-runtime"');
@@ -74,6 +76,7 @@ function run() {
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
   assert(qaToolsIndex !== -1 && worldIndex !== -1 && qaToolsIndex < worldIndex, "legacy script manifest should load QA tools before core/world runtime consumers");
   assert(proceduralRuntimeIndex !== -1 && worldIndex !== -1 && proceduralRuntimeIndex < worldIndex, "legacy script manifest should load world procedural runtime before world.js");
+  assert(sharedAssetsRuntimeIndex !== -1 && worldIndex !== -1 && sharedAssetsRuntimeIndex < worldIndex, "legacy script manifest should load world shared asset runtime before world.js");
   assert(waterRuntimeIndex !== -1 && worldIndex !== -1 && waterRuntimeIndex < worldIndex, "legacy script manifest should load world water runtime before world.js");
   assert(chunkTerrainRuntimeIndex !== -1 && worldIndex !== -1 && chunkTerrainRuntimeIndex < worldIndex, "legacy script manifest should load world chunk terrain runtime before world.js");
   assert(chunkTierRenderRuntimeIndex !== -1 && worldIndex !== -1 && chunkTierRenderRuntimeIndex < worldIndex, "legacy script manifest should load world chunk tier render runtime before world.js");
@@ -100,6 +103,8 @@ function run() {
   assert(proceduralRuntimeSource.includes("window.WorldProceduralRuntime"), "world procedural runtime should expose a runtime");
   assert(proceduralRuntimeSource.includes("buildGrassTextureCanvas"), "world procedural runtime should own generated grass texture canvases");
   assert(proceduralRuntimeSource.includes("sampleFractalNoise2D"), "world procedural runtime should own deterministic terrain noise helpers");
+  assert(sharedAssetsRuntimeSource.includes("window.WorldSharedAssetsRuntime"), "world shared asset runtime should expose a runtime");
+  assert(sharedAssetsRuntimeSource.includes("function initSharedAssets(options = {})"), "world shared asset runtime should own shared asset setup");
   assert(waterRuntimeSource.includes("window.WorldWaterRuntime"), "world water runtime should expose a runtime");
   assert(waterRuntimeSource.includes("appendChunkWaterTilesToBuilders"), "world water runtime should own chunk water batching");
   assert(chunkTierRenderRuntimeSource.includes("window.WorldChunkTierRenderRuntime"), "world chunk tier render runtime should expose a runtime");
@@ -110,8 +115,10 @@ function run() {
   assert(chunkResourceRenderRuntimeSource.includes("appendChunkResourceVisual"), "world chunk resource render runtime should own resource chunk rendering");
   assert(worldSource.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk resource rendering");
   assert(worldSource.includes("WorldProceduralRuntime"), "world.js should resolve procedural helpers through the procedural runtime");
+  assert(worldSource.includes("WorldSharedAssetsRuntime"), "world.js should delegate shared asset setup");
   assert(!worldSource.includes("function buildGrassTextureCanvas"), "world.js should not own generated texture canvas builders");
   assert(!worldSource.includes("function sampleFractalNoise2D"), "world.js should not own deterministic noise helpers");
+  assert(!worldSource.includes("sharedGeometries.ground = new THREE.PlaneGeometry"), "world.js should not own shared geometry construction");
   assert(worldSource.includes("WorldSceneStateRuntime"), "world.js should resolve authored scene state through the scene-state runtime");
   assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the current scene payload through the scene-state runtime");
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-scene reload lifecycle");
@@ -147,12 +154,14 @@ function run() {
   exposeLegacyBridge();
   exposeLegacyWorldAdapter();
   vm.runInThisContext(sceneStateSource, { filename: path.join(root, "src", "js", "world", "scene-state.js") });
+  vm.runInThisContext(sharedAssetsRuntimeSource, { filename: path.join(root, "src", "js", "world", "shared-assets-runtime.js") });
   vm.runInThisContext(sceneLifecycleSource, { filename: path.join(root, "src", "js", "world", "scene-lifecycle.js") });
   vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
   vm.runInThisContext(mapHudRuntimeSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
   vm.runInThisContext(chunkResourceRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js") });
   const runtime = window.WorldBootstrapRuntime;
   const adapterRuntime = window.LegacyWorldAdapterRuntime;
+  const sharedAssetsRuntime = window.WorldSharedAssetsRuntime;
   const sceneStateRuntime = window.WorldSceneStateRuntime;
   const sceneLifecycleRuntime = window.WorldSceneLifecycleRuntime;
   const chunkSceneRuntime = window.WorldChunkSceneRuntime;
@@ -160,6 +169,7 @@ function run() {
   const chunkResourceRuntime = window.WorldChunkResourceRenderRuntime;
   assert(runtime, "legacy bridge should expose the world bootstrap runtime");
   assert(adapterRuntime, "legacy world adapter should expose its runtime");
+  assert(sharedAssetsRuntime, "world shared asset runtime should expose its runtime");
   assert(sceneStateRuntime, "world scene state should expose its runtime");
   assert(sceneLifecycleRuntime, "world scene lifecycle should expose its runtime");
   assert(chunkSceneRuntime, "world chunk scene runtime should expose its runtime");

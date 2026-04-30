@@ -15,6 +15,7 @@ function run() {
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
+  const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -43,13 +44,17 @@ function run() {
   assert(worldRenderSource.includes("function createWaterSurfaceMaterial"), "world render runtime should own water material construction");
   assert(worldRenderSource.includes("function createSkyDomeMaterial"), "world render runtime should own sky material construction");
   assert(worldRenderSource.includes("function initSkyRuntime"), "world render runtime should initialize the static sky runtime");
+  assert(sharedAssetsSource.includes("window.WorldSharedAssetsRuntime"), "world shared asset runtime should expose a runtime");
+  assert(sharedAssetsSource.includes("function initSharedAssets(options = {})"), "world shared asset runtime should own shared asset initialization");
   assert(worldSource.includes("WorldRenderRuntime"), "world.js should delegate render infrastructure through the world render runtime");
+  assert(worldSource.includes("WorldSharedAssetsRuntime"), "world.js should delegate shared asset setup through the shared asset runtime");
   assert(!worldSource.includes("function createWaterSurfaceMaterial"), "world.js should not own water shader construction");
   assert(!worldSource.includes("function createSkyDomeMaterial"), "world.js should not own sky shader construction");
   assert(
     manifestSource.indexOf('id: "world-render-runtime"') > manifestSource.indexOf('id: "world-procedural-runtime"')
-      && manifestSource.indexOf('id: "world-render-runtime"') < manifestSource.indexOf('id: "world-scene-state"'),
-    "legacy script manifest should load world render runtime after procedural helpers and before world.js"
+      && manifestSource.indexOf('id: "world-shared-assets-runtime"') > manifestSource.indexOf('id: "world-render-runtime"')
+      && manifestSource.indexOf('id: "world-shared-assets-runtime"') < manifestSource.indexOf('id: "world-scene-state"'),
+    "legacy script manifest should load world shared asset runtime after render helpers and before world.js"
   );
   assert(worldSource.includes("function initSkyRuntime"), "world.js should keep a small sky runtime orchestration wrapper");
   assert(worldSource.includes("function updateSkyRuntime"), "world.js should expose a sky update helper");
