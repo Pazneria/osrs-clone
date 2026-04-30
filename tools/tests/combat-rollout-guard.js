@@ -7,6 +7,10 @@ function read(relPath) {
   return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
 }
 
+function countOccurrences(source, pattern) {
+  return source.split(pattern).length - 1;
+}
+
 const legacyManifest = read("src/game/platform/legacy-script-manifest.ts");
 const mainSource = read("src/main.ts");
 const coreSource = read("src/js/core.js");
@@ -147,6 +151,12 @@ assert.ok(
     combatSource.includes("else if (enemyState.enemyId === 'enemy_wolf') renderer = createWolfRenderer(enemyState, enemyType);"),
   "combat runtime should give boars and wolves dedicated quadruped renderers"
 );
+assert.strictEqual(countOccurrences(combatSource, "function createBoarRenderer("), 1, "combat.js should not keep shadowed boar renderer declarations");
+assert.strictEqual(countOccurrences(combatSource, "function createWolfRenderer("), 1, "combat.js should not keep shadowed wolf renderer declarations");
+assert.strictEqual(countOccurrences(combatSource, "function updateBoarRenderer("), 1, "combat.js should not keep shadowed boar update declarations");
+assert.strictEqual(countOccurrences(combatSource, "function updateWolfRenderer("), 1, "combat.js should not keep shadowed wolf update declarations");
+assert.ok(!combatSource.includes("function createQuadrupedLimbRig("), "combat.js should not keep the dead quadruped limb rig helper generation");
+assert.ok(!combatSource.includes("function poseQuadrupedLimbRig("), "combat.js should not keep the dead quadruped limb pose helper generation");
 assert.ok(
   combatContentSource.includes('modelPresetId: "guard"') &&
     combatContentSource.includes('animationSetId: "guard_basic"') &&
