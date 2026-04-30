@@ -1731,6 +1731,7 @@ function run() {
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
   const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
+  const treeLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-lifecycle-runtime.js"), "utf8");
   const rockNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-node-runtime.js"), "utf8");
   const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-resource-render-runtime.js"), "utf8");
   const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-pose-reference-runtime.js"), "utf8");
@@ -1949,7 +1950,16 @@ function run() {
   assert(woodcuttingRuntimeSource.includes("if (!draft.writers.setTree(placement)) continue;"), "woodcutting tree placement should flow through the runtime writer");
   assert(!worldScript.includes("materializeSkillWorldRuntime"), "world runtime should load authored starter-town topology directly");
   assert(worldScript.includes("function getTreeNodeAt(x, y, z = playerState.z)"), "world tree node lookup missing");
-  assert(worldScript.includes("function resolveTreeRespawnTicks(gridX, gridY, z)"), "woodcutting respawn scaling helper missing");
+  assert(worldScript.includes("WorldTreeLifecycleRuntime"), "world.js should delegate tree lifecycle behavior through the lifecycle runtime");
+  assert(treeLifecycleRuntimeSource.includes("function resolveTreeRespawnTicks(context = {}, gridX, gridY, z)"), "tree lifecycle runtime should own respawn scaling");
+  assert(treeLifecycleRuntimeSource.includes("function chopDownTree(context = {}, gridX, gridY, z)"), "tree lifecycle runtime should own chop-down mutation");
+  assert(treeLifecycleRuntimeSource.includes("function respawnTree(context = {}, gridX, gridY, z)"), "tree lifecycle runtime should own respawn mutation");
+  assert(treeLifecycleRuntimeSource.includes("function tickTreeLifecycle(context = {})"), "tree lifecycle runtime should own tree respawn ticks");
+  assert(inputRenderSource.includes("window.tickTreeLifecycle()"), "input renderer should delegate tree respawn ticks through the lifecycle hook");
+  assert(!inputRenderSource.includes("for (let i = respawningTrees.length - 1;"), "input renderer should not tick respawning trees inline");
+  assert(!worldScript.includes("respawningTrees.push({ x: gridX, y: gridY, z: z, respawnTick: currentTick + respawnTicks });"), "world.js should not enqueue tree respawns inline");
+  assert(!worldScript.includes("logicalMap[z][gridY][gridX] = 4;"), "world.js should not mutate tree stump tiles inline");
+  assert(!worldScript.includes("logicalMap[z][gridY][gridX] = 1;"), "world.js should not mutate tree respawn tiles inline");
   assert(worldScript.includes("WorldTreeNodeRuntime"), "world.js should delegate tree metadata helpers through the tree node runtime");
   assert(treeNodeRuntimeSource.includes("function createTreeNodeRecord(nodeId = 'normal_tree', options = {})"), "tree node runtime should own tree-node metadata shaping");
   assert(treeNodeRuntimeSource.includes("function rebuildTreeNodes(input = {})"), "tree node runtime should own tree-node rebuild scanning");

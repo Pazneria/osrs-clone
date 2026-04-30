@@ -1664,7 +1664,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             let movedThisTick = false;
             playerState.prevX = playerState.x; playerState.prevY = playerState.y; playerState.midX = null; playerState.midY = null;
-            for (let i = respawningTrees.length - 1; i >= 0; i--) { if (currentTick >= respawningTrees[i].respawnTick) { respawnTree(respawningTrees[i].x, respawningTrees[i].y, respawningTrees[i].z); respawningTrees.splice(i, 1); } }
+            if (typeof window.tickTreeLifecycle === 'function') window.tickTreeLifecycle();
             if (typeof tickRockNodes === 'function') tickRockNodes();
             if (typeof window.updateGroundItems === 'function') window.updateGroundItems();
             if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();

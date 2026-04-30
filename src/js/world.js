@@ -11,6 +11,7 @@
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
         const worldTreeNodeRuntime = window.WorldTreeNodeRuntime || null;
         const worldTreeRenderRuntime = window.WorldTreeRenderRuntime || null;
+        const worldTreeLifecycleRuntime = window.WorldTreeLifecycleRuntime || null;
         const worldRockNodeRuntime = window.WorldRockNodeRuntime || null;
         const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
@@ -1027,6 +1028,24 @@
 
         function markTreeVisualsDirty(tData) {
             return worldTreeRenderRuntime.markTreeVisualsDirty(tData);
+        }
+
+        function buildTreeLifecycleRuntimeContext() {
+            return {
+                THREE,
+                chunkSize: CHUNK_SIZE,
+                currentTick,
+                getTreeNodeAt,
+                getWorldChunkSceneRuntime,
+                heightMap,
+                logicalMap,
+                markTreeVisualsDirty,
+                respawningTrees,
+                setTreeVisualState,
+                skillSpecRegistry: window.SkillSpecRegistry || null,
+                tileIds: TileId,
+                worldChunkResourceRenderRuntime
+            };
         }
 
         function oreTypeForTile(x, y, z = 0) {
@@ -3797,63 +3816,19 @@
             getWorldMapHudRuntime().updateMinimap(frameNowMs, forceRender, buildMapHudRuntimeContext());
         }
         function resolveTreeRespawnTicks(gridX, gridY, z) {
-            const fallbackTicks = 18;
-            if (!window.SkillSpecRegistry || typeof SkillSpecRegistry.getNodeTable !== 'function') return fallbackTicks;
-            const nodeTable = SkillSpecRegistry.getNodeTable('woodcutting');
-            if (!nodeTable) return fallbackTicks;
-            const treeNode = getTreeNodeAt(gridX, gridY, z);
-            const nodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';
-            const nodeSpec = nodeTable[nodeId] || nodeTable.normal_tree;
-            if (!nodeSpec || !Number.isFinite(nodeSpec.respawnTicks)) return fallbackTicks;
-            return Math.max(1, Math.floor(nodeSpec.respawnTicks));
+            return worldTreeLifecycleRuntime.resolveTreeRespawnTicks(buildTreeLifecycleRuntimeContext(), gridX, gridY, z);
         }
 
         function chopDownTree(gridX, gridY, z) {
-            let cx = Math.floor(gridX / CHUNK_SIZE);
-            let cy = Math.floor(gridY / CHUNK_SIZE);
-            let group = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
-            const respawnTicks = resolveTreeRespawnTicks(gridX, gridY, z);
-
-            if (group) {
-                let planeGroup = group.children.find(c => c.userData.z === z);
-                worldChunkResourceRenderRuntime.setChunkTreeStumpVisual({
-                    THREE,
-                    planeGroup,
-                    heightMap,
-                    gridX,
-                    gridY,
-                    z,
-                    isStump: true,
-                    getTreeNodeAt,
-                    setTreeVisualState,
-                    markTreeVisualsDirty
-                });
-            }
-            logicalMap[z][gridY][gridX] = 4;
-            respawningTrees.push({ x: gridX, y: gridY, z: z, respawnTick: currentTick + respawnTicks });
+            return worldTreeLifecycleRuntime.chopDownTree(buildTreeLifecycleRuntimeContext(), gridX, gridY, z);
         }
 
         function respawnTree(gridX, gridY, z) {
-            let cx = Math.floor(gridX / CHUNK_SIZE);
-            let cy = Math.floor(gridY / CHUNK_SIZE);
-            let group = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
+            return worldTreeLifecycleRuntime.respawnTree(buildTreeLifecycleRuntimeContext(), gridX, gridY, z);
+        }
 
-            if (group) {
-                let planeGroup = group.children.find(c => c.userData.z === z);
-                worldChunkResourceRenderRuntime.setChunkTreeStumpVisual({
-                    THREE,
-                    planeGroup,
-                    heightMap,
-                    gridX,
-                    gridY,
-                    z,
-                    isStump: false,
-                    getTreeNodeAt,
-                    setTreeVisualState,
-                    markTreeVisualsDirty
-                });
-            }
-            logicalMap[z][gridY][gridX] = 1;
+        function tickTreeLifecycle() {
+            return worldTreeLifecycleRuntime.tickTreeLifecycle(buildTreeLifecycleRuntimeContext());
         }
         window.initLogicalMap = initLogicalMap;
         window.initThreeJS = initThreeJS;
@@ -3864,6 +3839,7 @@
         window.manageChunks = manageChunks;
         window.processPendingNearChunkBuilds = processPendingNearChunkBuilds;
         window.reloadActiveWorldScene = reloadActiveWorldScene;
+        window.tickTreeLifecycle = tickTreeLifecycle;
         window.tickFireLifecycle = tickFireLifecycle;
         window.updateMainDirectionalShadowFocus = updateMainDirectionalShadowFocus;
         window.updateSkyRuntime = updateSkyRuntime;
