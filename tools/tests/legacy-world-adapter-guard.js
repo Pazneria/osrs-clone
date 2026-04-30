@@ -28,6 +28,7 @@ function run() {
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
   const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
+  const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -85,6 +86,7 @@ function run() {
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const mapHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-map-hud-runtime"');
+  const trainingLocationRuntimeIndex = legacyManifestSource.indexOf('id: "world-training-location-runtime"');
   const worldIndex = legacyManifestSource.indexOf('id: "world"');
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
   assert(qaToolsIndex !== -1 && worldIndex !== -1 && qaToolsIndex < worldIndex, "legacy script manifest should load QA tools before core/world runtime consumers");
@@ -111,6 +113,7 @@ function run() {
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(mapHudRuntimeIndex !== -1 && worldIndex !== -1 && mapHudRuntimeIndex < worldIndex, "legacy script manifest should load world map HUD runtime before world.js");
+  assert(trainingLocationRuntimeIndex !== -1 && worldIndex !== -1 && trainingLocationRuntimeIndex < worldIndex, "legacy script manifest should load world training location runtime before world.js");
   assert(sceneStateSource.includes("window.LegacyWorldAdapterRuntime"), "world scene state should resolve the typed legacy world adapter runtime");
   assert(sceneStateSource.includes("getCurrentWorldScenePayload"), "world scene state should expose current scene payload lookup");
   assert(sceneStateSource.includes("resolveRenderWorldId"), "world scene state should own render-world-id fallback resolution");
@@ -120,6 +123,8 @@ function run() {
   assert(chunkRuntimeSource.includes("manageChunks"), "world chunk scene runtime should own chunk manage orchestration");
   assert(mapHudRuntimeSource.includes("window.WorldMapHudRuntime"), "world map HUD runtime should expose a runtime");
   assert(mapHudRuntimeSource.includes("updateWorldMapPanel"), "world map HUD runtime should own world-map panel rendering");
+  assert(trainingLocationRuntimeSource.includes("window.WorldTrainingLocationRuntime"), "world training location runtime should expose a runtime");
+  assert(trainingLocationRuntimeSource.includes("publishTrainingLocationHooks"), "world training location runtime should own training hook publication");
   assert(proceduralRuntimeSource.includes("window.WorldProceduralRuntime"), "world procedural runtime should expose a runtime");
   assert(proceduralRuntimeSource.includes("buildGrassTextureCanvas"), "world procedural runtime should own generated grass texture canvases");
   assert(proceduralRuntimeSource.includes("sampleFractalNoise2D"), "world procedural runtime should own deterministic terrain noise helpers");
@@ -178,7 +183,8 @@ function run() {
   assert(!worldSource.includes("const readWorldRouteGroup = (groupId, fallbackRoutes) => {"), "world.js should not own route-group fallback bridging");
   assert(!worldSource.includes("const cloneRouteDescriptor = (route) => ({"), "world.js should not carry route clone helpers");
   assert(!worldSource.includes("const cloneAltarRenderPlacement = (altar) => ({"), "world.js should not carry altar clone helpers");
-  assert(worldSource.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "world.js should expose the firemaking compatibility getter");
+  assert(worldSource.includes("WorldTrainingLocationRuntime"), "world.js should delegate training location compatibility hooks");
+  assert(!worldSource.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "world.js should not publish firemaking compatibility getters inline");
 
   assert(!bridgeSource.includes("function cloneRoute(route: RouteDescriptor)"), "legacy bridge should reuse shared route cloning");
   assert(bridgeSource.includes("getFiremakingTrainingLocations"), "legacy bridge should expose the firemaking compatibility hook");
@@ -197,6 +203,7 @@ function run() {
   vm.runInThisContext(sceneLifecycleSource, { filename: path.join(root, "src", "js", "world", "scene-lifecycle.js") });
   vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
   vm.runInThisContext(mapHudRuntimeSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
+  vm.runInThisContext(trainingLocationRuntimeSource, { filename: path.join(root, "src", "js", "world", "training-location-runtime.js") });
   vm.runInThisContext(chunkResourceRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js") });
   vm.runInThisContext(miningPoseReferenceRuntimeSource, { filename: path.join(root, "src", "js", "world", "mining-pose-reference-runtime.js") });
   vm.runInThisContext(townNpcRuntimeSource, { filename: path.join(root, "src", "js", "world", "town-npc-runtime.js") });
@@ -211,6 +218,7 @@ function run() {
   const sceneLifecycleRuntime = window.WorldSceneLifecycleRuntime;
   const chunkSceneRuntime = window.WorldChunkSceneRuntime;
   const mapHudRuntime = window.WorldMapHudRuntime;
+  const trainingLocationRuntime = window.WorldTrainingLocationRuntime;
   const chunkResourceRuntime = window.WorldChunkResourceRenderRuntime;
   const miningPoseReferenceRuntime = window.WorldMiningPoseReferenceRuntime;
   const groundItemLifecycleRuntime = window.WorldGroundItemLifecycleRuntime;
@@ -223,6 +231,7 @@ function run() {
   assert(sceneLifecycleRuntime, "world scene lifecycle should expose its runtime");
   assert(chunkSceneRuntime, "world chunk scene runtime should expose its runtime");
   assert(mapHudRuntime, "world map HUD runtime should expose its runtime");
+  assert(trainingLocationRuntime, "world training location runtime should expose its runtime");
   assert(chunkResourceRuntime, "world chunk resource render runtime should expose its runtime");
   assert(miningPoseReferenceRuntime, "world mining pose reference runtime should expose its runtime");
   assert(groundItemLifecycleRuntime, "world ground-item lifecycle runtime should expose its runtime");

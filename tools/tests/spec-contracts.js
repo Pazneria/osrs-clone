@@ -1738,6 +1738,7 @@ function run() {
   const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-pose-reference-runtime.js"), "utf8");
   const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
   const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-lifecycle-runtime.js"), "utf8");
+  const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/training-location-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
   const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
@@ -1803,9 +1804,14 @@ function run() {
   assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "willow_fire_lane"), "willow fire lane missing");
   assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "maple_fire_lane"), "maple fire lane missing");
   assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "yew_fire_lane"), "yew fire lane missing");
-  assert(worldScript.includes("window.getFishingTrainingLocations = function getFishingTrainingLocations()"), "fishing training location getter missing");
-  assert(worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "cooking training location getter missing");
-  assert(worldScript.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "firemaking training location getter missing");
+  assert(worldScript.includes("WorldTrainingLocationRuntime"), "world.js should delegate training location compatibility hooks");
+  assert(trainingLocationRuntimeSource.includes("function publishTrainingLocationHooks(options = {})"), "training location runtime should own compatibility hook publication");
+  assert(trainingLocationRuntimeSource.includes("windowTarget.getFishingTrainingLocations = function getFishingTrainingLocations()"), "training location runtime should publish the fishing getter");
+  assert(trainingLocationRuntimeSource.includes("windowTarget.getCookingTrainingLocations = function getCookingTrainingLocations()"), "training location runtime should publish the cooking getter");
+  assert(trainingLocationRuntimeSource.includes("windowTarget.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "training location runtime should publish the firemaking getter");
+  assert(!worldScript.includes("window.getFishingTrainingLocations = function getFishingTrainingLocations()"), "world.js should not publish the fishing getter inline");
+  assert(!worldScript.includes("window.getCookingTrainingLocations = function getCookingTrainingLocations()"), "world.js should not publish the cooking getter inline");
+  assert(!worldScript.includes("window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations()"), "world.js should not publish the firemaking getter inline");
   assert(worldScript.includes("WorldChunkTerrainRuntime"), "world.js should delegate chunk terrain mesh construction");
   assert(worldScript.includes("WorldSharedAssetsRuntime"), "world.js should delegate shared asset setup");
   assert(sharedAssetsRuntimeSource.includes("function initSharedAssets(options = {})"), "shared asset runtime should own shared geometry/material setup");
@@ -1952,7 +1958,10 @@ function run() {
   assert(!worldScript.includes("const rebuilt = {};"), "world.js should not rebuild rock-node tables inline");
   assert(!worldScript.includes("rockNodes[key] = {"), "world.js should not create rock-node records inline");
   assert(!inputRenderSource.includes("if (typeof tickRockNodes === 'function') tickRockNodes();"), "input renderer should not call the local rock tick function directly");
-  assert(worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "mining training location getter missing");
+  assert(trainingLocationRuntimeSource.includes("windowTarget.getMiningTrainingLocations = function getMiningTrainingLocations()"), "training location runtime should publish the mining getter");
+  assert(trainingLocationRuntimeSource.includes("windowTarget.getRunecraftingAltarLocations = function getRunecraftingAltarLocations()"), "training location runtime should publish the runecrafting altar getter");
+  assert(trainingLocationRuntimeSource.includes("windowTarget.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations()"), "training location runtime should publish the woodcutting getter");
+  assert(!worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "world.js should not publish the mining getter inline");
   assert(starterTownWorld.terrainPatches.woodcuttingRouteAnchor.x === 205 && starterTownWorld.terrainPatches.woodcuttingRouteAnchor.y === 205, "woodcutting route anchor missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.woodcutting) && starterTownWorld.skillRoutes.woodcutting.length === 5, "authored woodcutting routes missing");
   assert(Array.isArray(starterTownWorld.resourceNodes.woodcutting) && starterTownWorld.resourceNodes.woodcutting.length === 82, "authored woodcutting nodes missing");

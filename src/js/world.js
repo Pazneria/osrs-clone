@@ -17,6 +17,7 @@
         const worldRockLifecycleRuntime = window.WorldRockLifecycleRuntime || null;
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const worldFireLifecycleRuntime = window.WorldFireLifecycleRuntime || null;
+        const worldTrainingLocationRuntime = window.WorldTrainingLocationRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
@@ -1406,15 +1407,6 @@
                 }
             }
 
-            const fishingTrainingLocations = fishingTrainingRouteDefs.slice();
-            window.getFishingTrainingLocations = function getFishingTrainingLocations() {
-                return fishingTrainingLocations.slice();
-            };
-            const firemakingTrainingLocations = firemakingTrainingRouteDefs.slice();
-            window.getFiremakingTrainingLocations = function getFiremakingTrainingLocations() {
-                return firemakingTrainingLocations.slice();
-            };
-
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
             const fishingMerchantSpots = worldPayload.fishingMerchantSpots;
             for (let i = 0; i < fishingMerchantSpots.length; i++) {
@@ -1437,7 +1429,6 @@
                 });
             }
 
-            const cookingTrainingLocations = [];
             cookingFireSpotsToRender = [];
 
             function setCookingRouteTile(x, y, z = 0) {
@@ -1466,7 +1457,6 @@
             for (let i = 0; i < cookingRouteSpecs.length; i++) {
                 const routeSpec = cookingRouteSpecs[i];
                 if (!routeSpec || !Array.isArray(routeSpec.fireTiles)) continue;
-                const routePlacements = [];
                 for (let j = 0; j < routeSpec.fireTiles.length; j++) {
                     const tile = routeSpec.fireTiles[j];
                     if (!tile) continue;
@@ -1480,27 +1470,12 @@
                         z: 0
                     };
                     cookingFireSpotsToRender.push(fireSpot);
-                    routePlacements.push(fireSpot);
-                }
-
-                if (routePlacements.length > 0) {
-                    const anchor = routePlacements[Math.floor(routePlacements.length / 2)];
-                    cookingTrainingLocations.push({
-                        routeId: routeSpec.routeId,
-                        alias: routeSpec.alias || null,
-                        label: routeSpec.label,
-                        x: anchor.x,
-                        y: anchor.y,
-                        z: anchor.z,
-                        count: routePlacements.length,
-                        tags: Array.isArray(routeSpec.tags) ? routeSpec.tags.slice() : []
-                    });
                 }
             }
-
-            window.getCookingTrainingLocations = function getCookingTrainingLocations() {
-                return cookingTrainingLocations.slice();
-            };
+            const cookingTrainingLocations = worldTrainingLocationRuntime.buildCookingTrainingLocations({
+                routeSpecs: cookingRouteSpecs,
+                fireSpots: cookingFireSpotsToRender
+            });
 
             rebuildRockNodes();
             rebuildTreeNodes();
@@ -2695,8 +2670,6 @@
 
             const miningPlacementPlan = thinMiningRockPlacements(miningNodePlacements);
             let activeMiningPlacements = miningPlacementPlan.active;
-            const runecraftingRoutes = runecraftingRouteDefs.slice();
-            const woodcuttingTrainingLocations = woodcuttingTrainingRouteDefs.slice();
 
             // Shape the quarry floor first, then redistribute kept rocks across the dirt canvas.
             applyMiningQuarryTerrain(miningNodePlacements, []);
@@ -2705,27 +2678,10 @@
                 setMiningRockAt(activeMiningPlacements[i]);
             }
 
-            const miningRouteCountById = Object.create(null);
-            for (let i = 0; i < activeMiningPlacements.length; i++) {
-                const placement = activeMiningPlacements[i];
-                if (!placement || placement.z !== 0) continue;
-                const routeId = (typeof placement.routeId === 'string' && placement.routeId)
-                    ? placement.routeId
-                    : null;
-                if (!routeId) continue;
-                miningRouteCountById[routeId] = (miningRouteCountById[routeId] || 0) + 1;
-            }
-            const miningTrainingLocations = miningTrainingRouteDefs.map((route) => {
-                const layoutOverride = route && route.routeId ? MINING_QUARRY_LAYOUT_OVERRIDES[route.routeId] : null;
-                return {
-                    ...route,
-                    x: layoutOverride && Number.isFinite(layoutOverride.anchorX) ? layoutOverride.anchorX : route.x,
-                    y: layoutOverride && Number.isFinite(layoutOverride.anchorY) ? layoutOverride.anchorY : route.y,
-                    tags: Array.isArray(route && route.tags) ? route.tags.slice() : [],
-                    count: Number.isFinite(miningRouteCountById[route.routeId])
-                        ? miningRouteCountById[route.routeId]
-                        : route.count
-                };
+            const miningTrainingLocations = worldTrainingLocationRuntime.buildMiningTrainingLocations({
+                routeDefs: miningTrainingRouteDefs,
+                activePlacements: activeMiningPlacements,
+                layoutOverrides: MINING_QUARRY_LAYOUT_OVERRIDES
             });
 
             RUNE_ESSENCE_ROCKS = activeMiningPlacements
@@ -2770,25 +2726,14 @@
             rebuildRockNodes();
             rebuildTreeNodes();
 
-            window.getMiningTrainingLocations = function getMiningTrainingLocations() {
-                return miningTrainingLocations.slice();
-            };
-
-            window.getRunecraftingAltarLocations = function getRunecraftingAltarLocations() {
-                return runecraftingRoutes.slice();
-            };
-            window.getRunecraftingAltarNameAt = function getRunecraftingAltarNameAt(x, y, z) {
-                const routes = runecraftingRoutes;
-                for (let i = 0; i < routes.length; i++) {
-                    const route = routes[i];
-                    if (!route) continue;
-                    if (route.x === x && route.y === y && route.z === z) return route.label || null;
-                }
-                return null;
-            };
-            window.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations() {
-                return woodcuttingTrainingLocations.slice();
-            };
+            worldTrainingLocationRuntime.publishTrainingLocationHooks({
+                fishing: fishingTrainingRouteDefs,
+                cooking: cookingTrainingLocations,
+                firemaking: firemakingTrainingRouteDefs,
+                mining: miningTrainingLocations,
+                runecrafting: runecraftingRouteDefs,
+                woodcutting: woodcuttingTrainingRouteDefs
+            });
 
             const structureBoundsList = stampedStructures
                 .map((structure) => {
