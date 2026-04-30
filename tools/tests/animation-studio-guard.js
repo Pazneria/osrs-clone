@@ -10,9 +10,11 @@ function run() {
   const mainSource = fs.readFileSync(path.join(root, "src", "main.ts"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const debugPanelSource = fs.readFileSync(path.join(root, "src", "js", "combat-animation-debug-panel-runtime.js"), "utf8");
   const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "animation-bridge.ts"), "utf8");
   const studioSource = fs.readFileSync(path.join(root, "src", "game", "animation", "studio.ts"), "utf8");
+  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const viteSource = fs.readFileSync(path.join(root, "vite.config.ts"), "utf8");
 
   assert(mainSource.includes("exposeAnimationBridge"), "main.ts should expose the animation bridge");
@@ -27,8 +29,16 @@ function run() {
   assert(inputSource.includes("applyClipDrivenPlayerAnimation"), "input-render.js should use clip-driven player animation");
   assert(inputSource.includes("player/combat_slash"), "input-render.js should request the combat slash clip");
   assert(inputSource.includes("player/hit_recoil"), "input-render.js should request the hit recoil clip");
-  assert(inputSource.includes("combat-animation-debug-panel"), "input-render.js should expose a combat animation debug panel");
-  assert(inputSource.includes("updateCombatAnimationDebugPanel"), "input-render.js should refresh combat animation debug state");
+  assert(debugPanelSource.includes("window.CombatAnimationDebugPanelRuntime"), "combat animation debug panel runtime should expose a window runtime");
+  assert(debugPanelSource.includes("combat-animation-debug-panel"), "combat animation debug panel runtime should own the panel DOM");
+  assert(debugPanelSource.includes("function updateCombatAnimationDebugPanel(options = {})"), "combat animation debug panel runtime should refresh combat animation debug state");
+  assert(inputSource.includes("CombatAnimationDebugPanelRuntime"), "input-render.js should delegate combat animation debug panel rendering");
+  assert(!inputSource.includes("function ensureCombatAnimationDebugPanel()"), "input-render.js should not own combat animation debug panel DOM construction");
+  assert(manifestSource.includes('../../js/combat-animation-debug-panel-runtime.js?raw'), "legacy manifest should load combat animation debug panel runtime");
+  assert(
+    manifestSource.indexOf('id: "combat-animation-debug-panel-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy manifest should load combat animation debug panel runtime before input-render.js"
+  );
   assert(playerModelSource.includes("window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;"), "player-model.js should expose preview rig creation");
   assert(playerModelSource.includes("window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;"), "player-model.js should expose a weaponless studio preview rig");
   assert(playerModelSource.includes("torso.add(head, leftArm, rightArm);"), "player-model.js should parent the head under the torso for shared motion");
