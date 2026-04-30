@@ -37,6 +37,7 @@ function run() {
   const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "skill-progress-runtime.js"), "utf8");
   const inventoryItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "inventory-item-runtime.js"), "utf8");
   const equipmentItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "equipment-item-runtime.js"), "utf8");
+  const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -103,6 +104,7 @@ function run() {
   const skillProgressRuntimeIndex = legacyManifestSource.indexOf('id: "skill-progress-runtime"');
   const inventoryItemRuntimeIndex = legacyManifestSource.indexOf('id: "inventory-item-runtime"');
   const equipmentItemRuntimeIndex = legacyManifestSource.indexOf('id: "equipment-item-runtime"');
+  const foodItemRuntimeIndex = legacyManifestSource.indexOf('id: "food-item-runtime"');
   const worldIndex = legacyManifestSource.indexOf('id: "world"');
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
   assert(qaToolsIndex !== -1 && worldIndex !== -1 && qaToolsIndex < worldIndex, "legacy script manifest should load QA tools before core/world runtime consumers");
@@ -138,6 +140,7 @@ function run() {
   assert(skillProgressRuntimeIndex !== -1 && worldIndex !== -1 && skillProgressRuntimeIndex < worldIndex, "legacy script manifest should load skill progress runtime before world.js");
   assert(inventoryItemRuntimeIndex !== -1 && worldIndex !== -1 && inventoryItemRuntimeIndex < worldIndex, "legacy script manifest should load inventory item runtime before world.js");
   assert(equipmentItemRuntimeIndex !== -1 && worldIndex !== -1 && equipmentItemRuntimeIndex < worldIndex, "legacy script manifest should load equipment item runtime before world.js");
+  assert(foodItemRuntimeIndex !== -1 && worldIndex !== -1 && foodItemRuntimeIndex < worldIndex, "legacy script manifest should load food item runtime before world.js");
   assert(sceneStateSource.includes("window.LegacyWorldAdapterRuntime"), "world scene state should resolve the typed legacy world adapter runtime");
   assert(sceneStateSource.includes("getCurrentWorldScenePayload"), "world scene state should expose current scene payload lookup");
   assert(sceneStateSource.includes("resolveRenderWorldId"), "world scene state should own render-world-id fallback resolution");
@@ -157,6 +160,8 @@ function run() {
   assert(inventoryItemRuntimeSource.includes("giveItem"), "inventory item runtime should own item grants");
   assert(equipmentItemRuntimeSource.includes("window.EquipmentItemRuntime"), "equipment item runtime should expose a runtime");
   assert(equipmentItemRuntimeSource.includes("equipItem"), "equipment item runtime should own item equips");
+  assert(foodItemRuntimeSource.includes("window.FoodItemRuntime"), "food item runtime should expose a runtime");
+  assert(foodItemRuntimeSource.includes("eatItem"), "food item runtime should own food consumption");
   assert(proceduralRuntimeSource.includes("window.WorldProceduralRuntime"), "world procedural runtime should expose a runtime");
   assert(proceduralRuntimeSource.includes("buildGrassTextureCanvas"), "world procedural runtime should own generated grass texture canvases");
   assert(proceduralRuntimeSource.includes("sampleFractalNoise2D"), "world procedural runtime should own deterministic terrain noise helpers");

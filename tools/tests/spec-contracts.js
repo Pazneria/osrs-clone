@@ -1747,6 +1747,7 @@ function run() {
   const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src/js/skill-progress-runtime.js"), "utf8");
   const inventoryItemRuntimeSource = fs.readFileSync(path.join(root, "src/js/inventory-item-runtime.js"), "utf8");
   const equipmentItemRuntimeSource = fs.readFileSync(path.join(root, "src/js/equipment-item-runtime.js"), "utf8");
+  const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src/js/food-item-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
   const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
@@ -2020,6 +2021,10 @@ function run() {
   assert(equipmentItemRuntimeSource.includes("function equipItem(context = {}, invIndex)"), "equipment item runtime should own item equips");
   assert(worldScript.includes("equipmentItemRuntime.equipItem(buildEquipmentItemRuntimeContext(), invIndex)"), "world.js should delegate item equips");
   assert(!worldScript.includes("const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel)"), "world.js should not enforce equipment requirements inline");
+  assert(foodItemRuntimeSource.includes("window.FoodItemRuntime"), "food item runtime should expose a runtime");
+  assert(foodItemRuntimeSource.includes("function eatItem(context = {}, invIndex)"), "food item runtime should own food consumption");
+  assert(worldScript.includes("foodItemRuntime.eatItem(buildFoodItemRuntimeContext(), invIndex)"), "world.js should delegate food consumption");
+  assert(!worldScript.includes("invSlot.amount -= 1;"), "world.js should not consume food inline");
   assert(!worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "world.js should not publish the mining getter inline");
   assert(starterTownWorld.terrainPatches.woodcuttingRouteAnchor.x === 205 && starterTownWorld.terrainPatches.woodcuttingRouteAnchor.y === 205, "woodcutting route anchor missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.woodcutting) && starterTownWorld.skillRoutes.woodcutting.length === 5, "authored woodcutting routes missing");

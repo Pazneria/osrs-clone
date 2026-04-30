@@ -9,21 +9,6 @@ function loadBrowserScript(root, relPath) {
   vm.runInThisContext(code, { filename: abs });
 }
 
-function extractFunctionSource(source, functionName) {
-  const startToken = `function ${functionName}(`;
-  const startIndex = source.indexOf(startToken);
-  if (startIndex === -1) throw new Error(`Missing function ${functionName}`);
-  const bodyStart = source.indexOf("{", startIndex);
-  let depth = 0;
-  for (let i = bodyStart; i < source.length; i += 1) {
-    const char = source[i];
-    if (char === "{") depth += 1;
-    else if (char === "}") depth -= 1;
-    if (depth === 0) return source.slice(startIndex, i + 1);
-  }
-  throw new Error(`Unterminated function ${functionName}`);
-}
-
 function createEnemyDefinition(enemyId, overrides = {}) {
   const displayName = overrides.displayName || enemyId;
   const attack = Number.isFinite(overrides.attack) ? overrides.attack : 10;
@@ -306,13 +291,11 @@ function getEnemy(enemyId) {
 }
 
 function createEatSandbox(root, options = {}) {
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const didAttackOrCastThisTickSource = extractFunctionSource(worldSource, "didAttackOrCastThisTick");
-  const eatItemSource = extractFunctionSource(worldSource, "eatItem");
+  const foodRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
   const messages = [];
   const sandbox = {
+    window: {},
     currentTick: Number.isFinite(options.currentTick) ? options.currentTick : 100,
-    MAX_REASONABLE_EAT_COOLDOWN_TICKS: 10,
     playerState: Object.assign({
       currentHitpoints: 5,
       eatingCooldownEndTick: 0,
@@ -342,7 +325,7 @@ function createEatSandbox(root, options = {}) {
     renderInventory() {}
   };
   vm.runInNewContext(
-    `${didAttackOrCastThisTickSource}\n${eatItemSource}\nthis.eatItem = eatItem;`,
+    `${foodRuntimeSource}\nthis.eatItem = (invIndex) => window.FoodItemRuntime.eatItem(this, invIndex);`,
     sandbox,
     { filename: "eat-runtime-sandbox.js" }
   );

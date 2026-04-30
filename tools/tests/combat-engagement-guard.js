@@ -28,6 +28,7 @@ function run() {
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
 
   const lockTargetBody = getFunctionBody(combatSource, "lockPlayerCombatTarget");
   assert(lockTargetBody, "combat.js should define lockPlayerCombatTarget");
@@ -193,15 +194,20 @@ function run() {
   );
 
   assert(
-    worldSource.includes("const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;")
-      && worldSource.includes("if ((cooldownEndTick - currentTick) > MAX_REASONABLE_EAT_COOLDOWN_TICKS) {")
-      && worldSource.includes("playerState.eatingCooldownEndTick = currentTick;"),
+    foodItemRuntimeSource.includes("const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;")
+      && foodItemRuntimeSource.includes("if ((cooldownEndTick - currentTick) > MAX_REASONABLE_EAT_COOLDOWN_TICKS) {")
+      && foodItemRuntimeSource.includes("playerState.eatingCooldownEndTick = currentTick;"),
     "eat handling should self-heal impossible cooldown values so stale state cannot lock food usage for long durations"
   );
   assert(
-    worldSource.includes("if (didAttackOrCastThisTick()) {")
-      && worldSource.includes("You cannot eat on the same tick as attacking or casting."),
+    foodItemRuntimeSource.includes("if (didAttackOrCastThisTick(context)) {")
+      && foodItemRuntimeSource.includes("You cannot eat on the same tick as attacking or casting."),
     "eat handling should keep same-tick attack/cast restrictions"
+  );
+  assert(
+    worldSource.includes("foodItemRuntime.eatItem(buildFoodItemRuntimeContext(), invIndex)")
+      && !worldSource.includes("invSlot.amount -= 1;"),
+    "world.js should delegate food consumption through the food item runtime"
   );
 
   console.log("Combat engagement guard passed.");

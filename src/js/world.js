@@ -26,6 +26,7 @@
         const skillProgressRuntime = window.SkillProgressRuntime || null;
         const inventoryItemRuntime = window.InventoryItemRuntime || null;
         const equipmentItemRuntime = window.EquipmentItemRuntime || null;
+        const foodItemRuntime = window.FoodItemRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
@@ -355,19 +356,6 @@
             return worldStatusHudRuntime.updateStats(buildStatusHudRuntimeContext());
         }
 
-        function didAttackOrCastThisTick() {
-            const attackedThisTick = (
-                Number.isFinite(playerState.lastAttackTick) && playerState.lastAttackTick === currentTick
-            );
-
-            const actionName = typeof playerState.action === 'string' ? playerState.action.toUpperCase() : '';
-            const castedThisTick = (
-                Number.isFinite(playerState.lastCastTick) && playerState.lastCastTick === currentTick
-            ) || actionName.startsWith('CAST:') || actionName.startsWith('CASTING:');
-
-            return attackedThisTick || castedThisTick;
-        }
-
         function markPlayerCastTick(tick = currentTick) {
             const resolvedTick = Number.isFinite(tick) ? Math.floor(tick) : currentTick;
             playerState.lastCastTick = resolvedTick;
@@ -375,7 +363,6 @@
         window.markPlayerCastTick = markPlayerCastTick;
 
         const MAX_SKILL_LEVEL = skillProgressRuntime.MAX_SKILL_LEVEL;
-        const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;
         const DEFAULT_FIRE_LIFETIME_TICKS = 90;
         const ASHES_DESPAWN_TICKS = 100;
 
@@ -474,6 +461,20 @@
                 renderInventory,
                 renderEquipment,
                 updatePlayerModel
+            };
+        }
+
+        function buildFoodItemRuntimeContext() {
+            return {
+                inventory,
+                selectedUse,
+                playerState,
+                currentTick,
+                addChatMessage,
+                applyHitpointHealing,
+                clearSelectedUse,
+                updateStats,
+                renderInventory
             };
         }
 
@@ -692,46 +693,7 @@
             handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData, prefKey));
         }
         function eatItem(invIndex) {
-            const invSlot = inventory[invIndex];
-            if (!invSlot || !invSlot.itemData) return;
-
-            const item = invSlot.itemData;
-            const healAmount = Number.isFinite(item.healAmount) ? Math.max(0, Math.floor(item.healAmount)) : 0;
-            const eatDelayTicks = Number.isFinite(item.eatDelayTicks) ? Math.max(1, Math.floor(item.eatDelayTicks)) : 0;
-            if (item.type !== 'food' || healAmount <= 0 || eatDelayTicks <= 0) {
-                addChatMessage("You can't eat that.", 'warn');
-                return;
-            }
-
-            let cooldownEndTick = Number.isFinite(playerState.eatingCooldownEndTick)
-                ? Math.floor(playerState.eatingCooldownEndTick)
-                : 0;
-            if ((cooldownEndTick - currentTick) > MAX_REASONABLE_EAT_COOLDOWN_TICKS) {
-                cooldownEndTick = currentTick;
-                playerState.eatingCooldownEndTick = currentTick;
-            }
-            if (currentTick < cooldownEndTick) {
-                const remainingTicks = cooldownEndTick - currentTick;
-                addChatMessage(`You need to wait ${remainingTicks} tick${remainingTicks === 1 ? '' : 's'} before eating again.`, 'warn');
-                return;
-            }
-
-            if (didAttackOrCastThisTick()) {
-                addChatMessage('You cannot eat on the same tick as attacking or casting.', 'warn');
-                return;
-            }
-
-            invSlot.amount -= 1;
-            if (invSlot.amount <= 0) inventory[invIndex] = null;
-            if (selectedUse.invIndex === invIndex) clearSelectedUse(false);
-
-            const healed = applyHitpointHealing(healAmount);
-            playerState.eatingCooldownEndTick = currentTick + eatDelayTicks;
-
-            if (healed > 0) addChatMessage(`You eat the ${item.name}. (+${healed} HP)`, 'game');
-            else addChatMessage(`You eat the ${item.name}.`, 'game');
-            updateStats();
-            renderInventory();
+            return foodItemRuntime.eatItem(buildFoodItemRuntimeContext(), invIndex);
         }
 
         function handleItemAction(invIndex, actionName) {
