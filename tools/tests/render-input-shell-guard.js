@@ -21,6 +21,7 @@ function run() {
   const inputHoverTooltipSource = fs.readFileSync(path.join(root, "src", "js", "input-hover-tooltip-runtime.js"), "utf8");
   const inputStationInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-station-interaction-runtime.js"), "utf8");
   const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
+  const inputPlayerAnimationSource = fs.readFileSync(path.join(root, "src", "js", "input-player-animation-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -122,6 +123,17 @@ function run() {
   assert(
     manifestSource.indexOf('id: "input-pose-editor-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input pose editor runtime before input-render.js"
+  );
+  assert(inputPlayerAnimationSource.includes("window.InputPlayerAnimationRuntime"), "input player animation runtime should expose a window runtime");
+  assert(inputPlayerAnimationSource.includes("function getActiveSkillBaseClipId"), "input player animation runtime should own skilling base clip policy");
+  assert(inputPlayerAnimationSource.includes("function buildFishingStartActionClipRequest"), "input player animation runtime should own fishing start action clip policy");
+  assert(inputSource.includes("InputPlayerAnimationRuntime"), "input-render.js should delegate player animation policy through the player animation runtime");
+  assert(!inputSource.includes("function isMiningSkillAction("), "input-render.js should not own skilling action animation predicates");
+  assert(!inputSource.includes("const FISHING_START_ACTION_REQUEST_WINDOW_MS"), "input-render.js should not own fishing start clip timing policy");
+  assert(manifestSource.includes('../../js/input-player-animation-runtime.js?raw'), "legacy manifest should load input player animation runtime");
+  assert(
+    manifestSource.indexOf('id: "input-player-animation-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input player animation runtime before input-render.js"
   );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");

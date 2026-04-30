@@ -11,6 +11,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputQaCameraRuntime() {
             return window.InputQaCameraRuntime || null;
         }
+        function getInputPlayerAnimationRuntime() {
+            return window.InputPlayerAnimationRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -844,83 +847,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 rig.head.rotation.y -= recoil * 0.1;
             }
         }
-        function isMiningSkillAction(actionName) {
-            return actionName === 'SKILLING: ROCK';
-        }
-        function isWoodcuttingSkillAction(actionName) {
-            return actionName === 'SKILLING: TREE';
-        }
-        function isCookingSkillAction(actionName) {
-            return actionName === 'SKILLING: FIRE';
-        }
-        function isCraftingSkillAction(actionName) {
-            return actionName === 'SKILLING: CRAFTING';
-        }
-        function isRunecraftingSkillAction(actionName) {
-            return actionName === 'SKILLING: ALTAR_CANDIDATE';
-        }
-        function isSmithingSkillAction(actionName) {
-            return actionName === 'SKILLING: FURNACE' || actionName === 'SKILLING: ANVIL';
-        }
-        function isSmithingSmeltingSkillAction(actionName) {
-            return actionName === 'SKILLING: FURNACE';
-        }
-        function isSmithingForgingSkillAction(actionName) {
-            return actionName === 'SKILLING: ANVIL';
-        }
-        function isFiremakingSkillAction(actionName) {
-            return actionName === 'SKILLING: FIREMAKING';
-        }
-        function isFletchingSkillAction(actionName) {
-            return actionName === 'SKILLING: FLETCHING';
-        }
-        function isFishingSkillAction(actionName) {
-            return actionName === 'SKILLING: WATER';
-        }
-        const FISHING_START_ACTION_STARTED_AT_STATE_KEY = 'fishingCastStartedAt';
-        const FISHING_START_ACTION_REQUEST_WINDOW_MS = 250;
-        function getFishingSkillMethodId() {
-            return playerState && typeof playerState.fishingActiveMethodId === 'string'
-                ? playerState.fishingActiveMethodId
+        function getActiveSkillBaseClipId() {
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.getActiveSkillBaseClipId === 'function'
+                ? runtime.getActiveSkillBaseClipId(playerState)
                 : null;
         }
-        function isHarpoonFishingMethodId(methodId) {
-            return typeof methodId === 'string' && methodId.includes('harpoon');
-        }
-        function getFishingStartActionStartedAt() {
-            if (!isFishingSkillAction(playerState && playerState.action)) return null;
-            const startedAt = playerState ? playerState[FISHING_START_ACTION_STARTED_AT_STATE_KEY] : null;
-            return Number.isFinite(startedAt) ? startedAt : null;
-        }
-        function getFishingStartActionClipId() {
-            if (!isFishingSkillAction(playerState && playerState.action)) return null;
-            const methodId = getFishingSkillMethodId();
-            if (methodId === 'rod') return 'player/fishing_rod_cast1';
-            if (isHarpoonFishingMethodId(methodId)) return 'player/fishing_harpoon_strike1';
-            return null;
-        }
-        function getFishingSkillBaseClipId() {
-            if (!isFishingSkillAction(playerState && playerState.action)) return null;
-            const methodId = getFishingSkillMethodId();
-            if (isHarpoonFishingMethodId(methodId)) return 'player/fishing_harpoon_hold1';
-            if (!methodId) return null;
-            if (methodId === 'rod') return 'player/fishing_rod_hold1';
-            return 'player/fishing_net1';
-        }
-        function getActiveSkillBaseClipId() {
-            if (isMiningSkillAction(playerState && playerState.action)) return 'player/mining1';
-            if (isWoodcuttingSkillAction(playerState && playerState.action)) return 'player/woodcutting1';
-            if (isCookingSkillAction(playerState && playerState.action)) return 'player/cooking1';
-            if (isCraftingSkillAction(playerState && playerState.action)) return 'player/crafting1';
-            if (isRunecraftingSkillAction(playerState && playerState.action)) return 'player/runecrafting1';
-            if (isSmithingSmeltingSkillAction(playerState && playerState.action)) return 'player/smithing_smelting1';
-            if (isSmithingForgingSkillAction(playerState && playerState.action)) return 'player/smithing_forging1';
-            if (isFiremakingSkillAction(playerState && playerState.action)) return 'player/firemaking1';
-            if (isFletchingSkillAction(playerState && playerState.action)) return 'player/fletching1';
-            return getFishingSkillBaseClipId();
-        }
         function isAnySkillingAction(actionName) {
-            return typeof actionName === 'string' && actionName.startsWith('SKILLING:');
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.isAnySkillingAction === 'function'
+                ? runtime.isAnySkillingAction(actionName)
+                : (typeof actionName === 'string' && actionName.startsWith('SKILLING:'));
         }
         function syncPlayerRigSkillingToolVisual(playerRigRef) {
             if (!playerRigRef || !playerRigRef.userData) return;
@@ -944,67 +881,50 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             clearHeldItems();
         }
         function getActiveSkillAnimationHeldItems() {
-            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationHeldItems !== 'function') return null;
-            const heldItems = SkillRuntime.getSkillAnimationHeldItems();
-            if (!heldItems || typeof heldItems !== 'object') return null;
-            const normalized = {};
-            if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) normalized.rightHand = heldItems.rightHand;
-            else if (heldItems.rightHand === null) normalized.rightHand = null;
-            if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) normalized.leftHand = heldItems.leftHand;
-            else if (heldItems.leftHand === null) normalized.leftHand = null;
-            return Object.keys(normalized).length > 0 ? normalized : null;
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.getActiveSkillAnimationHeldItems === 'function'
+                ? runtime.getActiveSkillAnimationHeldItems(window.SkillRuntime || null)
+                : null;
         }
         function getActiveSkillAnimationHeldItemId() {
-            const heldItems = getActiveSkillAnimationHeldItems();
-            if (heldItems) {
-                if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) return heldItems.rightHand;
-                if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) return heldItems.leftHand;
-            }
-            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationHeldItemId !== 'function') return null;
-            const heldItemId = SkillRuntime.getSkillAnimationHeldItemId();
-            return (typeof heldItemId === 'string' && heldItemId) ? heldItemId : null;
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.getActiveSkillAnimationHeldItemId === 'function'
+                ? runtime.getActiveSkillAnimationHeldItemId(window.SkillRuntime || null)
+                : null;
         }
         function getActiveSkillAnimationHeldItemSlot() {
-            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationHeldItemSlot !== 'function') {
-                const heldItems = getActiveSkillAnimationHeldItems();
-                if (!heldItems) return null;
-                if (typeof heldItems.rightHand === 'string' && heldItems.rightHand) return 'rightHand';
-                if (typeof heldItems.leftHand === 'string' && heldItems.leftHand) return 'leftHand';
-                return null;
-            }
-            const heldItemSlot = SkillRuntime.getSkillAnimationHeldItemSlot();
-            return heldItemSlot === 'leftHand'
-                ? 'leftHand'
-                : (heldItemSlot === 'rightHand' ? 'rightHand' : null);
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.getActiveSkillAnimationHeldItemSlot === 'function'
+                ? runtime.getActiveSkillAnimationHeldItemSlot(window.SkillRuntime || null)
+                : null;
         }
         function getActiveSkillAnimationSuppressEquipmentVisual() {
-            if (!window.SkillRuntime || typeof SkillRuntime.getSkillAnimationSuppressEquipmentVisual !== 'function') return false;
-            return !!SkillRuntime.getSkillAnimationSuppressEquipmentVisual();
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.getActiveSkillAnimationSuppressEquipmentVisual === 'function'
+                ? runtime.getActiveSkillAnimationSuppressEquipmentVisual(window.SkillRuntime || null)
+                : false;
         }
         function shouldShowRigToolVisual(playerRigRef) {
-            const activeSkillHeldItems = getActiveSkillAnimationHeldItems();
-            const hasActiveSkillHeldItems = !!(activeSkillHeldItems && (activeSkillHeldItems.rightHand || activeSkillHeldItems.leftHand));
-            if (getActiveSkillAnimationSuppressEquipmentVisual()) {
-                return hasActiveSkillHeldItems
-                    || !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisualId)
-                    || !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisuals
-                        && (playerRigRef.userData.skillingToolVisuals.rightHand || playerRigRef.userData.skillingToolVisuals.leftHand));
-            }
-            if (equipment && equipment.weapon) return true;
-            if (!getActiveSkillBaseClipId()) return false;
-            if (hasActiveSkillHeldItems) return true;
-            return !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisualId)
-                || !!(playerRigRef && playerRigRef.userData && playerRigRef.userData.skillingToolVisuals
-                    && (playerRigRef.userData.skillingToolVisuals.rightHand || playerRigRef.userData.skillingToolVisuals.leftHand));
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.shouldShowRigToolVisual === 'function'
+                ? runtime.shouldShowRigToolVisual({
+                    playerRigRef,
+                    playerState,
+                    equipment,
+                    skillRuntime: window.SkillRuntime || null
+                })
+                : !!(equipment && equipment.weapon);
         }
         function getPlayerBaseClipId(isMoving, logicalTilesMoved) {
-            if (isMoving) {
-                if (logicalTilesMoved > 1 || (isRunning && logicalTilesMoved > 0)) return 'player/run';
-                return 'player/walk';
-            }
-            const skillBaseClipId = getActiveSkillBaseClipId();
-            if (skillBaseClipId) return skillBaseClipId;
-            return 'player/idle';
+            const runtime = getInputPlayerAnimationRuntime();
+            return runtime && typeof runtime.getPlayerBaseClipId === 'function'
+                ? runtime.getPlayerBaseClipId({
+                    isMoving,
+                    logicalTilesMoved,
+                    isRunning,
+                    playerState
+                })
+                : (isMoving ? 'player/walk' : 'player/idle');
         }
         function updateCombatAnimationDebugPanel(rig, playerRigRef, frameNow) {
             const runtime = window.CombatAnimationDebugPanelRuntime || null;
@@ -1039,18 +959,21 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const rigId = (playerRigRef && playerRigRef.userData && playerRigRef.userData.animationRigId)
                 ? playerRigRef.userData.animationRigId
                 : 'player_humanoid_v1';
-            const activeSkillHeldItems = getActiveSkillAnimationHeldItems();
-            const activeSkillHeldItemId = getActiveSkillAnimationHeldItemId();
-            const activeSkillHeldItemSlot = getActiveSkillAnimationHeldItemSlot();
-            const suppressSkillEquipmentVisual = getActiveSkillAnimationSuppressEquipmentVisual();
+            const playerAnimationRuntime = getInputPlayerAnimationRuntime();
+            const baseClipPolicy = playerAnimationRuntime && typeof playerAnimationRuntime.buildBaseClipOptions === 'function'
+                ? playerAnimationRuntime.buildBaseClipOptions({ skillRuntime: window.SkillRuntime || null })
+                : {
+                    heldItems: getActiveSkillAnimationHeldItems(),
+                    heldItemId: getActiveSkillAnimationHeldItemId(),
+                    heldItemSlot: getActiveSkillAnimationHeldItemSlot(),
+                    suppressEquipmentVisual: getActiveSkillAnimationSuppressEquipmentVisual(),
+                    baseClipOptions: undefined
+                };
+            const activeSkillHeldItems = baseClipPolicy.heldItems || null;
+            const activeSkillHeldItemId = baseClipPolicy.heldItemId || null;
+            const activeSkillHeldItemSlot = baseClipPolicy.heldItemSlot || null;
+            const suppressSkillEquipmentVisual = !!baseClipPolicy.suppressEquipmentVisual;
             if (playerRigRef && playerRigRef.userData) playerRigRef.userData.suppressBaseToolVisual = suppressSkillEquipmentVisual;
-            const hasActiveSkillHeldItems = !!(activeSkillHeldItems && (activeSkillHeldItems.rightHand || activeSkillHeldItems.leftHand));
-            const baseClipOptions = (hasActiveSkillHeldItems || activeSkillHeldItemId || activeSkillHeldItemSlot)
-                ? {}
-                : undefined;
-            if (baseClipOptions && activeSkillHeldItems) baseClipOptions.heldItems = activeSkillHeldItems;
-            if (baseClipOptions && activeSkillHeldItemId) baseClipOptions.heldItemId = activeSkillHeldItemId;
-            if (baseClipOptions && activeSkillHeldItemSlot) baseClipOptions.heldItemSlot = activeSkillHeldItemSlot;
 
             rig.axe.visible = shouldShowRigToolVisual(playerRigRef);
             rig.axe.rotation.set(0, 0, 0);
@@ -1059,7 +982,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             playerRigRef.rotation.z = 0;
 
             animationRuntimeBridge.beginLegacyFrame(playerRigRef, rigId);
-            animationRuntimeBridge.setLegacyBaseClip(playerRigRef, rigId, getPlayerBaseClipId(isMoving, logicalTilesMoved), frameNow, baseClipOptions);
+            animationRuntimeBridge.setLegacyBaseClip(playerRigRef, rigId, getPlayerBaseClipId(isMoving, logicalTilesMoved), frameNow, baseClipPolicy.baseClipOptions);
 
             if (isTimedAnimationActive(rig.attackAnimationStartedAt, 1100, frameNow)) {
                 animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, 'player/combat_slash', {
@@ -1079,21 +1002,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 });
             }
 
-            const fishingStartActionStartedAt = getFishingStartActionStartedAt();
-            const fishingStartActionClipId = getFishingStartActionClipId();
-            if (fishingStartActionClipId
-                && Number.isFinite(fishingStartActionStartedAt)
-                && (frameNow - fishingStartActionStartedAt) >= 0
-                && (frameNow - fishingStartActionStartedAt) <= FISHING_START_ACTION_REQUEST_WINDOW_MS) {
-                const fishingActionOptions = {
-                    startedAtMs: fishingStartActionStartedAt,
-                    startKey: `${fishingStartActionClipId}:${fishingStartActionStartedAt}`,
-                    priority: 0
-                };
-                if (activeSkillHeldItems) fishingActionOptions.heldItems = activeSkillHeldItems;
-                if (activeSkillHeldItemId) fishingActionOptions.heldItemId = activeSkillHeldItemId;
-                if (activeSkillHeldItemSlot) fishingActionOptions.heldItemSlot = activeSkillHeldItemSlot;
-                animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, fishingStartActionClipId, fishingActionOptions);
+            const fishingStartActionClipRequest = playerAnimationRuntime && typeof playerAnimationRuntime.buildFishingStartActionClipRequest === 'function'
+                ? playerAnimationRuntime.buildFishingStartActionClipRequest({
+                    playerState,
+                    frameNow,
+                    heldItems: activeSkillHeldItems,
+                    heldItemId: activeSkillHeldItemId,
+                    heldItemSlot: activeSkillHeldItemSlot
+                })
+                : null;
+            if (fishingStartActionClipRequest) {
+                animationRuntimeBridge.requestLegacyActionClip(
+                    playerRigRef,
+                    rigId,
+                    fishingStartActionClipRequest.clipId,
+                    fishingStartActionClipRequest.actionOptions
+                );
             }
 
             animationRuntimeBridge.applyLegacyFrame(playerRigRef, rigId, frameNow);
