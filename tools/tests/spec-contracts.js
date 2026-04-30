@@ -1726,6 +1726,7 @@ function run() {
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-tier-render-runtime.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/npc-render-runtime.js"), "utf8");
+  const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/town-npc-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
   const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
@@ -1752,6 +1753,10 @@ function run() {
   assert(cloneSource.includes("appearanceId: resolveServiceAppearanceId(service)"), "merchant NPC descriptors should resolve appearanceId");
   assert(cloneSource.includes("dialogueId: typeof service.dialogueId === \"string\" ? service.dialogueId.trim() || null : null"), "merchant NPC descriptors should preserve dialogueId");
   assert(worldScript.includes("WorldNpcRenderRuntime"), "world.js should delegate NPC hitbox rendering");
+  assert(worldScript.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC movement and occupancy behavior");
+  assert(townNpcRuntimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC update ticks");
+  assert(townNpcRuntimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
+  assert(!worldScript.includes("function applyTownNpcRigAnimation("), "world.js should not own town NPC rig animation");
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime hitboxes should preserve appearanceId");
   assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime hitboxes should preserve dialogueId");
   assert(inputRenderSource.includes("playerState.targetUid.action === 'Talk-to'"), "input renderer should route Talk-to actions");
@@ -1826,6 +1831,7 @@ function run() {
   assert(groundItemRenderRuntimeSource.includes("addGroundItemSprite({ THREE, group, path: spritePath, y: 0.17, scale: 0.42 });"), "ashes ground items should preview the pixel icon above the mound");
   assert(npcRenderRuntimeSource.includes("function appendChunkNpcVisuals(options = {})"), "NPC render runtime should own chunk NPC visual attachment");
   assert(npcRenderRuntimeSource.includes("function createNpcInteractionUid(npc, appearanceId)"), "NPC render runtime should own NPC interaction UID shaping");
+  assert(townNpcRuntimeSource.includes("let loadedChunkNpcActors = new Map();"), "town NPC runtime should own loaded chunk NPC actor state");
   assert(!worldScript.includes("const npcUid = {"), "world.js should not shape NPC hitbox UIDs inline");
   assert(!worldScript.includes("new THREE.BoxGeometry(1, 2, 1)"), "world.js should not own NPC hitbox geometry construction");
   assert(worldScript.includes("WorldStructureRenderRuntime"), "world.js should delegate static structure visuals through the render runtime");

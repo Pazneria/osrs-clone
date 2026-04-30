@@ -19,6 +19,7 @@ function run() {
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
   const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-pose-reference-runtime.js"), "utf8");
+  const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "town-npc-runtime.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
@@ -70,6 +71,7 @@ function run() {
   const rockRuntimeIndex = legacyManifestSource.indexOf('id: "world-rock-render-runtime"');
   const chunkResourceRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-resource-render-runtime"');
   const miningPoseReferenceRuntimeIndex = legacyManifestSource.indexOf('id: "world-mining-pose-reference-runtime"');
+  const townNpcRuntimeIndex = legacyManifestSource.indexOf('id: "world-town-npc-runtime"');
   const fireRuntimeIndex = legacyManifestSource.indexOf('id: "world-fire-render-runtime"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
@@ -90,6 +92,7 @@ function run() {
   assert(rockRuntimeIndex !== -1 && worldIndex !== -1 && rockRuntimeIndex < worldIndex, "legacy script manifest should load world rock render runtime before world.js");
   assert(chunkResourceRuntimeIndex !== -1 && worldIndex !== -1 && chunkResourceRuntimeIndex < worldIndex, "legacy script manifest should load world chunk resource render runtime before world.js");
   assert(miningPoseReferenceRuntimeIndex !== -1 && worldIndex !== -1 && miningPoseReferenceRuntimeIndex < worldIndex, "legacy script manifest should load world mining pose reference runtime before world.js");
+  assert(townNpcRuntimeIndex !== -1 && worldIndex !== -1 && townNpcRuntimeIndex < worldIndex, "legacy script manifest should load world town NPC runtime before world.js");
   assert(fireRuntimeIndex !== -1 && worldIndex !== -1 && fireRuntimeIndex < worldIndex, "legacy script manifest should load world fire render runtime before world.js");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
@@ -120,6 +123,9 @@ function run() {
   assert(miningPoseReferenceRuntimeSource.includes("window.WorldMiningPoseReferenceRuntime"), "world mining pose reference runtime should expose a runtime");
   assert(miningPoseReferenceRuntimeSource.includes("applyMiningReferenceVariant"), "world mining pose reference runtime should own pose variant math");
   assert(worldSource.includes("WorldMiningPoseReferenceRuntime"), "world.js should delegate mining pose references");
+  assert(townNpcRuntimeSource.includes("window.WorldTownNpcRuntime"), "world town NPC runtime should expose a runtime");
+  assert(townNpcRuntimeSource.includes("updateWorldNpcRuntime"), "world town NPC runtime should own NPC update ticks");
+  assert(worldSource.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC behavior");
   assert(worldSource.includes("WorldProceduralRuntime"), "world.js should resolve procedural helpers through the procedural runtime");
   assert(worldSource.includes("WorldSharedAssetsRuntime"), "world.js should delegate shared asset setup");
   assert(!worldSource.includes("function buildGrassTextureCanvas"), "world.js should not own generated texture canvas builders");
@@ -166,6 +172,7 @@ function run() {
   vm.runInThisContext(mapHudRuntimeSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
   vm.runInThisContext(chunkResourceRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js") });
   vm.runInThisContext(miningPoseReferenceRuntimeSource, { filename: path.join(root, "src", "js", "world", "mining-pose-reference-runtime.js") });
+  vm.runInThisContext(townNpcRuntimeSource, { filename: path.join(root, "src", "js", "world", "town-npc-runtime.js") });
   const runtime = window.WorldBootstrapRuntime;
   const adapterRuntime = window.LegacyWorldAdapterRuntime;
   const sharedAssetsRuntime = window.WorldSharedAssetsRuntime;
