@@ -1743,6 +1743,7 @@ function run() {
   const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-lifecycle-runtime.js"), "utf8");
   const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-quarry-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/training-location-runtime.js"), "utf8");
+  const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src/js/skill-progress-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
   const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
@@ -1999,6 +2000,11 @@ function run() {
   assert(trainingLocationRuntimeSource.includes("windowTarget.getMiningTrainingLocations = function getMiningTrainingLocations()"), "training location runtime should publish the mining getter");
   assert(trainingLocationRuntimeSource.includes("windowTarget.getRunecraftingAltarLocations = function getRunecraftingAltarLocations()"), "training location runtime should publish the runecrafting altar getter");
   assert(trainingLocationRuntimeSource.includes("windowTarget.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations()"), "training location runtime should publish the woodcutting getter");
+  assert(skillProgressRuntimeSource.includes("window.SkillProgressRuntime"), "skill progress runtime should expose a runtime");
+  assert(skillProgressRuntimeSource.includes("function addSkillXp(context = {}, skillName, amount)"), "skill progress runtime should own XP award bookkeeping");
+  assert(worldScript.includes("skillProgressRuntime.addSkillXp(buildSkillProgressRuntimeContext(), skillName, amount)"), "world.js should delegate XP award bookkeeping");
+  assert(!worldScript.includes("points += Math.floor(lvl + 300 * Math.pow(2, lvl / 7));"), "world.js should not own XP table math");
+  assert(!worldScript.includes("playerSkills[skillName].xp += amount;"), "world.js should not mutate skill XP inline");
   assert(!worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "world.js should not publish the mining getter inline");
   assert(starterTownWorld.terrainPatches.woodcuttingRouteAnchor.x === 205 && starterTownWorld.terrainPatches.woodcuttingRouteAnchor.y === 205, "woodcutting route anchor missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.woodcutting) && starterTownWorld.skillRoutes.woodcutting.length === 5, "authored woodcutting routes missing");

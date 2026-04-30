@@ -22,6 +22,7 @@
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const worldFireLifecycleRuntime = window.WorldFireLifecycleRuntime || null;
         const worldTrainingLocationRuntime = window.WorldTrainingLocationRuntime || null;
+        const skillProgressRuntime = window.SkillProgressRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
@@ -275,12 +276,7 @@
         }
 
         function showXPDrop(skill, amount) {
-            const container = document.getElementById('xp-drop-container');
-            const drop = document.createElement('div');
-            drop.className = 'xp-drop text-[#ff9800] font-bold text-md';
-            drop.innerText = `${skill} +${amount}xp`;
-            container.appendChild(drop);
-            setTimeout(() => drop.remove(), 2000); 
+            return skillProgressRuntime.showXPDrop(skill, amount, { document, setTimeout });
         }
 
         function spawnHitsplat(amount, gridX, gridY) {
@@ -425,7 +421,7 @@
         }
         window.markPlayerCastTick = markPlayerCastTick;
 
-        const MAX_SKILL_LEVEL = 99;
+        const MAX_SKILL_LEVEL = skillProgressRuntime.MAX_SKILL_LEVEL;
         const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;
         const DEFAULT_FIRE_LIFETIME_TICKS = 90;
         const ASHES_DESPAWN_TICKS = 100;
@@ -450,77 +446,39 @@
 
         const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();
 
+        function buildSkillProgressRuntimeContext() {
+            return {
+                document,
+                playerRig,
+                playerSkills,
+                skillManifest: window.SkillManifest || null,
+                addChatMessage,
+                playLevelUpAnimation,
+                setTimeout,
+                updateSkillProgressPanel: typeof updateSkillProgressPanel === 'function' ? updateSkillProgressPanel : null
+            };
+        }
+
         function getXpForLevel(level) {
-            const clamped = Math.max(1, Math.min(MAX_SKILL_LEVEL, level));
-            let points = 0;
-            for (let lvl = 1; lvl < clamped; lvl++) {
-                points += Math.floor(lvl + 300 * Math.pow(2, lvl / 7));
-            }
-            return Math.floor(points / 4);
+            return skillProgressRuntime.getXpForLevel(level);
         }
 
         function getLevelForXp(xp) {
-            let level = 1;
-            for (let lvl = 2; lvl <= MAX_SKILL_LEVEL; lvl++) {
-                if (xp >= getXpForLevel(lvl)) level = lvl;
-                else break;
-            }
-            return level;
+            return skillProgressRuntime.getLevelForXp(xp);
         }
 
-        Object.keys(playerSkills).forEach((skillName) => {
-            playerSkills[skillName].level = getLevelForXp(playerSkills[skillName].xp);
-        });
+        skillProgressRuntime.initializeSkillLevels(playerSkills);
 
         function getSkillUiLevelKey(skillName) {
-            if (!skillName) return null;
-            const manifest = window.SkillManifest;
-            if (manifest && manifest.skillTileBySkillId && manifest.skillTileBySkillId[skillName]) {
-                const levelKey = manifest.skillTileBySkillId[skillName].levelKey;
-                if (typeof levelKey === 'string' && levelKey) return levelKey;
-            }
-
-            const keyBySkill = {
-                attack: 'atk',
-                hitpoints: 'hp',
-                mining: 'min',
-                strength: 'str',
-                defense: 'def',
-                woodcutting: 'wc',
-                firemaking: 'fm',
-                fishing: 'fish',
-                cooking: 'cook',
-                runecrafting: 'rc',
-                smithing: 'smith',
-                crafting: 'craft',
-                fletching: 'fletch'
-            };
-            return keyBySkill[skillName] || null;
+            return skillProgressRuntime.getSkillUiLevelKey(skillName, window.SkillManifest || null);
         }
 
         function refreshSkillUi(skillName) {
-            const key = getSkillUiLevelKey(skillName);
-            if (!key || !playerSkills[skillName]) return;
-
-            const uiEl = document.getElementById(`stat-${key}-level`);
-            if (uiEl) uiEl.innerText = playerSkills[skillName].level;
-
-            if (typeof updateSkillProgressPanel === 'function') {
-                updateSkillProgressPanel(skillName);
-            }
+            return skillProgressRuntime.refreshSkillUi(buildSkillProgressRuntimeContext(), skillName);
         }
+
         function addSkillXp(skillName, amount) {
-            if (playerSkills[skillName]) {
-                const oldLevel = playerSkills[skillName].level;
-                playerSkills[skillName].xp += amount;
-                playerSkills[skillName].level = getLevelForXp(playerSkills[skillName].xp);
-                showXPDrop(skillName, amount);
-                if (playerSkills[skillName].level > oldLevel) {
-                    playLevelUpAnimation(8, playerRig);
-                    addChatMessage(`${skillName} level is now ${playerSkills[skillName].level}.`, 'info');
-                }
-                refreshSkillUi(skillName);
-            }
+            return skillProgressRuntime.addSkillXp(buildSkillProgressRuntimeContext(), skillName, amount);
         }
 
         function giveItem(itemData, amount = 1) {
@@ -2541,4 +2499,7 @@
         window.listQaNpcTargets = listQaNpcTargets;
         window.updateWorldMapPanel = updateWorldMapPanel;
         window.updateStats = updateStats;
+        window.getXpForLevel = getXpForLevel;
+        window.getLevelForXp = getLevelForXp;
+        window.addSkillXp = addSkillXp;
         window.refreshSkillUi = refreshSkillUi;
