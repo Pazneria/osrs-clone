@@ -2,6 +2,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputPoseEditorRuntime() {
             return window.InputPoseEditorRuntime || null;
         }
+        function getInputStationInteractionRuntime() {
+            return window.InputStationInteractionRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -749,120 +752,40 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             return false;
         }
-        function getStationFootprint(targetObj, tx, ty, z = playerState.z) {
-            if (targetObj !== 'FURNACE') return { w: 1, d: 1 };
-            if (!Array.isArray(furnacesToRender)) return { w: 1, d: 1 };
-
-            for (let i = 0; i < furnacesToRender.length; i++) {
-                const station = furnacesToRender[i];
-                if (!station || station.x !== tx || station.y !== ty || station.z !== z) continue;
-                const w = Number.isFinite(station.footprintW) ? Math.max(1, Math.round(station.footprintW)) : 1;
-                const d = Number.isFinite(station.footprintD) ? Math.max(1, Math.round(station.footprintD)) : 1;
-                return { w, d };
-            }
-            return { w: 1, d: 1 };
-        }
-        function getStationFacingYaw(targetObj, tx, ty, z = playerState.z) {
-            const stations = targetObj === 'FURNACE'
-                ? furnacesToRender
-                : (targetObj === 'ANVIL' ? anvilsToRender : null);
-            if (!Array.isArray(stations)) return 0;
-
-            for (let i = 0; i < stations.length; i++) {
-                const station = stations[i];
-                if (!station || station.x !== tx || station.y !== ty || station.z !== z) continue;
-                if (Number.isFinite(station.facingYaw)) return station.facingYaw;
-                break;
-            }
-            return 0;
-        }
-
-        function resolveCardinalStepFromYaw(yaw) {
-            const y = Number.isFinite(yaw) ? yaw : 0;
-            const sx = Math.sin(y);
-            const sy = Math.cos(y);
-            let dx = Math.round(sx);
-            let dy = Math.round(sy);
-
-            // Clamp any borderline diagonal rounding back to a cardinal step.
-            if (Math.abs(dx) === Math.abs(dy)) {
-                if (Math.abs(sx) >= Math.abs(sy)) dy = 0;
-                else dx = 0;
-            }
-            if (dx === 0 && dy === 0) dy = 1;
-
-            return { dx, dy };
-        }
-
-        function resolveCardinalFacingStep(fromX, fromY, toX, toY) {
-            let dx = toX - fromX;
-            let dy = toY - fromY;
-            if (Math.abs(dx) >= Math.abs(dy)) {
-                dx = Math.sign(dx);
-                dy = 0;
-            } else {
-                dy = Math.sign(dy);
-                dx = 0;
-            }
-            return { dx, dy };
+        function buildStationInteractionRuntimeOptions() {
+            return {
+                furnacesToRender,
+                anvilsToRender
+            };
         }
 
         function getStationInteractionFacingStep(targetObj, tx, ty, px = playerState.x, py = playerState.y, z = playerState.z) {
-            if (targetObj === 'FURNACE') {
-                const front = resolveCardinalStepFromYaw(getStationFacingYaw(targetObj, tx, ty, z));
-                return { dx: -front.dx, dy: -front.dy };
-            }
-            return resolveCardinalFacingStep(px, py, tx, ty);
+            const runtime = getInputStationInteractionRuntime();
+            return runtime && typeof runtime.getStationInteractionFacingStep === 'function'
+                ? runtime.getStationInteractionFacingStep(buildStationInteractionRuntimeOptions(), targetObj, tx, ty, px, py, z)
+                : { dx: 0, dy: 0 };
         }
 
         function resolveInteractionFacingRotation(targetObj, tx, ty, px = playerState.x, py = playerState.y, z = playerState.z) {
-            if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return null;
-            const facingStep = getStationInteractionFacingStep(targetObj, tx, ty, px, py, z);
-            if (facingStep.dx === 0 && facingStep.dy === 0) return null;
-            return Math.atan2(facingStep.dx, facingStep.dy);
+            const runtime = getInputStationInteractionRuntime();
+            return runtime && typeof runtime.resolveInteractionFacingRotation === 'function'
+                ? runtime.resolveInteractionFacingRotation(buildStationInteractionRuntimeOptions(), targetObj, tx, ty, px, py, z)
+                : null;
         }
         window.resolveInteractionFacingRotation = resolveInteractionFacingRotation;
 
         function getStationApproachPositions(targetObj, tx, ty, z = playerState.z) {
-            if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return [];
-
-            const front = resolveCardinalStepFromYaw(getStationFacingYaw(targetObj, tx, ty, z));
-            if (targetObj === 'FURNACE') {
-                const footprint = getStationFootprint(targetObj, tx, ty, z);
-                if (footprint.w === 1 && footprint.d === 1) {
-                    return [{ x: tx + front.dx, y: ty + front.dy }];
-                }
-                if (front.dx !== 0) {
-                    const fx = front.dx > 0 ? (tx + footprint.w) : (tx - 1);
-                    const centerY = ty + Math.floor((footprint.d - 1) / 2);
-                    return [{ x: fx, y: centerY }];
-                }
-                const fy = front.dy > 0 ? (ty + footprint.d) : (ty - 1);
-                const centerX = tx + Math.floor((footprint.w - 1) / 2);
-                return [{ x: centerX, y: fy }];
-            }
-
-            // Anvil approach uses the opposite pair of sides (other two).
-            const long = { dx: front.dx, dy: front.dy };
-            return [
-                { x: tx + long.dx, y: ty + long.dy },
-                { x: tx - long.dx, y: ty - long.dy }
-            ];
+            const runtime = getInputStationInteractionRuntime();
+            return runtime && typeof runtime.getStationApproachPositions === 'function'
+                ? runtime.getStationApproachPositions(buildStationInteractionRuntimeOptions(), targetObj, tx, ty, z)
+                : [];
         }
 
         function validateStationApproach(targetObj, tx, ty, px, py, z = playerState.z) {
-            if (targetObj !== 'FURNACE' && targetObj !== 'ANVIL') return { ok: true, message: '' };
-
-            const allowed = getStationApproachPositions(targetObj, tx, ty, z);
-            for (let i = 0; i < allowed.length; i++) {
-                const pos = allowed[i];
-                if (pos.x === px && pos.y === py) return { ok: true, message: '' };
-            }
-
-            if (targetObj === 'FURNACE') {
-                return { ok: false, message: 'You need to stand at the front of the furnace to use it.' };
-            }
-            return { ok: false, message: 'You need to stand on the long side of the anvil to use it.' };
+            const runtime = getInputStationInteractionRuntime();
+            return runtime && typeof runtime.validateStationApproach === 'function'
+                ? runtime.validateStationApproach(buildStationInteractionRuntimeOptions(), targetObj, tx, ty, px, py, z)
+                : { ok: true, message: '' };
         }
         function getPlayerRigShoulderPivot(rig) {
             const defaultTorsoY = 1.05;

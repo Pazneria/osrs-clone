@@ -16,6 +16,7 @@ function run() {
   const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
+  const inputStationInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-station-interaction-runtime.js"), "utf8");
   const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
@@ -67,6 +68,17 @@ function run() {
   );
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
+  assert(inputStationInteractionSource.includes("window.InputStationInteractionRuntime"), "input station interaction runtime should expose a window runtime");
+  assert(inputStationInteractionSource.includes("function getStationApproachPositions"), "input station interaction runtime should own station approach positions");
+  assert(inputStationInteractionSource.includes("function validateStationApproach"), "input station interaction runtime should own station approach validation");
+  assert(inputSource.includes("InputStationInteractionRuntime"), "input-render.js should delegate station interaction policy through the station runtime");
+  assert(!inputSource.includes("function getStationFootprint"), "input-render.js should not own station footprint lookup");
+  assert(!inputSource.includes("function resolveCardinalStepFromYaw"), "input-render.js should not own station cardinal facing math");
+  assert(manifestSource.includes('../../js/input-station-interaction-runtime.js?raw'), "legacy manifest should load input station interaction runtime");
+  assert(
+    manifestSource.indexOf('id: "input-station-interaction-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input station interaction runtime before input-render.js"
+  );
   assert(inputPoseEditorSource.includes("window.InputPoseEditorRuntime"), "input pose editor runtime should expose a window runtime");
   assert(inputPoseEditorSource.includes("function createPoseEditorState"), "input pose editor runtime should own pose editor state construction");
   assert(inputPoseEditorSource.includes("function beginPoseEditorDrag"), "input pose editor runtime should own pose editor drag startup");

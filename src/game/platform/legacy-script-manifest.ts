@@ -74,6 +74,7 @@ import inventoryScript from "../../js/inventory.js?raw";
 import playerHitpointsRuntimeScript from "../../js/player-hitpoints-runtime.js?raw";
 import worldScript from "../../js/world.js?raw";
 import combatScript from "../../js/combat.js?raw";
+import inputStationInteractionRuntimeScript from "../../js/input-station-interaction-runtime.js?raw";
 import inputPoseEditorRuntimeScript from "../../js/input-pose-editor-runtime.js?raw";
 import inputRenderScript from "../../js/input-render.js?raw";
 
@@ -160,6 +161,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "player-hitpoints-runtime", filename: "src/js/player-hitpoints-runtime.js", code: playerHitpointsRuntimeScript },
   { id: "world", filename: "src/js/world.js", code: worldScript },
   { id: "combat", filename: "src/js/combat.js", code: combatScript },
+  { id: "input-station-interaction-runtime", filename: "src/js/input-station-interaction-runtime.js", code: inputStationInteractionRuntimeScript },
   { id: "input-pose-editor-runtime", filename: "src/js/input-pose-editor-runtime.js", code: inputPoseEditorRuntimeScript },
   { id: "input-render", filename: "src/js/input-render.js", code: inputRenderScript }
 ];

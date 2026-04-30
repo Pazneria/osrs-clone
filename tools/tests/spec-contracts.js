@@ -2080,11 +2080,13 @@ function run() {
   assert(!smithRuntimeScript.includes("applyCookingStylePose"), "smithing runtime should remove the old shared procedural smithing pose");
 
   const inputRenderScript = inputRenderSource;
+  const inputStationInteractionRuntimeScript = fs.readFileSync(path.join(root, "src/js/input-station-interaction-runtime.js"), "utf8");
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
   assert(inputRenderScript.includes("function getActiveSkillAnimationHeldItems()"), "input render should resolve dual-hand skill props");
   assert(inputRenderScript.includes("function resolveInteractionFacingRotation("), "input render should expose station-aware interaction facing");
-  assert(inputRenderScript.includes("function getStationInteractionFacingStep("), "input render should centralize station-facing resolution");
-  assert(inputRenderScript.includes("return { dx: -front.dx, dy: -front.dy };"), "input render should face furnace interactions back into the furnace front");
+  assert(inputRenderScript.includes("InputStationInteractionRuntime"), "input render should delegate station-aware interaction facing");
+  assert(inputStationInteractionRuntimeScript.includes("function getStationInteractionFacingStep("), "station interaction runtime should centralize station-facing resolution");
+  assert(inputStationInteractionRuntimeScript.includes("return { dx: -front.dx, dy: -front.dy };"), "station interaction runtime should face furnace interactions back into the furnace front");
   assert(inputRenderScript.includes("'player/mining1'"), "input render should route mining through the studio clip");
   assert(inputRenderScript.includes("'player/woodcutting1'"), "input render should route woodcutting through the studio clip");
   assert(inputRenderScript.includes("'player/cooking1'"), "input render should route cooking through the studio clip");
