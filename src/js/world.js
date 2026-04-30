@@ -24,6 +24,7 @@
         const worldTrainingLocationRuntime = window.WorldTrainingLocationRuntime || null;
         const worldStatusHudRuntime = window.WorldStatusHudRuntime || null;
         const skillProgressRuntime = window.SkillProgressRuntime || null;
+        const inventoryItemRuntime = window.InventoryItemRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
@@ -432,82 +433,33 @@
             return skillProgressRuntime.addSkillXp(buildSkillProgressRuntimeContext(), skillName, amount);
         }
 
-        function giveItem(itemData, amount = 1) {
-            if (itemData.stackable) {
-                const existingIdx = inventory.findIndex(s => s && s.itemData.id === itemData.id);
-                if (existingIdx !== -1) {
-                    inventory[existingIdx].amount += amount;
-                    renderInventory(); return amount;
-                }
-                const emptyIdx = inventory.indexOf(null);
-                if (emptyIdx !== -1) {
-                    inventory[emptyIdx] = { itemData: itemData, amount: amount }; renderInventory(); return amount;
-                } else return 0;
-            } else {
-                let itemsGiven = 0;
-                for (let i = 0; i < amount; i++) {
-                    const emptyIdx = inventory.indexOf(null);
-                    if (emptyIdx !== -1) {
-                        inventory[emptyIdx] = { itemData: itemData, amount: 1 };
-                        itemsGiven++;
-                    } else break;
-                }
-                if (itemsGiven > 0) renderInventory();
-                return itemsGiven;
-            }
+        function buildInventoryItemRuntimeContext() {
+            return {
+                inventory,
+                selectedUse,
+                clearSelectedUse,
+                renderInventory
+            };
         }
+
+        function giveItem(itemData, amount = 1) {
+            return inventoryItemRuntime.giveItem(buildInventoryItemRuntimeContext(), itemData, amount);
+        }
+
         function getInventoryCount(itemId) {
-            return inventory.reduce((sum, slot) => {
-                if (!slot || slot.itemData.id !== itemId) return sum;
-                return sum + slot.amount;
-            }, 0);
+            return inventoryItemRuntime.getInventoryCount(buildInventoryItemRuntimeContext(), itemId);
         }
 
         function getFirstInventorySlotByItemId(itemId) {
-            if (!itemId) return -1;
-            for (let i = 0; i < inventory.length; i++) {
-                const slot = inventory[i];
-                if (!slot || !slot.itemData) continue;
-                if (slot.itemData.id === itemId && slot.amount > 0) return i;
-            }
-            return -1;
+            return inventoryItemRuntime.getFirstInventorySlotByItemId(buildInventoryItemRuntimeContext(), itemId);
         }
 
         function removeOneItemById(itemId) {
-            for (let i = 0; i < inventory.length; i++) {
-                const slot = inventory[i];
-                if (!slot || slot.itemData.id !== itemId) continue;
-
-                slot.amount -= 1;
-                if (slot.amount <= 0) inventory[i] = null;
-
-                if (selectedUse.invIndex === i) {
-                    clearSelectedUse(false);
-                }
-                return true;
-            }
-            return false;
+            return inventoryItemRuntime.removeOneItemById(buildInventoryItemRuntimeContext(), itemId);
         }
 
         function removeItemsById(itemId, amount) {
-            if (!itemId || amount <= 0) return 0;
-            let removed = 0;
-
-            for (let i = 0; i < inventory.length && removed < amount; i++) {
-                const slot = inventory[i];
-                if (!slot || slot.itemData.id !== itemId) continue;
-
-                const take = Math.min(slot.amount, amount - removed);
-                slot.amount -= take;
-                removed += take;
-
-                if (slot.amount <= 0) inventory[i] = null;
-                if (selectedUse.invIndex === i && (!inventory[i] || inventory[i].itemData.id !== selectedUse.itemId)) {
-                    clearSelectedUse(false);
-                }
-            }
-
-            return removed;
+            return inventoryItemRuntime.removeItemsById(buildInventoryItemRuntimeContext(), itemId, amount);
         }
 
         function buildFireLifecycleRuntimeContext() {
