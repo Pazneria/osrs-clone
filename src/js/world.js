@@ -8,6 +8,7 @@
         const worldTerrainSetupRuntime = window.WorldTerrainSetupRuntime || null;
         const worldLogicalMapAuthoringRuntime = window.WorldLogicalMapAuthoringRuntime || null;
         const worldMiningQuarryRuntime = window.WorldMiningQuarryRuntime || null;
+        const worldPierRuntime = window.WorldPierRuntime || null;
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
         const worldGroundItemLifecycleRuntime = window.WorldGroundItemLifecycleRuntime || null;
         const worldNpcRenderRuntime = window.WorldNpcRenderRuntime || null;
@@ -1969,45 +1970,19 @@
         window.updateTutorialRoofVisibility = updateTutorialRoofVisibility;
 
         function getActivePierConfig() {
-            return sharedMaterials.activePierConfig || null;
+            return worldPierRuntime.getActivePierConfig(sharedMaterials);
         }
 
         function isPierDeckTile(pierConfig, x, y, z) {
-            return !!(
-                pierConfig
-                && z === 0
-                && x >= pierConfig.xMin
-                && x <= pierConfig.xMax
-                && y >= pierConfig.yStart
-                && y <= pierConfig.yEnd
-            );
+            return worldPierRuntime.isPierDeckTile(pierConfig, x, y, z);
         }
 
         function isPierSideWaterTile(pierConfig, x, y, z) {
-            return !!(
-                pierConfig
-                && z === 0
-                && y >= (pierConfig.yStart + 1)
-                && y <= pierConfig.yEnd
-                && (x === (pierConfig.xMin - 1) || x === (pierConfig.xMax + 1))
-            );
+            return worldPierRuntime.isPierSideWaterTile(pierConfig, x, y, z);
         }
 
         function isPierVisualCoverageTile(pierConfig, x, y, z) {
-            return !!(
-                pierConfig
-                && z === 0
-                && (
-                    isPierDeckTile(pierConfig, x, y, z)
-                    || isPierSideWaterTile(pierConfig, x, y, z)
-                    || (
-                        y >= (pierConfig.yEnd - 1)
-                        && y <= pierConfig.yEnd
-                        && x >= (pierConfig.xMin - 1)
-                        && x <= (pierConfig.xMax + 1)
-                    )
-                )
-            );
+            return worldPierRuntime.isPierVisualCoverageTile(pierConfig, x, y, z);
         }
 
         function classifyWaterEdgeType(x, y, dx, dy, z, waterSurfaceY) {

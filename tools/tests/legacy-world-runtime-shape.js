@@ -15,6 +15,7 @@ function run() {
   const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
   const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
   const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-quarry-runtime.js"), "utf8");
+  const pierRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "pier-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -98,6 +99,10 @@ function run() {
     "world mining quarry runtime should expose quarry planning helpers"
   );
   assert(
+    pierRuntimeSource.includes("WorldPierRuntime"),
+    "world pier runtime should expose pier classification helpers"
+  );
+  assert(
     trainingLocationRuntimeSource.includes("WorldTrainingLocationRuntime"),
     "world training location runtime should expose training-location compatibility hooks"
   );
@@ -134,6 +139,10 @@ function run() {
     "world.js should delegate mining quarry planning through the quarry runtime"
   );
   assert(
+    worldSource.includes("WorldPierRuntime"),
+    "world.js should delegate pier classification through the pier runtime"
+  );
+  assert(
     worldSource.includes("WorldTrainingLocationRuntime"),
     "world.js should delegate training location compatibility hooks through the training runtime"
   );
@@ -168,6 +177,14 @@ function run() {
   assert(
     !worldSource.includes("const redistributeMiningRockPlacements = (placements, sourcePlacements) => {"),
     "world.js should not own mining rock redistribution planning"
+  );
+  assert(
+    !worldSource.includes("&& x >= pierConfig.xMin"),
+    "world.js should not own pier deck bounds"
+  );
+  assert(
+    !worldSource.includes("y >= (pierConfig.yEnd - 1)"),
+    "world.js should not own pier visual coverage bounds"
   );
   assert(
     !bridgeSource.includes("materializeSkillWorldRuntime"),

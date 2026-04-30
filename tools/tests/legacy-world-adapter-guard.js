@@ -18,6 +18,7 @@ function run() {
   const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
   const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
   const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-quarry-runtime.js"), "utf8");
+  const pierRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "pier-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
@@ -72,6 +73,7 @@ function run() {
   const terrainSetupRuntimeIndex = legacyManifestSource.indexOf('id: "world-terrain-setup-runtime"');
   const logicalMapAuthoringRuntimeIndex = legacyManifestSource.indexOf('id: "world-logical-map-authoring-runtime"');
   const miningQuarryRuntimeIndex = legacyManifestSource.indexOf('id: "world-mining-quarry-runtime"');
+  const pierRuntimeIndex = legacyManifestSource.indexOf('id: "world-pier-runtime"');
   const chunkTerrainRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-terrain-runtime"');
   const chunkTierRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-tier-render-runtime"');
   const groundItemRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-ground-item-render-runtime"');
@@ -102,6 +104,7 @@ function run() {
   assert(terrainSetupRuntimeIndex !== -1 && worldIndex !== -1 && terrainSetupRuntimeIndex < worldIndex, "legacy script manifest should load world terrain setup runtime before world.js");
   assert(logicalMapAuthoringRuntimeIndex !== -1 && worldIndex !== -1 && logicalMapAuthoringRuntimeIndex < worldIndex, "legacy script manifest should load world logical-map authoring runtime before world.js");
   assert(miningQuarryRuntimeIndex !== -1 && worldIndex !== -1 && miningQuarryRuntimeIndex < worldIndex, "legacy script manifest should load world mining quarry runtime before world.js");
+  assert(pierRuntimeIndex !== -1 && worldIndex !== -1 && pierRuntimeIndex < worldIndex, "legacy script manifest should load world pier runtime before world.js");
   assert(chunkTerrainRuntimeIndex !== -1 && worldIndex !== -1 && chunkTerrainRuntimeIndex < worldIndex, "legacy script manifest should load world chunk terrain runtime before world.js");
   assert(chunkTierRenderRuntimeIndex !== -1 && worldIndex !== -1 && chunkTierRenderRuntimeIndex < worldIndex, "legacy script manifest should load world chunk tier render runtime before world.js");
   assert(groundItemRenderRuntimeIndex !== -1 && worldIndex !== -1 && groundItemRenderRuntimeIndex < worldIndex, "legacy script manifest should load world ground-item render runtime before world.js");
@@ -147,6 +150,8 @@ function run() {
   assert(logicalMapAuthoringRuntimeSource.includes("applyStaticWorldAuthoring"), "world logical-map authoring runtime should own static map authoring");
   assert(miningQuarryRuntimeSource.includes("window.WorldMiningQuarryRuntime"), "world mining quarry runtime should expose a runtime");
   assert(miningQuarryRuntimeSource.includes("redistributeMiningRockPlacements"), "world mining quarry runtime should own quarry rock redistribution");
+  assert(pierRuntimeSource.includes("window.WorldPierRuntime"), "world pier runtime should expose a runtime");
+  assert(pierRuntimeSource.includes("isPierVisualCoverageTile"), "world pier runtime should own pier coverage classification");
   assert(chunkTierRenderRuntimeSource.includes("window.WorldChunkTierRenderRuntime"), "world chunk tier render runtime should expose a runtime");
   assert(chunkTierRenderRuntimeSource.includes("createSimplifiedChunkGroup"), "world chunk tier render runtime should own simplified tier chunk construction");
   assert(npcRenderRuntimeSource.includes("window.WorldNpcRenderRuntime"), "world NPC render runtime should expose a runtime");
@@ -188,6 +193,7 @@ function run() {
   assert(worldSource.includes("WorldTerrainSetupRuntime"), "world.js should delegate base terrain setup");
   assert(worldSource.includes("WorldLogicalMapAuthoringRuntime"), "world.js should delegate logical-map authoring setup");
   assert(worldSource.includes("WorldMiningQuarryRuntime"), "world.js should delegate mining quarry planning");
+  assert(worldSource.includes("WorldPierRuntime"), "world.js should delegate pier classification");
   assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk scene state");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD state");
   assert(worldSource.includes("WorldTreeNodeRuntime"), "world.js should delegate tree metadata helpers through the tree node runtime");
@@ -224,6 +230,7 @@ function run() {
   vm.runInThisContext(terrainSetupRuntimeSource, { filename: path.join(root, "src", "js", "world", "terrain-setup-runtime.js") });
   vm.runInThisContext(logicalMapAuthoringRuntimeSource, { filename: path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js") });
   vm.runInThisContext(miningQuarryRuntimeSource, { filename: path.join(root, "src", "js", "world", "mining-quarry-runtime.js") });
+  vm.runInThisContext(pierRuntimeSource, { filename: path.join(root, "src", "js", "world", "pier-runtime.js") });
   vm.runInThisContext(trainingLocationRuntimeSource, { filename: path.join(root, "src", "js", "world", "training-location-runtime.js") });
   vm.runInThisContext(chunkResourceRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js") });
   vm.runInThisContext(miningPoseReferenceRuntimeSource, { filename: path.join(root, "src", "js", "world", "mining-pose-reference-runtime.js") });
@@ -242,6 +249,7 @@ function run() {
   const terrainSetupRuntime = window.WorldTerrainSetupRuntime;
   const logicalMapAuthoringRuntime = window.WorldLogicalMapAuthoringRuntime;
   const miningQuarryRuntime = window.WorldMiningQuarryRuntime;
+  const pierRuntime = window.WorldPierRuntime;
   const trainingLocationRuntime = window.WorldTrainingLocationRuntime;
   const chunkResourceRuntime = window.WorldChunkResourceRenderRuntime;
   const miningPoseReferenceRuntime = window.WorldMiningPoseReferenceRuntime;
@@ -258,6 +266,7 @@ function run() {
   assert(terrainSetupRuntime, "world terrain setup runtime should expose its runtime");
   assert(logicalMapAuthoringRuntime, "world logical-map authoring runtime should expose its runtime");
   assert(miningQuarryRuntime, "world mining quarry runtime should expose its runtime");
+  assert(pierRuntime, "world pier runtime should expose its runtime");
   assert(trainingLocationRuntime, "world training location runtime should expose its runtime");
   assert(chunkResourceRuntime, "world chunk resource render runtime should expose its runtime");
   assert(miningPoseReferenceRuntime, "world mining pose reference runtime should expose its runtime");

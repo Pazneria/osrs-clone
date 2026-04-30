@@ -1731,6 +1731,7 @@ function run() {
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/npc-render-runtime.js"), "utf8");
   const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/town-npc-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
+  const pierRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/pier-runtime.js"), "utf8");
   const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
   const treeLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-lifecycle-runtime.js"), "utf8");
@@ -1875,6 +1876,12 @@ function run() {
   assert(!worldScript.includes("const npcUid = {"), "world.js should not shape NPC hitbox UIDs inline");
   assert(!worldScript.includes("new THREE.BoxGeometry(1, 2, 1)"), "world.js should not own NPC hitbox geometry construction");
   assert(worldScript.includes("WorldStructureRenderRuntime"), "world.js should delegate static structure visuals through the render runtime");
+  assert(worldScript.includes("WorldPierRuntime"), "world.js should delegate pier classification through the pier runtime");
+  assert(pierRuntimeSource.includes("function isPierDeckTile(pierConfig, x, y, z)"), "pier runtime should own pier deck classification");
+  assert(pierRuntimeSource.includes("function isPierSideWaterTile(pierConfig, x, y, z)"), "pier runtime should own pier side-water classification");
+  assert(pierRuntimeSource.includes("function isPierVisualCoverageTile(pierConfig, x, y, z)"), "pier runtime should own pier visual coverage classification");
+  assert(!worldScript.includes("&& x >= pierConfig.xMin"), "world.js should not own pier deck bounds inline");
+  assert(!worldScript.includes("y >= (pierConfig.yEnd - 1)"), "world.js should not own pier visual coverage bounds inline");
   assert(!worldScript.includes("const hasNorth = y > 0 && isFenceConnectorTile("), "world.js should not own fence visual construction");
   assert(!worldScript.includes("const railW = door.isEW ? door.width : 0.12;"), "world.js should not own wooden gate visual construction");
   assert(!worldScript.includes("const ridgeAlongX = roof.ridgeAxis !== 'y';"), "world.js should not own roof visual construction");
