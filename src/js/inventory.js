@@ -314,7 +314,7 @@
 
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
-                        contextOptionsListEl.innerHTML = '';
+                        clearContextMenuOptions();
                         addContextMenuOption(`Withdraw-1 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-1'));
                         addContextMenuOption(`Withdraw-5 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-5'));
                         addContextMenuOption(`Withdraw-10 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-10'));
@@ -533,7 +533,7 @@
                     };
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
-                        contextOptionsListEl.innerHTML = '';
+                        clearContextMenuOptions();
                         addContextMenuOption(`Value <span class="text-white">${sItem.itemData.name}</span>`, () => console.log(`${sItem.itemData.name} costs ${resolveMerchantBuyPrice(sItem.itemData.id)} coins.`));
                         addContextMenuOption(`Buy-1 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-1'));
                         addContextMenuOption(`Buy-5 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-5'));
@@ -668,7 +668,7 @@
                         slot.oncontextmenu = (e) => {
                             hideInventoryHoverTooltip();
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
-                            contextOptionsListEl.innerHTML = '';
+                            clearContextMenuOptions();
                             addContextMenuOption(`Deposit-1 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-1'));
                             addContextMenuOption(`Deposit-5 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-5'));
                             addContextMenuOption(`Deposit-10 <span class="text-white">${item.name}</span>`, () => runDepositAction('Deposit-10'));
@@ -699,7 +699,7 @@
                         slot.oncontextmenu = (e) => {
                             hideInventoryHoverTooltip();
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
-                            contextOptionsListEl.innerHTML = '';
+                            clearContextMenuOptions();
                             addContextMenuOption(`Value <span class="text-white">${item.name}</span>`, () => console.log(`${item.name} sells for ${resolveMerchantSellPrice(item.id)} coins.`));
                             addContextMenuOption(`Sell-1 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-1'));
                             addContextMenuOption(`Sell-5 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-5'));
@@ -722,7 +722,7 @@
                         slot.oncontextmenu = (e) => {
                             hideInventoryHoverTooltip();
                             e.preventDefault(); e.stopPropagation(); closeContextMenu();
-                            contextOptionsListEl.innerHTML = '';
+                            clearContextMenuOptions();
                             orderedActions.forEach(action => { addContextMenuOption(`${action} ${item.name}`, () => handleItemAction(i, action)); });
                             if (window.RunecraftingPouchRuntime
                                 && typeof window.RunecraftingPouchRuntime.getPouchStoredEssence === 'function'

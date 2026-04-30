@@ -8,17 +8,19 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const inputRenderPath = path.join(root, "src/js/input-render.js");
+  const contextMenuRuntimePath = path.join(root, "src/js/context-menu-runtime.js");
   const registryPath = path.join(root, "src/js/interactions/target-interaction-registry.js");
   const indexPath = path.join(root, "index.html");
   const legacyManifestPath = path.join(root, "src/game/platform/legacy-script-manifest.ts");
 
   const inputRenderScript = fs.readFileSync(inputRenderPath, "utf8");
+  const contextMenuRuntimeScript = fs.readFileSync(contextMenuRuntimePath, "utf8");
   const registryScript = fs.readFileSync(registryPath, "utf8");
   const indexHtml = fs.readFileSync(indexPath, "utf8");
   const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
 
   const contextMenuStart = inputRenderScript.indexOf("function onContextMenu(event)");
-  const contextMenuEnd = inputRenderScript.indexOf("function addContextMenuOption", contextMenuStart);
+  const contextMenuEnd = inputRenderScript.indexOf("function emitPierDebug", contextMenuStart);
   assert(contextMenuStart !== -1, "input-render missing onContextMenu");
   assert(contextMenuEnd !== -1, "input-render missing context-menu boundary");
 
@@ -44,6 +46,22 @@ function run() {
     !onContextMenuSection.includes("hitData.type === 'GROUND_ITEM'"),
     "onContextMenu should not hard-code GROUND_ITEM branch handling"
   );
+  assert(
+    onContextMenuSection.includes("clearContextMenuOptions();"),
+    "onContextMenu should clear menu options through the context menu shell"
+  );
+  assert(
+    contextMenuRuntimeScript.includes("window.ContextMenuRuntime"),
+    "context menu runtime should expose the shared context menu shell"
+  );
+  assert(
+    contextMenuRuntimeScript.includes("function addContextMenuOption"),
+    "context menu runtime should own option DOM insertion"
+  );
+  assert(
+    contextMenuRuntimeScript.includes("function closeContextMenu"),
+    "context menu runtime should own close behavior"
+  );
 
   assert(
     registryScript.includes("TARGET_INTERACTION_SPECS"),
@@ -61,6 +79,10 @@ function run() {
   assert(
     indexHtml.includes('/src/main.ts') && legacyManifest.includes("../../js/interactions/target-interaction-registry.js?raw"),
     "platform shell should load target interaction registry through the legacy manifest"
+  );
+  assert(
+    legacyManifest.indexOf('id: "context-menu-runtime"') < legacyManifest.indexOf('id: "core"'),
+    "legacy manifest should load context menu runtime before core.js"
   );
 
   console.log("Context menu registry guard passed.");

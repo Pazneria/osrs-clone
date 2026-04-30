@@ -278,7 +278,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             event.preventDefault(); closeContextMenu();
             const hitResults = getRaycastHits(event.clientX, event.clientY);
             if (!hitResults || hitResults.length === 0) return;
-            contextOptionsListEl.innerHTML = '';
+            clearContextMenuOptions();
             const selectedSlot = getSelectedUseItem();
             const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
             const selectedUseInvIndex = getSelectedUseInvIndex();
@@ -307,22 +307,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const walkHit = hitResults[hitResults.length - 1];
             addContextMenuOption('Walk here', () => { queueAction('WALK', walkHit.gridX, walkHit.gridY, null); spawnClickMarker(walkHit.point, false); });
             showContextMenuAt(event.clientX, event.clientY);
-        }
-
-        function addContextMenuOption(text, callback) {
-            const div = document.createElement('div'); div.className = 'context-option text-yellow-500';
-            const splitIndex = text.indexOf(' ');
-            if (splitIndex > -1 && text.indexOf('<span') === -1) {
-                const action = text.substring(0, splitIndex); const target = text.substring(splitIndex); div.innerHTML = `<span class="text-white">${action}</span>${target}`;
-            } else div.innerHTML = text; 
-            div.onclick = (e) => { e.stopPropagation(); callback(); closeContextMenu(); };
-            contextOptionsListEl.appendChild(div);
-        }
-
-        function closeContextMenu() {
-            contextMenuEl.classList.add('hidden');
-            if (typeof window.clearItemSwapLeftClickUI === 'function') window.clearItemSwapLeftClickUI();
-            if (typeof window.hideInventoryHoverTooltip === 'function') window.hideInventoryHoverTooltip();
         }
 
         function emitPierDebug(message) {

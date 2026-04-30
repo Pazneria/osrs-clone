@@ -1684,46 +1684,56 @@
         const contextMenuEl = document.getElementById('context-menu');
         const contextOptionsListEl = document.getElementById('context-options-list');
 
-        contextMenuEl.addEventListener('mouseleave', (e) => {
-            const related = e ? e.relatedTarget : null;
-            if (related && related.closest && related.closest('.context-submenu')) return;
-            closeContextMenu();
-        });
+        function getContextMenuRuntime() {
+            return window.ContextMenuRuntime || null;
+        }
+
+        function buildContextMenuRuntimeOptions() {
+            return {
+                documentRef: document,
+                windowRef: window,
+                contextMenuEl,
+                optionsListEl: contextOptionsListEl,
+                clearItemSwapLeftClickUI: () => {
+                    if (typeof window.clearItemSwapLeftClickUI === 'function') window.clearItemSwapLeftClickUI();
+                },
+                hideInventoryHoverTooltip: () => {
+                    if (typeof window.hideInventoryHoverTooltip === 'function') window.hideInventoryHoverTooltip();
+                }
+            };
+        }
+
+        if (getContextMenuRuntime() && typeof getContextMenuRuntime().bindContextMenuMouseleave === 'function') {
+            getContextMenuRuntime().bindContextMenuMouseleave(buildContextMenuRuntimeOptions());
+        }
 
         function showContextMenuAt(clientX, clientY) {
-            contextMenuEl.classList.remove('hidden');
-            contextMenuEl.style.left = '0px';
-            contextMenuEl.style.top = '0px';
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.showContextMenuAt === 'function') {
+                runtime.showContextMenuAt(clientX, clientY, buildContextMenuRuntimeOptions());
+            }
+        }
 
-            const menuW = contextMenuEl.offsetWidth || 160;
-            const menuH = contextMenuEl.offsetHeight || 120;
-            const pad = 8;
+        function clearContextMenuOptions() {
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.clearContextMenuOptions === 'function') {
+                runtime.clearContextMenuOptions(buildContextMenuRuntimeOptions());
+            }
+        }
 
-            // Cap context-menu depth so it never drops below the midpoint of the lowest visible inventory row.
-            // This keeps bottom-row inventory interactions clear for swap-left-click submenu usage.
-            const getLowestAllowedTop = () => {
-                const invSlots = Array.from(document.querySelectorAll('#view-inv .inventory-slot'));
-                let lowestMidY = null;
-                for (let i = 0; i < invSlots.length; i++) {
-                    const rect = invSlots[i].getBoundingClientRect();
-                    if (!rect || rect.width <= 0 || rect.height <= 0) continue;
-                    const midY = rect.top + (rect.height * 0.5);
-                    if (lowestMidY === null || midY > lowestMidY) lowestMidY = midY;
-                }
-                if (lowestMidY === null) return window.innerHeight - menuH - pad;
-                return Math.max(pad, Math.floor(lowestMidY - menuH));
-            };
+        function addContextMenuOption(text, callback) {
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.addContextMenuOption === 'function') {
+                return runtime.addContextMenuOption(text, callback, buildContextMenuRuntimeOptions());
+            }
+            return null;
+        }
 
-            let x = clientX;
-            let y = clientY;
-            if (x + menuW > window.innerWidth - pad) x = window.innerWidth - menuW - pad;
-            if (y + menuH > window.innerHeight - pad) y = window.innerHeight - menuH - pad;
-            y = Math.min(y, getLowestAllowedTop());
-            if (x < pad) x = pad;
-            if (y < pad) y = pad;
-
-            contextMenuEl.style.left = x + 'px';
-            contextMenuEl.style.top = y + 'px';
+        function closeContextMenu() {
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.closeContextMenu === 'function') {
+                runtime.closeContextMenu(buildContextMenuRuntimeOptions());
+            }
         }
 
         function promptAmount(callback) {
