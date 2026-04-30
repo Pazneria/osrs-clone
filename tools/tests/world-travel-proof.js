@@ -38,6 +38,7 @@ function run() {
   const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
   const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -172,8 +173,8 @@ function run() {
   assert(coreSource.includes("if (step === 5) {\n                    ensureTutorialItem('bronze_sword', 1);\n                    ensureTutorialItem('cooked_shrimp', 2);"), "combat instructor should grant starter combat supplies before the completion check");
   assert(coreSource.includes("if (step === 6) ensureTutorialItem('coins', 1);"), "bank tutor should grant the tutorial token before the completion check");
   assert(worldSource.includes("function isTutorialGateLocked(door)"), "world runtime should keep tutorial gates locked until their required step");
-  assert(worldSource.includes("WOODEN_GATE_CLOSED"), "world runtime should handle closed wooden tutorial gates");
-  assert(worldSource.includes("WOODEN_GATE_OPEN"), "world runtime should handle open wooden tutorial gates");
+  assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_CLOSED"), "logical-map authoring runtime should handle closed wooden tutorial gates");
+  assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_OPEN"), "logical-map authoring runtime should handle open wooden tutorial gates");
   assert(worldSource.includes("function createFenceVisualGroup"), "world runtime should render real fence tiles");
   assert(worldSource.includes("function updateTutorialRoofVisibility"), "world runtime should fade tutorial cabin roofs while the player is inside");
   assert(inputSource.includes("window.isTutorialGateLocked(door)"), "input handler should block direct locked tutorial gate toggles");

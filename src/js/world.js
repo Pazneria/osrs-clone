@@ -6,6 +6,7 @@
         const worldSharedAssetsRuntime = window.WorldSharedAssetsRuntime || null;
         const worldWaterRuntime = window.WorldWaterRuntime || null;
         const worldTerrainSetupRuntime = window.WorldTerrainSetupRuntime || null;
+        const worldLogicalMapAuthoringRuntime = window.WorldLogicalMapAuthoringRuntime || null;
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
         const worldGroundItemLifecycleRuntime = window.WorldGroundItemLifecycleRuntime || null;
         const worldNpcRenderRuntime = window.WorldNpcRenderRuntime || null;
@@ -1166,17 +1167,6 @@
             const roofLandmarks = worldPayload.roofLandmarks;
             const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
 
-            function placeStaticNpcOccupancyTile(x, y, z = 0, options = {}) {
-                if (!logicalMap[z] || !logicalMap[z][y]) return false;
-                const baseTile = Number.isFinite(options.baseTile)
-                    ? Math.floor(Number(options.baseTile))
-                    : logicalMap[z][y][x];
-                rememberStaticNpcBaseTile(x, y, z, baseTile);
-                logicalMap[z][y][x] = TileId.SOLID_NPC;
-                if (Number.isFinite(options.height)) heightMap[z][y][x] = Number(options.height);
-                return true;
-            }
-
             furnacesToRender = worldPayload.furnacesToRender.map((station) => Object.assign({}, station));
             anvilsToRender = worldPayload.anvilsToRender.map((station) => Object.assign({}, station));
             const waterRenderBodies = Array.isArray(waterRenderPayload && waterRenderPayload.bodies)
@@ -1203,27 +1193,16 @@
             const terrainNoise = terrainSetup.terrainNoise;
             const getStampBounds = terrainSetup.getStampBounds;
 
-            // Fishing-012 world placement: dedicated fishing merchants near the training water.
-            const fishingMerchantSpots = worldPayload.fishingMerchantSpots;
-            for (let i = 0; i < fishingMerchantSpots.length; i++) {
-                const spot = fishingMerchantSpots[i];
-                if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
-
-                // Force a shallow shoreline anchor so these merchants are always reachable beside fishing routes.
-                placeStaticNpcOccupancyTile(spot.x, spot.y, 0, { baseTile: TileId.SHORE, height: -0.01 });
-                npcsToRender.push({
-                    type: spot.type,
-                    x: spot.x,
-                    y: spot.y,
-                    z: 0,
-                    name: spot.name,
-                    merchantId: spot.merchantId,
-                    appearanceId: spot.appearanceId || null,
-                    dialogueId: spot.dialogueId || null,
-                    facingYaw: spot.facingYaw,
-                    action: spot.action || 'Trade'
-                });
-            }
+            const fishingMerchantAuthoring = worldLogicalMapAuthoringRuntime.applyFishingMerchantSpots({
+                fishingMerchantSpots: worldPayload.fishingMerchantSpots,
+                heightMap,
+                logicalMap,
+                mapSize: MAP_SIZE,
+                npcsToRender,
+                rememberStaticNpcBaseTile,
+                tileIds: TileId
+            });
+            npcsToRender = fishingMerchantAuthoring.npcsToRender;
 
             cookingFireSpotsToRender = [];
 
@@ -1307,228 +1286,30 @@
                 heightMap[0] = smoothed;
             }
 
-            // --- THE 3D ASCII BLUEPRINT ENGINE ---
-            // F = Floor, W = Wall, C = Corner Tower, B = Bank Booth, N = NPC, T = Dummy 
-            // U = Climb Up, D = Climb Down, s = Seamless Walkable Stairs
-            
-            const castleFloor0 = stampMap && Array.isArray(stampMap.castle_floor0) ? stampMap.castle_floor0.slice() : [];
-            const castleFloor1 = stampMap && Array.isArray(stampMap.castle_floor1) ? stampMap.castle_floor1.slice() : [];
-            const generalStoreBlueprint = stampMap && Array.isArray(stampMap.general_store) ? stampMap.general_store.slice() : [];
-            const smithingHallBlueprint = stampMap && Array.isArray(stampMap.smithing_hall) ? stampMap.smithing_hall.slice() : [];
-
-            function stampBlueprint(startX, startY, z, blueprint) {
-                for (let y = 0; y < blueprint.length; y++) {
-                    const row = blueprint[y];
-                    for (let x = 0; x < row.length; x++) {
-                        const char = row[x];
-                        if (char === ' ') continue; 
-                        
-                        const mapX = startX + x;
-                        const mapY = startY + y;
-                        
-                        logicalMap[z][mapY][mapX] = 0; 
-                        
-                        if (char === 'W') { logicalMap[z][mapY][mapX] = 11; heightMap[z][mapY][mapX] = 0.5; }
-                        else if (char === 'C') { logicalMap[z][mapY][mapX] = 12; heightMap[z][mapY][mapX] = 0.5; }
-                        else if (char === 'F') { logicalMap[z][mapY][mapX] = 7; heightMap[z][mapY][mapX] = 0.5; }
-                        else if (char === 'L' || char === 'T') { logicalMap[z][mapY][mapX] = 6; heightMap[z][mapY][mapX] = 0.5; }
-                        else if (char === 'U') { logicalMap[z][mapY][mapX] = 13; heightMap[z][mapY][mapX] = 0.25; } 
-                        else if (char === 'D') { logicalMap[z][mapY][mapX] = 14; heightMap[z][mapY][mapX] = 0.25; } 
-                        else if (char === 's') { logicalMap[z][mapY][mapX] = 15; heightMap[z][mapY][mapX] = 0.25; } // Seamless stairs
-                        else if (char === 'S') { logicalMap[z][mapY][mapX] = 15; heightMap[z][mapY][mapX] = 0.75; } // Seamless stairs T2
-                        else if (char === 'P') { logicalMap[z][mapY][mapX] = 7; heightMap[z][mapY][mapX] = 1.0; } // Platform T2
-                        else if (char === 'H') { logicalMap[z][mapY][mapX] = 15; heightMap[z][mapY][mapX] = 1.25; } // Seamless stairs T3
-                        else if (char === 'E') { logicalMap[z][mapY][mapX] = 7; heightMap[z][mapY][mapX] = 1.5; } // Platform T3
-                        else if (char === 'B') { 
-                            logicalMap[z][mapY][mapX] = 9; heightMap[z][mapY][mapX] = 0.5; 
-                            bankBoothsToRender.push({ x: mapX, y: mapY, z: z });
-                        }
-                        else if (char === 'N') { 
-                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
-                            npcsToRender.push({ type: 3, x: mapX, y: mapY, z: z, name: "Banker" });
-                        }
-                        else if (char === 'K') { 
-                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
-                            npcsToRender.push({ type: 7, x: mapX, y: mapY, z: z, name: "King Roald" });
-                        }
-                        else if (char === 'Q') { 
-                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
-                            npcsToRender.push({ type: 8, x: mapX, y: mapY, z: z, name: "Queen Ellamaria" });
-                        }
-                        else if (char === 'V') { 
-                            logicalMap[z][mapY][mapX] = 17; heightMap[z][mapY][mapX] = 0.5; 
-                        }
-                        else if (char === '$') { 
-                            placeStaticNpcOccupancyTile(mapX, mapY, z, { baseTile: TileId.FLOOR_STONE, height: 0.5 });
-                            npcsToRender.push({ type: 2, x: mapX, y: mapY, z: z, name: "Shopkeeper" });
-                        }
-                        else if (char === 'T') { 
-                            logicalMap[z][mapY][mapX] = 10; heightMap[z][mapY][mapX] = 0.5; 
-                        }
-                    }
-                }
-            }
-
-            for (let i = 0; i < stampedStructures.length; i++) {
-                const structure = stampedStructures[i];
-                if (!structure || !stampMap || !Array.isArray(stampMap[structure.stampId])) continue;
-                stampBlueprint(structure.x, structure.y, structure.z, stampMap[structure.stampId]);
-            }
-            // Re-assert smithing station collision after blueprint stamping.
-            for (let i = 0; i < smithingStations.length; i++) {
-                const station = smithingStations[i];
-                if (!station || station.x <= 1 || station.y <= 1 || station.x >= MAP_SIZE - 2 || station.y >= MAP_SIZE - 2) continue;
-                if (station.type === 'FURNACE') {
-                    const w = Number.isFinite(station.footprintW) ? station.footprintW : 2;
-                    const d = Number.isFinite(station.footprintD) ? station.footprintD : 2;
-                    for (let oy = 0; oy < d; oy++) {
-                        for (let ox = 0; ox < w; ox++) {
-                            const sx = station.x + ox;
-                            const sy = station.y + oy;
-                            if (sx <= 1 || sy <= 1 || sx >= MAP_SIZE - 2 || sy >= MAP_SIZE - 2) continue;
-                            logicalMap[0][sy][sx] = 16;
-                        }
-                    }
-                } else {
-                    logicalMap[0][station.y][station.x] = 16;
-                }
-            }
-            const staticMerchantSpots = worldPayload.staticMerchantSpots;
-            for (let i = 0; i < staticMerchantSpots.length; i++) {
-                const spot = staticMerchantSpots[i];
-                if (!spot || spot.x <= 1 || spot.y <= 1 || spot.x >= MAP_SIZE - 2 || spot.y >= MAP_SIZE - 2) continue;
-                const merchantHeight = Array.isArray(spot.tags)
-                    && !spot.tags.includes('tutorial')
-                    && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))
-                    ? 0.5
-                    : null;
-                placeStaticNpcOccupancyTile(spot.x, spot.y, 0, { height: merchantHeight });
-                npcsToRender.push({
-                    type: spot.type,
-                    x: spot.x,
-                    y: spot.y,
-                    z: 0,
-                    name: spot.name,
-                    merchantId: spot.merchantId,
-                    appearanceId: spot.appearanceId || null,
-                    dialogueId: spot.dialogueId || null,
-                    facingYaw: spot.facingYaw,
-                    action: spot.action || 'Trade',
-                    travelToWorldId: spot.travelToWorldId || null,
-                    travelSpawn: spot.travelSpawn || null
-                });
-            }
-
-            for (let i = 0; i < staircaseLandmarks.length; i++) {
-                const staircase = staircaseLandmarks[i];
-                if (!staircase || !Array.isArray(staircase.tiles)) continue;
-                for (let j = 0; j < staircase.tiles.length; j++) {
-                    const tile = staircase.tiles[j];
-                    if (!tile || !Number.isInteger(tile.x) || !Number.isInteger(tile.y) || !Number.isInteger(tile.z)) continue;
-                    if (!logicalMap[tile.z] || !logicalMap[tile.z][tile.y]) continue;
-                    const tileId = TileId[tile.tileId];
-                    if (!Number.isFinite(tileId)) continue;
-                    logicalMap[tile.z][tile.y][tile.x] = tileId;
-                    heightMap[tile.z][tile.y][tile.x] = Number.isFinite(tile.height) ? tile.height : heightMap[tile.z][tile.y][tile.x];
-                    if (tileId === TileId.BANK_BOOTH && !bankBoothsToRender.some((booth) => booth.x === tile.x && booth.y === tile.y && booth.z === tile.z)) {
-                        bankBoothsToRender.push({ x: tile.x, y: tile.y, z: tile.z });
-                    }
-                }
-            }
-
-            function applyFenceLandmark(fence) {
-                if (!fence || !Array.isArray(fence.points) || fence.points.length < 2) return;
-                const z = Number.isInteger(fence.z) ? fence.z : 0;
-                for (let pointIndex = 1; pointIndex < fence.points.length; pointIndex++) {
-                    const from = fence.points[pointIndex - 1];
-                    const to = fence.points[pointIndex];
-                    if (!from || !to) continue;
-                    const dx = Math.sign(to.x - from.x);
-                    const dy = Math.sign(to.y - from.y);
-                    if (dx !== 0 && dy !== 0) continue;
-                    const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
-                    let x = from.x;
-                    let y = from.y;
-                    for (let step = 0; step <= steps; step++) {
-                        if (logicalMap[z] && logicalMap[z][y] && x > 0 && y > 0 && x < MAP_SIZE - 1 && y < MAP_SIZE - 1) {
-                            logicalMap[z][y][x] = TileId.FENCE;
-                            heightMap[z][y][x] = Number.isFinite(fence.height) ? fence.height : 0.05;
-                        }
-                        x += dx;
-                        y += dy;
-                    }
-                }
-            }
-
-            for (let i = 0; i < fenceLandmarks.length; i++) {
-                applyFenceLandmark(fenceLandmarks[i]);
-            }
-
-            function resolveNpcAppearanceId(npc) {
-                if (!npc || typeof npc !== 'object') return null;
-                const explicitAppearanceId = typeof npc.appearanceId === 'string' ? npc.appearanceId.trim().toLowerCase() : '';
-                if (explicitAppearanceId) return explicitAppearanceId;
-                const merchantId = typeof npc.merchantId === 'string' ? npc.merchantId.trim().toLowerCase() : '';
-                const name = typeof npc.name === 'string' ? npc.name.trim().toLowerCase() : '';
-                if (merchantId === 'tanner_rusk' || name === 'tanner rusk') return 'tanner_rusk';
-                return null;
-            }
-
-            // Smithing hall approach stairs from pond side (west/open side).
-            if (
-                smithingHallApproach
-                && Number.isInteger(smithingHallApproach.shoreX)
-                && Number.isInteger(smithingHallApproach.stairX)
-                && Number.isInteger(smithingHallApproach.yStart)
-                && Number.isInteger(smithingHallApproach.yEnd)
-            ) {
-                const yStart = Math.min(smithingHallApproach.yStart, smithingHallApproach.yEnd);
-                const yEnd = Math.max(smithingHallApproach.yStart, smithingHallApproach.yEnd);
-                for (let sy = yStart; sy <= yEnd; sy++) {
-                    if (sy <= 1 || sy >= MAP_SIZE - 2) continue;
-                    if (smithingHallApproach.shoreX > 1 && smithingHallApproach.shoreX < MAP_SIZE - 2) {
-                        logicalMap[0][sy][smithingHallApproach.shoreX] = 20;
-                        heightMap[0][sy][smithingHallApproach.shoreX] = -0.01;
-                    }
-                    if (smithingHallApproach.stairX > 1 && smithingHallApproach.stairX < MAP_SIZE - 2) {
-                        logicalMap[0][sy][smithingHallApproach.stairX] = 15;
-                        heightMap[0][sy][smithingHallApproach.stairX] = 0.25;
-                    }
-                }
-            }
-            
-            for (let i = 0; i < doorLandmarks.length; i++) {
-                const door = doorLandmarks[i];
-                if (!door || !Number.isInteger(door.x) || !Number.isInteger(door.y) || !Number.isInteger(door.z)) continue;
-                const tileId = TileId[door.tileId];
-                if (Number.isFinite(tileId)) {
-                    logicalMap[door.z][door.y][door.x] = tileId;
-                    heightMap[door.z][door.y][door.x] = Number.isFinite(door.height) ? door.height : heightMap[door.z][door.y][door.x];
-                }
-                doorsToRender.push({
-                    x: door.x,
-                    y: door.y,
-                    z: door.z,
-                    isOpen: !!door.isOpen,
-                    hingeOffsetX: door.hingeOffsetX,
-                    hingeOffsetY: door.hingeOffsetY,
-                    thickness: door.thickness,
-                    width: door.width,
-                    isEW: door.isEW,
-                    closedRot: door.closedRot,
-                    openRot: door.openRot,
-                    currentRotation: door.currentRotation,
-                    targetRotation: door.targetRotation,
-                    isWoodenGate: tileId === TileId.WOODEN_GATE_CLOSED || tileId === TileId.WOODEN_GATE_OPEN,
-                    closedTileId: tileId === TileId.WOODEN_GATE_OPEN ? TileId.WOODEN_GATE_CLOSED : tileId,
-                    tutorialRequiredStep: Number.isFinite(door.tutorialRequiredStep) ? door.tutorialRequiredStep : null,
-                    tutorialGateMessage: typeof door.tutorialGateMessage === 'string' ? door.tutorialGateMessage : ''
-                });
-            }
+            const staticAuthoring = worldLogicalMapAuthoringRuntime.applyStaticWorldAuthoring({
+                bankBoothsToRender,
+                doorLandmarks,
+                doorsToRender,
+                fenceLandmarks,
+                heightMap,
+                logicalMap,
+                mapSize: MAP_SIZE,
+                npcsToRender,
+                rememberStaticNpcBaseTile,
+                roofLandmarks,
+                smithingHallApproach,
+                smithingStations,
+                staircaseLandmarks,
+                stampMap,
+                stampedStructures,
+                staticMerchantSpots: worldPayload.staticMerchantSpots,
+                tileIds: TileId
+            });
+            bankBoothsToRender = staticAuthoring.bankBoothsToRender;
+            doorsToRender = staticAuthoring.doorsToRender;
+            npcsToRender = staticAuthoring.npcsToRender;
             refreshTutorialGateStates();
-            sharedMaterials.activeRoofLandmarks = roofLandmarks.map((roof) => Object.assign({}, roof, {
-                hideBounds: roof && roof.hideBounds ? Object.assign({}, roof.hideBounds) : null
-            }));
+            sharedMaterials.activeRoofLandmarks = staticAuthoring.activeRoofLandmarks;
 
             const setMiningRockAt = (placement) => {
                 if (!placement || !placement.oreType) return false;
@@ -2484,19 +2265,13 @@
                 .filter((placement) => placement && placement.oreType === 'rune_essence')
                 .map((placement) => ({ x: placement.x, y: placement.y, z: placement.z }));
 
-            altarCandidatesToRender = authoredAltarPlacements.slice();
-            for (let i = 0; i < authoredAltarPlacements.length; i++) {
-                const altar = authoredAltarPlacements[i];
-                if (!altar) continue;
-                for (let by = altar.y - 1; by <= altar.y + 2; by++) {
-                    if (by < 0 || by >= MAP_SIZE) continue;
-                    for (let bx = altar.x - 1; bx <= altar.x + 2; bx++) {
-                        if (bx < 0 || bx >= MAP_SIZE) continue;
-                        if (!logicalMap[altar.z] || !logicalMap[altar.z][by]) continue;
-                        logicalMap[altar.z][by][bx] = TileId.OBSTACLE;
-                    }
-                }
-            }
+            const altarAuthoring = worldLogicalMapAuthoringRuntime.applyAuthoredAltarCollision({
+                authoredAltarPlacements,
+                logicalMap,
+                mapSize: MAP_SIZE,
+                tileIds: TileId
+            });
+            altarCandidatesToRender = altarAuthoring.altarCandidatesToRender;
 
             for (let i = 0; i < woodcuttingNodePlacements.length; i++) {
                 setTreePlacement(woodcuttingNodePlacements[i]);

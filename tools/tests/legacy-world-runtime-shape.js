@@ -13,6 +13,7 @@ function run() {
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
   const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
+  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -88,6 +89,10 @@ function run() {
     "world terrain setup runtime should expose base terrain setup"
   );
   assert(
+    logicalMapAuthoringRuntimeSource.includes("WorldLogicalMapAuthoringRuntime"),
+    "world logical-map authoring runtime should expose static map authoring"
+  );
+  assert(
     trainingLocationRuntimeSource.includes("WorldTrainingLocationRuntime"),
     "world training location runtime should expose training-location compatibility hooks"
   );
@@ -114,6 +119,10 @@ function run() {
   assert(
     worldSource.includes("WorldTerrainSetupRuntime"),
     "world.js should delegate base terrain setup through the terrain runtime"
+  );
+  assert(
+    worldSource.includes("WorldLogicalMapAuthoringRuntime"),
+    "world.js should delegate static logical-map authoring through the authoring runtime"
   );
   assert(
     worldSource.includes("WorldTrainingLocationRuntime"),

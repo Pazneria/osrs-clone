@@ -1723,6 +1723,7 @@ function run() {
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/shared-assets-runtime.js"), "utf8");
   const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/terrain-setup-runtime.js"), "utf8");
+  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/logical-map-authoring-runtime.js"), "utf8");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-terrain-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-tier-render-runtime.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
@@ -1823,6 +1824,13 @@ function run() {
   assert(terrainSetupRuntimeSource.includes("function applyBaseTerrainSetup(options = {})"), "terrain setup runtime should own base terrain setup");
   assert(!worldScript.includes("const sampleRiverAtY = (y) => {"), "world.js should not own river sampling");
   assert(!worldScript.includes("const carveWaterTile = (x, y, depthNorm) => {"), "world.js should not own base water carving");
+  assert(worldScript.includes("WorldLogicalMapAuthoringRuntime"), "world.js should delegate static logical-map authoring");
+  assert(logicalMapAuthoringRuntimeSource.includes("function applyStaticWorldAuthoring(options = {})"), "logical-map authoring runtime should own static landmark stamping");
+  assert(logicalMapAuthoringRuntimeSource.includes("function stampBlueprint(options = {})"), "logical-map authoring runtime should own blueprint stamping");
+  assert(logicalMapAuthoringRuntimeSource.includes("function applyAuthoredAltarCollision(options = {})"), "logical-map authoring runtime should own authored altar collision stamping");
+  assert(!worldScript.includes("function stampBlueprint("), "world.js should not own blueprint stamping inline");
+  assert(!worldScript.includes("function applyFenceLandmark("), "world.js should not own fence landmark stamping inline");
+  assert(!worldScript.includes("logicalMap[altar.z][by][bx] = TileId.OBSTACLE"), "world.js should not own authored altar collision stamping inline");
   assert(!worldScript.includes("sharedGeometries.ground = new THREE.PlaneGeometry"), "world.js should not own shared geometry construction");
   assert(!worldScript.includes("const makeNoiseTexture = (baseHex"), "world.js should not own shared procedural material texture helpers");
   assert(chunkTerrainRuntimeSource.includes("function buildChunkGroundMeshes(options = {})"), "chunk terrain runtime should own ground mesh construction");

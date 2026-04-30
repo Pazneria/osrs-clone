@@ -229,7 +229,7 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_combat_instructor"].dialogueId), "tutorial_combat_instructor", "combat instructor dialogue should resolve");
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_bank_tutor"].dialogueId), "tutorial_bank_tutor", "bank tutor dialogue should resolve");
   assert.ok(
-    fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8").includes("!spot.tags.includes('tutorial')"),
+    fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8").includes("!spot.tags.includes('tutorial')"),
     "tutorial instructors should not inherit raised smithing/crafting merchant floor height"
   );
   assert.deepStrictEqual(
