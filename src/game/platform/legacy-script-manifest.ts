@@ -14,6 +14,7 @@ import worldProceduralRuntimeScript from "../../js/world/procedural-runtime.js?r
 import worldRenderRuntimeScript from "../../js/world/render-runtime.js?raw";
 import worldGroundItemRenderRuntimeScript from "../../js/world/ground-item-render-runtime.js?raw";
 import worldStructureRenderRuntimeScript from "../../js/world/structure-render-runtime.js?raw";
+import worldTreeNodeRuntimeScript from "../../js/world/tree-node-runtime.js?raw";
 import worldTreeRenderRuntimeScript from "../../js/world/tree-render-runtime.js?raw";
 import worldRockNodeRuntimeScript from "../../js/world/rock-node-runtime.js?raw";
 import worldRockRenderRuntimeScript from "../../js/world/rock-render-runtime.js?raw";
@@ -71,6 +72,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-render-runtime", filename: "src/js/world/render-runtime.js", code: worldRenderRuntimeScript },
   { id: "world-ground-item-render-runtime", filename: "src/js/world/ground-item-render-runtime.js", code: worldGroundItemRenderRuntimeScript },
   { id: "world-structure-render-runtime", filename: "src/js/world/structure-render-runtime.js", code: worldStructureRenderRuntimeScript },
+  { id: "world-tree-node-runtime", filename: "src/js/world/tree-node-runtime.js", code: worldTreeNodeRuntimeScript },
   { id: "world-tree-render-runtime", filename: "src/js/world/tree-render-runtime.js", code: worldTreeRenderRuntimeScript },
   { id: "world-rock-node-runtime", filename: "src/js/world/rock-node-runtime.js", code: worldRockNodeRuntimeScript },
   { id: "world-rock-render-runtime", filename: "src/js/world/rock-render-runtime.js", code: worldRockRenderRuntimeScript },

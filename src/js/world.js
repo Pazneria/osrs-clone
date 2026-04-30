@@ -5,6 +5,7 @@
         const worldRenderRuntime = window.WorldRenderRuntime || null;
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
+        const worldTreeNodeRuntime = window.WorldTreeNodeRuntime || null;
         const worldTreeRenderRuntime = window.WorldTreeRenderRuntime || null;
         const worldRockNodeRuntime = window.WorldRockNodeRuntime || null;
         const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
@@ -2118,19 +2119,14 @@
         // --- THE MULTI-PLANE ENGINE REWRITE ---
 
         const rockNodeKey = worldRockNodeRuntime.rockNodeKey;
-        function treeNodeKey(x, y, z = 0) { return z + ':' + x + ',' + y; }
+        const treeNodeKey = worldTreeNodeRuntime.treeNodeKey;
 
         function setTreeNode(x, y, z = 0, nodeId = 'normal_tree', options = {}) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
             const tile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
             if (!isTreeTileId(tile)) return false;
             const key = treeNodeKey(x, y, z);
-            treeNodes[key] = {
-                nodeId: (typeof nodeId === 'string' && nodeId) ? nodeId : 'normal_tree',
-                areaGateFlag: (options && typeof options.areaGateFlag === 'string' && options.areaGateFlag) ? options.areaGateFlag : null,
-                areaName: (options && typeof options.areaName === 'string' && options.areaName) ? options.areaName : null,
-                areaGateMessage: (options && typeof options.areaGateMessage === 'string' && options.areaGateMessage) ? options.areaGateMessage : null
-            };
+            treeNodes[key] = worldTreeNodeRuntime.createTreeNodeRecord(nodeId, options);
             return true;
         }
 
@@ -2139,30 +2135,18 @@
             const tile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
             if (!isTreeTileId(tile)) return null;
             const key = treeNodeKey(x, y, z);
-            if (!treeNodes[key]) treeNodes[key] = { nodeId: 'normal_tree', areaGateFlag: null, areaName: null, areaGateMessage: null };
+            if (!treeNodes[key]) treeNodes[key] = worldTreeNodeRuntime.createDefaultTreeNodeRecord();
             return treeNodes[key];
         }
 
         function rebuildTreeNodes() {
-            const rebuilt = {};
-            for (let z = 0; z < PLANES; z++) {
-                for (let y = 0; y < MAP_SIZE; y++) {
-                    for (let x = 0; x < MAP_SIZE; x++) {
-                        const tile = logicalMap[z][y][x];
-                        if (isTreeTileId(tile)) {
-                            const key = treeNodeKey(x, y, z);
-                            const prev = treeNodes[key];
-                            rebuilt[key] = {
-                                nodeId: prev && prev.nodeId ? prev.nodeId : 'normal_tree',
-                                areaGateFlag: prev && prev.areaGateFlag ? prev.areaGateFlag : null,
-                                areaName: prev && prev.areaName ? prev.areaName : null,
-                                areaGateMessage: prev && prev.areaGateMessage ? prev.areaGateMessage : null
-                            };
-                        }
-                    }
-                }
-            }
-            treeNodes = rebuilt;
+            treeNodes = worldTreeNodeRuntime.rebuildTreeNodes({
+                logicalMap,
+                existingTreeNodes: treeNodes,
+                isTreeTileId,
+                planes: PLANES,
+                mapSize: MAP_SIZE
+            });
         }
 
         function getTreeVisualProfile(nodeId) {

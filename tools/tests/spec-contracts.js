@@ -1723,6 +1723,7 @@ function run() {
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
+  const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
   const rockNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-node-runtime.js"), "utf8");
   const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
@@ -1875,6 +1876,9 @@ function run() {
   assert(!worldScript.includes("materializeSkillWorldRuntime"), "world runtime should load authored starter-town topology directly");
   assert(worldScript.includes("function getTreeNodeAt(x, y, z = playerState.z)"), "world tree node lookup missing");
   assert(worldScript.includes("function resolveTreeRespawnTicks(gridX, gridY, z)"), "woodcutting respawn scaling helper missing");
+  assert(worldScript.includes("WorldTreeNodeRuntime"), "world.js should delegate tree metadata helpers through the tree node runtime");
+  assert(treeNodeRuntimeSource.includes("function createTreeNodeRecord(nodeId = 'normal_tree', options = {})"), "tree node runtime should own tree-node metadata shaping");
+  assert(treeNodeRuntimeSource.includes("function rebuildTreeNodes(input = {})"), "tree node runtime should own tree-node rebuild scanning");
   assert(worldScript.includes("WorldTreeRenderRuntime"), "world.js should delegate tree visuals through the tree render runtime");
   assert(treeRenderRuntimeSource.includes("const TREE_VISUAL_PROFILES = {"), "tree visual profile table missing");
   assert(treeRenderRuntimeSource.includes("function createTreeRenderData(options = {})"), "tree render runtime should own tree instanced mesh bundle construction");
