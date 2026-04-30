@@ -47,6 +47,7 @@ function run() {
   const targetSource = fs.readFileSync(path.join(root, "src", "js", "interactions", "target-interaction-registry.js"), "utf8");
   const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src", "js", "content", "npc-dialogue-catalog.js"), "utf8");
   const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "npc-dialogue-runtime.js"), "utf8");
+  const coreTutorialRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "core-tutorial-runtime.js"), "utf8");
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
   const starterTown = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "main_overworld.json"), "utf8"));
   const tutorialIsland = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "tutorial_island.json"), "utf8"));
@@ -75,6 +76,8 @@ function run() {
   assert(coreSource.includes("? TUTORIAL_WORLD_ID"), "fresh profile startup should route to tutorial island");
   assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for the main overworld");
   assert(coreSource.includes("window.TutorialRuntime = {"), "tutorial progression should be exposed to dialogue runtime");
+  assert(coreSource.includes("coreTutorialRuntime.buildNpcDialogueView(buildTutorialRuntimeContext(), npc, baseView)"), "tutorial progression should delegate dynamic dialogue to the tutorial runtime");
+  assert(coreTutorialRuntimeSource.includes("window.CoreTutorialRuntime"), "tutorial runtime should expose dynamic tutorial dialogue ownership");
   assert(coreSource.includes("Finish the Tutorial Island instructors before leaving for Starter Town."), "tutorial travel should be blocked until lessons are complete");
   assert(coreSource.includes("saveProgressToStorage('tutorial_complete')"), "tutorial completion should be persisted immediately");
 
@@ -163,15 +166,15 @@ function run() {
   const tutorialGuideDialogue = dialogueCatalog.getDialogueEntryByNpc({ name: "Tutorial Guide" });
   assert(!!tutorialGuideDialogue, "tutorial guide dialogue entry should resolve from NPC name");
   assert(tutorialGuideDialogue.options.map((option) => option && option.kind).join(",") === "text,text,close", "static tutorial guide dialogue should not expose immediate travel");
-  assert(coreSource.includes("label: 'Leave for Starter Town'"), "dynamic tutorial guide dialogue should expose exit travel after completion");
-  assert(coreSource.includes("travelToWorldId: MAIN_OVERWORLD_WORLD_ID"), "dynamic tutorial exit option should carry the main-overworld target");
-  assert(coreSource.includes("travelSpawn: { x: 205, y: 210, z: 0 }"), "dynamic tutorial exit option should carry the starter-town spawn");
-  assert(!coreSource.includes("makeTutorialStepOption('Open the first gate'"), "tutorial guide should not expose a text option to open the first gate");
-  assert(coreSource.includes("setTutorialStep(1, 'tutorial_arrival_welcome')"), "tutorial guide welcome should advance the arrival step naturally");
-  assert(coreSource.includes("if (step === 2) ensureTutorialItem('small_net', 1);"), "fishing instructor should grant the net before the completion check");
-  assert(coreSource.includes("if (step === 4) {\n                    ensureTutorialItem('bronze_pickaxe', 1);\n                    ensureTutorialItem('hammer', 1);"), "mining instructor should grant tools before the completion check");
-  assert(coreSource.includes("if (step === 5) {\n                    ensureTutorialItem('bronze_sword', 1);\n                    ensureTutorialItem('cooked_shrimp', 2);"), "combat instructor should grant starter combat supplies before the completion check");
-  assert(coreSource.includes("if (step === 6) ensureTutorialItem('coins', 1);"), "bank tutor should grant the tutorial token before the completion check");
+  assert(coreTutorialRuntimeSource.includes("label: 'Leave for Starter Town'"), "dynamic tutorial guide dialogue should expose exit travel after completion");
+  assert(coreTutorialRuntimeSource.includes("getMainOverworldWorldId(context)"), "dynamic tutorial exit option should carry the main-overworld target");
+  assert(coreTutorialRuntimeSource.includes("travelSpawn: { x: 205, y: 210, z: 0 }"), "dynamic tutorial exit option should carry the starter-town spawn");
+  assert(!coreTutorialRuntimeSource.includes("makeTutorialStepOption('Open the first gate'"), "tutorial guide should not expose a text option to open the first gate");
+  assert(coreTutorialRuntimeSource.includes("setTutorialStep({ context }, 1, 'tutorial_arrival_welcome')"), "tutorial guide welcome should advance the arrival step naturally");
+  assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('small_net', 1);"), "fishing instructor should grant the net before the completion check");
+  assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_pickaxe', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('hammer', 1);"), "mining instructor should grant tools before the completion check");
+  assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('cooked_shrimp', 2);"), "combat instructor should grant starter combat supplies before the completion check");
+  assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('coins', 1);"), "bank tutor should grant the tutorial token before the completion check");
   assert(worldSource.includes("function isTutorialGateLocked(door)"), "world runtime should keep tutorial gates locked until their required step");
   assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_CLOSED"), "logical-map authoring runtime should handle closed wooden tutorial gates");
   assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_OPEN"), "logical-map authoring runtime should handle open wooden tutorial gates");
