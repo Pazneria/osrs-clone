@@ -5,6 +5,7 @@ import examineCatalogScript from "../../js/content/examine-catalog.js?raw";
 import npcDialogueCatalogScript from "../../js/content/npc-dialogue-catalog.js?raw";
 import questCatalogScript from "../../js/content/quest-catalog.js?raw";
 import questRuntimeScript from "../../js/quest-runtime.js?raw";
+import questLogRuntimeScript from "../../js/quest-log-runtime.js?raw";
 import npcDialogueRuntimeScript from "../../js/npc-dialogue-runtime.js?raw";
 import combatQaDebugRuntimeScript from "../../js/combat-qa-debug-runtime.js?raw";
 import combatAnimationDebugPanelRuntimeScript from "../../js/combat-animation-debug-panel-runtime.js?raw";
@@ -101,6 +102,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "npc-dialogue-catalog", filename: "src/js/content/npc-dialogue-catalog.js", code: npcDialogueCatalogScript },
   { id: "quest-catalog", filename: "src/js/content/quest-catalog.js", code: questCatalogScript },
   { id: "quest-runtime", filename: "src/js/quest-runtime.js", code: questRuntimeScript },
+  { id: "quest-log-runtime", filename: "src/js/quest-log-runtime.js", code: questLogRuntimeScript },
   { id: "npc-dialogue-runtime", filename: "src/js/npc-dialogue-runtime.js", code: npcDialogueRuntimeScript },
   { id: "combat-qa-debug-runtime", filename: "src/js/combat-qa-debug-runtime.js", code: combatQaDebugRuntimeScript },
   { id: "combat-animation-debug-panel-runtime", filename: "src/js/combat-animation-debug-panel-runtime.js", code: combatAnimationDebugPanelRuntimeScript },
