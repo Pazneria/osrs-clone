@@ -40,6 +40,7 @@ import worldSceneLifecycleScript from "../../js/world/scene-lifecycle.js?raw";
 import worldChunkSceneRuntimeScript from "../../js/world/chunk-scene-runtime.js?raw";
 import worldMapHudRuntimeScript from "../../js/world/map-hud-runtime.js?raw";
 import worldTrainingLocationRuntimeScript from "../../js/world/training-location-runtime.js?raw";
+import worldStatusHudRuntimeScript from "../../js/world/status-hud-runtime.js?raw";
 import skillProgressRuntimeScript from "../../js/skill-progress-runtime.js?raw";
 import coreScript from "../../js/core.js?raw";
 import skillSpecsScript from "../../js/skills/specs.js?raw";
@@ -117,6 +118,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-chunk-scene-runtime", filename: "src/js/world/chunk-scene-runtime.js", code: worldChunkSceneRuntimeScript },
   { id: "world-map-hud-runtime", filename: "src/js/world/map-hud-runtime.js", code: worldMapHudRuntimeScript },
   { id: "world-training-location-runtime", filename: "src/js/world/training-location-runtime.js", code: worldTrainingLocationRuntimeScript },
+  { id: "world-status-hud-runtime", filename: "src/js/world/status-hud-runtime.js", code: worldStatusHudRuntimeScript },
   { id: "skill-progress-runtime", filename: "src/js/skill-progress-runtime.js", code: skillProgressRuntimeScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },
   { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },

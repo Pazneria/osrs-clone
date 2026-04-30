@@ -92,6 +92,7 @@ function extractFunction(source, name) {
 const bridgeSource = read("src/game/platform/ui-domain-bridge.ts");
 const inventorySource = read("src/js/inventory.js");
 const worldSource = read("src/js/world.js");
+const statusHudRuntimeSource = read("src/js/world/status-hud-runtime.js");
 const coreSource = read("src/js/core.js");
 const inputSource = read("src/js/input-render.js");
 const indexSource = read("index.html");
@@ -280,12 +281,12 @@ assert.strictEqual(
 }
 
 assert.ok(
-  worldSource.includes("buildCombatStatsViewModel"),
-  "world.js should source combat stat HUD data from the UI domain bridge"
+  statusHudRuntimeSource.includes("buildCombatStatsViewModel"),
+  "status HUD runtime should source combat stat HUD data from the UI domain bridge"
 );
 assert.ok(
-  worldSource.includes("buildCombatTabViewModel"),
-  "world.js should source combat-tab data from the UI domain bridge"
+  statusHudRuntimeSource.includes("buildCombatTabViewModel"),
+  "status HUD runtime should source combat-tab data from the UI domain bridge"
 );
 assert.ok(
   !worldSource.includes("buildCombatStatusViewModel"),
@@ -364,8 +365,12 @@ assert.ok(
   "index.html should remove the unlock timeline heading so the list can sit higher"
 );
 assert.ok(
-  worldSource.includes("updateInventoryHitpointsHud"),
-  "world.js should refresh the inventory hitpoints bar through updateStats"
+  statusHudRuntimeSource.includes("updateInventoryHitpointsHud"),
+  "status HUD runtime should refresh the inventory hitpoints bar through updateStats"
+);
+assert.ok(
+  worldSource.includes("worldStatusHudRuntime.updateStats(buildStatusHudRuntimeContext())"),
+  "world.js should delegate stat HUD painting to the status HUD runtime"
 );
 assert.ok(
   indexSource.includes("tab-combat"),

@@ -22,6 +22,7 @@
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const worldFireLifecycleRuntime = window.WorldFireLifecycleRuntime || null;
         const worldTrainingLocationRuntime = window.WorldTrainingLocationRuntime || null;
+        const worldStatusHudRuntime = window.WorldStatusHudRuntime || null;
         const skillProgressRuntime = window.SkillProgressRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
@@ -312,72 +313,6 @@
             } 
         }
 
-        function updateCombatStyleButtonState(button, active) {
-            if (!button) return;
-            button.classList.toggle('bg-[#5a311d]', active);
-            button.classList.toggle('border-[#ffcf8b]', active);
-            button.classList.toggle('text-[#ffcf8b]', active);
-            button.classList.toggle('bg-[#111418]', !active);
-            button.classList.toggle('border-[#3a444c]', !active);
-            button.classList.toggle('text-[#c8aa6e]', !active);
-            button.setAttribute('aria-pressed', active ? 'true' : 'false');
-        }
-
-        function updateCombatTab(combatTabViewModel) {
-            const combatLevelEl = document.getElementById('combat-level-value');
-            if (!combatLevelEl || !combatTabViewModel) return;
-
-            combatLevelEl.innerText = combatTabViewModel.combatLevelText;
-            document.getElementById('combat-level-formula').innerText = combatTabViewModel.combatLevelFormulaText;
-            document.getElementById('combat-style-current').innerText = combatTabViewModel.selectedStyleLabel;
-            document.getElementById('combat-style-effect').innerText = combatTabViewModel.selectedStyleDescription;
-            document.getElementById('combat-skill-attack').innerText = combatTabViewModel.attackLevel;
-            document.getElementById('combat-skill-strength').innerText = combatTabViewModel.strengthLevel;
-            document.getElementById('combat-skill-defense').innerText = combatTabViewModel.defenseLevel;
-            document.getElementById('combat-skill-hitpoints').innerText = combatTabViewModel.hitpointsLevel;
-            document.getElementById('combat-roll-attack').innerText = combatTabViewModel.combatStats.attack;
-            document.getElementById('combat-roll-defense').innerText = combatTabViewModel.combatStats.defense;
-            document.getElementById('combat-max-hit').innerText = combatTabViewModel.combatStats.strength;
-
-            const styleOptionsById = Object.fromEntries((combatTabViewModel.styleOptions || []).map((entry) => [entry.styleId, entry]));
-            updateCombatStyleButtonState(document.getElementById('combat-style-attack'), !!(styleOptionsById.attack && styleOptionsById.attack.active));
-            updateCombatStyleButtonState(document.getElementById('combat-style-strength'), !!(styleOptionsById.strength && styleOptionsById.strength.active));
-            updateCombatStyleButtonState(document.getElementById('combat-style-defense'), !!(styleOptionsById.defense && styleOptionsById.defense.active));
-        }
-
-        function updateInventoryHitpointsHud() {
-            const hitpointsTextEl = document.getElementById('inventory-hitpoints-text');
-            const hitpointsBarFillEl = document.getElementById('inventory-hitpoints-bar-fill');
-            if (!hitpointsTextEl || !hitpointsBarFillEl) return;
-
-            const currentHitpoints = getCurrentHitpoints();
-            const maxHitpoints = getMaxHitpoints();
-            const hitpointsLevel = playerSkills && playerSkills.hitpoints && Number.isFinite(playerSkills.hitpoints.level)
-                ? Math.max(1, Math.floor(playerSkills.hitpoints.level))
-                : maxHitpoints;
-            const fillPercent = Math.max(0, Math.min(100, (currentHitpoints / Math.max(1, maxHitpoints)) * 100));
-
-            hitpointsTextEl.innerText = `${currentHitpoints} / ${hitpointsLevel}`;
-            hitpointsBarFillEl.style.width = `${fillPercent}%`;
-        }
-
-        function updateStats() {
-            const uiDomainRuntime = window.UiDomainRuntime || null;
-            const combatTabViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatTabViewModel === 'function'
-                ? uiDomainRuntime.buildCombatTabViewModel({ playerSkills, equipment, playerState })
-                : null;
-            const statsViewModel = combatTabViewModel && combatTabViewModel.combatStats
-                ? combatTabViewModel.combatStats
-                : (uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatsViewModel === 'function'
-                    ? uiDomainRuntime.buildCombatStatsViewModel({ playerSkills, equipment, playerState })
-                    : { attack: 0, defense: 0, strength: 0 });
-            document.getElementById('stat-atk').innerText = statsViewModel.attack;
-            document.getElementById('stat-def').innerText = statsViewModel.defense;
-            document.getElementById('stat-str').innerText = statsViewModel.strength;
-            updateInventoryHitpointsHud();
-            updateCombatTab(combatTabViewModel);
-        }
-
         function buildPlayerHitpointsRuntimeContext() {
             return {
                 combatRuntime: window.CombatRuntime || null,
@@ -400,6 +335,22 @@
 
         function applyHitpointDamage(damageAmount, minHitpoints = 0) {
             return playerHitpointsRuntime.applyHitpointDamage(buildPlayerHitpointsRuntimeContext(), damageAmount, minHitpoints);
+        }
+
+        function buildStatusHudRuntimeContext() {
+            return {
+                document,
+                playerSkills,
+                equipment,
+                playerState,
+                uiDomainRuntime: window.UiDomainRuntime || null,
+                getCurrentHitpoints,
+                getMaxHitpoints
+            };
+        }
+
+        function updateStats() {
+            return worldStatusHudRuntime.updateStats(buildStatusHudRuntimeContext());
         }
 
         function didAttackOrCastThisTick() {

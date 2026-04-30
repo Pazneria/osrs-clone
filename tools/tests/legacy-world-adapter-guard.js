@@ -33,6 +33,7 @@ function run() {
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
   const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
+  const statusHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "status-hud-runtime.js"), "utf8");
   const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "skill-progress-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
@@ -96,6 +97,7 @@ function run() {
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const mapHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-map-hud-runtime"');
   const trainingLocationRuntimeIndex = legacyManifestSource.indexOf('id: "world-training-location-runtime"');
+  const statusHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-status-hud-runtime"');
   const skillProgressRuntimeIndex = legacyManifestSource.indexOf('id: "skill-progress-runtime"');
   const worldIndex = legacyManifestSource.indexOf('id: "world"');
   assert(sceneStateIndex !== -1 && worldIndex !== -1 && sceneStateIndex < worldIndex, "legacy script manifest should load world scene state before world.js");
@@ -128,6 +130,7 @@ function run() {
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(mapHudRuntimeIndex !== -1 && worldIndex !== -1 && mapHudRuntimeIndex < worldIndex, "legacy script manifest should load world map HUD runtime before world.js");
   assert(trainingLocationRuntimeIndex !== -1 && worldIndex !== -1 && trainingLocationRuntimeIndex < worldIndex, "legacy script manifest should load world training location runtime before world.js");
+  assert(statusHudRuntimeIndex !== -1 && worldIndex !== -1 && statusHudRuntimeIndex < worldIndex, "legacy script manifest should load world status HUD runtime before world.js");
   assert(skillProgressRuntimeIndex !== -1 && worldIndex !== -1 && skillProgressRuntimeIndex < worldIndex, "legacy script manifest should load skill progress runtime before world.js");
   assert(sceneStateSource.includes("window.LegacyWorldAdapterRuntime"), "world scene state should resolve the typed legacy world adapter runtime");
   assert(sceneStateSource.includes("getCurrentWorldScenePayload"), "world scene state should expose current scene payload lookup");
@@ -140,6 +143,8 @@ function run() {
   assert(mapHudRuntimeSource.includes("updateWorldMapPanel"), "world map HUD runtime should own world-map panel rendering");
   assert(trainingLocationRuntimeSource.includes("window.WorldTrainingLocationRuntime"), "world training location runtime should expose a runtime");
   assert(trainingLocationRuntimeSource.includes("publishTrainingLocationHooks"), "world training location runtime should own training hook publication");
+  assert(statusHudRuntimeSource.includes("window.WorldStatusHudRuntime"), "world status HUD runtime should expose a runtime");
+  assert(statusHudRuntimeSource.includes("updateStats"), "world status HUD runtime should own stat HUD painting");
   assert(skillProgressRuntimeSource.includes("window.SkillProgressRuntime"), "skill progress runtime should expose a runtime");
   assert(skillProgressRuntimeSource.includes("addSkillXp"), "skill progress runtime should own XP awards");
   assert(proceduralRuntimeSource.includes("window.WorldProceduralRuntime"), "world procedural runtime should expose a runtime");

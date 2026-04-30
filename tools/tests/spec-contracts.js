@@ -1743,6 +1743,7 @@ function run() {
   const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-lifecycle-runtime.js"), "utf8");
   const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-quarry-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/training-location-runtime.js"), "utf8");
+  const statusHudRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/status-hud-runtime.js"), "utf8");
   const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src/js/skill-progress-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
@@ -2000,6 +2001,10 @@ function run() {
   assert(trainingLocationRuntimeSource.includes("windowTarget.getMiningTrainingLocations = function getMiningTrainingLocations()"), "training location runtime should publish the mining getter");
   assert(trainingLocationRuntimeSource.includes("windowTarget.getRunecraftingAltarLocations = function getRunecraftingAltarLocations()"), "training location runtime should publish the runecrafting altar getter");
   assert(trainingLocationRuntimeSource.includes("windowTarget.getWoodcuttingTrainingLocations = function getWoodcuttingTrainingLocations()"), "training location runtime should publish the woodcutting getter");
+  assert(statusHudRuntimeSource.includes("window.WorldStatusHudRuntime"), "world status HUD runtime should expose a runtime");
+  assert(statusHudRuntimeSource.includes("function updateStats(context = {})"), "world status HUD runtime should own stat HUD painting");
+  assert(worldScript.includes("worldStatusHudRuntime.updateStats(buildStatusHudRuntimeContext())"), "world.js should delegate stat HUD painting");
+  assert(!worldScript.includes("document.getElementById('stat-atk').innerText"), "world.js should not paint stat HUD values inline");
   assert(skillProgressRuntimeSource.includes("window.SkillProgressRuntime"), "skill progress runtime should expose a runtime");
   assert(skillProgressRuntimeSource.includes("function addSkillXp(context = {}, skillName, amount)"), "skill progress runtime should own XP award bookkeeping");
   assert(worldScript.includes("skillProgressRuntime.addSkillXp(buildSkillProgressRuntimeContext(), skillName, amount)"), "world.js should delegate XP award bookkeeping");
