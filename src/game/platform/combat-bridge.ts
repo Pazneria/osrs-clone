@@ -11,9 +11,13 @@ import type { Point3 } from "../contracts/world";
 import {
   buildCombatStatsViewModel,
   buildPlayerCombatDefaults,
+  clampPlayerCurrentHitpoints,
   computeEnemyMeleeCombatSnapshot,
+  computePlayerMaxHitpoints,
   computePlayerMeleeCombatSnapshot,
   decrementCooldown,
+  applyPlayerHitpointDamage,
+  applyPlayerHitpointHealing,
   isWithinMeleeRange,
   isWithinSquareRange,
   pickDropEntry,
@@ -54,6 +58,10 @@ declare global {
       getDefaultMeleeStyle: () => PlayerCombatStateShape["selectedMeleeStyle"];
       createDefaultPlayerCombatState: (maxHitpoints?: number) => PlayerCombatStateShape;
       buildPlayerCombatDefaults: (playerSkills: PlayerSkillMap) => PlayerCombatStateShape;
+      computePlayerMaxHitpoints: typeof computePlayerMaxHitpoints;
+      clampPlayerCurrentHitpoints: typeof clampPlayerCurrentHitpoints;
+      applyPlayerHitpointHealing: typeof applyPlayerHitpointHealing;
+      applyPlayerHitpointDamage: typeof applyPlayerHitpointDamage;
       buildCombatStatsViewModel: typeof buildCombatStatsViewModel;
       computePlayerMeleeCombatSnapshot: typeof computePlayerMeleeCombatSnapshot;
       computeEnemyMeleeCombatSnapshot: typeof computeEnemyMeleeCombatSnapshot;
@@ -245,6 +253,10 @@ export function exposeCombatBridge(): void {
     getDefaultMeleeStyle: () => DEFAULT_MELEE_STYLE,
     createDefaultPlayerCombatState,
     buildPlayerCombatDefaults,
+    computePlayerMaxHitpoints,
+    clampPlayerCurrentHitpoints,
+    applyPlayerHitpointHealing,
+    applyPlayerHitpointDamage,
     buildCombatStatsViewModel,
     computePlayerMeleeCombatSnapshot,
     computeEnemyMeleeCombatSnapshot,

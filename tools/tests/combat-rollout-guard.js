@@ -14,8 +14,11 @@ const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
+const playerHitpointsRuntimeSource = read("src/js/player-hitpoints-runtime.js");
 const combatContentSource = read("src/game/combat/content.ts");
 const combatContractSource = read("src/game/contracts/combat.ts");
+const combatFormulasSource = read("src/game/combat/formulas.ts");
+const combatBridgeSource = read("src/game/platform/combat-bridge.ts");
 const playerModelSource = read("src/js/player-model.js");
 const targetRegistrySource = read("src/js/interactions/target-interaction-registry.js");
 const examineCatalogSource = read("src/js/content/examine-catalog.js");
@@ -33,6 +36,27 @@ assert.ok(
   legacyManifest.includes('../../js/combat-qa-debug-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-qa-debug-runtime"') < legacyManifest.indexOf('id: "core"'),
   "legacy script manifest should load combat QA debug runtime before core.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/player-hitpoints-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "player-hitpoints-runtime"') < legacyManifest.indexOf('id: "world"') &&
+    legacyManifest.indexOf('id: "player-hitpoints-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load player hitpoints runtime before world/combat consumers"
+);
+assert.ok(
+  combatFormulasSource.includes("export function applyPlayerHitpointDamage") &&
+    combatFormulasSource.includes("export function applyPlayerHitpointHealing") &&
+    combatBridgeSource.includes("applyPlayerHitpointDamage") &&
+    combatBridgeSource.includes("applyPlayerHitpointHealing"),
+  "typed combat formulas and bridge should own player hitpoint math"
+);
+assert.ok(
+  playerHitpointsRuntimeSource.includes("window.PlayerHitpointsRuntime") &&
+    playerHitpointsRuntimeSource.includes("applyHitpointDamage") &&
+    playerHitpointsRuntimeSource.includes("applyHitpointHealing") &&
+    worldSource.includes("PlayerHitpointsRuntime") &&
+    !worldSource.includes("const dealt = Math.min(requestedDamage, maxDamage);"),
+  "world.js should delegate player hitpoint mutation through the player hitpoints runtime"
 );
 assert.ok(
   combatQaDebugSource.includes("window.CombatQaDebugRuntime") &&

@@ -81,6 +81,47 @@ export function computePlayerMaxHitpoints(playerSkills: PlayerSkillMap): number 
   return Math.max(1, getSkillLevel(playerSkills, "hitpoints", 10));
 }
 
+export function clampPlayerCurrentHitpoints(currentHitpoints: unknown, maxHitpoints: number): number {
+  const resolvedMaxHitpoints = Number.isFinite(maxHitpoints) ? Math.max(1, Math.floor(maxHitpoints)) : 10;
+  const numericHitpoints = Number(currentHitpoints);
+  const resolvedHitpoints = Number.isFinite(numericHitpoints) ? Math.floor(numericHitpoints) : resolvedMaxHitpoints;
+  return Math.max(0, Math.min(resolvedMaxHitpoints, resolvedHitpoints));
+}
+
+export function applyPlayerHitpointHealing(
+  currentHitpoints: unknown,
+  maxHitpoints: number,
+  healAmount: unknown
+): { currentHitpoints: number; healed: number } {
+  const resolvedMaxHitpoints = Number.isFinite(maxHitpoints) ? Math.max(1, Math.floor(maxHitpoints)) : 10;
+  const current = clampPlayerCurrentHitpoints(currentHitpoints, resolvedMaxHitpoints);
+  const requestedHeal = Number.isFinite(Number(healAmount)) ? Math.max(0, Math.floor(Number(healAmount))) : 0;
+  const healed = Math.min(requestedHeal, Math.max(0, resolvedMaxHitpoints - current));
+  return {
+    currentHitpoints: current + healed,
+    healed
+  };
+}
+
+export function applyPlayerHitpointDamage(
+  currentHitpoints: unknown,
+  maxHitpoints: number,
+  damageAmount: unknown,
+  minHitpoints = 0
+): { currentHitpoints: number; dealt: number } {
+  const resolvedMaxHitpoints = Number.isFinite(maxHitpoints) ? Math.max(1, Math.floor(maxHitpoints)) : 10;
+  const current = clampPlayerCurrentHitpoints(currentHitpoints, resolvedMaxHitpoints);
+  const requestedDamage = Number.isFinite(Number(damageAmount)) ? Math.max(0, Math.floor(Number(damageAmount))) : 0;
+  const minimum = Number.isFinite(Number(minHitpoints))
+    ? Math.max(0, Math.min(resolvedMaxHitpoints, Math.floor(Number(minHitpoints))))
+    : 0;
+  const dealt = Math.min(requestedDamage, Math.max(0, current - minimum));
+  return {
+    currentHitpoints: current - dealt,
+    dealt
+  };
+}
+
 export function buildPlayerCombatDefaults(playerSkills: PlayerSkillMap): PlayerCombatStateShape {
   return {
     currentHitpoints: computePlayerMaxHitpoints(playerSkills),

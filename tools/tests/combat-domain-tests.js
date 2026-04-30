@@ -36,6 +36,26 @@ function makeWeapon(overrides = {}) {
   assert.strictEqual(combatFormulas.decrementCooldown(0), 0, "cooldown should not go negative");
   assert.strictEqual(combatFormulas.isWithinMeleeRange({ x: 10, y: 10 }, { x: 11, y: 11 }), true, "diagonal adjacency should count as melee range");
   assert.strictEqual(combatFormulas.isWithinSquareRange({ x: 10, y: 10 }, { x: 14, y: 14 }, 4), true, "square range should allow diagonal distance within range");
+  assert.strictEqual(
+    combatFormulas.computePlayerMaxHitpoints({ hitpoints: { xp: 0, level: 12 } }),
+    12,
+    "player max hitpoints should derive from the hitpoints skill level"
+  );
+  assert.strictEqual(
+    combatFormulas.clampPlayerCurrentHitpoints(99, 12),
+    12,
+    "current hitpoints should clamp to the computed maximum"
+  );
+  assert.deepStrictEqual(
+    combatFormulas.applyPlayerHitpointHealing(8, 12, 10),
+    { currentHitpoints: 12, healed: 4 },
+    "healing should cap at max hitpoints and report the effective amount"
+  );
+  assert.deepStrictEqual(
+    combatFormulas.applyPlayerHitpointDamage(8, 12, 10, 1),
+    { currentHitpoints: 1, dealt: 7 },
+    "damage should respect the minimum allowed hitpoints and report the effective amount"
+  );
 }
 
 {
@@ -143,6 +163,12 @@ function makeWeapon(overrides = {}) {
   };
 
   combatBridge.exposeCombatBridge();
+  assert.strictEqual(window.CombatRuntime.computePlayerMaxHitpoints({ hitpoints: { xp: 0, level: 13 } }), 13, "combat bridge should expose player max hitpoints");
+  assert.deepStrictEqual(
+    window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),
+    { currentHitpoints: 1, dealt: 5 },
+    "combat bridge should expose player hitpoint damage math"
+  );
   const summaries = new Map(
     window.CombatRuntime.listCombatProgressionBandWorldSummaries("qa_runtime_world").map((summary) => [summary.bandId, summary])
   );

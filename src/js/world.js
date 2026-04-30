@@ -17,6 +17,7 @@
         const worldRockLifecycleRuntime = window.WorldRockLifecycleRuntime || null;
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const worldFireLifecycleRuntime = window.WorldFireLifecycleRuntime || null;
+        const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
         const worldChunkResourceRenderRuntime = window.WorldChunkResourceRenderRuntime || null;
@@ -380,40 +381,28 @@
             updateCombatTab(combatTabViewModel);
         }
 
+        function buildPlayerHitpointsRuntimeContext() {
+            return {
+                combatRuntime: window.CombatRuntime || null,
+                playerSkills,
+                playerState
+            };
+        }
+
         function getMaxHitpoints() {
-            const hpLevel = playerSkills && playerSkills.hitpoints && Number.isFinite(playerSkills.hitpoints.level)
-                ? Math.floor(playerSkills.hitpoints.level)
-                : 10;
-            return Math.max(1, hpLevel);
+            return playerHitpointsRuntime.getMaxHitpoints(buildPlayerHitpointsRuntimeContext());
         }
 
         function getCurrentHitpoints() {
-            const maxHitpoints = getMaxHitpoints();
-            if (!Number.isFinite(playerState.currentHitpoints)) playerState.currentHitpoints = maxHitpoints;
-            playerState.currentHitpoints = Math.max(0, Math.min(maxHitpoints, Math.floor(playerState.currentHitpoints)));
-            return playerState.currentHitpoints;
+            return playerHitpointsRuntime.getCurrentHitpoints(buildPlayerHitpointsRuntimeContext());
         }
 
         function applyHitpointHealing(healAmount) {
-            const maxHitpoints = getMaxHitpoints();
-            const currentHitpoints = getCurrentHitpoints();
-            const requestedHeal = Number.isFinite(healAmount) ? Math.max(0, Math.floor(healAmount)) : 0;
-            const healed = Math.min(requestedHeal, Math.max(0, maxHitpoints - currentHitpoints));
-            playerState.currentHitpoints = currentHitpoints + healed;
-            return healed;
+            return playerHitpointsRuntime.applyHitpointHealing(buildPlayerHitpointsRuntimeContext(), healAmount);
         }
 
         function applyHitpointDamage(damageAmount, minHitpoints = 0) {
-            const maxHitpoints = getMaxHitpoints();
-            const currentHitpoints = getCurrentHitpoints();
-            const requestedDamage = Number.isFinite(damageAmount) ? Math.max(0, Math.floor(damageAmount)) : 0;
-            const minimum = Number.isFinite(minHitpoints)
-                ? Math.max(0, Math.min(maxHitpoints, Math.floor(minHitpoints)))
-                : 0;
-            const maxDamage = Math.max(0, currentHitpoints - minimum);
-            const dealt = Math.min(requestedDamage, maxDamage);
-            playerState.currentHitpoints = currentHitpoints - dealt;
-            return dealt;
+            return playerHitpointsRuntime.applyHitpointDamage(buildPlayerHitpointsRuntimeContext(), damageAmount, minHitpoints);
         }
 
         function didAttackOrCastThisTick() {
