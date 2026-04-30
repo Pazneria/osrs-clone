@@ -1731,6 +1731,7 @@ function run() {
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
   const rockNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-node-runtime.js"), "utf8");
   const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-resource-render-runtime.js"), "utf8");
+  const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-pose-reference-runtime.js"), "utf8");
   const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
@@ -1944,6 +1945,10 @@ function run() {
   assert(!worldScript.includes("tData.treeMap[tIdx]"), "world.js should not write tree instance maps inline");
   assert(!worldScript.includes("setRockVisualState(rData, visualId, rockIndex, {"), "world.js should not place rock instances inline");
   assert(!worldScript.includes("new THREE.InstancedMesh(sharedGeometries.treeTrunk"), "world.js should not own tree instanced mesh construction");
+  assert(worldScript.includes("WorldMiningPoseReferenceRuntime"), "world.js should delegate mining pose reference visuals");
+  assert(miningPoseReferenceRuntimeSource.includes("function applyMiningReferenceVariant(rigRoot, variantIndex, frameNowMs, options = {})"), "mining pose reference runtime should own pose variant math");
+  assert(miningPoseReferenceRuntimeSource.includes("const MINING_REFERENCE_VARIANTS = Object.freeze(["), "mining pose reference runtime should own variant metadata");
+  assert(!worldScript.includes("function applyMiningReferenceVariant"), "world.js should not own mining pose variant math");
 
   const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
   assert(starterTownWorld.services.some((entry) => entry.type === "FURNACE"), "furnace world placement missing");
