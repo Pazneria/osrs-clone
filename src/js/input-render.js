@@ -23,6 +23,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputTickMovementRuntime() {
             return window.InputTickMovementRuntime || null;
         }
+        function getInputArrivalInteractionRuntime() {
+            return window.InputArrivalInteractionRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -1155,6 +1158,32 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             };
         }
 
+        function buildInputArrivalInteractionRuntimeContext() {
+            return {
+                windowRef: window,
+                playerState,
+                logicalMap,
+                heightMap,
+                tileId: TileId,
+                playerRig,
+                skillRuntime: window.SkillRuntime || null,
+                addChatMessage: (typeof addChatMessage === 'function') ? addChatMessage : null,
+                isWaterTileId,
+                isDoorTileId,
+                isPierFishingApproachTile,
+                isStandableTile,
+                validateStationApproach,
+                resolveInteractionFacingRotation,
+                stopActiveFletchingProcessingSession,
+                clearMinimapDestinationIfReached,
+                updateMinimapCanvas,
+                takeGroundItemByUid: (typeof window.takeGroundItemByUid === 'function') ? window.takeGroundItemByUid : null,
+                openShop,
+                openBank,
+                setActiveBankSource: (typeof window.setActiveBankSource === 'function') ? window.setActiveBankSource : null
+            };
+        }
+
         function processTick() {
             if (isAnimationStudioActive()) {
                 lastTickTime = Date.now();
@@ -1210,203 +1239,11 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             
             if (playerState.path.length === 0) {
-                if (playerState.action === 'SKILLING: FLETCHING' && playerState.pendingInteractAfterFletchingWalk) {
-                    if (movedThisTick) return;
-                    const deferred = playerState.pendingInteractAfterFletchingWalk;
-                    if (Number.isInteger(deferred.targetX)) playerState.targetX = deferred.targetX;
-                    if (Number.isInteger(deferred.targetY)) playerState.targetY = deferred.targetY;
-                    if (typeof deferred.targetObj === 'string' && deferred.targetObj) playerState.targetObj = deferred.targetObj;
-                    if (deferred.targetUid !== undefined) playerState.targetUid = deferred.targetUid;
-
-                    const distX = Math.abs(playerState.targetX - playerState.x);
-                    const distY = Math.abs(playerState.targetY - playerState.y);
-                    let isAdjacent = (distX <= 1 && distY <= 1);
-                    if (playerState.targetObj === 'ALTAR_CANDIDATE') {
-                        isAdjacent = (distX <= 2 && distY <= 2 && (distX > 1 || distY > 1));
-                    }
-                    let isAcrossCounter = false;
-                    if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
-                        if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === TileId.SHOP_COUNTER) isAcrossCounter = true;
-                        if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === TileId.SHOP_COUNTER) isAcrossCounter = true;
-                    }
-
-                    if (isAdjacent || isAcrossCounter) {
-                        stopActiveFletchingProcessingSession();
-                        playerState.pendingInteractAfterFletchingWalk = null;
-                        playerState.action = 'WALKING_TO_INTERACT';
-                    } else {
-                        playerState.pendingInteractAfterFletchingWalk = null;
-                    }
-                }
-                if (playerState.action === 'WALKING_TO_INTERACT') {
-                    if (movedThisTick) return;
-                    const distX = Math.abs(playerState.targetX - playerState.x); 
-                    const distY = Math.abs(playerState.targetY - playerState.y);
-                    const playerH = heightMap[playerState.z][playerState.y][playerState.x];
-                    const targetH = heightMap[playerState.z][playerState.targetY][playerState.targetX];
-
-                    if (playerState.targetObj === 'GROUND_ITEM') {
-                        if (distX === 0 && distY === 0) { 
-                            if (typeof window.takeGroundItemByUid === 'function') window.takeGroundItemByUid(playerState.targetUid);
-                            playerState.action = 'IDLE';
-                        } else playerState.action = 'IDLE';
-                    } else if (playerState.targetObj === 'DOOR') {
-                        const door = playerState.targetUid;
-                        if (door) {
-                            if (window.isTutorialGateLocked && window.isTutorialGateLocked(door)) {
-                                const message = door.tutorialGateMessage || 'That gate is locked until you finish the current tutorial lesson.';
-                                if (typeof addChatMessage === 'function') addChatMessage(message, 'warn');
-                                playerState.action = 'IDLE';
-                                return;
-                            }
-                            // EMERGENCY ANTI-CLIP: Push player off the door tile if they are standing on it
-                            if (door.isOpen && playerState.x === door.x && playerState.y === door.y) {
-                                const dirs = [{x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1}];
-                                for (let d of dirs) {
-                                    let nx = playerState.x + d.x, ny = playerState.y + d.y;
-                                    if (isStandableTile(nx, ny, playerState.z) && !isDoorTileId(logicalMap[playerState.z][ny][nx])) {
-                                        playerState.x = nx; playerState.y = ny;
-                                        playerState.prevX = nx; playerState.prevY = ny;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            door.isOpen = !door.isOpen;
-                            door.targetRotation = door.isOpen ? door.openRot : door.closedRot;
-                            if (door.isWoodenGate) {
-                                logicalMap[door.z][door.y][door.x] = door.isOpen ? TileId.WOODEN_GATE_OPEN : TileId.WOODEN_GATE_CLOSED;
-                            } else {
-                                logicalMap[door.z][door.y][door.x] = door.isOpen ? TileId.DOOR_OPEN : TileId.DOOR_CLOSED;
-                            }
-                            updateMinimapCanvas(); // Redraw map to show Walkable state change
-                        }
-                        playerState.action = 'IDLE';
-                    } else {
-                        let isAdjacent = (distX <= 1 && distY <= 1);
-                        if (playerState.targetObj === 'ALTAR_CANDIDATE') {
-                            // Altars are interacted from one tile farther than default.
-                            isAdjacent = (distX <= 2 && distY <= 2 && (distX > 1 || distY > 1));
-                        } else if (playerState.targetObj === 'WATER') {
-                            const cardinalAdjacent = (distX + distY) === 1;
-                            const isPierApproach = isPierFishingApproachTile(
-                                playerState.x,
-                                playerState.y,
-                                playerState.targetX,
-                                playerState.targetY,
-                                playerState.z
-                            );
-                            const standingOnWater = isWaterTileId(logicalMap[playerState.z][playerState.y][playerState.x]);
-                            isAdjacent = cardinalAdjacent && (isPierApproach || !standingOnWater);
-                        }
-                        let isAcrossCounter = false;
-                        if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
-                            if (distX === 2 && distY === 0 && logicalMap[playerState.z][playerState.y][Math.min(playerState.x, playerState.targetX) + 1] === TileId.SHOP_COUNTER) isAcrossCounter = true;
-                            if (distY === 2 && distX === 0 && logicalMap[playerState.z][Math.min(playerState.y, playerState.targetY) + 1][playerState.x] === TileId.SHOP_COUNTER) isAcrossCounter = true;
-                        }
-
-                        if (isAdjacent || isAcrossCounter) {
-                            const stationApproach = validateStationApproach(
-                                playerState.targetObj,
-                                playerState.targetX,
-                                playerState.targetY,
-                                playerState.x,
-                                playerState.y
-                            );
-                            if (!stationApproach.ok) {
-                                if (typeof addChatMessage === 'function' && stationApproach.message) addChatMessage(stationApproach.message, 'warn');
-                                playerState.action = 'IDLE';
-                                return;
-                            }
-
-                            const pierFishingApproach = playerState.targetObj === 'WATER'
-                                && isPierFishingApproachTile(playerState.x, playerState.y, playerState.targetX, playerState.targetY, playerState.z);
-                            if (Math.abs(playerH - targetH) > 0.3 && !isAcrossCounter && !pierFishingApproach) {
-                                playerState.action = 'IDLE';
-                            } else if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
-                                playerState.action = 'IDLE';
-                                const faceDx = playerState.targetX - playerState.x; const faceDy = playerState.targetY - playerState.y; 
-                                if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
-                                
-                                if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Trade') {
-                                    openShop(playerState.targetUid.merchantId || 'general_store');
-                                } else if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Bank') {
-                                    openBank();
-                                } else if (playerState.targetObj === 'NPC' && playerState.targetUid && playerState.targetUid.action === 'Travel') {
-                                    if (typeof window.travelToWorld === 'function') {
-                                        const explicitWorldId = playerState.targetUid.travelToWorldId || null;
-                                        const sessionWorldId = (window.GameSessionRuntime && typeof window.GameSessionRuntime.resolveCurrentWorldId === 'function')
-                                            ? window.GameSessionRuntime.resolveCurrentWorldId()
-                                            : ((window.WorldBootstrapRuntime && typeof window.WorldBootstrapRuntime.getCurrentWorldId === 'function')
-                                                ? window.WorldBootstrapRuntime.getCurrentWorldId()
-                                                : null);
-                                        const targetWorldId = explicitWorldId || sessionWorldId;
-                                        if (targetWorldId) {
-                                            window.travelToWorld(targetWorldId, {
-                                                spawn: playerState.targetUid.travelSpawn || null,
-                                                label: playerState.targetUid.worldLabel || playerState.targetUid.name || targetWorldId
-                                            });
-                                        }
-                                    }
-                                } else if (playerState.targetObj === 'NPC' && playerState.targetUid && (playerState.targetUid.action === 'Talk-to' || !playerState.targetUid.action)) {
-                                    if (typeof window.openNpcDialogue === 'function') {
-                                        window.openNpcDialogue(playerState.targetUid);
-                                    }
-                                }
-                            } else if (playerState.targetObj === 'BANK_BOOTH') {
-                                playerState.action = 'IDLE';
-                                const faceDx = playerState.targetX - playerState.x; const faceDy = playerState.targetY - playerState.y; 
-                                if (faceDx !== 0 || faceDy !== 0) { playerState.targetRotation = Math.atan2(faceDx, faceDy); if (playerRig) playerRig.rotation.y = playerState.targetRotation; }
-                                if (typeof window.setActiveBankSource === 'function') {
-                                    window.setActiveBankSource(`booth:${playerState.targetX},${playerState.targetY},${playerState.z}`);
-                                }
-                                openBank();
-                            } else {
-                                if (playerState.targetObj === 'FURNACE' || playerState.targetObj === 'ANVIL') {
-                                    const facingRotation = resolveInteractionFacingRotation(
-                                        playerState.targetObj,
-                                        playerState.targetX,
-                                        playerState.targetY,
-                                        playerState.x,
-                                        playerState.y,
-                                        playerState.z
-                                    );
-                                    if (Number.isFinite(facingRotation)) {
-                                        playerState.targetRotation = facingRotation;
-                                        if (playerRig) playerRig.rotation.y = playerState.targetRotation;
-                                    }
-                                }
-                                if (playerState.targetObj === 'WATER') {
-                                    // Keep fishing stance head-on toward the selected water tile.
-                                    let faceDx = playerState.targetX - playerState.x;
-                                    let faceDy = playerState.targetY - playerState.y;
-                                    if (Math.abs(faceDx) >= Math.abs(faceDy)) {
-                                        faceDx = Math.sign(faceDx);
-                                        faceDy = 0;
-                                    } else {
-                                        faceDy = Math.sign(faceDy);
-                                        faceDx = 0;
-                                    }
-                                    if (faceDx !== 0 || faceDy !== 0) {
-                                        playerState.targetRotation = Math.atan2(faceDx, faceDy);
-                                        if (playerRig) playerRig.rotation.y = playerState.targetRotation;
-                                    }
-                                }
-                                if (window.SkillRuntime && SkillRuntime.canHandleTarget(playerState.targetObj)) {
-                                    if (!SkillRuntime.tryStartFromPlayerTarget()) playerState.action = 'IDLE';
-                                } else playerState.action = 'IDLE';
-                            }
-                        } else {
-                            if (playerState.targetObj === 'ALTAR_CANDIDATE' && window.QA_RC_DEBUG && typeof addChatMessage === 'function') {
-                                addChatMessage(`[QA rcdbg] interact blocked: dist=(${distX},${distY}) target=(${playerState.targetX},${playerState.targetY}) player=(${playerState.x},${playerState.y})`, 'info');
-                            }
-                            playerState.action = 'IDLE';
-                        }
-                    }
-                } else if (playerState.action === 'WALKING') {
-                    playerState.action = 'IDLE';
-                    clearMinimapDestinationIfReached();
-                }
+                const runtime = getInputArrivalInteractionRuntime();
+                const arrivalResult = runtime && typeof runtime.processArrivalInteractions === 'function'
+                    ? runtime.processArrivalInteractions(buildInputArrivalInteractionRuntimeContext(), movedThisTick)
+                    : null;
+                if (arrivalResult && arrivalResult.shouldReturnEarly) return;
             }
 
             clearMinimapDestinationIfReached();

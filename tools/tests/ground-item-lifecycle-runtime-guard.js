@@ -10,6 +10,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
   const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "ground-item-lifecycle-runtime.js"), "utf8");
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const renderRuntimeIndex = manifestSource.indexOf('id: "world-ground-item-render-runtime"');
@@ -28,7 +29,8 @@ function run() {
   assert(worldSource.includes("WorldGroundItemLifecycleRuntime"), "world.js should delegate ground-item lifecycle behavior");
   assert(worldSource.includes("worldGroundItemLifecycleRuntime.spawnGroundItem(buildGroundItemLifecycleRuntimeContext(), itemData, x, y, z, amount, options);"), "world.js should delegate ground-item spawning");
   assert(worldSource.includes("window.takeGroundItemByUid = takeGroundItemByUid;"), "world.js should expose take-by-uid compatibility hook");
-  assert(inputSource.includes("window.takeGroundItemByUid(playerState.targetUid)"), "input-render should delegate ground-item pickup");
+  assert(inputSource.includes("InputArrivalInteractionRuntime"), "input-render should delegate arrival interaction handling");
+  assert(inputArrivalInteractionSource.includes("context.takeGroundItemByUid(playerState.targetUid)"), "input arrival interaction runtime should delegate ground-item pickup");
   assert(!worldSource.includes("const uid = Date.now() + Math.random();"), "world.js should not own ground-item uid creation");
   assert(!worldSource.includes("new THREE.BoxGeometry(0.8, 0.8, 0.8)"), "world.js should not own ground-item hitbox construction");
   assert(!inputSource.includes("groundItems = groundItems.filter(gi => gi.uid !== itemEntry.uid);"), "input-render should not mutate groundItems directly for pickup");

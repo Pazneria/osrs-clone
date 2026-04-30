@@ -25,6 +25,7 @@ function run() {
   const inputPathfindingSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
   const inputRaycastSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
   const inputTickMovementSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
+  const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -173,6 +174,19 @@ function run() {
     manifestSource.indexOf('id: "input-raycast-runtime"') < manifestSource.indexOf('id: "input-tick-movement-runtime"')
       && manifestSource.indexOf('id: "input-tick-movement-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input tick movement runtime before input-render.js"
+  );
+  assert(inputArrivalInteractionSource.includes("window.InputArrivalInteractionRuntime"), "input arrival interaction runtime should expose a window runtime");
+  assert(inputArrivalInteractionSource.includes("function processArrivalInteractions"), "input arrival interaction runtime should own arrival interaction completion");
+  assert(inputArrivalInteractionSource.includes("function handleWalkingToInteractArrival"), "input arrival interaction runtime should own WALKING_TO_INTERACT completion");
+  assert(inputSource.includes("InputArrivalInteractionRuntime"), "input-render.js should delegate arrival interaction policy through the arrival runtime");
+  assert(inputSource.includes("buildInputArrivalInteractionRuntimeContext"), "input-render.js should provide a narrow arrival interaction runtime context");
+  assert(!inputSource.includes("door.isOpen = !door.isOpen;"), "input-render.js should not own door arrival mutation");
+  assert(!inputSource.includes("playerState.targetUid.action === 'Talk-to'"), "input-render.js should not own NPC Talk-to arrival routing");
+  assert(manifestSource.includes('../../js/input-arrival-interaction-runtime.js?raw'), "legacy manifest should load input arrival interaction runtime");
+  assert(
+    manifestSource.indexOf('id: "input-tick-movement-runtime"') < manifestSource.indexOf('id: "input-arrival-interaction-runtime"')
+      && manifestSource.indexOf('id: "input-arrival-interaction-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input arrival interaction runtime before input-render.js"
   );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");

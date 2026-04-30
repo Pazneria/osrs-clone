@@ -1756,6 +1756,7 @@ function run() {
   const runecraftingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/runecrafting-runtime.ts"), "utf8");
   const woodcuttingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/woodcutting-runtime.ts"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
+  const inputArrivalInteractionRuntimeSource = fs.readFileSync(path.join(root, "src/js/input-arrival-interaction-runtime.js"), "utf8");
   const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src/js/content/npc-dialogue-catalog.js"), "utf8");
   const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src/js/npc-dialogue-runtime.js"), "utf8");
   const npcPlayerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
@@ -1784,8 +1785,9 @@ function run() {
   assert(!worldScript.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime hitboxes should preserve appearanceId");
   assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime hitboxes should preserve dialogueId");
-  assert(inputRenderSource.includes("playerState.targetUid.action === 'Talk-to'"), "input renderer should route Talk-to actions");
-  assert(inputRenderSource.includes("window.openNpcDialogue(playerState.targetUid);"), "input renderer should open NPC dialogue from Talk-to");
+  assert(inputRenderSource.includes("InputArrivalInteractionRuntime"), "input renderer should delegate arrival interactions");
+  assert(inputArrivalInteractionRuntimeSource.includes("playerState.targetUid.action === 'Talk-to'"), "input arrival interaction runtime should route Talk-to actions");
+  assert(inputArrivalInteractionRuntimeSource.includes("windowRef.openNpcDialogue(playerState.targetUid);"), "input arrival interaction runtime should open NPC dialogue from Talk-to");
   assert(npcDialogueCatalogSource.includes("const DIALOGUE_ENTRIES = {"), "npc dialogue catalog should define dialogue entries");
   assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.getDialogueEntryByNpc(npc)"), "npc dialogue runtime should resolve dialogue entries through the catalog helper");
   assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.resolveDialogueIdFromNpc(normalizedNpc)"), "npc dialogue runtime should preserve the resolved dialogue id from full NPC metadata");
@@ -1874,7 +1876,7 @@ function run() {
   assert(groundItemLifecycleRuntimeSource.includes("function dropItem(context = {}, invIndex)"), "ground-item lifecycle runtime should own inventory drop flow");
   assert(groundItemLifecycleRuntimeSource.includes("function updateGroundItems(context = {})"), "ground-item lifecycle runtime should own ground-item despawn ticks");
   assert(groundItemLifecycleRuntimeSource.includes("function takeGroundItemByUid(context = {}, uid)"), "ground-item lifecycle runtime should own ground-item pickup");
-  assert(inputRenderSource.includes("window.takeGroundItemByUid(playerState.targetUid)"), "input renderer should delegate ground-item pickup through the lifecycle hook");
+  assert(inputArrivalInteractionRuntimeSource.includes("context.takeGroundItemByUid(playerState.targetUid)"), "input arrival interaction runtime should delegate ground-item pickup through the lifecycle hook");
   assert(!worldScript.includes("const uid = Date.now() + Math.random();"), "world.js should not own ground-item uid creation");
   assert(!worldScript.includes("new THREE.BoxGeometry(0.8, 0.8, 0.8)"), "world.js should not own ground-item hitbox construction");
   assert(!inputRenderSource.includes("groundItems = groundItems.filter(gi => gi.uid !== itemEntry.uid);"), "input renderer should not mutate groundItems directly for pickup");

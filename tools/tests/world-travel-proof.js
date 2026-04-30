@@ -43,6 +43,7 @@ function run() {
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
   const inventorySource = fs.readFileSync(path.join(root, "src", "js", "inventory.js"), "utf8");
   const targetSource = fs.readFileSync(path.join(root, "src", "js", "interactions", "target-interaction-registry.js"), "utf8");
   const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src", "js", "content", "npc-dialogue-catalog.js"), "utf8");
@@ -91,11 +92,12 @@ function run() {
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime should attach appearance metadata to NPC hitboxes");
   assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime should attach dialogue metadata to NPC hitboxes");
 
-  assert(inputSource.includes("playerState.targetUid.action === 'Travel'"), "input handler should resolve travel NPC actions");
-  assert(inputSource.includes("playerState.targetUid.action === 'Talk-to'"), "input handler should resolve Talk-to NPC actions");
-  assert(inputSource.includes("window.openNpcDialogue(playerState.targetUid);"), "input handler should delegate Talk-to through the NPC dialogue runtime");
-  assert(inputSource.includes("const targetWorldId = explicitWorldId || sessionWorldId;"), "input handler should resolve the target world before dispatch");
-  assert(inputSource.includes("window.travelToWorld(targetWorldId, {"), "input handler should delegate travel through the core world-travel helper");
+  assert(inputSource.includes("InputArrivalInteractionRuntime"), "input handler should delegate arrival interactions");
+  assert(inputArrivalInteractionSource.includes("playerState.targetUid.action === 'Travel'"), "input arrival interaction runtime should resolve travel NPC actions");
+  assert(inputArrivalInteractionSource.includes("playerState.targetUid.action === 'Talk-to'"), "input arrival interaction runtime should resolve Talk-to NPC actions");
+  assert(inputArrivalInteractionSource.includes("windowRef.openNpcDialogue(playerState.targetUid);"), "input arrival interaction runtime should delegate Talk-to through the NPC dialogue runtime");
+  assert(inputArrivalInteractionSource.includes("const targetWorldId = explicitWorldId || sessionWorldId;"), "input arrival interaction runtime should resolve the target world before dispatch");
+  assert(inputArrivalInteractionSource.includes("windowRef.travelToWorld(targetWorldId, {"), "input arrival interaction runtime should delegate travel through the core world-travel helper");
   assert(targetSource.includes("`Travel <span class=\"text-yellow-400\">${npcName}</span>`"), "target interaction registry should surface Travel for NPCs");
   assert(targetSource.includes("`Talk-to <span class=\"text-yellow-400\">${npcName}</span>`"), "target interaction registry should surface Talk-to for NPCs");
   assert(targetSource.includes("const talkTarget = npcUid") && targetSource.includes("Object.assign({}, npcUid, { action: 'Talk-to' })"), "target interaction registry should preserve NPC metadata for Talk-to");
@@ -180,8 +182,8 @@ function run() {
   assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_OPEN"), "logical-map authoring runtime should handle open wooden tutorial gates");
   assert(worldSource.includes("function createFenceVisualGroup"), "world runtime should render real fence tiles");
   assert(worldSource.includes("function updateTutorialRoofVisibility"), "world runtime should fade tutorial cabin roofs while the player is inside");
-  assert(inputSource.includes("window.isTutorialGateLocked(door)"), "input handler should block direct locked tutorial gate toggles");
-  assert(inputSource.includes("TileId.WOODEN_GATE_OPEN"), "input handler should open wooden gates as wooden gate tiles");
+  assert(inputArrivalInteractionSource.includes("windowRef.isTutorialGateLocked") && inputArrivalInteractionSource.includes("isTutorialGateLocked(door)"), "input arrival interaction runtime should block direct locked tutorial gate toggles");
+  assert(inputArrivalInteractionSource.includes("tileId.WOODEN_GATE_OPEN"), "input arrival interaction runtime should open wooden gates as wooden gate tiles");
   assert(inventorySource.includes("window.TutorialRuntime.recordBankAction"), "bank runtime should report tutorial deposit and withdraw evidence");
 
   console.log("World travel proof passed.");
