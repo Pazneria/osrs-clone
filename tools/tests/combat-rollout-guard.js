@@ -14,6 +14,7 @@ const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
+const combatEnemyOverlayRuntimeSource = read("src/js/combat-enemy-overlay-runtime.js");
 const playerHitpointsRuntimeSource = read("src/js/player-hitpoints-runtime.js");
 const combatContentSource = read("src/game/combat/content.ts");
 const combatContractSource = read("src/game/contracts/combat.ts");
@@ -76,12 +77,12 @@ assert.ok(
   "combat runtime should expose tick and render hooks"
 );
   assert.ok(
-  combatSource.includes("function createEnemyHitpointsBarRenderer()") &&
+  combatEnemyOverlayRuntimeSource.includes("function createEnemyHitpointsBarRenderer(options = {})") &&
     combatSource.includes("function computeCombatLevelFromStats(stats)") &&
     combatSource.includes("combatLevel = getEnemyCombatLevel(enemyType);") &&
     combatSource.includes("combatLevel,") &&
-    combatSource.includes("function updateEnemyHitpointsBar(enemyState, renderer)") &&
-    combatSource.includes("function updateCombatEnemyOverlays()") &&
+    combatEnemyOverlayRuntimeSource.includes("function updateEnemyHitpointsBar(options = {})") &&
+    combatSource.includes("combatEnemyOverlayRuntime.updateCombatEnemyOverlays({") &&
     combatSource.includes("function updateIdleEnemyMovement(enemyState, reservedTiles)") &&
     combatSource.includes("function getEnemyVisualMoveProgress(enemyState, frameNow)") &&
     combatSource.includes("function syncMeleeCombatFacing()") &&
@@ -90,7 +91,7 @@ assert.ok(
     combatSource.includes("enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);") &&
     combatSource.includes("snapCombatFacing = true;") &&
     combatSource.includes("renderer.group.rotation.y = targetYaw;"),
-  "combat runtime should render overhead enemy hitpoint bars, support idle enemy roaming, smooth enemy movement, and keep melee combatants facing each other"
+  "combat runtime should delegate overhead enemy hitpoint bars, support idle enemy roaming, smooth enemy movement, and keep melee combatants facing each other"
 );
 assert.ok(
   combatSource.includes("window.updateCombatEnemyOverlays = updateCombatEnemyOverlays;") &&

@@ -1,5 +1,6 @@
 (function () {
     const combatRuntime = window.CombatRuntime || null;
+    const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
     const PLAYER_TARGET_ID = 'player';
     const PLAYER_TARGET_KIND = 'enemy';
     const PLAYER_DEFEAT_MESSAGE = 'You were defeated and return to safety.';
@@ -201,7 +202,7 @@
         const renderer = combatEnemyRenderersById[enemyId];
         if (!renderer) return;
         if (renderer.group && renderer.group.parent) renderer.group.parent.remove(renderer.group);
-        if (renderer.healthBarEl && renderer.healthBarEl.parentNode) renderer.healthBarEl.parentNode.removeChild(renderer.healthBarEl);
+        combatEnemyOverlayRuntime.removeEnemyHitpointsBarRenderer(renderer);
         environmentMeshes = environmentMeshes.filter((mesh) => mesh !== renderer.hitbox);
         delete combatEnemyRenderersById[enemyId];
     }
@@ -1422,98 +1423,16 @@
         return combatEnemyRenderLayer;
     }
 
-    function createEnemyHitpointsBarRenderer() {
-        const el = document.createElement('div');
-        el.style.position = 'absolute';
-        el.style.left = '0px';
-        el.style.top = '0px';
-        el.style.transform = 'translate(-50%, -135%)';
-        el.style.pointerEvents = 'none';
-        el.style.zIndex = '1002';
-        el.style.display = 'none';
-        el.style.filter = 'drop-shadow(0 1px 2px rgba(0,0,0,0.55))';
-
-        const frame = document.createElement('div');
-        frame.style.width = '38px';
-        frame.style.height = '7px';
-        frame.style.padding = '1px';
-        frame.style.border = '1px solid rgba(8, 10, 12, 0.95)';
-        frame.style.background = 'rgba(34, 14, 14, 0.95)';
-        frame.style.borderRadius = '999px';
-        frame.style.boxSizing = 'border-box';
-        frame.style.overflow = 'hidden';
-
-        const fill = document.createElement('div');
-        fill.style.width = '100%';
-        fill.style.height = '100%';
-        fill.style.borderRadius = '999px';
-        fill.style.background = '#52d273';
-        fill.style.transition = 'width 80ms linear, background-color 80ms linear';
-
-        frame.appendChild(fill);
-        el.appendChild(frame);
-        document.body.appendChild(el);
-        return { el, fill };
-    }
-
-    function shouldShowEnemyHitpointsBar(enemyState) {
-        const isVisibleEnemy = isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);
-        if (!isVisibleEnemy) return false;
-        if (!playerState || !playerState.inCombat) return false;
-        if (enemyState.lockedTargetId === PLAYER_TARGET_ID) return true;
-        if (enemyState.lastDamagerId === PLAYER_TARGET_ID) return true;
-        if (enemyState.runtimeId === playerState.lockedTargetId) return true;
-        if (enemyState.runtimeId === playerState.lastDamagerEnemyId) return true;
-        return false;
-    }
-
-    function updateEnemyHitpointsBar(enemyState, renderer) {
-        if (!renderer || !renderer.healthBarEl || !renderer.healthBarFillEl || !renderer.group || !camera) return;
-        if (!shouldShowEnemyHitpointsBar(enemyState) || enemyState.z !== playerState.z) {
-            renderer.healthBarEl.style.display = 'none';
-            return;
-        }
-
-        const maxHealth = Math.max(1, Number.isFinite(renderer.maxHealth) ? Math.floor(renderer.maxHealth) : 1);
-        const currentHealth = Math.max(0, Math.min(maxHealth, Number.isFinite(enemyState.currentHealth) ? Math.floor(enemyState.currentHealth) : maxHealth));
-        const ratio = Math.max(0, Math.min(1, currentHealth / maxHealth));
-
-        renderer.healthBarFillEl.style.width = `${ratio * 100}%`;
-        if (ratio > 0.6) renderer.healthBarFillEl.style.background = '#52d273';
-        else if (ratio > 0.3) renderer.healthBarFillEl.style.background = '#f1c453';
-        else renderer.healthBarFillEl.style.background = '#ef5555';
-
-        const overheadPos = renderer.group.position.clone();
-        overheadPos.y += Number.isFinite(renderer.healthBarYOffset) ? renderer.healthBarYOffset : 1.0;
-        overheadPos.project(camera);
-
-        if (overheadPos.z >= 1 || overheadPos.z <= -1) {
-            renderer.healthBarEl.style.display = 'none';
-            return;
-        }
-
-        const screenX = (overheadPos.x * 0.5 + 0.5) * window.innerWidth;
-        const screenY = (overheadPos.y * -0.5 + 0.5) * window.innerHeight;
-        if (screenX < -64 || screenX > window.innerWidth + 64 || screenY < -32 || screenY > window.innerHeight + 32) {
-            renderer.healthBarEl.style.display = 'none';
-            return;
-        }
-
-        renderer.healthBarEl.style.left = `${screenX}px`;
-        renderer.healthBarEl.style.top = `${screenY}px`;
-        renderer.healthBarEl.style.display = 'block';
-    }
-
     function updateCombatEnemyOverlays() {
-        if (camera && typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld();
-        const enemyIds = Object.keys(combatEnemyRenderersById);
-        for (let i = 0; i < enemyIds.length; i++) {
-            const enemyId = enemyIds[i];
-            const renderer = combatEnemyRenderersById[enemyId];
-            const enemyState = combatEnemyStateById[enemyId];
-            if (!renderer || !enemyState) continue;
-            updateEnemyHitpointsBar(enemyState, renderer);
-        }
+        combatEnemyOverlayRuntime.updateCombatEnemyOverlays({
+            camera,
+            combatEnemyRenderersById,
+            combatEnemyStateById,
+            isEnemyAlive,
+            isEnemyPendingDefeat,
+            playerState,
+            windowRef: window
+        });
     }
 
     function createRatRenderer(enemyState, enemyType) {
@@ -2495,7 +2414,7 @@
         else if (enemyType.appearance && enemyType.appearance.kind === 'chicken') renderer = createChickenRenderer(enemyState, enemyType);
         else renderer = createHumanoidEnemyRenderer(enemyState, enemyType);
 
-        const hitpointsBar = createEnemyHitpointsBarRenderer();
+        const hitpointsBar = combatEnemyOverlayRuntime.createEnemyHitpointsBarRenderer({ documentRef: document });
         renderer.healthBarEl = hitpointsBar.el;
         renderer.healthBarFillEl = hitpointsBar.fill;
         renderer.maxHealth = Number.isFinite(enemyType.stats && enemyType.stats.hitpoints)

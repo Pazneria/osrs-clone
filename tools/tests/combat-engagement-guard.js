@@ -24,6 +24,7 @@ function getFunctionBody(source, functionName) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
+  const combatEnemyOverlayRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-overlay-runtime.js"), "utf8");
   const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
@@ -188,8 +189,8 @@ function run() {
     "enemy defeats should linger through the attack tick, then resolve on the following tick without stretching respawn timing"
   );
   assert(
-    combatSource.includes("const isVisibleEnemy = isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);")
-      && combatSource.includes("if (!isVisibleEnemy) return false;"),
+    combatEnemyOverlayRuntimeSource.includes("const isVisibleEnemy = isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);")
+      && combatEnemyOverlayRuntimeSource.includes("if (!isVisibleEnemy) return false;"),
     "enemy hitpoint bars should remain visible through the pending-defeat tick so the bar can drain to empty before despawn"
   );
 
