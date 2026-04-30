@@ -1740,6 +1740,7 @@ function run() {
   const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-pose-reference-runtime.js"), "utf8");
   const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
   const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-lifecycle-runtime.js"), "utf8");
+  const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-quarry-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/training-location-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
@@ -1807,6 +1808,13 @@ function run() {
   assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "maple_fire_lane"), "maple fire lane missing");
   assert(starterTownWorld.skillRoutes.firemaking.some((entry) => entry.routeId === "yew_fire_lane"), "yew fire lane missing");
   assert(worldScript.includes("WorldTrainingLocationRuntime"), "world.js should delegate training location compatibility hooks");
+  assert(worldScript.includes("WorldMiningQuarryRuntime"), "world.js should delegate mining quarry planning");
+  assert(miningQuarryRuntimeSource.includes("const MINING_QUARRY_LAYOUT_OVERRIDES = Object.freeze({"), "mining quarry runtime should own quarry layout overrides");
+  assert(miningQuarryRuntimeSource.includes("const thinMiningRockPlacements = (placements) => {"), "mining quarry runtime should own mining rock thinning");
+  assert(miningQuarryRuntimeSource.includes("const redistributeMiningRockPlacements = (placements, sourcePlacements) => {"), "mining quarry runtime should own mining rock redistribution planning");
+  assert(!worldScript.includes("const MINING_QUARRY_LAYOUT_OVERRIDES = Object.freeze({"), "world.js should not own mining quarry layout overrides");
+  assert(!worldScript.includes("const thinMiningRockPlacements = (placements) => {"), "world.js should not own mining rock thinning");
+  assert(!worldScript.includes("const redistributeMiningRockPlacements = (placements, sourcePlacements) => {"), "world.js should not own mining rock redistribution planning");
   assert(trainingLocationRuntimeSource.includes("function publishTrainingLocationHooks(options = {})"), "training location runtime should own compatibility hook publication");
   assert(trainingLocationRuntimeSource.includes("windowTarget.getFishingTrainingLocations = function getFishingTrainingLocations()"), "training location runtime should publish the fishing getter");
   assert(trainingLocationRuntimeSource.includes("windowTarget.getCookingTrainingLocations = function getCookingTrainingLocations()"), "training location runtime should publish the cooking getter");

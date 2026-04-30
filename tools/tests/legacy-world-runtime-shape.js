@@ -14,6 +14,7 @@ function run() {
   const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
   const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
+  const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-quarry-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -93,6 +94,10 @@ function run() {
     "world logical-map authoring runtime should expose static map authoring"
   );
   assert(
+    miningQuarryRuntimeSource.includes("WorldMiningQuarryRuntime"),
+    "world mining quarry runtime should expose quarry planning helpers"
+  );
+  assert(
     trainingLocationRuntimeSource.includes("WorldTrainingLocationRuntime"),
     "world training location runtime should expose training-location compatibility hooks"
   );
@@ -125,6 +130,10 @@ function run() {
     "world.js should delegate static logical-map authoring through the authoring runtime"
   );
   assert(
+    worldSource.includes("WorldMiningQuarryRuntime"),
+    "world.js should delegate mining quarry planning through the quarry runtime"
+  );
+  assert(
     worldSource.includes("WorldTrainingLocationRuntime"),
     "world.js should delegate training location compatibility hooks through the training runtime"
   );
@@ -147,6 +156,18 @@ function run() {
   assert(
     !worldSource.includes("loadStarterTownWorld"),
     "world.js should not reference starter-town-only loader names"
+  );
+  assert(
+    !worldSource.includes("const MINING_QUARRY_LAYOUT_OVERRIDES = Object.freeze({"),
+    "world.js should not own mining quarry layout overrides"
+  );
+  assert(
+    !worldSource.includes("const thinMiningRockPlacements = (placements) => {"),
+    "world.js should not own mining rock thinning"
+  );
+  assert(
+    !worldSource.includes("const redistributeMiningRockPlacements = (placements, sourcePlacements) => {"),
+    "world.js should not own mining rock redistribution planning"
   );
   assert(
     !bridgeSource.includes("materializeSkillWorldRuntime"),

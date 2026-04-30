@@ -16,6 +16,7 @@ import worldSharedAssetsRuntimeScript from "../../js/world/shared-assets-runtime
 import worldWaterRuntimeScript from "../../js/world/water-runtime.js?raw";
 import worldTerrainSetupRuntimeScript from "../../js/world/terrain-setup-runtime.js?raw";
 import worldLogicalMapAuthoringRuntimeScript from "../../js/world/logical-map-authoring-runtime.js?raw";
+import worldMiningQuarryRuntimeScript from "../../js/world/mining-quarry-runtime.js?raw";
 import worldChunkTerrainRuntimeScript from "../../js/world/chunk-terrain-runtime.js?raw";
 import worldChunkTierRenderRuntimeScript from "../../js/world/chunk-tier-render-runtime.js?raw";
 import worldGroundItemRenderRuntimeScript from "../../js/world/ground-item-render-runtime.js?raw";
@@ -90,6 +91,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-water-runtime", filename: "src/js/world/water-runtime.js", code: worldWaterRuntimeScript },
   { id: "world-terrain-setup-runtime", filename: "src/js/world/terrain-setup-runtime.js", code: worldTerrainSetupRuntimeScript },
   { id: "world-logical-map-authoring-runtime", filename: "src/js/world/logical-map-authoring-runtime.js", code: worldLogicalMapAuthoringRuntimeScript },
+  { id: "world-mining-quarry-runtime", filename: "src/js/world/mining-quarry-runtime.js", code: worldMiningQuarryRuntimeScript },
   { id: "world-chunk-terrain-runtime", filename: "src/js/world/chunk-terrain-runtime.js", code: worldChunkTerrainRuntimeScript },
   { id: "world-chunk-tier-render-runtime", filename: "src/js/world/chunk-tier-render-runtime.js", code: worldChunkTierRenderRuntimeScript },
   { id: "world-ground-item-render-runtime", filename: "src/js/world/ground-item-render-runtime.js", code: worldGroundItemRenderRuntimeScript },
