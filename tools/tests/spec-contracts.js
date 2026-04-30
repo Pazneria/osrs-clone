@@ -1766,11 +1766,14 @@ function run() {
   assert(townNpcRuntimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC update ticks");
   assert(townNpcRuntimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
   assert(townNpcRuntimeSource.includes("function createTownNpcActorRecord(options = {})"), "town NPC runtime should own town NPC actor shaping");
+  assert(townNpcRuntimeSource.includes("function listQaNpcTargets(npcsToRender)"), "town NPC runtime should own QA NPC target snapshots");
   assert(townNpcRuntimeSource.includes("function resolveTownNpcRoamBounds(options = {})"), "town NPC runtime should own NPC roam bounds resolution");
   assert(townNpcRuntimeSource.includes("function resolveTownNpcRoamingRadius(npc, roamBounds)"), "town NPC runtime should own NPC roaming radius resolution");
   assert(!worldScript.includes("function applyTownNpcRigAnimation("), "world.js should not own town NPC rig animation");
   assert(!worldScript.includes("const npcActorId = (npc && typeof npc.spawnId === 'string' && npc.spawnId)"), "world.js should not own town NPC actor id shaping");
   assert(!worldScript.includes("idleUntilMs: actorNowMs + 400"), "world.js should not own town NPC idle seed shaping");
+  assert(!worldScript.includes("actorId: npc && npc.actorId ? npc.actorId : ''"), "world.js should not own QA NPC target snapshots");
+  assert(!worldScript.includes("function hashTownNpcSeed(text)"), "world.js should not keep the old town NPC seed wrapper");
   assert(!worldScript.includes("const resolveTownNpcRoamBounds = (npc) => {"), "world.js should not own NPC roam bounds resolution");
   assert(!worldScript.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime hitboxes should preserve appearanceId");

@@ -21,6 +21,7 @@ function run() {
   assert(runtimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
   assert(runtimeSource.includes("function buildStructureBoundsList(options = {})"), "town NPC runtime should own structure-bound shaping for NPC roam policy");
   assert(runtimeSource.includes("function createTownNpcActorRecord(options = {})"), "town NPC runtime should own town NPC actor record shaping");
+  assert(runtimeSource.includes("function listQaNpcTargets(npcsToRender)"), "town NPC runtime should own QA NPC target snapshots");
   assert(runtimeSource.includes("function resolveTownNpcRoamBounds(options = {})"), "town NPC runtime should own NPC roam bounds resolution");
   assert(runtimeSource.includes("function resolveTownNpcRoamingRadius(npc, roamBounds)"), "town NPC runtime should own NPC roaming radius resolution");
   assert(runtimeSource.includes("let staticNpcBaseTiles = new Map();"), "town NPC runtime should own static NPC tile state");
@@ -29,6 +30,7 @@ function run() {
   assert(worldSource.includes("worldTownNpcRuntime.updateWorldNpcRuntime(buildTownNpcRuntimeContext(), frameNowMs);"), "world.js should delegate NPC update ticks");
   assert(worldSource.includes("worldTownNpcRuntime.buildStructureBoundsList"), "world.js should delegate town NPC structure bounds shaping");
   assert(worldSource.includes("worldTownNpcRuntime.createTownNpcActorRecord"), "world.js should delegate town NPC actor record shaping");
+  assert(worldSource.includes("worldTownNpcRuntime.listQaNpcTargets(npcsToRender)"), "world.js should delegate QA NPC target snapshots");
   assert(worldSource.includes("worldTownNpcRuntime.resetStaticNpcBaseTiles();"), "world.js should delegate static NPC tile reset");
   assert(worldSource.includes("worldTownNpcRuntime.setLoadedChunkNpcActors(key, renderedNpcActors);"), "world.js should delegate chunk NPC actor tracking");
   assert(!worldSource.includes("function applyTownNpcRigAnimation("), "world.js should not own town NPC rig animation");
@@ -36,6 +38,8 @@ function run() {
   assert(!worldSource.includes("const distanceToBounds = (bounds, x, y) => {"), "world.js should not own NPC roam bounds distance helpers");
   assert(!worldSource.includes("const npcActorId = (npc && typeof npc.spawnId === 'string' && npc.spawnId)"), "world.js should not own NPC actor id shaping");
   assert(!worldSource.includes("idleUntilMs: actorNowMs + 400"), "world.js should not own NPC idle seed shaping");
+  assert(!worldSource.includes("actorId: npc && npc.actorId ? npc.actorId : ''"), "world.js should not own QA NPC target shaping");
+  assert(!worldSource.includes("function hashTownNpcSeed(text)"), "world.js should not keep the old town NPC seed wrapper");
   assert(!worldSource.includes("const resolveTownNpcRoamBounds = (npc) => {"), "world.js should not own NPC roam bounds resolution");
   assert(!worldSource.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(!worldSource.includes("let staticNpcBaseTiles = new Map();"), "world.js should not own static NPC tile state");
@@ -49,6 +53,7 @@ function run() {
   assert(typeof runtime.getVisualTileId === "function", "town NPC runtime should expose visual tile resolver");
   assert(typeof runtime.buildStructureBoundsList === "function", "town NPC runtime should expose structure bounds builder");
   assert(typeof runtime.createTownNpcActorRecord === "function", "town NPC runtime should expose actor record builder");
+  assert(typeof runtime.listQaNpcTargets === "function", "town NPC runtime should expose QA target snapshot builder");
   assert(typeof runtime.resolveTownNpcRoamBounds === "function", "town NPC runtime should expose roam bounds resolver");
   assert(typeof runtime.resolveTownNpcRoamingRadius === "function", "town NPC runtime should expose roaming radius resolver");
   assert(typeof runtime.updateWorldNpcRuntime === "function", "town NPC runtime should expose NPC update runtime");
@@ -118,6 +123,29 @@ function run() {
   assert(actorRecord.homeX === 12 && actorRecord.homeY === 22 && actorRecord.visualBaseY === 0.25, "actor record should initialize home and visual state");
   assert(actorRecord.roamEnabled && actorRecord.roamingRadius === 4, "actor record should include resolved roam policy");
   assert(actorRecord.idleUntilMs >= 1400 && Number.isFinite(actorRecord.animationSeed), "actor record should initialize deterministic idle timing and animation seed");
+
+  const qaTargets = runtime.listQaNpcTargets([
+    {
+      actorId: "npc:guide",
+      spawnId: "guide_spawn",
+      merchantId: "general_store",
+      name: "Guide",
+      action: "Talk-to",
+      dialogueId: "guide_intro",
+      x: 5,
+      y: 6,
+      z: 0,
+      visualX: 5.5,
+      visualY: 6.5,
+      hitbox: {}
+    },
+    { name: "Fallback", x: 2, y: 3 }
+  ]);
+  assert(qaTargets.length === 2, "QA target snapshot should include each rendered NPC input");
+  assert(qaTargets[0].actorId === "npc:guide" && qaTargets[0].rendered, "QA target snapshot should preserve rendered NPC identity");
+  assert(qaTargets[0].visualX === 5.5 && qaTargets[0].visualY === 6.5, "QA target snapshot should preserve explicit visual positions");
+  assert(qaTargets[1].actorId === "" && qaTargets[1].visualX === 2 && qaTargets[1].visualY === 3, "QA target snapshot should default missing identity and visual positions");
+  assert(qaTargets[1].z === 0 && !qaTargets[1].rendered, "QA target snapshot should default missing z and hitbox state");
 
   console.log("Town NPC runtime guard passed.");
 }

@@ -165,6 +165,7 @@ function run() {
   assert(townNpcRuntimeSource.includes("window.WorldTownNpcRuntime"), "world town NPC runtime should expose a runtime");
   assert(townNpcRuntimeSource.includes("updateWorldNpcRuntime"), "world town NPC runtime should own NPC update ticks");
   assert(townNpcRuntimeSource.includes("createTownNpcActorRecord"), "world town NPC runtime should own NPC actor record shaping");
+  assert(townNpcRuntimeSource.includes("listQaNpcTargets"), "world town NPC runtime should own QA target snapshots");
   assert(townNpcRuntimeSource.includes("resolveTownNpcRoamBounds"), "world town NPC runtime should own NPC roam bounds resolution");
   assert(worldSource.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC behavior");
   assert(fireLifecycleRuntimeSource.includes("window.WorldFireLifecycleRuntime"), "world fire lifecycle runtime should expose a runtime");

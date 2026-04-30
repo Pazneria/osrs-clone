@@ -248,6 +248,24 @@
         });
     }
 
+    function listQaNpcTargets(npcsToRender) {
+        if (!Array.isArray(npcsToRender)) return [];
+        return npcsToRender.map((npc) => ({
+            actorId: npc && npc.actorId ? npc.actorId : '',
+            spawnId: npc && npc.spawnId ? npc.spawnId : '',
+            merchantId: npc && npc.merchantId ? npc.merchantId : '',
+            name: npc && npc.name ? npc.name : '',
+            action: npc && npc.action ? npc.action : '',
+            dialogueId: npc && npc.dialogueId ? npc.dialogueId : '',
+            x: Number.isFinite(npc && npc.x) ? npc.x : 0,
+            y: Number.isFinite(npc && npc.y) ? npc.y : 0,
+            z: Number.isFinite(npc && npc.z) ? npc.z : 0,
+            visualX: Number.isFinite(npc && npc.visualX) ? npc.visualX : (Number.isFinite(npc && npc.x) ? npc.x : 0),
+            visualY: Number.isFinite(npc && npc.visualY) ? npc.visualY : (Number.isFinite(npc && npc.y) ? npc.y : 0),
+            rendered: !!(npc && npc.hitbox)
+        }));
+    }
+
     function clearTownNpcRenderBindings(actor) {
         if (!actor || typeof actor !== 'object') return;
         actor.mesh = null;
@@ -622,6 +640,7 @@
         isTutorialGateLocked,
         isTutorialGateUnlocked,
         isWoodenGateTileIdSafe,
+        listQaNpcTargets,
         normalizeAngleRadians,
         occupiedTileKey,
         occupyTownNpcTile,
