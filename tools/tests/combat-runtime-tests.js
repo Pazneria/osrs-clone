@@ -202,6 +202,8 @@ function ensureCombatRuntimeLoaded(root) {
     return [{ x: startX + dx, y: startY + dy }];
   };
 
+  loadBrowserScript(root, "src/js/combat-qa-debug-runtime.js");
+  loadBrowserScript(root, "src/js/combat-enemy-overlay-runtime.js");
   loadBrowserScript(root, "src/js/combat.js");
   global.__combatRuntimeTestsLoaded = true;
 }

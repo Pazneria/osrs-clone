@@ -62,8 +62,25 @@ assert.ok(
 assert.ok(
   combatQaDebugSource.includes("window.CombatQaDebugRuntime") &&
     combatQaDebugSource.includes("getSnapshot") &&
-    combatQaDebugSource.includes("emitSnapshot"),
-  "combat QA debug runtime should own snapshot and chat emission formatting"
+    combatQaDebugSource.includes("emitSnapshot") &&
+    combatQaDebugSource.includes("recordPlayerPursuitDebug") &&
+    combatQaDebugSource.includes("recordAutoRetaliateSelection") &&
+    combatQaDebugSource.includes("recordEnemyAttackResult") &&
+    combatQaDebugSource.includes("recordClearResult"),
+  "combat QA debug runtime should own snapshot, chat emission, and debug scratch publication"
+);
+assert.ok(
+  combatSource.includes("const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;") &&
+    combatSource.includes("combatQaDebugRuntime.recordPlayerPursuitDebug({") &&
+    combatSource.includes("combatQaDebugRuntime.recordAutoRetaliateSelection({") &&
+    combatSource.includes("combatQaDebugRuntime.recordEnemyAttackResult({") &&
+    combatSource.includes("combatQaDebugRuntime.recordClearResult({") &&
+    !combatSource.includes("window.__qaCombatDebugLastPlayerPursuitState") &&
+    !combatSource.includes("window.__qaCombatDebugLastAutoRetaliateSelection") &&
+    !combatSource.includes("window.__qaCombatDebugLastEnemyAttackResult") &&
+    !combatSource.includes("window.__qaCombatDebugLastClearReason") &&
+    !combatSource.includes("window.__qaCombatDebugLastClearTick"),
+  "combat.js should delegate QA scratch globals through the combat QA debug runtime"
 );
 assert.ok(
   coreSource.includes("buildCombatQaDebugContext") &&
@@ -179,6 +196,39 @@ const combatQaSandbox = { window: {} };
 vm.runInNewContext(combatQaDebugSource, combatQaSandbox, { filename: "src/js/combat-qa-debug-runtime.js" });
 const combatQaRuntime = combatQaSandbox.window.CombatQaDebugRuntime;
 assert.ok(combatQaRuntime, "combat QA debug runtime should execute in isolation");
+const qaWindow = { QA_COMBAT_DEBUG: true };
+combatQaRuntime.recordPlayerPursuitDebug({
+  windowRef: qaWindow,
+  currentTick: 7,
+  enemyState: { runtimeId: "enemy-a", enemyId: "enemy_rat" },
+  pursuitState: "valid-path",
+  pursuitPath: [{ x: 1, y: 1 }],
+  occupancyIgnoredPath: [{ x: 2, y: 2 }, { x: 3, y: 3 }]
+});
+combatQaRuntime.recordAutoRetaliateSelection({
+  windowRef: qaWindow,
+  currentTick: 8,
+  selection: { runtimeId: "enemy-b", enemyId: "enemy_boar", displayName: "Boar", distance: 2, combatLevel: 4, aggressorOrder: 3 }
+});
+combatQaRuntime.recordEnemyAttackResult({
+  windowRef: qaWindow,
+  currentTick: 9,
+  attackerId: "enemy-b",
+  enemyId: "enemy_boar",
+  landed: true,
+  damage: 2,
+  isTrainingDummyAttack: false
+});
+combatQaRuntime.recordClearResult({ windowRef: qaWindow, currentTick: 10 }, "guard-clear");
+combatQaRuntime.recordClearEvent({ windowRef: qaWindow }, { tick: 10, reason: "guard-clear" });
+assert.strictEqual(qaWindow.__qaCombatDebugLastPlayerPursuitState.occupancyIgnoredPathLength, 2, "combat QA runtime should publish pursuit debug state");
+assert.strictEqual(qaWindow.__qaCombatDebugLastAutoRetaliateSelection.aggressorOrder, 3, "combat QA runtime should publish auto-retaliate selection");
+assert.strictEqual(qaWindow.__qaCombatDebugLastEnemyAttackResult.damage, 2, "combat QA runtime should publish enemy attack results");
+assert.strictEqual(qaWindow.__qaCombatDebugLastClearReason, "guard-clear", "combat QA runtime should publish clear results");
+assert.strictEqual(qaWindow.__qaCombatDebugClearEvents.length, 1, "combat QA runtime should retain clear history when debug is enabled");
+combatQaRuntime.resetDebugState({ windowRef: qaWindow });
+assert.strictEqual(qaWindow.__qaCombatDebugLastPlayerPursuitState, null, "combat QA runtime should reset pursuit debug state");
+assert.strictEqual(qaWindow.__qaCombatDebugLastAutoRetaliateSelection, null, "combat QA runtime should reset auto-retaliate debug state");
 const qaMessages = [];
 const qaSnapshot = combatQaRuntime.getSnapshot({
   windowRef: {

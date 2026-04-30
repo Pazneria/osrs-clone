@@ -13,6 +13,74 @@
         }
     }
 
+    function resetDebugState(context = {}) {
+        const windowRef = getWindowRef(context);
+        windowRef.__qaCombatDebugLastPlayerPursuitState = null;
+        windowRef.__qaCombatDebugLastAutoRetaliateSelection = null;
+    }
+
+    function recordClearEvent(context = {}, event = null) {
+        const windowRef = getWindowRef(context);
+        if (!windowRef.QA_COMBAT_DEBUG) return;
+        if (!event || typeof event !== 'object') return;
+        const clearEvents = Array.isArray(windowRef.__qaCombatDebugClearEvents) ? windowRef.__qaCombatDebugClearEvents : [];
+        if (!Array.isArray(windowRef.__qaCombatDebugClearEvents)) windowRef.__qaCombatDebugClearEvents = clearEvents;
+        clearEvents.push(event);
+        if (clearEvents.length > 40) clearEvents.splice(0, clearEvents.length - 40);
+    }
+
+    function recordClearResult(context = {}, reason = 'generic') {
+        const windowRef = getWindowRef(context);
+        const resolvedReason = typeof reason === 'string' && reason ? reason : 'generic';
+        windowRef.__qaCombatDebugLastClearReason = resolvedReason;
+        windowRef.__qaCombatDebugLastClearTick = Number.isFinite(context.currentTick) ? context.currentTick : null;
+    }
+
+    function recordPlayerPursuitDebug(context = {}) {
+        const windowRef = getWindowRef(context);
+        const enemyState = context.enemyState || null;
+        const pursuitPath = Array.isArray(context.pursuitPath) ? context.pursuitPath : null;
+        const occupancyIgnoredPath = Array.isArray(context.occupancyIgnoredPath) ? context.occupancyIgnoredPath : null;
+        windowRef.__qaCombatDebugLastPlayerPursuitState = {
+            tick: Number.isFinite(context.currentTick) ? context.currentTick : null,
+            runtimeId: enemyState && enemyState.runtimeId ? String(enemyState.runtimeId) : null,
+            enemyId: enemyState && enemyState.enemyId ? String(enemyState.enemyId) : null,
+            state: context.pursuitState || 'hard-no-path',
+            pathLength: pursuitPath ? pursuitPath.length : null,
+            occupancyIgnoredPathLength: occupancyIgnoredPath ? occupancyIgnoredPath.length : null
+        };
+    }
+
+    function recordAutoRetaliateSelection(context = {}) {
+        const windowRef = getWindowRef(context);
+        const selection = context.selection || null;
+        if (!selection) {
+            windowRef.__qaCombatDebugLastAutoRetaliateSelection = null;
+            return;
+        }
+        windowRef.__qaCombatDebugLastAutoRetaliateSelection = {
+            tick: Number.isFinite(context.currentTick) ? context.currentTick : null,
+            runtimeId: selection.runtimeId || null,
+            enemyId: selection.enemyId || null,
+            displayName: selection.displayName || null,
+            distance: Number.isFinite(selection.distance) ? Math.floor(selection.distance) : null,
+            combatLevel: Number.isFinite(selection.combatLevel) ? Math.floor(selection.combatLevel) : null,
+            aggressorOrder: Number.isFinite(selection.aggressorOrder) ? Math.floor(selection.aggressorOrder) : null
+        };
+    }
+
+    function recordEnemyAttackResult(context = {}) {
+        const windowRef = getWindowRef(context);
+        windowRef.__qaCombatDebugLastEnemyAttackResult = {
+            tick: Number.isFinite(context.currentTick) ? context.currentTick : null,
+            attackerId: context.attackerId || null,
+            enemyId: context.enemyId || null,
+            landed: !!context.landed,
+            damage: Number.isFinite(context.damage) ? context.damage : 0,
+            isTrainingDummyAttack: !!context.isTrainingDummyAttack
+        };
+    }
+
     function getSnapshot(context = {}) {
         const windowRef = getWindowRef(context);
         const playerState = context.playerState || {};
@@ -322,6 +390,12 @@
     }
 
     window.CombatQaDebugRuntime = {
+        resetDebugState,
+        recordAutoRetaliateSelection,
+        recordClearEvent,
+        recordClearResult,
+        recordEnemyAttackResult,
+        recordPlayerPursuitDebug,
         getSnapshot,
         getSignature,
         emitClearHistory,

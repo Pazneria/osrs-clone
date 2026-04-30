@@ -1,5 +1,6 @@
 (function () {
     const combatRuntime = window.CombatRuntime || null;
+    const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
     const PLAYER_TARGET_ID = 'player';
     const PLAYER_TARGET_KIND = 'enemy';
@@ -258,8 +259,7 @@
         combatEnemyStateById = Object.create(null);
         combatEnemyStates = [];
         combatAutoRetaliateAggressorOrdinal = 1;
-        window.__qaCombatDebugLastPlayerPursuitState = null;
-        window.__qaCombatDebugLastAutoRetaliateSelection = null;
+        combatQaDebugRuntime.resetDebugState({ windowRef: window });
     }
 
     function shouldPreservePreEngagementTargetLock() {
@@ -280,42 +280,44 @@
     }
 
     function recordCombatClearEvent(event) {
-        if (!window.QA_COMBAT_DEBUG) return;
-        if (!event || typeof event !== 'object') return;
-        const clearEvents = Array.isArray(window.__qaCombatDebugClearEvents) ? window.__qaCombatDebugClearEvents : [];
-        if (!Array.isArray(window.__qaCombatDebugClearEvents)) window.__qaCombatDebugClearEvents = clearEvents;
-        clearEvents.push(event);
-        if (clearEvents.length > 40) clearEvents.splice(0, clearEvents.length - 40);
+        combatQaDebugRuntime.recordClearEvent({ windowRef: window }, event);
     }
 
     function recordPlayerPursuitDebug(enemyState, pursuitState, pursuitPath = null, occupancyIgnoredPath = null) {
-        window.__qaCombatDebugLastPlayerPursuitState = {
-            tick: Number.isFinite(currentTick) ? currentTick : null,
-            runtimeId: enemyState && enemyState.runtimeId ? String(enemyState.runtimeId) : null,
-            enemyId: enemyState && enemyState.enemyId ? String(enemyState.enemyId) : null,
-            state: pursuitState || PLAYER_PURSUIT_STATE_HARD_NO_PATH,
-            pathLength: Array.isArray(pursuitPath) ? pursuitPath.length : null,
-            occupancyIgnoredPathLength: Array.isArray(occupancyIgnoredPath) ? occupancyIgnoredPath.length : null
-        };
+        combatQaDebugRuntime.recordPlayerPursuitDebug({
+            windowRef: window,
+            currentTick,
+            enemyState,
+            pursuitState: pursuitState || PLAYER_PURSUIT_STATE_HARD_NO_PATH,
+            pursuitPath,
+            occupancyIgnoredPath
+        });
     }
 
     function recordAutoRetaliateSelection(enemyState) {
         if (!enemyState) {
-            window.__qaCombatDebugLastAutoRetaliateSelection = null;
+            combatQaDebugRuntime.recordAutoRetaliateSelection({
+                windowRef: window,
+                currentTick,
+                selection: null
+            });
             return;
         }
         const enemyType = getEnemyDefinition(enemyState.enemyId);
-        window.__qaCombatDebugLastAutoRetaliateSelection = {
-            tick: Number.isFinite(currentTick) ? currentTick : null,
-            runtimeId: enemyState.runtimeId,
-            enemyId: enemyState.enemyId,
-            displayName: enemyType && enemyType.displayName ? enemyType.displayName : enemyState.enemyId,
-            distance: getChebyshevDistance(playerState, enemyState),
-            combatLevel: getEnemyCombatLevel(enemyType),
-            aggressorOrder: Number.isFinite(enemyState.autoRetaliateAggressorOrder)
-                ? Math.floor(enemyState.autoRetaliateAggressorOrder)
-                : null
-        };
+        combatQaDebugRuntime.recordAutoRetaliateSelection({
+            windowRef: window,
+            currentTick,
+            selection: {
+                runtimeId: enemyState.runtimeId,
+                enemyId: enemyState.enemyId,
+                displayName: enemyType && enemyType.displayName ? enemyType.displayName : enemyState.enemyId,
+                distance: getChebyshevDistance(playerState, enemyState),
+                combatLevel: getEnemyCombatLevel(enemyType),
+                aggressorOrder: Number.isFinite(enemyState.autoRetaliateAggressorOrder)
+                    ? Math.floor(enemyState.autoRetaliateAggressorOrder)
+                    : null
+            }
+        });
     }
 
     function clearPlayerCombatTarget(options = null) {
@@ -338,8 +340,7 @@
             }
             : null;
         if (!forced && shouldPreservePreEngagementTargetLock()) {
-            window.__qaCombatDebugLastClearReason = `blocked:${reason}`;
-            window.__qaCombatDebugLastClearTick = Number.isFinite(currentTick) ? currentTick : null;
+            combatQaDebugRuntime.recordClearResult({ windowRef: window, currentTick }, `blocked:${reason}`);
             if (combatClearEvent) combatClearEvent.blocked = true;
             recordCombatClearEvent(combatClearEvent);
             return false;
@@ -348,8 +349,7 @@
             !!playerState.lockedTargetId
             || playerState.combatTargetKind === PLAYER_TARGET_KIND
             || playerState.targetObj === 'ENEMY';
-        window.__qaCombatDebugLastClearReason = reason;
-        window.__qaCombatDebugLastClearTick = Number.isFinite(currentTick) ? currentTick : null;
+        combatQaDebugRuntime.recordClearResult({ windowRef: window, currentTick }, reason);
         recordCombatClearEvent(combatClearEvent);
         playerState.lockedTargetId = null;
         playerState.combatTargetKind = null;
@@ -1131,14 +1131,15 @@
                 ? 0
                 : (landed ? combatRuntime.rollDamage(attack.snapshot.maxHit) : 0);
             playerDamageTotal += damage;
-            window.__qaCombatDebugLastEnemyAttackResult = {
-                tick: Number.isFinite(currentTick) ? currentTick : null,
+            combatQaDebugRuntime.recordEnemyAttackResult({
+                windowRef: window,
+                currentTick,
                 attackerId: enemyState.runtimeId,
                 enemyId: enemyState.enemyId,
-                landed: !!landed,
-                damage: Number.isFinite(damage) ? damage : 0,
-                isTrainingDummyAttack: !!isTrainingDummyAttack
-            };
+                landed,
+                damage,
+                isTrainingDummyAttack
+            });
             results.push({
                 attackerKind: 'enemy',
                 attackerId: enemyState.runtimeId,
