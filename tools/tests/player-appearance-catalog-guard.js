@@ -16,6 +16,7 @@ function run() {
 
   const indexHtml = fs.readFileSync(indexPath, "utf8");
   const playerModelScript = fs.readFileSync(playerModelPath, "utf8");
+  const playerHeldItemRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-held-item-runtime.js"), "utf8");
   const catalogScript = fs.readFileSync(catalogPath, "utf8");
   const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
 
@@ -54,12 +55,16 @@ function run() {
     "player model should load appearance data from PlayerAppearanceCatalog"
   );
   assert(
-    playerModelScript.includes("SKILLING_TOOL_VISUAL_GROUP_NAME"),
-    "player model should isolate temporary skilling tool meshes from base equipped visuals"
+    playerHeldItemRuntimeScript.includes("SKILLING_TOOL_VISUAL_GROUP_NAME"),
+    "player held-item runtime should isolate temporary skilling tool meshes from base equipped visuals"
   );
   assert(
-    playerModelScript.includes("setBaseToolVisualVisibility"),
-    "player model should restore base equipped visuals when temporary skilling tools are cleared"
+    playerHeldItemRuntimeScript.includes("setBaseToolVisualVisibility"),
+    "player held-item runtime should restore base equipped visuals when temporary skilling tools are cleared"
+  );
+  assert(
+    playerModelScript.includes("PlayerHeldItemRuntime"),
+    "player model should delegate temporary skilling tool visuals through the held-item runtime"
   );
   assert(
     !playerModelScript.includes("kit_head_male: { slot: 'head'"),
