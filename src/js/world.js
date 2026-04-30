@@ -14,6 +14,7 @@
         const worldTreeLifecycleRuntime = window.WorldTreeLifecycleRuntime || null;
         const worldRockNodeRuntime = window.WorldRockNodeRuntime || null;
         const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
+        const worldRockLifecycleRuntime = window.WorldRockLifecycleRuntime || null;
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const worldFireLifecycleRuntime = window.WorldFireLifecycleRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
@@ -1048,16 +1049,6 @@
             };
         }
 
-        function oreTypeForTile(x, y, z = 0) {
-            return worldRockNodeRuntime.oreTypeForTile({
-                x,
-                y,
-                z,
-                rockOreOverrides,
-                runeEssenceRocks: RUNE_ESSENCE_ROCKS
-            });
-        }
-
         const getRockDisplayName = worldRockNodeRuntime.getRockDisplayName;
         const getRockColorHex = worldRockNodeRuntime.getRockColorHex;
 
@@ -1090,90 +1081,47 @@
             return worldRockRenderRuntime.markRockVisualsDirty(rData);
         }
 
+        function buildRockLifecycleRuntimeContext() {
+            return {
+                chunkSize: CHUNK_SIZE,
+                currentTick,
+                getWorldChunkSceneRuntime,
+                loadChunk,
+                logicalMap,
+                mapSize: MAP_SIZE,
+                planes: PLANES,
+                rockAreaGateOverrides,
+                rockNodeRuntime: worldRockNodeRuntime,
+                rockNodes,
+                rockOreOverrides,
+                runeEssenceRocks: RUNE_ESSENCE_ROCKS,
+                tileIds: TileId,
+                unloadChunk
+            };
+        }
+
         function rebuildRockNodes() {
-            const rebuilt = {};
-            for (let z = 0; z < PLANES; z++) {
-                for (let y = 0; y < MAP_SIZE; y++) {
-                    for (let x = 0; x < MAP_SIZE; x++) {
-                        if (logicalMap[z][y][x] === TileId.ROCK) {
-                            const key = rockNodeKey(x, y, z);
-                            const prev = rockNodes[key];
-                            const gateOverride = rockAreaGateOverrides && rockAreaGateOverrides[key] ? rockAreaGateOverrides[key] : null;
-                            rebuilt[key] = {
-                                oreType: prev && prev.oreType ? prev.oreType : oreTypeForTile(x, y, z),
-                                depletedUntilTick: prev && prev.depletedUntilTick ? prev.depletedUntilTick : 0,
-                                successfulYields: prev && Number.isFinite(prev.successfulYields) ? Math.max(0, Math.floor(prev.successfulYields)) : 0,
-                                lastInteractionTick: prev && Number.isFinite(prev.lastInteractionTick) ? Math.max(0, Math.floor(prev.lastInteractionTick)) : 0,
-                                areaGateFlag: prev && prev.areaGateFlag ? prev.areaGateFlag : (gateOverride && gateOverride.areaGateFlag ? gateOverride.areaGateFlag : null),
-                                areaName: prev && prev.areaName ? prev.areaName : (gateOverride && gateOverride.areaName ? gateOverride.areaName : null),
-                                areaGateMessage: prev && prev.areaGateMessage ? prev.areaGateMessage : (gateOverride && gateOverride.areaGateMessage ? gateOverride.areaGateMessage : null)
-                            };
-                        }
-                    }
-                }
-            }
-            rockNodes = rebuilt;
+            rockNodes = worldRockLifecycleRuntime.rebuildRockNodes(buildRockLifecycleRuntimeContext());
         }
 
         function getRockNodeAt(x, y, z = playerState.z) {
-            if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
-            if (logicalMap[z][y][x] !== TileId.ROCK) return null;
-            const key = rockNodeKey(x, y, z);
-            if (!rockNodes[key]) {
-                const gateOverride = rockAreaGateOverrides && rockAreaGateOverrides[key] ? rockAreaGateOverrides[key] : null;
-                rockNodes[key] = {
-                    oreType: oreTypeForTile(x, y, z),
-                    depletedUntilTick: 0,
-                    successfulYields: 0,
-                    lastInteractionTick: 0,
-                    areaGateFlag: gateOverride && gateOverride.areaGateFlag ? gateOverride.areaGateFlag : null,
-                    areaName: gateOverride && gateOverride.areaName ? gateOverride.areaName : null,
-                    areaGateMessage: gateOverride && gateOverride.areaGateMessage ? gateOverride.areaGateMessage : null
-                };
-            }
-            return rockNodes[key];
+            return worldRockLifecycleRuntime.getRockNodeAt(buildRockLifecycleRuntimeContext(), x, y, z);
         }
 
         function isRockNodeDepleted(x, y, z = playerState.z) {
-            const node = getRockNodeAt(x, y, z);
-            return !!(node && node.depletedUntilTick > currentTick);
+            return worldRockLifecycleRuntime.isRockNodeDepleted(buildRockLifecycleRuntimeContext(), x, y, z);
         }
 
         function refreshChunkAtTile(x, y) {
-            const cx = Math.floor(x / CHUNK_SIZE);
-            const cy = Math.floor(y / CHUNK_SIZE);
-            const key = cx + ',' + cy;
-            const chunkRuntime = getWorldChunkSceneRuntime();
-            if (chunkRuntime.isNearChunkLoaded(key)) {
-                const wasInteractive = chunkRuntime.getChunkInteractionState(key);
-                unloadChunk(key);
-                loadChunk(cx, cy, wasInteractive);
-            }
+            return worldRockLifecycleRuntime.refreshChunkAtTile(buildRockLifecycleRuntimeContext(), x, y);
         }
 
         function depleteRockNode(x, y, z = playerState.z, respawnTicks = 12) {
-            const node = getRockNodeAt(x, y, z);
-            if (!node) return;
-            worldRockNodeRuntime.depleteRockNodeRecord(node, currentTick, respawnTicks);
-            refreshChunkAtTile(x, y);
+            return worldRockLifecycleRuntime.depleteRockNode(buildRockLifecycleRuntimeContext(), x, y, z, respawnTicks);
         }
 
         function tickRockNodes() {
-            const chunksToRefresh = worldRockNodeRuntime.tickRockNodeRespawns({
-                rockNodes,
-                currentTick,
-                chunkSize: CHUNK_SIZE
-            });
-            chunksToRefresh.forEach((chunkKey) => {
-                const chunkRuntime = getWorldChunkSceneRuntime();
-                if (!chunkRuntime.isNearChunkLoaded(chunkKey)) return;
-                const parts = chunkKey.split(',');
-                const cx = parseInt(parts[0], 10);
-                const cy = parseInt(parts[1], 10);
-                const wasInteractive = chunkRuntime.getChunkInteractionState(chunkKey);
-                unloadChunk(chunkKey);
-                loadChunk(cx, cy, wasInteractive);
-            });
+            return worldRockLifecycleRuntime.tickRockNodes(buildRockLifecycleRuntimeContext());
         }
         function initLogicalMap() {
             rockNodes = {};
@@ -3840,6 +3788,7 @@
         window.processPendingNearChunkBuilds = processPendingNearChunkBuilds;
         window.reloadActiveWorldScene = reloadActiveWorldScene;
         window.tickTreeLifecycle = tickTreeLifecycle;
+        window.tickRockNodes = tickRockNodes;
         window.tickFireLifecycle = tickFireLifecycle;
         window.updateMainDirectionalShadowFocus = updateMainDirectionalShadowFocus;
         window.updateSkyRuntime = updateSkyRuntime;

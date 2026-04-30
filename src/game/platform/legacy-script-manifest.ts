@@ -25,6 +25,7 @@ import worldTreeRenderRuntimeScript from "../../js/world/tree-render-runtime.js?
 import worldTreeLifecycleRuntimeScript from "../../js/world/tree-lifecycle-runtime.js?raw";
 import worldRockNodeRuntimeScript from "../../js/world/rock-node-runtime.js?raw";
 import worldRockRenderRuntimeScript from "../../js/world/rock-render-runtime.js?raw";
+import worldRockLifecycleRuntimeScript from "../../js/world/rock-lifecycle-runtime.js?raw";
 import worldChunkResourceRenderRuntimeScript from "../../js/world/chunk-resource-render-runtime.js?raw";
 import worldMiningPoseReferenceRuntimeScript from "../../js/world/mining-pose-reference-runtime.js?raw";
 import worldTownNpcRuntimeScript from "../../js/world/town-npc-runtime.js?raw";
@@ -94,6 +95,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-tree-lifecycle-runtime", filename: "src/js/world/tree-lifecycle-runtime.js", code: worldTreeLifecycleRuntimeScript },
   { id: "world-rock-node-runtime", filename: "src/js/world/rock-node-runtime.js", code: worldRockNodeRuntimeScript },
   { id: "world-rock-render-runtime", filename: "src/js/world/rock-render-runtime.js", code: worldRockRenderRuntimeScript },
+  { id: "world-rock-lifecycle-runtime", filename: "src/js/world/rock-lifecycle-runtime.js", code: worldRockLifecycleRuntimeScript },
   { id: "world-chunk-resource-render-runtime", filename: "src/js/world/chunk-resource-render-runtime.js", code: worldChunkResourceRenderRuntimeScript },
   { id: "world-mining-pose-reference-runtime", filename: "src/js/world/mining-pose-reference-runtime.js", code: worldMiningPoseReferenceRuntimeScript },
   { id: "world-town-npc-runtime", filename: "src/js/world/town-npc-runtime.js", code: worldTownNpcRuntimeScript },
