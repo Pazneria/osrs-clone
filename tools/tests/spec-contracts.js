@@ -1724,6 +1724,7 @@ function run() {
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
+  const rockNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-node-runtime.js"), "utf8");
   const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
@@ -1860,6 +1861,11 @@ function run() {
   assert(worldScript.includes("const setMiningRockAt = (placement) => {"), "mining rock placement bridge writer missing");
   assert(miningRuntimeSource.includes("if (!draft.writers.setMiningRock(placement)) continue;"), "mining rock placement should flow through the runtime writer");
   assert(miningRuntimeSource.includes("areaGateFlag: zoneSpec.areaGateFlag || null"), "mining zone area-gate metadata should flow into rock placement");
+  assert(worldScript.includes("WorldRockNodeRuntime"), "world.js should delegate rock metadata helpers through the rock node runtime");
+  assert(rockNodeRuntimeSource.includes("function oreTypeForTile(input = {})"), "rock node runtime should own ore type resolution");
+  assert(rockNodeRuntimeSource.includes("function getRockDisplayName(oreType)"), "rock node runtime should own rock display names");
+  assert(!worldScript.includes("const GEM_HOTSPOT = { x: 200, y: 370, radius: 20 };"), "world.js should not own rock hotspot metadata");
+  assert(!worldScript.includes("const weightedTypes = ['clay', 'copper', 'tin', 'iron', 'coal', 'silver', 'gold'];"), "world.js should not own default ore weighting");
   assert(worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "mining training location getter missing");
   assert(starterTownWorld.terrainPatches.woodcuttingRouteAnchor.x === 205 && starterTownWorld.terrainPatches.woodcuttingRouteAnchor.y === 205, "woodcutting route anchor missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.woodcutting) && starterTownWorld.skillRoutes.woodcutting.length === 5, "authored woodcutting routes missing");

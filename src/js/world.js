@@ -6,6 +6,7 @@
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
         const worldTreeRenderRuntime = window.WorldTreeRenderRuntime || null;
+        const worldRockNodeRuntime = window.WorldRockNodeRuntime || null;
         const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const applyColorTextureSettings = worldProceduralRuntime.applyColorTextureSettings;
@@ -2116,7 +2117,7 @@
 
         // --- THE MULTI-PLANE ENGINE REWRITE ---
 
-        function rockNodeKey(x, y, z = 0) { return z + ':' + x + ',' + y; }
+        const rockNodeKey = worldRockNodeRuntime.rockNodeKey;
         function treeNodeKey(x, y, z = 0) { return z + ':' + x + ',' + y; }
 
         function setTreeNode(x, y, z = 0, nodeId = 'normal_tree', options = {}) {
@@ -2187,63 +2188,18 @@
             return worldTreeRenderRuntime.markTreeVisualsDirty(tData);
         }
 
-        function isRuneEssenceRockCoordinate(x, y, z = 0) {
-            if (!Array.isArray(RUNE_ESSENCE_ROCKS)) return false;
-            return RUNE_ESSENCE_ROCKS.some((rock) => rock && rock.x === x && rock.y === y && rock.z === z);
-        }
-
-        const GEM_HOTSPOT = { x: 200, y: 370, radius: 20 };
-
-        function isGemHotspotCoordinate(x, y, z = 0) {
-            if (z !== 0) return false;
-            return Math.hypot(x - GEM_HOTSPOT.x, y - GEM_HOTSPOT.y) <= GEM_HOTSPOT.radius;
-        }
-
         function oreTypeForTile(x, y, z = 0) {
-            const overrideKey = rockNodeKey(x, y, z);
-            const overrideOreType = rockOreOverrides && rockOreOverrides[overrideKey];
-            if (overrideOreType) return overrideOreType;
-            if (isRuneEssenceRockCoordinate(x, y, z)) return 'rune_essence';
-            const hash = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
-            if (isGemHotspotCoordinate(x, y, z)) {
-                const gemTypes = ['sapphire', 'emerald'];
-                return gemTypes[hash % gemTypes.length];
-            }
-            const weightedTypes = ['clay', 'copper', 'tin', 'iron', 'coal', 'silver', 'gold'];
-            return weightedTypes[hash % weightedTypes.length];
+            return worldRockNodeRuntime.oreTypeForTile({
+                x,
+                y,
+                z,
+                rockOreOverrides,
+                runeEssenceRocks: RUNE_ESSENCE_ROCKS
+            });
         }
 
-        function getRockDisplayName(oreType) {
-            const names = {
-                clay: 'Clay rock',
-                copper: 'Copper rock',
-                tin: 'Tin rock',
-                iron: 'Iron rock',
-                coal: 'Coal rock',
-                silver: 'Silver rock',
-                sapphire: 'Sapphire rock',
-                gold: 'Gold rock',
-                emerald: 'Emerald rock',
-                rune_essence: 'Rune essence'
-            };
-            return names[oreType] || 'Rock';
-        }
-
-        function getRockColorHex(oreType) {
-            const colors = {
-                clay: 0xa78668,
-                copper: 0xb06a4c,
-                tin: 0x9aa5ae,
-                iron: 0x6f7985,
-                coal: 0x3f444c,
-                silver: 0xc8ced6,
-                sapphire: 0x3d6ed8,
-                gold: 0xd4a829,
-                emerald: 0x2aa66f,
-                rune_essence: 0x7e848c
-            };
-            return colors[oreType] || 0x8f6b58;
-        }
+        const getRockDisplayName = worldRockNodeRuntime.getRockDisplayName;
+        const getRockColorHex = worldRockNodeRuntime.getRockColorHex;
 
         const ROCK_VISUAL_ORDER = worldRockRenderRuntime.ROCK_VISUAL_ORDER;
 
