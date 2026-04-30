@@ -1865,8 +1865,11 @@ function run() {
   assert(worldScript.includes("WorldRockNodeRuntime"), "world.js should delegate rock metadata helpers through the rock node runtime");
   assert(rockNodeRuntimeSource.includes("function oreTypeForTile(input = {})"), "rock node runtime should own ore type resolution");
   assert(rockNodeRuntimeSource.includes("function getRockDisplayName(oreType)"), "rock node runtime should own rock display names");
+  assert(rockNodeRuntimeSource.includes("function depleteRockNodeRecord(node, currentTick, respawnTicks = 12)"), "rock node runtime should own rock depletion record mutation");
+  assert(rockNodeRuntimeSource.includes("function tickRockNodeRespawns(input = {})"), "rock node runtime should own depleted rock respawn bookkeeping");
   assert(!worldScript.includes("const GEM_HOTSPOT = { x: 200, y: 370, radius: 20 };"), "world.js should not own rock hotspot metadata");
   assert(!worldScript.includes("const weightedTypes = ['clay', 'copper', 'tin', 'iron', 'coal', 'silver', 'gold'];"), "world.js should not own default ore weighting");
+  assert(!worldScript.includes("node.depletedUntilTick = currentTick + Math.max(1, respawnTicks);"), "world.js should not mutate rock depletion records inline");
   assert(worldScript.includes("window.getMiningTrainingLocations = function getMiningTrainingLocations()"), "mining training location getter missing");
   assert(starterTownWorld.terrainPatches.woodcuttingRouteAnchor.x === 205 && starterTownWorld.terrainPatches.woodcuttingRouteAnchor.y === 205, "woodcutting route anchor missing");
   assert(Array.isArray(starterTownWorld.skillRoutes.woodcutting) && starterTownWorld.skillRoutes.woodcutting.length === 5, "authored woodcutting routes missing");

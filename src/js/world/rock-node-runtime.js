@@ -67,15 +67,54 @@
         return ROCK_COLOR_HEX[oreType] || 0x8f6b58;
     }
 
+    function depleteRockNodeRecord(node, currentTick, respawnTicks = 12) {
+        if (!node) return false;
+        node.depletedUntilTick = currentTick + Math.max(1, respawnTicks);
+        node.successfulYields = 0;
+        node.lastInteractionTick = 0;
+        return true;
+    }
+
+    function resolveChunkKeyForRockNodeKey(key, chunkSize) {
+        if (typeof key !== 'string' || !Number.isFinite(chunkSize) || chunkSize <= 0) return null;
+        const parts = key.split(':');
+        if (parts.length < 2) return null;
+        const xy = parts[1].split(',');
+        const x = parseInt(xy[0], 10);
+        const y = parseInt(xy[1], 10);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        return Math.floor(x / chunkSize) + ',' + Math.floor(y / chunkSize);
+    }
+
+    function tickRockNodeRespawns(input = {}) {
+        const rockNodes = input.rockNodes || {};
+        const currentTick = input.currentTick;
+        const chunkSize = input.chunkSize;
+        const chunksToRefresh = new Set();
+        for (const [key, node] of Object.entries(rockNodes)) {
+            if (!node || !node.depletedUntilTick) continue;
+            if (currentTick < node.depletedUntilTick) continue;
+            node.depletedUntilTick = 0;
+            node.successfulYields = 0;
+            node.lastInteractionTick = 0;
+            const chunkKey = resolveChunkKeyForRockNodeKey(key, chunkSize);
+            if (chunkKey) chunksToRefresh.add(chunkKey);
+        }
+        return Array.from(chunksToRefresh);
+    }
+
     window.WorldRockNodeRuntime = {
         GEM_HOTSPOT,
         ROCK_COLOR_HEX,
         ROCK_DISPLAY_NAMES,
+        depleteRockNodeRecord,
         getRockColorHex,
         getRockDisplayName,
         isGemHotspotCoordinate,
         isRuneEssenceRockCoordinate,
         oreTypeForTile,
-        rockNodeKey
+        resolveChunkKeyForRockNodeKey,
+        rockNodeKey,
+        tickRockNodeRespawns
     };
 })();

@@ -2278,26 +2278,16 @@
         function depleteRockNode(x, y, z = playerState.z, respawnTicks = 12) {
             const node = getRockNodeAt(x, y, z);
             if (!node) return;
-            node.depletedUntilTick = currentTick + Math.max(1, respawnTicks);
-            node.successfulYields = 0;
-            node.lastInteractionTick = 0;
+            worldRockNodeRuntime.depleteRockNodeRecord(node, currentTick, respawnTicks);
             refreshChunkAtTile(x, y);
         }
 
         function tickRockNodes() {
-            const chunksToRefresh = new Set();
-            for (const [key, node] of Object.entries(rockNodes)) {
-                if (!node || !node.depletedUntilTick) continue;
-                if (currentTick < node.depletedUntilTick) continue;
-                node.depletedUntilTick = 0;
-                node.successfulYields = 0;
-                node.lastInteractionTick = 0;
-                const parts = key.split(':');
-                const xy = parts[1].split(',');
-                const x = parseInt(xy[0], 10);
-                const y = parseInt(xy[1], 10);
-                chunksToRefresh.add(Math.floor(x / CHUNK_SIZE) + ',' + Math.floor(y / CHUNK_SIZE));
-            }
+            const chunksToRefresh = worldRockNodeRuntime.tickRockNodeRespawns({
+                rockNodes,
+                currentTick,
+                chunkSize: CHUNK_SIZE
+            });
             chunksToRefresh.forEach((chunkKey) => {
                 const chunkRuntime = getWorldChunkSceneRuntime();
                 if (!chunkRuntime.isNearChunkLoaded(chunkKey)) return;
