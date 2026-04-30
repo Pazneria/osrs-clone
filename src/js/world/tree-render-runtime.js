@@ -83,6 +83,90 @@
         return TREE_VISUAL_PROFILES.normal_tree;
     }
 
+    function createEmptyTreeRenderData() {
+        return {
+            treeMap: [],
+            iTrunk: null,
+            iBranch: null,
+            iBranch2: null,
+            iBranch3: null,
+            iDrape1: null,
+            iDrape2: null,
+            iDrape3: null,
+            iDrape4: null,
+            iDrape5: null,
+            iDrape6: null,
+            iDrape7: null,
+            iDrape8: null,
+            iLeaf1: null,
+            iLeaf2: null,
+            iLeaf3: null,
+            iLeaf4: null
+        };
+    }
+
+    function createTreeInstancedMesh(THREE, geometry, material, count, treeMap) {
+        const mesh = new THREE.InstancedMesh(geometry, material, count);
+        mesh.castShadow = true;
+        mesh.matrixAutoUpdate = false;
+        mesh.userData = { instanceMap: treeMap };
+        return mesh;
+    }
+
+    function createTreeRenderData(options = {}) {
+        const tData = createEmptyTreeRenderData();
+        const count = Number.isFinite(options.count) ? Math.max(0, Math.floor(options.count)) : 0;
+        if (count <= 0) return tData;
+
+        const THREE = requireThree(options.THREE);
+        const sharedGeometries = options.sharedGeometries || {};
+        const sharedMaterials = options.sharedMaterials || {};
+        const planeGroup = options.planeGroup || null;
+        const environmentMeshes = Array.isArray(options.environmentMeshes) ? options.environmentMeshes : null;
+
+        tData.iTrunk = createTreeInstancedMesh(THREE, sharedGeometries.treeTrunk, sharedMaterials.trunk, count, tData.treeMap);
+        tData.iBranch = createTreeInstancedMesh(THREE, sharedGeometries.treeBranch, sharedMaterials.trunk, count, tData.treeMap);
+        tData.iBranch2 = createTreeInstancedMesh(THREE, sharedGeometries.treeBranch2, sharedMaterials.trunk, count, tData.treeMap);
+        tData.iBranch3 = createTreeInstancedMesh(THREE, sharedGeometries.treeBranch3, sharedMaterials.trunk, count, tData.treeMap);
+        tData.iDrape1 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape1, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape2 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape2, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape3 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape3, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape4 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape4, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape5 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape5, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape6 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape6, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape7 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape7, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iDrape8 = createTreeInstancedMesh(THREE, sharedGeometries.willowDrape8, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iLeaf1 = createTreeInstancedMesh(THREE, sharedGeometries.leaf1, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iLeaf2 = createTreeInstancedMesh(THREE, sharedGeometries.leaf2, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iLeaf3 = createTreeInstancedMesh(THREE, sharedGeometries.leaf3, sharedMaterials.leaves, count, tData.treeMap);
+        tData.iLeaf4 = createTreeInstancedMesh(THREE, sharedGeometries.leaf4, sharedMaterials.leaves, count, tData.treeMap);
+
+        const meshes = [
+            tData.iTrunk,
+            tData.iBranch,
+            tData.iBranch2,
+            tData.iBranch3,
+            tData.iDrape1,
+            tData.iDrape2,
+            tData.iDrape3,
+            tData.iDrape4,
+            tData.iDrape5,
+            tData.iDrape6,
+            tData.iDrape7,
+            tData.iDrape8,
+            tData.iLeaf1,
+            tData.iLeaf2,
+            tData.iLeaf3,
+            tData.iLeaf4
+        ];
+        for (let i = 0; i < meshes.length; i++) {
+            if (planeGroup) planeGroup.add(meshes[i]);
+            if (environmentMeshes) environmentMeshes.push(meshes[i]);
+        }
+
+        return tData;
+    }
+
     function deterministicCanopyJitter(seedX, seedY, layer, axis) {
         const value = Math.sin((seedX + (layer * 0.71) + (axis * 0.37)) * 12.9898 + (seedY - (layer * 0.47) + (axis * 0.19)) * 78.233) * 43758.5453;
         return ((value - Math.floor(value)) * 2.0) - 1.0;
@@ -210,6 +294,7 @@
 
     window.WorldTreeRenderRuntime = {
         TREE_VISUAL_PROFILES,
+        createTreeRenderData,
         deterministicCanopyJitter,
         getTreeVisualProfile,
         markTreeVisualsDirty,

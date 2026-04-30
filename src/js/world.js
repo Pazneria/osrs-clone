@@ -2168,6 +2168,17 @@
             return worldTreeRenderRuntime.getTreeVisualProfile(nodeId);
         }
 
+        function createTreeRenderData(count, planeGroup) {
+            return worldTreeRenderRuntime.createTreeRenderData({
+                THREE,
+                sharedGeometries,
+                sharedMaterials,
+                count,
+                planeGroup,
+                environmentMeshes
+            });
+        }
+
         function setTreeVisualState(tData, treeIndex, options = {}) {
             return worldTreeRenderRuntime.setTreeVisualState({ THREE, tData, treeIndex, options });
         }
@@ -5240,30 +5251,7 @@
                     }
                 }
 
-                let tData = { treeMap: [], iTrunk: null, iBranch: null, iBranch2: null, iBranch3: null, iDrape1: null, iDrape2: null, iDrape3: null, iDrape4: null, iDrape5: null, iDrape6: null, iDrape7: null, iDrape8: null, iLeaf1: null, iLeaf2: null, iLeaf3: null, iLeaf4: null };
-                if (tCount > 0) {
-                    tData.iTrunk = new THREE.InstancedMesh(sharedGeometries.treeTrunk, sharedMaterials.trunk, tCount);
-                    tData.iBranch = new THREE.InstancedMesh(sharedGeometries.treeBranch, sharedMaterials.trunk, tCount);
-                    tData.iBranch2 = new THREE.InstancedMesh(sharedGeometries.treeBranch2, sharedMaterials.trunk, tCount);
-                    tData.iBranch3 = new THREE.InstancedMesh(sharedGeometries.treeBranch3, sharedMaterials.trunk, tCount);
-                    tData.iDrape1 = new THREE.InstancedMesh(sharedGeometries.willowDrape1, sharedMaterials.leaves, tCount);
-                    tData.iDrape2 = new THREE.InstancedMesh(sharedGeometries.willowDrape2, sharedMaterials.leaves, tCount);
-                    tData.iDrape3 = new THREE.InstancedMesh(sharedGeometries.willowDrape3, sharedMaterials.leaves, tCount);
-                    tData.iDrape4 = new THREE.InstancedMesh(sharedGeometries.willowDrape4, sharedMaterials.leaves, tCount);
-                    tData.iDrape5 = new THREE.InstancedMesh(sharedGeometries.willowDrape5, sharedMaterials.leaves, tCount);
-                    tData.iDrape6 = new THREE.InstancedMesh(sharedGeometries.willowDrape6, sharedMaterials.leaves, tCount);
-                    tData.iDrape7 = new THREE.InstancedMesh(sharedGeometries.willowDrape7, sharedMaterials.leaves, tCount);
-                    tData.iDrape8 = new THREE.InstancedMesh(sharedGeometries.willowDrape8, sharedMaterials.leaves, tCount);
-                    tData.iLeaf1 = new THREE.InstancedMesh(sharedGeometries.leaf1, sharedMaterials.leaves, tCount);
-                    tData.iLeaf2 = new THREE.InstancedMesh(sharedGeometries.leaf2, sharedMaterials.leaves, tCount);
-                    tData.iLeaf3 = new THREE.InstancedMesh(sharedGeometries.leaf3, sharedMaterials.leaves, tCount);
-                    tData.iLeaf4 = new THREE.InstancedMesh(sharedGeometries.leaf4, sharedMaterials.leaves, tCount);
-                    [tData.iTrunk, tData.iBranch, tData.iBranch2, tData.iBranch3, tData.iDrape1, tData.iDrape2, tData.iDrape3, tData.iDrape4, tData.iDrape5, tData.iDrape6, tData.iDrape7, tData.iDrape8, tData.iLeaf1, tData.iLeaf2, tData.iLeaf3, tData.iLeaf4].forEach(mesh => {
-                        mesh.castShadow = true; mesh.matrixAutoUpdate = false;
-                        mesh.userData = { instanceMap: tData.treeMap };
-                        planeGroup.add(mesh); environmentMeshes.push(mesh);
-                    });
-                }
+                let tData = createTreeRenderData(tCount, planeGroup);
                 let rData = createRockRenderData(rockVisualCounts, planeGroup);
 
                 let castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };

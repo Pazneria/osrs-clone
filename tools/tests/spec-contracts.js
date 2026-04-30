@@ -1871,7 +1871,9 @@ function run() {
   assert(worldScript.includes("function resolveTreeRespawnTicks(gridX, gridY, z)"), "woodcutting respawn scaling helper missing");
   assert(worldScript.includes("WorldTreeRenderRuntime"), "world.js should delegate tree visuals through the tree render runtime");
   assert(treeRenderRuntimeSource.includes("const TREE_VISUAL_PROFILES = {"), "tree visual profile table missing");
+  assert(treeRenderRuntimeSource.includes("function createTreeRenderData(options = {})"), "tree render runtime should own tree instanced mesh bundle construction");
   assert(treeRenderRuntimeSource.includes("function setTreeVisualState(input)"), "tree render runtime should own tree visual state updates");
+  assert(!worldScript.includes("new THREE.InstancedMesh(sharedGeometries.treeTrunk"), "world.js should not own tree instanced mesh construction");
 
   const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
   assert(starterTownWorld.services.some((entry) => entry.type === "FURNACE"), "furnace world placement missing");
