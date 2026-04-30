@@ -15,9 +15,12 @@ function injectClassicScript(entry: LegacyScriptEntry): void {
 }
 
 export async function loadLegacyRuntime(entries: ReadonlyArray<LegacyScriptEntry>): Promise<void> {
-  if (window.__legacyRuntimeLoaded) return;
+  if (window.__legacyRuntimeLoaded || document.querySelector("script[data-legacy-script]")) {
+    window.__legacyRuntimeLoaded = true;
+    return;
+  }
+  window.__legacyRuntimeLoaded = true;
   for (let i = 0; i < entries.length; i++) {
     injectClassicScript(entries[i]);
   }
-  window.__legacyRuntimeLoaded = true;
 }

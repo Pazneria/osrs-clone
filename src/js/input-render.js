@@ -26,8 +26,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         // In open terrain, BFS iteration budget approximates a Chebyshev radius. Keep tooltip range slightly under that.
         const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
-        const inputControllerRuntime = window.InputControllerRuntime || null;
-        const animationRuntimeBridge = window.AnimationRuntimeBridge || null;
+        function getInputControllerRuntime() {
+            return window.InputControllerRuntime || null;
+        }
+
+        function getAnimationRuntimeBridge() {
+            return window.AnimationRuntimeBridge || null;
+        }
 
         function isAnimationStudioActive() {
             const bridge = window.AnimationStudioBridge || null;
@@ -37,6 +42,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function buildInputControllerContext() {
+            const inputControllerRuntime = getInputControllerRuntime();
             if (inputControllerRuntime && typeof inputControllerRuntime.createInputControllerContext === 'function') {
                 return inputControllerRuntime.createInputControllerContext({
                     isFreeCam,
@@ -67,6 +73,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         function onPointerDown(event) {
             if (isAnimationStudioActive()) return;
+            const inputControllerRuntime = getInputControllerRuntime();
             const decision = inputControllerRuntime && typeof inputControllerRuntime.resolvePointerDown === 'function'
                 ? inputControllerRuntime.resolvePointerDown(buildInputControllerContext(), {
                     button: event.button,
@@ -95,6 +102,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         function onPointerMove(event) {
             if (isAnimationStudioActive()) return;
+            const inputControllerRuntime = getInputControllerRuntime();
             const decision = inputControllerRuntime && typeof inputControllerRuntime.resolvePointerMove === 'function'
                 ? inputControllerRuntime.resolvePointerMove(buildInputControllerContext(), {
                     clientX: event.clientX,
@@ -126,6 +134,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         function onPointerUp(event) {
             if (isAnimationStudioActive()) return;
+            const inputControllerRuntime = getInputControllerRuntime();
             const decision = inputControllerRuntime && typeof inputControllerRuntime.resolvePointerUp === 'function'
                 ? inputControllerRuntime.resolvePointerUp(buildInputControllerContext(), {
                     button: event.button
@@ -142,6 +151,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function onMouseWheel(event) { 
             if (isAnimationStudioActive()) return;
             event.preventDefault(); 
+            const inputControllerRuntime = getInputControllerRuntime();
             cameraDist = inputControllerRuntime && typeof inputControllerRuntime.resolveMouseWheelCameraDistance === 'function'
                 ? inputControllerRuntime.resolveMouseWheelCameraDistance(cameraDist, event.deltaY)
                 : Math.max(5, Math.min(30, cameraDist + (Math.sign(event.deltaY) * 1.5))); 
@@ -149,6 +159,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function normalizeContextMenuOptions(options) {
+            const inputControllerRuntime = getInputControllerRuntime();
             if (inputControllerRuntime && typeof inputControllerRuntime.normalizeContextMenuOptions === 'function') {
                 return inputControllerRuntime.normalizeContextMenuOptions(options);
             }
@@ -256,6 +267,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         function onContextMenu(event) {
             if (isAnimationStudioActive()) return;
+            const inputControllerRuntime = getInputControllerRuntime();
             if (inputControllerRuntime && typeof inputControllerRuntime.shouldIgnoreContextMenu === 'function') {
                 if (inputControllerRuntime.shouldIgnoreContextMenu(isFreeCam, event.target && event.target.id)) return;
             } else {
@@ -876,14 +888,14 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             rig.leftArm.position.set(shoulderPivot.x, shoulderPivot.y, shoulderPivot.z);
             rig.rightArm.position.set(-shoulderPivot.x, shoulderPivot.y, shoulderPivot.z);
         }
-        function clamp01(v) {
+        function clampInputRender01(v) {
             return Math.max(0, Math.min(1, v));
         }
         function getCurrentTickProgress(frameNow) {
             const tickDurationMs = (typeof TICK_RATE_MS === 'number' && Number.isFinite(TICK_RATE_MS) && TICK_RATE_MS > 0)
                 ? TICK_RATE_MS
                 : 600;
-            return clamp01((frameNow - lastTickTime) / tickDurationMs);
+            return clampInputRender01((frameNow - lastTickTime) / tickDurationMs);
         }
         function isTimedAnimationActive(startedAtMs, durationMs, frameNow) {
             if (!Number.isFinite(startedAtMs) || startedAtMs <= 0) return false;
@@ -1118,6 +1130,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return `${request.clipId || 'unknown'}@p${Number.isFinite(request.priority) ? request.priority : '?'} start=${Number.isFinite(request.startedAtMs) ? Math.floor(request.startedAtMs) : 'none'}`;
         }
         function updateCombatAnimationDebugPanel(rig, playerRigRef, frameNow) {
+            const animationRuntimeBridge = getAnimationRuntimeBridge();
             const panel = ensureCombatAnimationDebugPanel();
             if (!window.QA_COMBAT_DEBUG) {
                 panel.style.display = 'none';
@@ -1178,6 +1191,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             panel.style.display = 'block';
         }
         function applyClipDrivenPlayerAnimation(rig, playerRigRef, frameNow, isMoving, logicalTilesMoved) {
+            const animationRuntimeBridge = getAnimationRuntimeBridge();
             if (!animationRuntimeBridge
                 || typeof animationRuntimeBridge.beginLegacyFrame !== 'function'
                 || typeof animationRuntimeBridge.setLegacyBaseClip !== 'function'

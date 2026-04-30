@@ -18,7 +18,11 @@ function run() {
   assert(mainSource.includes("exposeAnimationBridge"), "main.ts should expose the animation bridge");
   assert(coreSource.includes("window.AnimationStudioBridge.init"), "core.js should initialize the animation studio");
   assert(!coreSource.includes("initPoseEditor();"), "core.js should no longer initialize the old pose editor");
-  assert(inputSource.includes("const animationRuntimeBridge = window.AnimationRuntimeBridge || null;"), "input-render.js should bind the animation runtime bridge");
+  assert(
+    inputSource.includes("function getAnimationRuntimeBridge()")
+      && inputSource.includes("return window.AnimationRuntimeBridge || null;"),
+    "input-render.js should resolve the animation runtime bridge lazily"
+  );
   assert(inputSource.includes("function isAnimationStudioActive()"), "input-render.js should gate runtime input while the studio is open");
   assert(inputSource.includes("applyClipDrivenPlayerAnimation"), "input-render.js should use clip-driven player animation");
   assert(inputSource.includes("player/combat_slash"), "input-render.js should request the combat slash clip");

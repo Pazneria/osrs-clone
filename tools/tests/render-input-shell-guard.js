@@ -12,7 +12,9 @@ function run() {
   const renderInputBridge = fs.readFileSync(path.join(root, "src", "game", "platform", "render-input-bridge.ts"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
+  const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -37,10 +39,26 @@ function run() {
   assert(!coreSource.includes("let minimapDestination"), "core.js should not own minimap destination state");
   assert(!inputSource.includes("minimapLocked &&"), "input-render.js should not read minimap lock state directly");
   assert(worldSource.includes("shadowFocusRevision"), "world.js should track shadow focus revision changes across scene reloads");
-  assert(worldSource.includes("function initSkyRuntime"), "world.js should initialize a static sky runtime");
+  assert(worldRenderSource.includes("window.WorldRenderRuntime"), "world render runtime should expose a runtime");
+  assert(worldRenderSource.includes("function createWaterSurfaceMaterial"), "world render runtime should own water material construction");
+  assert(worldRenderSource.includes("function createSkyDomeMaterial"), "world render runtime should own sky material construction");
+  assert(worldRenderSource.includes("function initSkyRuntime"), "world render runtime should initialize the static sky runtime");
+  assert(worldSource.includes("WorldRenderRuntime"), "world.js should delegate render infrastructure through the world render runtime");
+  assert(!worldSource.includes("function createWaterSurfaceMaterial"), "world.js should not own water shader construction");
+  assert(!worldSource.includes("function createSkyDomeMaterial"), "world.js should not own sky shader construction");
+  assert(
+    manifestSource.indexOf('id: "world-render-runtime"') > manifestSource.indexOf('id: "world-procedural-runtime"')
+      && manifestSource.indexOf('id: "world-render-runtime"') < manifestSource.indexOf('id: "world-scene-state"'),
+    "legacy script manifest should load world render runtime after procedural helpers and before world.js"
+  );
+  assert(worldSource.includes("function initSkyRuntime"), "world.js should keep a small sky runtime orchestration wrapper");
   assert(worldSource.includes("function updateSkyRuntime"), "world.js should expose a sky update helper");
   assert(worldSource.includes("window.updateSkyRuntime = updateSkyRuntime;"), "world.js should keep sky updates wired through the world shell");
-  assert(inputSource.includes("const inputControllerRuntime = window.InputControllerRuntime || null;"), "input-render.js should adopt the input controller bridge");
+  assert(
+    inputSource.includes("function getInputControllerRuntime()")
+      && inputSource.includes("return window.InputControllerRuntime || null;"),
+    "input-render.js should adopt the input controller bridge lazily"
+  );
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
