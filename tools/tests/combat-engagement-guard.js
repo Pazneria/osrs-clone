@@ -29,6 +29,7 @@ function run() {
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
+  const inputTickMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
 
@@ -95,11 +96,12 @@ function run() {
   );
 
   assert(
-    inputRenderSource.includes("window.lockPlayerCombatTarget(enemyRuntimeId);"),
+    inputRenderSource.includes("lockPlayerCombatTarget: (typeof window.lockPlayerCombatTarget === 'function') ? window.lockPlayerCombatTarget : null")
+      && inputTickMovementRuntimeSource.includes("context.lockPlayerCombatTarget(enemyRuntimeId);"),
     "enemy interactions should still lock the selected target for pursuit"
   );
   assert(
-    inputRenderSource.includes("let stepsToTake = isRunning ? 2 : 1;"),
+    inputTickMovementRuntimeSource.includes("const stepsToTake = context.isRunning ? 2 : 1;"),
     "running should continue to move the player two tiles per tick so roaming enemies remain catchable"
   );
 

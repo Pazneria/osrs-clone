@@ -18,6 +18,7 @@ function run() {
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
   const inputRaycastRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
+  const inputTickMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
 
   assert(contractsSource.includes("waterBodies?: WaterBodyDefinition[];"), "world contract should expose optional authored water bodies");
   assert(contractsSource.includes("export interface WaterRenderPayload"), "world contract should expose a typed water render payload");
@@ -66,7 +67,7 @@ function run() {
   assert(inputRaycastRuntimeSource.includes("snappedBoardTile = context.findNearestPierDeckBoardingTile"), "input raycast runtime should snap shoreline water hits to nearby pier deck tiles when boarding");
   assert(inputRaycastRuntimeSource.includes("const canDescendViaPierStep ="), "input raycast runtime should detect pier stair clicks while on deck");
   assert(inputRaycastRuntimeSource.includes("pierStepDescend = true;"), "input raycast runtime should mark pier-descend walk intents when stair hits are normalized");
-  assert(inputRenderSource.includes("pendingAction.obj === 'PIER_STEP_DESCEND'"), "input-render.js should carry pier-descend walk intents into movement resolution");
+  assert(inputTickMovementRuntimeSource.includes("pendingAction.obj === 'PIER_STEP_DESCEND'"), "input tick movement runtime should carry pier-descend walk intents into movement resolution");
   assert(inputRenderSource.includes("stair fallback step"), "input-render.js should provide a stair fallback move when pathfinding cannot bridge dock seam tiles");
   assert(inputRenderSource.includes("candidateY === stairDeckY"), "pier step fallback should not treat the first deck row as the shore row");
   assert(inputPathfindingRuntimeSource.includes("isPierDeckHeightTransition"), "normal walking should bridge the small height seam between pier deck and shore");

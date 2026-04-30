@@ -20,6 +20,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputRaycastRuntime() {
             return window.InputRaycastRuntime || null;
         }
+        function getInputTickMovementRuntime() {
+            return window.InputTickMovementRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -1129,6 +1132,28 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 ? runtime.findPath(buildInputPathfindingRuntimeContext(), startX, startY, targetX, targetY, forceAdjacent, interactionObj, pathOptions)
                 : [];
         }
+        function buildInputTickMovementRuntimeContext() {
+            return {
+                windowRef: window,
+                playerState,
+                logicalMap,
+                heightMap,
+                isRunning,
+                isBankOpen,
+                skillRuntime: window.SkillRuntime || null,
+                findNearestFishableWaterEdgeTile,
+                buildPierStepDescendPath,
+                findPath,
+                isPierDeckTile,
+                isStandableTile,
+                isNearPierBoundsTile,
+                emitPierDebug,
+                clearMinimapDestination,
+                hasActiveFletchingProcessingSession,
+                lockPlayerCombatTarget: (typeof window.lockPlayerCombatTarget === 'function') ? window.lockPlayerCombatTarget : null,
+                closeBank
+            };
+        }
 
         function processTick() {
             if (isAnimationStudioActive()) {
@@ -1152,127 +1177,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();
 
             if (pendingAction) {
-                let actionX = pendingAction.x;
-                let actionY = pendingAction.y;
-
-                if (pendingAction.type === 'INTERACT' && pendingAction.obj === 'WATER') {
-                    const edgeWater = findNearestFishableWaterEdgeTile(pendingAction.x, pendingAction.y);
-                    if (edgeWater) {
-                        actionX = edgeWater.x;
-                        actionY = edgeWater.y;
-                    }
-                }
-
-                playerState.targetX = actionX; playerState.targetY = actionY;
-                if (pendingAction.type === 'WALK') {
-                    playerState.pendingSkillStart = null;
-                    playerState.pendingInteractAfterFletchingWalk = null;
-                    const stairDescendPath = pendingAction.obj === 'PIER_STEP_DESCEND'
-                        ? buildPierStepDescendPath(playerState.x, playerState.y, actionX, actionY, playerState.z)
-                        : null;
-                    playerState.path = stairDescendPath || findPath(playerState.x, playerState.y, actionX, actionY, false);
-
-                    if (playerState.path.length === 0 && pendingAction.obj === 'PIER_STEP_DESCEND') {
-                        const z = playerState.z;
-                        const onPierDeck = isPierDeckTile(playerState.x, playerState.y, z);
-                        const targetStandable = isStandableTile(actionX, actionY, z);
-                        if (window.QA_PIER_DEBUG) emitPierDebug(`stair fallback blocked onDeck=${onPierDeck} standable=${targetStandable}`);
-                    }
-
-                    if (window.QA_PIER_DEBUG && playerState.path.length === 0) {
-                        const nearPier = isNearPierBoundsTile(playerState.x, playerState.y, playerState.z, 3)
-                            || isNearPierBoundsTile(actionX, actionY, playerState.z, 3);
-                        if (nearPier) {
-                            const z = playerState.z;
-                            const startTile = logicalMap[z][playerState.y][playerState.x];
-                            const targetTile = logicalMap[z][actionY][actionX];
-                            const startH = heightMap[z][playerState.y][playerState.x];
-                            const targetH = heightMap[z][actionY][actionX];
-                            emitPierDebug(`walk path empty start=(${playerState.x},${playerState.y}) t=${startTile} h=${startH.toFixed(2)} target=(${actionX},${actionY}) t=${targetTile} h=${targetH.toFixed(2)} standable=${isStandableTile(actionX, actionY, z)}`);
-                        }
-                    }
-                    if (playerState.path.length === 0) clearMinimapDestination();
-                    playerState.pendingActionAfterTurn = null;
-                    playerState.turnLock = false;
-                    playerState.actionVisualReady = true;
-                    const keepFletchingAction = playerState.action === 'SKILLING: FLETCHING' && hasActiveFletchingProcessingSession();
-                    if (keepFletchingAction) {
-                        playerState.action = 'SKILLING: FLETCHING';
-                    } else {
-                        playerState.action = playerState.path.length > 0 ? 'WALKING' : 'IDLE';
-                    }
-                } else if (pendingAction.type === 'INTERACT') {
-                    if (pendingAction.obj === 'ENEMY') {
-                        playerState.pendingSkillStart = null;
-                        playerState.pendingInteractAfterFletchingWalk = null;
-                        playerState.path = [];
-                        playerState.pendingActionAfterTurn = null;
-                        playerState.turnLock = false;
-                        playerState.actionVisualReady = true;
-                        playerState.targetObj = 'ENEMY';
-                        playerState.targetUid = pendingAction.targetUid;
-                        let enemyRuntimeId = null;
-                        if (pendingAction.targetUid && typeof pendingAction.targetUid === 'object') {
-                            if (Number.isInteger(pendingAction.targetUid.enemyX)) playerState.targetX = pendingAction.targetUid.enemyX;
-                            if (Number.isInteger(pendingAction.targetUid.enemyY)) playerState.targetY = pendingAction.targetUid.enemyY;
-                            enemyRuntimeId = String(pendingAction.targetUid.enemyId || '').trim();
-                        } else if (typeof pendingAction.targetUid === 'string') {
-                            enemyRuntimeId = pendingAction.targetUid.trim();
-                        }
-                        if (enemyRuntimeId && typeof window.lockPlayerCombatTarget === 'function') {
-                            window.lockPlayerCombatTarget(enemyRuntimeId);
-                        }
-                        playerState.action = 'IDLE';
-                    } else {
-                        // Force standing adjacent to interactables (unless picking up a ground item)
-                        const forceAdjacent = pendingAction.obj !== 'GROUND_ITEM';
-                        playerState.path = findPath(playerState.x, playerState.y, actionX, actionY, forceAdjacent, pendingAction.obj);
-                        playerState.pendingActionAfterTurn = null;
-                        playerState.turnLock = false;
-                        playerState.actionVisualReady = true;
-                        const keepFletchingAction = playerState.action === 'SKILLING: FLETCHING' && hasActiveFletchingProcessingSession();
-
-                        let pendingSkillStart = playerState.pendingSkillStart || null;
-                        if (window.SkillRuntime
-                            && typeof SkillRuntime.canHandleTarget === 'function'
-                            && SkillRuntime.canHandleTarget(pendingAction.obj)
-                            && pendingAction.targetUid
-                            && typeof pendingAction.targetUid === 'object'
-                            && typeof pendingAction.targetUid.skillId === 'string') {
-                            pendingSkillStart = Object.assign({}, pendingAction.targetUid, {
-                                targetObj: pendingAction.obj,
-                                targetX: actionX,
-                                targetY: actionY,
-                                targetZ: playerState.z
-                            });
-                        } else if (pendingSkillStart && pendingSkillStart.targetObj === pendingAction.obj) {
-                            pendingSkillStart = Object.assign({}, pendingSkillStart, {
-                                targetX: actionX,
-                                targetY: actionY,
-                                targetZ: playerState.z
-                            });
-                        }
-                        if (keepFletchingAction) {
-                            playerState.pendingInteractAfterFletchingWalk = {
-                                targetObj: pendingAction.obj,
-                                targetUid: pendingAction.targetUid,
-                                targetX: actionX,
-                                targetY: actionY,
-                                targetZ: playerState.z
-                            };
-                            playerState.pendingSkillStart = pendingSkillStart;
-                            playerState.action = 'SKILLING: FLETCHING';
-                            playerState.targetObj = pendingAction.obj;
-                            playerState.targetUid = pendingAction.targetUid;
-                        } else {
-                            playerState.pendingInteractAfterFletchingWalk = null;
-                            playerState.pendingSkillStart = pendingSkillStart;
-                            playerState.action = 'WALKING_TO_INTERACT'; playerState.targetObj = pendingAction.obj; playerState.targetUid = pendingAction.targetUid;
-                        }
-                    }
-                }
-                pendingAction = null;
-
+                const runtime = getInputTickMovementRuntime();
+                pendingAction = runtime && typeof runtime.applyPendingAction === 'function'
+                    ? runtime.applyPendingAction(buildInputTickMovementRuntimeContext(), pendingAction)
+                    : null;
             }
 
             if (typeof window.processCombatTick === 'function') window.processCombatTick();
@@ -1296,14 +1204,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (typeof window.updateStats === 'function') window.updateStats();
             
             if (playerState.path.length > 0) {
-                let stepsToTake = isRunning ? 2 : 1; let nextStep = playerState.path.shift();
-                if (stepsToTake === 2 && playerState.path.length > 0) {
-                    playerState.midX = nextStep.x; playerState.midY = nextStep.y;
-                    let finalStep = playerState.path.shift(); playerState.x = finalStep.x; playerState.y = finalStep.y;
-                } else { playerState.x = nextStep.x; playerState.y = nextStep.y; }
-                movedThisTick = true;
-                
-                if (isBankOpen) closeBank();
+                const runtime = getInputTickMovementRuntime();
+                movedThisTick = !!(runtime && typeof runtime.advancePlayerMovement === 'function'
+                    && runtime.advancePlayerMovement(buildInputTickMovementRuntimeContext()));
             }
             
             if (playerState.path.length === 0) {

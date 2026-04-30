@@ -17,6 +17,7 @@ const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const inputRaycastRuntimeSource = read("src/js/input-raycast-runtime.js");
+const inputTickMovementRuntimeSource = read("src/js/input-tick-movement-runtime.js");
 const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
@@ -202,8 +203,8 @@ assert.ok(
   "enemy hover tooltips should append computed combat level next to the enemy name"
 );
 assert.ok(
-  inputRenderSource.includes("else if (typeof pendingAction.targetUid === 'string')") &&
-    inputRenderSource.includes("window.lockPlayerCombatTarget(enemyRuntimeId);"),
+  inputTickMovementRuntimeSource.includes("else if (typeof pendingAction.targetUid === 'string')") &&
+    inputTickMovementRuntimeSource.includes("context.lockPlayerCombatTarget(enemyRuntimeId);"),
   "enemy interaction resolution should support both object and string target IDs when locking combat targets"
 );
 assert.ok(

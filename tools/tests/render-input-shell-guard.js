@@ -24,6 +24,7 @@ function run() {
   const inputPlayerAnimationSource = fs.readFileSync(path.join(root, "src", "js", "input-player-animation-runtime.js"), "utf8");
   const inputPathfindingSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
   const inputRaycastSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
+  const inputTickMovementSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -160,6 +161,18 @@ function run() {
     manifestSource.indexOf('id: "input-pathfinding-runtime"') < manifestSource.indexOf('id: "input-raycast-runtime"')
       && manifestSource.indexOf('id: "input-raycast-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input raycast runtime before input-render.js"
+  );
+  assert(inputTickMovementSource.includes("window.InputTickMovementRuntime"), "input tick movement runtime should expose a window runtime");
+  assert(inputTickMovementSource.includes("function applyPendingAction"), "input tick movement runtime should own pending action setup");
+  assert(inputTickMovementSource.includes("function advancePlayerMovement"), "input tick movement runtime should own player path stepping");
+  assert(inputSource.includes("InputTickMovementRuntime"), "input-render.js should delegate tick movement through the tick movement runtime");
+  assert(inputSource.includes("buildInputTickMovementRuntimeContext"), "input-render.js should provide a narrow tick movement runtime context");
+  assert(!inputSource.includes("let stepsToTake = isRunning ? 2 : 1;"), "input-render.js should not own run-step path movement");
+  assert(manifestSource.includes('../../js/input-tick-movement-runtime.js?raw'), "legacy manifest should load input tick movement runtime");
+  assert(
+    manifestSource.indexOf('id: "input-raycast-runtime"') < manifestSource.indexOf('id: "input-tick-movement-runtime"')
+      && manifestSource.indexOf('id: "input-tick-movement-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input tick movement runtime before input-render.js"
   );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");
