@@ -8,6 +8,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputHoverTooltipRuntime() {
             return window.InputHoverTooltipRuntime || null;
         }
+        function getInputQaCameraRuntime() {
+            return window.InputQaCameraRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -1999,55 +2002,59 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function projectWorldTileToScreen(x, y, z = 0, heightOffset = 1.0) {
-            const gx = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(Number(x) || 0)));
-            const gy = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(Number(y) || 0)));
-            const gz = Math.max(0, Math.min(PLANES - 1, Math.floor(Number(z) || 0)));
-            if (!camera) return null;
-            if (typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld(true);
-            const pos = new THREE.Vector3(gx, getVisualHeight(gx, gy, gz) + (Number.isFinite(heightOffset) ? heightOffset : 1.0), gy);
-            pos.project(camera);
-            return {
-                x: Math.round((pos.x * 0.5 + 0.5) * window.innerWidth),
-                y: Math.round((pos.y * -0.5 + 0.5) * window.innerHeight),
-                depth: Number.isFinite(pos.z) ? Number(pos.z.toFixed(4)) : null,
-                visible: pos.z < 1 && pos.x >= -1 && pos.x <= 1 && pos.y >= -1 && pos.y <= 1
-            };
+            const runtime = getInputQaCameraRuntime();
+            return runtime && typeof runtime.projectWorldTileToScreen === 'function'
+                ? runtime.projectWorldTileToScreen({
+                    THREERef: THREE,
+                    windowRef: window,
+                    camera,
+                    mapSize: MAP_SIZE,
+                    planes: PLANES,
+                    getVisualHeight
+                }, x, y, z, heightOffset)
+                : null;
         }
 
         window.projectWorldTileToScreen = projectWorldTileToScreen;
 
         function syncQaRenderToPlayerState() {
-            if (!playerRig || !camera) return null;
-            const visualY = getVisualHeight(playerState.x, playerState.y, playerState.z);
-            baseVisualY = visualY;
-            playerRig.position.set(playerState.x, visualY, playerState.y);
-            const cameraFollowY = baseVisualY;
-            camera.position.x = playerRig.position.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
-            camera.position.y = cameraFollowY + 1.0 + cameraDist * Math.cos(cameraPitch);
-            camera.position.z = playerRig.position.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);
-            const followCamGround = getGroundHeightAtWorldPos(camera.position.x, camera.position.z, playerState.z);
-            camera.position.y = Math.max(camera.position.y, followCamGround + 0.3);
-            camera.lookAt(new THREE.Vector3(playerRig.position.x, cameraFollowY + 1.0, playerRig.position.z));
-            camera.updateMatrixWorld(true);
-            return {
-                x: playerState.x,
-                y: playerState.y,
-                z: playerState.z,
-                cameraX: Number(camera.position.x.toFixed(2)),
-                cameraY: Number(camera.position.y.toFixed(2)),
-                cameraZ: Number(camera.position.z.toFixed(2))
-            };
+            const runtime = getInputQaCameraRuntime();
+            const snapshot = runtime && typeof runtime.syncQaRenderToPlayerState === 'function'
+                ? runtime.syncQaRenderToPlayerState({
+                    THREERef: THREE,
+                    camera,
+                    playerRig,
+                    playerState,
+                    cameraYaw,
+                    cameraPitch,
+                    cameraDist,
+                    getVisualHeight,
+                    getGroundHeightAtWorldPos
+                })
+                : null;
+            if (snapshot && Number.isFinite(snapshot.baseVisualY)) baseVisualY = snapshot.baseVisualY;
+            return snapshot
+                ? {
+                    x: snapshot.x,
+                    y: snapshot.y,
+                    z: snapshot.z,
+                    cameraX: snapshot.cameraX,
+                    cameraY: snapshot.cameraY,
+                    cameraZ: snapshot.cameraZ
+                }
+                : null;
         }
 
         window.syncQaRenderToPlayerState = syncQaRenderToPlayerState;
 
         window.setQaCameraView = function setQaCameraView(nextYaw, nextPitch = cameraPitch, nextDist = cameraDist) {
-            const yaw = Number(nextYaw);
-            const pitch = Number(nextPitch);
-            const dist = Number(nextDist);
-            if (Number.isFinite(yaw)) cameraYaw = yaw;
-            if (Number.isFinite(pitch)) cameraPitch = Math.max(0.1, Math.min(Math.PI - 0.1, pitch));
-            if (Number.isFinite(dist)) cameraDist = Math.max(5, Math.min(30, dist));
+            const runtime = getInputQaCameraRuntime();
+            const nextState = runtime && typeof runtime.resolveQaCameraViewState === 'function'
+                ? runtime.resolveQaCameraViewState({ cameraYaw, cameraPitch, cameraDist, nextYaw, nextPitch, nextDist })
+                : { yaw: cameraYaw, pitch: cameraPitch, distance: cameraDist };
+            cameraYaw = nextState.yaw;
+            cameraPitch = nextState.pitch;
+            cameraDist = nextState.distance;
             syncQaRenderToPlayerState();
             return {
                 yaw: Number(cameraYaw.toFixed(4)),
@@ -2057,9 +2064,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         };
 
         function resetQaCameraView() {
-            cameraYaw = Math.PI * 1.25;
-            cameraPitch = Math.PI / 3.1;
-            cameraDist = 16;
+            const runtime = getInputQaCameraRuntime();
+            const nextState = runtime && typeof runtime.getDefaultQaCameraViewState === 'function'
+                ? runtime.getDefaultQaCameraViewState()
+                : { yaw: Math.PI * 1.25, pitch: Math.PI / 3.1, distance: 16 };
+            cameraYaw = nextState.yaw;
+            cameraPitch = nextState.pitch;
+            cameraDist = nextState.distance;
             syncQaRenderToPlayerState();
             return {
                 yaw: Number(cameraYaw.toFixed(4)),

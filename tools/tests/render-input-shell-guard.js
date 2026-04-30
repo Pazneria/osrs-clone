@@ -17,6 +17,7 @@ function run() {
   const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const humanoidModelSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
+  const inputQaCameraSource = fs.readFileSync(path.join(root, "src", "js", "input-qa-camera-runtime.js"), "utf8");
   const inputHoverTooltipSource = fs.readFileSync(path.join(root, "src", "js", "input-hover-tooltip-runtime.js"), "utf8");
   const inputStationInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-station-interaction-runtime.js"), "utf8");
   const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
@@ -70,6 +71,16 @@ function run() {
   );
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
+  assert(inputQaCameraSource.includes("window.InputQaCameraRuntime"), "input QA camera runtime should expose a window runtime");
+  assert(inputQaCameraSource.includes("function projectWorldTileToScreen"), "input QA camera runtime should own world-tile projection");
+  assert(inputQaCameraSource.includes("function syncQaRenderToPlayerState"), "input QA camera runtime should own QA render sync behavior");
+  assert(inputSource.includes("InputQaCameraRuntime"), "input-render.js should delegate QA camera helpers through the QA camera runtime");
+  assert(!inputSource.includes("const gx = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(Number(x) || 0)));"), "input-render.js should not own QA projection coordinate clamping");
+  assert(manifestSource.includes('../../js/input-qa-camera-runtime.js?raw'), "legacy manifest should load input QA camera runtime");
+  assert(
+    manifestSource.indexOf('id: "input-qa-camera-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input QA camera runtime before input-render.js"
+  );
   assert(inputHoverTooltipSource.includes("window.InputHoverTooltipRuntime"), "input hover tooltip runtime should expose a window runtime");
   assert(inputHoverTooltipSource.includes("function formatHoverTooltipActionText"), "input hover tooltip runtime should own hover action text policy");
   assert(inputHoverTooltipSource.includes("function positionHoverTooltip"), "input hover tooltip runtime should own hover tooltip positioning");
