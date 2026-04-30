@@ -1766,7 +1766,7 @@ function run() {
     starterTownWorld.services.some((entry) => entry && entry.merchantId === "tanner_rusk" && String(entry.appearanceId || "").trim().toLowerCase() === "tanner_rusk"),
     "tanner world placement should keep the exact tanner_rusk appearance id when authored"
   );
-  assert(worldScript.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
+  assert(structureRenderRuntimeSource.includes("new THREE.BoxGeometry(3, 2.6, 3)"), "runecrafting altar click-box regression");
   assert(runecraftingRuntimeSource.includes("for (let by = placed.y - 1; by <= placed.y + 2; by++)"), "runecrafting altar collision footprint regression");
   assert(Array.isArray(starterTownWorld.skillRoutes.runecrafting) && starterTownWorld.skillRoutes.runecrafting.length === 4, "runecrafting authored routes missing");
   assert(Array.isArray(starterTownWorld.landmarks.altars) && starterTownWorld.landmarks.altars.length === 4, "runecrafting authored altars missing");
@@ -1808,10 +1808,17 @@ function run() {
   assert(!worldScript.includes("const hasNorth = y > 0 && isFenceConnectorTile("), "world.js should not own fence visual construction");
   assert(!worldScript.includes("const railW = door.isEW ? door.width : 0.12;"), "world.js should not own wooden gate visual construction");
   assert(!worldScript.includes("const ridgeAlongX = roof.ridgeAxis !== 'y';"), "world.js should not own roof visual construction");
+  assert(!worldScript.includes("bankBoothsToRender.forEach"), "world.js should not own bank booth chunk landmark rendering");
+  assert(!worldScript.includes("furnacesToRender.forEach"), "world.js should not own furnace chunk landmark rendering");
+  assert(!worldScript.includes("altarCandidatesToRender.forEach"), "world.js should not own altar chunk landmark rendering");
+  assert(worldScript.includes("appendChunkLandmarkVisuals(planeGroup, z, Z_OFFSET, startX, startY, endX, endY);"), "world.js should delegate chunk landmark visuals through the structure runtime");
   assert(structureRenderRuntimeSource.includes("function createTopAnchoredFloorMesh(options)"), "structure render runtime should own top-anchored floor construction");
   assert(structureRenderRuntimeSource.includes("function createFenceVisualGroup(options)"), "structure render runtime should own fence visual construction");
   assert(structureRenderRuntimeSource.includes("function createWoodenGateVisualGroup(options)"), "structure render runtime should own wooden gate visual construction");
   assert(structureRenderRuntimeSource.includes("function createRoofVisualGroup(options)"), "structure render runtime should own roof visual construction");
+  assert(structureRenderRuntimeSource.includes("function appendChunkLandmarkVisuals(options)"), "structure render runtime should own chunk landmark visual rendering");
+  assert(structureRenderRuntimeSource.includes("function createFurnaceVisualGroup(options)"), "structure render runtime should own furnace visual construction");
+  assert(structureRenderRuntimeSource.includes("function createAltarCandidateVisualGroup(options)"), "structure render runtime should own altar visual construction");
   assert(structureRenderRuntimeSource.includes("function updateTutorialRoofVisibility(options)"), "structure render runtime should own tutorial roof fade updates");
   assert(!worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should not seed on renderer init");
   assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");

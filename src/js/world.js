@@ -4213,16 +4213,6 @@
             });
         }
 
-        function createWoodenGateVisualGroup(door, zOffset, baseHeight) {
-            return worldStructureRenderRuntime.createWoodenGateVisualGroup({
-                THREE,
-                sharedMaterials,
-                door,
-                zOffset,
-                baseHeight
-            });
-        }
-
         function chunkIntersectsRoof(roof, startX, startY, endX, endY, z) {
             return worldStructureRenderRuntime.chunkIntersectsRoof(roof, startX, startY, endX, endY, z);
         }
@@ -4236,6 +4226,28 @@
             });
             if (group) activeRoofVisuals.push(group);
             return group;
+        }
+
+        function appendChunkLandmarkVisuals(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
+            worldStructureRenderRuntime.appendChunkLandmarkVisuals({
+                THREE,
+                sharedMaterials,
+                environmentMeshes,
+                heightMap,
+                planeGroup,
+                bankBoothsToRender,
+                furnacesToRender,
+                anvilsToRender,
+                directionalSignsToRender,
+                altarCandidatesToRender,
+                doorsToRender,
+                z,
+                zOffset: Z_OFFSET,
+                startX,
+                startY,
+                endX,
+                endY
+            });
         }
 
         function updateTutorialRoofVisibility() {
@@ -4981,239 +4993,7 @@
                 planeGroup.userData.trees = tData;
                 planeGroup.userData.rocks = rData;
 
-                bankBoothsToRender.forEach(b => {
-                    if (b.x >= startX && b.x < endX && b.y >= startY && b.y < endY && b.z === z) {
-                        const boothGroup = new THREE.Group(); boothGroup.position.set(b.x, heightMap[z][b.y][b.x] + Z_OFFSET, b.y);
-                        const counter = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.1, 0.6), sharedMaterials.boothWood); counter.position.set(0, 0.55, 0); counter.castShadow = true; counter.receiveShadow = true; boothGroup.add(counter);
-                        const pL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.0, 0.6), sharedMaterials.boothWood); pL.position.set(-0.425, 1.6, 0); pL.castShadow = true; pL.receiveShadow = true; boothGroup.add(pL);
-                        const pR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.0, 0.6), sharedMaterials.boothWood); pR.position.set(0.425, 1.6, 0); pR.castShadow = true; pR.receiveShadow = true; boothGroup.add(pR);
-                        const sign = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.4, 0.6), sharedMaterials.boothWood); sign.position.set(0, 2.3, 0); sign.castShadow = true; sign.receiveShadow = true; boothGroup.add(sign);
-                        const bankTextPlane = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.2), sharedMaterials.bankTexPlaneMat); bankTextPlane.position.set(0, 2.3, 0.31); boothGroup.add(bankTextPlane);
-                        
-                        boothGroup.children.forEach(c => { c.userData = { type: 'BANK_BOOTH', gridX: b.x, gridY: b.y, z: z }; environmentMeshes.push(c); });
-                        planeGroup.add(boothGroup);
-                    }
-                });
-
-                furnacesToRender.forEach((furnace) => {
-                    if (furnace.x >= startX && furnace.x < endX && furnace.y >= startY && furnace.y < endY && furnace.z === z) {
-                        const furnaceGroup = new THREE.Group();
-                        const fw = Number.isFinite(furnace.footprintW) ? furnace.footprintW : 3;
-                        const fd = Number.isFinite(furnace.footprintD) ? furnace.footprintD : 2;
-                        const yaw = Number.isFinite(furnace.facingYaw) ? furnace.facingYaw : 0;
-                        const quarterTurn = Math.abs(Math.round(Math.sin(yaw))) === 1 && Math.abs(Math.round(Math.cos(yaw))) === 0;
-                        const bodyLocalW = quarterTurn ? fd : fw;
-                        const bodyLocalD = quarterTurn ? fw : fd;
-                        furnaceGroup.position.set(furnace.x + ((fw - 1) * 0.5), heightMap[z][furnace.y][furnace.x] + Z_OFFSET, furnace.y + ((fd - 1) * 0.5));
-                        if (Number.isFinite(furnace.facingYaw)) furnaceGroup.rotation.y = furnace.facingYaw;
-                        const base = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.floor8);
-                        base.position.set(0, 0.8, 0);
-                        base.castShadow = true;
-                        base.receiveShadow = true;
-                        const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.6, 0.3), sharedMaterials.floor7);
-                        mouth.position.set(0, 0.95, (bodyLocalD * 0.5) - 0.02);
-                        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 0.45), sharedMaterials.floor7);
-                        chimney.position.set(0.55, 1.9, -((bodyLocalD * 0.5) - 0.45));
-                        // Tooltip/click hitbox should match rectangular furnace body only (exclude chimney).
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.hiddenHitbox);
-                        hitbox.position.set(0, 0.8, 0);
-                        hitbox.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
-                        furnaceGroup.add(base, mouth, chimney, hitbox);
-                        base.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
-                        mouth.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
-                        chimney.userData = { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z: z };
-                        environmentMeshes.push(base, mouth, chimney, hitbox);
-                        planeGroup.add(furnaceGroup);
-                    }
-                });
-
-                anvilsToRender.forEach((anvil) => {
-                    if (anvil.x >= startX && anvil.x < endX && anvil.y >= startY && anvil.y < endY && anvil.z === z) {
-                        const anvilGroup = new THREE.Group();
-                        anvilGroup.position.set(anvil.x, heightMap[z][anvil.y][anvil.x] + Z_OFFSET, anvil.y);
-                        if (Number.isFinite(anvil.facingYaw)) anvilGroup.rotation.y = anvil.facingYaw;
-                        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.35), sharedMaterials.boothWood);
-                        stand.position.set(0, 0.275, 0);
-                        const top = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.45), sharedMaterials.floor7);
-                        top.position.set(0, 0.62, 0);
-                        const horn = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.2), sharedMaterials.floor7);
-                        horn.position.set(0.5, 0.6, 0);
-                        // Keep click volume aligned with the physical anvil silhouette.
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.3), sharedMaterials.hiddenHitbox);
-                        hitbox.position.set(0, 0.4, 0);
-                        hitbox.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
-                        anvilGroup.add(stand, top, horn, hitbox);
-                        stand.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
-                        top.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
-                        horn.userData = { type: 'ANVIL', gridX: anvil.x, gridY: anvil.y, z: z };
-                        environmentMeshes.push(stand, top, horn, hitbox);
-                        planeGroup.add(anvilGroup);
-                    }
-                });
-
-                directionalSignsToRender.forEach(ds => {
-                    if (ds.x >= startX && ds.x < endX && ds.y >= startY && ds.y < endY && ds.z === z) {
-                        const signGroup = new THREE.Group();
-                        const baseH = heightMap[z][ds.y][ds.x] + Z_OFFSET;
-                        signGroup.position.set(ds.x, baseH, ds.y);
-
-                        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.65, 8), sharedMaterials.boothWood);
-                        post.position.set(0, 0.82, 0);
-                        const board = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.9, 0.1), sharedMaterials.boothWood);
-                        board.position.set(0, 1.55, 0);
-                        const faceFront = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 0.8), sharedMaterials.directionSignMat);
-                        faceFront.position.set(0, 1.55, 0.055);
-                        const faceBack = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 0.8), sharedMaterials.directionSignMat);
-                        faceBack.position.set(0, 1.55, -0.055);
-                        faceBack.rotation.y = Math.PI;
-
-                        signGroup.add(post, board, faceFront, faceBack);
-                        planeGroup.add(signGroup);
-                    }
-                });
-
-                altarCandidatesToRender.forEach(ac => {
-                    if (ac.x >= startX && ac.x < endX && ac.y >= startY && ac.y < endY && ac.z === z) {
-                        const altarGroup = new THREE.Group();
-                        const baseY = heightMap[z][ac.y][ac.x] + Z_OFFSET;
-                        altarGroup.position.set(ac.x, baseY, ac.y);
-
-                        // Upscale target: ~4x footprint area (2x width/depth) and ~2x height.
-                        const footprintScale = 2.0;
-                        const heightScale = 2.0;
-                        const stoneMat = sharedMaterials.altarStone;
-                        const coalMat = sharedMaterials.altarCoal;
-                        const emberMat = sharedMaterials.altarEmber;
-                        const coreMat = sharedMaterials.altarCore;
-
-                        const plinth = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.52 * footprintScale, 0.64 * footprintScale, 0.28 * heightScale, 10),
-                            stoneMat
-                        );
-                        plinth.position.y = 0.14 * heightScale;
-                        plinth.castShadow = true;
-                        plinth.receiveShadow = true;
-                        altarGroup.add(plinth);
-
-                        if (ac.variant === 1) {
-                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * footprintScale, 0.42 * footprintScale, 0.2 * heightScale, 10), coalMat);
-                            bowl.position.y = 0.52 * heightScale;
-                            const flame1 = new THREE.Mesh(new THREE.ConeGeometry(0.12 * footprintScale, 0.36 * heightScale, 10), emberMat);
-                            flame1.position.y = 0.82 * heightScale;
-                            const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.08 * footprintScale, 0.24 * heightScale, 10), coreMat);
-                            flame2.position.y = 0.9 * heightScale;
-                            altarGroup.add(bowl, flame1, flame2);
-                        } else if (ac.variant === 2) {
-                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * footprintScale, 0.4 * footprintScale, 0.22 * heightScale, 10), coalMat);
-                            bowl.position.y = 0.5 * heightScale;
-                            const flameL = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
-                            flameL.position.set(-0.12 * footprintScale, 0.82 * heightScale, 0.04 * footprintScale);
-                            flameL.rotation.z = 0.12;
-                            const flameR = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
-                            flameR.position.set(0.12 * footprintScale, 0.8 * heightScale, -0.03 * footprintScale);
-                            flameR.rotation.z = -0.1;
-                            const emberCore = new THREE.Mesh(new THREE.SphereGeometry(0.07 * footprintScale, 10, 10), coreMat);
-                            emberCore.position.y = 0.74 * heightScale;
-                            altarGroup.add(bowl, flameL, flameR, emberCore);
-                        } else if (ac.variant === 3) {
-                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.36 * footprintScale, 0.44 * footprintScale, 0.22 * heightScale, 10), coalMat);
-                            bowl.position.y = 0.52 * heightScale;
-                            const spireBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * footprintScale, 0.12 * footprintScale, 0.28 * heightScale, 8), coreMat);
-                            spireBase.position.y = 0.78 * heightScale;
-                            const spireTop = new THREE.Mesh(new THREE.ConeGeometry(0.1 * footprintScale, 0.34 * heightScale, 8), emberMat);
-                            spireTop.position.y = 1.05 * heightScale;
-                            altarGroup.add(bowl, spireBase, spireTop);
-                        } else {
-                            // Mk IV remix: Mk II top with two ember rings (base + taper point).
-                            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * footprintScale, 0.4 * footprintScale, 0.22 * heightScale, 10), coalMat);
-                            bowl.position.y = 0.5 * heightScale;
-
-                            const flameL = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
-                            flameL.position.set(-0.12 * footprintScale, 0.82 * heightScale, 0.04 * footprintScale);
-                            flameL.rotation.z = 0.12;
-                            const flameR = new THREE.Mesh(new THREE.ConeGeometry(0.085 * footprintScale, 0.3 * heightScale, 8), emberMat);
-                            flameR.position.set(0.12 * footprintScale, 0.8 * heightScale, -0.03 * footprintScale);
-                            flameR.rotation.z = -0.1;
-                            const emberCore = new THREE.Mesh(new THREE.SphereGeometry(0.07 * footprintScale, 10, 10), coreMat);
-                            emberCore.position.y = 0.74 * heightScale;
-
-                            const baseRing = new THREE.Mesh(new THREE.TorusGeometry(0.31 * footprintScale, 0.045 * footprintScale, 10, 22), emberMat);
-                            baseRing.position.y = 0.58 * heightScale;
-                            baseRing.rotation.x = Math.PI / 2;
-                            const midPlinthRing = new THREE.Mesh(new THREE.TorusGeometry(0.46 * footprintScale, 0.03 * footprintScale, 10, 22), emberMat);
-                            midPlinthRing.position.y = 0.28 * heightScale;
-                            midPlinthRing.rotation.x = Math.PI / 2;
-
-                            altarGroup.add(bowl, flameL, flameR, emberCore, baseRing, midPlinthRing);
-                        }
-
-                                                altarGroup.children.forEach((child) => {
-                            child.userData = { type: 'ALTAR_CANDIDATE', gridX: ac.x, gridY: ac.y, z: z, name: ac.label, variant: ac.variant };
-                            environmentMeshes.push(child);
-                        });
-
-                        // Keep visuals unchanged; click/hover footprint is 3x3.
-                        const altarHitbox = new THREE.Mesh(
-                            new THREE.BoxGeometry(3, 2.6, 3),
-                            sharedMaterials.hiddenHitbox
-                        );
-                        altarHitbox.position.set(0, 1.3, 0);
-                        altarHitbox.userData = { type: 'ALTAR_CANDIDATE', gridX: ac.x, gridY: ac.y, z: z, name: ac.label, variant: ac.variant };
-                        altarGroup.add(altarHitbox);
-                        environmentMeshes.push(altarHitbox);
-
-                        planeGroup.add(altarGroup);
-                    }
-                });
-                doorsToRender.forEach(d => {
-                    if (d.x >= startX && d.x < endX && d.y >= startY && d.y < endY && d.z === z) {
-                        let doorGroup = null;
-                        if (d.isWoodenGate) {
-                            doorGroup = createWoodenGateVisualGroup(d, Z_OFFSET, heightMap[z][d.y][d.x]);
-                        } else {
-                            doorGroup = new THREE.Group();
-                            // Place hinge exactly on the requested edge of the tile
-                            doorGroup.position.set(d.x + (d.hingeOffsetX || 0), Z_OFFSET + heightMap[z][d.y][d.x], d.y + (d.hingeOffsetY || 0));
-                            doorGroup.rotation.y = d.currentRotation;
-
-                            // Dynamically adjust mesh dimensions depending on orientation
-                            const dw = d.isEW ? d.width : d.thickness;
-                            const dd = d.isEW ? d.thickness : d.width;
-                            const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(dw, 2.0, dd), sharedMaterials.boothWood);
-
-                            // Offset the mesh from the hinge so it perfectly centers back over the tile
-                            const meshOffsetX = d.hingeOffsetX ? -d.hingeOffsetX : 0;
-                            const meshOffsetZ = d.hingeOffsetY ? -d.hingeOffsetY : 0;
-                            doorMesh.position.set(meshOffsetX, 1.0, meshOffsetZ);
-                            doorMesh.castShadow = true; doorMesh.receiveShadow = true;
-
-                            // Slightly thicker hitbox for easier clicking
-                            const hw = d.isEW ? d.width : 0.6;
-                            const hd = d.isEW ? 0.6 : d.width;
-                            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, 2, hd), sharedMaterials.hiddenHitbox);
-                            hitbox.position.set(meshOffsetX, 1.0, meshOffsetZ);
-
-                            doorGroup.add(doorMesh, hitbox);
-                        }
-                        d.meshGroup = doorGroup; // Keep track for animation updates
-                        
-                        doorGroup.children.forEach(c => {
-                            c.userData = { type: 'DOOR', gridX: d.x, gridY: d.y, z: z, doorObj: d };
-                            environmentMeshes.push(c);
-                        });
-                        planeGroup.add(doorGroup);
-                        
-                        // Explicitly build floor beneath Door so it's walkable when open
-                        const floorHeight = heightMap[z][d.y][d.x];
-                        if (floorHeight > 0) {
-                            const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), sharedMaterials.floor7);
-                            floorMesh.position.set(d.x, Z_OFFSET + (floorHeight / 2), d.y);
-                            floorMesh.receiveShadow = true; floorMesh.castShadow = true; 
-                            floorMesh.userData = { type: 'GROUND', gridX: d.x, gridY: d.y, z: z };
-                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                        }
-                    }
-                });
+                appendChunkLandmarkVisuals(planeGroup, z, Z_OFFSET, startX, startY, endX, endY);
 
                 const activeRoofs = Array.isArray(sharedMaterials.activeRoofLandmarks) ? sharedMaterials.activeRoofLandmarks : [];
                 activeRoofs.forEach((roof) => {
