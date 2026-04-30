@@ -12,6 +12,7 @@ import qaToolsRuntimeScript from "../../js/qa-tools-runtime.js?raw";
 import tileRuntimeScript from "../../js/world/tile-runtime.js?raw";
 import worldProceduralRuntimeScript from "../../js/world/procedural-runtime.js?raw";
 import worldRenderRuntimeScript from "../../js/world/render-runtime.js?raw";
+import worldWaterRuntimeScript from "../../js/world/water-runtime.js?raw";
 import worldChunkTerrainRuntimeScript from "../../js/world/chunk-terrain-runtime.js?raw";
 import worldGroundItemRenderRuntimeScript from "../../js/world/ground-item-render-runtime.js?raw";
 import worldStructureRenderRuntimeScript from "../../js/world/structure-render-runtime.js?raw";
@@ -71,6 +72,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-tile-runtime", filename: "src/js/world/tile-runtime.js", code: tileRuntimeScript },
   { id: "world-procedural-runtime", filename: "src/js/world/procedural-runtime.js", code: worldProceduralRuntimeScript },
   { id: "world-render-runtime", filename: "src/js/world/render-runtime.js", code: worldRenderRuntimeScript },
+  { id: "world-water-runtime", filename: "src/js/world/water-runtime.js", code: worldWaterRuntimeScript },
   { id: "world-chunk-terrain-runtime", filename: "src/js/world/chunk-terrain-runtime.js", code: worldChunkTerrainRuntimeScript },
   { id: "world-ground-item-render-runtime", filename: "src/js/world/ground-item-render-runtime.js", code: worldGroundItemRenderRuntimeScript },
   { id: "world-structure-render-runtime", filename: "src/js/world/structure-render-runtime.js", code: worldStructureRenderRuntimeScript },
