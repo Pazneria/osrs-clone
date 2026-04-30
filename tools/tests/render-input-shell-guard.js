@@ -16,6 +16,7 @@ function run() {
   const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
+  const humanoidModelSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
   const inputStationInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-station-interaction-runtime.js"), "utf8");
   const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
@@ -68,6 +69,15 @@ function run() {
   );
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
+  assert(humanoidModelSource.includes("window.HumanoidModelRuntime"), "humanoid model runtime should expose a window runtime");
+  assert(humanoidModelSource.includes("window.createHumanoidModel = createHumanoidModel;"), "humanoid model runtime should publish the legacy model builder");
+  assert(!inputSource.includes("function createHumanoidModel("), "input-render.js should not own humanoid model construction");
+  assert(manifestSource.includes('../../js/humanoid-model-runtime.js?raw'), "legacy manifest should load humanoid model runtime");
+  assert(
+    manifestSource.indexOf('id: "humanoid-model-runtime"') < manifestSource.indexOf('id: "world"')
+      && manifestSource.indexOf('id: "humanoid-model-runtime"') < manifestSource.indexOf('id: "combat"'),
+    "legacy script manifest should load humanoid model runtime before world/combat consumers"
+  );
   assert(inputStationInteractionSource.includes("window.InputStationInteractionRuntime"), "input station interaction runtime should expose a window runtime");
   assert(inputStationInteractionSource.includes("function getStationApproachPositions"), "input station interaction runtime should own station approach positions");
   assert(inputStationInteractionSource.includes("function validateStationApproach"), "input station interaction runtime should own station approach validation");

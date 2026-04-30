@@ -9,12 +9,18 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const humanoidModelRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
+  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const npcRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const humanoidModelRuntimeIndex = manifestSource.indexOf('id: "humanoid-model-runtime"');
   const npcRuntimeIndex = manifestSource.indexOf('id: "world-npc-render-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
 
   assert(npcRuntimeIndex !== -1 && worldIndex !== -1 && npcRuntimeIndex < worldIndex, "legacy script manifest should load NPC render runtime before world.js");
+  assert(humanoidModelRuntimeIndex !== -1 && humanoidModelRuntimeIndex < worldIndex, "legacy script manifest should load humanoid model runtime before world.js");
+  assert(humanoidModelRuntimeSource.includes("window.createHumanoidModel = createHumanoidModel;"), "humanoid model runtime should publish the legacy humanoid model builder");
+  assert(!inputSource.includes("function createHumanoidModel("), "input-render.js should not own humanoid model construction");
   assert(worldSource.includes("WorldNpcRenderRuntime"), "world.js should delegate NPC render and hitbox construction");
   assert(npcRuntimeSource.includes("window.WorldNpcRenderRuntime"), "NPC render runtime should expose a window runtime");
   assert(npcRuntimeSource.includes("function appendChunkNpcVisuals(options = {})"), "NPC render runtime should own chunk NPC visual attachment");

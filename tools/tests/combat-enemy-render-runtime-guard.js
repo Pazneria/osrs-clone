@@ -26,13 +26,19 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "combat-enemy-render-runtime.js");
   const runtimeSource = fs.readFileSync(runtimePath, "utf8");
+  const humanoidModelRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
+  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const humanoidModelRuntimeIndex = manifestSource.indexOf('id: "humanoid-model-runtime"');
   const renderIndex = manifestSource.indexOf('id: "combat-enemy-render-runtime"');
   const overlayIndex = manifestSource.indexOf('id: "combat-enemy-overlay-runtime"');
   const combatIndex = manifestSource.indexOf('id: "combat"');
 
   assert(renderIndex !== -1, "legacy manifest should include combat enemy render runtime");
+  assert(humanoidModelRuntimeIndex !== -1 && humanoidModelRuntimeIndex < combatIndex, "legacy manifest should load humanoid model runtime before combat.js");
+  assert(humanoidModelRuntimeSource.includes("window.createHumanoidModel = createHumanoidModel;"), "humanoid model runtime should publish the legacy humanoid model builder");
+  assert(!inputSource.includes("function createHumanoidModel("), "input-render.js should not own humanoid model construction");
   assert(combatIndex !== -1 && renderIndex < combatIndex, "legacy manifest should load combat enemy render runtime before combat.js");
   assert(overlayIndex !== -1 && renderIndex < overlayIndex, "combat enemy render runtime should load before overlay/runtime combat consumers");
   assert(runtimeSource.includes("window.CombatEnemyRenderRuntime"), "combat enemy render runtime should expose a window runtime");
