@@ -22,7 +22,6 @@
         const PLAYER_PROFILE_DEFAULT_NAME = 'Adventurer';
         const PLAYER_NAME_MIN_LENGTH = 2;
         const PLAYER_NAME_MAX_LENGTH = 12;
-        const PLAYER_CREATION_COLOR_LABELS = ['Hair', 'Torso', 'Legs', 'Feet', 'Skin'];
         const TUTORIAL_WORLD_ID = 'tutorial_island';
         const MAIN_OVERWORLD_WORLD_ID = 'main_overworld';
         const TUTORIAL_EXIT_STEP = 7;
@@ -62,6 +61,7 @@
         const gameSessionRuntime = window.GameSessionRuntime || null;
         const combatRuntime = window.CombatRuntime || null;
         const coreChatRuntime = window.CoreChatRuntime || null;
+        const corePlayerEntryRuntime = window.CorePlayerEntryRuntime || null;
         const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
             ? gameSessionRuntime.createGameSession({
                 currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
@@ -1540,6 +1540,9 @@
         }
 
         function sanitizePlayerName(value) {
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.sanitizePlayerName === 'function') {
+                return corePlayerEntryRuntime.sanitizePlayerName(value, { maxLength: PLAYER_NAME_MAX_LENGTH });
+            }
             if (typeof value !== 'string') return '';
             const cleaned = value
                 .replace(/[^A-Za-z0-9 _-]/g, '')
@@ -2074,12 +2077,10 @@
         }
 
         function setPlayerEntryFlowOpen(isOpen) {
-            const overlay = document.getElementById('player-entry-overlay');
-            if (!overlay) return;
-
-            playerEntryFlowState.isOpen = !!isOpen;
-            overlay.classList.toggle('hidden', !isOpen);
-            document.body.classList.toggle('player-entry-open', !!isOpen);
+            const didSet = corePlayerEntryRuntime && typeof corePlayerEntryRuntime.setPlayerEntryFlowOpen === 'function'
+                ? corePlayerEntryRuntime.setPlayerEntryFlowOpen(Object.assign(buildPlayerEntryRuntimeOptions(), { isOpen }))
+                : false;
+            if (!didSet) return;
 
             if (!isOpen) return;
 
@@ -2099,66 +2100,23 @@
         }
 
         function validatePlayerEntryName() {
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.validatePlayerEntryName === 'function') {
+                return corePlayerEntryRuntime.validatePlayerEntryName({
+                    name: playerProfileState.name,
+                    minLength: PLAYER_NAME_MIN_LENGTH,
+                    maxLength: PLAYER_NAME_MAX_LENGTH
+                });
+            }
             const value = sanitizePlayerName(playerProfileState.name);
-            if (!value) {
-                return {
-                    ok: false,
-                    value: '',
-                    message: `Choose a name with ${PLAYER_NAME_MIN_LENGTH}-${PLAYER_NAME_MAX_LENGTH} letters or numbers.`
-                };
-            }
-            if (value.length < PLAYER_NAME_MIN_LENGTH) {
-                return {
-                    ok: false,
-                    value,
-                    message: `Name must be at least ${PLAYER_NAME_MIN_LENGTH} characters long.`
-                };
-            }
+            if (!value) return { ok: false, value: '', message: `Choose a name with ${PLAYER_NAME_MIN_LENGTH}-${PLAYER_NAME_MAX_LENGTH} letters or numbers.` };
+            if (value.length < PLAYER_NAME_MIN_LENGTH) return { ok: false, value, message: `Name must be at least ${PLAYER_NAME_MIN_LENGTH} characters long.` };
             return { ok: true, value, message: '' };
         }
 
-        function unpackPlayerEntryHsl(packed) {
-            const safePacked = Number.isFinite(packed) ? Math.floor(packed) : 0;
-            return {
-                h: (safePacked >> 10) & 63,
-                s: (safePacked >> 7) & 7,
-                l: safePacked & 127
-            };
-        }
-
-        function playerEntryHueToRgb(p, q, t) {
-            let wrapped = t;
-            if (wrapped < 0) wrapped += 1;
-            if (wrapped > 1) wrapped -= 1;
-            if (wrapped < 1 / 6) return p + (q - p) * 6 * wrapped;
-            if (wrapped < 1 / 2) return q;
-            if (wrapped < 2 / 3) return p + (q - p) * (2 / 3 - wrapped) * 6;
-            return p;
-        }
-
-        function packedPlayerEntryColorToCss(packed) {
-            const hsl = unpackPlayerEntryHsl(packed);
-            const h = hsl.h / 63;
-            const s = hsl.s / 7;
-            const l = hsl.l / 127;
-            let r;
-            let g;
-            let b;
-            if (s === 0) {
-                r = l;
-                g = l;
-                b = l;
-            } else {
-                const q = l < 0.5 ? l * (1 + s) : l + s - (l * s);
-                const p = (2 * l) - q;
-                r = playerEntryHueToRgb(p, q, h + (1 / 3));
-                g = playerEntryHueToRgb(p, q, h);
-                b = playerEntryHueToRgb(p, q, h - (1 / 3));
-            }
-            return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
-        }
-
         function formatPlayerEntryTimestamp(value) {
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.formatPlayerEntryTimestamp === 'function') {
+                return corePlayerEntryRuntime.formatPlayerEntryTimestamp(value);
+            }
             if (!Number.isFinite(value)) return 'unknown';
             try {
                 return new Date(value).toLocaleString();
@@ -2167,168 +2125,37 @@
             }
         }
 
+        function buildPlayerEntryRuntimeOptions() {
+            const uiDomainRuntime = window.UiDomainRuntime || null;
+            return {
+                documentRef: document,
+                windowRef: window,
+                playerProfileState,
+                playerEntryFlowState,
+                playerAppearanceState: window.playerAppearanceState || null,
+                playerAppearanceCatalog: window.PlayerAppearanceCatalog || {},
+                defaultName: PLAYER_PROFILE_DEFAULT_NAME,
+                nameMinLength: PLAYER_NAME_MIN_LENGTH,
+                nameMaxLength: PLAYER_NAME_MAX_LENGTH,
+                buildPlayerProfileSummaryViewModel: uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
+                    ? uiDomainRuntime.buildPlayerProfileSummaryViewModel
+                    : null,
+                formatTimestamp: formatPlayerEntryTimestamp,
+                refreshPlayerAppearancePreview,
+                completePlayerEntryFlow
+            };
+        }
+
         function refreshPlayerAppearancePreview() {
             if (typeof window.rebuildPlayerRigsFromAppearance === 'function') {
                 window.rebuildPlayerRigsFromAppearance();
             }
         }
 
-        function updatePlayerEntryGenderButtons() {
-            const currentGender = window.playerAppearanceState && window.playerAppearanceState.gender === 1 ? 1 : 0;
-            [0, 1].forEach((gender) => {
-                const button = document.getElementById(`player-entry-gender-${gender}`);
-                if (!button) return;
-                const active = currentGender === gender;
-                button.classList.toggle('active', active);
-                button.setAttribute('aria-pressed', active ? 'true' : 'false');
-            });
-        }
-
-        function renderPlayerEntryColorRows() {
-            const container = document.getElementById('player-entry-color-rows');
-            if (!container) return;
-            const catalog = window.PlayerAppearanceCatalog || {};
-            const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
-            if (!window.playerAppearanceState || !Array.isArray(window.playerAppearanceState.colors)) return;
-
-            container.innerHTML = '';
-
-            for (let paletteIndex = 0; paletteIndex < PLAYER_CREATION_COLOR_LABELS.length; paletteIndex++) {
-                const row = document.createElement('div');
-                row.className = 'player-entry-color-row';
-
-                const label = document.createElement('div');
-                label.className = 'player-entry-color-row-label';
-                label.textContent = PLAYER_CREATION_COLOR_LABELS[paletteIndex];
-                row.appendChild(label);
-
-                const swatches = document.createElement('div');
-                swatches.className = 'player-entry-color-row-swatches';
-
-                const palette = Array.isArray(palettes[paletteIndex]) ? palettes[paletteIndex] : [];
-                const activeIndex = Number.isFinite(window.playerAppearanceState.colors[paletteIndex])
-                    ? Math.floor(window.playerAppearanceState.colors[paletteIndex])
-                    : 0;
-
-                for (let swatchIndex = 0; swatchIndex < palette.length; swatchIndex++) {
-                    const swatchButton = document.createElement('button');
-                    swatchButton.type = 'button';
-                    swatchButton.className = 'player-entry-swatch';
-                    if (swatchIndex === activeIndex) swatchButton.classList.add('active');
-                    swatchButton.style.backgroundColor = packedPlayerEntryColorToCss(palette[swatchIndex]);
-                    swatchButton.setAttribute('aria-label', `${PLAYER_CREATION_COLOR_LABELS[paletteIndex]} option ${swatchIndex + 1}`);
-                    swatchButton.onclick = () => {
-                        window.playerAppearanceState.colors[paletteIndex] = swatchIndex;
-                        renderPlayerEntryColorRows();
-                        renderPlayerEntrySummary();
-                        refreshPlayerAppearancePreview();
-                    };
-                    swatches.appendChild(swatchButton);
-                }
-
-                row.appendChild(swatches);
-                container.appendChild(row);
-            }
-        }
-
-        function renderPlayerEntrySummary() {
-            const summary = document.getElementById('player-entry-summary');
-            if (!summary) return;
-            const uiDomainRuntime = window.UiDomainRuntime || null;
-            const profileSummaryViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
-                ? uiDomainRuntime.buildPlayerProfileSummaryViewModel({
-                    profile: playerProfileState,
-                    playerEntryFlow: playerEntryFlowState,
-                    playerAppearance: window.playerAppearanceState,
-                    formatTimestamp: formatPlayerEntryTimestamp
-                })
-                : null;
-            const safeName = profileSummaryViewModel ? profileSummaryViewModel.name : (sanitizePlayerName(playerProfileState.name) || 'Unnamed Adventurer');
-            const catalog = window.PlayerAppearanceCatalog || {};
-            const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
-            const colors = window.playerAppearanceState && Array.isArray(window.playerAppearanceState.colors)
-                ? window.playerAppearanceState.colors
-                : [0, 0, 0, 0, 0];
-
-            summary.innerHTML = '';
-
-            const heading = document.createElement('div');
-            heading.className = 'player-entry-summary-name';
-            heading.textContent = safeName;
-            summary.appendChild(heading);
-
-            const bodyType = document.createElement('div');
-            bodyType.className = 'player-entry-summary-meta';
-            bodyType.textContent = `Body type: ${profileSummaryViewModel ? profileSummaryViewModel.bodyTypeLabel : (window.playerAppearanceState && window.playerAppearanceState.gender === 1 ? 'Female' : 'Male')}`;
-            summary.appendChild(bodyType);
-
-            const meta = document.createElement('div');
-            meta.className = 'player-entry-summary-meta';
-            meta.textContent = profileSummaryViewModel ? profileSummaryViewModel.statusText : 'Fresh character profile';
-            summary.appendChild(meta);
-
-            const swatchList = document.createElement('div');
-            swatchList.className = 'player-entry-summary-swatches';
-            for (let paletteIndex = 0; paletteIndex < PLAYER_CREATION_COLOR_LABELS.length; paletteIndex++) {
-                const palette = Array.isArray(palettes[paletteIndex]) ? palettes[paletteIndex] : [];
-                const activeIndex = Number.isFinite(colors[paletteIndex]) ? Math.floor(colors[paletteIndex]) : 0;
-                const packed = palette[activeIndex] !== undefined ? palette[activeIndex] : 0;
-
-                const chip = document.createElement('div');
-                chip.className = 'player-entry-summary-chip';
-
-                const colorDot = document.createElement('span');
-                colorDot.className = 'player-entry-summary-chip-color';
-                colorDot.style.backgroundColor = packedPlayerEntryColorToCss(packed);
-                chip.appendChild(colorDot);
-
-                const chipLabel = document.createElement('span');
-                chipLabel.textContent = PLAYER_CREATION_COLOR_LABELS[paletteIndex];
-                chip.appendChild(chipLabel);
-
-                swatchList.appendChild(chip);
-            }
-            summary.appendChild(swatchList);
-        }
-
         function renderPlayerEntryFlow() {
-            const title = document.getElementById('player-entry-title');
-            const subtitle = document.getElementById('player-entry-subtitle');
-            const nameInput = document.getElementById('player-entry-name');
-            const error = document.getElementById('player-entry-name-error');
-            const note = document.getElementById('player-entry-secondary-note');
-            const primary = document.getElementById('player-entry-primary');
-            const nameValidation = validatePlayerEntryName();
-            const uiDomainRuntime = window.UiDomainRuntime || null;
-            const profileSummaryViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
-                ? uiDomainRuntime.buildPlayerProfileSummaryViewModel({
-                    profile: playerProfileState,
-                    playerEntryFlow: playerEntryFlowState,
-                    playerAppearance: window.playerAppearanceState,
-                    formatTimestamp: formatPlayerEntryTimestamp
-                })
-                : null;
-            const isContinueFlow = profileSummaryViewModel ? profileSummaryViewModel.isContinueFlow : (!!playerEntryFlowState.hasLoadedSave && !!playerProfileState.creationCompleted);
-
-            if (title) title.textContent = profileSummaryViewModel ? profileSummaryViewModel.titleText : (isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer');
-            if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before you arrive on Tutorial Island.';
-
-            if (nameInput) {
-                if (document.activeElement !== nameInput && nameInput.value !== playerProfileState.name) {
-                    nameInput.value = playerProfileState.name;
-                }
-                nameInput.placeholder = PLAYER_PROFILE_DEFAULT_NAME;
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.renderPlayerEntryFlow === 'function') {
+                corePlayerEntryRuntime.renderPlayerEntryFlow(buildPlayerEntryRuntimeOptions());
             }
-            if (error) error.textContent = nameValidation.ok ? '' : nameValidation.message;
-            if (primary) {
-                primary.textContent = profileSummaryViewModel ? profileSummaryViewModel.primaryActionText : (isContinueFlow ? 'Continue Adventure' : 'Start Adventure');
-                primary.disabled = !nameValidation.ok;
-            }
-            if (note) note.textContent = profileSummaryViewModel ? profileSummaryViewModel.noteText : 'Progress will begin autosaving locally in this browser once you arrive.';
-
-            updatePlayerEntryGenderButtons();
-            renderPlayerEntryColorRows();
-            renderPlayerEntrySummary();
         }
 
         function completePlayerEntryFlow() {
@@ -2366,8 +2193,10 @@
         }
 
         function initPlayerEntryFlow(loadProgressResult) {
-            const overlay = document.getElementById('player-entry-overlay');
-            if (!overlay) {
+            const isMounted = corePlayerEntryRuntime && typeof corePlayerEntryRuntime.isPlayerEntryMounted === 'function'
+                ? corePlayerEntryRuntime.isPlayerEntryMounted({ documentRef: document })
+                : !!document.getElementById('player-entry-overlay');
+            if (!isMounted) {
                 ensureProgressPersistenceLifecycle();
                 return;
             }
@@ -2386,46 +2215,9 @@
             }
 
             if (!playerEntryFlowState.uiBound) {
-                const nameInput = document.getElementById('player-entry-name');
-                const primaryButton = document.getElementById('player-entry-primary');
-                const maleButton = document.getElementById('player-entry-gender-0');
-                const femaleButton = document.getElementById('player-entry-gender-1');
-
-                if (nameInput) {
-                    nameInput.addEventListener('input', () => {
-                        const sanitized = sanitizePlayerName(nameInput.value);
-                        if (nameInput.value !== sanitized) nameInput.value = sanitized;
-                        playerProfileState.name = sanitized;
-                        renderPlayerEntryFlow();
-                    });
-                    nameInput.addEventListener('keydown', (event) => {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            completePlayerEntryFlow();
-                        }
-                    });
+                if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.bindPlayerEntryFlowControls === 'function') {
+                    corePlayerEntryRuntime.bindPlayerEntryFlowControls(buildPlayerEntryRuntimeOptions());
                 }
-
-                if (maleButton) {
-                    maleButton.addEventListener('click', () => {
-                        if (!window.playerAppearanceState) return;
-                        window.playerAppearanceState.gender = 0;
-                        renderPlayerEntryFlow();
-                        refreshPlayerAppearancePreview();
-                    });
-                }
-
-                if (femaleButton) {
-                    femaleButton.addEventListener('click', () => {
-                        if (!window.playerAppearanceState) return;
-                        window.playerAppearanceState.gender = 1;
-                        renderPlayerEntryFlow();
-                        refreshPlayerAppearancePreview();
-                    });
-                }
-
-                if (primaryButton) primaryButton.addEventListener('click', completePlayerEntryFlow);
-
                 playerEntryFlowState.uiBound = true;
             }
 
@@ -2449,10 +2241,8 @@
 
             setPlayerEntryFlowOpen(true);
 
-            const nameInput = document.getElementById('player-entry-name');
-            if (nameInput) {
-                nameInput.focus();
-                nameInput.select();
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.focusPlayerEntryName === 'function') {
+                corePlayerEntryRuntime.focusPlayerEntryName({ documentRef: document });
             }
         }
 
