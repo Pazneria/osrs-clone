@@ -50,6 +50,7 @@ import inventoryItemRuntimeScript from "../../js/inventory-item-runtime.js?raw";
 import equipmentItemRuntimeScript from "../../js/equipment-item-runtime.js?raw";
 import foodItemRuntimeScript from "../../js/food-item-runtime.js?raw";
 import inventoryActionRuntimeScript from "../../js/inventory-action-runtime.js?raw";
+import coreChatRuntimeScript from "../../js/core-chat-runtime.js?raw";
 import coreScript from "../../js/core.js?raw";
 import skillSpecsScript from "../../js/skills/specs.js?raw";
 import skillSpecRegistryScript from "../../js/skills/spec-registry.js?raw";
@@ -142,6 +143,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "equipment-item-runtime", filename: "src/js/equipment-item-runtime.js", code: equipmentItemRuntimeScript },
   { id: "food-item-runtime", filename: "src/js/food-item-runtime.js", code: foodItemRuntimeScript },
   { id: "inventory-action-runtime", filename: "src/js/inventory-action-runtime.js", code: inventoryActionRuntimeScript },
+  { id: "core-chat-runtime", filename: "src/js/core-chat-runtime.js", code: coreChatRuntimeScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },
   { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },
   { id: "skills-spec-registry", filename: "src/js/skills/spec-registry.js", code: skillSpecRegistryScript },

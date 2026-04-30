@@ -61,6 +61,7 @@
         const DEFAULT_WORLD_SPAWN = resolveDefaultWorldSpawn();
         const gameSessionRuntime = window.GameSessionRuntime || null;
         const combatRuntime = window.CombatRuntime || null;
+        const coreChatRuntime = window.CoreChatRuntime || null;
         const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
             ? gameSessionRuntime.createGameSession({
                 currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
@@ -2007,127 +2008,58 @@
             };
         }
         function addChatMessage(message, type = 'game') {
-            const logEl = document.getElementById('chat-log');
-            if (!logEl) return;
-
-            const line = document.createElement('div');
-            line.className = `chat-line ${type}`;
-
-            const prefix = document.createElement('span');
-            prefix.className = 'chat-prefix';
-            prefix.innerText = type === 'info' ? '[Info]' : (type === 'warn' ? '[Warn]' : '[Game]');
-
-            const body = document.createElement('span');
-            body.innerText = message;
-
-            line.appendChild(prefix);
-            line.appendChild(body);
-            logEl.appendChild(line);
-
-            while (logEl.children.length > 120) {
-                logEl.removeChild(logEl.firstChild);
+            if (coreChatRuntime && typeof coreChatRuntime.addChatMessage === 'function') {
+                coreChatRuntime.addChatMessage(message, type, { documentRef: document });
             }
-
-            logEl.scrollTop = logEl.scrollHeight;
         }
 
         function getChatLogCopyText() {
-            const logEl = document.getElementById('chat-log');
-            if (!logEl) return '';
-            const lines = Array.from(logEl.children)
-                .map((node) => (node && node.innerText ? node.innerText.trim() : ''))
-                .filter(Boolean);
-            return lines.join('\n');
+            if (coreChatRuntime && typeof coreChatRuntime.getChatLogCopyText === 'function') {
+                return coreChatRuntime.getChatLogCopyText({ documentRef: document });
+            }
+            return '';
         }
 
         async function copyChatLogTextToClipboard() {
-            const chatText = getChatLogCopyText();
-            if (!chatText) {
-                addChatMessage('Chat log is empty.', 'warn');
-                return false;
+            if (coreChatRuntime && typeof coreChatRuntime.copyChatLogTextToClipboard === 'function') {
+                return coreChatRuntime.copyChatLogTextToClipboard({
+                    documentRef: document,
+                    navigatorRef: navigator,
+                    addChatMessage
+                });
             }
-
-            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                try {
-                    await navigator.clipboard.writeText(chatText);
-                    addChatMessage(`Copied ${chatText.split('\n').length} chat line(s).`, 'info');
-                    return true;
-                } catch (error) {
-                    // Fall through to legacy copy path.
-                }
-            }
-
-            const fallbackInput = document.createElement('textarea');
-            fallbackInput.value = chatText;
-            fallbackInput.setAttribute('readonly', 'readonly');
-            fallbackInput.style.position = 'fixed';
-            fallbackInput.style.left = '-9999px';
-            fallbackInput.style.opacity = '0';
-            document.body.appendChild(fallbackInput);
-            fallbackInput.focus();
-            fallbackInput.select();
-
-            let copied = false;
-            try {
-                copied = document.execCommand('copy');
-            } catch (error) {
-                copied = false;
-            }
-
-            document.body.removeChild(fallbackInput);
-            if (copied) {
-                addChatMessage(`Copied ${chatText.split('\n').length} chat line(s).`, 'info');
-                return true;
-            }
-
-            addChatMessage('Copy failed. Select chat text and press Ctrl+C.', 'warn');
             return false;
         }
 
         function setChatBoxExpanded(expanded) {
-            const chatBox = document.getElementById('chat-box');
-            const expandBtn = document.getElementById('chat-expand-toggle');
-            if (!chatBox || !expandBtn) return;
-            const shouldExpand = !!expanded;
-            chatBox.classList.toggle('chat-expanded', shouldExpand);
-            expandBtn.innerText = shouldExpand ? 'Collapse' : 'Expand';
-            expandBtn.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
-            try {
-                if (window.localStorage) window.localStorage.setItem('osrsClone.chatExpanded', shouldExpand ? '1' : '0');
-            } catch (error) {
-                // Ignore persistence failures in private mode or restricted contexts.
+            if (coreChatRuntime && typeof coreChatRuntime.setChatBoxExpanded === 'function') {
+                coreChatRuntime.setChatBoxExpanded(expanded, {
+                    documentRef: document,
+                    windowRef: window
+                });
             }
         }
 
         function initChatControls() {
-            const chatBox = document.getElementById('chat-box');
-            if (!chatBox) return;
-            const copyBtn = document.getElementById('chat-copy-btn');
-            const expandBtn = document.getElementById('chat-expand-toggle');
-
-            let savedExpanded = false;
-            try {
-                savedExpanded = !!(window.localStorage && window.localStorage.getItem('osrsClone.chatExpanded') === '1');
-            } catch (error) {
-                savedExpanded = false;
-            }
-            setChatBoxExpanded(savedExpanded);
-
-            if (copyBtn) {
-                copyBtn.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    void copyChatLogTextToClipboard();
-                });
-            }
-            if (expandBtn) {
-                expandBtn.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    setChatBoxExpanded(!chatBox.classList.contains('chat-expanded'));
+            if (coreChatRuntime && typeof coreChatRuntime.initChatControls === 'function') {
+                coreChatRuntime.initChatControls({
+                    documentRef: document,
+                    windowRef: window,
+                    addChatMessage
                 });
             }
         }
 
         function showPlayerOverheadText(text, durationMs = 2800) {
+            if (coreChatRuntime && typeof coreChatRuntime.showPlayerOverheadText === 'function') {
+                coreChatRuntime.showPlayerOverheadText({
+                    playerOverheadText,
+                    text,
+                    durationMs,
+                    nowMs: Date.now()
+                });
+                return;
+            }
             playerOverheadText.text = text;
             playerOverheadText.expiresAt = Date.now() + durationMs;
         }
