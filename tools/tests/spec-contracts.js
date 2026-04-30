@@ -1724,6 +1724,7 @@ function run() {
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
+  const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
   const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
@@ -1811,6 +1812,12 @@ function run() {
   assert(worldScript.includes("function tickFireLifecycle()"), "fire lifecycle tick helper missing");
   assert(worldScript.includes("function tryStepBeforeFiremaking()"), "firemaking should expose the pre-ignition step helper");
   assert(worldScript.includes("function syncFiremakingLogPreview()"), "firemaking should render a temporary log preview on the origin tile");
+  assert(worldScript.includes("WorldFireRenderRuntime"), "world.js should delegate fire visuals through the render runtime");
+  assert(!worldScript.includes("new THREE.ConeGeometry(0.16, 0.45, 8)"), "world.js should not own fire flame mesh construction");
+  assert(!worldScript.includes("fire.flame.scale.set(1.0 + Math.sin(t) * 0.12"), "world.js should not own fire flame animation");
+  assert(fireRenderRuntimeSource.includes("function createFireVisual(options)"), "fire render runtime should own fire visual construction");
+  assert(fireRenderRuntimeSource.includes("function createFiremakingLogPreview(options)"), "fire render runtime should own firemaking preview construction");
+  assert(fireRenderRuntimeSource.includes("function updateFireFlameVisual(fire, frameNow)"), "fire render runtime should own fire flame animation");
   assert(worldScript.includes("window.tickFireLifecycle = tickFireLifecycle;"), "fire lifecycle tick export missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "borin_ironvein"), "borin world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.merchantId === "thrain_deepforge"), "thrain world placement missing");

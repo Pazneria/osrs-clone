@@ -55,6 +55,7 @@ function run() {
   const structureRuntimeIndex = legacyManifestSource.indexOf('id: "world-structure-render-runtime"');
   const treeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-render-runtime"');
   const rockRuntimeIndex = legacyManifestSource.indexOf('id: "world-rock-render-runtime"');
+  const fireRuntimeIndex = legacyManifestSource.indexOf('id: "world-fire-render-runtime"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const mapHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-map-hud-runtime"');
@@ -65,6 +66,7 @@ function run() {
   assert(structureRuntimeIndex !== -1 && worldIndex !== -1 && structureRuntimeIndex < worldIndex, "legacy script manifest should load world structure render runtime before world.js");
   assert(treeRuntimeIndex !== -1 && worldIndex !== -1 && treeRuntimeIndex < worldIndex, "legacy script manifest should load world tree render runtime before world.js");
   assert(rockRuntimeIndex !== -1 && worldIndex !== -1 && rockRuntimeIndex < worldIndex, "legacy script manifest should load world rock render runtime before world.js");
+  assert(fireRuntimeIndex !== -1 && worldIndex !== -1 && fireRuntimeIndex < worldIndex, "legacy script manifest should load world fire render runtime before world.js");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(mapHudRuntimeIndex !== -1 && worldIndex !== -1 && mapHudRuntimeIndex < worldIndex, "legacy script manifest should load world map HUD runtime before world.js");
@@ -88,6 +90,7 @@ function run() {
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-scene reload lifecycle");
   assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk scene state");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD state");
+  assert(worldSource.includes("WorldFireRenderRuntime"), "world.js should delegate fire visuals through the fire render runtime");
   assert(worldSource.includes("waterRenderPayload"), "world.js should consume the typed water render payload");
   assert(worldSource.includes("firemakingTrainingRouteDefs"), "world.js should read firemaking training routes from the legacy-ready world payload");
   assert(!worldSource.includes("getWorldLegacyConfig"), "world.js should not shape bootstrap payloads inline");

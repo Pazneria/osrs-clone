@@ -7,6 +7,7 @@
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
         const worldTreeRenderRuntime = window.WorldTreeRenderRuntime || null;
         const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
+        const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const applyColorTextureSettings = worldProceduralRuntime.applyColorTextureSettings;
         const clamp01 = worldProceduralRuntime.clamp01;
         const lerpNumber = worldProceduralRuntime.lerpNumber;
@@ -1487,68 +1488,29 @@
         let activeFiremakingLogPreview = null;
 
         function createFireVisualAt(x, y, z) {
-            const group = new THREE.Group();
-            const terrainHeight = heightMap[z][y][x] + (z * 3.0);
-            group.position.set(x, terrainHeight + 0.05, y);
-
-            const logMat = new THREE.MeshLambertMaterial({ color: 0x4b2e17 });
-            const logGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.55, 8);
-            logGeo.rotateZ(Math.PI / 2);
-            const logA = new THREE.Mesh(logGeo, logMat);
-            logA.position.set(0, 0.03, 0.08);
-            const logB = new THREE.Mesh(logGeo, logMat);
-            logB.position.set(0, 0.03, -0.08);
-
-            const flame = new THREE.Mesh(
-                new THREE.ConeGeometry(0.16, 0.45, 8),
-                new THREE.MeshBasicMaterial({ color: 0xff8a1f, transparent: true, opacity: 0.9 })
-            );
-            flame.position.set(0, 0.35, 0);
-            flame.userData.flame = true;
-            logA.userData = { type: 'FIRE', gridX: x, gridY: y, z };
-            logB.userData = { type: 'FIRE', gridX: x, gridY: y, z };
-            flame.userData = Object.assign({}, flame.userData, { type: 'FIRE', gridX: x, gridY: y, z });
-
-            group.add(logA, logB, flame);
-            return { group, flame, hitMeshes: [logA, logB, flame] };
-        }
-
-        function getItemIconSpritePath(itemData) {
-            return worldGroundItemRenderRuntime.getItemIconSpritePath(itemData);
-        }
-
-        function addGroundItemSprite(group, path, y = 0.2, scale = 0.5) {
-            return worldGroundItemRenderRuntime.addGroundItemSprite({ THREE, group, path, y, scale });
+            return worldFireRenderRuntime.createFireVisual({
+                THREE,
+                x,
+                y,
+                z,
+                terrainHeight: heightMap[z][y][x] + (z * 3.0)
+            });
         }
 
         function createFiremakingLogPreviewAt(x, y, z, itemId) {
-            const group = new THREE.Group();
-            const terrainHeight = heightMap[z][y][x] + (z * 3.0);
-            group.position.set(x, terrainHeight + 0.04, y);
-
             const itemData = ITEM_DB && typeof itemId === 'string' ? ITEM_DB[itemId] : null;
-            const spritePath = getItemIconSpritePath(itemData);
-            const base = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.18, 0.18, 0.06, 12),
-                new THREE.MeshLambertMaterial({ color: 0x3d2a1c })
-            );
-            base.position.set(0, -0.05, 0);
-            group.add(base);
-
-            if (spritePath) {
-                addGroundItemSprite(group, spritePath, 0.2, 0.5);
-            } else {
-                const logMat = new THREE.MeshLambertMaterial({ color: 0x4b2e17 });
-                const logGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.55, 8);
-                logGeo.rotateZ(Math.PI / 2);
-                const logA = new THREE.Mesh(logGeo, logMat);
-                logA.position.set(0, 0.03, 0.08);
-                const logB = new THREE.Mesh(logGeo, logMat);
-                logB.position.set(0, 0.03, -0.08);
-                group.add(logA, logB);
-            }
-
-            return group;
+            return worldFireRenderRuntime.createFiremakingLogPreview({
+                THREE,
+                x,
+                y,
+                z,
+                terrainHeight: heightMap[z][y][x] + (z * 3.0),
+                itemData,
+                getItemIconSpritePath: worldGroundItemRenderRuntime.getItemIconSpritePath,
+                addGroundItemSprite(group, path, yOffset, scale) {
+                    return worldGroundItemRenderRuntime.addGroundItemSprite({ THREE, group, path, y: yOffset, scale });
+                }
+            });
         }
 
         function attachFireVisualGroup(group, x, y, z, preferChunkParent = true) {
@@ -1708,10 +1670,7 @@
             syncFiremakingLogPreview();
             for (let i = 0; i < activeFires.length; i++) {
                 const fire = activeFires[i];
-                if (!fire || !fire.flame) continue;
-                const t = (frameNow * 0.01) + fire.phase;
-                fire.flame.scale.set(1.0 + Math.sin(t) * 0.12, 1.0 + Math.sin(t * 1.8) * 0.18, 1.0 + Math.cos(t) * 0.12);
-                fire.flame.material.opacity = 0.75 + (Math.sin(t * 1.3) * 0.12);
+                worldFireRenderRuntime.updateFireFlameVisual(fire, frameNow);
             }
         }
 

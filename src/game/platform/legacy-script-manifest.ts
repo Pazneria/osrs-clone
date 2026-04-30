@@ -16,6 +16,7 @@ import worldGroundItemRenderRuntimeScript from "../../js/world/ground-item-rende
 import worldStructureRenderRuntimeScript from "../../js/world/structure-render-runtime.js?raw";
 import worldTreeRenderRuntimeScript from "../../js/world/tree-render-runtime.js?raw";
 import worldRockRenderRuntimeScript from "../../js/world/rock-render-runtime.js?raw";
+import worldFireRenderRuntimeScript from "../../js/world/fire-render-runtime.js?raw";
 import worldSceneStateScript from "../../js/world/scene-state.js?raw";
 import worldSceneLifecycleScript from "../../js/world/scene-lifecycle.js?raw";
 import worldChunkSceneRuntimeScript from "../../js/world/chunk-scene-runtime.js?raw";
@@ -71,6 +72,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-structure-render-runtime", filename: "src/js/world/structure-render-runtime.js", code: worldStructureRenderRuntimeScript },
   { id: "world-tree-render-runtime", filename: "src/js/world/tree-render-runtime.js", code: worldTreeRenderRuntimeScript },
   { id: "world-rock-render-runtime", filename: "src/js/world/rock-render-runtime.js", code: worldRockRenderRuntimeScript },
+  { id: "world-fire-render-runtime", filename: "src/js/world/fire-render-runtime.js", code: worldFireRenderRuntimeScript },
   { id: "world-scene-state", filename: "src/js/world/scene-state.js", code: worldSceneStateScript },
   { id: "world-scene-lifecycle", filename: "src/js/world/scene-lifecycle.js", code: worldSceneLifecycleScript },
   { id: "world-chunk-scene-runtime", filename: "src/js/world/chunk-scene-runtime.js", code: worldChunkSceneRuntimeScript },
