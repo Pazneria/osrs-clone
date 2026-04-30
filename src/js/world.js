@@ -5,6 +5,7 @@
         const worldRenderRuntime = window.WorldRenderRuntime || null;
         const worldWaterRuntime = window.WorldWaterRuntime || null;
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
+        const worldNpcRenderRuntime = window.WorldNpcRenderRuntime || null;
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
         const worldTreeNodeRuntime = window.WorldTreeNodeRuntime || null;
         const worldTreeRenderRuntime = window.WorldTreeRenderRuntime || null;
@@ -4763,57 +4764,25 @@
                     planeGroup.add(createRoofVisualGroup(roof, Z_OFFSET));
                 });
 
-                const getNpcAppearanceId = (npc) => {
-                    if (!npc || typeof npc !== 'object') return null;
-                    const explicitAppearanceId = typeof npc.appearanceId === 'string' ? npc.appearanceId.trim().toLowerCase() : '';
-                    if (explicitAppearanceId) return explicitAppearanceId;
-                    const merchantId = typeof npc.merchantId === 'string' ? npc.merchantId.trim().toLowerCase() : '';
-                    const name = typeof npc.name === 'string' ? npc.name.trim().toLowerCase() : '';
-                    if (merchantId === 'tanner_rusk' || name === 'tanner rusk') return 'tanner_rusk';
-                    return null;
-                };
-
-                npcsToRender.forEach(npc => {
-                    if (npc.x >= startX && npc.x < endX && npc.y >= startY && npc.y < endY && npc.z === z) {
-                        const appearanceId = getNpcAppearanceId(npc);
-                        let dummy = null;
-                        if (appearanceId && typeof window.createNpcHumanoidRigFromPreset === 'function') {
-                            dummy = window.createNpcHumanoidRigFromPreset(appearanceId);
-                        }
-                        if (!dummy) dummy = createHumanoidModel(npc.type);
-                        const visualX = Number.isFinite(npc.visualX) ? npc.visualX : npc.x;
-                        const visualY = Number.isFinite(npc.visualY) ? npc.visualY : npc.y;
-                        const visualBaseY = Number.isFinite(npc.visualBaseY) ? npc.visualBaseY : (heightMap[z][npc.y][npc.x] + Z_OFFSET);
-                        dummy.position.set(visualX, visualBaseY, visualY);
-                        dummy.rotation.y = Number.isFinite(npc.visualFacingYaw)
-                            ? npc.visualFacingYaw
-                            : resolveTownNpcDefaultFacingYaw(npc);
-                        
-                        // Add interactive hitbox to NPCs
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), sharedMaterials.hiddenHitbox);
-                        hitbox.position.y = 1.0;
-                        const npcUid = {
-                            name: npc.name,
-                            action: npc.action || (npc.name === 'Shopkeeper' ? 'Trade' : (npc.name === 'Banker' ? 'Talk-to' : 'Talk-to'))
-                        };
-                        npcUid.gridX = npc.x;
-                        npcUid.gridY = npc.y;
-                        if (npc.spawnId) npcUid.spawnId = npc.spawnId;
-                        if (npc.merchantId) npcUid.merchantId = npc.merchantId;
-                        if (appearanceId) npcUid.appearanceId = appearanceId;
-                        if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();
-                        if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;
-                        if (npc.travelSpawn) npcUid.travelSpawn = Object.assign({}, npc.travelSpawn);
-                        hitbox.userData = { type: 'NPC', gridX: npc.x, gridY: npc.y, z: z, name: npc.name, uid: npcUid };
-                        dummy.add(hitbox);
-                        environmentMeshes.push(hitbox);
-
-                        planeGroup.add(dummy);
-                        npc.mesh = dummy;
-                        npc.hitbox = hitbox;
-                        npc.renderChunkKey = `${cx},${cy}`;
-                        renderedNpcActors.push(npc);
-                    }
+                worldNpcRenderRuntime.appendChunkNpcVisuals({
+                    THREE,
+                    sharedMaterials,
+                    heightMap,
+                    npcsToRender,
+                    planeGroup,
+                    environmentMeshes,
+                    renderedNpcActors,
+                    startX,
+                    startY,
+                    endX,
+                    endY,
+                    z,
+                    Z_OFFSET,
+                    cx,
+                    cy,
+                    createHumanoidModel,
+                    createNpcHumanoidRigFromPreset: window.createNpcHumanoidRigFromPreset,
+                    resolveTownNpcDefaultFacingYaw
                 });
 
                 group.add(planeGroup);

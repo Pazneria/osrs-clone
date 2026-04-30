@@ -15,6 +15,7 @@ function run() {
   const proceduralRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "procedural-runtime.js"), "utf8");
   const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
+  const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
@@ -57,6 +58,7 @@ function run() {
   const waterRuntimeIndex = legacyManifestSource.indexOf('id: "world-water-runtime"');
   const chunkTerrainRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-terrain-runtime"');
   const chunkTierRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-tier-render-runtime"');
+  const npcRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-npc-render-runtime"');
   const structureRuntimeIndex = legacyManifestSource.indexOf('id: "world-structure-render-runtime"');
   const treeNodeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-node-runtime"');
   const treeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-render-runtime"');
@@ -73,6 +75,7 @@ function run() {
   assert(waterRuntimeIndex !== -1 && worldIndex !== -1 && waterRuntimeIndex < worldIndex, "legacy script manifest should load world water runtime before world.js");
   assert(chunkTerrainRuntimeIndex !== -1 && worldIndex !== -1 && chunkTerrainRuntimeIndex < worldIndex, "legacy script manifest should load world chunk terrain runtime before world.js");
   assert(chunkTierRenderRuntimeIndex !== -1 && worldIndex !== -1 && chunkTierRenderRuntimeIndex < worldIndex, "legacy script manifest should load world chunk tier render runtime before world.js");
+  assert(npcRenderRuntimeIndex !== -1 && worldIndex !== -1 && npcRenderRuntimeIndex < worldIndex, "legacy script manifest should load world NPC render runtime before world.js");
   assert(structureRuntimeIndex !== -1 && worldIndex !== -1 && structureRuntimeIndex < worldIndex, "legacy script manifest should load world structure render runtime before world.js");
   assert(treeNodeRuntimeIndex !== -1 && worldIndex !== -1 && treeNodeRuntimeIndex < worldIndex, "legacy script manifest should load world tree node runtime before world.js");
   assert(treeRuntimeIndex !== -1 && worldIndex !== -1 && treeRuntimeIndex < worldIndex, "legacy script manifest should load world tree render runtime before world.js");
@@ -98,6 +101,8 @@ function run() {
   assert(waterRuntimeSource.includes("appendChunkWaterTilesToBuilders"), "world water runtime should own chunk water batching");
   assert(chunkTierRenderRuntimeSource.includes("window.WorldChunkTierRenderRuntime"), "world chunk tier render runtime should expose a runtime");
   assert(chunkTierRenderRuntimeSource.includes("createSimplifiedChunkGroup"), "world chunk tier render runtime should own simplified tier chunk construction");
+  assert(npcRenderRuntimeSource.includes("window.WorldNpcRenderRuntime"), "world NPC render runtime should expose a runtime");
+  assert(npcRenderRuntimeSource.includes("appendChunkNpcVisuals"), "world NPC render runtime should own NPC chunk rendering");
   assert(worldSource.includes("WorldProceduralRuntime"), "world.js should resolve procedural helpers through the procedural runtime");
   assert(!worldSource.includes("function buildGrassTextureCanvas"), "world.js should not own generated texture canvas builders");
   assert(!worldSource.includes("function sampleFractalNoise2D"), "world.js should not own deterministic noise helpers");
@@ -106,6 +111,7 @@ function run() {
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-scene reload lifecycle");
   assert(worldSource.includes("WorldChunkTerrainRuntime"), "world.js should delegate chunk ground mesh construction");
   assert(worldSource.includes("WorldChunkTierRenderRuntime"), "world.js should delegate simplified tier chunk rendering");
+  assert(worldSource.includes("WorldNpcRenderRuntime"), "world.js should delegate NPC chunk rendering");
   assert(worldSource.includes("WorldWaterRuntime"), "world.js should delegate water rendering helpers");
   assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk scene state");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD state");

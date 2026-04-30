@@ -38,6 +38,7 @@ function run() {
   const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
   const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
@@ -81,9 +82,10 @@ function run() {
   assert(sceneLifecycleSource.includes("reloadActiveWorldScene"), "world scene lifecycle should own active-world scene reload orchestration");
   assert(worldSource.includes("WorldSceneLifecycleRuntime"), "world.js should delegate active-world scene reload orchestration");
   assert(worldSource.includes("getCurrentWorldScenePayload"), "world.js should fetch the active world payload through the scene-state runtime");
-  assert(worldSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "world.js should attach travel world metadata to NPC hitboxes");
-  assert(worldSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "world.js should attach appearance metadata to NPC hitboxes");
-  assert(worldSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "world.js should attach dialogue metadata to NPC hitboxes");
+  assert(worldSource.includes("WorldNpcRenderRuntime"), "world.js should delegate NPC hitbox rendering");
+  assert(npcRenderRuntimeSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "NPC render runtime should attach travel world metadata to NPC hitboxes");
+  assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime should attach appearance metadata to NPC hitboxes");
+  assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime should attach dialogue metadata to NPC hitboxes");
 
   assert(inputSource.includes("playerState.targetUid.action === 'Travel'"), "input handler should resolve travel NPC actions");
   assert(inputSource.includes("playerState.targetUid.action === 'Talk-to'"), "input handler should resolve Talk-to NPC actions");
