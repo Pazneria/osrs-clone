@@ -1692,67 +1692,21 @@
                 woodcutting: woodcuttingTrainingRouteDefs
             });
 
-            const structureBoundsList = stampedStructures
-                .map((structure) => {
-                    if (!structure) return null;
-                    const bounds = getStampBounds(structure.structureId);
-                    if (!bounds) return null;
-                    return {
-                        structureId: structure.structureId,
-                        z: Number.isFinite(structure.z) ? structure.z : 0,
-                        xMin: bounds.xMin,
-                        xMax: bounds.xMax,
-                        yMin: bounds.yMin,
-                        yMax: bounds.yMax
-                    };
-                })
-                .filter(Boolean);
+            const structureBoundsList = worldTownNpcRuntime.buildStructureBoundsList({
+                getStampBounds,
+                stampedStructures
+            });
 
             worldTownNpcRuntime.resetLoadedChunkNpcActors();
             const actorNowMs = performance.now();
-            npcsToRender = npcsToRender.map((npc, index) => {
-                const npcActorId = (npc && typeof npc.spawnId === 'string' && npc.spawnId)
-                    || (npc && typeof npc.merchantId === 'string' && npc.merchantId ? `merchant:${npc.merchantId}` : '')
-                    || `npc:${String(npc && npc.name ? npc.name : 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_')}:${Number.isFinite(npc.x) ? npc.x : index}:${Number.isFinite(npc.y) ? npc.y : 0}:${Number.isFinite(npc.z) ? npc.z : 0}`;
-                const roamBounds = worldTownNpcRuntime.resolveTownNpcRoamBounds({
-                    mapSize: MAP_SIZE,
-                    npc,
-                    structureBoundsList
-                });
-                const facingYaw = resolveTownNpcDefaultFacingYaw(npc);
-                const roamingRadius = worldTownNpcRuntime.resolveTownNpcRoamingRadius(npc, roamBounds);
-                const baseHeight = getTileHeightSafe(npc.x, npc.y, Number.isFinite(npc.z) ? npc.z : 0);
-                return Object.assign({}, npc, {
-                    actorId: npcActorId,
-                    spawnId: typeof npc.spawnId === 'string' ? npc.spawnId : null,
-                    merchantId: typeof npc.merchantId === 'string' ? npc.merchantId : null,
-                    appearanceId: typeof npc.appearanceId === 'string' ? npc.appearanceId : null,
-                    dialogueId: typeof npc.dialogueId === 'string' ? npc.dialogueId : null,
-                    homeX: npc.x,
-                    homeY: npc.y,
-                    homeZ: Number.isFinite(npc.z) ? npc.z : 0,
-                    roamBounds,
-                    roamingRadius,
-                    roamEnabled: roamingRadius > 0,
-                    facingYaw,
-                    targetFacingYaw: facingYaw,
-                    visualFacingYaw: facingYaw,
-                    visualX: npc.x,
-                    visualY: npc.y,
-                    visualBaseY: baseHeight + ((Number.isFinite(npc.z) ? npc.z : 0) * 3.0),
-                    moveFromX: npc.x,
-                    moveFromY: npc.y,
-                    moveFromHeight: baseHeight,
-                    moveToHeight: baseHeight,
-                    moveStartedAtMs: 0,
-                    moveDurationMs: 0,
-                    idleUntilMs: actorNowMs + 400 + (hashTownNpcSeed(npcActorId) % 900),
-                    animationSeed: hashTownNpcSeed(npcActorId),
-                    mesh: null,
-                    hitbox: null,
-                    renderChunkKey: null
-                });
-            });
+            npcsToRender = npcsToRender.map((npc, index) => worldTownNpcRuntime.createTownNpcActorRecord({
+                actorNowMs,
+                getTileHeightSafe,
+                index,
+                mapSize: MAP_SIZE,
+                npc,
+                structureBoundsList
+            }));
 
             if (typeof window.initCombatWorldState === 'function') window.initCombatWorldState();
         }

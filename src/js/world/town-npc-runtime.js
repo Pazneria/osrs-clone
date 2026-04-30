@@ -165,6 +165,89 @@
         return 2;
     }
 
+    function buildTownNpcActorId(npc, index = 0) {
+        if (npc && typeof npc.spawnId === 'string' && npc.spawnId) return npc.spawnId;
+        if (npc && typeof npc.merchantId === 'string' && npc.merchantId) return `merchant:${npc.merchantId}`;
+        const name = String(npc && npc.name ? npc.name : 'unknown')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_');
+        const x = Number.isFinite(npc && npc.x) ? npc.x : index;
+        const y = Number.isFinite(npc && npc.y) ? npc.y : 0;
+        const z = Number.isFinite(npc && npc.z) ? npc.z : 0;
+        return `npc:${name}:${x}:${y}:${z}`;
+    }
+
+    function buildStructureBoundsList(options = {}) {
+        const stampedStructures = Array.isArray(options.stampedStructures) ? options.stampedStructures : [];
+        const getStampBounds = typeof options.getStampBounds === 'function' ? options.getStampBounds : null;
+        if (!getStampBounds) return [];
+        const structureBoundsList = [];
+        for (let i = 0; i < stampedStructures.length; i++) {
+            const structure = stampedStructures[i];
+            if (!structure) continue;
+            const bounds = getStampBounds(structure.structureId);
+            if (!bounds) continue;
+            structureBoundsList.push({
+                structureId: structure.structureId,
+                z: Number.isFinite(structure.z) ? structure.z : 0,
+                xMin: bounds.xMin,
+                xMax: bounds.xMax,
+                yMin: bounds.yMin,
+                yMax: bounds.yMax
+            });
+        }
+        return structureBoundsList;
+    }
+
+    function createTownNpcActorRecord(options = {}) {
+        const npc = options.npc || {};
+        const index = Number.isFinite(options.index) ? options.index : 0;
+        const actorNowMs = Number.isFinite(options.actorNowMs) ? options.actorNowMs : 0;
+        const getTileHeightSafe = typeof options.getTileHeightSafe === 'function' ? options.getTileHeightSafe : () => 0;
+        const actorId = buildTownNpcActorId(npc, index);
+        const z = Number.isFinite(npc.z) ? npc.z : 0;
+        const x = Number.isFinite(npc.x) ? npc.x : index;
+        const y = Number.isFinite(npc.y) ? npc.y : 0;
+        const roamBounds = resolveTownNpcRoamBounds({
+            mapSize: options.mapSize,
+            npc,
+            structureBoundsList: options.structureBoundsList
+        });
+        const facingYaw = resolveTownNpcDefaultFacingYaw(npc);
+        const roamingRadius = resolveTownNpcRoamingRadius(npc, roamBounds);
+        const baseHeight = getTileHeightSafe(x, y, z);
+        return Object.assign({}, npc, {
+            actorId,
+            spawnId: typeof npc.spawnId === 'string' ? npc.spawnId : null,
+            merchantId: typeof npc.merchantId === 'string' ? npc.merchantId : null,
+            appearanceId: typeof npc.appearanceId === 'string' ? npc.appearanceId : null,
+            dialogueId: typeof npc.dialogueId === 'string' ? npc.dialogueId : null,
+            homeX: x,
+            homeY: y,
+            homeZ: z,
+            roamBounds,
+            roamingRadius,
+            roamEnabled: roamingRadius > 0,
+            facingYaw,
+            targetFacingYaw: facingYaw,
+            visualFacingYaw: facingYaw,
+            visualX: x,
+            visualY: y,
+            visualBaseY: baseHeight + (z * 3.0),
+            moveFromX: x,
+            moveFromY: y,
+            moveFromHeight: baseHeight,
+            moveToHeight: baseHeight,
+            moveStartedAtMs: 0,
+            moveDurationMs: 0,
+            idleUntilMs: actorNowMs + 400 + (hashTownNpcSeed(actorId) % 900),
+            animationSeed: hashTownNpcSeed(actorId),
+            mesh: null,
+            hitbox: null,
+            renderChunkKey: null
+        });
+    }
+
     function clearTownNpcRenderBindings(actor) {
         if (!actor || typeof actor !== 'object') return;
         actor.mesh = null;
@@ -519,8 +602,11 @@
     window.WorldTownNpcRuntime = {
         TOWN_NPC_STEP_DIRS,
         applyTownNpcRigAnimation,
+        buildStructureBoundsList,
+        buildTownNpcActorId,
         chooseTownNpcNextStep,
         clearTownNpcRenderBindings,
+        createTownNpcActorRecord,
         deleteLoadedChunkNpcActors,
         distanceToBounds,
         expandTownNpcRoamBounds,
