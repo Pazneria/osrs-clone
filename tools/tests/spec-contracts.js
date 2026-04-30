@@ -1722,6 +1722,7 @@ function run() {
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/shared-assets-runtime.js"), "utf8");
+  const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/terrain-setup-runtime.js"), "utf8");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-terrain-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-tier-render-runtime.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
@@ -1818,6 +1819,10 @@ function run() {
   assert(sharedAssetsRuntimeSource.includes("sharedGeometries.ground = new THREE.PlaneGeometry(chunkSize, chunkSize);"), "shared asset runtime should own base ground geometry setup");
   assert(sharedAssetsRuntimeSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });"), "shared asset runtime should own terrain underlay material setup");
   assert(sharedAssetsRuntimeSource.includes("const makeNoiseTexture = (baseHex, vMin, vMax, speckleCount, patchCount = 42, patchSize = 5) => {"), "shared asset runtime should own procedural material texture helpers");
+  assert(worldScript.includes("WorldTerrainSetupRuntime"), "world.js should delegate base terrain setup");
+  assert(terrainSetupRuntimeSource.includes("function applyBaseTerrainSetup(options = {})"), "terrain setup runtime should own base terrain setup");
+  assert(!worldScript.includes("const sampleRiverAtY = (y) => {"), "world.js should not own river sampling");
+  assert(!worldScript.includes("const carveWaterTile = (x, y, depthNorm) => {"), "world.js should not own base water carving");
   assert(!worldScript.includes("sharedGeometries.ground = new THREE.PlaneGeometry"), "world.js should not own shared geometry construction");
   assert(!worldScript.includes("const makeNoiseTexture = (baseHex"), "world.js should not own shared procedural material texture helpers");
   assert(chunkTerrainRuntimeSource.includes("function buildChunkGroundMeshes(options = {})"), "chunk terrain runtime should own ground mesh construction");

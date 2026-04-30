@@ -5,6 +5,7 @@
         const worldRenderRuntime = window.WorldRenderRuntime || null;
         const worldSharedAssetsRuntime = window.WorldSharedAssetsRuntime || null;
         const worldWaterRuntime = window.WorldWaterRuntime || null;
+        const worldTerrainSetupRuntime = window.WorldTerrainSetupRuntime || null;
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
         const worldGroundItemLifecycleRuntime = window.WorldGroundItemLifecycleRuntime || null;
         const worldNpcRenderRuntime = window.WorldNpcRenderRuntime || null;
@@ -1176,82 +1177,6 @@
                 return true;
             }
 
-            function getStampBounds(structureId) {
-                for (let i = 0; i < stampedStructures.length; i++) {
-                    const structure = stampedStructures[i];
-                    if (!structure || structure.structureId !== structureId) continue;
-                    const rows = stampMap && Array.isArray(stampMap[structure.stampId]) ? stampMap[structure.stampId] : [];
-                    const height = rows.length;
-                    let width = 0;
-                    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-                        const row = rows[rowIndex];
-                        if (typeof row === 'string') width = Math.max(width, row.length);
-                    }
-                    if (width <= 0 || height <= 0) continue;
-                    return {
-                        xMin: structure.x,
-                        xMax: structure.x + width - 1,
-                        yMin: structure.y,
-                        yMax: structure.y + height - 1
-                    };
-                }
-                return null;
-            }
-
-            function expandBounds(bounds, padX, padY) {
-                if (!bounds) return null;
-                return {
-                    xMin: Math.max(1, bounds.xMin - padX),
-                    xMax: Math.min(MAP_SIZE - 2, bounds.xMax + padX),
-                    yMin: Math.max(1, bounds.yMin - padY),
-                    yMax: Math.min(MAP_SIZE - 2, bounds.yMax + padY)
-                };
-            }
-
-            const castleBounds = getStampBounds('castle_ground') || { xMin: 190, xMax: 220, yMin: 190, yMax: 215 };
-            const generalStoreBounds = getStampBounds('general_store') || { xMin: 177, xMax: 185, yMin: 232, yMax: 240 };
-            const smithingHallBounds = getStampBounds('smithing_hall') || { xMin: 221, xMax: 229, yMin: 228, yMax: 240 };
-            const townCoreBounds = [
-                expandBounds(castleBounds, 0, 0),
-                expandBounds(generalStoreBounds, 0, 0),
-                // Keep a clean spawn-safe apron around the open smithing hall footprint.
-                expandBounds(smithingHallBounds, 4, 4)
-            ].filter(Boolean);
-            const townSquareBounds = expandBounds(castleBounds, 10, 10);
-            const inTownCore = (x, y) => {
-                for (let i = 0; i < townCoreBounds.length; i++) {
-                    const bounds = townCoreBounds[i];
-                    if (!bounds) continue;
-                    if (x >= bounds.xMin && x <= bounds.xMax && y >= bounds.yMin && y <= bounds.yMax) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            const terrainNoise = (x, y) => {
-                const n1 = Math.sin(x * 0.045) * 0.08;
-                const n2 = Math.cos(y * 0.05) * 0.07;
-                const n3 = Math.sin((x + y) * 0.03) * 0.05;
-                return n1 + n2 + n3;
-            };
-            const LEGACY_COORD_MAP_SIZE = 486;
-            const riverAxisScale = MAP_SIZE / LEGACY_COORD_MAP_SIZE;
-            const riverFrequencyScale = LEGACY_COORD_MAP_SIZE / Math.max(1, MAP_SIZE);
-            const sampleRiverAtY = (y) => {
-                const eastCenterBase = 298 * riverAxisScale;
-                const southCurveT = Math.max(0, (y - (296 * riverAxisScale)) / Math.max(1, 98 * riverAxisScale));
-                const westBend = Math.pow(Math.min(1, southCurveT), 1.35) * (86 * riverAxisScale);
-                return {
-                    centerX: eastCenterBase
-                        + (Math.sin(y * 0.018 * riverFrequencyScale) * (8 * riverAxisScale))
-                        + (Math.sin(y * 0.007 * riverFrequencyScale) * (5 * riverAxisScale))
-                        - westBend,
-                    halfWidth: Math.max(
-                        2.4,
-                        (6.2 * riverAxisScale) + (Math.sin(y * 0.045 * riverFrequencyScale) * (1.8 * riverAxisScale))
-                    )
-                };
-            };
             furnacesToRender = worldPayload.furnacesToRender.map((station) => Object.assign({}, station));
             anvilsToRender = worldPayload.anvilsToRender.map((station) => Object.assign({}, station));
             const waterRenderBodies = Array.isArray(waterRenderPayload && waterRenderPayload.bodies)
@@ -1260,152 +1185,23 @@
             sharedMaterials.activeWaterRenderBodies = waterRenderBodies;
             sharedMaterials.activePierConfig = Object.assign({}, pierConfig);
 
-            for (let y = 0; y < MAP_SIZE; y++) {
-                for (let x = 0; x < MAP_SIZE; x++) {
-                    if (x === 0 || y === 0 || x === MAP_SIZE - 1 || y === MAP_SIZE - 1) {
-                        logicalMap[0][y][x] = 2; // Map borders
-                        heightMap[0][y][x] = 0.08;
-                    }
-                    else if (townSquareBounds && x >= townSquareBounds.xMin && x <= townSquareBounds.xMax && y >= townSquareBounds.yMin && y <= townSquareBounds.yMax) {
-                        logicalMap[0][y][x] = 0; // Empty Town Square
-                        heightMap[0][y][x] = 0;
-                    }
-                    else {
-                        logicalMap[0][y][x] = 0;
-                        heightMap[0][y][x] = terrainNoise(x, y);
-                    }
-                }
-            }
-            const carveWaterTile = (x, y, depthNorm) => {
-                if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return;
-                if (inTownCore(x, y)) return;
-
-                if (depthNorm >= 0.64) {
-                    logicalMap[0][y][x] = 22;
-                    heightMap[0][y][x] = -0.18;
-                } else {
-                    logicalMap[0][y][x] = 21;
-                    heightMap[0][y][x] = -0.10;
-                }
-            };
-
-            for (let y = 1; y < MAP_SIZE - 1; y++) {
-                const riverSample = sampleRiverAtY(y);
-                const riverCenter = riverSample.centerX;
-                const riverHalfWidth = riverSample.halfWidth;
-                const carveSpan = Math.ceil(riverHalfWidth + 4);
-                for (let x = Math.max(1, Math.floor(riverCenter - carveSpan)); x <= Math.min(MAP_SIZE - 2, Math.ceil(riverCenter + carveSpan)); x++) {
-                    const d = Math.abs(x - riverCenter);
-                    if (d <= riverHalfWidth) {
-                        const depthNorm = Math.max(0, 1 - (d / Math.max(0.1, riverHalfWidth)));
-                        carveWaterTile(x, y, depthNorm);
-                    }
-                }
-            }
-
-            const riverBridgeRows = [
-                Math.floor(MAP_SIZE * 0.24),
-                Math.floor(MAP_SIZE * 0.49),
-                Math.floor(MAP_SIZE * 0.73)
-            ];
-            for (let i = 0; i < riverBridgeRows.length; i++) {
-                const bridgeY = riverBridgeRows[i];
-                if (bridgeY <= 2 || bridgeY >= MAP_SIZE - 3) continue;
-                const sample = sampleRiverAtY(bridgeY);
-                const bridgeHalfSpan = Math.ceil(sample.halfWidth + Math.max(3, 2 * riverAxisScale));
-                const bridgeXMin = Math.max(2, Math.floor(sample.centerX - bridgeHalfSpan));
-                const bridgeXMax = Math.min(MAP_SIZE - 3, Math.ceil(sample.centerX + bridgeHalfSpan));
-                for (let x = bridgeXMin; x <= bridgeXMax; x++) {
-                    logicalMap[0][bridgeY][x] = TileId.FLOOR_WOOD;
-                    heightMap[0][bridgeY][x] = PIER_DECK_TOP_HEIGHT;
-                }
-                if (bridgeXMin - 1 > 1) {
-                    logicalMap[0][bridgeY][bridgeXMin - 1] = TileId.SHORE;
-                    heightMap[0][bridgeY][bridgeXMin - 1] = -0.01;
-                }
-                if (bridgeXMax + 1 < MAP_SIZE - 2) {
-                    logicalMap[0][bridgeY][bridgeXMax + 1] = TileId.SHORE;
-                    heightMap[0][bridgeY][bridgeXMax + 1] = -0.01;
-                }
-            }
-
-            lakeDefs.forEach(lake => {
-                for (let y = Math.max(1, Math.floor(lake.cy - lake.ry - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(lake.cy + lake.ry + 1)); y++) {
-                    for (let x = Math.max(1, Math.floor(lake.cx - lake.rx - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(lake.cx + lake.rx + 1)); x++) {
-                        const nx = (x - lake.cx) / lake.rx;
-                        const ny = (y - lake.cy) / lake.ry;
-                        const d = Math.sqrt(nx * nx + ny * ny);
-                        if (d <= 1.0) carveWaterTile(x, y, 1.0 - d);
-                    }
-                }
+            const terrainSetup = worldTerrainSetupRuntime.applyBaseTerrainSetup({
+                castleFrontPond,
+                deepWaterCenter,
+                heightMap,
+                isPierSideWaterTile,
+                lakeDefs,
+                logicalMap,
+                mapSize: MAP_SIZE,
+                pierConfig,
+                pierDeckTopHeight: PIER_DECK_TOP_HEIGHT,
+                stampMap,
+                stampedStructures,
+                tileIds: TileId
             });
-            // Add a guaranteed pond in front of the castle (clearing area).
-            for (let y = Math.max(1, Math.floor(castleFrontPond.cy - castleFrontPond.ry - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(castleFrontPond.cy + castleFrontPond.ry + 1)); y++) {
-                for (let x = Math.max(1, Math.floor(castleFrontPond.cx - castleFrontPond.rx - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(castleFrontPond.cx + castleFrontPond.rx + 1)); x++) {
-                    const nx = (x - castleFrontPond.cx) / castleFrontPond.rx;
-                    const ny = (y - castleFrontPond.cy) / castleFrontPond.ry;
-                    const d = Math.sqrt(nx * nx + ny * ny);
-                    if (d <= 1.0) carveWaterTile(x, y, 1.0 - d);
-                }
-            }
-
-            // Ensure a stable deep-water center so dockside fishing can target dark water.
-            for (let y = deepWaterCenter.yMin; y <= deepWaterCenter.yMax; y++) {
-                for (let x = deepWaterCenter.xMin; x <= deepWaterCenter.xMax; x++) {
-                    if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
-                    logicalMap[0][y][x] = 22;
-                    heightMap[0][y][x] = -0.18;
-                }
-            }
-
-            // Add a wooden pier from the castle-facing bank toward the deep center.
-            // The tip stops one tile short of water so the player stands on the pier and fishes adjacent dark water.
-            const pierXMin = pierConfig.xMin;
-            const pierXMax = pierConfig.xMax;
-            const pierYStart = pierConfig.yStart;
-            const pierYEnd = pierConfig.yEnd;
-            for (let y = pierYStart; y <= pierYEnd; y++) {
-                for (let x = pierXMin; x <= pierXMax; x++) {
-                    if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
-                    logicalMap[0][y][x] = 6;
-                    heightMap[0][y][x] = PIER_DECK_TOP_HEIGHT;
-                }
-            }
-            for (let y = pierYStart; y <= pierYEnd; y++) {
-                const sideXs = [pierXMin - 1, pierXMax + 1];
-                for (let i = 0; i < sideXs.length; i++) {
-                    const sideX = sideXs[i];
-                    if (!isPierSideWaterTile(pierConfig, sideX, y, 0)) continue;
-                    if (sideX <= 1 || y <= 1 || sideX >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) continue;
-                    logicalMap[0][y][sideX] = TileId.WATER_SHALLOW;
-                    heightMap[0][y][sideX] = -0.10;
-                }
-            }
-
-            const pierEntryShoulders = [
-                { x: pierXMin - 1, y: pierYStart },
-                { x: pierXMax + 1, y: pierYStart }
-            ];
-            for (let i = 0; i < pierEntryShoulders.length; i++) {
-                const shoulder = pierEntryShoulders[i];
-                if (!shoulder) continue;
-                if (shoulder.x <= 1 || shoulder.y <= 1 || shoulder.x >= MAP_SIZE - 2 || shoulder.y >= MAP_SIZE - 2) continue;
-                logicalMap[0][shoulder.y][shoulder.x] = TileId.GRASS;
-                heightMap[0][shoulder.y][shoulder.x] = Math.max(0.01, terrainNoise(shoulder.x, shoulder.y));
-            }
-
-            // Shoreline anchor tiles so the pier always has a clean walkable entry from land.
-            const pierEntryY = pierConfig.entryY;
-            const pierLandAnchorY = pierEntryY - 1;
-            for (let x = pierXMin; x <= pierXMax; x++) {
-                if (x <= 1 || pierEntryY <= 1 || x >= MAP_SIZE - 2 || pierEntryY >= MAP_SIZE - 2) continue;
-                logicalMap[0][pierEntryY][x] = 20;
-                heightMap[0][pierEntryY][x] = -0.01;
-                if (pierLandAnchorY > 1) {
-                    logicalMap[0][pierLandAnchorY][x] = TileId.SHORE;
-                    heightMap[0][pierLandAnchorY][x] = -0.01;
-                }
-            }
+            const inTownCore = terrainSetup.inTownCore;
+            const terrainNoise = terrainSetup.terrainNoise;
+            const getStampBounds = terrainSetup.getStampBounds;
 
             // Fishing-012 world placement: dedicated fishing merchants near the training water.
             const fishingMerchantSpots = worldPayload.fishingMerchantSpots;

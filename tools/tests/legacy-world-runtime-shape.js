@@ -12,6 +12,7 @@ function run() {
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
   const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
+  const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
   const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -83,6 +84,10 @@ function run() {
     "world map HUD runtime should expose minimap and world-map orchestration"
   );
   assert(
+    terrainSetupRuntimeSource.includes("WorldTerrainSetupRuntime"),
+    "world terrain setup runtime should expose base terrain setup"
+  );
+  assert(
     trainingLocationRuntimeSource.includes("WorldTrainingLocationRuntime"),
     "world training location runtime should expose training-location compatibility hooks"
   );
@@ -105,6 +110,10 @@ function run() {
   assert(
     worldSource.includes("WorldMapHudRuntime"),
     "world.js should delegate map HUD rendering through the map HUD runtime"
+  );
+  assert(
+    worldSource.includes("WorldTerrainSetupRuntime"),
+    "world.js should delegate base terrain setup through the terrain runtime"
   );
   assert(
     worldSource.includes("WorldTrainingLocationRuntime"),

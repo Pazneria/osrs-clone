@@ -15,6 +15,7 @@ function run() {
   const proceduralRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "procedural-runtime.js"), "utf8");
   const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
+  const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
@@ -66,6 +67,7 @@ function run() {
   const proceduralRuntimeIndex = legacyManifestSource.indexOf('id: "world-procedural-runtime"');
   const sharedAssetsRuntimeIndex = legacyManifestSource.indexOf('id: "world-shared-assets-runtime"');
   const waterRuntimeIndex = legacyManifestSource.indexOf('id: "world-water-runtime"');
+  const terrainSetupRuntimeIndex = legacyManifestSource.indexOf('id: "world-terrain-setup-runtime"');
   const chunkTerrainRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-terrain-runtime"');
   const chunkTierRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-tier-render-runtime"');
   const groundItemRenderRuntimeIndex = legacyManifestSource.indexOf('id: "world-ground-item-render-runtime"');
@@ -93,6 +95,7 @@ function run() {
   assert(proceduralRuntimeIndex !== -1 && worldIndex !== -1 && proceduralRuntimeIndex < worldIndex, "legacy script manifest should load world procedural runtime before world.js");
   assert(sharedAssetsRuntimeIndex !== -1 && worldIndex !== -1 && sharedAssetsRuntimeIndex < worldIndex, "legacy script manifest should load world shared asset runtime before world.js");
   assert(waterRuntimeIndex !== -1 && worldIndex !== -1 && waterRuntimeIndex < worldIndex, "legacy script manifest should load world water runtime before world.js");
+  assert(terrainSetupRuntimeIndex !== -1 && worldIndex !== -1 && terrainSetupRuntimeIndex < worldIndex, "legacy script manifest should load world terrain setup runtime before world.js");
   assert(chunkTerrainRuntimeIndex !== -1 && worldIndex !== -1 && chunkTerrainRuntimeIndex < worldIndex, "legacy script manifest should load world chunk terrain runtime before world.js");
   assert(chunkTierRenderRuntimeIndex !== -1 && worldIndex !== -1 && chunkTierRenderRuntimeIndex < worldIndex, "legacy script manifest should load world chunk tier render runtime before world.js");
   assert(groundItemRenderRuntimeIndex !== -1 && worldIndex !== -1 && groundItemRenderRuntimeIndex < worldIndex, "legacy script manifest should load world ground-item render runtime before world.js");
@@ -132,6 +135,8 @@ function run() {
   assert(sharedAssetsRuntimeSource.includes("function initSharedAssets(options = {})"), "world shared asset runtime should own shared asset setup");
   assert(waterRuntimeSource.includes("window.WorldWaterRuntime"), "world water runtime should expose a runtime");
   assert(waterRuntimeSource.includes("appendChunkWaterTilesToBuilders"), "world water runtime should own chunk water batching");
+  assert(terrainSetupRuntimeSource.includes("window.WorldTerrainSetupRuntime"), "world terrain setup runtime should expose a runtime");
+  assert(terrainSetupRuntimeSource.includes("applyBaseTerrainSetup"), "world terrain setup runtime should own base terrain setup");
   assert(chunkTierRenderRuntimeSource.includes("window.WorldChunkTierRenderRuntime"), "world chunk tier render runtime should expose a runtime");
   assert(chunkTierRenderRuntimeSource.includes("createSimplifiedChunkGroup"), "world chunk tier render runtime should own simplified tier chunk construction");
   assert(npcRenderRuntimeSource.includes("window.WorldNpcRenderRuntime"), "world NPC render runtime should expose a runtime");
@@ -170,6 +175,7 @@ function run() {
   assert(worldSource.includes("WorldChunkTierRenderRuntime"), "world.js should delegate simplified tier chunk rendering");
   assert(worldSource.includes("WorldNpcRenderRuntime"), "world.js should delegate NPC chunk rendering");
   assert(worldSource.includes("WorldWaterRuntime"), "world.js should delegate water rendering helpers");
+  assert(worldSource.includes("WorldTerrainSetupRuntime"), "world.js should delegate base terrain setup");
   assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk scene state");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD state");
   assert(worldSource.includes("WorldTreeNodeRuntime"), "world.js should delegate tree metadata helpers through the tree node runtime");
@@ -203,6 +209,7 @@ function run() {
   vm.runInThisContext(sceneLifecycleSource, { filename: path.join(root, "src", "js", "world", "scene-lifecycle.js") });
   vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
   vm.runInThisContext(mapHudRuntimeSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
+  vm.runInThisContext(terrainSetupRuntimeSource, { filename: path.join(root, "src", "js", "world", "terrain-setup-runtime.js") });
   vm.runInThisContext(trainingLocationRuntimeSource, { filename: path.join(root, "src", "js", "world", "training-location-runtime.js") });
   vm.runInThisContext(chunkResourceRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js") });
   vm.runInThisContext(miningPoseReferenceRuntimeSource, { filename: path.join(root, "src", "js", "world", "mining-pose-reference-runtime.js") });
@@ -218,6 +225,7 @@ function run() {
   const sceneLifecycleRuntime = window.WorldSceneLifecycleRuntime;
   const chunkSceneRuntime = window.WorldChunkSceneRuntime;
   const mapHudRuntime = window.WorldMapHudRuntime;
+  const terrainSetupRuntime = window.WorldTerrainSetupRuntime;
   const trainingLocationRuntime = window.WorldTrainingLocationRuntime;
   const chunkResourceRuntime = window.WorldChunkResourceRenderRuntime;
   const miningPoseReferenceRuntime = window.WorldMiningPoseReferenceRuntime;
@@ -231,6 +239,7 @@ function run() {
   assert(sceneLifecycleRuntime, "world scene lifecycle should expose its runtime");
   assert(chunkSceneRuntime, "world chunk scene runtime should expose its runtime");
   assert(mapHudRuntime, "world map HUD runtime should expose its runtime");
+  assert(terrainSetupRuntime, "world terrain setup runtime should expose its runtime");
   assert(trainingLocationRuntime, "world training location runtime should expose its runtime");
   assert(chunkResourceRuntime, "world chunk resource render runtime should expose its runtime");
   assert(miningPoseReferenceRuntime, "world mining pose reference runtime should expose its runtime");
