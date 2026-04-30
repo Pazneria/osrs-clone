@@ -26,6 +26,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputArrivalInteractionRuntime() {
             return window.InputArrivalInteractionRuntime || null;
         }
+        function getInputActionQueueRuntime() {
+            return window.InputActionQueueRuntime || null;
+        }
         function getTransientVisualRuntime() {
             return window.TransientVisualRuntime || null;
         }
@@ -997,18 +1000,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
         }
 
-        function cancelManualFiremakingChain() {
-            if (playerState.action !== 'SKILLING: FIREMAKING') return;
-            playerState.firemakingSession = null;
-            playerState.pendingSkillStart = null;
-            playerState.path = [];
-            playerState.pendingActionAfterTurn = null;
-            playerState.turnLock = false;
-            playerState.actionVisualReady = true;
-            playerState.action = 'IDLE';
-            if (typeof addChatMessage === 'function') addChatMessage('You stop lighting the logs.', 'info');
-        }
-
         function hasActiveFletchingProcessingSession() {
             if (!(window.SkillActionResolution && typeof SkillActionResolution.getSkillSession === 'function')) return false;
             const session = SkillActionResolution.getSkillSession(playerState, 'fletching');
@@ -1100,22 +1091,20 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (combatLevel === null) return baseName;
             return `${baseName} (Level ${combatLevel})`;
         }
+        function buildInputActionQueueRuntimeContext() {
+            return {
+                playerState,
+                addChatMessage: (typeof addChatMessage === 'function') ? addChatMessage : null,
+                clearPlayerCombatTarget: (typeof window.clearPlayerCombatTarget === 'function') ? window.clearPlayerCombatTarget : null,
+                setMinimapDestination,
+                clearMinimapDestination
+            };
+        }
         function queueAction(type, gridX, gridY, obj, targetUid = null) {
-            cancelManualFiremakingChain();
-            const hasCombatSelection = !!(
-                playerState.lockedTargetId
-                || playerState.combatTargetKind === 'enemy'
-                || playerState.targetObj === 'ENEMY'
-                || playerState.inCombat
-            );
-            if (type === 'WALK' && hasCombatSelection && typeof window.clearPlayerCombatTarget === 'function') {
-                window.clearPlayerCombatTarget({ force: true, reason: 'queue-walk' });
-            } else if (type === 'INTERACT' && obj !== 'ENEMY' && hasCombatSelection && typeof window.clearPlayerCombatTarget === 'function') {
-                window.clearPlayerCombatTarget({ force: true, reason: 'queue-interact-non-enemy' });
-            }
-            if (type === 'WALK') setMinimapDestination(gridX, gridY, playerState.z);
-            else clearMinimapDestination();
-            pendingAction = { type, x: gridX, y: gridY, obj, targetUid };
+            const runtime = getInputActionQueueRuntime();
+            pendingAction = runtime && typeof runtime.queueAction === 'function'
+                ? runtime.queueAction(buildInputActionQueueRuntimeContext(), type, gridX, gridY, obj, targetUid)
+                : { type, x: gridX, y: gridY, obj, targetUid };
         }
 
         function getPathTileId(x, y, z = playerState.z, pathOptions = null) {

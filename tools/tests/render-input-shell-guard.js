@@ -27,6 +27,7 @@ function run() {
   const inputRaycastSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
   const inputTickMovementSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
   const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
+  const inputActionQueueSource = fs.readFileSync(path.join(root, "src", "js", "input-action-queue-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -201,6 +202,19 @@ function run() {
     manifestSource.indexOf('id: "input-tick-movement-runtime"') < manifestSource.indexOf('id: "input-arrival-interaction-runtime"')
       && manifestSource.indexOf('id: "input-arrival-interaction-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input arrival interaction runtime before input-render.js"
+  );
+  assert(inputActionQueueSource.includes("window.InputActionQueueRuntime"), "input action queue runtime should expose a window runtime");
+  assert(inputActionQueueSource.includes("function queueAction"), "input action queue runtime should own action queueing");
+  assert(inputActionQueueSource.includes("function cancelManualFiremakingChain"), "input action queue runtime should own manual firemaking cancellation");
+  assert(inputSource.includes("InputActionQueueRuntime"), "input-render.js should delegate action queueing through the action queue runtime");
+  assert(inputSource.includes("buildInputActionQueueRuntimeContext"), "input-render.js should provide a narrow action queue runtime context");
+  assert(!inputSource.includes("playerState.firemakingSession = null;"), "input-render.js should not own firemaking cancellation details");
+  assert(!inputSource.includes("reason: 'queue-walk'"), "input-render.js should not own queued-action combat clear reasons");
+  assert(manifestSource.includes('../../js/input-action-queue-runtime.js?raw'), "legacy manifest should load input action queue runtime");
+  assert(
+    manifestSource.indexOf('id: "input-arrival-interaction-runtime"') < manifestSource.indexOf('id: "input-action-queue-runtime"')
+      && manifestSource.indexOf('id: "input-action-queue-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input action queue runtime before input-render.js"
   );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");

@@ -30,6 +30,7 @@ function run() {
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
   const inputTickMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
+  const inputActionQueueRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-action-queue-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
 
@@ -123,8 +124,9 @@ function run() {
     "clearing combat target should preserve active pre-engagement enemy pursuit unless explicitly forced"
   );
   assert(
-    inputRenderSource.includes("window.clearPlayerCombatTarget({ force: true, reason: 'queue-walk' });")
-      && inputRenderSource.includes("window.clearPlayerCombatTarget({ force: true, reason: 'queue-interact-non-enemy' });"),
+    inputRenderSource.includes("InputActionQueueRuntime")
+      && inputActionQueueRuntimeSource.includes("clearPlayerCombatTarget({ force: true, reason: 'queue-walk' });")
+      && inputActionQueueRuntimeSource.includes("clearPlayerCombatTarget({ force: true, reason: 'queue-interact-non-enemy' });"),
     "explicit non-combat actions should force-clear the enemy lock"
   );
 
