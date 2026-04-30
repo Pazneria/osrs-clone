@@ -7,6 +7,7 @@ import questCatalogScript from "../../js/content/quest-catalog.js?raw";
 import questRuntimeScript from "../../js/quest-runtime.js?raw";
 import npcDialogueRuntimeScript from "../../js/npc-dialogue-runtime.js?raw";
 import combatQaDebugRuntimeScript from "../../js/combat-qa-debug-runtime.js?raw";
+import combatEnemyRenderRuntimeScript from "../../js/combat-enemy-render-runtime.js?raw";
 import combatEnemyOverlayRuntimeScript from "../../js/combat-enemy-overlay-runtime.js?raw";
 import qaCommandRuntimeScript from "../../js/qa-command-runtime.js?raw";
 import qaToolsRuntimeScript from "../../js/qa-tools-runtime.js?raw";
@@ -90,6 +91,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "quest-runtime", filename: "src/js/quest-runtime.js", code: questRuntimeScript },
   { id: "npc-dialogue-runtime", filename: "src/js/npc-dialogue-runtime.js", code: npcDialogueRuntimeScript },
   { id: "combat-qa-debug-runtime", filename: "src/js/combat-qa-debug-runtime.js", code: combatQaDebugRuntimeScript },
+  { id: "combat-enemy-render-runtime", filename: "src/js/combat-enemy-render-runtime.js", code: combatEnemyRenderRuntimeScript },
   { id: "combat-enemy-overlay-runtime", filename: "src/js/combat-enemy-overlay-runtime.js", code: combatEnemyOverlayRuntimeScript },
   { id: "qa-command-runtime", filename: "src/js/qa-command-runtime.js", code: qaCommandRuntimeScript },
   { id: "qa-tools-runtime", filename: "src/js/qa-tools-runtime.js", code: qaToolsRuntimeScript },

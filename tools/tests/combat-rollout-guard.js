@@ -18,6 +18,7 @@ const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
+const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
 const combatEnemyOverlayRuntimeSource = read("src/js/combat-enemy-overlay-runtime.js");
 const playerHitpointsRuntimeSource = read("src/js/player-hitpoints-runtime.js");
 const combatContentSource = read("src/game/combat/content.ts");
@@ -41,6 +42,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-qa-debug-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-qa-debug-runtime"') < legacyManifest.indexOf('id: "core"'),
   "legacy script manifest should load combat QA debug runtime before core.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-enemy-render-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-enemy-render-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat enemy render runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/player-hitpoints-runtime.js?raw') &&
@@ -107,11 +113,15 @@ assert.ok(
   "combat runtime should expose tick and render hooks"
 );
   assert.ok(
-  combatEnemyOverlayRuntimeSource.includes("function createEnemyHitpointsBarRenderer(options = {})") &&
+  combatEnemyRenderRuntimeSource.includes("function createEnemyVisualRenderer(options = {})") &&
+    combatEnemyRenderRuntimeSource.includes("function updateEnemyVisualRenderer(options = {})") &&
+    combatEnemyOverlayRuntimeSource.includes("function createEnemyHitpointsBarRenderer(options = {})") &&
     combatSource.includes("function computeCombatLevelFromStats(stats)") &&
     combatSource.includes("combatLevel = getEnemyCombatLevel(enemyType);") &&
-    combatSource.includes("combatLevel,") &&
+    combatEnemyRenderRuntimeSource.includes("combatLevel,") &&
     combatEnemyOverlayRuntimeSource.includes("function updateEnemyHitpointsBar(options = {})") &&
+    combatSource.includes("combatEnemyRenderRuntime.createEnemyVisualRenderer({") &&
+    combatSource.includes("combatEnemyRenderRuntime.updateEnemyVisualRenderer({") &&
     combatSource.includes("combatEnemyOverlayRuntime.updateCombatEnemyOverlays({") &&
     combatSource.includes("function updateIdleEnemyMovement(enemyState, reservedTiles)") &&
     combatSource.includes("function getEnemyVisualMoveProgress(enemyState, frameNow)") &&
@@ -137,24 +147,27 @@ assert.ok(
   "combat runtime should wire a dedicated guard animation set"
 );
 assert.ok(
-  combatSource.includes("function createChickenRenderer(enemyState, enemyType)") &&
-    combatSource.includes("renderer.kind === 'chicken'") &&
-    combatSource.includes("updateChickenRenderer(enemyState, renderer"),
-  "combat runtime should provide a dedicated chicken renderer and motion path"
+  combatEnemyRenderRuntimeSource.includes("function createChickenRenderer(enemyState, enemyType)") &&
+    combatEnemyRenderRuntimeSource.includes("updateChickenRenderer(enemyState, renderer"),
+  "combat enemy render runtime should provide a dedicated chicken renderer and motion path"
 );
 assert.ok(
-  combatSource.includes("function createBoarRenderer(enemyState, enemyType)") &&
-    combatSource.includes("function updateBoarRenderer(enemyState, renderer, frameNow") &&
-    combatSource.includes("function createWolfRenderer(enemyState, enemyType)") &&
-    combatSource.includes("function updateWolfRenderer(enemyState, renderer, frameNow") &&
-    combatSource.includes("if (enemyState.enemyId === 'enemy_boar') renderer = createBoarRenderer(enemyState, enemyType);") &&
-    combatSource.includes("else if (enemyState.enemyId === 'enemy_wolf') renderer = createWolfRenderer(enemyState, enemyType);"),
-  "combat runtime should give boars and wolves dedicated quadruped renderers"
+  combatEnemyRenderRuntimeSource.includes("function createBoarRenderer(enemyState, enemyType)") &&
+    combatEnemyRenderRuntimeSource.includes("function updateBoarRenderer(enemyState, renderer, frameNow") &&
+    combatEnemyRenderRuntimeSource.includes("function createWolfRenderer(enemyState, enemyType)") &&
+    combatEnemyRenderRuntimeSource.includes("function updateWolfRenderer(enemyState, renderer, frameNow") &&
+    combatEnemyRenderRuntimeSource.includes("if (enemyState.enemyId === 'enemy_boar') return createBoarRenderer(enemyState, enemyType);") &&
+    combatEnemyRenderRuntimeSource.includes("if (enemyState.enemyId === 'enemy_wolf') return createWolfRenderer(enemyState, enemyType);"),
+  "combat enemy render runtime should give boars and wolves dedicated quadruped renderers"
 );
-assert.strictEqual(countOccurrences(combatSource, "function createBoarRenderer("), 1, "combat.js should not keep shadowed boar renderer declarations");
-assert.strictEqual(countOccurrences(combatSource, "function createWolfRenderer("), 1, "combat.js should not keep shadowed wolf renderer declarations");
-assert.strictEqual(countOccurrences(combatSource, "function updateBoarRenderer("), 1, "combat.js should not keep shadowed boar update declarations");
-assert.strictEqual(countOccurrences(combatSource, "function updateWolfRenderer("), 1, "combat.js should not keep shadowed wolf update declarations");
+assert.strictEqual(countOccurrences(combatSource, "function createBoarRenderer("), 0, "combat.js should delegate boar renderer declarations");
+assert.strictEqual(countOccurrences(combatSource, "function createWolfRenderer("), 0, "combat.js should delegate wolf renderer declarations");
+assert.strictEqual(countOccurrences(combatSource, "function updateBoarRenderer("), 0, "combat.js should delegate boar update declarations");
+assert.strictEqual(countOccurrences(combatSource, "function updateWolfRenderer("), 0, "combat.js should delegate wolf update declarations");
+assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function createBoarRenderer("), 1, "combat enemy render runtime should have one boar renderer declaration");
+assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function createWolfRenderer("), 1, "combat enemy render runtime should have one wolf renderer declaration");
+assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function updateBoarRenderer("), 1, "combat enemy render runtime should have one boar update declaration");
+assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function updateWolfRenderer("), 1, "combat enemy render runtime should have one wolf update declaration");
 assert.ok(!combatSource.includes("function createQuadrupedLimbRig("), "combat.js should not keep the dead quadruped limb rig helper generation");
 assert.ok(!combatSource.includes("function poseQuadrupedLimbRig("), "combat.js should not keep the dead quadruped limb pose helper generation");
 assert.ok(
