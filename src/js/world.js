@@ -25,6 +25,7 @@
         const worldStatusHudRuntime = window.WorldStatusHudRuntime || null;
         const skillProgressRuntime = window.SkillProgressRuntime || null;
         const inventoryItemRuntime = window.InventoryItemRuntime || null;
+        const equipmentItemRuntime = window.EquipmentItemRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
@@ -462,6 +463,20 @@
             return inventoryItemRuntime.removeItemsById(buildInventoryItemRuntimeContext(), itemId, amount);
         }
 
+        function buildEquipmentItemRuntimeContext() {
+            return {
+                equipment,
+                inventory,
+                playerSkills,
+                addChatMessage,
+                clearSelectedUse,
+                updateStats,
+                renderInventory,
+                renderEquipment,
+                updatePlayerModel
+            };
+        }
+
         function buildFireLifecycleRuntimeContext() {
             return {
                 THREE,
@@ -740,38 +755,7 @@
             }
 
             if (actionName === 'Equip') {
-                const slotName = (item && item.type && Object.prototype.hasOwnProperty.call(equipment, item.type))
-                    ? item.type
-                    : ((item && item.weaponClass && Object.prototype.hasOwnProperty.call(equipment, 'weapon')) ? 'weapon' : null);
-                if (!slotName) return;
-                const requiredAttackLevel = Number.isFinite(item.requiredAttackLevel) ? Math.max(1, Math.floor(item.requiredAttackLevel)) : 0;
-                const attackLevel = playerSkills && playerSkills.attack && Number.isFinite(playerSkills.attack.level)
-                    ? Math.max(1, Math.floor(playerSkills.attack.level))
-                    : 1;
-                if (requiredAttackLevel > 0 && attackLevel < requiredAttackLevel) {
-                    addChatMessage(`You need Attack level ${requiredAttackLevel} to equip the ${item.name}.`, 'warn');
-                    return;
-                }
-                const requiredFishingLevel = Number.isFinite(item.requiredFishingLevel) ? Math.max(1, Math.floor(item.requiredFishingLevel)) : 0;
-                const fishingLevel = playerSkills && playerSkills.fishing && Number.isFinite(playerSkills.fishing.level)
-                    ? Math.max(1, Math.floor(playerSkills.fishing.level))
-                    : 1;
-                if (requiredFishingLevel > 0 && fishingLevel < requiredFishingLevel) {
-                    addChatMessage(`You need Fishing level ${requiredFishingLevel} to equip the ${item.name}.`, 'warn');
-                    return;
-                }
-                const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel) ? Math.max(1, Math.floor(item.requiredDefenseLevel)) : 0;
-                const defenseLevel = playerSkills && playerSkills.defense && Number.isFinite(playerSkills.defense.level)
-                    ? Math.max(1, Math.floor(playerSkills.defense.level))
-                    : 1;
-                if (requiredDefenseLevel > 0 && defenseLevel < requiredDefenseLevel) {
-                    addChatMessage(`You need Defense level ${requiredDefenseLevel} to equip the ${item.name}.`, 'warn');
-                    return;
-                }
-                const oldItem = equipment[slotName];
-                equipment[slotName] = item; inventory[invIndex] = oldItem ? { itemData: oldItem, amount: 1 } : null;
-                clearSelectedUse(false);
-                updateStats(); renderInventory(); renderEquipment(); updatePlayerModel();
+                equipmentItemRuntime.equipItem(buildEquipmentItemRuntimeContext(), invIndex);
             } else if (actionName === 'Eat') {
                 eatItem(invIndex);
             } else if (actionName === 'Drop') {
@@ -780,34 +764,15 @@
         }
 
         function hasWeaponClassAvailable(weaponClass) {
-            if (equipment.weapon && equipment.weapon.weaponClass === weaponClass) return true;
-            return inventory.some((slot) => slot && slot.itemData && slot.itemData.type === 'weapon' && slot.itemData.weaponClass === weaponClass);
+            return equipmentItemRuntime.hasWeaponClassAvailable(buildEquipmentItemRuntimeContext(), weaponClass);
         }
 
         function autoEquipWeaponClass(weaponClass) {
-            if (equipment.weapon && equipment.weapon.weaponClass === weaponClass) return true;
-            const invIndex = inventory.findIndex((slot) => slot && slot.itemData && slot.itemData.type === 'weapon' && slot.itemData.weaponClass === weaponClass);
-            if (invIndex === -1) return false;
-            const slot = inventory[invIndex];
-            if (!slot || !slot.itemData) return false;
-            const item = slot.itemData;
-            const oldWeapon = equipment.weapon;
-            equipment.weapon = item;
-            inventory[invIndex] = oldWeapon ? { itemData: oldWeapon, amount: 1 } : null;
-            clearSelectedUse(false);
-            updateStats(); renderInventory(); renderEquipment(); updatePlayerModel();
-            return true;
+            return equipmentItemRuntime.autoEquipWeaponClass(buildEquipmentItemRuntimeContext(), weaponClass);
         }
 
         function unequipItem(slotName) {
-            const item = equipment[slotName];
-            if (!item) return;
-            const emptyIdx = inventory.indexOf(null);
-            if (emptyIdx !== -1) {
-                inventory[emptyIdx] = { itemData: item, amount: 1 }; equipment[slotName] = null;
-                clearSelectedUse(false);
-                updateStats(); renderInventory(); renderEquipment(); updatePlayerModel();
-            }
+            return equipmentItemRuntime.unequipItem(buildEquipmentItemRuntimeContext(), slotName);
         }
 
         function addGroundItemVisual(group, itemData) {

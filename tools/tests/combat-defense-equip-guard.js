@@ -7,100 +7,6 @@ function read(relPath) {
   return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
 }
 
-function extractBlock(source, startToken) {
-  const start = source.indexOf(startToken);
-  if (start === -1) {
-    throw new Error(`Failed to find block start: ${startToken}`);
-  }
-
-  const openBrace = source.indexOf("{", start);
-  if (openBrace === -1) {
-    throw new Error(`Failed to find opening brace for: ${startToken}`);
-  }
-
-  let depth = 0;
-  let inSingle = false;
-  let inDouble = false;
-  let inTemplate = false;
-  let inLineComment = false;
-  let inBlockComment = false;
-  for (let i = openBrace; i < source.length; i++) {
-    const ch = source[i];
-    const next = source[i + 1];
-    const prev = source[i - 1];
-
-    if (inLineComment) {
-      if (ch === "\n") inLineComment = false;
-      continue;
-    }
-    if (inBlockComment) {
-      if (ch === "*" && next === "/") {
-        inBlockComment = false;
-        i += 1;
-      }
-      continue;
-    }
-    if (inSingle) {
-      if (ch === "'" && prev !== "\\") inSingle = false;
-      continue;
-    }
-    if (inDouble) {
-      if (ch === "\"" && prev !== "\\") inDouble = false;
-      continue;
-    }
-    if (inTemplate) {
-      if (ch === "`" && prev !== "\\") {
-        inTemplate = false;
-        continue;
-      }
-      if (ch !== "$" || next !== "{") continue;
-    }
-
-    if (ch === "/" && next === "/") {
-      inLineComment = true;
-      i += 1;
-      continue;
-    }
-    if (ch === "/" && next === "*") {
-      inBlockComment = true;
-      i += 1;
-      continue;
-    }
-    if (ch === "'") {
-      inSingle = true;
-      continue;
-    }
-    if (ch === "\"") {
-      inDouble = true;
-      continue;
-    }
-    if (ch === "`") {
-      inTemplate = true;
-      continue;
-    }
-    if (ch === "{") depth += 1;
-    if (ch === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        return source.slice(start, i + 1);
-      }
-    }
-  }
-
-  throw new Error(`Failed to close block for: ${startToken}`);
-}
-
-function extractFunction(source, name) {
-  return extractBlock(source, `function ${name}(`);
-}
-
-function extractEquipBranchBody(source) {
-  const branch = extractBlock(source, "if (actionName === 'Equip') {");
-  const firstBrace = branch.indexOf("{");
-  const lastBrace = branch.lastIndexOf("}");
-  return branch.slice(firstBrace + 1, lastBrace);
-}
-
 const inventorySource = read("src/js/inventory.js");
 assert.ok(
   inventorySource.includes("const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel)"),
@@ -111,35 +17,19 @@ assert.ok(
   "inventory tooltip builder should surface a Defense req. row"
 );
 
-const worldSource = read("src/js/world.js");
-const equipBranchBody = extractEquipBranchBody(worldSource);
-const equipSandbox = {};
-vm.runInNewContext(
-  `
-  function runEquipAction(ctx) {
-    const {
-      item,
-      equipment,
-      inventory,
-      invIndex,
-      playerSkills,
-      addChatMessage,
-      clearSelectedUse,
-      updateStats,
-      renderInventory,
-      renderEquipment,
-      updatePlayerModel
-    } = ctx;
-    const actionName = 'Equip';
-    ${equipBranchBody}
-    return { equipment, inventory };
-  }
-  globalThis.runEquipAction = runEquipAction;
-  `,
-  equipSandbox,
-  { filename: "world-equip-extract.js" }
+const runtimeSource = read("src/js/equipment-item-runtime.js");
+assert.ok(
+  runtimeSource.includes("function canEquipItem(context = {}, item)"),
+  "equipment item runtime should own equip requirement checks"
 );
-const runEquipAction = equipSandbox.runEquipAction;
+assert.ok(
+  runtimeSource.includes("requiredDefenseLevel"),
+  "equipment item runtime should enforce requiredDefenseLevel"
+);
+
+const sandbox = { window: {} };
+vm.runInNewContext(runtimeSource, sandbox, { filename: "equipment-item-runtime.js" });
+const runtime = sandbox.window.EquipmentItemRuntime;
 
 function makeEquipContext(overrides = {}) {
   const chat = [];
@@ -152,15 +42,16 @@ function makeEquipContext(overrides = {}) {
   };
 
   const ctx = {
-    item: {
-      id: "rune_shield",
-      name: "Rune Shield",
-      type: "shield",
-      requiredDefenseLevel: 40
-    },
     equipment: { shield: overrides.oldShield || null, weapon: null },
-    inventory: [{ itemData: { id: "rune_shield" }, amount: 1 }],
-    invIndex: 0,
+    inventory: [{
+      itemData: {
+        id: "rune_shield",
+        name: "Rune Shield",
+        type: "shield",
+        requiredDefenseLevel: 40
+      },
+      amount: 1
+    }],
     playerSkills: {
       attack: { level: 99 },
       fishing: { level: 99 },
@@ -189,7 +80,7 @@ function makeEquipContext(overrides = {}) {
 
 {
   const { ctx, chat, hooks } = makeEquipContext({ defenseLevel: 30 });
-  runEquipAction(ctx);
+  runtime.equipItem(ctx, 0);
 
   assert.deepStrictEqual(
     chat,
@@ -214,7 +105,7 @@ function makeEquipContext(overrides = {}) {
 {
   const oldShield = { id: "bronze_shield", name: "Bronze Shield", type: "shield" };
   const { ctx, chat, hooks } = makeEquipContext({ defenseLevel: 40, oldShield });
-  runEquipAction(ctx);
+  runtime.equipItem(ctx, 0);
 
   assert.deepStrictEqual(chat, [], "successful equip should not emit a warning");
   assert.strictEqual(ctx.equipment.shield.id, "rune_shield", "successful equip should place the new shield in the equipment slot");
