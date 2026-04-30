@@ -93,6 +93,7 @@ const bridgeSource = read("src/game/platform/ui-domain-bridge.ts");
 const inventorySource = read("src/js/inventory.js");
 const inventoryTooltipRuntimeSource = read("src/js/inventory-tooltip-runtime.js");
 const skillPanelRuntimeSource = read("src/js/skill-panel-runtime.js");
+const skillPanelRenderRuntimeSource = read("src/js/skill-panel-render-runtime.js");
 const worldSource = read("src/js/world.js");
 const statusHudRuntimeSource = read("src/js/world/status-hud-runtime.js");
 const coreSource = read("src/js/core.js");
@@ -161,16 +162,28 @@ assert.ok(
   "skill panel runtime should own skill-panel timeline derivation"
 );
 assert.ok(
+  skillPanelRenderRuntimeSource.includes("window.SkillPanelRenderRuntime"),
+  "skill panel render runtime should expose window.SkillPanelRenderRuntime"
+);
+assert.ok(
+  skillPanelRenderRuntimeSource.includes("function renderSkillPanelTimeline(options = {})"),
+  "skill panel render runtime should own skill-panel timeline DOM rendering"
+);
+assert.ok(
   inventorySource.includes("getSkillPanelRuntime"),
   "inventory.js should read from the skill panel runtime"
+);
+assert.ok(
+  inventorySource.includes("getSkillPanelRenderRuntime"),
+  "inventory.js should read from the skill panel render runtime"
 );
 assert.ok(
   inventorySource.includes("runtime.buildSkillPanelRecipeDetails"),
   "inventory.js should delegate skill recipe details to the skill panel runtime"
 );
 assert.ok(
-  inventorySource.includes("runtime.buildSkillPanelTimeline"),
-  "inventory.js should delegate skill unlock timelines to the skill panel runtime"
+  inventorySource.includes("runtime.renderSkillPanelTimeline"),
+  "inventory.js should delegate skill unlock timeline rendering to the skill panel render runtime"
 );
 assert.ok(
   !inventorySource.includes("function collectSkillPanelMilestones"),

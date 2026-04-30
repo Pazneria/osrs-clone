@@ -14,17 +14,19 @@ function run() {
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const skillProgressIndex = manifestSource.indexOf('id: "skill-progress-runtime"');
   const skillPanelIndex = manifestSource.indexOf('id: "skill-panel-runtime"');
+  const skillPanelRenderIndex = manifestSource.indexOf('id: "skill-panel-render-runtime"');
   const inventoryIndex = manifestSource.indexOf('id: "inventory"');
 
   assert(skillPanelIndex !== -1, "legacy manifest should include the skill panel runtime");
+  assert(skillPanelRenderIndex !== -1, "legacy manifest should include the skill panel render runtime");
   assert(skillProgressIndex !== -1 && inventoryIndex !== -1, "legacy manifest should include skill progress and inventory scripts");
-  assert(skillProgressIndex < skillPanelIndex && skillPanelIndex < inventoryIndex, "legacy manifest should load skill panel runtime before inventory.js");
+  assert(skillProgressIndex < skillPanelIndex && skillPanelIndex < skillPanelRenderIndex && skillPanelRenderIndex < inventoryIndex, "legacy manifest should load skill panel runtimes before inventory.js");
   assert(runtimeSource.includes("window.SkillPanelRuntime"), "skill panel runtime should expose a window runtime");
   assert(runtimeSource.includes("function buildSkillPanelTimeline(options = {})"), "skill panel runtime should own timeline construction");
   assert(runtimeSource.includes("function buildSkillPanelRecipeDetails(options = {})"), "skill panel runtime should own recipe detail construction");
   assert(runtimeSource.includes("COMBAT_SKILL_MILESTONES"), "skill panel runtime should own combat milestone fallback data");
   assert(inventorySource.includes("getSkillPanelRuntime"), "inventory.js should resolve the skill panel runtime");
-  assert(inventorySource.includes("runtime.buildSkillPanelTimeline"), "inventory.js should delegate timeline construction");
+  assert(!inventorySource.includes("function buildSkillPanelTimeline("), "inventory.js should not own skill-panel timeline construction");
   assert(inventorySource.includes("runtime.buildSkillPanelRecipeDetails"), "inventory.js should delegate recipe detail construction");
   assert(!inventorySource.includes("const COMBAT_SKILL_MILESTONES"), "inventory.js should not own combat milestone fallback data");
   assert(!inventorySource.includes("const FISHING_METHOD_LABELS"), "inventory.js should not own fishing method label fallback data");
