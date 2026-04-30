@@ -16,6 +16,7 @@ const mainSource = read("src/main.ts");
 const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
+const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
@@ -196,7 +197,7 @@ assert.ok(
 assert.ok(
   inputRenderSource.includes("function formatEnemyTooltipDisplayName(hitData)") &&
     inputRenderSource.includes("${baseName} (Level ${combatLevel})") &&
-    inputRenderSource.includes("formatEnemyTooltipDisplayName(hitData)"),
+    inputHoverTooltipRuntimeSource.includes("formatEnemyTooltipDisplayName(hitData)"),
   "enemy hover tooltips should append computed combat level next to the enemy name"
 );
 assert.ok(

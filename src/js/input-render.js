@@ -5,6 +5,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputStationInteractionRuntime() {
             return window.InputStationInteractionRuntime || null;
         }
+        function getInputHoverTooltipRuntime() {
+            return window.InputHoverTooltipRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -1901,95 +1904,57 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function updateHoverTooltip() {
-            const tooltip = document.getElementById('hover-tooltip');
-            if (isDraggingCamera || isFreeCam || isBankOpen || currentMouseX === 0) { tooltip.classList.add('hidden'); return; }
+            const runtime = getInputHoverTooltipRuntime();
+            if (!runtime || typeof runtime.updateHoverTooltipDisplay !== 'function') return;
+
             const hoveredElement = document.elementFromPoint(currentMouseX, currentMouseY);
-            if (hoveredElement && hoveredElement.tagName !== 'CANVAS') { tooltip.classList.add('hidden'); return; }
+            const shouldHide = isDraggingCamera
+                || isFreeCam
+                || isBankOpen
+                || currentMouseX === 0
+                || !!(hoveredElement && hoveredElement.tagName !== 'CANVAS');
+            const hitData = shouldHide ? null : getRaycastHit(currentMouseX, currentMouseY);
+            const selectedSlot = hitData ? getSelectedUseItem() : null;
+            const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
+            const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
+            const fireUnderCursor = !!(hitData && Array.isArray(activeFires) && activeFires.some((f) => {
+                if (!f || f.z !== playerState.z) return false;
+                if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY) && f.x === hitData.gridX && f.y === hitData.gridY) return true;
+                if (!hitData.point) return false;
+                return Math.hypot((f.x + 0.5) - hitData.point.x, (f.y + 0.5) - hitData.point.z) <= 1.9;
+            }));
+            const isAshesGroundItem = !!(hitData && hitData.type === 'GROUND_ITEM' && /^Ashes(?:\s|\(|$)/i.test(hitData.name || ''));
+            const isTreeTile = !!(hitData
+                && hitData.type === 'TREE'
+                && logicalMap[playerState.z]
+                && logicalMap[playerState.z][hitData.gridY]
+                && logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.TREE);
 
-            const hitData = getRaycastHit(currentMouseX, currentMouseY);
-            if (hitData) {
-                if (!isHitWithinTooltipWalkDistance(hitData)) {
-                    tooltip.classList.add('hidden');
-                    return;
-                }
-                                const selectedSlot = getSelectedUseItem();
-                const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
-                const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
-                const fireUnderCursor = Array.isArray(activeFires) && activeFires.some((f) => {
-                    if (!f || f.z !== playerState.z) return false;
-                    if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY) && f.x === hitData.gridX && f.y === hitData.gridY) return true;
-                    if (!hitData.point) return false;
-                    return Math.hypot((f.x + 0.5) - hitData.point.x, (f.y + 0.5) - hitData.point.z) <= 1.9;
-                });
-
-                const isAshesGroundItem = hitData.type === 'GROUND_ITEM' && /^Ashes(?:\s|\(|$)/i.test(hitData.name || '');
-                const groundDisplayName = hitData.type === 'GROUND_ITEM'
-                    ? formatGroundItemDisplayName(hitData)
-                    : (hitData.name || '');
-
-                let actionText = '';
-                if (selectedCookable && (hitData.type === 'GROUND' || hitData.type === 'FIRE' || isAshesGroundItem) && fireUnderCursor) {
-                    actionText = `<span class="text-gray-300">Use</span> <span class="text-[#ff981f]">${selectedItem.name}</span> <span class="text-gray-300">-></span> <span class="text-orange-300">Fire</span>`;
-                } else if (isAshesGroundItem && fireUnderCursor) {
-                    actionText = '<span class="text-gray-300">Use</span> <span class="text-orange-300">Fire</span>';
-                }
-
-                if (!actionText) {
-                    actionText = (window.SkillRuntime && typeof SkillRuntime.getSkillTooltip === 'function')
-                        ? SkillRuntime.getSkillTooltip(hitData)
-                        : '';
-                }
-
-                if (!actionText) {
-                    if (hitData.type === 'TREE') {
-                        if (logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.TREE) actionText = '<span class="text-gray-300">Chop down</span> <span class="text-cyan-400">Tree</span>';
-                    } else if (hitData.type === 'ROCK') actionText = '<span class="text-gray-300">Mine</span> <span class="text-cyan-400">Rock</span>';
-                    else if (hitData.type === 'FIRE') actionText = '<span class="text-gray-300">Use</span> <span class="text-orange-300">Fire</span>';
-                    else if (hitData.type === 'GROUND_ITEM') actionText = `<span class="text-gray-300">Take</span> <span class="text-[#ff981f]">${groundDisplayName}</span>`;
-                    else if (hitData.type === 'BANK_BOOTH') actionText = '<span class="text-gray-300">Bank</span> <span class="text-cyan-400">Bank Booth</span>';
-                    else if (hitData.type === 'SHOP_COUNTER') actionText = '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
-                    else if (hitData.type === 'WATER') actionText = '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
-                    else if (hitData.type === 'DOOR') actionText = `<span class="text-gray-300">${hitData.doorObj.isOpen ? 'Close' : 'Open'}</span> <span class="text-cyan-400">Door</span>`;
-                    else if (hitData.type === 'ENEMY') actionText = `<span class="text-gray-300">Attack</span> <span class="text-[#ffff00]">${formatEnemyTooltipDisplayName(hitData)}</span>`;
-                    else if (hitData.type === 'STAIRS_UP') actionText = '<span class="text-gray-300">Climb-up</span> <span class="text-cyan-400">Stairs</span>';
-                    else if (hitData.type === 'STAIRS_DOWN') actionText = '<span class="text-gray-300">Climb-down</span> <span class="text-cyan-400">Stairs</span>';
-                    else if (hitData.type === 'NPC') {
-                        const baseNpcAction = (hitData.uid && hitData.uid.action) ? hitData.uid.action : (hitData.name === 'Shopkeeper' ? 'Trade' : 'Talk-to');
-                        let npcAction = (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
-                            ? window.QuestRuntime.resolveNpcPrimaryAction((hitData.uid && typeof hitData.uid === 'object')
-                                ? hitData.uid
-                                : { name: hitData.name, action: baseNpcAction })
-                            : baseNpcAction;
-                        if (hitData.name === 'Banker' && window.getItemMenuPreferenceKey && window.getPreferredMenuAction) {
-                            const prefKey = window.getItemMenuPreferenceKey('npc', (hitData.uid && (hitData.uid.spawnId || hitData.uid.merchantId || hitData.uid.name)) || hitData.name);
-                            npcAction = window.getPreferredMenuAction(prefKey, ['Talk-to', 'Bank']) || npcAction;
-                        }
-                        if (npcAction === 'Trade') actionText = `<span class="text-gray-300">Trade</span> <span class="text-yellow-400">${hitData.name}</span>`;
-                        else if (npcAction === 'Bank') actionText = `<span class="text-gray-300">Bank</span> <span class="text-yellow-400">${hitData.name}</span>`;
-                        else if (npcAction === 'Travel') actionText = `<span class="text-gray-300">Travel</span> <span class="text-yellow-400">${hitData.name}</span>`;
-                        else actionText = `<span class="text-gray-300">Talk-to</span> <span class="text-yellow-400">${hitData.name}</span>`;
-                }
-                }
-
-                if (actionText) {
-                    tooltip.innerHTML = actionText;
-                    tooltip.classList.remove('hidden');
-
-                    let x = currentMouseX + 14;
-                    let y = currentMouseY + 14;
-                    const w = tooltip.offsetWidth;
-                    const h = tooltip.offsetHeight;
-
-                    if (x + w > window.innerWidth - 8) x = currentMouseX - w - 14;
-                    if (y + h > window.innerHeight - 8) y = currentMouseY - h - 14;
-                    if (x < 8) x = 8;
-                    if (y < 8) y = 8;
-
-                    tooltip.style.left = x + 'px';
-                    tooltip.style.top = y + 'px';
-                    tooltip.style.transform = 'none';
-                } else tooltip.classList.add('hidden');
-            } else tooltip.classList.add('hidden');
+            runtime.updateHoverTooltipDisplay({
+                documentRef: document,
+                windowRef: window,
+                tooltipId: 'hover-tooltip',
+                shouldHide,
+                hitData,
+                isWithinWalkDistance: hitData ? isHitWithinTooltipWalkDistance(hitData) : false,
+                currentMouseX,
+                currentMouseY,
+                selectedItem,
+                selectedCookable,
+                fireUnderCursor,
+                isAshesGroundItem,
+                groundDisplayName: hitData && hitData.type === 'GROUND_ITEM' ? formatGroundItemDisplayName(hitData) : (hitData && hitData.name) || '',
+                isTreeTile,
+                getSkillTooltip: (target) => (window.SkillRuntime && typeof SkillRuntime.getSkillTooltip === 'function')
+                    ? SkillRuntime.getSkillTooltip(target)
+                    : '',
+                formatEnemyTooltipDisplayName,
+                resolveNpcPrimaryAction: (npc) => (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
+                    ? window.QuestRuntime.resolveNpcPrimaryAction(npc)
+                    : null,
+                getItemMenuPreferenceKey: (typeof window.getItemMenuPreferenceKey === 'function') ? window.getItemMenuPreferenceKey : null,
+                getPreferredMenuAction: (typeof window.getPreferredMenuAction === 'function') ? window.getPreferredMenuAction : null
+            });
         }
 
         // Helper to grab the visual height extruded for planes
