@@ -12,6 +12,10 @@
             return window.UiDomainRuntime || null;
         }
 
+        function getInventoryTooltipRuntime() {
+            return window.InventoryTooltipRuntime || null;
+        }
+
         function buildInventorySlotViewModels() {
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.buildInventorySlotViewModels === 'function') {
@@ -89,218 +93,55 @@
             return `<span class="${classes.join(' ')}">${text}</span>`;
         }
 
-        function getInventoryHoverTooltipEl() {
-            return document.getElementById('inventory-hover-tooltip');
-        }
-
-        function hideInventoryHoverTooltip() {
-            const tooltip = getInventoryHoverTooltipEl();
-            if (!tooltip) return;
-            tooltip.classList.add('hidden');
-        }
-
-        function rectanglesOverlap(x, y, width, height, rect) {
-            if (!rect) return false;
-            return !(x + width <= rect.left || x >= rect.right || y + height <= rect.top || y >= rect.bottom);
-        }
-
-        function positionInventoryHoverTooltip(tooltip, clientX, clientY) {
-            const pad = 8;
-            const xOffset = 14;
-            const yOffset = 14;
-            const w = tooltip.offsetWidth || 140;
-            const h = tooltip.offsetHeight || 24;
-
-            let x = clientX + xOffset;
-            let y = clientY + yOffset;
-
-            if (x + w > window.innerWidth - pad) x = clientX - w - xOffset;
-            if (y + h > window.innerHeight - pad) y = clientY - h - (yOffset + 2);
-            if (x < pad) x = pad;
-            if (y < pad) y = pad;
-
+        function buildInventoryTooltipOptions() {
             const avoidRects = [];
             if (contextMenuEl && !contextMenuEl.classList.contains('hidden')) avoidRects.push(contextMenuEl.getBoundingClientRect());
             const swapSubmenu = document.getElementById('context-swap-left-click-submenu');
             if (swapSubmenu && !swapSubmenu.classList.contains('hidden')) avoidRects.push(swapSubmenu.getBoundingClientRect());
-
-            for (let i = 0; i < avoidRects.length; i++) {
-                const rect = avoidRects[i];
-                if (!rectanglesOverlap(x, y, w, h, rect)) continue;
-
-                const aboveY = rect.top - h - 10;
-                if (aboveY >= pad) {
-                    y = aboveY;
-                } else {
-                    const leftX = rect.left - w - 10;
-                    const rightX = rect.right + 10;
-                    if (leftX >= pad) x = leftX;
-                    else if (rightX + w <= window.innerWidth - pad) x = rightX;
-                    else y = Math.max(pad, rect.bottom + 10);
-                }
-            }
-
-            if (x + w > window.innerWidth - pad) x = window.innerWidth - w - pad;
-            if (y + h > window.innerHeight - pad) y = window.innerHeight - h - pad;
-            if (x < pad) x = pad;
-            if (y < pad) y = pad;
-
-            tooltip.style.left = `${x}px`;
-            tooltip.style.top = `${y}px`;
-        }
-
-        function showInventoryHoverTooltip(text, clientX, clientY, html = '') {
-            const tooltip = getInventoryHoverTooltipEl();
-            const tooltipText = (typeof text === 'string') ? text.trim() : '';
-            const tooltipHtml = (typeof html === 'string') ? html.trim() : '';
-            if (!tooltip || (!tooltipText && !tooltipHtml)) {
-                hideInventoryHoverTooltip();
-                return;
-            }
-
-            if (tooltipHtml) tooltip.innerHTML = tooltipHtml;
-            else tooltip.textContent = tooltipText;
-            tooltip.classList.remove('hidden');
-            positionInventoryHoverTooltip(tooltip, clientX, clientY);
-        }
-
-        function escapeTooltipHtml(value) {
-            return String(value == null ? '' : value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        function formatSignedTooltipStat(value) {
-            const numericValue = Number.isFinite(value) ? Math.floor(value) : 0;
-            return `${numericValue >= 0 ? '+' : ''}${numericValue}`;
-        }
-
-        function buildItemTooltipSections(item, options = {}) {
-            if (!item || typeof item !== 'object') return null;
-
-            const detailLines = [];
-            const bonusLines = [];
-            const requirementLines = [];
-
-            const actionText = typeof options.actionText === 'string' ? options.actionText.trim() : '';
-            if (actionText) detailLines.push(actionText);
-
-            const amount = Number.isFinite(options.amount) ? Math.max(0, Math.floor(options.amount)) : 0;
-            if (amount > 1) detailLines.push(`Amount: ${amount.toLocaleString()}`);
-
-            const priceText = typeof options.priceText === 'string' ? options.priceText.trim() : '';
-            if (priceText) detailLines.push(priceText);
-            else if (Number.isFinite(item.value) && item.value > 0) detailLines.push(`Value: ${Math.floor(item.value).toLocaleString()} coins`);
-
-            if (Number.isFinite(item.healAmount) && item.healAmount > 0) {
-                detailLines.push(`Heals: +${Math.floor(item.healAmount)} HP`);
-            }
-
-            const attackProfile = item.combat && item.combat.attackProfile ? item.combat.attackProfile : null;
-            if (attackProfile && Number.isFinite(attackProfile.tickCycle)) {
-                const tickCycle = Math.max(1, Math.floor(attackProfile.tickCycle));
-                detailLines.push(`Speed: ${tickCycle} tick${tickCycle === 1 ? '' : 's'}`);
-            }
-
-            const stats = item.stats && typeof item.stats === 'object' ? item.stats : null;
-            if (stats) {
-                if (Number.isFinite(stats.atk) && Math.floor(stats.atk) !== 0) {
-                    bonusLines.push({ label: 'Attack bonus', value: formatSignedTooltipStat(stats.atk) });
-                }
-                if (Number.isFinite(stats.def) && Math.floor(stats.def) !== 0) {
-                    bonusLines.push({ label: 'Defense bonus', value: formatSignedTooltipStat(stats.def) });
-                }
-                if (Number.isFinite(stats.str) && Math.floor(stats.str) !== 0) {
-                    bonusLines.push({ label: 'Strength bonus', value: formatSignedTooltipStat(stats.str) });
-                }
-            }
-
-            const requiredAttackLevel = Number.isFinite(item.requiredAttackLevel)
-                ? Math.max(1, Math.floor(item.requiredAttackLevel))
-                : 0;
-            if (requiredAttackLevel > 1) {
-                requirementLines.push({ label: 'Attack req.', value: String(requiredAttackLevel) });
-            }
-            const requiredFishingLevel = Number.isFinite(item.requiredFishingLevel)
-                ? Math.max(1, Math.floor(item.requiredFishingLevel))
-                : 0;
-            if (requiredFishingLevel > 0) {
-                requirementLines.push({ label: 'Fishing req.', value: String(requiredFishingLevel) });
-            }
-            const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel)
-                ? Math.max(1, Math.floor(item.requiredDefenseLevel))
-                : 0;
-            if (requiredDefenseLevel > 0) {
-                requirementLines.push({ label: 'Defense req.', value: String(requiredDefenseLevel) });
-            }
-
             return {
-                name: typeof item.name === 'string' ? item.name : 'Item',
-                detailLines,
-                bonusLines,
-                requirementLines
+                documentRef: document,
+                windowRef: window,
+                avoidRects
             };
         }
 
-        function buildItemTooltipText(item, options = {}) {
-            const sections = buildItemTooltipSections(item, options);
-            if (!sections) return '';
+        function hideInventoryHoverTooltip() {
+            const runtime = getInventoryTooltipRuntime();
+            if (runtime && typeof runtime.hideInventoryHoverTooltip === 'function') {
+                runtime.hideInventoryHoverTooltip(buildInventoryTooltipOptions());
+            }
+        }
 
-            const lines = [sections.name];
-            sections.detailLines.forEach((line) => lines.push(line));
-            sections.bonusLines.forEach((line) => lines.push(`${line.label}: ${line.value}`));
-            sections.requirementLines.forEach((line) => lines.push(`${line.label}: ${line.value}`));
-            return lines.join('\n');
+        function escapeTooltipHtml(value) {
+            const runtime = getInventoryTooltipRuntime();
+            return runtime && typeof runtime.escapeTooltipHtml === 'function'
+                ? runtime.escapeTooltipHtml(value)
+                : String(value == null ? '' : value);
+        }
+
+        function buildItemTooltipText(item, options = {}) {
+            const runtime = getInventoryTooltipRuntime();
+            return runtime && typeof runtime.buildItemTooltipText === 'function'
+                ? runtime.buildItemTooltipText(item, options)
+                : '';
         }
 
         function buildItemTooltipHtml(item, options = {}) {
-            const sections = buildItemTooltipSections(item, options);
-            if (!sections) return '';
-
-            const detailHtml = sections.detailLines
-                .map((line) => `<div class="text-gray-300">${escapeTooltipHtml(line)}</div>`)
-                .join('');
-            const bonusHtml = sections.bonusLines.length > 0
-                ? `<div class="mt-2 border-t border-[#3a444c] pt-1.5">
-                        <div class="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#c8aa6e]">Bonuses</div>
-                        ${sections.bonusLines.map((line) => `<div class="flex items-center justify-between gap-3"><span class="text-gray-300">${escapeTooltipHtml(line.label)}</span><span class="text-white">${escapeTooltipHtml(line.value)}</span></div>`).join('')}
-                   </div>`
+            const runtime = getInventoryTooltipRuntime();
+            return runtime && typeof runtime.buildItemTooltipHtml === 'function'
+                ? runtime.buildItemTooltipHtml(item, options)
                 : '';
-            const requirementHtml = sections.requirementLines.length > 0
-                ? `<div class="mt-2 border-t border-[#3a444c] pt-1.5">
-                        <div class="mb-1 text-[10px] uppercase tracking-[0.18em] text-[#c8aa6e]">Requirements</div>
-                        ${sections.requirementLines.map((line) => `<div class="flex items-center justify-between gap-3"><span class="text-gray-300">${escapeTooltipHtml(line.label)}</span><span class="text-white">${escapeTooltipHtml(line.value)}</span></div>`).join('')}
-                   </div>`
-                : '';
-
-            return `<div class="min-w-[180px]">
-                <div class="text-[#ffcf8b] text-[11px] font-bold leading-4">${escapeTooltipHtml(sections.name)}</div>
-                <div class="mt-1 text-[10px] leading-4 font-normal tracking-normal space-y-0.5">
-                    ${detailHtml}
-                </div>
-                ${bonusHtml}
-                ${requirementHtml}
-            </div>`;
         }
 
         function bindInventorySlotTooltip(slot, text, html = '') {
-            const tooltipText = (typeof text === 'string') ? text.trim() : '';
-            const tooltipHtml = (typeof html === 'string') ? html.trim() : '';
-            slot.title = '';
-            slot.onmouseenter = null;
-            slot.onmousemove = null;
-            slot.onmouseleave = null;
-            if (!tooltipText && !tooltipHtml) {
-                slot.removeAttribute('aria-label');
-                return;
+            const runtime = getInventoryTooltipRuntime();
+            if (runtime && typeof runtime.bindInventorySlotTooltip === 'function') {
+                runtime.bindInventorySlotTooltip(Object.assign(buildInventoryTooltipOptions(), {
+                    slot,
+                    text,
+                    html
+                }));
             }
-            slot.setAttribute('aria-label', tooltipText);
-            slot.onmouseenter = (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY, tooltipHtml);
-            slot.onmousemove = (event) => showInventoryHoverTooltip(tooltipText, event.clientX, event.clientY, tooltipHtml);
-            slot.onmouseleave = hideInventoryHoverTooltip;
         }
 
         function setInterfaceOpenState(interfaceId, isOpen) {

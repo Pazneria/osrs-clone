@@ -8,13 +8,18 @@ function read(relPath) {
 }
 
 const inventorySource = read("src/js/inventory.js");
+const inventoryTooltipRuntimeSource = read("src/js/inventory-tooltip-runtime.js");
 assert.ok(
-  inventorySource.includes("const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel)"),
-  "inventory tooltip builder should read requiredDefenseLevel"
+  inventoryTooltipRuntimeSource.includes("const requiredDefenseLevel = Number.isFinite(item.requiredDefenseLevel)"),
+  "inventory tooltip runtime should read requiredDefenseLevel"
 );
 assert.ok(
-  inventorySource.includes("requirementLines.push({ label: 'Defense req.', value: String(requiredDefenseLevel) });"),
-  "inventory tooltip builder should surface a Defense req. row"
+  inventoryTooltipRuntimeSource.includes("requirementLines.push({ label: 'Defense req.', value: String(requiredDefenseLevel) });"),
+  "inventory tooltip runtime should surface a Defense req. row"
+);
+assert.ok(
+  inventorySource.includes("runtime.buildItemTooltipHtml(item, options)"),
+  "inventory.js should delegate item tooltip rendering to the tooltip runtime"
 );
 
 const runtimeSource = read("src/js/equipment-item-runtime.js");

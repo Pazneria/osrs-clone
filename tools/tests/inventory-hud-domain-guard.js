@@ -91,6 +91,7 @@ function extractFunction(source, name) {
 
 const bridgeSource = read("src/game/platform/ui-domain-bridge.ts");
 const inventorySource = read("src/js/inventory.js");
+const inventoryTooltipRuntimeSource = read("src/js/inventory-tooltip-runtime.js");
 const skillPanelRuntimeSource = read("src/js/skill-panel-runtime.js");
 const worldSource = read("src/js/world.js");
 const statusHudRuntimeSource = read("src/js/world/status-hud-runtime.js");
@@ -188,12 +189,12 @@ assert.ok(
   "inventory.js should wire combat-style tab controls"
 );
 assert.ok(
-  inventorySource.includes("buildItemTooltipHtml"),
-  "inventory.js should build rich item hover tooltips"
+  inventoryTooltipRuntimeSource.includes("function buildItemTooltipHtml"),
+  "inventory tooltip runtime should build rich item hover tooltips"
 );
 assert.ok(
-  inventorySource.includes("bindInventorySlotTooltip"),
-  "inventory.js should bind inventory and equipment tooltip handlers"
+  inventorySource.includes("runtime.bindInventorySlotTooltip"),
+  "inventory.js should delegate inventory and equipment tooltip handlers"
 );
 assert.ok(
   skillPanelRuntimeSource.includes("computeCookingBurnChance(cookingLevel, recipe.requiredLevel)"),
