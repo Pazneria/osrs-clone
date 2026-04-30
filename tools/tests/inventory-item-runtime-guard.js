@@ -66,6 +66,16 @@ function run() {
   assert(runtime.removeItemsById(context, "logs", 4) === 3, "multi-item removal should stop when matching slots are exhausted");
   assert(runtime.getInventoryCount(context, "logs") === 0, "multi-item removal should clear depleted non-stackable slots");
 
+  const staleSelectionInventory = [{ itemData: coins, amount: 4 }];
+  const staleSelectionCleared = [];
+  assert(runtime.removeItemsById({
+    inventory: staleSelectionInventory,
+    selectedUse: { invIndex: 0, itemId: "logs" },
+    clearSelectedUse: (preserve) => staleSelectionCleared.push(preserve)
+  }, "coins", 1) === 1, "multi-item removal should support stale selected-use slots");
+  assert(staleSelectionInventory[0].amount === 3, "multi-item removal should leave partially depleted stacks in place");
+  assert(staleSelectionCleared.length === 1 && staleSelectionCleared[0] === false, "multi-item removal should clear stale selected-use state when the slot no longer contains the selected item");
+
   console.log("Inventory item runtime guard passed.");
 }
 

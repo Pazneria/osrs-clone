@@ -3,12 +3,12 @@
         return Array.isArray(context.inventory) ? context.inventory : [];
     }
 
-    function clearSelectedUseForSlot(context = {}, index, itemId = null) {
+    function clearSelectedUseForSlot(context = {}, index, options = {}) {
         const selectedUse = context.selectedUse || {};
         if (selectedUse.invIndex !== index) return;
         const inventory = getInventory(context);
         const slot = inventory[index];
-        if (itemId && slot && slot.itemData && slot.itemData.id === itemId) return;
+        if (options.preserveMatchingSelection && slot && slot.itemData && slot.itemData.id === selectedUse.itemId) return;
         if (typeof context.clearSelectedUse === 'function') context.clearSelectedUse(false);
     }
 
@@ -96,7 +96,7 @@
             removed += take;
 
             if (slot.amount <= 0) inventory[i] = null;
-            clearSelectedUseForSlot(context, i, itemId);
+            clearSelectedUseForSlot(context, i, { preserveMatchingSelection: true });
         }
 
         return removed;
