@@ -1811,12 +1811,15 @@ function run() {
   assert(!worldScript.includes("bankBoothsToRender.forEach"), "world.js should not own bank booth chunk landmark rendering");
   assert(!worldScript.includes("furnacesToRender.forEach"), "world.js should not own furnace chunk landmark rendering");
   assert(!worldScript.includes("altarCandidatesToRender.forEach"), "world.js should not own altar chunk landmark rendering");
+  assert(!worldScript.includes("const deckTop = Z_OFFSET + PIER_DECK_TOP_HEIGHT;"), "world.js should not own pier visual construction");
   assert(worldScript.includes("appendChunkLandmarkVisuals(planeGroup, z, Z_OFFSET, startX, startY, endX, endY);"), "world.js should delegate chunk landmark visuals through the structure runtime");
+  assert(worldScript.includes("worldStructureRenderRuntime.appendPierVisualsToChunk"), "world.js should delegate pier visuals through the structure runtime");
   assert(structureRenderRuntimeSource.includes("function createTopAnchoredFloorMesh(options)"), "structure render runtime should own top-anchored floor construction");
   assert(structureRenderRuntimeSource.includes("function createFenceVisualGroup(options)"), "structure render runtime should own fence visual construction");
   assert(structureRenderRuntimeSource.includes("function createWoodenGateVisualGroup(options)"), "structure render runtime should own wooden gate visual construction");
   assert(structureRenderRuntimeSource.includes("function createRoofVisualGroup(options)"), "structure render runtime should own roof visual construction");
   assert(structureRenderRuntimeSource.includes("function appendChunkLandmarkVisuals(options)"), "structure render runtime should own chunk landmark visual rendering");
+  assert(structureRenderRuntimeSource.includes("function appendPierVisualsToChunk(options)"), "structure render runtime should own pier visual rendering");
   assert(structureRenderRuntimeSource.includes("function createFurnaceVisualGroup(options)"), "structure render runtime should own furnace visual construction");
   assert(structureRenderRuntimeSource.includes("function createAltarCandidateVisualGroup(options)"), "structure render runtime should own altar visual construction");
   assert(structureRenderRuntimeSource.includes("function updateTutorialRoofVisibility(options)"), "structure render runtime should own tutorial roof fade updates");

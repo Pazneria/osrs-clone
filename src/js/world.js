@@ -4323,112 +4323,25 @@
         }
 
         function addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
-            const pierConfig = getActivePierConfig();
-            if (!pierConfig || z !== 0) return;
-            // Keep pier stairs visually attached to the first deck row.
-            const pierStepBaseY = pierConfig.entryY + 1;
-            if (pierConfig.xMax < startX || pierConfig.xMin >= endX || pierConfig.yEnd < startY || pierStepBaseY >= endY) return;
-
-            const deckTop = Z_OFFSET + PIER_DECK_TOP_HEIGHT;
-            const deckThickness = PIER_DECK_THICKNESS;
-            const deckCenterY = deckTop - (deckThickness / 2);
-            const pierCenterX = (pierConfig.xMin + pierConfig.xMax) / 2;
-            const pierWidth = (pierConfig.xMax - pierConfig.xMin) + 1;
-            const waterBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies) ? sharedMaterials.activeWaterRenderBodies : [];
-            const pierWaterBody = findNearbyWaterRenderBodyForTile(waterBodies, pierCenterX, pierConfig.yStart + 1, z)
-                || resolveWaterRenderBodyForTile(waterBodies, pierCenterX, pierConfig.yEnd, z)
-                || getDefaultWaterRenderBody();
-            const intersectsPierRows = !(pierConfig.yEnd < startY || pierConfig.yStart >= endY);
-            const containsEntryRow = pierStepBaseY >= startY && pierStepBaseY < endY;
-            const containsTipRows = (pierConfig.yEnd - 1) < endY && pierConfig.yEnd >= startY;
-
-            if (intersectsPierRows) {
-                const straightRunStartY = Math.max(startY, pierConfig.yStart) - 0.5;
-                const straightRunEndY = Math.min(endY - 0.5, pierConfig.yEnd - 0.62);
-                if (straightRunEndY > straightRunStartY) {
-                    const straightRunUnderlay = createWaterSurfacePatchMesh(
-                        {
-                            xMin: pierConfig.xMin - 0.62,
-                            xMax: pierConfig.xMax + 0.62,
-                            yMin: straightRunStartY,
-                            yMax: straightRunEndY
-                        },
-                        Z_OFFSET + (Number.isFinite(pierWaterBody.surfaceY) ? pierWaterBody.surfaceY : -0.075) - 0.002,
-                        pierWaterBody.styleTokens,
-                        0.62,
-                        0.08
-                    );
-                    if (straightRunUnderlay) planeGroup.add(straightRunUnderlay);
-                }
-
-                for (let y = Math.max(startY, pierConfig.yStart); y < Math.min(endY, pierConfig.yEnd + 1); y++) {
-                    for (let x = Math.max(startX, pierConfig.xMin); x < Math.min(endX, pierConfig.xMax + 1); x++) {
-                        const deckMesh = new THREE.Mesh(new THREE.BoxGeometry(1.06, deckThickness, 1.06), sharedMaterials.floor6);
-                        deckMesh.position.set(x, deckCenterY, y);
-                        deckMesh.castShadow = true;
-                        deckMesh.receiveShadow = true;
-                        deckMesh.userData = { type: 'GROUND', z: z };
-                        planeGroup.add(deckMesh);
-                        environmentMeshes.push(deckMesh);
-                    }
-
-                    const isSupportRow = y === pierConfig.yStart || y === pierConfig.yEnd || ((y - pierConfig.yStart) % 3 === 0);
-                    if (!isSupportRow) continue;
-                    const postTop = deckCenterY - (deckThickness / 2) + 0.02;
-                    const waterBed = -0.28;
-                    const postHeight = Math.max(0.5, postTop - waterBed);
-                    const postY = waterBed + (postHeight / 2);
-                    const edgePostXs = [pierConfig.xMin - 0.36, pierConfig.xMax + 0.36];
-                    for (let i = 0; i < edgePostXs.length; i++) {
-                        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, postHeight, 6), sharedMaterials.trunk);
-                        post.position.set(edgePostXs[i], postY, y);
-                        post.castShadow = true;
-                        post.receiveShadow = true;
-                        planeGroup.add(post);
-                    }
-                }
-            }
-
-            if (containsEntryRow) {
-                const stepDepth = 0.26;
-                const stepHeights = [0.08, 0.16, 0.24];
-                const stepCenters = [0.18, 0.43, 0.68];
-                for (let i = 0; i < stepHeights.length; i++) {
-                    const stepHeight = stepHeights[i];
-                    const step = new THREE.Mesh(new THREE.BoxGeometry(pierWidth + 0.08, stepHeight, stepDepth), sharedMaterials.floor6);
-                    step.position.set(pierCenterX, Z_OFFSET + (stepHeight / 2), pierStepBaseY + stepCenters[i]);
-                    step.castShadow = true;
-                    step.receiveShadow = true;
-                    step.userData = { type: 'GROUND', z: z, isPierStep: true };
-                    planeGroup.add(step);
-                    environmentMeshes.push(step);
-                }
-            }
-
-            if (containsTipRows) {
-                const tipPlatform = new THREE.Mesh(new THREE.BoxGeometry(pierWidth + 2.0, deckThickness, 2.0), sharedMaterials.floor6);
-                tipPlatform.position.set(pierCenterX, deckCenterY, pierConfig.yEnd - 0.25);
-                tipPlatform.castShadow = true;
-                tipPlatform.receiveShadow = true;
-                planeGroup.add(tipPlatform);
-
-                const tipPostOffsets = [
-                    { x: -((pierWidth + 1.4) / 2), y: -0.82 },
-                    { x: ((pierWidth + 1.4) / 2), y: -0.82 },
-                    { x: -((pierWidth + 1.4) / 2), y: 0.82 },
-                    { x: ((pierWidth + 1.4) / 2), y: 0.82 }
-                ];
-                for (let i = 0; i < tipPostOffsets.length; i++) {
-                    const offset = tipPostOffsets[i];
-                    const postTop = deckCenterY - (deckThickness / 2) + 0.02;
-                    const postHeight = Math.max(0.58, postTop - (-0.28));
-                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, postHeight, 6), sharedMaterials.trunk);
-                    post.position.set(pierCenterX + offset.x, (-0.28) + (postHeight / 2), (pierConfig.yEnd - 0.25) + offset.y);
-                    post.castShadow = true;
-                    post.receiveShadow = true;
-                    planeGroup.add(post);
-                }
-            }
+            worldStructureRenderRuntime.appendPierVisualsToChunk({
+                THREE,
+                sharedMaterials,
+                environmentMeshes,
+                planeGroup,
+                pierConfig: getActivePierConfig(),
+                createWaterSurfacePatchMesh,
+                findNearbyWaterRenderBodyForTile,
+                resolveWaterRenderBodyForTile,
+                getDefaultWaterRenderBody,
+                pierDeckTopHeight: PIER_DECK_TOP_HEIGHT,
+                pierDeckThickness: PIER_DECK_THICKNESS,
+                z,
+                zOffset: Z_OFFSET,
+                startX,
+                startY,
+                endX,
+                endY
+            });
         }
 
         function getWorldChunkSceneRuntime() {
