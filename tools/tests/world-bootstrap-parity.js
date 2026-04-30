@@ -230,12 +230,14 @@ function extractObjectLiteralAfter(source, token, label) {
 }
 
 function loadTreeVisualProfiles(root) {
-  const absPath = path.join(root, "src", "js", "world.js");
+  const absPath = path.join(root, "src", "js", "world", "tree-render-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
+  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const objectLiteral = extractObjectLiteralAfter(source, "const TREE_VISUAL_PROFILES =", "TREE_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "TREE_VISUAL_PROFILES" }),
-    source
+    source,
+    worldSource
   };
 }
 
@@ -264,9 +266,9 @@ function treeVisualSignature(profile) {
 }
 
 function assertTreeVisualProfiles(root) {
-  const { profiles, source } = loadTreeVisualProfiles(root);
+  const { profiles, source, worldSource } = loadTreeVisualProfiles(root);
   const profileIds = Object.keys(profiles).sort().join(",");
-  assert(profileIds === TREE_VISUAL_NODE_IDS.slice().sort().join(","), "world.js should define one tree visual profile per woodcutting node type");
+  assert(profileIds === TREE_VISUAL_NODE_IDS.slice().sort().join(","), "tree render runtime should define one tree visual profile per woodcutting node type");
 
   const signatures = new Set(TREE_VISUAL_NODE_IDS.map((nodeId) => treeVisualSignature(profiles[nodeId])));
   assert(signatures.size === TREE_VISUAL_NODE_IDS.length, "tree visual profiles should not collapse to shared silhouettes");
@@ -276,8 +278,10 @@ function assertTreeVisualProfiles(root) {
   assert(profiles.maple_tree.canopyScales[0][0] > profiles.oak_tree.canopyScales[0][0], "maple trees should keep the broadest crown profile");
   assert(profiles.yew_tree.trunkScale[1] > profiles.willow_tree.trunkScale[1], "yew trees should keep the tallest trunk profile");
   assert(profiles.yew_tree.canopyScales[3][0] < profiles.willow_tree.canopyScales[3][0], "yew trees should keep the tight stacked top profile");
-  assert(source.includes("const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';"), "tree rendering should resolve a node-specific visual id");
-  assert(source.includes("setTreeVisualState(tData, tIdx, {") && source.includes("nodeId: treeNodeId"), "tree rendering should feed the node id into the visual profile path");
+  assert(source.includes("function setTreeVisualState(input)"), "tree render runtime should own instanced tree visual state updates");
+  assert(worldSource.includes("WorldTreeRenderRuntime"), "world.js should delegate tree visuals through the tree render runtime");
+  assert(worldSource.includes("const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';"), "tree rendering should resolve a node-specific visual id");
+  assert(worldSource.includes("setTreeVisualState(tData, tIdx, {") && worldSource.includes("nodeId: treeNodeId"), "tree rendering should feed the node id into the visual profile path");
 }
 
 function rockVisualSignature(profile) {

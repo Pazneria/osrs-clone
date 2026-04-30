@@ -1723,6 +1723,7 @@ function run() {
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
   const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
+  const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
   const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
@@ -1861,7 +1862,9 @@ function run() {
   assert(!worldScript.includes("materializeSkillWorldRuntime"), "world runtime should load authored starter-town topology directly");
   assert(worldScript.includes("function getTreeNodeAt(x, y, z = playerState.z)"), "world tree node lookup missing");
   assert(worldScript.includes("function resolveTreeRespawnTicks(gridX, gridY, z)"), "woodcutting respawn scaling helper missing");
-  assert(worldScript.includes("const TREE_VISUAL_PROFILES = {"), "tree visual profile table missing");
+  assert(worldScript.includes("WorldTreeRenderRuntime"), "world.js should delegate tree visuals through the tree render runtime");
+  assert(treeRenderRuntimeSource.includes("const TREE_VISUAL_PROFILES = {"), "tree visual profile table missing");
+  assert(treeRenderRuntimeSource.includes("function setTreeVisualState(input)"), "tree render runtime should own tree visual state updates");
 
   const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
   assert(starterTownWorld.services.some((entry) => entry.type === "FURNACE"), "furnace world placement missing");
