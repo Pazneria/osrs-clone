@@ -109,6 +109,267 @@
         return group;
     }
 
+    function createCastleRenderData(options = {}) {
+        const THREE = requireThree(options.THREE);
+        const sharedGeometries = options.sharedGeometries || {};
+        const sharedMaterials = options.sharedMaterials || {};
+        const planeGroup = options.planeGroup;
+        const environmentMeshes = options.environmentMeshes;
+        const wallCount = Number.isFinite(options.wallCount) ? options.wallCount : 0;
+        const towerCount = Number.isFinite(options.towerCount) ? options.towerCount : 0;
+        const castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };
+        if (wallCount > 0) {
+            castleData.iWall = new THREE.InstancedMesh(sharedGeometries.castleWall, sharedMaterials.castleStone, wallCount);
+            castleData.iWall.castShadow = true;
+            castleData.iWall.receiveShadow = true;
+            castleData.iWall.matrixAutoUpdate = false;
+            castleData.iWall.userData = { instanceMap: castleData.wallMap };
+            if (planeGroup) planeGroup.add(castleData.iWall);
+            if (Array.isArray(environmentMeshes)) environmentMeshes.push(castleData.iWall);
+        }
+        if (towerCount > 0) {
+            castleData.iTower = new THREE.InstancedMesh(sharedGeometries.castleTower, sharedMaterials.castleStone, towerCount);
+            castleData.iTower.castShadow = true;
+            castleData.iTower.receiveShadow = true;
+            castleData.iTower.matrixAutoUpdate = false;
+            castleData.iTower.userData = { instanceMap: castleData.towerMap };
+            if (planeGroup) planeGroup.add(castleData.iTower);
+            if (Array.isArray(environmentMeshes)) environmentMeshes.push(castleData.iTower);
+        }
+        return castleData;
+    }
+
+    function isCastleTile(options, tx, ty) {
+        const logicalMap = options.logicalMap || [];
+        const TileId = options.TileId || {};
+        const mapSize = Number.isFinite(options.mapSize) ? options.mapSize : 0;
+        const z = options.z;
+        if (tx < 0 || ty < 0 || tx >= mapSize || ty >= mapSize) return false;
+        if (!logicalMap[z] || !logicalMap[z][ty]) return false;
+        const neighborTile = logicalMap[z][ty][tx];
+        return neighborTile === TileId.WALL || neighborTile === TileId.TOWER;
+    }
+
+    function setCastleWallVisualState(options = {}) {
+        const castleData = options.castleData || {};
+        const dummyTransform = options.dummyTransform;
+        const wallIndex = Number.isFinite(options.wallIndex) ? options.wallIndex : 0;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        if (!castleData.iWall || !dummyTransform) return wallIndex;
+
+        const hasNorth = isCastleTile(options, x, y - 1);
+        const hasSouth = isCastleTile(options, x, y + 1);
+        const hasWest = isCastleTile(options, x - 1, y);
+        const hasEast = isCastleTile(options, x + 1, y);
+        const linkNS = hasNorth || hasSouth;
+        const linkEW = hasWest || hasEast;
+        const wallThin = 0.78;
+
+        dummyTransform.position.set(x, zOffset, y);
+        dummyTransform.rotation.set(0, 0, 0);
+        if (linkNS && !linkEW) dummyTransform.scale.set(wallThin, 1, 1);
+        else if (linkEW && !linkNS) dummyTransform.scale.set(1, 1, wallThin);
+        else if (!linkNS && !linkEW) dummyTransform.scale.set(0.88, 1, 0.88);
+        else dummyTransform.scale.set(1, 1, 1);
+        dummyTransform.updateMatrix();
+        castleData.iWall.setMatrixAt(wallIndex, dummyTransform.matrix);
+        castleData.wallMap[wallIndex] = { type: 'WALL', gridX: x, gridY: y, z };
+        return wallIndex + 1;
+    }
+
+    function setCastleTowerVisualState(options = {}) {
+        const castleData = options.castleData || {};
+        const dummyTransform = options.dummyTransform;
+        const towerIndex = Number.isFinite(options.towerIndex) ? options.towerIndex : 0;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        if (!castleData.iTower || !dummyTransform) return towerIndex;
+        dummyTransform.position.set(x, zOffset, y);
+        dummyTransform.rotation.set(0, 0, 0);
+        dummyTransform.scale.set(1, 1, 1);
+        dummyTransform.updateMatrix();
+        castleData.iTower.setMatrixAt(towerIndex, dummyTransform.matrix);
+        castleData.towerMap[towerIndex] = { type: 'TOWER', gridX: x, gridY: y, z };
+        return towerIndex + 1;
+    }
+
+    function markCastleRenderDataDirty(castleData) {
+        if (!castleData) return;
+        if (castleData.iWall) castleData.iWall.instanceMatrix.needsUpdate = true;
+        if (castleData.iTower) castleData.iTower.instanceMatrix.needsUpdate = true;
+    }
+
+    function appendShopCounterVisual(options = {}) {
+        const THREE = requireThree(options.THREE);
+        const sharedMaterials = options.sharedMaterials || {};
+        const logicalMap = options.logicalMap || [];
+        const heightMap = options.heightMap || [];
+        const TileId = options.TileId || {};
+        const planeGroup = options.planeGroup;
+        const environmentMeshes = options.environmentMeshes;
+        const mapSize = Number.isFinite(options.mapSize) ? options.mapSize : 0;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        if (!planeGroup) return false;
+
+        const tileHeight = heightMap[z] && heightMap[z][y] ? heightMap[z][y][x] : 0;
+        const counterGroup = new THREE.Group();
+        counterGroup.position.set(x, tileHeight + zOffset, y);
+        if (
+            (y > 0 && logicalMap[z][y - 1][x] === TileId.SHOP_COUNTER)
+            || (y < mapSize - 1 && logicalMap[z][y + 1][x] === TileId.SHOP_COUNTER)
+        ) {
+            counterGroup.rotation.y = Math.PI / 2;
+        }
+
+        const counter = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.8), sharedMaterials.boothWood);
+        counter.position.y = 0.5;
+        counter.castShadow = true;
+        counter.receiveShadow = true;
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.7), sharedMaterials.shopCounterGlass);
+        glass.position.y = 1.025;
+        glass.receiveShadow = true;
+        counterGroup.add(counter, glass);
+        counterGroup.children.forEach((child) => {
+            child.userData = { type: 'SHOP_COUNTER', gridX: x, gridY: y, z };
+            if (Array.isArray(environmentMeshes)) environmentMeshes.push(child);
+        });
+        planeGroup.add(counterGroup);
+
+        const floorMesh = createTopAnchoredFloorMesh({
+            THREE,
+            material: sharedMaterials.floor7,
+            x,
+            y,
+            z,
+            zOffset,
+            topHeight: tileHeight
+        });
+        planeGroup.add(floorMesh);
+        if (Array.isArray(environmentMeshes)) environmentMeshes.push(floorMesh);
+        return true;
+    }
+
+    function appendFloorTileVisual(options = {}) {
+        const THREE = requireThree(options.THREE);
+        const sharedMaterials = options.sharedMaterials || {};
+        const logicalMap = options.logicalMap || [];
+        const heightMap = options.heightMap || [];
+        const TileId = options.TileId || {};
+        const planeGroup = options.planeGroup;
+        const environmentMeshes = options.environmentMeshes;
+        const isPierDeckTile = typeof options.isPierDeckTile === 'function' ? options.isPierDeckTile : () => false;
+        const pierConfig = options.pierConfig || null;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        if (!planeGroup) return false;
+        const rawTile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
+        const visualTile = options.visualTile;
+        const floorTile = rawTile === TileId.SOLID_NPC ? visualTile : rawTile;
+        if (floorTile === TileId.GRASS || floorTile === TileId.DIRT || floorTile === TileId.SHORE) return true;
+        if (floorTile === TileId.FLOOR_WOOD && isPierDeckTile(pierConfig, x, y, z)) return true;
+        let floorMat = sharedMaterials.floor7;
+        if (floorTile === TileId.FLOOR_WOOD) floorMat = sharedMaterials.floor6;
+        if (floorTile === TileId.FLOOR_BRICK) floorMat = sharedMaterials.floor8;
+        const floorHeight = heightMap[z] && heightMap[z][y] ? heightMap[z][y][x] : 0;
+        const floorMesh = createTopAnchoredFloorMesh({
+            THREE,
+            material: floorMat,
+            x,
+            y,
+            z,
+            zOffset,
+            topHeight: floorHeight
+        });
+        planeGroup.add(floorMesh);
+        if (Array.isArray(environmentMeshes)) environmentMeshes.push(floorMesh);
+        return true;
+    }
+
+    function appendStairBlockVisual(options = {}) {
+        const THREE = requireThree(options.THREE);
+        const sharedMaterials = options.sharedMaterials || {};
+        const heightMap = options.heightMap || [];
+        const TileId = options.TileId || {};
+        const planeGroup = options.planeGroup;
+        const environmentMeshes = options.environmentMeshes;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        const tile = options.visualTile;
+        if (!planeGroup) return false;
+        const isUp = tile === TileId.STAIRS_UP;
+        const floorHeight = (heightMap[z] && heightMap[z][y] ? heightMap[z][y][x] : 0) || 0.5;
+        const stairMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), isUp ? sharedMaterials.stairsUp : sharedMaterials.stairsDown);
+        stairMesh.position.set(x, zOffset + (floorHeight / 2), y);
+        stairMesh.castShadow = true;
+        stairMesh.receiveShadow = true;
+        stairMesh.userData = { type: isUp ? 'STAIRS_UP' : 'STAIRS_DOWN', gridX: x, gridY: y, z };
+        planeGroup.add(stairMesh);
+        if (Array.isArray(environmentMeshes)) environmentMeshes.push(stairMesh);
+        return true;
+    }
+
+    function appendStairRampVisual(options = {}) {
+        const THREE = requireThree(options.THREE);
+        const sharedMaterials = options.sharedMaterials || {};
+        const heightMap = options.heightMap || [];
+        const mapSize = Number.isFinite(options.mapSize) ? options.mapSize : 0;
+        const planeGroup = options.planeGroup;
+        const environmentMeshes = options.environmentMeshes;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        if (!planeGroup || !heightMap[z] || !heightMap[z][y]) return false;
+
+        const stairGroup = new THREE.Group();
+        stairGroup.position.set(x, zOffset, y);
+        const currentHeight = heightMap[z][y][x];
+        if (x > 0 && heightMap[z][y][x - 1] > currentHeight) stairGroup.rotation.y = Math.PI / 2;
+        else if (x < mapSize - 1 && heightMap[z][y][x + 1] > currentHeight) stairGroup.rotation.y = -Math.PI / 2;
+        else if (y < mapSize - 1 && heightMap[z][y + 1][x] > currentHeight) stairGroup.rotation.y = Math.PI;
+
+        const steps = 3;
+        const stepDepth = 1.0 / steps;
+        const stepHeight = 0.5 / steps;
+        const baseHeight = currentHeight - 0.25;
+        if (baseHeight > 0) {
+            const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(1, baseHeight, 1), sharedMaterials.floor7);
+            baseMesh.position.set(0, baseHeight / 2, 0);
+            baseMesh.receiveShadow = true;
+            baseMesh.castShadow = true;
+            baseMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z };
+            stairGroup.add(baseMesh);
+            if (Array.isArray(environmentMeshes)) environmentMeshes.push(baseMesh);
+        }
+        for (let i = 0; i < steps; i++) {
+            const currentStepOffset = stepHeight * (i + 1);
+            const currentStepHeight = baseHeight + currentStepOffset;
+            const zCenter = 0.5 - stepDepth * (i + 0.5);
+            const yCenter = currentStepHeight / 2;
+            const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(1, currentStepHeight, stepDepth), sharedMaterials.floor7);
+            stepMesh.position.set(0, yCenter, zCenter);
+            stepMesh.receiveShadow = true;
+            stepMesh.castShadow = true;
+            stepMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z };
+            stairGroup.add(stepMesh);
+            if (Array.isArray(environmentMeshes)) environmentMeshes.push(stepMesh);
+        }
+        planeGroup.add(stairGroup);
+        return true;
+    }
+
     function createWoodenGateVisualGroup(options) {
         const THREE = requireThree(options && options.THREE);
         const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : {};
@@ -733,9 +994,14 @@
         chunkIntersectsRoof,
         appendChunkLandmarkVisuals,
         appendPierVisualsToChunk,
+        appendFloorTileVisual,
+        appendShopCounterVisual,
+        appendStairBlockVisual,
+        appendStairRampVisual,
         createAltarCandidateVisualGroup,
         createAnvilVisualGroup,
         createBankBoothVisualGroup,
+        createCastleRenderData,
         createDirectionalSignVisualGroup,
         createDoorVisualGroup,
         createFenceVisualGroup,
@@ -743,7 +1009,10 @@
         createRoofVisualGroup,
         createTopAnchoredFloorMesh,
         createWoodenGateVisualGroup,
+        markCastleRenderDataDirty,
         resolveFenceConnections,
+        setCastleTowerVisualState,
+        setCastleWallVisualState,
         updateTutorialRoofVisibility
     };
 })();

@@ -4543,19 +4543,15 @@
                 let tData = createTreeRenderData(tCount, planeGroup);
                 let rData = createRockRenderData(rockVisualCounts, planeGroup);
 
-                let castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };
-                if (wCount > 0) {
-                    castleData.iWall = new THREE.InstancedMesh(sharedGeometries.castleWall, sharedMaterials.castleStone, wCount);
-                    castleData.iWall.castShadow = true; castleData.iWall.receiveShadow = true; castleData.iWall.matrixAutoUpdate = false;
-                    castleData.iWall.userData = { instanceMap: castleData.wallMap };
-                    planeGroup.add(castleData.iWall); environmentMeshes.push(castleData.iWall);
-                }
-                if (cCount > 0) {
-                    castleData.iTower = new THREE.InstancedMesh(sharedGeometries.castleTower, sharedMaterials.castleStone, cCount);
-                    castleData.iTower.castShadow = true; castleData.iTower.receiveShadow = true; castleData.iTower.matrixAutoUpdate = false;
-                    castleData.iTower.userData = { instanceMap: castleData.towerMap };
-                    planeGroup.add(castleData.iTower); environmentMeshes.push(castleData.iTower);
-                }
+                let castleData = worldStructureRenderRuntime.createCastleRenderData({
+                    THREE,
+                    sharedGeometries,
+                    sharedMaterials,
+                    planeGroup,
+                    environmentMeshes,
+                    wallCount: wCount,
+                    towerCount: cCount
+                });
 
                 const dummyTransform = new THREE.Object3D();
                 let tIdx = 0, wIdx = 0, cIdx = 0;
@@ -4630,118 +4626,88 @@
                         } else if (tile === TileId.FENCE) {
                             const fenceGroup = createFenceVisualGroup(x, y, z, Z_OFFSET, heightMap[z][y][x]);
                             planeGroup.add(fenceGroup);
-                        } else if (tile === TileId.WALL) { // Wall (Anchored to base)
-                            const isCastleTile = (tx, ty) => {
-                                if (tx < 0 || ty < 0 || tx >= MAP_SIZE || ty >= MAP_SIZE) return false;
-                                const neighborTile = logicalMap[z][ty][tx];
-                                return neighborTile === TileId.WALL || neighborTile === TileId.TOWER;
-                            };
-                            const hasNorth = isCastleTile(x, y - 1);
-                            const hasSouth = isCastleTile(x, y + 1);
-                            const hasWest = isCastleTile(x - 1, y);
-                            const hasEast = isCastleTile(x + 1, y);
-                            const linkNS = hasNorth || hasSouth;
-                            const linkEW = hasWest || hasEast;
-                            const wallThin = 0.78;
-
-                            dummyTransform.position.set(x, Z_OFFSET, y);
-                            dummyTransform.rotation.set(0, 0, 0);
-                            if (linkNS && !linkEW) dummyTransform.scale.set(wallThin, 1, 1);
-                            else if (linkEW && !linkNS) dummyTransform.scale.set(1, 1, wallThin);
-                            else if (!linkNS && !linkEW) dummyTransform.scale.set(0.88, 1, 0.88);
-                            else dummyTransform.scale.set(1, 1, 1);
-                            dummyTransform.updateMatrix();
-                            castleData.iWall.setMatrixAt(wIdx, dummyTransform.matrix);
-                            castleData.wallMap[wIdx] = { type: 'WALL', gridX: x, gridY: y, z: z }; wIdx++;
-                        } else if (tile === TileId.TOWER) { // Tower (Anchored to base)
-                            dummyTransform.position.set(x, Z_OFFSET, y);
-                            dummyTransform.rotation.set(0, 0, 0); dummyTransform.scale.set(1, 1, 1); dummyTransform.updateMatrix();
-                            castleData.iTower.setMatrixAt(cIdx, dummyTransform.matrix);
-                            castleData.towerMap[cIdx] = { type: 'TOWER', gridX: x, gridY: y, z: z }; cIdx++;
-                        } else if (tile === TileId.SHOP_COUNTER) { // Shop Counter
-                            const counterGroup = new THREE.Group(); counterGroup.position.set(x, h, y);
-                            
-                            let rotY = 0;
-                            if ((y > 0 && logicalMap[z][y-1][x] === TileId.SHOP_COUNTER) || (y < MAP_SIZE - 1 && logicalMap[z][y+1][x] === TileId.SHOP_COUNTER)) {
-                                rotY = Math.PI / 2;
-                            }
-                            counterGroup.rotation.y = rotY;
-
-                            const counter = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.8), sharedMaterials.boothWood); 
-                            counter.position.y = 0.5; counter.castShadow = true; counter.receiveShadow = true; 
-                            
-                            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.7), sharedMaterials.shopCounterGlass);
-                            glass.position.y = 1.025; glass.receiveShadow = true;
-                            
-                            counterGroup.add(counter, glass);
-                            counterGroup.children.forEach(c => { c.userData = { type: 'SHOP_COUNTER', gridX: x, gridY: y, z: z }; environmentMeshes.push(c); });
-                            planeGroup.add(counterGroup);
-                            
-                            // Explicitly build floor beneath Counter
-                            const floorHeight = heightMap[z][y][x];
-                            const floorMesh = createTopAnchoredFloorMesh(sharedMaterials.floor7, x, y, Z_OFFSET, floorHeight, z);
-                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                        } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || logicalMap[z][y][x] === TileId.SOLID_NPC) { // Floors
-                            const floorTile = logicalMap[z][y][x] === TileId.SOLID_NPC ? tile : logicalMap[z][y][x];
-                            if (floorTile === TileId.GRASS || floorTile === TileId.DIRT || floorTile === TileId.SHORE) {
-                                continue;
-                            }
-                            if (floorTile === TileId.FLOOR_WOOD && isPierDeckTile(getActivePierConfig(), x, y, z)) {
-                                continue;
-                            }
-                            let floorMat = sharedMaterials.floor7; // default to stone
-                            if (floorTile === TileId.FLOOR_WOOD) floorMat = sharedMaterials.floor6;
-                            if (floorTile === TileId.FLOOR_BRICK) floorMat = sharedMaterials.floor8;
-                            
-                            const floorHeight = heightMap[z][y][x];
-                            const floorMesh = createTopAnchoredFloorMesh(floorMat, x, y, Z_OFFSET, floorHeight, z);
-                            planeGroup.add(floorMesh); environmentMeshes.push(floorMesh);
-                        } else if (tile === TileId.STAIRS_UP || tile === TileId.STAIRS_DOWN) { // Stairs Up/Down
-                            const isUp = tile === TileId.STAIRS_UP;
-                            const floorHeight = heightMap[z][y][x] || 0.5;
-                            const stairMesh = new THREE.Mesh(new THREE.BoxGeometry(1, floorHeight, 1), isUp ? sharedMaterials.stairsUp : sharedMaterials.stairsDown);
-                            stairMesh.position.set(x, Z_OFFSET + (floorHeight / 2), y);
-                            stairMesh.castShadow = true; stairMesh.receiveShadow = true;
-                            stairMesh.userData = { type: isUp ? 'STAIRS_UP' : 'STAIRS_DOWN', gridX: x, gridY: y, z: z };
-                            planeGroup.add(stairMesh); environmentMeshes.push(stairMesh);
-                        } else if (tile === TileId.STAIRS_RAMP) { // Seamless Walkable Stairs
-                            const stairGroup = new THREE.Group();
-                            stairGroup.position.set(x, Z_OFFSET, y);
-                            
-                            // Auto-orient stairs to face the uphill slope
-                            let rotY = 0; const ch = heightMap[z][y][x];
-                            if (x > 0 && heightMap[z][y][x-1] > ch) rotY = Math.PI / 2; // Ascend West
-                            else if (x < MAP_SIZE-1 && heightMap[z][y][x+1] > ch) rotY = -Math.PI / 2; // Ascend East
-                            else if (y < MAP_SIZE-1 && heightMap[z][y+1][x] > ch) rotY = Math.PI; // Ascend South
-                            stairGroup.rotation.y = rotY;
-
-                            const steps = 3;
-                            const stepDepth = 1.0 / steps;
-                            const stepHeight = 0.5 / steps; 
-                            const baseHeight = heightMap[z][y][x] - 0.25; 
-                            
-                            if (baseHeight > 0) {
-                                const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(1, baseHeight, 1), sharedMaterials.floor7);
-                                baseMesh.position.set(0, baseHeight / 2, 0);
-                                baseMesh.receiveShadow = true; baseMesh.castShadow = true;
-                                baseMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
-                                stairGroup.add(baseMesh);
-                                environmentMeshes.push(baseMesh);
-                            }
-
-                            for (let i = 0; i < steps; i++) {
-                                const currentStepOffset = stepHeight * (i + 1); 
-                                const currentHeight = baseHeight + currentStepOffset;
-                                const zCenter = 0.5 - stepDepth * (i + 0.5); 
-                                const yCenter = currentHeight / 2;
-                                const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(1, currentHeight, stepDepth), sharedMaterials.floor7);
-                                stepMesh.position.set(0, yCenter, zCenter);
-                                stepMesh.receiveShadow = true; stepMesh.castShadow = true;
-                                stepMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
-                                stairGroup.add(stepMesh);
-                                environmentMeshes.push(stepMesh);
-                            }
-                            planeGroup.add(stairGroup);
+                        } else if (tile === TileId.WALL) {
+                            wIdx = worldStructureRenderRuntime.setCastleWallVisualState({
+                                castleData,
+                                dummyTransform,
+                                logicalMap,
+                                TileId,
+                                mapSize: MAP_SIZE,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET,
+                                wallIndex: wIdx
+                            });
+                        } else if (tile === TileId.TOWER) {
+                            cIdx = worldStructureRenderRuntime.setCastleTowerVisualState({
+                                castleData,
+                                dummyTransform,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET,
+                                towerIndex: cIdx
+                            });
+                        } else if (tile === TileId.SHOP_COUNTER) {
+                            worldStructureRenderRuntime.appendShopCounterVisual({
+                                THREE,
+                                sharedMaterials,
+                                logicalMap,
+                                heightMap,
+                                TileId,
+                                planeGroup,
+                                environmentMeshes,
+                                mapSize: MAP_SIZE,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET
+                            });
+                        } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || logicalMap[z][y][x] === TileId.SOLID_NPC) {
+                            worldStructureRenderRuntime.appendFloorTileVisual({
+                                THREE,
+                                sharedMaterials,
+                                logicalMap,
+                                heightMap,
+                                TileId,
+                                planeGroup,
+                                environmentMeshes,
+                                pierConfig: activePierConfig,
+                                isPierDeckTile,
+                                visualTile: tile,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET
+                            });
+                        } else if (tile === TileId.STAIRS_UP || tile === TileId.STAIRS_DOWN) {
+                            worldStructureRenderRuntime.appendStairBlockVisual({
+                                THREE,
+                                sharedMaterials,
+                                heightMap,
+                                TileId,
+                                planeGroup,
+                                environmentMeshes,
+                                visualTile: tile,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET
+                            });
+                        } else if (tile === TileId.STAIRS_RAMP) {
+                            worldStructureRenderRuntime.appendStairRampVisual({
+                                THREE,
+                                sharedMaterials,
+                                heightMap,
+                                planeGroup,
+                                environmentMeshes,
+                                mapSize: MAP_SIZE,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET
+                            });
                         }
                     }
                 }
@@ -4750,8 +4716,7 @@
                 
                 if (tCount > 0) markTreeVisualsDirty(tData);
                 markRockVisualsDirty(rData);
-                if (wCount > 0) castleData.iWall.instanceMatrix.needsUpdate = true;
-                if (cCount > 0) castleData.iTower.instanceMatrix.needsUpdate = true;
+                worldStructureRenderRuntime.markCastleRenderDataDirty(castleData);
 
                 planeGroup.userData.trees = tData;
                 planeGroup.userData.rocks = rData;
