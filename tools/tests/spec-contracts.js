@@ -1722,6 +1722,7 @@ function run() {
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
   const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
   const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
+  const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
   const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
@@ -1794,6 +1795,15 @@ function run() {
   assert(groundItemRenderRuntimeSource.includes("function buildFishPixelGroundVisualMeshes(pixelSource, visual, createPixelSourceVisualMeshes)"), "fish ground-item silhouette builder missing");
   assert(groundItemRenderRuntimeSource.includes("function queueFishGroundVisualMeshes(options)"), "fish ground-item pixel-source queue missing");
   assert(groundItemRenderRuntimeSource.includes("addGroundItemSprite({ THREE, group, path: spritePath, y: 0.17, scale: 0.42 });"), "ashes ground items should preview the pixel icon above the mound");
+  assert(worldScript.includes("WorldStructureRenderRuntime"), "world.js should delegate static structure visuals through the render runtime");
+  assert(!worldScript.includes("const hasNorth = y > 0 && isFenceConnectorTile("), "world.js should not own fence visual construction");
+  assert(!worldScript.includes("const railW = door.isEW ? door.width : 0.12;"), "world.js should not own wooden gate visual construction");
+  assert(!worldScript.includes("const ridgeAlongX = roof.ridgeAxis !== 'y';"), "world.js should not own roof visual construction");
+  assert(structureRenderRuntimeSource.includes("function createTopAnchoredFloorMesh(options)"), "structure render runtime should own top-anchored floor construction");
+  assert(structureRenderRuntimeSource.includes("function createFenceVisualGroup(options)"), "structure render runtime should own fence visual construction");
+  assert(structureRenderRuntimeSource.includes("function createWoodenGateVisualGroup(options)"), "structure render runtime should own wooden gate visual construction");
+  assert(structureRenderRuntimeSource.includes("function createRoofVisualGroup(options)"), "structure render runtime should own roof visual construction");
+  assert(structureRenderRuntimeSource.includes("function updateTutorialRoofVisibility(options)"), "structure render runtime should own tutorial roof fade updates");
   assert(!worldScript.includes("seedCookingTrainingFires();"), "cooking training fires should not seed on renderer init");
   assert(worldScript.includes("const FIRE_LIFETIME_TICKS = resolveFireLifetimeTicks();"), "fire lifetime should resolve from firemaking data");
   assert(worldScript.includes("SkillSpecRegistry.getRecipeSet('firemaking')"), "fire lifetime resolver should read firemaking recipe data");
