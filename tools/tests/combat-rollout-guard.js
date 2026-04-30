@@ -16,6 +16,7 @@ const mainSource = read("src/main.ts");
 const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
+const inputRaycastRuntimeSource = read("src/js/input-raycast-runtime.js");
 const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
@@ -187,7 +188,7 @@ assert.ok(
 assert.ok(
   inputRenderSource.includes("else if (hitData.type === 'ENEMY') {") &&
     inputRenderSource.includes("enemyId: String(hitData.uid || '').trim()") &&
-    inputRenderSource.includes("combatLevel: data.combatLevel,"),
+    inputRaycastRuntimeSource.includes("combatLevel: data.combatLevel,"),
   "left-click enemy interaction should queue a normalized enemy target payload"
 );
 assert.ok(

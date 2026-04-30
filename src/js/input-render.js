@@ -17,6 +17,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputPathfindingRuntime() {
             return window.InputPathfindingRuntime || null;
         }
+        function getInputRaycastRuntime() {
+            return window.InputRaycastRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -350,194 +353,53 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return best;
         }
 
-        function normalizeRaycastHit(hit) {
-            let data = hit.object.userData;
-            if (hit.instanceId !== undefined && hit.object.userData.instanceMap) {
-                data = hit.object.userData.instanceMap[hit.instanceId];
-            }
-            if (!data || data.z !== playerState.z) return null;
-
-            if (data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER') {
-                let gridX = Math.floor(hit.point.x + 0.5);
-                let gridY = Math.floor(hit.point.z + 0.5);
-                if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
-                    let resolvedType = data.type;
-                    let pierStepDescend = false;
-                    const rawWaterHit = data.type === 'WATER';
-                    const playerOnPierDeck = isPierDeckTile(playerState.x, playerState.y, playerState.z);
-                    if (resolvedType === 'WATER') {
-                        const tile = logicalMap[playerState.z][gridY][gridX];
-                        let snappedBoardTile = null;
-
-                        if (!isWaterTileId(tile) && isWalkableTileId(tile)) {
-                            resolvedType = 'GROUND';
-                        } else if (!playerOnPierDeck) {
-                            snappedBoardTile = findNearestPierDeckBoardingTile(gridX, gridY, playerState.z);
-                            if (snappedBoardTile) {
-                                resolvedType = 'GROUND';
-                                gridX = snappedBoardTile.x;
-                                gridY = snappedBoardTile.y;
-                            }
-                        }
-
-                        if (window.QA_PIER_DEBUG && isNearPierBoundsTile(gridX, gridY, playerState.z, 3)) {
-                            emitPierDebug(`ray raw=WATER tile=${tile} resolved=${resolvedType} hit=(${Math.floor(hit.point.x * 100) / 100},${Math.floor(hit.point.z * 100) / 100}) grid=(${gridX},${gridY}) snap=${snappedBoardTile ? `${snappedBoardTile.x},${snappedBoardTile.y}` : 'none'}`);
-                        }
-                    }
-
-                    const pierConfig = getActivePierConfig();
-                    const stairBandMinY = pierConfig ? Math.min(pierConfig.entryY, pierConfig.yStart) - 1 : 0;
-                    const stairBandMaxY = pierConfig ? Math.max(pierConfig.entryY, pierConfig.yStart) + 1 : 0;
-                    const canDescendViaPierStep = !!(
-                        pierConfig
-                        && playerState.z === 0
-                        && playerOnPierDeck
-                        && gridX >= (pierConfig.xMin - 1)
-                        && gridX <= (pierConfig.xMax + 1)
-                        && gridY >= stairBandMinY
-                        && gridY <= stairBandMaxY
-                        && (data.isPierStep || rawWaterHit)
-                        && isStandableTile(
-                            Math.max(pierConfig.xMin, Math.min(pierConfig.xMax, gridX)),
-                            pierConfig.entryY,
-                            playerState.z
-                        )
-                    );
-                    if (canDescendViaPierStep) {
-                        const snappedX = Math.max(pierConfig.xMin, Math.min(pierConfig.xMax, gridX));
-                        const fromY = gridY;
-                        const fromX = gridX;
-                        gridX = snappedX;
-                        gridY = pierConfig.entryY;
-                        resolvedType = 'GROUND';
-                        pierStepDescend = true;
-                        if (window.QA_PIER_DEBUG) emitPierDebug(`stair descend snap (${fromX},${fromY}) -> (${gridX},${gridY}) source=${data.isPierStep ? 'step' : 'water'}`);
-                    }
-                    return { type: resolvedType, gridX, gridY, point: hit.point, pierStepDescend };
-                }
-                return null;
-            }
-            if (data.type === 'DOOR') {
-                return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, doorObj: data.doorObj };
-            }
+        function buildInputRaycastRuntimeContext() {
             return {
-                type: data.type,
-                gridX: data.gridX,
-                gridY: data.gridY,
-                point: hit.point,
-                name: data.name,
-                combatLevel: data.combatLevel,
-                uid: data.uid
+                windowRef: window,
+                mapSize: MAP_SIZE,
+                playerState,
+                logicalMap,
+                camera,
+                mouse,
+                raycaster,
+                environmentMeshes,
+                isWaterTileId,
+                isWalkableTileId,
+                isPierDeckTile,
+                findNearestPierDeckBoardingTile,
+                getActivePierConfig,
+                isNearPierBoundsTile,
+                emitPierDebug,
+                isStandableTile
             };
         }
 
-        function getRaycastHitKey(hitData) {
-            if (!hitData) return null;
-            if (hitData.uid !== undefined && hitData.uid !== null) return `${hitData.type}:uid:${hitData.uid}`;
-            if (hitData.type === 'DOOR' && hitData.doorObj) return `${hitData.type}:door:${hitData.gridX},${hitData.gridY}`;
-            if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY)) {
-                return `${hitData.type}:${hitData.gridX},${hitData.gridY}:${hitData.name || ''}`;
-            }
-            return `${hitData.type}:${hitData.name || ''}`;
-        }
-
         function getRaycastHits(clientX, clientY, maxHits = 16) {
-            if (camera && typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld(true);
-            mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(environmentMeshes);
-            const hits = [];
-            const seen = new Set();
-            for (let i = 0; i < intersects.length; i++) {
-                const hitData = normalizeRaycastHit(intersects[i]);
-                if (!hitData) continue;
-                const key = getRaycastHitKey(hitData);
-                if (key && seen.has(key)) continue;
-                if (key) seen.add(key);
-                hits.push(hitData);
-                if (hits.length >= maxHits) break;
-            }
-            return hits;
-        }
-
-        function getRaycastHitPriority(hitData) {
-            if (!hitData || !hitData.type) return 100;
-            if (hitData.type === 'ENEMY') return 0;
-            if (hitData.type === 'NPC') return 1;
-            if (hitData.type === 'GROUND_ITEM') return 2;
-            if (hitData.type === 'DOOR') return 3;
-            if (hitData.type === 'BANK_BOOTH' || hitData.type === 'SHOP_COUNTER') return 4;
-            if (hitData.type === 'TREE' || hitData.type === 'ROCK' || hitData.type === 'FISHING_SPOT' || hitData.type === 'WATER' || hitData.type === 'FIRE') return 5;
-            return 20;
+            const runtime = getInputRaycastRuntime();
+            return runtime && typeof runtime.getRaycastHits === 'function'
+                ? runtime.getRaycastHits(buildInputRaycastRuntimeContext(), clientX, clientY, maxHits)
+                : [];
         }
 
         function getRaycastHit(clientX, clientY) {
-            const hits = getRaycastHits(clientX, clientY, 12);
-            if (hits.length <= 1) return hits.length > 0 ? hits[0] : null;
-            let best = hits[0];
-            let bestPriority = getRaycastHitPriority(best);
-            for (let i = 1; i < hits.length; i++) {
-                const priority = getRaycastHitPriority(hits[i]);
-                if (priority < bestPriority) {
-                    best = hits[i];
-                    bestPriority = priority;
-                }
-            }
-            return best;
+            const runtime = getInputRaycastRuntime();
+            return runtime && typeof runtime.getRaycastHit === 'function'
+                ? runtime.getRaycastHit(buildInputRaycastRuntimeContext(), clientX, clientY)
+                : null;
         }
 
         window.listQaRaycastHitsAt = function listQaRaycastHitsAt(clientX, clientY, maxHits = 12) {
-            const x = Number(clientX);
-            const y = Number(clientY);
-            if (!Number.isFinite(x) || !Number.isFinite(y)) return [];
-            const limit = Number.isFinite(maxHits) ? Math.max(1, Math.min(24, Math.floor(maxHits))) : 12;
-            return getRaycastHits(x, y, limit).map((hitData, index) => ({
-                index,
-                type: hitData && hitData.type ? hitData.type : 'UNKNOWN',
-                name: hitData && hitData.name ? hitData.name : '',
-                uid: hitData && hitData.uid !== undefined && hitData.uid !== null ? String(hitData.uid) : '',
-                gridX: hitData && Number.isInteger(hitData.gridX) ? hitData.gridX : null,
-                gridY: hitData && Number.isInteger(hitData.gridY) ? hitData.gridY : null,
-                priority: getRaycastHitPriority(hitData)
-            }));
+            const runtime = getInputRaycastRuntime();
+            return runtime && typeof runtime.listQaRaycastHitsAt === 'function'
+                ? runtime.listQaRaycastHitsAt(buildInputRaycastRuntimeContext(), clientX, clientY, maxHits)
+                : [];
         };
 
         window.findQaRaycastHitNear = function findQaRaycastHitNear(clientX, clientY, type, name = '', radius = 80, step = 8) {
-            const centerX = Number(clientX);
-            const centerY = Number(clientY);
-            if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) return null;
-            const wantedType = String(type || '').trim().toUpperCase();
-            const wantedName = String(name || '').trim().toLowerCase();
-            const searchRadius = Math.max(0, Math.min(180, Math.floor(Number.isFinite(radius) ? radius : 80)));
-            const searchStep = Math.max(2, Math.min(24, Math.floor(Number.isFinite(step) ? step : 8)));
-            let best = null;
-            for (let dy = -searchRadius; dy <= searchRadius; dy += searchStep) {
-                for (let dx = -searchRadius; dx <= searchRadius; dx += searchStep) {
-                    const x = centerX + dx;
-                    const y = centerY + dy;
-                    if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) continue;
-                    const hits = getRaycastHits(x, y, 8);
-                    for (let i = 0; i < hits.length; i++) {
-                        const hit = hits[i];
-                        if (!hit) continue;
-                        if (wantedType && String(hit.type || '').toUpperCase() !== wantedType) continue;
-                        if (wantedName && !String(hit.name || '').toLowerCase().includes(wantedName)) continue;
-                        const dist = Math.sqrt((dx * dx) + (dy * dy));
-                        if (!best || dist < best.distance) {
-                            best = {
-                                x: Math.round(x),
-                                y: Math.round(y),
-                                distance: Number(dist.toFixed(2)),
-                                type: hit.type || 'UNKNOWN',
-                                name: hit.name || '',
-                                uid: hit.uid !== undefined && hit.uid !== null ? String(hit.uid) : '',
-                                gridX: Number.isInteger(hit.gridX) ? hit.gridX : null,
-                                gridY: Number.isInteger(hit.gridY) ? hit.gridY : null
-                            };
-                        }
-                    }
-                }
-            }
-            return best;
+            const runtime = getInputRaycastRuntime();
+            return runtime && typeof runtime.findQaRaycastHitNear === 'function'
+                ? runtime.findQaRaycastHitNear(buildInputRaycastRuntimeContext(), clientX, clientY, type, name, radius, step)
+                : null;
         };
 
         

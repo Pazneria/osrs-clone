@@ -23,6 +23,7 @@ function run() {
   const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
   const inputPlayerAnimationSource = fs.readFileSync(path.join(root, "src", "js", "input-player-animation-runtime.js"), "utf8");
   const inputPathfindingSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
+  const inputRaycastSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -147,6 +148,18 @@ function run() {
     manifestSource.indexOf('id: "input-player-animation-runtime"') < manifestSource.indexOf('id: "input-pathfinding-runtime"')
       && manifestSource.indexOf('id: "input-pathfinding-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input pathfinding runtime before input-render.js"
+  );
+  assert(inputRaycastSource.includes("window.InputRaycastRuntime"), "input raycast runtime should expose a window runtime");
+  assert(inputRaycastSource.includes("function normalizeRaycastHit"), "input raycast runtime should own raycast hit normalization");
+  assert(inputRaycastSource.includes("function getRaycastHitPriority"), "input raycast runtime should own raycast hit priority");
+  assert(inputSource.includes("InputRaycastRuntime"), "input-render.js should delegate raycast resolution through the raycast runtime");
+  assert(inputSource.includes("buildInputRaycastRuntimeContext"), "input-render.js should provide a narrow raycast runtime context");
+  assert(!inputSource.includes("function getRaycastHitPriority("), "input-render.js should not own raycast hit priority");
+  assert(manifestSource.includes('../../js/input-raycast-runtime.js?raw'), "legacy manifest should load input raycast runtime");
+  assert(
+    manifestSource.indexOf('id: "input-pathfinding-runtime"') < manifestSource.indexOf('id: "input-raycast-runtime"')
+      && manifestSource.indexOf('id: "input-raycast-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input raycast runtime before input-render.js"
   );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");
