@@ -27,6 +27,7 @@
         const inventoryItemRuntime = window.InventoryItemRuntime || null;
         const equipmentItemRuntime = window.EquipmentItemRuntime || null;
         const foodItemRuntime = window.FoodItemRuntime || null;
+        const inventoryActionRuntime = window.InventoryActionRuntime || null;
         const playerHitpointsRuntime = window.PlayerHitpointsRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
@@ -478,6 +479,26 @@
             };
         }
 
+        function buildInventoryActionRuntimeContext() {
+            return {
+                inventory,
+                selectedUse,
+                RunecraftingPouchRuntime: window.RunecraftingPouchRuntime || null,
+                SkillRuntime: window.SkillRuntime || null,
+                clearSelectedUse,
+                createRunecraftingPouchContext,
+                dropItem,
+                eatItem,
+                equipItem: (invIndex) => equipmentItemRuntime.equipItem(buildEquipmentItemRuntimeContext(), invIndex),
+                getFiremakingLogItemIdForPair,
+                getItemMenuPreferenceKey: typeof getItemMenuPreferenceKey === 'function' ? getItemMenuPreferenceKey : null,
+                getSelectedUseItem,
+                resolveDefaultItemAction,
+                selectUseItem,
+                startFiremaking
+            };
+        }
+
         function buildFireLifecycleRuntimeContext() {
             return {
                 THREE,
@@ -628,101 +649,22 @@
         }
 
         function tryUseItemOnInventory(sourceInvIndex, targetInvIndex) {
-            const source = inventory[sourceInvIndex];
-            const target = inventory[targetInvIndex];
-            if (!source || !target) return false;
-
-            const a = source.itemData.id;
-            const b = target.itemData.id;
-
-            if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUseItemOnInventory === 'function') {
-                const pouchUsed = window.RunecraftingPouchRuntime.tryUseItemOnInventory(createRunecraftingPouchContext(), a, b);
-                if (pouchUsed) return true;
-            }
-
-            if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
-                const skillUsed = SkillRuntime.tryUseItemOnTarget({
-                    targetObj: 'INVENTORY',
-                    targetUid: {
-                        sourceInvIndex,
-                        targetInvIndex,
-                        sourceItemId: a,
-                        targetItemId: b
-                    },
-                    sourceInvIndex,
-                    sourceItemId: a
-                });
-                if (skillUsed) return true;
-            }
-
-            const firemakingSourceItemId = getFiremakingLogItemIdForPair(a, b);
-            if (firemakingSourceItemId) {
-                return startFiremaking(firemakingSourceItemId);
-            }
-
-            return false;
+            return inventoryActionRuntime.tryUseItemOnInventory(buildInventoryActionRuntimeContext(), sourceInvIndex, targetInvIndex);
         }
 
         function tryUseItemOnWorld(sourceInvIndex, hitData) {
-            const source = inventory[sourceInvIndex];
-            if (!source || !hitData) return false;
-
-            // Non-skill use-on-world interactions can be added here.
-            // Skill item interactions are routed through SkillRuntime.tryUseItemOnTarget.
-            return false;
+            return inventoryActionRuntime.tryUseItemOnWorld(buildInventoryActionRuntimeContext(), sourceInvIndex, hitData);
         }
 
         function handleInventorySlotClick(invIndex) {
-            const selected = getSelectedUseItem();
-
-            if (selected) {
-                if (selectedUse.invIndex !== invIndex && tryUseItemOnInventory(selectedUse.invIndex, invIndex)) {
-                    clearSelectedUse();
-                    return;
-                }
-                // A selected Use should always consume the next click.
-                clearSelectedUse();
-                return;
-            }
-
-            const slot = inventory[invIndex];
-            if (!slot) return;
-            const prefKey = (typeof getItemMenuPreferenceKey === 'function')
-                ? getItemMenuPreferenceKey('inventory', slot.itemData.id)
-                : null;
-            handleItemAction(invIndex, resolveDefaultItemAction(slot.itemData, prefKey));
+            return inventoryActionRuntime.handleInventorySlotClick(buildInventoryActionRuntimeContext(), invIndex);
         }
         function eatItem(invIndex) {
             return foodItemRuntime.eatItem(buildFoodItemRuntimeContext(), invIndex);
         }
 
         function handleItemAction(invIndex, actionName) {
-            const invSlot = inventory[invIndex];
-            if (!invSlot) return;
-            const item = invSlot.itemData;
-            if (actionName === 'Use') {
-                if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUsePouch === 'function') {
-                    const pouchUsed = window.RunecraftingPouchRuntime.tryUsePouch(createRunecraftingPouchContext(), item.id);
-                    if (pouchUsed) return;
-                }
-                selectUseItem(invIndex);
-                return;
-            }
-
-            if (typeof actionName === 'string' && actionName.startsWith('Empty')) {
-                if (window.RunecraftingPouchRuntime && typeof window.RunecraftingPouchRuntime.tryUsePouch === 'function') {
-                    const pouchUsed = window.RunecraftingPouchRuntime.tryUsePouch(createRunecraftingPouchContext(), item.id, { forceEmpty: true });
-                    if (pouchUsed) return;
-                }
-            }
-
-            if (actionName === 'Equip') {
-                equipmentItemRuntime.equipItem(buildEquipmentItemRuntimeContext(), invIndex);
-            } else if (actionName === 'Eat') {
-                eatItem(invIndex);
-            } else if (actionName === 'Drop') {
-                dropItem(invIndex);
-            }
+            return inventoryActionRuntime.handleItemAction(buildInventoryActionRuntimeContext(), invIndex, actionName);
         }
 
         function hasWeaponClassAvailable(weaponClass) {
