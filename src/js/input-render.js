@@ -1,23 +1,11 @@
 function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25)); renderer.setSize(window.innerWidth, window.innerHeight); }
-        const poseEditor = {
-            enabled: false,
-            values: null,
-            handleMap: {},
-            activeHandle: null,
-            dragOffset: new THREE.Vector3(),
-            dragPlane: new THREE.Plane(),
-            dragPoint: new THREE.Vector3(),
-            raycaster: new THREE.Raycaster(),
-            pointer: new THREE.Vector2(),
-            panel: null,
-            text: null,
-            mode: 'translate',
-            rotationAxis: 'x',
-            dragLastX: 0,
-            dragLastY: 0,
-            modeSelect: null,
-            axisSelect: null
-        };
+        function getInputPoseEditorRuntime() {
+            return window.InputPoseEditorRuntime || null;
+        }
+        const inputPoseEditorRuntime = getInputPoseEditorRuntime();
+        const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
+            ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
+            : { enabled: false, handleMap: {}, activeHandle: null };
         const LEGACY_PATHFIND_MAP_SIZE = 486;
         const PATHFIND_MAX_ITERATIONS = Math.max(
             25000,
@@ -142,7 +130,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 : null;
 
             if ((decision && decision.endPoseEditorDrag) || (event.button === 0 && poseEditor.activeHandle)) {
-                poseEditor.activeHandle = null;
+                const runtime = getInputPoseEditorRuntime();
+                if (runtime && typeof runtime.endPoseEditorDrag === 'function') {
+                    runtime.endPoseEditorDrag(poseEditor);
+                } else {
+                    poseEditor.activeHandle = null;
+                }
                 return;
             }
             if ((decision && decision.endCameraDrag) || event.button === 1 || (isFreeCam && event.button === 0)) isDraggingCamera = false;
@@ -2336,282 +2329,47 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 }
             });
         }
-                function getPoseEditorDefaultValues() {
-            const elbow = (playerRig && playerRig.userData && playerRig.userData.rig && playerRig.userData.rig.elbowPivot)
-                ? playerRig.userData.rig.elbowPivot
-                : { x: 0, y: -0.35, z: -0.1 };
+        function buildPoseEditorRuntimeOptions(extra = {}) {
             return {
-                shoulder: { x: PLAYER_SHOULDER_PIVOT.x, y: PLAYER_SHOULDER_PIVOT.y, z: PLAYER_SHOULDER_PIVOT.z },
-                elbow: {
-                    x: Math.abs(Number.isFinite(elbow.x) ? elbow.x : 0),
-                    y: Number.isFinite(elbow.y) ? elbow.y : -0.35,
-                    z: Number.isFinite(elbow.z) ? elbow.z : -0.1
-                },
-                rotations: {
-                    leftShoulder: { x: 0, y: 0, z: 0 },
-                    rightShoulder: { x: 0, y: 0, z: 0 },
-                    leftElbow: { x: 0, y: 0, z: 0 },
-                    rightElbow: { x: 0, y: 0, z: 0 }
-                }
+                documentRef: document,
+                windowRef: window,
+                localStorageRef: localStorage,
+                navigatorRef: navigator,
+                THREERef: THREE,
+                scene,
+                camera,
+                playerRig,
+                uiPlayerRig,
+                playerShoulderPivot: PLAYER_SHOULDER_PIVOT,
+                ...extra
             };
-        }
-
-        function ensurePoseEditorRotationShape(values) {
-            if (!values.rotations || typeof values.rotations !== 'object') values.rotations = {};
-            ['leftShoulder', 'rightShoulder', 'leftElbow', 'rightElbow'].forEach((key) => {
-                const src = values.rotations[key] || { x: 0, y: 0, z: 0 };
-                values.rotations[key] = {
-                    x: Number.isFinite(src.x) ? src.x : 0,
-                    y: Number.isFinite(src.y) ? src.y : 0,
-                    z: Number.isFinite(src.z) ? src.z : 0
-                };
-            });
-        }
-
-        function poseEditorNodeForRig(rig, handleId) {
-            if (!rig) return null;
-            if (handleId === 'leftShoulder') return rig.leftArm;
-            if (handleId === 'rightShoulder') return rig.rightArm;
-            if (handleId === 'leftElbow') return rig.leftLowerArm;
-            if (handleId === 'rightElbow') return rig.rightLowerArm;
-            return null;
-        }
-        function applyPoseEditorValuesToRigRoot(rigRoot, values) {
-            if (!rigRoot || !rigRoot.userData || !rigRoot.userData.rig || !values) return;
-            const rig = rigRoot.userData.rig;
-            if (values.shoulder) {
-                const defaultTorsoY = (rig.torso && rig.torso.userData && rig.torso.userData.defaultPos && Number.isFinite(rig.torso.userData.defaultPos.y))
-                    ? rig.torso.userData.defaultPos.y
-                    : ((rig.torso && Number.isFinite(rig.torso.position.y)) ? rig.torso.position.y : 1.05);
-                const shoulderLocalY = values.shoulder.y - defaultTorsoY;
-                rig.leftArm.position.set(values.shoulder.x, shoulderLocalY, values.shoulder.z);
-                rig.rightArm.position.set(-values.shoulder.x, shoulderLocalY, values.shoulder.z);
-            }
-            if (values.elbow) {
-                rig.elbowPivot = { x: values.elbow.x, y: values.elbow.y, z: values.elbow.z };
-                rig.leftLowerArm.position.set(values.elbow.x, values.elbow.y, values.elbow.z);
-                rig.rightLowerArm.position.set(-values.elbow.x, values.elbow.y, values.elbow.z);
-            }
-            ensurePoseEditorRotationShape(values);
-            ['leftShoulder', 'rightShoulder', 'leftElbow', 'rightElbow'].forEach((key) => {
-                const node = poseEditorNodeForRig(rig, key);
-                const rot = values.rotations[key];
-                if (!node || !rot) return;
-                node.rotation.set(rot.x, rot.y, rot.z);
-            });
-        }
-
-        function applyPoseEditorValues(values) {
-            if (!values) return;
-            ensurePoseEditorRotationShape(values);
-            poseEditor.values = {
-                shoulder: { x: Math.abs(values.shoulder.x), y: values.shoulder.y, z: values.shoulder.z },
-                elbow: { x: Math.abs(values.elbow.x), y: values.elbow.y, z: values.elbow.z },
-                rotations: {
-                    leftShoulder: { ...values.rotations.leftShoulder },
-                    rightShoulder: { ...values.rotations.rightShoulder },
-                    leftElbow: { ...values.rotations.leftElbow },
-                    rightElbow: { ...values.rotations.rightElbow }
-                }
-            };
-            PLAYER_SHOULDER_PIVOT.x = poseEditor.values.shoulder.x;
-            PLAYER_SHOULDER_PIVOT.y = poseEditor.values.shoulder.y;
-            PLAYER_SHOULDER_PIVOT.z = poseEditor.values.shoulder.z;
-            applyPoseEditorValuesToRigRoot(playerRig, poseEditor.values);
-            applyPoseEditorValuesToRigRoot(uiPlayerRig, poseEditor.values);
-            updatePoseEditorText();
-        }
-
-        function updatePoseEditorText() {
-            if (!poseEditor.text || !poseEditor.values) return;
-            poseEditor.text.value = JSON.stringify(poseEditor.values, null, 2);
-        }
-
-        function togglePoseEditor(nextState) {
-            poseEditor.enabled = !!nextState;
-            if (poseEditor.panel) poseEditor.panel.classList.toggle('hidden', !poseEditor.enabled);
-            Object.values(poseEditor.handleMap).forEach((h) => {
-                if (h && h.mesh) h.mesh.visible = poseEditor.enabled;
-            });
-            if (!poseEditor.enabled) poseEditor.activeHandle = null;
-        }
-
-        function getPoseEditorNode(handleId) {
-            const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
-            return poseEditorNodeForRig(rig, handleId);
-        }
-
-        function makePoseEditorHandle(id, color) {
-            const mesh = new THREE.Mesh(
-                new THREE.SphereGeometry(0.085, 12, 10),
-                new THREE.MeshBasicMaterial({ color, depthTest: false, depthWrite: false, transparent: true, opacity: 0.92 })
-            );
-            mesh.renderOrder = 9999;
-            mesh.visible = false;
-            mesh.userData.poseHandleId = id;
-            scene.add(mesh);
-            poseEditor.handleMap[id] = { mesh, id };
-        }
-
-        function ensurePoseEditorHandles() {
-            if (!scene || poseEditor.handleMap.leftShoulder) return;
-            makePoseEditorHandle('leftShoulder', 0x68d2ff);
-            makePoseEditorHandle('rightShoulder', 0x68d2ff);
-            makePoseEditorHandle('leftElbow', 0xffd166);
-            makePoseEditorHandle('rightElbow', 0xffd166);
-        }
-
-        function updatePoseEditorHandles() {
-            if (!poseEditor.enabled) return;
-            ensurePoseEditorHandles();
-            ['leftShoulder', 'rightShoulder', 'leftElbow', 'rightElbow'].forEach((id) => {
-                const handle = poseEditor.handleMap[id];
-                const node = getPoseEditorNode(id);
-                if (!handle || !handle.mesh) return;
-                if (!node) {
-                    handle.mesh.visible = false;
-                    return;
-                }
-                node.getWorldPosition(handle.mesh.position);
-                handle.mesh.visible = true;
-            });
         }
 
         function beginPoseEditorDrag(clientX, clientY) {
-            if (!poseEditor.enabled || !camera) return false;
-            const handles = Object.values(poseEditor.handleMap).map((h) => h.mesh).filter(Boolean).filter((m) => m.visible);
-            if (handles.length === 0) return false;
-            poseEditor.pointer.x = (clientX / window.innerWidth) * 2 - 1;
-            poseEditor.pointer.y = -(clientY / window.innerHeight) * 2 + 1;
-            poseEditor.raycaster.setFromCamera(poseEditor.pointer, camera);
-            const hits = poseEditor.raycaster.intersectObjects(handles, false);
-            if (!hits.length) return false;
-            const hit = hits[0];
-            const handleId = hit.object.userData.poseHandleId;
-            if (!handleId) return false;
-            poseEditor.activeHandle = handleId;
-            poseEditor.dragLastX = clientX;
-            poseEditor.dragLastY = clientY;
-            const worldPos = hit.object.getWorldPosition(new THREE.Vector3());
-            const normal = camera.getWorldDirection(new THREE.Vector3()).normalize();
-            poseEditor.dragPlane.setFromNormalAndCoplanarPoint(normal, worldPos);
-            const rayPoint = poseEditor.raycaster.ray.intersectPlane(poseEditor.dragPlane, new THREE.Vector3()) || worldPos;
-            poseEditor.dragOffset.copy(worldPos).sub(rayPoint);
-            return true;
+            const runtime = getInputPoseEditorRuntime();
+            return !!(runtime && typeof runtime.beginPoseEditorDrag === 'function'
+                && runtime.beginPoseEditorDrag(poseEditor, buildPoseEditorRuntimeOptions({ clientX, clientY })));
         }
 
         function updatePoseEditorDrag(clientX, clientY) {
-            if (!poseEditor.activeHandle || !camera) return;
-            const node = getPoseEditorNode(poseEditor.activeHandle);
-            if (!node || !node.parent) return;
-            const values = poseEditor.values || getPoseEditorDefaultValues();
-
-            if (poseEditor.mode === 'rotate') {
-                ensurePoseEditorRotationShape(values);
-                const dx = clientX - poseEditor.dragLastX;
-                const dy = clientY - poseEditor.dragLastY;
-                const delta = (dx - dy) * 0.01;
-                const rot = values.rotations[poseEditor.activeHandle];
-                if (rot && (poseEditor.rotationAxis === 'x' || poseEditor.rotationAxis === 'y' || poseEditor.rotationAxis === 'z')) {
-                    rot[poseEditor.rotationAxis] += delta;
-                }
-            } else {
-                poseEditor.pointer.x = (clientX / window.innerWidth) * 2 - 1;
-                poseEditor.pointer.y = -(clientY / window.innerHeight) * 2 + 1;
-                poseEditor.raycaster.setFromCamera(poseEditor.pointer, camera);
-                if (!poseEditor.raycaster.ray.intersectPlane(poseEditor.dragPlane, poseEditor.dragPoint)) return;
-                const worldTarget = poseEditor.dragPoint.clone().add(poseEditor.dragOffset);
-                const local = node.parent.worldToLocal(worldTarget.clone());
-                if (poseEditor.activeHandle === 'leftShoulder' || poseEditor.activeHandle === 'rightShoulder') {
-                    values.shoulder.x = Math.abs(local.x);
-                    values.shoulder.y = local.y;
-                    values.shoulder.z = local.z;
-                } else {
-                    values.elbow.x = Math.abs(local.x);
-                    values.elbow.y = local.y;
-                    values.elbow.z = local.z;
-                }
+            const runtime = getInputPoseEditorRuntime();
+            if (runtime && typeof runtime.updatePoseEditorDrag === 'function') {
+                runtime.updatePoseEditorDrag(poseEditor, buildPoseEditorRuntimeOptions({ clientX, clientY }));
             }
-            poseEditor.dragLastX = clientX;
-            poseEditor.dragLastY = clientY;
-            applyPoseEditorValues(values);
+        }
+
+        function updatePoseEditorHandles() {
+            const runtime = getInputPoseEditorRuntime();
+            if (runtime && typeof runtime.updatePoseEditorHandles === 'function') {
+                runtime.updatePoseEditorHandles(poseEditor, buildPoseEditorRuntimeOptions());
+            }
         }
 
         function initPoseEditor() {
-            ensurePoseEditorHandles();
-            const uiLayer = document.getElementById('ui-layer');
-            if (!uiLayer) return;
-            const panel = document.createElement('div');
-            panel.id = 'pose-editor-panel';
-            panel.className = 'hidden absolute top-24 right-4 z-[240] pointer-events-auto bg-[#111418]/95 border border-[#3a444c] rounded p-2 w-64 text-[10px] text-gray-100';
-            panel.innerHTML = '<div class="font-bold text-[#c8aa6e] mb-1">Pose Editor (F8)</div>' +
-                '<div class="text-gray-400 mb-1">Translate or rotate pivots.</div>' +
-                '<div class="flex gap-1 mb-1">' +
-                    '<select id="pose-editor-mode" class="flex-1 bg-black/60 border border-[#3a444c] text-gray-100 p-1">' +
-                        '<option value="translate">Translate</option>' +
-                        '<option value="rotate">Rotate (Locked Pivot)</option>' +
-                    '</select>' +
-                    '<select id="pose-editor-axis" class="w-16 bg-black/60 border border-[#3a444c] text-gray-100 p-1">' +
-                        '<option value="x">X</option>' +
-                        '<option value="y">Y</option>' +
-                        '<option value="z">Z</option>' +
-                    '</select>' +
-                '</div>' +
-                '<textarea id="pose-editor-json" class="w-full h-28 bg-black/60 border border-[#3a444c] text-[10px] text-gray-100 p-1 font-mono" readonly></textarea>' +
-                '<div class="mt-2 flex gap-1">' +
-                    '<button id="pose-editor-copy" class="flex-1 bg-[#2a3138] hover:bg-[#3a444c] border border-[#c8aa6e] text-[#c8aa6e] px-2 py-1 rounded">Copy</button>' +
-                    '<button id="pose-editor-save" class="flex-1 bg-[#2a3138] hover:bg-[#3a444c] border border-[#c8aa6e] text-[#c8aa6e] px-2 py-1 rounded">Save</button>' +
-                    '<button id="pose-editor-reset" class="flex-1 bg-[#2a3138] hover:bg-[#3a444c] border border-[#c8aa6e] text-[#c8aa6e] px-2 py-1 rounded">Reset</button>' +
-                '</div>';
-            uiLayer.appendChild(panel);
-            poseEditor.panel = panel;
-            poseEditor.text = panel.querySelector('#pose-editor-json');
-            poseEditor.modeSelect = panel.querySelector('#pose-editor-mode');
-            poseEditor.axisSelect = panel.querySelector('#pose-editor-axis');
-            if (poseEditor.modeSelect) poseEditor.modeSelect.value = poseEditor.mode;
-            if (poseEditor.axisSelect) poseEditor.axisSelect.value = poseEditor.rotationAxis;
-            if (poseEditor.modeSelect) poseEditor.modeSelect.addEventListener('change', () => { poseEditor.mode = poseEditor.modeSelect.value === 'rotate' ? 'rotate' : 'translate'; });
-            if (poseEditor.axisSelect) poseEditor.axisSelect.addEventListener('change', () => { poseEditor.rotationAxis = poseEditor.axisSelect.value === 'y' || poseEditor.axisSelect.value === 'z' ? poseEditor.axisSelect.value : 'x'; });
-
-            const savedRaw = localStorage.getItem('poseEditor.v1');
-            let startValues = getPoseEditorDefaultValues();
-            if (savedRaw) {
-                try {
-                    const parsed = JSON.parse(savedRaw);
-                    if (parsed && parsed.shoulder && parsed.elbow) startValues = parsed;
-                } catch (err) {
-                    console.warn('Invalid poseEditor.v1 payload', err);
-                }
+            const runtime = getInputPoseEditorRuntime();
+            if (runtime && typeof runtime.initPoseEditor === 'function') {
+                runtime.initPoseEditor(poseEditor, buildPoseEditorRuntimeOptions());
             }
-            applyPoseEditorValues(startValues);
-
-            panel.querySelector('#pose-editor-copy').addEventListener('click', async () => {
-                if (!poseEditor.values) return;
-                const text = JSON.stringify(poseEditor.values, null, 2);
-                try { await navigator.clipboard.writeText(text); } catch (err) { console.warn('Clipboard copy failed', err); }
-            });
-            panel.querySelector('#pose-editor-save').addEventListener('click', () => {
-                if (!poseEditor.values) return;
-                localStorage.setItem('poseEditor.v1', JSON.stringify(poseEditor.values));
-            });
-            panel.querySelector('#pose-editor-reset').addEventListener('click', () => {
-                localStorage.removeItem('poseEditor.v1');
-                applyPoseEditorValues(getPoseEditorDefaultValues());
-            });
-
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'F8') {
-                    e.preventDefault();
-                    togglePoseEditor(!poseEditor.enabled);
-                    return;
-                }
-                if (!poseEditor.enabled) return;
-                if (e.key === 'r' || e.key === 'R') {
-                    e.preventDefault();
-                    poseEditor.mode = poseEditor.mode === 'rotate' ? 'translate' : 'rotate';
-                    if (poseEditor.modeSelect) poseEditor.modeSelect.value = poseEditor.mode;
-                }
-            });
         }
         const SHADOW_FOCUS_TILE_EPSILON = 0.25;
         const SHADOW_FOCUS_HEIGHT_EPSILON = 0.15;

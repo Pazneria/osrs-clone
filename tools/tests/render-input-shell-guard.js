@@ -16,6 +16,7 @@ function run() {
   const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
   const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
+  const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -66,6 +67,18 @@ function run() {
   );
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
+  assert(inputPoseEditorSource.includes("window.InputPoseEditorRuntime"), "input pose editor runtime should expose a window runtime");
+  assert(inputPoseEditorSource.includes("function createPoseEditorState"), "input pose editor runtime should own pose editor state construction");
+  assert(inputPoseEditorSource.includes("function beginPoseEditorDrag"), "input pose editor runtime should own pose editor drag startup");
+  assert(inputPoseEditorSource.includes("function initPoseEditor"), "input pose editor runtime should own pose editor panel setup");
+  assert(inputSource.includes("InputPoseEditorRuntime"), "input-render.js should delegate pose editor ownership through the pose editor runtime");
+  assert(!inputSource.includes("function ensurePoseEditorRotationShape"), "input-render.js should not own pose editor rotation normalization");
+  assert(!inputSource.includes("function makePoseEditorHandle"), "input-render.js should not own pose editor handle mesh creation");
+  assert(manifestSource.includes('../../js/input-pose-editor-runtime.js?raw'), "legacy manifest should load input pose editor runtime");
+  assert(
+    manifestSource.indexOf('id: "input-pose-editor-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input pose editor runtime before input-render.js"
+  );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");
   assert(inputSource.includes("function maybeUpdateMainDirectionalShadowFocus"), "input-render.js should throttle directional shadow focus updates through a helper");
