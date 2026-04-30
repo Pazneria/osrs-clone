@@ -620,6 +620,10 @@ function computeArmRigDefaults(normalizedAppearance) {
     };
 }
 
+function hasBaseToolVisual(node) {
+    return !!(node && Array.isArray(node.children) && node.children.length > 0);
+}
+
 function buildPlayerRigTemplate(normalizedAppearance) {
     const armRigDefaults = computeArmRigDefaults(normalizedAppearance);
     const rigRoot = createRigBones(armRigDefaults);

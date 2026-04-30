@@ -67,6 +67,10 @@ function run() {
     "player model should delegate temporary skilling tool visuals through the held-item runtime"
   );
   assert(
+    playerModelScript.includes("function hasBaseToolVisual"),
+    "player model should keep a template-time base tool visibility helper"
+  );
+  assert(
     !playerModelScript.includes("kit_head_male: { slot: 'head'"),
     "player model should not inline kit fragment tables"
   );
