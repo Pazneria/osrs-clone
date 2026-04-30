@@ -10,6 +10,7 @@ function run() {
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
+  const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "fire-lifecycle-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(
@@ -67,8 +68,8 @@ function run() {
   );
 
   assert(
-    worldSource.includes("Math.abs(nextH - currentH) > 0.3 && !tileIsRamp"),
-    "world.js movement stepping height threshold must remain unchanged"
+    fireLifecycleRuntimeSource.includes("Math.abs(nextH - currentH) > 0.3 && !tileIsRamp"),
+    "fire lifecycle movement stepping height threshold must remain unchanged"
   );
   assert(
     inputSource.includes("Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition"),

@@ -13,6 +13,7 @@
         const worldRockNodeRuntime = window.WorldRockNodeRuntime || null;
         const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
+        const worldFireLifecycleRuntime = window.WorldFireLifecycleRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
         const worldChunkResourceRenderRuntime = window.WorldChunkResourceRenderRuntime || null;
@@ -433,7 +434,6 @@
 
         const MAX_SKILL_LEVEL = 99;
         const MAX_REASONABLE_EAT_COOLDOWN_TICKS = 10;
-        const FIRE_STEP_DIR = { x: 0, y: 1 };
         const DEFAULT_FIRE_LIFETIME_TICKS = 90;
         const ASHES_DESPAWN_TICKS = 100;
 
@@ -607,197 +607,65 @@
 
             return removed;
         }
+
+        function buildFireLifecycleRuntimeContext() {
+            return {
+                THREE,
+                TileId,
+                ITEM_DB,
+                SkillRuntime: window.SkillRuntime || null,
+                SkillSpecRegistry: window.SkillSpecRegistry || null,
+                activeFires,
+                addChatMessage,
+                ashesDespawnTicks: ASHES_DESPAWN_TICKS,
+                chunkSize: CHUNK_SIZE,
+                cookingFireSpotsToRender,
+                currentTick,
+                environmentMeshes,
+                fireLifetimeTicks: FIRE_LIFETIME_TICKS,
+                getWorldChunkSceneRuntime,
+                heightMap,
+                isWalkableTileId,
+                logicalMap,
+                mapSize: MAP_SIZE,
+                playerState,
+                scene,
+                spawnGroundItem,
+                worldFireRenderRuntime,
+                worldGroundItemRenderRuntime
+            };
+        }
+
         function isFireOccupiedAt(x, y, z) {
-            return activeFires.some((fire) => fire && fire.x === x && fire.y === y && fire.z === z);
-        }
-
-        let activeFiremakingLogPreview = null;
-
-        function createFireVisualAt(x, y, z) {
-            return worldFireRenderRuntime.createFireVisual({
-                THREE,
-                x,
-                y,
-                z,
-                terrainHeight: heightMap[z][y][x] + (z * 3.0)
-            });
-        }
-
-        function createFiremakingLogPreviewAt(x, y, z, itemId) {
-            const itemData = ITEM_DB && typeof itemId === 'string' ? ITEM_DB[itemId] : null;
-            return worldFireRenderRuntime.createFiremakingLogPreview({
-                THREE,
-                x,
-                y,
-                z,
-                terrainHeight: heightMap[z][y][x] + (z * 3.0),
-                itemData,
-                getItemIconSpritePath: worldGroundItemRenderRuntime.getItemIconSpritePath,
-                addGroundItemSprite(group, path, yOffset, scale) {
-                    return worldGroundItemRenderRuntime.addGroundItemSprite({ THREE, group, path, y: yOffset, scale });
-                }
-            });
-        }
-
-        function attachFireVisualGroup(group, x, y, z, preferChunkParent = true) {
-            if (preferChunkParent) {
-                const cx = Math.floor(x / CHUNK_SIZE);
-                const cy = Math.floor(y / CHUNK_SIZE);
-                const chunkGroup = getWorldChunkSceneRuntime().getNearChunkGroup(`${cx},${cy}`);
-                if (chunkGroup) {
-                    const pGroup = chunkGroup.children.find((pg) => pg.userData.z === z);
-                    if (pGroup) {
-                        pGroup.add(group);
-                        return;
-                    }
-                }
-            }
-            scene.add(group);
-        }
-
-        function removeFiremakingLogPreview() {
-            if (!activeFiremakingLogPreview) return;
-            const preview = activeFiremakingLogPreview;
-            if (preview.mesh && preview.mesh.parent) preview.mesh.parent.remove(preview.mesh);
-            else if (preview.mesh) scene.remove(preview.mesh);
-            activeFiremakingLogPreview = null;
+            return worldFireLifecycleRuntime.isFireOccupiedAt(buildFireLifecycleRuntimeContext(), x, y, z);
         }
 
         function syncFiremakingLogPreview() {
-            const session = playerState && playerState.firemakingSession ? playerState.firemakingSession : null;
-            const target = session && session.target && typeof session.target === 'object' ? session.target : null;
-            const shouldShow = !!(
-                scene
-                && session
-                && session.phase === 'attempting'
-                && playerState.action === 'SKILLING: FIREMAKING'
-                && target
-                && Number.isFinite(target.x)
-                && Number.isFinite(target.y)
-                && Number.isFinite(target.z)
-                && !isFireOccupiedAt(target.x, target.y, target.z)
-            );
-
-            if (!shouldShow) {
-                removeFiremakingLogPreview();
-                return;
-            }
-
-            const itemId = typeof session.sourceItemId === 'string' && session.sourceItemId ? session.sourceItemId : 'logs';
-            if (
-                activeFiremakingLogPreview
-                && activeFiremakingLogPreview.x === target.x
-                && activeFiremakingLogPreview.y === target.y
-                && activeFiremakingLogPreview.z === target.z
-                && activeFiremakingLogPreview.itemId === itemId
-            ) {
-                return;
-            }
-
-            removeFiremakingLogPreview();
-            const mesh = createFiremakingLogPreviewAt(target.x, target.y, target.z, itemId);
-            attachFireVisualGroup(mesh, target.x, target.y, target.z, true);
-            activeFiremakingLogPreview = { x: target.x, y: target.y, z: target.z, itemId, mesh };
+            worldFireLifecycleRuntime.syncFiremakingLogPreview(buildFireLifecycleRuntimeContext());
         }
 
         function spawnFireAtTile(x, y, z, options = {}) {
-            if (isFireOccupiedAt(x, y, z)) return false;
-            if (!scene) return false;
-            if (activeFiremakingLogPreview && activeFiremakingLogPreview.x === x && activeFiremakingLogPreview.y === y && activeFiremakingLogPreview.z === z) {
-                removeFiremakingLogPreview();
-            }
-
-            const fireVisual = createFireVisualAt(x, y, z);
-            const expiresTick = Number.isFinite(options.expiresTick)
-                ? options.expiresTick
-                : currentTick + FIRE_LIFETIME_TICKS;
-            const preferChunkParent = options.preferChunkParent !== false;
-
-            attachFireVisualGroup(fireVisual.group, x, y, z, preferChunkParent);
-            environmentMeshes.push(...fireVisual.hitMeshes);
-            activeFires.push({
-                x,
-                y,
-                z,
-                mesh: fireVisual.group,
-                flame: fireVisual.flame,
-                hitMeshes: fireVisual.hitMeshes,
-                expiresTick,
-                phase: Math.random() * Math.PI * 2,
-                routeId: options.routeId || null
-            });
-            return true;
+            return worldFireLifecycleRuntime.spawnFireAtTile(buildFireLifecycleRuntimeContext(), x, y, z, options);
         }
 
         function seedCookingTrainingFires() {
-            if (!Array.isArray(cookingFireSpotsToRender) || cookingFireSpotsToRender.length === 0) return;
-            for (let i = 0; i < cookingFireSpotsToRender.length; i++) {
-                const spot = cookingFireSpotsToRender[i];
-                if (!spot) continue;
-                spawnFireAtTile(spot.x, spot.y, spot.z, {
-                    expiresTick: Number.POSITIVE_INFINITY,
-                    preferChunkParent: false,
-                    routeId: spot.routeId || null
-                });
-            }
+            worldFireLifecycleRuntime.seedCookingTrainingFires(buildFireLifecycleRuntimeContext());
         }
 
         function lightFireAtCurrentTile(x = playerState.x, y = playerState.y, z = playerState.z) {
-            x = Number.isFinite(x) ? Math.floor(x) : playerState.x;
-            y = Number.isFinite(y) ? Math.floor(y) : playerState.y;
-            z = Number.isFinite(z) ? Math.floor(z) : playerState.z;
-
-            if (isFireOccupiedAt(x, y, z)) {
-                addChatMessage('There is already a fire here.', 'warn');
-                return false;
-            }
-
-            return spawnFireAtTile(x, y, z, {
-                expiresTick: currentTick + FIRE_LIFETIME_TICKS,
-                preferChunkParent: true
-            });
+            return worldFireLifecycleRuntime.lightFireAtCurrentTile(buildFireLifecycleRuntimeContext(), x, y, z);
         }
 
         function expireFireAtIndex(index) {
-            const fire = activeFires[index];
-            if (!fire) return false;
-
-            if (fire.mesh && fire.mesh.parent) fire.mesh.parent.remove(fire.mesh);
-            else if (fire.mesh) scene.remove(fire.mesh);
-
-            if (Array.isArray(fire.hitMeshes)) {
-                for (let j = 0; j < fire.hitMeshes.length; j++) {
-                    const idx = environmentMeshes.indexOf(fire.hitMeshes[j]);
-                    if (idx !== -1) environmentMeshes.splice(idx, 1);
-                }
-            }
-
-            const ashesItem = ITEM_DB && ITEM_DB.ashes ? ITEM_DB.ashes : null;
-            if (ashesItem) {
-                spawnGroundItem(ashesItem, fire.x, fire.y, fire.z, 1, {
-                    despawnTicks: ASHES_DESPAWN_TICKS
-                });
-            }
-
-            activeFires.splice(index, 1);
-            return true;
+            return worldFireLifecycleRuntime.expireFireAtIndex(buildFireLifecycleRuntimeContext(), index);
         }
 
         function tickFireLifecycle() {
-            for (let i = activeFires.length - 1; i >= 0; i--) {
-                const fire = activeFires[i];
-                if (!fire || currentTick < fire.expiresTick) continue;
-                expireFireAtIndex(i);
-            }
+            worldFireLifecycleRuntime.tickFireLifecycle(buildFireLifecycleRuntimeContext());
         }
 
         function updateFires(frameNow) {
-            tickFireLifecycle();
-            syncFiremakingLogPreview();
-            for (let i = 0; i < activeFires.length; i++) {
-                const fire = activeFires[i];
-                worldFireRenderRuntime.updateFireFlameVisual(fire, frameNow);
-            }
+            worldFireLifecycleRuntime.updateFires(buildFireLifecycleRuntimeContext(), frameNow);
         }
 
         function removeGroundItemEntryAt(index) {
@@ -825,136 +693,31 @@
         }
 
         function findFireStepDestination() {
-            const z = playerState.z;
-            const currentH = heightMap[z][playerState.y][playerState.x];
-            const candidates = [
-                { direction: 'east', x: playerState.x + FIRE_STEP_DIR.x, y: playerState.y + FIRE_STEP_DIR.y },
-                { direction: 'west', x: playerState.x - FIRE_STEP_DIR.x, y: playerState.y - FIRE_STEP_DIR.y }
-            ];
-            const failureReasons = [];
-
-            for (let i = 0; i < candidates.length; i++) {
-                const candidate = candidates[i];
-                const nx = candidate.x;
-                const ny = candidate.y;
-
-                if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) {
-                    failureReasons.push('out_of_bounds');
-                    continue;
-                }
-                if (!isWalkableTileId(logicalMap[z][ny][nx])) {
-                    failureReasons.push('blocked_tile');
-                    continue;
-                }
-
-                const nextH = heightMap[z][ny][nx];
-                const tileIsRamp = logicalMap[z][playerState.y][playerState.x] === TileId.STAIRS_RAMP || logicalMap[z][ny][nx] === TileId.STAIRS_RAMP;
-                if (Math.abs(nextH - currentH) > 0.3 && !tileIsRamp) {
-                    failureReasons.push('height_mismatch');
-                    continue;
-                }
-
-                if (activeFires.some((f) => f.x === nx && f.y === ny && f.z === z)) {
-                    failureReasons.push('fire_occupied');
-                    continue;
-                }
-
-                return { stepped: true, direction: candidate.direction, x: nx, y: ny };
-            }
-
-            let reason = 'blocked_tile';
-            if (failureReasons.includes('fire_occupied')) reason = 'fire_occupied';
-            else if (failureReasons.includes('height_mismatch')) reason = 'height_mismatch';
-            else if (failureReasons.includes('out_of_bounds')) reason = 'out_of_bounds';
-
-            return { stepped: false, reason };
+            return worldFireLifecycleRuntime.findFireStepDestination(buildFireLifecycleRuntimeContext());
         }
 
         function applyFireStepDestination(stepResult) {
-            if (!stepResult || !stepResult.stepped) return stepResult;
-            playerState.prevX = playerState.x;
-            playerState.prevY = playerState.y;
-            playerState.x = stepResult.x;
-            playerState.y = stepResult.y;
-            playerState.targetX = stepResult.x;
-            playerState.targetY = stepResult.y;
-            playerState.midX = null;
-            playerState.midY = null;
-            playerState.path = [];
-            return stepResult;
+            return worldFireLifecycleRuntime.applyFireStepDestination(buildFireLifecycleRuntimeContext(), stepResult);
         }
 
         function tryStepAfterFire() {
-            return applyFireStepDestination(findFireStepDestination());
+            return worldFireLifecycleRuntime.tryStepAfterFire(buildFireLifecycleRuntimeContext());
         }
 
         function tryStepBeforeFiremaking() {
-            return applyFireStepDestination(findFireStepDestination());
+            return worldFireLifecycleRuntime.tryStepBeforeFiremaking(buildFireLifecycleRuntimeContext());
         }
 
         function startFiremaking(sourceItemId = null) {
-            if (!(window.SkillRuntime && typeof SkillRuntime.tryStartSkillById === 'function')) return false;
-            const payload = { skillId: 'firemaking' };
-            if (typeof sourceItemId === 'string' && sourceItemId) payload.sourceItemId = sourceItemId;
-            return SkillRuntime.tryStartSkillById('firemaking', payload);
+            return worldFireLifecycleRuntime.startFiremaking(buildFireLifecycleRuntimeContext(), sourceItemId);
         }
 
         function getFiremakingLogItemIdForPair(itemA, itemB) {
-            const a = String(itemA || '');
-            const b = String(itemB || '');
-            if (!a || !b) return null;
-
-            const firemakingRecipes = (window.SkillSpecRegistry && typeof SkillSpecRegistry.getRecipeSet === 'function')
-                ? SkillSpecRegistry.getRecipeSet('firemaking')
-                : null;
-            if (!firemakingRecipes || typeof firemakingRecipes !== 'object') return null;
-
-            const logItemIds = new Set();
-            const recipeIds = Object.keys(firemakingRecipes);
-            for (let i = 0; i < recipeIds.length; i++) {
-                const recipe = firemakingRecipes[recipeIds[i]];
-                const sourceItemId = typeof (recipe && recipe.sourceItemId) === 'string' ? recipe.sourceItemId : '';
-                if (sourceItemId) logItemIds.add(sourceItemId);
-            }
-
-            if (a === 'tinderbox' && logItemIds.has(b)) return b;
-            if (b === 'tinderbox' && logItemIds.has(a)) return a;
-            return null;
+            return worldFireLifecycleRuntime.getFiremakingLogItemIdForPair(buildFireLifecycleRuntimeContext(), itemA, itemB);
         }
 
         function resolveFireTargetFromHit(hitData) {
-            if (!hitData || !Array.isArray(activeFires) || activeFires.length === 0) return null;
-
-            const z = playerState.z;
-            let x = Number.isInteger(hitData.gridX) ? hitData.gridX : null;
-            let y = Number.isInteger(hitData.gridY) ? hitData.gridY : null;
-
-            if ((x === null || y === null) && hitData.point) {
-                x = Math.floor(hitData.point.x + 0.5);
-                y = Math.floor(hitData.point.z + 0.5);
-            }
-
-            if (x !== null && y !== null) {
-                const direct = activeFires.find((f) => f.x === x && f.y === y && f.z === z) || null;
-                if (direct) return { x: direct.x, y: direct.y, z: direct.z };
-            }
-
-            if (!hitData.point) return null;
-
-            let nearest = null;
-            let nearestDist = Infinity;
-            for (let i = 0; i < activeFires.length; i++) {
-                const fire = activeFires[i];
-                if (!fire || fire.z !== z) continue;
-                const d = Math.hypot((fire.x + 0.5) - hitData.point.x, (fire.y + 0.5) - hitData.point.z);
-                if (d < nearestDist) {
-                    nearestDist = d;
-                    nearest = fire;
-                }
-            }
-
-            if (!nearest || nearestDist > 1.35) return null;
-            return { x: nearest.x, y: nearest.y, z: nearest.z };
+            return worldFireLifecycleRuntime.resolveFireTargetFromHit(buildFireLifecycleRuntimeContext(), hitData);
         }
 
         function debugCookingUse(message) {

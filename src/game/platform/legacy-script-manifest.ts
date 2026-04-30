@@ -27,6 +27,7 @@ import worldChunkResourceRenderRuntimeScript from "../../js/world/chunk-resource
 import worldMiningPoseReferenceRuntimeScript from "../../js/world/mining-pose-reference-runtime.js?raw";
 import worldTownNpcRuntimeScript from "../../js/world/town-npc-runtime.js?raw";
 import worldFireRenderRuntimeScript from "../../js/world/fire-render-runtime.js?raw";
+import worldFireLifecycleRuntimeScript from "../../js/world/fire-lifecycle-runtime.js?raw";
 import worldSceneStateScript from "../../js/world/scene-state.js?raw";
 import worldSceneLifecycleScript from "../../js/world/scene-lifecycle.js?raw";
 import worldChunkSceneRuntimeScript from "../../js/world/chunk-scene-runtime.js?raw";
@@ -93,6 +94,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "world-mining-pose-reference-runtime", filename: "src/js/world/mining-pose-reference-runtime.js", code: worldMiningPoseReferenceRuntimeScript },
   { id: "world-town-npc-runtime", filename: "src/js/world/town-npc-runtime.js", code: worldTownNpcRuntimeScript },
   { id: "world-fire-render-runtime", filename: "src/js/world/fire-render-runtime.js", code: worldFireRenderRuntimeScript },
+  { id: "world-fire-lifecycle-runtime", filename: "src/js/world/fire-lifecycle-runtime.js", code: worldFireLifecycleRuntimeScript },
   { id: "world-scene-state", filename: "src/js/world/scene-state.js", code: worldSceneStateScript },
   { id: "world-scene-lifecycle", filename: "src/js/world/scene-lifecycle.js", code: worldSceneLifecycleScript },
   { id: "world-chunk-scene-runtime", filename: "src/js/world/chunk-scene-runtime.js", code: worldChunkSceneRuntimeScript },
