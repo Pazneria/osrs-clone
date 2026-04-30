@@ -11,7 +11,7 @@ function run() {
   const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
   const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "fire-lifecycle-runtime.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
 
   assert(
     sharedAssetsRuntimeSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial"),
@@ -72,8 +72,8 @@ function run() {
     "fire lifecycle movement stepping height threshold must remain unchanged"
   );
   assert(
-    inputSource.includes("Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition"),
-    "input-render.js pathfinding height threshold must remain unchanged"
+    inputPathfindingRuntimeSource.includes("Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition"),
+    "input pathfinding runtime height threshold must remain unchanged"
   );
 
   console.log("Terrain seam guard passed.");

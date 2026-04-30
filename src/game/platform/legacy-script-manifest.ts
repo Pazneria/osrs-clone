@@ -89,6 +89,7 @@ import inputHoverTooltipRuntimeScript from "../../js/input-hover-tooltip-runtime
 import inputStationInteractionRuntimeScript from "../../js/input-station-interaction-runtime.js?raw";
 import inputPoseEditorRuntimeScript from "../../js/input-pose-editor-runtime.js?raw";
 import inputPlayerAnimationRuntimeScript from "../../js/input-player-animation-runtime.js?raw";
+import inputPathfindingRuntimeScript from "../../js/input-pathfinding-runtime.js?raw";
 import inputRenderScript from "../../js/input-render.js?raw";
 
 export interface LegacyScriptEntry {
@@ -189,5 +190,6 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "input-station-interaction-runtime", filename: "src/js/input-station-interaction-runtime.js", code: inputStationInteractionRuntimeScript },
   { id: "input-pose-editor-runtime", filename: "src/js/input-pose-editor-runtime.js", code: inputPoseEditorRuntimeScript },
   { id: "input-player-animation-runtime", filename: "src/js/input-player-animation-runtime.js", code: inputPlayerAnimationRuntimeScript },
+  { id: "input-pathfinding-runtime", filename: "src/js/input-pathfinding-runtime.js", code: inputPathfindingRuntimeScript },
   { id: "input-render", filename: "src/js/input-render.js", code: inputRenderScript }
 ];

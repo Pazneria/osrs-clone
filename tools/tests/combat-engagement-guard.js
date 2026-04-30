@@ -28,6 +28,7 @@ function run() {
   const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
 
@@ -141,9 +142,10 @@ function run() {
     "player target validation should distinguish temporary occupancy blockage from true hard no-path failures"
   );
   assert(
-    inputRenderSource.includes("function getPathTileId(")
-      && inputRenderSource.includes("opts && opts.ignoreCombatEnemyOccupancy")
-      && inputRenderSource.includes("function isStandableTileForPath("),
+    inputRenderSource.includes("InputPathfindingRuntime")
+      && inputPathfindingRuntimeSource.includes("function getPathTileId(")
+      && inputPathfindingRuntimeSource.includes("opts && opts.ignoreCombatEnemyOccupancy")
+      && inputPathfindingRuntimeSource.includes("function isStandableTileForPath("),
     "pathfinding should support occupancy-ignored path sampling without changing normal walkability rules"
   );
 

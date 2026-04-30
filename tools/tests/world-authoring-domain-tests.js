@@ -307,12 +307,13 @@ function setSparseTile(map, x, y, z, tileId) {
     null,
     "tutorial movement bounds should prevent pathing from the mining yard into open grass"
   );
+  const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
   assert.ok(
-    fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8").includes("if (blockX || blockY) continue;"),
+    inputPathfindingRuntimeSource.includes("if (blockX || blockY) continue;"),
     "runtime pathing should reject diagonal corner-cutting along fence and gate corners"
   );
   assert.ok(
-    fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8").includes("window.isTutorialWalkTileAllowed"),
+    inputPathfindingRuntimeSource.includes("context.isTutorialWalkTileAllowed"),
     "runtime pathing should keep active tutorial movement inside the authored island route"
   );
 }

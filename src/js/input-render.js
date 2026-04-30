@@ -14,6 +14,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputPlayerAnimationRuntime() {
             return window.InputPlayerAnimationRuntime || null;
         }
+        function getInputPathfindingRuntime() {
+            return window.InputPathfindingRuntime || null;
+        }
         const inputPoseEditorRuntime = getInputPoseEditorRuntime();
         const poseEditor = inputPoseEditorRuntime && typeof inputPoseEditorRuntime.createPoseEditorState === 'function'
             ? inputPoseEditorRuntime.createPoseEditorState({ THREERef: THREE })
@@ -1166,6 +1169,25 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             return false;
         }
+        function buildInputPathfindingRuntimeContext() {
+            return {
+                mapSize: MAP_SIZE,
+                planes: PLANES,
+                pathfindMaxIterations: PATHFIND_MAX_ITERATIONS,
+                playerState,
+                logicalMap,
+                heightMap,
+                tileIds: TileId,
+                isTutorialWalkTileAllowed: (typeof window.isTutorialWalkTileAllowed === 'function') ? window.isTutorialWalkTileAllowed : null,
+                getCombatEnemyOccupiedBaseTileId: (typeof window.getCombatEnemyOccupiedBaseTileId === 'function') ? window.getCombatEnemyOccupiedBaseTileId : null,
+                isWalkableTileId,
+                isWaterTileId,
+                getStationApproachPositions,
+                isPierProtectedWaterTile,
+                isPierDeckTile,
+                isPierFishingApproachTile
+            };
+        }
         function getGroundTileStackCount(gridX, gridY, z = playerState.z) {
             if (!Array.isArray(groundItems) || !Number.isInteger(gridX) || !Number.isInteger(gridY)) return 1;
             let count = 0;
@@ -1227,185 +1249,23 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function getPathTileId(x, y, z = playerState.z, pathOptions = null) {
-            if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
-            const opts = pathOptions && typeof pathOptions === 'object' ? pathOptions : null;
-            if (opts && opts.ignoreCombatEnemyOccupancy && typeof window.getCombatEnemyOccupiedBaseTileId === 'function') {
-                const occupiedBaseTileId = window.getCombatEnemyOccupiedBaseTileId(x, y, z);
-                if (occupiedBaseTileId !== null && occupiedBaseTileId !== undefined) return occupiedBaseTileId;
-            }
-            return logicalMap[z][y][x];
+            const runtime = getInputPathfindingRuntime();
+            return runtime && typeof runtime.getPathTileId === 'function'
+                ? runtime.getPathTileId(buildInputPathfindingRuntimeContext(), x, y, z, pathOptions)
+                : null;
         }
 
         function isStandableTileForPath(x, y, z = playerState.z, pathOptions = null) {
-            if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;
-            if (typeof window.isTutorialWalkTileAllowed === 'function' && !window.isTutorialWalkTileAllowed(x, y, z)) return false;
-            const tile = getPathTileId(x, y, z, pathOptions);
-            if (isWalkableTileId(tile)) return true;
-
-            // Edge shallow-water tiles are standable; deeper water is not.
-            if (tile === TileId.WATER_SHALLOW) {
-                if (isPierProtectedWaterTile(x, y, z)) return false;
-                const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-                for (let i = 0; i < dirs.length; i++) {
-                    const nx = x + dirs[i].x;
-                    const ny = y + dirs[i].y;
-                    if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
-                    const neighborTile = getPathTileId(nx, ny, z, pathOptions);
-                    if (!isWaterTileId(neighborTile)) return true;
-                }
-            }
-            return false;
+            const runtime = getInputPathfindingRuntime();
+            return !!(runtime && typeof runtime.isStandableTileForPath === 'function'
+                && runtime.isStandableTileForPath(buildInputPathfindingRuntimeContext(), x, y, z, pathOptions));
         }
 
         function findPath(startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null, pathOptions = null) {
-            const encodeTileKey = (x, y) => (y * MAP_SIZE) + x;
-            const decodeTileX = (key) => key % MAP_SIZE;
-            const decodeTileY = (key) => Math.floor(key / MAP_SIZE);
-            const resolvedZ = Number.isFinite(pathOptions && pathOptions.z)
-                ? Math.max(0, Math.min(PLANES - 1, Math.floor(pathOptions.z)))
-                : playerState.z;
-            let validTargets = new Set();
-            let targetTileType = getPathTileId(targetX, targetY, resolvedZ, pathOptions);
-            const stationApproachKeys = new Set(
-                getStationApproachPositions(interactionObj, targetX, targetY, resolvedZ)
-                    .map((p) => encodeTileKey(p.x, p.y))
-            );
-            let isInteract = forceAdjacent || !isStandableTileForPath(targetX, targetY, resolvedZ, pathOptions);
-
-            if (isInteract) {
-                let targetH = heightMap[resolvedZ][targetY][targetX];
-                if (targetTileType === TileId.BANK_BOOTH) { // BANK BOOTH
-                    let nx = targetX, ny = targetY + 1;
-                    if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTileForPath(nx, ny, resolvedZ, pathOptions)) {
-                        if (Math.abs(heightMap[resolvedZ][ny][nx] - targetH) < 0.1) validTargets.add(encodeTileKey(nx, ny));
-                    }
-                } else {
-                    for (let dy = -2; dy <= 2; dy++) {
-                        for (let dx = -2; dx <= 2; dx++) {
-                            if (dx === 0 && dy === 0) continue;
-                            let nx = targetX + dx, ny = targetY + dy;
-
-                            if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
-                                // Normal adjacent interaction check
-                                if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTileForPath(nx, ny, resolvedZ, pathOptions)) {
-                                    const pierFishingApproach = interactionObj === 'WATER'
-                                        && isPierFishingApproachTile(nx, ny, targetX, targetY, resolvedZ);
-                                    if (interactionObj === 'WATER' && !pierFishingApproach) {
-                                        const isCardinalAdjacent = (Math.abs(dx) + Math.abs(dy)) === 1;
-                                        if (!isCardinalAdjacent) continue;
-                                        if (isWaterTileId(getPathTileId(nx, ny, resolvedZ, pathOptions))) continue;
-                                    }
-                                    if (pierFishingApproach || Math.abs(heightMap[resolvedZ][ny][nx] - targetH) <= 0.3) {
-                                        const neighborKey = encodeTileKey(nx, ny);
-                                        if (stationApproachKeys.size === 0 || stationApproachKeys.has(neighborKey)) validTargets.add(neighborKey);
-                                    }
-                                }
-                                continue;
-                            }
-
-                            const maxAxis = Math.max(Math.abs(dx), Math.abs(dy));
-                            const isAltarRingTile = interactionObj === 'ALTAR_CANDIDATE' && maxAxis === 2;
-                            if (isAltarRingTile) {
-                                if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && isStandableTileForPath(nx, ny, resolvedZ, pathOptions)) {
-                                    if (Math.abs(heightMap[resolvedZ][ny][nx] - targetH) <= 0.3) validTargets.add(encodeTileKey(nx, ny));
-                                }
-                                continue;
-                            }
-
-                            if (targetTileType === TileId.SOLID_NPC) { // Allow reaching NPCs over counters
-                                if (Math.abs(dx) === 2 && dy === 0) {
-                                    let midX = targetX + dx / 2;
-                                    if (getPathTileId(midX, targetY, resolvedZ, pathOptions) === TileId.SHOP_COUNTER) {
-                                        if (nx >= 0 && nx < MAP_SIZE && isStandableTileForPath(nx, ny, resolvedZ, pathOptions)) validTargets.add(encodeTileKey(nx, ny));
-                                    }
-                                } else if (Math.abs(dy) === 2 && dx === 0) {
-                                    let midY = targetY + dy / 2;
-                                    if (getPathTileId(targetX, midY, resolvedZ, pathOptions) === TileId.SHOP_COUNTER) {
-                                        if (ny >= 0 && ny < MAP_SIZE && isStandableTileForPath(nx, ny, resolvedZ, pathOptions)) validTargets.add(encodeTileKey(nx, ny));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (validTargets.size === 0) return [];
-            } else validTargets.add(encodeTileKey(targetX, targetY));
-            
-            const startKey = encodeTileKey(startX, startY);
-            if (validTargets.has(startKey)) return [];
-            
-            let queue = [startKey];
-            let queueIndex = 0;
-            let visitedParents = new Map();
-            visitedParents.set(startKey, -1);
-            
-            let dirs8 = [{x: 0, y: -1}, {x: 0, y: 1}, {x: -1, y: 0}, {x: 1, y: 0}, {x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1}, {x: 1, y: 1}];
-            const restrictPierFishingToDeck = interactionObj === 'WATER' && isPierDeckTile(startX, startY, resolvedZ);
-            
-            let iterations = 0; 
-            let foundTargetKey = -1;
-
-            while (queueIndex < queue.length) {
-                if (iterations++ > PATHFIND_MAX_ITERATIONS) break; 
-                
-                let currentKey = queue[queueIndex++];
-                let currentX = decodeTileX(currentKey);
-                let currentY = decodeTileY(currentKey);
-                let currentHeight = heightMap[resolvedZ][currentY][currentX];
-                
-                for (let dir of dirs8) {
-                    let nx = currentX + dir.x; let ny = currentY + dir.y;
-                    let nextKey = encodeTileKey(nx, ny);
-                    if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE && !visitedParents.has(nextKey) && isStandableTileForPath(nx, ny, resolvedZ, pathOptions)) {
-                        const nextTileId = getPathTileId(nx, ny, resolvedZ, pathOptions);
-                        const currentTileId = getPathTileId(currentX, currentY, resolvedZ, pathOptions);
-                        if (interactionObj === 'WATER' && isWaterTileId(nextTileId)) continue;
-                        if (restrictPierFishingToDeck && isWaterTileId(nextTileId)) continue;
-                        let nextHeight = heightMap[resolvedZ][ny][nx]; 
-                        let isStairTransition = (nextTileId === TileId.STAIRS_RAMP || currentTileId === TileId.STAIRS_RAMP) && Math.abs(currentHeight - nextHeight) <= 0.6;
-                        const cardinalStep = Math.abs(dir.x) + Math.abs(dir.y) === 1;
-                        const isPierDeckHeightTransition = cardinalStep
-                            && Math.abs(currentHeight - nextHeight) <= 0.6
-                            && (
-                                (isPierDeckTile(currentX, currentY, resolvedZ) && !isWaterTileId(nextTileId))
-                                || (isPierDeckTile(nx, ny, resolvedZ) && !isWaterTileId(currentTileId))
-                            );
-                        if (Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition && !isPierDeckHeightTransition) continue;
-                        
-                        if (Math.abs(dir.x) === 1 && Math.abs(dir.y) === 1) {
-                            let hX = heightMap[resolvedZ][currentY][currentX + dir.x]; let hY = heightMap[resolvedZ][currentY + dir.y][currentX];
-                            let blockX = !isStandableTileForPath(currentX + dir.x, currentY, resolvedZ, pathOptions) || Math.abs(hX - currentHeight) > 0.3;
-                            let blockY = !isStandableTileForPath(currentX, currentY + dir.y, resolvedZ, pathOptions) || Math.abs(hY - currentHeight) > 0.3;
-                            if (blockX || blockY) continue; 
-                        }
-                        
-                        visitedParents.set(nextKey, currentKey);
-                        
-                        if (validTargets.has(nextKey)) {
-                            foundTargetKey = nextKey;
-                            queueIndex = queue.length;
-                            break;
-                        }
-                        queue.push(nextKey);
-                    }
-                }
-            }
-            
-            if (foundTargetKey === -1) return [];
-
-            let path = [];
-            let currentPathKey = foundTargetKey;
-            
-            while (currentPathKey !== -1 && currentPathKey !== startKey) {
-                let cx = decodeTileX(currentPathKey);
-                let cy = decodeTileY(currentPathKey);
-                path.unshift({x: cx, y: cy});
-                const parentKey = visitedParents.get(currentPathKey);
-                if (parentKey === undefined) break;
-                currentPathKey = parentKey;
-            }
-            
-            return path;
+            const runtime = getInputPathfindingRuntime();
+            return runtime && typeof runtime.findPath === 'function'
+                ? runtime.findPath(buildInputPathfindingRuntimeContext(), startX, startY, targetX, targetY, forceAdjacent, interactionObj, pathOptions)
+                : [];
         }
 
         function processTick() {
