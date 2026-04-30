@@ -16,6 +16,7 @@ function run() {
   const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
+  const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
   const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
@@ -64,6 +65,7 @@ function run() {
   const treeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-render-runtime"');
   const rockNodeRuntimeIndex = legacyManifestSource.indexOf('id: "world-rock-node-runtime"');
   const rockRuntimeIndex = legacyManifestSource.indexOf('id: "world-rock-render-runtime"');
+  const chunkResourceRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-resource-render-runtime"');
   const fireRuntimeIndex = legacyManifestSource.indexOf('id: "world-fire-render-runtime"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
@@ -81,6 +83,7 @@ function run() {
   assert(treeRuntimeIndex !== -1 && worldIndex !== -1 && treeRuntimeIndex < worldIndex, "legacy script manifest should load world tree render runtime before world.js");
   assert(rockNodeRuntimeIndex !== -1 && worldIndex !== -1 && rockNodeRuntimeIndex < worldIndex, "legacy script manifest should load world rock node runtime before world.js");
   assert(rockRuntimeIndex !== -1 && worldIndex !== -1 && rockRuntimeIndex < worldIndex, "legacy script manifest should load world rock render runtime before world.js");
+  assert(chunkResourceRuntimeIndex !== -1 && worldIndex !== -1 && chunkResourceRuntimeIndex < worldIndex, "legacy script manifest should load world chunk resource render runtime before world.js");
   assert(fireRuntimeIndex !== -1 && worldIndex !== -1 && fireRuntimeIndex < worldIndex, "legacy script manifest should load world fire render runtime before world.js");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
@@ -103,6 +106,9 @@ function run() {
   assert(chunkTierRenderRuntimeSource.includes("createSimplifiedChunkGroup"), "world chunk tier render runtime should own simplified tier chunk construction");
   assert(npcRenderRuntimeSource.includes("window.WorldNpcRenderRuntime"), "world NPC render runtime should expose a runtime");
   assert(npcRenderRuntimeSource.includes("appendChunkNpcVisuals"), "world NPC render runtime should own NPC chunk rendering");
+  assert(chunkResourceRenderRuntimeSource.includes("window.WorldChunkResourceRenderRuntime"), "world chunk resource render runtime should expose a runtime");
+  assert(chunkResourceRenderRuntimeSource.includes("appendChunkResourceVisual"), "world chunk resource render runtime should own resource chunk rendering");
+  assert(worldSource.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk resource rendering");
   assert(worldSource.includes("WorldProceduralRuntime"), "world.js should resolve procedural helpers through the procedural runtime");
   assert(!worldSource.includes("function buildGrassTextureCanvas"), "world.js should not own generated texture canvas builders");
   assert(!worldSource.includes("function sampleFractalNoise2D"), "world.js should not own deterministic noise helpers");
@@ -144,18 +150,21 @@ function run() {
   vm.runInThisContext(sceneLifecycleSource, { filename: path.join(root, "src", "js", "world", "scene-lifecycle.js") });
   vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
   vm.runInThisContext(mapHudRuntimeSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
+  vm.runInThisContext(chunkResourceRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js") });
   const runtime = window.WorldBootstrapRuntime;
   const adapterRuntime = window.LegacyWorldAdapterRuntime;
   const sceneStateRuntime = window.WorldSceneStateRuntime;
   const sceneLifecycleRuntime = window.WorldSceneLifecycleRuntime;
   const chunkSceneRuntime = window.WorldChunkSceneRuntime;
   const mapHudRuntime = window.WorldMapHudRuntime;
+  const chunkResourceRuntime = window.WorldChunkResourceRenderRuntime;
   assert(runtime, "legacy bridge should expose the world bootstrap runtime");
   assert(adapterRuntime, "legacy world adapter should expose its runtime");
   assert(sceneStateRuntime, "world scene state should expose its runtime");
   assert(sceneLifecycleRuntime, "world scene lifecycle should expose its runtime");
   assert(chunkSceneRuntime, "world chunk scene runtime should expose its runtime");
   assert(mapHudRuntime, "world map HUD runtime should expose its runtime");
+  assert(chunkResourceRuntime, "world chunk resource render runtime should expose its runtime");
   assert(runtime.getCurrentWorldId() === "main_overworld", "legacy bridge should start on the canonical authored world");
   assert(sceneStateRuntime.getCurrentWorldScenePayload().worldId === "main_overworld", "world scene state should resolve the current canonical world payload");
   assert(sceneStateRuntime.getWorldScenePayload("starter_town").worldId === "main_overworld", "world scene state should canonicalize legacy world payload lookup");

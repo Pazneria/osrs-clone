@@ -14,6 +14,7 @@
         const worldFireRenderRuntime = window.WorldFireRenderRuntime || null;
         const worldChunkTerrainRuntime = window.WorldChunkTerrainRuntime || null;
         const worldChunkTierRenderRuntime = window.WorldChunkTierRenderRuntime || null;
+        const worldChunkResourceRenderRuntime = window.WorldChunkResourceRenderRuntime || null;
         const applyColorTextureSettings = worldProceduralRuntime.applyColorTextureSettings;
         const clamp01 = worldProceduralRuntime.clamp01;
         const lerpNumber = worldProceduralRuntime.lerpNumber;
@@ -4524,24 +4525,35 @@
                     buildChunkGroundMeshes(planeGroup, startX, startY, activePierConfig, waterRenderBodies);
                 }
 
-                let tCount = 0, wCount = 0, cCount = 0;
-                const rockVisualCounts = Object.create(null);
+                let wCount = 0, cCount = 0;
+                const resourceCounts = worldChunkResourceRenderRuntime.collectChunkResourceVisualCounts({
+                    TileId,
+                    logicalMap,
+                    startX,
+                    startY,
+                    endX,
+                    endY,
+                    z,
+                    currentTick,
+                    getVisualTileId,
+                    isTreeTileId,
+                    getRockNodeAt,
+                    getRockVisualIdForNode
+                });
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         let tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
-                        if (isTreeTileId(tile)) tCount++;
-                        else if (tile === TileId.ROCK) {
-                            const rockNode = getRockNodeAt(x, y, z);
-                            const visualId = getRockVisualIdForNode(rockNode, !!(rockNode && rockNode.depletedUntilTick > currentTick));
-                            rockVisualCounts[visualId] = (rockVisualCounts[visualId] || 0) + 1;
-                        }
-                        else if (tile === TileId.WALL) wCount++;
+                        if (tile === TileId.WALL) wCount++;
                         else if (tile === TileId.TOWER) cCount++;
                     }
                 }
 
-                let tData = createTreeRenderData(tCount, planeGroup);
-                let rData = createRockRenderData(rockVisualCounts, planeGroup);
+                const resourceRenderState = worldChunkResourceRenderRuntime.createChunkResourceRenderState({
+                    counts: resourceCounts,
+                    planeGroup,
+                    createTreeRenderData,
+                    createRockRenderData
+                });
 
                 let castleData = worldStructureRenderRuntime.createCastleRenderData({
                     THREE,
@@ -4554,75 +4566,41 @@
                 });
 
                 const dummyTransform = new THREE.Object3D();
-                let tIdx = 0, wIdx = 0, cIdx = 0;
-                const rockVisualIndices = Object.create(null);
+                let wIdx = 0, cIdx = 0;
                 const chunkWaterBuilders = Object.create(null);
                 appendChunkWaterTilesToBuilders(chunkWaterBuilders, waterRenderBodies, z, Z_OFFSET, startX, startY, endX, endY);
-                const sampleGroundTileCenterHeight = (tileX, tileY, layerZ) => {
-                    if (!heightMap[layerZ] || !heightMap[layerZ][tileY]) return 0;
-                    if (layerZ !== 0 || tileX <= 0 || tileY <= 0 || tileX >= MAP_SIZE - 1 || tileY >= MAP_SIZE - 1) {
-                        return heightMap[layerZ][tileY][tileX];
-                    }
-
-                    let weightedSum = 0;
-                    let weightedWeight = 0;
-                    for (let oy = -1; oy <= 1; oy++) {
-                        for (let ox = -1; ox <= 1; ox++) {
-                            const nx = tileX + ox;
-                            const ny = tileY + oy;
-                            if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
-                            if (isPierVisualCoverageTile(activePierConfig, nx, ny, 0)) continue;
-                            const tileType = getVisualTileId(logicalMap[0][ny][nx], nx, ny, 0);
-                            if (isWaterTileId(tileType)) continue;
-                            const weight = (ox === 0 && oy === 0) ? 0.25 : ((ox === 0 || oy === 0) ? 0.125 : 0.0625);
-                            weightedSum += heightMap[0][ny][nx] * weight;
-                            weightedWeight += weight;
-                        }
-                    }
-
-                    if (weightedWeight > 0) return weightedSum / weightedWeight;
-                    return heightMap[layerZ][tileY][tileX];
-                };
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
-                        const h = heightMap[z][y][x] + Z_OFFSET; 
 
-                        if (isTreeTileId(tile)) {
-                            const treeNode = getTreeNodeAt(x, y, z);
-                            const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';
-                            dummyTransform.position.set(x, h, y);
-                            dummyTransform.rotation.set(0, Math.random() * Math.PI * 2, 0);
-                            setTreeVisualState(tData, tIdx, {
-                                nodeId: treeNodeId,
-                                position: dummyTransform.position.clone(),
-                                quaternion: dummyTransform.quaternion.clone(),
-                                isStump: tile === TileId.STUMP
-                            });
-
-                            tData.treeMap[tIdx] = { type: 'TREE', gridX: x, gridY: y, z: z, nodeId: treeNodeId };
-                            tIdx++;
-                        } else if (tile === TileId.ROCK) {
-                            const rockNode = getRockNodeAt(x, y, z);
-                            const depleted = !!(rockNode && rockNode.depletedUntilTick > currentTick);
-                            const rockGroundY = sampleGroundTileCenterHeight(x, y, z) + Z_OFFSET - 0.01;
-                            const oreType = depleted ? 'depleted' : ((rockNode && rockNode.oreType) ? rockNode.oreType : 'copper');
-                            const visualId = getRockVisualIdForNode(rockNode, depleted);
-                            const rockIndex = rockVisualIndices[visualId] || 0;
-                            const rockUpdated = setRockVisualState(rData, visualId, rockIndex, {
-                                dummyTransform,
-                                x,
-                                y,
-                                z,
-                                groundY: rockGroundY,
-                                rotationY: hash2D(x, y, 702.17) * Math.PI * 2,
-                                oreType,
-                                name: depleted ? 'Depleted rock' : getRockDisplayName(oreType)
-                            });
-                            if (rockUpdated) {
-                                rockVisualIndices[visualId] = rockIndex + 1;
-                            }
+                        if (worldChunkResourceRenderRuntime.appendChunkResourceVisual({
+                            THREE,
+                            TileId,
+                            state: resourceRenderState,
+                            logicalMap,
+                            heightMap,
+                            mapSize: MAP_SIZE,
+                            activePierConfig,
+                            dummyTransform,
+                            currentTick,
+                            x,
+                            y,
+                            z,
+                            zOffset: Z_OFFSET,
+                            getVisualTileId,
+                            isTreeTileId,
+                            isWaterTileId,
+                            isPierVisualCoverageTile,
+                            getTreeNodeAt,
+                            getRockNodeAt,
+                            getRockVisualIdForNode,
+                            getRockDisplayName,
+                            setTreeVisualState,
+                            setRockVisualState,
+                            hash2D
+                        })) {
+                            continue;
                         } else if (tile === TileId.FENCE) {
                             const fenceGroup = createFenceVisualGroup(x, y, z, Z_OFFSET, heightMap[z][y][x]);
                             planeGroup.add(fenceGroup);
@@ -4714,12 +4692,15 @@
                 addPierVisualsToChunk(planeGroup, z, Z_OFFSET, startX, startY, endX, endY);
                 flushChunkWaterBuilders(planeGroup, chunkWaterBuilders);
                 
-                if (tCount > 0) markTreeVisualsDirty(tData);
-                markRockVisualsDirty(rData);
+                worldChunkResourceRenderRuntime.markChunkResourceVisualsDirty({
+                    state: resourceRenderState,
+                    markTreeVisualsDirty,
+                    markRockVisualsDirty
+                });
                 worldStructureRenderRuntime.markCastleRenderDataDirty(castleData);
 
-                planeGroup.userData.trees = tData;
-                planeGroup.userData.rocks = rData;
+                planeGroup.userData.trees = resourceRenderState.treeData;
+                planeGroup.userData.rocks = resourceRenderState.rockData;
 
                 appendChunkLandmarkVisuals(planeGroup, z, Z_OFFSET, startX, startY, endX, endY);
 
@@ -4983,22 +4964,18 @@
 
             if (group) {
                 let planeGroup = group.children.find(c => c.userData.z === z);
-                if (planeGroup && planeGroup.userData.trees && planeGroup.userData.trees.iTrunk) {
-                    let tData = planeGroup.userData.trees;
-                    let tIdx = tData.treeMap.findIndex(t => t && t.gridX === gridX && t.gridY === gridY);
-                    if (tIdx !== -1) {
-                        const treeEntry = tData.treeMap[tIdx] || {};
-                        const treeNode = getTreeNodeAt(gridX, gridY, z);
-                        const treeNodeId = treeEntry.nodeId || (treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree');
-                        const mat = new THREE.Matrix4();
-                        const quat = new THREE.Quaternion();
-                        tData.iTrunk.getMatrixAt(tIdx, mat);
-                        mat.decompose(new THREE.Vector3(), quat, new THREE.Vector3());
-                        const basePosition = new THREE.Vector3(gridX, heightMap[z][gridY][gridX] + (z * 3.0), gridY);
-                        setTreeVisualState(tData, tIdx, { nodeId: treeNodeId, position: basePosition, quaternion: quat, isStump: true });
-                        markTreeVisualsDirty(tData);
-                    }
-                }
+                worldChunkResourceRenderRuntime.setChunkTreeStumpVisual({
+                    THREE,
+                    planeGroup,
+                    heightMap,
+                    gridX,
+                    gridY,
+                    z,
+                    isStump: true,
+                    getTreeNodeAt,
+                    setTreeVisualState,
+                    markTreeVisualsDirty
+                });
             }
             logicalMap[z][gridY][gridX] = 4;
             respawningTrees.push({ x: gridX, y: gridY, z: z, respawnTick: currentTick + respawnTicks });
@@ -5011,22 +4988,18 @@
 
             if (group) {
                 let planeGroup = group.children.find(c => c.userData.z === z);
-                if (planeGroup && planeGroup.userData.trees && planeGroup.userData.trees.iTrunk) {
-                    let tData = planeGroup.userData.trees;
-                    let tIdx = tData.treeMap.findIndex(t => t && t.gridX === gridX && t.gridY === gridY);
-                    if (tIdx !== -1) {
-                        const treeEntry = tData.treeMap[tIdx] || {};
-                        const treeNode = getTreeNodeAt(gridX, gridY, z);
-                        const treeNodeId = treeEntry.nodeId || (treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree');
-                        const mat = new THREE.Matrix4();
-                        const quat = new THREE.Quaternion();
-                        tData.iTrunk.getMatrixAt(tIdx, mat);
-                        mat.decompose(new THREE.Vector3(), quat, new THREE.Vector3());
-                        const basePosition = new THREE.Vector3(gridX, heightMap[z][gridY][gridX] + (z * 3.0), gridY);
-                        setTreeVisualState(tData, tIdx, { nodeId: treeNodeId, position: basePosition, quaternion: quat, isStump: false });
-                        markTreeVisualsDirty(tData);
-                    }
-                }
+                worldChunkResourceRenderRuntime.setChunkTreeStumpVisual({
+                    THREE,
+                    planeGroup,
+                    heightMap,
+                    gridX,
+                    gridY,
+                    z,
+                    isStump: false,
+                    getTreeNodeAt,
+                    setTreeVisualState,
+                    markTreeVisualsDirty
+                });
             }
             logicalMap[z][gridY][gridX] = 1;
         }

@@ -1729,6 +1729,7 @@ function run() {
   const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
   const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
   const rockNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-node-runtime.js"), "utf8");
+  const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-resource-render-runtime.js"), "utf8");
   const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
   const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
   const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
@@ -1925,6 +1926,15 @@ function run() {
   assert(treeRenderRuntimeSource.includes("const TREE_VISUAL_PROFILES = {"), "tree visual profile table missing");
   assert(treeRenderRuntimeSource.includes("function createTreeRenderData(options = {})"), "tree render runtime should own tree instanced mesh bundle construction");
   assert(treeRenderRuntimeSource.includes("function setTreeVisualState(input)"), "tree render runtime should own tree visual state updates");
+  assert(worldScript.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk resource render placement");
+  assert(chunkResourceRenderRuntimeSource.includes("function collectChunkResourceVisualCounts(options = {})"), "chunk resource runtime should own tree/rock count collection");
+  assert(chunkResourceRenderRuntimeSource.includes("function appendChunkResourceVisual(options = {})"), "chunk resource runtime should own tree/rock instance placement");
+  assert(chunkResourceRenderRuntimeSource.includes("function sampleGroundTileCenterHeight(options = {}, tileX, tileY, layerZ)"), "chunk resource runtime should own rock ground-height sampling");
+  assert(chunkResourceRenderRuntimeSource.includes("function setChunkTreeStumpVisual(options = {})"), "chunk resource runtime should own loaded tree stump/respawn visual updates");
+  assert(!worldScript.includes("const sampleGroundTileCenterHeight = (tileX, tileY, layerZ) => {"), "world.js should not own rock ground-height sampling");
+  assert(!worldScript.includes("rockVisualCounts[visualId]"), "world.js should not bucket rock visual counts inline");
+  assert(!worldScript.includes("tData.treeMap[tIdx]"), "world.js should not write tree instance maps inline");
+  assert(!worldScript.includes("setRockVisualState(rData, visualId, rockIndex, {"), "world.js should not place rock instances inline");
   assert(!worldScript.includes("new THREE.InstancedMesh(sharedGeometries.treeTrunk"), "world.js should not own tree instanced mesh construction");
 
   const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");

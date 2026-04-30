@@ -233,10 +233,12 @@ function loadTreeVisualProfiles(root) {
   const absPath = path.join(root, "src", "js", "world", "tree-render-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const resourceSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
   const objectLiteral = extractObjectLiteralAfter(source, "const TREE_VISUAL_PROFILES =", "TREE_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "TREE_VISUAL_PROFILES" }),
     source,
+    resourceSource,
     worldSource
   };
 }
@@ -245,10 +247,12 @@ function loadRockVisualProfiles(root) {
   const absPath = path.join(root, "src", "js", "world", "rock-render-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const resourceSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
   const objectLiteral = extractObjectLiteralAfter(source, "const ROCK_VISUAL_PROFILES =", "ROCK_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "ROCK_VISUAL_PROFILES" }),
     source,
+    resourceSource,
     worldSource
   };
 }
@@ -268,7 +272,7 @@ function treeVisualSignature(profile) {
 }
 
 function assertTreeVisualProfiles(root) {
-  const { profiles, source, worldSource } = loadTreeVisualProfiles(root);
+  const { profiles, source, resourceSource, worldSource } = loadTreeVisualProfiles(root);
   const profileIds = Object.keys(profiles).sort().join(",");
   assert(profileIds === TREE_VISUAL_NODE_IDS.slice().sort().join(","), "tree render runtime should define one tree visual profile per woodcutting node type");
 
@@ -282,8 +286,10 @@ function assertTreeVisualProfiles(root) {
   assert(profiles.yew_tree.canopyScales[3][0] < profiles.willow_tree.canopyScales[3][0], "yew trees should keep the tight stacked top profile");
   assert(source.includes("function setTreeVisualState(input)"), "tree render runtime should own instanced tree visual state updates");
   assert(worldSource.includes("WorldTreeRenderRuntime"), "world.js should delegate tree visuals through the tree render runtime");
-  assert(worldSource.includes("const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';"), "tree rendering should resolve a node-specific visual id");
-  assert(worldSource.includes("setTreeVisualState(tData, tIdx, {") && worldSource.includes("nodeId: treeNodeId"), "tree rendering should feed the node id into the visual profile path");
+  assert(worldSource.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk tree/rock placement through the chunk resource runtime");
+  assert(resourceSource.includes("const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';"), "chunk resource runtime should resolve a node-specific tree visual id");
+  assert(resourceSource.includes("setTreeVisualState(state.treeData, state.treeIndex, {") && resourceSource.includes("nodeId: treeNodeId"), "chunk resource runtime should feed tree node id into the visual profile path");
+  assert(resourceSource.includes("function setChunkTreeStumpVisual(options = {})"), "chunk resource runtime should own loaded tree stump/respawn visual updates");
 }
 
 function rockVisualSignature(profile) {
@@ -296,7 +302,7 @@ function rockVisualSignature(profile) {
 }
 
 function assertRockVisualProfiles(root) {
-  const { profiles, source, worldSource } = loadRockVisualProfiles(root);
+  const { profiles, source, resourceSource, worldSource } = loadRockVisualProfiles(root);
   const profileIds = Object.keys(profiles).sort().join(",");
   assert(profileIds === ROCK_VISUAL_NODE_IDS.slice().sort().join(","), "rock render runtime should define one rock visual profile per mining node type plus depleted state");
 
@@ -314,8 +320,9 @@ function assertRockVisualProfiles(root) {
   assert(source.includes("function createRockRenderData(options = {})"), "rock render runtime should create per-profile instanced meshes with interaction maps");
   assert(source.includes("function setRockVisualState(options)"), "rock render runtime should own instanced rock transform updates");
   assert(worldSource.includes("WorldRockRenderRuntime"), "world.js should delegate rock visuals through the rock render runtime");
-  assert(worldSource.includes("getRockVisualIdForNode(rockNode") && worldSource.includes("rockVisualCounts[visualId]"), "rock rendering should bucket counts by visual profile");
-  assert(worldSource.includes("setRockVisualState(rData, visualId, rockIndex"), "world rendering should feed rock placements into the visual runtime");
+  assert(worldSource.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk tree/rock placement through the chunk resource runtime");
+  assert(resourceSource.includes("getRockVisualIdForNode(rockNode") && resourceSource.includes("counts.rockVisualCounts[visualId]"), "chunk resource runtime should bucket rocks by visual profile");
+  assert(resourceSource.includes("setRockVisualState(state.rockData, visualId, rockIndex"), "chunk resource runtime should feed rock placements into the visual runtime");
 }
 
 function assertStarterTown(root) {
