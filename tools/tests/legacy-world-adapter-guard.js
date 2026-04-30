@@ -54,6 +54,7 @@ function run() {
   const proceduralRuntimeIndex = legacyManifestSource.indexOf('id: "world-procedural-runtime"');
   const structureRuntimeIndex = legacyManifestSource.indexOf('id: "world-structure-render-runtime"');
   const treeRuntimeIndex = legacyManifestSource.indexOf('id: "world-tree-render-runtime"');
+  const rockRuntimeIndex = legacyManifestSource.indexOf('id: "world-rock-render-runtime"');
   const sceneLifecycleIndex = legacyManifestSource.indexOf('id: "world-scene-lifecycle"');
   const chunkRuntimeIndex = legacyManifestSource.indexOf('id: "world-chunk-scene-runtime"');
   const mapHudRuntimeIndex = legacyManifestSource.indexOf('id: "world-map-hud-runtime"');
@@ -63,6 +64,7 @@ function run() {
   assert(proceduralRuntimeIndex !== -1 && worldIndex !== -1 && proceduralRuntimeIndex < worldIndex, "legacy script manifest should load world procedural runtime before world.js");
   assert(structureRuntimeIndex !== -1 && worldIndex !== -1 && structureRuntimeIndex < worldIndex, "legacy script manifest should load world structure render runtime before world.js");
   assert(treeRuntimeIndex !== -1 && worldIndex !== -1 && treeRuntimeIndex < worldIndex, "legacy script manifest should load world tree render runtime before world.js");
+  assert(rockRuntimeIndex !== -1 && worldIndex !== -1 && rockRuntimeIndex < worldIndex, "legacy script manifest should load world rock render runtime before world.js");
   assert(sceneLifecycleIndex !== -1 && worldIndex !== -1 && sceneLifecycleIndex < worldIndex, "legacy script manifest should load world scene lifecycle before world.js");
   assert(chunkRuntimeIndex !== -1 && worldIndex !== -1 && chunkRuntimeIndex < worldIndex, "legacy script manifest should load world chunk scene runtime before world.js");
   assert(mapHudRuntimeIndex !== -1 && worldIndex !== -1 && mapHudRuntimeIndex < worldIndex, "legacy script manifest should load world map HUD runtime before world.js");

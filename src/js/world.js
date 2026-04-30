@@ -6,6 +6,7 @@
         const worldGroundItemRenderRuntime = window.WorldGroundItemRenderRuntime || null;
         const worldStructureRenderRuntime = window.WorldStructureRenderRuntime || null;
         const worldTreeRenderRuntime = window.WorldTreeRenderRuntime || null;
+        const worldRockRenderRuntime = window.WorldRockRenderRuntime || null;
         const applyColorTextureSettings = worldProceduralRuntime.applyColorTextureSettings;
         const clamp01 = worldProceduralRuntime.clamp01;
         const lerpNumber = worldProceduralRuntime.lerpNumber;
@@ -2274,54 +2275,33 @@
             return colors[oreType] || 0x8f6b58;
         }
 
-        const ROCK_VISUAL_PROFILES = {
-            clay: { geometryKey: 'rockClay', materialKey: 'rockClay', instanceScale: [1.16, 1.0, 0.96], silhouette: 'low_rounded_mound' },
-            copper: { geometryKey: 'rockCopper', materialKey: 'rockCopper', instanceScale: [1.0, 1.0, 1.0], silhouette: 'medium_faceted_lump' },
-            tin: { geometryKey: 'rockTin', materialKey: 'rockTin', instanceScale: [0.92, 1.0, 1.08], silhouette: 'soft_dodeca_lump' },
-            iron: { geometryKey: 'rockIron', materialKey: 'rockIron', instanceScale: [1.05, 1.08, 0.88], silhouette: 'blocky_slab' },
-            coal: { geometryKey: 'rockCoal', materialKey: 'rockCoal', instanceScale: [1.12, 0.92, 1.08], silhouette: 'jagged_black_shard' },
-            silver: { geometryKey: 'rockSilver', materialKey: 'rockSilver', instanceScale: [0.94, 1.08, 1.04], silhouette: 'bright_octa_lump' },
-            sapphire: { geometryKey: 'rockSapphire', materialKey: 'rockSapphire', instanceScale: [0.82, 1.2, 0.82], silhouette: 'blue_tall_crystal' },
-            gold: { geometryKey: 'rockGold', materialKey: 'rockGold', instanceScale: [1.18, 0.98, 0.92], silhouette: 'wide_gold_nugget' },
-            emerald: { geometryKey: 'rockEmerald', materialKey: 'rockEmerald', instanceScale: [0.72, 1.34, 0.72], silhouette: 'green_needle_crystal' },
-            rune_essence: { geometryKey: 'rockRuneEssence', materialKey: 'rockRuneEssence', instanceScale: [1.0, 1.0, 1.0], silhouette: 'large_persistent_essence_boulder' },
-            depleted: { geometryKey: 'rockDepleted', materialKey: 'rockDepleted', instanceScale: [1.0, 1.0, 1.0], silhouette: 'flattened_depleted_shell' }
-        };
-
-        const ROCK_VISUAL_ORDER = Object.freeze([
-            'clay',
-            'copper',
-            'tin',
-            'iron',
-            'coal',
-            'silver',
-            'sapphire',
-            'gold',
-            'emerald',
-            'rune_essence',
-            'depleted'
-        ]);
+        const ROCK_VISUAL_ORDER = worldRockRenderRuntime.ROCK_VISUAL_ORDER;
 
         function getRockVisualProfile(visualId) {
-            if (typeof visualId === 'string' && ROCK_VISUAL_PROFILES[visualId]) return ROCK_VISUAL_PROFILES[visualId];
-            return ROCK_VISUAL_PROFILES.copper;
+            return worldRockRenderRuntime.getRockVisualProfile(visualId);
         }
 
         function getRockVisualIdForNode(rockNode, depleted) {
-            if (depleted) return 'depleted';
-            const oreType = rockNode && rockNode.oreType ? rockNode.oreType : 'copper';
-            return ROCK_VISUAL_PROFILES[oreType] ? oreType : 'copper';
+            return worldRockRenderRuntime.getRockVisualIdForNode(rockNode, depleted);
         }
 
-        function createRockRenderData() {
-            const rockMapByVisualId = Object.create(null);
-            const rockMeshByVisualId = Object.create(null);
-            for (let i = 0; i < ROCK_VISUAL_ORDER.length; i++) {
-                const visualId = ROCK_VISUAL_ORDER[i];
-                rockMapByVisualId[visualId] = [];
-                rockMeshByVisualId[visualId] = null;
-            }
-            return { rockMapByVisualId, rockMeshByVisualId };
+        function createRockRenderData(rockVisualCounts, planeGroup) {
+            return worldRockRenderRuntime.createRockRenderData({
+                THREE,
+                sharedGeometries,
+                sharedMaterials,
+                rockVisualCounts,
+                planeGroup,
+                environmentMeshes
+            });
+        }
+
+        function setRockVisualState(rData, visualId, rockIndex, options) {
+            return worldRockRenderRuntime.setRockVisualState(Object.assign({ THREE, rData, visualId, rockIndex }, options));
+        }
+
+        function markRockVisualsDirty(rData) {
+            return worldRockRenderRuntime.markRockVisualsDirty(rData);
         }
 
         function rebuildRockNodes() {
@@ -5325,22 +5305,7 @@
                         planeGroup.add(mesh); environmentMeshes.push(mesh);
                     });
                 }
-                let rData = createRockRenderData();
-                for (let i = 0; i < ROCK_VISUAL_ORDER.length; i++) {
-                    const visualId = ROCK_VISUAL_ORDER[i];
-                    const rockCount = rockVisualCounts[visualId] || 0;
-                    if (rockCount <= 0) continue;
-                    const profile = getRockVisualProfile(visualId);
-                    const geometry = sharedGeometries[profile.geometryKey] || sharedGeometries.rockCopper;
-                    const material = sharedMaterials[profile.materialKey] || sharedMaterials.rockCopper;
-                    const mesh = new THREE.InstancedMesh(geometry, material, rockCount);
-                    mesh.castShadow = false;
-                    mesh.matrixAutoUpdate = false;
-                    mesh.userData = { instanceMap: rData.rockMapByVisualId[visualId] };
-                    rData.rockMeshByVisualId[visualId] = mesh;
-                    planeGroup.add(mesh);
-                    environmentMeshes.push(mesh);
-                }
+                let rData = createRockRenderData(rockVisualCounts, planeGroup);
 
                 let castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };
                 if (wCount > 0) {
@@ -5412,26 +5377,18 @@
                             const rockGroundY = sampleGroundTileCenterHeight(x, y, z) + Z_OFFSET - 0.01;
                             const oreType = depleted ? 'depleted' : ((rockNode && rockNode.oreType) ? rockNode.oreType : 'copper');
                             const visualId = getRockVisualIdForNode(rockNode, depleted);
-                            const profile = getRockVisualProfile(visualId);
-                            const instanceScale = Array.isArray(profile.instanceScale) ? profile.instanceScale : [1, 1, 1];
-                            const mesh = rData.rockMeshByVisualId[visualId];
-                            const map = rData.rockMapByVisualId[visualId];
                             const rockIndex = rockVisualIndices[visualId] || 0;
-                            dummyTransform.position.set(x, rockGroundY, y);
-                            dummyTransform.rotation.set(0, hash2D(x, y, 702.17) * Math.PI * 2, 0);
-                            dummyTransform.scale.set(instanceScale[0] || 1, instanceScale[1] || 1, instanceScale[2] || 1);
-                            dummyTransform.updateMatrix();
-
-                            if (mesh && map) {
-                                mesh.setMatrixAt(rockIndex, dummyTransform.matrix);
-                                map[rockIndex] = {
-                                    type: 'ROCK',
-                                    gridX: x,
-                                    gridY: y,
-                                    z: z,
-                                    oreType: oreType,
-                                    name: depleted ? 'Depleted rock' : getRockDisplayName(oreType)
-                                };
+                            const rockUpdated = setRockVisualState(rData, visualId, rockIndex, {
+                                dummyTransform,
+                                x,
+                                y,
+                                z,
+                                groundY: rockGroundY,
+                                rotationY: hash2D(x, y, 702.17) * Math.PI * 2,
+                                oreType,
+                                name: depleted ? 'Depleted rock' : getRockDisplayName(oreType)
+                            });
+                            if (rockUpdated) {
                                 rockVisualIndices[visualId] = rockIndex + 1;
                             }
                         } else if (tile === TileId.FENCE) {
@@ -5556,11 +5513,7 @@
                 flushChunkWaterBuilders(planeGroup, chunkWaterBuilders);
                 
                 if (tCount > 0) markTreeVisualsDirty(tData);
-                for (let i = 0; i < ROCK_VISUAL_ORDER.length; i++) {
-                    const visualId = ROCK_VISUAL_ORDER[i];
-                    const mesh = rData.rockMeshByVisualId[visualId];
-                    if (mesh) mesh.instanceMatrix.needsUpdate = true;
-                }
+                markRockVisualsDirty(rData);
                 if (wCount > 0) castleData.iWall.instanceMatrix.needsUpdate = true;
                 if (cCount > 0) castleData.iTower.instanceMatrix.needsUpdate = true;
 

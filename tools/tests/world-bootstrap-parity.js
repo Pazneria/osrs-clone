@@ -242,12 +242,14 @@ function loadTreeVisualProfiles(root) {
 }
 
 function loadRockVisualProfiles(root) {
-  const absPath = path.join(root, "src", "js", "world.js");
+  const absPath = path.join(root, "src", "js", "world", "rock-render-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
+  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const objectLiteral = extractObjectLiteralAfter(source, "const ROCK_VISUAL_PROFILES =", "ROCK_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "ROCK_VISUAL_PROFILES" }),
-    source
+    source,
+    worldSource
   };
 }
 
@@ -294,9 +296,9 @@ function rockVisualSignature(profile) {
 }
 
 function assertRockVisualProfiles(root) {
-  const { profiles, source } = loadRockVisualProfiles(root);
+  const { profiles, source, worldSource } = loadRockVisualProfiles(root);
   const profileIds = Object.keys(profiles).sort().join(",");
-  assert(profileIds === ROCK_VISUAL_NODE_IDS.slice().sort().join(","), "world.js should define one rock visual profile per mining node type plus depleted state");
+  assert(profileIds === ROCK_VISUAL_NODE_IDS.slice().sort().join(","), "rock render runtime should define one rock visual profile per mining node type plus depleted state");
 
   const signatures = new Set(ROCK_VISUAL_NODE_IDS.map((nodeId) => rockVisualSignature(profiles[nodeId])));
   assert(signatures.size === ROCK_VISUAL_NODE_IDS.length, "rock visual profiles should not collapse to shared silhouettes");
@@ -309,8 +311,11 @@ function assertRockVisualProfiles(root) {
   assert(profiles.rune_essence.geometryKey === "rockRuneEssence", "rune essence should keep the large persistent boulder geometry");
   assert(profiles.depleted.geometryKey === "rockDepleted", "depleted rocks should keep a separate depleted mesh");
   assert(source.includes("const ROCK_VISUAL_ORDER = Object.freeze(["), "rock rendering should keep stable visual mesh order");
-  assert(source.includes("getRockVisualIdForNode(rockNode") && source.includes("rockVisualCounts[visualId]"), "rock rendering should bucket counts by visual profile");
-  assert(source.includes("rData.rockMeshByVisualId[visualId]") && source.includes("rData.rockMapByVisualId[visualId]"), "rock rendering should create per-profile instanced meshes with interaction maps");
+  assert(source.includes("function createRockRenderData(options = {})"), "rock render runtime should create per-profile instanced meshes with interaction maps");
+  assert(source.includes("function setRockVisualState(options)"), "rock render runtime should own instanced rock transform updates");
+  assert(worldSource.includes("WorldRockRenderRuntime"), "world.js should delegate rock visuals through the rock render runtime");
+  assert(worldSource.includes("getRockVisualIdForNode(rockNode") && worldSource.includes("rockVisualCounts[visualId]"), "rock rendering should bucket counts by visual profile");
+  assert(worldSource.includes("setRockVisualState(rData, visualId, rockIndex"), "world rendering should feed rock placements into the visual runtime");
 }
 
 function assertStarterTown(root) {
