@@ -216,10 +216,16 @@
             return null;
         }
 
-        window.clearItemSwapLeftClickUI = clearItemSwapLeftClickUI;
-        window.appendSwapLeftClickControl = appendSwapLeftClickControl;
-        window.getItemMenuPreferenceKey = getItemMenuPreferenceKey;
-        window.getPreferredMenuAction = getPreferredMenuAction;
+        const contextMenuRuntimeForPublication = getContextMenuRuntime();
+        if (contextMenuRuntimeForPublication && typeof contextMenuRuntimeForPublication.publishInventoryMenuHooks === 'function') {
+            contextMenuRuntimeForPublication.publishInventoryMenuHooks({
+                windowRef: window,
+                clearItemSwapLeftClickUI,
+                appendSwapLeftClickControl,
+                getItemMenuPreferenceKey,
+                getPreferredMenuAction
+            });
+        }
         window.hideInventoryHoverTooltip = hideInventoryHoverTooltip;
 
         let rememberedDepositXAmount = null;

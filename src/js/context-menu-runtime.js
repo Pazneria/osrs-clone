@@ -130,6 +130,23 @@
         return preferences;
     }
 
+    function publishInventoryMenuHooks(options = {}) {
+        const windowRef = getWindowRef(options);
+        if (!windowRef) return;
+        if (typeof options.clearItemSwapLeftClickUI === 'function') {
+            windowRef.clearItemSwapLeftClickUI = options.clearItemSwapLeftClickUI;
+        }
+        if (typeof options.appendSwapLeftClickControl === 'function') {
+            windowRef.appendSwapLeftClickControl = options.appendSwapLeftClickControl;
+        }
+        if (typeof options.getItemMenuPreferenceKey === 'function') {
+            windowRef.getItemMenuPreferenceKey = options.getItemMenuPreferenceKey;
+        }
+        if (typeof options.getPreferredMenuAction === 'function') {
+            windowRef.getPreferredMenuAction = options.getPreferredMenuAction;
+        }
+    }
+
     function clearSwapLeftClickControl(options = {}) {
         const documentRef = getDocumentRef(options);
         if (!documentRef || typeof documentRef.getElementById !== 'function') return;
@@ -263,6 +280,7 @@
         getItemMenuPreferenceKey,
         getLowestAllowedTop,
         getPreferredMenuAction,
+        publishInventoryMenuHooks,
         setPreferredMenuAction,
         showContextMenuAt
     };

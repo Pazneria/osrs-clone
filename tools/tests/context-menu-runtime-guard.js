@@ -35,6 +35,7 @@ assert.ok(runtimeSource.includes("function closeContextMenu(options = {})"), "co
 assert.ok(runtimeSource.includes("function appendSwapLeftClickControl(options = {})"), "context menu runtime should own swap-left-click submenu insertion");
 assert.ok(runtimeSource.includes("function clearSwapLeftClickControl(options = {})"), "context menu runtime should own swap-left-click submenu cleanup");
 assert.ok(runtimeSource.includes("function getPreferredMenuAction(prefKey, actions, preferences = {})"), "context menu runtime should own preferred menu action lookup");
+assert.ok(runtimeSource.includes("function publishInventoryMenuHooks(options = {})"), "context menu runtime should own inventory menu hook publication");
 assert.ok(coreSource.includes("function getContextMenuRuntime()"), "core.js should resolve the context menu runtime");
 assert.ok(coreSource.includes("runtime.showContextMenuAt(clientX, clientY"), "core.js should delegate menu positioning");
 assert.ok(coreSource.includes("runtime.addContextMenuOption(text, callback"), "core.js should delegate option insertion");
@@ -46,6 +47,11 @@ assert.ok(inventorySource.includes("clearContextMenuOptions();"), "inventory.js 
 assert.ok(!inventorySource.includes("contextOptionsListEl.innerHTML = ''"), "inventory.js should not clear the menu container directly");
 assert.ok(inventorySource.includes("runtime.appendSwapLeftClickControl({"), "inventory.js should delegate swap-left-click UI to the context menu runtime");
 assert.ok(inventorySource.includes("runtime.clearSwapLeftClickControl({ documentRef: document })"), "inventory.js should delegate swap-left-click cleanup to the context menu runtime");
+assert.ok(inventorySource.includes("contextMenuRuntimeForPublication.publishInventoryMenuHooks({"), "inventory.js should publish menu hooks through the context menu runtime");
+assert.ok(!inventorySource.includes("window.clearItemSwapLeftClickUI = clearItemSwapLeftClickUI"), "inventory.js should not directly publish clearItemSwapLeftClickUI");
+assert.ok(!inventorySource.includes("window.appendSwapLeftClickControl = appendSwapLeftClickControl"), "inventory.js should not directly publish appendSwapLeftClickControl");
+assert.ok(!inventorySource.includes("window.getItemMenuPreferenceKey = getItemMenuPreferenceKey"), "inventory.js should not directly publish getItemMenuPreferenceKey");
+assert.ok(!inventorySource.includes("window.getPreferredMenuAction = getPreferredMenuAction"), "inventory.js should not directly publish getPreferredMenuAction");
 assert.ok(!inventorySource.includes("document.body.appendChild(submenu)"), "inventory.js should not own swap-left-click submenu DOM");
 assert.ok(!inventorySource.includes("context-swap-caret"), "inventory.js should not own swap-left-click submenu markup");
 assert.ok(manifestSource.includes('../../js/context-menu-runtime.js?raw'), "legacy manifest should import context menu runtime");
@@ -58,6 +64,19 @@ const sandbox = { window: {} };
 vm.runInNewContext(runtimeSource, sandbox, { filename: "context-menu-runtime.js" });
 const runtime = sandbox.window.ContextMenuRuntime;
 assert.ok(runtime, "context menu runtime should evaluate in isolation");
+
+const publishedWindow = {};
+const publishedHooks = {
+  clearItemSwapLeftClickUI() {},
+  appendSwapLeftClickControl() {},
+  getItemMenuPreferenceKey() {},
+  getPreferredMenuAction() {}
+};
+runtime.publishInventoryMenuHooks(Object.assign({ windowRef: publishedWindow }, publishedHooks));
+assert.strictEqual(publishedWindow.clearItemSwapLeftClickUI, publishedHooks.clearItemSwapLeftClickUI, "publishInventoryMenuHooks should publish swap cleanup");
+assert.strictEqual(publishedWindow.appendSwapLeftClickControl, publishedHooks.appendSwapLeftClickControl, "publishInventoryMenuHooks should publish swap insertion");
+assert.strictEqual(publishedWindow.getItemMenuPreferenceKey, publishedHooks.getItemMenuPreferenceKey, "publishInventoryMenuHooks should publish preference key lookup");
+assert.strictEqual(publishedWindow.getPreferredMenuAction, publishedHooks.getPreferredMenuAction, "publishInventoryMenuHooks should publish preferred action lookup");
 
 const menu = {
   classList: makeClassList(["hidden"]),
