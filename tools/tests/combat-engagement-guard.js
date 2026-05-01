@@ -9,7 +9,8 @@ function getFunctionBody(source, functionName) {
   const startToken = `function ${functionName}(`;
   const startIndex = source.indexOf(startToken);
   if (startIndex === -1) return "";
-  const bodyStart = source.indexOf("{", startIndex);
+  const paramsEnd = source.indexOf(")", startIndex);
+  const bodyStart = paramsEnd === -1 ? -1 : source.indexOf("{", paramsEnd);
   if (bodyStart === -1) return "";
   let depth = 0;
   for (let i = bodyStart; i < source.length; i++) {
@@ -24,6 +25,7 @@ function getFunctionBody(source, functionName) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
+  const combatEnemyMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-movement-runtime.js"), "utf8");
   const combatEnemyOverlayRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-overlay-runtime.js"), "utf8");
   const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
@@ -54,27 +56,31 @@ function run() {
     "temporary occupancy blocks should keep the lock while stopping stale pursuit movement"
   );
 
-  const chaseAttackOpportunityBody = getFunctionBody(combatSource, "resolvePlayerChaseAttackOpportunity");
-  assert(chaseAttackOpportunityBody, "combat.js should define resolvePlayerChaseAttackOpportunity");
+  const chaseAttackOpportunityBody = getFunctionBody(combatEnemyMovementRuntimeSource, "resolvePlayerChaseAttackOpportunity");
+  assert(chaseAttackOpportunityBody, "combat enemy movement runtime should define resolvePlayerChaseAttackOpportunity");
   assert(
-    chaseAttackOpportunityBody.includes("const stepBudget = Math.max(1, Math.floor(getPlayerCombatMovementStepCount()));")
-      && chaseAttackOpportunityBody.includes("if (!isWithinMeleeRange(attackTile, playerLockState.enemyState)) return null;"),
+    chaseAttackOpportunityBody.includes("const stepBudget = Math.max(1, Math.floor(getPlayerCombatMovementStepCount(context)));")
+      && chaseAttackOpportunityBody.includes("!context.isWithinMeleeRange(attackTile, playerLockState.enemyState)"),
     "combat chase attacks should check whether the player's within-tick movement reaches melee range"
   );
 
-  const idleEnemyMovementBody = getFunctionBody(combatSource, "updateIdleEnemyMovement");
-  assert(idleEnemyMovementBody, "combat.js should define updateIdleEnemyMovement");
+  const idleEnemyMovementBody = getFunctionBody(combatEnemyMovementRuntimeSource, "updateIdleEnemyMovement");
+  assert(idleEnemyMovementBody, "combat enemy movement runtime should define updateIdleEnemyMovement");
   assert(
     idleEnemyMovementBody.includes("const nextStep = idlePath[0];"),
     "idle enemy roaming should continue to advance at one tile per tick"
   );
 
-  const updateEnemyMovementBody = getFunctionBody(combatSource, "updateEnemyMovement");
-  assert(updateEnemyMovementBody, "combat.js should define updateEnemyMovement");
+  const updateEnemyMovementBody = getFunctionBody(combatEnemyMovementRuntimeSource, "updateEnemyMovement");
+  assert(updateEnemyMovementBody, "combat enemy movement runtime should define updateEnemyMovement");
   assert(
     updateEnemyMovementBody.includes("const homeStep = returnPath[0];")
       && updateEnemyMovementBody.includes("const nextStep = pursuitPath[0];"),
     "enemy return and pursuit movement should continue to advance one tile per tick"
+  );
+  assert(
+    combatSource.includes("getCombatEnemyMovementRuntime().updateEnemyMovement(buildCombatEnemyMovementRuntimeContext(), attacks);"),
+    "combat.js should delegate enemy movement orchestration to the movement runtime"
   );
 
   assert(

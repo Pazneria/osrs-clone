@@ -22,6 +22,7 @@ const inputTickMovementRuntimeSource = read("src/js/input-tick-movement-runtime.
 const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
+const combatEnemyMovementRuntimeSource = read("src/js/combat-enemy-movement-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
 const combatEnemyOverlayRuntimeSource = read("src/js/combat-enemy-overlay-runtime.js");
 const playerHitpointsRuntimeSource = read("src/js/player-hitpoints-runtime.js");
@@ -52,6 +53,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-enemy-render-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-enemy-render-runtime"') < legacyManifest.indexOf('id: "combat"'),
   "legacy script manifest should load combat enemy render runtime before combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-enemy-movement-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-enemy-movement-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat enemy movement runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/player-hitpoints-runtime.js?raw') &&
@@ -128,7 +134,10 @@ assert.ok(
     combatSource.includes("combatEnemyRenderRuntime.createEnemyVisualRenderer({") &&
     combatSource.includes("combatEnemyRenderRuntime.updateEnemyVisualRenderer({") &&
     combatSource.includes("combatEnemyOverlayRuntime.updateCombatEnemyOverlays({") &&
-    combatSource.includes("function updateIdleEnemyMovement(enemyState, reservedTiles)") &&
+    combatSource.includes("combatEnemyMovementRuntime") &&
+    combatSource.includes("getCombatEnemyMovementRuntime().updateEnemyMovement(buildCombatEnemyMovementRuntimeContext(), attacks);") &&
+    combatEnemyMovementRuntimeSource.includes("function updateIdleEnemyMovement(context = {}, enemyState, reservedTiles)") &&
+    combatEnemyMovementRuntimeSource.includes("function updateEnemyMovement(context = {}, attacks = [])") &&
     combatSource.includes("function getEnemyVisualMoveProgress(enemyState, frameNow)") &&
     combatSource.includes("function syncMeleeCombatFacing()") &&
     combatSource.includes("function isPlayerCombatFacingReady()") &&

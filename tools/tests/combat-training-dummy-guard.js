@@ -9,7 +9,8 @@ function getFunctionBody(source, functionName) {
   const startToken = `function ${functionName}(`;
   const startIndex = source.indexOf(startToken);
   if (startIndex === -1) return "";
-  const bodyStart = source.indexOf("{", startIndex);
+  const paramsEnd = source.indexOf(")", startIndex);
+  const bodyStart = paramsEnd === -1 ? -1 : source.indexOf("{", paramsEnd);
   if (bodyStart === -1) return "";
   let depth = 0;
   for (let i = bodyStart; i < source.length; i++) {
@@ -39,6 +40,7 @@ function getBlockBody(source, startToken) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
+  const combatEnemyMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-movement-runtime.js"), "utf8");
 
   assert(
     combatSource.includes("function isTrainingDummyEnemy(enemyStateOrId) {"),
@@ -55,14 +57,14 @@ function run() {
     "training dummy enemy attacks should always land for feedback, deal zero damage, and enemy attack results should trigger hit reaction feedback"
   );
 
-  const updateEnemyMovementBody = getFunctionBody(combatSource, "updateEnemyMovement");
-  assert(updateEnemyMovementBody, "combat.js should define updateEnemyMovement");
-  const trainingDummyMovementBody = getBlockBody(updateEnemyMovementBody, "if (isTrainingDummyEnemy(enemyState))");
+  const updateEnemyMovementBody = getFunctionBody(combatEnemyMovementRuntimeSource, "updateEnemyMovement");
+  assert(updateEnemyMovementBody, "combat enemy movement runtime should define updateEnemyMovement");
+  const trainingDummyMovementBody = getBlockBody(updateEnemyMovementBody, "if (typeof context.isTrainingDummyEnemy === 'function' && context.isTrainingDummyEnemy(enemyState))");
   assert(
     trainingDummyMovementBody
-      && trainingDummyMovementBody.includes("faceEnemyTowards(enemyState, playerState);")
+      && trainingDummyMovementBody.includes("context.faceEnemyTowards(enemyState, playerState)")
       && trainingDummyMovementBody.includes("reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);")
-      && !trainingDummyMovementBody.includes("moveEnemyToStep(enemyState, nextStep);"),
+      && !trainingDummyMovementBody.includes("context.moveEnemyToStep(enemyState, nextStep);"),
     "training dummy enemies should stay rooted while still facing the player"
   );
 

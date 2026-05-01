@@ -3,6 +3,7 @@
     const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
+    const combatEnemyMovementRuntime = window.CombatEnemyMovementRuntime || null;
     const PLAYER_TARGET_ID = 'player';
     const PLAYER_TARGET_KIND = 'enemy';
     const PLAYER_DEFEAT_MESSAGE = 'You were defeated and return to safety.';
@@ -553,190 +554,75 @@
         return true;
     }
 
+    function getCombatEnemyMovementRuntime() {
+        if (!combatEnemyMovementRuntime) {
+            throw new Error('CombatEnemyMovementRuntime missing. Load src/js/combat-enemy-movement-runtime.js before combat.js.');
+        }
+        return combatEnemyMovementRuntime;
+    }
+
+    function buildCombatEnemyMovementRuntimeContext() {
+        return {
+            combatEnemyStates,
+            currentTick,
+            enemyIdleWanderPauseMinTicks: ENEMY_IDLE_WANDER_PAUSE_MIN_TICKS,
+            enemyIdleWanderPauseMaxTicks: ENEMY_IDLE_WANDER_PAUSE_MAX_TICKS,
+            enemyIdleWanderPickAttempts: ENEMY_IDLE_WANDER_PICK_ATTEMPTS,
+            enemyIdleWanderMinPathLength: ENEMY_IDLE_WANDER_MIN_PATH_LENGTH,
+            enemyMoveClipHoldMs: ENEMY_MOVE_CLIP_HOLD_MS,
+            findPath: typeof findPath === 'function' ? findPath : null,
+            isEnemyAlive,
+            isPlayerAlive,
+            isRunning,
+            isTrainingDummyEnemy,
+            isWalkableTileId,
+            isWithinMeleeRange,
+            logicalMap,
+            mapSize: MAP_SIZE,
+            moveEnemyToStep,
+            playerState,
+            playerTargetId: PLAYER_TARGET_ID,
+            rollInclusive,
+            beginEnemyReturn,
+            restoreEnemyAtHome,
+            faceEnemyTowards
+        };
+    }
+
     function clearEnemyIdleWanderState(enemyState) {
-        if (!enemyState) return;
-        enemyState.idleDestination = null;
-        enemyState.idleMoveReadyAtTick = currentTick;
+        return getCombatEnemyMovementRuntime().clearEnemyIdleWanderState(buildCombatEnemyMovementRuntimeContext(), enemyState);
     }
 
     function clearEnemyLocomotionIntent(enemyState) {
-        if (!enemyState) return;
-        enemyState.lastLocomotionIntentAt = 0;
-        enemyState.locomotionIntentUntilAt = 0;
+        return getCombatEnemyMovementRuntime().clearEnemyLocomotionIntent(buildCombatEnemyMovementRuntimeContext(), enemyState);
     }
 
     function markEnemyLocomotionIntent(enemyState, holdMs = ENEMY_MOVE_CLIP_HOLD_MS) {
-        if (!enemyState) return;
-        const now = Date.now();
-        const safeHoldMs = Number.isFinite(holdMs) ? Math.max(0, Math.floor(holdMs)) : ENEMY_MOVE_CLIP_HOLD_MS;
-        enemyState.lastLocomotionIntentAt = now;
-        enemyState.locomotionIntentUntilAt = Math.max(
-            Number.isFinite(enemyState.locomotionIntentUntilAt) ? enemyState.locomotionIntentUntilAt : 0,
-            now + safeHoldMs
-        );
+        return getCombatEnemyMovementRuntime().markEnemyLocomotionIntent(buildCombatEnemyMovementRuntimeContext(), enemyState, holdMs);
     }
 
     function hasTrackedEnemyLocomotionIntent(enemyState, frameNow) {
-        if (!enemyState) return false;
-        const intentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt) ? enemyState.locomotionIntentUntilAt : 0;
-        return intentUntilAt > 0 && frameNow < intentUntilAt;
+        return getCombatEnemyMovementRuntime().hasTrackedEnemyLocomotionIntent(buildCombatEnemyMovementRuntimeContext(), enemyState, frameNow);
     }
 
     function scheduleEnemyIdleWanderPause(enemyState, minTicks = ENEMY_IDLE_WANDER_PAUSE_MIN_TICKS, maxTicks = ENEMY_IDLE_WANDER_PAUSE_MAX_TICKS) {
-        if (!enemyState) return;
-        enemyState.idleDestination = null;
-        enemyState.idleMoveReadyAtTick = currentTick + rollInclusive(minTicks, maxTicks);
-        clearEnemyLocomotionIntent(enemyState);
-    }
-
-    function resolvePathToTile(enemyState, targetTile, allowTargetOccupied = false, targetKind = null) {
-        if (!enemyState || !targetTile) return null;
-        if (enemyState.z !== targetTile.z) return null;
-        if (enemyState.x === targetTile.x && enemyState.y === targetTile.y) return [];
-        if (typeof findPath !== 'function') return null;
-        const path = findPath(enemyState.x, enemyState.y, targetTile.x, targetTile.y, allowTargetOccupied, targetKind);
-        return path.length > 0 ? path : null;
+        return getCombatEnemyMovementRuntime().scheduleEnemyIdleWanderPause(buildCombatEnemyMovementRuntimeContext(), enemyState, minTicks, maxTicks);
     }
 
     function resolvePathToEnemy(enemyState, pathOptions = null) {
-        if (!enemyState || !isEnemyAlive(enemyState)) return null;
-        if (enemyState.z !== playerState.z) return null;
-        if (isWithinMeleeRange(playerState, enemyState)) return [];
-        if (typeof findPath !== 'function') return null;
-        const path = findPath(playerState.x, playerState.y, enemyState.x, enemyState.y, true, 'ENEMY', pathOptions);
-        return path.length > 0 ? path : null;
+        return getCombatEnemyMovementRuntime().resolvePathToEnemy(buildCombatEnemyMovementRuntimeContext(), enemyState, pathOptions);
     }
 
     function resolvePathToPlayer(enemyState, pathOptions = null) {
-        if (!enemyState || !isEnemyAlive(enemyState) || !isPlayerAlive()) return null;
-        if (enemyState.z !== playerState.z) return null;
-        if (isWithinMeleeRange(enemyState, playerState)) return [];
-        if (typeof findPath !== 'function') return null;
-        const path = findPath(
-            enemyState.x,
-            enemyState.y,
-            playerState.x,
-            playerState.y,
-            true,
-            'ENEMY',
-            Object.assign({ z: enemyState.z }, pathOptions && typeof pathOptions === 'object' ? pathOptions : null)
-        );
-        return path.length > 0 ? path : null;
-    }
-
-    function getPlayerCombatMovementStepCount() {
-        return isRunning ? 2 : 1;
+        return getCombatEnemyMovementRuntime().resolvePathToPlayer(buildCombatEnemyMovementRuntimeContext(), enemyState, pathOptions);
     }
 
     function cloneCombatPathStep(step) {
-        return {
-            x: Number.isFinite(step && step.x) ? Math.floor(step.x) : playerState.x,
-            y: Number.isFinite(step && step.y) ? Math.floor(step.y) : playerState.y
-        };
+        return getCombatEnemyMovementRuntime().cloneCombatPathStep(buildCombatEnemyMovementRuntimeContext(), step);
     }
 
     function resolvePlayerChaseAttackOpportunity(playerLockState) {
-        if (!playerLockState || !playerLockState.enemyState || !Array.isArray(playerLockState.pursuitPath)) return null;
-        if (playerLockState.pursuitPath.length === 0) return null;
-        const stepBudget = Math.max(1, Math.floor(getPlayerCombatMovementStepCount()));
-        const approachPath = playerLockState.pursuitPath
-            .slice(0, stepBudget)
-            .map((step) => cloneCombatPathStep(step));
-        if (approachPath.length === 0) return null;
-        const attackTile = approachPath[approachPath.length - 1];
-        if (!isWithinMeleeRange(attackTile, playerLockState.enemyState)) return null;
-        return {
-            attackTile,
-            approachPath
-        };
-    }
-
-    function resolvePathToHome(enemyState) {
-        if (!enemyState) return null;
-        const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
-        return resolvePathToTile(enemyState, homeTile, false, null);
-    }
-
-    function pickEnemyIdleWanderTarget(enemyState, reservedTiles) {
-        if (!enemyState) return null;
-        const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
-        const roamingRadius = Number.isFinite(enemyState.resolvedRoamingRadius)
-            ? Math.max(0, Math.floor(enemyState.resolvedRoamingRadius))
-            : 0;
-        if (!homeTile || roamingRadius <= 0) return null;
-
-        let bestPlan = null;
-        const preferredPathLength = Math.max(ENEMY_IDLE_WANDER_MIN_PATH_LENGTH, Math.floor(roamingRadius * 0.65));
-        for (let attempt = 0; attempt < ENEMY_IDLE_WANDER_PICK_ATTEMPTS; attempt++) {
-            const targetX = homeTile.x + rollInclusive(-roamingRadius, roamingRadius);
-            const targetY = homeTile.y + rollInclusive(-roamingRadius, roamingRadius);
-            if (targetX < 0 || targetY < 0 || targetX >= MAP_SIZE || targetY >= MAP_SIZE) continue;
-            if (!logicalMap[homeTile.z] || !logicalMap[homeTile.z][targetY]) continue;
-            if (targetX === enemyState.x && targetY === enemyState.y) continue;
-            if (playerState && playerState.z === homeTile.z && targetX === playerState.x && targetY === playerState.y) continue;
-
-            const targetKey = `${targetX},${targetY},${homeTile.z}`;
-            if (reservedTiles.has(targetKey)) continue;
-            if (!isWalkableTileId(logicalMap[homeTile.z][targetY][targetX])) continue;
-
-            const destination = { x: targetX, y: targetY, z: homeTile.z };
-            const path = resolvePathToTile(enemyState, destination, false, null);
-            if (!path || path.length <= 0) continue;
-
-            if (!bestPlan || path.length > bestPlan.path.length) {
-                bestPlan = { destination, path };
-                if (path.length >= preferredPathLength) break;
-            }
-        }
-
-        return bestPlan;
-    }
-
-    function updateIdleEnemyMovement(enemyState, reservedTiles) {
-        if (!enemyState || enemyState.currentState !== 'idle') return false;
-        const roamingRadius = Number.isFinite(enemyState.resolvedRoamingRadius)
-            ? Math.max(0, Math.floor(enemyState.resolvedRoamingRadius))
-            : 0;
-        if (roamingRadius <= 0) {
-            clearEnemyLocomotionIntent(enemyState);
-            return false;
-        }
-
-        if (enemyState.idleDestination && enemyState.x === enemyState.idleDestination.x && enemyState.y === enemyState.idleDestination.y) {
-            scheduleEnemyIdleWanderPause(enemyState);
-            return false;
-        }
-
-        const readyAtTick = Number.isFinite(enemyState.idleMoveReadyAtTick) ? enemyState.idleMoveReadyAtTick : 0;
-        if (!enemyState.idleDestination) {
-            if (currentTick < readyAtTick) {
-                clearEnemyLocomotionIntent(enemyState);
-                return false;
-            }
-            const wanderPlan = pickEnemyIdleWanderTarget(enemyState, reservedTiles);
-            if (!wanderPlan) {
-                scheduleEnemyIdleWanderPause(enemyState, 1, 2);
-                return false;
-            }
-            enemyState.idleDestination = wanderPlan.destination;
-        }
-
-        const idlePath = resolvePathToTile(enemyState, enemyState.idleDestination, false, null);
-        if (idlePath === null || idlePath.length === 0) {
-            scheduleEnemyIdleWanderPause(enemyState, 1, 2);
-            return false;
-        }
-
-        markEnemyLocomotionIntent(enemyState);
-        const nextStep = idlePath[0];
-        const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
-        if (!reservedTiles.has(nextKey)) moveEnemyToStep(enemyState, nextStep);
-
-        if (enemyState.idleDestination && enemyState.x === enemyState.idleDestination.x && enemyState.y === enemyState.idleDestination.y) {
-            scheduleEnemyIdleWanderPause(enemyState);
-        }
-
-        return true;
+        return getCombatEnemyMovementRuntime().resolvePlayerChaseAttackOpportunity(buildCombatEnemyMovementRuntimeContext(), playerLockState);
     }
 
     function facePlayerTowards(tile) {
@@ -1277,85 +1163,7 @@
     }
 
     function updateEnemyMovement(attacks) {
-        const attackedEnemyIds = new Set(attacks
-            .filter((entry) => entry.attackerKind === 'enemy' || entry.attackerKind === 'player')
-            .map((entry) => (entry.attackerKind === 'enemy' ? entry.attackerId : entry.targetId)));
-        const reservedTiles = new Set();
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (isEnemyAlive(enemyState)) reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-        }
-
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (!isEnemyAlive(enemyState) || attackedEnemyIds.has(enemyState.runtimeId)) continue;
-            reservedTiles.delete(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-
-            if (enemyState.currentState === 'returning') {
-                const returnPath = resolvePathToHome(enemyState);
-                if (returnPath === null || returnPath.length === 0) {
-                    restoreEnemyAtHome(enemyState);
-                    reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                    continue;
-                }
-                markEnemyLocomotionIntent(enemyState);
-                const homeStep = returnPath[0];
-                const homeKey = `${homeStep.x},${homeStep.y},${enemyState.z}`;
-                if (!reservedTiles.has(homeKey)) moveEnemyToStep(enemyState, homeStep);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            if (enemyState.currentState === 'idle') {
-                updateIdleEnemyMovement(enemyState, reservedTiles);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            if (enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID) {
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            if (!isPlayerAlive()) {
-                beginEnemyReturn(enemyState);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            if (isTrainingDummyEnemy(enemyState)) {
-                clearEnemyLocomotionIntent(enemyState);
-                faceEnemyTowards(enemyState, playerState);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            if (isWithinMeleeRange(enemyState, playerState)) {
-                clearEnemyLocomotionIntent(enemyState);
-                faceEnemyTowards(enemyState, playerState);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            const pursuitPath = resolvePathToPlayer(enemyState);
-            if (pursuitPath === null) {
-                clearEnemyLocomotionIntent(enemyState);
-                beginEnemyReturn(enemyState);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-            if (pursuitPath.length === 0) {
-                clearEnemyLocomotionIntent(enemyState);
-                reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-                continue;
-            }
-
-            markEnemyLocomotionIntent(enemyState);
-            const nextStep = pursuitPath[0];
-            const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
-            if (!reservedTiles.has(nextKey)) moveEnemyToStep(enemyState, nextStep);
-            reservedTiles.add(`${enemyState.x},${enemyState.y},${enemyState.z}`);
-        }
+        getCombatEnemyMovementRuntime().updateEnemyMovement(buildCombatEnemyMovementRuntimeContext(), attacks);
     }
 
     function processCombatTick() {
