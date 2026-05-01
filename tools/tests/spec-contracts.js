@@ -1760,6 +1760,7 @@ function run() {
   const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src/js/content/npc-dialogue-catalog.js"), "utf8");
   const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src/js/npc-dialogue-runtime.js"), "utf8");
   const npcPlayerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
+  const playerNpcHumanoidRuntimeSource = fs.readFileSync(path.join(root, "src/js/player-npc-humanoid-runtime.js"), "utf8");
   const starterTownWorld = JSON.parse(fs.readFileSync(path.join(root, "content/world/regions/main_overworld.json"), "utf8"));
   assert(!!NpcDialogueCatalog && typeof NpcDialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
   assert(worldContractsSource.includes("appearanceId?: string | null;"), "world contracts should expose appearanceId on NPC/service descriptors");
@@ -1792,7 +1793,8 @@ function run() {
   assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.getDialogueEntryByNpc(npc)"), "npc dialogue runtime should resolve dialogue entries through the catalog helper");
   assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.resolveDialogueIdFromNpc(normalizedNpc)"), "npc dialogue runtime should preserve the resolved dialogue id from full NPC metadata");
   assert(npcDialogueRuntimeSource.includes("window.openNpcDialogue = openNpcDialogue;"), "npc dialogue runtime should expose openNpcDialogue");
-  assert(npcPlayerModelSource.includes("normalizedPresetId !== 'goblin' && normalizedPresetId !== 'guard' && normalizedPresetId !== 'tanner_rusk' && normalizedPresetId !== 'tanner'"), "player model should allow the Tanner NPC preset");
+  assert(npcPlayerModelSource.includes("PlayerNpcHumanoidRuntime"), "player model should delegate NPC humanoid presets");
+  assert(playerNpcHumanoidRuntimeSource.includes("normalizedPresetId === 'tanner'") && playerNpcHumanoidRuntimeSource.includes("return 'tanner_rusk';"), "player NPC humanoid runtime should allow the Tanner NPC preset alias");
   Object.entries(STARTER_TOWN_NAMED_NPC_DIALOGUES).forEach(([serviceId, expectedDialogueId]) => {
     const service = (starterTownWorld.services || []).find((entry) => entry && entry.serviceId === serviceId);
     assert(!!service, `starter-town named NPC service missing: ${serviceId}`);

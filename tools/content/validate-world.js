@@ -74,7 +74,7 @@ function loadNpcDialogueCatalog(root) {
 }
 
 function loadNpcAppearancePresetIds(root) {
-  const absPath = path.join(root, "src", "js", "player-model.js");
+  const absPath = path.join(root, "src", "js", "player-npc-humanoid-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
   const presetIds = new Set();
   const templateStart = source.indexOf("function buildNpcHumanoidRigTemplate");
@@ -84,22 +84,20 @@ function loadNpcAppearancePresetIds(root) {
   const templateSection = templateStart >= 0
     ? source.slice(templateStart, templateEnd >= 0 ? templateEnd : undefined)
     : source;
-  const presetMatcher = /normalizedPresetId !== '([^']+)'/g;
+  const presetMatcher = /normalizedPresetId === '([^']+)'/g;
   let match = presetMatcher.exec(templateSection);
   while (match) {
     const presetId = String(match[1] || "").trim().toLowerCase();
-    if (presetId) presetIds.add(presetId);
+    if (presetId && presetId !== "tanner") presetIds.add(presetId);
     match = presetMatcher.exec(templateSection);
   }
 
-  if (presetIds.size === 0) {
-    const actorMatcher = /actorId:\s*'([^']+)'/g;
+  const actorMatcher = /actorId:\s*'([^']+)'/g;
+  match = actorMatcher.exec(source);
+  while (match) {
+    const presetId = String(match[1] || "").trim().toLowerCase();
+    if (presetId && presetId !== "player") presetIds.add(presetId);
     match = actorMatcher.exec(source);
-    while (match) {
-      const presetId = String(match[1] || "").trim().toLowerCase();
-      if (presetId && presetId !== "player") presetIds.add(presetId);
-      match = actorMatcher.exec(source);
-    }
   }
 
   return presetIds;

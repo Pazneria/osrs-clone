@@ -30,6 +30,7 @@ const combatContractSource = read("src/game/contracts/combat.ts");
 const combatFormulasSource = read("src/game/combat/formulas.ts");
 const combatBridgeSource = read("src/game/platform/combat-bridge.ts");
 const playerModelSource = read("src/js/player-model.js");
+const playerNpcHumanoidRuntimeSource = read("src/js/player-npc-humanoid-runtime.js");
 const targetRegistrySource = read("src/js/interactions/target-interaction-registry.js");
 const examineCatalogSource = read("src/js/content/examine-catalog.js");
 const packageJson = read("package.json");
@@ -182,10 +183,11 @@ assert.ok(
   "combat content/contracts should expose the guard presentation wiring and chicken appearance kind"
 );
 assert.ok(
-  playerModelSource.includes("function createGuardHumanoidFragments()") &&
-    playerModelSource.includes("normalizedPresetId !== 'goblin' && normalizedPresetId !== 'guard'") &&
-    playerModelSource.includes("{ actorId: 'guard', label: 'Guard' }"),
-  "player-model should expose a dedicated guard humanoid preset and preview actor"
+  playerNpcHumanoidRuntimeSource.includes("function createGuardHumanoidFragments") &&
+    playerNpcHumanoidRuntimeSource.includes("normalizedPresetId === 'guard'") &&
+    playerNpcHumanoidRuntimeSource.includes("{ actorId: 'guard', label: 'Guard' }") &&
+    playerModelSource.includes("PlayerNpcHumanoidRuntime"),
+  "player NPC humanoid runtime should expose the dedicated guard preset and preview actor"
 );
 assert.ok(
   inputRenderSource.includes("InputTargetInteractionRuntime") &&

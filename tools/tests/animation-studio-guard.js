@@ -12,6 +12,7 @@ function run() {
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const debugPanelSource = fs.readFileSync(path.join(root, "src", "js", "combat-animation-debug-panel-runtime.js"), "utf8");
   const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
+  const playerNpcHumanoidRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "player-npc-humanoid-runtime.js"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "animation-bridge.ts"), "utf8");
   const studioSource = fs.readFileSync(path.join(root, "src", "game", "animation", "studio.ts"), "utf8");
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
@@ -41,6 +42,8 @@ function run() {
   );
   assert(playerModelSource.includes("window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;"), "player-model.js should expose preview rig creation");
   assert(playerModelSource.includes("window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;"), "player-model.js should expose a weaponless studio preview rig");
+  assert(playerModelSource.includes("PlayerNpcHumanoidRuntime"), "player-model.js should delegate NPC preview actor routing");
+  assert(playerNpcHumanoidRuntimeSource.includes("function listAnimationStudioPreviewActors"), "player NPC humanoid runtime should own animation studio NPC preview actors");
   assert(playerModelSource.includes("torso.add(head, leftArm, rightArm);"), "player-model.js should parent the head under the torso for shared motion");
   assert(bridgeSource.includes("window.AnimationRuntimeBridge"), "animation bridge should expose AnimationRuntimeBridge");
   assert(bridgeSource.includes("window.AnimationStudioBridge"), "animation bridge should expose AnimationStudioBridge");
