@@ -77,6 +77,7 @@ import fletchingSkillScript from "../../js/skills/fletching/index.js?raw";
 import runecraftingSkillScript from "../../js/skills/runecrafting/index.js?raw";
 import smithingSkillScript from "../../js/skills/smithing/index.js?raw";
 import skillsRegisterScript from "../../js/skills/register.js?raw";
+import playerModelVisualRuntimeScript from "../../js/player-model-visual-runtime.js?raw";
 import playerHeldItemRuntimeScript from "../../js/player-held-item-runtime.js?raw";
 import playerModelScript from "../../js/player-model.js?raw";
 import inventoryScript from "../../js/inventory.js?raw";
@@ -185,6 +186,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "skills-runecrafting", filename: "src/js/skills/runecrafting/index.js", code: runecraftingSkillScript },
   { id: "skills-smithing", filename: "src/js/skills/smithing/index.js", code: smithingSkillScript },
   { id: "skills-register", filename: "src/js/skills/register.js", code: skillsRegisterScript },
+  { id: "player-model-visual-runtime", filename: "src/js/player-model-visual-runtime.js", code: playerModelVisualRuntimeScript },
   { id: "player-held-item-runtime", filename: "src/js/player-held-item-runtime.js", code: playerHeldItemRuntimeScript },
   { id: "player-model", filename: "src/js/player-model.js", code: playerModelScript },
   { id: "inventory", filename: "src/js/inventory.js", code: inventoryScript },

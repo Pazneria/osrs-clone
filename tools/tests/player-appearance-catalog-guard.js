@@ -16,6 +16,7 @@ function run() {
 
   const indexHtml = fs.readFileSync(indexPath, "utf8");
   const playerModelScript = fs.readFileSync(playerModelPath, "utf8");
+  const playerModelVisualRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-model-visual-runtime.js"), "utf8");
   const playerHeldItemRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-held-item-runtime.js"), "utf8");
   const catalogScript = fs.readFileSync(catalogPath, "utf8");
   const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
@@ -53,6 +54,14 @@ function run() {
   assert(
     playerModelScript.includes("window.PlayerAppearanceCatalog"),
     "player model should load appearance data from PlayerAppearanceCatalog"
+  );
+  assert(
+    playerModelVisualRuntimeScript.includes("window.PlayerModelVisualRuntime"),
+    "player model visual runtime should expose shared visual mesh helpers"
+  );
+  assert(
+    playerModelScript.includes("PlayerModelVisualRuntime"),
+    "player model should delegate visual mesh construction through the visual runtime"
   );
   assert(
     playerHeldItemRuntimeScript.includes("SKILLING_TOOL_VISUAL_GROUP_NAME"),
