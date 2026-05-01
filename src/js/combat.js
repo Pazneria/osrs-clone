@@ -4,6 +4,7 @@
     const combatHudRuntime = window.CombatHudRuntime || null;
     const combatEngagementRuntime = window.CombatEngagementRuntime || null;
     const combatFacingRuntime = window.CombatFacingRuntime || null;
+    const combatLootRuntime = window.CombatLootRuntime || null;
     const combatEnemyOccupancyRuntime = window.CombatEnemyOccupancyRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
@@ -189,6 +190,23 @@
             logicalMap,
             shouldEnemyOccupyTile,
             TileId
+        };
+    }
+
+    function getCombatLootRuntime() {
+        if (!combatLootRuntime) {
+            throw new Error('CombatLootRuntime missing. Load src/js/combat-loot-runtime.js before combat.js.');
+        }
+        return combatLootRuntime;
+    }
+
+    function buildCombatLootRuntimeContext() {
+        return {
+            combatRuntime,
+            getEnemyDefinition,
+            ITEM_DB,
+            rollInclusive,
+            spawnGroundItem: typeof spawnGroundItem === 'function' ? spawnGroundItem : null
         };
     }
 
@@ -701,22 +719,7 @@
     }
 
     function spawnEnemyDrop(enemyState) {
-        const enemyType = getEnemyDefinition(enemyState.enemyId);
-        if (!enemyType || typeof spawnGroundItem !== 'function') return;
-        if (!combatRuntime || typeof combatRuntime.pickDropEntry !== 'function') return;
-        const dropEntry = combatRuntime.pickDropEntry(enemyType.dropTable || []);
-        if (!dropEntry || dropEntry.kind === 'nothing') return;
-
-        if (dropEntry.kind === 'coins' && ITEM_DB && ITEM_DB.coins) {
-            const amount = rollInclusive(dropEntry.minAmount, dropEntry.maxAmount);
-            if (amount > 0) spawnGroundItem(ITEM_DB.coins, enemyState.x, enemyState.y, enemyState.z, amount);
-            return;
-        }
-
-        if (dropEntry.kind === 'item' && dropEntry.itemId && ITEM_DB && ITEM_DB[dropEntry.itemId]) {
-            const amount = rollInclusive(dropEntry.minAmount, dropEntry.maxAmount);
-            if (amount > 0) spawnGroundItem(ITEM_DB[dropEntry.itemId], enemyState.x, enemyState.y, enemyState.z, amount);
-        }
+        getCombatLootRuntime().spawnEnemyDrop(buildCombatLootRuntimeContext(), enemyState);
     }
 
     function defeatEnemy(enemyState) {

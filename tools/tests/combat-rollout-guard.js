@@ -25,6 +25,7 @@ const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
 const combatHudRuntimeSource = read("src/js/combat-hud-runtime.js");
 const combatEngagementRuntimeSource = read("src/js/combat-engagement-runtime.js");
 const combatFacingRuntimeSource = read("src/js/combat-facing-runtime.js");
+const combatLootRuntimeSource = read("src/js/combat-loot-runtime.js");
 const combatEnemyMovementRuntimeSource = read("src/js/combat-enemy-movement-runtime.js");
 const combatEnemyOccupancyRuntimeSource = read("src/js/combat-enemy-occupancy-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
@@ -72,6 +73,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-facing-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-facing-runtime"') < legacyManifest.indexOf('id: "combat"'),
   "legacy script manifest should load combat facing runtime before combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-loot-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-loot-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat loot runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/combat-enemy-movement-runtime.js?raw') &&
@@ -203,6 +209,11 @@ assert.ok(
     combatSource.includes("getCombatFacingRuntime().syncMeleeCombatFacing(buildCombatFacingRuntimeContext());") &&
     !combatSource.includes("playerState.targetRotation = Math.atan2(dx, dy);") &&
     !combatSource.includes("enemyState.facingYaw = Math.atan2(dx, dy);") &&
+    combatLootRuntimeSource.includes("window.CombatLootRuntime") &&
+    combatLootRuntimeSource.includes("function spawnEnemyDrop(context = {}, enemyState)") &&
+    combatSource.includes("const combatLootRuntime = window.CombatLootRuntime || null;") &&
+    combatSource.includes("getCombatLootRuntime().spawnEnemyDrop(buildCombatLootRuntimeContext(), enemyState);") &&
+    !combatSource.includes("const dropEntry = combatRuntime.pickDropEntry(enemyType.dropTable || []);") &&
     combatSource.includes("function getEnemyVisualMoveProgress(enemyState, frameNow)") &&
     combatSource.includes("function isPlayerCombatFacingReady()") &&
     combatSource.includes("function captureEnemyPendingDefeatFacing(enemyState)") &&
