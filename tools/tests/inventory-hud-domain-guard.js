@@ -94,10 +94,12 @@ const inventorySource = read("src/js/inventory.js");
 const inventoryTooltipRuntimeSource = read("src/js/inventory-tooltip-runtime.js");
 const skillPanelRuntimeSource = read("src/js/skill-panel-runtime.js");
 const skillPanelRenderRuntimeSource = read("src/js/skill-panel-render-runtime.js");
+const skillManifestSource = read("src/js/skills/manifest.js");
 const worldSource = read("src/js/world.js");
 const statusHudRuntimeSource = read("src/js/world/status-hud-runtime.js");
 const coreSource = read("src/js/core.js");
 const inputSource = read("src/js/input-render.js");
+const manifestSource = read("src/game/platform/legacy-script-manifest.ts");
 const indexSource = read("index.html");
 
 assert.ok(
@@ -148,6 +150,23 @@ assert.ok(
 assert.ok(
   inventorySource.includes("runtime.buildSkillReferencePanelViewModel"),
   "inventory.js should render structured skill-reference data from the UI domain bridge"
+);
+assert.ok(
+  skillManifestSource.includes("skillTiles"),
+  "skill manifest should own skill tile metadata"
+);
+assert.ok(
+  inventorySource.includes("const manifest = window.SkillManifest;"),
+  "inventory.js should read skill tile metadata from the skill manifest"
+);
+assert.ok(
+  !inventorySource.includes("DEFAULT_SKILL_TILE_DEFS"),
+  "inventory.js should not duplicate skill tile metadata owned by the skill manifest"
+);
+assert.ok(
+  manifestSource.indexOf('id: "skills-manifest"') !== -1 && manifestSource.indexOf('id: "inventory"') !== -1
+    && manifestSource.indexOf('id: "skills-manifest"') < manifestSource.indexOf('id: "inventory"'),
+  "legacy manifest should load the skill manifest before inventory.js consumes skill tile metadata"
 );
 assert.ok(
   skillPanelRuntimeSource.includes("window.SkillPanelRuntime"),

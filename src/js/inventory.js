@@ -863,28 +863,12 @@
             }
         }
 
-        const DEFAULT_SKILL_TILE_DEFS = [
-            { skillId: 'attack', displayName: 'Attack', icon: 'ATK', levelKey: 'atk' },
-            { skillId: 'hitpoints', displayName: 'Hitpoints', icon: 'HP', levelKey: 'hp' },
-            { skillId: 'mining', displayName: 'Mining', icon: 'MIN', levelKey: 'min' },
-            { skillId: 'strength', displayName: 'Strength', icon: 'STR', levelKey: 'str' },
-            { skillId: 'defense', displayName: 'Defense', icon: 'DEF', levelKey: 'def' },
-            { skillId: 'woodcutting', displayName: 'Woodcutting', icon: 'WC', levelKey: 'wc' },
-            { skillId: 'firemaking', displayName: 'Firemaking', icon: 'FM', levelKey: 'fm' },
-            { skillId: 'fishing', displayName: 'Fishing', icon: 'FIS', levelKey: 'fish' },
-            { skillId: 'runecrafting', displayName: 'Runecrafting', icon: 'RC', levelKey: 'rc' },
-            { skillId: 'cooking', displayName: 'Cooking', icon: 'COOK', levelKey: 'cook' },
-            { skillId: 'smithing', displayName: 'Smithing', icon: 'SMI', levelKey: 'smith' },
-            { skillId: 'crafting', displayName: 'Crafting', icon: 'CRFT', levelKey: 'craft' },
-            { skillId: 'fletching', displayName: 'Fletching', icon: 'FLT', levelKey: 'fletch' }
-        ];
-
         function getSkillTileDefinitions() {
             const manifest = window.SkillManifest;
             if (manifest && Array.isArray(manifest.skillTiles) && manifest.skillTiles.length > 0) {
                 return manifest.skillTiles;
             }
-            return DEFAULT_SKILL_TILE_DEFS;
+            return [];
         }
 
         function getSkillTileMeta(skillName) {
