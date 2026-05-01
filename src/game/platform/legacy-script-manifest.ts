@@ -95,6 +95,7 @@ import inputRaycastRuntimeScript from "../../js/input-raycast-runtime.js?raw";
 import inputTickMovementRuntimeScript from "../../js/input-tick-movement-runtime.js?raw";
 import inputArrivalInteractionRuntimeScript from "../../js/input-arrival-interaction-runtime.js?raw";
 import inputActionQueueRuntimeScript from "../../js/input-action-queue-runtime.js?raw";
+import inputTargetInteractionRuntimeScript from "../../js/input-target-interaction-runtime.js?raw";
 import inputRenderScript from "../../js/input-render.js?raw";
 
 export interface LegacyScriptEntry {
@@ -201,5 +202,6 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "input-tick-movement-runtime", filename: "src/js/input-tick-movement-runtime.js", code: inputTickMovementRuntimeScript },
   { id: "input-arrival-interaction-runtime", filename: "src/js/input-arrival-interaction-runtime.js", code: inputArrivalInteractionRuntimeScript },
   { id: "input-action-queue-runtime", filename: "src/js/input-action-queue-runtime.js", code: inputActionQueueRuntimeScript },
+  { id: "input-target-interaction-runtime", filename: "src/js/input-target-interaction-runtime.js", code: inputTargetInteractionRuntimeScript },
   { id: "input-render", filename: "src/js/input-render.js", code: inputRenderScript }
 ];

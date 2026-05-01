@@ -28,6 +28,7 @@ function run() {
   const inputTickMovementSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
   const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
   const inputActionQueueSource = fs.readFileSync(path.join(root, "src", "js", "input-action-queue-runtime.js"), "utf8");
+  const inputTargetInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-target-interaction-runtime.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
@@ -215,6 +216,19 @@ function run() {
     manifestSource.indexOf('id: "input-arrival-interaction-runtime"') < manifestSource.indexOf('id: "input-action-queue-runtime"')
       && manifestSource.indexOf('id: "input-action-queue-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input action queue runtime before input-render.js"
+  );
+  assert(inputTargetInteractionSource.includes("window.InputTargetInteractionRuntime"), "input target interaction runtime should expose a window runtime");
+  assert(inputTargetInteractionSource.includes("function resolveTargetInteractionOptions"), "input target interaction runtime should own target context-menu option resolution");
+  assert(inputTargetInteractionSource.includes("function handlePrimaryInteractionHit"), "input target interaction runtime should own primary click target policy");
+  assert(inputSource.includes("InputTargetInteractionRuntime"), "input-render.js should delegate target interaction policy through the target interaction runtime");
+  assert(inputSource.includes("buildInputTargetInteractionRuntimeContext"), "input-render.js should provide a narrow target interaction runtime context");
+  assert(!inputSource.includes("SkillRuntime.tryUseItemOnTarget({"), "input-render.js should not own selected item target-use policy");
+  assert(!inputSource.includes("enemyId: String(hitData.uid || '').trim()"), "input-render.js should not own enemy target metadata shaping");
+  assert(manifestSource.includes('../../js/input-target-interaction-runtime.js?raw'), "legacy manifest should load input target interaction runtime");
+  assert(
+    manifestSource.indexOf('id: "input-action-queue-runtime"') < manifestSource.indexOf('id: "input-target-interaction-runtime"')
+      && manifestSource.indexOf('id: "input-target-interaction-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input target interaction runtime before input-render.js"
   );
   assert(!inputSource.includes("const animationStudioBridge ="), "input-render.js should not cache AnimationStudioBridge before runtime initialization settles");
   assert(inputSource.includes("const bridge = window.AnimationStudioBridge || null;"), "input-render.js should resolve AnimationStudioBridge lazily when checking studio activity");

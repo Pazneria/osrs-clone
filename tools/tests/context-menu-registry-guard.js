@@ -8,12 +8,14 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const inputRenderPath = path.join(root, "src/js/input-render.js");
+  const inputTargetInteractionRuntimePath = path.join(root, "src/js/input-target-interaction-runtime.js");
   const contextMenuRuntimePath = path.join(root, "src/js/context-menu-runtime.js");
   const registryPath = path.join(root, "src/js/interactions/target-interaction-registry.js");
   const indexPath = path.join(root, "index.html");
   const legacyManifestPath = path.join(root, "src/game/platform/legacy-script-manifest.ts");
 
   const inputRenderScript = fs.readFileSync(inputRenderPath, "utf8");
+  const inputTargetInteractionRuntimeScript = fs.readFileSync(inputTargetInteractionRuntimePath, "utf8");
   const contextMenuRuntimeScript = fs.readFileSync(contextMenuRuntimePath, "utf8");
   const registryScript = fs.readFileSync(registryPath, "utf8");
   const indexHtml = fs.readFileSync(indexPath, "utf8");
@@ -32,7 +34,11 @@ function run() {
   );
   assert(
     onContextMenuSection.includes("resolveTargetInteractionOptions"),
-    "onContextMenu should delegate world-target options through registry resolver"
+    "onContextMenu should delegate world-target options through the target interaction runtime wrapper"
+  );
+  assert(
+    inputTargetInteractionRuntimeScript.includes("targetInteractionRegistry") && inputTargetInteractionRuntimeScript.includes("registry.resolveOptions(hitData"),
+    "input target interaction runtime should own the target registry call"
   );
   assert(
     !onContextMenuSection.includes("hitData.type === 'TREE'"),

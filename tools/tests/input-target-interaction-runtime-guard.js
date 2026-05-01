@@ -1,0 +1,158 @@
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function makeContext(overrides = {}) {
+  const logs = overrides.logs || { queued: [], markers: [], chats: [] };
+  const windowRef = Object.assign({
+    SkillRuntime: null,
+    TargetInteractionRegistry: null,
+    QuestRuntime: null
+  }, overrides.windowRef || {});
+  const contextOverrides = Object.assign({}, overrides);
+  delete contextOverrides.logs;
+  delete contextOverrides.windowRef;
+  return Object.assign({
+    windowRef,
+    playerState: { z: 0 },
+    logicalMap: [[[1, 2], [3, 4]]],
+    groundItems: [],
+    tileIds: { TREE: 10, STUMP: 11 },
+    inputControllerRuntime: null,
+    skillRuntime: windowRef.SkillRuntime,
+    targetInteractionRegistry: windowRef.TargetInteractionRegistry,
+    addChatMessage: (text, tone) => logs.chats.push({ text, tone }),
+    clearSelectedUse: () => { logs.cleared = true; },
+    queueAction: (type, x, y, obj, targetUid = null) => logs.queued.push({ type, x, y, obj, targetUid }),
+    spawnClickMarker: (point, isAction) => logs.markers.push({ point, isAction }),
+    tryUseItemOnWorld: () => false,
+    formatGroundItemDisplayName: (hitData) => hitData.name || "item",
+    formatEnemyDisplayName: (hitData) => hitData.name || "Enemy",
+    getEnemyCombatLevel: (hitData) => hitData.combatLevel || null
+  }, contextOverrides);
+}
+
+function run() {
+  const root = path.resolve(__dirname, "..", "..");
+  const runtimePath = path.join(root, "src", "js", "input-target-interaction-runtime.js");
+  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
+  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+
+  const actionQueueIndex = manifestSource.indexOf('id: "input-action-queue-runtime"');
+  const targetInteractionIndex = manifestSource.indexOf('id: "input-target-interaction-runtime"');
+  const inputRenderIndex = manifestSource.indexOf('id: "input-render"');
+
+  assert(manifestSource.includes("../../js/input-target-interaction-runtime.js?raw"), "legacy manifest should import the input target interaction runtime raw script");
+  assert(actionQueueIndex !== -1 && targetInteractionIndex !== -1 && inputRenderIndex !== -1, "legacy manifest should include input target interaction runtime");
+  assert(actionQueueIndex < targetInteractionIndex && targetInteractionIndex < inputRenderIndex, "legacy manifest should load target interaction after action queue and before input-render.js");
+
+  assert(runtimeSource.includes("window.InputTargetInteractionRuntime"), "input target interaction runtime should expose a window runtime");
+  assert(runtimeSource.includes("function resolveTargetInteractionOptions"), "input target interaction runtime should own context-menu target option resolution");
+  assert(runtimeSource.includes("function buildInteractionTargetData"), "input target interaction runtime should own primary target data shaping");
+  assert(runtimeSource.includes("function handlePrimaryInteractionHit"), "input target interaction runtime should own primary click target policy");
+
+  assert(inputSource.includes("function getInputTargetInteractionRuntime()"), "input-render.js should resolve the input target interaction runtime");
+  assert(inputSource.includes("buildInputTargetInteractionRuntimeContext"), "input-render.js should provide a narrow target interaction context");
+  assert(inputSource.includes("runtime.handlePrimaryInteractionHit(buildInputTargetInteractionRuntimeContext(), hitData"), "input-render.js should delegate primary hit interaction policy");
+  assert(!inputSource.includes("SkillRuntime.tryUseItemOnTarget({"), "input-render.js should not directly invoke skill item-use policy");
+  assert(!inputSource.includes("window.TargetInteractionRegistry.resolveOptions(hitData"), "input-render.js should not directly call the target interaction registry");
+  assert(!inputSource.includes("enemyId: String(hitData.uid || '').trim()"), "input-render.js should not shape enemy target data inline");
+  assert(!inputSource.includes("targetData.action = window.getPreferredMenuAction"), "input-render.js should not own banker primary action preference shaping");
+
+  const sandbox = { window: {}, console, Number, Object, String, Math, Array };
+  vm.createContext(sandbox);
+  vm.runInContext(runtimeSource, sandbox, { filename: runtimePath });
+  const runtime = sandbox.window.InputTargetInteractionRuntime;
+  assert(runtime, "input target interaction runtime should execute in isolation");
+
+  {
+    const normalized = runtime.normalizeContextMenuOptions({}, [
+      { text: "Use", onSelect: () => {} },
+      { text: "Broken" },
+      null
+    ]);
+    assert(normalized.length === 1 && normalized[0].text === "Use", "runtime should normalize context menu options");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({
+      logs,
+      windowRef: {
+        TargetInteractionRegistry: {
+          resolveOptions: (hitData, registryContext) => [
+            { text: "Attack", onSelect: () => registryContext.queueInteract("ENEMY", { enemyId: hitData.uid }) }
+          ]
+        }
+      }
+    });
+    const options = runtime.resolveTargetInteractionOptions(context, { type: "ENEMY", uid: "rat-1", gridX: 4, gridY: 5, point: { x: 4, y: 0, z: 5 } }, null, null, false, null);
+    assert(options.length === 1 && options[0].text === "Attack", "runtime should resolve target registry options");
+    options[0].onSelect();
+    assert(logs.queued.length === 1 && logs.queued[0].obj === "ENEMY", "target registry queue callbacks should route through the runtime context");
+    assert(logs.markers.length === 1 && logs.markers[0].isAction, "target registry actions should spawn action markers");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({
+      logs,
+      windowRef: {
+        QuestRuntime: { resolveNpcPrimaryAction: () => "Talk-to" },
+        getItemMenuPreferenceKey: () => "npc:banker",
+        getPreferredMenuAction: () => "Bank"
+      }
+    });
+    runtime.handlePrimaryInteractionHit(context, { type: "NPC", name: "Banker", gridX: 2, gridY: 3, point: { x: 2, y: 0, z: 3 } });
+    assert(logs.queued.length === 1 && logs.queued[0].obj === "NPC", "NPC primary clicks should queue an interaction");
+    assert(logs.queued[0].targetUid.action === "Bank", "banker primary action preference should be applied by the runtime");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({ logs });
+    runtime.handlePrimaryInteractionHit(context, { type: "ENEMY", uid: "wolf-1", name: "Wolf", gridX: 7, gridY: 8, point: { x: 7, y: 0, z: 8 } });
+    assert(logs.queued[0].targetUid.enemyId === "wolf-1", "enemy primary clicks should shape enemy target metadata");
+    assert(logs.queued[0].targetUid.name === "Wolf", "enemy primary target metadata should preserve the display name");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({
+      logs,
+      skillRuntime: {
+        tryUseItemOnTarget: ({ sourceInvIndex, sourceItemId }) => sourceInvIndex === 3 && sourceItemId === "raw_shrimp"
+      }
+    });
+    const result = runtime.handlePrimaryInteractionHit(
+      context,
+      { type: "FIRE", gridX: 1, gridY: 1, point: { x: 1, y: 0, z: 1 } },
+      { selectedItem: { id: "raw_shrimp" }, selectedUseInvIndex: 3 }
+    );
+    assert(result.used, "selected item primary clicks should try skill target use");
+    assert(logs.cleared, "selected item primary clicks should clear the selected use state");
+    assert(logs.markers.length === 1 && logs.markers[0].isAction, "successful selected item use should spawn an action marker");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({ logs });
+    runtime.handlePrimaryInteractionHit(context, { type: "GROUND", gridX: 9, gridY: 10, point: { x: 9, y: 0, z: 10 }, pierStepDescend: true });
+    assert(logs.queued[0].type === "WALK" && logs.queued[0].obj === "PIER_STEP_DESCEND", "ground primary clicks should queue walk actions with pier descent metadata");
+    assert(logs.markers[0].isAction === false, "walk clicks should spawn walk markers");
+  }
+
+  console.log("Input target interaction runtime guard passed.");
+}
+
+try {
+  run();
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}

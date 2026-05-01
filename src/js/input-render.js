@@ -29,6 +29,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputActionQueueRuntime() {
             return window.InputActionQueueRuntime || null;
         }
+        function getInputTargetInteractionRuntime() {
+            return window.InputTargetInteractionRuntime || null;
+        }
         function getTransientVisualRuntime() {
             return window.TransientVisualRuntime || null;
         }
@@ -182,23 +185,17 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function normalizeContextMenuOptions(options) {
-            const inputControllerRuntime = getInputControllerRuntime();
-            if (inputControllerRuntime && typeof inputControllerRuntime.normalizeContextMenuOptions === 'function') {
-                return inputControllerRuntime.normalizeContextMenuOptions(options);
-            }
-            if (!Array.isArray(options) || options.length === 0) return [];
-            const normalized = [];
-            for (let i = 0; i < options.length; i++) {
-                const option = options[i];
-                if (!option || typeof option.text !== 'string' || typeof option.onSelect !== 'function') continue;
-                normalized.push(option);
-            }
-            return normalized;
+            const runtime = getInputTargetInteractionRuntime();
+            return runtime && typeof runtime.normalizeContextMenuOptions === 'function'
+                ? runtime.normalizeContextMenuOptions(buildInputTargetInteractionRuntimeContext(), options)
+                : [];
         }
 
         function resolveSkillContextMenuOptions(hitData) {
-            if (!window.SkillRuntime || typeof SkillRuntime.getSkillContextMenuOptions !== 'function') return [];
-            return normalizeContextMenuOptions(SkillRuntime.getSkillContextMenuOptions(hitData));
+            const runtime = getInputTargetInteractionRuntime();
+            return runtime && typeof runtime.resolveSkillContextMenuOptions === 'function'
+                ? runtime.resolveSkillContextMenuOptions(buildInputTargetInteractionRuntimeContext(), hitData)
+                : [];
         }
 
         function getSelectedUseInvIndex() {
@@ -207,85 +204,35 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function tryUseSelectedInventoryItemOnTarget(hitData, selectedItem, selectedUseInvIndex) {
-            if (!hitData || !selectedItem || !Number.isInteger(selectedUseInvIndex)) return false;
-
-            let used = false;
-            if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
-                used = SkillRuntime.tryUseItemOnTarget({
+            const runtime = getInputTargetInteractionRuntime();
+            return !!(runtime && typeof runtime.tryUseSelectedInventoryItemOnTarget === 'function'
+                && runtime.tryUseSelectedInventoryItemOnTarget(
+                    buildInputTargetInteractionRuntimeContext(),
                     hitData,
-                    sourceInvIndex: selectedUseInvIndex,
-                    sourceItemId: selectedItem.id
-                });
-            }
-            if (!used) used = tryUseItemOnWorld(selectedUseInvIndex, hitData);
-            return used;
+                    selectedItem,
+                    selectedUseInvIndex
+                ));
         }
 
         function emitExamineFallback(text) {
-            const line = String(text || 'Nothing unusual.').trim() || 'Nothing unusual.';
-            if (typeof addChatMessage === 'function') {
-                addChatMessage(line, 'game');
-                return;
+            const runtime = getInputTargetInteractionRuntime();
+            if (runtime && typeof runtime.emitExamineFallback === 'function') {
+                runtime.emitExamineFallback(buildInputTargetInteractionRuntimeContext(), text);
             }
-            console.log(`EXAMINING: ${line}`);
         }
 
         function resolveTargetInteractionOptions(hitData, selectedSlot, selectedItem, selectedCookable, selectedUseInvIndex) {
-            if (!window.TargetInteractionRegistry || typeof window.TargetInteractionRegistry.resolveOptions !== 'function') return [];
-
-            const resolved = window.TargetInteractionRegistry.resolveOptions(hitData, {
-                selectedSlot,
-                selectedItem,
-                selectedCookable,
-                selectedUseInvIndex,
-                clearSelectedUse,
-                spawnActionMarker: () => {
-                    if (hitData && hitData.point) spawnClickMarker(hitData.point, true);
-                },
-                tryUseSelectedItemOnHit: () => tryUseSelectedInventoryItemOnTarget(hitData, selectedItem, selectedUseInvIndex),
-                queueInteract: (targetType, targetData = null) => {
-                    queueAction('INTERACT', hitData.gridX, hitData.gridY, targetType, targetData);
-                    if (hitData.point) spawnClickMarker(hitData.point, true);
-                },
-                examineTarget: (targetType, fallbackText, options = {}) => {
-                    if (window.ExamineCatalog && typeof window.ExamineCatalog.examineTarget === 'function') {
-                        window.ExamineCatalog.examineTarget(targetType, options);
-                        return;
-                    }
-                    emitExamineFallback(fallbackText);
-                },
-                examineNpc: (npcName, fallbackText) => {
-                    if (window.ExamineCatalog && typeof window.ExamineCatalog.examineNpc === 'function') {
-                        window.ExamineCatalog.examineNpc(npcName);
-                        return;
-                    }
-                    emitExamineFallback(fallbackText);
-                },
-                examineItem: (itemId, itemName, fallbackText) => {
-                    if (window.ExamineCatalog && typeof window.ExamineCatalog.examineItem === 'function') {
-                        window.ExamineCatalog.examineItem(itemId, itemName);
-                        return;
-                    }
-                    emitExamineFallback(fallbackText);
-                },
-                formatGroundItemDisplayName,
-                formatEnemyDisplayName: (enemyHitData = hitData) => formatEnemyDisplayName(enemyHitData),
-                combatLevel: getEnemyCombatLevel(hitData),
-                getGroundItemByUid: (uid) => {
-                    if (!Array.isArray(groundItems)) return null;
-                    return groundItems.find((entry) => entry && entry.uid === uid) || null;
-                },
-                getTileIdAtHit: () => {
-                    if (!hitData || !logicalMap[playerState.z] || !logicalMap[playerState.z][hitData.gridY]) return null;
-                    return logicalMap[playerState.z][hitData.gridY][hitData.gridX];
-                },
-                tileIds: {
-                    TREE: TileId.TREE,
-                    STUMP: TileId.STUMP
-                }
-            });
-
-            return normalizeContextMenuOptions(resolved);
+            const runtime = getInputTargetInteractionRuntime();
+            return runtime && typeof runtime.resolveTargetInteractionOptions === 'function'
+                ? runtime.resolveTargetInteractionOptions(
+                    buildInputTargetInteractionRuntimeContext(),
+                    hitData,
+                    selectedSlot,
+                    selectedItem,
+                    selectedCookable,
+                    selectedUseInvIndex
+                )
+                : [];
         }
 
         function onContextMenu(event) {
@@ -931,73 +878,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const hitData = getRaycastHit(clientX, clientY); if (!hitData) return;
 
             const selected = getSelectedUseItem();
-            if (selected) {
-                let used = false;
-                const selectedSlot = inventory[selectedUse.invIndex];
-                const selectedItemId = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData.id : null;
-
-                if (window.DEBUG_COOKING_USE && typeof addChatMessage === 'function') {
-                    addChatMessage(`[cook-debug] use-click item=${selectedItemId || 'none'} target=${hitData.type} @ (${hitData.gridX},${hitData.gridY},${playerState.z})`, 'info');
-                }
-
-                if (window.SkillRuntime && typeof SkillRuntime.tryUseItemOnTarget === 'function') {
-                    used = SkillRuntime.tryUseItemOnTarget({
-                        hitData,
-                        sourceInvIndex: selectedUse.invIndex,
-                        sourceItemId: selectedItemId
-                    });
-                }
-
-                if (!used) {
-                    used = tryUseItemOnWorld(selectedUse.invIndex, hitData);
-                }
-
-                if (window.DEBUG_COOKING_USE && typeof addChatMessage === 'function') {
-                    addChatMessage(`[cook-debug] use-click result handled=${used ? 'yes' : 'no'}`, 'info');
-                }
-
-                if (used && hitData.point) spawnClickMarker(hitData.point, true);
-                clearSelectedUse();
-                // Use-click should consume this click: either valid use, or cancel selection.
-                return;
-            }
-
-                        // Treating walls and towers strictly as move obstacles, not interactables!
-            if (hitData.type === 'WATER') {
-                queueAction('INTERACT', hitData.gridX, hitData.gridY, 'WATER');
-                spawnClickMarker(hitData.point, true);
-            } else if (hitData.type === 'GROUND' || hitData.type === 'WALL' || hitData.type === 'TOWER' || hitData.type === 'FIRE') {
-                const walkObj = hitData.pierStepDescend ? 'PIER_STEP_DESCEND' : null;
-                queueAction('WALK', hitData.gridX, hitData.gridY, walkObj);
-                spawnClickMarker(hitData.point, false);
-            }
-            else {
-                let targetData = hitData.uid;
-                if (hitData.type === 'DOOR') targetData = hitData.doorObj;
-                else if (hitData.type === 'ENEMY') {
-                    targetData = {
-                        enemyId: String(hitData.uid || '').trim(),
-                        enemyX: Number.isInteger(hitData.gridX) ? hitData.gridX : null,
-                        enemyY: Number.isInteger(hitData.gridY) ? hitData.gridY : null,
-                        name: hitData.name || 'Enemy'
-                    };
-                }
-
-                else if (hitData.type === 'NPC') {
-                    if (hitData.uid && typeof hitData.uid === 'object') targetData = Object.assign({}, hitData.uid);
-                    else if (hitData.name === 'Shopkeeper') targetData = { name: hitData.name, action: 'Trade', merchantId: 'general_store' };
-                    else targetData = { name: hitData.name, action: 'Talk-to' };
-                    if (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function') {
-                        targetData.action = window.QuestRuntime.resolveNpcPrimaryAction(targetData);
-                    }
-                    if (targetData && targetData.name === 'Banker' && window.getItemMenuPreferenceKey && window.getPreferredMenuAction) {
-                        const prefKey = window.getItemMenuPreferenceKey('npc', targetData.spawnId || targetData.merchantId || targetData.name);
-                        targetData.action = window.getPreferredMenuAction(prefKey, ['Talk-to', 'Bank']) || targetData.action;
-                    }
-                }
-                queueAction('INTERACT', hitData.gridX, hitData.gridY, hitData.type, targetData); 
-                spawnClickMarker(hitData.point, true); 
-            }
+            const runtime = getInputTargetInteractionRuntime();
+            if (!runtime || typeof runtime.handlePrimaryInteractionHit !== 'function') return;
+            runtime.handlePrimaryInteractionHit(buildInputTargetInteractionRuntimeContext(), hitData, {
+                selectedItem: selected && selected.itemData ? selected.itemData : null,
+                selectedUseInvIndex: selected ? getSelectedUseInvIndex() : null
+            });
         }
 
         function hasActiveFletchingProcessingSession() {
@@ -1090,6 +976,29 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const combatLevel = getEnemyCombatLevel(hitData);
             if (combatLevel === null) return baseName;
             return `${baseName} (Level ${combatLevel})`;
+        }
+        function buildInputTargetInteractionRuntimeContext() {
+            return {
+                windowRef: window,
+                playerState,
+                logicalMap,
+                groundItems,
+                tileIds: {
+                    TREE: TileId.TREE,
+                    STUMP: TileId.STUMP
+                },
+                inputControllerRuntime: getInputControllerRuntime(),
+                skillRuntime: window.SkillRuntime || null,
+                targetInteractionRegistry: window.TargetInteractionRegistry || null,
+                addChatMessage: (typeof addChatMessage === 'function') ? addChatMessage : null,
+                clearSelectedUse,
+                queueAction,
+                spawnClickMarker,
+                tryUseItemOnWorld,
+                formatGroundItemDisplayName,
+                formatEnemyDisplayName,
+                getEnemyCombatLevel
+            };
         }
         function buildInputActionQueueRuntimeContext() {
             return {

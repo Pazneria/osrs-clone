@@ -17,6 +17,7 @@ const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
 const inputRaycastRuntimeSource = read("src/js/input-raycast-runtime.js");
+const inputTargetInteractionRuntimeSource = read("src/js/input-target-interaction-runtime.js");
 const inputTickMovementRuntimeSource = read("src/js/input-tick-movement-runtime.js");
 const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.js");
 const combatSource = read("src/js/combat.js");
@@ -187,10 +188,11 @@ assert.ok(
   "player-model should expose a dedicated guard humanoid preset and preview actor"
 );
 assert.ok(
-  inputRenderSource.includes("else if (hitData.type === 'ENEMY') {") &&
-    inputRenderSource.includes("enemyId: String(hitData.uid || '').trim()") &&
+  inputRenderSource.includes("InputTargetInteractionRuntime") &&
+    inputTargetInteractionRuntimeSource.includes("else if (hitData.type === 'ENEMY') {") &&
+    inputTargetInteractionRuntimeSource.includes("enemyId: String(hitData.uid || '').trim()") &&
     inputRaycastRuntimeSource.includes("combatLevel: data.combatLevel,"),
-  "left-click enemy interaction should queue a normalized enemy target payload"
+  "left-click enemy interaction should queue a normalized enemy target payload through the target interaction runtime"
 );
 assert.ok(
   inputRenderSource.includes("window.updateCombatEnemyOverlays()"),
