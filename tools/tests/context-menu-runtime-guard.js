@@ -32,6 +32,9 @@ assert.ok(runtimeSource.includes("window.ContextMenuRuntime"), "context menu run
 assert.ok(runtimeSource.includes("function showContextMenuAt(clientX, clientY, options = {})"), "context menu runtime should own menu positioning");
 assert.ok(runtimeSource.includes("function addContextMenuOption(text, callback, options = {})"), "context menu runtime should own option insertion");
 assert.ok(runtimeSource.includes("function closeContextMenu(options = {})"), "context menu runtime should own close hooks");
+assert.ok(runtimeSource.includes("function appendSwapLeftClickControl(options = {})"), "context menu runtime should own swap-left-click submenu insertion");
+assert.ok(runtimeSource.includes("function clearSwapLeftClickControl(options = {})"), "context menu runtime should own swap-left-click submenu cleanup");
+assert.ok(runtimeSource.includes("function getPreferredMenuAction(prefKey, actions, preferences = {})"), "context menu runtime should own preferred menu action lookup");
 assert.ok(coreSource.includes("function getContextMenuRuntime()"), "core.js should resolve the context menu runtime");
 assert.ok(coreSource.includes("runtime.showContextMenuAt(clientX, clientY"), "core.js should delegate menu positioning");
 assert.ok(coreSource.includes("runtime.addContextMenuOption(text, callback"), "core.js should delegate option insertion");
@@ -41,6 +44,10 @@ assert.ok(!inputSource.includes("function addContextMenuOption(text, callback)")
 assert.ok(!inputSource.includes("function closeContextMenu()"), "input-render.js should not own context menu close DOM");
 assert.ok(inventorySource.includes("clearContextMenuOptions();"), "inventory.js should clear menu options through the shell wrapper");
 assert.ok(!inventorySource.includes("contextOptionsListEl.innerHTML = ''"), "inventory.js should not clear the menu container directly");
+assert.ok(inventorySource.includes("runtime.appendSwapLeftClickControl({"), "inventory.js should delegate swap-left-click UI to the context menu runtime");
+assert.ok(inventorySource.includes("runtime.clearSwapLeftClickControl({ documentRef: document })"), "inventory.js should delegate swap-left-click cleanup to the context menu runtime");
+assert.ok(!inventorySource.includes("document.body.appendChild(submenu)"), "inventory.js should not own swap-left-click submenu DOM");
+assert.ok(!inventorySource.includes("context-swap-caret"), "inventory.js should not own swap-left-click submenu markup");
 assert.ok(manifestSource.includes('../../js/context-menu-runtime.js?raw'), "legacy manifest should import context menu runtime");
 assert.ok(
   manifestSource.indexOf('id: "context-menu-runtime"') < manifestSource.indexOf('id: "core"'),
@@ -58,8 +65,22 @@ const menu = {
   offsetHeight: 120,
   style: {},
   listeners: {},
+  querySelector(selector) {
+    return selector === ".context-cancel" ? cancelRow : null;
+  },
   addEventListener(name, callback) {
     this.listeners[name] = callback;
+  }
+};
+const insertedAfterCancel = [];
+const cancelRow = {
+  insertAdjacentElement(position, node) {
+    insertedAfterCancel.push({ position, node });
+    node.parentNode = {
+      removeChild(child) {
+        insertedAfterCancel.splice(insertedAfterCancel.findIndex((entry) => entry.node === child), 1);
+      }
+    };
   }
 };
 const optionRows = [];
@@ -69,24 +90,60 @@ const optionsList = {
     optionRows.push(node);
   }
 };
+const bodyNodes = [];
 const inventorySlots = [
   { getBoundingClientRect: () => ({ top: 300, width: 32, height: 32 }) }
 ];
+const nodesById = {};
 const documentRef = {
   getElementById(id) {
+    if (nodesById[id]) return nodesById[id];
     if (id === "context-menu") return menu;
     if (id === "context-options-list") return optionsList;
     return null;
+  },
+  body: {
+    appendChild(node) {
+      bodyNodes.push(node);
+      nodesById[node.id] = node;
+      node.parentNode = {
+        removeChild(child) {
+          const idx = bodyNodes.indexOf(child);
+          if (idx !== -1) bodyNodes.splice(idx, 1);
+          delete nodesById[child.id];
+        }
+      };
+    }
   },
   querySelectorAll(selector) {
     return selector === "#view-inv .inventory-slot" ? inventorySlots : [];
   },
   createElement(tagName) {
+    const nodeClassList = makeClassList();
     return {
       tagName,
+      id: "",
       className: "",
+      classList: nodeClassList,
       innerHTML: "",
-      onclick: null
+      textContent: "",
+      onclick: null,
+      style: {},
+      offsetWidth: 120,
+      offsetHeight: 90,
+      listeners: {},
+      children: [],
+      parentNode: null,
+      appendChild(child) {
+        this.children.push(child);
+        child.parentNode = this;
+      },
+      addEventListener(name, callback) {
+        this.listeners[name] = callback;
+      },
+      getBoundingClientRect() {
+        return { left: 250, right: 310, top: 450 };
+      }
     };
   }
 };
@@ -123,5 +180,47 @@ runtime.bindContextMenuMouseleave(options);
 menu.classList.remove("hidden");
 menu.listeners.mouseleave({ relatedTarget: null });
 assert.ok(menu.classList.contains("hidden"), "mouseleave should close the context menu");
+
+const preferences = { "inventory:logs": "Drop" };
+assert.strictEqual(
+  runtime.getItemMenuPreferenceKey("inventory", "logs"),
+  "inventory:logs",
+  "getItemMenuPreferenceKey should build stable preference keys"
+);
+assert.strictEqual(
+  runtime.getPreferredMenuAction("inventory:logs", ["Use", "Drop"], preferences),
+  "Drop",
+  "getPreferredMenuAction should honor stored preferences"
+);
+runtime.setPreferredMenuAction("inventory:logs", "Use", preferences);
+assert.strictEqual(preferences["inventory:logs"], "Use", "setPreferredMenuAction should persist the chosen action");
+
+let submenuClosed = 0;
+let submenuSelected = "";
+const swap = runtime.appendSwapLeftClickControl({
+  documentRef,
+  windowRef,
+  contextMenuEl: menu,
+  prefKey: "inventory:logs",
+  actions: ["Use", "Drop"],
+  currentLabel: "Drop",
+  preferences,
+  onSelect: (actionName) => { submenuSelected = actionName; },
+  closeContextMenu: () => { submenuClosed += 1; }
+});
+assert.ok(swap && swap.trigger && swap.submenu, "appendSwapLeftClickControl should return created nodes");
+assert.strictEqual(insertedAfterCancel.length, 1, "appendSwapLeftClickControl should insert the trigger after the cancel row");
+assert.strictEqual(bodyNodes.length, 1, "appendSwapLeftClickControl should append the submenu to the document body");
+assert.strictEqual(swap.submenu.children.length, 2, "appendSwapLeftClickControl should render one option per action");
+swap.trigger.listeners.click({ preventDefault() {}, stopPropagation() {} });
+assert.strictEqual(swap.submenu.style.left, "130px", "swap submenu positioning should flip left when near the viewport edge");
+assert.strictEqual(swap.submenu.style.top, "402px", "swap submenu positioning should clamp to the viewport bottom");
+swap.submenu.children[0].onclick({ preventDefault() {}, stopPropagation() {} });
+assert.strictEqual(submenuSelected, "Use", "swap submenu option click should notify the caller");
+assert.strictEqual(preferences["inventory:logs"], "Use", "swap submenu option click should store the preference");
+assert.strictEqual(submenuClosed, 1, "swap submenu option click should close the context menu");
+
+runtime.clearSwapLeftClickControl({ documentRef });
+assert.strictEqual(bodyNodes.length, 0, "clearSwapLeftClickControl should remove the submenu");
 
 console.log("Context menu runtime guard passed.");

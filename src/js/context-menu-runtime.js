@@ -112,6 +112,137 @@
         if (typeof options.hideInventoryHoverTooltip === 'function') options.hideInventoryHoverTooltip();
     }
 
+    function getItemMenuPreferenceKey(scope, itemId) {
+        return `${scope || 'inventory'}:${itemId || ''}`;
+    }
+
+    function getPreferredMenuAction(prefKey, actions, preferences = {}) {
+        if (!Array.isArray(actions) || actions.length === 0) return null;
+        const preferred = (prefKey && preferences && typeof preferences[prefKey] === 'string')
+            ? preferences[prefKey]
+            : null;
+        return (preferred && actions.includes(preferred)) ? preferred : actions[0];
+    }
+
+    function setPreferredMenuAction(prefKey, actionName, preferences = {}) {
+        if (!prefKey || !actionName || !preferences) return preferences;
+        preferences[prefKey] = actionName;
+        return preferences;
+    }
+
+    function clearSwapLeftClickControl(options = {}) {
+        const documentRef = getDocumentRef(options);
+        if (!documentRef || typeof documentRef.getElementById !== 'function') return;
+
+        const trigger = documentRef.getElementById('context-swap-left-click-trigger');
+        if (trigger && trigger.parentNode && typeof trigger.parentNode.removeChild === 'function') {
+            trigger.parentNode.removeChild(trigger);
+        }
+
+        const submenu = documentRef.getElementById('context-swap-left-click-submenu');
+        if (submenu && submenu.parentNode && typeof submenu.parentNode.removeChild === 'function') {
+            submenu.parentNode.removeChild(submenu);
+        }
+    }
+
+    function appendSwapLeftClickControl(options = {}) {
+        const prefKey = options.prefKey || '';
+        const actions = Array.isArray(options.actions) ? options.actions : [];
+        if (!prefKey || actions.length === 0) return null;
+
+        const documentRef = getDocumentRef(options);
+        const windowRef = getWindowRef(options);
+        const contextMenuEl = getContextMenuEl(options);
+        if (!documentRef || !contextMenuEl || typeof documentRef.createElement !== 'function') return null;
+
+        clearSwapLeftClickControl(options);
+
+        const cancelRow = typeof contextMenuEl.querySelector === 'function'
+            ? contextMenuEl.querySelector('.context-cancel')
+            : null;
+        if (!cancelRow || typeof cancelRow.insertAdjacentElement !== 'function') return null;
+
+        const trigger = documentRef.createElement('div');
+        trigger.id = 'context-swap-left-click-trigger';
+        trigger.className = 'context-swap-trigger';
+        trigger.innerHTML = `<span>Swap left click</span><span class="context-swap-caret">&#9654;</span>`;
+        cancelRow.insertAdjacentElement('afterend', trigger);
+
+        const submenu = documentRef.createElement('div');
+        submenu.id = 'context-swap-left-click-submenu';
+        submenu.className = 'context-submenu hidden';
+
+        const selectedAction = options.currentLabel
+            || (typeof options.getPreferredMenuAction === 'function'
+                ? options.getPreferredMenuAction(prefKey, actions)
+                : getPreferredMenuAction(prefKey, actions, options.preferences || {}));
+
+        actions.forEach((actionName) => {
+            const option = documentRef.createElement('div');
+            option.className = 'context-option';
+            option.textContent = actionName;
+            if (option.classList && actionName === selectedAction) option.classList.add('context-option-selected');
+            option.onclick = (event) => {
+                if (event && typeof event.preventDefault === 'function') event.preventDefault();
+                if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+                if (typeof options.setPreferredMenuAction === 'function') {
+                    options.setPreferredMenuAction(prefKey, actionName);
+                } else {
+                    setPreferredMenuAction(prefKey, actionName, options.preferences || {});
+                }
+                if (typeof options.onSelect === 'function') options.onSelect(actionName);
+                if (typeof options.closeContextMenu === 'function') options.closeContextMenu();
+                else closeContextMenu(options);
+            };
+            submenu.appendChild(option);
+        });
+
+        if (documentRef.body && typeof documentRef.body.appendChild === 'function') {
+            documentRef.body.appendChild(submenu);
+        }
+
+        const positionSubmenu = () => {
+            if (submenu.classList && typeof submenu.classList.remove === 'function') submenu.classList.remove('hidden');
+            submenu.style.left = '0px';
+            submenu.style.top = '0px';
+            const triggerRect = typeof trigger.getBoundingClientRect === 'function'
+                ? trigger.getBoundingClientRect()
+                : { left: 0, right: 0, top: 0 };
+            const menuW = submenu.offsetWidth || 160;
+            const menuH = submenu.offsetHeight || 120;
+            const pad = 8;
+            const viewportWidth = Number.isFinite(windowRef.innerWidth) ? windowRef.innerWidth : 0;
+            const viewportHeight = Number.isFinite(windowRef.innerHeight) ? windowRef.innerHeight : 0;
+            let x = triggerRect.right;
+            if (x + menuW > viewportWidth - pad) x = triggerRect.left - menuW;
+            let y = triggerRect.top;
+            if (y + menuH > viewportHeight - pad) y = viewportHeight - menuH - pad;
+            if (y < pad) y = pad;
+            submenu.style.left = `${x}px`;
+            submenu.style.top = `${y}px`;
+        };
+
+        if (typeof trigger.addEventListener === 'function') {
+            trigger.addEventListener('mouseenter', positionSubmenu);
+            trigger.addEventListener('click', (event) => {
+                if (event && typeof event.preventDefault === 'function') event.preventDefault();
+                if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+                positionSubmenu();
+            });
+        }
+
+        if (typeof submenu.addEventListener === 'function') {
+            submenu.addEventListener('mouseleave', (event) => {
+                const related = event ? event.relatedTarget : null;
+                if (related && related.closest && (related.closest('#context-menu') || related.closest('.context-submenu'))) return;
+                if (typeof options.closeContextMenu === 'function') options.closeContextMenu();
+                else closeContextMenu(options);
+            });
+        }
+
+        return { trigger, submenu };
+    }
+
     function bindContextMenuMouseleave(options = {}) {
         const contextMenuEl = getContextMenuEl(options);
         if (!contextMenuEl || typeof contextMenuEl.addEventListener !== 'function') return;
@@ -124,10 +255,15 @@
 
     window.ContextMenuRuntime = {
         addContextMenuOption,
+        appendSwapLeftClickControl,
         bindContextMenuMouseleave,
         clearContextMenuOptions,
+        clearSwapLeftClickControl,
         closeContextMenu,
+        getItemMenuPreferenceKey,
         getLowestAllowedTop,
+        getPreferredMenuAction,
+        setPreferredMenuAction,
         showContextMenuAt
     };
 })();

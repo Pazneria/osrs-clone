@@ -20,6 +20,10 @@
             return window.QuestLogRuntime || null;
         }
 
+        function getContextMenuRuntime() {
+            return window.ContextMenuRuntime || null;
+        }
+
         function buildInventorySlotViewModels() {
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.buildInventorySlotViewModels === 'function') {
@@ -157,93 +161,55 @@
         }
 
         function getItemMenuPreferenceKey(scope, itemId) {
-            return `${scope || 'inventory'}:${itemId || ''}`;
+            const runtime = getContextMenuRuntime();
+            return runtime && typeof runtime.getItemMenuPreferenceKey === 'function'
+                ? runtime.getItemMenuPreferenceKey(scope, itemId)
+                : `${scope || 'inventory'}:${itemId || ''}`;
         }
 
         function getPreferredMenuAction(prefKey, actions) {
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.getPreferredMenuAction === 'function') {
+                return runtime.getPreferredMenuAction(prefKey, actions, userItemPrefs);
+            }
             if (!Array.isArray(actions) || actions.length === 0) return null;
-            const preferred = (prefKey && userItemPrefs && typeof userItemPrefs[prefKey] === 'string')
-                ? userItemPrefs[prefKey]
-                : null;
+            const preferred = (prefKey && userItemPrefs && typeof userItemPrefs[prefKey] === 'string') ? userItemPrefs[prefKey] : null;
             return (preferred && actions.includes(preferred)) ? preferred : actions[0];
         }
 
         function setPreferredMenuAction(prefKey, actionName) {
-            if (!prefKey || !actionName) return;
-            userItemPrefs[prefKey] = actionName;
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.setPreferredMenuAction === 'function') {
+                runtime.setPreferredMenuAction(prefKey, actionName, userItemPrefs);
+                return;
+            }
+            if (prefKey && actionName) userItemPrefs[prefKey] = actionName;
         }
 
         function clearItemSwapLeftClickUI() {
-            const trigger = document.getElementById('context-swap-left-click-trigger');
-            if (trigger && trigger.parentNode) trigger.parentNode.removeChild(trigger);
-            const submenu = document.getElementById('context-swap-left-click-submenu');
-            if (submenu && submenu.parentNode) submenu.parentNode.removeChild(submenu);
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.clearSwapLeftClickControl === 'function') {
+                runtime.clearSwapLeftClickControl({ documentRef: document });
+            }
         }
 
         function appendSwapLeftClickControl(prefKey, actions, onSelect, currentLabel = null) {
-            if (!prefKey || !Array.isArray(actions) || actions.length === 0) return;
-            clearItemSwapLeftClickUI();
-
-            const cancelRow = contextMenuEl.querySelector('.context-cancel');
-            if (!cancelRow) return;
-
-            const trigger = document.createElement('div');
-            trigger.id = 'context-swap-left-click-trigger';
-            trigger.className = 'context-swap-trigger';
-            trigger.innerHTML = `<span>Swap left click</span><span class="context-swap-caret">&#9654;</span>`;
-            cancelRow.insertAdjacentElement('afterend', trigger);
-
-            const submenu = document.createElement('div');
-            submenu.id = 'context-swap-left-click-submenu';
-            submenu.className = 'context-submenu hidden';
-
-            const selectedAction = currentLabel || getPreferredMenuAction(prefKey, actions);
-            actions.forEach((actionName) => {
-                const option = document.createElement('div');
-                option.className = 'context-option';
-                option.textContent = actionName;
-                if (actionName === selectedAction) option.classList.add('context-option-selected');
-                option.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setPreferredMenuAction(prefKey, actionName);
-                    if (typeof onSelect === 'function') onSelect(actionName);
-                    closeContextMenu();
-                };
-                submenu.appendChild(option);
-            });
-
-            document.body.appendChild(submenu);
-
-            const positionSubmenu = () => {
-                submenu.classList.remove('hidden');
-                submenu.style.left = '0px';
-                submenu.style.top = '0px';
-                const triggerRect = trigger.getBoundingClientRect();
-                const menuW = submenu.offsetWidth || 160;
-                const menuH = submenu.offsetHeight || 120;
-                const pad = 8;
-                let x = triggerRect.right;
-                if (x + menuW > window.innerWidth - pad) x = triggerRect.left - menuW;
-                let y = triggerRect.top;
-                if (y + menuH > window.innerHeight - pad) y = window.innerHeight - menuH - pad;
-                if (y < pad) y = pad;
-                submenu.style.left = `${x}px`;
-                submenu.style.top = `${y}px`;
-            };
-
-            trigger.addEventListener('mouseenter', positionSubmenu);
-            trigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                positionSubmenu();
-            });
-
-            submenu.addEventListener('mouseleave', (e) => {
-                const related = e.relatedTarget;
-                if (related && related.closest && (related.closest('#context-menu') || related.closest('.context-submenu'))) return;
-                closeContextMenu();
-            });
+            const runtime = getContextMenuRuntime();
+            if (runtime && typeof runtime.appendSwapLeftClickControl === 'function') {
+                return runtime.appendSwapLeftClickControl({
+                    documentRef: document,
+                    windowRef: window,
+                    contextMenuEl,
+                    prefKey,
+                    actions,
+                    currentLabel,
+                    onSelect,
+                    getPreferredMenuAction,
+                    setPreferredMenuAction,
+                    closeContextMenu
+                });
+            }
+            return null;
         }
 
         window.clearItemSwapLeftClickUI = clearItemSwapLeftClickUI;
