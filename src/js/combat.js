@@ -1,6 +1,7 @@
 (function () {
     const combatRuntime = window.CombatRuntime || null;
     const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;
+    const combatHudRuntime = window.CombatHudRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
     const combatEnemyMovementRuntime = window.CombatEnemyMovementRuntime || null;
@@ -414,55 +415,32 @@
         return getEnemyCombatLevel(getEnemyDefinition(enemyState.enemyId));
     }
 
-    function resolveCombatHudFocusEnemy() {
-        const lockedEnemy = getPlayerLockedEnemy();
-        if (lockedEnemy && isEnemyAlive(lockedEnemy)) {
-            return {
-                enemyState: lockedEnemy,
-                focusLabel: 'Target'
-            };
+    function getCombatHudRuntime() {
+        if (!combatHudRuntime) {
+            throw new Error('CombatHudRuntime missing. Load src/js/combat-hud-runtime.js before combat.js.');
         }
+        return combatHudRuntime;
+    }
 
-        const lastDamager = getCombatEnemyState(playerState.lastDamagerEnemyId);
-        if (lastDamager && isEnemyAlive(lastDamager) && (lastDamager.lockedTargetId === PLAYER_TARGET_ID || lastDamager.currentState === 'aggroed')) {
-            return {
-                enemyState: lastDamager,
-                focusLabel: 'Aggressor'
-            };
-        }
-
+    function buildCombatHudRuntimeContext() {
         return {
-            enemyState: null,
-            focusLabel: 'Target'
+            ensureCombatEnemyWorldReady,
+            getCombatEnemyState,
+            getEnemyDefinition,
+            getPlayerLockedEnemy,
+            isEnemyAlive,
+            isWithinMeleeRange,
+            playerState,
+            playerTargetId: PLAYER_TARGET_ID
         };
     }
 
-    function getCombatHudSnapshot() {
-        ensureCombatEnemyWorldReady();
-        const focus = resolveCombatHudFocusEnemy();
-        const enemyState = focus.enemyState;
-        const enemyType = enemyState ? getEnemyDefinition(enemyState.enemyId) : null;
+    function resolveCombatHudFocusEnemy() {
+        return getCombatHudRuntime().resolveCombatHudFocusEnemy(buildCombatHudRuntimeContext());
+    }
 
-        return {
-            inCombat: !!playerState.inCombat,
-            playerRemainingAttackCooldown: Number.isFinite(playerState.remainingAttackCooldown)
-                ? Math.max(0, Math.floor(playerState.remainingAttackCooldown))
-                : 0,
-            target: enemyState && enemyType
-                ? {
-                    label: enemyType.displayName || enemyState.enemyId,
-                    focusLabel: focus.focusLabel,
-                    currentHealth: Number.isFinite(enemyState.currentHealth) ? enemyState.currentHealth : enemyType.stats.hitpoints,
-                    maxHealth: enemyType.stats.hitpoints,
-                    remainingAttackCooldown: Number.isFinite(enemyState.remainingAttackCooldown)
-                        ? Math.max(0, Math.floor(enemyState.remainingAttackCooldown))
-                        : 0,
-                    state: enemyState.currentState || '',
-                    distance: getChebyshevDistance(playerState, enemyState),
-                    inMeleeRange: isWithinMeleeRange(playerState, enemyState)
-                }
-                : null
-        };
+    function getCombatHudSnapshot() {
+        return getCombatHudRuntime().buildCombatHudSnapshot(buildCombatHudRuntimeContext());
     }
 
     function resolveRespawnLocation() {

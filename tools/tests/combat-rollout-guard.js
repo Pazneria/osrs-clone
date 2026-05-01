@@ -22,6 +22,7 @@ const inputTickMovementRuntimeSource = read("src/js/input-tick-movement-runtime.
 const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.js");
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
+const combatHudRuntimeSource = read("src/js/combat-hud-runtime.js");
 const combatEnemyMovementRuntimeSource = read("src/js/combat-enemy-movement-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
 const combatEnemyOverlayRuntimeSource = read("src/js/combat-enemy-overlay-runtime.js");
@@ -53,6 +54,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-enemy-render-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-enemy-render-runtime"') < legacyManifest.indexOf('id: "combat"'),
   "legacy script manifest should load combat enemy render runtime before combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-hud-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-hud-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat HUD runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/combat-enemy-movement-runtime.js?raw') &&
@@ -106,11 +112,21 @@ assert.ok(
   "combat.js should delegate QA scratch globals through the combat QA debug runtime"
 );
 assert.ok(
-  combatSource.includes("combatQaDebugRuntime.buildEnemyAnimationDebugState({") &&
+    combatSource.includes("combatQaDebugRuntime.buildEnemyAnimationDebugState({") &&
     combatSource.includes("combatQaDebugRuntime.listCombatEnemyStates({") &&
     !combatSource.includes("const locomotionIntentUntilAt = Number.isFinite(enemyState.locomotionIntentUntilAt)") &&
     !combatSource.includes("return combatEnemyStates.map((enemyState) => {"),
   "combat.js should delegate QA enemy animation and list snapshots through the combat QA debug runtime"
+);
+assert.ok(
+  combatHudRuntimeSource.includes("window.CombatHudRuntime") &&
+    combatHudRuntimeSource.includes("function resolveCombatHudFocusEnemy(context = {})") &&
+    combatHudRuntimeSource.includes("function buildCombatHudSnapshot(context = {})") &&
+    combatSource.includes("const combatHudRuntime = window.CombatHudRuntime || null;") &&
+    combatSource.includes("function buildCombatHudRuntimeContext()") &&
+    combatSource.includes("getCombatHudRuntime().buildCombatHudSnapshot(buildCombatHudRuntimeContext())") &&
+    !combatSource.includes("playerRemainingAttackCooldown: Number.isFinite(playerState.remainingAttackCooldown)"),
+  "combat.js should delegate combat HUD focus and snapshot shaping through the combat HUD runtime"
 );
 assert.ok(
   coreSource.includes("buildCombatQaDebugContext") &&
