@@ -1034,6 +1034,40 @@
         return true;
     }
 
+    function getQaXpForLevel(context, levelValue) {
+        const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
+        if (typeof context.getXpForLevel === 'function') return context.getXpForLevel(lvl);
+
+        let points = 0;
+        for (let level = 1; level < lvl; level++) {
+            points += Math.floor(level + 300 * Math.pow(2, level / 7));
+        }
+        return Math.floor(points / 4);
+    }
+
+    function setQaSkillLevel(context, skillId, levelValue) {
+        const playerSkills = getPlayerSkills(context);
+        if (!playerSkills || !playerSkills[skillId]) return false;
+        const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
+        if (!Number.isFinite(lvl)) return false;
+
+        playerSkills[skillId].xp = getQaXpForLevel(context, lvl);
+        playerSkills[skillId].level = lvl;
+
+        if (typeof context.refreshSkillUi === 'function') context.refreshSkillUi(skillId);
+        return true;
+    }
+
+    function setQaUnlockFlag(context, flagId, enabled) {
+        if (!flagId) return false;
+        const playerState = getPlayerState(context);
+        if (!playerState.unlockFlags || typeof playerState.unlockFlags !== 'object') {
+            playerState.unlockFlags = {};
+        }
+        playerState.unlockFlags[flagId] = !!enabled;
+        return true;
+    }
+
     function createCommandHandlers(context = {}) {
         return {
             formatQaOpenShopUsage: () => formatQaOpenShopUsage(context),
@@ -1061,7 +1095,9 @@
             qaDiagFishing: () => qaDiagFishing(context),
             qaDiagMining: () => qaDiagMining(context),
             qaDiagRunecrafting: () => qaDiagRunecrafting(context),
-            applyQaInventoryPreset: (presetName) => applyQaInventoryPreset(context, presetName)
+            applyQaInventoryPreset: (presetName) => applyQaInventoryPreset(context, presetName),
+            setQaSkillLevel: (skillId, levelValue) => setQaSkillLevel(context, skillId, levelValue),
+            setQaUnlockFlag: (flagId, enabled) => setQaUnlockFlag(context, flagId, enabled)
         };
     }
 
@@ -1077,6 +1113,9 @@
         makeFilledSlots,
         getQaToolSlots,
         buildQaInventoryPresetSlots,
-        applyQaInventoryPreset
+        applyQaInventoryPreset,
+        getQaXpForLevel,
+        setQaSkillLevel,
+        setQaUnlockFlag
     };
 })();

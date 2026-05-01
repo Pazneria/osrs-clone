@@ -714,34 +714,23 @@
         window.applyQaInventoryPreset = applyQaInventoryPreset;
 
         function getQaXpForLevel(levelValue) {
-            const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
-            if (typeof getXpForLevel === 'function') return getXpForLevel(lvl);
-
-            let points = 0;
-            for (let level = 1; level < lvl; level++) {
-                points += Math.floor(level + 300 * Math.pow(2, level / 7));
-            }
-            return Math.floor(points / 4);
+            const qaToolsRuntime = window.QaToolsRuntime || null;
+            return qaToolsRuntime && typeof qaToolsRuntime.getQaXpForLevel === 'function'
+                ? qaToolsRuntime.getQaXpForLevel(buildQaToolsContext(), levelValue)
+                : 0;
         }
 
         function setQaSkillLevel(skillId, levelValue) {
-            if (!playerSkills || !playerSkills[skillId]) return false;
-            const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
-            if (!Number.isFinite(lvl)) return false;
-
-            playerSkills[skillId].xp = getQaXpForLevel(lvl);
-            playerSkills[skillId].level = lvl;
-
-            if (typeof refreshSkillUi === 'function') refreshSkillUi(skillId);
-            return true;
+            const qaToolsRuntime = window.QaToolsRuntime || null;
+            return qaToolsRuntime && typeof qaToolsRuntime.setQaSkillLevel === 'function'
+                ? qaToolsRuntime.setQaSkillLevel(buildQaToolsContext(), skillId, levelValue)
+                : false;
         }
         function setQaUnlockFlag(flagId, enabled) {
-            if (!flagId) return false;
-            if (!playerState.unlockFlags || typeof playerState.unlockFlags !== 'object') {
-                playerState.unlockFlags = {};
-            }
-            playerState.unlockFlags[flagId] = !!enabled;
-            return true;
+            const qaToolsRuntime = window.QaToolsRuntime || null;
+            return qaToolsRuntime && typeof qaToolsRuntime.setQaUnlockFlag === 'function'
+                ? qaToolsRuntime.setQaUnlockFlag(buildQaToolsContext(), flagId, enabled)
+                : false;
         }
         function getWorldGameContext() {
             if (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldGameContext === 'function') {
@@ -844,6 +833,8 @@
                 addChatMessage,
                 setInventorySlots,
                 getActiveIconReviewBatch,
+                getXpForLevel: (typeof getXpForLevel === 'function') ? getXpForLevel : null,
+                refreshSkillUi: (typeof refreshSkillUi === 'function') ? refreshSkillUi : null,
                 getWorldGameContext,
                 getWorldAdapterRuntime: () => worldAdapterRuntime,
                 travelToWorld,
