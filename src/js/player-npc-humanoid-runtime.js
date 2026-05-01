@@ -271,6 +271,20 @@
             : null;
     }
 
+    function publishNpcHumanoidHooks(options = {}) {
+        const windowRef = options.windowRef || (typeof window !== 'undefined' ? window : null);
+        if (!windowRef) return;
+        if (typeof options.createNpcHumanoidRigFromPreset === 'function') {
+            windowRef.createNpcHumanoidRigFromPreset = options.createNpcHumanoidRigFromPreset;
+        }
+        if (typeof options.listAnimationStudioPreviewActors === 'function') {
+            windowRef.listAnimationStudioPreviewActors = options.listAnimationStudioPreviewActors;
+        }
+        if (typeof options.createAnimationStudioPreviewRig === 'function') {
+            windowRef.createAnimationStudioPreviewRig = options.createAnimationStudioPreviewRig;
+        }
+    }
+
     window.PlayerNpcHumanoidRuntime = {
         normalizeNpcHumanoidPresetId,
         createLiteralRgbFragment,
@@ -283,6 +297,7 @@
         buildNpcHumanoidRigTemplate,
         createNpcHumanoidRigFromPreset,
         listAnimationStudioPreviewActors,
-        createAnimationStudioPreviewRig
+        createAnimationStudioPreviewRig,
+        publishNpcHumanoidHooks
     };
 })();

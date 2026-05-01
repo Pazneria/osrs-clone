@@ -68,6 +68,7 @@ function run() {
   assert(runtimeSource.includes("function createTannerHumanoidFragments"), "NPC humanoid runtime should own tanner preset fragments");
   assert(runtimeSource.includes("function applyGuardRigBasePose"), "NPC humanoid runtime should own guard base pose");
   assert(runtimeSource.includes("function createNpcHumanoidRigFromPreset"), "NPC humanoid runtime should own NPC rig creation");
+  assert(runtimeSource.includes("function publishNpcHumanoidHooks(options = {})"), "NPC humanoid runtime should own NPC humanoid hook publication");
   assert(runtimeSource.includes("{ actorId: 'guard', label: 'Guard' }"), "NPC humanoid runtime should own animation studio NPC preview actors");
   assert(runtimeSource.includes("normalizedPresetId === 'tanner'"), "NPC humanoid runtime should preserve the tanner alias");
 
@@ -75,6 +76,10 @@ function run() {
   assert(playerModelSource.includes("PlayerNpcHumanoidRuntime missing"), "player-model.js should fail fast when NPC humanoid runtime is missing");
   assert(playerModelSource.includes("createNpcHumanoidRigFromPreset(buildPlayerNpcHumanoidRuntimeOptions()"), "player-model.js should delegate NPC rig creation");
   assert(playerModelSource.includes("createAnimationStudioPreviewRig(buildPlayerNpcHumanoidRuntimeOptions()"), "player-model.js should delegate animation studio NPC preview routing");
+  assert(playerModelSource.includes("playerNpcHumanoidRuntimeForPublication.publishNpcHumanoidHooks({"), "player-model.js should publish NPC humanoid hooks through the NPC humanoid runtime");
+  assert(!playerModelSource.includes("window.createNpcHumanoidRigFromPreset = createNpcHumanoidRigFromPreset"), "player-model.js should not directly publish createNpcHumanoidRigFromPreset");
+  assert(!playerModelSource.includes("window.listAnimationStudioPreviewActors = listAnimationStudioPreviewActors"), "player-model.js should not directly publish listAnimationStudioPreviewActors");
+  assert(!playerModelSource.includes("window.createAnimationStudioPreviewRig = createAnimationStudioPreviewRig"), "player-model.js should not directly publish createAnimationStudioPreviewRig");
   assert(!playerModelSource.includes("function createGuardHumanoidFragments"), "player-model.js should not own guard preset fragments");
   assert(!playerModelSource.includes("function createTannerHumanoidFragments"), "player-model.js should not own tanner preset fragments");
   assert(!playerModelSource.includes("function applyGuardRigBasePose"), "player-model.js should not own NPC base poses");
@@ -88,6 +93,20 @@ function run() {
   assert(runtime.normalizeNpcHumanoidPresetId("tanner") === "tanner_rusk", "runtime should preserve tanner alias normalization");
   assert(runtime.createGuardHumanoidFragments({ packJagexHsl: () => 64 }).length > 0, "runtime should build guard fragments");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "guard"), "runtime should list guard preview actor");
+
+  const publishedWindow = {};
+  const createNpcHumanoidRigFromPreset = () => ({ npc: true });
+  const listAnimationStudioPreviewActors = () => [];
+  const createAnimationStudioPreviewRig = () => ({ preview: true });
+  runtime.publishNpcHumanoidHooks({
+    windowRef: publishedWindow,
+    createNpcHumanoidRigFromPreset,
+    listAnimationStudioPreviewActors,
+    createAnimationStudioPreviewRig
+  });
+  assert(publishedWindow.createNpcHumanoidRigFromPreset === createNpcHumanoidRigFromPreset, "NPC hook publication should expose NPC rig creation");
+  assert(publishedWindow.listAnimationStudioPreviewActors === listAnimationStudioPreviewActors, "NPC hook publication should expose preview actor listing");
+  assert(publishedWindow.createAnimationStudioPreviewRig === createAnimationStudioPreviewRig, "NPC hook publication should expose preview rig creation");
 
   const added = [];
   const options = {

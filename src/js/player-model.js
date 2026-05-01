@@ -533,9 +533,15 @@ window.syncPlayerAppearanceFromEquipment = syncPlayerAppearanceFromEquipment;
 window.rebuildPlayerRigsFromAppearance = rebuildPlayerRigsFromAppearance;
 window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;
 window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;
-window.createNpcHumanoidRigFromPreset = createNpcHumanoidRigFromPreset;
-window.listAnimationStudioPreviewActors = listAnimationStudioPreviewActors;
-window.createAnimationStudioPreviewRig = createAnimationStudioPreviewRig;
+const playerNpcHumanoidRuntimeForPublication = window.PlayerNpcHumanoidRuntime || null;
+if (playerNpcHumanoidRuntimeForPublication && typeof playerNpcHumanoidRuntimeForPublication.publishNpcHumanoidHooks === 'function') {
+    playerNpcHumanoidRuntimeForPublication.publishNpcHumanoidHooks({
+        windowRef: window,
+        createNpcHumanoidRigFromPreset,
+        listAnimationStudioPreviewActors,
+        createAnimationStudioPreviewRig
+    });
+}
 
 
 
