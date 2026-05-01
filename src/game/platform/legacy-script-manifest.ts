@@ -60,6 +60,7 @@ import equipmentItemRuntimeScript from "../../js/equipment-item-runtime.js?raw";
 import foodItemRuntimeScript from "../../js/food-item-runtime.js?raw";
 import inventoryActionRuntimeScript from "../../js/inventory-action-runtime.js?raw";
 import inventoryTooltipRuntimeScript from "../../js/inventory-tooltip-runtime.js?raw";
+import inventoryShopSessionRuntimeScript from "../../js/inventory-shop-session-runtime.js?raw";
 import contextMenuRuntimeScript from "../../js/context-menu-runtime.js?raw";
 import coreChatRuntimeScript from "../../js/core-chat-runtime.js?raw";
 import corePlayerEntryRuntimeScript from "../../js/core-player-entry-runtime.js?raw";
@@ -179,6 +180,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "food-item-runtime", filename: "src/js/food-item-runtime.js", code: foodItemRuntimeScript },
   { id: "inventory-action-runtime", filename: "src/js/inventory-action-runtime.js", code: inventoryActionRuntimeScript },
   { id: "inventory-tooltip-runtime", filename: "src/js/inventory-tooltip-runtime.js", code: inventoryTooltipRuntimeScript },
+  { id: "inventory-shop-session-runtime", filename: "src/js/inventory-shop-session-runtime.js", code: inventoryShopSessionRuntimeScript },
   { id: "context-menu-runtime", filename: "src/js/context-menu-runtime.js", code: contextMenuRuntimeScript },
   { id: "core-chat-runtime", filename: "src/js/core-chat-runtime.js", code: coreChatRuntimeScript },
   { id: "core-player-entry-runtime", filename: "src/js/core-player-entry-runtime.js", code: corePlayerEntryRuntimeScript },

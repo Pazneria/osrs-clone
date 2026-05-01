@@ -16,6 +16,10 @@
             return window.InventoryTooltipRuntime || null;
         }
 
+        function getInventoryShopSessionRuntime() {
+            return window.InventoryShopSessionRuntime || null;
+        }
+
         function getQuestLogRuntime() {
             return window.QuestLogRuntime || null;
         }
@@ -49,8 +53,8 @@
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.buildShopSlotViewModels === 'function') {
                 return runtime.buildShopSlotViewModels({
-                    shopInventory,
-                    merchantId: activeShopMerchantId,
+                    shopInventory: getActiveShopInventory(),
+                    merchantId: getActiveShopMerchantId(),
                     itemDb: ITEM_DB,
                     economy: getShopEconomy()
                 });
@@ -337,7 +341,7 @@
             if (result.reason === 'bank_full' || result.reason === 'bank_full_partial') console.log("Bank is full!");
 
             if(isBankOpen) renderBank(); 
-            if(typeof isShopOpen !== 'undefined' && isShopOpen) renderShop(); 
+            if (isShopInterfaceOpen()) renderShop();
             renderInventory();
         }
 
@@ -363,10 +367,51 @@
         }
 
         // --- Shop Interface System ---
-        let isShopOpen = false;
-        let activeShopMerchantId = 'general_store';
-        const shopInventoriesByMerchant = {};
-        let shopInventory = Array(100).fill(null);
+        const inventoryShopSessionRuntime = getInventoryShopSessionRuntime();
+        const shopSession = inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.createShopSession === 'function'
+            ? inventoryShopSessionRuntime.createShopSession({ defaultMerchantId: 'general_store', inventorySize: 100 })
+            : {
+                isOpen: false,
+                activeMerchantId: 'general_store',
+                inventorySize: 100,
+                inventoriesByMerchant: {},
+                activeInventory: Array(100).fill(null)
+            };
+
+        function getActiveShopMerchantId() {
+            return inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.getActiveMerchantId === 'function'
+                ? inventoryShopSessionRuntime.getActiveMerchantId(shopSession)
+                : (shopSession.activeMerchantId || 'general_store');
+        }
+
+        function getActiveShopInventory() {
+            return inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.getActiveInventory === 'function'
+                ? inventoryShopSessionRuntime.getActiveInventory(shopSession)
+                : (Array.isArray(shopSession.activeInventory) ? shopSession.activeInventory : []);
+        }
+
+        function isShopInterfaceOpen() {
+            return inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.isOpen === 'function'
+                ? inventoryShopSessionRuntime.isOpen(shopSession)
+                : !!shopSession.isOpen;
+        }
+
+        function setShopInterfaceOpen(isOpen) {
+            if (inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.setOpen === 'function') {
+                inventoryShopSessionRuntime.setOpen(shopSession, isOpen);
+                return;
+            }
+            shopSession.isOpen = !!isOpen;
+        }
+
+        function setActiveShopInventory(nextInventory) {
+            if (inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.updateActiveInventory === 'function') {
+                inventoryShopSessionRuntime.updateActiveInventory(shopSession, nextInventory);
+                return;
+            }
+            shopSession.activeInventory = Array.isArray(nextInventory) ? nextInventory : [];
+            shopSession.inventoriesByMerchant[getActiveShopMerchantId()] = shopSession.activeInventory;
+        }
 
         function getShopEconomy() {
             return (window.ShopEconomy && typeof window.ShopEconomy.resolveBuyPrice === 'function') ? window.ShopEconomy : null;
@@ -376,9 +421,9 @@
             const economy = getShopEconomy();
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.resolveMerchantBuyPrice === 'function') {
-                return runtime.resolveMerchantBuyPrice(ITEM_DB, economy, itemId, activeShopMerchantId);
+                return runtime.resolveMerchantBuyPrice(ITEM_DB, economy, itemId, getActiveShopMerchantId());
             }
-            if (economy) return economy.resolveBuyPrice(itemId, activeShopMerchantId);
+            if (economy) return economy.resolveBuyPrice(itemId, getActiveShopMerchantId());
             return ITEM_DB[itemId] && Number.isFinite(ITEM_DB[itemId].value) ? ITEM_DB[itemId].value : 0;
         }
 
@@ -386,9 +431,9 @@
             const economy = getShopEconomy();
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.resolveMerchantSellPrice === 'function') {
-                return runtime.resolveMerchantSellPrice(ITEM_DB, economy, itemId, activeShopMerchantId);
+                return runtime.resolveMerchantSellPrice(ITEM_DB, economy, itemId, getActiveShopMerchantId());
             }
-            if (economy) return economy.resolveSellPrice(itemId, activeShopMerchantId);
+            if (economy) return economy.resolveSellPrice(itemId, getActiveShopMerchantId());
             const base = ITEM_DB[itemId] && Number.isFinite(ITEM_DB[itemId].value) ? ITEM_DB[itemId].value : 0;
             return Math.floor(base * 0.4);
         }
@@ -419,22 +464,32 @@
         function ensureUnlockedMerchantStock(merchantId) {
             const runtime = getUiDomainRuntime();
             if (!runtime || typeof runtime.ensureUnlockedMerchantStock !== 'function') return;
-            shopInventory = runtime.ensureUnlockedMerchantStock({
-                shopInventory,
+            const shopInventory = runtime.ensureUnlockedMerchantStock({
+                shopInventory: getActiveShopInventory(),
                 merchantId,
                 itemDb: ITEM_DB,
                 economy: getShopEconomy()
             });
-            shopInventoriesByMerchant[merchantId] = shopInventory;
+            setActiveShopInventory(shopInventory);
         }
 
         function ensureMerchantShopInventory(merchantId) {
-            const id = merchantId || 'general_store';
-            if (!shopInventoriesByMerchant[id]) {
-                shopInventoriesByMerchant[id] = createShopInventoryForMerchant(id);
+            if (inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.ensureMerchantInventory === 'function') {
+                inventoryShopSessionRuntime.ensureMerchantInventory(shopSession, merchantId, {
+                    createInventory: createShopInventoryForMerchant,
+                    ensureUnlockedStock: (id) => {
+                        ensureUnlockedMerchantStock(id);
+                        return getActiveShopInventory();
+                    }
+                });
+                return;
             }
-            activeShopMerchantId = id;
-            shopInventory = shopInventoriesByMerchant[id];
+            const id = merchantId || 'general_store';
+            if (!shopSession.inventoriesByMerchant[id]) {
+                shopSession.inventoriesByMerchant[id] = createShopInventoryForMerchant(id);
+            }
+            shopSession.activeMerchantId = id;
+            shopSession.activeInventory = shopSession.inventoriesByMerchant[id];
             ensureUnlockedMerchantStock(id);
         }
 
@@ -449,7 +504,7 @@
                 }
             }
             ensureMerchantShopInventory(merchantId);
-            isShopOpen = true;
+            setShopInterfaceOpen(true);
             setInterfaceOpenState('shop-interface', true);
             renderShop();
             renderInventory();
@@ -457,19 +512,20 @@
         }
 
         function closeShop() {
-            isShopOpen = false;
+            setShopInterfaceOpen(false);
             setInterfaceOpenState('shop-interface', false);
             renderInventory();
         }
 
         window.openShopForMerchant = openShop;
-        window.getActiveShopMerchantId = () => activeShopMerchantId;
+        window.getActiveShopMerchantId = getActiveShopMerchantId;
 
         function renderShop() {
             const container = document.getElementById('shop-grid');
             hideInventoryHoverTooltip();
             container.innerHTML = '';
             const shopSlotViewModels = buildShopSlotViewModels();
+            const shopInventory = getActiveShopInventory();
             for (let i = 0; i < 100; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-pointer hover:bg-[#2b251d] select-none relative group transition-colors';
@@ -519,16 +575,15 @@
             if (!runtime || typeof runtime.buyShopItem !== 'function') return;
             const result = runtime.buyShopItem({
                 inventory,
-                shopInventory,
+                shopInventory: getActiveShopInventory(),
                 shopIndex: shopIdx,
                 amount,
-                merchantId: activeShopMerchantId,
+                merchantId: getActiveShopMerchantId(),
                 itemDb: ITEM_DB,
                 economy: getShopEconomy()
             });
             inventory = result.inventory;
-            shopInventory = result.shopInventory;
-            shopInventoriesByMerchant[activeShopMerchantId] = shopInventory;
+            setActiveShopInventory(result.shopInventory);
             if (result.reason === 'inventory_full') console.log("Inventory full!");
             else if (result.reason === 'not_enough_coins') console.log("Not enough coins!");
             else if (result.reason === 'cannot_buy_coins') console.log("You cannot buy coins.");
@@ -542,16 +597,15 @@
             const existingItemName = existingSlot && existingSlot.itemData ? existingSlot.itemData.name : 'That item';
             const result = runtime.sellInventoryItem({
                 inventory,
-                shopInventory,
+                shopInventory: getActiveShopInventory(),
                 inventoryIndex: invIdx,
                 amount,
-                merchantId: activeShopMerchantId,
+                merchantId: getActiveShopMerchantId(),
                 itemDb: ITEM_DB,
                 economy: getShopEconomy()
             });
             inventory = result.inventory;
-            shopInventory = result.shopInventory;
-            shopInventoriesByMerchant[activeShopMerchantId] = shopInventory;
+            setActiveShopInventory(result.shopInventory);
             if (result.reason === 'merchant_wont_buy_item') {
                 if (typeof addChatMessage === 'function') addChatMessage(existingItemName + ' cannot be sold to this merchant.', 'warn');
                 return;
@@ -643,7 +697,7 @@
                             showContextMenuAt(e.clientX, e.clientY);
                             appendSwapLeftClickControl(depositActionPrefKey, depositActions, () => { renderInventory(); if (isBankOpen) renderBank(); });
                         };
-                    } else if (typeof isShopOpen !== 'undefined' && isShopOpen) {
+                    } else if (isShopInterfaceOpen()) {
                         const sellActionPrefKey = getItemMenuPreferenceKey('sell', item.id);
                         const sellActions = ['Sell-1', 'Sell-5', 'Sell-10', 'Sell-50', 'Sell-X'];
                         const runSellAction = (actionName) => {
@@ -673,7 +727,7 @@
                             addContextMenuOption(`Sell-50 <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-50'));
                             addContextMenuOption(`Sell-X <span class="text-white">${item.name}</span>`, () => runSellAction('Sell-X'));
                             showContextMenuAt(e.clientX, e.clientY);
-                            appendSwapLeftClickControl(sellActionPrefKey, sellActions, () => { renderInventory(); if (isShopOpen) renderShop(); });
+                            appendSwapLeftClickControl(sellActionPrefKey, sellActions, () => { renderInventory(); if (isShopInterfaceOpen()) renderShop(); });
                         };
                     } else {
                         const invActionPrefKey = getItemMenuPreferenceKey('inventory', item.id);
