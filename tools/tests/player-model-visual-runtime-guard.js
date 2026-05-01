@@ -28,6 +28,7 @@ function run() {
 
   assert(runtimeSource.includes("window.PlayerModelVisualRuntime"), "player model visual runtime should expose a window runtime");
   assert(runtimeSource.includes("function createPixelSourceVisualMeshes"), "visual runtime should own pixel-source mesh construction");
+  assert(runtimeSource.includes("function publishPixelSourceVisualHooks(options = {})"), "visual runtime should own pixel-source hook publication");
   assert(runtimeSource.includes("function createPixelExtrudeGeometry"), "visual runtime should own pixel extrusion geometry");
   assert(runtimeSource.includes("function createColorizedMesh"), "visual runtime should own colorized mesh creation");
   assert(runtimeSource.includes("function packJagexHsl"), "visual runtime should own packed color helpers");
@@ -38,6 +39,8 @@ function run() {
   assert(playerModelSource.includes("createColorizedMesh(buildPlayerModelVisualRuntimeOptions()"), "player-model.js should delegate colorized mesh construction");
   assert(playerModelSource.includes("createPixelSourceVisualMeshes(buildPlayerModelVisualRuntimeOptions()"), "player-model.js should delegate pixel-source mesh construction");
   assert(countOccurrences(playerModelSource, "function createPixelSourceVisualMeshes(") === 1, "player-model.js should keep only the compatibility pixel-source wrapper");
+  assert(playerModelSource.includes("playerModelVisualRuntimeForPublication.publishPixelSourceVisualHooks({"), "player-model.js should publish pixel-source hooks through the visual runtime");
+  assert(!playerModelSource.includes("window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes"), "player-model.js should not directly publish pixel-source mesh creation");
   assert(!playerModelSource.includes("function createPixelExtrudeGeometry"), "player-model.js should not own pixel extrusion geometry");
   assert(!playerModelSource.includes("new THREE.TorusGeometry"), "player-model.js should not own primitive geometry construction");
   assert(!playerModelSource.includes("function hslToRgb"), "player-model.js should not own color conversion helpers");
@@ -51,6 +54,10 @@ function run() {
   assert(runtime.unpackJagexHsl(1283).h === 1, "runtime should unpack Jagex HSL hue");
   const rgb = runtime.hexColorToRgb("#336699");
   assert(rgb && Math.abs(rgb.r - 0.2) < 0.001 && Math.abs(rgb.g - 0.4) < 0.001 && Math.abs(rgb.b - 0.6) < 0.001, "runtime should parse hex RGB fragments");
+  const publishedWindow = {};
+  const createPixelSourceVisualMeshes = () => [];
+  runtime.publishPixelSourceVisualHooks({ windowRef: publishedWindow, createPixelSourceVisualMeshes });
+  assert(publishedWindow.createPixelSourceVisualMeshes === createPixelSourceVisualMeshes, "pixel-source hook publication should expose mesh creation");
 
   console.log("Player model visual runtime guard passed.");
 }

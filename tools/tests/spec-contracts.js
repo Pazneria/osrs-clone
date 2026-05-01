@@ -2152,8 +2152,10 @@ function run() {
   assert(skillRuntimeScript.includes("getSkillAnimationSuppressEquipmentVisual"), "skill runtime should expose animation equipment-visibility overrides");
   const fishingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/fishing/index.js"), "utf8");
   const playerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
+  const playerModelVisualRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-model-visual-runtime.js"), "utf8");
   assert(fishingRuntimeScript.includes("getAnimationHeldItemId(context)"), "fishing runtime should still resolve held-tool visuals");
-  assert(playerModelSource.includes("window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes;"), "player-model should expose pixel-source visual mesh builder");
+  assert(playerModelVisualRuntimeScript.includes("function publishPixelSourceVisualHooks(options = {})"), "player model visual runtime should own pixel-source hook publication");
+  assert(playerModelSource.includes("playerModelVisualRuntimeForPublication.publishPixelSourceVisualHooks({"), "player-model should expose pixel-source visual mesh builder through the visual runtime");
   assert(!fishingRuntimeScript.includes("alignTorsoToUpperLegFrontHinge"), "fishing runtime should remove the legacy procedural fishing pose");
   const cookingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/cooking/index.js"), "utf8");
   assert(cookingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "cooking runtime should request empty hands during clip playback");

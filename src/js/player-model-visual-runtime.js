@@ -310,6 +310,14 @@
         return meshes;
     }
 
+    function publishPixelSourceVisualHooks(options = {}) {
+        const windowRef = options.windowRef || (typeof window !== 'undefined' ? window : null);
+        if (!windowRef) return;
+        if (typeof options.createPixelSourceVisualMeshes === 'function') {
+            windowRef.createPixelSourceVisualMeshes = options.createPixelSourceVisualMeshes;
+        }
+    }
+
     window.PlayerModelVisualRuntime = {
         packJagexHsl,
         unpackJagexHsl,
@@ -321,6 +329,7 @@
         createPixelExtrudeGeometry,
         createGeometry,
         createColorizedMesh,
-        createPixelSourceVisualMeshes
+        createPixelSourceVisualMeshes,
+        publishPixelSourceVisualHooks
     };
 })();

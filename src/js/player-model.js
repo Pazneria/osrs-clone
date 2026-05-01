@@ -626,5 +626,11 @@ if (playerHeldItemRuntimeForPublication && typeof playerHeldItemRuntimeForPublic
         setPlayerRigToolVisual
     });
 }
+const playerModelVisualRuntimeForPublication = window.PlayerModelVisualRuntime || null;
+if (playerModelVisualRuntimeForPublication && typeof playerModelVisualRuntimeForPublication.publishPixelSourceVisualHooks === 'function') {
+    playerModelVisualRuntimeForPublication.publishPixelSourceVisualHooks({
+        windowRef: window,
+        createPixelSourceVisualMeshes
+    });
+}
 window.createEquipmentVisualMeshes = createEquipmentVisualMeshes;
-window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes;
