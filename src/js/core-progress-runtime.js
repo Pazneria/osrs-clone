@@ -115,6 +115,131 @@
         return restored;
     }
 
+    function createEmptyPlayerProfile() {
+        return {
+            name: '',
+            creationCompleted: false,
+            createdAt: null,
+            lastStartedAt: null,
+            tutorialStep: 0,
+            tutorialCompletedAt: null,
+            tutorialBankDepositSource: null,
+            tutorialBankWithdrawSource: null
+        };
+    }
+
+    function sanitizePlayerName(context = {}, value) {
+        if (typeof context.sanitizePlayerName === 'function') {
+            return context.sanitizePlayerName(value);
+        }
+        if (typeof value !== 'string') return '';
+        return value.trim();
+    }
+
+    function syncPlayerProfileState(context = {}, nextProfile) {
+        const playerProfileState = context.playerProfileState || null;
+        if (!playerProfileState) return null;
+        const safeProfile = nextProfile && typeof nextProfile === 'object'
+            ? nextProfile
+            : createEmptyPlayerProfile();
+        playerProfileState.name = typeof safeProfile.name === 'string' ? safeProfile.name : '';
+        playerProfileState.creationCompleted = !!safeProfile.creationCompleted;
+        playerProfileState.createdAt = Number.isFinite(safeProfile.createdAt)
+            ? Math.max(0, Math.floor(safeProfile.createdAt))
+            : null;
+        playerProfileState.lastStartedAt = Number.isFinite(safeProfile.lastStartedAt)
+            ? Math.max(0, Math.floor(safeProfile.lastStartedAt))
+            : null;
+        playerProfileState.tutorialStep = Number.isFinite(safeProfile.tutorialStep)
+            ? Math.max(0, Math.floor(safeProfile.tutorialStep))
+            : 0;
+        playerProfileState.tutorialCompletedAt = Number.isFinite(safeProfile.tutorialCompletedAt)
+            ? Math.max(0, Math.floor(safeProfile.tutorialCompletedAt))
+            : null;
+        playerProfileState.tutorialBankDepositSource = typeof safeProfile.tutorialBankDepositSource === 'string'
+            ? safeProfile.tutorialBankDepositSource
+            : null;
+        playerProfileState.tutorialBankWithdrawSource = typeof safeProfile.tutorialBankWithdrawSource === 'string'
+            ? safeProfile.tutorialBankWithdrawSource
+            : null;
+        return playerProfileState;
+    }
+
+    function sanitizePlayerProfile(context = {}, savedProfile, options = {}) {
+        const allowLegacyFallback = !!(options && options.allowLegacyFallback);
+        const savedWorldId = typeof options.savedWorldId === 'string' ? options.savedWorldId : '';
+        const tutorialWorldId = context.tutorialWorldId || 'tutorial_island';
+        const tutorialExitStep = Number.isFinite(context.tutorialExitStep) ? Math.floor(context.tutorialExitStep) : 7;
+        const defaultName = context.playerProfileDefaultName || 'Adventurer';
+        const now = typeof context.now === 'function' ? context.now : Date.now;
+        const restored = createEmptyPlayerProfile();
+        if (savedProfile && typeof savedProfile === 'object') {
+            restored.name = sanitizePlayerName(context, savedProfile.name);
+            restored.creationCompleted = !!savedProfile.creationCompleted;
+            restored.createdAt = Number.isFinite(savedProfile.createdAt)
+                ? Math.max(0, Math.floor(savedProfile.createdAt))
+                : null;
+            restored.lastStartedAt = Number.isFinite(savedProfile.lastStartedAt)
+                ? Math.max(0, Math.floor(savedProfile.lastStartedAt))
+                : null;
+            restored.tutorialStep = Number.isFinite(savedProfile.tutorialStep)
+                ? Math.max(0, Math.floor(savedProfile.tutorialStep))
+                : 0;
+            restored.tutorialCompletedAt = Number.isFinite(savedProfile.tutorialCompletedAt)
+                ? Math.max(0, Math.floor(savedProfile.tutorialCompletedAt))
+                : null;
+            restored.tutorialBankDepositSource = typeof savedProfile.tutorialBankDepositSource === 'string'
+                ? savedProfile.tutorialBankDepositSource
+                : null;
+            restored.tutorialBankWithdrawSource = typeof savedProfile.tutorialBankWithdrawSource === 'string'
+                ? savedProfile.tutorialBankWithdrawSource
+                : null;
+        }
+
+        if (allowLegacyFallback && !restored.name) restored.name = defaultName;
+        if (allowLegacyFallback && !restored.creationCompleted) restored.creationCompleted = true;
+        if (allowLegacyFallback && !restored.createdAt) restored.createdAt = now();
+        if (
+            allowLegacyFallback
+            && restored.creationCompleted
+            && savedWorldId
+            && savedWorldId !== tutorialWorldId
+            && !restored.tutorialCompletedAt
+        ) {
+            restored.tutorialCompletedAt = restored.lastStartedAt || restored.createdAt || now();
+        }
+        if (restored.tutorialCompletedAt) restored.tutorialStep = tutorialExitStep;
+
+        return restored;
+    }
+
+    function serializePlayerProfile(context = {}) {
+        const playerProfileState = context.playerProfileState || createEmptyPlayerProfile();
+        const defaultName = context.playerProfileDefaultName || 'Adventurer';
+        return {
+            name: sanitizePlayerName(context, playerProfileState.name) || defaultName,
+            creationCompleted: !!playerProfileState.creationCompleted,
+            createdAt: Number.isFinite(playerProfileState.createdAt)
+                ? Math.max(0, Math.floor(playerProfileState.createdAt))
+                : null,
+            lastStartedAt: Number.isFinite(playerProfileState.lastStartedAt)
+                ? Math.max(0, Math.floor(playerProfileState.lastStartedAt))
+                : null,
+            tutorialStep: Number.isFinite(playerProfileState.tutorialStep)
+                ? Math.max(0, Math.floor(playerProfileState.tutorialStep))
+                : 0,
+            tutorialCompletedAt: Number.isFinite(playerProfileState.tutorialCompletedAt)
+                ? Math.max(0, Math.floor(playerProfileState.tutorialCompletedAt))
+                : null,
+            tutorialBankDepositSource: typeof playerProfileState.tutorialBankDepositSource === 'string'
+                ? playerProfileState.tutorialBankDepositSource
+                : null,
+            tutorialBankWithdrawSource: typeof playerProfileState.tutorialBankWithdrawSource === 'string'
+                ? playerProfileState.tutorialBankWithdrawSource
+                : null
+        };
+    }
+
     function sanitizeAppearanceState(context = {}, savedAppearance) {
         const windowRef = context.windowRef || window;
         if (!windowRef.playerAppearanceState || typeof windowRef.playerAppearanceState !== 'object') return null;
@@ -152,6 +277,10 @@
         deserializeEquipmentState,
         sanitizeUserItemPrefs,
         sanitizeSkillState,
+        createEmptyPlayerProfile,
+        syncPlayerProfileState,
+        sanitizePlayerProfile,
+        serializePlayerProfile,
         sanitizeAppearanceState,
         serializeAppearanceState
     };

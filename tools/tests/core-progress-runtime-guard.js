@@ -26,6 +26,8 @@ function run() {
   assert(runtimeSource.includes("function deserializeItemArray(context = {}, savedSlots, size)"), "runtime should own item array deserialization");
   assert(runtimeSource.includes("function serializeEquipmentState(context = {})"), "runtime should own equipment serialization");
   assert(runtimeSource.includes("function sanitizeSkillState(context = {}, savedSkills)"), "runtime should own skill save sanitization");
+  assert(runtimeSource.includes("function sanitizePlayerProfile(context = {}, savedProfile, options = {})"), "runtime should own player profile sanitization");
+  assert(runtimeSource.includes("function serializePlayerProfile(context = {})"), "runtime should own player profile serialization");
   assert(runtimeSource.includes("function serializeAppearanceState(context = {})"), "runtime should own appearance serialization");
 
   assert(coreSource.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;"), "core.js should resolve core progress runtime");
@@ -34,9 +36,12 @@ function run() {
   assert(coreSource.includes("getCoreProgressRuntime().deserializeItemArray(buildCoreProgressRuntimeContext(), savedSlots, size)"), "core.js should delegate item array deserialization");
   assert(coreSource.includes("getCoreProgressRuntime().serializeEquipmentState(buildCoreProgressRuntimeContext())"), "core.js should delegate equipment serialization");
   assert(coreSource.includes("getCoreProgressRuntime().sanitizeSkillState(buildCoreProgressRuntimeContext(), savedSkills)"), "core.js should delegate skill save sanitization");
+  assert(coreSource.includes("getCoreProgressRuntime().sanitizePlayerProfile(buildCoreProgressRuntimeContext(), savedProfile, options)"), "core.js should delegate player profile sanitization");
+  assert(coreSource.includes("getCoreProgressRuntime().serializePlayerProfile(buildCoreProgressRuntimeContext())"), "core.js should delegate player profile serialization");
   assert(coreSource.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())"), "core.js should delegate appearance save serialization");
   assert(!coreSource.includes("return value.trim().toLowerCase();"), "core.js should not own item id normalization inline");
   assert(!coreSource.includes("const restored = Array(size).fill(null);"), "core.js should not own item array deserialization inline");
+  assert(!coreSource.includes("if (allowLegacyFallback && !restored.name)"), "core.js should not own legacy profile fallback rules inline");
   assert(!coreSource.includes("const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];"), "core.js should not own appearance sanitization inline");
 
   const sandbox = { window: {} };
@@ -46,6 +51,7 @@ function run() {
   assert(typeof runtime.serializeItemArray === "function", "runtime should expose serializeItemArray");
   assert(typeof runtime.deserializeEquipmentState === "function", "runtime should expose deserializeEquipmentState");
   assert(typeof runtime.sanitizeSkillState === "function", "runtime should expose sanitizeSkillState");
+  assert(typeof runtime.sanitizePlayerProfile === "function", "runtime should expose sanitizePlayerProfile");
 
   const itemDb = {
     coins: { id: "coins", stackable: true },
@@ -60,6 +66,21 @@ function run() {
     },
     maxSkillLevel: 99,
     getLevelForXp: (xp) => (xp >= 200 ? 3 : 1),
+    playerProfileDefaultName: "Adventurer",
+    playerProfileState: {
+      name: "Raw",
+      creationCompleted: false,
+      createdAt: null,
+      lastStartedAt: null,
+      tutorialStep: 0,
+      tutorialCompletedAt: null,
+      tutorialBankDepositSource: null,
+      tutorialBankWithdrawSource: null
+    },
+    sanitizePlayerName: (value) => String(value || "").replace(/[^A-Za-z0-9 _-]/g, "").trim().slice(0, 12),
+    tutorialExitStep: 7,
+    tutorialWorldId: "tutorial_island",
+    now: () => 12345,
     windowRef: {
       playerAppearanceState: { gender: 1, colors: [1, 2, 3, 4, 5, 6] }
     }
@@ -97,6 +118,25 @@ function run() {
   });
   assert(skills.attack.xp === 250 && skills.attack.level === 3, "runtime should derive levels from xp when a resolver is provided");
   assert(skills.hitpoints.xp === 0 && skills.hitpoints.level === 1, "runtime should clamp invalid saved skill values");
+
+  const emptyProfile = runtime.createEmptyPlayerProfile();
+  assert(emptyProfile.name === "" && emptyProfile.creationCompleted === false, "runtime should create empty player profiles");
+  const legacyProfile = runtime.sanitizePlayerProfile(context, null, { allowLegacyFallback: true, savedWorldId: "main_overworld" });
+  assert(legacyProfile.name === "Adventurer", "runtime should apply legacy profile default names");
+  assert(legacyProfile.creationCompleted === true, "runtime should mark legacy profiles as created");
+  assert(legacyProfile.createdAt === 12345, "runtime should stamp legacy createdAt");
+  assert(legacyProfile.tutorialCompletedAt === 12345 && legacyProfile.tutorialStep === 7, "runtime should infer tutorial completion for legacy overworld saves");
+  const syncedProfile = runtime.syncPlayerProfileState(context, {
+    name: "Alice",
+    creationCompleted: true,
+    createdAt: 12.9,
+    tutorialStep: 3.8,
+    tutorialBankDepositSource: "banker"
+  });
+  assert(syncedProfile === context.playerProfileState, "runtime should mutate the provided profile object");
+  assert(context.playerProfileState.name === "Alice" && context.playerProfileState.createdAt === 12, "runtime should sync profile scalar fields");
+  const serializedProfile = runtime.serializePlayerProfile(context);
+  assert(serializedProfile.name === "Alice" && serializedProfile.tutorialStep === 3, "runtime should serialize profile state");
 
   const appearance = runtime.sanitizeAppearanceState(context, { gender: 1, colors: [4.8, "bad", 2] });
   assert(appearance.gender === 1, "runtime should restore appearance gender");

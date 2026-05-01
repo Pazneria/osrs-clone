@@ -1194,7 +1194,12 @@
                 equipment,
                 getLevelForXp: typeof getLevelForXp === 'function' ? getLevelForXp : null,
                 maxSkillLevel: PROGRESS_MAX_SKILL_LEVEL,
+                playerProfileDefaultName: PLAYER_PROFILE_DEFAULT_NAME,
+                playerProfileState,
                 playerSkills,
+                sanitizePlayerName,
+                tutorialExitStep: TUTORIAL_EXIT_STEP,
+                tutorialWorldId: TUTORIAL_WORLD_ID,
                 windowRef: window
             };
         }
@@ -1249,86 +1254,15 @@
         }
 
         function createEmptyPlayerProfile() {
-            return {
-                name: '',
-                creationCompleted: false,
-                createdAt: null,
-                lastStartedAt: null,
-                tutorialStep: 0,
-                tutorialCompletedAt: null,
-                tutorialBankDepositSource: null,
-                tutorialBankWithdrawSource: null
-            };
+            return getCoreProgressRuntime().createEmptyPlayerProfile();
         }
 
         function syncPlayerProfileState(nextProfile) {
-            const safeProfile = nextProfile && typeof nextProfile === 'object'
-                ? nextProfile
-                : createEmptyPlayerProfile();
-            playerProfileState.name = typeof safeProfile.name === 'string' ? safeProfile.name : '';
-            playerProfileState.creationCompleted = !!safeProfile.creationCompleted;
-            playerProfileState.createdAt = Number.isFinite(safeProfile.createdAt)
-                ? Math.max(0, Math.floor(safeProfile.createdAt))
-                : null;
-            playerProfileState.lastStartedAt = Number.isFinite(safeProfile.lastStartedAt)
-                ? Math.max(0, Math.floor(safeProfile.lastStartedAt))
-                : null;
-            playerProfileState.tutorialStep = Number.isFinite(safeProfile.tutorialStep)
-                ? Math.max(0, Math.floor(safeProfile.tutorialStep))
-                : 0;
-            playerProfileState.tutorialCompletedAt = Number.isFinite(safeProfile.tutorialCompletedAt)
-                ? Math.max(0, Math.floor(safeProfile.tutorialCompletedAt))
-                : null;
-            playerProfileState.tutorialBankDepositSource = typeof safeProfile.tutorialBankDepositSource === 'string'
-                ? safeProfile.tutorialBankDepositSource
-                : null;
-            playerProfileState.tutorialBankWithdrawSource = typeof safeProfile.tutorialBankWithdrawSource === 'string'
-                ? safeProfile.tutorialBankWithdrawSource
-                : null;
+            return getCoreProgressRuntime().syncPlayerProfileState(buildCoreProgressRuntimeContext(), nextProfile);
         }
 
         function sanitizePlayerProfile(savedProfile, options = {}) {
-            const allowLegacyFallback = !!(options && options.allowLegacyFallback);
-            const savedWorldId = typeof options.savedWorldId === 'string' ? options.savedWorldId : '';
-            const restored = createEmptyPlayerProfile();
-            if (savedProfile && typeof savedProfile === 'object') {
-                restored.name = sanitizePlayerName(savedProfile.name);
-                restored.creationCompleted = !!savedProfile.creationCompleted;
-                restored.createdAt = Number.isFinite(savedProfile.createdAt)
-                    ? Math.max(0, Math.floor(savedProfile.createdAt))
-                    : null;
-                restored.lastStartedAt = Number.isFinite(savedProfile.lastStartedAt)
-                    ? Math.max(0, Math.floor(savedProfile.lastStartedAt))
-                    : null;
-                restored.tutorialStep = Number.isFinite(savedProfile.tutorialStep)
-                    ? Math.max(0, Math.floor(savedProfile.tutorialStep))
-                    : 0;
-                restored.tutorialCompletedAt = Number.isFinite(savedProfile.tutorialCompletedAt)
-                    ? Math.max(0, Math.floor(savedProfile.tutorialCompletedAt))
-                    : null;
-                restored.tutorialBankDepositSource = typeof savedProfile.tutorialBankDepositSource === 'string'
-                    ? savedProfile.tutorialBankDepositSource
-                    : null;
-                restored.tutorialBankWithdrawSource = typeof savedProfile.tutorialBankWithdrawSource === 'string'
-                    ? savedProfile.tutorialBankWithdrawSource
-                    : null;
-            }
-
-            if (allowLegacyFallback && !restored.name) restored.name = PLAYER_PROFILE_DEFAULT_NAME;
-            if (allowLegacyFallback && !restored.creationCompleted) restored.creationCompleted = true;
-            if (allowLegacyFallback && !restored.createdAt) restored.createdAt = Date.now();
-            if (
-                allowLegacyFallback
-                && restored.creationCompleted
-                && savedWorldId
-                && savedWorldId !== TUTORIAL_WORLD_ID
-                && !restored.tutorialCompletedAt
-            ) {
-                restored.tutorialCompletedAt = restored.lastStartedAt || restored.createdAt || Date.now();
-            }
-            if (restored.tutorialCompletedAt) restored.tutorialStep = TUTORIAL_EXIT_STEP;
-
-            return restored;
+            return getCoreProgressRuntime().sanitizePlayerProfile(buildCoreProgressRuntimeContext(), savedProfile, options);
         }
 
         function isInsideTutorialActiveBounds(x, y, z) {
@@ -1353,28 +1287,7 @@
         }
 
         function serializePlayerProfile() {
-            return {
-                name: sanitizePlayerName(playerProfileState.name) || PLAYER_PROFILE_DEFAULT_NAME,
-                creationCompleted: !!playerProfileState.creationCompleted,
-                createdAt: Number.isFinite(playerProfileState.createdAt)
-                    ? Math.max(0, Math.floor(playerProfileState.createdAt))
-                    : null,
-                lastStartedAt: Number.isFinite(playerProfileState.lastStartedAt)
-                    ? Math.max(0, Math.floor(playerProfileState.lastStartedAt))
-                    : null,
-                tutorialStep: Number.isFinite(playerProfileState.tutorialStep)
-                    ? Math.max(0, Math.floor(playerProfileState.tutorialStep))
-                    : 0,
-                tutorialCompletedAt: Number.isFinite(playerProfileState.tutorialCompletedAt)
-                    ? Math.max(0, Math.floor(playerProfileState.tutorialCompletedAt))
-                    : null,
-                tutorialBankDepositSource: typeof playerProfileState.tutorialBankDepositSource === 'string'
-                    ? playerProfileState.tutorialBankDepositSource
-                    : null,
-                tutorialBankWithdrawSource: typeof playerProfileState.tutorialBankWithdrawSource === 'string'
-                    ? playerProfileState.tutorialBankWithdrawSource
-                    : null
-            };
+            return getCoreProgressRuntime().serializePlayerProfile(buildCoreProgressRuntimeContext());
         }
 
         function sanitizeAppearanceState(savedAppearance) {

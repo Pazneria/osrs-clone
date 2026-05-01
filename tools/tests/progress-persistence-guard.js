@@ -39,6 +39,8 @@ function run() {
       coreProgressRuntimeScript.includes("function serializeItemArray(context = {}, slots)") &&
       coreProgressRuntimeScript.includes("function deserializeItemArray(context = {}, savedSlots, size)") &&
       coreProgressRuntimeScript.includes("function sanitizeSkillState(context = {}, savedSkills)") &&
+      coreProgressRuntimeScript.includes("function sanitizePlayerProfile(context = {}, savedProfile, options = {})") &&
+      coreProgressRuntimeScript.includes("function serializePlayerProfile(context = {})") &&
       coreProgressRuntimeScript.includes("function serializeAppearanceState(context = {})"),
     "core progress runtime should own progress save encoding and decoding helpers"
   );
@@ -48,12 +50,15 @@ function run() {
       coreScript.includes("getCoreProgressRuntime().serializeItemArray(buildCoreProgressRuntimeContext(), slots)") &&
       coreScript.includes("getCoreProgressRuntime().deserializeItemArray(buildCoreProgressRuntimeContext(), savedSlots, size)") &&
       coreScript.includes("getCoreProgressRuntime().sanitizeSkillState(buildCoreProgressRuntimeContext(), savedSkills)") &&
+      coreScript.includes("getCoreProgressRuntime().sanitizePlayerProfile(buildCoreProgressRuntimeContext(), savedProfile, options)") &&
+      coreScript.includes("getCoreProgressRuntime().serializePlayerProfile(buildCoreProgressRuntimeContext())") &&
       coreScript.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())"),
     "core should delegate progress save codec helpers through the core progress runtime"
   );
   assert(
     !coreScript.includes("return value.trim().toLowerCase();") &&
       !coreScript.includes("const restored = Array(size).fill(null);") &&
+      !coreScript.includes("if (allowLegacyFallback && !restored.name)") &&
       !coreScript.includes("const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];"),
     "core should not keep progress codec helper bodies inline"
   );
