@@ -24,6 +24,7 @@ const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
 const combatHudRuntimeSource = read("src/js/combat-hud-runtime.js");
 const combatEngagementRuntimeSource = read("src/js/combat-engagement-runtime.js");
+const combatFacingRuntimeSource = read("src/js/combat-facing-runtime.js");
 const combatEnemyMovementRuntimeSource = read("src/js/combat-enemy-movement-runtime.js");
 const combatEnemyOccupancyRuntimeSource = read("src/js/combat-enemy-occupancy-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
@@ -66,6 +67,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-engagement-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-engagement-runtime"') < legacyManifest.indexOf('id: "combat"'),
   "legacy script manifest should load combat engagement runtime before combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-facing-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-facing-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat facing runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/combat-enemy-movement-runtime.js?raw') &&
@@ -191,8 +197,13 @@ assert.ok(
     combatSource.includes("getCombatEnemyOccupancyRuntime().getEnemyOccupiedBaseTileId(x, y, z)") &&
     !combatSource.includes("let combatEnemyOccupiedTiles = new Map();") &&
     !combatSource.includes("logicalMap[z][y][x] = TileId.SOLID_NPC;") &&
+    combatFacingRuntimeSource.includes("window.CombatFacingRuntime") &&
+    combatFacingRuntimeSource.includes("function syncMeleeCombatFacing(context = {})") &&
+    combatSource.includes("const combatFacingRuntime = window.CombatFacingRuntime || null;") &&
+    combatSource.includes("getCombatFacingRuntime().syncMeleeCombatFacing(buildCombatFacingRuntimeContext());") &&
+    !combatSource.includes("playerState.targetRotation = Math.atan2(dx, dy);") &&
+    !combatSource.includes("enemyState.facingYaw = Math.atan2(dx, dy);") &&
     combatSource.includes("function getEnemyVisualMoveProgress(enemyState, frameNow)") &&
-    combatSource.includes("function syncMeleeCombatFacing()") &&
     combatSource.includes("function isPlayerCombatFacingReady()") &&
     combatSource.includes("function captureEnemyPendingDefeatFacing(enemyState)") &&
     combatSource.includes("enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);") &&

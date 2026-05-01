@@ -26,6 +26,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
   const combatEngagementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-engagement-runtime.js"), "utf8");
+  const combatFacingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-facing-runtime.js"), "utf8");
   const combatEnemyMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-movement-runtime.js"), "utf8");
   const combatEnemyOverlayRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-overlay-runtime.js"), "utf8");
   const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
@@ -192,11 +193,12 @@ function run() {
   );
 
   assert(
-    combatSource.includes("function isPlayerCombatFacingReady() {")
-      && combatSource.includes("if (playerState.midX !== null || playerState.midY !== null) return false;")
-      && combatSource.includes("if (playerState.x !== playerState.prevX || playerState.y !== playerState.prevY) return false;")
-      && combatSource.includes("if (Array.isArray(playerState.path) && playerState.path.length > 0) return false;")
-      && combatSource.includes("if (!isPlayerCombatFacingReady()) return;"),
+    combatFacingRuntimeSource.includes("function isPlayerCombatFacingReady(context = {})")
+      && combatFacingRuntimeSource.includes("if (playerState.midX !== null || playerState.midY !== null) return false;")
+      && combatFacingRuntimeSource.includes("if (playerState.x !== playerState.prevX || playerState.y !== playerState.prevY) return false;")
+      && combatFacingRuntimeSource.includes("if (Array.isArray(playerState.path) && playerState.path.length > 0) return false;")
+      && combatFacingRuntimeSource.includes("if (!isPlayerCombatFacingReady(context)) return false;")
+      && combatSource.includes("getCombatFacingRuntime().syncMeleeCombatFacing(buildCombatFacingRuntimeContext());"),
     "combat-facing should wait until the player is visually settled on the destination tile before snapping"
   );
   assert(

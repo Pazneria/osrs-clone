@@ -3,6 +3,7 @@
     const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;
     const combatHudRuntime = window.CombatHudRuntime || null;
     const combatEngagementRuntime = window.CombatEngagementRuntime || null;
+    const combatFacingRuntime = window.CombatFacingRuntime || null;
     const combatEnemyOccupancyRuntime = window.CombatEnemyOccupancyRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
@@ -555,12 +556,26 @@
         return typeof getCurrentHitpoints === 'function' ? getCurrentHitpoints() > 0 : playerState.currentHitpoints > 0;
     }
 
+    function getCombatFacingRuntime() {
+        if (!combatFacingRuntime) {
+            throw new Error('CombatFacingRuntime missing. Load src/js/combat-facing-runtime.js before combat.js.');
+        }
+        return combatFacingRuntime;
+    }
+
+    function buildCombatFacingRuntimeContext() {
+        return {
+            combatEnemyStates,
+            isEnemyAlive,
+            isPlayerAlive,
+            playerState,
+            playerTargetId: PLAYER_TARGET_ID,
+            resolveCombatHudFocusEnemy
+        };
+    }
+
     function isPlayerCombatFacingReady() {
-        if (!playerState) return false;
-        if (playerState.midX !== null || playerState.midY !== null) return false;
-        if (playerState.x !== playerState.prevX || playerState.y !== playerState.prevY) return false;
-        if (Array.isArray(playerState.path) && playerState.path.length > 0) return false;
-        return true;
+        return getCombatFacingRuntime().isPlayerCombatFacingReady(buildCombatFacingRuntimeContext());
     }
 
     function getCombatEnemyMovementRuntime() {
@@ -635,19 +650,11 @@
     }
 
     function facePlayerTowards(tile) {
-        if (!tile) return;
-        const dx = tile.x - playerState.x;
-        const dy = tile.y - playerState.y;
-        if (dx === 0 && dy === 0) return;
-        playerState.targetRotation = Math.atan2(dx, dy);
+        getCombatFacingRuntime().facePlayerTowards(buildCombatFacingRuntimeContext(), tile);
     }
 
     function faceEnemyTowards(enemyState, tile) {
-        if (!enemyState || !tile) return;
-        const dx = tile.x - enemyState.x;
-        const dy = tile.y - enemyState.y;
-        if (dx === 0 && dy === 0) return;
-        enemyState.facingYaw = Math.atan2(dx, dy);
+        getCombatFacingRuntime().faceEnemyTowards(enemyState, tile);
     }
 
     function beginEnemyReturn(enemyState) {
@@ -1043,22 +1050,7 @@
     }
 
     function syncMeleeCombatFacing() {
-        if (!isPlayerAlive()) return;
-        if (!isPlayerCombatFacingReady()) return;
-
-        const focus = resolveCombatHudFocusEnemy();
-        const focusEnemy = focus && focus.enemyState ? focus.enemyState : null;
-        if (playerState.inCombat && focusEnemy && focusEnemy.z === playerState.z) {
-            facePlayerTowards(focusEnemy);
-        }
-
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (!isEnemyAlive(enemyState)) continue;
-            if (enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID) continue;
-            if (enemyState.z !== playerState.z) continue;
-            faceEnemyTowards(enemyState, playerState);
-        }
+        getCombatFacingRuntime().syncMeleeCombatFacing(buildCombatFacingRuntimeContext());
     }
 
     function updateEnemyMovement(attacks) {
