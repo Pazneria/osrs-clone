@@ -5,6 +5,7 @@
     const combatEngagementRuntime = window.CombatEngagementRuntime || null;
     const combatFacingRuntime = window.CombatFacingRuntime || null;
     const combatLootRuntime = window.CombatLootRuntime || null;
+    const combatPlayerDefeatRuntime = window.CombatPlayerDefeatRuntime || null;
     const combatEnemyOccupancyRuntime = window.CombatEnemyOccupancyRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
@@ -493,15 +494,34 @@
         return getCombatHudRuntime().buildCombatHudSnapshot(buildCombatHudRuntimeContext());
     }
 
-    function resolveRespawnLocation() {
-        const worldId = getCurrentWorldId();
-        if (window.LegacyWorldAdapterRuntime && typeof window.LegacyWorldAdapterRuntime.getWorldDefaultSpawn === 'function') {
-            return clonePoint(window.LegacyWorldAdapterRuntime.getWorldDefaultSpawn(worldId, {
-                mapSize: MAP_SIZE,
-                planes: PLANES
-            }));
+    function getCombatPlayerDefeatRuntime() {
+        if (!combatPlayerDefeatRuntime) {
+            throw new Error('CombatPlayerDefeatRuntime missing. Load src/js/combat-player-defeat-runtime.js before combat.js.');
         }
-        return { x: 205, y: 210, z: 0 };
+        return combatPlayerDefeatRuntime;
+    }
+
+    function buildCombatPlayerDefeatRuntimeContext() {
+        return {
+            addChatMessage: typeof addChatMessage === 'function' ? addChatMessage : null,
+            beginEnemyReturn,
+            clearMinimapDestination: typeof clearMinimapDestination === 'function' ? clearMinimapDestination : null,
+            clearPlayerCombatTarget,
+            clonePoint,
+            combatEnemyStates,
+            getCurrentWorldId,
+            getMaxHitpoints: typeof getMaxHitpoints === 'function' ? getMaxHitpoints : null,
+            mapSize: MAP_SIZE,
+            planes: PLANES,
+            playerDefeatMessage: PLAYER_DEFEAT_MESSAGE,
+            playerState,
+            playerTargetId: PLAYER_TARGET_ID,
+            windowRef: window
+        };
+    }
+
+    function resolveRespawnLocation() {
+        return getCombatPlayerDefeatRuntime().resolveRespawnLocation(buildCombatPlayerDefeatRuntimeContext());
     }
 
     function initCombatWorldState(worldIdOverride = null) {
@@ -798,33 +818,7 @@
     }
 
     function applyPlayerDefeat() {
-        const respawn = resolveRespawnLocation();
-        const maxHitpoints = typeof getMaxHitpoints === 'function' ? getMaxHitpoints() : Math.max(1, playerState.currentHitpoints || 10);
-        playerState.currentHitpoints = maxHitpoints;
-        playerState.remainingAttackCooldown = 0;
-        playerState.lastDamagerEnemyId = null;
-        playerState.eatingCooldownEndTick = 0;
-        playerState.path = [];
-        playerState.x = respawn.x;
-        playerState.y = respawn.y;
-        playerState.z = respawn.z;
-        playerState.prevX = respawn.x;
-        playerState.prevY = respawn.y;
-        playerState.midX = null;
-        playerState.midY = null;
-        playerState.targetX = respawn.x;
-        playerState.targetY = respawn.y;
-        playerState.action = 'IDLE';
-        playerState.turnLock = false;
-        playerState.actionVisualReady = true;
-        clearPlayerCombatTarget({ force: true, reason: 'player-defeated' });
-        if (typeof clearMinimapDestination === 'function') clearMinimapDestination();
-        if (typeof addChatMessage === 'function') addChatMessage(PLAYER_DEFEAT_MESSAGE, 'warn');
-
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (enemyState.lockedTargetId === PLAYER_TARGET_ID) beginEnemyReturn(enemyState);
-        }
+        getCombatPlayerDefeatRuntime().applyPlayerDefeat(buildCombatPlayerDefeatRuntimeContext());
     }
 
     function validatePlayerTargetLock() {

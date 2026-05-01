@@ -13,6 +13,7 @@ import combatHudRuntimeScript from "../../js/combat-hud-runtime.js?raw";
 import combatEngagementRuntimeScript from "../../js/combat-engagement-runtime.js?raw";
 import combatFacingRuntimeScript from "../../js/combat-facing-runtime.js?raw";
 import combatLootRuntimeScript from "../../js/combat-loot-runtime.js?raw";
+import combatPlayerDefeatRuntimeScript from "../../js/combat-player-defeat-runtime.js?raw";
 import combatEnemyMovementRuntimeScript from "../../js/combat-enemy-movement-runtime.js?raw";
 import combatEnemyOccupancyRuntimeScript from "../../js/combat-enemy-occupancy-runtime.js?raw";
 import combatEnemyRenderRuntimeScript from "../../js/combat-enemy-render-runtime.js?raw";
@@ -129,6 +130,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "combat-engagement-runtime", filename: "src/js/combat-engagement-runtime.js", code: combatEngagementRuntimeScript },
   { id: "combat-facing-runtime", filename: "src/js/combat-facing-runtime.js", code: combatFacingRuntimeScript },
   { id: "combat-loot-runtime", filename: "src/js/combat-loot-runtime.js", code: combatLootRuntimeScript },
+  { id: "combat-player-defeat-runtime", filename: "src/js/combat-player-defeat-runtime.js", code: combatPlayerDefeatRuntimeScript },
   { id: "combat-enemy-movement-runtime", filename: "src/js/combat-enemy-movement-runtime.js", code: combatEnemyMovementRuntimeScript },
   { id: "combat-enemy-occupancy-runtime", filename: "src/js/combat-enemy-occupancy-runtime.js", code: combatEnemyOccupancyRuntimeScript },
   { id: "combat-enemy-render-runtime", filename: "src/js/combat-enemy-render-runtime.js", code: combatEnemyRenderRuntimeScript },

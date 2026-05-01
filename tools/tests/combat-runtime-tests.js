@@ -207,6 +207,7 @@ function ensureCombatRuntimeLoaded(root) {
   loadBrowserScript(root, "src/js/combat-engagement-runtime.js");
   loadBrowserScript(root, "src/js/combat-facing-runtime.js");
   loadBrowserScript(root, "src/js/combat-loot-runtime.js");
+  loadBrowserScript(root, "src/js/combat-player-defeat-runtime.js");
   loadBrowserScript(root, "src/js/combat-enemy-movement-runtime.js");
   loadBrowserScript(root, "src/js/combat-enemy-occupancy-runtime.js");
   loadBrowserScript(root, "src/js/combat-enemy-render-runtime.js");

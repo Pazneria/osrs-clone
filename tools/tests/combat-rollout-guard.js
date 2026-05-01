@@ -26,6 +26,7 @@ const combatHudRuntimeSource = read("src/js/combat-hud-runtime.js");
 const combatEngagementRuntimeSource = read("src/js/combat-engagement-runtime.js");
 const combatFacingRuntimeSource = read("src/js/combat-facing-runtime.js");
 const combatLootRuntimeSource = read("src/js/combat-loot-runtime.js");
+const combatPlayerDefeatRuntimeSource = read("src/js/combat-player-defeat-runtime.js");
 const combatEnemyMovementRuntimeSource = read("src/js/combat-enemy-movement-runtime.js");
 const combatEnemyOccupancyRuntimeSource = read("src/js/combat-enemy-occupancy-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
@@ -78,6 +79,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-loot-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-loot-runtime"') < legacyManifest.indexOf('id: "combat"'),
   "legacy script manifest should load combat loot runtime before combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-player-defeat-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-player-defeat-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat player defeat runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/combat-enemy-movement-runtime.js?raw') &&
@@ -164,6 +170,20 @@ assert.ok(
     combatSource.includes("getCombatEngagementRuntime().acquireAggressiveEnemyTargets(buildCombatEngagementRuntimeContext())") &&
     !combatSource.includes("const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {"),
   "combat.js should delegate target validation, auto-retaliate, and aggressive acquisition through the engagement runtime"
+);
+assert.ok(
+  combatPlayerDefeatRuntimeSource.includes("window.CombatPlayerDefeatRuntime") &&
+    combatPlayerDefeatRuntimeSource.includes("function resolveRespawnLocation(context = {})") &&
+    combatPlayerDefeatRuntimeSource.includes("function applyPlayerDefeat(context = {})") &&
+    combatPlayerDefeatRuntimeSource.includes("function returnPlayerLockedEnemies(context = {})") &&
+    combatSource.includes("const combatPlayerDefeatRuntime = window.CombatPlayerDefeatRuntime || null;") &&
+    combatSource.includes("function buildCombatPlayerDefeatRuntimeContext()") &&
+    combatSource.includes("getCombatPlayerDefeatRuntime().resolveRespawnLocation(buildCombatPlayerDefeatRuntimeContext())") &&
+    combatSource.includes("getCombatPlayerDefeatRuntime().applyPlayerDefeat(buildCombatPlayerDefeatRuntimeContext());") &&
+    !combatSource.includes("playerState.currentHitpoints = maxHitpoints;") &&
+    !combatSource.includes("playerState.eatingCooldownEndTick = 0;") &&
+    !combatSource.includes("addChatMessage(PLAYER_DEFEAT_MESSAGE, 'warn')"),
+  "combat.js should delegate player defeat respawn and cleanup through the combat player defeat runtime"
 );
 assert.ok(
   coreSource.includes("buildCombatQaDebugContext") &&
