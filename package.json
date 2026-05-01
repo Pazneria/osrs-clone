@@ -35,6 +35,7 @@
     "test:qa:firemaking": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/firemaking-runtime-tests.js",
     "test:qa:fishing": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/fishing-runtime-tests.js",
     "test:qa:mining": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/mining-runtime-tests.js",
+    "test:qa:inventory-presets": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/qa-inventory-preset-runtime-guard.js",
     "test:tile:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/tile-semantics-guard.js",
     "test:session:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/game-session-guard.js",
     "test:core:chat": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/core-chat-runtime-guard.js",

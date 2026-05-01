@@ -479,25 +479,6 @@
             if (typeof renderInventory === 'function') renderInventory();
         }
 
-        function makeFilledSlots(baseSlots, fillerItemId) {
-            const slots = Array.isArray(baseSlots) ? baseSlots.slice() : [];
-            const fallbackItem = ITEM_DB[fillerItemId] ? fillerItemId : 'logs';
-            while (slots.length < 28) {
-                slots.push({ itemId: fallbackItem, amount: 1 });
-            }
-            return slots;
-        }
-
-        function getQaToolSlots() {
-            return [
-                { itemId: 'iron_axe', amount: 1 },
-                { itemId: 'iron_pickaxe', amount: 1 },
-                { itemId: 'small_net', amount: 1 },
-                { itemId: 'tinderbox', amount: 1 },
-                { itemId: 'knife', amount: 1 }
-            ];
-        }
-
         function sanitizeContentGrantState(savedGrants) {
             const restored = {};
             if (!savedGrants || typeof savedGrants !== 'object') return restored;
@@ -724,148 +705,10 @@
         }
 
         function applyQaInventoryPreset(presetName) {
-            const name = String(presetName || '').trim().toLowerCase();
-            const tools = getQaToolSlots();
-            let slots = null;
-
-            if (name === 'fish_full') {
-                slots = makeFilledSlots(tools.concat([
-                    { itemId: 'fishing_rod', amount: 1 },
-
-                    { itemId: 'harpoon', amount: 1 },
-                    { itemId: 'rune_harpoon', amount: 1 },
-                    { itemId: 'bait', amount: 200 }
-                ]), 'raw_shrimp');
-            } else if (name === 'fish_rod') {
-                slots = tools.concat([
-                    { itemId: 'fishing_rod', amount: 1 },
-
-                    { itemId: 'bait', amount: 500 },
-                    { itemId: 'coins', amount: 1000 }
-                ]);
-            } else if (name === 'fish_harpoon') {
-                slots = tools.concat([
-                    { itemId: 'harpoon', amount: 1 },
-                    { itemId: 'coins', amount: 1000 }
-                ]);
-            } else if (name === 'fish_rune') {
-                slots = tools.concat([
-                    { itemId: 'rune_harpoon', amount: 1 },
-                    { itemId: 'coins', amount: 1000 }
-                ]);
-            } else if (name === 'wc_full') {
-                slots = makeFilledSlots(tools, 'logs');
-            } else if (name === 'mining_full') {
-                slots = makeFilledSlots(tools, 'copper_ore');
-            } else if (name === 'rc_full') {
-                slots = makeFilledSlots(tools, 'rune_essence');
-            } else if (name === 'rc_combo') {
-                slots = tools.concat([
-                    { itemId: 'rune_essence', amount: 12 },
-                    { itemId: 'air_rune', amount: 120 },
-                    { itemId: 'small_pouch', amount: 1 }
-                ]);
-            } else if (name === 'rc_routes') {
-                slots = tools.concat([
-                    { itemId: 'rune_essence', amount: 12 },
-                    { itemId: 'ember_rune', amount: 120 },
-                    { itemId: 'water_rune', amount: 120 },
-                    { itemId: 'earth_rune', amount: 120 },
-                    { itemId: 'air_rune', amount: 120 },
-                    { itemId: 'small_pouch', amount: 1 }
-                ]);
-            } else if (name === 'fm_full') {
-                slots = tools.concat([
-                    { itemId: 'logs', amount: 5 },
-                    { itemId: 'oak_logs', amount: 5 },
-                    { itemId: 'willow_logs', amount: 5 },
-                    { itemId: 'maple_logs', amount: 4 },
-                    { itemId: 'yew_logs', amount: 4 }
-                ]);
-            } else if (name === 'smith_smelt') {
-                slots = [
-                    { itemId: 'hammer', amount: 1 },
-                    { itemId: 'ring_mould', amount: 1 },
-                    { itemId: 'amulet_mould', amount: 1 },
-                    { itemId: 'tiara_mould', amount: 1 },
-                    { itemId: 'copper_ore', amount: 8 },
-                    { itemId: 'tin_ore', amount: 8 },
-                    { itemId: 'iron_ore', amount: 6 },
-                    { itemId: 'coal', amount: 10 },
-                    { itemId: 'silver_ore', amount: 4 },
-                    { itemId: 'gold_ore', amount: 4 },
-                    { itemId: 'mithril_ore', amount: 4 },
-                    { itemId: 'adamant_ore', amount: 2 },
-                    { itemId: 'rune_ore', amount: 1 }
-                ];
-            } else if (name === 'smith_forge') {
-                slots = [
-                    { itemId: 'hammer', amount: 1 },
-                    { itemId: 'bronze_bar', amount: 8 },
-                    { itemId: 'iron_bar', amount: 6 },
-                    { itemId: 'steel_bar', amount: 5 },
-                    { itemId: 'mithril_bar', amount: 4 },
-                    { itemId: 'adamant_bar', amount: 3 },
-                    { itemId: 'rune_bar', amount: 1 }
-                ];
-            } else if (name === 'smith_jewelry') {
-                slots = [
-                    { itemId: 'hammer', amount: 1 },
-                    { itemId: 'ring_mould', amount: 1 },
-                    { itemId: 'amulet_mould', amount: 1 },
-                    { itemId: 'tiara_mould', amount: 1 },
-                    { itemId: 'silver_bar', amount: 10 },
-                    { itemId: 'gold_bar', amount: 10 }
-                ];
-            } else if (name === 'smith_full') {
-                slots = [
-                    { itemId: 'hammer', amount: 1 },
-                    { itemId: 'ring_mould', amount: 1 },
-                    { itemId: 'amulet_mould', amount: 1 },
-                    { itemId: 'tiara_mould', amount: 1 },
-                    { itemId: 'copper_ore', amount: 3 },
-                    { itemId: 'tin_ore', amount: 3 },
-                    { itemId: 'iron_ore', amount: 2 },
-                    { itemId: 'coal', amount: 4 },
-                    { itemId: 'silver_ore', amount: 2 },
-                    { itemId: 'gold_ore', amount: 2 },
-                    { itemId: 'mithril_ore', amount: 2 },
-                    { itemId: 'adamant_ore', amount: 1 },
-                    { itemId: 'rune_ore', amount: 1 },
-                    { itemId: 'bronze_bar', amount: 1 },
-                    { itemId: 'iron_bar', amount: 1 },
-                    { itemId: 'steel_bar', amount: 1 }
-                ];
-            } else if (name === 'smith_fullinv') {
-                slots = makeFilledSlots(tools.concat([
-                    { itemId: 'hammer', amount: 1 },
-                    { itemId: 'bronze_bar', amount: 1 }
-                ]), 'logs');
-            } else if (name === 'icons') {
-                const reviewBatch = getActiveIconReviewBatch();
-                slots = reviewBatch.itemIds.map((itemId) => ({ itemId, amount: 1 }));
-            } else if (name === 'default') {
-                slots = [
-                    { itemId: 'iron_axe', amount: 1 },
-                    { itemId: 'logs', amount: 1 },
-                    { itemId: 'coins', amount: 1000 },
-                    { itemId: 'small_net', amount: 1 },
-                    { itemId: 'iron_pickaxe', amount: 1 },
-                    { itemId: 'tinderbox', amount: 1 },
-                    { itemId: 'knife', amount: 1 },
-                    { itemId: 'raw_shrimp', amount: 1 },
-                    { itemId: 'raw_shrimp', amount: 1 },
-                    { itemId: 'raw_shrimp', amount: 1 },
-                    { itemId: 'raw_shrimp', amount: 1 },
-                    { itemId: 'raw_shrimp', amount: 1 }
-                ];
-            } else {
-                return false;
-            }
-
-            setInventorySlots(slots);
-            addChatMessage(`QA preset applied: ${name}`, 'info');
-            return true;
+            const qaToolsRuntime = window.QaToolsRuntime || null;
+            return qaToolsRuntime && typeof qaToolsRuntime.applyQaInventoryPreset === 'function'
+                ? qaToolsRuntime.applyQaInventoryPreset(buildQaToolsContext(), presetName)
+                : false;
         }
 
         window.applyQaInventoryPreset = applyQaInventoryPreset;
@@ -996,8 +839,11 @@
         window.travelToWorld = travelToWorld;
         function buildQaToolsContext() {
             return {
+                ITEM_DB,
                 windowRef: window,
                 addChatMessage,
+                setInventorySlots,
+                getActiveIconReviewBatch,
                 getWorldGameContext,
                 getWorldAdapterRuntime: () => worldAdapterRuntime,
                 travelToWorld,
