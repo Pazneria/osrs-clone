@@ -935,48 +935,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 isPierFishingApproachTile
             };
         }
-        function getGroundTileStackCount(gridX, gridY, z = playerState.z) {
-            if (!Array.isArray(groundItems) || !Number.isInteger(gridX) || !Number.isInteger(gridY)) return 1;
-            let count = 0;
-            for (let i = 0; i < groundItems.length; i++) {
-                const entry = groundItems[i];
-                if (!entry) continue;
-                if (entry.x === gridX && entry.y === gridY && entry.z === z) count++;
-            }
-            return Math.max(1, count);
-        }
-        function formatGroundItemDisplayName(hitData) {
-            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
-                ? hitData.name
-                : 'item';
-            if (!hitData || hitData.type !== 'GROUND_ITEM') return baseName;
-            const tileStackCount = getGroundTileStackCount(hitData.gridX, hitData.gridY);
-            return tileStackCount > 1 ? `${baseName} (${tileStackCount})` : baseName;
-        }
-
-        function getEnemyCombatLevel(hitData) {
-            return hitData && Number.isFinite(hitData.combatLevel)
-                ? Math.max(1, Math.floor(hitData.combatLevel))
-                : null;
-        }
-
-        function formatEnemyDisplayName(hitData) {
-            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
-                ? hitData.name.trim()
-                : 'Enemy';
-            const combatLevel = getEnemyCombatLevel(hitData);
-            if (combatLevel === null) return baseName;
-            return `Lv ${combatLevel} ${baseName}`;
-        }
-
-        function formatEnemyTooltipDisplayName(hitData) {
-            const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
-                ? hitData.name.trim()
-                : 'Enemy';
-            const combatLevel = getEnemyCombatLevel(hitData);
-            if (combatLevel === null) return baseName;
-            return `${baseName} (Level ${combatLevel})`;
-        }
         function buildInputTargetInteractionRuntimeContext() {
             return {
                 windowRef: window,
@@ -994,10 +952,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 clearSelectedUse,
                 queueAction,
                 spawnClickMarker,
-                tryUseItemOnWorld,
-                formatGroundItemDisplayName,
-                formatEnemyDisplayName,
-                getEnemyCombatLevel
+                tryUseItemOnWorld
             };
         }
         function buildInputActionQueueRuntimeContext() {
@@ -1159,23 +1114,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
         }
 
-        function resolveTooltipTargetTile(hitData) {
-            if (!hitData || !Number.isInteger(hitData.gridX) || !Number.isInteger(hitData.gridY)) return null;
-            if (hitData.type === 'WATER') {
-                const edge = findNearestFishableWaterEdgeTile(hitData.gridX, hitData.gridY);
-                return edge || { x: hitData.gridX, y: hitData.gridY };
-            }
-            return { x: hitData.gridX, y: hitData.gridY };
-        }
-
-        function isHitWithinTooltipWalkDistance(hitData) {
-            const target = resolveTooltipTargetTile(hitData);
-            if (!target) return true;
-            const dx = Math.abs(target.x - playerState.x);
-            const dy = Math.abs(target.y - playerState.y);
-            return Math.max(dx, dy) <= MAX_TOOLTIP_WALK_DISTANCE_TILES;
-        }
-
         function updateHoverTooltip() {
             const runtime = getInputHoverTooltipRuntime();
             if (!runtime || typeof runtime.updateHoverTooltipDisplay !== 'function') return;
@@ -1187,47 +1125,49 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 || currentMouseX === 0
                 || !!(hoveredElement && hoveredElement.tagName !== 'CANVAS');
             const hitData = shouldHide ? null : getRaycastHit(currentMouseX, currentMouseY);
-            const selectedSlot = hitData ? getSelectedUseItem() : null;
-            const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
-            const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
-            const fireUnderCursor = !!(hitData && Array.isArray(activeFires) && activeFires.some((f) => {
-                if (!f || f.z !== playerState.z) return false;
-                if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY) && f.x === hitData.gridX && f.y === hitData.gridY) return true;
-                if (!hitData.point) return false;
-                return Math.hypot((f.x + 0.5) - hitData.point.x, (f.y + 0.5) - hitData.point.z) <= 1.9;
-            }));
-            const isAshesGroundItem = !!(hitData && hitData.type === 'GROUND_ITEM' && /^Ashes(?:\s|\(|$)/i.test(hitData.name || ''));
-            const isTreeTile = !!(hitData
-                && hitData.type === 'TREE'
-                && logicalMap[playerState.z]
-                && logicalMap[playerState.z][hitData.gridY]
-                && logicalMap[playerState.z][hitData.gridY][hitData.gridX] === TileId.TREE);
+            const displayOptions = typeof runtime.buildHoverTooltipDisplayOptions === 'function'
+                ? runtime.buildHoverTooltipDisplayOptions(buildInputHoverTooltipRuntimeContext(), {
+                    tooltipId: 'hover-tooltip',
+                    shouldHide,
+                    hitData,
+                    currentMouseX,
+                    currentMouseY
+                })
+                : {
+                    documentRef: document,
+                    windowRef: window,
+                    tooltipId: 'hover-tooltip',
+                    shouldHide,
+                    hitData,
+                    currentMouseX,
+                    currentMouseY
+                };
+            runtime.updateHoverTooltipDisplay(displayOptions);
+        }
 
-            runtime.updateHoverTooltipDisplay({
+        function buildInputHoverTooltipRuntimeContext() {
+            return {
                 documentRef: document,
                 windowRef: window,
-                tooltipId: 'hover-tooltip',
-                shouldHide,
-                hitData,
-                isWithinWalkDistance: hitData ? isHitWithinTooltipWalkDistance(hitData) : false,
-                currentMouseX,
-                currentMouseY,
-                selectedItem,
-                selectedCookable,
-                fireUnderCursor,
-                isAshesGroundItem,
-                groundDisplayName: hitData && hitData.type === 'GROUND_ITEM' ? formatGroundItemDisplayName(hitData) : (hitData && hitData.name) || '',
-                isTreeTile,
+                playerState,
+                logicalMap,
+                groundItems,
+                activeFires,
+                tileIds: {
+                    TREE: TileId.TREE
+                },
+                maxTooltipWalkDistanceTiles: MAX_TOOLTIP_WALK_DISTANCE_TILES,
+                findNearestFishableWaterEdgeTile,
+                getSelectedUseItem,
                 getSkillTooltip: (target) => (window.SkillRuntime && typeof SkillRuntime.getSkillTooltip === 'function')
                     ? SkillRuntime.getSkillTooltip(target)
                     : '',
-                formatEnemyTooltipDisplayName,
                 resolveNpcPrimaryAction: (npc) => (window.QuestRuntime && typeof window.QuestRuntime.resolveNpcPrimaryAction === 'function')
                     ? window.QuestRuntime.resolveNpcPrimaryAction(npc)
                     : null,
                 getItemMenuPreferenceKey: (typeof window.getItemMenuPreferenceKey === 'function') ? window.getItemMenuPreferenceKey : null,
                 getPreferredMenuAction: (typeof window.getPreferredMenuAction === 'function') ? window.getPreferredMenuAction : null
-            });
+            };
         }
 
         // Helper to grab the visual height extruded for planes

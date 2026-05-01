@@ -57,6 +57,44 @@
         return groundItems.find((entry) => entry && entry.uid === uid) || null;
     }
 
+    function getGroundTileStackCount(context = {}, gridX, gridY, z = null) {
+        const groundItems = context.groundItems;
+        const playerState = context.playerState || {};
+        const resolvedZ = Number.isInteger(z) ? z : playerState.z;
+        if (!Array.isArray(groundItems) || !Number.isInteger(gridX) || !Number.isInteger(gridY)) return 1;
+        let count = 0;
+        for (let i = 0; i < groundItems.length; i++) {
+            const entry = groundItems[i];
+            if (!entry) continue;
+            if (entry.x === gridX && entry.y === gridY && entry.z === resolvedZ) count++;
+        }
+        return Math.max(1, count);
+    }
+
+    function formatGroundItemDisplayName(context = {}, hitData) {
+        const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+            ? hitData.name
+            : 'item';
+        if (!hitData || hitData.type !== 'GROUND_ITEM') return baseName;
+        const tileStackCount = getGroundTileStackCount(context, hitData.gridX, hitData.gridY);
+        return tileStackCount > 1 ? `${baseName} (${tileStackCount})` : baseName;
+    }
+
+    function getEnemyCombatLevel(hitData) {
+        return hitData && Number.isFinite(hitData.combatLevel)
+            ? Math.max(1, Math.floor(hitData.combatLevel))
+            : null;
+    }
+
+    function formatEnemyDisplayName(hitData) {
+        const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+            ? hitData.name.trim()
+            : 'Enemy';
+        const combatLevel = getEnemyCombatLevel(hitData);
+        if (combatLevel === null) return baseName;
+        return `Lv ${combatLevel} ${baseName}`;
+    }
+
     function getTileIdAtHit(context = {}, hitData) {
         const playerState = context.playerState || {};
         const logicalMap = context.logicalMap || [];
@@ -110,15 +148,13 @@
                 }
                 emitExamineFallback(context, fallbackText);
             },
-            formatGroundItemDisplayName: context.formatGroundItemDisplayName,
+            formatGroundItemDisplayName: (hit) => formatGroundItemDisplayName(context, hit),
             formatEnemyDisplayName: (enemyHitData = hitData) => (
                 typeof context.formatEnemyDisplayName === 'function'
                     ? context.formatEnemyDisplayName(enemyHitData)
-                    : ((enemyHitData && enemyHitData.name) || 'Enemy')
+                    : formatEnemyDisplayName(enemyHitData)
             ),
-            combatLevel: typeof context.getEnemyCombatLevel === 'function'
-                ? context.getEnemyCombatLevel(hitData)
-                : null,
+            combatLevel: getEnemyCombatLevel(hitData),
             getGroundItemByUid: (uid) => getGroundItemByUid(context, uid),
             getTileIdAtHit: () => getTileIdAtHit(context, hitData),
             tileIds: context.tileIds || {}
@@ -235,6 +271,10 @@
         tryUseSelectedInventoryItemOnTarget,
         emitExamineFallback,
         getGroundItemByUid,
+        getGroundTileStackCount,
+        formatGroundItemDisplayName,
+        getEnemyCombatLevel,
+        formatEnemyDisplayName,
         getTileIdAtHit,
         resolveTargetInteractionOptions,
         buildInteractionTargetData,

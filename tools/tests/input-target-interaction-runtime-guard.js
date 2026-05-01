@@ -29,10 +29,7 @@ function makeContext(overrides = {}) {
     clearSelectedUse: () => { logs.cleared = true; },
     queueAction: (type, x, y, obj, targetUid = null) => logs.queued.push({ type, x, y, obj, targetUid }),
     spawnClickMarker: (point, isAction) => logs.markers.push({ point, isAction }),
-    tryUseItemOnWorld: () => false,
-    formatGroundItemDisplayName: (hitData) => hitData.name || "item",
-    formatEnemyDisplayName: (hitData) => hitData.name || "Enemy",
-    getEnemyCombatLevel: (hitData) => hitData.combatLevel || null
+    tryUseItemOnWorld: () => false
   }, contextOverrides);
 }
 
@@ -53,6 +50,8 @@ function run() {
 
   assert(runtimeSource.includes("window.InputTargetInteractionRuntime"), "input target interaction runtime should expose a window runtime");
   assert(runtimeSource.includes("function resolveTargetInteractionOptions"), "input target interaction runtime should own context-menu target option resolution");
+  assert(runtimeSource.includes("function formatGroundItemDisplayName"), "input target interaction runtime should own target menu ground item display names");
+  assert(runtimeSource.includes("function formatEnemyDisplayName"), "input target interaction runtime should own target menu enemy display names");
   assert(runtimeSource.includes("function buildInteractionTargetData"), "input target interaction runtime should own primary target data shaping");
   assert(runtimeSource.includes("function handlePrimaryInteractionHit"), "input target interaction runtime should own primary click target policy");
 
@@ -62,6 +61,7 @@ function run() {
   assert(!inputSource.includes("SkillRuntime.tryUseItemOnTarget({"), "input-render.js should not directly invoke skill item-use policy");
   assert(!inputSource.includes("window.TargetInteractionRegistry.resolveOptions(hitData"), "input-render.js should not directly call the target interaction registry");
   assert(!inputSource.includes("enemyId: String(hitData.uid || '').trim()"), "input-render.js should not shape enemy target data inline");
+  assert(!inputSource.includes("function formatGroundItemDisplayName"), "input-render.js should not own target display-name helpers");
   assert(!inputSource.includes("targetData.action = window.getPreferredMenuAction"), "input-render.js should not own banker primary action preference shaping");
 
   const sandbox = { window: {}, console, Number, Object, String, Math, Array };
@@ -83,18 +83,22 @@ function run() {
     const logs = { queued: [], markers: [], chats: [] };
     const context = makeContext({
       logs,
+      groundItems: [
+        { uid: "coins-1", x: 4, y: 5, z: 0 },
+        { uid: "coins-2", x: 4, y: 5, z: 0 }
+      ],
       windowRef: {
         TargetInteractionRegistry: {
           resolveOptions: (hitData, registryContext) => [
-            { text: "Attack", onSelect: () => registryContext.queueInteract("ENEMY", { enemyId: hitData.uid }) }
+            { text: registryContext.formatGroundItemDisplayName(hitData), onSelect: () => registryContext.queueInteract("GROUND_ITEM", hitData.uid) }
           ]
         }
       }
     });
-    const options = runtime.resolveTargetInteractionOptions(context, { type: "ENEMY", uid: "rat-1", gridX: 4, gridY: 5, point: { x: 4, y: 0, z: 5 } }, null, null, false, null);
-    assert(options.length === 1 && options[0].text === "Attack", "runtime should resolve target registry options");
+    const options = runtime.resolveTargetInteractionOptions(context, { type: "GROUND_ITEM", uid: "coins-1", name: "Coins", gridX: 4, gridY: 5, point: { x: 4, y: 0, z: 5 } }, null, null, false, null);
+    assert(options.length === 1 && options[0].text === "Coins (2)", "runtime should resolve target registry options with owned display names");
     options[0].onSelect();
-    assert(logs.queued.length === 1 && logs.queued[0].obj === "ENEMY", "target registry queue callbacks should route through the runtime context");
+    assert(logs.queued.length === 1 && logs.queued[0].obj === "GROUND_ITEM", "target registry queue callbacks should route through the runtime context");
     assert(logs.markers.length === 1 && logs.markers[0].isAction, "target registry actions should spawn action markers");
   }
 

@@ -31,6 +31,122 @@
         return npcAction;
     }
 
+    function resolveTooltipTargetTile(context = {}, hitData) {
+        if (!hitData || !Number.isInteger(hitData.gridX) || !Number.isInteger(hitData.gridY)) return null;
+        if (hitData.type === 'WATER' && typeof context.findNearestFishableWaterEdgeTile === 'function') {
+            const edge = context.findNearestFishableWaterEdgeTile(hitData.gridX, hitData.gridY);
+            return edge || { x: hitData.gridX, y: hitData.gridY };
+        }
+        return { x: hitData.gridX, y: hitData.gridY };
+    }
+
+    function isHitWithinTooltipWalkDistance(context = {}, hitData) {
+        const target = resolveTooltipTargetTile(context, hitData);
+        if (!target) return true;
+        const playerState = context.playerState || {};
+        const maxDistance = Number.isFinite(context.maxTooltipWalkDistanceTiles)
+            ? context.maxTooltipWalkDistanceTiles
+            : 90;
+        const dx = Math.abs(target.x - playerState.x);
+        const dy = Math.abs(target.y - playerState.y);
+        return Math.max(dx, dy) <= maxDistance;
+    }
+
+    function isFireUnderCursor(context = {}, hitData) {
+        const playerState = context.playerState || {};
+        if (!hitData || !Array.isArray(context.activeFires)) return false;
+        return context.activeFires.some((fire) => {
+            if (!fire || fire.z !== playerState.z) return false;
+            if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY) && fire.x === hitData.gridX && fire.y === hitData.gridY) return true;
+            if (!hitData.point) return false;
+            return Math.hypot((fire.x + 0.5) - hitData.point.x, (fire.y + 0.5) - hitData.point.z) <= 1.9;
+        });
+    }
+
+    function isAshesGroundItem(hitData) {
+        return !!(hitData && hitData.type === 'GROUND_ITEM' && /^Ashes(?:\s|\(|$)/i.test(hitData.name || ''));
+    }
+
+    function isTreeTile(context = {}, hitData) {
+        const playerState = context.playerState || {};
+        const logicalMap = context.logicalMap || [];
+        const tileIds = context.tileIds || {};
+        return !!(hitData
+            && hitData.type === 'TREE'
+            && logicalMap[playerState.z]
+            && logicalMap[playerState.z][hitData.gridY]
+            && logicalMap[playerState.z][hitData.gridY][hitData.gridX] === tileIds.TREE);
+    }
+
+    function getGroundTileStackCount(context = {}, gridX, gridY, z = null) {
+        const playerState = context.playerState || {};
+        const resolvedZ = Number.isInteger(z) ? z : playerState.z;
+        if (!Array.isArray(context.groundItems) || !Number.isInteger(gridX) || !Number.isInteger(gridY)) return 1;
+        let count = 0;
+        for (let i = 0; i < context.groundItems.length; i++) {
+            const entry = context.groundItems[i];
+            if (!entry) continue;
+            if (entry.x === gridX && entry.y === gridY && entry.z === resolvedZ) count++;
+        }
+        return Math.max(1, count);
+    }
+
+    function formatGroundItemDisplayName(context = {}, hitData) {
+        const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+            ? hitData.name
+            : 'item';
+        if (!hitData || hitData.type !== 'GROUND_ITEM') return baseName;
+        const tileStackCount = getGroundTileStackCount(context, hitData.gridX, hitData.gridY);
+        return tileStackCount > 1 ? `${baseName} (${tileStackCount})` : baseName;
+    }
+
+    function getEnemyCombatLevel(hitData) {
+        return hitData && Number.isFinite(hitData.combatLevel)
+            ? Math.max(1, Math.floor(hitData.combatLevel))
+            : null;
+    }
+
+    function formatEnemyTooltipDisplayName(hitData) {
+        const baseName = (hitData && typeof hitData.name === 'string' && hitData.name.trim())
+            ? hitData.name.trim()
+            : 'Enemy';
+        const combatLevel = getEnemyCombatLevel(hitData);
+        if (combatLevel === null) return baseName;
+        return `${baseName} (Level ${combatLevel})`;
+    }
+
+    function buildHoverTooltipDisplayOptions(context = {}, options = {}) {
+        const hitData = options.hitData || null;
+        const selectedSlot = hitData && typeof context.getSelectedUseItem === 'function'
+            ? context.getSelectedUseItem()
+            : null;
+        const selectedItem = selectedSlot && selectedSlot.itemData ? selectedSlot.itemData : null;
+        const selectedCookable = !!(selectedItem && selectedItem.cookResultId && selectedItem.burnResultId);
+        return {
+            documentRef: context.documentRef,
+            windowRef: context.windowRef,
+            tooltipId: options.tooltipId || 'hover-tooltip',
+            shouldHide: !!options.shouldHide,
+            hitData,
+            isWithinWalkDistance: hitData ? isHitWithinTooltipWalkDistance(context, hitData) : false,
+            currentMouseX: options.currentMouseX,
+            currentMouseY: options.currentMouseY,
+            selectedItem,
+            selectedCookable,
+            fireUnderCursor: isFireUnderCursor(context, hitData),
+            isAshesGroundItem: isAshesGroundItem(hitData),
+            groundDisplayName: hitData && hitData.type === 'GROUND_ITEM'
+                ? formatGroundItemDisplayName(context, hitData)
+                : (hitData && hitData.name) || '',
+            isTreeTile: isTreeTile(context, hitData),
+            getSkillTooltip: context.getSkillTooltip,
+            formatEnemyTooltipDisplayName,
+            resolveNpcPrimaryAction: context.resolveNpcPrimaryAction,
+            getItemMenuPreferenceKey: context.getItemMenuPreferenceKey,
+            getPreferredMenuAction: context.getPreferredMenuAction
+        };
+    }
+
     function formatHoverTooltipActionText(options = {}) {
         const hitData = options.hitData || null;
         if (!hitData || !hitData.type) return '';
@@ -129,6 +245,16 @@
     }
 
     window.InputHoverTooltipRuntime = {
+        resolveTooltipTargetTile,
+        isHitWithinTooltipWalkDistance,
+        isFireUnderCursor,
+        isAshesGroundItem,
+        isTreeTile,
+        getGroundTileStackCount,
+        formatGroundItemDisplayName,
+        getEnemyCombatLevel,
+        formatEnemyTooltipDisplayName,
+        buildHoverTooltipDisplayOptions,
         formatHoverTooltipActionText,
         positionHoverTooltip,
         updateHoverTooltipDisplay

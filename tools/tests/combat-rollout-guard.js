@@ -199,10 +199,10 @@ assert.ok(
   "render loop should refresh enemy overlays after camera updates"
 );
 assert.ok(
-  inputRenderSource.includes("function formatEnemyTooltipDisplayName(hitData)") &&
-    inputRenderSource.includes("${baseName} (Level ${combatLevel})") &&
-    inputHoverTooltipRuntimeSource.includes("formatEnemyTooltipDisplayName(hitData)"),
-  "enemy hover tooltips should append computed combat level next to the enemy name"
+  inputRenderSource.includes("InputHoverTooltipRuntime") &&
+    inputHoverTooltipRuntimeSource.includes("function formatEnemyTooltipDisplayName(hitData)") &&
+    inputHoverTooltipRuntimeSource.includes("${baseName} (Level ${combatLevel})"),
+  "enemy hover tooltips should append computed combat level through the hover tooltip runtime"
 );
 assert.ok(
   inputTickMovementRuntimeSource.includes("else if (typeof pendingAction.targetUid === 'string')") &&

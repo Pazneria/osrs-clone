@@ -30,9 +30,17 @@ function run() {
 
   assert(runtimeSource.includes("window.InputHoverTooltipRuntime"), "hover tooltip runtime should expose a window runtime");
   assert(runtimeSource.includes("function formatHoverTooltipActionText"), "hover tooltip runtime should own action text formatting");
+  assert(runtimeSource.includes("function buildHoverTooltipDisplayOptions"), "hover tooltip runtime should own hover display option shaping");
+  assert(runtimeSource.includes("function isFireUnderCursor"), "hover tooltip runtime should own active-fire hover detection");
+  assert(runtimeSource.includes("function formatGroundItemDisplayName"), "hover tooltip runtime should own ground item hover display names");
+  assert(runtimeSource.includes("function formatEnemyTooltipDisplayName"), "hover tooltip runtime should own enemy hover display names");
   assert(runtimeSource.includes("function positionHoverTooltip"), "hover tooltip runtime should own DOM positioning");
   assert(inputSource.includes("InputHoverTooltipRuntime"), "input-render.js should delegate hover tooltip display");
+  assert(inputSource.includes("buildInputHoverTooltipRuntimeContext"), "input-render.js should provide a narrow hover tooltip runtime context");
   assert(!inputSource.includes("tooltip.innerHTML = actionText"), "input-render.js should not own hover tooltip DOM writes");
+  assert(!inputSource.includes("function resolveTooltipTargetTile"), "input-render.js should not own hover target tile resolution");
+  assert(!inputSource.includes("function formatEnemyTooltipDisplayName"), "input-render.js should not own enemy hover display names");
+  assert(!inputSource.includes("const fireUnderCursor ="), "input-render.js should not own active-fire hover detection");
   assert(
     manifestSource.indexOf('id: "input-hover-tooltip-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy manifest should load hover tooltip runtime before input-render.js"
@@ -44,9 +52,32 @@ function run() {
   const runtime = sandbox.window.InputHoverTooltipRuntime;
   assert(runtime, "hover tooltip runtime should evaluate in isolation");
 
+  const builtOptions = runtime.buildHoverTooltipDisplayOptions({
+    playerState: { x: 5, y: 5, z: 0 },
+    logicalMap: [[[10]]],
+    tileIds: { TREE: 10 },
+    activeFires: [{ x: 8, y: 8, z: 0 }],
+    groundItems: [
+      { x: 8, y: 8, z: 0 },
+      { x: 8, y: 8, z: 0 }
+    ],
+    maxTooltipWalkDistanceTiles: 10,
+    getSelectedUseItem: () => ({ itemData: { id: "raw_shrimp", name: "Raw shrimp", cookResultId: "shrimp", burnResultId: "burnt_shrimp" } }),
+    getSkillTooltip: () => "",
+    findNearestFishableWaterEdgeTile: () => ({ x: 6, y: 5 })
+  }, {
+    hitData: { type: "GROUND_ITEM", name: "Ashes", gridX: 8, gridY: 8, point: { x: 8.2, z: 8.2 } },
+    currentMouseX: 40,
+    currentMouseY: 50
+  });
+  assert(builtOptions.selectedCookable, "hover option shaping should detect selected cookable items");
+  assert(builtOptions.fireUnderCursor, "hover option shaping should detect active fires under the cursor");
+  assert(builtOptions.isAshesGroundItem, "hover option shaping should identify ashes ground items");
+  assert(builtOptions.groundDisplayName === "Ashes (2)", "hover option shaping should count ground item stacks");
+
   const enemyText = runtime.formatHoverTooltipActionText({
     hitData: { type: "ENEMY", name: "Rat", combatLevel: 2 },
-    formatEnemyTooltipDisplayName: () => "Rat (Level 2)"
+    formatEnemyTooltipDisplayName: runtime.formatEnemyTooltipDisplayName
   });
   assert(enemyText.includes("Attack") && enemyText.includes("Rat (Level 2)"), "enemy tooltip should include computed combat level");
 

@@ -51,6 +51,7 @@
     "test:context-menu:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/context-menu-runtime-guard.js",
     "test:quest-log:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/quest-log-runtime-guard.js",
     "test:render-input:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/render-input-shell-guard.js",
+    "test:input-hover-tooltip:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/input-hover-tooltip-runtime-guard.js",
     "test:input-player-animation:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/input-player-animation-runtime-guard.js",
     "test:input-pathfinding:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/input-pathfinding-runtime-guard.js",
     "test:input-raycast:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/input-raycast-runtime-guard.js",

@@ -91,9 +91,14 @@ function run() {
   );
   assert(inputHoverTooltipSource.includes("window.InputHoverTooltipRuntime"), "input hover tooltip runtime should expose a window runtime");
   assert(inputHoverTooltipSource.includes("function formatHoverTooltipActionText"), "input hover tooltip runtime should own hover action text policy");
+  assert(inputHoverTooltipSource.includes("function buildHoverTooltipDisplayOptions"), "input hover tooltip runtime should own hover display option shaping");
+  assert(inputHoverTooltipSource.includes("function isFireUnderCursor"), "input hover tooltip runtime should own active-fire hover detection");
   assert(inputHoverTooltipSource.includes("function positionHoverTooltip"), "input hover tooltip runtime should own hover tooltip positioning");
   assert(inputSource.includes("InputHoverTooltipRuntime"), "input-render.js should delegate hover tooltip display through the hover tooltip runtime");
+  assert(inputSource.includes("buildInputHoverTooltipRuntimeContext"), "input-render.js should provide a narrow hover tooltip runtime context");
   assert(!inputSource.includes("tooltip.innerHTML = actionText"), "input-render.js should not own hover tooltip DOM updates");
+  assert(!inputSource.includes("function resolveTooltipTargetTile"), "input-render.js should not own hover target tile resolution");
+  assert(!inputSource.includes("const fireUnderCursor ="), "input-render.js should not own active-fire hover detection");
   assert(manifestSource.includes('../../js/input-hover-tooltip-runtime.js?raw'), "legacy manifest should load input hover tooltip runtime");
   assert(
     manifestSource.indexOf('id: "input-hover-tooltip-runtime"') < manifestSource.indexOf('id: "input-render"'),
