@@ -91,6 +91,7 @@ import inputStationInteractionRuntimeScript from "../../js/input-station-interac
 import inputPoseEditorRuntimeScript from "../../js/input-pose-editor-runtime.js?raw";
 import inputPlayerAnimationRuntimeScript from "../../js/input-player-animation-runtime.js?raw";
 import inputPathfindingRuntimeScript from "../../js/input-pathfinding-runtime.js?raw";
+import inputPierInteractionRuntimeScript from "../../js/input-pier-interaction-runtime.js?raw";
 import inputRaycastRuntimeScript from "../../js/input-raycast-runtime.js?raw";
 import inputTickMovementRuntimeScript from "../../js/input-tick-movement-runtime.js?raw";
 import inputArrivalInteractionRuntimeScript from "../../js/input-arrival-interaction-runtime.js?raw";
@@ -198,6 +199,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "input-pose-editor-runtime", filename: "src/js/input-pose-editor-runtime.js", code: inputPoseEditorRuntimeScript },
   { id: "input-player-animation-runtime", filename: "src/js/input-player-animation-runtime.js", code: inputPlayerAnimationRuntimeScript },
   { id: "input-pathfinding-runtime", filename: "src/js/input-pathfinding-runtime.js", code: inputPathfindingRuntimeScript },
+  { id: "input-pier-interaction-runtime", filename: "src/js/input-pier-interaction-runtime.js", code: inputPierInteractionRuntimeScript },
   { id: "input-raycast-runtime", filename: "src/js/input-raycast-runtime.js", code: inputRaycastRuntimeScript },
   { id: "input-tick-movement-runtime", filename: "src/js/input-tick-movement-runtime.js", code: inputTickMovementRuntimeScript },
   { id: "input-arrival-interaction-runtime", filename: "src/js/input-arrival-interaction-runtime.js", code: inputArrivalInteractionRuntimeScript },

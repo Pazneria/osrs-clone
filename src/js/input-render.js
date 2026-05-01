@@ -32,6 +32,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         function getInputTargetInteractionRuntime() {
             return window.InputTargetInteractionRuntime || null;
         }
+        function getInputPierInteractionRuntime() {
+            return window.InputPierInteractionRuntime || null;
+        }
         function getTransientVisualRuntime() {
             return window.TransientVisualRuntime || null;
         }
@@ -278,38 +281,38 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         }
 
         function emitPierDebug(message) {
-            if (!window.QA_PIER_DEBUG || typeof addChatMessage !== 'function') return;
-            addChatMessage(`[pier-debug] ${String(message || '').trim()}`, 'info');
+            const runtime = getInputPierInteractionRuntime();
+            if (runtime && typeof runtime.emitPierDebug === 'function') {
+                runtime.emitPierDebug(buildInputPierInteractionRuntimeContext(), message);
+            }
         }
 
         function isNearPierBoundsTile(x, y, z = playerState.z, pad = 2) {
-            const pierConfig = getActivePierConfig();
-            if (!pierConfig || z !== 0) return false;
-            return (
-                x >= (pierConfig.xMin - pad)
-                && x <= (pierConfig.xMax + pad)
-                && y >= (pierConfig.yStart - pad)
-                && y <= (pierConfig.yEnd + pad)
-            );
+            const runtime = getInputPierInteractionRuntime();
+            return !!(runtime && typeof runtime.isNearPierBoundsTile === 'function'
+                && runtime.isNearPierBoundsTile(buildInputPierInteractionRuntimeContext(), x, y, z, pad));
         }
 
         function findNearestPierDeckBoardingTile(targetX, targetY, z = playerState.z) {
-            const pierConfig = getActivePierConfig();
-            if (!pierConfig || z !== 0) return null;
+            const runtime = getInputPierInteractionRuntime();
+            return runtime && typeof runtime.findNearestPierDeckBoardingTile === 'function'
+                ? runtime.findNearestPierDeckBoardingTile(buildInputPierInteractionRuntimeContext(), targetX, targetY, z)
+                : null;
+        }
 
-            let best = null;
-            for (let y = pierConfig.yStart; y <= pierConfig.yEnd; y++) {
-                for (let x = pierConfig.xMin; x <= pierConfig.xMax; x++) {
-                    if (!isStandableTile(x, y, z)) continue;
-                    const dist = Math.abs(x - targetX) + Math.abs(y - targetY);
-                    if (dist > 2) continue;
-                    if (!best || dist < best.dist || (dist === best.dist && y < best.y)) {
-                        best = { x, y, dist };
-                    }
-                }
-            }
-
-            return best;
+        function buildInputPierInteractionRuntimeContext() {
+            return {
+                windowRef: window,
+                mapSize: MAP_SIZE,
+                playerState,
+                logicalMap,
+                sharedMaterials,
+                worldPierRuntime: window.WorldPierRuntime || null,
+                addChatMessage: (typeof addChatMessage === 'function') ? addChatMessage : null,
+                isWaterTileId,
+                isStandableTile,
+                findPath
+            };
         }
 
         function buildInputRaycastRuntimeContext() {
@@ -362,192 +365,48 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         };
 
         
-        function forEachTileInSearchRing(targetX, targetY, radius, visit) {
-            if (radius < 0 || typeof visit !== 'function') return false;
-            if (radius === 0) {
-                if (targetX < 0 || targetY < 0 || targetX >= MAP_SIZE || targetY >= MAP_SIZE) return false;
-                return !!visit(targetX, targetY);
-            }
-
-            const minX = Math.max(0, targetX - radius);
-            const maxX = Math.min(MAP_SIZE - 1, targetX + radius);
-            const minY = Math.max(0, targetY - radius);
-            const maxY = Math.min(MAP_SIZE - 1, targetY + radius);
-
-            for (let x = minX; x <= maxX; x++) {
-                if (visit(x, minY)) return true;
-                if (maxY !== minY && visit(x, maxY)) return true;
-            }
-            for (let y = minY + 1; y <= maxY - 1; y++) {
-                if (visit(minX, y)) return true;
-                if (maxX !== minX && visit(maxX, y)) return true;
-            }
-            return false;
-        }
-
-        function findNearestRiverBankTile(targetX, targetY) {
-            const z = playerState.z;
-            let best = null;
-            let bestDistSq = Infinity;
-
-            const hasAdjacentWater = (x, y) => {
-                const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-                for (let i = 0; i < dirs.length; i++) {
-                    const nx = x + dirs[i].x;
-                    const ny = y + dirs[i].y;
-                    if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
-                    const t = logicalMap[z][ny][nx];
-                    if (isWaterTileId(t)) return true;
-                }
-                return false;
-            };
-
-            for (let r = 1; r <= 10; r++) {
-                forEachTileInSearchRing(targetX, targetY, r, (x, y) => {
-                    if (!isStandableTile(x, y, z)) return false;
-                    if (!hasAdjacentWater(x, y)) return false;
-                    const dx = x - targetX;
-                    const dy = y - targetY;
-                    const distSq = (dx * dx) + (dy * dy);
-                    if (distSq < bestDistSq) {
-                        bestDistSq = distSq;
-                        best = { x, y };
-                    }
-                    return false;
-                });
-                if (best) break;
-            }
-
-            return best;
-        }
-
-
         function findNearestFishableWaterEdgeTile(targetX, targetY) {
-            const z = playerState.z;
-            let best = null;
-            let bestDistSq = Infinity;
-            const playerOnPierDeck = isPierDeckTile(playerState.x, playerState.y, z);
-
-            const hasAdjacentStandable = (x, y) => {
-                if (playerOnPierDeck) return hasPierFishingApproachForWaterTile(x, y, z);
-                return hasDryFishingApproachForWaterTile(x, y, z);
-            };
-
-            for (let r = 0; r <= 20; r++) {
-                forEachTileInSearchRing(targetX, targetY, r, (x, y) => {
-                    const tile = logicalMap[z][y][x];
-                    if (!isWaterTileId(tile)) return false;
-                    if (!hasAdjacentStandable(x, y)) return false;
-                    const dx = x - targetX;
-                    const dy = y - targetY;
-                    const distSq = (dx * dx) + (dy * dy);
-                    if (distSq < bestDistSq) {
-                        bestDistSq = distSq;
-                        best = { x, y };
-                    }
-                    return false;
-                });
-                if (best) break;
-            }
-
-            return best;
+            const runtime = getInputPierInteractionRuntime();
+            return runtime && typeof runtime.findNearestFishableWaterEdgeTile === 'function'
+                ? runtime.findNearestFishableWaterEdgeTile(buildInputPierInteractionRuntimeContext(), targetX, targetY)
+                : null;
         }
         function getActivePierConfig() {
-            return sharedMaterials && sharedMaterials.activePierConfig
-                ? sharedMaterials.activePierConfig
+            const runtime = getInputPierInteractionRuntime();
+            return runtime && typeof runtime.getActivePierConfig === 'function'
+                ? runtime.getActivePierConfig(buildInputPierInteractionRuntimeContext())
                 : null;
         }
         function isPierDeckTile(x, y, z = playerState.z) {
-            const pierConfig = getActivePierConfig();
-            return !!(
-                pierConfig
-                && z === 0
-                && x >= pierConfig.xMin
-                && x <= pierConfig.xMax
-                && y >= pierConfig.yStart
-                && y <= pierConfig.yEnd
-            );
+            const runtime = getInputPierInteractionRuntime();
+            return !!(runtime && typeof runtime.isPierDeckTile === 'function'
+                && runtime.isPierDeckTile(buildInputPierInteractionRuntimeContext(), x, y, z));
         }
         function isPierFishingApproachTile(standX, standY, targetX, targetY, z = playerState.z) {
-            if (!isPierDeckTile(standX, standY, z)) return false;
-            if (standX < 0 || standY < 0 || targetX < 0 || targetY < 0 || standX >= MAP_SIZE || standY >= MAP_SIZE || targetX >= MAP_SIZE || targetY >= MAP_SIZE) return false;
-            if (!isWaterTileId(logicalMap[z][targetY][targetX])) return false;
-            return (Math.abs(standX - targetX) + Math.abs(standY - targetY)) === 1;
+            const runtime = getInputPierInteractionRuntime();
+            return !!(runtime && typeof runtime.isPierFishingApproachTile === 'function'
+                && runtime.isPierFishingApproachTile(buildInputPierInteractionRuntimeContext(), standX, standY, targetX, targetY, z));
         }
         function hasPierFishingApproachForWaterTile(targetX, targetY, z = playerState.z) {
-            const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-            for (let i = 0; i < dirs.length; i++) {
-                const standX = targetX + dirs[i].x;
-                const standY = targetY + dirs[i].y;
-                if (isPierFishingApproachTile(standX, standY, targetX, targetY, z)) return true;
-            }
-            return false;
+            const runtime = getInputPierInteractionRuntime();
+            return !!(runtime && typeof runtime.hasPierFishingApproachForWaterTile === 'function'
+                && runtime.hasPierFishingApproachForWaterTile(buildInputPierInteractionRuntimeContext(), targetX, targetY, z));
         }
         function hasDryFishingApproachForWaterTile(targetX, targetY, z = playerState.z) {
-            const dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
-            for (let i = 0; i < dirs.length; i++) {
-                const standX = targetX + dirs[i].x;
-                const standY = targetY + dirs[i].y;
-                if (standX < 0 || standY < 0 || standX >= MAP_SIZE || standY >= MAP_SIZE) continue;
-                if (!isStandableTile(standX, standY, z)) continue;
-                if (isWaterTileId(logicalMap[z][standY][standX])) continue;
-                return true;
-            }
-            return false;
+            const runtime = getInputPierInteractionRuntime();
+            return !!(runtime && typeof runtime.hasDryFishingApproachForWaterTile === 'function'
+                && runtime.hasDryFishingApproachForWaterTile(buildInputPierInteractionRuntimeContext(), targetX, targetY, z));
         }
         function buildPierStepDescendPath(startX, startY, targetX, targetY, z = playerState.z) {
-            const pierConfig = getActivePierConfig();
-            if (!pierConfig || z !== 0) return null;
-            if (!isPierDeckTile(startX, startY, z)) return null;
-
-            const stairDeckY = pierConfig.yStart;
-            const stairX = Math.max(pierConfig.xMin, Math.min(pierConfig.xMax, targetX));
-            const shoreCandidates = [pierConfig.entryY, pierConfig.yStart - 1, pierConfig.entryY - 1];
-            let shoreY = null;
-            for (let i = 0; i < shoreCandidates.length; i++) {
-                const candidateY = shoreCandidates[i];
-                if (!Number.isInteger(candidateY) || candidateY < 0 || candidateY >= MAP_SIZE) continue;
-                if (candidateY === stairDeckY) continue;
-                if (isStandableTile(stairX, candidateY, z)) {
-                    shoreY = candidateY;
-                    break;
-                }
-            }
-            if (!Number.isInteger(shoreY)) return null;
-
-            let pathToStair = findPath(startX, startY, stairX, stairDeckY, false, null);
-            let stairXNow = startX;
-            let stairYNow = startY;
-            if (Array.isArray(pathToStair) && pathToStair.length > 0) {
-                const last = pathToStair[pathToStair.length - 1];
-                stairXNow = last.x;
-                stairYNow = last.y;
-            } else {
-                pathToStair = [];
-            }
-
-            if (!(stairXNow === stairX && stairYNow === stairDeckY)) {
-                if (!(startX === stairX && startY === stairDeckY)) return null;
-                stairXNow = stairX;
-                stairYNow = stairDeckY;
-            }
-
-            if ((Math.abs(stairXNow - stairX) + Math.abs(stairYNow - shoreY)) !== 1) return null;
-
-            const finalPath = pathToStair.slice();
-            finalPath.push({ x: stairX, y: shoreY });
-            if (window.QA_PIER_DEBUG) emitPierDebug(`stair fallback step start=(${startX},${startY}) -> deck=(${stairX},${stairDeckY}) -> shore=(${stairX},${shoreY})`);
-            return finalPath;
+            const runtime = getInputPierInteractionRuntime();
+            return runtime && typeof runtime.buildPierStepDescendPath === 'function'
+                ? runtime.buildPierStepDescendPath(buildInputPierInteractionRuntimeContext(), startX, startY, targetX, targetY, z)
+                : null;
         }
         function isPierProtectedWaterTile(x, y, z = playerState.z) {
-            const pierConfig = getActivePierConfig();
-            return !!(
-                pierConfig
-                && z === 0
-                && y >= (pierConfig.yStart + 1)
-                && y <= pierConfig.yEnd
-                && (x === (pierConfig.xMin - 1) || x === (pierConfig.xMax + 1))
-            );
+            const runtime = getInputPierInteractionRuntime();
+            return !!(runtime && typeof runtime.isPierProtectedWaterTile === 'function'
+                && runtime.isPierProtectedWaterTile(buildInputPierInteractionRuntimeContext(), x, y, z));
         }
         function isStandableTile(x, y, z = playerState.z) {
             if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return false;

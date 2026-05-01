@@ -55,12 +55,13 @@ function run() {
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
 
   const pathfindingRuntimeIndex = manifestSource.indexOf('id: "input-pathfinding-runtime"');
+  const pierRuntimeIndex = manifestSource.indexOf('id: "input-pier-interaction-runtime"');
   const raycastRuntimeIndex = manifestSource.indexOf('id: "input-raycast-runtime"');
   const inputRenderIndex = manifestSource.indexOf('id: "input-render"');
 
   assert(manifestSource.includes("../../js/input-raycast-runtime.js?raw"), "legacy manifest should import the input raycast runtime raw script");
-  assert(pathfindingRuntimeIndex !== -1 && raycastRuntimeIndex !== -1 && inputRenderIndex !== -1, "legacy manifest should include input raycast runtime");
-  assert(pathfindingRuntimeIndex < raycastRuntimeIndex && raycastRuntimeIndex < inputRenderIndex, "legacy manifest should load input raycast runtime before input-render.js");
+  assert(pathfindingRuntimeIndex !== -1 && pierRuntimeIndex !== -1 && raycastRuntimeIndex !== -1 && inputRenderIndex !== -1, "legacy manifest should include input raycast runtime");
+  assert(pathfindingRuntimeIndex < pierRuntimeIndex && pierRuntimeIndex < raycastRuntimeIndex && raycastRuntimeIndex < inputRenderIndex, "legacy manifest should load input raycast runtime after pier helpers and before input-render.js");
 
   assert(runtimeSource.includes("window.InputRaycastRuntime"), "input raycast runtime should expose a window runtime");
   assert(runtimeSource.includes("function normalizeRaycastHit"), "input raycast runtime should own hit normalization");

@@ -24,6 +24,7 @@ function run() {
   const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
   const inputPlayerAnimationSource = fs.readFileSync(path.join(root, "src", "js", "input-player-animation-runtime.js"), "utf8");
   const inputPathfindingSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
+  const inputPierInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-pier-interaction-runtime.js"), "utf8");
   const inputRaycastSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
   const inputTickMovementSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
   const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
@@ -171,6 +172,20 @@ function run() {
     manifestSource.indexOf('id: "input-player-animation-runtime"') < manifestSource.indexOf('id: "input-pathfinding-runtime"')
       && manifestSource.indexOf('id: "input-pathfinding-runtime"') < manifestSource.indexOf('id: "input-render"'),
     "legacy script manifest should load input pathfinding runtime before input-render.js"
+  );
+  assert(inputPierInteractionSource.includes("window.InputPierInteractionRuntime"), "input pier interaction runtime should expose a window runtime");
+  assert(inputPierInteractionSource.includes("function findNearestFishableWaterEdgeTile"), "input pier interaction runtime should own fishable water edge resolution");
+  assert(inputPierInteractionSource.includes("function buildPierStepDescendPath"), "input pier interaction runtime should own pier step descent fallback pathing");
+  assert(inputSource.includes("InputPierInteractionRuntime"), "input-render.js should delegate pier interaction helpers through the pier runtime");
+  assert(inputSource.includes("buildInputPierInteractionRuntimeContext"), "input-render.js should provide a narrow pier interaction runtime context");
+  assert(!inputSource.includes("function forEachTileInSearchRing"), "input-render.js should not own pier search-ring traversal");
+  assert(!inputSource.includes("const shoreCandidates = [pierConfig.entryY"), "input-render.js should not own pier step descent internals");
+  assert(manifestSource.includes('../../js/input-pier-interaction-runtime.js?raw'), "legacy manifest should load input pier interaction runtime");
+  assert(
+    manifestSource.indexOf('id: "input-pathfinding-runtime"') < manifestSource.indexOf('id: "input-pier-interaction-runtime"')
+      && manifestSource.indexOf('id: "input-pier-interaction-runtime"') < manifestSource.indexOf('id: "input-raycast-runtime"')
+      && manifestSource.indexOf('id: "input-pier-interaction-runtime"') < manifestSource.indexOf('id: "input-render"'),
+    "legacy script manifest should load input pier interaction runtime before raycast/input consumers"
   );
   assert(inputRaycastSource.includes("window.InputRaycastRuntime"), "input raycast runtime should expose a window runtime");
   assert(inputRaycastSource.includes("function normalizeRaycastHit"), "input raycast runtime should own raycast hit normalization");
