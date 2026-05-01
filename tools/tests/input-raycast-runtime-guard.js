@@ -67,13 +67,18 @@ function run() {
   assert(runtimeSource.includes("function normalizeRaycastHit"), "input raycast runtime should own hit normalization");
   assert(runtimeSource.includes("function getRaycastHitPriority"), "input raycast runtime should own hit priority");
   assert(runtimeSource.includes("function findQaRaycastHitNear"), "input raycast runtime should own QA nearby hit search");
+  assert(runtimeSource.includes("function publishQaRaycastHooks"), "input raycast runtime should own QA raycast public hook publication");
   assert(runtimeSource.includes("data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER'"), "input raycast runtime should normalize world mesh hits");
   assert(runtimeSource.includes("!context.isWaterTileId(tile)"), "input raycast runtime should treat pier-overlaid walkable water hits as ground");
 
   assert(inputSource.includes("function getInputRaycastRuntime()"), "input-render.js should resolve the input raycast runtime");
   assert(inputSource.includes("buildInputRaycastRuntimeContext"), "input-render.js should provide a narrow raycast runtime context");
   assert(inputSource.includes("runtime.getRaycastHit(buildInputRaycastRuntimeContext()"), "input-render.js should delegate selected hit resolution to raycast runtime");
-  assert(inputSource.includes("runtime.findQaRaycastHitNear(buildInputRaycastRuntimeContext()"), "input-render.js should delegate QA raycast search to raycast runtime");
+  assert(inputSource.includes("function installQaRaycastHooks()"), "input-render.js should install QA raycast hooks through a narrow helper");
+  assert(inputSource.includes("runtime.publishQaRaycastHooks({"), "input-render.js should delegate QA raycast public hook publication to raycast runtime");
+  assert(inputSource.includes("buildContext: buildInputRaycastRuntimeContext"), "input-render.js should pass a lazy raycast context builder to the runtime");
+  assert(!inputSource.includes("window.listQaRaycastHitsAt = function"), "input-render.js should not directly publish listQaRaycastHitsAt");
+  assert(!inputSource.includes("window.findQaRaycastHitNear = function"), "input-render.js should not directly publish findQaRaycastHitNear");
   assert(!inputSource.includes("function getRaycastHitPriority("), "input-render.js should not own raycast hit priority");
   assert(!inputSource.includes("const seen = new Set();"), "input-render.js should not own raycast dedupe traversal");
   assert(!inputSource.includes("data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER'"), "input-render.js should not own world hit normalization");
@@ -133,6 +138,34 @@ function run() {
     ];
     const nearby = runtime.findQaRaycastHitNear(context, 100, 50, "npc", "shop", 0, 8);
     assert(nearby && nearby.uid === "npc-1" && nearby.name === "Shopkeeper", "runtime should find QA hits near a screen point");
+  }
+
+  {
+    let buildContextCalls = 0;
+    const windowRef = { innerWidth: 200, innerHeight: 100 };
+    const context = makeContext({
+      windowRef,
+      raycaster: {
+        setFromCamera: () => {},
+        intersectObjects: () => [
+          makeHit("NPC", 1, 1, { uid: "npc-2", name: "Guide" })
+        ]
+      }
+    });
+    runtime.publishQaRaycastHooks({
+      windowRef,
+      buildContext: () => {
+        buildContextCalls += 1;
+        return context;
+      }
+    });
+    assert(typeof windowRef.listQaRaycastHitsAt === "function", "runtime should publish listQaRaycastHitsAt");
+    assert(typeof windowRef.findQaRaycastHitNear === "function", "runtime should publish findQaRaycastHitNear");
+    const publishedHits = windowRef.listQaRaycastHitsAt(100, 50, 8);
+    const publishedNearby = windowRef.findQaRaycastHitNear(100, 50, "npc", "guide", 0, 8);
+    assert(buildContextCalls === 2, "published QA raycast hooks should resolve context lazily per call");
+    assert(publishedHits.length === 1 && publishedHits[0].uid === "npc-2", "published list hook should delegate to runtime hit listing");
+    assert(publishedNearby && publishedNearby.uid === "npc-2", "published nearby hook should delegate to runtime hit search");
   }
 
   console.log("Input raycast runtime guard passed.");

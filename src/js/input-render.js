@@ -350,19 +350,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 : null;
         }
 
-        window.listQaRaycastHitsAt = function listQaRaycastHitsAt(clientX, clientY, maxHits = 12) {
+        function installQaRaycastHooks() {
             const runtime = getInputRaycastRuntime();
-            return runtime && typeof runtime.listQaRaycastHitsAt === 'function'
-                ? runtime.listQaRaycastHitsAt(buildInputRaycastRuntimeContext(), clientX, clientY, maxHits)
-                : [];
-        };
+            if (!runtime || typeof runtime.publishQaRaycastHooks !== 'function') return;
+            runtime.publishQaRaycastHooks({
+                windowRef: window,
+                buildContext: buildInputRaycastRuntimeContext
+            });
+        }
 
-        window.findQaRaycastHitNear = function findQaRaycastHitNear(clientX, clientY, type, name = '', radius = 80, step = 8) {
-            const runtime = getInputRaycastRuntime();
-            return runtime && typeof runtime.findQaRaycastHitNear === 'function'
-                ? runtime.findQaRaycastHitNear(buildInputRaycastRuntimeContext(), clientX, clientY, type, name, radius, step)
-                : null;
-        };
+        installQaRaycastHooks();
 
         
         function findNearestFishableWaterEdgeTile(targetX, targetY) {

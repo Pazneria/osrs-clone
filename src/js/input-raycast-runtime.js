@@ -223,6 +223,27 @@
         return best;
     }
 
+    function resolvePublishedRaycastContext(options) {
+        if (!options) return {};
+        if (typeof options.buildContext === 'function') {
+            const context = options.buildContext();
+            return context && typeof context === 'object' ? context : {};
+        }
+        return options.context && typeof options.context === 'object' ? options.context : {};
+    }
+
+    function publishQaRaycastHooks(options = {}) {
+        const windowRef = options.windowRef || window;
+        const listHitsAt = listQaRaycastHitsAt;
+        const findHitNear = findQaRaycastHitNear;
+        windowRef.listQaRaycastHitsAt = function listQaRaycastHitsAt(clientX, clientY, maxHits = 12) {
+            return listHitsAt(resolvePublishedRaycastContext(options), clientX, clientY, maxHits);
+        };
+        windowRef.findQaRaycastHitNear = function findQaRaycastHitNear(clientX, clientY, type, name = '', radius = 80, step = 8) {
+            return findHitNear(resolvePublishedRaycastContext(options), clientX, clientY, type, name, radius, step);
+        };
+    }
+
     window.InputRaycastRuntime = {
         normalizeRaycastHit,
         getRaycastHitKey,
@@ -230,6 +251,7 @@
         getRaycastHitPriority,
         getRaycastHit,
         listQaRaycastHitsAt,
-        findQaRaycastHitNear
+        findQaRaycastHitNear,
+        publishQaRaycastHooks
     };
 })();
