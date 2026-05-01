@@ -469,8 +469,8 @@ assert.ok(
   "core.js should persist player-entry completion"
 );
 assert.ok(
-  coreSource.includes("params.get('iconReview')"),
-  "core.js should keep inventory icon review grants opt-in instead of filling normal inventories"
+  coreSource.includes("getCoreIconReviewRuntime().applyInventoryIconReviewGrant(buildCoreIconReviewRuntimeContext())"),
+  "core.js should delegate opt-in inventory icon review grants to the icon review runtime"
 );
 assert.ok(
   inputSource.includes("if (typeof window.updateStats === 'function') window.updateStats();"),

@@ -64,6 +64,7 @@
         const corePlayerEntryRuntime = window.CorePlayerEntryRuntime || null;
         const coreTutorialRuntime = window.CoreTutorialRuntime || null;
         const coreProgressRuntime = window.CoreProgressRuntime || null;
+        const coreIconReviewRuntime = window.CoreIconReviewRuntime || null;
         const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
             ? gameSessionRuntime.createGameSession({
                 currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
@@ -361,56 +362,12 @@
 
         const ASSET_VERSION_TAG = "20260317l";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
-        const DEFAULT_ICON_REVIEW_GRANT_ID = 'inventory_icon_review_20260313a';
-        const DEFAULT_ICON_REVIEW_LABEL = 'Inventory Icons';
-        const DEFAULT_ICON_REVIEW_ITEM_IDS = [
-            'bronze_pickaxe',
-            'iron_pickaxe',
-            'steel_pickaxe',
-            'mithril_pickaxe',
-            'adamant_pickaxe',
-            'rune_pickaxe',
-            'hammer',
-            'fishing_rod',
-            'harpoon',
-            'rune_harpoon',
-            'air_staff',
-            'water_staff',
-            'earth_staff',
-            'fire_staff'
-        ];
-
         function sanitizeIconReviewItemIds(itemIds) {
-            if (!Array.isArray(itemIds)) return [];
-            const restored = [];
-            const seen = new Set();
-            for (let i = 0; i < itemIds.length; i++) {
-                const itemId = sanitizeItemId(itemIds[i]);
-                if (!itemId || seen.has(itemId)) continue;
-                seen.add(itemId);
-                restored.push(itemId);
-            }
-            return restored;
+            return getCoreIconReviewRuntime().sanitizeIconReviewItemIds(buildCoreIconReviewRuntimeContext(), itemIds);
         }
 
         function getActiveIconReviewBatch() {
-            const fallbackItemIds = sanitizeIconReviewItemIds(DEFAULT_ICON_REVIEW_ITEM_IDS);
-            const catalog = window.IconReviewCatalog && typeof window.IconReviewCatalog === 'object'
-                ? window.IconReviewCatalog
-                : null;
-            const itemIds = sanitizeIconReviewItemIds(catalog && Array.isArray(catalog.itemIds) ? catalog.itemIds : fallbackItemIds);
-            const activeBatchId = (catalog && typeof catalog.activeBatchId === 'string' && catalog.activeBatchId.trim())
-                ? catalog.activeBatchId.trim()
-                : DEFAULT_ICON_REVIEW_GRANT_ID;
-            const label = (catalog && typeof catalog.label === 'string' && catalog.label.trim())
-                ? catalog.label.trim()
-                : DEFAULT_ICON_REVIEW_LABEL;
-            return {
-                batchId: activeBatchId,
-                label,
-                itemIds: itemIds.length > 0 ? itemIds : fallbackItemIds,
-                replaceInventory: !!(catalog && catalog.replaceInventory)
-            };
+            return getCoreIconReviewRuntime().getActiveIconReviewBatch(buildCoreIconReviewRuntimeContext());
         }
 
         function inferItemActions(item) {
@@ -474,7 +431,28 @@
         let inventory = gameSession ? gameSession.progress.inventory : Array(28).fill(null);
         let progressContentGrants = gameSession ? gameSession.progress.contentGrants : {};
 
-                        function setInventorySlots(slotDefs) {
+        function getCoreIconReviewRuntime() {
+            if (!coreIconReviewRuntime) {
+                throw new Error('CoreIconReviewRuntime missing. Load src/js/core-icon-review-runtime.js before core.js.');
+            }
+            return coreIconReviewRuntime;
+        }
+
+        function buildCoreIconReviewRuntimeContext() {
+            return {
+                ITEM_DB,
+                URLSearchParamsRef: typeof URLSearchParams === 'function' ? URLSearchParams : null,
+                hasContentGrantItem,
+                inventory,
+                inventoryContainsItem,
+                markContentGrantItem,
+                sanitizeItemId,
+                setInventorySlots,
+                windowRef: window
+            };
+        }
+
+        function setInventorySlots(slotDefs) {
             inventory = Array(28).fill(null);
             const defs = Array.isArray(slotDefs) ? slotDefs : [];
             let writeIndex = 0;
@@ -742,93 +720,7 @@
         };
 
         function applyInventoryIconReviewGrant() {
-            const params = new URLSearchParams(window.location.search || '');
-            if (!['1', 'true', 'yes'].includes(String(params.get('iconReview') || '').trim().toLowerCase())) {
-                return {
-                    batchId: '',
-                    batchLabel: '',
-                    added: [],
-                    acknowledged: [],
-                    blocked: [],
-                    changed: false,
-                    replaced: false,
-                    placed: 0
-                };
-            }
-
-            const reviewBatch = getActiveIconReviewBatch();
-            const added = [];
-            const acknowledged = [];
-            const blocked = [];
-            const replaceInventory = reviewBatch.replaceInventory === true;
-
-            if (replaceInventory) {
-                const slots = [];
-
-                for (let i = 0; i < reviewBatch.itemIds.length; i++) {
-                    const itemId = reviewBatch.itemIds[i];
-                    if (!ITEM_DB[itemId]) {
-                        blocked.push(itemId);
-                        continue;
-                    }
-
-                    slots.push({ itemId, amount: 1 });
-                    if (hasContentGrantItem(reviewBatch.batchId, itemId)) {
-                        acknowledged.push(itemId);
-                    } else {
-                        markContentGrantItem(reviewBatch.batchId, itemId);
-                        added.push(itemId);
-                    }
-                }
-
-                setInventorySlots(slots);
-                return {
-                    batchId: reviewBatch.batchId,
-                    batchLabel: reviewBatch.label,
-                    added,
-                    acknowledged,
-                    blocked,
-                    changed: slots.length > 0 || blocked.length > 0,
-                    replaced: true,
-                    placed: slots.length
-                };
-            }
-
-            for (let i = 0; i < reviewBatch.itemIds.length; i++) {
-                const itemId = reviewBatch.itemIds[i];
-                if (!ITEM_DB[itemId]) {
-                    blocked.push(itemId);
-                    continue;
-                }
-                if (hasContentGrantItem(reviewBatch.batchId, itemId)) continue;
-
-                if (inventoryContainsItem(itemId)) {
-                    markContentGrantItem(reviewBatch.batchId, itemId);
-                    acknowledged.push(itemId);
-                    continue;
-                }
-
-                const emptyIdx = inventory.indexOf(null);
-                if (emptyIdx === -1) {
-                    blocked.push(itemId);
-                    continue;
-                }
-
-                inventory[emptyIdx] = { itemData: ITEM_DB[itemId], amount: 1 };
-                markContentGrantItem(reviewBatch.batchId, itemId);
-                added.push(itemId);
-            }
-
-            return {
-                batchId: reviewBatch.batchId,
-                batchLabel: reviewBatch.label,
-                added,
-                acknowledged,
-                blocked,
-                changed: added.length > 0 || acknowledged.length > 0,
-                replaced: false,
-                placed: added.length + acknowledged.length
-            };
+            return getCoreIconReviewRuntime().applyInventoryIconReviewGrant(buildCoreIconReviewRuntimeContext());
         }
 
         function applyQaInventoryPreset(presetName) {
