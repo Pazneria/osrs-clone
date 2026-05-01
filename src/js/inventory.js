@@ -1,12 +1,45 @@
 // --- Bank & Drag/Drop Logic ---
 
-        let activeBankSource = 'unknown_bank';
-
-        function setActiveBankSource(sourceKey) {
-            activeBankSource = typeof sourceKey === 'string' && sourceKey ? sourceKey : 'unknown_bank';
+        function getInventoryBankSessionRuntime() {
+            return window.InventoryBankSessionRuntime || null;
         }
 
-        window.setActiveBankSource = setActiveBankSource;
+        const inventoryBankSessionRuntime = getInventoryBankSessionRuntime();
+        const bankSession = inventoryBankSessionRuntime && typeof inventoryBankSessionRuntime.createBankSession === 'function'
+            ? inventoryBankSessionRuntime.createBankSession({ defaultSource: 'unknown_bank' })
+            : {
+                isOpen: false,
+                activeSource: 'unknown_bank'
+            };
+
+        function getActiveBankSource() {
+            const runtime = getInventoryBankSessionRuntime();
+            if (runtime && typeof runtime.getActiveBankSource === 'function') {
+                return runtime.getActiveBankSource(bankSession);
+            }
+            return typeof bankSession.activeSource === 'string' && bankSession.activeSource
+                ? bankSession.activeSource
+                : 'unknown_bank';
+        }
+
+        function setActiveBankSource(sourceKey) {
+            const runtime = getInventoryBankSessionRuntime();
+            if (runtime && typeof runtime.setActiveBankSource === 'function') {
+                runtime.setActiveBankSource(bankSession, sourceKey);
+                return;
+            }
+            bankSession.activeSource = typeof sourceKey === 'string' && sourceKey ? sourceKey : 'unknown_bank';
+        }
+
+        function setBankOpenState(nextOpen) {
+            const runtime = getInventoryBankSessionRuntime();
+            const isOpenNext = runtime && typeof runtime.setOpen === 'function'
+                ? runtime.setOpen(bankSession, nextOpen)
+                : !!nextOpen;
+            if (!runtime || typeof runtime.setOpen !== 'function') bankSession.isOpen = isOpenNext;
+            isBankOpen = isOpenNext;
+            return isOpenNext;
+        }
 
         function getUiDomainRuntime() {
             return window.UiDomainRuntime || null;
@@ -74,20 +107,27 @@
         }
 
         function openBank() {
-            isBankOpen = true;
+            setBankOpenState(true);
             setInterfaceOpenState('bank-interface', true);
             renderBank();
             renderInventory();
         }
 
         function closeBank() {
-            isBankOpen = false;
+            setBankOpenState(false);
             setInterfaceOpenState('bank-interface', false);
             renderInventory();
         }
 
-        window.openBank = openBank;
-        window.closeBank = closeBank;
+        const inventoryBankSessionRuntimeForPublication = getInventoryBankSessionRuntime();
+        if (inventoryBankSessionRuntimeForPublication && typeof inventoryBankSessionRuntimeForPublication.publishBankSessionHooks === 'function') {
+            inventoryBankSessionRuntimeForPublication.publishBankSessionHooks({
+                windowRef: window,
+                setActiveBankSource,
+                openBank,
+                closeBank
+            });
+        }
 
         function formatStackSize(num, placementClass = '') {
             if (num <= 1) return '';
@@ -348,7 +388,7 @@
             inventory = result.inventory;
             bankItems = result.bankItems;
             if (result.amountChanged > 0 && window.TutorialRuntime && typeof window.TutorialRuntime.recordBankAction === 'function') {
-                window.TutorialRuntime.recordBankAction('deposit', activeBankSource, beforeItemId, result.amountChanged);
+                window.TutorialRuntime.recordBankAction('deposit', getActiveBankSource(), beforeItemId, result.amountChanged);
             }
             if (result.reason === 'bank_full' || result.reason === 'bank_full_partial') console.log("Bank is full!");
 
@@ -372,7 +412,7 @@
             inventory = result.inventory;
             bankItems = result.bankItems;
             if (result.amountChanged > 0 && window.TutorialRuntime && typeof window.TutorialRuntime.recordBankAction === 'function') {
-                window.TutorialRuntime.recordBankAction('withdraw', activeBankSource, beforeItemId, result.amountChanged);
+                window.TutorialRuntime.recordBankAction('withdraw', getActiveBankSource(), beforeItemId, result.amountChanged);
             }
             if (result.reason === 'inventory_full' || result.reason === 'inventory_full_partial') console.log("Inventory full.");
             if (isBankOpen) renderBank(); renderInventory();
