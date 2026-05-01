@@ -160,6 +160,8 @@ assert.ok(
 );
   assert.ok(
   combatEnemyRenderRuntimeSource.includes("function createEnemyVisualRenderer(options = {})") &&
+    combatEnemyRenderRuntimeSource.includes("function mountEnemyVisualRenderer(options = {})") &&
+    combatEnemyRenderRuntimeSource.includes("function unmountEnemyVisualRenderer(options = {})") &&
     combatEnemyRenderRuntimeSource.includes("function updateEnemyVisualRenderer(options = {})") &&
     combatEnemyRenderRuntimeSource.includes("function updateEnemyVisualFrame(options = {})") &&
     combatEnemyOverlayRuntimeSource.includes("function createEnemyHitpointsBarRenderer(options = {})") &&
@@ -167,7 +169,9 @@ assert.ok(
     combatEnemyRenderRuntimeSource.includes("renderer.hitbox.userData.combatLevel = getEnemyCombatLevel(enemyType);") &&
     combatEnemyRenderRuntimeSource.includes("combatLevel,") &&
     combatEnemyOverlayRuntimeSource.includes("function updateEnemyHitpointsBar(options = {})") &&
-    combatSource.includes("combatEnemyRenderRuntime.createEnemyVisualRenderer({") &&
+    combatSource.includes("combatEnemyRenderRuntime.mountEnemyVisualRenderer({") &&
+    combatSource.includes("combatEnemyRenderRuntime.unmountEnemyVisualRenderer({") &&
+    combatSource.includes("combatEnemyRenderRuntime.ensureEnemyVisualRenderLayer({") &&
     combatSource.includes("combatEnemyRenderRuntime.updateEnemyVisualFrame(buildCombatEnemyVisualFrameContext(enemyState, renderer, frameNow));") &&
     combatSource.includes("combatEnemyOverlayRuntime.updateCombatEnemyOverlays({") &&
     combatSource.includes("combatEnemyMovementRuntime") &&

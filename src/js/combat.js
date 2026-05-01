@@ -204,19 +204,21 @@
     }
 
     function clearEnemyRenderer(enemyId) {
-        const renderer = combatEnemyRenderersById[enemyId];
-        if (!renderer) return;
-        if (renderer.group && renderer.group.parent) renderer.group.parent.remove(renderer.group);
-        combatEnemyOverlayRuntime.removeEnemyHitpointsBarRenderer(renderer);
-        environmentMeshes = environmentMeshes.filter((mesh) => mesh !== renderer.hitbox);
-        delete combatEnemyRenderersById[enemyId];
+        const result = combatEnemyRenderRuntime.unmountEnemyVisualRenderer({
+            enemyId,
+            renderersById: combatEnemyRenderersById,
+            environmentMeshes,
+            removeHitpointsBarRenderer(renderer) {
+                combatEnemyOverlayRuntime.removeEnemyHitpointsBarRenderer(renderer);
+            }
+        });
+        if (result && Array.isArray(result.environmentMeshes)) environmentMeshes = result.environmentMeshes;
     }
 
     function clearCombatEnemyRenderers() {
         const enemyIds = Object.keys(combatEnemyRenderersById);
         for (let i = 0; i < enemyIds.length; i++) clearEnemyRenderer(enemyIds[i]);
-        if (combatEnemyRenderLayer && combatEnemyRenderLayer.parent) combatEnemyRenderLayer.parent.remove(combatEnemyRenderLayer);
-        combatEnemyRenderLayer = null;
+        combatEnemyRenderLayer = combatEnemyRenderRuntime.clearEnemyVisualRenderLayer({ layer: combatEnemyRenderLayer });
     }
 
     function clearCombatEnemyOccupancy() {
@@ -1130,11 +1132,12 @@
 
     function ensureCombatEnemyRenderLayer() {
         if (!scene || typeof THREE === 'undefined') return null;
-        if (!combatEnemyRenderLayer) {
-            combatEnemyRenderLayer = new THREE.Group();
-            combatEnemyRenderLayer.name = 'combat-enemies';
-            scene.add(combatEnemyRenderLayer);
-        }
+        combatEnemyRenderLayer = combatEnemyRenderRuntime.ensureEnemyVisualRenderLayer({
+            scene,
+            THREE,
+            layer: combatEnemyRenderLayer,
+            name: 'combat-enemies'
+        });
         return combatEnemyRenderLayer;
     }
 
@@ -1155,37 +1158,22 @@
         const enemyType = getEnemyDefinition(enemyState.enemyId);
         if (!layer || !enemyType) return null;
 
-        const renderer = combatEnemyRenderRuntime.createEnemyVisualRenderer({
+        const renderer = combatEnemyRenderRuntime.mountEnemyVisualRenderer({
             windowRef: window,
             enemyState,
             enemyType,
+            layer,
+            renderersById: combatEnemyRenderersById,
+            environmentMeshes,
+            createHitpointsBarRenderer() {
+                return combatEnemyOverlayRuntime.createEnemyHitpointsBarRenderer({ documentRef: document });
+            },
             createHumanoidModel,
             getEnemyCombatLevel,
             resolveEnemyAnimationSetDef,
             resolveEnemyAnimationSetId,
             resolveEnemyModelPresetId
         });
-        if (!renderer) return null;
-
-        const hitpointsBar = combatEnemyOverlayRuntime.createEnemyHitpointsBarRenderer({ documentRef: document });
-        renderer.healthBarEl = hitpointsBar.el;
-        renderer.healthBarFillEl = hitpointsBar.fill;
-        renderer.maxHealth = Number.isFinite(enemyType.stats && enemyType.stats.hitpoints)
-            ? Math.max(1, Math.floor(enemyType.stats.hitpoints))
-            : 1;
-        renderer.healthBarYOffset = renderer.kind === 'rat'
-            ? 0.66
-            : (renderer.kind === 'chicken'
-                ? 0.88
-                : (renderer.kind === 'boar'
-                    ? 0.82
-                    : (renderer.kind === 'wolf' ? 0.9 : 1.15)));
-        renderer.group.position.set(enemyState.x, 0, enemyState.y);
-        renderer.group.rotation.y = enemyState.facingYaw || 0;
-        layer.add(renderer.group);
-        renderer.group.updateMatrixWorld(true);
-        environmentMeshes.push(renderer.hitbox);
-        combatEnemyRenderersById[enemyState.runtimeId] = renderer;
         return renderer;
     }
 

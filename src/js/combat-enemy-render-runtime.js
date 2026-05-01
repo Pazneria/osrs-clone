@@ -898,6 +898,87 @@
         return createHumanoidEnemyRenderer(enemyState, enemyType);
     }
 
+    function ensureEnemyVisualRenderLayer(options = {}) {
+        const sceneRef = options.scene || null;
+        const existingLayer = options.layer || null;
+        const threeRef = options.THREE || (typeof THREE !== 'undefined' ? THREE : null);
+        if (existingLayer) return existingLayer;
+        if (!sceneRef || !threeRef || typeof threeRef.Group !== 'function') return null;
+        const layer = new threeRef.Group();
+        layer.name = typeof options.name === 'string' && options.name ? options.name : 'combat-enemies';
+        sceneRef.add(layer);
+        return layer;
+    }
+
+    function resolveEnemyHealthBarYOffset(renderer) {
+        if (!renderer) return 1.15;
+        if (renderer.kind === 'rat') return 0.66;
+        if (renderer.kind === 'chicken') return 0.88;
+        if (renderer.kind === 'boar') return 0.82;
+        if (renderer.kind === 'wolf') return 0.9;
+        return 1.15;
+    }
+
+    function mountEnemyVisualRenderer(options = {}) {
+        setRenderContext(options);
+        const enemyState = options.enemyState || null;
+        const enemyType = options.enemyType || null;
+        const layer = options.layer || null;
+        if (!enemyState || !enemyType || !layer) return null;
+
+        const renderer = options.renderer || createEnemyVisualRenderer(options);
+        if (!renderer || !renderer.group) return null;
+
+        if (typeof options.createHitpointsBarRenderer === 'function' && !renderer.healthBarEl) {
+            const hitpointsBar = options.createHitpointsBarRenderer() || {};
+            renderer.healthBarEl = hitpointsBar.el || null;
+            renderer.healthBarFillEl = hitpointsBar.fill || null;
+        }
+        renderer.maxHealth = Number.isFinite(enemyType.stats && enemyType.stats.hitpoints)
+            ? Math.max(1, Math.floor(enemyType.stats.hitpoints))
+            : 1;
+        renderer.healthBarYOffset = resolveEnemyHealthBarYOffset(renderer);
+        renderer.group.position.set(enemyState.x, 0, enemyState.y);
+        renderer.group.rotation.y = enemyState.facingYaw || 0;
+        layer.add(renderer.group);
+        renderer.group.updateMatrixWorld(true);
+        if (Array.isArray(options.environmentMeshes) && renderer.hitbox) {
+            options.environmentMeshes.push(renderer.hitbox);
+        }
+        if (options.renderersById && enemyState.runtimeId) {
+            options.renderersById[enemyState.runtimeId] = renderer;
+        }
+        return renderer;
+    }
+
+    function unmountEnemyVisualRenderer(options = {}) {
+        const renderersById = options.renderersById || null;
+        const enemyId = options.enemyId;
+        const renderer = options.renderer || (renderersById && enemyId ? renderersById[enemyId] : null);
+        const result = {
+            renderer,
+            environmentMeshes: Array.isArray(options.environmentMeshes) ? options.environmentMeshes : null
+        };
+        if (!renderer) return result;
+        if (renderer.group && renderer.group.parent && typeof renderer.group.parent.remove === 'function') {
+            renderer.group.parent.remove(renderer.group);
+        }
+        if (typeof options.removeHitpointsBarRenderer === 'function') {
+            options.removeHitpointsBarRenderer(renderer);
+        }
+        if (Array.isArray(options.environmentMeshes)) {
+            result.environmentMeshes = options.environmentMeshes.filter((mesh) => mesh !== renderer.hitbox);
+        }
+        if (renderersById && enemyId) delete renderersById[enemyId];
+        return result;
+    }
+
+    function clearEnemyVisualRenderLayer(options = {}) {
+        const layer = options.layer || null;
+        if (layer && layer.parent) layer.parent.remove(layer);
+        return null;
+    }
+
     function updateEnemyVisualRenderer(options = {}) {
         setRenderContext(options);
         const enemyState = options.enemyState || null;
@@ -1040,6 +1121,10 @@
 
     window.CombatEnemyRenderRuntime = {
         createEnemyVisualRenderer,
+        ensureEnemyVisualRenderLayer,
+        mountEnemyVisualRenderer,
+        unmountEnemyVisualRenderer,
+        clearEnemyVisualRenderLayer,
         updateEnemyVisualRenderer,
         updateEnemyVisualFrame,
         getEnemyVisualMoveProgress,
