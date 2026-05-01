@@ -162,10 +162,22 @@
         setPlayerRigToolVisuals(options, rigRoot, desiredHeldItems, desiredSlot);
     }
 
+    function publishHeldItemVisualHooks(options = {}) {
+        const windowRef = options.windowRef || (typeof window !== 'undefined' ? window : null);
+        if (!windowRef) return;
+        if (typeof options.setPlayerRigToolVisuals === 'function') {
+            windowRef.setPlayerRigToolVisuals = options.setPlayerRigToolVisuals;
+        }
+        if (typeof options.setPlayerRigToolVisual === 'function') {
+            windowRef.setPlayerRigToolVisual = options.setPlayerRigToolVisual;
+        }
+    }
+
     window.PlayerHeldItemRuntime = {
         SKILLING_TOOL_VISUAL_GROUP_NAME,
         normalizeHeldItemSlot,
         normalizeHeldItemVisualMap,
+        publishHeldItemVisualHooks,
         resolvePrimaryHeldItemVisualSlot,
         setPlayerRigToolVisual,
         setPlayerRigToolVisuals

@@ -612,7 +612,13 @@ function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverr
     return createMeshesForTarget(targetName, fragments, bodyColors, itemDef.recolors || []);
 }
 
-window.setPlayerRigToolVisuals = setPlayerRigToolVisuals;
-window.setPlayerRigToolVisual = setPlayerRigToolVisual;
+const playerHeldItemRuntimeForPublication = window.PlayerHeldItemRuntime || null;
+if (playerHeldItemRuntimeForPublication && typeof playerHeldItemRuntimeForPublication.publishHeldItemVisualHooks === 'function') {
+    playerHeldItemRuntimeForPublication.publishHeldItemVisualHooks({
+        windowRef: window,
+        setPlayerRigToolVisuals,
+        setPlayerRigToolVisual
+    });
+}
 window.createEquipmentVisualMeshes = createEquipmentVisualMeshes;
 window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes;

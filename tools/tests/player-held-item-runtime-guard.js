@@ -64,10 +64,14 @@ function run() {
   assert(playerModelIndex !== -1 && heldItemIndex < playerModelIndex, "legacy manifest should load player held-item runtime before player-model.js");
   assert(runtimeSource.includes("window.PlayerHeldItemRuntime"), "held-item runtime should expose a window runtime");
   assert(runtimeSource.includes("function setPlayerRigToolVisuals(options = {}, rigRoot, heldItems, primaryHeldItemSlot = null)"), "held-item runtime should own held-item visual attachment");
+  assert(runtimeSource.includes("function publishHeldItemVisualHooks(options = {})"), "held-item runtime should own held-item hook publication");
   assert(runtimeSource.includes("function setBaseToolVisualVisibility"), "held-item runtime should own base tool visibility restoration");
   assert(runtimeSource.includes("pm-skillingToolVisual"), "held-item runtime should isolate temporary skilling tool meshes");
   assert(playerModelSource.includes("PlayerHeldItemRuntime"), "player-model.js should delegate temporary held-item visuals");
   assert(playerModelSource.includes("runtime.setPlayerRigToolVisuals"), "player-model.js should call the held-item runtime for multi-hand visuals");
+  assert(playerModelSource.includes("playerHeldItemRuntimeForPublication.publishHeldItemVisualHooks({"), "player-model.js should publish held-item hooks through the held-item runtime");
+  assert(!playerModelSource.includes("window.setPlayerRigToolVisuals = setPlayerRigToolVisuals"), "player-model.js should not directly publish setPlayerRigToolVisuals");
+  assert(!playerModelSource.includes("window.setPlayerRigToolVisual = setPlayerRigToolVisual"), "player-model.js should not directly publish setPlayerRigToolVisual");
   assert(!playerModelSource.includes("function setBaseToolVisualVisibility"), "player-model.js should not own base tool visibility restoration");
   assert(!playerModelSource.includes("function normalizeHeldItemVisualMap"), "player-model.js should not own held-item map normalization");
 
@@ -78,6 +82,13 @@ function run() {
   assert(runtime, "held-item runtime should execute in isolation");
   assert(runtime.normalizeHeldItemSlot("leftHand") === "leftHand", "runtime should preserve left-hand slots");
   assert(runtime.normalizeHeldItemSlot("other") === "rightHand", "runtime should default unknown slots to right hand");
+
+  const publishedWindow = {};
+  const setPlayerRigToolVisuals = () => {};
+  const setPlayerRigToolVisual = () => {};
+  runtime.publishHeldItemVisualHooks({ windowRef: publishedWindow, setPlayerRigToolVisuals, setPlayerRigToolVisual });
+  assert(publishedWindow.setPlayerRigToolVisuals === setPlayerRigToolVisuals, "held-item hook publication should expose setPlayerRigToolVisuals");
+  assert(publishedWindow.setPlayerRigToolVisual === setPlayerRigToolVisual, "held-item hook publication should expose setPlayerRigToolVisual");
 
   const rig = makeRig();
   const createdMeshes = [];
