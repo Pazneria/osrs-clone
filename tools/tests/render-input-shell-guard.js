@@ -83,7 +83,10 @@ function run() {
   assert(inputQaCameraSource.includes("window.InputQaCameraRuntime"), "input QA camera runtime should expose a window runtime");
   assert(inputQaCameraSource.includes("function projectWorldTileToScreen"), "input QA camera runtime should own world-tile projection");
   assert(inputQaCameraSource.includes("function syncQaRenderToPlayerState"), "input QA camera runtime should own QA render sync behavior");
+  assert(inputQaCameraSource.includes("function publishQaCameraHooks"), "input QA camera runtime should own QA camera public hook publication");
   assert(inputSource.includes("InputQaCameraRuntime"), "input-render.js should delegate QA camera helpers through the QA camera runtime");
+  assert(inputSource.includes("runtime.publishQaCameraHooks({"), "input-render.js should publish QA camera hooks through the QA camera runtime");
+  assert(!inputSource.includes("window.setQaCameraView = function"), "input-render.js should not directly publish setQaCameraView");
   assert(!inputSource.includes("const gx = Math.max(0, Math.min(MAP_SIZE - 1, Math.floor(Number(x) || 0)));"), "input-render.js should not own QA projection coordinate clamping");
   assert(manifestSource.includes('../../js/input-qa-camera-runtime.js?raw'), "legacy manifest should load input QA camera runtime");
   assert(

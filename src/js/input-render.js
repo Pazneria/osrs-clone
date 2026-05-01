@@ -1066,8 +1066,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 : null;
         }
 
-        window.projectWorldTileToScreen = projectWorldTileToScreen;
-
         function syncQaRenderToPlayerState() {
             const runtime = getInputQaCameraRuntime();
             const snapshot = runtime && typeof runtime.syncQaRenderToPlayerState === 'function'
@@ -1096,41 +1094,30 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 : null;
         }
 
-        window.syncQaRenderToPlayerState = syncQaRenderToPlayerState;
-
-        window.setQaCameraView = function setQaCameraView(nextYaw, nextPitch = cameraPitch, nextDist = cameraDist) {
-            const runtime = getInputQaCameraRuntime();
-            const nextState = runtime && typeof runtime.resolveQaCameraViewState === 'function'
-                ? runtime.resolveQaCameraViewState({ cameraYaw, cameraPitch, cameraDist, nextYaw, nextPitch, nextDist })
-                : { yaw: cameraYaw, pitch: cameraPitch, distance: cameraDist };
+        function applyQaCameraState(nextState) {
             cameraYaw = nextState.yaw;
             cameraPitch = nextState.pitch;
             cameraDist = nextState.distance;
-            syncQaRenderToPlayerState();
             return {
-                yaw: Number(cameraYaw.toFixed(4)),
-                pitch: Number(cameraPitch.toFixed(4)),
-                distance: Number(cameraDist.toFixed(2))
-            };
-        };
-
-        function resetQaCameraView() {
-            const runtime = getInputQaCameraRuntime();
-            const nextState = runtime && typeof runtime.getDefaultQaCameraViewState === 'function'
-                ? runtime.getDefaultQaCameraViewState()
-                : { yaw: Math.PI * 1.25, pitch: Math.PI / 3.1, distance: 16 };
-            cameraYaw = nextState.yaw;
-            cameraPitch = nextState.pitch;
-            cameraDist = nextState.distance;
-            syncQaRenderToPlayerState();
-            return {
-                yaw: Number(cameraYaw.toFixed(4)),
-                pitch: Number(cameraPitch.toFixed(4)),
-                distance: Number(cameraDist.toFixed(2))
+                yaw: cameraYaw,
+                pitch: cameraPitch,
+                distance: cameraDist
             };
         }
 
-        window.resetQaCameraView = resetQaCameraView;
+        function installQaCameraHooks() {
+            const runtime = getInputQaCameraRuntime();
+            if (!runtime || typeof runtime.publishQaCameraHooks !== 'function') return;
+            runtime.publishQaCameraHooks({
+                windowRef: window,
+                projectWorldTileToScreen,
+                syncQaRenderToPlayerState,
+                getCameraState: () => ({ yaw: cameraYaw, pitch: cameraPitch, distance: cameraDist }),
+                applyCameraState: applyQaCameraState
+            });
+        }
+
+        installQaCameraHooks();
 
         function initMotionDebugPanel() {
             const panel = document.getElementById('motion-debug-panel');

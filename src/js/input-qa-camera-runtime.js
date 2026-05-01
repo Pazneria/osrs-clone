@@ -89,10 +89,59 @@
         };
     }
 
+    function formatQaCameraState(state = {}) {
+        return {
+            yaw: Number(Number(state.yaw).toFixed(4)),
+            pitch: Number(Number(state.pitch).toFixed(4)),
+            distance: Number(Number(state.distance).toFixed(2))
+        };
+    }
+
+    function publishQaCameraHooks(options = {}) {
+        const windowRef = getWindowRef(options);
+        windowRef.projectWorldTileToScreen = function projectWorldTileToScreenHook(x, y, z = 0, heightOffset = 1.0) {
+            return typeof options.projectWorldTileToScreen === 'function'
+                ? options.projectWorldTileToScreen(x, y, z, heightOffset)
+                : null;
+        };
+        windowRef.syncQaRenderToPlayerState = function syncQaRenderToPlayerStateHook() {
+            return typeof options.syncQaRenderToPlayerState === 'function'
+                ? options.syncQaRenderToPlayerState()
+                : null;
+        };
+        windowRef.setQaCameraView = function setQaCameraView(nextYaw, nextPitch, nextDist) {
+            const currentState = typeof options.getCameraState === 'function'
+                ? options.getCameraState()
+                : {};
+            const resolvedState = resolveQaCameraViewState({
+                cameraYaw: currentState.yaw,
+                cameraPitch: currentState.pitch,
+                cameraDist: currentState.distance,
+                nextYaw,
+                nextPitch: nextPitch === undefined ? currentState.pitch : nextPitch,
+                nextDist: nextDist === undefined ? currentState.distance : nextDist
+            });
+            const appliedState = typeof options.applyCameraState === 'function'
+                ? options.applyCameraState(resolvedState)
+                : resolvedState;
+            if (typeof options.syncQaRenderToPlayerState === 'function') options.syncQaRenderToPlayerState();
+            return formatQaCameraState(appliedState || resolvedState);
+        };
+        windowRef.resetQaCameraView = function resetQaCameraView() {
+            const resolvedState = getDefaultQaCameraViewState();
+            const appliedState = typeof options.applyCameraState === 'function'
+                ? options.applyCameraState(resolvedState)
+                : resolvedState;
+            if (typeof options.syncQaRenderToPlayerState === 'function') options.syncQaRenderToPlayerState();
+            return formatQaCameraState(appliedState || resolvedState);
+        };
+    }
+
     window.InputQaCameraRuntime = {
         resolveQaCameraViewState,
         getDefaultQaCameraViewState,
         projectWorldTileToScreen,
-        syncQaRenderToPlayerState
+        syncQaRenderToPlayerState,
+        publishQaCameraHooks
     };
 })();
