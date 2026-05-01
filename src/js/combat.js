@@ -2,6 +2,7 @@
     const combatRuntime = window.CombatRuntime || null;
     const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;
     const combatHudRuntime = window.CombatHudRuntime || null;
+    const combatEngagementRuntime = window.CombatEngagementRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
     const combatEnemyMovementRuntime = window.CombatEnemyMovementRuntime || null;
@@ -415,6 +416,42 @@
         return getEnemyCombatLevel(getEnemyDefinition(enemyState.enemyId));
     }
 
+    function getCombatEngagementRuntime() {
+        if (!combatEngagementRuntime) {
+            throw new Error('CombatEngagementRuntime missing. Load src/js/combat-engagement-runtime.js before combat.js.');
+        }
+        return combatEngagementRuntime;
+    }
+
+    function buildCombatEngagementRuntimeContext() {
+        return {
+            combatEnemyStates,
+            playerState,
+            playerTargetId: PLAYER_TARGET_ID,
+            playerTargetKind: PLAYER_TARGET_KIND,
+            playerPursuitStateHardNoPath: PLAYER_PURSUIT_STATE_HARD_NO_PATH,
+            playerPursuitStateTemporaryBlock: PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK,
+            playerPursuitStateValid: PLAYER_PURSUIT_STATE_VALID,
+            beginEnemyReturn,
+            clearEnemyIdleWanderState,
+            clearPlayerCombatTarget,
+            faceEnemyTowards,
+            facePlayerTowards,
+            getAutoRetaliateCandidateCombatLevel,
+            getChebyshevDistance,
+            getCombatEnemyState,
+            getEnemyDefinition,
+            getPlayerLockedEnemy,
+            getSquareRange,
+            isEnemyAlive,
+            isPlayerAlive,
+            isWithinMeleeRange,
+            recordPlayerPursuitDebug,
+            resolvePathToEnemy,
+            resolvePathToPlayer
+        };
+    }
+
     function getCombatHudRuntime() {
         if (!combatHudRuntime) {
             throw new Error('CombatHudRuntime missing. Load src/js/combat-hud-runtime.js before combat.js.');
@@ -787,124 +824,27 @@
     }
 
     function validatePlayerTargetLock() {
-        const lockedEnemy = getPlayerLockedEnemy();
-        if (!lockedEnemy) {
-            recordPlayerPursuitDebug(null, PLAYER_PURSUIT_STATE_HARD_NO_PATH, null, null);
-            const hasCombatSelection =
-                !!playerState.lockedTargetId
-                || playerState.combatTargetKind === PLAYER_TARGET_KIND
-                || playerState.targetObj === 'ENEMY';
-            if (hasCombatSelection) clearPlayerCombatTarget({ reason: 'missing-locked-enemy' });
-            return null;
-        }
-        if (!isEnemyAlive(lockedEnemy)) {
-            recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_HARD_NO_PATH, null, null);
-            clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-not-alive' });
-            return null;
-        }
-        playerState.targetX = lockedEnemy.x;
-        playerState.targetY = lockedEnemy.y;
-        const pursuitPath = resolvePathToEnemy(lockedEnemy);
-        if (pursuitPath !== null) {
-            recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_VALID, pursuitPath, pursuitPath);
-            return {
-                enemyState: lockedEnemy,
-                pursuitPath,
-                pursuitState: PLAYER_PURSUIT_STATE_VALID,
-                occupancyIgnoredPursuitPath: pursuitPath
-            };
-        }
-        const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {
-            z: playerState.z,
-            ignoreCombatEnemyOccupancy: true
-        });
-        if (occupancyIgnoredPursuitPath !== null) {
-            recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK, null, occupancyIgnoredPursuitPath);
-            return {
-                enemyState: lockedEnemy,
-                pursuitPath: null,
-                pursuitState: PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK,
-                occupancyIgnoredPursuitPath
-            };
-        }
-        recordPlayerPursuitDebug(lockedEnemy, PLAYER_PURSUIT_STATE_HARD_NO_PATH, null, null);
-        clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-hard-no-path' });
-        return null;
+        return getCombatEngagementRuntime().validatePlayerTargetLock(buildCombatEngagementRuntimeContext());
     }
 
     function hasValidPlayerCombatLock() {
-        const lockedEnemy = getPlayerLockedEnemy();
-        if (!lockedEnemy || !isEnemyAlive(lockedEnemy)) return false;
-        const pursuitPath = resolvePathToEnemy(lockedEnemy);
-        if (pursuitPath !== null) return true;
-        const occupancyIgnoredPath = resolvePathToEnemy(lockedEnemy, {
-            z: playerState.z,
-            ignoreCombatEnemyOccupancy: true
-        });
-        return occupancyIgnoredPath !== null;
+        return getCombatEngagementRuntime().hasValidPlayerCombatLock(buildCombatEngagementRuntimeContext());
     }
 
     function isValidAutoRetaliateCandidate(enemyState) {
-        if (!isEnemyAlive(enemyState)) return false;
-        if (!isPlayerAlive()) return false;
-        if (enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID) return false;
-        if (enemyState.z !== playerState.z) return false;
-        const playerTile = { x: playerState.x, y: playerState.y, z: playerState.z };
-        const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
-        return !!homeTile && getSquareRange(homeTile, playerTile, enemyState.resolvedChaseRange);
+        return getCombatEngagementRuntime().isValidAutoRetaliateCandidate(buildCombatEngagementRuntimeContext(), enemyState);
     }
 
     function pickAutoRetaliateTarget() {
-        const candidates = combatEnemyStates.filter((enemyState) => isValidAutoRetaliateCandidate(enemyState));
-        if (candidates.length === 0) return null;
-        candidates.sort((left, right) => {
-            const leftOrder = Number.isFinite(left.autoRetaliateAggressorOrder) ? left.autoRetaliateAggressorOrder : Number.MAX_SAFE_INTEGER;
-            const rightOrder = Number.isFinite(right.autoRetaliateAggressorOrder) ? right.autoRetaliateAggressorOrder : Number.MAX_SAFE_INTEGER;
-            if (leftOrder !== rightOrder) return leftOrder - rightOrder;
-            const leftDistance = getChebyshevDistance(playerState, left);
-            const rightDistance = getChebyshevDistance(playerState, right);
-            if (leftDistance !== rightDistance) return leftDistance - rightDistance;
-            const leftLevel = getAutoRetaliateCandidateCombatLevel(left);
-            const rightLevel = getAutoRetaliateCandidateCombatLevel(right);
-            if (leftLevel !== rightLevel) return leftLevel - rightLevel;
-            return String(left.runtimeId || '').localeCompare(String(right.runtimeId || ''));
-        });
-        return candidates[0] || null;
+        return getCombatEngagementRuntime().pickAutoRetaliateTarget(buildCombatEngagementRuntimeContext());
     }
 
     function validateEnemyTargetLock(enemyState) {
-        if (!isEnemyAlive(enemyState)) return null;
-        if (!isPlayerAlive()) {
-            beginEnemyReturn(enemyState);
-            return null;
-        }
-        const playerTile = { x: playerState.x, y: playerState.y, z: playerState.z };
-        const homeTile = enemyState.resolvedHomeTile || enemyState.resolvedSpawnTile;
-        if (!getSquareRange(homeTile, playerTile, enemyState.resolvedChaseRange)) {
-            beginEnemyReturn(enemyState);
-            return null;
-        }
-        return enemyState;
+        return getCombatEngagementRuntime().validateEnemyTargetLock(buildCombatEngagementRuntimeContext(), enemyState);
     }
 
     function acquireAggressiveEnemyTargets() {
-        if (!isPlayerAlive()) return;
-        const playerTile = { x: playerState.x, y: playerState.y, z: playerState.z };
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (!isEnemyAlive(enemyState)) continue;
-            if (enemyState.currentState !== 'idle') continue;
-            const enemyType = getEnemyDefinition(enemyState.enemyId);
-            if (!enemyType || enemyType.behavior.aggroType !== 'aggressive') continue;
-            if (!getSquareRange(enemyState, playerTile, enemyState.resolvedAggroRadius)) continue;
-            const pursuitPath = resolvePathToPlayer(enemyState);
-            if (pursuitPath === null) continue;
-            enemyState.currentState = 'aggroed';
-            enemyState.lockedTargetId = PLAYER_TARGET_ID;
-            enemyState.lastDamagerId = PLAYER_TARGET_ID;
-            faceEnemyTowards(enemyState, playerState);
-            clearEnemyIdleWanderState(enemyState);
-        }
+        getCombatEngagementRuntime().acquireAggressiveEnemyTargets(buildCombatEngagementRuntimeContext());
     }
 
     function collectReadyAttacks(playerLockState) {
@@ -1089,20 +1029,7 @@
     }
 
     function movePlayerTowardLockedTarget(playerLockState, attackedThisTick) {
-        if (!playerLockState || attackedThisTick) return;
-        if (playerState.action === 'SKILLING: FLETCHING') return;
-        if (playerLockState.pursuitState === PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK) {
-            playerState.path = [];
-            playerState.action = 'COMBAT: MELEE';
-            return;
-        }
-        if (playerLockState.pursuitPath && playerLockState.pursuitPath.length > 0) {
-            playerState.path = playerLockState.pursuitPath;
-            playerState.action = 'WALKING';
-        } else if (isWithinMeleeRange(playerState, playerLockState.enemyState)) {
-            facePlayerTowards(playerLockState.enemyState);
-            playerState.action = 'COMBAT: MELEE';
-        }
+        getCombatEngagementRuntime().movePlayerTowardLockedTarget(buildCombatEngagementRuntimeContext(), playerLockState, attackedThisTick);
     }
 
     function moveEnemyToStep(enemyState, nextStep) {

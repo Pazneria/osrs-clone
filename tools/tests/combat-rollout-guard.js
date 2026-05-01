@@ -23,6 +23,7 @@ const inputHoverTooltipRuntimeSource = read("src/js/input-hover-tooltip-runtime.
 const combatSource = read("src/js/combat.js");
 const combatQaDebugSource = read("src/js/combat-qa-debug-runtime.js");
 const combatHudRuntimeSource = read("src/js/combat-hud-runtime.js");
+const combatEngagementRuntimeSource = read("src/js/combat-engagement-runtime.js");
 const combatEnemyMovementRuntimeSource = read("src/js/combat-enemy-movement-runtime.js");
 const combatEnemyRenderRuntimeSource = read("src/js/combat-enemy-render-runtime.js");
 const combatEnemyOverlayRuntimeSource = read("src/js/combat-enemy-overlay-runtime.js");
@@ -59,6 +60,11 @@ assert.ok(
   legacyManifest.includes('../../js/combat-hud-runtime.js?raw') &&
     legacyManifest.indexOf('id: "combat-hud-runtime"') < legacyManifest.indexOf('id: "combat"'),
   "legacy script manifest should load combat HUD runtime before combat.js"
+);
+assert.ok(
+  legacyManifest.includes('../../js/combat-engagement-runtime.js?raw') &&
+    legacyManifest.indexOf('id: "combat-engagement-runtime"') < legacyManifest.indexOf('id: "combat"'),
+  "legacy script manifest should load combat engagement runtime before combat.js"
 );
 assert.ok(
   legacyManifest.includes('../../js/combat-enemy-movement-runtime.js?raw') &&
@@ -127,6 +133,19 @@ assert.ok(
     combatSource.includes("getCombatHudRuntime().buildCombatHudSnapshot(buildCombatHudRuntimeContext())") &&
     !combatSource.includes("playerRemainingAttackCooldown: Number.isFinite(playerState.remainingAttackCooldown)"),
   "combat.js should delegate combat HUD focus and snapshot shaping through the combat HUD runtime"
+);
+assert.ok(
+  combatEngagementRuntimeSource.includes("window.CombatEngagementRuntime") &&
+    combatEngagementRuntimeSource.includes("function validatePlayerTargetLock(context = {})") &&
+    combatEngagementRuntimeSource.includes("function pickAutoRetaliateTarget(context = {})") &&
+    combatEngagementRuntimeSource.includes("function acquireAggressiveEnemyTargets(context = {})") &&
+    combatSource.includes("const combatEngagementRuntime = window.CombatEngagementRuntime || null;") &&
+    combatSource.includes("function buildCombatEngagementRuntimeContext()") &&
+    combatSource.includes("getCombatEngagementRuntime().validatePlayerTargetLock(buildCombatEngagementRuntimeContext())") &&
+    combatSource.includes("getCombatEngagementRuntime().pickAutoRetaliateTarget(buildCombatEngagementRuntimeContext())") &&
+    combatSource.includes("getCombatEngagementRuntime().acquireAggressiveEnemyTargets(buildCombatEngagementRuntimeContext())") &&
+    !combatSource.includes("const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {"),
+  "combat.js should delegate target validation, auto-retaliate, and aggressive acquisition through the engagement runtime"
 );
 assert.ok(
   coreSource.includes("buildCombatQaDebugContext") &&

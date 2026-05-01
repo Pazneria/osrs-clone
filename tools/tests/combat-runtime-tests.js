@@ -204,6 +204,7 @@ function ensureCombatRuntimeLoaded(root) {
 
   loadBrowserScript(root, "src/js/combat-qa-debug-runtime.js");
   loadBrowserScript(root, "src/js/combat-hud-runtime.js");
+  loadBrowserScript(root, "src/js/combat-engagement-runtime.js");
   loadBrowserScript(root, "src/js/combat-enemy-movement-runtime.js");
   loadBrowserScript(root, "src/js/combat-enemy-render-runtime.js");
   loadBrowserScript(root, "src/js/combat-enemy-overlay-runtime.js");

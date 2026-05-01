@@ -25,6 +25,7 @@ function getFunctionBody(source, functionName) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
+  const combatEngagementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-engagement-runtime.js"), "utf8");
   const combatEnemyMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-movement-runtime.js"), "utf8");
   const combatEnemyOverlayRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-overlay-runtime.js"), "utf8");
   const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
@@ -43,17 +44,22 @@ function run() {
     "locking a target should not mark the player in-combat before any attack resolves"
   );
 
-  const moveTowardTargetBody = getFunctionBody(combatSource, "movePlayerTowardLockedTarget");
-  assert(moveTowardTargetBody, "combat.js should define movePlayerTowardLockedTarget");
+  const moveTowardTargetBody = getFunctionBody(combatEngagementRuntimeSource, "movePlayerTowardLockedTarget");
+  assert(moveTowardTargetBody, "combat engagement runtime should define movePlayerTowardLockedTarget");
   assert(
     !moveTowardTargetBody.includes("playerState.inCombat = true;"),
     "pursuing or facing a locked target should not mark the player in-combat before an attack"
   );
   assert(
-    moveTowardTargetBody.includes("if (playerLockState.pursuitState === PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK) {")
+    moveTowardTargetBody.includes("const temporaryBlockState = context.playerPursuitStateTemporaryBlock || 'temporary-block';")
+      && moveTowardTargetBody.includes("if (playerLockState.pursuitState === temporaryBlockState) {")
       && moveTowardTargetBody.includes("playerState.path = [];")
       && moveTowardTargetBody.includes("playerState.action = 'COMBAT: MELEE';"),
     "temporary occupancy blocks should keep the lock while stopping stale pursuit movement"
+  );
+  assert(
+    combatSource.includes("getCombatEngagementRuntime().movePlayerTowardLockedTarget(buildCombatEngagementRuntimeContext(), playerLockState, attackedThisTick);"),
+    "combat.js should delegate player pursuit action shaping to the engagement runtime"
   );
 
   const chaseAttackOpportunityBody = getFunctionBody(combatEnemyMovementRuntimeSource, "resolvePlayerChaseAttackOpportunity");
@@ -142,13 +148,13 @@ function run() {
     "player cooldown should keep ticking after lock clears instead of being gated only by playerState.inCombat"
   );
 
-  const validateLockBody = getFunctionBody(combatSource, "validatePlayerTargetLock");
-  assert(validateLockBody, "combat.js should define validatePlayerTargetLock");
+  const validateLockBody = getFunctionBody(combatEngagementRuntimeSource, "validatePlayerTargetLock");
+  assert(validateLockBody, "combat engagement runtime should define validatePlayerTargetLock");
   assert(
-    validateLockBody.includes("const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {")
+    validateLockBody.includes("const occupancyIgnoredPursuitPath = typeof context.resolvePathToEnemy === 'function'")
       && validateLockBody.includes("ignoreCombatEnemyOccupancy: true")
-      && validateLockBody.includes("PLAYER_PURSUIT_STATE_TEMPORARY_BLOCK")
-      && validateLockBody.includes("clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-hard-no-path' });"),
+      && validateLockBody.includes("temporaryBlockState")
+      && validateLockBody.includes("context.clearPlayerCombatTarget({ force: true, reason: 'locked-enemy-hard-no-path' });"),
     "player target validation should distinguish temporary occupancy blockage from true hard no-path failures"
   );
   assert(
@@ -160,12 +166,12 @@ function run() {
   );
 
   assert(
-    combatSource.includes("function pickAutoRetaliateTarget() {")
+    combatEngagementRuntimeSource.includes("function pickAutoRetaliateTarget(context = {})")
       && combatSource.includes("markEnemyAutoRetaliateAggressor(enemyState);")
-      && combatSource.includes("const leftOrder = Number.isFinite(left.autoRetaliateAggressorOrder)")
-      && combatSource.includes("const leftDistance = getChebyshevDistance(playerState, left);")
-      && combatSource.includes("const leftLevel = getAutoRetaliateCandidateCombatLevel(left);")
-      && combatSource.includes("localeCompare")
+      && combatEngagementRuntimeSource.includes("const leftOrder = Number.isFinite(left.autoRetaliateAggressorOrder)")
+      && combatEngagementRuntimeSource.includes("const leftDistance = typeof context.getChebyshevDistance === 'function'")
+      && combatEngagementRuntimeSource.includes("context.getAutoRetaliateCandidateCombatLevel(left)")
+      && combatEngagementRuntimeSource.includes("localeCompare")
       && !combatSource.includes("lockPlayerCombatTarget(playerAttackers[0]);"),
     "auto-retaliate should be explicit and deterministic instead of choosing the first attacker array entry"
   );
