@@ -493,6 +493,30 @@
         return snapshot;
     }
 
+    function buildPublishedContext(options = {}) {
+        if (typeof options.buildContext === 'function') {
+            const context = options.buildContext();
+            return context && typeof context === 'object' ? context : {};
+        }
+        return options.context && typeof options.context === 'object' ? options.context : {};
+    }
+
+    function publishWindowHooks(options = {}) {
+        const windowRef = getWindowRef(options);
+        windowRef.getQaCombatDebugSnapshot = function getQaCombatDebugSnapshot() {
+            return getSnapshot(buildPublishedContext(options));
+        };
+        windowRef.getQaCombatDebugSignature = function getQaCombatDebugSignature(snapshot = null) {
+            return getSignature(buildPublishedContext(options), snapshot);
+        };
+        windowRef.emitQaCombatDebugClearHistory = function emitQaCombatDebugClearHistory() {
+            emitClearHistory(buildPublishedContext(options));
+        };
+        windowRef.emitQaCombatDebugSnapshot = function emitQaCombatDebugSnapshot(reason = 'manual') {
+            return emitSnapshot(buildPublishedContext(options), reason);
+        };
+    }
+
     window.CombatQaDebugRuntime = {
         buildEnemyAnimationDebugState,
         listCombatEnemyStates,
@@ -505,6 +529,7 @@
         getSnapshot,
         getSignature,
         emitClearHistory,
-        emitSnapshot
+        emitSnapshot,
+        publishWindowHooks
     };
 })();

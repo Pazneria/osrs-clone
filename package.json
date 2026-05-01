@@ -71,6 +71,7 @@
     "test:combat:sim": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-simulator-guard.js",
     "test:combat:runtime": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-runtime-tests.js",
     "test:combat:guard": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-rollout-guard.js",
+    "test:combat:qa-debug-hooks": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-qa-debug-public-hooks-guard.js",
     "test:combat:hud": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-hud-runtime-guard.js",
     "test:combat:engagement-runtime": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-engagement-runtime-guard.js",
     "test:combat:facing": "set \"NODE=C:\\Program Files\\nodejs\\node.exe\" && \"%NODE%\" ./tools/tests/combat-facing-runtime-guard.js",

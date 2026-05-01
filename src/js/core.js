@@ -140,42 +140,17 @@
             };
         }
 
-        function getCombatQaDebugRuntime() {
-            return window.CombatQaDebugRuntime || null;
-        }
-
-        function getQaCombatDebugSnapshot() {
-            const runtime = getCombatQaDebugRuntime();
-            return runtime && typeof runtime.getSnapshot === 'function'
-                ? runtime.getSnapshot(buildCombatQaDebugContext())
-                : { tick: Number.isFinite(currentTick) ? currentTick : 0, player: {}, animation: {}, enemy: null, pursuit: null, autoRetaliate: null, hud: null, lastEnemyAttack: null };
-        }
-
-        function getQaCombatDebugSignature(snapshot = null) {
-            const runtime = getCombatQaDebugRuntime();
-            return runtime && typeof runtime.getSignature === 'function'
-                ? runtime.getSignature(buildCombatQaDebugContext(), snapshot)
-                : '';
-        }
-
-        function emitQaCombatDebugClearHistory() {
-            const runtime = getCombatQaDebugRuntime();
-            if (runtime && typeof runtime.emitClearHistory === 'function') {
-                runtime.emitClearHistory(buildCombatQaDebugContext());
+        function installCombatQaDebugHooks() {
+            const runtime = window.CombatQaDebugRuntime || null;
+            if (runtime && typeof runtime.publishWindowHooks === 'function') {
+                runtime.publishWindowHooks({
+                    windowRef: window,
+                    buildContext: buildCombatQaDebugContext
+                });
             }
         }
 
-        function emitQaCombatDebugSnapshot(reason = 'manual') {
-            const runtime = getCombatQaDebugRuntime();
-            return runtime && typeof runtime.emitSnapshot === 'function'
-                ? runtime.emitSnapshot(buildCombatQaDebugContext(), reason)
-                : getQaCombatDebugSnapshot();
-        }
-
-        window.getQaCombatDebugSnapshot = getQaCombatDebugSnapshot;
-        window.getQaCombatDebugSignature = getQaCombatDebugSignature;
-        window.emitQaCombatDebugClearHistory = emitQaCombatDebugClearHistory;
-        window.emitQaCombatDebugSnapshot = emitQaCombatDebugSnapshot;
+        installCombatQaDebugHooks();
 
         // 3D Array Logic: logicalMap[z][y][x]
         let logicalMap = []; 
@@ -1547,8 +1522,8 @@
                 setQaCameraView: (typeof window.setQaCameraView === 'function') ? window.setQaCameraView : null,
                 setQaSkillLevel,
                 setQaUnlockFlag,
-                emitQaCombatDebugSnapshot,
-                emitQaCombatDebugClearHistory,
+                emitQaCombatDebugSnapshot: (typeof window.emitQaCombatDebugSnapshot === 'function') ? window.emitQaCombatDebugSnapshot : null,
+                emitQaCombatDebugClearHistory: (typeof window.emitQaCombatDebugClearHistory === 'function') ? window.emitQaCombatDebugClearHistory : null,
                 openShopForMerchant: (typeof window.openShopForMerchant === 'function') ? window.openShopForMerchant : null,
                 applyQaInventoryPreset
             }, qaToolHandlers);
