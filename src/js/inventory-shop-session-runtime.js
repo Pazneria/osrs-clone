@@ -71,6 +71,17 @@
         return session.activeInventory;
     }
 
+    function publishShopSessionHooks(options = {}) {
+        const windowRef = options.windowRef || (typeof window !== 'undefined' ? window : null);
+        if (!windowRef) return;
+        if (typeof options.openShopForMerchant === 'function') {
+            windowRef.openShopForMerchant = options.openShopForMerchant;
+        }
+        if (typeof options.getActiveShopMerchantId === 'function') {
+            windowRef.getActiveShopMerchantId = options.getActiveShopMerchantId;
+        }
+    }
+
     window.InventoryShopSessionRuntime = {
         createShopSession,
         ensureMerchantInventory,
@@ -78,6 +89,7 @@
         getActiveMerchantId,
         isOpen,
         normalizeMerchantId,
+        publishShopSessionHooks,
         setOpen,
         updateActiveInventory
     };

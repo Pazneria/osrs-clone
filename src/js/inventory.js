@@ -529,8 +529,13 @@
             renderInventory();
         }
 
-        window.openShopForMerchant = openShop;
-        window.getActiveShopMerchantId = getActiveShopMerchantId;
+        if (inventoryShopSessionRuntime && typeof inventoryShopSessionRuntime.publishShopSessionHooks === 'function') {
+            inventoryShopSessionRuntime.publishShopSessionHooks({
+                windowRef: window,
+                openShopForMerchant: openShop,
+                getActiveShopMerchantId
+            });
+        }
 
         function renderShop() {
             const container = document.getElementById('shop-grid');

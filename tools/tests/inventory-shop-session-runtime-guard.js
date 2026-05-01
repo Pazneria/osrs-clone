@@ -24,6 +24,7 @@ function run() {
   assert(runtimeSource.includes("function createShopSession(options = {})"), "shop session runtime should own session creation");
   assert(runtimeSource.includes("function ensureMerchantInventory(session, merchantId, options = {})"), "shop session runtime should own merchant inventory activation");
   assert(runtimeSource.includes("function updateActiveInventory(session, inventory)"), "shop session runtime should own active inventory persistence");
+  assert(runtimeSource.includes("function publishShopSessionHooks(options = {})"), "shop session runtime should own shop compatibility hook publication");
   assert(runtimeIndex !== -1, "legacy manifest should include inventory shop session runtime");
   assert(inventoryIndex !== -1 && runtimeIndex < inventoryIndex, "legacy manifest should load shop session runtime before inventory.js");
   assert(packageSource.includes('"test:inventory-shop-session:guard"'), "package should expose a targeted inventory shop session guard");
@@ -33,7 +34,9 @@ function run() {
   assert(inventorySource.includes("inventoryShopSessionRuntime.createShopSession({ defaultMerchantId: 'general_store', inventorySize: 100 })"), "inventory.js should initialize shop state through the runtime");
   assert(inventorySource.includes("inventoryShopSessionRuntime.ensureMerchantInventory(shopSession, merchantId"), "inventory.js should activate merchant inventories through the runtime");
   assert(inventorySource.includes("inventoryShopSessionRuntime.updateActiveInventory(shopSession, nextInventory)"), "inventory.js should persist shop inventory changes through the runtime");
-  assert(inventorySource.includes("window.getActiveShopMerchantId = getActiveShopMerchantId"), "inventory.js should keep the existing active merchant compatibility hook");
+  assert(inventorySource.includes("inventoryShopSessionRuntime.publishShopSessionHooks({"), "inventory.js should publish shop hooks through the shop session runtime");
+  assert(!inventorySource.includes("window.openShopForMerchant = openShop"), "inventory.js should not directly publish openShopForMerchant");
+  assert(!inventorySource.includes("window.getActiveShopMerchantId = getActiveShopMerchantId"), "inventory.js should not directly publish getActiveShopMerchantId");
   assert(!inventorySource.includes("let isShopOpen = false;"), "inventory.js should not own shop open state as a loose local");
   assert(!inventorySource.includes("let activeShopMerchantId = 'general_store';"), "inventory.js should not own active merchant as a loose local");
   assert(!inventorySource.includes("const shopInventoriesByMerchant = {};"), "inventory.js should not own merchant shop cache as a loose local");
@@ -43,6 +46,13 @@ function run() {
   vm.runInNewContext(runtimeSource, sandbox, { filename: runtimePath });
   const runtime = sandbox.window.InventoryShopSessionRuntime;
   assert(runtime, "shop session runtime should execute in isolation");
+
+  const publishedWindow = {};
+  const openShopForMerchant = () => true;
+  const getActiveShopMerchantId = () => "general_store";
+  runtime.publishShopSessionHooks({ windowRef: publishedWindow, openShopForMerchant, getActiveShopMerchantId });
+  assert(publishedWindow.openShopForMerchant === openShopForMerchant, "shop hook publication should expose openShopForMerchant");
+  assert(publishedWindow.getActiveShopMerchantId === getActiveShopMerchantId, "shop hook publication should expose getActiveShopMerchantId");
 
   const session = runtime.createShopSession({ defaultMerchantId: "general_store", inventorySize: 3 });
   assert(runtime.getActiveMerchantId(session) === "general_store", "shop session should start on the default merchant");
