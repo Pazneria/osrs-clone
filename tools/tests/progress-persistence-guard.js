@@ -41,8 +41,13 @@ function run() {
       coreProgressRuntimeScript.includes("function sanitizeSkillState(context = {}, savedSkills)") &&
       coreProgressRuntimeScript.includes("function sanitizePlayerProfile(context = {}, savedProfile, options = {})") &&
       coreProgressRuntimeScript.includes("function serializePlayerProfile(context = {})") &&
-      coreProgressRuntimeScript.includes("function serializeAppearanceState(context = {})"),
-    "core progress runtime should own progress save encoding and decoding helpers"
+      coreProgressRuntimeScript.includes("function serializeAppearanceState(context = {})") &&
+      coreProgressRuntimeScript.includes("function saveProgressToStorage(context = {}, reason = 'manual')") &&
+      coreProgressRuntimeScript.includes("function clearProgressFromStorage(context = {}, options = {})") &&
+      coreProgressRuntimeScript.includes("function consumeFreshSessionRequest(context = {})") &&
+      coreProgressRuntimeScript.includes("function startProgressAutosave(context = {})") &&
+      coreProgressRuntimeScript.includes("function ensureProgressPersistenceLifecycle(context = {})"),
+    "core progress runtime should own progress save encoding, decoding, and lifecycle helpers"
   );
   assert(
     coreScript.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;") &&
@@ -52,15 +57,23 @@ function run() {
       coreScript.includes("getCoreProgressRuntime().sanitizeSkillState(buildCoreProgressRuntimeContext(), savedSkills)") &&
       coreScript.includes("getCoreProgressRuntime().sanitizePlayerProfile(buildCoreProgressRuntimeContext(), savedProfile, options)") &&
       coreScript.includes("getCoreProgressRuntime().serializePlayerProfile(buildCoreProgressRuntimeContext())") &&
-      coreScript.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())"),
-    "core should delegate progress save codec helpers through the core progress runtime"
+      coreScript.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())") &&
+      coreScript.includes("getCoreProgressRuntime().saveProgressToStorage(buildCoreProgressRuntimeContext(), reason)") &&
+      coreScript.includes("getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options)") &&
+      coreScript.includes("getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext())") &&
+      coreScript.includes("getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext())") &&
+      coreScript.includes("getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext())"),
+    "core should delegate progress save codec and lifecycle helpers through the core progress runtime"
   );
   assert(
     !coreScript.includes("return value.trim().toLowerCase();") &&
       !coreScript.includes("const restored = Array(size).fill(null);") &&
       !coreScript.includes("if (allowLegacyFallback && !restored.name)") &&
-      !coreScript.includes("const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];"),
-    "core should not keep progress codec helper bodies inline"
+      !coreScript.includes("const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];") &&
+      !coreScript.includes("window.localStorage.removeItem(PROGRESS_SAVE_KEY);") &&
+      !coreScript.includes("const requested = ['fresh', 'resetProgress', 'clearSave'].some((key) => shouldConsumeFreshSessionParam(params.get(key)))") &&
+      !coreScript.includes("window.addEventListener('beforeunload', () => saveProgressToStorage('beforeunload'))"),
+    "core should not keep progress codec or lifecycle helper bodies inline"
   );
   assert(
     coreScript.includes("function loadProgressFromStorage()"),
@@ -86,8 +99,8 @@ function run() {
     "core should include quest progress in the save payload"
   );
   assert(
-    coreScript.includes("gameSessionRuntime.saveProgressPayloadToStorage"),
-    "core should write progress through the session runtime"
+    coreProgressRuntimeScript.includes("gameSessionRuntime.saveProgressPayloadToStorage"),
+    "progress runtime should write progress through the session runtime"
   );
   assert(
     coreScript.includes("gameSessionRuntime.loadProgressPayloadFromStorage"),
@@ -110,16 +123,16 @@ function run() {
     "core should define autosave scheduler"
   );
   assert(
-    coreScript.includes("startProgressAutosave();"),
-    "core should start autosave during startup"
+    coreScript.includes("getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext())"),
+    "core should delegate autosave scheduling through the progress runtime"
   );
   assert(
-    coreScript.includes("window.addEventListener('beforeunload'"),
-    "core should flush progress on beforeunload"
+    coreProgressRuntimeScript.includes("windowRef.addEventListener('beforeunload'"),
+    "progress runtime should flush progress on beforeunload"
   );
   assert(
-    coreScript.includes("window.addEventListener('pagehide'"),
-    "core should flush progress on pagehide"
+    coreProgressRuntimeScript.includes("windowRef.addEventListener('pagehide'"),
+    "progress runtime should flush progress on pagehide"
   );
 
   const loadCall = coreScript.indexOf("const loadProgressResult = loadProgressFromStorage();");

@@ -267,6 +267,152 @@
         };
     }
 
+    function getProgressStorage(context = {}) {
+        if (context.storage) return context.storage;
+        const windowRef = context.windowRef || (typeof window !== 'undefined' ? window : null);
+        return windowRef ? windowRef.localStorage : null;
+    }
+
+    function canUseProgressStorage(context = {}) {
+        try {
+            const gameSessionRuntime = context.gameSessionRuntime || null;
+            return !!getProgressStorage(context)
+                && !!gameSessionRuntime
+                && typeof gameSessionRuntime.saveProgressPayloadToStorage === 'function'
+                && typeof gameSessionRuntime.loadProgressPayloadFromStorage === 'function';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function saveProgressToStorage(context = {}, reason = 'manual') {
+        if (!canUseProgressStorage(context)) return { ok: false, reason: 'storage_unavailable' };
+        const gameSessionRuntime = context.gameSessionRuntime;
+        const consoleRef = context.consoleRef || console;
+        try {
+            const payload = typeof context.buildProgressPayload === 'function'
+                ? context.buildProgressPayload(reason)
+                : null;
+            if (!payload) return { ok: false, reason: 'session_unavailable' };
+            return gameSessionRuntime.saveProgressPayloadToStorage({
+                storage: getProgressStorage(context),
+                storageKey: context.storageKey,
+                payload
+            });
+        } catch (error) {
+            consoleRef.warn('Progress save failed', error);
+            return { ok: false, reason: 'save_failed', error };
+        }
+    }
+
+    function clearProgressFromStorage(context = {}, options = {}) {
+        if (!canUseProgressStorage(context)) return { ok: false, reason: 'storage_unavailable' };
+        const clearPoseEditor = !!options.clearPoseEditor;
+        const consoleRef = context.consoleRef || console;
+        const storage = getProgressStorage(context);
+        try {
+            storage.removeItem(context.storageKey);
+            if (clearPoseEditor) storage.removeItem(context.poseEditorStorageKey || 'poseEditor.v1');
+            return { ok: true, clearedPoseEditor: clearPoseEditor };
+        } catch (error) {
+            consoleRef.warn('Progress save clear failed', error);
+            return { ok: false, reason: 'clear_failed', error };
+        }
+    }
+
+    function shouldConsumeFreshSessionParam(paramValue) {
+        if (paramValue === null || paramValue === undefined) return false;
+        if (paramValue === '') return true;
+        const normalized = String(paramValue).trim().toLowerCase();
+        return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y';
+    }
+
+    function consumeFreshSessionRequest(context = {}) {
+        const windowRef = context.windowRef || (typeof window !== 'undefined' ? window : null);
+        const documentRef = context.documentRef || (typeof document !== 'undefined' ? document : { title: '' });
+        const URLSearchParamsRef = context.URLSearchParamsRef || (typeof URLSearchParams !== 'undefined' ? URLSearchParams : null);
+        if (!windowRef || !windowRef.location || typeof URLSearchParamsRef !== 'function') return false;
+        const params = new URLSearchParamsRef(windowRef.location.search || '');
+        const freshSessionParamKeys = context.freshSessionParamKeys || ['fresh', 'resetProgress', 'clearSave'];
+        const requested = freshSessionParamKeys.some((key) => shouldConsumeFreshSessionParam(params.get(key)));
+        if (!requested) return false;
+
+        if (typeof context.clearProgressFromStorage === 'function') {
+            context.clearProgressFromStorage({ clearPoseEditor: true });
+        } else {
+            clearProgressFromStorage(context, { clearPoseEditor: true });
+        }
+
+        freshSessionParamKeys.forEach((key) => params.delete(key));
+        if (windowRef.history && typeof windowRef.history.replaceState === 'function') {
+            const nextQuery = params.toString();
+            const nextUrl = `${windowRef.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${windowRef.location.hash || ''}`;
+            windowRef.history.replaceState({}, documentRef.title, nextUrl);
+        }
+        return true;
+    }
+
+    function startProgressAutosave(context = {}) {
+        const clearIntervalRef = context.clearIntervalRef || (typeof clearInterval !== 'undefined' ? clearInterval : null);
+        const setIntervalRef = context.setIntervalRef || (typeof setInterval !== 'undefined' ? setInterval : null);
+        if (typeof setIntervalRef !== 'function') return null;
+        const existingHandle = context.progressAutosaveHandle;
+        if (existingHandle && typeof clearIntervalRef === 'function') clearIntervalRef(existingHandle);
+        const handle = setIntervalRef(() => {
+            if (typeof context.saveProgressToStorage === 'function') {
+                context.saveProgressToStorage('autosave');
+            } else {
+                saveProgressToStorage(context, 'autosave');
+            }
+        }, context.progressAutosaveIntervalMs);
+        if (typeof context.setProgressAutosaveHandle === 'function') {
+            context.setProgressAutosaveHandle(handle);
+        }
+        return handle;
+    }
+
+    function ensureProgressPersistenceLifecycle(context = {}) {
+        const playerEntryFlowState = context.playerEntryFlowState || null;
+        const windowRef = context.windowRef || (typeof window !== 'undefined' ? window : null);
+        if (!playerEntryFlowState) return false;
+        if (playerEntryFlowState.sessionActivated) return false;
+        playerEntryFlowState.sessionActivated = true;
+        if (typeof context.startProgressAutosave === 'function') {
+            context.startProgressAutosave();
+        } else {
+            startProgressAutosave(context);
+        }
+        if (!playerEntryFlowState.unloadSaveHooksRegistered && windowRef && typeof windowRef.addEventListener === 'function') {
+            const save = typeof context.saveProgressToStorage === 'function'
+                ? context.saveProgressToStorage
+                : (reason) => saveProgressToStorage(context, reason);
+            windowRef.addEventListener('beforeunload', () => save('beforeunload'));
+            windowRef.addEventListener('pagehide', () => save('pagehide'));
+            playerEntryFlowState.unloadSaveHooksRegistered = true;
+        }
+        return true;
+    }
+
+    function clearProgressSave(context = {}, options = {}) {
+        const windowRef = context.windowRef || (typeof window !== 'undefined' ? window : null);
+        const result = typeof context.clearProgressFromStorage === 'function'
+            ? context.clearProgressFromStorage(options)
+            : clearProgressFromStorage(context, options);
+        if (result && result.ok && options && options.reload && windowRef && windowRef.location) {
+            windowRef.location.reload();
+        }
+        return result;
+    }
+
+    function startFreshSession(context = {}) {
+        const windowRef = context.windowRef || (typeof window !== 'undefined' ? window : null);
+        const result = typeof context.clearProgressFromStorage === 'function'
+            ? context.clearProgressFromStorage({ clearPoseEditor: true })
+            : clearProgressFromStorage(context, { clearPoseEditor: true });
+        if (result && result.ok && windowRef && windowRef.location) windowRef.location.reload();
+        return result;
+    }
+
     window.CoreProgressRuntime = {
         sanitizeItemId,
         serializeInventorySlot,
@@ -282,6 +428,15 @@
         sanitizePlayerProfile,
         serializePlayerProfile,
         sanitizeAppearanceState,
-        serializeAppearanceState
+        serializeAppearanceState,
+        canUseProgressStorage,
+        saveProgressToStorage,
+        clearProgressFromStorage,
+        shouldConsumeFreshSessionParam,
+        consumeFreshSessionRequest,
+        startProgressAutosave,
+        ensureProgressPersistenceLifecycle,
+        clearProgressSave,
+        startFreshSession
     };
 })();

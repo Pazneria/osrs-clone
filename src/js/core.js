@@ -1172,15 +1172,7 @@
         syncGameSessionState();
 
         function canUseProgressStorage() {
-            try {
-                return typeof window !== 'undefined'
-                    && !!window.localStorage
-                    && !!gameSessionRuntime
-                    && typeof gameSessionRuntime.saveProgressPayloadToStorage === 'function'
-                    && typeof gameSessionRuntime.loadProgressPayloadFromStorage === 'function';
-            } catch (error) {
-                return false;
-            }
+            return getCoreProgressRuntime().canUseProgressStorage(buildCoreProgressRuntimeContext());
         }
 
         function getCoreProgressRuntime() {
@@ -1193,13 +1185,30 @@
         function buildCoreProgressRuntimeContext() {
             return {
                 ITEM_DB,
+                URLSearchParamsRef: typeof URLSearchParams === 'function' ? URLSearchParams : null,
+                clearIntervalRef: typeof clearInterval === 'function' ? clearInterval : null,
+                clearProgressFromStorage,
+                consoleRef: console,
+                documentRef: document,
                 equipment,
+                gameSessionRuntime,
                 getLevelForXp: typeof getLevelForXp === 'function' ? getLevelForXp : null,
                 maxSkillLevel: PROGRESS_MAX_SKILL_LEVEL,
+                playerEntryFlowState,
                 playerProfileDefaultName: PLAYER_PROFILE_DEFAULT_NAME,
                 playerProfileState,
                 playerSkills,
+                poseEditorStorageKey: 'poseEditor.v1',
+                progressAutosaveHandle,
+                progressAutosaveIntervalMs: PROGRESS_AUTOSAVE_INTERVAL_MS,
                 sanitizePlayerName,
+                saveProgressToStorage,
+                setIntervalRef: typeof setInterval === 'function' ? setInterval : null,
+                setProgressAutosaveHandle: (handle) => {
+                    progressAutosaveHandle = handle;
+                },
+                startProgressAutosave,
+                storageKey: PROGRESS_SAVE_KEY,
                 tutorialExitStep: TUTORIAL_EXIT_STEP,
                 tutorialWorldId: TUTORIAL_WORLD_ID,
                 windowRef: window
@@ -1315,19 +1324,7 @@
         }
 
         function saveProgressToStorage(reason = 'manual') {
-            if (!canUseProgressStorage()) return { ok: false, reason: 'storage_unavailable' };
-            try {
-                const payload = buildProgressPayload(reason);
-                if (!payload) return { ok: false, reason: 'session_unavailable' };
-                return gameSessionRuntime.saveProgressPayloadToStorage({
-                    storage: window.localStorage,
-                    storageKey: PROGRESS_SAVE_KEY,
-                    payload
-                });
-            } catch (error) {
-                console.warn('Progress save failed', error);
-                return { ok: false, reason: 'save_failed', error };
-            }
+            return getCoreProgressRuntime().saveProgressToStorage(buildCoreProgressRuntimeContext(), reason);
         }
 
         function loadProgressFromStorage() {
@@ -1457,71 +1454,30 @@
         }
 
         function clearProgressFromStorage(options = {}) {
-            if (!canUseProgressStorage()) return { ok: false, reason: 'storage_unavailable' };
-            const clearPoseEditor = !!options.clearPoseEditor;
-            try {
-                window.localStorage.removeItem(PROGRESS_SAVE_KEY);
-                if (clearPoseEditor) window.localStorage.removeItem('poseEditor.v1');
-                return { ok: true, clearedPoseEditor: clearPoseEditor };
-            } catch (error) {
-                console.warn('Progress save clear failed', error);
-                return { ok: false, reason: 'clear_failed', error };
-            }
+            return getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options);
         }
 
         function shouldConsumeFreshSessionParam(paramValue) {
-            if (paramValue === null || paramValue === undefined) return false;
-            if (paramValue === '') return true;
-            const normalized = String(paramValue).trim().toLowerCase();
-            return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y';
+            return getCoreProgressRuntime().shouldConsumeFreshSessionParam(paramValue);
         }
 
         function consumeFreshSessionRequest() {
-            if (typeof window === 'undefined' || !window.location || typeof URLSearchParams !== 'function') return false;
-            const params = new URLSearchParams(window.location.search || '');
-            const requested = ['fresh', 'resetProgress', 'clearSave'].some((key) => shouldConsumeFreshSessionParam(params.get(key)));
-            if (!requested) return false;
-
-            clearProgressFromStorage({ clearPoseEditor: true });
-
-            ['fresh', 'resetProgress', 'clearSave'].forEach((key) => params.delete(key));
-            if (window.history && typeof window.history.replaceState === 'function') {
-                const nextQuery = params.toString();
-                const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash || ''}`;
-                window.history.replaceState({}, document.title, nextUrl);
-            }
-            return true;
+            return getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext());
         }
 
         function startProgressAutosave() {
-            if (progressAutosaveHandle) clearInterval(progressAutosaveHandle);
-            progressAutosaveHandle = setInterval(() => {
-                saveProgressToStorage('autosave');
-            }, PROGRESS_AUTOSAVE_INTERVAL_MS);
+            return getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext());
         }
 
         function ensureProgressPersistenceLifecycle() {
-            if (playerEntryFlowState.sessionActivated) return;
-            playerEntryFlowState.sessionActivated = true;
-            startProgressAutosave();
-            if (!playerEntryFlowState.unloadSaveHooksRegistered) {
-                window.addEventListener('beforeunload', () => saveProgressToStorage('beforeunload'));
-                window.addEventListener('pagehide', () => saveProgressToStorage('pagehide'));
-                playerEntryFlowState.unloadSaveHooksRegistered = true;
-            }
+            return getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext());
         }
 
         window.clearProgressSave = function clearProgressSave(options = {}) {
-            const result = clearProgressFromStorage(options);
-            if (result && result.ok && options && options.reload && window.location) {
-                window.location.reload();
-            }
-            return result;
+            return getCoreProgressRuntime().clearProgressSave(buildCoreProgressRuntimeContext(), options);
         };
         window.startFreshSession = function startFreshSession() {
-            const result = clearProgressFromStorage({ clearPoseEditor: true });
-            if (result && result.ok && window.location) window.location.reload();
-            return result;
+            return getCoreProgressRuntime().startFreshSession(buildCoreProgressRuntimeContext());
         };
 
         // Temporary interaction diagnostics for QA flows.
