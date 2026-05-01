@@ -3,6 +3,7 @@
     const combatQaDebugRuntime = window.CombatQaDebugRuntime || null;
     const combatHudRuntime = window.CombatHudRuntime || null;
     const combatEngagementRuntime = window.CombatEngagementRuntime || null;
+    const combatEnemyOccupancyRuntime = window.CombatEnemyOccupancyRuntime || null;
     const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;
     const combatEnemyOverlayRuntime = window.CombatEnemyOverlayRuntime || null;
     const combatEnemyMovementRuntime = window.CombatEnemyMovementRuntime || null;
@@ -46,8 +47,6 @@
     let combatEnemyStateById = Object.create(null);
     let combatEnemyRenderLayer = null;
     let combatEnemyRenderersById = Object.create(null);
-    let combatEnemyOccupiedTiles = new Map();
-    let combatEnemyOccupancyDirty = true;
     let combatAutoRetaliateAggressorOrdinal = 1;
 
     function clonePoint(point) {
@@ -176,6 +175,22 @@
         return isEnemyAlive(enemyState) || isEnemyPendingDefeat(enemyState);
     }
 
+    function getCombatEnemyOccupancyRuntime() {
+        if (!combatEnemyOccupancyRuntime) {
+            throw new Error('CombatEnemyOccupancyRuntime missing. Load src/js/combat-enemy-occupancy-runtime.js before combat.js.');
+        }
+        return combatEnemyOccupancyRuntime;
+    }
+
+    function buildCombatEnemyOccupancyRuntimeContext() {
+        return {
+            combatEnemyStates,
+            logicalMap,
+            shouldEnemyOccupyTile,
+            TileId
+        };
+    }
+
     function captureEnemyPendingDefeatFacing(enemyState) {
         if (!enemyState) return 0;
         const renderer = combatEnemyRenderersById[enemyState.runtimeId];
@@ -222,42 +237,19 @@
     }
 
     function clearCombatEnemyOccupancy() {
-        combatEnemyOccupiedTiles.forEach((baseTile, key) => {
-            const parts = key.split(':');
-            if (parts.length !== 3) return;
-            const z = parseInt(parts[0], 10);
-            const x = parseInt(parts[1], 10);
-            const y = parseInt(parts[2], 10);
-            if (!logicalMap[z] || !logicalMap[z][y]) return;
-            if (logicalMap[z][y][x] === TileId.SOLID_NPC) logicalMap[z][y][x] = baseTile;
-        });
-        combatEnemyOccupiedTiles.clear();
+        getCombatEnemyOccupancyRuntime().clearEnemyOccupancy(buildCombatEnemyOccupancyRuntimeContext());
     }
 
     function markCombatEnemyOccupancyDirty() {
-        combatEnemyOccupancyDirty = true;
+        getCombatEnemyOccupancyRuntime().markEnemyOccupancyDirty();
     }
 
     function refreshCombatEnemyOccupancy() {
-        if (!combatEnemyOccupancyDirty) return;
-        clearCombatEnemyOccupancy();
-        for (let i = 0; i < combatEnemyStates.length; i++) {
-            const enemyState = combatEnemyStates[i];
-            if (!shouldEnemyOccupyTile(enemyState)) continue;
-            const z = enemyState.z;
-            const x = enemyState.x;
-            const y = enemyState.y;
-            if (!logicalMap[z] || !logicalMap[z][y]) continue;
-            const key = `${z}:${x}:${y}`;
-            if (!combatEnemyOccupiedTiles.has(key)) combatEnemyOccupiedTiles.set(key, logicalMap[z][y][x]);
-            logicalMap[z][y][x] = TileId.SOLID_NPC;
-        }
-        combatEnemyOccupancyDirty = false;
+        getCombatEnemyOccupancyRuntime().refreshEnemyOccupancy(buildCombatEnemyOccupancyRuntimeContext());
     }
 
     function getCombatEnemyOccupiedBaseTileId(x, y, z = 0) {
-        const key = `${z}:${x}:${y}`;
-        return combatEnemyOccupiedTiles.has(key) ? combatEnemyOccupiedTiles.get(key) : null;
+        return getCombatEnemyOccupancyRuntime().getEnemyOccupiedBaseTileId(x, y, z);
     }
 
     function resetCombatStateCollections() {
@@ -498,7 +490,7 @@
         clearCombatEnemyRenderers();
         clearCombatEnemyOccupancy();
         resetCombatStateCollections();
-        combatEnemyOccupancyDirty = true;
+        markCombatEnemyOccupancyDirty();
         clearPlayerCombatTarget({ force: true, reason: 'init-world-state', resetCooldown: true });
         playerState.lastDamagerEnemyId = null;
 

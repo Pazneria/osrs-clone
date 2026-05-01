@@ -12,6 +12,7 @@ import combatAnimationDebugPanelRuntimeScript from "../../js/combat-animation-de
 import combatHudRuntimeScript from "../../js/combat-hud-runtime.js?raw";
 import combatEngagementRuntimeScript from "../../js/combat-engagement-runtime.js?raw";
 import combatEnemyMovementRuntimeScript from "../../js/combat-enemy-movement-runtime.js?raw";
+import combatEnemyOccupancyRuntimeScript from "../../js/combat-enemy-occupancy-runtime.js?raw";
 import combatEnemyRenderRuntimeScript from "../../js/combat-enemy-render-runtime.js?raw";
 import combatEnemyOverlayRuntimeScript from "../../js/combat-enemy-overlay-runtime.js?raw";
 import qaCommandRuntimeScript from "../../js/qa-command-runtime.js?raw";
@@ -125,6 +126,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "combat-hud-runtime", filename: "src/js/combat-hud-runtime.js", code: combatHudRuntimeScript },
   { id: "combat-engagement-runtime", filename: "src/js/combat-engagement-runtime.js", code: combatEngagementRuntimeScript },
   { id: "combat-enemy-movement-runtime", filename: "src/js/combat-enemy-movement-runtime.js", code: combatEnemyMovementRuntimeScript },
+  { id: "combat-enemy-occupancy-runtime", filename: "src/js/combat-enemy-occupancy-runtime.js", code: combatEnemyOccupancyRuntimeScript },
   { id: "combat-enemy-render-runtime", filename: "src/js/combat-enemy-render-runtime.js", code: combatEnemyRenderRuntimeScript },
   { id: "combat-enemy-overlay-runtime", filename: "src/js/combat-enemy-overlay-runtime.js", code: combatEnemyOverlayRuntimeScript },
   { id: "qa-command-runtime", filename: "src/js/qa-command-runtime.js", code: qaCommandRuntimeScript },
