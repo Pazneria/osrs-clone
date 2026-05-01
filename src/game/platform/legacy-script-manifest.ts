@@ -64,6 +64,7 @@ import contextMenuRuntimeScript from "../../js/context-menu-runtime.js?raw";
 import coreChatRuntimeScript from "../../js/core-chat-runtime.js?raw";
 import corePlayerEntryRuntimeScript from "../../js/core-player-entry-runtime.js?raw";
 import coreTutorialRuntimeScript from "../../js/core-tutorial-runtime.js?raw";
+import coreProgressRuntimeScript from "../../js/core-progress-runtime.js?raw";
 import coreScript from "../../js/core.js?raw";
 import skillSpecsScript from "../../js/skills/specs.js?raw";
 import skillSpecRegistryScript from "../../js/skills/spec-registry.js?raw";
@@ -181,6 +182,7 @@ export const legacyScriptManifest: ReadonlyArray<LegacyScriptEntry> = [
   { id: "core-chat-runtime", filename: "src/js/core-chat-runtime.js", code: coreChatRuntimeScript },
   { id: "core-player-entry-runtime", filename: "src/js/core-player-entry-runtime.js", code: corePlayerEntryRuntimeScript },
   { id: "core-tutorial-runtime", filename: "src/js/core-tutorial-runtime.js", code: coreTutorialRuntimeScript },
+  { id: "core-progress-runtime", filename: "src/js/core-progress-runtime.js", code: coreProgressRuntimeScript },
   { id: "core", filename: "src/js/core.js", code: coreScript },
   { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },
   { id: "skills-spec-registry", filename: "src/js/skills/spec-registry.js", code: skillSpecRegistryScript },

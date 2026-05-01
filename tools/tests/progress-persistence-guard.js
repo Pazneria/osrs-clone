@@ -9,6 +9,8 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const corePath = path.join(root, "src/js/core.js");
   const coreScript = fs.readFileSync(corePath, "utf8");
+  const coreProgressRuntimeScript = fs.readFileSync(path.join(root, "src", "js", "core-progress-runtime.js"), "utf8");
+  const manifestScript = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const sessionBridgeScript = fs.readFileSync(path.join(root, "src", "game", "platform", "session-bridge.ts"), "utf8");
 
   assert(
@@ -26,6 +28,34 @@ function run() {
   assert(
     coreScript.includes("function saveProgressToStorage(reason = 'manual')"),
     "core should define saveProgressToStorage"
+  );
+  assert(
+    manifestScript.includes('../../js/core-progress-runtime.js?raw') &&
+      manifestScript.indexOf('id: "core-progress-runtime"') < manifestScript.indexOf('id: "core"'),
+    "legacy manifest should load core progress runtime before core.js"
+  );
+  assert(
+    coreProgressRuntimeScript.includes("window.CoreProgressRuntime") &&
+      coreProgressRuntimeScript.includes("function serializeItemArray(context = {}, slots)") &&
+      coreProgressRuntimeScript.includes("function deserializeItemArray(context = {}, savedSlots, size)") &&
+      coreProgressRuntimeScript.includes("function sanitizeSkillState(context = {}, savedSkills)") &&
+      coreProgressRuntimeScript.includes("function serializeAppearanceState(context = {})"),
+    "core progress runtime should own progress save encoding and decoding helpers"
+  );
+  assert(
+    coreScript.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;") &&
+      coreScript.includes("function buildCoreProgressRuntimeContext()") &&
+      coreScript.includes("getCoreProgressRuntime().serializeItemArray(buildCoreProgressRuntimeContext(), slots)") &&
+      coreScript.includes("getCoreProgressRuntime().deserializeItemArray(buildCoreProgressRuntimeContext(), savedSlots, size)") &&
+      coreScript.includes("getCoreProgressRuntime().sanitizeSkillState(buildCoreProgressRuntimeContext(), savedSkills)") &&
+      coreScript.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())"),
+    "core should delegate progress save codec helpers through the core progress runtime"
+  );
+  assert(
+    !coreScript.includes("return value.trim().toLowerCase();") &&
+      !coreScript.includes("const restored = Array(size).fill(null);") &&
+      !coreScript.includes("const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];"),
+    "core should not keep progress codec helper bodies inline"
   );
   assert(
     coreScript.includes("function loadProgressFromStorage()"),

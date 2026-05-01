@@ -63,6 +63,7 @@
         const coreChatRuntime = window.CoreChatRuntime || null;
         const corePlayerEntryRuntime = window.CorePlayerEntryRuntime || null;
         const coreTutorialRuntime = window.CoreTutorialRuntime || null;
+        const coreProgressRuntime = window.CoreProgressRuntime || null;
         const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
             ? gameSessionRuntime.createGameSession({
                 currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
@@ -1180,107 +1181,58 @@
             }
         }
 
+        function getCoreProgressRuntime() {
+            if (!coreProgressRuntime) {
+                throw new Error('CoreProgressRuntime missing. Load src/js/core-progress-runtime.js before core.js.');
+            }
+            return coreProgressRuntime;
+        }
+
+        function buildCoreProgressRuntimeContext() {
+            return {
+                ITEM_DB,
+                equipment,
+                getLevelForXp: typeof getLevelForXp === 'function' ? getLevelForXp : null,
+                maxSkillLevel: PROGRESS_MAX_SKILL_LEVEL,
+                playerSkills,
+                windowRef: window
+            };
+        }
+
         function sanitizeItemId(value) {
-            if (typeof value !== 'string') return '';
-            return value.trim().toLowerCase();
+            return getCoreProgressRuntime().sanitizeItemId(value);
         }
 
         function serializeInventorySlot(slot) {
-            if (!slot || !slot.itemData || typeof slot.itemData.id !== 'string') return null;
-            const itemId = sanitizeItemId(slot.itemData.id);
-            if (!itemId || !ITEM_DB[itemId]) return null;
-            const rawAmount = Number(slot.amount);
-            const amount = Number.isFinite(rawAmount) ? Math.max(1, Math.floor(rawAmount)) : 1;
-            return { itemId, amount };
+            return getCoreProgressRuntime().serializeInventorySlot(buildCoreProgressRuntimeContext(), slot);
         }
 
         function deserializeInventorySlot(serializedSlot) {
-            if (!serializedSlot || typeof serializedSlot !== 'object') return null;
-            const itemId = sanitizeItemId(serializedSlot.itemId);
-            if (!itemId || !ITEM_DB[itemId]) return null;
-            const itemData = ITEM_DB[itemId];
-            const rawAmount = Number(serializedSlot.amount);
-            const amount = itemData.stackable
-                ? (Number.isFinite(rawAmount) ? Math.max(1, Math.floor(rawAmount)) : 1)
-                : 1;
-            return { itemData, amount };
+            return getCoreProgressRuntime().deserializeInventorySlot(buildCoreProgressRuntimeContext(), serializedSlot);
         }
 
         function serializeItemArray(slots) {
-            if (!Array.isArray(slots)) return [];
-            return slots.map((slot) => serializeInventorySlot(slot));
+            return getCoreProgressRuntime().serializeItemArray(buildCoreProgressRuntimeContext(), slots);
         }
 
         function deserializeItemArray(savedSlots, size) {
-            const restored = Array(size).fill(null);
-            if (!Array.isArray(savedSlots)) return restored;
-            const max = Math.min(size, savedSlots.length);
-            for (let i = 0; i < max; i++) {
-                restored[i] = deserializeInventorySlot(savedSlots[i]);
-            }
-            return restored;
+            return getCoreProgressRuntime().deserializeItemArray(buildCoreProgressRuntimeContext(), savedSlots, size);
         }
 
         function serializeEquipmentState() {
-            const out = {};
-            const slotNames = Object.keys(equipment || {});
-            for (let i = 0; i < slotNames.length; i++) {
-                const slotName = slotNames[i];
-                const equippedItem = equipment[slotName];
-                out[slotName] = equippedItem && typeof equippedItem.id === 'string'
-                    ? sanitizeItemId(equippedItem.id)
-                    : null;
-            }
-            return out;
+            return getCoreProgressRuntime().serializeEquipmentState(buildCoreProgressRuntimeContext());
         }
 
         function deserializeEquipmentState(savedEquipment) {
-            const restored = {};
-            const slotNames = Object.keys(equipment || {});
-            for (let i = 0; i < slotNames.length; i++) {
-                const slotName = slotNames[i];
-                const itemId = savedEquipment && typeof savedEquipment === 'object'
-                    ? sanitizeItemId(savedEquipment[slotName])
-                    : '';
-                restored[slotName] = itemId && ITEM_DB[itemId] ? ITEM_DB[itemId] : null;
-            }
-            return restored;
+            return getCoreProgressRuntime().deserializeEquipmentState(buildCoreProgressRuntimeContext(), savedEquipment);
         }
 
         function sanitizeUserItemPrefs(savedPrefs) {
-            const restored = {};
-            if (!savedPrefs || typeof savedPrefs !== 'object') return restored;
-            const keys = Object.keys(savedPrefs);
-            for (let i = 0; i < keys.length; i++) {
-                const key = keys[i];
-                if (!key || typeof savedPrefs[key] !== 'string') continue;
-                restored[key] = savedPrefs[key];
-            }
-            return restored;
+            return getCoreProgressRuntime().sanitizeUserItemPrefs(savedPrefs);
         }
 
         function sanitizeSkillState(savedSkills) {
-            const defaults = playerSkills;
-            const skillIds = Object.keys(defaults);
-            const restored = {};
-            for (let i = 0; i < skillIds.length; i++) {
-                const skillId = skillIds[i];
-                const defaultEntry = defaults[skillId] || { xp: 0, level: 1 };
-                const savedEntry = savedSkills && typeof savedSkills === 'object' ? savedSkills[skillId] : null;
-                const xpRaw = savedEntry && Number.isFinite(savedEntry.xp) ? savedEntry.xp : defaultEntry.xp;
-                const xp = Math.max(0, Math.floor(xpRaw));
-
-                let level = defaultEntry.level;
-                if (savedEntry && Number.isFinite(savedEntry.level)) {
-                    level = Math.max(1, Math.min(PROGRESS_MAX_SKILL_LEVEL, Math.floor(savedEntry.level)));
-                }
-                if (typeof getLevelForXp === 'function') {
-                    level = Math.max(1, Math.min(PROGRESS_MAX_SKILL_LEVEL, getLevelForXp(xp)));
-                }
-
-                restored[skillId] = { xp, level };
-            }
-            return restored;
+            return getCoreProgressRuntime().sanitizeSkillState(buildCoreProgressRuntimeContext(), savedSkills);
         }
 
         function sanitizePlayerName(value) {
@@ -1426,17 +1378,7 @@
         }
 
         function sanitizeAppearanceState(savedAppearance) {
-            if (!window.playerAppearanceState || typeof window.playerAppearanceState !== 'object') return null;
-            if (!savedAppearance || typeof savedAppearance !== 'object') return null;
-
-            const gender = savedAppearance.gender === 1 ? 1 : 0;
-            const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];
-            const colors = [0, 0, 0, 0, 0];
-            for (let i = 0; i < colors.length; i++) {
-                const raw = Number(colorsIn[i]);
-                colors[i] = Number.isFinite(raw) ? Math.floor(raw) : 0;
-            }
-            return { gender, colors };
+            return getCoreProgressRuntime().sanitizeAppearanceState(buildCoreProgressRuntimeContext(), savedAppearance);
         }
 
         function buildProgressPayload(reason = 'manual') {
@@ -1454,14 +1396,7 @@
                 contentGrants: cloneContentGrantState(),
                 quests: questProgressState,
                 profile: serializePlayerProfile(),
-                appearance: window.playerAppearanceState
-                    ? {
-                        gender: window.playerAppearanceState.gender === 1 ? 1 : 0,
-                        colors: Array.isArray(window.playerAppearanceState.colors)
-                            ? window.playerAppearanceState.colors.slice(0, 5)
-                            : [0, 0, 0, 0, 0]
-                    }
-                    : null
+                appearance: getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())
             });
         }
 
