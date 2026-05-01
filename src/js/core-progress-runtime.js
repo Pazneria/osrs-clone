@@ -413,6 +413,27 @@
         return result;
     }
 
+    function resolvePublishedProgressContext(options) {
+        if (!options) return {};
+        if (typeof options.buildContext === 'function') {
+            const context = options.buildContext();
+            return context && typeof context === 'object' ? context : {};
+        }
+        return options.context && typeof options.context === 'object' ? options.context : {};
+    }
+
+    function publishProgressHooks(options = {}) {
+        const windowRef = options.windowRef || (typeof window !== 'undefined' ? window : {});
+        const clearSave = clearProgressSave;
+        const startFresh = startFreshSession;
+        windowRef.clearProgressSave = function clearProgressSave(optionsArg = {}) {
+            return clearSave(resolvePublishedProgressContext(options), optionsArg);
+        };
+        windowRef.startFreshSession = function startFreshSession() {
+            return startFresh(resolvePublishedProgressContext(options));
+        };
+    }
+
     window.CoreProgressRuntime = {
         sanitizeItemId,
         serializeInventorySlot,
@@ -437,6 +458,7 @@
         startProgressAutosave,
         ensureProgressPersistenceLifecycle,
         clearProgressSave,
-        startFreshSession
+        startFreshSession,
+        publishProgressHooks
     };
 })();

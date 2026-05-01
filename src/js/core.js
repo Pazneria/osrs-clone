@@ -1177,12 +1177,14 @@
             return getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext());
         }
 
-        window.clearProgressSave = function clearProgressSave(options = {}) {
-            return getCoreProgressRuntime().clearProgressSave(buildCoreProgressRuntimeContext(), options);
-        };
-        window.startFreshSession = function startFreshSession() {
-            return getCoreProgressRuntime().startFreshSession(buildCoreProgressRuntimeContext());
-        };
+        function installProgressHooks() {
+            getCoreProgressRuntime().publishProgressHooks({
+                windowRef: window,
+                buildContext: buildCoreProgressRuntimeContext
+            });
+        }
+
+        installProgressHooks();
 
         // Temporary interaction diagnostics for QA flows.
         if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;

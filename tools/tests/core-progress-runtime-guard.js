@@ -34,6 +34,7 @@ function run() {
   assert(runtimeSource.includes("function consumeFreshSessionRequest(context = {})"), "runtime should own fresh-session URL handling");
   assert(runtimeSource.includes("function startProgressAutosave(context = {})"), "runtime should own progress autosave scheduling");
   assert(runtimeSource.includes("function ensureProgressPersistenceLifecycle(context = {})"), "runtime should own progress persistence lifecycle hooks");
+  assert(runtimeSource.includes("function publishProgressHooks"), "runtime should own public progress hook publication");
 
   assert(coreSource.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;"), "core.js should resolve core progress runtime");
   assert(coreSource.includes("function buildCoreProgressRuntimeContext()"), "core.js should adapt progress codec context narrowly");
@@ -49,8 +50,11 @@ function run() {
   assert(coreSource.includes("getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext())"), "core.js should delegate fresh-session URL handling");
   assert(coreSource.includes("getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext())"), "core.js should delegate progress autosave scheduling");
   assert(coreSource.includes("getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext())"), "core.js should delegate progress lifecycle hooks");
-  assert(coreSource.includes("getCoreProgressRuntime().clearProgressSave(buildCoreProgressRuntimeContext(), options)"), "core.js should delegate public progress clear helper");
-  assert(coreSource.includes("getCoreProgressRuntime().startFreshSession(buildCoreProgressRuntimeContext())"), "core.js should delegate public fresh session helper");
+  assert(coreSource.includes("function installProgressHooks()"), "core.js should install public progress hooks through a narrow helper");
+  assert(coreSource.includes("getCoreProgressRuntime().publishProgressHooks({"), "core.js should delegate public progress hook publication to the progress runtime");
+  assert(coreSource.includes("buildContext: buildCoreProgressRuntimeContext"), "core.js should pass a lazy progress context builder to public progress hooks");
+  assert(!coreSource.includes("window.clearProgressSave = function"), "core.js should not directly publish clearProgressSave");
+  assert(!coreSource.includes("window.startFreshSession = function"), "core.js should not directly publish startFreshSession");
   assert(!coreSource.includes("return value.trim().toLowerCase();"), "core.js should not own item id normalization inline");
   assert(!coreSource.includes("const restored = Array(size).fill(null);"), "core.js should not own item array deserialization inline");
   assert(!coreSource.includes("if (allowLegacyFallback && !restored.name)"), "core.js should not own legacy profile fallback rules inline");
@@ -73,6 +77,7 @@ function run() {
   assert(typeof runtime.consumeFreshSessionRequest === "function", "runtime should expose consumeFreshSessionRequest");
   assert(typeof runtime.startProgressAutosave === "function", "runtime should expose startProgressAutosave");
   assert(typeof runtime.ensureProgressPersistenceLifecycle === "function", "runtime should expose ensureProgressPersistenceLifecycle");
+  assert(typeof runtime.publishProgressHooks === "function", "runtime should expose public progress hook publication");
 
   const itemDb = {
     coins: { id: "coins", stackable: true },
@@ -257,6 +262,35 @@ function run() {
     clearProgressFromStorage: (options) => ({ ok: !!options.clearPoseEditor })
   });
   assert(publicFresh.ok === true && reloadCount === 2, "runtime should clear pose editor state and reload for fresh sessions");
+
+  {
+    let buildContextCalls = 0;
+    let hookReloads = 0;
+    const clearedOptions = [];
+    const windowRef = { location: { reload: () => { hookReloads += 1; } } };
+    runtime.publishProgressHooks({
+      windowRef,
+      buildContext: () => {
+        buildContextCalls += 1;
+        return {
+          windowRef,
+          clearProgressFromStorage: (options) => {
+            clearedOptions.push(options || {});
+            return { ok: true };
+          }
+        };
+      }
+    });
+    assert(typeof windowRef.clearProgressSave === "function", "runtime should publish clearProgressSave");
+    assert(typeof windowRef.startFreshSession === "function", "runtime should publish startFreshSession");
+    const publishedClear = windowRef.clearProgressSave({ reload: true });
+    const publishedFresh = windowRef.startFreshSession();
+    assert(publishedClear.ok === true && publishedFresh.ok === true, "published progress hooks should delegate to runtime helpers");
+    assert(buildContextCalls === 2, "published progress hooks should resolve context lazily per call");
+    assert(clearedOptions[0].reload === true, "published clear hook should preserve clear options");
+    assert(clearedOptions[1].clearPoseEditor === true, "published fresh hook should clear pose editor state");
+    assert(hookReloads === 2, "published progress hooks should preserve successful reload behavior");
+  }
 
   console.log("Core progress runtime guard passed.");
 }

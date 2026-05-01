@@ -46,7 +46,8 @@ function run() {
       coreProgressRuntimeScript.includes("function clearProgressFromStorage(context = {}, options = {})") &&
       coreProgressRuntimeScript.includes("function consumeFreshSessionRequest(context = {})") &&
       coreProgressRuntimeScript.includes("function startProgressAutosave(context = {})") &&
-      coreProgressRuntimeScript.includes("function ensureProgressPersistenceLifecycle(context = {})"),
+      coreProgressRuntimeScript.includes("function ensureProgressPersistenceLifecycle(context = {})") &&
+      coreProgressRuntimeScript.includes("function publishProgressHooks"),
     "core progress runtime should own progress save encoding, decoding, and lifecycle helpers"
   );
   assert(
@@ -62,7 +63,8 @@ function run() {
       coreScript.includes("getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options)") &&
       coreScript.includes("getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext())") &&
       coreScript.includes("getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext())") &&
-      coreScript.includes("getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext())"),
+      coreScript.includes("getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext())") &&
+      coreScript.includes("getCoreProgressRuntime().publishProgressHooks({"),
     "core should delegate progress save codec and lifecycle helpers through the core progress runtime"
   );
   assert(
@@ -71,6 +73,8 @@ function run() {
       !coreScript.includes("if (allowLegacyFallback && !restored.name)") &&
       !coreScript.includes("const colorsIn = Array.isArray(savedAppearance.colors) ? savedAppearance.colors : [];") &&
       !coreScript.includes("window.localStorage.removeItem(PROGRESS_SAVE_KEY);") &&
+      !coreScript.includes("window.clearProgressSave = function") &&
+      !coreScript.includes("window.startFreshSession = function") &&
       !coreScript.includes("const requested = ['fresh', 'resetProgress', 'clearSave'].some((key) => shouldConsumeFreshSessionParam(params.get(key)))") &&
       !coreScript.includes("window.addEventListener('beforeunload', () => saveProgressToStorage('beforeunload'))"),
     "core should not keep progress codec or lifecycle helper bodies inline"
