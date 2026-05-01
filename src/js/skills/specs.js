@@ -516,6 +516,23 @@
                 dust_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'dust_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' }
             },
             pouchTable: { small_pouch: { requiredLevel: 10, capacity: 6 }, medium_pouch: { requiredLevel: 20, capacity: 13 }, large_pouch: { requiredLevel: 30, capacity: 26 } },
+            integration: {
+                miningEssenceSource: {
+                    skillId: 'mining',
+                    nodeId: 'rune_essence',
+                    itemId: 'rune_essence',
+                    requiredLevel: 1,
+                    persistent: true
+                },
+                magicRuneDemand: {
+                    skillId: 'magic',
+                    status: 'future_sink_contract',
+                    purpose: 'spell_resource',
+                    elementalRuneItemIds: ['ember_rune', 'water_rune', 'earth_rune', 'air_rune'],
+                    combinationRuneItemIds: ['steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune'],
+                    allRunesAreStackable: true
+                }
+            },
             economy: {
                 primaryResource: 'ember_rune',
                 valueTable: {
@@ -1954,6 +1971,143 @@
 
         if (errors.length > 0) {
             throw new Error('Runecrafting economy parity mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
+    function validateRunecraftingCrossSkillIntegration(skillSpecs) {
+        const runecraftingSpec = skillSpecs && skillSpecs.runecrafting ? skillSpecs.runecrafting : null;
+        const miningSpec = skillSpecs && skillSpecs.mining ? skillSpecs.mining : null;
+        if (!runecraftingSpec || !runecraftingSpec.recipeSet || !runecraftingSpec.economy) {
+            throw new Error('Runecrafting cross-skill integration mismatch\n- missing runecrafting spec tables');
+        }
+        if (!miningSpec || !miningSpec.nodeTable || !miningSpec.economy) {
+            throw new Error('Runecrafting cross-skill integration mismatch\n- missing mining spec tables');
+        }
+
+        const errors = [];
+        const integration = runecraftingSpec.integration && typeof runecraftingSpec.integration === 'object'
+            ? runecraftingSpec.integration
+            : {};
+        const miningSource = integration.miningEssenceSource && typeof integration.miningEssenceSource === 'object'
+            ? integration.miningEssenceSource
+            : {};
+        const magicDemand = integration.magicRuneDemand && typeof integration.magicRuneDemand === 'object'
+            ? integration.magicRuneDemand
+            : {};
+        const recipeRows = gatherRecipeRows(runecraftingSpec.recipeSet);
+        const recipeOutputIds = new Set();
+        const elementalRecipeOutputIds = new Set();
+        const combinationRecipeOutputIds = new Set();
+
+        for (let i = 0; i < recipeRows.length; i++) {
+            const recipe = recipeRows[i].recipe || {};
+            const recipeId = recipeRows[i].recipeId || '(unknown)';
+            const essenceItemId = typeof recipe.essenceItemId === 'string' ? recipe.essenceItemId : '';
+            const outputItemId = typeof recipe.outputItemId === 'string' ? recipe.outputItemId : '';
+            if (essenceItemId !== miningSource.itemId) {
+                errors.push('runecrafting:' + recipeId + ' must consume the mining essence item ' + (miningSource.itemId || '(missing)'));
+            }
+            if (!outputItemId) {
+                errors.push('runecrafting:' + recipeId + ' missing outputItemId');
+            } else {
+                recipeOutputIds.add(outputItemId);
+                if (recipe.requiresSecondaryRune) {
+                    combinationRecipeOutputIds.add(outputItemId);
+                } else {
+                    elementalRecipeOutputIds.add(outputItemId);
+                }
+            }
+        }
+
+        if (miningSource.skillId !== 'mining') errors.push('mining essence source must point at mining');
+        if (miningSource.nodeId !== 'rune_essence') errors.push('mining essence source must use rune_essence node');
+        if (miningSource.itemId !== 'rune_essence') errors.push('mining essence source must use rune_essence item');
+
+        const sourceNode = miningSpec.nodeTable[miningSource.nodeId];
+        if (!sourceNode || typeof sourceNode !== 'object') {
+            errors.push('mining essence source node missing from mining node table');
+        } else {
+            if (sourceNode.rewardItemId !== miningSource.itemId) {
+                errors.push('mining essence source reward must match runecrafting essence input');
+            }
+            if (!!sourceNode.persistent !== !!miningSource.persistent) {
+                errors.push('mining essence source persistence mismatch');
+            }
+            if (sourceNode.requiredLevel !== miningSource.requiredLevel) {
+                errors.push('mining essence source level mismatch');
+            }
+        }
+
+        const runecraftingValueTable = runecraftingSpec.economy.valueTable && typeof runecraftingSpec.economy.valueTable === 'object'
+            ? runecraftingSpec.economy.valueTable
+            : {};
+        const miningValueTable = miningSpec.economy.valueTable && typeof miningSpec.economy.valueTable === 'object'
+            ? miningSpec.economy.valueTable
+            : {};
+        const rcEssenceValue = runecraftingValueTable[miningSource.itemId];
+        const miningEssenceValue = miningValueTable[miningSource.itemId];
+        if (!rcEssenceValue || !miningEssenceValue) {
+            errors.push('rune essence value row must exist in both mining and runecrafting economy tables');
+        } else if (rcEssenceValue.buy !== miningEssenceValue.buy || rcEssenceValue.sell !== miningEssenceValue.sell) {
+            errors.push('rune essence buy/sell values must match between mining and runecrafting');
+        }
+
+        if (magicDemand.skillId !== 'magic') errors.push('magic rune demand must point at magic');
+        if (magicDemand.status !== 'future_sink_contract') errors.push('magic rune demand must stay marked as future_sink_contract until magic is live');
+        if (magicDemand.purpose !== 'spell_resource') errors.push('magic rune demand purpose must be spell_resource');
+
+        const elementalRuneIds = Array.isArray(magicDemand.elementalRuneItemIds) ? magicDemand.elementalRuneItemIds.slice() : [];
+        const combinationRuneIds = Array.isArray(magicDemand.combinationRuneItemIds) ? magicDemand.combinationRuneItemIds.slice() : [];
+        const allDemandRuneIds = elementalRuneIds.concat(combinationRuneIds);
+        const allDemandRuneSet = new Set(allDemandRuneIds);
+
+        if (allDemandRuneIds.length !== allDemandRuneSet.size) {
+            errors.push('magic rune demand contains duplicate rune ids');
+        }
+        if (!!magicDemand.allRunesAreStackable !== true) {
+            errors.push('magic rune demand must require stackable runes');
+        }
+
+        for (const outputId of elementalRecipeOutputIds) {
+            if (!elementalRuneIds.includes(outputId)) {
+                errors.push('elemental magic demand missing runecrafting output ' + outputId);
+            }
+        }
+        for (let i = 0; i < elementalRuneIds.length; i++) {
+            if (!elementalRecipeOutputIds.has(elementalRuneIds[i])) {
+                errors.push('elemental magic demand references non-elemental output ' + elementalRuneIds[i]);
+            }
+        }
+        for (const outputId of combinationRecipeOutputIds) {
+            if (!combinationRuneIds.includes(outputId)) {
+                errors.push('combination magic demand missing runecrafting output ' + outputId);
+            }
+        }
+        for (let i = 0; i < combinationRuneIds.length; i++) {
+            if (!combinationRecipeOutputIds.has(combinationRuneIds[i])) {
+                errors.push('combination magic demand references non-combination output ' + combinationRuneIds[i]);
+            }
+        }
+
+        const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS && typeof window.ItemCatalog.ITEM_DEFS === 'object'
+            ? window.ItemCatalog.ITEM_DEFS
+            : null;
+        for (let i = 0; i < allDemandRuneIds.length; i++) {
+            const runeId = allDemandRuneIds[i];
+            if (!recipeOutputIds.has(runeId)) errors.push('magic demand rune must be craftable through runecrafting: ' + runeId);
+            if (!runecraftingValueTable[runeId]) errors.push('magic demand rune missing runecrafting value row: ' + runeId);
+            if (itemDefs) {
+                const item = itemDefs[runeId];
+                if (!item) {
+                    errors.push('magic demand rune missing item catalog row: ' + runeId);
+                } else if (item.stackable !== true) {
+                    errors.push('magic demand rune must stay stackable: ' + runeId);
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Runecrafting cross-skill integration mismatch\n- ' + errors.join('\n- '));
         }
     }
 
@@ -3524,6 +3678,7 @@
     validateWoodcuttingBalanceCurve(SKILL_SPECS);
     validateMiningBalanceCurve(SKILL_SPECS);
     validateRunecraftingEconomyParity(SKILL_SPECS);
+    validateRunecraftingCrossSkillIntegration(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
     validateFiremakingBalanceCurve(SKILL_SPECS);

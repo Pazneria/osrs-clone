@@ -481,6 +481,7 @@ function run() {
   assert(rc.economy.merchantTable.rune_tutor.strictBuys === true, "rune tutor should use strict buy coverage");
   assert(rc.economy.merchantTable.combination_sage.strictBuys === true, "combination sage should use strict buy coverage");
   assert(typeof SkillSpecRegistry.getRunecraftingEconomySummary === "function", "runecrafting economy summary helper missing");
+  assert(typeof SkillSpecRegistry.getRunecraftingIntegrationSummary === "function", "runecrafting integration summary helper missing");
 
   loadBrowserScript(root, "src/js/content/item-catalog.js");
   const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS;
@@ -522,6 +523,25 @@ function run() {
     assert(specRow.buy === item.value, "runecrafting buy value mismatch for " + itemId);
     assert(specRow.sell === runecraftingSellValues[itemId], "runecrafting sell value mismatch for " + itemId);
   });
+  const runecraftingIntegration = SkillSpecRegistry.getRunecraftingIntegrationSummary();
+  assert(runecraftingIntegration.essenceSource.skillId === "mining", "runecrafting essence source should point at mining");
+  assert(runecraftingIntegration.essenceSource.nodeId === "rune_essence", "runecrafting essence source node mismatch");
+  assert(runecraftingIntegration.essenceSource.itemId === "rune_essence", "runecrafting essence source item mismatch");
+  assert(runecraftingIntegration.essenceSource.requiredLevel === 1, "rune essence source should stay level 1");
+  assert(runecraftingIntegration.essenceSource.persistent === true, "rune essence source should stay persistent");
+  assert(runecraftingIntegration.essenceSource.rewardMatches === true, "rune essence mining reward should feed runecrafting input");
+  assert(runecraftingIntegration.essenceSource.valueMatches === true, "rune essence value should match between mining and runecrafting");
+  assert(runecraftingIntegration.magicDemand.skillId === "magic", "runecrafting magic demand skill mismatch");
+  assert(runecraftingIntegration.magicDemand.status === "future_sink_contract", "runecrafting magic demand should remain a future sink contract");
+  assert(runecraftingIntegration.magicDemand.purpose === "spell_resource", "runecrafting magic demand purpose mismatch");
+  assert(runecraftingIntegration.magicDemand.elementalRuneItemIds.join(",") === "ember_rune,water_rune,earth_rune,air_rune", "runecrafting elemental magic-demand coverage mismatch");
+  assert(runecraftingIntegration.magicDemand.combinationRuneItemIds.join(",") === "steam_rune,smoke_rune,lava_rune,mud_rune,mist_rune,dust_rune", "runecrafting combination magic-demand coverage mismatch");
+  assert(runecraftingIntegration.magicDemand.allRunesHaveItemDefs === true, "all magic-demand runes should have item definitions");
+  assert(runecraftingIntegration.magicDemand.allRunesStackable === true, "all magic-demand runes should stay stackable");
+  assert(runecraftingIntegration.magicDemand.allRunesInEconomy === true, "all magic-demand runes should stay in runecrafting economy");
+  assert(runecraftingIntegration.magicDemand.allRunesHaveRecipeOutput === true, "all magic-demand runes should be craftable outputs");
+  assert(runecraftingIntegration.recipeCoverage.length === Object.keys(rc.recipeSet).length, "runecrafting integration recipe coverage mismatch");
+  assert(runecraftingIntegration.recipeCoverage.every((row) => row.essenceItemId === "rune_essence" && row.coveredByMagicDemand), "runecrafting recipes should consume rune essence and feed magic demand");
   assert(itemDefs.rune_sword_blade.value === 750, "item catalog rune sword blade value mismatch");
   assert(itemDefs.rune_arrowheads.value === 500, "item catalog rune arrowheads value mismatch");
   assert(itemDefs.rune_boots.value === 1000, "item catalog rune boots value mismatch");
@@ -982,6 +1002,39 @@ function run() {
     ),
     /runecrafting economy parity mismatch/i,
     "runecrafting-extra-pouch-unlock"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "rune_essence: { tileId: 2, oreType: 'rune_essence', requiredLevel: 1, difficulty: 6, xpPerSuccess: 2, rewardItemId: 'rune_essence', persistent: true }",
+      "rune_essence: { tileId: 2, oreType: 'rune_essence', requiredLevel: 1, difficulty: 6, xpPerSuccess: 2, rewardItemId: 'coal', persistent: true }",
+      "runecrafting-mining-source-reward"
+    ),
+    /runecrafting cross-skill integration mismatch/i,
+    "runecrafting-mining-source-reward"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "elementalRuneItemIds: ['ember_rune', 'water_rune', 'earth_rune', 'air_rune'],",
+      "elementalRuneItemIds: ['ember_rune', 'water_rune', 'earth_rune'],",
+      "runecrafting-magic-demand-elemental"
+    ),
+    /runecrafting cross-skill integration mismatch/i,
+    "runecrafting-magic-demand-elemental"
+  );
+  expectMutatedSpecsFailure(
+    root,
+    (source) => replaceOnce(
+      source,
+      "combinationRuneItemIds: ['steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune'],",
+      "combinationRuneItemIds: ['steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'steam_rune'],",
+      "runecrafting-magic-demand-duplicate"
+    ),
+    /runecrafting cross-skill integration mismatch/i,
+    "runecrafting-magic-demand-duplicate"
   );
   assert(woodSpec.economy.valueTable.logs.buy === itemDefs.logs.value, "woodcutting logs buy value mismatch");
   assert(woodSpec.economy.valueTable.oak_logs.buy === itemDefs.oak_logs.value, "woodcutting oak logs buy value mismatch");

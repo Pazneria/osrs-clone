@@ -74,6 +74,24 @@ function run() {
     "expected woodcutting node drift path to be reported"
   );
 
+  const runecraftingIntegrationDriftDir = path.join(tempRoot, "runecrafting-integration-drift");
+  writeCanonicalSkillSet(runecraftingIntegrationDriftDir, canonical.rows, {
+    mutateBySkillId: {
+      runecrafting: (row) => {
+        row.integration.magicRuneDemand.combinationRuneItemIds = row.integration.magicRuneDemand.combinationRuneItemIds.filter((itemId) => itemId !== "dust_rune");
+      }
+    }
+  });
+  const runecraftingIntegrationDriftResult = validateSkillDirectory(runecraftingIntegrationDriftDir, canonical.rows);
+  assert(
+    runecraftingIntegrationDriftResult.errors.some((entry) => entry.includes("content mismatch for skill 'runecrafting'")),
+    "expected runecrafting integration drift to fail full skill validation"
+  );
+  assert(
+    runecraftingIntegrationDriftResult.errors.some((entry) => entry.includes("integration.magicRuneDemand.combinationRuneItemIds")),
+    "expected runecrafting integration drift path to be reported"
+  );
+
   console.log("Skill validator negative tests passed.");
 }
 

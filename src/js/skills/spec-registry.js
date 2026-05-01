@@ -1202,6 +1202,99 @@
         };
     }
 
+    function getRunecraftingIntegrationSummary() {
+        const runecraftingSpec = getSkillSpec('runecrafting') || {};
+        const miningSpec = getSkillSpec('mining') || {};
+        const integration = runecraftingSpec.integration && typeof runecraftingSpec.integration === 'object'
+            ? runecraftingSpec.integration
+            : {};
+        const miningSource = integration.miningEssenceSource && typeof integration.miningEssenceSource === 'object'
+            ? integration.miningEssenceSource
+            : {};
+        const magicDemand = integration.magicRuneDemand && typeof integration.magicRuneDemand === 'object'
+            ? integration.magicRuneDemand
+            : {};
+        const miningNodeTable = miningSpec.nodeTable && typeof miningSpec.nodeTable === 'object'
+            ? miningSpec.nodeTable
+            : {};
+        const miningNode = miningNodeTable[miningSource.nodeId] && typeof miningNodeTable[miningSource.nodeId] === 'object'
+            ? miningNodeTable[miningSource.nodeId]
+            : {};
+        const miningValueTable = miningSpec.economy && miningSpec.economy.valueTable && typeof miningSpec.economy.valueTable === 'object'
+            ? miningSpec.economy.valueTable
+            : {};
+        const runecraftingValueTable = runecraftingSpec.economy && runecraftingSpec.economy.valueTable && typeof runecraftingSpec.economy.valueTable === 'object'
+            ? runecraftingSpec.economy.valueTable
+            : {};
+        const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS && typeof window.ItemCatalog.ITEM_DEFS === 'object'
+            ? window.ItemCatalog.ITEM_DEFS
+            : null;
+        const elementalRuneItemIds = Array.isArray(magicDemand.elementalRuneItemIds)
+            ? magicDemand.elementalRuneItemIds.slice()
+            : [];
+        const combinationRuneItemIds = Array.isArray(magicDemand.combinationRuneItemIds)
+            ? magicDemand.combinationRuneItemIds.slice()
+            : [];
+        const runeItemIds = elementalRuneItemIds.concat(combinationRuneItemIds);
+        const recipeSet = runecraftingSpec.recipeSet && typeof runecraftingSpec.recipeSet === 'object'
+            ? runecraftingSpec.recipeSet
+            : {};
+        const recipeCoverage = Object.keys(recipeSet).sort().map((recipeId) => {
+            const recipe = recipeSet[recipeId] || {};
+            const outputItemId = typeof recipe.outputItemId === 'string' ? recipe.outputItemId : '';
+            return {
+                recipeId,
+                outputItemId,
+                essenceItemId: typeof recipe.essenceItemId === 'string' ? recipe.essenceItemId : '',
+                demandGroup: recipe.requiresSecondaryRune ? 'combination' : 'elemental',
+                coveredByMagicDemand: runeItemIds.includes(outputItemId)
+            };
+        });
+        const craftableOutputIds = new Set(recipeCoverage.map((row) => row.outputItemId).filter(Boolean));
+        const miningValue = miningValueTable[miningSource.itemId] || {};
+        const runecraftingValue = runecraftingValueTable[miningSource.itemId] || {};
+        let stackableCount = 0;
+        let itemDefCount = 0;
+        let economyCount = 0;
+        let recipeOutputCount = 0;
+
+        for (let i = 0; i < runeItemIds.length; i++) {
+            const runeId = runeItemIds[i];
+            const item = itemDefs && itemDefs[runeId] ? itemDefs[runeId] : null;
+            if (item) itemDefCount++;
+            if (item && item.stackable === true) stackableCount++;
+            if (runecraftingValueTable[runeId]) economyCount++;
+            if (craftableOutputIds.has(runeId)) recipeOutputCount++;
+        }
+
+        return {
+            essenceSource: {
+                skillId: typeof miningSource.skillId === 'string' ? miningSource.skillId : '',
+                nodeId: typeof miningSource.nodeId === 'string' ? miningSource.nodeId : '',
+                itemId: typeof miningSource.itemId === 'string' ? miningSource.itemId : '',
+                requiredLevel: Number.isFinite(miningNode.requiredLevel) ? miningNode.requiredLevel : null,
+                persistent: !!miningNode.persistent,
+                rewardMatches: miningNode.rewardItemId === miningSource.itemId,
+                valueMatches: Number.isFinite(miningValue.buy) && Number.isFinite(runecraftingValue.buy)
+                    && miningValue.buy === runecraftingValue.buy
+                    && miningValue.sell === runecraftingValue.sell
+            },
+            magicDemand: {
+                skillId: typeof magicDemand.skillId === 'string' ? magicDemand.skillId : '',
+                status: typeof magicDemand.status === 'string' ? magicDemand.status : '',
+                purpose: typeof magicDemand.purpose === 'string' ? magicDemand.purpose : '',
+                elementalRuneItemIds,
+                combinationRuneItemIds,
+                runeItemIds,
+                allRunesHaveItemDefs: itemDefs === null ? null : itemDefCount === runeItemIds.length,
+                allRunesStackable: itemDefs === null ? null : stackableCount === runeItemIds.length,
+                allRunesInEconomy: economyCount === runeItemIds.length,
+                allRunesHaveRecipeOutput: recipeOutputCount === runeItemIds.length
+            },
+            recipeCoverage
+        };
+    }
+
     function computeFletchingRecipeMetrics(recipeId) {
         const fletchingSpec = getSkillSpec('fletching') || {};
         const recipeSet = fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
@@ -1350,6 +1443,7 @@
         computeCookingRecipeMetrics,
         getCookingBalanceSummary,
         getRunecraftingEconomySummary,
+        getRunecraftingIntegrationSummary,
         computeCraftingRecipeMetrics,
         getCraftingBalanceSummary,
         computeSmithingRecipeMetrics,

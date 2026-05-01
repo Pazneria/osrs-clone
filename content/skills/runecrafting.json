@@ -117,6 +117,35 @@
   "formulas": {
     "outputPerEssence": "1 + floor((level - scalingStartLevel) / 10), minimum 1"
   },
+  "integration": {
+    "magicRuneDemand": {
+      "allRunesAreStackable": true,
+      "combinationRuneItemIds": [
+        "steam_rune",
+        "smoke_rune",
+        "lava_rune",
+        "mud_rune",
+        "mist_rune",
+        "dust_rune"
+      ],
+      "elementalRuneItemIds": [
+        "ember_rune",
+        "water_rune",
+        "earth_rune",
+        "air_rune"
+      ],
+      "purpose": "spell_resource",
+      "skillId": "magic",
+      "status": "future_sink_contract"
+    },
+    "miningEssenceSource": {
+      "itemId": "rune_essence",
+      "nodeId": "rune_essence",
+      "persistent": true,
+      "requiredLevel": 1,
+      "skillId": "mining"
+    }
+  },
   "pouchTable": {
     "large_pouch": {
       "capacity": 26,

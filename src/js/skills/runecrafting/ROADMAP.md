@@ -306,6 +306,30 @@ The general store buys everything at half price.
 | Shops and economy | Selling runes and buying essence            |
 | Quest progression | Combination-runecrafting unlock progression |
 
+## Cross-Skill Integration Contract
+
+Runecrafting owns rune production, but its input and output loops are cross-skill contracts:
+
+- Mining is the canonical source of rune essence.
+- Magic is the canonical future sink for all crafted rune outputs.
+
+### Mining Essence Supply
+
+| Source Skill | Node ID | Output Item | Required Level | Supply Rule |
+| ------------ | ------- | ----------- | -------------- | ----------- |
+| Mining | rune_essence | Rune Essence | 1 | Persistent |
+
+Rune essence must continue to come from the mining `rune_essence` node, and that node must remain persistent so runecrafting does not inherit ore-style depletion downtime.
+
+### Magic Rune Demand
+
+| Sink Skill | Demand Status | Rune Family | Rune Items |
+| ---------- | ------------- | ----------- | ---------- |
+| Magic | future_sink_contract | Elemental runes | Ember Rune, Water Rune, Earth Rune, Air Rune |
+| Magic | future_sink_contract | Combination runes | Steam Rune, Smoke Rune, Lava Rune, Mud Rune, Mist Rune, Dust Rune |
+
+All runes in the demand contract must stay stackable, craftable through runecrafting recipes, and present in the runecrafting economy table. The `future_sink_contract` status means the Magic skill is not live yet, but future spell costs should consume these item IDs rather than defining a parallel rune set.
+
 ## Possible Rules
 
 | Rule                                                            | Value |

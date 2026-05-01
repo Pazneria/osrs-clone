@@ -990,6 +990,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-071 - Runecrafting cross-skill integration contract
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
+- Repro:
+  1. Review the open `RUNECRAFTING-012` milestone in the runecrafting status board.
+  2. Compare the runecrafting roadmap dependency notes against canonical mining essence data and future magic rune-demand assumptions.
+  3. Check whether a runtime/spec guard can prove rune essence supply and crafted rune demand stay aligned.
+- Expected: Runecrafting should explicitly lock mining as the rune-essence source and Magic as the future sink for every craftable elemental and combination rune.
+- Actual: The roadmap described Mining and Magic as dependencies, but the canonical spec had no integration contract or registry summary tying those loops to live mining nodes, rune outputs, item stackability, and economy rows.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a runecrafting integration contract in the authored skill spec for mining essence supply and future magic rune demand.
+  2. Expose a registry summary helper and focused contract assertions so drift is caught by spec guards.
+  3. Sync the runecrafting roadmap/status/index docs and generated skill mirror.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `integration.miningEssenceSource` and `integration.magicRuneDemand` to the canonical runecrafting skill spec.
+  - Added `SkillSpecRegistry.getRunecraftingIntegrationSummary()` plus spec-contract coverage for persistent mining essence, stackable craftable rune outputs, and runecrafting economy coverage.
+  - Documented the cross-skill contract in the runecrafting roadmap and advanced the runecrafting tracker from `RUNECRAFTING-012` to the balance pass.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-070 - Camp-threat combat band had no live authored spawns
 - Status: Fixed
 - Severity: S2

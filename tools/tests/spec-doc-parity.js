@@ -741,6 +741,27 @@ function runRunecraftingChecks(roadmap, spec) {
 
   const routeLines = lines.filter((line) => /^\|\s*(Steam|Smoke|Lava|Mud|Mist|Dust) Rune\s*\|/.test(line));
   assert(routeLines.length >= 6, "runecrafting combination route table is incomplete");
+
+  const integration = spec.integration || {};
+  const miningSource = integration.miningEssenceSource || {};
+  const magicDemand = integration.magicRuneDemand || {};
+  const elementalRuneLabels = (magicDemand.elementalRuneItemIds || []).map(toTitleCaseId).join(", ");
+  const combinationRuneLabels = (magicDemand.combinationRuneItemIds || []).map(toTitleCaseId).join(", ");
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*Mining\\s*\\|\\s*${escapeRegex(miningSource.nodeId)}\\s*\\|\\s*${escapeRegex(toTitleCaseId(miningSource.itemId))}\\s*\\|\\s*${miningSource.requiredLevel}\\s*\\|\\s*Persistent\\s*\\|`),
+    "runecrafting mining essence integration row mismatch"
+  );
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*${escapeRegex(toTitleCaseId(magicDemand.skillId))}\\s*\\|\\s*${escapeRegex(magicDemand.status)}\\s*\\|\\s*Elemental runes\\s*\\|\\s*${escapeRegex(elementalRuneLabels)}\\s*\\|`),
+    "runecrafting elemental magic demand row mismatch"
+  );
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*${escapeRegex(toTitleCaseId(magicDemand.skillId))}\\s*\\|\\s*${escapeRegex(magicDemand.status)}\\s*\\|\\s*Combination runes\\s*\\|\\s*${escapeRegex(combinationRuneLabels)}\\s*\\|`),
+    "runecrafting combination magic demand row mismatch"
+  );
 }
 
 function runCraftingChecks(roadmap, spec, itemDefs) {
