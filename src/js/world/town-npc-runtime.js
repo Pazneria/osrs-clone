@@ -316,6 +316,27 @@
         if (typeof context.updateMinimapCanvas === 'function') context.updateMinimapCanvas();
     }
 
+    function resolvePublishedTownNpcContext(options) {
+        if (!options) return {};
+        if (typeof options.buildContext === 'function') {
+            const context = options.buildContext();
+            return context && typeof context === 'object' ? context : {};
+        }
+        return options.context && typeof options.context === 'object' ? options.context : {};
+    }
+
+    function publishTutorialGateHooks(options = {}) {
+        const windowRef = options.windowRef || (typeof window !== 'undefined' ? window : {});
+        const isGateLocked = isTutorialGateLocked;
+        const refreshGateStates = refreshTutorialGateStates;
+        windowRef.isTutorialGateLocked = function isTutorialGateLocked(door) {
+            return isGateLocked(resolvePublishedTownNpcContext(options), door);
+        };
+        windowRef.refreshTutorialGateStates = function refreshTutorialGateStates() {
+            return refreshGateStates(resolvePublishedTownNpcContext(options));
+        };
+    }
+
     function openTownNpcDoorAt(context = {}, x, y, z = 0) {
         const door = findDoorStateAt(context, x, y, z);
         const logicalMap = context.logicalMap;
@@ -645,6 +666,7 @@
         occupiedTileKey,
         occupyTownNpcTile,
         openTownNpcDoorAt,
+        publishTutorialGateHooks,
         refreshTutorialGateStates,
         releaseTownNpcOccupiedTile,
         rememberStaticNpcBaseTile,

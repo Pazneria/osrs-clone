@@ -19,6 +19,7 @@ function run() {
   assert(runtimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC roaming update");
   assert(runtimeSource.includes("function applyTownNpcRigAnimation(actor, frameNowMs, visualBaseY)"), "town NPC runtime should own NPC rig animation");
   assert(runtimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
+  assert(runtimeSource.includes("function publishTutorialGateHooks"), "town NPC runtime should own tutorial gate public hook publication");
   assert(runtimeSource.includes("function buildStructureBoundsList(options = {})"), "town NPC runtime should own structure-bound shaping for NPC roam policy");
   assert(runtimeSource.includes("function createTownNpcActorRecord(options = {})"), "town NPC runtime should own town NPC actor record shaping");
   assert(runtimeSource.includes("function listQaNpcTargets(npcsToRender)"), "town NPC runtime should own QA NPC target snapshots");
@@ -28,6 +29,9 @@ function run() {
   assert(runtimeSource.includes("let loadedChunkNpcActors = new Map();"), "town NPC runtime should own loaded chunk NPC actor state");
   assert(worldSource.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC behavior");
   assert(worldSource.includes("worldTownNpcRuntime.updateWorldNpcRuntime(buildTownNpcRuntimeContext(), frameNowMs);"), "world.js should delegate NPC update ticks");
+  assert(worldSource.includes("function installTutorialGateHooks()"), "world.js should install tutorial gate hooks through a narrow helper");
+  assert(worldSource.includes("worldTownNpcRuntime.publishTutorialGateHooks({"), "world.js should delegate tutorial gate public hook publication");
+  assert(worldSource.includes("buildContext: buildTownNpcRuntimeContext"), "world.js should pass a lazy town NPC context builder to tutorial gate hooks");
   assert(worldSource.includes("worldTownNpcRuntime.buildStructureBoundsList"), "world.js should delegate town NPC structure bounds shaping");
   assert(worldSource.includes("worldTownNpcRuntime.createTownNpcActorRecord"), "world.js should delegate town NPC actor record shaping");
   assert(worldSource.includes("worldTownNpcRuntime.listQaNpcTargets(npcsToRender)"), "world.js should delegate QA NPC target snapshots");
@@ -44,6 +48,8 @@ function run() {
   assert(!worldSource.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(!worldSource.includes("let staticNpcBaseTiles = new Map();"), "world.js should not own static NPC tile state");
   assert(!worldSource.includes("let loadedChunkNpcActors = new Map();"), "world.js should not own loaded chunk NPC actor state");
+  assert(!worldSource.includes("window.refreshTutorialGateStates = refreshTutorialGateStates;"), "world.js should not directly publish refreshTutorialGateStates");
+  assert(!worldSource.includes("window.isTutorialGateLocked = isTutorialGateLocked;"), "world.js should not directly publish isTutorialGateLocked");
 
   global.window = {};
   vm.runInThisContext(runtimeSource, { filename: path.join(root, "src", "js", "world", "town-npc-runtime.js") });
@@ -57,6 +63,7 @@ function run() {
   assert(typeof runtime.resolveTownNpcRoamBounds === "function", "town NPC runtime should expose roam bounds resolver");
   assert(typeof runtime.resolveTownNpcRoamingRadius === "function", "town NPC runtime should expose roaming radius resolver");
   assert(typeof runtime.updateWorldNpcRuntime === "function", "town NPC runtime should expose NPC update runtime");
+  assert(typeof runtime.publishTutorialGateHooks === "function", "town NPC runtime should expose tutorial gate hook publication");
 
   const TileId = {
     SOLID_NPC: 99,
@@ -146,6 +153,47 @@ function run() {
   assert(qaTargets[0].visualX === 5.5 && qaTargets[0].visualY === 6.5, "QA target snapshot should preserve explicit visual positions");
   assert(qaTargets[1].actorId === "" && qaTargets[1].visualX === 2 && qaTargets[1].visualY === 3, "QA target snapshot should default missing identity and visual positions");
   assert(qaTargets[1].z === 0 && !qaTargets[1].rendered, "QA target snapshot should default missing z and hitbox state");
+
+  {
+    let buildContextCalls = 0;
+    let minimapUpdates = 0;
+    const windowRef = {};
+    const logicalMap = [[[TileId.WOODEN_GATE_CLOSED]]];
+    const door = {
+      x: 0,
+      y: 0,
+      z: 0,
+      isWoodenGate: true,
+      tutorialRequiredStep: 2,
+      isOpen: false,
+      openRot: 1,
+      closedRot: 0,
+      targetRotation: 0
+    };
+    let tutorialStep = 1;
+    runtime.publishTutorialGateHooks({
+      windowRef,
+      buildContext: () => {
+        buildContextCalls += 1;
+        return {
+          TileId,
+          TutorialRuntime: { getStep: () => tutorialStep },
+          doorsToRender: [door],
+          logicalMap,
+          updateMinimapCanvas: () => { minimapUpdates += 1; }
+        };
+      }
+    });
+    assert(typeof windowRef.isTutorialGateLocked === "function", "runtime should publish isTutorialGateLocked");
+    assert(typeof windowRef.refreshTutorialGateStates === "function", "runtime should publish refreshTutorialGateStates");
+    assert(windowRef.isTutorialGateLocked(door) === true, "published tutorial gate lock hook should delegate to runtime lock policy");
+    windowRef.refreshTutorialGateStates();
+    assert(door.isOpen === false && logicalMap[0][0][0] === TileId.WOODEN_GATE_CLOSED, "published tutorial gate refresh should keep locked gates closed");
+    tutorialStep = 2;
+    windowRef.refreshTutorialGateStates();
+    assert(door.isOpen === true && logicalMap[0][0][0] === TileId.WOODEN_GATE_OPEN, "published tutorial gate refresh should open unlocked gates");
+    assert(buildContextCalls === 3 && minimapUpdates === 2, "published tutorial gate hooks should resolve context lazily and refresh the minimap");
+  }
 
   console.log("Town NPC runtime guard passed.");
 }

@@ -1773,6 +1773,8 @@ function run() {
   assert(worldScript.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC movement and occupancy behavior");
   assert(townNpcRuntimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC update ticks");
   assert(townNpcRuntimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
+  assert(townNpcRuntimeSource.includes("function publishTutorialGateHooks"), "town NPC runtime should own tutorial gate public hook publication");
+  assert(worldScript.includes("worldTownNpcRuntime.publishTutorialGateHooks({"), "world.js should install tutorial gate hooks through the town NPC runtime");
   assert(townNpcRuntimeSource.includes("function createTownNpcActorRecord(options = {})"), "town NPC runtime should own town NPC actor shaping");
   assert(townNpcRuntimeSource.includes("function listQaNpcTargets(npcsToRender)"), "town NPC runtime should own QA NPC target snapshots");
   assert(townNpcRuntimeSource.includes("function resolveTownNpcRoamBounds(options = {})"), "town NPC runtime should own NPC roam bounds resolution");

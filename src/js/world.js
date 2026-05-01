@@ -163,16 +163,14 @@
             worldTownNpcRuntime.clearTownNpcRenderBindings(actor);
         }
 
-        function isTutorialGateLocked(door) {
-            return worldTownNpcRuntime.isTutorialGateLocked(buildTownNpcRuntimeContext(), door);
+        function installTutorialGateHooks() {
+            worldTownNpcRuntime.publishTutorialGateHooks({
+                windowRef: window,
+                buildContext: buildTownNpcRuntimeContext
+            });
         }
 
-        function refreshTutorialGateStates() {
-            worldTownNpcRuntime.refreshTutorialGateStates(buildTownNpcRuntimeContext());
-        }
-
-        window.refreshTutorialGateStates = refreshTutorialGateStates;
-        window.isTutorialGateLocked = isTutorialGateLocked;
+        installTutorialGateHooks();
 
         function updateWorldNpcRuntime(frameNowMs) {
             worldTownNpcRuntime.updateWorldNpcRuntime(buildTownNpcRuntimeContext(), frameNowMs);
@@ -1030,7 +1028,7 @@
             bankBoothsToRender = staticAuthoring.bankBoothsToRender;
             doorsToRender = staticAuthoring.doorsToRender;
             npcsToRender = staticAuthoring.npcsToRender;
-            refreshTutorialGateStates();
+            worldTownNpcRuntime.refreshTutorialGateStates(buildTownNpcRuntimeContext());
             sharedMaterials.activeRoofLandmarks = staticAuthoring.activeRoofLandmarks;
 
             const setMiningRockAt = (placement) => {

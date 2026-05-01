@@ -39,6 +39,7 @@ function run() {
   const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
+  const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "town-npc-runtime.js"), "utf8");
   const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
   const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
   const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
@@ -177,7 +178,9 @@ function run() {
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_pickaxe', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('hammer', 1);"), "mining instructor should grant tools before the completion check");
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('cooked_shrimp', 2);"), "combat instructor should grant starter combat supplies before the completion check");
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('coins', 1);"), "bank tutor should grant the tutorial token before the completion check");
-  assert(worldSource.includes("function isTutorialGateLocked(door)"), "world runtime should keep tutorial gates locked until their required step");
+  assert(townNpcRuntimeSource.includes("function isTutorialGateLocked(context, door)"), "town NPC runtime should keep tutorial gates locked until their required step");
+  assert(townNpcRuntimeSource.includes("function publishTutorialGateHooks"), "town NPC runtime should publish tutorial gate hooks for input/core consumers");
+  assert(worldSource.includes("worldTownNpcRuntime.publishTutorialGateHooks({"), "world runtime should install tutorial gate hooks through the town NPC runtime");
   assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_CLOSED"), "logical-map authoring runtime should handle closed wooden tutorial gates");
   assert(logicalMapAuthoringRuntimeSource.includes("WOODEN_GATE_OPEN"), "logical-map authoring runtime should handle open wooden tutorial gates");
   assert(worldSource.includes("function createFenceVisualGroup"), "world runtime should render real fence tiles");
