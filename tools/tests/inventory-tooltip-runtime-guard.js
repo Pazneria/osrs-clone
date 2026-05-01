@@ -39,6 +39,10 @@ assert.ok(
   "inventory tooltip runtime should own inventory tooltip positioning"
 );
 assert.ok(
+  runtimeSource.includes("function publishInventoryTooltipHooks(options = {})"),
+  "inventory tooltip runtime should own inventory tooltip hook publication"
+);
+assert.ok(
   inventorySource.includes("function getInventoryTooltipRuntime()"),
   "inventory.js should resolve the inventory tooltip runtime"
 );
@@ -49,6 +53,14 @@ assert.ok(
 assert.ok(
   inventorySource.includes("runtime.bindInventorySlotTooltip(Object.assign(buildInventoryTooltipOptions()"),
   "inventory.js should delegate tooltip binding"
+);
+assert.ok(
+  inventorySource.includes("inventoryTooltipRuntimeForPublication.publishInventoryTooltipHooks({"),
+  "inventory.js should publish tooltip hooks through the inventory tooltip runtime"
+);
+assert.ok(
+  !inventorySource.includes("window.hideInventoryHoverTooltip = hideInventoryHoverTooltip"),
+  "inventory.js should not directly publish hideInventoryHoverTooltip"
 );
 assert.ok(
   !inventorySource.includes("function buildItemTooltipSections(item, options = {})"),
@@ -71,6 +83,15 @@ const sandbox = { window: {} };
 vm.runInNewContext(runtimeSource, sandbox, { filename: "inventory-tooltip-runtime.js" });
 const runtime = sandbox.window.InventoryTooltipRuntime;
 assert.ok(runtime, "inventory tooltip runtime should evaluate in isolation");
+
+const publishedWindow = {};
+const hideInventoryHoverTooltip = () => {};
+runtime.publishInventoryTooltipHooks({ windowRef: publishedWindow, hideInventoryHoverTooltip });
+assert.strictEqual(
+  publishedWindow.hideInventoryHoverTooltip,
+  hideInventoryHoverTooltip,
+  "publishInventoryTooltipHooks should publish the hide tooltip compatibility hook"
+);
 
 const item = {
   name: "Rune Shield <safe>",

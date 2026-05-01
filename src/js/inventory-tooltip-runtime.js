@@ -20,6 +20,14 @@
         tooltip.classList.add('hidden');
     }
 
+    function publishInventoryTooltipHooks(options = {}) {
+        const windowRef = getWindowRef(options);
+        if (!windowRef) return;
+        if (typeof options.hideInventoryHoverTooltip === 'function') {
+            windowRef.hideInventoryHoverTooltip = options.hideInventoryHoverTooltip;
+        }
+    }
+
     function rectanglesOverlap(x, y, width, height, rect) {
         if (!rect) return false;
         return !(x + width <= rect.left || x >= rect.right || y + height <= rect.top || y >= rect.bottom);
@@ -237,6 +245,7 @@
         formatSignedTooltipStat,
         hideInventoryHoverTooltip,
         positionInventoryHoverTooltip,
+        publishInventoryTooltipHooks,
         rectanglesOverlap,
         showInventoryHoverTooltip
     };

@@ -226,7 +226,13 @@
                 getPreferredMenuAction
             });
         }
-        window.hideInventoryHoverTooltip = hideInventoryHoverTooltip;
+        const inventoryTooltipRuntimeForPublication = getInventoryTooltipRuntime();
+        if (inventoryTooltipRuntimeForPublication && typeof inventoryTooltipRuntimeForPublication.publishInventoryTooltipHooks === 'function') {
+            inventoryTooltipRuntimeForPublication.publishInventoryTooltipHooks({
+                windowRef: window,
+                hideInventoryHoverTooltip
+            });
+        }
 
         let rememberedDepositXAmount = null;
 
