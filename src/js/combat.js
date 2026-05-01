@@ -1189,96 +1189,52 @@
         return renderer;
     }
 
-    function getEnemyVisualMoveProgress(enemyState, frameNow) {
-        if (!enemyState) return 1;
-        const moved = enemyState.x !== enemyState.prevX || enemyState.y !== enemyState.prevY;
-        if (!moved) return 1;
-        const moveStartedAt = Number.isFinite(enemyState.moveTriggerAt) ? enemyState.moveTriggerAt : 0;
-        if (moveStartedAt <= 0) return 1;
-        const elapsed = Math.max(0, frameNow - moveStartedAt);
-        return Math.max(0, Math.min(1, elapsed / ENEMY_MOVE_LERP_DURATION_MS));
-    }
-
-    function isEnemyVisuallyMoving(enemyState, frameNow) {
-        if (!enemyState) return false;
-        const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
-        const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
-        if (enemyState.x === prevX && enemyState.y === prevY) return false;
-        return getEnemyVisualMoveProgress(enemyState, frameNow) < 1;
-    }
-
-    function shouldEnemyUseWalkBaseClip(enemyState, frameNow) {
-        if (isEnemyVisuallyMoving(enemyState, frameNow)) return true;
-        return hasTrackedEnemyLocomotionIntent(enemyState, frameNow);
-    }
-
-    function updateEnemyRenderer(enemyState, renderer, frameNow) {
-        const moveProgress = getEnemyVisualMoveProgress(enemyState, frameNow);
-        const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
-        const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
-        const hasRecentStepDirection = enemyState.x !== prevX || enemyState.y !== prevY;
-        const visuallyMoving = isEnemyVisuallyMoving(enemyState, frameNow);
-        const useWalkBaseClip = shouldEnemyUseWalkBaseClip(enemyState, frameNow);
-        const currentVisualX = prevX + ((enemyState.x - prevX) * moveProgress);
-        const currentVisualY = prevY + ((enemyState.y - prevY) * moveProgress);
-        const prevTerrainHeight = getVisualHeight(prevX, prevY, enemyState.z);
-        const terrainHeight = getVisualHeight(enemyState.x, enemyState.y, enemyState.z);
-        const currentVisualHeight = prevTerrainHeight + ((terrainHeight - prevTerrainHeight) * moveProgress);
-        const idlePhase = ((frameNow + (currentVisualX * 37) + (currentVisualY * 19)) % 1200) / 1200 * Math.PI * 2;
-        const idleBob = Math.sin(idlePhase) * 0.04;
-        renderer.group.position.set(currentVisualX, currentVisualHeight + idleBob, currentVisualY);
-
-        let targetYaw = enemyState.facingYaw;
-        let snapCombatFacing = false;
-        if (isEnemyPendingDefeat(enemyState) && Number.isFinite(enemyState.pendingDefeatFacingYaw)) {
-            targetYaw = enemyState.pendingDefeatFacingYaw;
-            snapCombatFacing = true;
-        } else if (useWalkBaseClip && hasRecentStepDirection) {
-            targetYaw = Math.atan2(enemyState.x - prevX, enemyState.y - prevY);
-            snapCombatFacing = false;
-        } else if (
-            enemyState.currentState === 'aggroed'
-            && enemyState.lockedTargetId === PLAYER_TARGET_ID
-            && isPlayerAlive()
-            && enemyState.z === playerState.z
-            && isPlayerCombatFacingReady()
-        ) {
-            targetYaw = Math.atan2(playerState.x - currentVisualX, playerState.y - currentVisualY);
-            snapCombatFacing = true;
-        }
-        if (targetYaw !== undefined) {
-            if (snapCombatFacing) {
-                renderer.group.rotation.y = targetYaw;
-            } else {
-                let diff = targetYaw - renderer.group.rotation.y;
-                while (diff < -Math.PI) diff += Math.PI * 2;
-                while (diff > Math.PI) diff -= Math.PI * 2;
-                const turnLerp = useWalkBaseClip ? 0.55 : 0.25;
-                renderer.group.rotation.y += diff * turnLerp;
-            }
-        }
-
-        renderer.hitbox.userData.gridX = enemyState.x;
-        renderer.hitbox.userData.gridY = enemyState.y;
-        renderer.hitbox.userData.z = enemyState.z;
-        if (!Number.isFinite(renderer.hitbox.userData.combatLevel)) {
-            const enemyType = getEnemyDefinition(enemyState.enemyId);
-            renderer.hitbox.userData.combatLevel = getEnemyCombatLevel(enemyType);
-        }
-        renderer.group.updateMatrixWorld(true);
-
-        combatEnemyRenderRuntime.updateEnemyVisualRenderer({
+    function buildCombatEnemyVisualFrameContext(enemyState, renderer, frameNow) {
+        return {
             windowRef: window,
             enemyState,
             renderer,
             frameNow,
-            idlePhase,
-            visuallyMoving,
-            useWalkBaseClip,
-            currentVisualX,
-            currentVisualY,
-            isEnemyActionAnimationActive
-        });
+            enemyMoveLerpDurationMs: ENEMY_MOVE_LERP_DURATION_MS,
+            getEnemyCombatLevel,
+            getEnemyDefinition,
+            getVisualHeight,
+            hasTrackedEnemyLocomotionIntent,
+            isEnemyActionAnimationActive,
+            isEnemyPendingDefeat,
+            isPlayerAlive,
+            isPlayerCombatFacingReady,
+            playerState,
+            playerTargetId: PLAYER_TARGET_ID
+        };
+    }
+
+    function getEnemyVisualMoveProgress(enemyState, frameNow) {
+        return combatEnemyRenderRuntime.getEnemyVisualMoveProgress(
+            buildCombatEnemyVisualFrameContext(enemyState, null, frameNow),
+            enemyState,
+            frameNow
+        );
+    }
+
+    function isEnemyVisuallyMoving(enemyState, frameNow) {
+        return combatEnemyRenderRuntime.isEnemyVisuallyMoving(
+            buildCombatEnemyVisualFrameContext(enemyState, null, frameNow),
+            enemyState,
+            frameNow
+        );
+    }
+
+    function shouldEnemyUseWalkBaseClip(enemyState, frameNow) {
+        return combatEnemyRenderRuntime.shouldEnemyUseWalkBaseClip(
+            buildCombatEnemyVisualFrameContext(enemyState, null, frameNow),
+            enemyState,
+            frameNow
+        );
+    }
+
+    function updateEnemyRenderer(enemyState, renderer, frameNow) {
+        combatEnemyRenderRuntime.updateEnemyVisualFrame(buildCombatEnemyVisualFrameContext(enemyState, renderer, frameNow));
     }
     function updateCombatRenderers(frameNow) {
         ensureCombatEnemyWorldReady();

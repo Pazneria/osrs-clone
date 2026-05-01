@@ -161,13 +161,14 @@ assert.ok(
   assert.ok(
   combatEnemyRenderRuntimeSource.includes("function createEnemyVisualRenderer(options = {})") &&
     combatEnemyRenderRuntimeSource.includes("function updateEnemyVisualRenderer(options = {})") &&
+    combatEnemyRenderRuntimeSource.includes("function updateEnemyVisualFrame(options = {})") &&
     combatEnemyOverlayRuntimeSource.includes("function createEnemyHitpointsBarRenderer(options = {})") &&
     combatSource.includes("function computeCombatLevelFromStats(stats)") &&
-    combatSource.includes("combatLevel = getEnemyCombatLevel(enemyType);") &&
+    combatEnemyRenderRuntimeSource.includes("renderer.hitbox.userData.combatLevel = getEnemyCombatLevel(enemyType);") &&
     combatEnemyRenderRuntimeSource.includes("combatLevel,") &&
     combatEnemyOverlayRuntimeSource.includes("function updateEnemyHitpointsBar(options = {})") &&
     combatSource.includes("combatEnemyRenderRuntime.createEnemyVisualRenderer({") &&
-    combatSource.includes("combatEnemyRenderRuntime.updateEnemyVisualRenderer({") &&
+    combatSource.includes("combatEnemyRenderRuntime.updateEnemyVisualFrame(buildCombatEnemyVisualFrameContext(enemyState, renderer, frameNow));") &&
     combatSource.includes("combatEnemyOverlayRuntime.updateCombatEnemyOverlays({") &&
     combatSource.includes("combatEnemyMovementRuntime") &&
     combatSource.includes("getCombatEnemyMovementRuntime().updateEnemyMovement(buildCombatEnemyMovementRuntimeContext(), attacks);") &&
@@ -178,8 +179,8 @@ assert.ok(
     combatSource.includes("function isPlayerCombatFacingReady()") &&
     combatSource.includes("function captureEnemyPendingDefeatFacing(enemyState)") &&
     combatSource.includes("enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);") &&
-    combatSource.includes("snapCombatFacing = true;") &&
-    combatSource.includes("renderer.group.rotation.y = targetYaw;"),
+    combatEnemyRenderRuntimeSource.includes("snapCombatFacing = true;") &&
+    combatEnemyRenderRuntimeSource.includes("renderer.group.rotation.y = targetYaw;"),
   "combat runtime should delegate overhead enemy hitpoint bars, support idle enemy roaming, smooth enemy movement, and keep melee combatants facing each other"
 );
 assert.ok(

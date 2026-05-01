@@ -928,8 +928,122 @@
         updateHumanoidEnemyRenderer(enemyState, renderer, frameNow, idlePhase, useWalkBaseClip);
     }
 
+    function getEnemyVisualMoveProgress(context = {}, enemyState, frameNow) {
+        if (!enemyState) return 1;
+        const moved = enemyState.x !== enemyState.prevX || enemyState.y !== enemyState.prevY;
+        if (!moved) return 1;
+        const moveStartedAt = Number.isFinite(enemyState.moveTriggerAt) ? enemyState.moveTriggerAt : 0;
+        if (moveStartedAt <= 0) return 1;
+        const durationMs = Number.isFinite(context.enemyMoveLerpDurationMs)
+            ? Math.max(1, Math.floor(context.enemyMoveLerpDurationMs))
+            : 500;
+        const elapsed = Math.max(0, frameNow - moveStartedAt);
+        return Math.max(0, Math.min(1, elapsed / durationMs));
+    }
+
+    function isEnemyVisuallyMoving(context = {}, enemyState, frameNow) {
+        if (!enemyState) return false;
+        const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
+        const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
+        if (enemyState.x === prevX && enemyState.y === prevY) return false;
+        return getEnemyVisualMoveProgress(context, enemyState, frameNow) < 1;
+    }
+
+    function shouldEnemyUseWalkBaseClip(context = {}, enemyState, frameNow) {
+        if (isEnemyVisuallyMoving(context, enemyState, frameNow)) return true;
+        return typeof context.hasTrackedEnemyLocomotionIntent === 'function'
+            ? context.hasTrackedEnemyLocomotionIntent(enemyState, frameNow)
+            : false;
+    }
+
+    function getVisualHeight(context = {}, x, y, z) {
+        return typeof context.getVisualHeight === 'function' ? context.getVisualHeight(x, y, z) : 0;
+    }
+
+    function updateEnemyVisualFrame(options = {}) {
+        setRenderContext(options);
+        const enemyState = options.enemyState || null;
+        const renderer = options.renderer || null;
+        const frameNow = Number.isFinite(options.frameNow) ? options.frameNow : Date.now();
+        if (!enemyState || !renderer || !renderer.group || !renderer.hitbox) return;
+
+        const playerState = options.playerState || {};
+        const playerTargetId = options.playerTargetId || 'player';
+        const moveProgress = getEnemyVisualMoveProgress(options, enemyState, frameNow);
+        const prevX = Number.isFinite(enemyState.prevX) ? enemyState.prevX : enemyState.x;
+        const prevY = Number.isFinite(enemyState.prevY) ? enemyState.prevY : enemyState.y;
+        const hasRecentStepDirection = enemyState.x !== prevX || enemyState.y !== prevY;
+        const visuallyMoving = isEnemyVisuallyMoving(options, enemyState, frameNow);
+        const useWalkBaseClip = shouldEnemyUseWalkBaseClip(options, enemyState, frameNow);
+        const currentVisualX = prevX + ((enemyState.x - prevX) * moveProgress);
+        const currentVisualY = prevY + ((enemyState.y - prevY) * moveProgress);
+        const prevTerrainHeight = getVisualHeight(options, prevX, prevY, enemyState.z);
+        const terrainHeight = getVisualHeight(options, enemyState.x, enemyState.y, enemyState.z);
+        const currentVisualHeight = prevTerrainHeight + ((terrainHeight - prevTerrainHeight) * moveProgress);
+        const idlePhase = ((frameNow + (currentVisualX * 37) + (currentVisualY * 19)) % 1200) / 1200 * Math.PI * 2;
+        const idleBob = Math.sin(idlePhase) * 0.04;
+        renderer.group.position.set(currentVisualX, currentVisualHeight + idleBob, currentVisualY);
+
+        let targetYaw = enemyState.facingYaw;
+        let snapCombatFacing = false;
+        if (
+            typeof options.isEnemyPendingDefeat === 'function'
+            && options.isEnemyPendingDefeat(enemyState)
+            && Number.isFinite(enemyState.pendingDefeatFacingYaw)
+        ) {
+            targetYaw = enemyState.pendingDefeatFacingYaw;
+            snapCombatFacing = true;
+        } else if (useWalkBaseClip && hasRecentStepDirection) {
+            targetYaw = Math.atan2(enemyState.x - prevX, enemyState.y - prevY);
+            snapCombatFacing = false;
+        } else if (
+            enemyState.currentState === 'aggroed'
+            && enemyState.lockedTargetId === playerTargetId
+            && (typeof options.isPlayerAlive !== 'function' || options.isPlayerAlive())
+            && enemyState.z === playerState.z
+            && (typeof options.isPlayerCombatFacingReady !== 'function' || options.isPlayerCombatFacingReady())
+        ) {
+            targetYaw = Math.atan2(playerState.x - currentVisualX, playerState.y - currentVisualY);
+            snapCombatFacing = true;
+        }
+        if (targetYaw !== undefined) {
+            if (snapCombatFacing) {
+                renderer.group.rotation.y = targetYaw;
+            } else {
+                let diff = targetYaw - renderer.group.rotation.y;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                const turnLerp = useWalkBaseClip ? 0.55 : 0.25;
+                renderer.group.rotation.y += diff * turnLerp;
+            }
+        }
+
+        renderer.hitbox.userData.gridX = enemyState.x;
+        renderer.hitbox.userData.gridY = enemyState.y;
+        renderer.hitbox.userData.z = enemyState.z;
+        if (!Number.isFinite(renderer.hitbox.userData.combatLevel)) {
+            const enemyType = typeof options.getEnemyDefinition === 'function'
+                ? options.getEnemyDefinition(enemyState.enemyId)
+                : null;
+            renderer.hitbox.userData.combatLevel = getEnemyCombatLevel(enemyType);
+        }
+        renderer.group.updateMatrixWorld(true);
+
+        updateEnemyVisualRenderer(Object.assign({}, options, {
+            idlePhase,
+            visuallyMoving,
+            useWalkBaseClip,
+            currentVisualX,
+            currentVisualY
+        }));
+    }
+
     window.CombatEnemyRenderRuntime = {
         createEnemyVisualRenderer,
-        updateEnemyVisualRenderer
+        updateEnemyVisualRenderer,
+        updateEnemyVisualFrame,
+        getEnemyVisualMoveProgress,
+        isEnemyVisuallyMoving,
+        shouldEnemyUseWalkBaseClip
     };
 })();
