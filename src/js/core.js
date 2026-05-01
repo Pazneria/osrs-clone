@@ -657,6 +657,8 @@
             return {
                 playerProfileState,
                 tutorialExitStep: TUTORIAL_EXIT_STEP,
+                tutorialActiveBounds: TUTORIAL_ACTIVE_BOUNDS,
+                tutorialRecoverySpawns: TUTORIAL_RECOVERY_SPAWNS,
                 mainOverworldWorldId: MAIN_OVERWORLD_WORLD_ID,
                 isTutorialWorldActive,
                 ensureTutorialItem,
@@ -1266,24 +1268,23 @@
         }
 
         function isInsideTutorialActiveBounds(x, y, z) {
-            return z === TUTORIAL_ACTIVE_BOUNDS.z
-                && x >= TUTORIAL_ACTIVE_BOUNDS.xMin
-                && x <= TUTORIAL_ACTIVE_BOUNDS.xMax
-                && y >= TUTORIAL_ACTIVE_BOUNDS.yMin
-                && y <= TUTORIAL_ACTIVE_BOUNDS.yMax;
+            return coreTutorialRuntime && typeof coreTutorialRuntime.isInsideActiveBounds === 'function'
+                ? coreTutorialRuntime.isInsideActiveBounds(buildTutorialRuntimeContext(), x, y, z)
+                : false;
         }
 
         function isTutorialWalkTileAllowed(x, y, z) {
-            if (!isTutorialWorldActive() || (playerProfileState && playerProfileState.tutorialCompletedAt)) return true;
-            return isInsideTutorialActiveBounds(x, y, z);
+            return coreTutorialRuntime && typeof coreTutorialRuntime.isWalkTileAllowed === 'function'
+                ? coreTutorialRuntime.isWalkTileAllowed(buildTutorialRuntimeContext(), x, y, z)
+                : true;
         }
 
         window.isTutorialWalkTileAllowed = isTutorialWalkTileAllowed;
 
         function getTutorialRecoverySpawnForStep(step) {
-            const safeStep = Math.max(0, Math.min(TUTORIAL_EXIT_STEP, Math.floor(Number(step) || 0)));
-            const spawn = TUTORIAL_RECOVERY_SPAWNS[safeStep] || TUTORIAL_RECOVERY_SPAWNS[0];
-            return { x: spawn.x, y: spawn.y, z: spawn.z };
+            return coreTutorialRuntime && typeof coreTutorialRuntime.getRecoverySpawnForStep === 'function'
+                ? coreTutorialRuntime.getRecoverySpawnForStep(buildTutorialRuntimeContext(), step)
+                : { x: TUTORIAL_RECOVERY_SPAWNS[0].x, y: TUTORIAL_RECOVERY_SPAWNS[0].y, z: TUTORIAL_RECOVERY_SPAWNS[0].z };
         }
 
         function serializePlayerProfile() {

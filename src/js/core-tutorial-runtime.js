@@ -26,6 +26,51 @@
             : 'main_overworld';
     }
 
+    function getTutorialActiveBounds(context) {
+        const bounds = context.tutorialActiveBounds || {};
+        return {
+            xMin: Number.isFinite(bounds.xMin) ? Math.floor(bounds.xMin) : 0,
+            xMax: Number.isFinite(bounds.xMax) ? Math.floor(bounds.xMax) : 0,
+            yMin: Number.isFinite(bounds.yMin) ? Math.floor(bounds.yMin) : 0,
+            yMax: Number.isFinite(bounds.yMax) ? Math.floor(bounds.yMax) : 0,
+            z: Number.isFinite(bounds.z) ? Math.floor(bounds.z) : 0
+        };
+    }
+
+    function clonePoint(point) {
+        return {
+            x: Number.isFinite(point && point.x) ? Math.floor(point.x) : 0,
+            y: Number.isFinite(point && point.y) ? Math.floor(point.y) : 0,
+            z: Number.isFinite(point && point.z) ? Math.floor(point.z) : 0
+        };
+    }
+
+    function isInsideActiveBounds(options = {}, x, y, z) {
+        const context = getContext(options);
+        const bounds = getTutorialActiveBounds(context);
+        return z === bounds.z
+            && x >= bounds.xMin
+            && x <= bounds.xMax
+            && y >= bounds.yMin
+            && y <= bounds.yMax;
+    }
+
+    function isWalkTileAllowed(options = {}, x, y, z) {
+        const context = getContext(options);
+        const profile = context.playerProfileState || null;
+        if (!callBoolean(context, 'isTutorialWorldActive') || (profile && profile.tutorialCompletedAt)) return true;
+        return isInsideActiveBounds({ context }, x, y, z);
+    }
+
+    function getRecoverySpawnForStep(options = {}, step) {
+        const context = getContext(options);
+        const recoverySpawns = Array.isArray(context.tutorialRecoverySpawns) ? context.tutorialRecoverySpawns : [];
+        const exitStep = getTutorialExitStep(context);
+        const safeStep = Math.max(0, Math.min(exitStep, Math.floor(Number(step) || 0)));
+        const spawn = recoverySpawns[safeStep] || recoverySpawns[0] || { x: 0, y: 0, z: 0 };
+        return clonePoint(spawn);
+    }
+
     function getTutorialStep(options = {}) {
         const context = getContext(options);
         const profile = context.playerProfileState || null;
@@ -383,6 +428,9 @@
         getStep: getTutorialStep,
         setStep: setTutorialStep,
         recordBankAction: recordTutorialBankAction,
+        isInsideActiveBounds,
+        isWalkTileAllowed,
+        getRecoverySpawnForStep,
         isExitUnlocked: (options = {}) => getTutorialStep(options) >= getTutorialExitStep(getContext(options))
     };
 })();
