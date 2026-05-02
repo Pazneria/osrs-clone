@@ -1,4 +1,13 @@
 {
+  "balance": {
+    "maxInventoryEssence": 28,
+    "routeTravelTicks": {
+      "air_altar": 42,
+      "earth_altar": 36,
+      "ember_altar": 24,
+      "water_altar": 30
+    }
+  },
   "economy": {
     "generalStoreFallback": {
       "buyPolicy": "half_price_floor"
@@ -115,7 +124,8 @@
     }
   },
   "formulas": {
-    "outputPerEssence": "1 + floor((level - scalingStartLevel) / 10), minimum 1"
+    "outputPerEssence": "1 + floor((level - scalingStartLevel) / 10), minimum 1",
+    "travelAdjusted": "per-action totals / (action ticks + route travel ticks)"
   },
   "integration": {
     "magicRuneDemand": {
@@ -146,6 +156,13 @@
       "skillId": "mining"
     }
   },
+  "levelBands": [
+    1,
+    10,
+    20,
+    30,
+    40
+  ],
   "pouchTable": {
     "large_pouch": {
       "capacity": 26,
@@ -169,7 +186,7 @@
       "requiresSecondaryRune": false,
       "scalingStartLevel": 30,
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 12
+      "xpPerEssence": 20
     },
     "dust_combo_from_air": {
       "altarName": "Air Altar",
@@ -181,7 +198,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "earth_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "dust_combo_from_earth": {
       "altarName": "Earth Altar",
@@ -193,7 +210,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "air_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "earth_altar": {
       "altarName": "Earth Altar",
@@ -203,7 +220,7 @@
       "requiresSecondaryRune": false,
       "scalingStartLevel": 20,
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 9
+      "xpPerEssence": 14
     },
     "ember_altar": {
       "altarName": "Ember Altar",
@@ -225,7 +242,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "ember_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "lava_combo_from_ember": {
       "altarName": "Ember Altar",
@@ -237,7 +254,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "earth_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "mist_combo_from_air": {
       "altarName": "Air Altar",
@@ -249,7 +266,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "water_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "mist_combo_from_water": {
       "altarName": "Water Altar",
@@ -261,7 +278,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "air_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "mud_combo_from_earth": {
       "altarName": "Earth Altar",
@@ -273,7 +290,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "water_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "mud_combo_from_water": {
       "altarName": "Water Altar",
@@ -285,7 +302,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "earth_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "smoke_combo_from_air": {
       "altarName": "Air Altar",
@@ -297,7 +314,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "ember_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "smoke_combo_from_ember": {
       "altarName": "Ember Altar",
@@ -309,7 +326,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "air_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "steam_combo_from_ember": {
       "altarName": "Ember Altar",
@@ -321,7 +338,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "water_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "steam_combo_from_water": {
       "altarName": "Water Altar",
@@ -333,7 +350,7 @@
       "scalingStartLevel": 40,
       "secondaryRuneItemId": "ember_rune",
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 16
+      "xpPerEssence": 24
     },
     "water_altar": {
       "altarName": "Water Altar",
@@ -343,7 +360,7 @@
       "requiresSecondaryRune": false,
       "scalingStartLevel": 10,
       "targetObj": "ALTAR_CANDIDATE",
-      "xpPerEssence": 7
+      "xpPerEssence": 10
     }
   },
   "skillId": "runecrafting",

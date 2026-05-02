@@ -13,6 +13,7 @@ function countOccurrences(source, pattern) {
 
 const legacyManifest = read("src/game/platform/legacy-script-manifest.ts");
 const mainSource = read("src/main.ts");
+const platformBootstrapSource = read("src/game/platform/bootstrap.ts");
 const coreSource = read("src/js/core.js");
 const worldSource = read("src/js/world.js");
 const inputRenderSource = read("src/js/input-render.js");
@@ -43,8 +44,10 @@ const examineCatalogSource = read("src/js/content/examine-catalog.js");
 const packageJson = read("package.json");
 
 assert.ok(
-  mainSource.includes('exposeCombatBridge'),
-  "main.ts should expose the combat bridge before loading legacy runtime"
+  mainSource.includes("bootstrapGamePlatform") &&
+    platformBootstrapSource.includes("exposeCombatBridge") &&
+    platformBootstrapSource.indexOf("exposeCombatBridge") < platformBootstrapSource.indexOf("loadLegacyRuntime"),
+  "platform bootstrap should expose the combat bridge before loading legacy runtime"
 );
 assert.ok(
   legacyManifest.includes('../../js/combat.js?raw'),

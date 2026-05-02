@@ -8,6 +8,7 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const mainSource = fs.readFileSync(path.join(root, "src", "main.ts"), "utf8");
+  const platformBootstrapSource = fs.readFileSync(path.join(root, "src", "game", "platform", "bootstrap.ts"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
   const debugPanelSource = fs.readFileSync(path.join(root, "src", "js", "combat-animation-debug-panel-runtime.js"), "utf8");
@@ -18,7 +19,8 @@ function run() {
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
   const viteSource = fs.readFileSync(path.join(root, "vite.config.ts"), "utf8");
 
-  assert(mainSource.includes("exposeAnimationBridge"), "main.ts should expose the animation bridge");
+  assert(mainSource.includes("bootstrapGamePlatform"), "main.ts should delegate platform setup to the platform bootstrap");
+  assert(platformBootstrapSource.includes("exposeAnimationBridge"), "platform bootstrap should expose the animation bridge");
   assert(coreSource.includes("window.AnimationStudioBridge.init"), "core.js should initialize the animation studio");
   assert(!coreSource.includes("initPoseEditor();"), "core.js should no longer initialize the old pose editor");
   assert(

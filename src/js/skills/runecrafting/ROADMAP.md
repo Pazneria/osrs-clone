@@ -44,6 +44,12 @@ No special altar-access system is used.
 | Essence Used for Output   | Essence Used for Output = Essence Consumed for normal runes, or floor(Secondary Runes in Inventory / Runes Crafted per Essence) for combination runes | Determines how much essence actually produces rune output |
 | Total XP Gained           | Total XP Gained = Essence Used for Output x XP per Essence                                   | Determines experience gained from one altar action                          |
 | Total Gold Created        | Total Gold Created = Total Runes Crafted x Rune Sell Value                                  | Estimates value created by one altar action                                 |
+| Output Sell Value per Action | Output Sell Value per Action = Total Runes Crafted x Rune Sell Value                     | Estimates gross sell value produced by one altar action                      |
+| Input Sell Value per Action | Input Sell Value per Action = (Essence Used for Output x Essence Sell Value) + Secondary Runes Consumed Sell Value | Estimates the material value consumed by one altar action |
+| Net Sell Value per Action | Net Sell Value per Action = Output Sell Value per Action - Input Sell Value per Action       | Estimates net value created by one altar action                              |
+| Travel-Adjusted Ticks     | Travel-Adjusted Ticks = Base Craft Ticks + Route Travel Ticks                               | Adds route overhead to the 1-tick altar action for pacing benchmarks         |
+| Travel-Adjusted XP per Tick | Travel-Adjusted XP per Tick = Total XP Gained / Travel-Adjusted Ticks                     | Estimates XP pacing once altar-route overhead is included                    |
+| Travel-Adjusted Net Sell Value per Tick | Travel-Adjusted Net Sell Value per Tick = Net Sell Value per Action / Travel-Adjusted Ticks | Estimates net value pacing once altar-route overhead is included |
 
 ### Equation Variables
 
@@ -127,9 +133,9 @@ Pouch essence is not used directly for crafting. The player must first empty the
 | Rune       | Required Level | XP per Essence | Rune Sell Value | Crafting Location                  | Notes |
 | ---------- | -------------- | -------------- | --------------- | ---------------------------------- | ----- |
 | Ember Rune | 1              | 8              | 4               | Ember altar on world map           | Entry-level crafted rune |
-| Water Rune | 10             | 7              | 8               | Water altar on world map           | Early upgrade crafted rune |
-| Earth Rune | 20             | 9              | 16              | Earth altar on world map           | Mid-tier crafted rune |
-| Air Rune   | 30             | 12             | 32              | Air altar on world map             | Highest base elemental rune |
+| Water Rune | 10             | 10             | 8               | Water altar on world map           | Early upgrade crafted rune |
+| Earth Rune | 20             | 14             | 16              | Earth altar on world map           | Mid-tier crafted rune |
+| Air Rune   | 30             | 20             | 32              | Air altar on world map             | Highest base elemental rune |
 
 
 ### Combination Rune Rules
@@ -175,12 +181,12 @@ Each combination rune can be crafted from either valid elemental direction.
 
 | Combination Rune | Required Level | XP per Essence | Rune Sell Value | Crafting Location                  | Notes |
 | ---------------- | -------------- | -------------- | --------------- | ---------------------------------- | ----- |
-| Steam Rune       | 40             | 16             | 64              | Ember or Water altar on world map  | Combination rune crafted from a valid Ember + Water route |
-| Smoke Rune       | 40             | 16             | 64              | Ember or Air altar on world map    | Combination rune crafted from a valid Ember + Air route |
-| Lava Rune        | 40             | 16             | 64              | Ember or Earth altar on world map  | Combination rune crafted from a valid Ember + Earth route |
-| Mud Rune         | 40             | 16             | 64              | Water or Earth altar on world map  | Combination rune crafted from a valid Water + Earth route |
-| Mist Rune        | 40             | 16             | 64              | Water or Air altar on world map    | Combination rune crafted from a valid Water + Air route |
-| Dust Rune        | 40             | 16             | 64              | Earth or Air altar on world map    | Combination rune crafted from a valid Earth + Air route |
+| Steam Rune       | 40             | 24             | 64              | Ember or Water altar on world map  | Combination rune crafted from a valid Ember + Water route |
+| Smoke Rune       | 40             | 24             | 64              | Ember or Air altar on world map    | Combination rune crafted from a valid Ember + Air route |
+| Lava Rune        | 40             | 24             | 64              | Ember or Earth altar on world map  | Combination rune crafted from a valid Ember + Earth route |
+| Mud Rune         | 40             | 24             | 64              | Water or Earth altar on world map  | Combination rune crafted from a valid Water + Earth route |
+| Mist Rune        | 40             | 24             | 64              | Water or Air altar on world map    | Combination rune crafted from a valid Water + Air route |
+| Dust Rune        | 40             | 24             | 64              | Earth or Air altar on world map    | Combination rune crafted from a valid Earth + Air route |
 
 ### Craft Resolution
 
@@ -227,6 +233,52 @@ Runecrafting creates value by converting rune essence into usable runes.
 | Small Pouch  | Utility  | 500       | 200        |
 | Medium Pouch | Utility  | 2000      | 800        |
 | Large Pouch  | Utility  | 8000      | 3200       |
+
+## Balance Benchmarks
+
+Runecrafting balance uses one full inventory of rune essence per altar action and adds route-overhead benchmarks from `SkillSpecs.runecrafting.balance` to avoid judging a 1-tick altar action in isolation.
+
+Pouch fill and empty micro-actions are excluded from these tables because pouches extend carried essence before the altar action; the live altar craft still consumes only essence currently in inventory.
+
+### Balance Assumptions
+
+| Assumption | Value |
+| ---------- | ----- |
+| Inventory Essence per Action | 28 |
+| Base Craft Ticks | 1 |
+| Ember Route Travel Ticks | 24 |
+| Water Route Travel Ticks | 30 |
+| Earth Route Travel Ticks | 36 |
+| Air Route Travel Ticks | 42 |
+
+### Tier-Entry Elemental Benchmarks
+
+| Rune | Level | Route Travel Ticks | Runes per Essence | Runes per Action | XP per Action | Output Sell/Action | Input Sell/Action | Net Sell/Action | Travel XP/Tick | Travel Net Sell/Tick |
+| ---- | ----- | ------------------ | ----------------- | ---------------- | ------------- | ------------------ | ----------------- | --------------- | -------------- | -------------------- |
+| Ember Rune | 1 | 24 | 1 | 28 | 224 | 112 | 112 | 0 | 8.9600 | 0.0000 |
+| Water Rune | 10 | 30 | 1 | 28 | 280 | 224 | 112 | 112 | 9.0323 | 3.6129 |
+| Earth Rune | 20 | 36 | 1 | 28 | 392 | 448 | 112 | 336 | 10.5946 | 9.0811 |
+| Air Rune | 30 | 42 | 1 | 28 | 560 | 896 | 112 | 784 | 13.0233 | 18.2326 |
+
+### Level-40 Elemental Scaling Benchmarks
+
+| Rune | Level | Route Travel Ticks | Runes per Essence | Runes per Action | XP per Action | Output Sell/Action | Input Sell/Action | Net Sell/Action | Travel XP/Tick | Travel Net Sell/Tick |
+| ---- | ----- | ------------------ | ----------------- | ---------------- | ------------- | ------------------ | ----------------- | --------------- | -------------- | -------------------- |
+| Ember Rune | 40 | 24 | 5 | 140 | 224 | 560 | 112 | 448 | 8.9600 | 17.9200 |
+| Water Rune | 40 | 30 | 4 | 112 | 280 | 896 | 112 | 784 | 9.0323 | 25.2903 |
+| Earth Rune | 40 | 36 | 3 | 84 | 392 | 1344 | 112 | 1232 | 10.5946 | 33.2973 |
+| Air Rune | 40 | 42 | 2 | 56 | 560 | 1792 | 112 | 1680 | 13.0233 | 39.0698 |
+
+### Preferred Combination Benchmarks
+
+| Combination Rune | Preferred Route | Secondary Rune | Route Travel Ticks | Runes per Action | XP per Action | Output Sell/Action | Input Sell/Action | Net Sell/Action | Travel XP/Tick | Travel Net Sell/Tick |
+| ---------------- | --------------- | -------------- | ------------------ | ---------------- | ------------- | ------------------ | ----------------- | --------------- | -------------- | -------------------- |
+| Steam Rune | Ember Altar | Water Rune | 24 | 28 | 672 | 1792 | 336 | 1456 | 26.8800 | 58.2400 |
+| Smoke Rune | Air Altar | Ember Rune | 42 | 28 | 672 | 1792 | 224 | 1568 | 15.6279 | 36.4651 |
+| Lava Rune | Ember Altar | Earth Rune | 24 | 28 | 672 | 1792 | 560 | 1232 | 26.8800 | 49.2800 |
+| Mud Rune | Water Altar | Earth Rune | 30 | 28 | 672 | 1792 | 560 | 1232 | 21.6774 | 39.7419 |
+| Mist Rune | Air Altar | Water Rune | 42 | 28 | 672 | 1792 | 336 | 1456 | 15.6279 | 33.8605 |
+| Dust Rune | Air Altar | Earth Rune | 42 | 28 | 672 | 1792 | 560 | 1232 | 15.6279 | 28.6512 |
 
 ## Merchant / NPC Structure
 

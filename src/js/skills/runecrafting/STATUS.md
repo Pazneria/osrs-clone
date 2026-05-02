@@ -16,11 +16,12 @@
 - [x] RUNECRAFTING-011: Altar route/training-location placement pass across elemental progression bands.
 - [x] RUNECRAFTING-013: Economy pass completed for runtime buy/sell parity with the authored rune/pouch tables (strict rune-merchant buy lists, pouch unlock-level coverage, and registry/contract guards).
 - [x] RUNECRAFTING-012: Cross-skill integration pass completed for mining essence supply and future magic rune demand (spec contract, registry summary helper, and doc parity coverage).
+- [x] RUNECRAFTING-014: Balance pass completed for elemental and combination rune XP/value pacing, with route-travel benchmark assumptions, registry summary helpers, spec guards, and roadmap parity coverage.
 
 ## Now
 
 ## Next
-- [ ] RUNECRAFTING-014: Balance pass for XP/value per action and travel-time-adjusted progression pacing.
+- [ ] RUNECRAFTING-015: UX/polish pass for altar feedback, interruption handling, and route readability.
 
 ## Later
-- [ ] RUNECRAFTING-015: UX/polish pass for altar feedback, interruption handling, and route readability.
+(empty)

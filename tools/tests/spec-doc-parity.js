@@ -693,6 +693,55 @@ function runMiningChecks(roadmap, spec) {
 function runRunecraftingChecks(roadmap, spec) {
   const lines = roadmap.split(/\r?\n/);
   assertRegex(roadmap, new RegExp(`\\|\\s*Base Craft Ticks\\s*\\|\\s*${spec.timing.actionTicks}\\s*\\|`), "runecrafting base craft ticks mismatch");
+  assertRegex(roadmap, /\|\s*Travel-Adjusted XP per Tick\s*\|\s*Travel-Adjusted XP per Tick = Total XP Gained \/ Travel-Adjusted Ticks\s*\|/, "runecrafting travel-adjusted XP formula missing");
+  assertRegex(roadmap, /\|\s*Travel-Adjusted Net Sell Value per Tick\s*\|\s*Travel-Adjusted Net Sell Value per Tick = Net Sell Value per Action \/ Travel-Adjusted Ticks\s*\|/, "runecrafting travel-adjusted net-value formula missing");
+
+  function resolveRunecraftingRouteId(recipeId, recipe) {
+    if (recipeId === "ember_altar" || /_from_ember$/.test(recipeId)) return "ember_altar";
+    if (recipeId === "water_altar" || /_from_water$/.test(recipeId)) return "water_altar";
+    if (recipeId === "earth_altar" || /_from_earth$/.test(recipeId)) return "earth_altar";
+    if (recipeId === "air_altar" || /_from_air$/.test(recipeId)) return "air_altar";
+    const altarName = recipe && typeof recipe.altarName === "string" ? recipe.altarName.toLowerCase() : "";
+    if (altarName.includes("ember")) return "ember_altar";
+    if (altarName.includes("water")) return "water_altar";
+    if (altarName.includes("earth")) return "earth_altar";
+    if (altarName.includes("air")) return "air_altar";
+    return "";
+  }
+
+  function computeRunecraftingOutputs(recipeId, level) {
+    const recipe = spec.recipeSet[recipeId];
+    const routeId = resolveRunecraftingRouteId(recipeId, recipe);
+    const inventoryEssence = spec.balance.maxInventoryEssence;
+    const outputPerEssence = Math.max(1, 1 + Math.floor((level - recipe.scalingStartLevel) / 10));
+    const essenceUsed = inventoryEssence;
+    const runesCreated = essenceUsed * outputPerEssence;
+    const secondaryConsumed = recipe.requiresSecondaryRune ? runesCreated : 0;
+    const outputSellValue = spec.economy.valueTable[recipe.outputItemId].sell;
+    const essenceSellValue = spec.economy.valueTable[recipe.essenceItemId].sell;
+    const secondarySellValue = recipe.requiresSecondaryRune ? spec.economy.valueTable[recipe.secondaryRuneItemId].sell : 0;
+    const outputSellValuePerAction = runesCreated * outputSellValue;
+    const inputSellValuePerAction = (essenceUsed * essenceSellValue) + (secondaryConsumed * secondarySellValue);
+    const netSellValuePerAction = outputSellValuePerAction - inputSellValuePerAction;
+    const travelTicks = spec.balance.routeTravelTicks[routeId];
+    const totalTicks = spec.timing.actionTicks + travelTicks;
+    return {
+      recipe,
+      routeId,
+      routeLabel: recipe.altarName,
+      secondaryLabel: recipe.secondaryRuneItemId ? toTitleCaseId(recipe.secondaryRuneItemId) : "",
+      level,
+      travelTicks,
+      outputPerEssence,
+      runesCreated,
+      xpPerAction: essenceUsed * recipe.xpPerEssence,
+      outputSellValuePerAction,
+      inputSellValuePerAction,
+      netSellValuePerAction,
+      xpPerTick: essenceUsed * recipe.xpPerEssence / totalTicks,
+      netSellValuePerTick: netSellValuePerAction / totalTicks
+    };
+  }
 
   const progressionRows = [
     ["Ember Rune", spec.recipeSet.ember_altar.requiredLevel],
@@ -721,7 +770,9 @@ function runRunecraftingChecks(roadmap, spec) {
   const comboOutputIds = ["steam_rune", "smoke_rune", "lava_rune", "mud_rune", "mist_rune", "dust_rune"];
   for (const outputId of comboOutputIds) {
     const label = toTitleCaseId(outputId);
-    assertRegex(roadmap, new RegExp(`\\|\\s*${escapeRegex(label)}\\s*\\|\\s*40\\s*\\|\\s*16\\s*\\|\\s*${spec.economy.valueTable[outputId].sell}\\s*\\|`), `runecrafting combo stat mismatch for ${label}`);
+    const comboRecipe = Object.values(spec.recipeSet).find((recipe) => recipe && recipe.outputItemId === outputId && recipe.requiresSecondaryRune);
+    assert(!!comboRecipe, `runecrafting combo recipe missing for ${label}`);
+    assertRegex(roadmap, new RegExp(`\\|\\s*${escapeRegex(label)}\\s*\\|\\s*${comboRecipe.requiredLevel}\\s*\\|\\s*${comboRecipe.xpPerEssence}\\s*\\|\\s*${spec.economy.valueTable[outputId].sell}\\s*\\|`), `runecrafting combo stat mismatch for ${label}`);
     assertRegex(roadmap, new RegExp(`\\|\\s*${escapeRegex(label)}\\s*\\|\\s*Rune\\s*\\|\\s*${spec.economy.valueTable[outputId].buy}\\s*\\|\\s*${spec.economy.valueTable[outputId].sell}\\s*\\|`), `runecrafting value-table mismatch for ${label}`);
   }
 
@@ -762,6 +813,72 @@ function runRunecraftingChecks(roadmap, spec) {
     new RegExp(`\\|\\s*${escapeRegex(toTitleCaseId(magicDemand.skillId))}\\s*\\|\\s*${escapeRegex(magicDemand.status)}\\s*\\|\\s*Combination runes\\s*\\|\\s*${escapeRegex(combinationRuneLabels)}\\s*\\|`),
     "runecrafting combination magic demand row mismatch"
   );
+
+  assertRegex(
+    roadmap,
+    new RegExp(`\\|\\s*Inventory Essence per Action\\s*\\|\\s*${spec.balance.maxInventoryEssence}\\s*\\|`),
+    "runecrafting inventory balance assumption mismatch"
+  );
+  const travelRows = [
+    ["Ember Route Travel Ticks", "ember_altar"],
+    ["Water Route Travel Ticks", "water_altar"],
+    ["Earth Route Travel Ticks", "earth_altar"],
+    ["Air Route Travel Ticks", "air_altar"]
+  ];
+  for (const [label, routeId] of travelRows) {
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(label)}\\s*\\|\\s*${spec.balance.routeTravelTicks[routeId]}\\s*\\|`),
+      `runecrafting ${routeId} travel benchmark mismatch`
+    );
+  }
+
+  const elementalBenchmarks = [
+    { label: "Ember Rune", recipeId: "ember_altar", level: 1 },
+    { label: "Water Rune", recipeId: "water_altar", level: 10 },
+    { label: "Earth Rune", recipeId: "earth_altar", level: 20 },
+    { label: "Air Rune", recipeId: "air_altar", level: 30 }
+  ];
+  for (const row of elementalBenchmarks) {
+    const metrics = computeRunecraftingOutputs(row.recipeId, row.level);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${row.level}\\s*\\|\\s*${metrics.travelTicks}\\s*\\|\\s*${metrics.outputPerEssence}\\s*\\|\\s*${metrics.runesCreated}\\s*\\|\\s*${metrics.xpPerAction}\\s*\\|\\s*${metrics.outputSellValuePerAction}\\s*\\|\\s*${metrics.inputSellValuePerAction}\\s*\\|\\s*${metrics.netSellValuePerAction}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.netSellValuePerTick)}\\s*\\|`),
+      `runecrafting tier-entry benchmark mismatch for ${row.label}`
+    );
+  }
+
+  const level40Benchmarks = [
+    { label: "Ember Rune", recipeId: "ember_altar" },
+    { label: "Water Rune", recipeId: "water_altar" },
+    { label: "Earth Rune", recipeId: "earth_altar" },
+    { label: "Air Rune", recipeId: "air_altar" }
+  ];
+  for (const row of level40Benchmarks) {
+    const metrics = computeRunecraftingOutputs(row.recipeId, 40);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*40\\s*\\|\\s*${metrics.travelTicks}\\s*\\|\\s*${metrics.outputPerEssence}\\s*\\|\\s*${metrics.runesCreated}\\s*\\|\\s*${metrics.xpPerAction}\\s*\\|\\s*${metrics.outputSellValuePerAction}\\s*\\|\\s*${metrics.inputSellValuePerAction}\\s*\\|\\s*${metrics.netSellValuePerAction}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.netSellValuePerTick)}\\s*\\|`),
+      `runecrafting level-40 benchmark mismatch for ${row.label}`
+    );
+  }
+
+  const preferredComboBenchmarks = [
+    { label: "Steam Rune", recipeId: "steam_combo_from_ember" },
+    { label: "Smoke Rune", recipeId: "smoke_combo_from_air" },
+    { label: "Lava Rune", recipeId: "lava_combo_from_ember" },
+    { label: "Mud Rune", recipeId: "mud_combo_from_water" },
+    { label: "Mist Rune", recipeId: "mist_combo_from_air" },
+    { label: "Dust Rune", recipeId: "dust_combo_from_air" }
+  ];
+  for (const row of preferredComboBenchmarks) {
+    const metrics = computeRunecraftingOutputs(row.recipeId, 40);
+    assertRegex(
+      roadmap,
+      new RegExp(`\\|\\s*${escapeRegex(row.label)}\\s*\\|\\s*${escapeRegex(metrics.routeLabel)}\\s*\\|\\s*${escapeRegex(metrics.secondaryLabel)}\\s*\\|\\s*${metrics.travelTicks}\\s*\\|\\s*${metrics.runesCreated}\\s*\\|\\s*${metrics.xpPerAction}\\s*\\|\\s*${metrics.outputSellValuePerAction}\\s*\\|\\s*${metrics.inputSellValuePerAction}\\s*\\|\\s*${metrics.netSellValuePerAction}\\s*\\|\\s*${formatMetric(metrics.xpPerTick)}\\s*\\|\\s*${formatMetric(metrics.netSellValuePerTick)}\\s*\\|`),
+      `runecrafting preferred combination benchmark mismatch for ${row.label}`
+    );
+  }
 }
 
 function runCraftingChecks(roadmap, spec, itemDefs) {

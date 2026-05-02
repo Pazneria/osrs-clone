@@ -990,6 +990,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-072 - Runecrafting balance lacked travel-adjusted guardrails
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `content/skills/runecrafting.json`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
+- Repro:
+  1. Review the open `RUNECRAFTING-014` milestone in the runecrafting status board.
+  2. Compare elemental and combination XP/value tables against the 1-tick altar action.
+  3. Check whether route-travel overhead is represented in runtime-backed balance summaries.
+- Expected: Runecrafting should have locked XP/value-per-action and travel-adjusted pacing benchmarks for elemental and combination rune routes.
+- Actual: Economy and integration contracts existed, but there was no runecrafting balance helper, spec guard, or roadmap parity table for route-adjusted pacing.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical runecrafting level bands, route-travel benchmark assumptions, and monotonic XP tuning in the authored skill spec.
+  2. Expose registry balance metrics for elemental and combination recipes, then guard them in spec contracts.
+  3. Document tier-entry, level-40, and preferred-combination benchmarks and advance the runecrafting tracker.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `SkillSpecRegistry.computeRunecraftingRecipeMetrics()` and `getRunecraftingBalanceSummary()` with per-action and travel-adjusted XP/value outputs.
+  - Rebalanced elemental XP per essence to climb across water/earth/air and lifted combination XP per essence to keep level-40 routes ahead of elemental entry benchmarks.
+  - Added route-overhead assumptions and benchmark tables to the runecrafting roadmap, then locked them with spec-contract and spec-doc-parity coverage.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-071 - Runecrafting cross-skill integration contract
 - Status: Fixed
 - Severity: S2

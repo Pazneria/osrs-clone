@@ -1295,6 +1295,182 @@
         };
     }
 
+    function resolveRunecraftingRouteId(recipeId, recipe) {
+        if (recipeId === 'ember_altar' || /_from_ember$/.test(recipeId)) return 'ember_altar';
+        if (recipeId === 'water_altar' || /_from_water$/.test(recipeId)) return 'water_altar';
+        if (recipeId === 'earth_altar' || /_from_earth$/.test(recipeId)) return 'earth_altar';
+        if (recipeId === 'air_altar' || /_from_air$/.test(recipeId)) return 'air_altar';
+
+        const altarName = recipe && typeof recipe.altarName === 'string'
+            ? recipe.altarName.toLowerCase()
+            : '';
+        if (altarName.includes('ember')) return 'ember_altar';
+        if (altarName.includes('water')) return 'water_altar';
+        if (altarName.includes('earth')) return 'earth_altar';
+        if (altarName.includes('air')) return 'air_altar';
+        return '';
+    }
+
+    function computeRunecraftingRecipeMetrics(recipeId, options = {}) {
+        const runecraftingSpec = getSkillSpec('runecrafting') || {};
+        const recipeSet = runecraftingSpec.recipeSet && typeof runecraftingSpec.recipeSet === 'object'
+            ? runecraftingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const economy = runecraftingSpec.economy && typeof runecraftingSpec.economy === 'object'
+            ? runecraftingSpec.economy
+            : {};
+        const valueTable = economy.valueTable && typeof economy.valueTable === 'object'
+            ? economy.valueTable
+            : {};
+        const balance = runecraftingSpec.balance && typeof runecraftingSpec.balance === 'object'
+            ? runecraftingSpec.balance
+            : {};
+        const routeTravelTicks = balance.routeTravelTicks && typeof balance.routeTravelTicks === 'object'
+            ? balance.routeTravelTicks
+            : {};
+        const routeId = resolveRunecraftingRouteId(recipeId, recipe);
+        const defaultInventoryEssence = Number.isFinite(balance.maxInventoryEssence)
+            ? Math.max(1, Math.floor(balance.maxInventoryEssence))
+            : 28;
+        const level = Number.isFinite(options.level)
+            ? options.level
+            : (Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1);
+        const inventoryEssence = Number.isFinite(options.inventoryEssence)
+            ? Math.max(0, Math.floor(options.inventoryEssence))
+            : defaultInventoryEssence;
+        const actionTicks = Number.isFinite(runecraftingSpec.timing && runecraftingSpec.timing.actionTicks)
+            ? Math.max(1, Math.floor(runecraftingSpec.timing.actionTicks))
+            : 1;
+        const travelTicks = Number.isFinite(options.travelTicks)
+            ? Math.max(0, Math.floor(options.travelTicks))
+            : (Number.isFinite(routeTravelTicks[routeId]) ? Math.max(0, Math.floor(routeTravelTicks[routeId])) : 0);
+        const outputPerEssence = computeRuneOutputPerEssence(level, recipe.scalingStartLevel);
+        const hasFiniteSecondaryCount = Number.isFinite(options.secondaryRuneCount);
+        const secondaryRuneCount = hasFiniteSecondaryCount ? Math.max(0, Math.floor(options.secondaryRuneCount)) : null;
+        const essenceUsed = recipe.requiresSecondaryRune && hasFiniteSecondaryCount
+            ? Math.min(inventoryEssence, Math.floor(secondaryRuneCount / outputPerEssence))
+            : inventoryEssence;
+        const runesCreated = essenceUsed * outputPerEssence;
+        const secondaryConsumed = recipe.requiresSecondaryRune ? runesCreated : 0;
+
+        const outputValueRow = valueTable[recipe.outputItemId] && typeof valueTable[recipe.outputItemId] === 'object'
+            ? valueTable[recipe.outputItemId]
+            : {};
+        const essenceValueRow = valueTable[recipe.essenceItemId] && typeof valueTable[recipe.essenceItemId] === 'object'
+            ? valueTable[recipe.essenceItemId]
+            : {};
+        const secondaryValueRow = recipe.requiresSecondaryRune && valueTable[recipe.secondaryRuneItemId] && typeof valueTable[recipe.secondaryRuneItemId] === 'object'
+            ? valueTable[recipe.secondaryRuneItemId]
+            : {};
+        const outputSellValuePerUnit = Number.isFinite(outputValueRow.sell) ? outputValueRow.sell : null;
+        const essenceSellValuePerUnit = Number.isFinite(essenceValueRow.sell) ? essenceValueRow.sell : null;
+        const secondarySellValuePerUnit = Number.isFinite(secondaryValueRow.sell) ? secondaryValueRow.sell : null;
+        const xpPerAction = essenceUsed * (Number.isFinite(recipe.xpPerEssence) ? recipe.xpPerEssence : 0);
+        const outputSellValuePerAction = outputSellValuePerUnit === null ? null : runesCreated * outputSellValuePerUnit;
+        const essenceInputSellValuePerAction = essenceSellValuePerUnit === null ? null : essenceUsed * essenceSellValuePerUnit;
+        const secondaryInputSellValuePerAction = recipe.requiresSecondaryRune
+            ? (secondarySellValuePerUnit === null ? null : secondaryConsumed * secondarySellValuePerUnit)
+            : 0;
+        const inputSellValuePerAction = essenceInputSellValuePerAction === null || secondaryInputSellValuePerAction === null
+            ? null
+            : essenceInputSellValuePerAction + secondaryInputSellValuePerAction;
+        const netSellValuePerAction = outputSellValuePerAction === null || inputSellValuePerAction === null
+            ? null
+            : outputSellValuePerAction - inputSellValuePerAction;
+        const totalTicks = actionTicks + travelTicks;
+
+        return {
+            recipeId,
+            routeId,
+            altarName: typeof recipe.altarName === 'string' ? recipe.altarName : '',
+            outputItemId: typeof recipe.outputItemId === 'string' ? recipe.outputItemId : '',
+            secondaryRuneItemId: typeof recipe.secondaryRuneItemId === 'string' ? recipe.secondaryRuneItemId : null,
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            level,
+            inventoryEssence,
+            outputPerEssence,
+            actionTicks,
+            travelTicks,
+            totalTicks,
+            essenceUsed,
+            runesCreated,
+            secondaryConsumed,
+            xpPerAction,
+            outputSellValuePerAction,
+            inputSellValuePerAction,
+            netSellValuePerAction,
+            throughput: {
+                xpPerTick: roundMetric(totalTicks > 0 ? xpPerAction / totalTicks : 0),
+                outputSellValuePerTick: outputSellValuePerAction === null || totalTicks <= 0
+                    ? null
+                    : roundMetric(outputSellValuePerAction / totalTicks),
+                netSellValuePerTick: netSellValuePerAction === null || totalTicks <= 0
+                    ? null
+                    : roundMetric(netSellValuePerAction / totalTicks)
+            }
+        };
+    }
+
+    function getRunecraftingBalanceSummary(options = {}) {
+        const runecraftingSpec = getSkillSpec('runecrafting') || {};
+        const recipeSet = runecraftingSpec.recipeSet && typeof runecraftingSpec.recipeSet === 'object'
+            ? runecraftingSpec.recipeSet
+            : {};
+        const routeOrder = {
+            ember_altar: 0,
+            water_altar: 1,
+            earth_altar: 2,
+            air_altar: 3
+        };
+        const recipeIds = Object.keys(recipeSet).sort((a, b) => {
+            const aRecipe = recipeSet[a] || {};
+            const bRecipe = recipeSet[b] || {};
+            const aLevel = Number.isFinite(aRecipe.requiredLevel) ? aRecipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+            const bLevel = Number.isFinite(bRecipe.requiredLevel) ? bRecipe.requiredLevel : Number.MAX_SAFE_INTEGER;
+            if (aLevel !== bLevel) return aLevel - bLevel;
+            const aRouteOrder = Number.isFinite(routeOrder[resolveRunecraftingRouteId(a, aRecipe)]) ? routeOrder[resolveRunecraftingRouteId(a, aRecipe)] : Number.MAX_SAFE_INTEGER;
+            const bRouteOrder = Number.isFinite(routeOrder[resolveRunecraftingRouteId(b, bRecipe)]) ? routeOrder[resolveRunecraftingRouteId(b, bRecipe)] : Number.MAX_SAFE_INTEGER;
+            if (aRouteOrder !== bRouteOrder) return aRouteOrder - bRouteOrder;
+            return a.localeCompare(b);
+        });
+
+        const rows = [];
+        for (let i = 0; i < recipeIds.length; i++) {
+            const recipe = recipeSet[recipeIds[i]] || {};
+            const level = Number.isFinite(options.level)
+                ? options.level
+                : (Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1);
+            const row = computeRunecraftingRecipeMetrics(recipeIds[i], {
+                level,
+                inventoryEssence: options.inventoryEssence,
+                travelTicks: options.travelTicks,
+                secondaryRuneCount: options.secondaryRuneCount
+            });
+            if (row) rows.push(row);
+        }
+
+        const balance = runecraftingSpec.balance && typeof runecraftingSpec.balance === 'object'
+            ? runecraftingSpec.balance
+            : {};
+        return {
+            assumptions: {
+                inventoryEssence: Number.isFinite(options.inventoryEssence)
+                    ? Math.max(0, Math.floor(options.inventoryEssence))
+                    : (Number.isFinite(balance.maxInventoryEssence) ? balance.maxInventoryEssence : 28),
+                actionTicks: Number.isFinite(runecraftingSpec.timing && runecraftingSpec.timing.actionTicks)
+                    ? runecraftingSpec.timing.actionTicks
+                    : 1,
+                routeTravelTicks: balance.routeTravelTicks && typeof balance.routeTravelTicks === 'object'
+                    ? { ...balance.routeTravelTicks }
+                    : {}
+            },
+            rows
+        };
+    }
+
     function computeFletchingRecipeMetrics(recipeId) {
         const fletchingSpec = getSkillSpec('fletching') || {};
         const recipeSet = fletchingSpec.recipeSet && typeof fletchingSpec.recipeSet === 'object'
@@ -1444,6 +1620,8 @@
         getCookingBalanceSummary,
         getRunecraftingEconomySummary,
         getRunecraftingIntegrationSummary,
+        computeRunecraftingRecipeMetrics,
+        getRunecraftingBalanceSummary,
         computeCraftingRecipeMetrics,
         getCraftingBalanceSummary,
         computeSmithingRecipeMetrics,

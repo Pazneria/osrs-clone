@@ -38,7 +38,8 @@ npm run build
 Notes:
 - `dev` runs the Vite module shell on port `5500`.
 - `build` emits a production bundle to `dist/` and copies the runtime PNG/OBJ asset folders the live game still reads by URL.
-- `check` and `test` now include the incremental TypeScript bridge plus world-content validation.
+- `check` and `test` are backed by `tools/tests/package-suite.js`; update that runner when adding broad repo checks instead of growing `package.json`.
+- `check` and `test` include the incremental TypeScript bridge plus world-content validation.
 
 ## GitHub Pages Deploy
 

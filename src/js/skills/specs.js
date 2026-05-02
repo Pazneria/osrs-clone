@@ -491,29 +491,40 @@
         },
         runecrafting: {
             skillId: 'runecrafting',
+            levelBands: [1, 10, 20, 30, 40],
             formulas: {
-                outputPerEssence: '1 + floor((level - scalingStartLevel) / 10), minimum 1'
+                outputPerEssence: '1 + floor((level - scalingStartLevel) / 10), minimum 1',
+                travelAdjusted: 'per-action totals / (action ticks + route travel ticks)'
             },
             timing: {
                 actionTicks: 1
             },
+            balance: {
+                maxInventoryEssence: 28,
+                routeTravelTicks: {
+                    ember_altar: 24,
+                    water_altar: 30,
+                    earth_altar: 36,
+                    air_altar: 42
+                }
+            },
             recipeSet: {
                 ember_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 1, essenceItemId: 'rune_essence', outputItemId: 'ember_rune', xpPerEssence: 8, scalingStartLevel: 0, requiresSecondaryRune: false },
-                water_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 10, essenceItemId: 'rune_essence', outputItemId: 'water_rune', xpPerEssence: 7, scalingStartLevel: 10, requiresSecondaryRune: false },
-                earth_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 20, essenceItemId: 'rune_essence', outputItemId: 'earth_rune', xpPerEssence: 9, scalingStartLevel: 20, requiresSecondaryRune: false },
-                air_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 30, essenceItemId: 'rune_essence', outputItemId: 'air_rune', xpPerEssence: 12, scalingStartLevel: 30, requiresSecondaryRune: false },
-                steam_combo_from_ember: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'steam_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'water_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                steam_combo_from_water: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'steam_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'ember_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                smoke_combo_from_ember: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'smoke_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'air_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                smoke_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'smoke_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'ember_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                lava_combo_from_ember: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'lava_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                lava_combo_from_earth: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'lava_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'ember_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                mud_combo_from_water: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mud_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                mud_combo_from_earth: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mud_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'water_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                mist_combo_from_water: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mist_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'air_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                mist_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mist_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'water_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                dust_combo_from_earth: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'dust_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'air_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
-                dust_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'dust_rune', xpPerEssence: 16, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' }
+                water_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 10, essenceItemId: 'rune_essence', outputItemId: 'water_rune', xpPerEssence: 10, scalingStartLevel: 10, requiresSecondaryRune: false },
+                earth_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 20, essenceItemId: 'rune_essence', outputItemId: 'earth_rune', xpPerEssence: 14, scalingStartLevel: 20, requiresSecondaryRune: false },
+                air_altar: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 30, essenceItemId: 'rune_essence', outputItemId: 'air_rune', xpPerEssence: 20, scalingStartLevel: 30, requiresSecondaryRune: false },
+                steam_combo_from_ember: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'steam_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'water_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                steam_combo_from_water: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'steam_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'ember_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                smoke_combo_from_ember: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'smoke_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'air_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                smoke_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'smoke_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'ember_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                lava_combo_from_ember: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Ember Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'lava_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                lava_combo_from_earth: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'lava_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'ember_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                mud_combo_from_water: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mud_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                mud_combo_from_earth: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mud_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'water_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                mist_combo_from_water: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Water Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mist_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'air_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                mist_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'mist_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'water_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                dust_combo_from_earth: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Earth Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'dust_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'air_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' },
+                dust_combo_from_air: { targetObj: 'ALTAR_CANDIDATE', altarName: 'Air Altar', requiredLevel: 40, essenceItemId: 'rune_essence', outputItemId: 'dust_rune', xpPerEssence: 24, scalingStartLevel: 40, requiresSecondaryRune: true, secondaryRuneItemId: 'earth_rune', requiresUnlockFlag: 'runecraftingComboUnlocked' }
             },
             pouchTable: { small_pouch: { requiredLevel: 10, capacity: 6 }, medium_pouch: { requiredLevel: 20, capacity: 13 }, large_pouch: { requiredLevel: 30, capacity: 26 } },
             integration: {
@@ -2121,6 +2132,255 @@
         return Math.max(minValue, Math.min(maxValue, next));
     }
 
+    function computeRunecraftingOutputPerEssence(level, scalingStartLevel) {
+        const lvl = Number.isFinite(level) ? level : 1;
+        const start = Number.isFinite(scalingStartLevel) ? scalingStartLevel : 1;
+        return Math.max(1, 1 + Math.floor((lvl - start) / 10));
+    }
+
+    function resolveRunecraftingRouteId(recipeId, recipe) {
+        if (recipeId === 'ember_altar' || /_from_ember$/.test(recipeId)) return 'ember_altar';
+        if (recipeId === 'water_altar' || /_from_water$/.test(recipeId)) return 'water_altar';
+        if (recipeId === 'earth_altar' || /_from_earth$/.test(recipeId)) return 'earth_altar';
+        if (recipeId === 'air_altar' || /_from_air$/.test(recipeId)) return 'air_altar';
+
+        const altarName = recipe && typeof recipe.altarName === 'string'
+            ? recipe.altarName.toLowerCase()
+            : '';
+        if (altarName.includes('ember')) return 'ember_altar';
+        if (altarName.includes('water')) return 'water_altar';
+        if (altarName.includes('earth')) return 'earth_altar';
+        if (altarName.includes('air')) return 'air_altar';
+        return '';
+    }
+
+    function computeRunecraftingBalanceMetrics(runecraftingSpec, recipeId, benchmark) {
+        const recipeSet = runecraftingSpec && runecraftingSpec.recipeSet && typeof runecraftingSpec.recipeSet === 'object'
+            ? runecraftingSpec.recipeSet
+            : {};
+        const recipe = recipeSet[recipeId];
+        if (!recipe || typeof recipe !== 'object') return null;
+
+        const valueTable = runecraftingSpec && runecraftingSpec.economy && runecraftingSpec.economy.valueTable && typeof runecraftingSpec.economy.valueTable === 'object'
+            ? runecraftingSpec.economy.valueTable
+            : {};
+        const balance = runecraftingSpec && runecraftingSpec.balance && typeof runecraftingSpec.balance === 'object'
+            ? runecraftingSpec.balance
+            : {};
+        const routeTravelTicks = balance.routeTravelTicks && typeof balance.routeTravelTicks === 'object'
+            ? balance.routeTravelTicks
+            : {};
+        const routeId = resolveRunecraftingRouteId(recipeId, recipe);
+        const defaultInventoryEssence = Number.isFinite(balance.maxInventoryEssence)
+            ? Math.max(1, Math.floor(balance.maxInventoryEssence))
+            : 28;
+        const level = Number.isFinite(benchmark && benchmark.level)
+            ? benchmark.level
+            : (Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1);
+        const inventoryEssence = Number.isFinite(benchmark && benchmark.inventoryEssence)
+            ? Math.max(0, Math.floor(benchmark.inventoryEssence))
+            : defaultInventoryEssence;
+        const actionTicks = Number.isFinite(runecraftingSpec && runecraftingSpec.timing && runecraftingSpec.timing.actionTicks)
+            ? Math.max(1, Math.floor(runecraftingSpec.timing.actionTicks))
+            : 1;
+        const travelTicks = Number.isFinite(benchmark && benchmark.travelTicks)
+            ? Math.max(0, Math.floor(benchmark.travelTicks))
+            : (Number.isFinite(routeTravelTicks[routeId]) ? Math.max(0, Math.floor(routeTravelTicks[routeId])) : 0);
+        const outputPerEssence = computeRunecraftingOutputPerEssence(level, recipe.scalingStartLevel);
+        const hasFiniteSecondaryCount = Number.isFinite(benchmark && benchmark.secondaryRuneCount);
+        const secondaryRuneCount = hasFiniteSecondaryCount
+            ? Math.max(0, Math.floor(benchmark.secondaryRuneCount))
+            : null;
+        const essenceUsed = recipe.requiresSecondaryRune && hasFiniteSecondaryCount
+            ? Math.min(inventoryEssence, Math.floor(secondaryRuneCount / outputPerEssence))
+            : inventoryEssence;
+        const runesCreated = essenceUsed * outputPerEssence;
+        const secondaryConsumed = recipe.requiresSecondaryRune ? runesCreated : 0;
+        const outputValueRow = valueTable[recipe.outputItemId] && typeof valueTable[recipe.outputItemId] === 'object'
+            ? valueTable[recipe.outputItemId]
+            : {};
+        const essenceValueRow = valueTable[recipe.essenceItemId] && typeof valueTable[recipe.essenceItemId] === 'object'
+            ? valueTable[recipe.essenceItemId]
+            : {};
+        const secondaryValueRow = recipe.requiresSecondaryRune && valueTable[recipe.secondaryRuneItemId] && typeof valueTable[recipe.secondaryRuneItemId] === 'object'
+            ? valueTable[recipe.secondaryRuneItemId]
+            : {};
+        const outputSellValuePerUnit = Number.isFinite(outputValueRow.sell) ? outputValueRow.sell : 0;
+        const essenceSellValuePerUnit = Number.isFinite(essenceValueRow.sell) ? essenceValueRow.sell : 0;
+        const secondarySellValuePerUnit = Number.isFinite(secondaryValueRow.sell) ? secondaryValueRow.sell : 0;
+        const xpPerAction = essenceUsed * (Number.isFinite(recipe.xpPerEssence) ? recipe.xpPerEssence : 0);
+        const outputSellValuePerAction = runesCreated * outputSellValuePerUnit;
+        const essenceInputSellValuePerAction = essenceUsed * essenceSellValuePerUnit;
+        const secondaryInputSellValuePerAction = secondaryConsumed * secondarySellValuePerUnit;
+        const inputSellValuePerAction = essenceInputSellValuePerAction + secondaryInputSellValuePerAction;
+        const netSellValuePerAction = outputSellValuePerAction - inputSellValuePerAction;
+        const totalTicks = actionTicks + travelTicks;
+
+        return {
+            recipeId,
+            routeId,
+            outputItemId: typeof recipe.outputItemId === 'string' ? recipe.outputItemId : '',
+            secondaryRuneItemId: typeof recipe.secondaryRuneItemId === 'string' ? recipe.secondaryRuneItemId : null,
+            requiredLevel: Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1,
+            level,
+            inventoryEssence,
+            outputPerEssence,
+            actionTicks,
+            travelTicks,
+            totalTicks,
+            essenceUsed,
+            runesCreated,
+            secondaryConsumed,
+            xpPerAction,
+            outputSellValuePerAction,
+            inputSellValuePerAction,
+            netSellValuePerAction,
+            xpPerTick: totalTicks > 0 ? xpPerAction / totalTicks : 0,
+            outputSellValuePerTick: totalTicks > 0 ? outputSellValuePerAction / totalTicks : 0,
+            netSellValuePerTick: totalTicks > 0 ? netSellValuePerAction / totalTicks : 0
+        };
+    }
+
+    function validateRunecraftingBalanceCurve(skillSpecs) {
+        const runecraftingSpec = skillSpecs && skillSpecs.runecrafting ? skillSpecs.runecrafting : null;
+        if (!runecraftingSpec || !runecraftingSpec.recipeSet) {
+            throw new Error('Runecrafting balance curve mismatch\n- missing runecrafting recipe set');
+        }
+
+        const errors = [];
+        const recipeSet = runecraftingSpec.recipeSet || {};
+        const valueTable = runecraftingSpec.economy && runecraftingSpec.economy.valueTable && typeof runecraftingSpec.economy.valueTable === 'object'
+            ? runecraftingSpec.economy.valueTable
+            : null;
+        const balance = runecraftingSpec.balance && typeof runecraftingSpec.balance === 'object'
+            ? runecraftingSpec.balance
+            : {};
+        const routeTravelTicks = balance.routeTravelTicks && typeof balance.routeTravelTicks === 'object'
+            ? balance.routeTravelTicks
+            : {};
+
+        if (!valueTable) {
+            errors.push('missing runecrafting value table');
+        }
+        if (balance.maxInventoryEssence !== 28) {
+            errors.push('max inventory essence benchmark must stay 28');
+        }
+
+        const expectedTravelTicks = {
+            ember_altar: 24,
+            water_altar: 30,
+            earth_altar: 36,
+            air_altar: 42
+        };
+        const expectedRouteIds = Object.keys(expectedTravelTicks);
+        for (let i = 0; i < expectedRouteIds.length; i++) {
+            const routeId = expectedRouteIds[i];
+            if (routeTravelTicks[routeId] !== expectedTravelTicks[routeId]) {
+                errors.push(routeId + ' route travel benchmark mismatch');
+            }
+        }
+
+        const elementalBenchmarks = [
+            { recipeId: 'ember_altar', level: 1, xpPerEssence: 8 },
+            { recipeId: 'water_altar', level: 10, xpPerEssence: 10 },
+            { recipeId: 'earth_altar', level: 20, xpPerEssence: 14 },
+            { recipeId: 'air_altar', level: 30, xpPerEssence: 20 }
+        ];
+        let prevElemental = null;
+        let airEntryMetrics = null;
+        for (let i = 0; i < elementalBenchmarks.length; i++) {
+            const benchmark = elementalBenchmarks[i];
+            const recipe = recipeSet[benchmark.recipeId] || {};
+            const metrics = computeRunecraftingBalanceMetrics(runecraftingSpec, benchmark.recipeId, { level: benchmark.level });
+            if (!metrics) {
+                errors.push('missing runecrafting balance metrics for ' + benchmark.recipeId);
+                continue;
+            }
+
+            if (recipe.xpPerEssence !== benchmark.xpPerEssence) {
+                errors.push(benchmark.recipeId + ' xpPerEssence mismatch');
+            }
+            if (metrics.essenceUsed !== 28) errors.push(benchmark.recipeId + ' should benchmark a full 28-essence inventory');
+            if (metrics.outputPerEssence !== 1) errors.push(benchmark.recipeId + ' tier-entry output per essence should be 1');
+            if (!Number.isFinite(metrics.outputSellValuePerAction) || metrics.outputSellValuePerAction <= 0) {
+                errors.push(benchmark.recipeId + ' missing positive output sell value');
+            }
+
+            if (prevElemental) {
+                if (!(recipe.requiredLevel > prevElemental.recipe.requiredLevel)) {
+                    errors.push(benchmark.recipeId + ' required level must increase across elemental tiers');
+                }
+                if (!(recipe.xpPerEssence > prevElemental.recipe.xpPerEssence)) {
+                    errors.push(benchmark.recipeId + ' XP per essence must increase across elemental tiers');
+                }
+                if (!(metrics.outputSellValuePerAction > prevElemental.metrics.outputSellValuePerAction)) {
+                    errors.push(benchmark.recipeId + ' output sell value/action must increase across elemental tiers');
+                }
+                if (!(metrics.netSellValuePerAction > prevElemental.metrics.netSellValuePerAction)) {
+                    errors.push(benchmark.recipeId + ' net sell value/action must increase across elemental tiers');
+                }
+                if (!(metrics.xpPerTick > prevElemental.metrics.xpPerTick)) {
+                    errors.push(benchmark.recipeId + ' travel-adjusted XP/tick must increase across elemental tiers');
+                }
+                if (!(metrics.netSellValuePerTick > prevElemental.metrics.netSellValuePerTick)) {
+                    errors.push(benchmark.recipeId + ' travel-adjusted net sell value/tick must increase across elemental tiers');
+                }
+            }
+
+            prevElemental = { recipe, metrics };
+            if (benchmark.recipeId === 'air_altar') airEntryMetrics = metrics;
+        }
+
+        const comboRecipeIds = Object.keys(recipeSet).filter((recipeId) => recipeSet[recipeId] && recipeSet[recipeId].requiresSecondaryRune).sort();
+        if (comboRecipeIds.length !== 12) {
+            errors.push('expected 12 bidirectional combination recipe routes');
+        }
+        for (let i = 0; i < comboRecipeIds.length; i++) {
+            const recipeId = comboRecipeIds[i];
+            const recipe = recipeSet[recipeId] || {};
+            if (recipe.requiredLevel !== 40) errors.push(recipeId + ' combination route must require level 40');
+            if (recipe.xpPerEssence !== 24) errors.push(recipeId + ' combination XP per essence must stay at 24');
+            if (recipe.requiresUnlockFlag !== 'runecraftingComboUnlocked') errors.push(recipeId + ' combination route must keep combo unlock flag');
+            if (!recipe.secondaryRuneItemId) errors.push(recipeId + ' combination route missing secondary rune');
+        }
+
+        const preferredComboBenchmarks = [
+            'steam_combo_from_ember',
+            'smoke_combo_from_air',
+            'lava_combo_from_ember',
+            'mud_combo_from_water',
+            'mist_combo_from_air',
+            'dust_combo_from_air'
+        ];
+        for (let i = 0; i < preferredComboBenchmarks.length; i++) {
+            const recipeId = preferredComboBenchmarks[i];
+            const metrics = computeRunecraftingBalanceMetrics(runecraftingSpec, recipeId, { level: 40 });
+            if (!metrics) {
+                errors.push('missing preferred combination balance metrics for ' + recipeId);
+                continue;
+            }
+            if (metrics.outputPerEssence !== 1) errors.push(recipeId + ' level-40 combo output per essence should be 1');
+            if (airEntryMetrics) {
+                if (!(metrics.xpPerAction > airEntryMetrics.xpPerAction)) {
+                    errors.push(recipeId + ' combination XP/action should beat air rune entry');
+                }
+                if (!(metrics.netSellValuePerAction > airEntryMetrics.netSellValuePerAction)) {
+                    errors.push(recipeId + ' combination net sell/action should beat air rune entry');
+                }
+                if (!(metrics.xpPerTick > airEntryMetrics.xpPerTick)) {
+                    errors.push(recipeId + ' travel-adjusted combination XP/tick should beat air rune entry');
+                }
+                if (!(metrics.netSellValuePerTick > airEntryMetrics.netSellValuePerTick)) {
+                    errors.push(recipeId + ' travel-adjusted combination net sell/tick should beat air rune entry');
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Runecrafting balance curve mismatch\n- ' + errors.join('\n- '));
+        }
+    }
+
     function computeCookingBurnChance(level, requiredLevel) {
         const lvl = Number.isFinite(level) ? level : 1;
         const unlock = Number.isFinite(requiredLevel) ? requiredLevel : 1;
@@ -3679,6 +3939,7 @@
     validateMiningBalanceCurve(SKILL_SPECS);
     validateRunecraftingEconomyParity(SKILL_SPECS);
     validateRunecraftingCrossSkillIntegration(SKILL_SPECS);
+    validateRunecraftingBalanceCurve(SKILL_SPECS);
     validateCrossSkillIntegration(SKILL_SPECS);
     validateWoodcuttingLogDemandIntegration(SKILL_SPECS);
     validateFiremakingBalanceCurve(SKILL_SPECS);

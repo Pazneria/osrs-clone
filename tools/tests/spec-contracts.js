@@ -482,6 +482,62 @@ function run() {
   assert(rc.economy.merchantTable.combination_sage.strictBuys === true, "combination sage should use strict buy coverage");
   assert(typeof SkillSpecRegistry.getRunecraftingEconomySummary === "function", "runecrafting economy summary helper missing");
   assert(typeof SkillSpecRegistry.getRunecraftingIntegrationSummary === "function", "runecrafting integration summary helper missing");
+  assert(typeof SkillSpecRegistry.computeRunecraftingRecipeMetrics === "function", "runecrafting recipe metrics helper missing");
+  assert(typeof SkillSpecRegistry.getRunecraftingBalanceSummary === "function", "runecrafting balance summary helper missing");
+  assert(Array.isArray(rc.levelBands) && rc.levelBands.join(",") === "1,10,20,30,40", "runecrafting level bands mismatch");
+  assert(!!rc.balance && rc.balance.maxInventoryEssence === 28, "runecrafting inventory benchmark mismatch");
+  assert(rc.balance.routeTravelTicks.ember_altar === 24, "runecrafting ember travel benchmark mismatch");
+  assert(rc.balance.routeTravelTicks.air_altar === 42, "runecrafting air travel benchmark mismatch");
+
+  const runecraftingBalanceSummary = SkillSpecRegistry.getRunecraftingBalanceSummary();
+  assert(!!runecraftingBalanceSummary && !!runecraftingBalanceSummary.assumptions, "runecrafting balance summary missing assumptions");
+  assert(runecraftingBalanceSummary.assumptions.inventoryEssence === 28, "runecrafting balance summary inventory assumption mismatch");
+  assert(runecraftingBalanceSummary.assumptions.actionTicks === 1, "runecrafting balance summary action tick mismatch");
+  assert(Array.isArray(runecraftingBalanceSummary.rows) && runecraftingBalanceSummary.rows.length === Object.keys(rc.recipeSet).length, "runecrafting balance summary row count mismatch");
+  assert(runecraftingBalanceSummary.rows[0].recipeId === "ember_altar", "runecrafting balance summary should start with ember");
+  assert(runecraftingBalanceSummary.rows[3].recipeId === "air_altar", "runecrafting balance summary should include air as the last base altar");
+  assert(SkillSpecRegistry.computeRunecraftingRecipeMetrics("missing_recipe") === null, "missing runecrafting recipes should return null metrics");
+
+  const rcEmberEntry = SkillSpecRegistry.computeRunecraftingRecipeMetrics("ember_altar", { level: 1 });
+  const rcWaterEntry = SkillSpecRegistry.computeRunecraftingRecipeMetrics("water_altar", { level: 10 });
+  const rcEarthEntry = SkillSpecRegistry.computeRunecraftingRecipeMetrics("earth_altar", { level: 20 });
+  const rcAirEntry = SkillSpecRegistry.computeRunecraftingRecipeMetrics("air_altar", { level: 30 });
+  assert(rcEmberEntry.outputPerEssence === 1 && rcEmberEntry.xpPerAction === 224 && rcEmberEntry.netSellValuePerAction === 0, "ember entry balance mismatch");
+  assert(rcWaterEntry.outputPerEssence === 1 && rcWaterEntry.xpPerAction === 280 && rcWaterEntry.netSellValuePerAction === 112, "water entry balance mismatch");
+  assert(rcEarthEntry.outputPerEssence === 1 && rcEarthEntry.xpPerAction === 392 && rcEarthEntry.netSellValuePerAction === 336, "earth entry balance mismatch");
+  assert(rcAirEntry.outputPerEssence === 1 && rcAirEntry.xpPerAction === 560 && rcAirEntry.netSellValuePerAction === 784, "air entry balance mismatch");
+  assert(approxEq(rcEmberEntry.throughput.xpPerTick, 8.96, 1e-4), "ember travel-adjusted xp/tick mismatch");
+  assert(approxEq(rcAirEntry.throughput.netSellValuePerTick, 18.2326, 1e-4), "air travel-adjusted net/tick mismatch");
+  assert(rcWaterEntry.throughput.xpPerTick > rcEmberEntry.throughput.xpPerTick, "water should beat ember on travel-adjusted XP");
+  assert(rcEarthEntry.throughput.netSellValuePerTick > rcWaterEntry.throughput.netSellValuePerTick, "earth should beat water on travel-adjusted net value");
+  assert(rcAirEntry.throughput.xpPerTick > rcEarthEntry.throughput.xpPerTick, "air should beat earth on travel-adjusted XP");
+
+  const rcAirAt40 = SkillSpecRegistry.computeRunecraftingRecipeMetrics("air_altar", { level: 40 });
+  assert(rcAirAt40.outputPerEssence === 2 && rcAirAt40.runesCreated === 56, "air level-40 output scaling mismatch");
+  assert(rcAirAt40.netSellValuePerAction === 1680, "air level-40 net value mismatch");
+  const rcSteamPreferred = SkillSpecRegistry.computeRunecraftingRecipeMetrics("steam_combo_from_ember", { level: 40 });
+  const rcDustPreferred = SkillSpecRegistry.computeRunecraftingRecipeMetrics("dust_combo_from_air", { level: 40 });
+  assert(rcSteamPreferred.secondaryRuneItemId === "water_rune" && rcSteamPreferred.secondaryConsumed === 28, "steam combo input balance mismatch");
+  assert(rcSteamPreferred.xpPerAction === 672 && rcSteamPreferred.netSellValuePerAction === 1456, "steam combo balance mismatch");
+  assert(rcDustPreferred.secondaryRuneItemId === "earth_rune" && rcDustPreferred.netSellValuePerAction === 1232, "dust combo balance mismatch");
+  assert(rcDustPreferred.throughput.xpPerTick > rcAirEntry.throughput.xpPerTick, "preferred dust combo should beat air entry on travel-adjusted XP");
+  assert(rcDustPreferred.throughput.netSellValuePerTick > rcAirEntry.throughput.netSellValuePerTick, "preferred dust combo should beat air entry on travel-adjusted net value");
+
+  const rcSteamLimited = SkillSpecRegistry.computeRunecraftingRecipeMetrics("steam_combo_from_ember", {
+    level: 50,
+    inventoryEssence: 10,
+    secondaryRuneCount: 7,
+    travelTicks: 5
+  });
+  assert(rcSteamLimited.routeId === "ember_altar" && rcSteamLimited.travelTicks === 5 && rcSteamLimited.totalTicks === 6, "steam combo option override mismatch");
+  assert(rcSteamLimited.outputPerEssence === 2 && rcSteamLimited.essenceUsed === 3, "steam combo secondary-rune limiting mismatch");
+  assert(rcSteamLimited.runesCreated === 6 && rcSteamLimited.secondaryConsumed === 6, "steam combo limited output mismatch");
+  assert(rcSteamLimited.xpPerAction === 72 && rcSteamLimited.throughput.xpPerTick === 12, "steam combo limited throughput mismatch");
+
+  const runecraftingCustomSummary = SkillSpecRegistry.getRunecraftingBalanceSummary({ level: 50, inventoryEssence: 10, travelTicks: 5, secondaryRuneCount: 7 });
+  const customSteamRow = runecraftingCustomSummary.rows.find((row) => row.recipeId === "steam_combo_from_ember");
+  assert(runecraftingCustomSummary.assumptions.inventoryEssence === 10, "runecrafting custom summary inventory assumption mismatch");
+  assert(!!customSteamRow && customSteamRow.essenceUsed === 3 && customSteamRow.travelTicks === 5, "runecrafting custom summary option propagation mismatch");
 
   loadBrowserScript(root, "src/js/content/item-catalog.js");
   const itemDefs = window.ItemCatalog && window.ItemCatalog.ITEM_DEFS;
