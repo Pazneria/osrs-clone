@@ -137,6 +137,7 @@ const TEST_RUN_FILES = [
   "tools/content/validate-items.js",
   "tools/content/validate-skills.js",
   "tools/content/validate-world.js",
+  "tools/tests/package-script-portability-guard.js",
   "tools/tests/codex-export-guard.js",
   "tools/tests/codex-link-contract.js",
   "tools/tests/spec-contracts.js",
