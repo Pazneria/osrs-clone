@@ -1,4 +1,4 @@
-import type { LegacyScriptEntry } from "./legacy-script-manifest";
+import type { LegacyScriptEntry } from "./legacy-script-entry";
 
 declare global {
   interface Window {
