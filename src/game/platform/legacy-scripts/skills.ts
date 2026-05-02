@@ -17,7 +17,17 @@ import coreTutorialRuntimeScript from "../../../js/core-tutorial-runtime.js?raw"
 import coreProgressRuntimeScript from "../../../js/core-progress-runtime.js?raw";
 import coreIconReviewRuntimeScript from "../../../js/core-icon-review-runtime.js?raw";
 import coreScript from "../../../js/core.js?raw";
-import skillSpecsScript from "../../../js/skills/specs.js?raw";
+import skillSpecsSharedScript from "../../../js/skills/specs/shared.js?raw";
+import skillSpecsWoodcuttingScript from "../../../js/skills/specs/woodcutting.js?raw";
+import skillSpecsFishingScript from "../../../js/skills/specs/fishing.js?raw";
+import skillSpecsFiremakingScript from "../../../js/skills/specs/firemaking.js?raw";
+import skillSpecsCookingScript from "../../../js/skills/specs/cooking.js?raw";
+import skillSpecsMiningScript from "../../../js/skills/specs/mining.js?raw";
+import skillSpecsRunecraftingScript from "../../../js/skills/specs/runecrafting.js?raw";
+import skillSpecsCraftingScript from "../../../js/skills/specs/crafting.js?raw";
+import skillSpecsFletchingScript from "../../../js/skills/specs/fletching.js?raw";
+import skillSpecsSmithingScript from "../../../js/skills/specs/smithing.js?raw";
+import skillSpecsFinalizeScript from "../../../js/skills/specs/finalize.js?raw";
 import skillSpecRegistryScript from "../../../js/skills/spec-registry.js?raw";
 import shopEconomyScript from "../../../js/shop-economy.js?raw";
 import skillManifestScript from "../../../js/skills/manifest.js?raw";
@@ -55,7 +65,17 @@ export const skillsLegacyScriptsById: Readonly<Record<string, LegacyScriptEntry>
   "core-progress-runtime": { id: "core-progress-runtime", filename: "src/js/core-progress-runtime.js", code: coreProgressRuntimeScript },
   "core-icon-review-runtime": { id: "core-icon-review-runtime", filename: "src/js/core-icon-review-runtime.js", code: coreIconReviewRuntimeScript },
   "core": { id: "core", filename: "src/js/core.js", code: coreScript },
-  "skills-specs": { id: "skills-specs", filename: "src/js/skills/specs.js", code: skillSpecsScript },
+  "skills-specs-shared": { id: "skills-specs-shared", filename: "src/js/skills/specs/shared.js", code: skillSpecsSharedScript },
+  "skills-specs-woodcutting": { id: "skills-specs-woodcutting", filename: "src/js/skills/specs/woodcutting.js", code: skillSpecsWoodcuttingScript },
+  "skills-specs-fishing": { id: "skills-specs-fishing", filename: "src/js/skills/specs/fishing.js", code: skillSpecsFishingScript },
+  "skills-specs-firemaking": { id: "skills-specs-firemaking", filename: "src/js/skills/specs/firemaking.js", code: skillSpecsFiremakingScript },
+  "skills-specs-cooking": { id: "skills-specs-cooking", filename: "src/js/skills/specs/cooking.js", code: skillSpecsCookingScript },
+  "skills-specs-mining": { id: "skills-specs-mining", filename: "src/js/skills/specs/mining.js", code: skillSpecsMiningScript },
+  "skills-specs-runecrafting": { id: "skills-specs-runecrafting", filename: "src/js/skills/specs/runecrafting.js", code: skillSpecsRunecraftingScript },
+  "skills-specs-crafting": { id: "skills-specs-crafting", filename: "src/js/skills/specs/crafting.js", code: skillSpecsCraftingScript },
+  "skills-specs-fletching": { id: "skills-specs-fletching", filename: "src/js/skills/specs/fletching.js", code: skillSpecsFletchingScript },
+  "skills-specs-smithing": { id: "skills-specs-smithing", filename: "src/js/skills/specs/smithing.js", code: skillSpecsSmithingScript },
+  "skills-specs": { id: "skills-specs", filename: "src/js/skills/specs/finalize.js", code: skillSpecsFinalizeScript },
   "skills-spec-registry": { id: "skills-spec-registry", filename: "src/js/skills/spec-registry.js", code: skillSpecRegistryScript },
   "shop-economy": { id: "shop-economy", filename: "src/js/shop-economy.js", code: shopEconomyScript },
   "skills-manifest": { id: "skills-manifest", filename: "src/js/skills/manifest.js", code: skillManifestScript },

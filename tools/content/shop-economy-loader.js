@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { loadSkillSpecScripts } = require("./runtime-skill-specs");
 
 function loadShopEconomy(root) {
   const sandbox = {
@@ -14,7 +15,7 @@ function loadShopEconomy(root) {
     vm.runInNewContext(code, sandbox, { filename: abs });
   };
 
-  loadBrowserScript(path.join("src", "js", "skills", "specs.js"));
+  loadSkillSpecScripts(root, sandbox);
   sandbox.SkillSpecs = sandbox.window.SkillSpecs;
   loadBrowserScript(path.join("src", "js", "skills", "spec-registry.js"));
   sandbox.SkillSpecRegistry = sandbox.window.SkillSpecRegistry;

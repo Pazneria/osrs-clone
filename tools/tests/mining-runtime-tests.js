@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -10,6 +11,10 @@ function loadBrowserScript(root, relPath) {
   const abs = path.join(root, relPath);
   const code = fs.readFileSync(abs, "utf8");
   vm.runInThisContext(code, { filename: abs });
+}
+
+function loadSkillSpecScripts(root) {
+  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
 }
 
 function createSequenceRng(values) {
@@ -100,7 +105,7 @@ function run() {
   };
   global.SkillSharedUtils = window.SkillSharedUtils;
 
-  loadBrowserScript(root, "src/js/skills/specs.js");
+  loadSkillSpecScripts(root);
   loadBrowserScript(root, "src/js/skills/spec-registry.js");
   loadBrowserScript(root, "src/js/skills/shared/action-resolution.js");
 

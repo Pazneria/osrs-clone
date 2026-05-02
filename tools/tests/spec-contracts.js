@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -28,6 +29,16 @@ function loadBrowserScript(root, relPath) {
   vm.runInThisContext(code, { filename: abs });
 }
 
+function loadSkillSpecScripts(root) {
+  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
+}
+
+function readSkillSpecShardSource(root) {
+  return SKILL_SPEC_SCRIPT_PATHS
+    .map((relPath) => fs.readFileSync(path.join(root, relPath), "utf8"))
+    .join("\n");
+}
+
 function replaceOnce(source, from, to, label) {
   const next = source.replace(from, to);
   assert(next !== source, "test setup failed (" + label + ")");
@@ -53,8 +64,8 @@ const STARTER_TOWN_NAMED_NPC_DIALOGUES = Object.freeze({
 
 
 function expectMutatedSpecsFailure(root, mutate, expectedMessageRegex, label) {
-  const abs = path.join(root, "src/js/skills/specs.js");
-  const original = fs.readFileSync(abs, "utf8");
+  const abs = path.join(root, "src/js/skills/specs/_mutated_shards.js");
+  const original = readSkillSpecShardSource(root);
   const mutated = mutate(original);
   const sandbox = { window: {} };
 
@@ -76,7 +87,7 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
 
   global.window = {};
-  loadBrowserScript(root, "src/js/skills/specs.js");
+  loadSkillSpecScripts(root);
   global.SkillSpecs = global.window.SkillSpecs;
   loadBrowserScript(root, "src/js/skills/spec-registry.js");
   global.SkillSpecRegistry = global.window.SkillSpecRegistry;
