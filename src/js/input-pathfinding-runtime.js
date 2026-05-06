@@ -75,6 +75,85 @@
         return new Set(positions.map((p) => encodeTileKey(context, p.x, p.y)));
     }
 
+    function estimatePathDistanceToTarget(x, y, target) {
+        const dx = Math.abs(target.x - x);
+        const dy = Math.abs(target.y - y);
+        const diagonal = Math.min(dx, dy);
+        const straight = Math.max(dx, dy) - diagonal;
+        return (diagonal * Math.SQRT2) + straight;
+    }
+
+    function estimatePathDistanceToAnyTarget(x, y, targets) {
+        let best = Infinity;
+        for (let i = 0; i < targets.length; i++) {
+            best = Math.min(best, estimatePathDistanceToTarget(x, y, targets[i]));
+        }
+        return best;
+    }
+
+    function estimatePathLineDeviationToTarget(startX, startY, x, y, target) {
+        const targetDx = target.x - startX;
+        const targetDy = target.y - startY;
+        const stepDx = x - startX;
+        const stepDy = y - startY;
+        const targetSpan = Math.max(Math.abs(targetDx), Math.abs(targetDy));
+        if (targetSpan <= 0) return 0;
+        return Math.abs((targetDx * stepDy) - (targetDy * stepDx)) / targetSpan;
+    }
+
+    function estimatePathLineDeviationToAnyTarget(startX, startY, x, y, targets) {
+        let best = Infinity;
+        for (let i = 0; i < targets.length; i++) {
+            best = Math.min(best, estimatePathLineDeviationToTarget(startX, startY, x, y, targets[i]));
+        }
+        return best;
+    }
+
+    function compareOpenEntries(a, b) {
+        const fDelta = a.f - b.f;
+        if (Math.abs(fDelta) > 0.000001) return fDelta;
+        const lineDelta = a.line - b.line;
+        if (Math.abs(lineDelta) > 0.000001) return lineDelta;
+        const hDelta = a.h - b.h;
+        if (Math.abs(hDelta) > 0.000001) return hDelta;
+        return a.order - b.order;
+    }
+
+    function pushOpenEntry(heap, entry) {
+        heap.push(entry);
+        let index = heap.length - 1;
+        while (index > 0) {
+            const parentIndex = Math.floor((index - 1) / 2);
+            if (compareOpenEntries(heap[parentIndex], entry) <= 0) break;
+            heap[index] = heap[parentIndex];
+            index = parentIndex;
+        }
+        heap[index] = entry;
+    }
+
+    function popOpenEntry(heap) {
+        if (heap.length === 0) return null;
+        const first = heap[0];
+        const last = heap.pop();
+        if (heap.length > 0 && last) {
+            let index = 0;
+            while (true) {
+                const leftIndex = (index * 2) + 1;
+                const rightIndex = leftIndex + 1;
+                if (leftIndex >= heap.length) break;
+                let childIndex = leftIndex;
+                if (rightIndex < heap.length && compareOpenEntries(heap[rightIndex], heap[leftIndex]) < 0) {
+                    childIndex = rightIndex;
+                }
+                if (compareOpenEntries(heap[childIndex], last) >= 0) break;
+                heap[index] = heap[childIndex];
+                index = childIndex;
+            }
+            heap[index] = last;
+        }
+        return first;
+    }
+
     function findPath(context, startX, startY, targetX, targetY, forceAdjacent = false, interactionObj = null, pathOptions = null) {
         if (!context || !isInBounds(context, startX, startY) || !isInBounds(context, targetX, targetY)) return [];
         const resolvedZ = resolvePathPlane(context, pathOptions);
@@ -151,10 +230,29 @@
         const startKey = encodeTileKey(context, startX, startY);
         if (validTargets.has(startKey)) return [];
 
-        const queue = [startKey];
-        let queueIndex = 0;
+        const validTargetCoords = Array.from(validTargets).map((key) => ({
+            key,
+            x: decodeTileX(context, key),
+            y: decodeTileY(context, key)
+        }));
+        const openHeap = [];
         const visitedParents = new Map();
+        const pathCosts = new Map();
+        const closedKeys = new Set();
+        let openOrder = 0;
         visitedParents.set(startKey, -1);
+        pathCosts.set(startKey, 0);
+        const startH = estimatePathDistanceToAnyTarget(startX, startY, validTargetCoords);
+        pushOpenEntry(openHeap, {
+            key: startKey,
+            x: startX,
+            y: startY,
+            g: 0,
+            h: startH,
+            f: startH,
+            line: 0,
+            order: openOrder++
+        });
 
         const dirs8 = [{x: 0, y: -1}, {x: 0, y: 1}, {x: -1, y: 0}, {x: 1, y: 0}, {x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1}, {x: 1, y: 1}];
         const restrictPierFishingToDeck = interactionObj === 'WATER'
@@ -165,19 +263,26 @@
         let foundTargetKey = -1;
         const maxIterations = Number.isFinite(context.pathfindMaxIterations) ? context.pathfindMaxIterations : 25000;
 
-        while (queueIndex < queue.length) {
+        while (openHeap.length > 0) {
             if (iterations++ > maxIterations) break;
 
-            const currentKey = queue[queueIndex++];
-            const currentX = decodeTileX(context, currentKey);
-            const currentY = decodeTileY(context, currentKey);
+            const currentEntry = popOpenEntry(openHeap);
+            if (!currentEntry || closedKeys.has(currentEntry.key)) continue;
+            const currentKey = currentEntry.key;
+            const currentX = currentEntry.x;
+            const currentY = currentEntry.y;
+            if (validTargets.has(currentKey)) {
+                foundTargetKey = currentKey;
+                break;
+            }
+            closedKeys.add(currentKey);
             const currentHeight = heightMap[resolvedZ][currentY][currentX];
 
             for (const dir of dirs8) {
                 const nx = currentX + dir.x;
                 const ny = currentY + dir.y;
                 const nextKey = encodeTileKey(context, nx, ny);
-                if (!isInBounds(context, nx, ny) || visitedParents.has(nextKey) || !isStandableTileForPath(context, nx, ny, resolvedZ, pathOptions)) continue;
+                if (!isInBounds(context, nx, ny) || closedKeys.has(nextKey) || !isStandableTileForPath(context, nx, ny, resolvedZ, pathOptions)) continue;
 
                 const nextTileId = getPathTileId(context, nx, ny, resolvedZ, pathOptions);
                 const currentTileId = getPathTileId(context, currentX, currentY, resolvedZ, pathOptions);
@@ -204,14 +309,25 @@
                     if (blockX || blockY) continue;
                 }
 
-                visitedParents.set(nextKey, currentKey);
+                const stepCost = cardinalStep ? 1 : Math.SQRT2;
+                const tentativeCost = currentEntry.g + stepCost;
+                const knownCost = pathCosts.has(nextKey) ? pathCosts.get(nextKey) : Infinity;
+                if (tentativeCost >= knownCost - 0.000001) continue;
 
-                if (validTargets.has(nextKey)) {
-                    foundTargetKey = nextKey;
-                    queueIndex = queue.length;
-                    break;
-                }
-                queue.push(nextKey);
+                visitedParents.set(nextKey, currentKey);
+                pathCosts.set(nextKey, tentativeCost);
+                const nextH = estimatePathDistanceToAnyTarget(nx, ny, validTargetCoords);
+                const nextLine = estimatePathLineDeviationToAnyTarget(startX, startY, nx, ny, validTargetCoords);
+                pushOpenEntry(openHeap, {
+                    key: nextKey,
+                    x: nx,
+                    y: ny,
+                    g: tentativeCost,
+                    h: nextH,
+                    f: tentativeCost + nextH,
+                    line: nextLine,
+                    order: openOrder++
+                });
             }
         }
 

@@ -1,11 +1,16 @@
 (function () {
     function getActivePierConfig(sharedMaterials) {
-        return (sharedMaterials && sharedMaterials.activePierConfig) || null;
+        const pierConfig = (sharedMaterials && sharedMaterials.activePierConfig) || null;
+        return isPierConfigEnabled(pierConfig) ? pierConfig : null;
+    }
+
+    function isPierConfigEnabled(pierConfig) {
+        return !!(pierConfig && pierConfig.enabled !== false);
     }
 
     function isPierDeckTile(pierConfig, x, y, z) {
         return !!(
-            pierConfig
+            isPierConfigEnabled(pierConfig)
             && z === 0
             && x >= pierConfig.xMin
             && x <= pierConfig.xMax
@@ -16,7 +21,7 @@
 
     function isPierSideWaterTile(pierConfig, x, y, z) {
         return !!(
-            pierConfig
+            isPierConfigEnabled(pierConfig)
             && z === 0
             && y >= (pierConfig.yStart + 1)
             && y <= pierConfig.yEnd
@@ -26,7 +31,7 @@
 
     function isPierTipCoverageTile(pierConfig, x, y, z) {
         return !!(
-            pierConfig
+            isPierConfigEnabled(pierConfig)
             && z === 0
             && y >= (pierConfig.yEnd - 1)
             && y <= pierConfig.yEnd
@@ -49,6 +54,7 @@
 
     window.WorldPierRuntime = {
         getActivePierConfig,
+        isPierConfigEnabled,
         isPierDeckTile,
         isPierSideWaterTile,
         isPierTipCoverageTile,

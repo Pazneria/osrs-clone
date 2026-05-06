@@ -89,6 +89,8 @@
         ENEMY: 'It looks ready for a fight.',
         SHOP_COUNTER: 'A counter built for haggling.',
         DOOR: 'A sturdy wooden door.',
+        GATE: 'A simple wooden gate.',
+        DECOR_PROP: 'A useful-looking fixture.',
         WATER: 'The water looks fishable.'
     };
 
@@ -220,6 +222,18 @@
         return `${enemyLabel} looks ready for a fight.`;
     }
 
+    function getDecorPropExamine(options = {}) {
+        const kind = String(options.kind || '').toLowerCase();
+        const label = cleanName(options.label || options.name) || 'fixture';
+        if (kind === 'desk') return 'A tutor desk covered with lesson notes.';
+        if (kind === 'crate') return 'A crate of starter supplies for new arrivals.';
+        if (kind === 'tool_rack') return 'A wall rack holding simple tools and practice gear.';
+        if (kind === 'notice_board') return 'A board showing the first steps through Tutorial Island.';
+        if (kind === 'chopping_block') return 'A chopping block scarred by practice swings.';
+        if (kind === 'woodpile') return 'A neat pile of logs ready for the next lesson.';
+        return `A ${label}.`;
+    }
+
     function getTargetExamine(targetType, options = {}) {
         const type = String(targetType || '').toUpperCase();
         if (type === 'NPC') return getNpcExamine(options.name);
@@ -230,6 +244,9 @@
         }
         if (type === 'ENEMY') {
             return getEnemyExamine(options);
+        }
+        if (type === 'DECOR_PROP') {
+            return getDecorPropExamine(options);
         }
         if (type === 'ROCK') {
             const oreKey = String(options.oreType || '').toLowerCase();
@@ -274,6 +291,7 @@
         DEFAULT_TARGET_EXAMINE,
         getItemExamine,
         getTargetExamine,
+        getDecorPropExamine,
         getNpcExamine,
         dispatchExamineText,
         examineItem,

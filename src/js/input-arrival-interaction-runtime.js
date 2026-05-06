@@ -7,6 +7,117 @@
         return context && context.tileId ? context.tileId : {};
     }
 
+    function getDocumentRef(context) {
+        return context && context.documentRef ? context.documentRef : (typeof document !== 'undefined' ? document : null);
+    }
+
+    function formatDecorPropLabel(targetUid) {
+        if (targetUid && typeof targetUid.label === 'string' && targetUid.label.trim()) return targetUid.label.trim();
+        return 'object';
+    }
+
+    function getDecorPropSearchMessage(targetUid) {
+        const label = formatDecorPropLabel(targetUid);
+        const kind = String(targetUid && targetUid.kind ? targetUid.kind : '').toLowerCase();
+        if (kind === 'desk') return 'You search the desk. Lesson notes and a rough map of the island are laid out neatly.';
+        if (kind === 'crate') return 'You search the starter supplies. The Tutorial Guide has set aside what you need first.';
+        if (kind === 'tool_rack') return 'You search the tool rack. Axes and practice gear are racked with their sharp sides facing out.';
+        if (kind === 'notice_board') return 'You read the notice board. Speak to the Tutorial Guide, then follow the path east to the trees.';
+        if (kind === 'chopping_block') return 'You check the chopping block. Fresh axe marks show where new adventurers practice their first cuts.';
+        if (kind === 'woodpile') return 'You search the stacked logs. They are split neatly, but the instructor wants you to cut your own.';
+        return `You search the ${label}.`;
+    }
+
+    function showBlockingInteractionMessage(context, message) {
+        const text = String(message || '').trim();
+        if (!text) return;
+
+        const documentRef = getDocumentRef(context);
+        if (!documentRef || !documentRef.body || typeof documentRef.createElement !== 'function') return;
+        let popup = typeof documentRef.getElementById === 'function'
+            ? documentRef.getElementById('tutorial-blocking-popup')
+            : null;
+        const closePopup = () => {
+            if (!popup) return;
+            popup.style.opacity = '0';
+            popup.style.transform = 'translate(-50%, -8px) scale(0.96)';
+            popup.style.display = 'none';
+            if (popup._tutorialClickAwayHandler && typeof documentRef.removeEventListener === 'function') {
+                documentRef.removeEventListener('pointerdown', popup._tutorialClickAwayHandler, true);
+            }
+            popup._tutorialClickAwayHandler = null;
+        };
+        if (!popup) {
+            popup = documentRef.createElement('div');
+            popup.id = 'tutorial-blocking-popup';
+            popup.style.position = 'fixed';
+            popup.style.left = '50%';
+            popup.style.top = '18%';
+            popup.style.zIndex = '10000';
+            popup.style.maxWidth = 'min(520px, calc(100vw - 32px))';
+            popup.style.padding = '10px 16px';
+            popup.style.border = '2px solid #c8aa6e';
+            popup.style.borderRadius = '4px';
+            popup.style.background = 'rgba(22, 18, 12, 0.95)';
+            popup.style.color = '#fff2bf';
+            popup.style.font = '700 15px system-ui, sans-serif';
+            popup.style.textAlign = 'center';
+            popup.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 242, 191, 0.18)';
+            popup.style.pointerEvents = 'auto';
+            popup.style.transition = 'opacity 140ms ease, transform 140ms ease';
+            popup.style.alignItems = 'center';
+            popup.style.justifyContent = 'center';
+            popup.style.gap = '12px';
+            const body = documentRef.createElement('span');
+            body.className = 'tutorial-blocking-popup-text';
+            body.style.display = 'block';
+            body.style.flex = '1 1 auto';
+            const closeButton = documentRef.createElement('button');
+            closeButton.type = 'button';
+            closeButton.setAttribute('aria-label', 'Close message');
+            closeButton.textContent = 'x';
+            closeButton.style.width = '24px';
+            closeButton.style.height = '24px';
+            closeButton.style.border = '1px solid #c8aa6e';
+            closeButton.style.borderRadius = '3px';
+            closeButton.style.background = '#2a1f12';
+            closeButton.style.color = '#fff2bf';
+            closeButton.style.font = '700 14px system-ui, sans-serif';
+            closeButton.style.lineHeight = '20px';
+            closeButton.style.cursor = 'pointer';
+            if (typeof closeButton.addEventListener === 'function') {
+                closeButton.addEventListener('click', (event) => {
+                    if (event && typeof event.preventDefault === 'function') event.preventDefault();
+                    if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+                    closePopup();
+                });
+            }
+            if (typeof popup.appendChild === 'function') {
+                popup.appendChild(body);
+                popup.appendChild(closeButton);
+            }
+            popup._tutorialBody = body;
+            popup._tutorialCloseButton = closeButton;
+            documentRef.body.appendChild(popup);
+        }
+        if (popup._tutorialBody) popup._tutorialBody.textContent = text;
+        else popup.textContent = text;
+        popup.style.display = 'flex';
+        popup.style.opacity = '1';
+        popup.style.transform = 'translate(-50%, 0) scale(1)';
+
+        if (popup._tutorialClickAwayHandler && typeof documentRef.removeEventListener === 'function') {
+            documentRef.removeEventListener('pointerdown', popup._tutorialClickAwayHandler, true);
+        }
+        popup._tutorialClickAwayHandler = (event) => {
+            if (popup && typeof popup.contains === 'function' && popup.contains(event && event.target)) return;
+            closePopup();
+        };
+        if (typeof documentRef.addEventListener === 'function') {
+            documentRef.addEventListener('pointerdown', popup._tutorialClickAwayHandler, true);
+        }
+    }
+
     function isAcrossShopCounter(context, distX, distY) {
         const playerState = context.playerState;
         const tileId = getTileId(context);
@@ -116,6 +227,7 @@
             if (windowRef.isTutorialGateLocked && windowRef.isTutorialGateLocked(door)) {
                 const message = door.tutorialGateMessage || 'That gate is locked until you finish the current tutorial lesson.';
                 if (typeof context.addChatMessage === 'function') context.addChatMessage(message, 'warn');
+                showBlockingInteractionMessage(context, message);
                 playerState.action = 'IDLE';
                 return;
             }
@@ -182,6 +294,15 @@
             if (typeof windowRef.openNpcDialogue === 'function') {
                 windowRef.openNpcDialogue(playerState.targetUid);
             }
+        }
+    }
+
+    function handleDecorPropArrival(context) {
+        const playerState = context.playerState;
+        playerState.action = 'IDLE';
+        facePlayerToward(context, playerState.targetX, playerState.targetY);
+        if (typeof context.addChatMessage === 'function') {
+            context.addChatMessage(getDecorPropSearchMessage(playerState.targetUid), 'game');
         }
     }
 
@@ -273,6 +394,8 @@
                     playerState.action = 'IDLE';
                 } else if (playerState.targetObj === 'NPC' || playerState.targetObj === 'SHOP_COUNTER') {
                     handleNpcOrCounterArrival(context);
+                } else if (playerState.targetObj === 'DECOR_PROP') {
+                    handleDecorPropArrival(context);
                 } else if (playerState.targetObj === 'BANK_BOOTH') {
                     handleBankBoothArrival(context);
                 } else {
@@ -311,6 +434,8 @@
     window.InputArrivalInteractionRuntime = {
         processArrivalInteractions,
         resumeDeferredFletchingInteraction,
-        handleWalkingToInteractArrival
+        handleWalkingToInteractArrival,
+        getDecorPropSearchMessage,
+        showBlockingInteractionMessage
     };
 })();

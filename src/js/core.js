@@ -26,21 +26,21 @@
         const MAIN_OVERWORLD_WORLD_ID = 'main_overworld';
         const TUTORIAL_EXIT_STEP = 7;
         const TUTORIAL_ACTIVE_BOUNDS = Object.freeze({
-            xMin: 140,
-            xMax: 255,
-            yMin: 135,
-            yMax: 195,
+            xMin: 92,
+            xMax: 568,
+            yMin: 164,
+            yMax: 492,
             z: 0
         });
         const TUTORIAL_RECOVERY_SPAWNS = Object.freeze([
-            { x: 157, y: 157, z: 0 },
-            { x: 171, y: 157, z: 0 },
-            { x: 187, y: 156, z: 0 },
-            { x: 205, y: 175, z: 0 },
-            { x: 229, y: 183, z: 0 },
-            { x: 237, y: 159, z: 0 },
-            { x: 215, y: 149, z: 0 },
-            { x: 200, y: 148, z: 0 }
+            { x: 187, y: 232, z: 0 },
+            { x: 187, y: 232, z: 0 },
+            { x: 280, y: 269, z: 0 },
+            { x: 440, y: 299, z: 0 },
+            { x: 373, y: 331, z: 0 },
+            { x: 475, y: 384, z: 0 },
+            { x: 427, y: 435, z: 0 },
+            { x: 269, y: 440, z: 0 }
         ]);
 
         // --- Game State (Logical & Terrain) ---
@@ -160,10 +160,12 @@
         let pendingAction = null;
         let npcsToRender = []; 
         let bankBoothsToRender = []; 
+        let caveOpeningsToRender = [];
         let furnacesToRender = [];
         let anvilsToRender = []; 
         let doorsToRender = []; 
         let directionalSignsToRender = []; 
+        let decorPropsToRender = [];
         let activeHitsplats = []; 
         
         // Pathfinder Walkability Registry (Added DOOR_OPEN for open doors)
@@ -669,6 +671,9 @@
                 : (baseView || null),
             getStep: getTutorialStep,
             setStep: setTutorialStep,
+            getGuidanceMarker: () => coreTutorialRuntime && typeof coreTutorialRuntime.getGuidanceMarker === 'function'
+                ? coreTutorialRuntime.getGuidanceMarker(buildTutorialRuntimeContext())
+                : null,
             recordBankAction: recordTutorialBankAction,
             isExitUnlocked: () => coreTutorialRuntime && typeof coreTutorialRuntime.isExitUnlocked === 'function'
                 ? coreTutorialRuntime.isExitUnlocked(buildTutorialRuntimeContext())
@@ -895,6 +900,7 @@
                 consoleRef: console,
                 documentRef: document,
                 equipment,
+                buildProgressPayload,
                 gameSessionRuntime,
                 getLevelForXp: typeof getLevelForXp === 'function' ? getLevelForXp : null,
                 maxSkillLevel: PROGRESS_MAX_SKILL_LEVEL,
@@ -1148,6 +1154,7 @@
             if (appearance && window.playerAppearanceState) {
                 window.playerAppearanceState.gender = appearance.gender;
                 window.playerAppearanceState.colors = appearance.colors.slice();
+                window.playerAppearanceState.creatorSelections = Object.assign({}, appearance.creatorSelections || {});
             }
 
             syncGameSessionState();
@@ -1392,6 +1399,19 @@
 
         function buildPlayerEntryRuntimeOptions() {
             const uiDomainRuntime = window.UiDomainRuntime || null;
+            const profileSummaryBuilder = uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
+                ? (summaryOptions) => {
+                    const viewModel = uiDomainRuntime.buildPlayerProfileSummaryViewModel(summaryOptions);
+                    if (!playerEntryFlowState.forceCreatorMode || !viewModel) return viewModel;
+                    return Object.assign({}, viewModel, {
+                        isContinueFlow: false,
+                        titleText: 'Create Your Adventurer',
+                        subtitleText: 'Choose a starter identity before you arrive on Tutorial Island.',
+                        primaryActionText: 'Start Adventure',
+                        noteText: 'Creator reopened for QA. Changes save when you start adventure.'
+                    });
+                }
+                : null;
             return {
                 documentRef: document,
                 windowRef: window,
@@ -1402,9 +1422,7 @@
                 defaultName: PLAYER_PROFILE_DEFAULT_NAME,
                 nameMinLength: PLAYER_NAME_MIN_LENGTH,
                 nameMaxLength: PLAYER_NAME_MAX_LENGTH,
-                buildPlayerProfileSummaryViewModel: uiDomainRuntime && typeof uiDomainRuntime.buildPlayerProfileSummaryViewModel === 'function'
-                    ? uiDomainRuntime.buildPlayerProfileSummaryViewModel
-                    : null,
+                buildPlayerProfileSummaryViewModel: profileSummaryBuilder,
                 formatTimestamp: formatPlayerEntryTimestamp,
                 refreshPlayerAppearancePreview,
                 completePlayerEntryFlow
@@ -1414,6 +1432,9 @@
         function refreshPlayerAppearancePreview() {
             if (typeof window.rebuildPlayerRigsFromAppearance === 'function') {
                 window.rebuildPlayerRigsFromAppearance();
+            }
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.refreshPlayerEntryPreview === 'function') {
+                corePlayerEntryRuntime.refreshPlayerEntryPreview(buildPlayerEntryRuntimeOptions());
             }
         }
 
@@ -1436,6 +1457,7 @@
             playerProfileState.creationCompleted = true;
             if (!playerProfileState.createdAt) playerProfileState.createdAt = Date.now();
             playerProfileState.lastStartedAt = Date.now();
+            playerEntryFlowState.forceCreatorMode = false;
 
             setPlayerEntryFlowOpen(false);
             ensureProgressPersistenceLifecycle();
@@ -1489,7 +1511,6 @@
             const shouldBlockBehindEntryFlow =
                 !playerEntryFlowState.hasLoadedSave ||
                 !playerProfileState.creationCompleted ||
-                playerEntryFlowState.saveWasLegacyProfile ||
                 playerEntryFlowState.loadReason === 'parse_failed' ||
                 playerEntryFlowState.loadReason === 'invalid_payload';
 
@@ -1500,6 +1521,9 @@
                 ensureProgressPersistenceLifecycle();
                 addChatMessage(`Welcome back, ${playerProfileState.name}.`, 'game');
                 addChatMessage('Loaded saved progress from your previous session.', 'info');
+                if (playerEntryFlowState.saveWasLegacyProfile) {
+                    addChatMessage('Legacy save profile upgraded automatically.', 'info');
+                }
                 saveProgressToStorage('auto_resume_session');
                 return;
             }
@@ -1509,6 +1533,28 @@
             if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.focusPlayerEntryName === 'function') {
                 corePlayerEntryRuntime.focusPlayerEntryName({ documentRef: document });
             }
+        }
+
+        function qaOpenPlayerCreator() {
+            const isMounted = corePlayerEntryRuntime && typeof corePlayerEntryRuntime.isPlayerEntryMounted === 'function'
+                ? corePlayerEntryRuntime.isPlayerEntryMounted({ documentRef: document })
+                : !!document.getElementById('player-entry-overlay');
+            if (!isMounted) {
+                addChatMessage('QA creator unavailable: player entry overlay is not mounted.', 'warn');
+                return false;
+            }
+            if (!playerEntryFlowState.uiBound && corePlayerEntryRuntime && typeof corePlayerEntryRuntime.bindPlayerEntryFlowControls === 'function') {
+                corePlayerEntryRuntime.bindPlayerEntryFlowControls(buildPlayerEntryRuntimeOptions());
+                playerEntryFlowState.uiBound = true;
+            }
+            playerEntryFlowState.forceCreatorMode = true;
+            setPlayerEntryFlowOpen(true);
+            renderPlayerEntryFlow();
+            if (corePlayerEntryRuntime && typeof corePlayerEntryRuntime.focusPlayerEntryName === 'function') {
+                corePlayerEntryRuntime.focusPlayerEntryName({ documentRef: document });
+            }
+            addChatMessage('QA opened the character creator. Changes save when you start adventure.', 'info');
+            return true;
         }
 
         function buildQaCommandContext() {
@@ -1522,8 +1568,10 @@
                 showPlayerOverheadText,
                 resetQaCameraView: (typeof window.resetQaCameraView === 'function') ? window.resetQaCameraView : null,
                 setQaCameraView: (typeof window.setQaCameraView === 'function') ? window.setQaCameraView : null,
+                setQaCameraAerialView: (typeof window.setQaCameraAerialView === 'function') ? window.setQaCameraAerialView : null,
                 setQaSkillLevel,
                 setQaUnlockFlag,
+                qaOpenPlayerCreator,
                 emitQaCombatDebugSnapshot: (typeof window.emitQaCombatDebugSnapshot === 'function') ? window.emitQaCombatDebugSnapshot : null,
                 emitQaCombatDebugClearHistory: (typeof window.emitQaCombatDebugClearHistory === 'function') ? window.emitQaCombatDebugClearHistory : null,
                 openShopForMerchant: (typeof window.openShopForMerchant === 'function') ? window.openShopForMerchant : null,

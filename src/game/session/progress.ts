@@ -135,9 +135,19 @@ export function cloneQuestProgressState(quests: QuestProgressState): QuestProgre
 
 export function cloneAppearanceState(appearance: SaveAppearanceState | null): SaveAppearanceState | null {
   if (!appearance) return null;
+  const creatorSelections: Record<string, string> = {};
+  const selectionSource = appearance.creatorSelections && typeof appearance.creatorSelections === "object"
+    ? appearance.creatorSelections
+    : {};
+  for (const [slotId, optionId] of Object.entries(selectionSource)) {
+    if (typeof slotId === "string" && slotId && typeof optionId === "string" && optionId) {
+      creatorSelections[slotId] = optionId;
+    }
+  }
   return {
     gender: appearance.gender === 1 ? 1 : 0,
-    colors: Array.isArray(appearance.colors) ? appearance.colors.slice(0, 5) : [0, 0, 0, 0, 0]
+    colors: Array.isArray(appearance.colors) ? appearance.colors.slice(0, 5) : [0, 0, 0, 0, 0],
+    creatorSelections
   };
 }
 

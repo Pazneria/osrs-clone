@@ -15,6 +15,12 @@ const PLAYER_BODY_COLOR_PALETTES = Array.isArray(PLAYER_APPEARANCE_CATALOG.bodyC
 const PLAYER_DEFAULT_SLOT_KITS = PLAYER_APPEARANCE_CATALOG.defaultSlotKits || {};
 const PLAYER_KIT_DEFS = PLAYER_APPEARANCE_CATALOG.kitDefs || {};
 const PLAYER_ITEM_DEFS = PLAYER_APPEARANCE_CATALOG.itemDefs || {};
+const PLAYER_CREATOR_SLOT_ORDER = Array.isArray(PLAYER_APPEARANCE_CATALOG.creatorSlotOrder)
+    ? PLAYER_APPEARANCE_CATALOG.creatorSlotOrder.slice()
+    : [];
+const PLAYER_CREATOR_SLOTS = PLAYER_APPEARANCE_CATALOG.creatorSlots || {};
+const PLAYER_CREATOR_DEFAULTS = PLAYER_APPEARANCE_CATALOG.creatorDefaults || {};
+const PLAYER_CREATOR_KIT_DEFS = PLAYER_APPEARANCE_CATALOG.creatorKitDefs || {};
 
 if (!PLAYER_APPEARANCE_SLOT_ORDER.length || !PLAYER_BODY_COLOR_FIND.length || !PLAYER_BODY_COLOR_PALETTES.length) {
     throw new Error('PlayerAppearanceCatalog is malformed: missing slot order or body color palettes.');
@@ -26,9 +32,32 @@ const PLAYER_ELBOW_DEPTH_BIAS = -0.02;
 const PLAYER_ARM_FALLBACK_UPPER_FRAGMENT = { size: [0.20, 0.36, 0.20], offset: [0, -0.18, -0.08] };
 const PLAYER_ARM_FALLBACK_LOWER_FRAGMENT = { size: [0.16, 0.34, 0.16], offset: [0, -0.17, 0.0] };
 
+function resolveCreatorSlotOption(creatorSlot, optionId) {
+    const slotDef = PLAYER_CREATOR_SLOTS[creatorSlot] || {};
+    const options = Array.isArray(slotDef.options) ? slotDef.options : [];
+    const requestedId = typeof optionId === 'string' ? optionId : '';
+    const defaultId = typeof PLAYER_CREATOR_DEFAULTS[creatorSlot] === 'string' ? PLAYER_CREATOR_DEFAULTS[creatorSlot] : '';
+    return options.find((option) => option && option.id === requestedId)
+        || options.find((option) => option && option.id === defaultId)
+        || options[0]
+        || null;
+}
+
+function sanitizeCreatorSelections(selections) {
+    const safeSelections = {};
+    const input = selections && typeof selections === 'object' ? selections : {};
+    for (let i = 0; i < PLAYER_CREATOR_SLOT_ORDER.length; i++) {
+        const creatorSlot = PLAYER_CREATOR_SLOT_ORDER[i];
+        const option = resolveCreatorSlotOption(creatorSlot, input[creatorSlot]);
+        if (option && typeof option.id === 'string') safeSelections[creatorSlot] = option.id;
+    }
+    return safeSelections;
+}
+
 window.playerAppearanceState = {
     gender: 0,
-    colors: [0, 0, 0, 0, 0],
+    colors: [0, 2, 3, 1, 7],
+    creatorSelections: sanitizeCreatorSelections(null),
     slots: []
 };
 
@@ -82,7 +111,8 @@ function normalizeAppearance(appearance) {
     for (let i = 0; i < PLAYER_APPEARANCE_SLOT_ORDER.length; i++) {
         slots.push(ensureSlotComposition(slotsIn[i], i, gender));
     }
-    return { gender, colors, slots };
+    const creatorSelections = sanitizeCreatorSelections(appearance && appearance.creatorSelections);
+    return { gender, colors, creatorSelections, slots };
 }
 
 function applyPackedRecolors(baseColor, bodyColorIndex, bodyColors, recolors) {
@@ -107,7 +137,8 @@ function getAppearanceCacheKey(appearance) {
         if (!slot) return 'n';
         return `${slot.kind}:${slot.id}`;
     }).join(',');
-    return `g${normalized.gender}|c${normalized.colors.join('-')}|s${slotKey}`;
+    const creatorKey = PLAYER_CREATOR_SLOT_ORDER.map((slotName) => `${slotName}:${normalized.creatorSelections[slotName] || ''}`).join(',');
+    return `g${normalized.gender}|c${normalized.colors.join('-')}|cr${creatorKey}|s${slotKey}`;
 }
 
 function createRigBones(armRigDefaults) {
@@ -279,6 +310,13 @@ function getItemAppearanceFragments(itemDef, gender) {
     return Array.isArray(itemDef.fragments) ? itemDef.fragments : [];
 }
 
+function getCreatorKitAppearanceFragments(kitDef, gender) {
+    if (!kitDef || typeof kitDef !== 'object') return [];
+    const preferred = gender === 1 ? kitDef.femaleFragments : kitDef.maleFragments;
+    if (Array.isArray(preferred) && preferred.length) return preferred;
+    return Array.isArray(kitDef.fragments) ? kitDef.fragments : [];
+}
+
 function resolveSlotFragments(slotEntry, slotName, normalizedAppearance) {
     if (!slotEntry) return [];
     if (slotEntry.kind === 'kit') {
@@ -294,6 +332,37 @@ function resolveSlotFragments(slotEntry, slotName, normalizedAppearance) {
         return [{ fragments, recolors: item.recolors || [] }];
     }
     return [];
+}
+
+function isAppearanceSlotEquipped(normalizedAppearance, slotName) {
+    const slotIndex = PLAYER_APPEARANCE_SLOT_ORDER.indexOf(slotName);
+    const slotEntry = slotIndex >= 0 ? normalizedAppearance.slots[slotIndex] : null;
+    return !!(slotEntry && slotEntry.kind === 'item');
+}
+
+function isCreatorSlotSuppressedByEquipment(normalizedAppearance, creatorSlot) {
+    if (creatorSlot === 'hairStyle' || creatorSlot === 'faceStyle' || creatorSlot === 'facialHair') {
+        return isAppearanceSlotEquipped(normalizedAppearance, 'head');
+    }
+    if (creatorSlot === 'bodyStyle') return isAppearanceSlotEquipped(normalizedAppearance, 'body');
+    if (creatorSlot === 'legStyle') return isAppearanceSlotEquipped(normalizedAppearance, 'legs');
+    if (creatorSlot === 'feetStyle') return isAppearanceSlotEquipped(normalizedAppearance, 'feet');
+    return false;
+}
+
+function collectCreatorFragmentGroups(normalizedAppearance) {
+    const groups = [];
+    for (let i = 0; i < PLAYER_CREATOR_SLOT_ORDER.length; i++) {
+        const creatorSlot = PLAYER_CREATOR_SLOT_ORDER[i];
+        if (isCreatorSlotSuppressedByEquipment(normalizedAppearance, creatorSlot)) continue;
+        const option = resolveCreatorSlotOption(creatorSlot, normalizedAppearance.creatorSelections[creatorSlot]);
+        if (!option || typeof option.kitId !== 'string') continue;
+        const kitDef = PLAYER_CREATOR_KIT_DEFS[option.kitId];
+        if (!kitDef || kitDef.creatorSlot !== creatorSlot) continue;
+        const fragments = getCreatorKitAppearanceFragments(kitDef, normalizedAppearance.gender);
+        if (fragments.length) groups.push({ fragments, recolors: kitDef.recolors || [] });
+    }
+    return groups;
 }
 
 function fragmentAxisOr(fragment, key, axis, fallback) {
@@ -330,6 +399,11 @@ function collectAppearanceFragments(normalizedAppearance) {
             });
         });
     }
+    collectCreatorFragmentGroups(normalizedAppearance).forEach((group) => {
+        group.fragments.forEach((fragment) => {
+            if (fragment) fragments.push(fragment);
+        });
+    });
     return fragments;
 }
 
@@ -372,6 +446,9 @@ function buildPlayerRigTemplate(normalizedAppearance) {
         const groups = resolveSlotFragments(slotEntry, slotName, normalizedAppearance);
         groups.forEach((group) => addFragmentsToRig(rigRoot, group.fragments, normalizedAppearance.colors, group.recolors));
     }
+    collectCreatorFragmentGroups(normalizedAppearance).forEach((group) => {
+        addFragmentsToRig(rigRoot, group.fragments, normalizedAppearance.colors, group.recolors);
+    });
     const nodes = rigNodeMap(rigRoot);
     const equippedWeaponSlot = normalizedAppearance.slots[3] && normalizedAppearance.slots[3].kind === 'item' ? normalizedAppearance.slots[3].id : null;
     nodes.axe.visible = !!equippedWeaponSlot;
@@ -447,6 +524,7 @@ function buildAppearanceFromEquipment() {
     return {
         gender,
         colors: Array.isArray(playerAppearanceState.colors) ? playerAppearanceState.colors.slice(0, 5) : [0, 0, 0, 0, 0],
+        creatorSelections: sanitizeCreatorSelections(playerAppearanceState.creatorSelections),
         slots
     };
 }
@@ -455,6 +533,7 @@ function syncPlayerAppearanceFromEquipment() {
     const updated = normalizeAppearance(buildAppearanceFromEquipment());
     playerAppearanceState.gender = updated.gender;
     playerAppearanceState.colors = updated.colors.slice();
+    playerAppearanceState.creatorSelections = Object.assign({}, updated.creatorSelections);
     playerAppearanceState.slots = updated.slots.slice();
     return playerAppearanceState;
 }
@@ -469,6 +548,7 @@ function createPlayerRigForAnimationStudio() {
     const previewAppearance = {
         gender: appearance.gender,
         colors: Array.isArray(appearance.colors) ? appearance.colors.slice() : [0, 0, 0, 0, 0],
+        creatorSelections: sanitizeCreatorSelections(appearance.creatorSelections),
         slots: Array.isArray(appearance.slots) ? appearance.slots.slice() : []
     };
     const weaponSlotIndex = PLAYER_APPEARANCE_SLOT_ORDER.indexOf('weapon');
@@ -531,6 +611,7 @@ function rebuildPlayerRigsFromAppearance() {
 
 window.syncPlayerAppearanceFromEquipment = syncPlayerAppearanceFromEquipment;
 window.rebuildPlayerRigsFromAppearance = rebuildPlayerRigsFromAppearance;
+window.createPlayerRigFromAppearance = createPlayerRigFromAppearance;
 window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;
 window.createPlayerRigForAnimationStudio = createPlayerRigForAnimationStudio;
 const playerNpcHumanoidRuntimeForPublication = window.PlayerNpcHumanoidRuntime || null;

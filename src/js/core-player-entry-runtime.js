@@ -1,5 +1,17 @@
 (function () {
-    const DEFAULT_COLOR_LABELS = ['Hair', 'Torso', 'Legs', 'Feet', 'Skin'];
+    const DEFAULT_COLOR_LABELS = ['Hair', 'Top', 'Bottom', 'Footwear', 'Skin'];
+    const previewState = {
+        container: null,
+        scene: null,
+        camera: null,
+        renderer: null,
+        rig: null,
+        yaw: -Math.PI / 8,
+        dragging: false,
+        lastX: 0,
+        frameHandle: null,
+        resizeBound: false
+    };
 
     function getDocumentRef(options = {}) {
         return options.documentRef || (typeof document !== 'undefined' ? document : null);
@@ -9,10 +21,65 @@
         return options.windowRef || (typeof window !== 'undefined' ? window : {});
     }
 
+    function getAppearanceCatalog(options = {}) {
+        return options.playerAppearanceCatalog || getWindowRef(options).PlayerAppearanceCatalog || {};
+    }
+
     function getColorLabels(options = {}) {
-        return Array.isArray(options.colorLabels) && options.colorLabels.length
-            ? options.colorLabels
+        if (Array.isArray(options.colorLabels) && options.colorLabels.length) return options.colorLabels;
+        const catalog = getAppearanceCatalog(options);
+        return Array.isArray(catalog.bodyColorLabels) && catalog.bodyColorLabels.length
+            ? catalog.bodyColorLabels
             : DEFAULT_COLOR_LABELS;
+    }
+
+    function getCreatorSlotOrder(options = {}) {
+        const catalog = getAppearanceCatalog(options);
+        return Array.isArray(catalog.creatorSlotOrder) ? catalog.creatorSlotOrder : [];
+    }
+
+    function resolveCreatorSlotOption(options = {}, creatorSlot, optionId) {
+        const catalog = getAppearanceCatalog(options);
+        const creatorSlots = catalog.creatorSlots || {};
+        const creatorDefaults = catalog.creatorDefaults || {};
+        const slotDef = creatorSlots[creatorSlot] || {};
+        const slotOptions = Array.isArray(slotDef.options) ? slotDef.options : [];
+        const requestedId = typeof optionId === 'string' ? optionId : '';
+        const defaultId = typeof creatorDefaults[creatorSlot] === 'string' ? creatorDefaults[creatorSlot] : '';
+        return slotOptions.find((option) => option && option.id === requestedId)
+            || slotOptions.find((option) => option && option.id === defaultId)
+            || slotOptions[0]
+            || null;
+    }
+
+    function sanitizeCreatorSelections(options = {}, selections) {
+        const input = selections && typeof selections === 'object' ? selections : {};
+        const restored = {};
+        getCreatorSlotOrder(options).forEach((creatorSlot) => {
+            const option = resolveCreatorSlotOption(options, creatorSlot, input[creatorSlot]);
+            if (option && typeof option.id === 'string') restored[creatorSlot] = option.id;
+        });
+        return restored;
+    }
+
+    function ensurePlayerEntryAppearance(options = {}) {
+        const appearance = options.playerAppearanceState || null;
+        if (!appearance) return null;
+        appearance.gender = appearance.gender === 1 ? 1 : 0;
+        const palettes = Array.isArray(getAppearanceCatalog(options).bodyColorPalettes)
+            ? getAppearanceCatalog(options).bodyColorPalettes
+            : [];
+        const colorsIn = Array.isArray(appearance.colors) ? appearance.colors : [];
+        const colors = [0, 0, 0, 0, 0];
+        for (let i = 0; i < colors.length; i++) {
+            const palette = Array.isArray(palettes[i]) ? palettes[i] : [];
+            const raw = Number(colorsIn[i]);
+            const safe = Number.isFinite(raw) ? Math.floor(raw) : 0;
+            colors[i] = palette.length ? (((safe % palette.length) + palette.length) % palette.length) : safe;
+        }
+        appearance.colors = colors;
+        appearance.creatorSelections = sanitizeCreatorSelections(options, appearance.creatorSelections);
+        return appearance;
     }
 
     function sanitizePlayerName(value, options = {}) {
@@ -108,6 +175,139 @@
         });
     }
 
+    function resizePlayerEntryPreview(options = {}) {
+        const windowRef = getWindowRef(options);
+        if (!previewState.container || !previewState.renderer || !previewState.camera) return false;
+        const width = Math.max(240, previewState.container.clientWidth || 420);
+        const height = Math.max(260, previewState.container.clientHeight || 520);
+        previewState.renderer.setSize(width, height, false);
+        previewState.camera.aspect = width / height;
+        previewState.camera.updateProjectionMatrix();
+        if (windowRef.requestAnimationFrame) windowRef.requestAnimationFrame(() => renderPlayerEntryPreview());
+        else renderPlayerEntryPreview();
+        return true;
+    }
+
+    function renderPlayerEntryPreview() {
+        if (!previewState.renderer || !previewState.scene || !previewState.camera) return false;
+        if (previewState.rig) previewState.rig.rotation.y = previewState.yaw;
+        previewState.renderer.render(previewState.scene, previewState.camera);
+        return true;
+    }
+
+    function buildPreviewAppearance(options = {}) {
+        const appearance = ensurePlayerEntryAppearance(options);
+        if (!appearance) return null;
+        return {
+            gender: appearance.gender === 1 ? 1 : 0,
+            colors: Array.isArray(appearance.colors) ? appearance.colors.slice(0, 5) : [0, 0, 0, 0, 0],
+            creatorSelections: sanitizeCreatorSelections(options, appearance.creatorSelections),
+            slots: []
+        };
+    }
+
+    function replacePreviewRig(options = {}) {
+        const windowRef = getWindowRef(options);
+        if (!previewState.scene || typeof windowRef.createPlayerRigFromAppearance !== 'function') return false;
+        const nextAppearance = buildPreviewAppearance(options);
+        if (!nextAppearance) return false;
+        const nextRig = windowRef.createPlayerRigFromAppearance(nextAppearance);
+        if (!nextRig) return false;
+        nextRig.position.set(0, -0.18, -0.16);
+        nextRig.rotation.y = previewState.yaw;
+        nextRig.scale.set(1.18, 1.18, 1.18);
+        if (previewState.rig && previewState.rig.parent) previewState.rig.parent.remove(previewState.rig);
+        previewState.rig = nextRig;
+        previewState.scene.add(nextRig);
+        renderPlayerEntryPreview();
+        return true;
+    }
+
+    function startPreviewLoop(options = {}) {
+        renderPlayerEntryPreview();
+    }
+
+    function bindPreviewDrag(options = {}) {
+        const documentRef = getDocumentRef(options);
+        const windowRef = getWindowRef(options);
+        if (!previewState.container || previewState.container.dataset.playerEntryPreviewBound === 'true') return;
+        previewState.container.dataset.playerEntryPreviewBound = 'true';
+        previewState.container.addEventListener('mousedown', (event) => {
+            previewState.dragging = true;
+            previewState.lastX = event.clientX;
+            event.preventDefault();
+        });
+        const moveTarget = windowRef && typeof windowRef.addEventListener === 'function' ? windowRef : documentRef;
+        if (moveTarget && typeof moveTarget.addEventListener === 'function') {
+            moveTarget.addEventListener('mousemove', (event) => {
+                if (!previewState.dragging) return;
+                previewState.yaw += (event.clientX - previewState.lastX) * 0.012;
+                previewState.lastX = event.clientX;
+                renderPlayerEntryPreview();
+            });
+            moveTarget.addEventListener('mouseup', () => {
+                previewState.dragging = false;
+            });
+        }
+    }
+
+    function initPlayerEntryPreview(options = {}) {
+        const documentRef = getDocumentRef(options);
+        const windowRef = getWindowRef(options);
+        const THREERef = windowRef.THREE || (typeof THREE !== 'undefined' ? THREE : null);
+        if (!documentRef || !THREERef || typeof windowRef.createPlayerRigFromAppearance !== 'function') return false;
+        const container = documentRef.getElementById('player-entry-preview-stage');
+        if (!container) return false;
+
+        if (previewState.container !== container || !previewState.renderer) {
+            if (previewState.renderer && previewState.renderer.domElement && previewState.renderer.domElement.parentNode) {
+                previewState.renderer.domElement.parentNode.removeChild(previewState.renderer.domElement);
+            }
+            previewState.container = container;
+            previewState.scene = new THREERef.Scene();
+            previewState.camera = new THREERef.PerspectiveCamera(36, 1, 0.1, 100);
+            previewState.camera.position.set(0, 1.15, 4.3);
+            previewState.camera.lookAt(0, 0.82, 0);
+            previewState.renderer = new THREERef.WebGLRenderer({ antialias: false, alpha: true });
+            previewState.renderer.outputColorSpace = THREERef.SRGBColorSpace;
+            previewState.renderer.domElement.className = 'player-entry-preview-canvas';
+            container.innerHTML = '';
+            container.appendChild(previewState.renderer.domElement);
+            previewState.scene.add(new THREERef.HemisphereLight(0xfff0d0, 0x6f7f64, 1.05));
+            previewState.scene.add(new THREERef.AmbientLight(0xffffff, 0.75));
+            const keyLight = new THREERef.DirectionalLight(0xffdfaa, 1.35);
+            keyLight.position.set(2.8, 4.2, 3.6);
+            previewState.scene.add(keyLight);
+            const rimLight = new THREERef.DirectionalLight(0x9bc6ff, 0.55);
+            rimLight.position.set(-3, 2.5, -2);
+            previewState.scene.add(rimLight);
+            const floor = new THREERef.Mesh(
+                new THREERef.CylinderGeometry(0.72, 0.88, 0.045, 24),
+                new THREERef.MeshLambertMaterial({ color: 0x4b3320 })
+            );
+            floor.position.set(0, -0.245, -0.16);
+            previewState.scene.add(floor);
+            bindPreviewDrag(options);
+            resizePlayerEntryPreview(options);
+            if (!previewState.resizeBound && windowRef && typeof windowRef.addEventListener === 'function') {
+                windowRef.addEventListener('resize', () => resizePlayerEntryPreview(options));
+                previewState.resizeBound = true;
+            }
+        }
+
+        replacePreviewRig(options);
+        resizePlayerEntryPreview(options);
+        startPreviewLoop(options);
+        return true;
+    }
+
+    function refreshPlayerEntryPreview(options = {}) {
+        if (!previewState.renderer) return initPlayerEntryPreview(options);
+        replacePreviewRig(options);
+        resizePlayerEntryPreview(options);
+        return true;
+    }
+
     function setPlayerEntryFlowOpen(options = {}) {
         const documentRef = getDocumentRef(options);
         const playerEntryFlowState = options.playerEntryFlowState || null;
@@ -121,12 +321,13 @@
         if (documentRef.body && documentRef.body.classList) {
             documentRef.body.classList.toggle('player-entry-open', isOpen);
         }
+        if (isOpen) initPlayerEntryPreview(options);
         return true;
     }
 
     function updatePlayerEntryGenderButtons(options = {}) {
         const documentRef = getDocumentRef(options);
-        const appearance = options.playerAppearanceState || null;
+        const appearance = ensurePlayerEntryAppearance(options);
         if (!documentRef || typeof documentRef.getElementById !== 'function') return;
         const currentGender = appearance && appearance.gender === 1 ? 1 : 0;
         [0, 1].forEach((gender) => {
@@ -138,15 +339,69 @@
         });
     }
 
+    function renderPlayerEntryCreatorRows(options = {}) {
+        const documentRef = getDocumentRef(options);
+        const appearance = ensurePlayerEntryAppearance(options);
+        if (!documentRef || !appearance || typeof documentRef.getElementById !== 'function' || typeof documentRef.createElement !== 'function') return;
+        const container = documentRef.getElementById('player-entry-creator-rows');
+        if (!container) return;
+        const catalog = getAppearanceCatalog(options);
+        const creatorSlots = catalog.creatorSlots || {};
+        container.innerHTML = '';
+
+        getCreatorSlotOrder(options).forEach((creatorSlot) => {
+            const slotDef = creatorSlots[creatorSlot] || {};
+            const option = resolveCreatorSlotOption(options, creatorSlot, appearance.creatorSelections[creatorSlot]);
+            const row = documentRef.createElement('div');
+            row.className = 'player-entry-creator-row';
+
+            const label = documentRef.createElement('div');
+            label.className = 'player-entry-creator-label';
+            label.textContent = slotDef.label || creatorSlot;
+            row.appendChild(label);
+
+            const control = documentRef.createElement('div');
+            control.className = 'player-entry-creator-control';
+
+            const createStepButton = (step) => {
+                const button = documentRef.createElement('button');
+                button.type = 'button';
+                button.className = 'player-entry-arrow';
+                button.textContent = step < 0 ? '<' : '>';
+                button.setAttribute('aria-label', `${step < 0 ? 'Previous' : 'Next'} ${slotDef.label || creatorSlot}`);
+                button.onclick = () => {
+                    const slotOptions = Array.isArray(slotDef.options) ? slotDef.options : [];
+                    if (!slotOptions.length) return;
+                    const currentIndex = Math.max(0, slotOptions.findIndex((entry) => entry && entry.id === appearance.creatorSelections[creatorSlot]));
+                    const nextIndex = (currentIndex + step + slotOptions.length) % slotOptions.length;
+                    appearance.creatorSelections[creatorSlot] = slotOptions[nextIndex].id;
+                    renderPlayerEntryFlow(options);
+                    if (typeof options.refreshPlayerAppearancePreview === 'function') options.refreshPlayerAppearancePreview();
+                };
+                return button;
+            };
+
+            control.appendChild(createStepButton(-1));
+            const value = documentRef.createElement('div');
+            value.className = 'player-entry-creator-value';
+            value.textContent = option && option.label ? option.label : 'Default';
+            control.appendChild(value);
+            control.appendChild(createStepButton(1));
+
+            row.appendChild(control);
+            container.appendChild(row);
+        });
+    }
+
     function renderPlayerEntryColorRows(options = {}) {
         const documentRef = getDocumentRef(options);
         if (!documentRef || typeof documentRef.getElementById !== 'function' || typeof documentRef.createElement !== 'function') return;
         const container = documentRef.getElementById('player-entry-color-rows');
         if (!container) return;
         const labels = getColorLabels(options);
-        const catalog = options.playerAppearanceCatalog || {};
+        const catalog = getAppearanceCatalog(options);
         const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
-        const appearance = options.playerAppearanceState || null;
+        const appearance = ensurePlayerEntryAppearance(options);
         if (!appearance || !Array.isArray(appearance.colors)) return;
 
         container.innerHTML = '';
@@ -196,11 +451,11 @@
         const labels = getColorLabels(options);
         const profileSummaryViewModel = buildProfileSummaryViewModel(options);
         const profile = options.playerProfileState || {};
-        const appearance = options.playerAppearanceState || null;
+        const appearance = ensurePlayerEntryAppearance(options);
         const safeName = profileSummaryViewModel
             ? profileSummaryViewModel.name
             : (sanitizePlayerName(profile.name, { maxLength: options.nameMaxLength }) || 'Unnamed Adventurer');
-        const catalog = options.playerAppearanceCatalog || {};
+        const catalog = getAppearanceCatalog(options);
         const palettes = Array.isArray(catalog.bodyColorPalettes) ? catalog.bodyColorPalettes : [];
         const colors = appearance && Array.isArray(appearance.colors)
             ? appearance.colors
@@ -252,6 +507,7 @@
         if (!documentRef || typeof documentRef.getElementById !== 'function') return null;
         const profile = options.playerProfileState || {};
         const playerEntryFlowState = options.playerEntryFlowState || {};
+        ensurePlayerEntryAppearance(options);
         const title = documentRef.getElementById('player-entry-title');
         const subtitle = documentRef.getElementById('player-entry-subtitle');
         const nameInput = documentRef.getElementById('player-entry-name');
@@ -285,8 +541,10 @@
         if (note) note.textContent = profileSummaryViewModel ? profileSummaryViewModel.noteText : 'Progress will begin autosaving locally in this browser once you arrive.';
 
         updatePlayerEntryGenderButtons(options);
+        renderPlayerEntryCreatorRows(options);
         renderPlayerEntryColorRows(options);
         renderPlayerEntrySummary(options);
+        refreshPlayerEntryPreview(options);
         return { nameValidation, isContinueFlow };
     }
 
@@ -294,7 +552,7 @@
         const documentRef = getDocumentRef(options);
         if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
         const profile = options.playerProfileState || null;
-        const appearance = options.playerAppearanceState || null;
+        const appearance = ensurePlayerEntryAppearance(options);
         const nameInput = documentRef.getElementById('player-entry-name');
         const primaryButton = documentRef.getElementById('player-entry-primary');
         const maleButton = documentRef.getElementById('player-entry-gender-0');
@@ -319,6 +577,7 @@
             maleButton.addEventListener('click', () => {
                 if (!appearance) return;
                 appearance.gender = 0;
+                appearance.creatorSelections = sanitizeCreatorSelections(options, appearance.creatorSelections);
                 renderPlayerEntryFlow(options);
                 if (typeof options.refreshPlayerAppearancePreview === 'function') options.refreshPlayerAppearancePreview();
             });
@@ -328,6 +587,7 @@
             femaleButton.addEventListener('click', () => {
                 if (!appearance) return;
                 appearance.gender = 1;
+                appearance.creatorSelections = sanitizeCreatorSelections(options, appearance.creatorSelections);
                 renderPlayerEntryFlow(options);
                 if (typeof options.refreshPlayerAppearancePreview === 'function') options.refreshPlayerAppearancePreview();
             });
@@ -355,9 +615,12 @@
     window.CorePlayerEntryRuntime = {
         sanitizePlayerName,
         validatePlayerEntryName,
+        sanitizeCreatorSelections,
         packedPlayerEntryColorToCss,
         formatPlayerEntryTimestamp,
         setPlayerEntryFlowOpen,
+        initPlayerEntryPreview,
+        refreshPlayerEntryPreview,
         renderPlayerEntryFlow,
         bindPlayerEntryFlowControls,
         focusPlayerEntryName,

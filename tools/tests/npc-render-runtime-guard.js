@@ -27,6 +27,7 @@ function run() {
   assert(npcRuntimeSource.includes("function createNpcInteractionUid(npc, appearanceId)"), "NPC render runtime should own NPC interaction UID shaping");
   assert(npcRuntimeSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "NPC render runtime should preserve travel metadata on hitboxes");
   assert(npcRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime should preserve appearance metadata on hitboxes");
+  assert(npcRuntimeSource.includes("if (Number.isFinite(npc.type)) npcUid.type = npc.type;"), "NPC render runtime should preserve model type metadata on hitboxes");
   assert(npcRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime should preserve dialogue metadata on hitboxes");
   assert(!worldSource.includes("const getNpcAppearanceId = (npc) => {"), "world.js should not own NPC appearance fallback resolution");
   assert(!worldSource.includes("const npcUid = {"), "world.js should not shape NPC hitbox UIDs inline");
@@ -40,6 +41,7 @@ function run() {
   const uid = runtime.createNpcInteractionUid({
     name: "Guide",
     action: "Travel",
+    type: 3,
     x: 10,
     y: 20,
     spawnId: "npc:guide",
@@ -49,6 +51,7 @@ function run() {
     travelSpawn: { x: 205, y: 210, z: 0 }
   }, "tanner_rusk");
   assert(uid.action === "Travel", "NPC interaction UID should preserve explicit action");
+  assert(uid.type === 3, "NPC interaction UID should preserve model type");
   assert(uid.appearanceId === "tanner_rusk", "NPC interaction UID should preserve resolved appearance");
   assert(uid.dialogueId === "tutorial_guide", "NPC interaction UID should trim dialogue id");
   assert(uid.travelToWorldId === "main_overworld", "NPC interaction UID should preserve travel world id");

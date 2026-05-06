@@ -292,7 +292,7 @@ assert.ok(
 assert.ok(
   playerNpcHumanoidRuntimeSource.includes("function createGuardHumanoidFragments") &&
     playerNpcHumanoidRuntimeSource.includes("normalizedPresetId === 'guard'") &&
-    playerNpcHumanoidRuntimeSource.includes("{ actorId: 'guard', label: 'Guard' }") &&
+    playerNpcHumanoidRuntimeSource.includes("appendPreviewActor(actors, seen, 'guard', 'Guard')") &&
     playerModelSource.includes("PlayerNpcHumanoidRuntime"),
   "player NPC humanoid runtime should expose the dedicated guard preset and preview actor"
 );

@@ -1,6 +1,25 @@
 (function () {
     const TREE_VISUAL_PROFILES = {
-        normal_tree: { trunkScale: [1.0, 1.0, 1.0], canopyScales: [[1.0, 1.0, 1.0], [0.96, 0.98, 0.96], [0.94, 0.98, 0.94], [0.9, 0.95, 0.9]], canopyYOffset: 0.0, canopyJitter: 0.03, branchScale: [0, 0, 0], stumpScale: [1.1, 0.15, 1.1] },
+        normal_tree: {
+            trunkScale: [0.68, 1.0, 0.68],
+            rootFlareScale: [0.62, 0.72, 0.62],
+            stumpRootFlareScale: [0.48, 0.62, 0.48],
+            stumpCapScale: [0.56, 1.0, 0.56],
+            stumpCapOffset: [0.0, 0.3, 0.0],
+            canopyScales: [[0.58, 0.44, 0.56], [0.48, 0.38, 0.46], [0.48, 0.38, 0.46], [0.24, 0.2, 0.24]],
+            canopyYOffset: 0.94,
+            canopyOffsets: [[0.0, 0.0, 0.0], [0.17, 0.04, 0.12], [-0.18, 0.04, -0.12], [0.0, 0.0, 0.0]],
+            canopyYRotations: [0.0, 0.28, -0.24, 0.42],
+            canopyJitter: 0.025,
+            branchScale: [0.28, 0.3, 0.28],
+            branchOffset: [0.02, 0.5, 0.02],
+            branchYaw: -0.2,
+            branch2Scale: [0.58, 0.5, 0.42],
+            branch2Offset: [0.05, 0.6, 0.0],
+            branch2Yaw: 1.35,
+            branchCanopyAttachments: { 3: { branch: 'branch2', endpoint: 'tipLocal', nudge: [0, 0.02, 0] } },
+            stumpScale: [0.66, 0.15, 0.66]
+        },
         oak_tree: {
             trunkScale: [1.46, 1.52, 1.46],
             canopyScales: [[1.78, 1.28, 1.74], [1.55, 1.12, 1.5], [1.48, 1.08, 1.45], [1.28, 1.34, 1.24]],
@@ -87,6 +106,8 @@
         return {
             treeMap: [],
             iTrunk: null,
+            iRootFlare: null,
+            iStumpCap: null,
             iBranch: null,
             iBranch2: null,
             iBranch3: null,
@@ -107,7 +128,7 @@
 
     function createTreeInstancedMesh(THREE, geometry, material, count, treeMap) {
         const mesh = new THREE.InstancedMesh(geometry, material, count);
-        mesh.castShadow = true;
+        mesh.castShadow = false;
         mesh.matrixAutoUpdate = false;
         mesh.userData = { instanceMap: treeMap };
         return mesh;
@@ -125,6 +146,12 @@
         const environmentMeshes = Array.isArray(options.environmentMeshes) ? options.environmentMeshes : null;
 
         tData.iTrunk = createTreeInstancedMesh(THREE, sharedGeometries.treeTrunk, sharedMaterials.trunk, count, tData.treeMap);
+        tData.iRootFlare = sharedGeometries.treeRootFlare
+            ? createTreeInstancedMesh(THREE, sharedGeometries.treeRootFlare, sharedMaterials.trunk, count, tData.treeMap)
+            : null;
+        tData.iStumpCap = sharedGeometries.treeStumpCap && sharedMaterials.trunkCut
+            ? createTreeInstancedMesh(THREE, sharedGeometries.treeStumpCap, sharedMaterials.trunkCut, count, tData.treeMap)
+            : null;
         tData.iBranch = createTreeInstancedMesh(THREE, sharedGeometries.treeBranch, sharedMaterials.trunk, count, tData.treeMap);
         tData.iBranch2 = createTreeInstancedMesh(THREE, sharedGeometries.treeBranch2, sharedMaterials.trunk, count, tData.treeMap);
         tData.iBranch3 = createTreeInstancedMesh(THREE, sharedGeometries.treeBranch3, sharedMaterials.trunk, count, tData.treeMap);
@@ -143,6 +170,8 @@
 
         const meshes = [
             tData.iTrunk,
+            tData.iRootFlare,
+            tData.iStumpCap,
             tData.iBranch,
             tData.iBranch2,
             tData.iBranch3,
@@ -160,6 +189,7 @@
             tData.iLeaf4
         ];
         for (let i = 0; i < meshes.length; i++) {
+            if (!meshes[i]) continue;
             if (planeGroup) planeGroup.add(meshes[i]);
             if (environmentMeshes) environmentMeshes.push(meshes[i]);
         }
@@ -170,6 +200,40 @@
     function deterministicCanopyJitter(seedX, seedY, layer, axis) {
         const value = Math.sin((seedX + (layer * 0.71) + (axis * 0.37)) * 12.9898 + (seedY - (layer * 0.47) + (axis * 0.19)) * 78.233) * 43758.5453;
         return ((value - Math.floor(value)) * 2.0) - 1.0;
+    }
+
+    function getBranchVisualSpec(profile, tData, branchId) {
+        if (branchId === 'branch') return { mesh: tData.iBranch, scale: profile.branchScale, offset: profile.branchOffset, yaw: profile.branchYaw };
+        if (branchId === 'branch2') return { mesh: tData.iBranch2, scale: profile.branch2Scale, offset: profile.branch2Offset, yaw: profile.branch2Yaw };
+        if (branchId === 'branch3') return { mesh: tData.iBranch3, scale: profile.branch3Scale, offset: profile.branch3Offset, yaw: profile.branch3Yaw };
+        return null;
+    }
+
+    function createYawQuaternion(THREE, yaw) {
+        return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    }
+
+    function computeBranchEndpointWorld(THREE, basePosition, baseQuaternion, profile, tData, branchId, endpointKey) {
+        const spec = getBranchVisualSpec(profile, tData, branchId);
+        if (!spec || !spec.mesh || !spec.mesh.geometry || !spec.mesh.geometry.userData) return null;
+        const endpoint = spec.mesh.geometry.userData[endpointKey || 'tipLocal'];
+        if (!Array.isArray(endpoint)) return null;
+        const scale = Array.isArray(spec.scale) ? spec.scale : [0, 0, 0];
+        const offset = Array.isArray(spec.offset) ? spec.offset : [0, 0, 0];
+        const yaw = Number.isFinite(spec.yaw) ? spec.yaw : 0;
+        const quaternion = baseQuaternion.clone();
+        if (yaw !== 0) quaternion.multiply(createYawQuaternion(THREE, yaw));
+        const localEndpoint = new THREE.Vector3(
+            endpoint[0] * (scale[0] || 0),
+            endpoint[1] * (scale[1] || 0),
+            endpoint[2] * (scale[2] || 0)
+        );
+        localEndpoint.applyQuaternion(quaternion);
+        return new THREE.Vector3(
+            basePosition.x + offset[0] + localEndpoint.x,
+            basePosition.y + offset[1] + localEndpoint.y,
+            basePosition.z + offset[2] + localEndpoint.z
+        );
     }
 
     function setTreeVisualState(input) {
@@ -189,6 +253,38 @@
         dummy.scale.set(trunkScale[0], trunkScale[1], trunkScale[2]);
         dummy.updateMatrix();
         if (tData.iTrunk) tData.iTrunk.setMatrixAt(treeIndex, dummy.matrix);
+
+        if (tData.iRootFlare) {
+            const rootFlareScale = isStump
+                ? (Array.isArray(profile.stumpRootFlareScale) ? profile.stumpRootFlareScale : profile.rootFlareScale)
+                : profile.rootFlareScale;
+            const rootFlareOffset = Array.isArray(profile.rootFlareOffset) ? profile.rootFlareOffset : [0, 0, 0];
+            dummy.position.copy(basePosition);
+            dummy.quaternion.copy(baseQuaternion);
+            if (Array.isArray(rootFlareScale)) {
+                dummy.position.x += rootFlareOffset[0];
+                dummy.position.y += rootFlareOffset[1];
+                dummy.position.z += rootFlareOffset[2];
+                dummy.scale.set(rootFlareScale[0] || 0, rootFlareScale[1] || 0, rootFlareScale[2] || 0);
+            } else {
+                dummy.scale.set(0, 0, 0);
+            }
+            dummy.updateMatrix();
+            tData.iRootFlare.setMatrixAt(treeIndex, dummy.matrix);
+        }
+
+        if (tData.iStumpCap) {
+            const stumpCapScale = isStump && Array.isArray(profile.stumpCapScale) ? profile.stumpCapScale : [0, 0, 0];
+            const stumpCapOffset = isStump && Array.isArray(profile.stumpCapOffset) ? profile.stumpCapOffset : [0, 0, 0];
+            dummy.position.copy(basePosition);
+            dummy.quaternion.copy(baseQuaternion);
+            dummy.position.x += stumpCapOffset[0];
+            dummy.position.y += stumpCapOffset[1];
+            dummy.position.z += stumpCapOffset[2];
+            dummy.scale.set(stumpCapScale[0] || 0, stumpCapScale[1] || 0, stumpCapScale[2] || 0);
+            dummy.updateMatrix();
+            tData.iStumpCap.setMatrixAt(treeIndex, dummy.matrix);
+        }
 
         const applyBranchVisual = (branchMesh, scaleValue, offsetValue, yawValue) => {
             if (!branchMesh) return;
@@ -253,19 +349,46 @@
                 const canopyOffset = (Array.isArray(profile.canopyOffsets) && Array.isArray(profile.canopyOffsets[i])) ? profile.canopyOffsets[i] : [0, 0, 0];
                 const canopyYaw = (Array.isArray(profile.canopyYRotations) && Number.isFinite(profile.canopyYRotations[i])) ? profile.canopyYRotations[i] : 0;
                 const canopyJitter = Number.isFinite(profile.canopyJitter) ? profile.canopyJitter : 0;
+                const attachment = profile.branchCanopyAttachments ? profile.branchCanopyAttachments[i] : null;
+                const attachmentTarget = attachment
+                    ? computeBranchEndpointWorld(THREE, basePosition, baseQuaternion, profile, tData, attachment.branch, attachment.endpoint)
+                    : null;
 
-                dummy.position.x += canopyOffset[0];
-                dummy.position.y += (profile.canopyYOffset || 0) + canopyOffset[1];
-                dummy.position.z += canopyOffset[2];
-
+                const leafQuaternion = baseQuaternion.clone();
                 if (canopyJitter > 0) {
-                    dummy.position.x += deterministicCanopyJitter(basePosition.x, basePosition.z, i, 0) * canopyJitter;
-                    dummy.position.z += deterministicCanopyJitter(basePosition.x, basePosition.z, i, 1) * canopyJitter;
-                    dummy.position.y += deterministicCanopyJitter(basePosition.x, basePosition.z, i, 2) * canopyJitter * 0.35;
-                    dummy.rotateY(deterministicCanopyJitter(basePosition.x, basePosition.z, i, 3) * canopyJitter * 0.42);
+                    const jitterYaw = deterministicCanopyJitter(basePosition.x, basePosition.z, i, 3) * canopyJitter * 0.42;
+                    if (jitterYaw !== 0) leafQuaternion.multiply(createYawQuaternion(THREE, jitterYaw));
                 }
-                if (canopyYaw !== 0) dummy.rotateY(canopyYaw);
+                if (canopyYaw !== 0) leafQuaternion.multiply(createYawQuaternion(THREE, canopyYaw));
+                dummy.quaternion.copy(leafQuaternion);
                 dummy.scale.set(canopyScale[0], canopyScale[1], canopyScale[2]);
+                if (attachmentTarget) {
+                    const attachmentLocal = Array.isArray(attachment.anchorLocal)
+                        ? attachment.anchorLocal
+                        : (leafMesh.geometry && leafMesh.geometry.userData && Array.isArray(leafMesh.geometry.userData.branchAttachmentLocal)
+                            ? leafMesh.geometry.userData.branchAttachmentLocal
+                            : [0, 0, 0]);
+                    const attachmentOffset = new THREE.Vector3(
+                        attachmentLocal[0] * canopyScale[0],
+                        attachmentLocal[1] * canopyScale[1],
+                        attachmentLocal[2] * canopyScale[2]
+                    );
+                    attachmentOffset.applyQuaternion(leafQuaternion);
+                    dummy.position.copy(attachmentTarget).sub(attachmentOffset);
+                    const attachmentNudge = Array.isArray(attachment.nudge) ? attachment.nudge : [0, 0, 0];
+                    dummy.position.x += attachmentNudge[0] || 0;
+                    dummy.position.y += attachmentNudge[1] || 0;
+                    dummy.position.z += attachmentNudge[2] || 0;
+                } else {
+                    dummy.position.x += canopyOffset[0];
+                    dummy.position.y += (profile.canopyYOffset || 0) + canopyOffset[1];
+                    dummy.position.z += canopyOffset[2];
+                    if (canopyJitter > 0) {
+                        dummy.position.x += deterministicCanopyJitter(basePosition.x, basePosition.z, i, 0) * canopyJitter;
+                        dummy.position.z += deterministicCanopyJitter(basePosition.x, basePosition.z, i, 1) * canopyJitter;
+                        dummy.position.y += deterministicCanopyJitter(basePosition.x, basePosition.z, i, 2) * canopyJitter * 0.35;
+                    }
+                }
             }
             dummy.updateMatrix();
             leafMesh.setMatrixAt(treeIndex, dummy.matrix);
@@ -275,6 +398,8 @@
     function markTreeVisualsDirty(tData) {
         if (!tData) return;
         if (tData.iTrunk) tData.iTrunk.instanceMatrix.needsUpdate = true;
+        if (tData.iRootFlare) tData.iRootFlare.instanceMatrix.needsUpdate = true;
+        if (tData.iStumpCap) tData.iStumpCap.instanceMatrix.needsUpdate = true;
         if (tData.iBranch) tData.iBranch.instanceMatrix.needsUpdate = true;
         if (tData.iBranch2) tData.iBranch2.instanceMatrix.needsUpdate = true;
         if (tData.iBranch3) tData.iBranch3.instanceMatrix.needsUpdate = true;

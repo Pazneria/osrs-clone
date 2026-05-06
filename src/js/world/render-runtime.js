@@ -1,7 +1,7 @@
 (function () {
     const MAIN_DIRECTIONAL_SHADOW_CONFIG = {
         enabled: true,
-        mapSize: 1024,
+        mapSize: 512,
         cameraHalfSize: 28,
         cameraNear: 1,
         cameraFar: 120,
@@ -26,10 +26,12 @@
         const materials = requireSharedMaterials(sharedMaterials);
         if (!materials.waterSurfaceCache) materials.waterSurfaceCache = Object.create(null);
         if (!materials.waterShoreCache) materials.waterShoreCache = Object.create(null);
+        if (!materials.waterFringeCache) materials.waterFringeCache = Object.create(null);
         if (!Array.isArray(materials.waterAnimatedMaterials)) materials.waterAnimatedMaterials = [];
         return {
             surface: materials.waterSurfaceCache,
             shore: materials.waterShoreCache,
+            fringe: materials.waterFringeCache,
             animated: materials.waterAnimatedMaterials
         };
     }
@@ -50,13 +52,14 @@
     function createWaterSurfaceMaterial(three, tokens) {
         const THREE = requireThree(three);
         return new THREE.ShaderMaterial({
-            transparent: true,
-            depthWrite: false,
+            transparent: false,
+            depthWrite: true,
             uniforms: {
                 uTime: { value: 0 },
                 uShallowColor: { value: new THREE.Color(tokens.shallowColor) },
                 uDeepColor: { value: new THREE.Color(tokens.deepColor) },
                 uFoamColor: { value: new THREE.Color(tokens.foamColor) },
+                uShoreColor: { value: new THREE.Color(tokens.shoreColor) },
                 uRippleColor: { value: new THREE.Color(tokens.rippleColor) },
                 uHighlightColor: { value: new THREE.Color(tokens.highlightColor) },
                 uOpacity: { value: Number.isFinite(tokens.opacity) ? tokens.opacity : 0.86 }
@@ -71,7 +74,8 @@
                         vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
                         float waveA = sin((worldPos.x * 0.17) + (uTime * 0.72) + (worldPos.z * 0.11));
                         float waveB = cos((worldPos.z * 0.21) - (uTime * 0.56) + (worldPos.x * 0.07));
-                        float wave = (waveA + waveB) * 0.014 * (0.55 + (waterData.x * 0.45));
+                        float shoreCalm = mix(1.0, 0.34, clamp(waterData.y, 0.0, 1.0));
+                        float wave = (waveA + waveB) * 0.014 * (0.55 + (waterData.x * 0.45)) * shoreCalm;
                         vec3 transformed = position;
                         transformed.y += wave;
                         vec4 displacedWorld = modelMatrix * vec4(transformed, 1.0);
@@ -86,6 +90,7 @@
                     uniform vec3 uShallowColor;
                     uniform vec3 uDeepColor;
                     uniform vec3 uFoamColor;
+                    uniform vec3 uShoreColor;
                     uniform vec3 uRippleColor;
                     uniform vec3 uHighlightColor;
                     uniform float uOpacity;
@@ -93,19 +98,101 @@
                     varying float vDepth;
                     varying float vShore;
                     void main() {
-                        float ripple = sin((vWorldPos.x * 0.36) + (uTime * 1.14)) * cos((vWorldPos.z * 0.28) - (uTime * 0.92));
-                        float wideRipple = sin((vWorldPos.x + vWorldPos.z) * 0.12 - (uTime * 0.44));
-                        float rippleMix = (ripple * 0.5) + (wideRipple * 0.5);
+                        float broadWave = sin((vWorldPos.x * 0.18) + (vWorldPos.z * 0.11) - (uTime * 0.36));
+                        float crossingWave = sin((vWorldPos.x * -0.22) + (vWorldPos.z * 0.28) + (uTime * 0.42));
+                        float smallRipple = sin((vWorldPos.x * 0.76) - (vWorldPos.z * 0.58) + (uTime * 0.82));
+                        float fineRipple = sin((vWorldPos.x * 1.42) + (vWorldPos.z * 1.16) - (uTime * 1.18));
+                        float rippleMix = (broadWave * 0.34) + (crossingWave * 0.28) + (smallRipple * 0.24) + (fineRipple * 0.14);
+                        float waveField = (broadWave * 0.48) + (crossingWave * 0.32) + (smallRipple * 0.2);
+                        float crestMask = smoothstep(0.56, 0.96, waveField);
+                        float troughMask = smoothstep(0.54, 0.98, -waveField);
                         float depthMix = smoothstep(0.18, 0.96, vDepth);
+                        float offShore = 1.0 - smoothstep(0.16, 0.82, vShore);
                         vec3 color = mix(uShallowColor, uDeepColor, depthMix);
-                        color += uRippleColor * (rippleMix * 0.045);
-                        color = mix(color, uFoamColor, vShore * 0.24);
+                        color = mix(color, uDeepColor * 0.72, smoothstep(0.50, 1.0, vDepth) * offShore * 0.38);
+                        float surfaceMottle = sin((vWorldPos.x * 0.41) + (vWorldPos.z * 0.67) + (uTime * 0.12))
+                            * sin((vWorldPos.x * -0.59) + (vWorldPos.z * 0.36) - (uTime * 0.08));
+                        color += uRippleColor * (rippleMix * 0.036);
+                        color = mix(color, color + (uHighlightColor * 0.04), smoothstep(0.22, 0.92, surfaceMottle) * (0.12 + (depthMix * 0.08)));
+                        color = mix(color, color + (uRippleColor * 0.052), crestMask * (0.16 + (offShore * 0.08)));
+                        color = mix(color, color * 0.88, troughMask * 0.11);
+                        color = mix(color, uShallowColor, smoothstep(0.34, 0.92, vShore) * (1.0 - depthMix) * 0.12);
                         float highlight = smoothstep(0.52, 1.0, rippleMix) * (0.04 + (depthMix * 0.05));
                         color += uHighlightColor * highlight;
-                        gl_FragColor = vec4(clamp(color, 0.0, 1.0), uOpacity);
+                        gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
                     }
                 `
         });
+    }
+
+    function createWaterShorelineRibbonMaterial(three, tokens) {
+        const THREE = requireThree(three);
+        return new THREE.ShaderMaterial({
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            uniforms: {
+                uTime: { value: 0 },
+                uShallowColor: { value: new THREE.Color(tokens.shallowColor) },
+                uFoamColor: { value: new THREE.Color(tokens.foamColor) },
+                uShoreColor: { value: new THREE.Color(tokens.shoreColor) },
+                uRippleColor: { value: new THREE.Color(tokens.rippleColor) },
+                uHighlightColor: { value: new THREE.Color(tokens.highlightColor) }
+            },
+            vertexShader: `
+                    uniform float uTime;
+                    attribute vec2 waterData;
+                    attribute float fringeAlpha;
+                    varying vec3 vWorldPos;
+                    varying float vLane;
+                    varying float vBreakSeed;
+                    varying float vAlpha;
+                    void main() {
+                        vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                        float ripple = sin((worldPos.x * 0.25) + (worldPos.z * 0.19) + (uTime * 0.52));
+                        vec3 transformed = position;
+                        transformed.y += ripple * 0.004 * clamp(fringeAlpha, 0.0, 1.0);
+                        vec4 displacedWorld = modelMatrix * vec4(transformed, 1.0);
+                        vWorldPos = displacedWorld.xyz;
+                        vLane = clamp(waterData.x, 0.0, 1.0);
+                        vBreakSeed = clamp(waterData.y, 0.0, 1.0);
+                        vAlpha = clamp(fringeAlpha, 0.0, 1.0);
+                        gl_Position = projectionMatrix * viewMatrix * displacedWorld;
+                    }
+                `,
+            fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uShallowColor;
+                    uniform vec3 uShoreColor;
+                    uniform vec3 uRippleColor;
+                    uniform vec3 uHighlightColor;
+                    varying vec3 vWorldPos;
+                    varying float vLane;
+                    varying float vBreakSeed;
+                    varying float vAlpha;
+                    void main() {
+                        float laceA = sin((vWorldPos.x * 1.84) - (vWorldPos.z * 1.31) + (uTime * 0.92) + (vBreakSeed * 4.7)) * 0.5 + 0.5;
+                        float laceB = sin((vWorldPos.x * -2.42) + (vWorldPos.z * 1.68) - (uTime * 0.74) + (vBreakSeed * 6.1)) * 0.5 + 0.5;
+                        float ripple = sin((vWorldPos.x * 0.48) + (vWorldPos.z * 0.36) - (uTime * 0.42));
+                        float brokenFeather = smoothstep(0.34, 0.92, (laceA * 0.58) + (laceB * 0.42));
+                        float featherCenter = 1.0 - smoothstep(0.0, 0.34, abs(vLane - 0.58));
+                        float edgeFeather = featherCenter * (0.58 + (brokenFeather * 0.24));
+                        float waterSide = 1.0 - smoothstep(0.18, 0.52, vLane);
+                        float bankFade = smoothstep(0.56, 0.98, vLane);
+                        vec3 outerWaterColor = mix(uShallowColor, uRippleColor, 0.14);
+                        vec3 color = outerWaterColor * (0.94 + (ripple * 0.03));
+                        color = mix(color, uShoreColor, bankFade * 0.08);
+                        color += uRippleColor * (ripple * waterSide * 0.02);
+                        color += uHighlightColor * (edgeFeather * 0.006);
+                        float alpha = vAlpha * (0.16 + (waterSide * 0.14) + (edgeFeather * 0.22));
+                        gl_FragColor = vec4(clamp(color, 0.0, 1.0), clamp(alpha, 0.0, 0.46));
+                    }
+                `
+        });
+    }
+
+    function createWaterFringeMaterial(three, tokens) {
+        return createWaterShorelineRibbonMaterial(three, tokens);
     }
 
     function getWaterSurfaceMaterial(options) {
@@ -121,6 +208,25 @@
             caches.animated.push(material);
         }
         return caches.surface[key];
+    }
+
+    function getWaterShorelineRibbonMaterial(options) {
+        const THREE = requireThree(options && options.THREE);
+        const sharedMaterials = requireSharedMaterials(options && options.sharedMaterials);
+        const tokens = options && options.tokens ? options.tokens : {};
+        const caches = getWaterMaterialCaches(sharedMaterials);
+        const key = buildWaterMaterialKey(tokens);
+        if (!caches.fringe[key]) {
+            const material = createWaterShorelineRibbonMaterial(THREE, tokens);
+            material.userData = Object.assign({}, material.userData, { waterAnimated: true });
+            caches.fringe[key] = material;
+            caches.animated.push(material);
+        }
+        return caches.fringe[key];
+    }
+
+    function getWaterFringeMaterial(options) {
+        return getWaterShorelineRibbonMaterial(options);
     }
 
     function getWaterShoreMaterial(options) {
@@ -301,9 +407,13 @@
     window.WorldRenderRuntime = {
         MAIN_DIRECTIONAL_SHADOW_CONFIG,
         buildWaterMaterialKey,
+        createWaterFringeMaterial,
+        createWaterShorelineRibbonMaterial,
         createWaterSurfaceMaterial,
         createSkyDomeMaterial,
         getWaterMaterialCaches,
+        getWaterFringeMaterial,
+        getWaterShorelineRibbonMaterial,
         getWaterSurfaceMaterial,
         getWaterShoreMaterial,
         initSkyRuntime,

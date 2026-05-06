@@ -293,7 +293,7 @@
             
             for (let i = 0; i < 200; i++) {
                 const slot = document.createElement('div');
-                slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-pointer hover:bg-[#2b251d] select-none relative group transition-colors';
+                slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-default hover:bg-[#2b251d] select-none relative group transition-colors';
                 const bItem = bankItems[i];
                 const bankViewModel = bankSlotViewModels[i] || null;
                 
@@ -585,7 +585,7 @@
             const shopInventory = getActiveShopInventory();
             for (let i = 0; i < 100; i++) {
                 const slot = document.createElement('div');
-                slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-pointer hover:bg-[#2b251d] select-none relative group transition-colors';
+                slot.className = 'w-9 h-9 bg-[#231e18] border-b-2 border-r-2 border-[#15120e] border-t border-l border-[#4a4136] flex items-center justify-center text-xl cursor-default hover:bg-[#2b251d] select-none relative group transition-colors';
                 const sItem = shopInventory[i];
                 const shopViewModel = shopSlotViewModels[i] || null;
                 if (sItem && sItem.amount > 0) {
@@ -853,7 +853,7 @@
                         buildItemTooltipHtml(item, { actionText: 'Click to unequip' })
                     );
                     el.onclick = () => unequipItem(slotName);
-                    el.style.cursor = 'pointer';
+                    el.style.cursor = 'default';
                 } else {
                     el.innerHTML = '';
                     bindInventorySlotTooltip(el, '');
@@ -1082,7 +1082,7 @@
                 const initialLevel = Number.isFinite(def.level) ? Math.max(1, Math.floor(def.level)) : 1;
 
                 const tile = document.createElement('div');
-                tile.className = 'skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-pointer hover:bg-[#1a1f24] select-none';
+                tile.className = 'skill-tile w-full bg-[#111418] border border-[#3a444c] p-1 py-2 text-center text-[10px] text-[#c8aa6e] font-bold shadow-inner cursor-default hover:bg-[#1a1f24] select-none';
                 tile.dataset.skill = skillId;
                 tile.dataset.skillName = displayName;
                 tile.dataset.skillIcon = icon;
@@ -1146,6 +1146,17 @@
             const panel = document.getElementById('skill-panel');
             if (panel) panel.classList.remove('hidden');
         }
+        function setMainUiExpanded(mainContainer, expandButton, expanded) {
+            if (!mainContainer) return;
+            mainContainer.dataset.expanded = expanded ? 'true' : 'false';
+            if (expandButton) expandButton.setAttribute('aria-pressed', expanded ? 'true' : 'false');
+            if (expanded) {
+                mainContainer.style.transform = 'scale(1.5)';
+            } else {
+                mainContainer.style.removeProperty('transform');
+            }
+        }
+
         function initInventoryUI() {
             const tabs = [
                 { id: 'inv', displayClass: 'grid' },
@@ -1155,7 +1166,11 @@
                 { id: 'quests', displayClass: 'flex' }
             ];
             const mainContainer = document.getElementById('main-ui-container');
-            if (mainContainer) mainContainer.dataset.activeTab = 'inv';
+            const expandButton = document.getElementById('btn-expand');
+            if (mainContainer) {
+                mainContainer.dataset.activeTab = 'inv';
+                setMainUiExpanded(mainContainer, expandButton, false);
+            }
             tabs.forEach((tab) => {
                 const t = tab.id;
                 const btn = document.getElementById(`tab-${t}`);
@@ -1175,7 +1190,12 @@
                 };
             });
             let isExpanded = false;
-            document.getElementById('btn-expand').onclick = () => { isExpanded = !isExpanded; mainContainer.style.transform = isExpanded ? 'scale(1.5)' : 'scale(1)'; };
+            if (expandButton) {
+                expandButton.onclick = () => {
+                    isExpanded = !isExpanded;
+                    setMainUiExpanded(mainContainer, expandButton, isExpanded);
+                };
+            }
             renderSkillTilesFromManifest();
             bindCombatStyleButtons();
             const skillTiles = Array.from(document.querySelectorAll('.skill-tile'));

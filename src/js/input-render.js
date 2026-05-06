@@ -1,4 +1,4 @@
-function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25)); renderer.setSize(window.innerWidth, window.innerHeight); }
+function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0)); renderer.setSize(window.innerWidth, window.innerHeight); }
         function getInputPoseEditorRuntime() {
             return window.InputPoseEditorRuntime || null;
         }
@@ -47,7 +47,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             25000,
             Math.floor(25000 * Math.pow((MAP_SIZE / LEGACY_PATHFIND_MAP_SIZE), 2))
         );
-        // In open terrain, BFS iteration budget approximates a Chebyshev radius. Keep tooltip range slightly under that.
+        // Keep tooltip range well under the pathfinding iteration budget on large maps.
         const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
         function getInputControllerRuntime() {
@@ -875,10 +875,12 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 playerState,
                 logicalMap,
                 heightMap,
+                documentRef: document,
                 tileId: TileId,
                 playerRig,
                 skillRuntime: window.SkillRuntime || null,
                 addChatMessage: (typeof addChatMessage === 'function') ? addChatMessage : null,
+                showPlayerOverheadText: (typeof showPlayerOverheadText === 'function') ? showPlayerOverheadText : null,
                 isWaterTileId,
                 isDoorTileId,
                 isPierFishingApproachTile,
@@ -1094,10 +1096,51 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 : null;
         }
 
+        function syncFreeCamControlsForQa(enabled) {
+            const freeCamBtn = document.getElementById('freeCamBtn');
+            const freeCamInfo = document.getElementById('freeCamInfo');
+            if (freeCamBtn) {
+                freeCamBtn.innerText = enabled ? 'CAM Free Cam: ON' : 'CAM Free Cam: OFF';
+                freeCamBtn.classList.toggle('bg-blue-600', enabled);
+                freeCamBtn.classList.toggle('hover:bg-blue-500', enabled);
+                freeCamBtn.classList.toggle('bg-gray-700', !enabled);
+                freeCamBtn.classList.toggle('hover:bg-gray-600', !enabled);
+            }
+            if (freeCamInfo) freeCamInfo.classList.toggle('hidden', !enabled);
+        }
+
         function applyQaCameraState(nextState) {
             cameraYaw = nextState.yaw;
             cameraPitch = nextState.pitch;
             cameraDist = nextState.distance;
+            isFreeCam = false;
+            syncFreeCamControlsForQa(false);
+            return {
+                yaw: cameraYaw,
+                pitch: cameraPitch,
+                distance: cameraDist
+            };
+        }
+
+        function applyQaAerialCameraState(nextState) {
+            cameraYaw = nextState.yaw;
+            cameraPitch = nextState.pitch;
+            cameraDist = nextState.distance;
+            isFreeCam = true;
+            const targetGround = getGroundHeightAtWorldPos(nextState.targetX, nextState.targetY, nextState.targetZ);
+            const targetHeight = Number.isFinite(nextState.targetHeight) ? nextState.targetHeight : 1.2;
+            freeCamTarget.set(nextState.targetX, Math.max(targetGround + 0.7, targetHeight), nextState.targetY);
+            const nextCamX = freeCamTarget.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
+            const nextCamZ = freeCamTarget.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);
+            const nextCamGround = getGroundHeightAtWorldPos(nextCamX, nextCamZ, nextState.targetZ);
+            camera.position.set(
+                nextCamX,
+                Math.max(freeCamTarget.y + cameraDist * Math.cos(cameraPitch), nextCamGround + 0.3),
+                nextCamZ
+            );
+            camera.lookAt(freeCamTarget);
+            if (typeof camera.updateMatrixWorld === 'function') camera.updateMatrixWorld(true);
+            syncFreeCamControlsForQa(true);
             return {
                 yaw: cameraYaw,
                 pitch: cameraPitch,
@@ -1113,7 +1156,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 projectWorldTileToScreen,
                 syncQaRenderToPlayerState,
                 getCameraState: () => ({ yaw: cameraYaw, pitch: cameraPitch, distance: cameraDist }),
-                applyCameraState: applyQaCameraState
+                applyCameraState: applyQaCameraState,
+                applyAerialCameraState: applyQaAerialCameraState
             });
         }
 
@@ -1269,6 +1313,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                     material.uniforms.uTime.value = frameNowMs * 0.001;
                 });
             }
+            if (window.WorldStructureRenderRuntime && typeof window.WorldStructureRenderRuntime.updateFurnaceVisualEffects === 'function') {
+                window.WorldStructureRenderRuntime.updateFurnaceVisualEffects({ sharedMaterials, frameNowMs });
+            }
 
             // Handle Door Animations
             doorsToRender.forEach(d => {
@@ -1329,6 +1376,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 updateCombatAnimationDebugPanel(null, null, frameNow);
                 if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
                 if (typeof window.updateWorldNpcRuntime === 'function') window.updateWorldNpcRuntime(frameNowMs);
+                if (typeof window.updateTutorialGuidanceMarker === 'function') window.updateTutorialGuidanceMarker(frameNowMs);
                 renderer.render(scene, camera);
                 if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
                 return;
@@ -1344,6 +1392,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
                 maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, baseVisualY, shadowFocus.z, frameNowMs);
                 if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
+                if (typeof window.updateTutorialGuidanceMarker === 'function') window.updateTutorialGuidanceMarker(frameNowMs);
                 renderer.render(scene, camera);
                 if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
                 return;
@@ -1469,6 +1518,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z, frameNowMs);
             if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
             if (typeof window.updateWorldNpcRuntime === 'function') window.updateWorldNpcRuntime(frameNowMs);
+            if (typeof window.updateTutorialGuidanceMarker === 'function') window.updateTutorialGuidanceMarker(frameNowMs);
             renderer.render(scene, camera); updateMinimap(frameNowMs);
             if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
             if (uiPlayerRig && !document.getElementById('view-equip').classList.contains('hidden')) uiRenderer.render(uiScene, uiCamera);

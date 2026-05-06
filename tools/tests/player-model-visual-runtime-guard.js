@@ -38,6 +38,12 @@ function run() {
   assert(playerModelSource.includes("PlayerModelVisualRuntime missing"), "player-model.js should fail fast when the visual runtime is missing");
   assert(playerModelSource.includes("createColorizedMesh(buildPlayerModelVisualRuntimeOptions()"), "player-model.js should delegate colorized mesh construction");
   assert(playerModelSource.includes("createPixelSourceVisualMeshes(buildPlayerModelVisualRuntimeOptions()"), "player-model.js should delegate pixel-source mesh construction");
+  assert(playerModelSource.includes("function getCreatorKitAppearanceFragments"), "player-model.js should resolve creator kit fragments");
+  assert(playerModelSource.includes("function collectCreatorFragmentGroups"), "player-model.js should compose creator fragment groups");
+  assert(playerModelSource.includes("function isCreatorSlotSuppressedByEquipment"), "player-model.js should suppress creator visuals behind equipment");
+  assert(playerModelSource.includes("creatorSlot === 'hairStyle' || creatorSlot === 'faceStyle' || creatorSlot === 'facialHair'"), "head equipment should hide creator hair and face fragments");
+  assert(playerModelSource.includes("creatorSlot === 'bodyStyle'") && playerModelSource.includes("creatorSlot === 'legStyle'") && playerModelSource.includes("creatorSlot === 'feetStyle'"), "body, leg, and feet equipment should hide matching starter creator fragments");
+  assert(playerModelSource.includes("creatorSelections: sanitizeCreatorSelections"), "player-model.js should normalize creator selections for cached rig builds");
   assert(countOccurrences(playerModelSource, "function createPixelSourceVisualMeshes(") === 1, "player-model.js should keep only the compatibility pixel-source wrapper");
   assert(playerModelSource.includes("playerModelVisualRuntimeForPublication.publishPixelSourceVisualHooks({"), "player-model.js should publish pixel-source hooks through the visual runtime");
   assert(!playerModelSource.includes("window.createPixelSourceVisualMeshes = createPixelSourceVisualMeshes"), "player-model.js should not directly publish pixel-source mesh creation");

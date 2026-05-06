@@ -15,9 +15,11 @@ import {
 } from "../world/authoring";
 import { MAIN_OVERWORLD_WORLD_ID, canonicalizeWorldId } from "../world/ids";
 import {
+  cloneCaveOpeningLandmark,
   cloneCombatSpawnNode,
   cloneDoorLandmark,
   cloneFenceLandmark,
+  cloneIslandWaterPatch,
   cloneMiningNodePlacement,
   clonePoint3,
   cloneRouteDescriptor,
@@ -30,6 +32,7 @@ import {
   cloneStructurePlacement,
   cloneTerrainBox2D,
   cloneTerrainEllipse,
+  cloneTerrainPathPatch,
   cloneTerrainPier,
   cloneTravelSpawn,
   cloneWaterBodyDefinition,
@@ -74,9 +77,11 @@ interface LegacyWorldPayload {
   worldId: string;
   label: string;
   lakeDefs: WorldBootstrapResult["legacy"]["lakeDefs"];
+  islandWater: WorldBootstrapResult["legacy"]["islandWater"];
   castleFrontPond: WorldBootstrapResult["legacy"]["castleFrontPond"];
   deepWaterCenter: WorldBootstrapResult["legacy"]["deepWaterCenter"];
   pierConfig: WorldBootstrapResult["legacy"]["pier"];
+  pathPatches: WorldBootstrapResult["legacy"]["pathPatches"];
   smithingHallApproach: WorldBootstrapResult["legacy"]["smithingHallApproach"];
   waterBodies: WorldBootstrapResult["legacy"]["waterBodies"];
   stampedStructures: WorldBootstrapResult["legacy"]["stampedStructures"];
@@ -96,6 +101,8 @@ interface LegacyWorldPayload {
   doorLandmarks: WorldBootstrapResult["legacy"]["doors"];
   fenceLandmarks: WorldBootstrapResult["legacy"]["fences"];
   roofLandmarks: WorldBootstrapResult["legacy"]["roofs"];
+  caveOpeningLandmarks: WorldBootstrapResult["legacy"]["caveOpenings"];
+  decorPropLandmarks: WorldBootstrapResult["legacy"]["decorProps"];
   showcaseTreeDefs: WorldBootstrapResult["legacy"]["showcaseTrees"];
   fishingMerchantSpots: LegacyNpcRenderPlacement[];
   staticMerchantSpots: LegacyMerchantNpcRenderPlacement[];
@@ -343,6 +350,9 @@ function toMerchantRenderPlacement(
     dialogueId: typeof service.dialogueId === "string" ? service.dialogueId.trim() || null : null,
     action: normalizeLabel(service.action) || "Trade",
     facingYaw: service.facingYaw,
+    roamingRadiusOverride: Number.isFinite(service.roamingRadiusOverride)
+      ? Math.max(0, Math.floor(Number(service.roamingRadiusOverride)))
+      : null,
     tags: Array.isArray(service.tags) ? service.tags.slice() : [],
     travelToWorldId: options.includeTravel
       ? (normalizeWorldId(service.travelToWorldId) || null)
@@ -364,9 +374,11 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     worldId: resolvedWorldId,
     label: manifestEntry ? manifestEntry.label : resolvedWorldId,
     lakeDefs: legacy.lakeDefs.map(cloneTerrainEllipse),
+    islandWater: legacy.islandWater ? cloneIslandWaterPatch(legacy.islandWater) : undefined,
     castleFrontPond: cloneTerrainEllipse(legacy.castleFrontPond),
     deepWaterCenter: cloneTerrainBox2D(legacy.deepWaterCenter),
     pierConfig: cloneTerrainPier(legacy.pier),
+    pathPatches: legacy.pathPatches.map(cloneTerrainPathPatch),
     smithingHallApproach: { ...legacy.smithingHallApproach },
     waterBodies: legacy.waterBodies.map(cloneWaterBodyDefinition),
     stampedStructures: legacy.stampedStructures.map(cloneStructurePlacement),
@@ -388,9 +400,14 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     doorLandmarks: legacy.doors.map(cloneDoorLandmark),
     fenceLandmarks: legacy.fences.map(cloneFenceLandmark),
     roofLandmarks: legacy.roofs.map(cloneRoofLandmark),
+    caveOpeningLandmarks: legacy.caveOpenings.map(cloneCaveOpeningLandmark),
+    decorPropLandmarks: legacy.decorProps.map((prop) => ({
+      ...prop,
+      tags: Array.isArray(prop.tags) ? prop.tags.slice() : []
+    })),
     showcaseTreeDefs: legacy.showcaseTrees.map(cloneShowcaseTree),
     fishingMerchantSpots: staticMerchantServices
-      .filter((service) => Array.isArray(service.tags) && service.tags.includes("fishing"))
+      .filter((service) => Array.isArray(service.tags) && service.tags.includes("fishing") && !service.tags.includes("tutorial"))
       .map((service) => toMerchantRenderPlacement(service, { includeTravel: false }))
       .filter((entry): entry is LegacyNpcRenderPlacement => !!entry),
     staticMerchantSpots: staticMerchantServices

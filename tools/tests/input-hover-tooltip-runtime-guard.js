@@ -95,6 +95,16 @@ function run() {
   });
   assert(npcText.includes("Bank") && npcText.includes("Banker"), "NPC tooltip should respect preferred banker action");
 
+  const gateText = runtime.formatHoverTooltipActionText({
+    hitData: { type: "DOOR", doorObj: { isOpen: false, isWoodenGate: true } }
+  });
+  assert(gateText.includes("Open") && gateText.includes("Gate"), "wooden gate tooltip should name a gate instead of a generic door");
+
+  const propText = runtime.formatHoverTooltipActionText({
+    hitData: { type: "DECOR_PROP", name: "Tool Rack" }
+  });
+  assert(propText.includes("Search") && propText.includes("Tool Rack"), "decor prop tooltip should expose searchable station props");
+
   const tooltip = makeTooltip();
   const documentRef = { getElementById: () => tooltip };
   const displayed = runtime.updateHoverTooltipDisplay({

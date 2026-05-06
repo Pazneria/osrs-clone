@@ -1,8 +1,8 @@
 (function () {
     const ROCK_VISUAL_PROFILES = {
         clay: { geometryKey: 'rockClay', materialKey: 'rockClay', instanceScale: [1.16, 1.0, 0.96], silhouette: 'low_rounded_mound' },
-        copper: { geometryKey: 'rockCopper', materialKey: 'rockCopper', instanceScale: [1.0, 1.0, 1.0], silhouette: 'medium_faceted_lump' },
-        tin: { geometryKey: 'rockTin', materialKey: 'rockTin', instanceScale: [0.92, 1.0, 1.08], silhouette: 'soft_dodeca_lump' },
+        copper: { geometryKey: 'rockCopper', materialKey: 'rockCopper', instanceScale: [1.1, 1.0, 1.0], silhouette: 'chipped_copper_outcrop' },
+        tin: { geometryKey: 'rockTin', materialKey: 'rockTin', instanceScale: [1.0, 1.08, 1.0], silhouette: 'broken_tin_shard_cluster' },
         iron: { geometryKey: 'rockIron', materialKey: 'rockIron', instanceScale: [1.05, 1.08, 0.88], silhouette: 'blocky_slab' },
         coal: { geometryKey: 'rockCoal', materialKey: 'rockCoal', instanceScale: [1.12, 0.92, 1.08], silhouette: 'jagged_black_shard' },
         silver: { geometryKey: 'rockSilver', materialKey: 'rockSilver', instanceScale: [0.94, 1.08, 1.04], silhouette: 'bright_octa_lump' },
@@ -10,7 +10,7 @@
         gold: { geometryKey: 'rockGold', materialKey: 'rockGold', instanceScale: [1.18, 0.98, 0.92], silhouette: 'wide_gold_nugget' },
         emerald: { geometryKey: 'rockEmerald', materialKey: 'rockEmerald', instanceScale: [0.72, 1.34, 0.72], silhouette: 'green_needle_crystal' },
         rune_essence: { geometryKey: 'rockRuneEssence', materialKey: 'rockRuneEssence', instanceScale: [1.0, 1.0, 1.0], silhouette: 'large_persistent_essence_boulder' },
-        depleted: { geometryKey: 'rockDepleted', materialKey: 'rockDepleted', instanceScale: [1.0, 1.0, 1.0], silhouette: 'flattened_depleted_shell' }
+        depleted: { geometryKey: 'rockDepleted', materialKey: 'rockDepleted', instanceScale: [1.08, 1.0, 1.02], silhouette: 'spent_chipped_slab' }
     };
 
     const ROCK_VISUAL_ORDER = Object.freeze([

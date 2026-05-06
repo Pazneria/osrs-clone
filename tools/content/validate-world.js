@@ -77,6 +77,24 @@ function loadNpcAppearancePresetIds(root) {
   const absPath = path.join(root, "src", "js", "player-npc-humanoid-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
   const presetIds = new Set();
+  ["goblin", "guard", "tanner_rusk"].forEach((presetId) => presetIds.add(presetId));
+  const catalogPath = path.join(root, "src", "js", "content", "npc-appearance-catalog.js");
+  if (fs.existsSync(catalogPath)) {
+    const sandbox = { window: {} };
+    const catalogSource = fs.readFileSync(catalogPath, "utf8");
+    vm.runInNewContext(catalogSource, sandbox, { filename: catalogPath });
+    const catalog = sandbox.window && sandbox.window.NpcAppearanceCatalog ? sandbox.window.NpcAppearanceCatalog : null;
+    const presets = catalog && catalog.presets && typeof catalog.presets === "object" ? catalog.presets : {};
+    Object.keys(presets).forEach((presetId) => {
+      const normalized = String(presetId || "").trim().toLowerCase();
+      if (normalized) presetIds.add(normalized);
+    });
+    const previewActors = catalog && Array.isArray(catalog.previewActors) ? catalog.previewActors : [];
+    previewActors.forEach((entry) => {
+      const normalized = String(entry && entry.actorId ? entry.actorId : "").trim().toLowerCase();
+      if (normalized && normalized !== "player") presetIds.add(normalized);
+    });
+  }
   const templateStart = source.indexOf("function buildNpcHumanoidRigTemplate");
   const templateEnd = templateStart >= 0
     ? source.indexOf("function createNpcHumanoidRigFromPreset", templateStart)
@@ -176,6 +194,10 @@ function normalizeLower(value) {
   return normalizeString(value).toLowerCase();
 }
 
+function isTutorialSurfaceV1(worldId, world) {
+  return worldId === "tutorial_island" && normalizeString(world && world.version).includes("surface_v1");
+}
+
 const CARDINAL_DIRECTIONS = Object.freeze([
   { x: 0, y: -1 },
   { x: 1, y: 0 },
@@ -230,6 +252,7 @@ function collectAuthoredStairTiles(world) {
   const approach = world && world.terrainPatches ? world.terrainPatches.smithingHallApproach : null;
   if (
     approach
+    && approach.enabled !== false
     && Number.isFinite(approach.stairX)
     && Number.isFinite(approach.yStart)
     && Number.isFinite(approach.yEnd)
@@ -384,6 +407,7 @@ function validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, lo
 
 function validateCombatSpawns(worldId, manifestEntry, world, logicalMap, combatCatalog) {
   const combatSpawns = Array.isArray(world.combatSpawns) ? world.combatSpawns : [];
+  if (combatSpawns.length === 0 && isTutorialSurfaceV1(worldId, world)) return;
   assert(combatSpawns.length > 0, `${worldId}: missing authored combat spawns`);
 
   const enemyIds = combatCatalog && combatCatalog.enemyIds ? combatCatalog.enemyIds : new Set();
@@ -455,12 +479,73 @@ function validateCombatSpawns(worldId, manifestEntry, world, logicalMap, combatC
   });
 }
 
+function validateCaveOpenings(worldId, world) {
+  const openings = world && world.landmarks && Array.isArray(world.landmarks.caveOpenings)
+    ? world.landmarks.caveOpenings
+    : [];
+  const openingIds = new Set();
+  const allowedFacings = new Set(["north", "south", "east", "west"]);
+  for (let i = 0; i < openings.length; i++) {
+    const opening = openings[i];
+    assert(opening && opening.landmarkId, `${worldId}: cave opening missing landmarkId`);
+    assert(!openingIds.has(opening.landmarkId), `${worldId}: duplicate cave opening landmarkId ${opening.landmarkId}`);
+    openingIds.add(opening.landmarkId);
+    assertFinitePoint3(opening, `${worldId}: cave opening ${opening.landmarkId} has invalid coordinates`);
+    assert(allowedFacings.has(String(opening.facing || "").toLowerCase()), `${worldId}: cave opening ${opening.landmarkId} has invalid facing`);
+    assert(Number.isFinite(opening.width) && opening.width > 0, `${worldId}: cave opening ${opening.landmarkId} missing positive width`);
+    assert(Number.isFinite(opening.depth) && opening.depth > 0, `${worldId}: cave opening ${opening.landmarkId} missing positive depth`);
+    assert(opening.visualOnly === true, `${worldId}: cave opening ${opening.landmarkId} must be visualOnly until travel is authored`);
+  }
+
+  if (isTutorialSurfaceV1(worldId, world)) {
+    assert(openings.length === 2, `${worldId}: surface-v1 should author exactly two cave openings`);
+    assert(openingIds.has("tutorial_mine_entrance"), `${worldId}: surface-v1 missing tutorial_mine_entrance`);
+    assert(openingIds.has("tutorial_mine_exit"), `${worldId}: surface-v1 missing tutorial_mine_exit`);
+  }
+}
+
+function validateDecorProps(worldId, world) {
+  const props = world && world.landmarks && Array.isArray(world.landmarks.decorProps)
+    ? world.landmarks.decorProps
+    : [];
+  const propIds = new Set();
+  const allowedKinds = new Set([
+    "desk",
+    "crate",
+    "tool_rack",
+    "notice_board",
+    "chopping_block",
+    "woodpile",
+    "ore_pile",
+    "coal_bin",
+    "barrel"
+  ]);
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
+    assert(prop && prop.propId, `${worldId}: decor prop missing propId`);
+    assert(!propIds.has(prop.propId), `${worldId}: duplicate decor prop ${prop.propId}`);
+    propIds.add(prop.propId);
+    assert(allowedKinds.has(String(prop.kind || "").toLowerCase()), `${worldId}: decor prop ${prop.propId} has invalid kind ${prop.kind}`);
+    assertFinitePoint3(prop, `${worldId}: decor prop ${prop.propId} has invalid coordinates`);
+    assert(prop.x >= 0 && prop.y >= 0 && prop.x < 648 && prop.y < 648, `${worldId}: decor prop ${prop.propId} is out of bounds`);
+    if (prop.facingYaw !== undefined) {
+      assert(Number.isFinite(prop.facingYaw), `${worldId}: decor prop ${prop.propId} has invalid facingYaw`);
+    }
+    if (prop.blocksMovement !== undefined) {
+      assert(typeof prop.blocksMovement === "boolean", `${worldId}: decor prop ${prop.propId} has invalid blocksMovement`);
+    }
+  }
+}
+
 function validateWaterShape(worldId, bodyId, shape) {
   assert(shape && typeof shape === "object", `${worldId}: water body ${bodyId} missing shape`);
   assert(shape.kind === "ellipse" || shape.kind === "box" || shape.kind === "polygon", `${worldId}: water body ${bodyId} has unsupported shape kind`);
   if (shape.kind === "ellipse") {
     assert(Number.isFinite(shape.cx) && Number.isFinite(shape.cy), `${worldId}: water body ${bodyId} ellipse missing center`);
     assert(Number.isFinite(shape.rx) && shape.rx > 0 && Number.isFinite(shape.ry) && shape.ry > 0, `${worldId}: water body ${bodyId} ellipse missing radii`);
+    if (shape.rotationRadians !== undefined) {
+      assert(Number.isFinite(shape.rotationRadians), `${worldId}: water body ${bodyId} ellipse has invalid rotationRadians`);
+    }
     return;
   }
   if (shape.kind === "box") {
@@ -473,6 +558,62 @@ function validateWaterShape(worldId, bodyId, shape) {
   assert(points.length >= 3, `${worldId}: water body ${bodyId} polygon needs at least 3 points`);
   for (let i = 0; i < points.length; i++) {
     assertFinitePoint2(points[i], `${worldId}: water body ${bodyId} polygon point ${i} is invalid`);
+  }
+}
+
+function validateIslandWaterPatch(worldId, world) {
+  const patch = world && world.terrainPatches ? world.terrainPatches.islandWater : null;
+  if (!patch) {
+    assert(!isTutorialSurfaceV1(worldId, world), `${worldId}: surface-v1 should author an island water patch`);
+    return;
+  }
+  if (patch.enabled === false) return;
+  assert(patch.waterBounds && typeof patch.waterBounds === "object", `${worldId}: island water patch missing waterBounds`);
+  assert(Number.isFinite(patch.waterBounds.xMin) && Number.isFinite(patch.waterBounds.xMax), `${worldId}: island water patch has invalid x bounds`);
+  assert(Number.isFinite(patch.waterBounds.yMin) && Number.isFinite(patch.waterBounds.yMax), `${worldId}: island water patch has invalid y bounds`);
+  assert(patch.waterBounds.xMin < patch.waterBounds.xMax && patch.waterBounds.yMin < patch.waterBounds.yMax, `${worldId}: island water patch bounds are inverted`);
+  const points = Array.isArray(patch.landPolygon) ? patch.landPolygon : [];
+  assert(points.length >= 3, `${worldId}: island water patch needs a land polygon`);
+  for (let i = 0; i < points.length; i++) {
+    assertFinitePoint2(points[i], `${worldId}: island water patch polygon point ${i} is invalid`);
+  }
+  if (patch.shoreWidth !== undefined) {
+    assert(Number.isFinite(patch.shoreWidth) && patch.shoreWidth >= 0, `${worldId}: island water patch has invalid shoreWidth`);
+  }
+  if (patch.shallowDistance !== undefined) {
+    assert(Number.isFinite(patch.shallowDistance) && patch.shallowDistance >= 0, `${worldId}: island water patch has invalid shallowDistance`);
+  }
+}
+
+function validateTerrainPathPatches(worldId, world) {
+  const paths = world && world.terrainPatches && Array.isArray(world.terrainPatches.paths)
+    ? world.terrainPatches.paths
+    : [];
+  const pathIds = new Set();
+  for (let i = 0; i < paths.length; i++) {
+    const pathPatch = paths[i];
+    assert(pathPatch && pathPatch.pathId, `${worldId}: terrain path missing pathId`);
+    assert(!pathIds.has(pathPatch.pathId), `${worldId}: duplicate terrain path ${pathPatch.pathId}`);
+    pathIds.add(pathPatch.pathId);
+    const points = Array.isArray(pathPatch.points) ? pathPatch.points : [];
+    assert(points.length >= 2, `${worldId}: terrain path ${pathPatch.pathId} needs at least two points`);
+    for (let pointIndex = 0; pointIndex < points.length; pointIndex++) {
+      assertFinitePoint2(points[pointIndex], `${worldId}: terrain path ${pathPatch.pathId} point ${pointIndex} is invalid`);
+    }
+    assert(Number.isFinite(pathPatch.pathWidth) && pathPatch.pathWidth > 0, `${worldId}: terrain path ${pathPatch.pathId} has invalid pathWidth`);
+    if (pathPatch.z !== undefined) {
+      assert(Number.isInteger(pathPatch.z) && pathPatch.z >= 0, `${worldId}: terrain path ${pathPatch.pathId} has invalid z`);
+    }
+    if (pathPatch.tileId !== undefined) {
+      const tileId = String(pathPatch.tileId || "").trim();
+      assert(tileId && TileId[tileId] !== undefined, `${worldId}: terrain path ${pathPatch.pathId} has unknown tileId ${tileId}`);
+    }
+    if (pathPatch.height !== undefined) {
+      assert(Number.isFinite(pathPatch.height), `${worldId}: terrain path ${pathPatch.pathId} has invalid height`);
+    }
+    if (pathPatch.edgeSoftness !== undefined) {
+      assert(Number.isFinite(pathPatch.edgeSoftness) && pathPatch.edgeSoftness >= 0, `${worldId}: terrain path ${pathPatch.pathId} has invalid edgeSoftness`);
+    }
   }
 }
 
@@ -496,6 +637,8 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   assert(!world.skillRoutes.miningZones, `${worldId} should not define legacy miningZones`);
   assert(!world.skillRoutes.runecraftingBands, `${worldId} should not define legacy runecraftingBands`);
   assert(!world.skillRoutes.woodcuttingZones, `${worldId} should not define legacy woodcuttingZones`);
+  validateIslandWaterPatch(worldId, world);
+  validateTerrainPathPatches(worldId, world);
 
   const waterBodyIds = new Set();
   const waterBodies = Array.isArray(world.waterBodies) ? world.waterBodies : [];
@@ -556,6 +699,12 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
       const merchantId = String(service.merchantId).trim().toLowerCase();
       assert(knownMerchantIds.has(merchantId), `${worldId}: unknown merchantId ${merchantId}`);
     }
+    if (service.roamingRadiusOverride !== undefined && service.roamingRadiusOverride !== null) {
+      assert(
+        Number.isFinite(service.roamingRadiusOverride) && service.roamingRadiusOverride >= 0,
+        `${worldId}: service ${service.serviceId} has invalid roamingRadiusOverride`
+      );
+    }
     if (service.travelToWorldId) {
       const travelWorldId = String(service.travelToWorldId).trim();
       assert(travelWorldId, `${worldId}: service ${service.serviceId} has an empty travelToWorldId`);
@@ -573,7 +722,11 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   const groups = world.skillRoutes || {};
   ["fishing", "cooking", "firemaking", "mining", "runecrafting", "woodcutting"].forEach((groupKey) => {
     const rows = Array.isArray(groups[groupKey]) ? groups[groupKey] : [];
-    assert(rows.length > 0, `${worldId}: missing routes for ${groupKey}`);
+    const optionalTutorialSurfaceGroup = isTutorialSurfaceV1(worldId, world) && groupKey === "mining";
+    const optionalRunecraftingGroup = groupKey === "runecrafting";
+    if (!optionalTutorialSurfaceGroup && !optionalRunecraftingGroup) {
+      assert(rows.length > 0, `${worldId}: missing routes for ${groupKey}`);
+    }
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       assert(row && row.routeId, `${worldId}: route in ${groupKey} missing routeId`);
@@ -590,7 +743,9 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
 
   const miningRouteIds = new Set((world.skillRoutes.mining || []).map((entry) => entry.routeId));
   const miningNodes = world.resourceNodes && Array.isArray(world.resourceNodes.mining) ? world.resourceNodes.mining : [];
-  assert(miningNodes.length > 0, `${worldId}: missing authored mining resource nodes`);
+  if (!isTutorialSurfaceV1(worldId, world)) {
+    assert(miningNodes.length > 0, `${worldId}: missing authored mining resource nodes`);
+  }
   for (let i = 0; i < miningNodes.length; i++) {
     const node = miningNodes[i];
     assert(node && node.placementId, `${worldId}: mining node missing placementId`);
@@ -614,7 +769,11 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
 
   const runecraftingRouteIds = new Set((world.skillRoutes.runecrafting || []).map((entry) => entry.routeId));
   const altars = world.landmarks && Array.isArray(world.landmarks.altars) ? world.landmarks.altars : [];
-  assert(altars.length > 0, `${worldId}: missing authored runecrafting altars`);
+  if (runecraftingRouteIds.size === 0) {
+    assert(altars.length === 0, `${worldId}: runecrafting altars require runecrafting routes`);
+  } else {
+    assert(altars.length > 0, `${worldId}: missing authored runecrafting altars`);
+  }
   for (let i = 0; i < altars.length; i++) {
     const altar = altars[i];
     assert(altar && altar.routeId, `${worldId}: altar placement missing routeId`);
@@ -624,6 +783,8 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
 
   const logicalMap = buildWorldGameplayMap(world, stamps);
   validateElevatedStructureAccess(worldId, world, stamps, logicalMap);
+  validateCaveOpenings(worldId, world);
+  validateDecorProps(worldId, world);
   validateCombatSpawns(worldId, manifestEntry, world, logicalMap, resolvedCombatCatalog);
   validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, logicalMap, resolvedNpcMetadataCatalogs);
   const adjacencyViolations = collectAdjacencyViolations(world, logicalMap);

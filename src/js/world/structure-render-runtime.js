@@ -166,7 +166,7 @@
         const hasEast = isCastleTile(options, x + 1, y);
         const linkNS = hasNorth || hasSouth;
         const linkEW = hasWest || hasEast;
-        const wallThin = 0.78;
+        const wallThin = 1.0;
 
         dummyTransform.position.set(x, zOffset, y);
         dummyTransform.rotation.set(0, 0, 0);
@@ -275,6 +275,7 @@
         const rawTile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
         const visualTile = options.visualTile;
         const floorTile = rawTile === TileId.SOLID_NPC ? visualTile : rawTile;
+        if (floorTile === TileId.SOLID_NPC) return true;
         if (floorTile === TileId.GRASS || floorTile === TileId.DIRT || floorTile === TileId.SHORE) return true;
         if (floorTile === TileId.FLOOR_WOOD && isPierDeckTile(pierConfig, x, y, z)) return true;
         let floorMat = sharedMaterials.floor7;
@@ -532,6 +533,67 @@
         return boothGroup;
     }
 
+    function registerFurnaceEffectMaterial(sharedMaterials, material, config) {
+        if (!sharedMaterials || !material) return;
+        if (!Array.isArray(sharedMaterials.furnaceEffectMaterials)) sharedMaterials.furnaceEffectMaterials = [];
+        sharedMaterials.furnaceEffectMaterials.push(Object.assign({ material }, config || null));
+    }
+
+    function getSharedFurnaceEffectMaterial(sharedMaterials, key, createMaterial, config) {
+        if (!sharedMaterials) return null;
+        if (sharedMaterials[key]) return sharedMaterials[key];
+        const material = typeof createMaterial === 'function' ? createMaterial() : null;
+        if (!material) return null;
+        sharedMaterials[key] = material;
+        registerFurnaceEffectMaterial(sharedMaterials, material, config);
+        return material;
+    }
+
+    function updateFurnaceVisualEffects(options) {
+        const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : null;
+        const frameNowMs = Number.isFinite(options && options.frameNowMs) ? options.frameNowMs : 0;
+        const effects = sharedMaterials && Array.isArray(sharedMaterials.furnaceEffectMaterials)
+            ? sharedMaterials.furnaceEffectMaterials
+            : [];
+        for (let i = 0; i < effects.length; i++) {
+            const effect = effects[i];
+            const material = effect && effect.material;
+            if (!material) continue;
+            const phase = Number.isFinite(effect.phase) ? effect.phase : 0;
+            const speed = Number.isFinite(effect.speed) ? effect.speed : 1;
+            const pulse = 0.5 + (Math.sin((frameNowMs * 0.0042 * speed) + phase) * 0.5);
+            if (Number.isFinite(effect.baseOpacity) && Number.isFinite(effect.opacityRange)) {
+                material.opacity = effect.baseOpacity + (pulse * effect.opacityRange);
+            }
+            if (Number.isFinite(effect.baseEmissiveIntensity) && Number.isFinite(effect.emissiveRange)) {
+                material.emissiveIntensity = effect.baseEmissiveIntensity + (pulse * effect.emissiveRange);
+            }
+        }
+    }
+
+    function getFurnaceInteractionTile(furnace) {
+        const fw = Number.isFinite(furnace && furnace.footprintW) ? Math.max(1, Math.round(furnace.footprintW)) : 1;
+        const fd = Number.isFinite(furnace && furnace.footprintD) ? Math.max(1, Math.round(furnace.footprintD)) : 1;
+        return {
+            x: (furnace && Number.isFinite(furnace.x) ? furnace.x : 0) + Math.floor((fw - 1) / 2),
+            y: (furnace && Number.isFinite(furnace.y) ? furnace.y : 0) + Math.floor((fd - 1) / 2)
+        };
+    }
+
+    function resolveFurnaceFrontStep(furnace) {
+        const yaw = Number.isFinite(furnace && furnace.facingYaw) ? furnace.facingYaw : 0;
+        const sx = Math.sin(yaw);
+        const sy = Math.cos(yaw);
+        let dx = Math.round(sx);
+        let dy = Math.round(sy);
+        if (Math.abs(dx) === Math.abs(dy)) {
+            if (Math.abs(sx) >= Math.abs(sy)) dy = 0;
+            else dx = 0;
+        }
+        if (dx === 0 && dy === 0) dy = 1;
+        return { dx, dy };
+    }
+
     function createFurnaceVisualGroup(options) {
         const THREE = requireThree(options && options.THREE);
         const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : {};
@@ -541,23 +603,93 @@
         const furnaceGroup = new THREE.Group();
         const fw = Number.isFinite(furnace.footprintW) ? furnace.footprintW : 3;
         const fd = Number.isFinite(furnace.footprintD) ? furnace.footprintD : 2;
-        const yaw = Number.isFinite(furnace.facingYaw) ? furnace.facingYaw : 0;
-        const quarterTurn = Math.abs(Math.round(Math.sin(yaw))) === 1 && Math.abs(Math.round(Math.cos(yaw))) === 0;
-        const bodyLocalW = quarterTurn ? fd : fw;
-        const bodyLocalD = quarterTurn ? fw : fd;
+        const front = resolveFurnaceFrontStep(furnace);
+        const frontIsX = Math.abs(front.dx) > 0;
+        const bodyLocalW = frontIsX ? fd : fw;
+        const bodyLocalD = frontIsX ? fw : fd;
         furnaceGroup.position.set(furnace.x + ((fw - 1) * 0.5), baseY, furnace.y + ((fd - 1) * 0.5));
         if (Number.isFinite(furnace.facingYaw)) furnaceGroup.rotation.y = furnace.facingYaw;
-        const base = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.floor8);
-        base.position.set(0, 0.8, 0);
+        const brickMat = sharedMaterials.floor8 || sharedMaterials.castleStone;
+        const stoneMat = sharedMaterials.floor7 || sharedMaterials.castleStone || brickMat;
+        const coalMat = sharedMaterials.caveMouth || sharedMaterials.altarCoal || stoneMat;
+        const emberBaseMat = sharedMaterials.altarEmber || brickMat;
+        const mouthGlowMat = getSharedFurnaceEffectMaterial(sharedMaterials, 'furnaceMouthGlowMaterial', () => {
+            const material = emberBaseMat && emberBaseMat.clone
+                ? emberBaseMat.clone()
+                : new THREE.MeshLambertMaterial({ color: 0xff7a1a, emissive: 0x7a2e00 });
+            material.transparent = true;
+            material.opacity = 0.66;
+            material.emissive = material.emissive || new THREE.Color(0x7a2e00);
+            material.emissiveIntensity = 0.8;
+            return material;
+        }, {
+            baseOpacity: 0.48,
+            opacityRange: 0.28,
+            baseEmissiveIntensity: 0.55,
+            emissiveRange: 0.55,
+            phase: 0.72,
+            speed: 1.0
+        });
+        const heatMat = getSharedFurnaceEffectMaterial(sharedMaterials, 'furnaceHeatShimmerMaterial', () => {
+            const material = mouthGlowMat && mouthGlowMat.clone
+                ? mouthGlowMat.clone()
+                : new THREE.MeshLambertMaterial({ color: 0xff9a35, emissive: 0x7a2e00 });
+            material.transparent = true;
+            material.opacity = 0.18;
+            return material;
+        }, {
+            baseOpacity: 0.10,
+            opacityRange: 0.12,
+            phase: 1.2,
+            speed: 1.35
+        });
+        const smokeMat = getSharedFurnaceEffectMaterial(sharedMaterials, 'furnaceSmokeHintMaterial', () => new THREE.MeshBasicMaterial({
+            color: 0x4f4a43,
+            transparent: true,
+            opacity: 0.14,
+            depthWrite: false
+        }), {
+            baseOpacity: 0.08,
+            opacityRange: 0.09,
+            phase: 2.4,
+            speed: 0.55
+        });
+
+        const base = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.5, bodyLocalD), brickMat);
+        base.position.set(0, 0.75, 0);
         base.castShadow = true;
         base.receiveShadow = true;
-        const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.6, 0.3), sharedMaterials.floor7);
-        mouth.position.set(0, 0.95, (bodyLocalD * 0.5) - 0.02);
-        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 0.45), sharedMaterials.floor7);
-        chimney.position.set(0.55, 1.9, -((bodyLocalD * 0.5) - 0.45));
+        const frontFrame = new THREE.Mesh(new THREE.BoxGeometry(Math.min(1.45, bodyLocalW - 0.18), 0.84, 0.2), stoneMat);
+        frontFrame.position.set(0, 0.86, (bodyLocalD * 0.5) + 0.01);
+        frontFrame.castShadow = true;
+        frontFrame.receiveShadow = true;
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(Math.min(1.0, bodyLocalW - 0.38), 0.42, 0.08), coalMat);
+        mouth.position.set(0, 0.76, (bodyLocalD * 0.5) + 0.12);
+        const glow = new THREE.Mesh(new THREE.BoxGeometry(Math.min(0.76, bodyLocalW - 0.52), 0.26, 0.04), mouthGlowMat);
+        glow.position.set(0, 0.72, (bodyLocalD * 0.5) + 0.165);
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(Math.min(1.25, bodyLocalW - 0.16), 0.16, 0.24), stoneMat);
+        lintel.position.set(0, 1.24, (bodyLocalD * 0.5) + 0.04);
+        const leftButtress = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.22, bodyLocalD + 0.08), stoneMat);
+        leftButtress.position.set(-(bodyLocalW * 0.5) + 0.08, 0.76, 0);
+        const rightButtress = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.22, bodyLocalD + 0.08), stoneMat);
+        rightButtress.position.set((bodyLocalW * 0.5) - 0.08, 0.76, 0);
+        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.48, 1.22, 0.48), stoneMat);
+        chimney.position.set(Math.min(0.55, (bodyLocalW * 0.5) - 0.34), 1.86, -((bodyLocalD * 0.5) - 0.42));
+        chimney.castShadow = true;
+        chimney.receiveShadow = true;
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.16, 0.62), stoneMat);
+        cap.position.set(chimney.position.x, 2.55, chimney.position.z);
+        cap.castShadow = true;
+        cap.receiveShadow = true;
+        const smoke = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.74, 7), smokeMat);
+        smoke.position.set(chimney.position.x, 2.98, chimney.position.z);
+        smoke.rotation.y = 0.45;
+        const heat = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.5), heatMat || mouthGlowMat);
+        heat.position.set(0, 1.03, (bodyLocalD * 0.5) + 0.19);
+        heat.rotation.x = -0.08;
         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.hiddenHitbox);
         hitbox.position.set(0, 0.8, 0);
-        furnaceGroup.add(base, mouth, chimney, hitbox);
+        furnaceGroup.add(base, frontFrame, mouth, glow, lintel, leftButtress, rightButtress, chimney, cap, smoke, heat, hitbox);
         return furnaceGroup;
     }
 
@@ -570,15 +702,35 @@
         const anvilGroup = new THREE.Group();
         anvilGroup.position.set(anvil.x, baseY, anvil.y);
         if (Number.isFinite(anvil.facingYaw)) anvilGroup.rotation.y = anvil.facingYaw;
-        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.35), sharedMaterials.boothWood);
+        const woodMat = sharedMaterials.boothWood || sharedMaterials.floor6;
+        const metalMat = sharedMaterials.floor7 || sharedMaterials.rockIron || woodMat;
+        const darkMat = sharedMaterials.rockIron || sharedMaterials.floor7 || metalMat;
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.55, 0.42), woodMat);
         stand.position.set(0, 0.275, 0);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.45), sharedMaterials.floor7);
-        top.position.set(0, 0.62, 0);
-        const horn = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.2), sharedMaterials.floor7);
-        horn.position.set(0.5, 0.6, 0);
+        stand.castShadow = true;
+        stand.receiveShadow = true;
+        const waist = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.16, 0.42), darkMat);
+        waist.position.set(0, 0.58, 0);
+        waist.castShadow = true;
+        waist.receiveShadow = true;
+        const top = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.2, 0.48), metalMat);
+        top.position.set(-0.06, 0.72, 0);
+        top.castShadow = true;
+        top.receiveShadow = true;
+        const horn = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.22), metalMat);
+        horn.position.set(0.58, 0.72, 0);
+        horn.scale.set(1.25, 0.72, 0.72);
+        horn.castShadow = true;
+        horn.receiveShadow = true;
+        const heel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.42), darkMat);
+        heel.position.set(-0.63, 0.71, 0);
+        heel.castShadow = true;
+        heel.receiveShadow = true;
+        const hardy = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.026, 0.1), sharedMaterials.caveMouth || darkMat);
+        hardy.position.set(0.12, 0.835, 0.08);
         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.3), sharedMaterials.hiddenHitbox);
         hitbox.position.set(0, 0.4, 0);
-        anvilGroup.add(stand, top, horn, hitbox);
+        anvilGroup.add(stand, waist, top, horn, heel, hardy, hitbox);
         return anvilGroup;
     }
 
@@ -601,6 +753,195 @@
         faceBack.rotation.y = Math.PI;
         signGroup.add(post, board, faceFront, faceBack);
         return signGroup;
+    }
+
+    function createDecorPropVisualGroup(options) {
+        const THREE = requireThree(options && options.THREE);
+        const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : {};
+        const sharedGeometries = options && options.sharedGeometries ? options.sharedGeometries : {};
+        const prop = options && options.prop;
+        const baseY = Number.isFinite(options && options.baseY) ? options.baseY : 0;
+        if (!prop || !Number.isFinite(prop.x) || !Number.isFinite(prop.y)) return null;
+        const group = new THREE.Group();
+        group.position.set(prop.x, baseY, prop.y);
+        if (Number.isFinite(prop.facingYaw)) group.rotation.y = prop.facingYaw;
+        const createEquipmentVisualMeshes = typeof (options && options.createEquipmentVisualMeshes) === 'function'
+            ? options.createEquipmentVisualMeshes
+            : ((typeof window !== 'undefined' && typeof window.createEquipmentVisualMeshes === 'function')
+                ? window.createEquipmentVisualMeshes
+                : null);
+
+        const woodMat = sharedMaterials.boothWood || sharedMaterials.floor7;
+        const darkWoodMat = sharedMaterials.fenceWood || woodMat;
+        const accentMat = sharedMaterials.rockIron || sharedMaterials.floor7 || woodMat;
+        const paperMat = sharedMaterials.parchmentMat || sharedMaterials.directionSignMat || accentMat;
+        const noticeMat = sharedMaterials.tutorialNoticeMat || sharedMaterials.directionSignMat || paperMat;
+        const addBox = (w, h, d, mat, x, y, z) => {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            mesh.position.set(x || 0, y || 0, z || 0);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        };
+        const addCylinder = (radiusTop, radiusBottom, h, mat, x, y, z, rotationZ) => {
+            const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, h, 8), mat);
+            mesh.position.set(x || 0, y || 0, z || 0);
+            if (Number.isFinite(rotationZ)) mesh.rotation.z = rotationZ;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        };
+        const addOreChunk = (geometry, mat, x, y, z, scale, yaw) => {
+            const mesh = new THREE.Mesh(geometry || new THREE.DodecahedronGeometry(0.28, 0), mat || accentMat);
+            mesh.position.set(x || 0, y || 0, z || 0);
+            const scalar = Number.isFinite(scale) ? scale : 1;
+            mesh.scale.setScalar(scalar);
+            if (Number.isFinite(yaw)) mesh.rotation.y = yaw;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        };
+        const createToolRackHeldToVerticalQuaternion = () => new THREE.Quaternion()
+            .setFromEuler(new THREE.Euler(0.9561333749, -Math.PI / 2, 0))
+            .invert();
+        const addToolRackAsset = (itemId, x, y, z, scale, rotationZ) => {
+            const wrapper = new THREE.Group();
+            wrapper.position.set(x, y, z);
+            wrapper.scale.setScalar(scale);
+            wrapper.rotation.z = Number.isFinite(rotationZ) ? rotationZ : 0;
+            let addedRealAsset = false;
+            if (createEquipmentVisualMeshes) {
+                const meshes = createEquipmentVisualMeshes(itemId, 'axe', [0, 0, 0, 0, 0]);
+                if (Array.isArray(meshes) && meshes.length) {
+                    const assetGroup = new THREE.Group();
+                    meshes.forEach((mesh) => {
+                        if (!mesh) return;
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        assetGroup.add(mesh);
+                    });
+                    const poseGroup = new THREE.Group();
+                    poseGroup.quaternion.copy(createToolRackHeldToVerticalQuaternion());
+                    poseGroup.add(assetGroup);
+                    poseGroup.updateMatrixWorld(true);
+                    const bounds = new THREE.Box3().setFromObject(poseGroup);
+                    if (!bounds.isEmpty()) {
+                        const center = bounds.getCenter(new THREE.Vector3());
+                        poseGroup.position.set(-center.x, -center.y, -center.z);
+                    }
+                    wrapper.add(poseGroup);
+                    addedRealAsset = true;
+                }
+            }
+            if (!addedRealAsset) {
+                addBox(0.08, 0.72, 0.08, accentMat, x, y, z);
+                addBox(0.28, 0.12, 0.12, accentMat, x, y + 0.36, z);
+                return;
+            }
+            group.add(wrapper);
+        };
+
+        if (prop.kind === 'desk') {
+            addBox(1.8, 0.16, 0.85, woodMat, 0, 0.72, 0);
+            addBox(0.16, 0.68, 0.16, darkWoodMat, -0.72, 0.34, -0.28);
+            addBox(0.16, 0.68, 0.16, darkWoodMat, 0.72, 0.34, -0.28);
+            addBox(0.16, 0.68, 0.16, darkWoodMat, -0.72, 0.34, 0.28);
+            addBox(0.16, 0.68, 0.16, darkWoodMat, 0.72, 0.34, 0.28);
+            addBox(0.72, 0.025, 0.42, paperMat, 0.22, 0.825, 0.03);
+        } else if (prop.kind === 'crate') {
+            addBox(0.82, 0.72, 0.82, woodMat, 0, 0.36, 0);
+            addBox(0.9, 0.08, 0.9, darkWoodMat, 0, 0.72, 0);
+            addBox(0.08, 0.76, 0.9, darkWoodMat, -0.28, 0.38, 0);
+            addBox(0.08, 0.76, 0.9, darkWoodMat, 0.28, 0.38, 0);
+        } else if (prop.kind === 'tool_rack') {
+            addBox(0.16, 1.42, 0.12, darkWoodMat, -0.72, 0.71, -0.1);
+            addBox(0.16, 1.42, 0.12, darkWoodMat, 0.72, 0.71, -0.1);
+            addBox(1.16, 0.14, 0.1, woodMat, 0, 1.2, 0.08);
+            addBox(1.08, 0.1, 0.1, woodMat, 0, 0.56, 0.08);
+            addBox(0.11, 0.08, 0.34, darkWoodMat, -0.48, 1.03, 0.27);
+            addBox(0.11, 0.08, 0.34, darkWoodMat, 0, 1.03, 0.27);
+            addBox(0.11, 0.08, 0.34, darkWoodMat, 0.48, 1.03, 0.27);
+            addToolRackAsset('bronze_axe', -0.48, 0.88, 0.43, 1.18, -0.64 + (Math.PI / 2));
+            addToolRackAsset('bronze_pickaxe', 0, 0.88, 0.43, 1.14, -0.64 + (Math.PI / 2));
+            addToolRackAsset('hammer', 0.48, 0.88, 0.43, 1.44, 0);
+        } else if (prop.kind === 'notice_board') {
+            addBox(0.14, 1.45, 0.14, darkWoodMat, 0, 0.72, 0);
+            addBox(1.45, 0.82, 0.12, woodMat, 0, 1.48, 0);
+            addBox(1.24, 0.6, 0.025, noticeMat, 0, 1.48, 0.07);
+        } else if (prop.kind === 'chopping_block') {
+            addCylinder(0.34, 0.38, 0.46, woodMat, 0, 0.23, 0);
+            addCylinder(0.36, 0.36, 0.04, darkWoodMat, 0, 0.48, 0);
+            addBox(0.5, 0.025, 0.045, darkWoodMat, 0, 0.515, 0.02);
+            addBox(0.34, 0.025, 0.04, darkWoodMat, -0.06, 0.518, -0.12);
+        } else if (prop.kind === 'woodpile') {
+            addCylinder(0.11, 0.11, 1.05, woodMat, 0, 0.14, -0.18, Math.PI / 2);
+            addCylinder(0.11, 0.11, 1.0, woodMat, 0.04, 0.14, 0.08, Math.PI / 2);
+            addCylinder(0.1, 0.1, 0.92, woodMat, -0.02, 0.34, -0.04, Math.PI / 2);
+            addBox(1.15, 0.08, 0.08, darkWoodMat, 0, 0.08, 0.28);
+            addBox(1.15, 0.08, 0.08, darkWoodMat, 0, 0.08, -0.38);
+        } else if (prop.kind === 'ore_pile') {
+            addOreChunk(sharedGeometries.rockDepleted, sharedMaterials.rockDepleted || accentMat, -0.28, 0.04, 0.02, 0.72, -0.35);
+            addOreChunk(sharedGeometries.rockCopper, sharedMaterials.rockCopper || accentMat, -0.05, 0.08, -0.12, 0.72, 0.44);
+            addOreChunk(sharedGeometries.rockTin, sharedMaterials.rockTin || accentMat, 0.22, 0.08, 0.04, 0.68, -0.18);
+            addOreChunk(sharedGeometries.rockCopper, sharedMaterials.rockCopper || accentMat, 0.05, 0.24, 0.18, 0.48, 0.82);
+            addOreChunk(sharedGeometries.rockTin, sharedMaterials.rockTin || accentMat, -0.18, 0.23, 0.18, 0.44, -0.58);
+        } else if (prop.kind === 'coal_bin') {
+            addBox(1.08, 0.14, 0.86, darkWoodMat, 0, 0.07, 0);
+            addBox(0.12, 0.58, 0.82, woodMat, -0.54, 0.36, 0);
+            addBox(0.12, 0.58, 0.82, woodMat, 0.54, 0.36, 0);
+            addBox(1.08, 0.58, 0.12, woodMat, 0, 0.36, -0.41);
+            addBox(1.08, 0.38, 0.12, woodMat, 0, 0.26, 0.41);
+            addOreChunk(sharedGeometries.rockCoal, sharedMaterials.rockCoal || accentMat, -0.28, 0.52, -0.08, 0.56, 0.1);
+            addOreChunk(sharedGeometries.rockCoal, sharedMaterials.rockCoal || accentMat, 0.04, 0.56, 0.08, 0.58, 0.9);
+            addOreChunk(sharedGeometries.rockCoal, sharedMaterials.rockCoal || accentMat, 0.28, 0.48, -0.08, 0.48, -0.42);
+        } else if (prop.kind === 'barrel') {
+            addCylinder(0.34, 0.34, 0.82, woodMat, 0, 0.41, 0);
+            addCylinder(0.355, 0.355, 0.045, darkWoodMat, 0, 0.1, 0);
+            addCylinder(0.355, 0.355, 0.045, darkWoodMat, 0, 0.41, 0);
+            addCylinder(0.355, 0.355, 0.045, darkWoodMat, 0, 0.72, 0);
+            addBox(0.08, 0.78, 0.08, darkWoodMat, -0.21, 0.41, 0.22);
+            addBox(0.08, 0.78, 0.08, darkWoodMat, 0.21, 0.41, -0.22);
+        } else {
+            addBox(0.65, 0.5, 0.65, woodMat, 0, 0.25, 0);
+        }
+
+        const hitboxSizeByKind = {
+            desk: { w: 1.95, h: 0.95, d: 1.05 },
+            crate: { w: 1.05, h: 0.95, d: 1.05 },
+            tool_rack: { w: 1.58, h: 1.7, d: 0.78 },
+            notice_board: { w: 1.75, h: 1.9, d: 0.62 },
+            chopping_block: { w: 0.9, h: 0.7, d: 0.9 },
+            woodpile: { w: 1.35, h: 0.55, d: 0.95 },
+            ore_pile: { w: 1.25, h: 0.68, d: 1.0 },
+            coal_bin: { w: 1.25, h: 0.95, d: 1.0 },
+            barrel: { w: 0.85, h: 0.98, d: 0.85 }
+        };
+        const hitboxSize = hitboxSizeByKind[prop.kind] || { w: 1.0, h: 1.0, d: 1.0 };
+        const hitbox = new THREE.Mesh(
+            new THREE.BoxGeometry(hitboxSize.w, hitboxSize.h, hitboxSize.d),
+            sharedMaterials.hiddenHitbox
+        );
+        hitbox.position.set(0, hitboxSize.h / 2, 0);
+        group.add(hitbox);
+
+        group.userData = {
+            type: 'DECOR_PROP',
+            gridX: prop.x,
+            gridY: prop.y,
+            z: Number.isFinite(prop.z) ? prop.z : 0,
+            propId: prop.propId || '',
+            kind: prop.kind || 'decor',
+            name: prop.label || 'Decorative prop',
+            uid: {
+                propId: prop.propId || '',
+                kind: prop.kind || 'decor',
+                label: prop.label || 'Decorative prop'
+            }
+        };
+        return group;
     }
 
     function createAltarCandidateVisualGroup(options) {
@@ -691,18 +1032,168 @@
         doorGroup.rotation.y = door.currentRotation;
         const dw = door.isEW ? door.width : door.thickness;
         const dd = door.isEW ? door.thickness : door.width;
-        const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(dw, 2.0, dd), sharedMaterials.boothWood);
+        const doorHeight = 2.42;
+        const panelMat = sharedMaterials.boothWood || sharedMaterials.fenceWood;
+        const braceMat = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+        const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(dw, doorHeight, dd), panelMat);
         const meshOffsetX = door.hingeOffsetX ? -door.hingeOffsetX : 0;
         const meshOffsetZ = door.hingeOffsetY ? -door.hingeOffsetY : 0;
-        doorMesh.position.set(meshOffsetX, 1.0, meshOffsetZ);
+        doorMesh.position.set(meshOffsetX, doorHeight / 2, meshOffsetZ);
         doorMesh.castShadow = true;
         doorMesh.receiveShadow = true;
+        const braceDepth = door.isEW ? dd + 0.025 : dw + 0.025;
+        const frontOffset = door.isEW ? -(braceDepth / 2) : -(braceDepth / 2);
+        const addDoorDetail = (w, h, d, mat, x, y, z) => {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        };
+        const braceLower = new THREE.Mesh(
+            new THREE.BoxGeometry(door.isEW ? Math.max(0.18, door.width * 0.76) : 0.07, 0.12, door.isEW ? 0.07 : Math.max(0.18, door.width * 0.76)),
+            braceMat
+        );
+        braceLower.position.set(meshOffsetX, 0.8, meshOffsetZ + (door.isEW ? frontOffset : 0));
+        const braceUpper = braceLower.clone();
+        braceUpper.position.y = 1.62;
+        const panelDepth = 0.026;
+        const panelOffset = frontOffset - 0.01;
+        const topPanel = addDoorDetail(
+            door.isEW ? door.width * 0.56 : panelDepth,
+            0.52,
+            door.isEW ? panelDepth : door.width * 0.56,
+            braceMat,
+            meshOffsetX,
+            1.6,
+            meshOffsetZ + (door.isEW ? panelOffset : 0)
+        );
+        const bottomPanel = topPanel.clone();
+        bottomPanel.position.y = 0.88;
+        const threshold = addDoorDetail(
+            door.isEW ? door.width + 0.14 : 0.16,
+            0.08,
+            door.isEW ? 0.16 : door.width + 0.14,
+            braceMat,
+            meshOffsetX,
+            0.04,
+            meshOffsetZ
+        );
+        const jambA = addDoorDetail(
+            door.isEW ? 0.09 : 0.12,
+            doorHeight + 0.1,
+            door.isEW ? 0.18 : 0.09,
+            braceMat,
+            meshOffsetX + (door.isEW ? -(door.width / 2) - 0.035 : 0),
+            (doorHeight + 0.1) / 2,
+            meshOffsetZ + (door.isEW ? 0 : -(door.width / 2) - 0.035)
+        );
+        const jambB = jambA.clone();
+        if (door.isEW) jambB.position.x = meshOffsetX + (door.width / 2) + 0.035;
+        else jambB.position.z = meshOffsetZ + (door.width / 2) + 0.035;
+        const knobMat = sharedMaterials.rockGold || sharedMaterials.floor7 || braceMat;
+        const knobFaceOffset = (door.isEW ? dd : dw) / 2 + 0.06;
+        const latchX = meshOffsetX + (door.isEW
+            ? ((door.hingeOffsetX || 0) >= 0 ? -door.width * 0.32 : door.width * 0.32)
+            : 0);
+        const latchZ = meshOffsetZ + (door.isEW
+            ? 0
+            : ((door.hingeOffsetY || 0) >= 0 ? -door.width * 0.32 : door.width * 0.32));
+        const createKnob = (side) => {
+            const knob = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8), knobMat);
+            knob.position.set(
+                door.isEW ? latchX : meshOffsetX + (side * knobFaceOffset),
+                1.18,
+                door.isEW ? meshOffsetZ + (side * knobFaceOffset) : latchZ
+            );
+            return knob;
+        };
+        const knobInside = createKnob(-1);
+        const knobOutside = createKnob(1);
+        [braceLower, braceUpper, topPanel, bottomPanel, threshold, jambA, jambB, knobInside, knobOutside].forEach((mesh) => {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+        });
         const hw = door.isEW ? door.width : 0.6;
         const hd = door.isEW ? 0.6 : door.width;
-        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, 2, hd), sharedMaterials.hiddenHitbox);
-        hitbox.position.set(meshOffsetX, 1.0, meshOffsetZ);
-        doorGroup.add(doorMesh, hitbox);
+        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, doorHeight, hd), sharedMaterials.hiddenHitbox);
+        hitbox.position.set(meshOffsetX, doorHeight / 2, meshOffsetZ);
+        doorGroup.add(doorMesh, braceLower, braceUpper, topPanel, bottomPanel, threshold, jambA, jambB, knobInside, knobOutside, hitbox);
         return doorGroup;
+    }
+
+    function resolveCaveFacingVector(facing) {
+        const key = String(facing || '').toLowerCase();
+        if (key === 'south') return { x: 0, z: 1 };
+        if (key === 'east') return { x: 1, z: 0 };
+        if (key === 'west') return { x: -1, z: 0 };
+        return { x: 0, z: -1 };
+    }
+
+    function createCaveOpeningVisualGroup(options) {
+        const THREE = requireThree(options && options.THREE);
+        const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : {};
+        const opening = options && options.opening;
+        const baseY = Number.isFinite(options && options.baseY) ? options.baseY : 0;
+        if (!opening) return null;
+
+        const width = Number.isFinite(opening.width) ? Math.max(1.5, opening.width) : 3.2;
+        const depth = Number.isFinite(opening.depth) ? Math.max(1.0, opening.depth) : 2.2;
+        const forward = resolveCaveFacingVector(opening.facing);
+        const side = { x: -forward.z, z: forward.x };
+        const caveGroup = new THREE.Group();
+        caveGroup.position.set(opening.x, baseY, opening.y);
+
+        const mouthMat = sharedMaterials.caveMouth || sharedMaterials.rockCoal || sharedMaterials.floor7;
+        const rockMat = sharedMaterials.caveRock || sharedMaterials.rockDepleted || sharedMaterials.floor7;
+        const mouth = new THREE.Mesh(new THREE.CircleGeometry(1, 28), mouthMat);
+        mouth.rotation.x = -Math.PI / 2;
+        mouth.scale.set(width * 0.48, depth * 0.46, 1);
+        mouth.position.set(forward.x * 0.16, 0.035, forward.z * 0.16);
+        mouth.receiveShadow = true;
+        caveGroup.add(mouth);
+
+        const backRock = new THREE.Mesh(new THREE.BoxGeometry(width * 0.9, 0.52, 0.42), rockMat);
+        backRock.position.set(-forward.x * depth * 0.28, 0.28, -forward.z * depth * 0.28);
+        backRock.rotation.y = Math.atan2(forward.x, forward.z);
+        backRock.castShadow = true;
+        backRock.receiveShadow = true;
+        caveGroup.add(backRock);
+
+        for (let i = -1; i <= 1; i += 2) {
+            const flank = new THREE.Mesh(new THREE.DodecahedronGeometry(0.48, 0), rockMat);
+            flank.scale.set(1.1, 0.72, 0.82);
+            flank.position.set(
+                side.x * i * width * 0.42 - forward.x * depth * 0.08,
+                0.3,
+                side.z * i * width * 0.42 - forward.z * depth * 0.08
+            );
+            flank.castShadow = true;
+            flank.receiveShadow = true;
+            caveGroup.add(flank);
+        }
+
+        if (opening.occluded) {
+            const overhang = new THREE.Mesh(new THREE.DodecahedronGeometry(0.66, 0), rockMat);
+            overhang.scale.set(width * 0.42, 0.58, depth * 0.32);
+            overhang.position.set(-forward.x * depth * 0.12, 0.62, -forward.z * depth * 0.12);
+            overhang.castShadow = true;
+            overhang.receiveShadow = true;
+            caveGroup.add(overhang);
+        }
+
+        caveGroup.traverse((child) => {
+            if (!child || !child.isMesh) return;
+            child.userData = {
+                type: 'CAVE_OPENING_VISUAL',
+                gridX: opening.x,
+                gridY: opening.y,
+                z: Number.isFinite(opening.z) ? opening.z : 0,
+                landmarkId: opening.landmarkId,
+                visualOnly: true
+            };
+        });
+        return caveGroup;
     }
 
     function addGroupChildrenToEnvironment(group, environmentMeshes, userData) {
@@ -716,6 +1207,7 @@
     function appendChunkLandmarkVisuals(options) {
         const THREE = requireThree(options && options.THREE);
         const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : {};
+        const sharedGeometries = options && options.sharedGeometries ? options.sharedGeometries : {};
         const planeGroup = options && options.planeGroup;
         const environmentMeshes = options && options.environmentMeshes;
         const heightMap = options && options.heightMap;
@@ -726,6 +1218,17 @@
         const endX = options && options.endX;
         const endY = options && options.endY;
         if (!planeGroup || !heightMap) return;
+
+        (Array.isArray(options.caveOpeningsToRender) ? options.caveOpeningsToRender : []).forEach((opening) => {
+            if (!isEntryInChunk(opening, startX, startY, endX, endY, z)) return;
+            const caveGroup = createCaveOpeningVisualGroup({
+                THREE,
+                sharedMaterials,
+                opening,
+                baseY: heightMap[z][opening.y][opening.x] + zOffset
+            });
+            if (caveGroup) planeGroup.add(caveGroup);
+        });
 
         (Array.isArray(options.bankBoothsToRender) ? options.bankBoothsToRender : []).forEach((booth) => {
             if (!isEntryInChunk(booth, startX, startY, endX, endY, z)) return;
@@ -747,7 +1250,8 @@
                 furnace,
                 baseY: heightMap[z][furnace.y][furnace.x] + zOffset
             });
-            addGroupChildrenToEnvironment(furnaceGroup, environmentMeshes, { type: 'FURNACE', gridX: furnace.x, gridY: furnace.y, z });
+            const interactionTile = getFurnaceInteractionTile(furnace);
+            addGroupChildrenToEnvironment(furnaceGroup, environmentMeshes, { type: 'FURNACE', gridX: interactionTile.x, gridY: interactionTile.y, z });
             planeGroup.add(furnaceGroup);
         });
 
@@ -772,6 +1276,33 @@
                 baseY: heightMap[z][sign.y][sign.x] + zOffset
             });
             planeGroup.add(signGroup);
+        });
+
+        (Array.isArray(options.decorPropsToRender) ? options.decorPropsToRender : []).forEach((prop) => {
+            if (!isEntryInChunk(prop, startX, startY, endX, endY, z)) return;
+            const propGroup = createDecorPropVisualGroup({
+                THREE,
+                sharedMaterials,
+                sharedGeometries,
+                prop,
+                baseY: heightMap[z][prop.y][prop.x] + zOffset,
+                createEquipmentVisualMeshes: options.createEquipmentVisualMeshes
+            });
+            if (propGroup) {
+                addGroupChildrenToEnvironment(propGroup, environmentMeshes, {
+                    type: 'DECOR_PROP',
+                    gridX: prop.x,
+                    gridY: prop.y,
+                    z,
+                    name: prop.label || 'Decorative prop',
+                    uid: {
+                        propId: prop.propId || '',
+                        kind: prop.kind || 'decor',
+                        label: prop.label || 'Decorative prop'
+                    }
+                });
+                planeGroup.add(propGroup);
+            }
         });
 
         (Array.isArray(options.altarCandidatesToRender) ? options.altarCandidatesToRender : []).forEach((altar) => {
@@ -821,7 +1352,7 @@
             addGroupChildrenToEnvironment(doorGroup, environmentMeshes, { type: 'DOOR', gridX: door.x, gridY: door.y, z, doorObj: door });
             planeGroup.add(doorGroup);
             const floorHeight = heightMap[z][door.y][door.x];
-            if (floorHeight > 0) {
+            if (floorHeight > 0.12) {
                 const floorMesh = createTopAnchoredFloorMesh({
                     THREE,
                     material: sharedMaterials.floor7,
@@ -1002,10 +1533,13 @@
         createAnvilVisualGroup,
         createBankBoothVisualGroup,
         createCastleRenderData,
+        createCaveOpeningVisualGroup,
+        createDecorPropVisualGroup,
         createDirectionalSignVisualGroup,
         createDoorVisualGroup,
         createFenceVisualGroup,
         createFurnaceVisualGroup,
+        getFurnaceInteractionTile,
         createRoofVisualGroup,
         createTopAnchoredFloorMesh,
         createWoodenGateVisualGroup,
@@ -1013,6 +1547,7 @@
         resolveFenceConnections,
         setCastleTowerVisualState,
         setCastleWallVisualState,
+        updateFurnaceVisualEffects,
         updateTutorialRoofVisibility
     };
 })();

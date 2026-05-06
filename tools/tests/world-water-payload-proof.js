@@ -49,7 +49,14 @@ function run() {
   assertDeepWaterPreserved(starterTown, starterBodies);
   assertRenderPayloadDeterministic(buildWaterRenderPayload, starterTown);
 
-  console.log("World water payload proof passed for main_overworld.");
+  const tutorialIsland = loadWorldContent(root, "tutorial_island").world;
+  const tutorialBodies = getWorldWaterBodies(tutorialIsland);
+  assert(tutorialBodies.length === 2, "tutorial_island should use only its authored surrounding sea and survival pond water bodies");
+  assert(!tutorialBodies.some((body) => body.id === "legacy-east-river"), "tutorial_island should not inherit the legacy mainland river");
+  assert(tutorialBodies.some((body) => body.id === "tutorial_surrounding_sea"), "tutorial_island should keep its authored surrounding sea");
+  assertRenderPayloadDeterministic(buildWaterRenderPayload, tutorialIsland);
+
+  console.log("World water payload proof passed for main_overworld and tutorial_island.");
 }
 
 try {

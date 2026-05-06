@@ -132,6 +132,94 @@ function run() {
   }
 
   {
+    const messages = [];
+    const overhead = [];
+    const fakeDocument = {
+      popup: null,
+      listeners: [],
+      body: {
+        appendChild(element) {
+          fakeDocument.popup = element;
+        }
+      },
+      createElement() {
+        return {
+          id: "",
+          className: "",
+          style: {},
+          textContent: "",
+          children: [],
+          setAttribute(name, value) { this[name] = value; },
+          appendChild(child) {
+            this.children.push(child);
+            child.parentNode = this;
+          },
+          contains(target) {
+            return target === this || this.children.includes(target);
+          },
+          addEventListener(type, handler) {
+            this[`on${type}`] = handler;
+          }
+        };
+      },
+      getElementById(id) {
+        return this.popup && this.popup.id === id ? this.popup : null;
+      },
+      addEventListener(type, handler) {
+        this.listeners.push({ type, handler });
+      },
+      removeEventListener(type, handler) {
+        this.listeners = this.listeners.filter((entry) => entry.type !== type || entry.handler !== handler);
+      }
+    };
+    const door = {
+      x: 3,
+      y: 2,
+      z: 0,
+      isOpen: false,
+      openRot: 1,
+      closedRot: 0,
+      isWoodenGate: false,
+      tutorialGateMessage: "Speak with the Tutorial Guide before leaving the cabin."
+    };
+    const context = makeContext({
+      addChatMessage: (message, tone) => messages.push({ message, tone }),
+      showPlayerOverheadText: (message, durationMs) => overhead.push({ message, durationMs }),
+      documentRef: fakeDocument,
+      windowRef: { isTutorialGateLocked: () => true },
+      playerState: {
+        targetObj: "DOOR",
+        targetUid: door,
+        targetX: 3,
+        targetY: 2
+      }
+    });
+    runtime.processArrivalInteractions(context, false);
+    assert(door.isOpen === false && context.logicalMap[0][2][3] !== context.tileId.DOOR_OPEN, "locked tutorial cabin doors should not open on arrival");
+    assert(messages.some((entry) => entry.message.includes("Tutorial Guide") && entry.tone === "warn"), "locked tutorial cabin doors should explain the guide requirement");
+    assert(overhead.length === 0, "locked tutorial cabin doors should not double-publish overhead popup feedback");
+    assert(fakeDocument.popup && fakeDocument.popup._tutorialBody && fakeDocument.popup._tutorialBody.textContent.includes("Tutorial Guide"), "locked tutorial cabin doors should create a pop-up warning");
+    assert(fakeDocument.popup.style.display === "flex" && fakeDocument.popup.style.opacity === "1", "locked tutorial cabin popup should stay visible");
+    assert(fakeDocument.listeners.some((entry) => entry.type === "pointerdown"), "locked tutorial cabin popup should close on click-away");
+  }
+
+  {
+    const messages = [];
+    const context = makeContext({
+      addChatMessage: (message, tone) => messages.push({ message, tone }),
+      playerState: {
+        targetObj: "DECOR_PROP",
+        targetUid: { kind: "tool_rack", label: "Tool Rack" },
+        targetX: 3,
+        targetY: 2
+      }
+    });
+    runtime.processArrivalInteractions(context, false);
+    assert(messages.some((entry) => entry.message.includes("tool rack") && entry.tone === "game"), "decor prop arrival should search decorative station props");
+    assert(context.playerState.action === "IDLE", "decor prop arrival should return to idle");
+  }
+
+  {
     let openedNpc = null;
     const context = makeContext({
       windowRef: { openNpcDialogue: (npc) => { openedNpc = npc; } },

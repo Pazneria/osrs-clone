@@ -18,29 +18,170 @@ function carveWaterTile(map, x, y, depthNorm) {
   map[0][y][x] = depthNorm >= 0.64 ? TileId.WATER_DEEP : TileId.WATER_SHALLOW;
 }
 
-function applyWaterFeatures(map, world) {
-  const lakes = world.terrainPatches.lakes || [];
-  for (let i = 0; i < lakes.length; i++) {
-    const lake = lakes[i];
-    for (let y = Math.max(1, Math.floor(lake.cy - lake.ry - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(lake.cy + lake.ry + 1)); y++) {
-      for (let x = Math.max(1, Math.floor(lake.cx - lake.rx - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(lake.cx + lake.rx + 1)); x++) {
-        const nx = (x - lake.cx) / lake.rx;
-        const ny = (y - lake.cy) / lake.ry;
-        const d = Math.sqrt((nx * nx) + (ny * ny));
-        if (d <= 1.0) carveWaterTile(map, x, y, 1.0 - d);
+function pointInPolygon(points, x, y) {
+  if (!Array.isArray(points) || points.length < 3) return false;
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const a = points[i];
+    const b = points[j];
+    if (!a || !b) continue;
+    const dy = b.y - a.y;
+    if (Math.abs(dy) < 0.0001) continue;
+    const intersects = ((a.y > y) !== (b.y > y))
+      && (x < ((b.x - a.x) * (y - a.y)) / dy + a.x);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function pointToSegmentDistance(px, py, ax, ay, bx, by) {
+  const vx = bx - ax;
+  const vy = by - ay;
+  const lenSq = vx * vx + vy * vy;
+  if (lenSq <= 0.0001) return Math.hypot(px - ax, py - ay);
+  const t = Math.max(0, Math.min(1, (((px - ax) * vx) + ((py - ay) * vy)) / lenSq));
+  const cx = ax + (vx * t);
+  const cy = ay + (vy * t);
+  return Math.hypot(px - cx, py - cy);
+}
+
+function distanceToPolygonEdge(points, x, y) {
+  if (!Array.isArray(points) || points.length < 2) return Infinity;
+  let best = Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    if (!a || !b) continue;
+    best = Math.min(best, pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y));
+  }
+  return best;
+}
+
+function isWaterTileId(tileId) {
+  return tileId === TileId.WATER_SHALLOW || tileId === TileId.WATER_DEEP;
+}
+
+function getEllipseRotation(ellipse) {
+  return Number.isFinite(ellipse && ellipse.rotationRadians) ? Number(ellipse.rotationRadians) : 0;
+}
+
+function getEllipseBounds(ellipse) {
+  const rotation = getEllipseRotation(ellipse);
+  if (Math.abs(rotation) <= 0.000001) {
+    return {
+      xMin: ellipse.cx - ellipse.rx,
+      xMax: ellipse.cx + ellipse.rx,
+      yMin: ellipse.cy - ellipse.ry,
+      yMax: ellipse.cy + ellipse.ry
+    };
+  }
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const halfWidth = Math.sqrt((ellipse.rx * cos) ** 2 + (ellipse.ry * sin) ** 2);
+  const halfHeight = Math.sqrt((ellipse.rx * sin) ** 2 + (ellipse.ry * cos) ** 2);
+  return {
+    xMin: ellipse.cx - halfWidth,
+    xMax: ellipse.cx + halfWidth,
+    yMin: ellipse.cy - halfHeight,
+    yMax: ellipse.cy + halfHeight
+  };
+}
+
+function getRotatedEllipseDepthNorm(ellipse, x, y) {
+  if (!ellipse || !Number.isFinite(ellipse.rx) || !Number.isFinite(ellipse.ry) || ellipse.rx <= 0 || ellipse.ry <= 0) return null;
+  const rotation = getEllipseRotation(ellipse);
+  const dx = x - ellipse.cx;
+  const dy = y - ellipse.cy;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const localX = (dx * cos) + (dy * sin);
+  const localY = (-dx * sin) + (dy * cos);
+  const nx = localX / ellipse.rx;
+  const ny = localY / ellipse.ry;
+  const d = Math.sqrt((nx * nx) + (ny * ny));
+  return d <= 1.0 ? 1.0 - d : null;
+}
+
+function applyEllipseWater(map, ellipse) {
+  const bounds = getEllipseBounds(ellipse);
+  for (let y = Math.max(1, Math.floor(bounds.yMin - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(bounds.yMax + 1)); y++) {
+    for (let x = Math.max(1, Math.floor(bounds.xMin - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(bounds.xMax + 1)); x++) {
+      const depthNorm = getRotatedEllipseDepthNorm(ellipse, x, y);
+      if (depthNorm !== null) carveWaterTile(map, x, y, depthNorm);
+    }
+  }
+}
+
+function distanceToPath(points, x, y) {
+  if (!Array.isArray(points) || points.length === 0) return Infinity;
+  if (points.length === 1 && points[0]) return Math.hypot(x - points[0].x, y - points[0].y);
+  let best = Infinity;
+  for (let i = 1; i < points.length; i++) {
+    const from = points[i - 1];
+    const to = points[i];
+    if (!from || !to) continue;
+    best = Math.min(best, pointToSegmentDistance(x, y, from.x, from.y, to.x, to.y));
+  }
+  return best;
+}
+
+function getPathBounds(points, padding) {
+  let xMin = Infinity;
+  let xMax = -Infinity;
+  let yMin = Infinity;
+  let yMax = -Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+    xMin = Math.min(xMin, point.x);
+    xMax = Math.max(xMax, point.x);
+    yMin = Math.min(yMin, point.y);
+    yMax = Math.max(yMax, point.y);
+  }
+  if (!Number.isFinite(xMin)) return null;
+  return {
+    xMin: Math.max(1, Math.floor(xMin - padding)),
+    xMax: Math.min(MAP_SIZE - 2, Math.ceil(xMax + padding)),
+    yMin: Math.max(1, Math.floor(yMin - padding)),
+    yMax: Math.min(MAP_SIZE - 2, Math.ceil(yMax + padding))
+  };
+}
+
+function applyIslandWaterPatch(map, world) {
+  const patch = world.terrainPatches && world.terrainPatches.islandWater;
+  if (!patch || patch.enabled === false || !patch.waterBounds || !Array.isArray(patch.landPolygon) || patch.landPolygon.length < 3) return;
+  const bounds = patch.waterBounds;
+  const xMin = Math.max(1, Math.floor(bounds.xMin));
+  const xMax = Math.min(MAP_SIZE - 2, Math.ceil(bounds.xMax));
+  const yMin = Math.max(1, Math.floor(bounds.yMin));
+  const yMax = Math.min(MAP_SIZE - 2, Math.ceil(bounds.yMax));
+  const shoreWidth = Number.isFinite(patch.shoreWidth) ? Math.max(0, Number(patch.shoreWidth)) : 2.2;
+  const shallowDistance = Number.isFinite(patch.shallowDistance) ? Math.max(0.5, Number(patch.shallowDistance)) : 4.0;
+
+  for (let y = yMin; y <= yMax; y++) {
+    for (let x = xMin; x <= xMax; x++) {
+      const px = x + 0.5;
+      const py = y + 0.5;
+      const insideLand = pointInPolygon(patch.landPolygon, px, py);
+      const edgeDistance = distanceToPolygonEdge(patch.landPolygon, px, py);
+      if (insideLand) {
+        map[0][y][x] = edgeDistance <= shoreWidth ? TileId.SHORE : TileId.GRASS;
+      } else {
+        map[0][y][x] = edgeDistance <= shallowDistance ? TileId.WATER_SHALLOW : TileId.WATER_DEEP;
       }
     }
   }
+}
 
-  const pond = world.terrainPatches.castleFrontPond;
-  for (let y = Math.max(1, Math.floor(pond.cy - pond.ry - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(pond.cy + pond.ry + 1)); y++) {
-    for (let x = Math.max(1, Math.floor(pond.cx - pond.rx - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(pond.cx + pond.rx + 1)); x++) {
-      const nx = (x - pond.cx) / pond.rx;
-      const ny = (y - pond.cy) / pond.ry;
-      const d = Math.sqrt((nx * nx) + (ny * ny));
-      if (d <= 1.0) carveWaterTile(map, x, y, 1.0 - d);
-    }
+function applyWaterFeatures(map, world) {
+  applyIslandWaterPatch(map, world);
+
+  const lakes = world.terrainPatches.lakes || [];
+  for (let i = 0; i < lakes.length; i++) {
+    applyEllipseWater(map, lakes[i]);
   }
+
+  applyEllipseWater(map, world.terrainPatches.castleFrontPond);
 
   const deep = world.terrainPatches.deepWaterCenter;
   for (let y = deep.yMin; y <= deep.yMax; y++) {
@@ -50,13 +191,45 @@ function applyWaterFeatures(map, world) {
   }
 
   const pier = world.terrainPatches.pier;
-  for (let y = pier.yStart; y <= pier.yEnd; y++) {
+  if (pier && pier.enabled !== false) {
+    for (let y = pier.yStart; y <= pier.yEnd; y++) {
+      for (let x = pier.xMin; x <= pier.xMax; x++) {
+        map[0][y][x] = TileId.FLOOR_WOOD;
+      }
+    }
     for (let x = pier.xMin; x <= pier.xMax; x++) {
-      map[0][y][x] = TileId.FLOOR_WOOD;
+      map[0][pier.entryY][x] = TileId.SHORE;
     }
   }
-  for (let x = pier.xMin; x <= pier.xMax; x++) {
-    map[0][pier.entryY][x] = TileId.SHORE;
+}
+
+function applyTerrainPathPatches(map, world) {
+  const paths = world.terrainPatches && Array.isArray(world.terrainPatches.paths)
+    ? world.terrainPatches.paths
+    : [];
+  for (let pathIndex = 0; pathIndex < paths.length; pathIndex++) {
+    const pathPatch = paths[pathIndex];
+    const points = pathPatch && Array.isArray(pathPatch.points) ? pathPatch.points : [];
+    const pathWidth = Number.isFinite(pathPatch && pathPatch.pathWidth) ? Math.max(0.5, Number(pathPatch.pathWidth)) : 3.0;
+    const halfWidth = pathWidth / 2;
+    const edgeSoftness = Number.isFinite(pathPatch && pathPatch.edgeSoftness)
+      ? Math.max(0, Number(pathPatch.edgeSoftness))
+      : Math.max(0.5, halfWidth * 0.45);
+    const bounds = getPathBounds(points, halfWidth + edgeSoftness + 1);
+    const z = Number.isInteger(pathPatch && pathPatch.z) ? pathPatch.z : 0;
+    const tileKey = typeof pathPatch.tileId === "string" ? pathPatch.tileId.trim() : "";
+    const pathTileId = tileKey && Number.isFinite(TileId[tileKey]) ? TileId[tileKey] : TileId.DIRT;
+    if (!bounds || !map[z]) continue;
+    for (let y = bounds.yMin; y <= bounds.yMax; y++) {
+      if (!map[z][y]) continue;
+      for (let x = bounds.xMin; x <= bounds.xMax; x++) {
+        const tile = map[z][y][x];
+        if (isWaterTileId(tile)) continue;
+        if (!(tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.SHORE || tile === TileId.STUMP)) continue;
+        const dist = distanceToPath(points, x + 0.5, y + 0.5);
+        if (dist <= halfWidth + edgeSoftness) map[z][y][x] = pathTileId;
+      }
+    }
   }
 }
 
@@ -95,18 +268,14 @@ function applyFenceSegment(map, fence) {
     const from = fence.points[i - 1];
     const to = fence.points[i];
     if (!from || !to) continue;
-    const dx = Math.sign(to.x - from.x);
-    const dy = Math.sign(to.y - from.y);
-    if (dx !== 0 && dy !== 0) continue;
-    let x = from.x;
-    let y = from.y;
     const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
     for (let step = 0; step <= steps; step++) {
+      const t = steps === 0 ? 0 : step / steps;
+      const x = Math.round(from.x + ((to.x - from.x) * t));
+      const y = Math.round(from.y + ((to.y - from.y) * t));
       if (map[z] && map[z][y] && x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE) {
         map[z][y][x] = TileId.FENCE;
       }
-      x += dx;
-      y += dy;
     }
   }
 }
@@ -141,7 +310,15 @@ function applyLandmarks(map, world) {
     if (!door || !door.tileId || TileId[door.tileId] === undefined) continue;
     map[door.z][door.y][door.x] = TileId[door.tileId];
   }
+  const decorProps = world.landmarks && Array.isArray(world.landmarks.decorProps) ? world.landmarks.decorProps : [];
+  for (let i = 0; i < decorProps.length; i++) {
+    const prop = decorProps[i];
+    if (!prop || prop.blocksMovement !== true) continue;
+    if (!map[prop.z] || !map[prop.z][prop.y]) continue;
+    map[prop.z][prop.y][prop.x] = TileId.OBSTACLE;
+  }
   const approach = world.terrainPatches.smithingHallApproach;
+  if (approach && approach.enabled === false) return;
   for (let y = approach.yStart; y <= approach.yEnd; y++) {
     map[0][y][approach.shoreX] = TileId.SHORE;
     map[0][y][approach.stairX] = TileId.STAIRS_RAMP;
@@ -166,6 +343,7 @@ function setCookingRouteTiles(map, world) {
 function buildWorldLogicalMap(world, stamps) {
   const map = createEmptyMap();
   applyWaterFeatures(map, world);
+  applyTerrainPathPatches(map, world);
   applyStructures(map, world, stamps);
   applyLandmarks(map, world);
   setCookingRouteTiles(map, world);

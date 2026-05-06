@@ -29,6 +29,40 @@
         };
     }
 
+    function getQaAerialPreset(presetId) {
+        const key = String(presetId || '').trim().toLowerCase();
+        if (key === 'tutorial_surface' || key === 'tutorial-island' || key === 'tutorial') {
+            return {
+                presetId: 'tutorial_surface',
+                targetX: 330,
+                targetY: 328,
+                targetZ: 0,
+                targetHeight: 1.2,
+                yaw: Math.PI * 1.5,
+                pitch: 0.12,
+                distance: 520
+            };
+        }
+        return null;
+    }
+
+    function resolveQaAerialCameraViewState(options = {}) {
+        const preset = getQaAerialPreset(options.presetId) || {};
+        const targetX = clampNumber(options.targetX, 0, 647, Number.isFinite(preset.targetX) ? preset.targetX : 204);
+        const targetY = clampNumber(options.targetY, 0, 647, Number.isFinite(preset.targetY) ? preset.targetY : 170);
+        const targetZ = clampNumber(options.targetZ, 0, 1, Number.isFinite(preset.targetZ) ? preset.targetZ : 0);
+        return {
+            presetId: preset.presetId || 'custom',
+            targetX,
+            targetY,
+            targetZ,
+            targetHeight: clampNumber(options.targetHeight, 0, 8, Number.isFinite(preset.targetHeight) ? preset.targetHeight : 1.2),
+            yaw: Number.isFinite(options.yaw) ? Number(options.yaw) : (Number.isFinite(preset.yaw) ? preset.yaw : Math.PI * 1.5),
+            pitch: clampNumber(options.pitch, 0.1, Math.PI - 0.1, Number.isFinite(preset.pitch) ? preset.pitch : 0.34),
+            distance: clampNumber(options.distance, 5, 540, Number.isFinite(preset.distance) ? preset.distance : 78)
+        };
+    }
+
     function projectWorldTileToScreen(options = {}, x, y, z = 0, heightOffset = 1.0) {
         const THREERef = getThreeRef(options);
         const windowRef = getWindowRef(options);
@@ -135,10 +169,27 @@
             if (typeof options.syncQaRenderToPlayerState === 'function') options.syncQaRenderToPlayerState();
             return formatQaCameraState(appliedState || resolvedState);
         };
+        windowRef.setQaCameraAerialView = function setQaCameraAerialView(presetOrOptions = 'tutorial_surface') {
+            const requestedOptions = typeof presetOrOptions === 'object' && presetOrOptions !== null
+                ? presetOrOptions
+                : { presetId: presetOrOptions };
+            const resolvedState = resolveQaAerialCameraViewState(requestedOptions);
+            const appliedState = typeof options.applyAerialCameraState === 'function'
+                ? options.applyAerialCameraState(resolvedState)
+                : resolvedState;
+            const formatted = formatQaCameraState(appliedState || resolvedState);
+            return Object.assign({}, formatted, {
+                presetId: resolvedState.presetId,
+                targetX: Number(resolvedState.targetX.toFixed(2)),
+                targetY: Number(resolvedState.targetY.toFixed(2)),
+                targetZ: Number(resolvedState.targetZ.toFixed(2))
+            });
+        };
     }
 
     window.InputQaCameraRuntime = {
         resolveQaCameraViewState,
+        resolveQaAerialCameraViewState,
         getDefaultQaCameraViewState,
         projectWorldTileToScreen,
         syncQaRenderToPlayerState,

@@ -58,13 +58,24 @@
         packJagexHsl(4, 2, 88)   // skin
     ];
 
+    const sharedCreatorColorPalette = [
+        '#b77a5f',
+        '#3a281f',
+        '#d4c86f',
+        '#6da84f',
+        '#2f82b8',
+        '#7e43ad',
+        '#b64a3f',
+        '#d0ad86'
+    ].map((hex) => hexToPackedJagexHsl(hex, packJagexHsl(0, 0, 64)));
     const bodyColorPalettes = [
-        [packJagexHsl(2, 3, 64), packJagexHsl(3, 4, 58), packJagexHsl(5, 5, 52), packJagexHsl(7, 6, 50)],
-        [packJagexHsl(10, 4, 72), packJagexHsl(16, 5, 60), packJagexHsl(21, 5, 58), packJagexHsl(31, 6, 52)],
-        [packJagexHsl(18, 4, 56), packJagexHsl(25, 5, 50), packJagexHsl(36, 5, 48), packJagexHsl(45, 6, 42)],
-        [packJagexHsl(22, 4, 44), packJagexHsl(30, 5, 40), packJagexHsl(41, 5, 36), packJagexHsl(52, 6, 34)],
-        [packJagexHsl(4, 2, 88), packJagexHsl(5, 2, 78), packJagexHsl(6, 3, 66), packJagexHsl(7, 3, 54)]
+        sharedCreatorColorPalette.slice(),
+        sharedCreatorColorPalette.slice(),
+        sharedCreatorColorPalette.slice(),
+        sharedCreatorColorPalette.slice(),
+        sharedCreatorColorPalette.slice()
     ];
+    const bodyColorLabels = ['Hair', 'Top', 'Bottom', 'Footwear', 'Skin'];
 
     const HEAD_SLOT_FITS = Object.freeze({
         male: Object.freeze({ size: Object.freeze([0.34, 0.34, 0.34]), offset: Object.freeze([0, 0, 0]) }),
@@ -140,6 +151,12 @@
         if (typeof options.rgbColor === 'string') fragment.rgbColor = options.rgbColor;
         if (Number.isInteger(options.bodyColorIndex)) fragment.bodyColorIndex = options.bodyColorIndex;
         if (Array.isArray(options.rotation)) fragment.rotation = options.rotation.slice(0, 3);
+        return fragment;
+    }
+
+    function createAppearanceShapeFragment(target, shape, size, offset, options = {}) {
+        const fragment = createAppearanceBoxFragment(target, size, offset, options);
+        fragment.shape = shape || 'box';
         return fragment;
     }
 
@@ -222,6 +239,348 @@
         kit_hands_female: { slot: 'hands', fragments: [{ target: 'leftLowerArm', shape: 'box', size: [0.15, 0.15, 0.15], offset: [0, -0.30, 0.02], color: bodyColorFind[4], bodyColorIndex: 4 }, { target: 'rightLowerArm', shape: 'box', size: [0.15, 0.15, 0.15], offset: [0, -0.30, 0.02], color: bodyColorFind[4], bodyColorIndex: 4 }] },
         kit_feet_male: createBaseFeetKitDef(FEET_SLOT_FITS.male),
         kit_feet_female: createBaseFeetKitDef(FEET_SLOT_FITS.female)
+    };
+
+    const creatorSlotOrder = ['hairStyle', 'faceStyle', 'facialHair', 'bodyStyle', 'legStyle', 'feetStyle'];
+    const creatorDefaults = {
+        hairStyle: 'short',
+        faceStyle: 'plain',
+        facialHair: 'clean',
+        bodyStyle: 'plain_tunic',
+        legStyle: 'trousers',
+        feetStyle: 'shoes'
+    };
+
+    function creatorColorBox(target, size, offset, bodyColorIndex, extras = {}) {
+        return createAppearanceBoxFragment(target, size, offset, Object.assign({
+            color: bodyColorFind[bodyColorIndex],
+            bodyColorIndex
+        }, extras));
+    }
+
+    function creatorRgbBox(target, size, offset, rgbColor, extras = {}) {
+        return createAppearanceBoxFragment(target, size, offset, Object.assign({
+            color: hexToPackedJagexHsl(rgbColor, packJagexHsl(0, 0, 64)),
+            rgbColor
+        }, extras));
+    }
+
+    function creatorColorShape(target, shape, size, offset, bodyColorIndex, extras = {}) {
+        return createAppearanceShapeFragment(target, shape, size, offset, Object.assign({
+            color: bodyColorFind[bodyColorIndex],
+            bodyColorIndex
+        }, extras));
+    }
+
+    function createCreatorKitDef(creatorSlot, fragmentsByGender) {
+        const maleSource = fragmentsByGender && (fragmentsByGender.male || fragmentsByGender.female);
+        const femaleSource = fragmentsByGender && (fragmentsByGender.female || fragmentsByGender.male);
+        const maleFragments = cloneFragmentList(maleSource);
+        const femaleFragments = cloneFragmentList(femaleSource);
+        return {
+            creatorSlot,
+            fragments: cloneFragmentList(maleFragments),
+            maleFragments,
+            femaleFragments
+        };
+    }
+
+    function createHairFragmentsForFit(fit, style) {
+        if (style === 'bald') return [];
+        const fragments = [];
+        const hairColor = 0;
+        const capWidth = fit.size[0] + 0.035;
+        const capDepth = fit.size[2] * 0.82;
+        const topY = fit.offset[1] + (fit.size[1] * 0.55);
+        const frontZ = fit.offset[2] + (fit.size[2] * 0.64);
+        const backZ = fit.offset[2] - (fit.size[2] * 0.08);
+        fragments.push(creatorColorBox('head', [capWidth, 0.075, capDepth], [fit.offset[0], topY, backZ], hairColor));
+        if (style === 'short') {
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.72, 0.065, 0.048], [fit.offset[0], topY - 0.075, frontZ], hairColor));
+        } else if (style === 'swept') {
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.82, 0.068, 0.05], [fit.offset[0] - 0.025, topY - 0.06, frontZ], hairColor));
+            fragments.push(creatorColorBox('head', [0.095, 0.15, 0.052], [fit.offset[0] - (fit.size[0] * 0.44), topY - 0.13, frontZ - 0.035], hairColor));
+        } else if (style === 'long') {
+            const backPanelZ = fit.offset[2] - (fit.size[2] * 0.46);
+            const sideX = fit.size[0] * 0.43;
+            const lowerY = topY - 0.42;
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.82, 0.07, 0.055], [fit.offset[0] - 0.012, topY - 0.07, frontZ + 0.002], hairColor));
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.94, 0.37, 0.105], [fit.offset[0], topY - 0.225, backPanelZ], hairColor));
+            fragments.push(creatorColorBox('head', [0.092, 0.40, 0.135], [fit.offset[0] + sideX, topY - 0.245, fit.offset[2] - (fit.size[2] * 0.25)], hairColor));
+            fragments.push(creatorColorBox('head', [0.092, 0.40, 0.135], [fit.offset[0] - sideX, topY - 0.245, fit.offset[2] - (fit.size[2] * 0.25)], hairColor));
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.32, 0.12, 0.105], [fit.offset[0] - (fit.size[0] * 0.28), lowerY + 0.018, backPanelZ + 0.014], hairColor));
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.36, 0.13, 0.105], [fit.offset[0] + 0.004, lowerY - 0.012, backPanelZ + 0.01], hairColor));
+            fragments.push(creatorColorBox('head', [fit.size[0] * 0.32, 0.12, 0.105], [fit.offset[0] + (fit.size[0] * 0.28), lowerY + 0.016, backPanelZ + 0.014], hairColor));
+        }
+        return fragments;
+    }
+
+    function createFaceFragmentsForFit(fit, style) {
+        const frontZ = fit.offset[2] + (fit.size[2] * 0.56);
+        const eyeY = fit.offset[1] + 0.05;
+        const mouthY = fit.offset[1] - 0.10;
+        const eye = '#17120e';
+        const brow = style === 'strong_brow' || style === 'angular' ? '#2b1b12' : '#23170f';
+        const mouth = style === 'soft' ? '#9b604c' : '#6f3b2e';
+        const fragments = [
+            creatorRgbBox('head', [0.052, 0.042, 0.025], [fit.offset[0] + 0.09, eyeY, frontZ], eye),
+            creatorRgbBox('head', [0.052, 0.042, 0.025], [fit.offset[0] - 0.09, eyeY, frontZ], eye),
+            creatorRgbBox('head', [style === 'soft' ? 0.10 : 0.12, 0.025, 0.024], [fit.offset[0], mouthY, frontZ + 0.004], mouth)
+        ];
+        if (style === 'angular' || style === 'strong_brow') {
+            fragments.push(creatorRgbBox('head', [0.11, 0.025, 0.024], [fit.offset[0] + 0.09, eyeY + 0.055, frontZ + 0.004], brow));
+            fragments.push(creatorRgbBox('head', [0.11, 0.025, 0.024], [fit.offset[0] - 0.09, eyeY + 0.055, frontZ + 0.004], brow));
+        }
+        if (style === 'soft') {
+            fragments.push(creatorRgbBox('head', [0.038, 0.024, 0.018], [fit.offset[0] + 0.14, mouthY + 0.055, frontZ + 0.002], '#c78368'));
+            fragments.push(creatorRgbBox('head', [0.038, 0.024, 0.018], [fit.offset[0] - 0.14, mouthY + 0.055, frontZ + 0.002], '#c78368'));
+        }
+        return fragments;
+    }
+
+    function createFacialHairFragmentsForFit(fit, style) {
+        if (style === 'clean') return [];
+        const frontZ = fit.offset[2] + (fit.size[2] * 0.68);
+        const hairColor = 0;
+        if (style === 'stubble') {
+            return [
+                creatorColorBox('head', [0.19, 0.026, 0.022], [fit.offset[0], fit.offset[1] - 0.07, frontZ], hairColor),
+                creatorColorBox('head', [0.22, 0.026, 0.022], [fit.offset[0], fit.offset[1] - 0.13, frontZ], hairColor)
+            ];
+        }
+        if (style === 'moustache') {
+            return [
+                creatorColorBox('head', [0.22, 0.042, 0.026], [fit.offset[0], fit.offset[1] - 0.055, frontZ + 0.004], hairColor)
+            ];
+        }
+        return [
+            creatorColorBox('head', [0.23, 0.044, 0.026], [fit.offset[0], fit.offset[1] - 0.055, frontZ + 0.004], hairColor),
+            creatorColorBox('head', [0.25, 0.12, 0.032], [fit.offset[0], fit.offset[1] - 0.15, frontZ], hairColor)
+        ];
+    }
+
+    function createBodyStyleFragmentsForFit(fit, style) {
+        const torso = fit.torso;
+        const upperArm = fit.upperArm;
+        const frontZ = torso.offset[2] + (torso.size[2] * 0.56);
+        const sideX = torso.size[0] * 0.25;
+        const fragments = [
+            creatorRgbBox('torso', [torso.size[0] * 0.96, 0.065, 0.04], [torso.offset[0], torso.offset[1] + (torso.size[1] * 0.36), frontZ], '#d8c18c'),
+            creatorRgbBox('torso', [torso.size[0] * 1.02, 0.08, 0.05], [torso.offset[0], torso.offset[1] - (torso.size[1] * 0.38), frontZ + 0.01], '#5a3923')
+        ];
+        if (style === 'shirt_vest') {
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.32, torso.size[1] * 0.72, 0.05], [torso.offset[0] + sideX, torso.offset[1] - 0.01, frontZ + 0.015], '#3e5034'));
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.32, torso.size[1] * 0.72, 0.05], [torso.offset[0] - sideX, torso.offset[1] - 0.01, frontZ + 0.015], '#2c3c28'));
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.26, torso.size[1] * 0.60, 0.045], [torso.offset[0], torso.offset[1], frontZ + 0.012], '#d8c99e'));
+        } else if (style === 'striped_shirt') {
+            fragments.push(creatorColorBox('torso', [torso.size[0] * 0.98, 0.05, 0.045], [torso.offset[0], torso.offset[1] + 0.18, frontZ + 0.012], 1));
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.98, 0.045, 0.048], [torso.offset[0], torso.offset[1] + 0.08, frontZ + 0.018], '#f1d9a4'));
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.98, 0.045, 0.048], [torso.offset[0], torso.offset[1] - 0.04, frontZ + 0.018], '#f1d9a4'));
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.98, 0.045, 0.048], [torso.offset[0], torso.offset[1] - 0.16, frontZ + 0.018], '#f1d9a4'));
+        } else if (style === 'work_apron') {
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.62, torso.size[1] * 0.78, 0.06], [torso.offset[0], torso.offset[1] - 0.05, frontZ + 0.02], '#6e5637'));
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.72, 0.055, 0.052], [torso.offset[0], torso.offset[1] + 0.18, frontZ + 0.025], '#9b7748'));
+        }
+        if (style === 'plain_tunic') {
+            fragments.push(creatorRgbBox('torso', [torso.size[0] * 0.24, torso.size[1] * 0.46, 0.045], [torso.offset[0], torso.offset[1] + 0.02, frontZ + 0.012], '#f0d79c'));
+        }
+        fragments.push(creatorColorBox('leftArm', [upperArm.size[0] + 0.018, upperArm.size[1] * 0.48, upperArm.size[2] + 0.018], [upperArm.offset[0], upperArm.offset[1] + 0.07, upperArm.offset[2] + 0.006], 1));
+        fragments.push(creatorColorBox('rightArm', [upperArm.size[0] + 0.018, upperArm.size[1] * 0.48, upperArm.size[2] + 0.018], [upperArm.offset[0], upperArm.offset[1] + 0.07, upperArm.offset[2] + 0.006], 1));
+        return fragments;
+    }
+
+    function createLegStyleFragmentsForFit(fit, style) {
+        const upperLeg = fit.upperLeg;
+        const lowerLeg = fit.lowerLeg;
+        const fragments = [];
+        if (style === 'trousers') {
+            fragments.push(creatorRgbBox('leftLowerLeg', [lowerLeg.size[0] * 0.95, 0.055, lowerLeg.size[2] * 1.08], [lowerLeg.offset[0], lowerLeg.offset[1] - 0.11, lowerLeg.offset[2] + 0.012], '#5f4934'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [lowerLeg.size[0] * 0.95, 0.055, lowerLeg.size[2] * 1.08], [lowerLeg.offset[0], lowerLeg.offset[1] - 0.11, lowerLeg.offset[2] + 0.012], '#5f4934'));
+        } else if (style === 'rolled_trousers') {
+            fragments.push(creatorRgbBox('leftLowerLeg', [lowerLeg.size[0] * 1.02, 0.07, lowerLeg.size[2] * 1.1], [lowerLeg.offset[0], lowerLeg.offset[1] - 0.06, lowerLeg.offset[2] + 0.012], '#d8c18c'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [lowerLeg.size[0] * 1.02, 0.07, lowerLeg.size[2] * 1.1], [lowerLeg.offset[0], lowerLeg.offset[1] - 0.06, lowerLeg.offset[2] + 0.012], '#d8c18c'));
+        } else if (style === 'skirt') {
+            fragments.push(creatorColorBox('leftLeg', [upperLeg.size[0] * 1.16, upperLeg.size[1] * 0.92, upperLeg.size[2] * 1.15], [upperLeg.offset[0], upperLeg.offset[1] - 0.02, upperLeg.offset[2] + 0.012], 2));
+            fragments.push(creatorColorBox('rightLeg', [upperLeg.size[0] * 1.16, upperLeg.size[1] * 0.92, upperLeg.size[2] * 1.15], [upperLeg.offset[0], upperLeg.offset[1] - 0.02, upperLeg.offset[2] + 0.012], 2));
+            fragments.push(creatorRgbBox('leftLeg', [upperLeg.size[0] * 1.2, 0.055, upperLeg.size[2] * 1.18], [upperLeg.offset[0], upperLeg.offset[1] - 0.17, upperLeg.offset[2] + 0.02], '#d8c18c'));
+            fragments.push(creatorRgbBox('rightLeg', [upperLeg.size[0] * 1.2, 0.055, upperLeg.size[2] * 1.18], [upperLeg.offset[0], upperLeg.offset[1] - 0.17, upperLeg.offset[2] + 0.02], '#d8c18c'));
+        } else if (style === 'wrapped_legs') {
+            fragments.push(creatorRgbBox('leftLeg', [upperLeg.size[0] * 1.05, 0.055, upperLeg.size[2] * 1.1], [upperLeg.offset[0], upperLeg.offset[1] + 0.04, upperLeg.offset[2] + 0.016], '#d8c18c'));
+            fragments.push(creatorRgbBox('rightLeg', [upperLeg.size[0] * 1.05, 0.055, upperLeg.size[2] * 1.1], [upperLeg.offset[0], upperLeg.offset[1] + 0.04, upperLeg.offset[2] + 0.016], '#d8c18c'));
+            fragments.push(creatorRgbBox('leftLowerLeg', [lowerLeg.size[0] * 1.05, 0.055, lowerLeg.size[2] * 1.1], [lowerLeg.offset[0], lowerLeg.offset[1] - 0.02, lowerLeg.offset[2] + 0.016], '#d8c18c'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [lowerLeg.size[0] * 1.05, 0.055, lowerLeg.size[2] * 1.1], [lowerLeg.offset[0], lowerLeg.offset[1] - 0.02, lowerLeg.offset[2] + 0.016], '#d8c18c'));
+        }
+        return fragments;
+    }
+
+    function createFeetStyleFragmentsForFit(fit, style) {
+        const frontZ = fit.offset[2] + (fit.size[2] * 0.55);
+        const fragments = [];
+        if (style === 'shoes') {
+            fragments.push(creatorRgbBox('leftLowerLeg', [fit.size[0] * 0.78, fit.size[1] * 0.60, fit.size[2] * 0.42], [fit.offset[0], fit.offset[1] - 0.005, frontZ], '#2d2118'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [fit.size[0] * 0.78, fit.size[1] * 0.60, fit.size[2] * 0.42], [fit.offset[0], fit.offset[1] - 0.005, frontZ], '#2d2118'));
+        } else if (style === 'work_boots') {
+            const toeZ = fit.offset[2] + (fit.size[2] * 0.55);
+            fragments.push(creatorColorBox('leftLowerLeg', [fit.size[0] * 1.02, fit.size[1] * 1.18, fit.size[2] * 0.78], [fit.offset[0], fit.offset[1] + 0.012, fit.offset[2] - 0.012], 3));
+            fragments.push(creatorColorBox('rightLowerLeg', [fit.size[0] * 1.02, fit.size[1] * 1.18, fit.size[2] * 0.78], [fit.offset[0], fit.offset[1] + 0.012, fit.offset[2] - 0.012], 3));
+            fragments.push(creatorColorBox('leftLowerLeg', [fit.size[0] * 0.90, fit.size[1] * 0.76, fit.size[2] * 0.52], [fit.offset[0], fit.offset[1] - 0.008, fit.offset[2] + (fit.size[2] * 0.28)], 3));
+            fragments.push(creatorColorBox('rightLowerLeg', [fit.size[0] * 0.90, fit.size[1] * 0.76, fit.size[2] * 0.52], [fit.offset[0], fit.offset[1] - 0.008, fit.offset[2] + (fit.size[2] * 0.28)], 3));
+            fragments.push(creatorColorShape('leftLowerLeg', 'cylinder', [fit.size[1] * 0.45, fit.size[0] * 0.82, fit.size[1] * 0.45], [fit.offset[0], fit.offset[1] - 0.01, toeZ], 3, { rotation: [0, 0, Math.PI / 2] }));
+            fragments.push(creatorColorShape('rightLowerLeg', 'cylinder', [fit.size[1] * 0.45, fit.size[0] * 0.82, fit.size[1] * 0.45], [fit.offset[0], fit.offset[1] - 0.01, toeZ], 3, { rotation: [0, 0, Math.PI / 2] }));
+            fragments.push(creatorRgbBox('leftLowerLeg', [fit.size[0] * 0.95, 0.038, fit.size[2] * 0.68], [fit.offset[0], fit.offset[1] + 0.062, fit.offset[2] - 0.02], '#4b3a2a'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [fit.size[0] * 0.95, 0.038, fit.size[2] * 0.68], [fit.offset[0], fit.offset[1] + 0.062, fit.offset[2] - 0.02], '#4b3a2a'));
+        } else if (style === 'sandals') {
+            fragments.push(creatorRgbBox('leftLowerLeg', [fit.size[0] * 0.95, 0.032, fit.size[2] * 0.92], [fit.offset[0], fit.offset[1] - 0.025, fit.offset[2] + 0.006], '#5a3923'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [fit.size[0] * 0.95, 0.032, fit.size[2] * 0.92], [fit.offset[0], fit.offset[1] - 0.025, fit.offset[2] + 0.006], '#5a3923'));
+            fragments.push(creatorRgbBox('leftLowerLeg', [fit.size[0] * 0.22, 0.035, fit.size[2] * 0.94], [fit.offset[0], fit.offset[1] + 0.02, fit.offset[2] + 0.008], '#5a3923'));
+            fragments.push(creatorRgbBox('rightLowerLeg', [fit.size[0] * 0.22, 0.035, fit.size[2] * 0.94], [fit.offset[0], fit.offset[1] + 0.02, fit.offset[2] + 0.008], '#5a3923'));
+        }
+        return fragments;
+    }
+
+    const creatorKitDefs = {
+        creator_hair_bald: createCreatorKitDef('hairStyle', { male: [], female: [] }),
+        creator_hair_short: createCreatorKitDef('hairStyle', {
+            male: createHairFragmentsForFit(HEAD_SLOT_FITS.male, 'short'),
+            female: createHairFragmentsForFit(HEAD_SLOT_FITS.female, 'short')
+        }),
+        creator_hair_swept: createCreatorKitDef('hairStyle', {
+            male: createHairFragmentsForFit(HEAD_SLOT_FITS.male, 'swept'),
+            female: createHairFragmentsForFit(HEAD_SLOT_FITS.female, 'swept')
+        }),
+        creator_hair_long: createCreatorKitDef('hairStyle', {
+            male: createHairFragmentsForFit(HEAD_SLOT_FITS.male, 'long'),
+            female: createHairFragmentsForFit(HEAD_SLOT_FITS.female, 'long')
+        }),
+        creator_face_plain: createCreatorKitDef('faceStyle', {
+            male: createFaceFragmentsForFit(HEAD_SLOT_FITS.male, 'plain'),
+            female: createFaceFragmentsForFit(HEAD_SLOT_FITS.female, 'plain')
+        }),
+        creator_face_soft: createCreatorKitDef('faceStyle', {
+            male: createFaceFragmentsForFit(HEAD_SLOT_FITS.male, 'soft'),
+            female: createFaceFragmentsForFit(HEAD_SLOT_FITS.female, 'soft')
+        }),
+        creator_face_angular: createCreatorKitDef('faceStyle', {
+            male: createFaceFragmentsForFit(HEAD_SLOT_FITS.male, 'angular'),
+            female: createFaceFragmentsForFit(HEAD_SLOT_FITS.female, 'angular')
+        }),
+        creator_face_strong_brow: createCreatorKitDef('faceStyle', {
+            male: createFaceFragmentsForFit(HEAD_SLOT_FITS.male, 'strong_brow'),
+            female: createFaceFragmentsForFit(HEAD_SLOT_FITS.female, 'strong_brow')
+        }),
+        creator_facial_hair_clean: createCreatorKitDef('facialHair', { male: [], female: [] }),
+        creator_facial_hair_stubble: createCreatorKitDef('facialHair', {
+            male: createFacialHairFragmentsForFit(HEAD_SLOT_FITS.male, 'stubble'),
+            female: createFacialHairFragmentsForFit(HEAD_SLOT_FITS.female, 'stubble')
+        }),
+        creator_facial_hair_moustache: createCreatorKitDef('facialHair', {
+            male: createFacialHairFragmentsForFit(HEAD_SLOT_FITS.male, 'moustache'),
+            female: createFacialHairFragmentsForFit(HEAD_SLOT_FITS.female, 'moustache')
+        }),
+        creator_facial_hair_short_beard: createCreatorKitDef('facialHair', {
+            male: createFacialHairFragmentsForFit(HEAD_SLOT_FITS.male, 'short_beard'),
+            female: createFacialHairFragmentsForFit(HEAD_SLOT_FITS.female, 'short_beard')
+        }),
+        creator_body_plain_tunic: createCreatorKitDef('bodyStyle', {
+            male: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.male, 'plain_tunic'),
+            female: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.female, 'plain_tunic')
+        }),
+        creator_body_shirt_vest: createCreatorKitDef('bodyStyle', {
+            male: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.male, 'shirt_vest'),
+            female: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.female, 'shirt_vest')
+        }),
+        creator_body_striped_shirt: createCreatorKitDef('bodyStyle', {
+            male: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.male, 'striped_shirt'),
+            female: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.female, 'striped_shirt')
+        }),
+        creator_body_work_apron: createCreatorKitDef('bodyStyle', {
+            male: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.male, 'work_apron'),
+            female: createBodyStyleFragmentsForFit(BODY_SLOT_FITS.female, 'work_apron')
+        }),
+        creator_leg_trousers: createCreatorKitDef('legStyle', {
+            male: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.male, 'trousers'),
+            female: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.female, 'trousers')
+        }),
+        creator_leg_rolled_trousers: createCreatorKitDef('legStyle', {
+            male: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.male, 'rolled_trousers'),
+            female: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.female, 'rolled_trousers')
+        }),
+        creator_leg_skirt: createCreatorKitDef('legStyle', {
+            male: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.male, 'skirt'),
+            female: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.female, 'skirt')
+        }),
+        creator_leg_wrapped_legs: createCreatorKitDef('legStyle', {
+            male: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.male, 'wrapped_legs'),
+            female: createLegStyleFragmentsForFit(LEGS_SLOT_FITS.female, 'wrapped_legs')
+        }),
+        creator_feet_shoes: createCreatorKitDef('feetStyle', {
+            male: createFeetStyleFragmentsForFit(FEET_SLOT_FITS.male, 'shoes'),
+            female: createFeetStyleFragmentsForFit(FEET_SLOT_FITS.female, 'shoes')
+        }),
+        creator_feet_work_boots: createCreatorKitDef('feetStyle', {
+            male: createFeetStyleFragmentsForFit(FEET_SLOT_FITS.male, 'work_boots'),
+            female: createFeetStyleFragmentsForFit(FEET_SLOT_FITS.female, 'work_boots')
+        }),
+        creator_feet_sandals: createCreatorKitDef('feetStyle', {
+            male: createFeetStyleFragmentsForFit(FEET_SLOT_FITS.male, 'sandals'),
+            female: createFeetStyleFragmentsForFit(FEET_SLOT_FITS.female, 'sandals')
+        })
+    };
+
+    const creatorSlots = {
+        hairStyle: {
+            label: 'Hair',
+            options: [
+                { id: 'bald', label: 'Bald', kitId: 'creator_hair_bald' },
+                { id: 'short', label: 'Short', kitId: 'creator_hair_short' },
+                { id: 'swept', label: 'Swept', kitId: 'creator_hair_swept' },
+                { id: 'long', label: 'Long', kitId: 'creator_hair_long' }
+            ]
+        },
+        faceStyle: {
+            label: 'Face',
+            options: [
+                { id: 'plain', label: 'Plain', kitId: 'creator_face_plain' },
+                { id: 'soft', label: 'Soft', kitId: 'creator_face_soft' },
+                { id: 'angular', label: 'Angular', kitId: 'creator_face_angular' },
+                { id: 'strong-brow', label: 'Strong Brow', kitId: 'creator_face_strong_brow' }
+            ]
+        },
+        facialHair: {
+            label: 'Facial Hair',
+            options: [
+                { id: 'clean', label: 'Clean', kitId: 'creator_facial_hair_clean' },
+                { id: 'stubble', label: 'Stubble', kitId: 'creator_facial_hair_stubble' },
+                { id: 'moustache', label: 'Moustache', kitId: 'creator_facial_hair_moustache' },
+                { id: 'short_beard', label: 'Short Beard', kitId: 'creator_facial_hair_short_beard' }
+            ]
+        },
+        bodyStyle: {
+            label: 'Top',
+            options: [
+                { id: 'plain_tunic', label: 'Plain Tunic', kitId: 'creator_body_plain_tunic' },
+                { id: 'shirt_vest', label: 'Shirt & Vest', kitId: 'creator_body_shirt_vest' },
+                { id: 'striped_shirt', label: 'Striped Shirt', kitId: 'creator_body_striped_shirt' },
+                { id: 'work_apron', label: 'Work Apron', kitId: 'creator_body_work_apron' }
+            ]
+        },
+        legStyle: {
+            label: 'Bottom',
+            options: [
+                { id: 'trousers', label: 'Trousers', kitId: 'creator_leg_trousers' },
+                { id: 'rolled_trousers', label: 'Rolled Trousers', kitId: 'creator_leg_rolled_trousers' },
+                { id: 'skirt', label: 'Skirt', kitId: 'creator_leg_skirt' },
+                { id: 'wrapped_legs', label: 'Wrapped Legs', kitId: 'creator_leg_wrapped_legs' }
+            ]
+        },
+        feetStyle: {
+            label: 'Footwear',
+            options: [
+                { id: 'shoes', label: 'Shoes', kitId: 'creator_feet_shoes' },
+                { id: 'work_boots', label: 'Work Boots', kitId: 'creator_feet_work_boots' },
+                { id: 'sandals', label: 'Sandals', kitId: 'creator_feet_sandals' }
+            ]
+        }
     };
 
     const PICKAXE_ICON_PIXELS = [
@@ -2089,8 +2448,13 @@
         slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
         bodyColorFind,
         bodyColorPalettes,
+        bodyColorLabels,
         defaultSlotKits,
         kitDefs,
+        creatorSlotOrder,
+        creatorSlots,
+        creatorDefaults,
+        creatorKitDefs,
         itemDefs: Object.assign(
             {},
             pickaxeItemDefs,

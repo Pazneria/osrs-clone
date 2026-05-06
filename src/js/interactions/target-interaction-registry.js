@@ -24,6 +24,33 @@
         return `Lv ${enemyLevel} ${enemyName}`;
     }
 
+    function getDecorPropDisplayName(hitData) {
+        const uid = hitData && hitData.uid && typeof hitData.uid === 'object' ? hitData.uid : null;
+        if (uid && typeof uid.label === 'string' && uid.label.trim()) return uid.label.trim();
+        if (hitData && typeof hitData.name === 'string' && hitData.name.trim()) return hitData.name.trim();
+        return 'Object';
+    }
+
+    function getDecorPropTargetData(hitData) {
+        const uid = hitData && hitData.uid && typeof hitData.uid === 'object' ? hitData.uid : {};
+        return {
+            propId: uid.propId || '',
+            kind: uid.kind || 'decor',
+            label: getDecorPropDisplayName(hitData)
+        };
+    }
+
+    function getDecorPropExamineText(hitData) {
+        const target = getDecorPropTargetData(hitData);
+        if (target.kind === 'desk') return 'A tutor desk covered with lesson notes.';
+        if (target.kind === 'crate') return 'A crate of starter supplies for new arrivals.';
+        if (target.kind === 'tool_rack') return 'A wall rack holding simple tools and practice gear.';
+        if (target.kind === 'notice_board') return 'A board showing the first steps through Tutorial Island.';
+        if (target.kind === 'chopping_block') return 'A chopping block scarred by practice swings.';
+        if (target.kind === 'woodpile') return 'A neat pile of logs ready for the next lesson.';
+        return `A ${target.label}.`;
+    }
+
     const TARGET_INTERACTION_SPECS = {
         TREE: {
             priority: 100,
@@ -129,6 +156,26 @@
                 );
             }
         },
+        DECOR_PROP: {
+            priority: 100,
+            guards: [hasGridHit],
+            actions: [
+                function resolveDecorPropSearchAction(context) {
+                    const label = getDecorPropDisplayName(context.hitData);
+                    return createOption(
+                        `Search <span class="text-white">${label}</span>`,
+                        () => context.queueInteract('DECOR_PROP', getDecorPropTargetData(context.hitData))
+                    );
+                }
+            ],
+            examine: function resolveDecorPropExamine(context) {
+                const label = getDecorPropDisplayName(context.hitData);
+                return createOption(
+                    `Examine <span class="text-white">${label}</span>`,
+                    () => context.examineTarget('DECOR_PROP', getDecorPropExamineText(context.hitData), getDecorPropTargetData(context.hitData))
+                );
+            }
+        },
         ENEMY: {
             priority: 100,
             guards: [hasGridHit],
@@ -175,14 +222,20 @@
                     const doorObj = context.hitData && context.hitData.doorObj ? context.hitData.doorObj : null;
                     if (!doorObj) return null;
                     const action = doorObj.isOpen ? 'Close' : 'Open';
+                    const label = doorObj.isWoodenGate ? 'Gate' : 'Door';
                     return createOption(
-                        `${action} <span class="text-white">Door</span>`,
+                        `${action} <span class="text-white">${label}</span>`,
                         () => context.queueInteract('DOOR', doorObj)
                     );
                 }
             ],
             examine: function resolveDoorExamine(context) {
-                return createOption('Examine <span class="text-white">Door</span>', () => context.examineTarget('DOOR', 'A sturdy wooden door.'));
+                const doorObj = context.hitData && context.hitData.doorObj ? context.hitData.doorObj : null;
+                const isGate = !!(doorObj && doorObj.isWoodenGate);
+                return createOption(
+                    `Examine <span class="text-white">${isGate ? 'Gate' : 'Door'}</span>`,
+                    () => context.examineTarget(isGate ? 'GATE' : 'DOOR', isGate ? 'A simple wooden gate.' : 'A sturdy wooden door.')
+                );
             }
         },
         STAIRS_UP: {

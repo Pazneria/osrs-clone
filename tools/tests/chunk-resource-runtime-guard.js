@@ -21,6 +21,8 @@ function run() {
   assert(resourceRuntimeSource.includes("function createChunkResourceRenderState(options = {})"), "chunk resource runtime should own tree/rock render state creation");
   assert(resourceRuntimeSource.includes("function sampleGroundTileCenterHeight(options = {}, tileX, tileY, layerZ)"), "chunk resource runtime should own rock ground-height sampling");
   assert(resourceRuntimeSource.includes("function appendChunkResourceVisual(options = {})"), "chunk resource runtime should own tree/rock instance placement");
+  assert(resourceRuntimeSource.includes("hash2D(x, y, 331.71) * Math.PI * 2"), "chunk resource runtime should rotate trees deterministically");
+  assert(!resourceRuntimeSource.includes("Math.random() * Math.PI * 2"), "chunk resource runtime should not randomize tree rotation on rebuild");
   assert(!worldSource.includes("const sampleGroundTileCenterHeight = (tileX, tileY, layerZ) => {"), "world.js should not own rock ground-height sampling");
   assert(!worldSource.includes("rockVisualCounts[visualId]"), "world.js should not bucket rock visual counts inline");
   assert(!worldSource.includes("tData.treeMap[tIdx]"), "world.js should not write tree interaction maps inline");

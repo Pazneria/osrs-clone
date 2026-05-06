@@ -60,11 +60,16 @@ function run() {
   assert(runtimeSource.includes("window.InputQaCameraRuntime"), "QA camera runtime should expose a window runtime");
   assert(runtimeSource.includes("function projectWorldTileToScreen"), "QA camera runtime should own projection helper");
   assert(runtimeSource.includes("function syncQaRenderToPlayerState"), "QA camera runtime should own render sync helper");
+  assert(runtimeSource.includes("function resolveQaAerialCameraViewState"), "QA camera runtime should own aerial preset state");
   assert(runtimeSource.includes("function publishQaCameraHooks"), "QA camera runtime should own QA camera public hook publication");
   assert(inputSource.includes("InputQaCameraRuntime"), "input-render.js should delegate QA camera helpers");
   assert(inputSource.includes("function installQaCameraHooks()"), "input-render.js should install QA camera hooks through a narrow helper");
   assert(inputSource.includes("runtime.publishQaCameraHooks({"), "input-render.js should delegate QA camera public hook publication to the QA camera runtime");
   assert(inputSource.includes("getCameraState: () => ({ yaw: cameraYaw, pitch: cameraPitch, distance: cameraDist })"), "input-render.js should pass live camera state access to the QA camera runtime");
+  assert(inputSource.includes("function applyQaAerialCameraState(nextState)"), "input-render.js should apply QA aerial camera presets through a narrow helper");
+  assert(inputSource.includes("function syncFreeCamControlsForQa(enabled)"), "input-render.js should keep QA camera free-cam UI state in one helper");
+  assert(inputSource.includes("isFreeCam = false;\n            syncFreeCamControlsForQa(false);"), "QA camera reset/set should return the renderer to player-follow camera mode");
+  assert(inputSource.includes("syncFreeCamControlsForQa(true);"), "QA aerial camera presets should keep enabling the free-cam UI state");
   assert(!inputSource.includes("window.projectWorldTileToScreen = projectWorldTileToScreen;"), "input-render.js should not directly publish projectWorldTileToScreen");
   assert(!inputSource.includes("window.syncQaRenderToPlayerState = syncQaRenderToPlayerState;"), "input-render.js should not directly publish syncQaRenderToPlayerState");
   assert(!inputSource.includes("window.setQaCameraView = function"), "input-render.js should not directly publish setQaCameraView");
@@ -92,6 +97,8 @@ function run() {
   assert(clamped.yaw === 2, "QA camera state should accept finite yaw");
   assert(clamped.pitch === 0.1, "QA camera state should clamp pitch");
   assert(clamped.distance === 30, "QA camera state should clamp distance");
+  const aerial = runtime.resolveQaAerialCameraViewState({ presetId: "tutorial_surface" });
+  assert(aerial.targetX === 330 && aerial.targetY === 328 && aerial.distance === 520, "tutorial surface aerial preset should frame the full spread-out island footprint");
 
   const projected = runtime.projectWorldTileToScreen({
     THREERef: { Vector3: FakeVector3 },
@@ -140,12 +147,17 @@ function run() {
       applyCameraState: (nextState) => {
         cameraState = { yaw: nextState.yaw, pitch: nextState.pitch, distance: nextState.distance };
         return cameraState;
+      },
+      applyAerialCameraState: (nextState) => {
+        cameraState = { yaw: nextState.yaw, pitch: nextState.pitch, distance: nextState.distance };
+        return cameraState;
       }
     });
     assert(typeof windowRef.projectWorldTileToScreen === "function", "runtime should publish projectWorldTileToScreen");
     assert(typeof windowRef.syncQaRenderToPlayerState === "function", "runtime should publish syncQaRenderToPlayerState");
     assert(typeof windowRef.setQaCameraView === "function", "runtime should publish setQaCameraView");
     assert(typeof windowRef.resetQaCameraView === "function", "runtime should publish resetQaCameraView");
+    assert(typeof windowRef.setQaCameraAerialView === "function", "runtime should publish setQaCameraAerialView");
     assert(windowRef.projectWorldTileToScreen(4, 5, 1, 1.5).height === 1.5 && projectCalls === 1, "published projection hook should delegate to input-render callback");
     assert(windowRef.syncQaRenderToPlayerState().synced === true && syncCalls === 1, "published sync hook should delegate to input-render callback");
     const setState = windowRef.setQaCameraView(2, -5, 99);
@@ -154,6 +166,8 @@ function run() {
     const resetState = windowRef.resetQaCameraView();
     assert(resetState.yaw === Number((Math.PI * 1.25).toFixed(4)) && resetState.distance === 16, "published reset hook should restore default QA camera state");
     assert(syncCalls === 3, "published reset hook should sync render state after applying camera state");
+    const aerialState = windowRef.setQaCameraAerialView("tutorial_surface");
+    assert(aerialState.presetId === "tutorial_surface" && aerialState.targetX === 330 && aerialState.distance === 520, "published aerial hook should apply the tutorial surface preset");
   }
 
   console.log("Input QA camera runtime guard passed.");

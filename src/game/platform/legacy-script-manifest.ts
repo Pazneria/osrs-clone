@@ -18,6 +18,7 @@ export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = 
   { id: "item-catalog", filename: "src/js/content/item-catalog.js", rawPath: "../../js/content/item-catalog.js?raw", codeVariable: "itemCatalogScript" },
   { id: "icon-review-catalog", filename: "src/js/content/icon-review-catalog.js", rawPath: "../../js/content/icon-review-catalog.js?raw", codeVariable: "iconReviewCatalogScript" },
   { id: "player-appearance-catalog", filename: "src/js/content/player-appearance-catalog.js", rawPath: "../../js/content/player-appearance-catalog.js?raw", codeVariable: "playerAppearanceCatalogScript" },
+  { id: "npc-appearance-catalog", filename: "src/js/content/npc-appearance-catalog.js", rawPath: "../../js/content/npc-appearance-catalog.js?raw", codeVariable: "npcAppearanceCatalogScript" },
   { id: "examine-catalog", filename: "src/js/content/examine-catalog.js", rawPath: "../../js/content/examine-catalog.js?raw", codeVariable: "examineCatalogScript" },
   { id: "npc-dialogue-catalog", filename: "src/js/content/npc-dialogue-catalog.js", rawPath: "../../js/content/npc-dialogue-catalog.js?raw", codeVariable: "npcDialogueCatalogScript" },
   { id: "quest-catalog", filename: "src/js/content/quest-catalog.js", rawPath: "../../js/content/quest-catalog.js?raw", codeVariable: "questCatalogScript" },

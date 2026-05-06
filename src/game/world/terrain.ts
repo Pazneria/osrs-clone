@@ -6,9 +6,11 @@ export function createLegacyTerrainView(
 ): Pick<
   WorldLegacyView,
   | "lakeDefs"
+  | "islandWater"
   | "castleFrontPond"
   | "deepWaterCenter"
   | "pier"
+  | "pathPatches"
   | "smithingHallApproach"
   | "castleRouteAnchor"
   | "woodcuttingRouteAnchor"
@@ -18,13 +20,31 @@ export function createLegacyTerrainView(
   | "doors"
   | "fences"
   | "roofs"
+  | "caveOpenings"
+  | "decorProps"
   | "showcaseTrees"
 > {
   return {
     lakeDefs: definition.terrainPatches.lakes.slice(),
+    islandWater: definition.terrainPatches.islandWater
+      ? {
+          ...definition.terrainPatches.islandWater,
+          waterBounds: { ...definition.terrainPatches.islandWater.waterBounds },
+          landPolygon: Array.isArray(definition.terrainPatches.islandWater.landPolygon)
+            ? definition.terrainPatches.islandWater.landPolygon.map((point) => ({ ...point }))
+            : []
+        }
+      : undefined,
     castleFrontPond: { ...definition.terrainPatches.castleFrontPond },
     deepWaterCenter: { ...definition.terrainPatches.deepWaterCenter },
     pier: { ...definition.terrainPatches.pier },
+    pathPatches: Array.isArray(definition.terrainPatches.paths)
+      ? definition.terrainPatches.paths.map((pathPatch) => ({
+          ...pathPatch,
+          points: Array.isArray(pathPatch.points) ? pathPatch.points.map((point) => ({ ...point })) : [],
+          tags: Array.isArray(pathPatch.tags) ? pathPatch.tags.slice() : []
+        }))
+      : [],
     smithingHallApproach: { ...definition.terrainPatches.smithingHallApproach },
     castleRouteAnchor: { ...definition.terrainPatches.castleRouteAnchor },
     woodcuttingRouteAnchor: { ...definition.terrainPatches.woodcuttingRouteAnchor },
@@ -42,6 +62,14 @@ export function createLegacyTerrainView(
     roofs: (definition.landmarks.roofs || []).map((roof) => ({
       ...roof,
       hideBounds: roof.hideBounds ? { ...roof.hideBounds } : undefined
+    })),
+    caveOpenings: (definition.landmarks.caveOpenings || []).map((opening) => ({
+      ...opening,
+      tags: Array.isArray(opening.tags) ? opening.tags.slice() : []
+    })),
+    decorProps: (definition.landmarks.decorProps || []).map((prop) => ({
+      ...prop,
+      tags: Array.isArray(prop.tags) ? prop.tags.slice() : []
     })),
     showcaseTrees: definition.landmarks.showcaseTrees.map((tree) => ({ ...tree }))
   };

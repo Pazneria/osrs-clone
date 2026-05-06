@@ -129,21 +129,21 @@
             },
             examineTarget: (targetType, fallbackText, options = {}) => {
                 if (windowRef.ExamineCatalog && typeof windowRef.ExamineCatalog.examineTarget === 'function') {
-                    windowRef.ExamineCatalog.examineTarget(targetType, options);
+                    windowRef.ExamineCatalog.examineTarget(targetType, options, context.addChatMessage);
                     return;
                 }
                 emitExamineFallback(context, fallbackText);
             },
             examineNpc: (npcName, fallbackText) => {
                 if (windowRef.ExamineCatalog && typeof windowRef.ExamineCatalog.examineNpc === 'function') {
-                    windowRef.ExamineCatalog.examineNpc(npcName);
+                    windowRef.ExamineCatalog.examineNpc(npcName, context.addChatMessage);
                     return;
                 }
                 emitExamineFallback(context, fallbackText);
             },
             examineItem: (itemId, itemName, fallbackText) => {
                 if (windowRef.ExamineCatalog && typeof windowRef.ExamineCatalog.examineItem === 'function') {
-                    windowRef.ExamineCatalog.examineItem(itemId, itemName);
+                    windowRef.ExamineCatalog.examineItem(itemId, itemName, context.addChatMessage);
                     return;
                 }
                 emitExamineFallback(context, fallbackText);
@@ -186,6 +186,13 @@
         let targetData = hitData.uid;
         if (hitData.type === 'DOOR') {
             targetData = hitData.doorObj;
+        } else if (hitData.type === 'DECOR_PROP') {
+            const uid = hitData.uid && typeof hitData.uid === 'object' ? hitData.uid : {};
+            targetData = {
+                propId: uid.propId || '',
+                kind: uid.kind || 'decor',
+                label: uid.label || hitData.name || 'Object'
+            };
         } else if (hitData.type === 'ENEMY') {
             targetData = {
                 enemyId: String(hitData.uid || '').trim(),

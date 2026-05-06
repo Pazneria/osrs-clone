@@ -12,6 +12,62 @@
         return resolvedDocument;
     }
 
+    function createChippedRockGeometry(THREE, rings, options = {}) {
+        const positions = [];
+        const pushVertex = (point) => {
+            positions.push(point[0], point[1], point[2]);
+        };
+        const pushTriangle = (a, b, c) => {
+            pushVertex(a);
+            pushVertex(b);
+            pushVertex(c);
+        };
+        const averagePoint = (points) => {
+            const result = [0, 0, 0];
+            for (let i = 0; i < points.length; i++) {
+                result[0] += points[i][0];
+                result[1] += points[i][1];
+                result[2] += points[i][2];
+            }
+            const divisor = Math.max(1, points.length);
+            return [result[0] / divisor, result[1] / divisor, result[2] / divisor];
+        };
+
+        for (let ringIndex = 0; ringIndex < rings.length - 1; ringIndex++) {
+            const current = rings[ringIndex];
+            const next = rings[ringIndex + 1];
+            const count = Math.min(current.length, next.length);
+            for (let i = 0; i < count; i++) {
+                const a = current[i];
+                const b = current[(i + 1) % count];
+                const c = next[i];
+                const d = next[(i + 1) % count];
+                pushTriangle(a, c, b);
+                pushTriangle(b, c, d);
+            }
+        }
+
+        const bottom = rings[0] || [];
+        const top = rings[rings.length - 1] || [];
+        const bottomCenter = averagePoint(bottom);
+        const topCenter = averagePoint(top);
+        for (let i = 0; i < bottom.length; i++) {
+            pushTriangle(bottomCenter, bottom[(i + 1) % bottom.length], bottom[i]);
+        }
+        for (let i = 0; i < top.length; i++) {
+            pushTriangle(topCenter, top[(i + 1) % top.length], top[i]);
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.computeVertexNormals();
+        const scale = Array.isArray(options.scale) ? options.scale : [1, 1, 1];
+        geometry.scale(scale[0], scale[1], scale[2]);
+        if (Number.isFinite(options.yaw)) geometry.rotateY(options.yaw);
+        if (Number.isFinite(options.yOffset)) geometry.translate(0, options.yOffset, 0);
+        return geometry;
+    }
+
     function initSharedAssets(options = {}) {
         const THREE = requireThree(options.THREE);
         const document = requireDocument(options.document);
@@ -38,13 +94,19 @@
             sharedGeometries.fishingSpotMarker = new THREE.CylinderGeometry(0.15, 0.15, 0.25, 10);
 
             sharedGeometries.treeTrunk = new THREE.CylinderGeometry(0.16, 0.28, 2.0, 6).translate(0, 1.0, 0);
+            sharedGeometries.treeRootFlare = new THREE.CylinderGeometry(0.36, 0.62, 0.2, 6).translate(0, 0.1, 0);
+            sharedGeometries.treeStumpCap = new THREE.CylinderGeometry(0.34, 0.36, 0.035, 6).translate(0, 0.0175, 0);
             sharedGeometries.treeBranch = new THREE.CylinderGeometry(0.055, 0.095, 1.18, 6).rotateZ(Math.PI / 2.65).translate(0.44, 1.52, 0.04);
-            sharedGeometries.treeBranch2 = new THREE.CylinderGeometry(0.05, 0.09, 1.06, 6).rotateZ(-Math.PI / 2.45).translate(-0.42, 1.66, -0.06);
+            sharedGeometries.treeBranch2 = new THREE.CylinderGeometry(0.052, 0.09, 1.12, 6).rotateZ(-Math.PI / 2.8).translate(0.44, 1.54, -0.06);
             sharedGeometries.treeBranch3 = new THREE.CylinderGeometry(0.045, 0.08, 0.94, 6).rotateX(Math.PI / 6.2).rotateZ(Math.PI / 3.05).translate(0.12, 1.86, -0.34);
+            sharedGeometries.treeBranch.userData = { rootLocal: [0.987, 1.298, 0.04], tipLocal: [-0.107, 1.742, 0.04] };
+            sharedGeometries.treeBranch2.userData = { rootLocal: [-0.065, 1.297, -0.06], tipLocal: [0.945, 1.783, -0.06] };
+            sharedGeometries.treeBranch3.userData = { rootLocal: [0.472, 1.648, -0.568], tipLocal: [-0.232, 2.072, -0.112] };
             sharedGeometries.leaf1 = new THREE.DodecahedronGeometry(0.86, 0).scale(1.52, 0.95, 1.42).translate(0.02, 2.42, 0);
             sharedGeometries.leaf2 = new THREE.IcosahedronGeometry(0.62, 0).scale(1.34, 0.9, 1.2).translate(0.62, 2.18, 0.34);
             sharedGeometries.leaf3 = new THREE.IcosahedronGeometry(0.6, 0).scale(1.26, 0.94, 1.22).translate(-0.58, 2.16, -0.32);
             sharedGeometries.leaf4 = new THREE.DodecahedronGeometry(0.56, 0).scale(1.18, 0.88, 1.14).translate(-0.06, 2.58, 0.44);
+            sharedGeometries.leaf4.userData = { branchAttachmentLocal: [-0.06, 2.4, 0.44] };
             sharedGeometries.willowDrape1 = new THREE.CylinderGeometry(0.065, 0.012, 1.82, 4).rotateZ(0.08).translate(1.02, 2.34, 0.66);
             sharedGeometries.willowDrape2 = new THREE.CylinderGeometry(0.062, 0.012, 1.76, 4).rotateZ(-0.07).translate(-0.98, 2.3, -0.58);
             sharedGeometries.willowDrape3 = new THREE.CylinderGeometry(0.06, 0.011, 1.94, 4).rotateZ(0.14).translate(-0.86, 2.26, 0.74);
@@ -54,15 +116,27 @@
             sharedGeometries.willowDrape7 = new THREE.CylinderGeometry(0.058, 0.011, 1.86, 4).rotateZ(0.11).translate(-1.04, 2.18, 0.06);
             sharedGeometries.willowDrape8 = new THREE.CylinderGeometry(0.058, 0.011, 1.9, 4).rotateZ(-0.12).translate(1.06, 2.16, -0.08);
             sharedGeometries.rockClay = new THREE.DodecahedronGeometry(0.46, 0).scale(1.18, 0.58, 0.96).translate(0, 0.27, 0);
-            sharedGeometries.rockCopper = new THREE.IcosahedronGeometry(0.48, 0).scale(1.08, 0.8, 0.95).translate(0, 0.34, 0);
-            sharedGeometries.rockTin = new THREE.DodecahedronGeometry(0.46, 0).scale(1.0, 0.74, 0.92).translate(0, 0.32, 0);
+            sharedGeometries.rockCopper = createChippedRockGeometry(THREE, [
+                [[-0.54, 0, -0.36], [0.12, 0, -0.48], [0.56, 0, -0.18], [0.48, 0, 0.28], [0.02, 0, 0.5], [-0.48, 0, 0.22], [-0.62, 0, -0.08]],
+                [[-0.5, 0.34, -0.24], [0.02, 0.5, -0.5], [0.58, 0.36, -0.05], [0.36, 0.43, 0.44], [-0.17, 0.3, 0.55], [-0.58, 0.45, 0.07], [-0.45, 0.28, -0.34]],
+                [[-0.22, 0.68, -0.16], [0.18, 0.59, -0.28], [0.35, 0.62, -0.03], [0.18, 0.72, 0.28], [-0.12, 0.6, 0.34], [-0.34, 0.55, 0.1], [-0.3, 0.64, -0.22]]
+            ], { scale: [1.08, 0.96, 0.94], yaw: Math.PI / 11, yOffset: 0 });
+            sharedGeometries.rockTin = createChippedRockGeometry(THREE, [
+                [[-0.42, 0, -0.34], [0.14, 0, -0.46], [0.47, 0, -0.12], [0.34, 0, 0.38], [-0.16, 0, 0.48], [-0.5, 0, 0.08]],
+                [[-0.44, 0.36, -0.2], [0.0, 0.54, -0.42], [0.42, 0.47, 0.0], [0.18, 0.55, 0.42], [-0.28, 0.34, 0.35], [-0.54, 0.45, -0.04]],
+                [[-0.12, 0.88, -0.18], [0.16, 0.8, -0.22], [0.25, 0.78, 0.04], [0.03, 0.72, 0.28], [-0.2, 0.75, 0.18], [-0.28, 0.82, -0.04]]
+            ], { scale: [0.92, 1.0, 0.88], yaw: -Math.PI / 9, yOffset: 0 });
             sharedGeometries.rockIron = new THREE.BoxGeometry(0.78, 0.58, 0.72).translate(0, 0.29, 0);
             sharedGeometries.rockCoal = new THREE.TetrahedronGeometry(0.58, 0).scale(1.22, 0.78, 1.04).translate(0, 0.36, 0);
             sharedGeometries.rockSilver = new THREE.OctahedronGeometry(0.5, 0).scale(1.08, 0.9, 0.92).translate(0, 0.42, 0);
             sharedGeometries.rockSapphire = new THREE.OctahedronGeometry(0.52, 0).scale(0.82, 1.16, 0.82).translate(0, 0.54, 0);
             sharedGeometries.rockGold = new THREE.DodecahedronGeometry(0.5, 0).scale(1.22, 0.78, 0.9).translate(0, 0.36, 0);
             sharedGeometries.rockEmerald = new THREE.OctahedronGeometry(0.52, 0).scale(0.72, 1.28, 0.72).translate(0, 0.58, 0);
-            sharedGeometries.rockDepleted = new THREE.IcosahedronGeometry(0.42, 0).scale(0.95, 0.66, 0.9).translate(0, 0.28, 0);
+            sharedGeometries.rockDepleted = createChippedRockGeometry(THREE, [
+                [[-0.52, 0, -0.28], [0.18, 0, -0.35], [0.5, 0, -0.08], [0.38, 0, 0.26], [-0.1, 0, 0.36], [-0.5, 0, 0.12]],
+                [[-0.42, 0.14, -0.2], [0.12, 0.22, -0.28], [0.42, 0.16, -0.04], [0.28, 0.2, 0.2], [-0.12, 0.13, 0.28], [-0.45, 0.18, 0.06]],
+                [[-0.18, 0.29, -0.1], [0.08, 0.23, -0.16], [0.2, 0.25, 0.0], [0.08, 0.21, 0.16], [-0.12, 0.22, 0.14], [-0.26, 0.25, 0.02]]
+            ], { scale: [1.08, 0.9, 1.02], yaw: Math.PI / 6, yOffset: 0 });
             sharedGeometries.rockRuneEssence = new THREE.IcosahedronGeometry(0.9, 1).scale(1.35, 0.95, 1.35).translate(0, 0.78, 0);
 
             // Castle Geometries (Taller and anchors are centered for grounded effect)
@@ -75,17 +149,18 @@
             sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
             sharedMaterials.rockClay = new THREE.MeshLambertMaterial({ color: 0xa78668, flatShading: true });
-            sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xb06a4c, flatShading: true });
-            sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0x9aa5ae, flatShading: true });
+            sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xc8754d, flatShading: true });
+            sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0xb8c3c9, flatShading: true });
             sharedMaterials.rockIron = new THREE.MeshLambertMaterial({ color: 0x6f7985, flatShading: true });
             sharedMaterials.rockCoal = new THREE.MeshLambertMaterial({ color: 0x3f444c, flatShading: true });
             sharedMaterials.rockSilver = new THREE.MeshLambertMaterial({ color: 0xc8ced6, flatShading: true });
             sharedMaterials.rockSapphire = new THREE.MeshLambertMaterial({ color: 0x3d6ed8, flatShading: true });
             sharedMaterials.rockGold = new THREE.MeshLambertMaterial({ color: 0xd4a829, flatShading: true });
             sharedMaterials.rockEmerald = new THREE.MeshLambertMaterial({ color: 0x2aa66f, flatShading: true });
-            sharedMaterials.rockDepleted = new THREE.MeshLambertMaterial({ color: 0x5a5f68, flatShading: true });
+            sharedMaterials.rockDepleted = new THREE.MeshLambertMaterial({ color: 0x4f5258, flatShading: true });
             sharedMaterials.rockRuneEssence = new THREE.MeshLambertMaterial({ color: 0x7e848c, flatShading: true });
             sharedMaterials.trunk = new THREE.MeshLambertMaterial({ color: 0x6a452a, flatShading: true });
+            sharedMaterials.trunkCut = new THREE.MeshLambertMaterial({ color: 0xb48754, flatShading: true });
             sharedMaterials.leaves = new THREE.MeshLambertMaterial({ color: 0x2f7f3a, flatShading: true });
             sharedMaterials.boothWood = new THREE.MeshLambertMaterial({color: 0x4a3018});
             sharedMaterials.fenceWood = new THREE.MeshLambertMaterial({ color: 0x6b4424, flatShading: true });
@@ -106,13 +181,15 @@
             sharedMaterials.altarCoal = new THREE.MeshLambertMaterial({ color: 0x2d2320, flatShading: true });
             sharedMaterials.altarEmber = new THREE.MeshLambertMaterial({ color: 0xff7a1a, emissive: 0x8a2f00 });
             sharedMaterials.altarCore = new THREE.MeshLambertMaterial({ color: 0xffc04d, emissive: 0x8a4d00 });
+            sharedMaterials.caveMouth = new THREE.MeshLambertMaterial({ color: 0x161412, flatShading: true });
+            sharedMaterials.caveRock = new THREE.MeshLambertMaterial({ color: 0x4f514b, flatShading: true });
 
             // Lightweight procedural textures to avoid flat-color terrain/water.
-            const grassCanvas = buildGrassTextureCanvas(192);
+            const grassCanvas = buildGrassTextureCanvas(256);
             const grassTex = applyColorTextureSettings(new THREE.CanvasTexture(grassCanvas), 'linear');
             grassTex.wrapS = THREE.RepeatWrapping;
             grassTex.wrapT = THREE.RepeatWrapping;
-            grassTex.repeat.set(12, 12);
+            grassTex.repeat.set(1.85, 1.85);
             if (renderer && renderer.capabilities && typeof renderer.capabilities.getMaxAnisotropy === 'function') {
                 grassTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
             }
@@ -154,17 +231,17 @@
             const leafCanvas = document.createElement('canvas');
             leafCanvas.width = 64; leafCanvas.height = 64;
             const lCtx = leafCanvas.getContext('2d');
-            lCtx.fillStyle = '#82a171';
+            lCtx.fillStyle = '#5f8347';
             lCtx.fillRect(0, 0, 64, 64);
-            for (let i = 0; i < 900; i++) {
-                const green = 112 + Math.floor(Math.random() * 60);
-                const red = Math.max(74, green - (24 + Math.floor(Math.random() * 10)));
-                const blue = Math.max(56, green - (40 + Math.floor(Math.random() * 14)));
-                lCtx.fillStyle = 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + (0.42 + Math.random() * 0.42) + ')';
+            for (let i = 0; i < 760; i++) {
+                const green = 88 + Math.floor(Math.random() * 46);
+                const red = Math.max(58, green - (18 + Math.floor(Math.random() * 10)));
+                const blue = Math.max(44, green - (40 + Math.floor(Math.random() * 10)));
+                lCtx.fillStyle = 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + (0.3 + Math.random() * 0.28) + ')';
                 lCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
             }
-            for (let i = 0; i < 120; i++) {
-                lCtx.fillStyle = 'rgba(182, 168, 112, ' + (0.04 + Math.random() * 0.06) + ')';
+            for (let i = 0; i < 72; i++) {
+                lCtx.fillStyle = 'rgba(142, 160, 84, ' + (0.03 + Math.random() * 0.04) + ')';
                 lCtx.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 2, 2);
             }
             const leafTex = applyColorTextureSettings(new THREE.CanvasTexture(leafCanvas));
@@ -214,7 +291,18 @@
                 return tex;
             };
 
-                        const makeBrickTexture = (brickHex, mortarHex, jitter = 12) => {
+            const applyRockOreTexture = (material, texture) => {
+                if (!material || !texture) return;
+                texture.repeat.set(1.35, 1.35);
+                material.color.setHex(0xffffff);
+                material.map = texture;
+                material.needsUpdate = true;
+            };
+            applyRockOreTexture(sharedMaterials.rockCopper, makeNoiseTexture(0xc8754d, -28, 24, 720, 64, 7));
+            applyRockOreTexture(sharedMaterials.rockTin, makeNoiseTexture(0xb8c3c9, -26, 20, 680, 58, 7));
+            applyRockOreTexture(sharedMaterials.rockDepleted, makeNoiseTexture(0x4f5258, -18, 18, 560, 48, 6));
+
+            const makeBrickTexture = (brickHex, mortarHex, jitter = 12) => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 64; canvas.height = 64;
                 const ctx = canvas.getContext('2d');
@@ -310,6 +398,42 @@
             dCtx.fillText('SOUTH  v', 128, 104);
             sharedMaterials.directionSignMat = new THREE.MeshBasicMaterial({
                 map: applyColorTextureSettings(new THREE.CanvasTexture(dirCanvas))
+            });
+
+            const parchmentCanvas = document.createElement('canvas');
+            parchmentCanvas.width = 128; parchmentCanvas.height = 128;
+            const pCtx = parchmentCanvas.getContext('2d');
+            pCtx.fillStyle = '#d7c095';
+            pCtx.fillRect(0, 0, 128, 128);
+            pCtx.strokeStyle = '#8a6334';
+            pCtx.lineWidth = 5;
+            pCtx.strokeRect(5, 5, 118, 118);
+            pCtx.fillStyle = 'rgba(72, 44, 18, 0.24)';
+            pCtx.fillRect(24, 34, 78, 5);
+            pCtx.fillRect(18, 55, 92, 4);
+            pCtx.fillRect(22, 73, 84, 4);
+            sharedMaterials.parchmentMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(parchmentCanvas))
+            });
+
+            const noticeCanvas = document.createElement('canvas');
+            noticeCanvas.width = 256; noticeCanvas.height = 128;
+            const nCtx = noticeCanvas.getContext('2d');
+            nCtx.fillStyle = '#d7c095';
+            nCtx.fillRect(0, 0, 256, 128);
+            nCtx.strokeStyle = '#5a3f21';
+            nCtx.lineWidth = 6;
+            nCtx.strokeRect(3, 3, 250, 122);
+            nCtx.fillStyle = '#2b1c0d';
+            nCtx.textAlign = 'center';
+            nCtx.font = 'bold 20px monospace';
+            nCtx.fillText('TUTORIAL ROUTE', 128, 28);
+            nCtx.font = 'bold 17px monospace';
+            nCtx.fillText('1  TALK TO GUIDE', 128, 57);
+            nCtx.fillText('2  GATE TO TREES', 128, 82);
+            nCtx.fillText('FOLLOW THE PATH', 128, 107);
+            sharedMaterials.tutorialNoticeMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(noticeCanvas))
             });
 
 

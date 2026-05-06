@@ -147,7 +147,7 @@
         if (hitData.type === 'NPC') return 1;
         if (hitData.type === 'GROUND_ITEM') return 2;
         if (hitData.type === 'DOOR') return 3;
-        if (hitData.type === 'BANK_BOOTH' || hitData.type === 'SHOP_COUNTER') return 4;
+        if (hitData.type === 'BANK_BOOTH' || hitData.type === 'SHOP_COUNTER' || hitData.type === 'DECOR_PROP') return 4;
         if (hitData.type === 'TREE' || hitData.type === 'ROCK' || hitData.type === 'FISHING_SPOT' || hitData.type === 'WATER' || hitData.type === 'FIRE') return 5;
         return 20;
     }

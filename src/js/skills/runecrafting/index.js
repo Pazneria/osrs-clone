@@ -216,7 +216,13 @@
         const totalOutput = essenceUsed * outputPerEssence;
 
         if (essenceUsed <= 0 || totalOutput <= 0) {
-            return { ok: false, reasonCode: 'MISSING_SECONDARY' };
+            return {
+                ok: false,
+                reasonCode: 'MISSING_SECONDARY',
+                secondaryRuneItemId,
+                requiredSecondaryCount: Math.max(1, outputPerEssence),
+                outputPerEssence
+            };
         }
 
         return {
@@ -301,6 +307,72 @@
         return String(itemId).replace(/_/g, ' ');
     }
 
+    function formatItemName(itemId) {
+        if (!itemId) return 'that item';
+        return String(itemId).replace(/_/g, ' ');
+    }
+
+    function formatCountedItemName(itemId, count) {
+        const name = formatItemName(itemId);
+        if (count === 1) return name;
+        if (name.endsWith('essence') || name.endsWith('s')) return name;
+        return `${name}s`;
+    }
+
+    function buildRecipeStatusHint(context, recipe) {
+        if (!recipe) return '';
+
+        const requirementFailure = getRequirementFailure(context, recipe);
+        if (requirementFailure === 'LEVEL_TOO_LOW') {
+            const needed = Number.isFinite(recipe.requiredLevel) ? recipe.requiredLevel : 1;
+            return `need level ${needed}`;
+        }
+        if (requirementFailure === 'QUEST_LOCKED') {
+            return 'quest locked';
+        }
+
+        const essenceCount = context.getInventoryCount(recipe.essenceItemId);
+        const plan = computeCraftPlan(context, recipe, essenceCount);
+        if (!plan.ok) {
+            if (plan.reasonCode === 'NO_ESSENCE') return 'need rune essence';
+            if (plan.reasonCode === 'MISSING_SECONDARY') {
+                const required = Math.max(1, plan.requiredSecondaryCount || 1);
+                const secondaryItemId = plan.secondaryRuneItemId || recipe.secondaryRuneItemId;
+                return `need ${required} ${formatCountedItemName(secondaryItemId, required)}`;
+            }
+            return 'cannot craft';
+        }
+
+        if (recipe.requiresSecondaryRune && recipe.secondaryRuneItemId) {
+            return `using ${formatItemName(recipe.secondaryRuneItemId)}`;
+        }
+
+        return '';
+    }
+
+    function buildOutputRouteLabel(context, recipe) {
+        if (!recipe) return 'runes';
+        const outputName = formatOutputName(recipe.outputItemId);
+        const statusHint = buildRecipeStatusHint(context, recipe);
+        return statusHint ? `${outputName}, ${statusHint}` : outputName;
+    }
+
+    function hasSessionTargetChanged(context, session) {
+        if (!context || !session) return false;
+        const checks = [
+            ['targetX', context.targetX, session.targetX],
+            ['targetY', context.targetY, session.targetY],
+            ['targetZ', context.targetZ, session.targetZ]
+        ];
+        for (let i = 0; i < checks.length; i++) {
+            const current = checks[i][1];
+            const expected = checks[i][2];
+            if (!Number.isFinite(current) || !Number.isFinite(expected)) continue;
+            if (Math.floor(current) !== Math.floor(expected)) return true;
+        }
+        return false;
+    }
+
     function rcDebug(context, message) {
         if (!window.QA_RC_DEBUG) return;
         if (!context || typeof context.addChatMessage !== 'function') return;
@@ -313,6 +385,28 @@
 
     function addComboUnlockMessage(context) {
         context.addChatMessage('You have not unlocked combination runecrafting yet.', 'warn');
+    }
+
+    function addCraftPlanFailureMessage(context, recipe, plan) {
+        if (!plan || plan.reasonCode === 'NO_ESSENCE') {
+            addNoEssenceMessage(context);
+            return;
+        }
+
+        if (plan.reasonCode === 'MISSING_SECONDARY') {
+            const required = Math.max(1, plan.requiredSecondaryCount || 1);
+            const secondaryName = formatItemName(plan.secondaryRuneItemId || (recipe && recipe.secondaryRuneItemId));
+            const outputName = formatOutputName(recipe && recipe.outputItemId);
+            const secondaryLabel = required === 1 ? secondaryName : `${secondaryName}s`;
+            context.addChatMessage(`You need at least ${required} ${secondaryLabel} to bind ${outputName}.`, 'warn');
+            return;
+        }
+
+        context.addChatMessage('You cannot craft those runes right now.', 'warn');
+    }
+
+    function addAltarInterruptedMessage(context) {
+        context.addChatMessage('You stop binding runes because the altar is no longer selected.', 'warn');
     }
 
     const runecraftingModule = {
@@ -364,6 +458,13 @@
                 return false;
             }
 
+            const plan = computeCraftPlan(context, recipe, essenceCount);
+            if (!plan.ok) {
+                rcDebug(context, `onStart: craft plan blocked reason=${plan.reasonCode}`);
+                addCraftPlanFailureMessage(context, recipe, plan);
+                return false;
+            }
+
             const skillSpec = typeof context.getSkillSpec === 'function' ? context.getSkillSpec(SKILL_ID) : null;
             const actionTicks = skillSpec && skillSpec.timing && Number.isFinite(skillSpec.timing.actionTicks)
                 ? skillSpec.timing.actionTicks
@@ -400,7 +501,9 @@
                 return;
             }
 
-            if (context.targetObj !== TARGETS.ALTAR_CANDIDATE) {
+            if (context.targetObj !== TARGETS.ALTAR_CANDIDATE || hasSessionTargetChanged(context, session)) {
+                rcDebug(context, 'onTick: altar target changed');
+                addAltarInterruptedMessage(context);
                 clearSession(context);
                 context.stopAction();
                 return;
@@ -408,6 +511,8 @@
 
             const altarName = getAltarName(context);
             if (session.altarName && altarName && altarName !== session.altarName) {
+                rcDebug(context, `onTick: altar changed from '${session.altarName}' to '${altarName}'`);
+                addAltarInterruptedMessage(context);
                 clearSession(context);
                 context.stopAction();
                 return;
@@ -424,6 +529,8 @@
 
             const plan = computeCraftPlan(context, recipe, essenceCount);
             if (!plan.ok) {
+                rcDebug(context, `onTick: craft plan blocked reason=${plan.reasonCode}`);
+                addCraftPlanFailureMessage(context, recipe, plan);
                 clearSession(context);
                 context.stopAction();
                 return;
@@ -475,7 +582,7 @@
             const recipeId = resolveRecipeIdFromContext(context);
             const recipe = getRecipeById(context, recipeId);
             const altarName = getAltarName(context) || (recipe ? recipe.altarName : 'Altar');
-            const outputName = recipe ? formatOutputName(recipe.outputItemId) : 'runes';
+            const outputName = buildOutputRouteLabel(context, recipe);
             return `<span class="text-gray-300">Craft-rune</span> <span class="text-orange-300">${altarName}</span> <span class="text-cyan-300">(${outputName})</span>`;
         },
 
@@ -483,9 +590,10 @@
             const recipeId = resolveRecipeIdFromContext(context);
             const recipe = getRecipeById(context, recipeId);
             const altarName = getAltarName(context) || (recipe ? recipe.altarName : 'Altar');
+            const outputName = buildOutputRouteLabel(context, recipe);
             return [
                 {
-                    text: `Craft-rune <span class="text-orange-300">${altarName}</span>`,
+                    text: `Craft-rune <span class="text-orange-300">${altarName}</span> <span class="text-cyan-300">(${outputName})</span>`,
                     onSelect: () => {
                         context.queueInteract();
                         context.spawnClickMarker(true);

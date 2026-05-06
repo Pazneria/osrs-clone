@@ -1,7 +1,10 @@
 import type { EnemySpawnNodeDefinition } from "../contracts/combat";
 import type {
+  CaveOpeningLandmark,
+  DecorPropLandmark,
   DoorLandmark,
   FenceLandmark,
+  IslandWaterPatch,
   MiningNodePlacement,
   NpcDescriptor,
   Point2,
@@ -16,6 +19,7 @@ import type {
   StructurePlacement,
   TerrainBox2D,
   TerrainEllipse,
+  TerrainPathPatch,
   TerrainPier,
   WaterBodyDefinition,
   WaterBodyShape,
@@ -110,6 +114,9 @@ export function createMerchantNpcDescriptor(service: ServiceDescriptor): NpcDesc
     travelToWorldId: service.travelToWorldId || null,
     travelSpawn: cloneTravelSpawn(service.travelSpawn),
     facingYaw: service.facingYaw,
+    roamingRadiusOverride: Number.isFinite(service.roamingRadiusOverride)
+      ? Math.max(0, Math.floor(Number(service.roamingRadiusOverride)))
+      : null,
     tags: Array.isArray(service.tags) ? service.tags.slice() : []
   };
 }
@@ -147,6 +154,22 @@ export function cloneTerrainBox2D(box: TerrainBox2D): TerrainBox2D {
 
 export function cloneTerrainPier(pier: TerrainPier): TerrainPier {
   return { ...pier };
+}
+
+export function cloneTerrainPathPatch(pathPatch: TerrainPathPatch): TerrainPathPatch {
+  return {
+    ...pathPatch,
+    points: Array.isArray(pathPatch.points) ? pathPatch.points.map(clonePoint2) : [],
+    tags: Array.isArray(pathPatch.tags) ? pathPatch.tags.slice() : []
+  };
+}
+
+export function cloneIslandWaterPatch(patch: IslandWaterPatch): IslandWaterPatch {
+  return {
+    ...patch,
+    waterBounds: { ...patch.waterBounds },
+    landPolygon: Array.isArray(patch.landPolygon) ? patch.landPolygon.map(clonePoint2) : []
+  };
 }
 
 export function cloneWaterBodyShape(shape: WaterBodyShape): WaterBodyShape {
@@ -241,6 +264,20 @@ export function cloneRoofLandmark(roof: RoofLandmark): RoofLandmark {
   return {
     ...roof,
     hideBounds: roof.hideBounds ? { ...roof.hideBounds } : undefined
+  };
+}
+
+export function cloneCaveOpeningLandmark(opening: CaveOpeningLandmark): CaveOpeningLandmark {
+  return {
+    ...opening,
+    tags: Array.isArray(opening.tags) ? opening.tags.slice() : []
+  };
+}
+
+export function cloneDecorPropLandmark(prop: DecorPropLandmark): DecorPropLandmark {
+  return {
+    ...prop,
+    tags: Array.isArray(prop.tags) ? prop.tags.slice() : []
   };
 }
 

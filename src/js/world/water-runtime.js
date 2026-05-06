@@ -4,6 +4,51 @@
         return three;
     }
 
+    function hash01(x, y, seed = 0) {
+        const value = Math.sin((x * 127.1) + (y * 311.7) + (seed * 74.7)) * 43758.5453123;
+        return value - Math.floor(value);
+    }
+
+    function clampValue(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function smoothstep(edge0, edge1, value) {
+        if (edge0 === edge1) return value < edge0 ? 0 : 1;
+        const t = clampValue((value - edge0) / (edge1 - edge0), 0, 1);
+        return t * t * (3 - (2 * t));
+    }
+
+    function lerpValue(a, b, t) {
+        return a + ((b - a) * t);
+    }
+
+    const WATER_EDGE_SUBDIVISIONS = 4;
+    const WATER_EDGE_OVERLAP_BASE = 0.26;
+    const WATER_EDGE_OVERLAP_VARIANCE = 0.12;
+    const WATER_EDGE_SURFACE_LIFT_CAP = 0.07;
+    const WATER_EDGE_BANK_OVERLAP = 0.006;
+    const WATER_FRINGE_SEGMENTS = 4;
+    const WATER_FRINGE_INSET = 0.08;
+    const WATER_FRINGE_BASE_WIDTH = 1.08;
+    const WATER_FRINGE_WIDTH_VARIANCE = 0.28;
+    const WATER_FRINGE_SURFACE_OFFSET = 0.018;
+    const WATER_SHORELINE_CONTOUR_SPACING = 1.05;
+    const WATER_SHORELINE_CONTOUR_MAX_POINTS = 360;
+    const WATER_SHORELINE_INNER_WIDTH = 1.05;
+    const WATER_SHORELINE_OUTER_WIDTH = 1.18;
+    const WATER_SHORELINE_FEATHER_WIDTH = 0.42;
+    const WATER_SHORELINE_SURFACE_OFFSET = 0.026;
+    const WATER_SMOOTH_SURFACE_EDGE_OVERLAP = 2.35;
+    const WATER_SMOOTH_SURFACE_Y_OFFSET = -0.052;
+    const ISLAND_COASTLINE_SURFACE_LIFT = 0.032;
+    const ISLAND_COASTLINE_SURFACE_INNER_OVERLAP = -1.25;
+    const ISLAND_COASTLINE_SURFACE_OUTER_WIDTH = 10.5;
+    const ISLAND_COASTLINE_TILE_VISUAL_SUPPRESSION_WIDTH = 9.0;
+    const ISLAND_COASTLINE_SURFACE_OUTER_PADDING = 1.1;
+    const ISLAND_COASTLINE_RIBBON_WATER_WIDTH = 1.75;
+    const ISLAND_COASTLINE_RIBBON_BANK_WIDTH = 1.35;
+
     function pointInPolygon(points, x, y) {
         let inside = false;
         for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
@@ -17,12 +62,42 @@
         return inside;
     }
 
+    function pointToSegmentDistance(px, py, ax, ay, bx, by) {
+        const vx = bx - ax;
+        const vy = by - ay;
+        const lenSq = (vx * vx) + (vy * vy);
+        if (lenSq <= 0.0001) return Math.hypot(px - ax, py - ay);
+        const t = clampValue((((px - ax) * vx) + ((py - ay) * vy)) / lenSq, 0, 1);
+        const cx = ax + (vx * t);
+        const cy = ay + (vy * t);
+        return Math.hypot(px - cx, py - cy);
+    }
+
+    function distanceToPolygonEdge(points, x, y) {
+        if (!Array.isArray(points) || points.length < 2) return Infinity;
+        let best = Infinity;
+        for (let i = 0; i < points.length; i++) {
+            const a = points[i];
+            const b = points[(i + 1) % points.length];
+            if (!a || !b) continue;
+            best = Math.min(best, pointToSegmentDistance(x, y, a.x, a.y, b.x, b.y));
+        }
+        return best;
+    }
+
     function waterShapeContains(shape, x, y) {
         if (!shape || !shape.kind) return false;
         if (shape.kind === 'ellipse') {
             if (!Number.isFinite(shape.rx) || !Number.isFinite(shape.ry) || shape.rx <= 0 || shape.ry <= 0) return false;
-            const nx = (x - shape.cx) / shape.rx;
-            const ny = (y - shape.cy) / shape.ry;
+            const rotation = Number.isFinite(shape.rotationRadians) ? Number(shape.rotationRadians) : 0;
+            const dx = x - shape.cx;
+            const dy = y - shape.cy;
+            const cos = Math.cos(rotation);
+            const sin = Math.sin(rotation);
+            const localX = (dx * cos) + (dy * sin);
+            const localY = (-dx * sin) + (dy * cos);
+            const nx = localX / shape.rx;
+            const ny = localY / shape.ry;
             return ((nx * nx) + (ny * ny)) <= 1.0;
         }
         if (shape.kind === 'box') {
@@ -30,6 +105,365 @@
         }
         if (!Array.isArray(shape.points) || shape.points.length < 3) return false;
         return pointInPolygon(shape.points, x, y);
+    }
+
+    function isFullMapOceanBody(body, MAP_SIZE) {
+        if (!body || !body.shape || body.shape.kind !== 'box' || !body.bounds || !Number.isFinite(MAP_SIZE)) return false;
+        const width = body.bounds.xMax - body.bounds.xMin;
+        const height = body.bounds.yMax - body.bounds.yMin;
+        const startsAtOrigin = body.bounds.xMin <= 1 && body.bounds.yMin <= 1;
+        const spansMap = body.bounds.xMax >= MAP_SIZE - 2 && body.bounds.yMax >= MAP_SIZE - 2;
+        const namedOcean = /(?:sea|ocean|surrounding)/i.test(String(body.id || ''))
+            && width >= MAP_SIZE * 0.45
+            && height >= MAP_SIZE * 0.45;
+        return (startsAtOrigin && spansMap) || namedOcean;
+    }
+
+    function usesSmoothWaterShorelineRibbon(body, MAP_SIZE) {
+        if (!body || !body.shape || !body.bounds || isFullMapOceanBody(body, MAP_SIZE)) return false;
+        return body.shape.kind === 'ellipse' || body.shape.kind === 'polygon' || body.shape.kind === 'box';
+    }
+
+    function usesSmoothWaterSurfaceOverlay(body, MAP_SIZE) {
+        if (!body || !body.shape || !body.bounds || isFullMapOceanBody(body, MAP_SIZE)) return false;
+        return body.shape.kind === 'ellipse';
+    }
+
+    function getWaterInteractionOnlyMaterial(THREE, sharedMaterials) {
+        if (!sharedMaterials.waterInteractionOnlyMaterial) {
+            sharedMaterials.waterInteractionOnlyMaterial = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0,
+                depthWrite: false,
+                colorWrite: false,
+                side: THREE.DoubleSide
+            });
+        }
+        return sharedMaterials.waterInteractionOnlyMaterial;
+    }
+
+    function getSmoothWaterVisualSurfaceY(body, zOffset) {
+        return zOffset + (Number.isFinite(body && body.surfaceY) ? body.surfaceY : -0.075) + WATER_SMOOTH_SURFACE_Y_OFFSET;
+    }
+
+    function getWaterShorelineContourCache(sharedMaterials) {
+        if (!sharedMaterials) return null;
+        if (!sharedMaterials.waterShorelineContourCache) {
+            sharedMaterials.waterShorelineContourCache = Object.create(null);
+        }
+        return sharedMaterials.waterShorelineContourCache;
+    }
+
+    function getWaterShapeCacheKey(body) {
+        if (!body || !body.shape || !body.bounds) return 'missing';
+        const shape = body.shape;
+        const boundsKey = [
+            body.bounds.xMin,
+            body.bounds.xMax,
+            body.bounds.yMin,
+            body.bounds.yMax
+        ].map((value) => Number.isFinite(value) ? value.toFixed(2) : 'x').join(',');
+        if (shape.kind === 'ellipse') {
+            return [
+                body.id,
+                shape.kind,
+                boundsKey,
+                shape.cx,
+                shape.cy,
+                shape.rx,
+                shape.ry,
+                Number.isFinite(shape.rotationRadians) ? shape.rotationRadians : 0
+            ].join(':');
+        }
+        if (shape.kind === 'box') {
+            return [
+                body.id,
+                shape.kind,
+                boundsKey,
+                shape.xMin,
+                shape.xMax,
+                shape.yMin,
+                shape.yMax
+            ].join(':');
+        }
+        const points = Array.isArray(shape.points) ? shape.points : [];
+        return [
+            body.id,
+            shape.kind,
+            boundsKey,
+            points.length,
+            points.length > 0 ? points[0].x : 0,
+            points.length > 0 ? points[0].y : 0,
+            points.length > 0 ? points[points.length - 1].x : 0,
+            points.length > 0 ? points[points.length - 1].y : 0
+        ].join(':');
+    }
+
+    function estimateEllipsePerimeter(rx, ry) {
+        const a = Math.max(Math.abs(rx), Math.abs(ry));
+        const b = Math.min(Math.abs(rx), Math.abs(ry));
+        if (a <= 0 || b <= 0) return 0;
+        return Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+    }
+
+    function resampleClosedContourPoints(rawPoints, maxStep, maxPoints) {
+        const source = Array.isArray(rawPoints)
+            ? rawPoints.filter((point) => point && Number.isFinite(point.x) && Number.isFinite(point.y))
+            : [];
+        if (source.length < 3) return [];
+        const segmentLengths = [];
+        let perimeter = 0;
+        for (let i = 0; i < source.length; i++) {
+            const a = source[i];
+            const b = source[(i + 1) % source.length];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const length = Math.sqrt((dx * dx) + (dy * dy));
+            segmentLengths.push(length);
+            perimeter += length;
+        }
+        if (perimeter <= 0) return [];
+        const count = Math.max(source.length, Math.min(maxPoints, Math.ceil(perimeter / Math.max(0.25, maxStep))));
+        const points = [];
+        let segmentIndex = 0;
+        let distanceBeforeSegment = 0;
+        for (let i = 0; i < count; i++) {
+            const targetDistance = (i / count) * perimeter;
+            while (
+                segmentIndex < segmentLengths.length - 1
+                && distanceBeforeSegment + segmentLengths[segmentIndex] < targetDistance
+            ) {
+                distanceBeforeSegment += segmentLengths[segmentIndex];
+                segmentIndex++;
+            }
+            const a = source[segmentIndex];
+            const b = source[(segmentIndex + 1) % source.length];
+            const segmentLength = segmentLengths[segmentIndex] || 1;
+            const t = clampValue((targetDistance - distanceBeforeSegment) / segmentLength, 0, 1);
+            points.push({
+                x: lerpValue(a.x, b.x, t),
+                y: lerpValue(a.y, b.y, t)
+            });
+        }
+        return points;
+    }
+
+    function limitContourPointCount(points, maxPoints) {
+        if (!Array.isArray(points) || points.length <= maxPoints) return points;
+        const limited = [];
+        const step = points.length / maxPoints;
+        for (let i = 0; i < maxPoints; i++) {
+            limited.push(points[Math.floor(i * step)]);
+        }
+        return limited;
+    }
+
+    function smoothClosedContourPoints(points, iterations) {
+        let result = Array.isArray(points) ? points : [];
+        for (let pass = 0; pass < iterations && result.length >= 3; pass++) {
+            const next = [];
+            for (let i = 0; i < result.length; i++) {
+                const a = result[i];
+                const b = result[(i + 1) % result.length];
+                next.push({
+                    x: lerpValue(a.x, b.x, 0.25),
+                    y: lerpValue(a.y, b.y, 0.25)
+                });
+                next.push({
+                    x: lerpValue(a.x, b.x, 0.75),
+                    y: lerpValue(a.y, b.y, 0.75)
+                });
+            }
+            result = limitContourPointCount(next, WATER_SHORELINE_CONTOUR_MAX_POINTS);
+        }
+        return result;
+    }
+
+    function computeContourSignedArea(points) {
+        let area = 0;
+        for (let i = 0; i < points.length; i++) {
+            const a = points[i];
+            const b = points[(i + 1) % points.length];
+            area += (a.x * b.y) - (b.x * a.y);
+        }
+        return area * 0.5;
+    }
+
+    function computeContourVertexNormals(points) {
+        const normals = [];
+        if (!Array.isArray(points) || points.length < 3) return normals;
+        const area = computeContourSignedArea(points);
+        const positiveArea = area >= 0;
+        for (let i = 0; i < points.length; i++) {
+            const prev = points[(i - 1 + points.length) % points.length];
+            const next = points[(i + 1) % points.length];
+            const tx = next.x - prev.x;
+            const ty = next.y - prev.y;
+            const length = Math.sqrt((tx * tx) + (ty * ty)) || 1;
+            normals.push(positiveArea
+                ? { x: ty / length, y: -tx / length }
+                : { x: -ty / length, y: tx / length });
+        }
+        return normals;
+    }
+
+    function buildSmoothWaterShorelineContourPoints(body) {
+        const shape = body && body.shape;
+        if (!shape || !shape.kind) return [];
+        if (shape.kind === 'ellipse') {
+            const perimeter = estimateEllipsePerimeter(shape.rx, shape.ry);
+            const count = Math.max(48, Math.min(WATER_SHORELINE_CONTOUR_MAX_POINTS, Math.ceil(perimeter / WATER_SHORELINE_CONTOUR_SPACING)));
+            const rotation = Number.isFinite(shape.rotationRadians) ? Number(shape.rotationRadians) : 0;
+            const cos = Math.cos(rotation);
+            const sin = Math.sin(rotation);
+            const points = [];
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const localX = Math.cos(angle) * shape.rx;
+                const localY = Math.sin(angle) * shape.ry;
+                points.push({
+                    x: shape.cx + (localX * cos) - (localY * sin),
+                    y: shape.cy + (localX * sin) + (localY * cos)
+                });
+            }
+            return points;
+        }
+        if (shape.kind === 'box') {
+            const raw = [
+                { x: shape.xMin, y: shape.yMin },
+                { x: shape.xMax, y: shape.yMin },
+                { x: shape.xMax, y: shape.yMax },
+                { x: shape.xMin, y: shape.yMax }
+            ];
+            return smoothClosedContourPoints(
+                resampleClosedContourPoints(raw, WATER_SHORELINE_CONTOUR_SPACING, WATER_SHORELINE_CONTOUR_MAX_POINTS),
+                1
+            );
+        }
+        const rawPoints = Array.isArray(shape.points) ? shape.points.filter((point) => point && Number.isFinite(point.x) && Number.isFinite(point.y)) : [];
+        if (rawPoints.length < 3) return [];
+        return smoothClosedContourPoints(
+            resampleClosedContourPoints(rawPoints, WATER_SHORELINE_CONTOUR_SPACING, WATER_SHORELINE_CONTOUR_MAX_POINTS),
+            1
+        );
+    }
+
+    function getSmoothWaterShorelineContour(context, body) {
+        const cache = getWaterShorelineContourCache(context.sharedMaterials || {});
+        const key = getWaterShapeCacheKey(body);
+        if (cache && cache[key]) return cache[key];
+        const points = buildSmoothWaterShorelineContourPoints(body);
+        const contour = {
+            points,
+            normals: computeContourVertexNormals(points)
+        };
+        if (cache) cache[key] = contour;
+        return contour;
+    }
+
+    function getIslandWaterLandPolygon(islandWater) {
+        const points = islandWater && islandWater.enabled !== false && Array.isArray(islandWater.landPolygon)
+            ? islandWater.landPolygon
+            : [];
+        const safePoints = points.filter((point) => point && Number.isFinite(point.x) && Number.isFinite(point.y));
+        return safePoints.length >= 3 ? safePoints : [];
+    }
+
+    function getPointBounds(points) {
+        let xMin = Infinity;
+        let xMax = -Infinity;
+        let yMin = Infinity;
+        let yMax = -Infinity;
+        for (let i = 0; i < points.length; i++) {
+            const point = points[i];
+            if (!point) continue;
+            xMin = Math.min(xMin, point.x);
+            xMax = Math.max(xMax, point.x);
+            yMin = Math.min(yMin, point.y);
+            yMax = Math.max(yMax, point.y);
+        }
+        if (!Number.isFinite(xMin)) return null;
+        return { xMin, xMax, yMin, yMax };
+    }
+
+    function usesIslandCoastlineRibbon(body, context = {}) {
+        if (!isFullMapOceanBody(body, context.MAP_SIZE)) return false;
+        return getIslandWaterLandPolygon(context.islandWater).length >= 3;
+    }
+
+    function findFullMapOceanWaterBody(waterBodies, MAP_SIZE) {
+        const bodies = Array.isArray(waterBodies) ? waterBodies : [];
+        for (let i = 0; i < bodies.length; i++) {
+            const body = bodies[i];
+            if (isFullMapOceanBody(body, MAP_SIZE)) return body;
+        }
+        return null;
+    }
+
+    function createIslandCoastlineWaterBody(context, oceanBody) {
+        const points = getIslandWaterLandPolygon(context.islandWater);
+        const bounds = getPointBounds(points);
+        if (!bounds || !oceanBody) return null;
+        const islandWater = context.islandWater || {};
+        const oceanShoreline = oceanBody.shoreline || {};
+        const width = Number.isFinite(islandWater.shoreWidth)
+            ? clampValue(Number(islandWater.shoreWidth) * 0.62, 1.2, 3.4)
+            : Math.max(ISLAND_COASTLINE_RIBBON_WATER_WIDTH, Number.isFinite(oceanShoreline.width) ? oceanShoreline.width : 0);
+        return {
+            id: `${oceanBody.id || 'ocean'}-island-coastline`,
+            shape: { kind: 'polygon', points },
+            bounds,
+            surfaceY: Number.isFinite(oceanBody.surfaceY) ? oceanBody.surfaceY : -0.075,
+            shoreline: {
+                width,
+                foamWidth: Number.isFinite(oceanShoreline.foamWidth) ? oceanShoreline.foamWidth : 0.3,
+                skirtDepth: Number.isFinite(oceanShoreline.skirtDepth) ? oceanShoreline.skirtDepth : 0.18
+            },
+            styleTokens: oceanBody.styleTokens || getDefaultWaterRenderBody().styleTokens
+        };
+    }
+
+    function getIslandCoastlineWaterShoreStrength(context, worldX, worldY) {
+        const points = getIslandWaterLandPolygon(context.islandWater);
+        if (points.length < 3) return null;
+        const distance = distanceToPolygonEdge(points, worldX, worldY);
+        if (!Number.isFinite(distance)) return null;
+        const width = Number.isFinite(context.islandWater && context.islandWater.shallowDistance)
+            ? clampValue(Number(context.islandWater.shallowDistance) * 0.32, 1.6, 4.0)
+            : 2.65;
+        const insideLand = pointInPolygon(points, worldX, worldY);
+        if (insideLand && distance > 0.7) return 0;
+        return 1 - smoothstep(0.16, width, distance);
+    }
+
+    function getIslandCoastlineSurfaceOuterWidth(context) {
+        const islandWater = context && context.islandWater ? context.islandWater : {};
+        const shallowDistanceWidth = Number.isFinite(islandWater.shallowDistance)
+            ? clampValue(Number(islandWater.shallowDistance) * 0.82, 7.5, 12.5)
+            : 0;
+        return Math.max(ISLAND_COASTLINE_SURFACE_OUTER_WIDTH, shallowDistanceWidth);
+    }
+
+    function getIslandCoastlineTileVisualSuppressionWidth(context) {
+        return Math.max(
+            ISLAND_COASTLINE_TILE_VISUAL_SUPPRESSION_WIDTH,
+            getIslandCoastlineSurfaceOuterWidth(context) - ISLAND_COASTLINE_SURFACE_OUTER_PADDING
+        );
+    }
+
+    function isIslandCoastlineWaterTile(context, x, y) {
+        const points = getIslandWaterLandPolygon(context.islandWater);
+        if (points.length < 3 || pointInPolygon(points, x, y)) return false;
+        const distance = distanceToPolygonEdge(points, x, y);
+        if (!Number.isFinite(distance)) return false;
+        return distance <= getIslandCoastlineTileVisualSuppressionWidth(context);
+    }
+
+    function createIslandCoastlineInteractionBody(body) {
+        return Object.assign({}, body, {
+            id: `${body.id || 'ocean'}-coast-interaction`
+        });
     }
 
     function resolveWaterRenderBodyForTile(waterBodies, x, y) {
@@ -146,10 +580,19 @@
         const worldY = options.worldY;
         const z = options.z;
         const sampleOffsets = [
-            { x: -0.24, y: -0.24 },
-            { x: 0.24, y: -0.24 },
-            { x: 0.24, y: 0.24 },
-            { x: -0.24, y: 0.24 }
+            { x: 0, y: 0, weight: 1.4 },
+            { x: -0.42, y: 0, weight: 0.78 },
+            { x: 0.42, y: 0, weight: 0.78 },
+            { x: 0, y: -0.42, weight: 0.78 },
+            { x: 0, y: 0.42, weight: 0.78 },
+            { x: -0.42, y: -0.42, weight: 0.46 },
+            { x: 0.42, y: -0.42, weight: 0.46 },
+            { x: 0.42, y: 0.42, weight: 0.46 },
+            { x: -0.42, y: 0.42, weight: 0.46 },
+            { x: -0.78, y: 0, weight: 0.24 },
+            { x: 0.78, y: 0, weight: 0.24 },
+            { x: 0, y: -0.78, weight: 0.24 },
+            { x: 0, y: 0.78, weight: 0.24 }
         ];
         let total = 0;
         let count = 0;
@@ -160,8 +603,8 @@
             if (gridX < 0 || gridY < 0 || gridX >= MAP_SIZE || gridY >= MAP_SIZE) continue;
             const weight = getWaterDepthWeightForTile(logicalMap[z][gridY][gridX], TileId);
             if (weight !== null) {
-                total += weight;
-                count++;
+                total += weight * sample.weight;
+                count += sample.weight;
             }
         }
         if (count > 0) return total / count;
@@ -205,12 +648,13 @@
         const worldY = options.worldY;
         const z = options.z;
         const shorelineWidth = options.shorelineWidth;
-        const searchRadius = Math.max(1, Math.ceil(Math.max(0.2, shorelineWidth) + 1));
+        const resolvedShorelineWidth = Math.max(1.38, Number.isFinite(shorelineWidth) ? shorelineWidth : 0.8);
+        const searchRadius = Math.max(1, Math.ceil(resolvedShorelineWidth + 1));
         const minX = Math.max(0, Math.floor(worldX - searchRadius));
         const maxX = Math.min(MAP_SIZE - 1, Math.ceil(worldX + searchRadius));
         const minY = Math.max(0, Math.floor(worldY - searchRadius));
         const maxY = Math.min(MAP_SIZE - 1, Math.ceil(worldY + searchRadius));
-        let minDistance = Math.max(0.2, shorelineWidth);
+        let minDistance = resolvedShorelineWidth;
         const pierConfig = getActivePierConfig();
 
         for (let tileY = minY; tileY <= maxY; tileY++) {
@@ -222,19 +666,24 @@
             }
         }
 
-        return 1 - Math.min(1, minDistance / Math.max(0.2, shorelineWidth));
+        return 1 - Math.min(1, minDistance / resolvedShorelineWidth);
     }
 
     function pushWaterVertex(builder, context, worldX, worldY, surfaceY) {
+        const islandCoastlineShoreStrength = builder.usesIslandCoastlineRibbon
+            ? getIslandCoastlineWaterShoreStrength(context, worldX, worldY)
+            : null;
         builder.surfacePositions.push(worldX, surfaceY, worldY);
         builder.surfaceData.push(
             getWaterDepthWeightAtPoint(Object.assign({}, context, { worldX, worldY, z: builder.z })),
-            getWaterShoreStrengthAtPoint(Object.assign({}, context, {
-                worldX,
-                worldY,
-                z: builder.z,
-                shorelineWidth: builder.body.shoreline.width
-            }))
+            Number.isFinite(islandCoastlineShoreStrength)
+                ? islandCoastlineShoreStrength
+                : getWaterShoreStrengthAtPoint(Object.assign({}, context, {
+                    worldX,
+                    worldY,
+                    z: builder.z,
+                    shorelineWidth: builder.body.shoreline.width
+                }))
         );
     }
 
@@ -242,8 +691,20 @@
         return {
             body,
             z,
+            usesSmoothShorelineRibbon: false,
+            usesSmoothSurfaceOverlay: false,
+            usesIslandCoastlineRibbon: false,
+            forceInteractionOnly: false,
+            shorelineRibbonAppended: false,
+            islandCoastlineAppended: false,
+            smoothSurfaceAppended: false,
             surfacePositions: [],
-            surfaceData: []
+            surfaceData: [],
+            smoothSurfacePositions: [],
+            smoothSurfaceData: [],
+            fringePositions: [],
+            fringeData: [],
+            fringeAlpha: []
         };
     }
 
@@ -293,6 +754,379 @@
         };
     }
 
+    function isSoftWaterEdge(edge) {
+        return edge && edge.kind !== 'structural_cover';
+    }
+
+    function getWaterEdgeOverlap(worldX, worldY, edgeSeed) {
+        const broad = hash01(worldX * 2.4, worldY * 2.4, edgeSeed) - 0.5;
+        const fine = hash01(worldX * 6.3, worldY * 6.3, edgeSeed + 13.7) - 0.5;
+        return clampValue(
+            WATER_EDGE_OVERLAP_BASE + (broad * WATER_EDGE_OVERLAP_VARIANCE) + (fine * WATER_EDGE_OVERLAP_VARIANCE * 0.42),
+            0.14,
+            0.44
+        );
+    }
+
+    function getWaterEdgeSurfaceHeight(edge, surfaceY) {
+        if (!isSoftWaterEdge(edge)) return surfaceY;
+        const bankTopY = Number.isFinite(edge.topY) ? edge.topY : surfaceY;
+        const bankOverlapY = bankTopY + WATER_EDGE_BANK_OVERLAP;
+        return clampValue(bankOverlapY, surfaceY, surfaceY + WATER_EDGE_SURFACE_LIFT_CAP);
+    }
+
+    function getWaterEdgeVertex(builder, context, x, y, localX, localY, surfaceY, edges, isPierCoveredTile) {
+        let worldX = x - 0.5 + localX;
+        let worldY = y - 0.5 + localY;
+        let edgeSurfaceY = surfaceY;
+        if (!isPierCoveredTile && localY === 0 && isSoftWaterEdge(edges.north)) {
+            worldY -= getWaterEdgeOverlap(worldX, y - 0.5, 11.1);
+            edgeSurfaceY = Math.max(edgeSurfaceY, getWaterEdgeSurfaceHeight(edges.north, surfaceY));
+        }
+        if (!isPierCoveredTile && localY === 1 && isSoftWaterEdge(edges.south)) {
+            worldY += getWaterEdgeOverlap(worldX, y + 0.5, 23.2);
+            edgeSurfaceY = Math.max(edgeSurfaceY, getWaterEdgeSurfaceHeight(edges.south, surfaceY));
+        }
+        if (!isPierCoveredTile && localX === 0 && isSoftWaterEdge(edges.west)) {
+            worldX -= getWaterEdgeOverlap(x - 0.5, worldY, 37.3);
+            edgeSurfaceY = Math.max(edgeSurfaceY, getWaterEdgeSurfaceHeight(edges.west, surfaceY));
+        }
+        if (!isPierCoveredTile && localX === 1 && isSoftWaterEdge(edges.east)) {
+            worldX += getWaterEdgeOverlap(x + 0.5, worldY, 41.4);
+            edgeSurfaceY = Math.max(edgeSurfaceY, getWaterEdgeSurfaceHeight(edges.east, surfaceY));
+        }
+        return { x: worldX, y: worldY, h: edgeSurfaceY };
+    }
+
+    function pushWaterCellVertex(builder, context, vertex) {
+        pushWaterVertex(builder, context, vertex.x, vertex.y, vertex.h);
+    }
+
+    function pushWaterFringeVertex(builder, worldX, worldY, surfaceY, alpha, lane = 0.24, breakSeed = 1.0) {
+        builder.fringePositions.push(worldX, surfaceY, worldY);
+        builder.fringeData.push(lane, breakSeed);
+        builder.fringeAlpha.push(clampValue(alpha, 0, 1));
+    }
+
+    function getFringeWidth(worldX, worldY, seed) {
+        const broad = hash01(worldX * 1.7, worldY * 1.7, seed) - 0.5;
+        const fine = hash01(worldX * 5.1, worldY * 5.1, seed + 17.7) - 0.5;
+        return clampValue(
+            WATER_FRINGE_BASE_WIDTH + (broad * WATER_FRINGE_WIDTH_VARIANCE) + (fine * WATER_FRINGE_WIDTH_VARIANCE * 0.42),
+            0.54,
+            1.12
+        );
+    }
+
+    function getFringePointForEdge(x, y, edgeName, t, offset) {
+        if (edgeName === 'north') return { x: x - 0.5 + t, y: y - 0.5 - offset };
+        if (edgeName === 'south') return { x: x - 0.5 + t, y: y + 0.5 + offset };
+        if (edgeName === 'west') return { x: x - 0.5 - offset, y: y - 0.5 + t };
+        return { x: x + 0.5 + offset, y: y - 0.5 + t };
+    }
+
+    function appendWaterFringeForEdge(builder, x, y, surfaceY, edgeName, edge, isPierCoveredTile) {
+        if (isPierCoveredTile || !isSoftWaterEdge(edge)) return;
+        const bankTopY = Number.isFinite(edge.topY) ? edge.topY : surfaceY;
+        const nearSurfaceY = getWaterEdgeSurfaceHeight(edge, surfaceY) + WATER_FRINGE_SURFACE_OFFSET;
+        const bankSurfaceY = bankTopY + WATER_FRINGE_SURFACE_OFFSET;
+        const seedBase = edgeName === 'north' ? 113.1 : edgeName === 'south' ? 229.7 : edgeName === 'west' ? 337.3 : 443.9;
+        for (let i = 0; i < WATER_FRINGE_SEGMENTS; i++) {
+            const t0 = i / WATER_FRINGE_SEGMENTS;
+            const t1 = (i + 1) / WATER_FRINGE_SEGMENTS;
+            const midT0 = (t0 + (0.5 / WATER_FRINGE_SEGMENTS));
+            const midT1 = (t1 - (0.5 / WATER_FRINGE_SEGMENTS));
+            const near0 = getFringePointForEdge(x, y, edgeName, t0, -WATER_FRINGE_INSET);
+            const near1 = getFringePointForEdge(x, y, edgeName, t1, -WATER_FRINGE_INSET);
+            const far0Width = getFringeWidth(near0.x + midT0, near0.y - midT0, seedBase);
+            const far1Width = getFringeWidth(near1.x + midT1, near1.y - midT1, seedBase + 3.7);
+            const far0 = getFringePointForEdge(x, y, edgeName, t0, far0Width);
+            const far1 = getFringePointForEdge(x, y, edgeName, t1, far1Width);
+            const nearAlpha = 0.72 + (hash01(x + t0, y + t1, seedBase + 9.1) * 0.16);
+            pushWaterFringeVertex(builder, near0.x, near0.y, nearSurfaceY, nearAlpha);
+            pushWaterFringeVertex(builder, far1.x, far1.y, bankSurfaceY, 0);
+            pushWaterFringeVertex(builder, near1.x, near1.y, nearSurfaceY, nearAlpha * 0.94);
+            pushWaterFringeVertex(builder, near0.x, near0.y, nearSurfaceY, nearAlpha);
+            pushWaterFringeVertex(builder, far0.x, far0.y, bankSurfaceY, 0);
+            pushWaterFringeVertex(builder, far1.x, far1.y, bankSurfaceY, 0);
+        }
+    }
+
+    function sampleShorelineRibbonHeight(context, builder, worldX, worldY, surfaceY, lane) {
+        const heightMap = context.heightMap || [];
+        const MAP_SIZE = context.MAP_SIZE;
+        const z = builder.z;
+        const tileX = clampValue(Math.floor(worldX + 0.5), 0, MAP_SIZE - 1);
+        const tileY = clampValue(Math.floor(worldY + 0.5), 0, MAP_SIZE - 1);
+        const planeOffset = z * 3.0;
+        const fallbackBankY = surfaceY + 0.08;
+        const row = heightMap[z] && heightMap[z][tileY] ? heightMap[z][tileY] : null;
+        const sampledBankY = row && Number.isFinite(row[tileX]) ? row[tileX] + planeOffset : fallbackBankY;
+        const bankY = Math.max(sampledBankY, surfaceY + WATER_SHORELINE_SURFACE_OFFSET);
+        const bankBlend = clampValue((lane - 0.52) / 0.48, 0, 1);
+        return lerpValue(surfaceY + WATER_SHORELINE_SURFACE_OFFSET, bankY + WATER_SHORELINE_SURFACE_OFFSET, bankBlend);
+    }
+
+    function pushWaterShorelineRibbonVertex(builder, context, surfaceY, point, normal, laneConfig, segmentSeed) {
+        const worldX = point.x + (normal.x * laneConfig.offset);
+        const worldY = point.y + (normal.y * laneConfig.offset);
+        const height = sampleShorelineRibbonHeight(context, builder, worldX, worldY, surfaceY, laneConfig.lane);
+        pushWaterFringeVertex(builder, worldX, worldY, height, laneConfig.alpha, laneConfig.lane, segmentSeed);
+    }
+
+    function appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, innerLane, outerLane, segmentSeed) {
+        pushWaterShorelineRibbonVertex(builder, context, surfaceY, p0, n0, innerLane, segmentSeed);
+        pushWaterShorelineRibbonVertex(builder, context, surfaceY, p1, n1, outerLane, segmentSeed);
+        pushWaterShorelineRibbonVertex(builder, context, surfaceY, p1, n1, innerLane, segmentSeed);
+        pushWaterShorelineRibbonVertex(builder, context, surfaceY, p0, n0, innerLane, segmentSeed);
+        pushWaterShorelineRibbonVertex(builder, context, surfaceY, p0, n0, outerLane, segmentSeed);
+        pushWaterShorelineRibbonVertex(builder, context, surfaceY, p1, n1, outerLane, segmentSeed);
+    }
+
+    function isContourSegmentOwnedByChunk(p0, p1, chunkBounds) {
+        const midX = (p0.x + p1.x) * 0.5;
+        const midY = (p0.y + p1.y) * 0.5;
+        return midX >= chunkBounds.startX
+            && midX < chunkBounds.endX
+            && midY >= chunkBounds.startY
+            && midY < chunkBounds.endY;
+    }
+
+    function getSmoothWaterSurfaceOwnerPoint(body) {
+        if (!body || !body.shape || !body.bounds) return null;
+        if (body.shape.kind === 'ellipse') {
+            return { x: body.shape.cx, y: body.shape.cy };
+        }
+        return {
+            x: (body.bounds.xMin + body.bounds.xMax) * 0.5,
+            y: (body.bounds.yMin + body.bounds.yMax) * 0.5
+        };
+    }
+
+    function isSmoothWaterSurfaceOwnerChunk(body, chunkBounds) {
+        const center = getSmoothWaterSurfaceOwnerPoint(body);
+        if (!center) return false;
+        return center.x >= chunkBounds.startX
+            && center.x < chunkBounds.endX
+            && center.y >= chunkBounds.startY
+            && center.y < chunkBounds.endY;
+    }
+
+    function pushSmoothWaterSurfaceVertex(builder, context, point, surfaceY, depthFallback, shoreStrength) {
+        builder.smoothSurfacePositions.push(point.x, surfaceY, point.y);
+        const sampledDepth = getWaterDepthWeightAtPoint(Object.assign({}, context, {
+            worldX: point.x,
+            worldY: point.y,
+            z: builder.z
+        }));
+        builder.smoothSurfaceData.push(
+            Number.isFinite(sampledDepth) ? Math.max(depthFallback, sampledDepth) : depthFallback,
+            clampValue(shoreStrength, 0, 1)
+        );
+    }
+
+    function appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, a, b, c, aData, bData, cData) {
+        pushSmoothWaterSurfaceVertex(builder, context, a, surfaceY, aData.depth, aData.shore);
+        pushSmoothWaterSurfaceVertex(builder, context, b, surfaceY, bData.depth, bData.shore);
+        pushSmoothWaterSurfaceVertex(builder, context, c, surfaceY, cData.depth, cData.shore);
+    }
+
+    function appendSmoothWaterSurfaceOverlayToBuilder(builder, context, chunkBounds) {
+        if (!builder || !builder.body || !usesSmoothWaterSurfaceOverlay(builder.body, context.MAP_SIZE)) return;
+        if (builder.smoothSurfaceAppended || !isSmoothWaterSurfaceOwnerChunk(builder.body, chunkBounds)) return;
+        const contour = getSmoothWaterShorelineContour(context, builder.body);
+        const points = contour.points || [];
+        const normals = contour.normals || [];
+        if (points.length < 3 || normals.length !== points.length) return;
+        const center = getSmoothWaterSurfaceOwnerPoint(builder.body);
+        if (!center) return;
+        const zOffset = Number.isFinite(chunkBounds.zOffset) ? chunkBounds.zOffset : builder.z * 3.0;
+        const surfaceY = getSmoothWaterVisualSurfaceY(builder.body, zOffset);
+        const centerData = { depth: 0.96, shore: 0.02 };
+        const innerData = { depth: 0.72, shore: 0.22 };
+        const edgeData = { depth: 0.42, shore: 0.82 };
+        const overhangData = { depth: 0.34, shore: 0.98 };
+        for (let i = 0; i < points.length; i++) {
+            const p0 = points[i];
+            const p1 = points[(i + 1) % points.length];
+            const n0 = normals[i];
+            const n1 = normals[(i + 1) % points.length];
+            const inner0 = {
+                x: lerpValue(center.x, p0.x, 0.58),
+                y: lerpValue(center.y, p0.y, 0.58)
+            };
+            const inner1 = {
+                x: lerpValue(center.x, p1.x, 0.58),
+                y: lerpValue(center.y, p1.y, 0.58)
+            };
+            const outer0 = {
+                x: p0.x + (n0.x * WATER_SMOOTH_SURFACE_EDGE_OVERLAP),
+                y: p0.y + (n0.y * WATER_SMOOTH_SURFACE_EDGE_OVERLAP)
+            };
+            const outer1 = {
+                x: p1.x + (n1.x * WATER_SMOOTH_SURFACE_EDGE_OVERLAP),
+                y: p1.y + (n1.y * WATER_SMOOTH_SURFACE_EDGE_OVERLAP)
+            };
+            appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, center, inner1, inner0, centerData, innerData, innerData);
+            appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, inner0, inner1, p1, innerData, innerData, edgeData);
+            appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, inner0, p1, p0, innerData, edgeData, edgeData);
+            appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, p0, p1, outer1, edgeData, edgeData, overhangData);
+            appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, p0, outer1, outer0, edgeData, overhangData, overhangData);
+        }
+        builder.smoothSurfaceAppended = true;
+    }
+
+    function appendWaterBodyShorelineRibbonToBuilder(builder, context, chunkBounds) {
+        if (!builder || !builder.body || !usesSmoothWaterShorelineRibbon(builder.body, context.MAP_SIZE)) return;
+        if (builder.shorelineRibbonAppended) return;
+        const contour = getSmoothWaterShorelineContour(context, builder.body);
+        const points = contour.points || [];
+        const normals = contour.normals || [];
+        if (points.length < 3 || normals.length !== points.length) return;
+        const zOffset = Number.isFinite(chunkBounds.zOffset) ? chunkBounds.zOffset : builder.z * 3.0;
+        const surfaceY = builder.usesSmoothSurfaceOverlay
+            ? getSmoothWaterVisualSurfaceY(builder.body, zOffset)
+            : zOffset + (Number.isFinite(builder.body.surfaceY) ? builder.body.surfaceY : -0.075);
+        const shoreline = builder.body.shoreline || {};
+        const innerWidth = Math.max(WATER_SHORELINE_INNER_WIDTH, Number.isFinite(shoreline.width) ? shoreline.width * 1.12 : 0);
+        const outerWidth = Math.max(WATER_SHORELINE_OUTER_WIDTH, Number.isFinite(shoreline.width) ? shoreline.width * 0.96 : 0);
+        const featherWidth = Math.max(WATER_SHORELINE_FEATHER_WIDTH, Number.isFinite(shoreline.foamWidth) ? shoreline.foamWidth * 1.15 : 0);
+        const lanes = [
+            { offset: -innerWidth, lane: 0.0, alpha: 0.22 },
+            { offset: -featherWidth * 0.58, lane: 0.34, alpha: 0.62 },
+            { offset: featherWidth * 0.18, lane: 0.62, alpha: 0.74 },
+            { offset: outerWidth, lane: 1.0, alpha: 0.0 }
+        ];
+        for (let i = 0; i < points.length; i++) {
+            const nextIndex = (i + 1) % points.length;
+            const p0 = points[i];
+            const p1 = points[nextIndex];
+            if (!isContourSegmentOwnedByChunk(p0, p1, chunkBounds)) continue;
+            const n0 = normals[i];
+            const n1 = normals[nextIndex];
+            const segmentSeed = hash01((p0.x + p1.x) * 0.37, (p0.y + p1.y) * 0.37, i * 0.19);
+            appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[0], lanes[1], segmentSeed);
+            appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[1], lanes[2], segmentSeed);
+            appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[2], lanes[3], segmentSeed);
+        }
+        builder.shorelineRibbonAppended = true;
+    }
+
+    function offsetContourPoint(point, normal, offset) {
+        return {
+            x: point.x + (normal.x * offset),
+            y: point.y + (normal.y * offset)
+        };
+    }
+
+    function appendIslandCoastlineSurfaceQuad(builder, context, surfaceY, p0, p1, n0, n1, innerLane, outerLane) {
+        const a0 = offsetContourPoint(p0, n0, innerLane.offset);
+        const a1 = offsetContourPoint(p1, n1, innerLane.offset);
+        const b0 = offsetContourPoint(p0, n0, outerLane.offset);
+        const b1 = offsetContourPoint(p1, n1, outerLane.offset);
+        appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, a0, b1, a1, innerLane, outerLane, innerLane);
+        appendSmoothWaterSurfaceTriangle(builder, context, surfaceY, a0, b0, b1, innerLane, outerLane, outerLane);
+    }
+
+    function appendIslandCoastlineWaterSurfaceToBuilder(builder, context, chunkBounds) {
+        if (!builder || !builder.body || builder.islandCoastlineAppended) return;
+        const contour = getSmoothWaterShorelineContour(context, builder.body);
+        const points = contour.points || [];
+        const normals = contour.normals || [];
+        if (points.length < 3 || normals.length !== points.length) return;
+        const zOffset = Number.isFinite(chunkBounds.zOffset) ? chunkBounds.zOffset : builder.z * 3.0;
+        const surfaceY = zOffset + (Number.isFinite(builder.body.surfaceY) ? builder.body.surfaceY : -0.075) + ISLAND_COASTLINE_SURFACE_LIFT;
+        const outerWidth = getIslandCoastlineSurfaceOuterWidth(context);
+        const lanes = [
+            { offset: ISLAND_COASTLINE_SURFACE_INNER_OVERLAP, depth: 0.34, shore: 0.98 },
+            { offset: -0.08, depth: 0.36, shore: 0.92 },
+            { offset: 0.56, depth: 0.38, shore: 0.82 },
+            { offset: outerWidth * 0.56, depth: 0.52, shore: 0.42 },
+            { offset: outerWidth, depth: 0.68, shore: 0.12 }
+        ];
+        for (let i = 0; i < points.length; i++) {
+            const nextIndex = (i + 1) % points.length;
+            const p0 = points[i];
+            const p1 = points[nextIndex];
+            if (!isContourSegmentOwnedByChunk(p0, p1, chunkBounds)) continue;
+            const n0 = normals[i];
+            const n1 = normals[nextIndex];
+            appendIslandCoastlineSurfaceQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[0], lanes[1]);
+            appendIslandCoastlineSurfaceQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[1], lanes[2]);
+            appendIslandCoastlineSurfaceQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[2], lanes[3]);
+            appendIslandCoastlineSurfaceQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[3], lanes[4]);
+        }
+    }
+
+    function appendIslandCoastlineRibbonToBuilder(builder, context, chunkBounds) {
+        if (!builder || !builder.body || builder.islandCoastlineAppended) return;
+        const contour = getSmoothWaterShorelineContour(context, builder.body);
+        const points = contour.points || [];
+        const normals = contour.normals || [];
+        if (points.length < 3 || normals.length !== points.length) return;
+        const zOffset = Number.isFinite(chunkBounds.zOffset) ? chunkBounds.zOffset : builder.z * 3.0;
+        const surfaceY = zOffset + (Number.isFinite(builder.body.surfaceY) ? builder.body.surfaceY : -0.075) + ISLAND_COASTLINE_SURFACE_LIFT;
+        const waterWidth = Math.max(
+            ISLAND_COASTLINE_RIBBON_WATER_WIDTH,
+            Number.isFinite(builder.body.shoreline && builder.body.shoreline.width) ? builder.body.shoreline.width * 0.72 : 0
+        );
+        const bankWidth = Math.max(ISLAND_COASTLINE_RIBBON_BANK_WIDTH, waterWidth * 0.55);
+        const lanes = [
+            { offset: waterWidth, lane: 0.0, alpha: 0.68 },
+            { offset: 0.28, lane: 0.34, alpha: 0.95 },
+            { offset: -0.18, lane: 0.62, alpha: 0.56 },
+            { offset: -bankWidth, lane: 1.0, alpha: 0.0 }
+        ];
+        for (let i = 0; i < points.length; i++) {
+            const nextIndex = (i + 1) % points.length;
+            const p0 = points[i];
+            const p1 = points[nextIndex];
+            if (!isContourSegmentOwnedByChunk(p0, p1, chunkBounds)) continue;
+            const n0 = normals[i];
+            const n1 = normals[nextIndex];
+            const segmentSeed = hash01((p0.x + p1.x) * 0.21, (p0.y + p1.y) * 0.21, i * 0.31);
+            appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[0], lanes[1], segmentSeed);
+            appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[1], lanes[2], segmentSeed);
+            appendWaterShorelineRibbonQuad(builder, context, surfaceY, p0, p1, n0, n1, lanes[2], lanes[3], segmentSeed);
+        }
+    }
+
+    function appendIslandCoastlineVisualsForChunk(options = {}, builders = {}) {
+        const z = options.z;
+        if (z !== 0) return;
+        const oceanBody = findFullMapOceanWaterBody(options.waterBodies, options.MAP_SIZE);
+        if (!usesIslandCoastlineRibbon(oceanBody, options)) return;
+        const coastlineBody = createIslandCoastlineWaterBody(options, oceanBody);
+        if (!coastlineBody) return;
+        const chunkBounds = {
+            startX: options.startX,
+            startY: options.startY,
+            endX: options.endX,
+            endY: options.endY,
+            zOffset: Number.isFinite(options.zOffset) ? options.zOffset : 0
+        };
+        let builder = builders[coastlineBody.id];
+        const createdForCoastlineOnly = !builder;
+        if (!builder) {
+            builder = createChunkWaterBuilder(coastlineBody, z);
+            builders[coastlineBody.id] = builder;
+        }
+        builder.usesIslandCoastlineRibbon = true;
+        const beforeSurfaceCount = builder.smoothSurfacePositions.length;
+        const beforeFringeCount = builder.fringePositions.length;
+        appendIslandCoastlineWaterSurfaceToBuilder(builder, options, chunkBounds);
+        appendIslandCoastlineRibbonToBuilder(builder, options, chunkBounds);
+        builder.islandCoastlineAppended = true;
+        if (
+            createdForCoastlineOnly
+            && builder.surfacePositions.length <= 0
+            && builder.smoothSurfacePositions.length === beforeSurfaceCount
+            && builder.fringePositions.length === beforeFringeCount
+        ) {
+            delete builders[coastlineBody.id];
+        }
+    }
+
     function appendWaterTileToBuilder(builder, context, x, y, surfaceY) {
         const pierConfig = context.getActivePierConfig();
         const isPierCoveredTile = context.isPierVisualCoverageTile(pierConfig, x, y, builder.z);
@@ -302,24 +1136,32 @@
             south: classifyWaterEdgeType(Object.assign({}, context, { x, y, dx: 0, dy: 1, z: builder.z, waterSurfaceY: surfaceY })),
             west: classifyWaterEdgeType(Object.assign({}, context, { x, y, dx: -1, dy: 0, z: builder.z, waterSurfaceY: surfaceY }))
         };
-        const edgeOverlap = isPierCoveredTile ? 0 : 0.18;
-
-        const northY = (edges.north && edges.north.kind !== 'structural_cover') ? (y - 0.5 - edgeOverlap) : (y - 0.5);
-        const eastX = (edges.east && edges.east.kind !== 'structural_cover') ? (x + 0.5 + edgeOverlap) : (x + 0.5);
-        const southY = (edges.south && edges.south.kind !== 'structural_cover') ? (y + 0.5 + edgeOverlap) : (y + 0.5);
-        const westX = (edges.west && edges.west.kind !== 'structural_cover') ? (x - 0.5 - edgeOverlap) : (x - 0.5);
-
-        const nw = { x: westX, y: northY, h: surfaceY };
-        const ne = { x: eastX, y: northY, h: surfaceY };
-        const se = { x: eastX, y: southY, h: surfaceY };
-        const sw = { x: westX, y: southY, h: surfaceY };
-
-        pushWaterVertex(builder, context, nw.x, nw.y, nw.h);
-        pushWaterVertex(builder, context, se.x, se.y, se.h);
-        pushWaterVertex(builder, context, ne.x, ne.y, ne.h);
-        pushWaterVertex(builder, context, nw.x, nw.y, nw.h);
-        pushWaterVertex(builder, context, sw.x, sw.y, sw.h);
-        pushWaterVertex(builder, context, se.x, se.y, se.h);
+        const subdivisions = (edges.north || edges.east || edges.south || edges.west) ? WATER_EDGE_SUBDIVISIONS : 1;
+        const cellSize = 1 / subdivisions;
+        for (let row = 0; row < subdivisions; row++) {
+            for (let column = 0; column < subdivisions; column++) {
+                const x0 = column * cellSize;
+                const y0 = row * cellSize;
+                const x1 = x0 + cellSize;
+                const y1 = y0 + cellSize;
+                const nw = getWaterEdgeVertex(builder, context, x, y, x0, y0, surfaceY, edges, isPierCoveredTile);
+                const ne = getWaterEdgeVertex(builder, context, x, y, x1, y0, surfaceY, edges, isPierCoveredTile);
+                const se = getWaterEdgeVertex(builder, context, x, y, x1, y1, surfaceY, edges, isPierCoveredTile);
+                const sw = getWaterEdgeVertex(builder, context, x, y, x0, y1, surfaceY, edges, isPierCoveredTile);
+                pushWaterCellVertex(builder, context, nw);
+                pushWaterCellVertex(builder, context, se);
+                pushWaterCellVertex(builder, context, ne);
+                pushWaterCellVertex(builder, context, nw);
+                pushWaterCellVertex(builder, context, sw);
+                pushWaterCellVertex(builder, context, se);
+            }
+        }
+        if (builder.usesSmoothShorelineRibbon) return;
+        if (builder.usesIslandCoastlineRibbon) return;
+        appendWaterFringeForEdge(builder, x, y, surfaceY, 'north', edges.north, isPierCoveredTile);
+        appendWaterFringeForEdge(builder, x, y, surfaceY, 'east', edges.east, isPierCoveredTile);
+        appendWaterFringeForEdge(builder, x, y, surfaceY, 'south', edges.south, isPierCoveredTile);
+        appendWaterFringeForEdge(builder, x, y, surfaceY, 'west', edges.west, isPierCoveredTile);
     }
 
     function appendChunkWaterTilesToBuilders(options = {}) {
@@ -331,13 +1173,60 @@
             for (let x = options.startX; x < options.endX; x++) {
                 const visualBody = resolveVisualWaterRenderBodyForTile(Object.assign({}, options, { waterBodies: bodies, x, y, z }));
                 if (!visualBody) continue;
-                if (!builders[visualBody.id]) {
-                    builders[visualBody.id] = createChunkWaterBuilder(visualBody, z);
+                const islandCoastlineBody = usesIslandCoastlineRibbon(visualBody, options);
+                const useCoastInteractionOnly = islandCoastlineBody && isIslandCoastlineWaterTile(options, x, y);
+                const builderBody = useCoastInteractionOnly
+                    ? createIslandCoastlineInteractionBody(visualBody)
+                    : visualBody;
+                if (!builders[builderBody.id]) {
+                    builders[builderBody.id] = createChunkWaterBuilder(builderBody, z);
                 }
+                builders[builderBody.id].usesSmoothShorelineRibbon = usesSmoothWaterShorelineRibbon(visualBody, options.MAP_SIZE);
+                builders[builderBody.id].usesSmoothSurfaceOverlay = usesSmoothWaterSurfaceOverlay(visualBody, options.MAP_SIZE);
+                builders[builderBody.id].usesIslandCoastlineRibbon = islandCoastlineBody;
+                builders[builderBody.id].forceInteractionOnly = !!useCoastInteractionOnly;
                 const surfaceY = zOffset + (Number.isFinite(visualBody.surfaceY) ? visualBody.surfaceY : -0.075);
-                appendWaterTileToBuilder(builders[visualBody.id], options, x, y, surfaceY);
+                appendWaterTileToBuilder(builders[builderBody.id], options, x, y, surfaceY);
             }
         }
+        appendSmoothWaterShorelineRibbonsForChunk(Object.assign({}, options, { zOffset }), builders);
+    }
+
+    function appendSmoothWaterShorelineRibbonsForChunk(options = {}, builders = {}) {
+        const bodies = Array.isArray(options.waterBodies) ? options.waterBodies : [];
+        const z = options.z;
+        if (z !== 0) return;
+        const chunkBounds = {
+            startX: options.startX,
+            startY: options.startY,
+            endX: options.endX,
+            endY: options.endY,
+            zOffset: Number.isFinite(options.zOffset) ? options.zOffset : 0
+        };
+        for (let i = 0; i < bodies.length; i++) {
+            const body = bodies[i];
+            if (!usesSmoothWaterShorelineRibbon(body, options.MAP_SIZE)) continue;
+            let builder = builders[body.id];
+            const createdForRibbonOnly = !builder;
+            if (!builder) {
+                builder = createChunkWaterBuilder(body, z);
+                builders[body.id] = builder;
+            }
+            builder.usesSmoothShorelineRibbon = true;
+            builder.usesSmoothSurfaceOverlay = usesSmoothWaterSurfaceOverlay(body, options.MAP_SIZE);
+            const beforeFringeCount = builder.fringePositions.length;
+            appendSmoothWaterSurfaceOverlayToBuilder(builder, options, chunkBounds);
+            appendWaterBodyShorelineRibbonToBuilder(builder, options, chunkBounds);
+            if (
+                createdForRibbonOnly
+                && builder.surfacePositions.length <= 0
+                && builder.smoothSurfacePositions.length <= 0
+                && builder.fringePositions.length === beforeFringeCount
+            ) {
+                delete builders[body.id];
+            }
+        }
+        appendIslandCoastlineVisualsForChunk(options, builders);
     }
 
     function flushChunkWaterBuilders(options = {}) {
@@ -348,6 +1237,9 @@
         const getWaterSurfaceMaterial = typeof options.getWaterSurfaceMaterial === 'function'
             ? options.getWaterSurfaceMaterial
             : () => null;
+        const getWaterFringeMaterial = typeof options.getWaterFringeMaterial === 'function'
+            ? options.getWaterFringeMaterial
+            : () => null;
         Object.keys(builders).forEach((bodyId) => {
             const builder = builders[bodyId];
             if (!builder) return;
@@ -357,13 +1249,44 @@
                 surfaceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(builder.surfacePositions, 3));
                 surfaceGeometry.setAttribute('waterData', new THREE.Float32BufferAttribute(builder.surfaceData, 2));
                 surfaceGeometry.computeBoundingSphere();
-                const surfaceMesh = new THREE.Mesh(surfaceGeometry, getWaterSurfaceMaterial(builder.body.styleTokens));
+                const surfaceMaterial = builder.forceInteractionOnly || (builder.usesSmoothSurfaceOverlay && builder.smoothSurfacePositions.length > 0)
+                    ? getWaterInteractionOnlyMaterial(THREE, options.sharedMaterials || {})
+                    : getWaterSurfaceMaterial(builder.body.styleTokens);
+                const surfaceMesh = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
                 surfaceMesh.userData = { type: 'WATER', z: builder.z, waterBodyId: builder.body.id };
                 surfaceMesh.receiveShadow = false;
                 surfaceMesh.castShadow = false;
-                surfaceMesh.renderOrder = 3;
+                surfaceMesh.renderOrder = builder.usesSmoothSurfaceOverlay ? 2 : 3;
                 if (planeGroup) planeGroup.add(surfaceMesh);
                 if (environmentMeshes) environmentMeshes.push(surfaceMesh);
+            }
+
+            if (builder.smoothSurfacePositions.length > 0) {
+                const smoothSurfaceGeometry = new THREE.BufferGeometry();
+                smoothSurfaceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(builder.smoothSurfacePositions, 3));
+                smoothSurfaceGeometry.setAttribute('waterData', new THREE.Float32BufferAttribute(builder.smoothSurfaceData, 2));
+                smoothSurfaceGeometry.computeBoundingSphere();
+                const smoothSurfaceMaterial = getWaterSurfaceMaterial(builder.body.styleTokens);
+                const smoothSurfaceMesh = new THREE.Mesh(smoothSurfaceGeometry, smoothSurfaceMaterial);
+                smoothSurfaceMesh.userData = { type: 'WATER_VISUAL_SURFACE', z: builder.z, waterBodyId: builder.body.id };
+                smoothSurfaceMesh.receiveShadow = false;
+                smoothSurfaceMesh.castShadow = false;
+                smoothSurfaceMesh.renderOrder = 3;
+                if (planeGroup) planeGroup.add(smoothSurfaceMesh);
+            }
+
+            if (builder.fringePositions.length > 0) {
+                const fringeGeometry = new THREE.BufferGeometry();
+                fringeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(builder.fringePositions, 3));
+                fringeGeometry.setAttribute('waterData', new THREE.Float32BufferAttribute(builder.fringeData, 2));
+                fringeGeometry.setAttribute('fringeAlpha', new THREE.Float32BufferAttribute(builder.fringeAlpha, 1));
+                fringeGeometry.computeBoundingSphere();
+                const fringeMesh = new THREE.Mesh(fringeGeometry, getWaterFringeMaterial(builder.body.styleTokens));
+                fringeMesh.userData = { type: 'WATER_VISUAL_FRINGE', z: builder.z, waterBodyId: builder.body.id };
+                fringeMesh.receiveShadow = false;
+                fringeMesh.castShadow = false;
+                fringeMesh.renderOrder = 4;
+                if (planeGroup) planeGroup.add(fringeMesh);
             }
 
         });
@@ -425,15 +1348,61 @@
         return mesh;
     }
 
+    function createWaterBackdropMesh(options = {}) {
+        const THREE = requireThree(options.THREE);
+        const bounds = options.bounds;
+        const surfaceY = options.surfaceY;
+        const styleTokens = options.styleTokens;
+        if (!bounds || !styleTokens) return null;
+        const xMin = Number.isFinite(bounds.xMin) ? bounds.xMin : 0;
+        const xMax = Number.isFinite(bounds.xMax) ? bounds.xMax : 0;
+        const yMin = Number.isFinite(bounds.yMin) ? bounds.yMin : 0;
+        const yMax = Number.isFinite(bounds.yMax) ? bounds.yMax : 0;
+        if ((xMax - xMin) <= 0.01 || (yMax - yMin) <= 0.01) return null;
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute([
+            xMin, surfaceY, yMin,
+            xMax, surfaceY, yMax,
+            xMax, surfaceY, yMin,
+            xMin, surfaceY, yMin,
+            xMin, surfaceY, yMax,
+            xMax, surfaceY, yMax
+        ], 3));
+        geometry.computeBoundingSphere();
+
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+            color: Number.isFinite(styleTokens.deepColor) ? styleTokens.deepColor : 0x3f748d,
+            depthTest: true,
+            depthWrite: true,
+            side: THREE.DoubleSide
+        }));
+        mesh.receiveShadow = false;
+        mesh.castShadow = false;
+        mesh.frustumCulled = false;
+        mesh.renderOrder = -2;
+        mesh.userData = { disposeMaterialOnRemove: true };
+        return mesh;
+    }
+
     window.WorldWaterRuntime = {
         appendChunkWaterTilesToBuilders,
+        appendIslandCoastlineVisualsForChunk,
+        appendSmoothWaterShorelineRibbonsForChunk,
+        appendSmoothWaterSurfaceOverlayToBuilder,
+        appendWaterBodyShorelineRibbonToBuilder,
+        buildSmoothWaterShorelineContourPoints,
         classifyWaterEdgeType,
+        createWaterBackdropMesh,
         createWaterSurfacePatchMesh,
         findNearbyWaterRenderBodyForTile,
         flushChunkWaterBuilders,
         getDefaultWaterRenderBody,
         getWaterSurfaceHeightForTile,
         resolveVisualWaterRenderBodyForTile,
-        resolveWaterRenderBodyForTile
+        resolveWaterRenderBodyForTile,
+        usesIslandCoastlineRibbon,
+        usesSmoothWaterShorelineRibbon,
+        usesSmoothWaterSurfaceOverlay
     };
 })();

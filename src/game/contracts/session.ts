@@ -96,6 +96,7 @@ export interface PlayerProfileState {
 export interface SaveAppearanceState {
   gender: number;
   colors: number[];
+  creatorSelections: Record<string, string>;
 }
 
 export interface PlayerEntryFlowState {

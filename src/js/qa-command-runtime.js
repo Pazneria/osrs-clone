@@ -1,6 +1,6 @@
 (function () {
     const HELP_PRESETS = 'QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default';
-    const HELP_TOOLS = 'QA tools: /qa worlds, /qa travel <worldId>, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]';
+    const HELP_TOOLS = 'QA tools: /qa worlds, /qa travel <worldId>, /qa creator, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa camera preset <tutorial_surface>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]';
 
     function getWindowRef(context = {}) {
         return context.windowRef || (typeof window !== 'undefined' ? window : {});
@@ -51,6 +51,19 @@
             }
             const cameraState = setter(yaw, pitch, dist);
             addChat(context, `[QA camera] set yaw=${cameraState.yaw} pitch=${cameraState.pitch} dist=${cameraState.distance}`, 'info');
+            return true;
+        }
+        if (subcommand === 'preset') {
+            const presetId = String(parts[2] || '').toLowerCase();
+            const setter = typeof context.setQaCameraAerialView === 'function'
+                ? context.setQaCameraAerialView
+                : (typeof windowRef.setQaCameraAerialView === 'function' ? windowRef.setQaCameraAerialView.bind(windowRef) : null);
+            if (!presetId || !setter) {
+                addChat(context, 'Usage: /qa camera preset <tutorial_surface>', 'warn');
+                return true;
+            }
+            const cameraState = setter(presetId);
+            addChat(context, `[QA camera] preset=${cameraState.presetId} target=${cameraState.targetX},${cameraState.targetY},${cameraState.targetZ} yaw=${cameraState.yaw} pitch=${cameraState.pitch} dist=${cameraState.distance}`, 'info');
             return true;
         }
         return false;
@@ -156,6 +169,7 @@
             return true;
         }
         if (cmd === 'worlds') return consumeHook(context, 'qaListWorlds');
+        if (cmd === 'creator' || cmd === 'appearance') return consumeHook(context, 'qaOpenPlayerCreator');
         if (cmd === 'combattargets') return consumeHook(context, 'qaListCombatTargets');
         if (cmd === 'npctargets') return consumeHook(context, 'qaListNpcTargets', parts.slice(1).join(' '));
         if (cmd === 'projecttile') return consumeHook(context, 'qaProjectTile', parts);

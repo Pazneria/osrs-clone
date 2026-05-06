@@ -62,7 +62,11 @@ const AXIS_COORD_KEYS = new Set([
 
 const RADIUS_COORD_KEYS = new Set([
   "rx",
-  "ry"
+  "ry",
+  "shoreWidth",
+  "shallowDistance",
+  "pathWidth",
+  "edgeSoftness"
 ]);
 
 interface StructureShiftBounds {
@@ -357,6 +361,28 @@ function applyStructureLocalAlignment(
         : scaledRoof.hideBounds;
       return { ...scaledRoof, x: mapped.x, y: mapped.y, z: mapped.z, hideBounds: mappedHideBounds };
     }),
+    caveOpenings: (rawDefinition.landmarks.caveOpenings || []).map((rawOpening, index) => {
+      const scaledOpening = (scaledDefinition.landmarks.caveOpenings || [])[index] || rawOpening;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawOpening, 1);
+      return {
+        ...scaledOpening,
+        x: mapped.x,
+        y: mapped.y,
+        z: mapped.z,
+        tags: Array.isArray(rawOpening.tags) ? rawOpening.tags.slice() : []
+      };
+    }),
+    decorProps: (rawDefinition.landmarks.decorProps || []).map((rawProp, index) => {
+      const scaledProp = (scaledDefinition.landmarks.decorProps || [])[index] || rawProp;
+      const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawProp, 1);
+      return {
+        ...scaledProp,
+        x: mapped.x,
+        y: mapped.y,
+        z: mapped.z,
+        tags: Array.isArray(rawProp.tags) ? rawProp.tags.slice() : []
+      };
+    }),
     altars: rawDefinition.landmarks.altars.map((rawAltar, index) => {
       const scaledAltar = scaledDefinition.landmarks.altars[index] || rawAltar;
       const mapped = remapPoint3WithStructureShift(structureShiftBounds, rawAltar);
@@ -377,9 +403,14 @@ function buildScaledWorldDefinition(rawDefinition: WorldDefinition): WorldDefini
   return applyStructureLocalAlignment(rawDefinition, scaledDefinition);
 }
 
+const rawWorldDefinitions: Record<string, WorldDefinition> = {
+  [mainOverworld.worldId]: mainOverworld as WorldDefinition,
+  [tutorialIsland.worldId]: tutorialIsland as WorldDefinition
+};
+
 const worldDefinitions: Record<string, WorldDefinition> = {
-  [mainOverworld.worldId]: buildScaledWorldDefinition(mainOverworld as WorldDefinition),
-  [tutorialIsland.worldId]: buildScaledWorldDefinition(tutorialIsland as WorldDefinition)
+  [mainOverworld.worldId]: buildScaledWorldDefinition(rawWorldDefinitions[mainOverworld.worldId]),
+  [tutorialIsland.worldId]: buildScaledWorldDefinition(rawWorldDefinitions[tutorialIsland.worldId])
 };
 
 function cloneSpawn(spawn: Point3): Point3 {
@@ -392,8 +423,18 @@ function cloneManifestEntry(entry: WorldManifestEntry): WorldManifestEntry {
     label: entry.label,
     regionFile: entry.regionFile,
     stampIds: Array.isArray(entry.stampIds) ? entry.stampIds.slice() : [],
-    defaultSpawn: cloneAndScaleSpawn(cloneSpawn(entry.defaultSpawn))
+    defaultSpawn: resolveScaledDefaultSpawn(entry)
   };
+}
+
+function resolveScaledDefaultSpawn(entry: WorldManifestEntry): Point3 {
+  const rawDefinition = rawWorldDefinitions[entry.worldId];
+  const scaledDefinition = worldDefinitions[entry.worldId];
+  if (entry.worldId === "tutorial_island" && rawDefinition && scaledDefinition) {
+    const structureShiftBounds = buildStructureShiftBounds(rawDefinition, scaledDefinition);
+    return remapPoint3WithStructureShift(structureShiftBounds, entry.defaultSpawn, 0);
+  }
+  return cloneAndScaleSpawn(cloneSpawn(entry.defaultSpawn));
 }
 
 function findManifestEntry(worldId: string): WorldManifestEntry {
@@ -441,7 +482,7 @@ export const worldRegistry: WorldRegistry = {
     return getStampedSubset(findManifestEntry(worldId));
   },
   getDefaultSpawn(worldId: string): Point3 {
-    return cloneSpawn(findManifestEntry(worldId).defaultSpawn);
+    return resolveScaledDefaultSpawn(findManifestEntry(worldId));
   }
 };
 
@@ -466,5 +507,5 @@ export function getWorldStamps(worldId: string): Record<string, WorldStamp> {
 }
 
 export function getDefaultSpawn(worldId: string): Point3 {
-  return cloneAndScaleSpawn(worldRegistry.getDefaultSpawn(worldId));
+  return worldRegistry.getDefaultSpawn(worldId);
 }

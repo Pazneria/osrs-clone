@@ -278,9 +278,12 @@
     function ensureWorldMapCenter(context) {
         const mapSize = getMapSize(context);
         if (!Number.isFinite(worldMapState.centerX) || !Number.isFinite(worldMapState.centerY)) {
+            const focus = callHook(context, 'getWorldMapInitialCenter', null);
             const player = getPlayerMapPosition(context);
-            worldMapState.centerX = Math.max(0, Math.min(mapSize, player.x + 0.5));
-            worldMapState.centerY = Math.max(0, Math.min(mapSize, player.y + 0.5));
+            const centerX = focus && Number.isFinite(focus.x) ? focus.x : player.x + 0.5;
+            const centerY = focus && Number.isFinite(focus.y) ? focus.y : player.y + 0.5;
+            worldMapState.centerX = Math.max(0, Math.min(mapSize, centerX));
+            worldMapState.centerY = Math.max(0, Math.min(mapSize, centerY));
         }
     }
 

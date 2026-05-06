@@ -6,6 +6,31 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function makeVec3(x = 0, y = 0, z = 0) {
+  return {
+    x,
+    y,
+    z,
+    clone() {
+      return makeVec3(this.x, this.y, this.z);
+    },
+    copy(other) {
+      this.x = other.x;
+      this.y = other.y;
+      this.z = other.z;
+      return this;
+    }
+  };
+}
+
+function makeRigNode() {
+  return {
+    position: makeVec3(),
+    rotation: makeVec3(),
+    scale: makeVec3(1, 1, 1)
+  };
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
@@ -101,6 +126,7 @@ function run() {
   const dialogueBounds = runtime.resolveTownNpcRoamBounds({ mapSize: 32, npc: dialogueNpc, structureBoundsList });
   assert(dialogueBounds.xMin === 7 && dialogueBounds.xMax === 17, "dialogue NPCs should get expanded structure roam bounds");
   assert(runtime.resolveTownNpcRoamingRadius(dialogueNpc, dialogueBounds) === 4, "dialogue NPC radius should scale from structure bounds");
+  assert(runtime.resolveTownNpcRoamingRadius({ name: "Guide", x: 12, y: 22, z: 0, dialogueId: "guide_intro", roamingRadiusOverride: 0 }, dialogueBounds) === 0, "authored stationary NPCs should override dialogue roam policy");
   const nearbyTravelNpc = { name: "Ferry", x: 15, y: 25, z: 0, action: "Travel" };
   const travelBounds = runtime.resolveTownNpcRoamBounds({ mapSize: 32, npc: nearbyTravelNpc, structureBoundsList });
   assert(travelBounds.xMin === 8 && travelBounds.xMax === 16, "nearby travel NPCs should reuse nearest structure bounds");
@@ -130,6 +156,105 @@ function run() {
   assert(actorRecord.homeX === 12 && actorRecord.homeY === 22 && actorRecord.visualBaseY === 0.25, "actor record should initialize home and visual state");
   assert(actorRecord.roamEnabled && actorRecord.roamingRadius === 4, "actor record should include resolved roam policy");
   assert(actorRecord.idleUntilMs >= 1400 && Number.isFinite(actorRecord.animationSeed), "actor record should initialize deterministic idle timing and animation seed");
+  const stationaryActorRecord = runtime.createTownNpcActorRecord({
+    actorNowMs: 1000,
+    getTileHeightSafe: () => 0,
+    index: 4,
+    mapSize: 32,
+    npc: { spawnId: "tutorial:guide", name: "Guide", x: 12, y: 22, z: 0, dialogueId: "guide_intro", roamingRadiusOverride: 0 },
+    structureBoundsList
+  });
+  assert(stationaryActorRecord.actorId === "tutorial:guide" && stationaryActorRecord.roamingRadius === 0 && !stationaryActorRecord.roamEnabled, "stationary actor records should preserve authored no-roam overrides");
+  const stationaryRig = {
+    torso: makeRigNode(),
+    head: makeRigNode(),
+    leftArm: makeRigNode(),
+    rightArm: makeRigNode(),
+    leftLowerArm: makeRigNode(),
+    rightLowerArm: makeRigNode(),
+    leftLeg: makeRigNode(),
+    rightLeg: makeRigNode(),
+    leftLowerLeg: makeRigNode(),
+    rightLowerLeg: makeRigNode()
+  };
+  const stationaryMesh = {
+    position: makeVec3(0, 0, 0),
+    userData: {
+      rig: stationaryRig,
+      baseY: 0
+    }
+  };
+  runtime.applyTownNpcRigAnimation({
+    mesh: stationaryMesh,
+    roamEnabled: false,
+    roamingRadius: 0,
+    moveDurationMs: 0,
+    animationSeed: 7
+  }, 12345, 1.25);
+  assert(stationaryMesh.position.y === 1.25, "stationary NPC rig animation should not bob the mesh");
+  assert(stationaryRig.leftArm.rotation.x === 0 && stationaryRig.rightArm.rotation.x === 0, "stationary NPC rig animation should not swing arms");
+  assert(stationaryRig.leftLeg.rotation.x === 0 && stationaryRig.rightLeg.rotation.x === 0, "stationary NPC rig animation should not move legs");
+
+  const roamIdleRig = {
+    torso: makeRigNode(),
+    head: makeRigNode(),
+    leftArm: makeRigNode(),
+    rightArm: makeRigNode(),
+    leftLowerArm: makeRigNode(),
+    rightLowerArm: makeRigNode(),
+    leftLeg: makeRigNode(),
+    rightLeg: makeRigNode(),
+    leftLowerLeg: makeRigNode(),
+    rightLowerLeg: makeRigNode()
+  };
+  const roamIdleMesh = {
+    position: makeVec3(0, 0, 0),
+    userData: {
+      rig: roamIdleRig,
+      baseY: 0
+    }
+  };
+  runtime.applyTownNpcRigAnimation({
+    mesh: roamIdleMesh,
+    roamEnabled: true,
+    roamingRadius: 4,
+    moveDurationMs: 0,
+    animationSeed: 7
+  }, 12345, 1.25);
+  assert(roamIdleMesh.position.y === 1.25, "idle roam-capable NPCs should keep their feet planted while waiting");
+  assert(roamIdleRig.leftArm.rotation.x === 0 && roamIdleRig.rightArm.rotation.x === 0, "idle roam-capable NPCs should not swing arms while waiting");
+  assert(roamIdleRig.leftLowerArm.rotation.x === 0 && roamIdleRig.rightLowerArm.rotation.x === 0, "idle roam-capable NPCs should not swing forearms while waiting");
+  assert(roamIdleRig.leftLeg.rotation.x === 0 && roamIdleRig.rightLeg.rotation.x === 0, "idle roam-capable NPCs should not move upper legs while waiting");
+  assert(roamIdleRig.leftLowerLeg.rotation.x === 0 && roamIdleRig.rightLowerLeg.rotation.x === 0, "idle roam-capable NPCs should not bend knees while waiting");
+
+  const movingRig = {
+    torso: makeRigNode(),
+    head: makeRigNode(),
+    leftArm: makeRigNode(),
+    rightArm: makeRigNode(),
+    leftLowerArm: makeRigNode(),
+    rightLowerArm: makeRigNode(),
+    leftLeg: makeRigNode(),
+    rightLeg: makeRigNode(),
+    leftLowerLeg: makeRigNode(),
+    rightLowerLeg: makeRigNode()
+  };
+  const movingMesh = {
+    position: makeVec3(0, 0, 0),
+    userData: {
+      rig: movingRig,
+      baseY: 0
+    }
+  };
+  runtime.applyTownNpcRigAnimation({
+    mesh: movingMesh,
+    roamEnabled: true,
+    roamingRadius: 4,
+    moveDurationMs: 720,
+    animationSeed: 7
+  }, 1000, 1.25);
+  assert(movingRig.leftArm.rotation.x !== 0 && movingRig.rightArm.rotation.x !== 0, "walking NPC rig animation should still swing arms");
+  assert(movingRig.leftLeg.rotation.x !== 0 && movingRig.rightLeg.rotation.x !== 0, "walking NPC rig animation should still move legs");
 
   const qaTargets = runtime.listQaNpcTargets([
     {
@@ -193,6 +318,34 @@ function run() {
     windowRef.refreshTutorialGateStates();
     assert(door.isOpen === true && logicalMap[0][0][0] === TileId.WOODEN_GATE_OPEN, "published tutorial gate refresh should open unlocked gates");
     assert(buildContextCalls === 3 && minimapUpdates === 2, "published tutorial gate hooks should resolve context lazily and refresh the minimap");
+  }
+
+  {
+    const windowRef = {};
+    const logicalMap = [[[TileId.DOOR_CLOSED]]];
+    const door = {
+      x: 0,
+      y: 0,
+      z: 0,
+      isWoodenGate: false,
+      tutorialRequiredStep: 1,
+      tutorialAutoOpenOnUnlock: false,
+      isOpen: false,
+      openRot: 1,
+      closedRot: 0,
+      targetRotation: 0
+    };
+    runtime.publishTutorialGateHooks({
+      windowRef,
+      context: {
+        TileId,
+        TutorialRuntime: { getStep: () => 1 },
+        doorsToRender: [door],
+        logicalMap
+      }
+    });
+    windowRef.refreshTutorialGateStates();
+    assert(door.isOpen === false && door.targetRotation === 0 && logicalMap[0][0][0] === TileId.DOOR_CLOSED, "guide-unlocked cabin doors should stay closed when auto-open is disabled");
   }
 
   console.log("Town NPC runtime guard passed.");

@@ -1,57 +1,367 @@
 {
   "worldId": "tutorial_island",
-  "version": "2026.04.tutorial5_visual",
+  "version": "2026.05.surface_v2",
   "structures": [
     {
       "structureId": "tutorial_start_cabin",
       "stampId": "tutorial_start_cabin",
       "label": "Tutorial Start Cabin",
-      "x": 110,
-      "y": 110,
+      "x": 132,
+      "y": 166,
       "z": 0
     }
   ],
+  "waterBodies": [
+    {
+      "id": "tutorial_surrounding_sea",
+      "shape": {
+        "kind": "box",
+        "xMin": 0,
+        "xMax": 486,
+        "yMin": 0,
+        "yMax": 486
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 1.15,
+        "foamWidth": 0.42,
+        "skirtDepth": 0.22
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "tutorial_survival_pond",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 274,
+        "cy": 222,
+        "rx": 20,
+        "ry": 12,
+        "rotationRadians": 0.7853981633974483
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": [
+          {
+            "shape": {
+              "kind": "box",
+              "xMin": 271,
+              "xMax": 277,
+              "yMin": 219,
+              "yMax": 225
+            },
+            "weight": 1
+          }
+        ]
+      },
+      "shoreline": {
+        "width": 0.8,
+        "foamWidth": 0.3,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    }
+  ],
   "terrainPatches": {
+    "islandWater": {
+      "enabled": true,
+      "waterBounds": {
+        "xMin": 0,
+        "xMax": 486,
+        "yMin": 0,
+        "yMax": 486
+      },
+      "landPolygon": [
+        {
+          "x": 118,
+          "y": 139
+        },
+        {
+          "x": 240,
+          "y": 128
+        },
+        {
+          "x": 357,
+          "y": 151
+        },
+        {
+          "x": 420,
+          "y": 221
+        },
+        {
+          "x": 399,
+          "y": 320
+        },
+        {
+          "x": 322,
+          "y": 364
+        },
+        {
+          "x": 166,
+          "y": 356
+        },
+        {
+          "x": 82,
+          "y": 309
+        },
+        {
+          "x": 75,
+          "y": 210
+        }
+      ],
+      "shoreWidth": 3.2,
+      "shallowDistance": 9.5
+    },
     "lakes": [
       {
-        "cx": 145,
-        "cy": 121,
-        "rx": 5,
-        "ry": 4
+        "cx": 274,
+        "cy": 222,
+        "rx": 20,
+        "ry": 12,
+        "rotationRadians": 0.7853981633974483
       }
     ],
     "castleFrontPond": {
-      "cx": 145,
-      "cy": 121,
-      "rx": 5,
-      "ry": 4
+      "cx": 274,
+      "cy": 222,
+      "rx": 20,
+      "ry": 12,
+      "rotationRadians": 0.7853981633974483
     },
     "deepWaterCenter": {
-      "xMin": 145,
-      "xMax": 146,
-      "yMin": 121,
-      "yMax": 122
+      "xMin": 271,
+      "xMax": 277,
+      "yMin": 219,
+      "yMax": 225
     },
     "pier": {
-      "xMin": 141,
-      "xMax": 142,
-      "yStart": 116,
-      "yEnd": 119,
-      "entryY": 116
+      "enabled": false,
+      "xMin": 299,
+      "xMax": 302,
+      "yStart": 236,
+      "yEnd": 254,
+      "entryY": 254
     },
+    "paths": [
+      {
+        "pathId": "tutorial_start_to_survival_path",
+        "points": [
+          {
+            "x": 140,
+            "y": 179
+          },
+          {
+            "x": 154,
+            "y": 182
+          },
+          {
+            "x": 176,
+            "y": 186
+          },
+          {
+            "x": 216,
+            "y": 196
+          }
+        ],
+        "pathWidth": 1.8,
+        "height": -0.075,
+        "edgeSoftness": 0.85,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path"
+        ]
+      },
+      {
+        "pathId": "tutorial_survival_resources_path",
+        "points": [
+          {
+            "x": 216,
+            "y": 196
+          },
+          {
+            "x": 246,
+            "y": 206
+          },
+          {
+            "x": 262,
+            "y": 237
+          }
+        ],
+        "pathWidth": 2.0,
+        "height": -0.07,
+        "edgeSoftness": 1.0,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path"
+        ]
+      },
+      {
+        "pathId": "tutorial_survival_to_fire_path",
+        "points": [
+          {
+            "x": 262,
+            "y": 237
+          },
+          {
+            "x": 282,
+            "y": 246
+          }
+        ],
+        "pathWidth": 1.9,
+        "height": -0.07,
+        "edgeSoftness": 1.0,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path"
+        ]
+      },
+      {
+        "pathId": "tutorial_fire_clearing_patch",
+        "points": [
+          {
+            "x": 280,
+            "y": 245
+          },
+          {
+            "x": 290,
+            "y": 248
+          }
+        ],
+        "pathWidth": 1.5,
+        "height": -0.075,
+        "edgeSoftness": 0.45,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "fire-clearing"
+        ]
+      },
+      {
+        "pathId": "tutorial_fire_to_quarry_path",
+        "points": [
+          {
+            "x": 282,
+            "y": 246
+          },
+          {
+            "x": 324,
+            "y": 260
+          },
+          {
+            "x": 352,
+            "y": 278
+          },
+          {
+            "x": 352,
+            "y": 286
+          }
+        ],
+        "pathWidth": 3.6,
+        "height": -0.105,
+        "edgeSoftness": 1.0,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path",
+          "quarry"
+        ]
+      },
+      {
+        "pathId": "tutorial_quarry_work_apron",
+        "points": [
+          {
+            "x": 340,
+            "y": 292
+          },
+          {
+            "x": 352,
+            "y": 294
+          },
+          {
+            "x": 360,
+            "y": 288
+          }
+        ],
+        "pathWidth": 4.2,
+        "height": -0.095,
+        "edgeSoftness": 0.85,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "quarry",
+          "smithing",
+          "apron"
+        ]
+      },
+      {
+        "pathId": "tutorial_quarry_to_bank_path",
+        "points": [
+          {
+            "x": 352,
+            "y": 286
+          },
+          {
+            "x": 342,
+            "y": 304
+          },
+          {
+            "x": 322,
+            "y": 326
+          },
+          {
+            "x": 286,
+            "y": 328
+          },
+          {
+            "x": 245,
+            "y": 326
+          },
+          {
+            "x": 202,
+            "y": 330
+          }
+        ],
+        "pathWidth": 3.3,
+        "height": -0.09,
+        "edgeSoftness": 1.0,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path",
+          "combat",
+          "bank"
+        ]
+      }
+    ],
     "smithingHallApproach": {
-      "shoreX": 176,
-      "stairX": 177,
-      "yStart": 133,
-      "yEnd": 134
+      "enabled": false,
+      "shoreX": 304,
+      "stairX": 305,
+      "yStart": 282,
+      "yEnd": 282
     },
     "castleRouteAnchor": {
-      "x": 118,
-      "y": 118
+      "x": 140,
+      "y": 174
     },
     "woodcuttingRouteAnchor": {
-      "x": 131,
-      "y": 118
+      "x": 216,
+      "y": 196
     }
   },
   "npcSpawns": [],
@@ -60,31 +370,46 @@
       "spawnNodeId": "enemy_spawn_tutorial_chicken_1",
       "enemyId": "enemy_chicken",
       "spawnTile": {
-        "x": 183,
-        "y": 117,
+        "x": 326,
+        "y": 332,
         "z": 0
       },
       "homeTileOverride": null,
       "roamingRadiusOverride": 3,
-      "respawnTicks": 8,
+      "respawnTicks": 20,
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,
-      "spawnGroupId": "tutorial_chickens"
+      "spawnGroupId": "tutorial_surface_chickens"
     },
     {
       "spawnNodeId": "enemy_spawn_tutorial_chicken_2",
       "enemyId": "enemy_chicken",
       "spawnTile": {
-        "x": 184,
-        "y": 121,
+        "x": 334,
+        "y": 336,
         "z": 0
       },
       "homeTileOverride": null,
       "roamingRadiusOverride": 3,
-      "respawnTicks": 8,
+      "respawnTicks": 20,
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,
-      "spawnGroupId": "tutorial_chickens"
+      "spawnGroupId": "tutorial_surface_chickens"
+    },
+    {
+      "spawnNodeId": "enemy_spawn_tutorial_chicken_3",
+      "enemyId": "enemy_chicken",
+      "spawnTile": {
+        "x": 342,
+        "y": 330,
+        "z": 0
+      },
+      "homeTileOverride": null,
+      "roamingRadiusOverride": 3,
+      "respawnTicks": 20,
+      "spawnEnabled": true,
+      "facingYaw": 3.141592653589793,
+      "spawnGroupId": "tutorial_surface_chickens"
     }
   ],
   "services": [
@@ -95,9 +420,12 @@
       "interactionTarget": "NPC",
       "name": "Tutorial Guide",
       "npcType": 3,
-      "x": 118,
-      "y": 118,
+      "appearanceId": "tutorial_guide",
+      "x": 141,
+      "y": 177,
       "z": 0,
+      "facingYaw": 3.141592653589793,
+      "roamingRadiusOverride": 0,
       "action": "Talk-to",
       "travelToWorldId": "main_overworld",
       "travelSpawn": {
@@ -106,7 +434,11 @@
         "z": 0
       },
       "dialogueId": "tutorial_guide",
-      "tags": ["tutorial", "fresh-start", "arrival"]
+      "tags": [
+        "tutorial",
+        "fresh-start",
+        "arrival"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_woodcutting_instructor",
@@ -115,12 +447,16 @@
       "interactionTarget": "NPC",
       "name": "Woodcutting Instructor",
       "npcType": 2,
-      "x": 126,
-      "y": 116,
+      "appearanceId": "tutorial_woodcutting_instructor",
+      "x": 250,
+      "y": 212,
       "z": 0,
       "action": "Talk-to",
       "dialogueId": "tutorial_woodcutting_instructor",
-      "tags": ["tutorial", "woodcutting"]
+      "tags": [
+        "tutorial",
+        "woodcutting"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_fishing_instructor",
@@ -129,12 +465,18 @@
       "interactionTarget": "NPC",
       "name": "Fishing Instructor",
       "npcType": 4,
-      "x": 140,
-      "y": 116,
+      "appearanceId": "tutorial_fishing_instructor",
+      "x": 274,
+      "y": 240,
       "z": 0,
+      "facingYaw": 3.141592653589793,
+      "roamingRadiusOverride": 0,
       "action": "Talk-to",
       "dialogueId": "tutorial_fishing_instructor",
-      "tags": ["tutorial", "fishing"]
+      "tags": [
+        "tutorial",
+        "fishing"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_firemaking_instructor",
@@ -143,12 +485,18 @@
       "interactionTarget": "NPC",
       "name": "Firemaking Instructor",
       "npcType": 2,
-      "x": 154,
-      "y": 130,
+      "appearanceId": "tutorial_firemaking_instructor",
+      "x": 288,
+      "y": 248,
       "z": 0,
+      "roamingRadiusOverride": 0,
       "action": "Talk-to",
       "dialogueId": "tutorial_firemaking_instructor",
-      "tags": ["tutorial", "firemaking", "cooking"]
+      "tags": [
+        "tutorial",
+        "firemaking",
+        "cooking"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_mining_smithing_instructor",
@@ -156,36 +504,51 @@
       "type": "MERCHANT",
       "interactionTarget": "NPC",
       "name": "Mining and Smithing Instructor",
-      "npcType": 1,
-      "x": 168,
-      "y": 132,
+      "npcType": 3,
+      "appearanceId": "tutorial_mining_smithing_instructor",
+      "x": 338,
+      "y": 292,
       "z": 0,
+      "facingYaw": 1.5707963267948966,
       "action": "Talk-to",
       "dialogueId": "tutorial_mining_smithing_instructor",
-      "tags": ["tutorial", "mining", "smithing"]
+      "tags": [
+        "tutorial",
+        "mining",
+        "smithing"
+      ]
     },
     {
       "serviceId": "station:tutorial_furnace",
       "spawnId": "station:tutorial_furnace",
       "type": "FURNACE",
       "interactionTarget": "FURNACE",
-      "x": 177,
-      "y": 135,
+      "x": 347,
+      "y": 301,
       "z": 0,
       "facingYaw": -1.5707963267948966,
       "footprintW": 2,
-      "footprintD": 2,
-      "tags": ["station", "tutorial", "smithing"]
+      "footprintD": 3,
+      "tags": [
+        "tutorial",
+        "station",
+        "smithing"
+      ]
     },
     {
       "serviceId": "station:tutorial_anvil",
       "spawnId": "station:tutorial_anvil",
       "type": "ANVIL",
       "interactionTarget": "ANVIL",
-      "x": 177,
-      "y": 138,
+      "x": 348,
+      "y": 307,
       "z": 0,
-      "tags": ["station", "tutorial", "smithing"]
+      "facingYaw": 1.5707963267948966,
+      "tags": [
+        "tutorial",
+        "station",
+        "smithing"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_combat_instructor",
@@ -193,13 +556,16 @@
       "type": "MERCHANT",
       "interactionTarget": "NPC",
       "name": "Combat Instructor",
-      "npcType": 1,
-      "x": 177,
-      "y": 117,
+      "npcType": 3,
+      "x": 320,
+      "y": 326,
       "z": 0,
       "action": "Talk-to",
       "dialogueId": "tutorial_combat_instructor",
-      "tags": ["tutorial", "combat"]
+      "tags": [
+        "tutorial",
+        "combat"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_bank_tutor",
@@ -208,12 +574,15 @@
       "interactionTarget": "NPC",
       "name": "Bank Tutor",
       "npcType": 3,
-      "x": 160,
-      "y": 111,
+      "x": 202,
+      "y": 330,
       "z": 0,
       "action": "Talk-to",
       "dialogueId": "tutorial_bank_tutor",
-      "tags": ["tutorial", "bank"]
+      "tags": [
+        "tutorial",
+        "bank"
+      ]
     },
     {
       "serviceId": "merchant:tutorial_exit_guide",
@@ -222,8 +591,9 @@
       "interactionTarget": "NPC",
       "name": "Tutorial Guide",
       "npcType": 3,
-      "x": 149,
-      "y": 109,
+      "appearanceId": "tutorial_guide",
+      "x": 250,
+      "y": 334,
       "z": 0,
       "action": "Talk-to",
       "travelToWorldId": "main_overworld",
@@ -233,16 +603,31 @@
         "z": 0
       },
       "dialogueId": "tutorial_guide",
-      "tags": ["tutorial", "fresh-start", "exit"]
+      "tags": [
+        "tutorial",
+        "fresh-start",
+        "exit"
+      ]
     }
   ],
   "resourceNodes": {
     "mining": [
       {
-        "placementId": "mining:tutorial_copper:1",
-        "routeId": "tutorial_mine",
-        "x": 171,
-        "y": 133,
+        "placementId": "mining:tutorial_surface_mine:1",
+        "routeId": "tutorial_surface_mine",
+        "x": 350,
+        "y": 280,
+        "z": 0,
+        "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": "tutorial island",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:tutorial_surface_mine:2",
+        "routeId": "tutorial_surface_mine",
+        "x": 358,
+        "y": 280,
         "z": 0,
         "oreType": "copper",
         "areaGateFlag": null,
@@ -250,12 +635,23 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "mining:tutorial_tin:1",
-        "routeId": "tutorial_mine",
-        "x": 173,
-        "y": 137,
+        "placementId": "mining:tutorial_surface_mine:3",
+        "routeId": "tutorial_surface_mine",
+        "x": 368,
+        "y": 287,
         "z": 0,
         "oreType": "tin",
+        "areaGateFlag": null,
+        "areaName": "tutorial island",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "mining:tutorial_surface_mine:4",
+        "routeId": "tutorial_surface_mine",
+        "x": 356,
+        "y": 298,
+        "z": 0,
+        "oreType": "copper",
         "areaGateFlag": null,
         "areaName": "tutorial island",
         "areaGateMessage": null
@@ -265,8 +661,8 @@
       {
         "placementId": "woodcutting:tutorial_tree:1",
         "routeId": "tutorial_grove",
-        "x": 130,
-        "y": 115,
+        "x": 198,
+        "y": 188,
         "z": 0,
         "nodeId": "normal_tree",
         "areaGateFlag": null,
@@ -276,8 +672,52 @@
       {
         "placementId": "woodcutting:tutorial_tree:2",
         "routeId": "tutorial_grove",
-        "x": 133,
-        "y": 119,
+        "x": 206,
+        "y": 212,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "tutorial island",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:tutorial_tree:3",
+        "routeId": "tutorial_grove",
+        "x": 222,
+        "y": 186,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "tutorial island",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:tutorial_tree:4",
+        "routeId": "tutorial_grove",
+        "x": 236,
+        "y": 214,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "tutorial island",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:tutorial_tree:5",
+        "routeId": "tutorial_grove",
+        "x": 248,
+        "y": 196,
+        "z": 0,
+        "nodeId": "normal_tree",
+        "areaGateFlag": null,
+        "areaName": "tutorial island",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:tutorial_tree:6",
+        "routeId": "tutorial_grove",
+        "x": 258,
+        "y": 224,
         "z": 0,
         "nodeId": "normal_tree",
         "areaGateFlag": null,
@@ -292,70 +732,72 @@
         "routeId": "tutorial_pond",
         "alias": "tutorial",
         "label": "Tutorial Pond",
-        "x": 141,
-        "y": 116,
+        "x": 262,
+        "y": 237,
         "z": 0,
-        "tags": ["tutorial", "fishing"]
+        "tags": [
+          "tutorial",
+          "fishing"
+        ]
       }
     ],
     "cooking": [
       {
         "routeId": "tutorial_fire",
         "alias": "tutorial",
-        "label": "Tutorial Cooking Fire",
-        "x": 158,
-        "y": 132,
+        "label": "Tutorial Open Fire Cooking",
+        "x": 282,
+        "y": 246,
         "z": 0,
-        "fireTiles": [
-          { "x": 158, "y": 132 },
-          { "x": 159, "y": 132 }
-        ],
-        "tags": ["tutorial", "cooking"]
+        "fireTiles": [],
+        "tags": [
+          "tutorial",
+          "cooking"
+        ]
       }
     ],
     "firemaking": [
       {
         "routeId": "tutorial_fire_lane",
         "alias": "tutorial",
-        "label": "Tutorial Fire Lane",
-        "x": 158,
-        "y": 132,
+        "label": "Tutorial Firemaking Field",
+        "x": 282,
+        "y": 246,
         "z": 0,
-        "tags": ["tutorial", "firemaking"]
+        "tags": [
+          "tutorial",
+          "firemaking"
+        ]
       }
     ],
     "mining": [
       {
-        "routeId": "tutorial_mine",
+        "routeId": "tutorial_surface_mine",
         "alias": "tutorial",
-        "label": "Tutorial Mine",
-        "x": 172,
-        "y": 134,
+        "label": "Tutorial Surface Quarry",
+        "x": 356,
+        "y": 288,
         "z": 0,
-        "tags": ["tutorial", "mining"]
+        "count": 4,
+        "tags": [
+          "tutorial",
+          "mining"
+        ]
       }
     ],
-    "runecrafting": [
-      {
-        "routeId": "tutorial_altar",
-        "alias": "tutorial",
-        "label": "Tutorial Altar",
-        "x": 148,
-        "y": 113,
-        "z": 0,
-        "variant": 0,
-        "tags": ["tutorial", "runecrafting", "altar"]
-      }
-    ],
+    "runecrafting": [],
     "woodcutting": [
       {
         "routeId": "tutorial_grove",
         "alias": "tutorial",
-        "label": "Tutorial Grove",
-        "x": 131,
-        "y": 118,
+        "label": "Tutorial Survival Field",
+        "x": 216,
+        "y": 196,
         "z": 0,
-        "tags": ["tutorial", "woodcutting"]
+        "tags": [
+          "tutorial",
+          "woodcutting"
+        ]
       }
     ]
   },
@@ -364,15 +806,32 @@
       {
         "landmarkId": "tutorial_start_cabin_steps",
         "tiles": [
-          { "x": 118, "y": 123, "z": 0, "tileId": "STAIRS_RAMP", "height": 0.05 },
-          { "x": 117, "y": 123, "z": 0, "tileId": "STAIRS_RAMP", "height": 0.05 }
+          {
+            "x": 140,
+            "y": 179,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
         ]
       },
       {
         "landmarkId": "tutorial_bank_booths",
         "tiles": [
-          { "x": 161, "y": 107, "z": 0, "tileId": "BANK_BOOTH", "height": 0.05 },
-          { "x": 166, "y": 107, "z": 0, "tileId": "BANK_BOOTH", "height": 0.05 }
+          {
+            "x": 184,
+            "y": 322,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          },
+          {
+            "x": 208,
+            "y": 324,
+            "z": 0,
+            "tileId": "BANK_BOOTH",
+            "height": 0.05
+          }
         ]
       }
     ],
@@ -382,59 +841,57 @@
         "z": 0,
         "height": 0.05,
         "points": [
-          { "x": 114, "y": 122 },
-          { "x": 114, "y": 124 },
-          { "x": 126, "y": 124 },
-          { "x": 126, "y": 123 }
+          {
+            "x": 130,
+            "y": 162
+          },
+          {
+            "x": 164,
+            "y": 162
+          },
+          {
+            "x": 176,
+            "y": 186
+          },
+          {
+            "x": 150,
+            "y": 200
+          },
+          {
+            "x": 130,
+            "y": 192
+          },
+          {
+            "x": 130,
+            "y": 162
+          }
         ]
       },
       {
-        "landmarkId": "tutorial_woodcutting_yard_fence",
+        "landmarkId": "tutorial_quarry_yard_fence",
         "z": 0,
         "height": 0.05,
         "points": [
-          { "x": 123, "y": 112 },
-          { "x": 136, "y": 112 },
-          { "x": 136, "y": 123 },
-          { "x": 126, "y": 123 },
-          { "x": 126, "y": 112 },
-          { "x": 123, "y": 112 }
-        ]
-      },
-      {
-        "landmarkId": "tutorial_fishing_yard_fence",
-        "z": 0,
-        "height": 0.05,
-        "points": [
-          { "x": 136, "y": 112 },
-          { "x": 150, "y": 112 },
-          { "x": 150, "y": 127 },
-          { "x": 136, "y": 127 },
-          { "x": 136, "y": 112 }
-        ]
-      },
-      {
-        "landmarkId": "tutorial_fire_yard_fence",
-        "z": 0,
-        "height": 0.05,
-        "points": [
-          { "x": 150, "y": 124 },
-          { "x": 164, "y": 124 },
-          { "x": 164, "y": 137 },
-          { "x": 150, "y": 137 },
-          { "x": 150, "y": 124 }
-        ]
-      },
-      {
-        "landmarkId": "tutorial_mining_yard_fence",
-        "z": 0,
-        "height": 0.05,
-        "points": [
-          { "x": 164, "y": 126 },
-          { "x": 184, "y": 126 },
-          { "x": 184, "y": 142 },
-          { "x": 164, "y": 142 },
-          { "x": 164, "y": 126 }
+          {
+            "x": 332,
+            "y": 256
+          },
+          {
+            "x": 376,
+            "y": 256
+          },
+          {
+            "x": 390,
+            "y": 288
+          },
+          {
+            "x": 368,
+            "y": 316
+          },
+          {
+            "x": 320,
+            "y": 306
+          }
         ]
       },
       {
@@ -442,47 +899,87 @@
         "z": 0,
         "height": 0.05,
         "points": [
-          { "x": 174, "y": 111 },
-          { "x": 188, "y": 111 },
-          { "x": 188, "y": 126 },
-          { "x": 174, "y": 126 },
-          { "x": 174, "y": 111 }
+          {
+            "x": 350,
+            "y": 306
+          },
+          {
+            "x": 358,
+            "y": 332
+          },
+          {
+            "x": 320,
+            "y": 346
+          },
+          {
+            "x": 282,
+            "y": 336
+          }
         ]
       },
       {
-        "landmarkId": "tutorial_bank_yard_fence",
+        "landmarkId": "tutorial_bank_exit_fence",
         "z": 0,
         "height": 0.05,
         "points": [
-          { "x": 156, "y": 104 },
-          { "x": 174, "y": 104 },
-          { "x": 174, "y": 118 },
-          { "x": 156, "y": 118 },
-          { "x": 156, "y": 104 }
+          {
+            "x": 162,
+            "y": 304
+          },
+          {
+            "x": 242,
+            "y": 300
+          },
+          {
+            "x": 284,
+            "y": 324
+          },
+          {
+            "x": 250,
+            "y": 350
+          },
+          {
+            "x": 170,
+            "y": 342
+          },
+          {
+            "x": 162,
+            "y": 304
+          }
         ]
       },
       {
-        "landmarkId": "tutorial_exit_yard_fence",
+        "landmarkId": "tutorial_bank_inner_counter_fence",
         "z": 0,
         "height": 0.05,
         "points": [
-          { "x": 142, "y": 104 },
-          { "x": 156, "y": 104 },
-          { "x": 156, "y": 116 },
-          { "x": 142, "y": 116 },
-          { "x": 142, "y": 104 }
+          {
+            "x": 180,
+            "y": 320
+          },
+          {
+            "x": 204,
+            "y": 321
+          },
+          {
+            "x": 226,
+            "y": 326
+          }
         ]
       }
     ],
     "doors": [
       {
         "landmarkId": "tutorial_start_cabin_door",
-        "x": 118,
-        "y": 122,
+        "x": 140,
+        "y": 178,
         "z": 0,
-        "tileId": "DOOR_OPEN",
-        "height": 0.05,
-        "isOpen": true,
+        "tileId": "DOOR_CLOSED",
+        "height": 0.5,
+        "isOpen": false,
+        "tutorialRequiredStep": 1,
+        "tutorialGateMessage": "Talk to the Tutorial Guide before you leave the cabin.",
+        "tutorialAutoOpenOnUnlock": false,
         "hingeOffsetX": 0.45,
         "hingeOffsetY": 0,
         "thickness": 0.12,
@@ -490,19 +987,19 @@
         "isEW": true,
         "closedRot": 0,
         "openRot": -1.5707963267948966,
-        "currentRotation": -1.5707963267948966,
-        "targetRotation": -1.5707963267948966
+        "currentRotation": 0,
+        "targetRotation": 0
       },
       {
-        "landmarkId": "tutorial_gate_arrival_to_woodcutting",
-        "x": 126,
-        "y": 118,
+        "landmarkId": "tutorial_gate_arrival_to_survival_field",
+        "x": 176,
+        "y": 186,
         "z": 0,
         "tileId": "WOODEN_GATE_CLOSED",
         "height": 0.05,
         "isOpen": false,
         "tutorialRequiredStep": 1,
-        "tutorialGateMessage": "Talk to the Tutorial Guide before entering the grove.",
+        "tutorialGateMessage": "Tell the Tutorial Guide you are ready before entering the survival field.",
         "hingeOffsetX": 0,
         "hingeOffsetY": 0.45,
         "thickness": 0.12,
@@ -514,55 +1011,15 @@
         "targetRotation": 0
       },
       {
-        "landmarkId": "tutorial_gate_woodcutting_to_fishing",
-        "x": 136,
-        "y": 116,
-        "z": 0,
-        "tileId": "WOODEN_GATE_CLOSED",
-        "height": 0.05,
-        "isOpen": false,
-        "tutorialRequiredStep": 2,
-        "tutorialGateMessage": "Cut logs and report to the Woodcutting Instructor first.",
-        "hingeOffsetX": 0,
-        "hingeOffsetY": 0.45,
-        "thickness": 0.12,
-        "width": 0.9,
-        "isEW": false,
-        "closedRot": 0,
-        "openRot": 1.5707963267948966,
-        "currentRotation": 0,
-        "targetRotation": 0
-      },
-      {
-        "landmarkId": "tutorial_gate_fishing_to_firemaking",
-        "x": 150,
-        "y": 125,
-        "z": 0,
-        "tileId": "WOODEN_GATE_CLOSED",
-        "height": 0.05,
-        "isOpen": false,
-        "tutorialRequiredStep": 3,
-        "tutorialGateMessage": "Catch shrimp and report to the Fishing Instructor first.",
-        "hingeOffsetX": 0,
-        "hingeOffsetY": 0.45,
-        "thickness": 0.12,
-        "width": 0.9,
-        "isEW": false,
-        "closedRot": 0,
-        "openRot": 1.5707963267948966,
-        "currentRotation": 0,
-        "targetRotation": 0
-      },
-      {
-        "landmarkId": "tutorial_gate_firemaking_to_smithing",
-        "x": 164,
-        "y": 134,
+        "landmarkId": "tutorial_gate_survival_to_quarry_yard",
+        "x": 324,
+        "y": 260,
         "z": 0,
         "tileId": "WOODEN_GATE_CLOSED",
         "height": 0.05,
         "isOpen": false,
         "tutorialRequiredStep": 4,
-        "tutorialGateMessage": "Cook your shrimp and report to the Firemaking Instructor first.",
+        "tutorialGateMessage": "Finish the survival loop first: cut logs, catch shrimp, cook or burn it, then report to the Firemaking Instructor.",
         "hingeOffsetX": 0,
         "hingeOffsetY": 0.45,
         "thickness": 0.12,
@@ -574,20 +1031,20 @@
         "targetRotation": 0
       },
       {
-        "landmarkId": "tutorial_gate_smithing_to_combat",
-        "x": 181,
-        "y": 126,
+        "landmarkId": "tutorial_gate_quarry_to_combat_yard",
+        "x": 342,
+        "y": 304,
         "z": 0,
         "tileId": "WOODEN_GATE_CLOSED",
         "height": 0.05,
         "isOpen": false,
         "tutorialRequiredStep": 5,
-        "tutorialGateMessage": "Forge bronze and report to the Mining and Smithing Instructor first.",
-        "hingeOffsetX": 0.45,
-        "hingeOffsetY": 0,
+        "tutorialGateMessage": "Finish the mining and smithing lesson first.",
+        "hingeOffsetX": 0,
+        "hingeOffsetY": 0.45,
         "thickness": 0.12,
         "width": 0.9,
-        "isEW": true,
+        "isEW": false,
         "closedRot": 0,
         "openRot": 1.5707963267948966,
         "currentRotation": 0,
@@ -595,14 +1052,14 @@
       },
       {
         "landmarkId": "tutorial_gate_combat_to_bank",
-        "x": 174,
-        "y": 116,
+        "x": 284,
+        "y": 324,
         "z": 0,
         "tileId": "WOODEN_GATE_CLOSED",
         "height": 0.05,
         "isOpen": false,
         "tutorialRequiredStep": 6,
-        "tutorialGateMessage": "Fight a chicken and report to the Combat Instructor first.",
+        "tutorialGateMessage": "Finish the combat lesson first.",
         "hingeOffsetX": 0,
         "hingeOffsetY": 0.45,
         "thickness": 0.12,
@@ -615,8 +1072,8 @@
       },
       {
         "landmarkId": "tutorial_gate_bank_to_exit",
-        "x": 156,
-        "y": 110,
+        "x": 250,
+        "y": 350,
         "z": 0,
         "tileId": "WOODEN_GATE_CLOSED",
         "height": 0.05,
@@ -634,51 +1091,205 @@
         "targetRotation": 0
       }
     ],
+    "caveOpenings": [],
+    "decorProps": [
+      {
+        "propId": "tutorial_cabin_desk",
+        "kind": "desk",
+        "label": "Tutor's Desk",
+        "x": 135,
+        "y": 168,
+        "z": 0,
+        "facingYaw": 0,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "arrival",
+          "cabin"
+        ]
+      },
+      {
+        "propId": "tutorial_cabin_supply_crate",
+        "kind": "crate",
+        "label": "Starter Supplies",
+        "x": 137,
+        "y": 168,
+        "z": 0,
+        "facingYaw": 0,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "arrival",
+          "cabin"
+        ]
+      },
+      {
+        "propId": "tutorial_cabin_tool_rack",
+        "kind": "tool_rack",
+        "label": "Tool Rack",
+        "x": 143,
+        "y": 171,
+        "z": 0,
+        "facingYaw": -1.5707963267948966,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "arrival",
+          "cabin"
+        ]
+      },
+      {
+        "propId": "tutorial_arrival_notice_board",
+        "kind": "notice_board",
+        "label": "Tutorial Notice Board",
+        "x": 158,
+        "y": 178,
+        "z": 0,
+        "facingYaw": 0.2617993877991494,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "arrival",
+          "yard"
+        ]
+      },
+      {
+        "propId": "tutorial_grove_chopping_block",
+        "kind": "chopping_block",
+        "label": "Chopping Block",
+        "x": 214,
+        "y": 210,
+        "z": 0,
+        "facingYaw": 0.2617993877991494,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "survival",
+          "woodcutting"
+        ]
+      },
+      {
+        "propId": "tutorial_grove_woodpile",
+        "kind": "woodpile",
+        "label": "Stacked Logs",
+        "x": 226,
+        "y": 210,
+        "z": 0,
+        "facingYaw": -0.3490658503988659,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "survival",
+          "woodcutting"
+        ]
+      },
+      {
+        "propId": "tutorial_quarry_tool_rack",
+        "kind": "tool_rack",
+        "label": "Mining Tools",
+        "x": 340,
+        "y": 298,
+        "z": 0,
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "mining",
+          "smithing",
+          "quarry"
+        ]
+      },
+      {
+        "propId": "tutorial_quarry_ore_pile",
+        "kind": "ore_pile",
+        "label": "Sorted Ore",
+        "x": 354,
+        "y": 286,
+        "z": 0,
+        "facingYaw": 0.3490658503988659,
+        "blocksMovement": false,
+        "tags": [
+          "tutorial",
+          "mining",
+          "smithing",
+          "quarry"
+        ]
+      },
+      {
+        "propId": "tutorial_quarry_coal_bin",
+        "kind": "coal_bin",
+        "label": "Coal Bin",
+        "x": 342,
+        "y": 300,
+        "z": 0,
+        "facingYaw": -0.2617993877991494,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "mining",
+          "smithing",
+          "quarry"
+        ]
+      },
+      {
+        "propId": "tutorial_quarry_barrel",
+        "kind": "barrel",
+        "label": "Quench Barrel",
+        "x": 352,
+        "y": 302,
+        "z": 0,
+        "facingYaw": 0.17453292519943295,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "mining",
+          "smithing",
+          "quarry"
+        ]
+      }
+    ],
     "roofs": [
       {
         "landmarkId": "tutorial_start_cabin_roof",
-        "x": 110,
-        "y": 110,
+        "x": 132,
+        "y": 166,
         "z": 0,
         "width": 13,
         "depth": 13,
-        "height": 2.3,
+        "height": 3.02,
         "ridgeAxis": "x",
         "hideWhenPlayerInside": true,
         "hideBounds": {
-          "xMin": 110,
-          "xMax": 122,
-          "yMin": 110,
-          "yMax": 122,
+          "xMin": 132,
+          "xMax": 144,
+          "yMin": 166,
+          "yMax": 178,
           "z": 0
         }
       }
     ],
-    "altars": [
-      {
-        "x": 148,
-        "y": 113,
-        "z": 0,
-        "variant": 0,
-        "label": "Tutorial Altar",
-        "routeId": "tutorial_altar",
-        "alias": "tutorial",
-        "tags": ["tutorial", "runecrafting", "altar"]
-      }
-    ],
+    "altars": [],
     "showcaseTrees": [
       {
         "nodeId": "normal_tree",
-        "x": 130,
-        "y": 115,
+        "x": 198,
+        "y": 184,
         "z": 0,
         "label": "Tutorial Tree",
         "clearRadius": 2
       },
       {
         "nodeId": "normal_tree",
-        "x": 133,
-        "y": 119,
+        "x": 228,
+        "y": 204,
+        "z": 0,
+        "label": "Tutorial Tree",
+        "clearRadius": 2
+      },
+      {
+        "nodeId": "normal_tree",
+        "x": 252,
+        "y": 226,
         "z": 0,
         "label": "Tutorial Tree",
         "clearRadius": 2

@@ -36,14 +36,15 @@
         </div>
 
         <div id="player-entry-overlay" class="hidden pointer-events-auto absolute inset-0 z-[1150] player-entry-overlay">
-            <div class="player-entry-panel">
-                <div class="player-entry-intro">
+            <div class="player-entry-shell">
+                <section class="player-entry-preview-panel" aria-label="Character preview">
                     <div class="player-entry-kicker">Arrival Gate</div>
                     <h1 id="player-entry-title" class="player-entry-title">Create Your Adventurer</h1>
                     <p id="player-entry-subtitle" class="player-entry-subtitle">Choose a starter identity before you arrive on Tutorial Island.</p>
+                    <div id="player-entry-preview-stage" class="player-entry-preview-stage" title="Drag to rotate"></div>
                     <div id="player-entry-summary" class="player-entry-summary"></div>
-                </div>
-                <div class="player-entry-form">
+                </section>
+                <section class="player-entry-controls" aria-label="Character controls">
                     <label class="player-entry-field" for="player-entry-name">
                         <span class="player-entry-label">Name</span>
                         <input id="player-entry-name" class="player-entry-input" type="text" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Adventurer">
@@ -57,15 +58,16 @@
                         </div>
                     </div>
                     <div class="player-entry-field">
-                        <div class="player-entry-label-row">
-                            <span class="player-entry-label">Colors</span>
-                            <span class="player-entry-label-hint">Pick from the palettes wired into the player model.</span>
-                        </div>
+                        <span class="player-entry-label">Looks</span>
+                        <div id="player-entry-creator-rows" class="player-entry-creator-rows"></div>
+                    </div>
+                    <div class="player-entry-field">
+                        <span class="player-entry-label">Colors</span>
                         <div id="player-entry-color-rows" class="player-entry-color-rows"></div>
                     </div>
                     <div id="player-entry-secondary-note" class="player-entry-secondary-note">Progress will begin autosaving once you arrive.</div>
                     <button id="player-entry-primary" class="player-entry-primary" type="button">Start Adventure</button>
-                </div>
+                </section>
             </div>
         </div>
 
@@ -81,20 +83,33 @@
         <div id="xp-drop-container" class="absolute top-[25%] left-1/2 transform -translate-x-1/2 pointer-events-none flex flex-col items-center gap-1 z-[100]"></div>
 
         <!-- Minimap & Toggles Container -->
-        <div class="pointer-events-auto absolute top-4 right-4 z-50 flex flex-col items-end gap-2">
-            <div class="relative z-50">
+        <div class="pointer-events-none absolute top-4 right-4 z-50 flex flex-col items-end gap-2">
+            <div class="relative z-50 pointer-events-auto">
                 <div class="w-48 h-48 bg-black rounded-full border-[6px] border-[#5d5447] overflow-hidden shadow-2xl cursor-crosshair">
                     <div class="absolute top-1 w-full text-center text-red-500 font-bold text-sm z-10 select-none pointer-events-none drop-shadow-md">N</div>
                     <canvas id="minimap" width="192" height="192" class="w-full h-full block"></canvas>
                 </div>
             </div>
-            <button id="mapToggleBtn" class="w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-200" title="World Map" aria-label="World map">
-                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M3.5 6.2 8.8 4l6.2 2.1L20.5 4v13.8L15 20l-6.2-2.1L3.5 20V6.2z"></path>
-                    <path d="M8.8 4v13.9"></path>
-                    <path d="M15 6.1V20"></path>
-                </svg>
-            </button>
+            <div class="pointer-events-auto flex items-center gap-2">
+                <button id="runToggleBtn" class="w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-50 text-gray-200" title="Run Mode: OFF" aria-label="Run toggle">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="16.5" cy="4.8" r="1.7" fill="currentColor" stroke="none"></circle>
+                        <path d="M14 8.3 11.7 12.1l3.3 2.1 1.6 4.6"></path>
+                        <path d="m11.7 12.1-4 2.4"></path>
+                        <path d="m13.9 9.2 3.8 1"></path>
+                        <path d="m14.8 16.1-4.3 2.9"></path>
+                        <path d="M4.5 10h2.3"></path>
+                        <path d="M3.8 12.5h2.6"></path>
+                    </svg>
+                </button>
+                <button id="mapToggleBtn" class="w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-40 text-gray-200" title="World Map" aria-label="World map">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3.5 6.2 8.8 4l6.2 2.1L20.5 4v13.8L15 20l-6.2-2.1L3.5 20V6.2z"></path>
+                        <path d="M8.8 4v13.9"></path>
+                        <path d="M15 6.1V20"></path>
+                    </svg>
+                </button>
+            </div>
             
             <!-- Free Cam Toggle -->
             <button id="freeCamBtn" class="bg-gray-700 border-2 border-[#5d5447] text-white text-[10px] font-bold py-1.5 px-3 rounded shadow-md hover:bg-gray-600 transition-colors z-40 uppercase tracking-wider">
@@ -150,38 +165,35 @@
         </div>
 
         <!-- NPC Dialogue Overlay -->
-        <div id="npc-dialogue-overlay" class="hidden pointer-events-auto absolute inset-0 z-[255] bg-black/45 flex items-center justify-center p-3">
-            <div class="w-[500px] max-w-[calc(100vw-1.5rem)] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.85)] flex flex-col">
-                <div class="flex items-center justify-between px-3 py-2 bg-[#2c241c] border-b border-[#3e3529]">
-                    <div>
-                        <div id="npc-dialogue-title" class="text-[#ff981f] font-bold text-sm uppercase tracking-wide">Conversation</div>
-                        <div class="text-[10px] text-[#c8aa6e] uppercase tracking-[0.18em]">Talk-to</div>
+        <div id="npc-dialogue-overlay" class="hidden pointer-events-auto absolute inset-0 z-[255] npc-dialogue-overlay">
+            <div id="npc-dialogue-panel" class="npc-dialogue-panel" role="dialog" aria-modal="true" aria-labelledby="npc-dialogue-title">
+                <button id="npc-dialogue-close" type="button" class="npc-dialogue-close" aria-label="Close dialogue">X</button>
+                <div class="npc-dialogue-title-rail" aria-hidden="true"></div>
+                <div class="npc-dialogue-title-plaque">
+                    <div id="npc-dialogue-title" class="npc-dialogue-title">Conversation</div>
+                </div>
+                <div class="npc-dialogue-portrait" aria-hidden="true">
+                    <div id="npc-dialogue-portrait-model" class="npc-dialogue-portrait-model"></div>
+                    <div class="npc-dialogue-portrait-stage">
+                        <div class="npc-dialogue-portrait-hat"></div>
+                        <div class="npc-dialogue-portrait-head">
+                            <span class="npc-dialogue-portrait-eye left"></span>
+                            <span class="npc-dialogue-portrait-eye right"></span>
+                            <span class="npc-dialogue-portrait-mouth"></span>
+                            <span class="npc-dialogue-portrait-beard"></span>
+                        </div>
+                        <div class="npc-dialogue-portrait-robe"></div>
                     </div>
-                    <button id="npc-dialogue-close" type="button" class="text-[#ff981f] font-bold hover:text-red-400 transition-colors bg-[#2b251d] px-2 rounded border border-[#1a1611]">X</button>
                 </div>
-                <div class="p-3 text-sm text-[#f3e4c3] space-y-3">
-                    <div id="npc-dialogue-body" class="min-h-[64px] leading-6">They do not have much to say right now.</div>
-                    <div id="npc-dialogue-options" class="grid gap-2"></div>
+                <div class="npc-dialogue-scroll">
+                    <div id="npc-dialogue-body" class="npc-dialogue-body">They do not have much to say right now.</div>
                 </div>
-                <div class="px-3 py-2 border-t border-[#3e3529] text-[10px] uppercase tracking-[0.16em] text-[#c8aa6e]">
-                    Press Esc or click outside to close.
-                </div>
+                <div id="npc-dialogue-options" class="npc-dialogue-options"></div>
             </div>
         </div>
 
         <!-- Bottom Right Container (Tabbed Inventory / Equipment) -->
         <div id="main-ui-container" data-active-tab="inv" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
-            <button id="runToggleBtn" class="absolute -left-16 bottom-2 w-12 h-12 bg-gray-700 rounded-full border-[3px] border-[#5d5447] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.8)] hover:bg-gray-600 transition-colors z-50 text-gray-200" title="Run Mode: OFF" aria-label="Run toggle">
-                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="16.5" cy="4.8" r="1.7" fill="currentColor" stroke="none"></circle>
-                    <path d="M14 8.3 11.7 12.1l3.3 2.1 1.6 4.6"></path>
-                    <path d="m11.7 12.1-4 2.4"></path>
-                    <path d="m13.9 9.2 3.8 1"></path>
-                    <path d="m14.8 16.1-4.3 2.9"></path>
-                    <path d="M4.5 10h2.3"></path>
-                    <path d="M3.8 12.5h2.6"></path>
-                </svg>
-            </button>
             <div class="px-3 pt-3 pb-2 bg-[#14191d] border-b border-[#3a444c]">
                 <div class="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] font-bold">
                     <span class="text-[#ff9b9b]">Hitpoints</span>
@@ -220,7 +232,7 @@
                         </div>
                         
                         <div class="flex-1 flex flex-col mx-2 gap-2 h-full justify-between">
-                            <div id="player-preview-box" class="flex-1 flex flex-col items-center justify-center border border-solid border-[#3a444c] bg-[#0a0c0e] shadow-inner select-none overflow-hidden cursor-ew-resize min-h-[140px]" title="Middle-click and drag to rotate">
+                            <div id="player-preview-box" class="flex-1 flex flex-col items-center justify-center border border-solid border-[#3a444c] bg-[#0a0c0e] shadow-inner select-none overflow-hidden cursor-default min-h-[140px]" title="Middle-click and drag to rotate">
                             </div>
                             <div class="bg-[#090b0c] p-2 text-[10px] text-gray-400 border border-[#1e2328] font-sans shadow-inner select-none mt-auto">
                                 <div class="flex justify-between"><span>Atk:</span><span id="stat-atk" class="text-white font-bold">10</span></div>

@@ -30,6 +30,7 @@ export interface ServiceDescriptor extends Point3 {
   travelToWorldId?: string | null;
   travelSpawn?: Point3 | null;
   facingYaw?: number;
+  roamingRadiusOverride?: number | null;
   footprintW?: number;
   footprintD?: number;
   tags?: string[];
@@ -48,6 +49,7 @@ export interface NpcDescriptor extends Point3 {
   travelToWorldId?: string | null;
   travelSpawn?: Point3 | null;
   facingYaw?: number;
+  roamingRadiusOverride?: number | null;
   tags?: string[];
 }
 
@@ -86,6 +88,7 @@ export interface TerrainEllipse {
   cy: number;
   rx: number;
   ry: number;
+  rotationRadians?: number;
 }
 
 export interface TerrainBox2D {
@@ -96,11 +99,31 @@ export interface TerrainBox2D {
 }
 
 export interface TerrainPier {
+  enabled?: boolean;
   xMin: number;
   xMax: number;
   yStart: number;
   yEnd: number;
   entryY: number;
+}
+
+export interface TerrainPathPatch {
+  pathId: string;
+  points: Point2[];
+  pathWidth: number;
+  z?: number;
+  tileId?: string;
+  height?: number;
+  edgeSoftness?: number;
+  tags?: string[];
+}
+
+export interface IslandWaterPatch {
+  enabled?: boolean;
+  waterBounds: TerrainBox2D;
+  landPolygon: Point2[];
+  shoreWidth?: number;
+  shallowDistance?: number;
 }
 
 export interface WaterBodyEllipseShape extends TerrainEllipse {
@@ -245,6 +268,7 @@ export interface DynamicMerchantSpawn {
   appearanceId?: string | null;
   dialogueId?: string | null;
   action?: string;
+  roamingRadiusOverride?: number | null;
   anchorRouteId: string;
   tags?: string[];
 }
@@ -266,6 +290,7 @@ export interface DoorLandmark extends Point3 {
   isOpen: boolean;
   tutorialRequiredStep?: number | null;
   tutorialGateMessage?: string | null;
+  tutorialAutoOpenOnUnlock?: boolean | null;
   hingeOffsetX: number;
   hingeOffsetY: number;
   thickness: number;
@@ -294,6 +319,39 @@ export interface RoofLandmark extends Point3 {
   hideBounds?: TerrainBox2D & { z: number };
 }
 
+export type CaveOpeningFacing = "north" | "south" | "east" | "west";
+
+export interface CaveOpeningLandmark extends Point3 {
+  landmarkId: string;
+  label: string;
+  facing: CaveOpeningFacing;
+  width: number;
+  depth: number;
+  visualOnly: boolean;
+  occluded?: boolean;
+  tags?: string[];
+}
+
+export type DecorPropKind =
+  | "desk"
+  | "crate"
+  | "tool_rack"
+  | "notice_board"
+  | "chopping_block"
+  | "woodpile"
+  | "ore_pile"
+  | "coal_bin"
+  | "barrel";
+
+export interface DecorPropLandmark extends Point3 {
+  propId: string;
+  kind: DecorPropKind;
+  label?: string;
+  facingYaw?: number;
+  blocksMovement?: boolean;
+  tags?: string[];
+}
+
 export interface ShowcaseTree {
   nodeId: string;
   x: number;
@@ -308,11 +366,14 @@ export interface WorldDefinition {
   structures: StructurePlacement[];
   waterBodies?: WaterBodyDefinition[];
   terrainPatches: {
+    islandWater?: IslandWaterPatch;
     lakes: TerrainEllipse[];
     castleFrontPond: TerrainEllipse;
     deepWaterCenter: TerrainBox2D;
     pier: TerrainPier;
+    paths?: TerrainPathPatch[];
     smithingHallApproach: {
+      enabled?: boolean;
       shoreX: number;
       stairX: number;
       yStart: number;
@@ -341,6 +402,8 @@ export interface WorldDefinition {
     doors: DoorLandmark[];
     fences?: FenceLandmark[];
     roofs?: RoofLandmark[];
+    caveOpenings?: CaveOpeningLandmark[];
+    decorProps?: DecorPropLandmark[];
     altars: RunecraftingAltarPlacement[];
     showcaseTrees: ShowcaseTree[];
   };
@@ -370,11 +433,14 @@ export interface NpcRegistry {
 
 export interface WorldLegacyView {
   lakeDefs: TerrainEllipse[];
+  islandWater?: IslandWaterPatch;
   castleFrontPond: TerrainEllipse;
   deepWaterCenter: TerrainBox2D;
   pier: TerrainPier;
+  pathPatches: TerrainPathPatch[];
   waterBodies: WaterBodyDefinition[];
   smithingHallApproach: {
+    enabled?: boolean;
     shoreX: number;
     stairX: number;
     yStart: number;
@@ -401,6 +467,8 @@ export interface WorldLegacyView {
   doors: DoorLandmark[];
   fences: FenceLandmark[];
   roofs: RoofLandmark[];
+  caveOpenings: CaveOpeningLandmark[];
+  decorProps: DecorPropLandmark[];
   showcaseTrees: ShowcaseTree[];
 }
 
@@ -480,6 +548,7 @@ export interface LegacyNpcRenderPlacement extends Point3 {
   dialogueId?: string | null;
   action?: string;
   facingYaw?: number;
+  roamingRadiusOverride?: number | null;
   tags?: string[];
 }
 

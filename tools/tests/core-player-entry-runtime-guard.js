@@ -34,6 +34,7 @@ function makeElement(tagName) {
     onclick: null,
     children: [],
     style: {},
+    dataset: {},
     classList: makeClassList(),
     attributes: {},
     listeners: {},
@@ -76,7 +77,9 @@ function makeDocument() {
     "player-entry-secondary-note": makeElement("div"),
     "player-entry-primary": makeElement("button"),
     "player-entry-gender-0": makeElement("button"),
-    "player-entry-gender-1": makeElement("button")
+    "player-entry-gender-1": makeElement("button"),
+    "player-entry-preview-stage": makeElement("div"),
+    "player-entry-creator-rows": makeElement("div")
   };
   elements["player-entry-color-rows"] = makeElement("div");
   const body = makeElement("body");
@@ -106,6 +109,9 @@ function run() {
   assert(runtimeSource.includes("function packedPlayerEntryColorToCss"), "player-entry runtime should own packed color conversion");
   assert(runtimeSource.includes("function renderPlayerEntryFlow"), "player-entry runtime should own player-entry DOM rendering");
   assert(runtimeSource.includes("function bindPlayerEntryFlowControls"), "player-entry runtime should own player-entry DOM event binding");
+  assert(!runtimeSource.includes("previewState.yaw += 0.0025"), "player-entry preview should not auto-rotate");
+  assert(runtimeSource.includes("nextRig.position.set(0, -0.18, -0.16)"), "player-entry preview rig should sit high enough inside the stage frame");
+  assert(runtimeSource.includes("floor.position.set(0, -0.245, -0.16)"), "player-entry platform should stay inside the preview stage frame");
   assert(manifestSource.indexOf('id: "core-player-entry-runtime"') !== -1, "legacy manifest should include the player-entry runtime");
   assert(
     manifestSource.indexOf('id: "core-chat-runtime"') < manifestSource.indexOf('id: "core-player-entry-runtime"')
@@ -136,15 +142,91 @@ function run() {
   const documentRef = makeDocument();
   const profile = { name: "Ari", creationCompleted: false };
   const flow = { isOpen: false, hasLoadedSave: false };
-  const appearance = { gender: 1, colors: [0, 1, 0, 0, 0] };
+  const appearance = {
+    gender: 1,
+    colors: [0, 1, 0, 0, 0],
+    creatorSelections: {
+      hairStyle: "missing",
+      faceStyle: "angular",
+      facialHair: "clean",
+      bodyStyle: "shirt_vest",
+      legStyle: "trousers",
+      feetStyle: "shoes"
+    }
+  };
   const catalog = {
+    bodyColorLabels: ["Hair", "Top", "Bottom", "Footwear", "Skin"],
     bodyColorPalettes: [
-      [0, 1024],
-      [2048, 4096],
-      [8192],
-      [16384],
-      [32768]
-    ]
+      [0, 1024, 2048, 4096, 8192, 16384, 32768, 65535],
+      [0, 1024, 2048, 4096, 8192, 16384, 32768, 65535],
+      [0, 1024, 2048, 4096, 8192, 16384, 32768, 65535],
+      [0, 1024, 2048, 4096, 8192, 16384, 32768, 65535],
+      [0, 1024, 2048, 4096, 8192, 16384, 32768, 65535]
+    ],
+    creatorSlotOrder: ["hairStyle", "faceStyle", "facialHair", "bodyStyle", "legStyle", "feetStyle"],
+    creatorDefaults: {
+      hairStyle: "short",
+      faceStyle: "plain",
+      facialHair: "clean",
+      bodyStyle: "plain_tunic",
+      legStyle: "trousers",
+      feetStyle: "shoes"
+    },
+    creatorSlots: {
+      hairStyle: {
+        label: "Hair",
+        options: [
+          { id: "bald", label: "Bald", kitId: "creator_hair_bald" },
+          { id: "short", label: "Short", kitId: "creator_hair_short" },
+          { id: "swept", label: "Swept", kitId: "creator_hair_swept" },
+          { id: "long", label: "Long", kitId: "creator_hair_long" }
+        ]
+      },
+      faceStyle: {
+        label: "Face",
+        options: [
+          { id: "plain", label: "Plain", kitId: "creator_face_plain" },
+          { id: "soft", label: "Soft", kitId: "creator_face_soft" },
+          { id: "angular", label: "Angular", kitId: "creator_face_angular" },
+          { id: "strong-brow", label: "Strong Brow", kitId: "creator_face_strong_brow" }
+        ]
+      },
+      facialHair: {
+        label: "Facial Hair",
+        options: [
+          { id: "clean", label: "Clean", kitId: "creator_facial_hair_clean" },
+          { id: "stubble", label: "Stubble", kitId: "creator_facial_hair_stubble" },
+          { id: "moustache", label: "Moustache", kitId: "creator_facial_hair_moustache" },
+          { id: "short_beard", label: "Short Beard", kitId: "creator_facial_hair_short_beard" }
+        ]
+      },
+      bodyStyle: {
+        label: "Top",
+        options: [
+          { id: "plain_tunic", label: "Plain Tunic", kitId: "creator_body_plain_tunic" },
+          { id: "shirt_vest", label: "Shirt & Vest", kitId: "creator_body_shirt_vest" },
+          { id: "striped_shirt", label: "Striped Shirt", kitId: "creator_body_striped_shirt" },
+          { id: "work_apron", label: "Work Apron", kitId: "creator_body_work_apron" }
+        ]
+      },
+      legStyle: {
+        label: "Bottom",
+        options: [
+          { id: "trousers", label: "Trousers", kitId: "creator_leg_trousers" },
+          { id: "rolled_trousers", label: "Rolled Trousers", kitId: "creator_leg_rolled_trousers" },
+          { id: "skirt", label: "Skirt", kitId: "creator_leg_skirt" },
+          { id: "wrapped_legs", label: "Wrapped Legs", kitId: "creator_leg_wrapped_legs" }
+        ]
+      },
+      feetStyle: {
+        label: "Footwear",
+        options: [
+          { id: "shoes", label: "Shoes", kitId: "creator_feet_shoes" },
+          { id: "work_boots", label: "Work Boots", kitId: "creator_feet_work_boots" },
+          { id: "sandals", label: "Sandals", kitId: "creator_feet_sandals" }
+        ]
+      }
+    }
   };
   let previewRefreshes = 0;
   runtime.renderPlayerEntryFlow({
@@ -171,11 +253,20 @@ function run() {
   assert(documentRef.getElementById("player-entry-title").textContent === "Create Your Adventurer", "runtime should render player-entry title");
   assert(documentRef.getElementById("player-entry-primary").disabled === false, "runtime should enable primary action for valid names");
   assert(documentRef.getElementById("player-entry-gender-1").classList.contains("active"), "runtime should render active gender button");
+  assert(appearance.creatorSelections.hairStyle === "short", "runtime should sanitize missing creator selections to defaults");
+  assert(appearance.creatorSelections.bodyStyle === "shirt_vest", "runtime should preserve valid shared creator selections");
+  const creatorRows = documentRef.getElementById("player-entry-creator-rows");
+  assert(creatorRows.children.length === 6, "runtime should render the creator category rows");
+  assert(creatorRows.children[0].children[0].textContent === "Hair", "runtime should render creator row labels");
+  assert(creatorRows.children[0].children[1].children[1].textContent === "Short", "runtime should render the active creator option label");
+  creatorRows.children[0].children[1].children[2].onclick();
+  assert(appearance.creatorSelections.hairStyle === "swept" && previewRefreshes === 1, "runtime creator arrows should update selections and refresh preview");
   const colorRows = documentRef.getElementById("player-entry-color-rows");
   assert(colorRows.children.length === 5, "runtime should render the player-entry color rows");
+  assert(colorRows.children[0].children[1].children.length === 8, "runtime should render the expanded shared creator palette");
   const firstSwatch = colorRows.children[0].children[1].children[1];
   firstSwatch.onclick();
-  assert(appearance.colors[0] === 1 && previewRefreshes === 1, "runtime swatch clicks should update appearance and refresh preview");
+  assert(appearance.colors[0] === 1 && previewRefreshes === 2, "runtime swatch clicks should update appearance and refresh preview");
 
   let completed = false;
   runtime.bindPlayerEntryFlowControls({
@@ -185,12 +276,18 @@ function run() {
     playerAppearanceState: appearance,
     playerAppearanceCatalog: catalog,
     nameMaxLength: 12,
+    refreshPlayerAppearancePreview: () => { previewRefreshes += 1; },
     completePlayerEntryFlow: () => { completed = true; }
   });
   const nameInput = documentRef.getElementById("player-entry-name");
   nameInput.value = "No!! Name";
   nameInput.listeners.input();
   assert(profile.name === "No Name" && nameInput.value === "No Name", "runtime name input binding should sanitize profile names");
+  const refreshesBeforeGender = previewRefreshes;
+  documentRef.getElementById("player-entry-gender-0").listeners.click();
+  assert(appearance.gender === 0, "runtime should switch body type from the gender controls");
+  assert(appearance.creatorSelections.hairStyle === "swept" && appearance.creatorSelections.bodyStyle === "shirt_vest", "runtime should preserve creator selections across body type switches");
+  assert(previewRefreshes > refreshesBeforeGender, "runtime body type switches should refresh preview");
   nameInput.listeners.keydown({ key: "Enter", preventDefault() {} });
   assert(completed, "runtime key binding should delegate completion");
 

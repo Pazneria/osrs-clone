@@ -21,6 +21,8 @@
         };
         npcUid.gridX = npc.x;
         npcUid.gridY = npc.y;
+        if (Number.isFinite(npc.type)) npcUid.type = npc.type;
+        if (Number.isFinite(npc.npcType)) npcUid.npcType = npc.npcType;
         if (npc.spawnId) npcUid.spawnId = npc.spawnId;
         if (npc.merchantId) npcUid.merchantId = npc.merchantId;
         if (appearanceId) npcUid.appearanceId = appearanceId;

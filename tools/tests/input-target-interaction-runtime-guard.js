@@ -127,6 +127,21 @@ function run() {
 
   {
     const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({ logs });
+    runtime.handlePrimaryInteractionHit(context, {
+      type: "DECOR_PROP",
+      uid: { propId: "tutorial_cabin_tool_rack", kind: "tool_rack", label: "Tool Rack" },
+      name: "Tool Rack",
+      gridX: 8,
+      gridY: 9,
+      point: { x: 8, y: 0, z: 9 }
+    });
+    assert(logs.queued[0].obj === "DECOR_PROP", "decor prop primary clicks should queue a decor interaction");
+    assert(logs.queued[0].targetUid.kind === "tool_rack", "decor prop primary target metadata should preserve prop kind");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
     const context = makeContext({
       logs,
       skillRuntime: {

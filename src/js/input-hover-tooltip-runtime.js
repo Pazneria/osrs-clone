@@ -176,10 +176,15 @@
         }
         if (hitData.type === 'BANK_BOOTH') return '<span class="text-gray-300">Bank</span> <span class="text-cyan-400">Bank Booth</span>';
         if (hitData.type === 'SHOP_COUNTER') return '<span class="text-gray-300">Examine</span> <span class="text-cyan-400">Shop Counter</span>';
+        if (hitData.type === 'DECOR_PROP') {
+            const propName = hitData.name || (hitData.uid && hitData.uid.label) || 'Object';
+            return `<span class="text-gray-300">Search</span> <span class="text-cyan-400">${propName}</span>`;
+        }
         if (hitData.type === 'WATER') return '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
         if (hitData.type === 'DOOR') {
             const action = hitData.doorObj && hitData.doorObj.isOpen ? 'Close' : 'Open';
-            return `<span class="text-gray-300">${action}</span> <span class="text-cyan-400">Door</span>`;
+            const label = hitData.doorObj && hitData.doorObj.isWoodenGate ? 'Gate' : 'Door';
+            return `<span class="text-gray-300">${action}</span> <span class="text-cyan-400">${label}</span>`;
         }
         if (hitData.type === 'ENEMY') {
             const enemyName = typeof options.formatEnemyTooltipDisplayName === 'function'

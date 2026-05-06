@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const THREE = require("three");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -44,7 +45,32 @@ function run() {
   assert(chunkTierRenderRuntimeSource.includes("window.WorldChunkTierRenderRuntime"), "chunk tier render runtime should expose a window runtime");
   assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedChunkGroup(options = {})"), "chunk tier render runtime should own simplified chunk group construction");
   assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedTerrainMesh(options = {})"), "chunk tier render runtime should own simplified tier terrain construction");
+  assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedWaterMeshes(options = {})"), "chunk tier render runtime should own simplified tier water construction");
+  assert(chunkTierRenderRuntimeSource.includes("terrainGeo.setIndex(filteredTerrainIndices);"), "simplified tier terrain should filter water-covered cells out of the grass mesh");
+  assert(chunkTierRenderRuntimeSource.includes("? CHUNK_SIZE"), "mixed land/water simplified terrain should switch to tile-accurate segmentation");
+  assert(chunkTierRenderRuntimeSource.includes("function ensureSimplifiedTerrainMaterialSet"), "simplified tier terrain should own a low-detail tile material set");
+  assert(chunkTierRenderRuntimeSource.includes("function getSimplifiedTerrainMaterialIndex(tile, TileId)"), "simplified tier terrain should classify authored tile ids before near chunks load");
+  assert(chunkTierRenderRuntimeSource.includes("const hasTerrainMaterialVariation = terrainMaterialCoverage.size > 1"), "simplified tier terrain should detect non-grass tile coverage");
+  assert(chunkTierRenderRuntimeSource.includes("const terrainIndicesByMaterial = terrainMaterials.map(() => []);"), "simplified tier terrain should bucket geometry by tile material");
+  assert(chunkTierRenderRuntimeSource.includes("terrainGeo.addGroup(groupStart, indices.length, materialIndex);"), "simplified tier terrain should render grouped low-detail tile materials");
+  assert(chunkTierRenderRuntimeSource.includes("const isMixedChunk = hasLandCoverage && hasWaterCoverage;"), "simplified tier water should distinguish mixed shore chunks from open ocean chunks");
+  assert(chunkTierRenderRuntimeSource.includes("function ensureSimplifiedStructureProxyAssets"), "simplified tier chunks should own low-detail structure proxy assets");
+  assert(chunkTierRenderRuntimeSource.includes("function getStructureStampBounds"), "simplified tier chunks should derive building proxy bounds from authored stamps");
+  assert(chunkTierRenderRuntimeSource.includes("function chunkOwnsStructureProxy"), "simplified tier chunks should assign each building proxy to a single owning chunk");
+  assert(chunkTierRenderRuntimeSource.includes("function collectStructureProxyBounds"), "simplified tier chunks should know which authored building areas are covered by proxies");
+  assert(chunkTierRenderRuntimeSource.includes("function isStructureProxyCoveredTile"), "simplified tier chunks should suppress duplicate wall details inside proxy footprints");
+  assert(chunkTierRenderRuntimeSource.includes("function appendSimplifiedStructureProxies(options = {})"), "simplified tier chunks should render low-detail structure proxies before near chunks load");
+  assert(chunkTierRenderRuntimeSource.includes("type: 'STRUCTURE_PROXY'"), "simplified building proxies should be tagged as visual structure proxies");
   assert(chunkTierRenderRuntimeSource.includes("function addSimplifiedChunkFeatures(options = {})"), "chunk tier render runtime should own simplified tier feature rendering");
+  assert(worldSource.includes("sharedMaterials.activeStampedStructures"), "world.js should retain stamped structure metadata for simplified chunk proxies");
+  assert(
+    worldSource.includes("stampedStructures: Array.isArray(sharedMaterials.activeStampedStructures)"),
+    "world.js should pass stamped structures into simplified chunk rendering"
+  );
+  assert(
+    worldSource.includes("roofLandmarks: Array.isArray(sharedMaterials.activeRoofLandmarks)"),
+    "world.js should pass roof landmarks into simplified chunk rendering"
+  );
   assert(!worldSource.includes("function ensureChunkTierRenderAssets"), "world.js should not own chunk tier render asset setup");
   assert(!worldSource.includes("function createSimplifiedTerrainMesh"), "world.js should not own simplified tier terrain construction");
   assert(!worldSource.includes("function addSimplifiedChunkFeatures"), "world.js should not own simplified tier feature rendering");
@@ -57,6 +83,273 @@ function run() {
     inputSource.includes("window.processPendingNearChunkBuilds"),
     "input-render.js should process pending near-chunk builds from the render loop"
   );
+
+  global.window = {};
+  vm.runInThisContext(chunkTierRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js") });
+  const tierRuntime = window.WorldChunkTierRenderRuntime;
+  assert(tierRuntime, "chunk tier render runtime should expose a window runtime");
+  {
+    const tileIds = { GRASS: 0, WATER_SHALLOW: 21, WATER_DEEP: 22 };
+    const allWaterMap = [[
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP]
+    ]];
+    const heightMap = [[
+      [-0.18, -0.18, -0.18, -0.18],
+      [-0.18, -0.18, -0.18, -0.18],
+      [-0.18, -0.18, -0.18, -0.18],
+      [-0.18, -0.18, -0.18, -0.18]
+    ]];
+    const waterBody = {
+      id: "test-sea",
+      surfaceY: -0.075,
+      styleTokens: {
+        shallowColor: 0x78b3c4,
+        deepColor: 0x3f748d,
+        foamColor: 0xe5f6fc,
+        shoreColor: 0xd5c393,
+        rippleColor: 0xa7e0f0,
+        highlightColor: 0xf9ffff,
+        opacity: 0.86,
+        shoreOpacity: 0.52
+      }
+    };
+    const sharedMaterials = {
+      grassTile: new THREE.MeshBasicMaterial(),
+      chunkFarTerrain: new THREE.MeshBasicMaterial(),
+      chunkMidTerrain: new THREE.MeshBasicMaterial()
+    };
+    const sharedGeometries = {};
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 4,
+      MAP_SIZE: 4,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials,
+      sharedGeometries,
+      logicalMap: allWaterMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [waterBody],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: (waterBodies, x, y) => {
+        const tile = allWaterMap[0][y][x];
+        return tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP ? waterBodies[0] : null;
+      },
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    assert(!planeGroup.children.some((child) => child.userData && child.userData.type === "GROUND"), "all-water far chunks should not render a grass terrain plane");
+    const waterMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "WATER");
+    assert(waterMesh, "all-water far chunks should render simplified water");
+    assert(waterMesh.geometry.attributes.position.count === 6, "all-water far chunks should use one cheap water quad");
+  }
+  {
+    const tileIds = { GRASS: 0, WATER_SHALLOW: 21, WATER_DEEP: 22 };
+    const mixedMap = [[
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP]
+    ]];
+    const heightMap = [[
+      [0, 0, -0.18, -0.18],
+      [0, 0, -0.18, -0.18],
+      [0, 0, -0.18, -0.18],
+      [0, 0, -0.18, -0.18]
+    ]];
+    const waterBody = {
+      id: "test-sea",
+      surfaceY: -0.075,
+      styleTokens: {
+        shallowColor: 0x78b3c4,
+        deepColor: 0x3f748d,
+        foamColor: 0xe5f6fc,
+        shoreColor: 0xd5c393,
+        rippleColor: 0xa7e0f0,
+        highlightColor: 0xf9ffff,
+        opacity: 0.86,
+        shoreOpacity: 0.52
+      }
+    };
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 4,
+      MAP_SIZE: 4,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        chunkFarTerrain: new THREE.MeshBasicMaterial(),
+        chunkMidTerrain: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: mixedMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [waterBody],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: (waterBodies, x, y) => {
+        const tile = mixedMap[0][y][x];
+        return tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP ? waterBodies[0] : null;
+      },
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const waterMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "WATER");
+    const waterPositions = Array.from(waterMesh.geometry.attributes.position.array);
+    const waterXs = [];
+    for (let i = 0; i < waterPositions.length; i += 3) waterXs.push(waterPositions[i]);
+    assert(Math.min(...waterXs) >= 0, "mixed shoreline simplified water should not spill into land columns");
+  }
+  {
+    const tileIds = {
+      GRASS: 0,
+      DIRT: 3,
+      FLOOR_WOOD: 6,
+      FLOOR_STONE: 7,
+      FLOOR_BRICK: 8,
+      SHORE: 20,
+      WATER_SHALLOW: 21,
+      WATER_DEEP: 22
+    };
+    const mixedTerrainMap = [[
+      [tileIds.GRASS, tileIds.DIRT, tileIds.DIRT, tileIds.FLOOR_WOOD],
+      [tileIds.SHORE, tileIds.DIRT, tileIds.FLOOR_STONE, tileIds.FLOOR_WOOD],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.FLOOR_BRICK, tileIds.FLOOR_STONE],
+      [tileIds.GRASS, tileIds.DIRT, tileIds.GRASS, tileIds.GRASS]
+    ]];
+    const heightMap = [[
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ]];
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 4,
+      MAP_SIZE: 4,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        dirtTile: new THREE.MeshBasicMaterial(),
+        floor6: new THREE.MeshBasicMaterial(),
+        floor7: new THREE.MeshBasicMaterial(),
+        floor8: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: mixedTerrainMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: () => null,
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const terrainMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND");
+    assert(terrainMesh, "mixed non-water far chunks should render simplified terrain");
+    assert(Array.isArray(terrainMesh.material) && terrainMesh.material.length >= 7, "simplified terrain should use a tile-aware material array");
+    assert(terrainMesh.geometry.parameters.widthSegments === 4, "non-grass far chunks should raise simplified terrain resolution enough to show paths");
+    const groupMaterialIndices = new Set(terrainMesh.geometry.groups.map((group) => group.materialIndex));
+    assert(groupMaterialIndices.has(1), "far terrain should keep dirt paths visible before near chunks load");
+    assert(groupMaterialIndices.has(2), "far terrain should keep shore tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(4), "far terrain should keep wood floor tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(5), "far terrain should keep stone floor tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(6), "far terrain should keep brick floor tiles visible before near chunks load");
+  }
+  {
+    const tileIds = {
+      GRASS: 0,
+      WALL: 11,
+      TOWER: 12,
+      WATER_SHALLOW: 21,
+      WATER_DEEP: 22
+    };
+    const mapRows = Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => tileIds.GRASS));
+    mapRows[1][1] = tileIds.TOWER;
+    mapRows[1][2] = tileIds.WALL;
+    mapRows[1][3] = tileIds.WALL;
+    mapRows[1][4] = tileIds.TOWER;
+    mapRows[2][1] = tileIds.WALL;
+    mapRows[2][4] = tileIds.WALL;
+    mapRows[3][1] = tileIds.TOWER;
+    mapRows[3][2] = tileIds.WALL;
+    mapRows[3][3] = tileIds.WALL;
+    mapRows[3][4] = tileIds.TOWER;
+    const heightRows = Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => 0));
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 8,
+      MAP_SIZE: 8,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        dirtTile: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: [mapRows],
+      heightMap: [heightRows],
+      playerState: { z: 0 },
+      waterRenderBodies: [],
+      stampedStructures: [{ structureId: "hut-a", stampId: "hut", label: "Timber Hut", x: 1, y: 1, z: 0 }],
+      stampMap: { hut: ["CWWC", "WTTW", "CWWC"] },
+      roofLandmarks: [{ landmarkId: "hut-roof", x: 1, y: 1, z: 0, width: 4, depth: 3, height: 2.6 }],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: () => null,
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const proxies = planeGroup.children.filter((child) => child.userData && child.userData.type === "STRUCTURE_PROXY");
+    assert(proxies.length === 2, "far chunks should include low-detail body and roof building proxies");
+    assert(proxies.some((proxy) => proxy.userData.proxyRole === "body"), "building proxies should include a body silhouette");
+    assert(proxies.some((proxy) => proxy.userData.proxyRole === "roof"), "building proxies should include a roof silhouette when an authored roof matches");
+    assert(
+      !planeGroup.children.some((child) => child.isInstancedMesh),
+      "building proxy footprints should suppress duplicate low-detail wall and tower instances"
+    );
+  }
 
   global.window = {};
   vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });

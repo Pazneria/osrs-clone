@@ -43,9 +43,11 @@ function run() {
   assert(mapHudSource.includes("worldMapState"), "world map HUD runtime should own world-map pan and zoom state");
   assert(mapHudSource.includes("const minimapState"), "world map HUD runtime should own minimap zoom, lock, target, and destination state");
   assert(mapHudSource.includes("syncLockedMinimapTarget"), "world map HUD runtime should own locked-target following");
+  assert(mapHudSource.includes("getWorldMapInitialCenter"), "world map HUD runtime should accept an authored initial center for large isolated maps");
   assert(mapHudSource.includes("clearMinimapDestinationIfReached"), "world map HUD runtime should own destination cleanup");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD orchestration through the map HUD runtime");
   assert(worldSource.includes("buildMapHudRuntimeContext"), "world.js should provide map HUD runtime context callbacks");
+  assert(worldSource.includes("resolveRenderWorldId() === 'tutorial_island'"), "world.js should center the tutorial world map on the enlarged island");
   assert(!worldSource.includes("const worldMapState ="), "world.js should no longer own world-map pan and zoom state");
   assert(!worldSource.includes("minimapZoom"), "world.js should not read minimap zoom state directly");
   assert(!worldSource.includes("minimapDestination"), "world.js should not read minimap destination state directly");
@@ -58,6 +60,9 @@ function run() {
   assert(worldRenderSource.includes("function createWaterSurfaceMaterial"), "world render runtime should own water material construction");
   assert(worldRenderSource.includes("function createSkyDomeMaterial"), "world render runtime should own sky material construction");
   assert(worldRenderSource.includes("function initSkyRuntime"), "world render runtime should initialize the static sky runtime");
+  assert(worldRenderSource.includes("mapSize: 512"), "world render runtime should keep the main shadow map on a cheaper 512px budget");
+  assert(worldSource.includes("renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));"), "world renderer should cap main canvas pixel ratio for performance");
+  assert(inputSource.includes("renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));"), "input resize should preserve the main canvas pixel-ratio cap");
   assert(sharedAssetsSource.includes("window.WorldSharedAssetsRuntime"), "world shared asset runtime should expose a runtime");
   assert(sharedAssetsSource.includes("function initSharedAssets(options = {})"), "world shared asset runtime should own shared asset initialization");
   assert(worldSource.includes("WorldRenderRuntime"), "world.js should delegate render infrastructure through the world render runtime");
@@ -73,6 +78,8 @@ function run() {
   assert(worldSource.includes("function initSkyRuntime"), "world.js should keep a small sky runtime orchestration wrapper");
   assert(worldSource.includes("function updateSkyRuntime"), "world.js should expose a sky update helper");
   assert(worldSource.includes("window.updateSkyRuntime = updateSkyRuntime;"), "world.js should keep sky updates wired through the world shell");
+  assert(worldSource.includes("function updateTutorialGuidanceMarker"), "world.js should own the tutorial guidance marker renderer");
+  assert(worldSource.includes("window.updateTutorialGuidanceMarker = updateTutorialGuidanceMarker;"), "world.js should expose tutorial guidance marker updates through the world shell");
   assert(
     inputSource.includes("function getInputControllerRuntime()")
       && inputSource.includes("return window.InputControllerRuntime || null;"),
@@ -165,7 +172,10 @@ function run() {
     "legacy script manifest should load input player animation runtime before input-render.js"
   );
   assert(inputPathfindingSource.includes("window.InputPathfindingRuntime"), "input pathfinding runtime should expose a window runtime");
-  assert(inputPathfindingSource.includes("function findPath"), "input pathfinding runtime should own BFS pathfinding");
+  assert(inputPathfindingSource.includes("function findPath"), "input pathfinding runtime should own pathfinding");
+  assert(inputPathfindingSource.includes("function estimatePathDistanceToAnyTarget"), "input pathfinding runtime should score routes toward the nearest valid target");
+  assert(inputPathfindingSource.includes("function estimatePathLineDeviationToAnyTarget"), "input pathfinding runtime should prefer equal-cost routes that stay close to the click line");
+  assert(inputPathfindingSource.includes("Math.SQRT2"), "input pathfinding runtime should price diagonal movement separately from cardinal movement");
   assert(inputPathfindingSource.includes("if (blockX || blockY) continue;"), "input pathfinding runtime should reject diagonal corner cutting");
   assert(inputSource.includes("InputPathfindingRuntime"), "input-render.js should delegate pathfinding through the pathfinding runtime");
   assert(inputSource.includes("buildInputPathfindingRuntimeContext"), "input-render.js should provide a narrow pathfinding runtime context");
@@ -258,6 +268,7 @@ function run() {
   assert(inputSource.includes("function maybeUpdateMainDirectionalShadowFocus"), "input-render.js should throttle directional shadow focus updates through a helper");
   assert(inputSource.includes("window.updateMainDirectionalShadowFocus"), "input-render.js should keep directional shadow focus wired through the world shell");
   assert(inputSource.includes("window.updateSkyRuntime(camera.position, frameNowMs);"), "input-render.js should refresh the sky runtime from animate()");
+  assert(inputSource.includes("window.updateTutorialGuidanceMarker(frameNowMs);"), "input-render.js should refresh tutorial guidance markers from animate()");
   assert(inputSource.includes("function syncPlayerRigSkillingToolVisual("), "input-render.js should reconcile temporary skilling tool visuals with live actions");
   assert(inputSource.includes("setPlayerRigToolVisual(playerRigRef, null);"), "input-render.js should clear temporary skilling tool visuals after skilling ends");
 

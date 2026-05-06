@@ -98,13 +98,17 @@ function normalizeStyle(style?: WaterStyleId | null): WaterStyleId {
 }
 
 function cloneTerrainEllipseAsShape(ellipse: TerrainEllipse): WaterBodyShape {
-  return {
+  const shape: WaterBodyShape = {
     kind: "ellipse",
     cx: ellipse.cx,
     cy: ellipse.cy,
     rx: ellipse.rx,
     ry: ellipse.ry
   };
+  if (Number.isFinite(ellipse.rotationRadians)) {
+    shape.rotationRadians = Number(ellipse.rotationRadians);
+  }
+  return shape;
 }
 
 function cloneTerrainBoxAsShape(box: TerrainBox2D): WaterBodyShape {
@@ -258,6 +262,19 @@ function computePolygonBounds(points: Point2[]): TerrainBox2D {
 
 function computeShapeBounds(shape: WaterBodyShape): TerrainBox2D {
   if (shape.kind === "ellipse") {
+    const rotation = Number.isFinite(shape.rotationRadians) ? Number(shape.rotationRadians) : 0;
+    if (Math.abs(rotation) > 0.000001) {
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      const halfWidth = Math.sqrt((shape.rx * cos) ** 2 + (shape.ry * sin) ** 2);
+      const halfHeight = Math.sqrt((shape.rx * sin) ** 2 + (shape.ry * cos) ** 2);
+      return {
+        xMin: shape.cx - halfWidth,
+        xMax: shape.cx + halfWidth,
+        yMin: shape.cy - halfHeight,
+        yMax: shape.cy + halfHeight
+      };
+    }
     return {
       xMin: shape.cx - shape.rx,
       xMax: shape.cx + shape.rx,
@@ -286,12 +303,7 @@ export function getWorldWaterBodies(definition: WorldDefinition): WaterBodyDefin
       .map((body, index) => normalizeWaterBodyDefinition(body, `legacy-water-${index + 1}`));
   }
 
-  const hasRiverBody = authoredBodies.some((body) => body.id === LEGACY_RIVER_ID);
-  if (hasRiverBody) return authoredBodies;
-
-  return authoredBodies.concat(
-    normalizeWaterBodyDefinition(createLegacyRiverWaterBody(), LEGACY_RIVER_ID)
-  );
+  return authoredBodies;
 }
 
 export function buildWaterRenderPayload(definition: WorldDefinition): WaterRenderPayload {

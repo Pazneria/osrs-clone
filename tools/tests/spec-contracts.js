@@ -1907,6 +1907,7 @@ function run() {
   assert(!worldScript.includes("const resolveTownNpcRoamBounds = (npc) => {"), "world.js should not own NPC roam bounds resolution");
   assert(!worldScript.includes("const resolveTownNpcRoamingRadius = (npc, roamBounds) => {"), "world.js should not own NPC roaming radius resolution");
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime hitboxes should preserve appearanceId");
+  assert(npcRenderRuntimeSource.includes("if (Number.isFinite(npc.type)) npcUid.type = npc.type;"), "NPC render runtime hitboxes should preserve model type metadata");
   assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime hitboxes should preserve dialogueId");
   assert(inputRenderSource.includes("InputArrivalInteractionRuntime"), "input renderer should delegate arrival interactions");
   assert(inputArrivalInteractionRuntimeSource.includes("playerState.targetUid.action === 'Talk-to'"), "input arrival interaction runtime should route Talk-to actions");
@@ -1915,6 +1916,8 @@ function run() {
   assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.getDialogueEntryByNpc(npc)"), "npc dialogue runtime should resolve dialogue entries through the catalog helper");
   assert(npcDialogueRuntimeSource.includes("window.NpcDialogueCatalog.resolveDialogueIdFromNpc(normalizedNpc)"), "npc dialogue runtime should preserve the resolved dialogue id from full NPC metadata");
   assert(npcDialogueRuntimeSource.includes("window.openNpcDialogue = openNpcDialogue;"), "npc dialogue runtime should expose openNpcDialogue");
+  assert(npcDialogueRuntimeSource.includes("function normalizeDialoguePages"), "npc dialogue runtime should support paged dialogue text");
+  assert(npcDialogueRuntimeSource.includes("function renderContinueOption"), "npc dialogue runtime should render a continue option for paged dialogue");
   assert(npcPlayerModelSource.includes("PlayerNpcHumanoidRuntime"), "player model should delegate NPC humanoid presets");
   assert(playerNpcHumanoidRuntimeSource.includes("normalizedPresetId === 'tanner'") && playerNpcHumanoidRuntimeSource.includes("return 'tanner_rusk';"), "player NPC humanoid runtime should allow the Tanner NPC preset alias");
   Object.entries(STARTER_TOWN_NAMED_NPC_DIALOGUES).forEach(([serviceId, expectedDialogueId]) => {
@@ -2259,6 +2262,7 @@ function run() {
   assert(manifestScript.includes("levelKey"), "skill manifest skill-tile level key metadata missing");
   const indexHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(indexHtml.includes('/src/main.ts'), "index missing Vite module entry");
+  assert(!indexHtml.includes("npc-dialogue-action"), "NPC dialogue panel should not hard-code the NPC action under the name");
   const legacyBridgeManifestScript = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
   assert(legacyBridgeManifestScript.includes("../../js/skills/crafting/index.js?raw"), "legacy manifest missing crafting runtime bridge include");
   assert(!indexHtml.includes('data-skill="attack"'), "stats view should not hard-code attack tile markup");

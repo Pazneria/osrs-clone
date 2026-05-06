@@ -1,5 +1,11 @@
 // --- Rest of ThreeJS & Engine Init ---
         let activeRoofVisuals = [];
+        let activeStampedStructures = [];
+        let activeStampMap = {};
+        let tutorialGuidanceMarkerGroup = null;
+        let tutorialGuidanceMarkerId = '';
+        let tutorialGuidanceMarkerMaterials = null;
+        let tutorialGuidanceMarkerGeometries = null;
 
         const worldProceduralRuntime = window.WorldProceduralRuntime || null;
         const worldRenderRuntime = window.WorldRenderRuntime || null;
@@ -54,6 +60,10 @@
 
         function getWaterSurfaceMaterial(tokens) {
             return worldRenderRuntime.getWaterSurfaceMaterial({ THREE, sharedMaterials, tokens });
+        }
+
+        function getWaterFringeMaterial(tokens) {
+            return worldRenderRuntime.getWaterFringeMaterial({ THREE, sharedMaterials, tokens });
         }
 
         function getWaterShoreMaterial(tokens) {
@@ -176,6 +186,111 @@
             worldTownNpcRuntime.updateWorldNpcRuntime(buildTownNpcRuntimeContext(), frameNowMs);
         }
 
+        function getTutorialGuidanceMarkerMaterials() {
+            if (tutorialGuidanceMarkerMaterials) return tutorialGuidanceMarkerMaterials;
+            tutorialGuidanceMarkerMaterials = {
+                dark: new THREE.MeshLambertMaterial({ color: 0x2a1a08, flatShading: true }),
+                gold: new THREE.MeshLambertMaterial({ color: 0xd6a13a, flatShading: true, emissive: 0x241400 }),
+                highlight: new THREE.MeshLambertMaterial({ color: 0xffd96a, flatShading: true, emissive: 0x2c1a00 })
+            };
+            return tutorialGuidanceMarkerMaterials;
+        }
+
+        function getTutorialGuidanceMarkerGeometries() {
+            if (tutorialGuidanceMarkerGeometries) return tutorialGuidanceMarkerGeometries;
+            tutorialGuidanceMarkerGeometries = {
+                outerTip: new THREE.ConeGeometry(0.34, 0.62, 4),
+                innerTip: new THREE.ConeGeometry(0.27, 0.54, 4),
+                outerStem: new THREE.BoxGeometry(0.24, 0.48, 0.24),
+                innerStem: new THREE.BoxGeometry(0.16, 0.42, 0.16),
+                cap: new THREE.BoxGeometry(0.38, 0.08, 0.38)
+            };
+            return tutorialGuidanceMarkerGeometries;
+        }
+
+        function createTutorialGuidanceMarkerGroup() {
+            const materials = getTutorialGuidanceMarkerMaterials();
+            const geometries = getTutorialGuidanceMarkerGeometries();
+            const group = new THREE.Group();
+            group.name = 'tutorial_guidance_marker';
+
+            const outerTip = new THREE.Mesh(geometries.outerTip, materials.dark);
+            outerTip.rotation.x = Math.PI;
+            outerTip.position.y = -0.16;
+            group.add(outerTip);
+
+            const innerTip = new THREE.Mesh(geometries.innerTip, materials.gold);
+            innerTip.rotation.x = Math.PI;
+            innerTip.position.y = -0.17;
+            group.add(innerTip);
+
+            const outerStem = new THREE.Mesh(geometries.outerStem, materials.dark);
+            outerStem.position.y = 0.36;
+            group.add(outerStem);
+
+            const innerStem = new THREE.Mesh(geometries.innerStem, materials.gold);
+            innerStem.position.y = 0.36;
+            group.add(innerStem);
+
+            const cap = new THREE.Mesh(geometries.cap, materials.highlight);
+            cap.position.y = 0.63;
+            group.add(cap);
+
+            group.rotation.y = Math.PI * 0.25;
+            group.traverse((child) => {
+                if (!child || !child.isMesh) return;
+                child.castShadow = false;
+                child.receiveShadow = false;
+                child.renderOrder = 10;
+                if (!child.userData) child.userData = {};
+                child.userData.ignoreRaycast = true;
+            });
+            return group;
+        }
+
+        function hideTutorialGuidanceMarker() {
+            if (tutorialGuidanceMarkerGroup) tutorialGuidanceMarkerGroup.visible = false;
+            tutorialGuidanceMarkerId = '';
+        }
+
+        function updateTutorialGuidanceMarker(frameNowMs) {
+            const tutorialRuntime = window.TutorialRuntime || null;
+            const marker = tutorialRuntime && typeof tutorialRuntime.getGuidanceMarker === 'function'
+                ? tutorialRuntime.getGuidanceMarker()
+                : null;
+            if (!marker || !scene || !THREE) {
+                hideTutorialGuidanceMarker();
+                return;
+            }
+            const markerZ = Number.isFinite(marker.z) ? Math.floor(marker.z) : 0;
+            if (playerState && Number.isFinite(playerState.z) && markerZ !== Math.floor(playerState.z)) {
+                hideTutorialGuidanceMarker();
+                return;
+            }
+            const markerX = Number.isFinite(marker.x) ? marker.x : 0;
+            const markerY = Number.isFinite(marker.y) ? marker.y : 0;
+            const heightOffset = Number.isFinite(marker.heightOffset) ? marker.heightOffset : 2.35;
+            if (!tutorialGuidanceMarkerGroup || tutorialGuidanceMarkerGroup.parent !== scene) {
+                if (tutorialGuidanceMarkerGroup && tutorialGuidanceMarkerGroup.parent) {
+                    tutorialGuidanceMarkerGroup.parent.remove(tutorialGuidanceMarkerGroup);
+                }
+                tutorialGuidanceMarkerGroup = createTutorialGuidanceMarkerGroup();
+                scene.add(tutorialGuidanceMarkerGroup);
+            }
+            tutorialGuidanceMarkerId = typeof marker.markerId === 'string' ? marker.markerId : '';
+            const frameMs = Number.isFinite(frameNowMs) ? frameNowMs : performance.now();
+            const bob = Math.sin(frameMs * 0.004) * 0.1;
+            const scale = marker.targetKind === 'water' ? 0.92 : 1;
+            const groundHeight = getTileHeightSafe(Math.round(markerX), Math.round(markerY), markerZ);
+            tutorialGuidanceMarkerGroup.position.set(markerX, groundHeight + heightOffset + bob, markerY);
+            tutorialGuidanceMarkerGroup.scale.set(scale, scale, scale);
+            tutorialGuidanceMarkerGroup.visible = true;
+            if (!tutorialGuidanceMarkerGroup.userData) tutorialGuidanceMarkerGroup.userData = {};
+            tutorialGuidanceMarkerGroup.userData.markerId = tutorialGuidanceMarkerId;
+            tutorialGuidanceMarkerGroup.userData.label = typeof marker.label === 'string' ? marker.label : '';
+            tutorialGuidanceMarkerGroup.userData.targetKind = typeof marker.targetKind === 'string' ? marker.targetKind : '';
+        }
+
         function spawnMiningPoseReferences() {
             worldMiningPoseReferenceRuntime.spawnMiningPoseReferences(buildMiningPoseReferenceRuntimeContext());
         }
@@ -191,10 +306,10 @@
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x5ea8f7);
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 260);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 900);
             scene.fog = null;
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.outputColorSpace = THREE.SRGBColorSpace;
             renderer.shadowMap.enabled = !!MAIN_DIRECTIONAL_SHADOW_CONFIG.enabled;
@@ -850,11 +965,13 @@
             worldTownNpcRuntime.resetStaticNpcBaseTiles();
             npcsToRender = [];
             bankBoothsToRender = [];
+            caveOpeningsToRender = [];
             doorsToRender = [];
             activeRoofVisuals = [];
             fishingSpotsToRender = [];
             cookingFireSpotsToRender = [];
             directionalSignsToRender = [];
+            decorPropsToRender = [];
             altarCandidatesToRender = [];
             furnacesToRender = [];
             anvilsToRender = [];
@@ -864,9 +981,11 @@
                 : null;
             if (!worldPayload) throw new Error('WorldSceneStateRuntime is unavailable.');
             const lakeDefs = worldPayload.lakeDefs;
+            const islandWater = worldPayload.islandWater;
             const castleFrontPond = worldPayload.castleFrontPond;
             const deepWaterCenter = worldPayload.deepWaterCenter;
             const pierConfig = worldPayload.pierConfig;
+            const pathPatches = Array.isArray(worldPayload.pathPatches) ? worldPayload.pathPatches : [];
             const smithingHallApproach = worldPayload.smithingHallApproach;
             const waterRenderPayload = worldPayload.waterRenderPayload;
             const stampedStructures = worldPayload.stampedStructures;
@@ -885,24 +1004,39 @@
             const doorLandmarks = worldPayload.doorLandmarks;
             const fenceLandmarks = worldPayload.fenceLandmarks;
             const roofLandmarks = worldPayload.roofLandmarks;
+            const caveOpeningLandmarks = worldPayload.caveOpeningLandmarks;
+            const decorPropLandmarks = worldPayload.decorPropLandmarks;
             const showcaseTreeDefs = worldPayload.showcaseTreeDefs;
 
             furnacesToRender = worldPayload.furnacesToRender.map((station) => Object.assign({}, station));
             anvilsToRender = worldPayload.anvilsToRender.map((station) => Object.assign({}, station));
+            caveOpeningsToRender = Array.isArray(caveOpeningLandmarks)
+                ? caveOpeningLandmarks.map((opening) => Object.assign({}, opening, {
+                    tags: Array.isArray(opening.tags) ? opening.tags.slice() : []
+                }))
+                : [];
             const waterRenderBodies = Array.isArray(waterRenderPayload && waterRenderPayload.bodies)
                 ? waterRenderPayload.bodies.slice()
                 : [];
             sharedMaterials.activeWaterRenderBodies = waterRenderBodies;
-            sharedMaterials.activePierConfig = Object.assign({}, pierConfig);
+            sharedMaterials.activeIslandWater = islandWater && islandWater.enabled !== false
+                ? islandWater
+                : null;
+            sharedMaterials.activePierConfig = pierConfig && pierConfig.enabled !== false
+                ? Object.assign({}, pierConfig)
+                : null;
+            refreshWorldOceanBackdrop();
 
             const terrainSetup = worldTerrainSetupRuntime.applyBaseTerrainSetup({
                 castleFrontPond,
                 deepWaterCenter,
                 heightMap,
                 isPierSideWaterTile,
+                islandWater,
                 lakeDefs,
                 logicalMap,
                 mapSize: MAP_SIZE,
+                pathPatches,
                 pierConfig,
                 pierDeckTopHeight: PIER_DECK_TOP_HEIGHT,
                 stampMap,
@@ -1008,6 +1142,8 @@
 
             const staticAuthoring = worldLogicalMapAuthoringRuntime.applyStaticWorldAuthoring({
                 bankBoothsToRender,
+                decorPropLandmarks,
+                decorPropsToRender,
                 doorLandmarks,
                 doorsToRender,
                 fenceLandmarks,
@@ -1026,10 +1162,17 @@
                 tileIds: TileId
             });
             bankBoothsToRender = staticAuthoring.bankBoothsToRender;
+            decorPropsToRender = staticAuthoring.decorPropsToRender;
             doorsToRender = staticAuthoring.doorsToRender;
             npcsToRender = staticAuthoring.npcsToRender;
             worldTownNpcRuntime.refreshTutorialGateStates(buildTownNpcRuntimeContext());
             sharedMaterials.activeRoofLandmarks = staticAuthoring.activeRoofLandmarks;
+            activeStampedStructures = Array.isArray(stampedStructures)
+                ? stampedStructures.map((structure) => Object.assign({}, structure))
+                : [];
+            activeStampMap = stampMap || {};
+            sharedMaterials.activeStampedStructures = activeStampedStructures;
+            sharedMaterials.activeStampMap = activeStampMap;
 
             const setMiningRockAt = (placement) => {
                 if (!placement || !placement.oreType) return false;
@@ -1442,10 +1585,12 @@
                 heightMap,
                 sharedMaterials,
                 environmentMeshes,
+                islandWater: sharedMaterials.activeIslandWater || null,
                 isWaterTileId,
                 isPierVisualCoverageTile,
                 getActivePierConfig,
-                getWaterSurfaceMaterial
+                getWaterSurfaceMaterial,
+                getWaterFringeMaterial
             };
         }
 
@@ -1499,6 +1644,76 @@
             }));
         }
 
+        function createWaterBackdropMesh(bounds, surfaceY, styleTokens, depthWeight = 1.0, shoreStrength = 0.02) {
+            return worldWaterRuntime.createWaterBackdropMesh(Object.assign(buildWorldWaterRuntimeContext(), {
+                bounds,
+                surfaceY,
+                styleTokens,
+                depthWeight,
+                shoreStrength
+            }));
+        }
+
+        function removeWorldOceanBackdrop() {
+            const mesh = sharedMaterials.worldOceanBackdrop || null;
+            if (mesh && mesh.parent) mesh.parent.remove(mesh);
+            if (mesh && typeof mesh.traverse === 'function') {
+                mesh.traverse((child) => {
+                    if (!child) return;
+                    if (child.geometry && typeof child.geometry.dispose === 'function') child.geometry.dispose();
+                    if (child.userData && child.userData.disposeMaterialOnRemove && child.material && typeof child.material.dispose === 'function') {
+                        child.material.dispose();
+                    }
+                });
+            } else if (mesh) {
+                if (mesh.geometry && typeof mesh.geometry.dispose === 'function') mesh.geometry.dispose();
+                if (mesh.userData && mesh.userData.disposeMaterialOnRemove && mesh.material && typeof mesh.material.dispose === 'function') {
+                    mesh.material.dispose();
+                }
+            }
+            sharedMaterials.worldOceanBackdrop = null;
+        }
+
+        function findFullMapOceanBody(waterBodies) {
+            const bodies = Array.isArray(waterBodies) ? waterBodies : [];
+            for (let i = 0; i < bodies.length; i++) {
+                const body = bodies[i];
+                if (!body || !body.bounds || !body.shape || body.shape.kind !== 'box') continue;
+                if (body.bounds.xMin > 1 || body.bounds.yMin > 1) continue;
+                if (body.bounds.xMax < MAP_SIZE - 2 || body.bounds.yMax < MAP_SIZE - 2) continue;
+                return body;
+            }
+            return null;
+        }
+
+        function refreshWorldOceanBackdrop() {
+            removeWorldOceanBackdrop();
+            if (!scene) return null;
+            const waterBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies)
+                ? sharedMaterials.activeWaterRenderBodies
+                : [];
+            const oceanBody = findFullMapOceanBody(waterBodies);
+            if (!oceanBody || !oceanBody.styleTokens) return null;
+            const padding = Math.max(192, Math.floor(MAP_SIZE * 0.6));
+            const surfaceY = (Number.isFinite(oceanBody.surfaceY) ? oceanBody.surfaceY : -0.075) - 0.12;
+            const backdrop = new THREE.Group();
+            const backdropBands = [
+                { xMin: -padding, xMax: MAP_SIZE + padding, yMin: -padding, yMax: 0 },
+                { xMin: -padding, xMax: MAP_SIZE + padding, yMin: MAP_SIZE, yMax: MAP_SIZE + padding },
+                { xMin: -padding, xMax: 0, yMin: 0, yMax: MAP_SIZE },
+                { xMin: MAP_SIZE, xMax: MAP_SIZE + padding, yMin: 0, yMax: MAP_SIZE }
+            ];
+            backdropBands.forEach((bounds) => {
+                const band = createWaterBackdropMesh(bounds, surfaceY, oceanBody.styleTokens, 1.0, 0.02);
+                if (band) backdrop.add(band);
+            });
+            if (backdrop.children.length <= 0) return null;
+            backdrop.userData = Object.assign({}, backdrop.userData, { type: 'WATER_BACKDROP', waterBodyId: oceanBody.id });
+            scene.add(backdrop);
+            sharedMaterials.worldOceanBackdrop = backdrop;
+            return backdrop;
+        }
+
         function createTopAnchoredFloorMesh(material, x, y, zOffset, topHeight, z) {
             return worldStructureRenderRuntime.createTopAnchoredFloorMesh({ THREE, material, x, y, zOffset, topHeight, z });
         }
@@ -1507,6 +1722,7 @@
             return worldStructureRenderRuntime.createFenceVisualGroup({
                 THREE,
                 sharedMaterials,
+                sharedGeometries,
                 environmentMeshes,
                 logicalMap,
                 mapSize: MAP_SIZE,
@@ -1543,9 +1759,14 @@
                 heightMap,
                 planeGroup,
                 bankBoothsToRender,
+                caveOpeningsToRender,
                 furnacesToRender,
                 anvilsToRender,
                 directionalSignsToRender,
+                decorPropsToRender,
+                createEquipmentVisualMeshes: typeof window.createEquipmentVisualMeshes === 'function'
+                    ? window.createEquipmentVisualMeshes
+                    : null,
                 altarCandidatesToRender,
                 doorsToRender,
                 z,
@@ -1714,8 +1935,23 @@
                 logicalMap,
                 heightMap,
                 playerState,
+                waterRenderBodies: Array.isArray(sharedMaterials.activeWaterRenderBodies)
+                    ? sharedMaterials.activeWaterRenderBodies
+                    : [],
                 getVisualTileId,
                 isTreeTileId,
+                isWaterTileId,
+                isPierVisualCoverageTile,
+                getActivePierConfig,
+                getWaterSurfaceMaterial,
+                resolveVisualWaterRenderBodyForTile,
+                stampedStructures: Array.isArray(sharedMaterials.activeStampedStructures)
+                    ? sharedMaterials.activeStampedStructures
+                    : [],
+                stampMap: sharedMaterials.activeStampMap || {},
+                roofLandmarks: Array.isArray(sharedMaterials.activeRoofLandmarks)
+                    ? sharedMaterials.activeRoofLandmarks
+                    : [],
                 cx,
                 cy,
                 tier
@@ -1769,6 +2005,7 @@
                 heightMap,
                 sharedMaterials,
                 waterRenderBodies,
+                islandWater: sharedMaterials.activeIslandWater || null,
                 activePierConfig,
                 planeGroup,
                 environmentMeshes,
@@ -2084,6 +2321,7 @@
 
         function build3DEnvironment() {
             initSharedAssets();
+            refreshWorldOceanBackdrop();
             clearPendingNearChunkBuilds();
             ensureFarChunkBackdropBuilt();
             markChunkPolicyDirty();
@@ -2180,6 +2418,9 @@
                         : (Number.isFinite(playerState.targetRotation) ? playerState.targetRotation : 0);
                     return { x: playerX, y: playerY, z: playerState.z, facingYaw };
                 },
+                getWorldMapInitialCenter: () => resolveRenderWorldId() === 'tutorial_island'
+                    ? { x: 330, y: 328 }
+                    : null,
                 getClickMarkers: () => Array.isArray(clickMarkers)
                     ? clickMarkers.map((marker) => ({
                         x: marker && marker.mesh && marker.mesh.position ? marker.mesh.position.x : 0,
@@ -2251,6 +2492,7 @@
         window.tickFireLifecycle = tickFireLifecycle;
         window.updateMainDirectionalShadowFocus = updateMainDirectionalShadowFocus;
         window.updateSkyRuntime = updateSkyRuntime;
+        window.updateTutorialGuidanceMarker = updateTutorialGuidanceMarker;
         window.updateFires = updateFires;
         window.updateGroundItems = updateGroundItems;
         window.takeGroundItemByUid = takeGroundItemByUid;

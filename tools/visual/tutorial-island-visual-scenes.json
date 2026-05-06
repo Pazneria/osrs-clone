@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "defaultUrl": "http://127.0.0.1:5502/",
+  "viewport": {
+    "width": 1240,
+    "height": 941
+  },
+  "defaultWaitMs": 900,
+  "pixelmatchThreshold": 0.12,
+  "maxMismatchRatio": 0.035,
+  "scenes": [
+    {
+      "id": "arrival-default",
+      "label": "Tutorial Island arrival at normal gameplay camera",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial arrival",
+        "/qa camera reset"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 900,
+      "minUniqueColors": 160
+    },
+    {
+      "id": "firemaking-coast-low",
+      "label": "Firemaking tutor coastline at low gameplay camera",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial firemaking",
+        "/qa camera set 3.95 1.22 17"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 1100,
+      "minUniqueColors": 180
+    },
+    {
+      "id": "tutorial-overhead",
+      "label": "Full Tutorial Island aerial QA camera",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa camera preset tutorial_surface"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 1200,
+      "minUniqueColors": 180
+    },
+    {
+      "id": "mining-smithing-yard",
+      "label": "Mining and smithing yard with furnace, anvil, ore rocks, and tutor",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial smithing",
+        "/qa camera set 4.25 1.08 15"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 1100,
+      "minUniqueColors": 180
+    },
+    {
+      "id": "inventory-hud",
+      "label": "Inventory HUD and playfield composition",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial mining",
+        "/qa camera reset"
+      ],
+      "hideUi": false,
+      "mouse": {
+        "x": 1110,
+        "y": 860
+      },
+      "waitMs": 900,
+      "minUniqueColors": 170
+    }
+  ]
+}

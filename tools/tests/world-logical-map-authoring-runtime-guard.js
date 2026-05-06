@@ -25,6 +25,7 @@ function run() {
   assert(runtimeSource.includes("function applyFishingMerchantSpots(options = {})"), "logical-map authoring runtime should own fishing merchant placement");
   assert(runtimeSource.includes("function stampBlueprint(options = {})"), "logical-map authoring runtime should own blueprint stamping");
   assert(runtimeSource.includes("function applyStaticWorldAuthoring(options = {})"), "logical-map authoring runtime should own static world authoring");
+  assert(runtimeSource.includes("function applyDecorPropLandmarks(options = {})"), "logical-map authoring runtime should own decor prop collision stamping");
   assert(runtimeSource.includes("function applyAuthoredAltarCollision(options = {})"), "logical-map authoring runtime should own altar collision stamping");
   assert(worldSource.includes("WorldLogicalMapAuthoringRuntime"), "world.js should resolve the logical-map authoring runtime");
   assert(worldSource.includes("worldLogicalMapAuthoringRuntime.applyFishingMerchantSpots"), "world.js should delegate fishing merchant authoring");
@@ -81,6 +82,8 @@ function run() {
   const roofLandmarks = [{ x: 2, y: 2, hideBounds: { xMin: 1, xMax: 3, yMin: 1, yMax: 3 } }];
   const staticResult = runtime.applyStaticWorldAuthoring({
     bankBoothsToRender: [],
+    decorPropLandmarks: [{ propId: "test_notice", kind: "notice_board", x: 13, y: 8, z: 0, blocksMovement: true, tags: ["test"] }],
+    decorPropsToRender: [],
     doorLandmarks: [{
       x: 9,
       y: 9,
@@ -92,6 +95,15 @@ function run() {
       targetRotation: 1.1,
       tutorialRequiredStep: 2,
       tutorialGateMessage: "Locked"
+    }, {
+      x: 10,
+      y: 9,
+      z: 0,
+      tileId: "WOODEN_GATE_CLOSED",
+      height: 0.05,
+      isOpen: false,
+      currentRotation: 0,
+      targetRotation: 0
     }],
     doorsToRender: [],
     fenceLandmarks: [{ z: 0, height: 0.1, points: [{ x: 1, y: 12 }, { x: 3, y: 12 }] }],
@@ -106,7 +118,7 @@ function run() {
     staircaseLandmarks: [{ tiles: [{ x: 8, y: 8, z: 0, tileId: "BANK_BOOTH", height: 0.25 }] }],
     stampMap: { shop: ["BN$", "WCV"] },
     stampedStructures: [{ structureId: "shop", stampId: "shop", x: 3, y: 3, z: 0 }],
-    staticMerchantSpots: [{ type: 6, x: 5, y: 10, name: "Smith", merchantId: "smith", tags: ["smithing"] }],
+    staticMerchantSpots: [{ spawnId: "npc:smith", type: 6, x: 5, y: 10, name: "Smith", merchantId: "smith", roamingRadiusOverride: 0, tags: ["smithing"] }],
     tileIds
   });
 
@@ -118,12 +130,21 @@ function run() {
   assert(logicalMap[0][4][3] === tileIds.WALL && logicalMap[0][4][4] === tileIds.TOWER, "blueprint walls and towers should be stamped");
   assert(logicalMap[0][4][5] === tileIds.SHOP_COUNTER, "blueprint shop counter should be stamped");
   assert(logicalMap[0][4][10] === tileIds.SOLID_NPC && logicalMap[0][5][11] === tileIds.SOLID_NPC, "furnace footprint should reserve collision");
+  assert(remembered.some((entry) => entry.x === 10 && entry.y === 4 && entry.tileId === tileIds.GRASS), "furnace collision should preserve its underlying terrain tile");
+  assert(remembered.some((entry) => entry.x === 11 && entry.y === 5 && entry.tileId === tileIds.GRASS), "full furnace footprint should preserve underlying terrain tiles");
   assert(logicalMap[0][10][5] === tileIds.SOLID_NPC && heightMap[0][10][5] === 0.5, "static merchant should reserve raised smithing collision");
+  const smithNpc = staticResult.npcsToRender.find((npc) => npc.name === "Smith");
+  assert(smithNpc && smithNpc.spawnId === "npc:smith" && smithNpc.roamingRadiusOverride === 0, "static merchant render data should preserve stationary NPC metadata");
+  assert(Array.isArray(smithNpc.tags) && smithNpc.tags.includes("smithing"), "static merchant render data should preserve tags");
   assert(logicalMap[0][8][8] === tileIds.BANK_BOOTH && heightMap[0][8][8] === 0.25, "staircase landmark tiles should stamp tile and height");
   assert(logicalMap[0][12][1] === tileIds.FENCE && logicalMap[0][12][3] === tileIds.FENCE, "fence landmarks should stamp straight segments");
   assert(logicalMap[0][11][6] === tileIds.SHORE && logicalMap[0][12][7] === tileIds.STAIRS_RAMP, "smithing hall approach should stamp shore and stairs");
   assert(logicalMap[0][9][9] === tileIds.WOODEN_GATE_OPEN, "door landmarks should stamp door tile ids");
+  assert(logicalMap[0][9][10] === tileIds.WOODEN_GATE_CLOSED && heightMap[0][9][10] === 0, "low wooden gates should not raise a square terrain tile under the door");
   assert(staticResult.doorsToRender[0].isWoodenGate && staticResult.doorsToRender[0].closedTileId === tileIds.WOODEN_GATE_CLOSED, "door render data should preserve wooden gate metadata");
+  assert(staticResult.doorsToRender[0].tutorialAutoOpenOnUnlock === true, "door render data should default tutorial gates to auto-open on unlock");
+  assert(logicalMap[0][8][13] === tileIds.OBSTACLE, "blocking decor props should reserve obstacle tiles");
+  assert(staticResult.decorPropsToRender.length === 1 && staticResult.decorPropsToRender[0].propId === "test_notice", "decor props should be published for rendering");
   staticResult.activeRoofLandmarks[0].hideBounds.xMin = 99;
   assert(roofLandmarks[0].hideBounds.xMin === 1, "roof landmarks should be cloned for runtime ownership");
 

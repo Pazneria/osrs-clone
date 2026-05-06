@@ -34,9 +34,19 @@
                 anchorX: 114,
                 anchorY: 204,
                 radiusScale: 0.72,
-                dirtRadiusScale: 1.08,
+                dirtRadiusScale: 0.98,
                 edgeDepth: -0.17,
                 centerDepth: -0.34
+            }),
+            tutorial_surface_mine: Object.freeze({
+                centerX: 475,
+                centerY: 384,
+                anchorX: 475,
+                anchorY: 384,
+                radiusScale: 0.86,
+                dirtRadiusScale: 1.05,
+                edgeDepth: -0.16,
+                centerDepth: -0.35
             }),
             iron_mine: Object.freeze({
                 centerX: 404,
@@ -44,7 +54,7 @@
                 anchorX: 404,
                 anchorY: 204,
                 radiusScale: 0.76,
-                dirtRadiusScale: 1.08,
+                dirtRadiusScale: 0.98,
                 edgeDepth: -0.18,
                 centerDepth: -0.36
             }),
@@ -54,7 +64,7 @@
                 anchorX: 434,
                 anchorY: 350,
                 radiusScale: 0.8,
-                dirtRadiusScale: 1.08,
+                dirtRadiusScale: 0.98,
                 edgeDepth: -0.2,
                 centerDepth: -0.4
             }),
@@ -64,7 +74,7 @@
                 anchorX: 49,
                 anchorY: 371,
                 radiusScale: 0.78,
-                dirtRadiusScale: 1.08,
+                dirtRadiusScale: 0.98,
                 edgeDepth: -0.2,
                 centerDepth: -0.41
             }),
@@ -74,7 +84,7 @@
                 anchorX: 262,
                 anchorY: 427,
                 radiusScale: 0.74,
-                dirtRadiusScale: 1.08,
+                dirtRadiusScale: 0.98,
                 edgeDepth: -0.19,
                 centerDepth: -0.39
             }),
@@ -84,7 +94,7 @@
                 anchorX: 408,
                 anchorY: 50,
                 radiusScale: 0.7,
-                dirtRadiusScale: 1.06,
+                dirtRadiusScale: 0.98,
                 edgeDepth: -0.18,
                 centerDepth: -0.35
             })
@@ -132,7 +142,7 @@
 
             const radiusBase = Math.max(5.2, recenteredMaxDistance + 2.6 + Math.min(2.8, Math.sqrt(Math.max(1, points.length)) * 0.32));
             const radius = Math.min(16.0, radiusBase * (override && Number.isFinite(override.radiusScale) ? override.radiusScale : 1));
-            const dirtRadius = Math.min(17.6, radius * (override && Number.isFinite(override.dirtRadiusScale) ? override.dirtRadiusScale : 1.06));
+            const dirtRadius = Math.min(17.6, radius * (override && Number.isFinite(override.dirtRadiusScale) ? override.dirtRadiusScale : 0.98));
             const edgeDepth = override && Number.isFinite(override.edgeDepth)
                 ? override.edgeDepth
                 : Math.max(-0.22, -0.15 - (Math.sqrt(Math.max(1, points.length)) * 0.009));

@@ -31,16 +31,18 @@ function run() {
   assert(runtime, "station runtime should execute in isolation");
 
   const context = {
-    furnacesToRender: [{ x: 10, y: 20, z: 0, footprintW: 3, footprintD: 2, facingYaw: Math.PI / 2 }],
+    furnacesToRender: [{ x: 10, y: 20, z: 0, footprintW: 2, footprintD: 3, facingYaw: -Math.PI / 2 }],
     anvilsToRender: [{ x: 30, y: 40, z: 0, facingYaw: 0 }]
   };
 
   const furnaceApproach = runtime.getStationApproachPositions(context, "FURNACE", 10, 20, 0);
   assert(furnaceApproach.length === 1, "large furnace should expose one centered front approach tile");
-  assert(furnaceApproach[0].x === 13 && furnaceApproach[0].y === 20, "large furnace approach should honor footprint and facing yaw");
+  assert(furnaceApproach[0].x === 9 && furnaceApproach[0].y === 21, "west-facing three-wide furnace approach should align to the center of the entrance side");
+  const centeredFurnaceApproach = runtime.getStationApproachPositions(context, "FURNACE", 10, 21, 0);
+  assert(centeredFurnaceApproach.length === 1 && centeredFurnaceApproach[0].x === 9 && centeredFurnaceApproach[0].y === 21, "large furnace should accept its center entrance tile as the interaction target");
   const blockedFurnace = runtime.validateStationApproach(context, "FURNACE", 10, 20, 10, 19, 0);
   assert(blockedFurnace.ok === false && blockedFurnace.message.includes("front of the furnace"), "furnace validation should explain blocked side");
-  const allowedFurnace = runtime.validateStationApproach(context, "FURNACE", 10, 20, 13, 20, 0);
+  const allowedFurnace = runtime.validateStationApproach(context, "FURNACE", 10, 21, 9, 21, 0);
   assert(allowedFurnace.ok === true, "furnace validation should accept the front approach tile");
 
   const anvilApproach = runtime.getStationApproachPositions(context, "ANVIL", 30, 40, 0);

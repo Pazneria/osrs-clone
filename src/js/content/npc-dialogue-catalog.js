@@ -7,8 +7,20 @@
             .replace(/^_+|_+$/g, '');
     }
 
+    function normalizeDialogueTextValue(value) {
+        if (Array.isArray(value)) {
+            const pages = value
+                .map((entry) => typeof entry === 'string' ? entry.trim() : '')
+                .filter((entry) => entry.length > 0);
+            if (pages.length > 1) return pages;
+            if (pages.length === 1) return pages[0];
+            return '';
+        }
+        return typeof value === 'string' ? value.trim() : String(value || '');
+    }
+
     function createTextOption(label, response) {
-        return { kind: 'text', label, response: String(response || '') };
+        return { kind: 'text', label, response: normalizeDialogueTextValue(response) };
     }
 
     function createActionOption(label, kind, extra = null) {
@@ -52,34 +64,44 @@
         },
         tutorial_guide: {
             title: 'Tutorial Guide',
-            greeting: 'Welcome to Tutorial Island. This place is built to slow the world down: one yard, one instructor, one lesson at a time.',
+            greeting: [
+                'Welcome, traveler! You made it to Tutorial Island.',
+                'This little arrival cabin is where new adventurers get their bearings before stepping out into the island.',
+                'I will walk you through the basics one piece at a time.'
+            ],
             options: [
-                createTextOption('Ask about movement', 'Left-click the ground to walk. Right-click people, doors, resources, and objects when you want the full set of actions.'),
-                createTextOption('Ask about the island', 'You will gather wood, catch fish, light fires, cook, mine, smith, fight chickens, use the bank, then leave for Starter Town.'),
+                createTextOption('Ask about movement', [
+                    'Left-click the ground to walk. Right-click people, doors, resources, and objects when you want the full set of actions.',
+                    'If you are unsure, use Examine to learn what something is, or Use when a tool and object belong together.'
+                ]),
+                createTextOption('Ask about the island', [
+                    'Tutorial Island is a guided route for first-time adventurers. Each instructor covers one basic skill and then points you to the next stop.',
+                    'You will gather wood, catch fish, light fires, cook, mine, smith, fight chickens, use the bank, then leave for Starter Town.'
+                ]),
                 createActionOption('Goodbye', 'close')
             ]
         },
         tutorial_woodcutting_instructor: {
             title: 'Woodcutting Instructor',
-            greeting: 'This grove is for gathering. Trees become logs, and logs feed the rest of the island.',
+            greeting: 'Welcome to the grove. Trees are your first renewable resource: cut one, take the logs, and the stump will grow back.',
             options: [
-                createTextOption('Ask about trees', 'Use an axe on a normal tree to collect logs. Bring one back before you move on.'),
+                createTextOption('Ask about chopping', 'Keep the bronze axe in your inventory, use it on a normal tree, and bring the logs back before you move on.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
         tutorial_firemaking_instructor: {
             title: 'Firemaking Instructor',
-            greeting: 'This lane is for spending gathered resources. Light a fire, then use it to cook your fish.',
+            greeting: 'This clearing finishes the Survival Field: logs become fire, and fire turns raw food into something useful.',
             options: [
-                createTextOption('Ask about fires', 'Use a tinderbox with logs. Firemaking consumes the logs and creates a cooking spot for a short time.'),
+                createTextOption('Ask about fires', 'Use a tinderbox with logs near the clearing, then cook raw shrimp on your own fire. Burnt shrimp still proves the loop.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
         tutorial_fishing_instructor: {
             title: 'Fishing Instructor',
-            greeting: 'This pond is for learning that water can be a resource node too.',
+            greeting: 'The pond is part of the Survival Field: gather food here, then carry it to your own fire.',
             options: [
-                createTextOption('Ask about fishing', 'Use a small net on the pond until you catch raw shrimp, then report back.'),
+                createTextOption('Ask about fishing', 'Use a small net on the pond until you catch raw shrimp, then take it to the fire clearing.'),
                 createActionOption('Goodbye', 'close')
             ]
         },

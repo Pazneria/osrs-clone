@@ -38,6 +38,7 @@ function run() {
 
   assert(coreSource.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;"), "core.js should resolve core progress runtime");
   assert(coreSource.includes("function buildCoreProgressRuntimeContext()"), "core.js should adapt progress codec context narrowly");
+  assert(coreSource.includes("buildProgressPayload,"), "core.js should pass progress payload building into the delegated progress context");
   assert(coreSource.includes("getCoreProgressRuntime().serializeItemArray(buildCoreProgressRuntimeContext(), slots)"), "core.js should delegate item array serialization");
   assert(coreSource.includes("getCoreProgressRuntime().deserializeItemArray(buildCoreProgressRuntimeContext(), savedSlots, size)"), "core.js should delegate item array deserialization");
   assert(coreSource.includes("getCoreProgressRuntime().serializeEquipmentState(buildCoreProgressRuntimeContext())"), "core.js should delegate equipment serialization");
@@ -71,6 +72,7 @@ function run() {
   assert(typeof runtime.serializeItemArray === "function", "runtime should expose serializeItemArray");
   assert(typeof runtime.deserializeEquipmentState === "function", "runtime should expose deserializeEquipmentState");
   assert(typeof runtime.sanitizeSkillState === "function", "runtime should expose sanitizeSkillState");
+  assert(typeof runtime.sanitizeCreatorSelections === "function", "runtime should expose creator-selection sanitization");
   assert(typeof runtime.sanitizePlayerProfile === "function", "runtime should expose sanitizePlayerProfile");
   assert(typeof runtime.saveProgressToStorage === "function", "runtime should expose saveProgressToStorage");
   assert(typeof runtime.clearProgressFromStorage === "function", "runtime should expose clearProgressFromStorage");
@@ -108,7 +110,37 @@ function run() {
     tutorialWorldId: "tutorial_island",
     now: () => 12345,
     windowRef: {
-      playerAppearanceState: { gender: 1, colors: [1, 2, 3, 4, 5, 6] }
+      PlayerAppearanceCatalog: {
+        creatorSlotOrder: ["hairStyle", "faceStyle", "facialHair", "bodyStyle", "legStyle", "feetStyle"],
+        creatorDefaults: {
+          hairStyle: "short",
+          faceStyle: "plain",
+          facialHair: "clean",
+          bodyStyle: "plain_tunic",
+          legStyle: "trousers",
+          feetStyle: "shoes"
+        },
+        creatorSlots: {
+          hairStyle: { options: [{ id: "bald" }, { id: "short" }, { id: "long" }] },
+          faceStyle: { options: [{ id: "plain" }, { id: "soft" }, { id: "strong-brow" }] },
+          facialHair: { options: [{ id: "clean" }, { id: "short_beard" }] },
+          bodyStyle: { options: [{ id: "plain_tunic" }, { id: "shirt_vest" }, { id: "work_apron" }] },
+          legStyle: { options: [{ id: "trousers" }, { id: "skirt" }] },
+          feetStyle: { options: [{ id: "shoes" }, { id: "sandals" }] }
+        }
+      },
+      playerAppearanceState: {
+        gender: 1,
+        colors: [1, 2, 3, 4, 5, 6],
+        creatorSelections: {
+          hairStyle: "long",
+          faceStyle: "missing",
+          facialHair: "short_beard",
+          bodyStyle: "shirt_vest",
+          legStyle: "skirt",
+          feetStyle: "sandals"
+        }
+      }
     }
   };
 
@@ -167,8 +199,24 @@ function run() {
   const appearance = runtime.sanitizeAppearanceState(context, { gender: 1, colors: [4.8, "bad", 2] });
   assert(appearance.gender === 1, "runtime should restore appearance gender");
   assert(appearance.colors.join(",") === "4,0,2,0,0", "runtime should sanitize appearance colors");
+  assert(appearance.creatorSelections.hairStyle === "short" && appearance.creatorSelections.bodyStyle === "plain_tunic", "runtime should default missing creator selections for old saves");
+  const selectedAppearance = runtime.sanitizeAppearanceState(context, {
+    gender: 0,
+    colors: [0, 0, 0, 0, 0],
+    creatorSelections: {
+      hairStyle: "long",
+      faceStyle: "bad",
+      facialHair: "short_beard",
+      bodyStyle: "work_apron",
+      legStyle: "skirt",
+      feetStyle: "sandals"
+    }
+  });
+  assert(selectedAppearance.creatorSelections.hairStyle === "long", "runtime should preserve valid creator selections on load");
+  assert(selectedAppearance.creatorSelections.faceStyle === "plain", "runtime should sanitize invalid creator selections to catalog defaults");
   const serializedAppearance = runtime.serializeAppearanceState(context);
   assert(serializedAppearance.gender === 1 && serializedAppearance.colors.length === 5, "runtime should serialize current appearance state");
+  assert(serializedAppearance.creatorSelections.hairStyle === "long" && serializedAppearance.creatorSelections.faceStyle === "plain", "runtime should serialize sanitized creator selections");
 
   const removedKeys = [];
   const storage = { removeItem: (key) => removedKeys.push(key) };

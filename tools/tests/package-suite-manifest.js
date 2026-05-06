@@ -74,6 +74,7 @@ const CHECK_SYNTAX_FILES = [
   "src/js/skills/specs/fletching.js",
   "src/js/skills/specs/smithing.js",
   "src/js/skills/specs/finalize.js",
+  "src/js/content/npc-appearance-catalog.js",
   "src/js/inventory.js",
   "src/js/player-hitpoints-runtime.js",
   "src/js/player-model-visual-runtime.js",
@@ -143,6 +144,7 @@ const TEST_SYNTAX_FILES = [
   "src/js/skills/specs/fletching.js",
   "src/js/skills/specs/smithing.js",
   "src/js/skills/specs/finalize.js",
+  "src/js/content/npc-appearance-catalog.js",
   "src/js/inventory.js",
   "src/js/player-hitpoints-runtime.js",
   "src/js/world.js",
@@ -167,6 +169,8 @@ const TEST_RUN_FILES = [
   "tools/tests/firemaking-runtime-tests.js",
   "tools/tests/fishing-runtime-tests.js",
   "tools/tests/mining-runtime-tests.js",
+  "tools/tests/main-ui-pointer-guard.js",
+  "tools/tests/runecrafting-runtime-tests.js",
   "tools/tests/validate-skills-negatives.js",
   "tools/tests/context-menu-registry-guard.js",
   "tools/tests/target-interaction-runtime-tests.js",
@@ -218,7 +222,8 @@ const TEST_RUN_FILES = [
   "tools/tests/tree-lifecycle-runtime-guard.js",
   "tools/tests/rock-lifecycle-runtime-guard.js",
   "tools/tests/world-training-location-runtime-guard.js",
-  "tools/tests/player-hitpoints-runtime-guard.js"
+  "tools/tests/player-hitpoints-runtime-guard.js",
+  "tools/tests/tutorial-island-visual-harness-guard.js"
 ];
 
 const SUITES = {

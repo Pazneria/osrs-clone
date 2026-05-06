@@ -213,6 +213,38 @@
         return restored;
     }
 
+    function getAppearanceCatalog(context = {}) {
+        const windowRef = context.windowRef || window;
+        return windowRef.PlayerAppearanceCatalog || {};
+    }
+
+    function resolveCreatorSlotOption(context = {}, creatorSlot, optionId) {
+        const catalog = getAppearanceCatalog(context);
+        const creatorSlots = catalog.creatorSlots || {};
+        const creatorDefaults = catalog.creatorDefaults || {};
+        const slotDef = creatorSlots[creatorSlot] || {};
+        const options = Array.isArray(slotDef.options) ? slotDef.options : [];
+        const requestedId = typeof optionId === 'string' ? optionId : '';
+        const defaultId = typeof creatorDefaults[creatorSlot] === 'string' ? creatorDefaults[creatorSlot] : '';
+        return options.find((option) => option && option.id === requestedId)
+            || options.find((option) => option && option.id === defaultId)
+            || options[0]
+            || null;
+    }
+
+    function sanitizeCreatorSelections(context = {}, savedSelections) {
+        const catalog = getAppearanceCatalog(context);
+        const slotOrder = Array.isArray(catalog.creatorSlotOrder) ? catalog.creatorSlotOrder : [];
+        const input = savedSelections && typeof savedSelections === 'object' ? savedSelections : {};
+        const restored = {};
+        for (let i = 0; i < slotOrder.length; i++) {
+            const creatorSlot = slotOrder[i];
+            const option = resolveCreatorSlotOption(context, creatorSlot, input[creatorSlot]);
+            if (option && typeof option.id === 'string') restored[creatorSlot] = option.id;
+        }
+        return restored;
+    }
+
     function serializePlayerProfile(context = {}) {
         const playerProfileState = context.playerProfileState || createEmptyPlayerProfile();
         const defaultName = context.playerProfileDefaultName || 'Adventurer';
@@ -252,7 +284,11 @@
             const raw = Number(colorsIn[i]);
             colors[i] = Number.isFinite(raw) ? Math.floor(raw) : 0;
         }
-        return { gender, colors };
+        return {
+            gender,
+            colors,
+            creatorSelections: sanitizeCreatorSelections(context, savedAppearance.creatorSelections)
+        };
     }
 
     function serializeAppearanceState(context = {}) {
@@ -263,7 +299,8 @@
             gender: appearanceState.gender === 1 ? 1 : 0,
             colors: Array.isArray(appearanceState.colors)
                 ? appearanceState.colors.slice(0, 5)
-                : [0, 0, 0, 0, 0]
+                : [0, 0, 0, 0, 0],
+            creatorSelections: sanitizeCreatorSelections(context, appearanceState.creatorSelections)
         };
     }
 
@@ -448,6 +485,7 @@
         syncPlayerProfileState,
         sanitizePlayerProfile,
         serializePlayerProfile,
+        sanitizeCreatorSelections,
         sanitizeAppearanceState,
         serializeAppearanceState,
         canUseProgressStorage,

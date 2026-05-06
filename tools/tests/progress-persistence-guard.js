@@ -26,6 +26,10 @@ function run() {
     "session bridge should include progress-payload migration handling"
   );
   assert(
+    fs.readFileSync(path.join(root, "src", "game", "session", "progress.ts"), "utf8").includes("creatorSelections"),
+    "typed progress cloning should preserve saved creator selections"
+  );
+  assert(
     coreScript.includes("function saveProgressToStorage(reason = 'manual')"),
     "core should define saveProgressToStorage"
   );
@@ -39,9 +43,11 @@ function run() {
       coreProgressRuntimeScript.includes("function serializeItemArray(context = {}, slots)") &&
       coreProgressRuntimeScript.includes("function deserializeItemArray(context = {}, savedSlots, size)") &&
       coreProgressRuntimeScript.includes("function sanitizeSkillState(context = {}, savedSkills)") &&
+      coreProgressRuntimeScript.includes("function sanitizeCreatorSelections(context = {}, savedSelections)") &&
       coreProgressRuntimeScript.includes("function sanitizePlayerProfile(context = {}, savedProfile, options = {})") &&
       coreProgressRuntimeScript.includes("function serializePlayerProfile(context = {})") &&
       coreProgressRuntimeScript.includes("function serializeAppearanceState(context = {})") &&
+      coreProgressRuntimeScript.includes("creatorSelections: sanitizeCreatorSelections(context, appearanceState.creatorSelections)") &&
       coreProgressRuntimeScript.includes("function saveProgressToStorage(context = {}, reason = 'manual')") &&
       coreProgressRuntimeScript.includes("function clearProgressFromStorage(context = {}, options = {})") &&
       coreProgressRuntimeScript.includes("function consumeFreshSessionRequest(context = {})") &&
@@ -51,14 +57,16 @@ function run() {
     "core progress runtime should own progress save encoding, decoding, and lifecycle helpers"
   );
   assert(
-    coreScript.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;") &&
+      coreScript.includes("const coreProgressRuntime = window.CoreProgressRuntime || null;") &&
       coreScript.includes("function buildCoreProgressRuntimeContext()") &&
+      coreScript.includes("buildProgressPayload,") &&
       coreScript.includes("getCoreProgressRuntime().serializeItemArray(buildCoreProgressRuntimeContext(), slots)") &&
       coreScript.includes("getCoreProgressRuntime().deserializeItemArray(buildCoreProgressRuntimeContext(), savedSlots, size)") &&
       coreScript.includes("getCoreProgressRuntime().sanitizeSkillState(buildCoreProgressRuntimeContext(), savedSkills)") &&
       coreScript.includes("getCoreProgressRuntime().sanitizePlayerProfile(buildCoreProgressRuntimeContext(), savedProfile, options)") &&
       coreScript.includes("getCoreProgressRuntime().serializePlayerProfile(buildCoreProgressRuntimeContext())") &&
       coreScript.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())") &&
+      coreScript.includes("window.playerAppearanceState.creatorSelections = Object.assign({}, appearance.creatorSelections || {});") &&
       coreScript.includes("getCoreProgressRuntime().saveProgressToStorage(buildCoreProgressRuntimeContext(), reason)") &&
       coreScript.includes("getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options)") &&
       coreScript.includes("getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext())") &&
@@ -82,6 +90,10 @@ function run() {
   assert(
     coreScript.includes("function loadProgressFromStorage()"),
     "core should define loadProgressFromStorage"
+  );
+  assert(
+    !coreScript.includes("playerEntryFlowState.saveWasLegacyProfile ||"),
+    "core should not reopen the player creator solely for upgraded legacy saves"
   );
   assert(
     coreScript.includes("const MAX_PERSISTED_EAT_COOLDOWN_TICKS = 10;"),

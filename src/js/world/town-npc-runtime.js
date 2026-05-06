@@ -146,6 +146,9 @@
     function resolveTownNpcRoamingRadius(npc, roamBounds) {
         const npcName = npc && typeof npc.name === 'string' ? npc.name : '';
         const dialogueId = npc && typeof npc.dialogueId === 'string' ? npc.dialogueId.trim() : '';
+        if (npc && Number.isFinite(npc.roamingRadiusOverride)) {
+            return Math.max(0, Math.floor(Number(npc.roamingRadiusOverride)));
+        }
         if (npcName === 'Banker') return 0;
         if (/^King\b/i.test(npcName) || /^Queen\b/i.test(npcName)) return 1;
         if (npc && npc.action === 'Travel') return dialogueId ? 2 : 1;
@@ -307,10 +310,11 @@
             const door = doorsToRender[i];
             if (!door || !Number.isFinite(door.tutorialRequiredStep)) continue;
             const unlocked = isTutorialGateUnlocked(context, door);
-            door.isOpen = unlocked;
-            door.targetRotation = unlocked ? door.openRot : door.closedRot;
+            if (!unlocked) door.isOpen = false;
+            else if (door.tutorialAutoOpenOnUnlock !== false) door.isOpen = true;
+            door.targetRotation = door.isOpen ? door.openRot : door.closedRot;
             if (logicalMap && logicalMap[door.z] && logicalMap[door.z][door.y]) {
-                logicalMap[door.z][door.y][door.x] = unlocked ? getDoorOpenTileId(TileId, door) : getDoorClosedTileId(TileId, door);
+                logicalMap[door.z][door.y][door.x] = (unlocked && door.isOpen) ? getDoorOpenTileId(TileId, door) : getDoorClosedTileId(TileId, door);
             }
         }
         if (typeof context.updateMinimapCanvas === 'function') context.updateMinimapCanvas();
@@ -464,14 +468,31 @@
 
         const walkActive = Number.isFinite(actor.moveDurationMs) && actor.moveDurationMs > 0;
         const phaseOffset = Number.isFinite(actor.animationSeed) ? (actor.animationSeed % 628) / 100 : 0;
-        const phase = phaseOffset + (frameNowMs * (walkActive ? 0.011 : 0.0038));
-        const stride = walkActive ? Math.sin(phase) * 0.52 : Math.sin(phase * 1.1) * 0.06;
-        const bounce = walkActive ? Math.abs(Math.sin(phase)) * 0.034 : (Math.sin(phase * 0.65) * 0.01);
+        if (!walkActive) {
+            actor.mesh.position.y = visualBaseY;
+            if (actor.roamEnabled !== false) {
+                const idlePhase = phaseOffset + (frameNowMs * 0.0038);
+                const idleBreath = Math.sin(idlePhase * 0.65) * 0.01;
+                const headNod = Math.sin(idlePhase * 0.8) * 0.015;
+                if (rig.torso && defaultNodes.torso) {
+                    rig.torso.position.y = defaultNodes.torso.position.y + (idleBreath * 0.45);
+                }
+                if (rig.head && defaultNodes.head) {
+                    rig.head.position.y = defaultNodes.head.position.y + (idleBreath * 0.2);
+                    rig.head.rotation.x = defaultNodes.head.rotation.x + headNod;
+                }
+            }
+            return;
+        }
+
+        const phase = phaseOffset + (frameNowMs * 0.011);
+        const stride = Math.sin(phase) * 0.52;
+        const bounce = Math.abs(Math.sin(phase)) * 0.034;
         const armSwing = stride * 0.72;
         const torsoTilt = stride * 0.08;
-        const headNod = walkActive ? Math.sin(phase * 2) * 0.04 : Math.sin(phase * 0.8) * 0.015;
-        const leftKnee = walkActive ? Math.max(0, -stride) * 0.78 : 0;
-        const rightKnee = walkActive ? Math.max(0, stride) * 0.78 : 0;
+        const headNod = Math.sin(phase * 2) * 0.04;
+        const leftKnee = Math.max(0, -stride) * 0.78;
+        const rightKnee = Math.max(0, stride) * 0.78;
 
         actor.mesh.position.y = visualBaseY + bounce;
         if (rig.torso && defaultNodes.torso) {

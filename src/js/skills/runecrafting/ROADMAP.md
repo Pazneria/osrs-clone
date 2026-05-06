@@ -206,6 +206,14 @@ Each combination rune can be crafted from either valid elemental direction.
 | 12   | Award XP based on Essence Used for Output |
 | 13   | End the crafting action |
 
+### Runtime Feedback and Interruption Notes
+
+- Combination routes now validate that the carried secondary runes can support at least one rune essence at the player's current output multiplier before the altar action starts.
+- If matching secondary runes are removed before the craft tick resolves, the action stops with the same explicit secondary-rune requirement message instead of silently ending.
+- Partial combination crafting remains valid when the carried secondary rune count can support at least one essence; unused essence stays in inventory as described in the combination-rune rules.
+- Altar hover and context-menu labels now show the selected output route plus lock, essence, or secondary-rune hints before the player commits to the action.
+- Queued altar crafts now stop with explicit feedback if the selected altar target changes before the craft tick resolves.
+
 ## Economy Role
 
 Runecrafting creates value by converting rune essence into usable runes.

@@ -4,10 +4,25 @@
 
     let activeNpc = null;
     let activeDialogueId = '';
+    let activeDialogueView = null;
     let activeMessage = '';
+    let activePageFlow = null;
+    const portraitState = {
+        scene: null,
+        camera: null,
+        renderer: null,
+        rig: null,
+        container: null,
+        mounted: false,
+        key: ''
+    };
 
     function getOverlayEl() {
         return document.getElementById('npc-dialogue-overlay');
+    }
+
+    function getPanelEl() {
+        return document.getElementById('npc-dialogue-panel');
     }
 
     function getTitleEl() {
@@ -26,9 +41,41 @@
         return document.getElementById('npc-dialogue-close');
     }
 
+    function getPortraitEl() {
+        return document.querySelector('.npc-dialogue-portrait');
+    }
+
+    function getPortraitModelEl() {
+        return document.getElementById('npc-dialogue-portrait-model');
+    }
+
     function normalizeNpcData(npc) {
         if (!npc || typeof npc !== 'object') return {};
         return Object.assign({}, npc);
+    }
+
+    function normalizeDialoguePages(value) {
+        if (Array.isArray(value)) {
+            return value
+                .map((entry) => typeof entry === 'string' ? entry.trim() : '')
+                .filter((entry) => entry.length > 0);
+        }
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return trimmed ? [trimmed] : [];
+        }
+        return [];
+    }
+
+    function hasDialogueText(value) {
+        return normalizeDialoguePages(value).length > 0;
+    }
+
+    function normalizeDialogueValue(value, fallback) {
+        const pages = normalizeDialoguePages(value);
+        if (pages.length > 1) return pages;
+        if (pages.length === 1) return pages[0];
+        return fallback;
     }
 
     function resolveDialogueEntry(npc) {
@@ -48,9 +95,7 @@
         const entry = resolveDialogueEntry(npc);
         const baseView = {
             title: entry && entry.title ? entry.title : (npc && npc.name ? npc.name : FALLBACK_TITLE),
-            greeting: entry && typeof entry.greeting === 'string' && entry.greeting.trim()
-                ? entry.greeting.trim()
-                : FALLBACK_GREETING,
+            greeting: normalizeDialogueValue(entry && entry.greeting, FALLBACK_GREETING),
             options: Array.isArray(entry && entry.options) ? entry.options.slice() : []
         };
 
@@ -59,9 +104,7 @@
             if (questView && typeof questView === 'object') {
                 const resolvedQuestView = {
                     title: questView.title || baseView.title,
-                    greeting: (typeof questView.greeting === 'string' && questView.greeting.trim())
-                        ? questView.greeting.trim()
-                        : baseView.greeting,
+                    greeting: normalizeDialogueValue(questView.greeting, baseView.greeting),
                     options: Array.isArray(questView.options) ? questView.options.slice() : baseView.options
                 };
                 if (window.TutorialRuntime && typeof window.TutorialRuntime.buildNpcDialogueView === 'function') {
@@ -102,10 +145,257 @@
         return true;
     }
 
+    function resolveOptionIconClass(option) {
+        const kind = option && typeof option.kind === 'string' ? option.kind.trim().toLowerCase() : '';
+        const label = option && typeof option.label === 'string' ? option.label.trim().toLowerCase() : '';
+        if (kind === 'trade' || label.includes('trade') || label.includes('shop')) return 'npc-dialogue-option-icon-coin';
+        if (kind === 'bank' || label.includes('bank')) return 'npc-dialogue-option-icon-bank';
+        if (kind === 'travel' || label.includes('leave') || label.includes('exit')) return 'npc-dialogue-option-icon-arrow';
+        if (kind === 'close' || label.includes('goodbye') || label.includes('close')) return 'npc-dialogue-option-icon-close';
+        if (label.includes('ready')) return 'npc-dialogue-option-icon-sword';
+        if (label.includes('move') || label.includes('walk')) return 'npc-dialogue-option-icon-walk';
+        if (label.includes('?') || label.includes('what') || label.includes('how') || label.includes('why')) return 'npc-dialogue-option-icon-help';
+        return 'npc-dialogue-option-icon-dot';
+    }
+
+    function resolveNpcAppearanceId(npc) {
+        const worldNpcRuntime = window.WorldNpcRenderRuntime || null;
+        if (worldNpcRuntime && typeof worldNpcRuntime.resolveNpcAppearanceId === 'function') {
+            const resolved = worldNpcRuntime.resolveNpcAppearanceId(npc);
+            if (resolved) return resolved;
+        }
+        const explicitAppearanceId = typeof npc.appearanceId === 'string' ? npc.appearanceId.trim().toLowerCase() : '';
+        if (explicitAppearanceId) return explicitAppearanceId;
+        const merchantId = typeof npc.merchantId === 'string' ? npc.merchantId.trim().toLowerCase() : '';
+        const name = typeof npc.name === 'string' ? npc.name.trim().toLowerCase() : '';
+        if (merchantId === 'tanner_rusk' || name === 'tanner rusk') return 'tanner_rusk';
+        return '';
+    }
+
+    function resolveNpcModelType(npc) {
+        if (Number.isFinite(npc && npc.type)) return Number(npc.type);
+        if (Number.isFinite(npc && npc.npcType)) return Number(npc.npcType);
+        const name = npc && typeof npc.name === 'string' ? npc.name.trim() : '';
+        if (name === 'Shopkeeper') return 2;
+        if (name === 'Banker') return 3;
+        return 3;
+    }
+
+    function buildPortraitKey(npc) {
+        if (!npc) return '';
+        return [
+            npc.spawnId || '',
+            npc.merchantId || '',
+            npc.name || '',
+            npc.appearanceId || '',
+            Number.isFinite(npc.type) ? npc.type : '',
+            Number.isFinite(npc.npcType) ? npc.npcType : ''
+        ].join('|');
+    }
+
+    function ensurePortraitRuntime() {
+        const container = getPortraitModelEl();
+        if (!container || typeof THREE === 'undefined') return false;
+        if (portraitState.mounted && portraitState.container === container) return true;
+
+        portraitState.container = container;
+        portraitState.scene = new THREE.Scene();
+        portraitState.camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+        portraitState.camera.position.set(0, 1.05, 3.15);
+        portraitState.camera.lookAt(0, 0.92, 0);
+        portraitState.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+        portraitState.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        portraitState.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        portraitState.renderer.domElement.className = 'npc-dialogue-portrait-canvas';
+        container.innerHTML = '';
+        container.appendChild(portraitState.renderer.domElement);
+
+        portraitState.scene.add(new THREE.HemisphereLight(0xfff4de, 0x6d5435, 1.1));
+        portraitState.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const keyLight = new THREE.DirectionalLight(0xffe1a5, 1.15);
+        keyLight.position.set(2.2, 4, 3);
+        portraitState.scene.add(keyLight);
+        const rimLight = new THREE.DirectionalLight(0x9fb6ff, 0.38);
+        rimLight.position.set(-2.5, 2.3, -1.5);
+        portraitState.scene.add(rimLight);
+
+        portraitState.mounted = true;
+        return true;
+    }
+
+    function resizePortraitRuntime() {
+        if (!portraitState.renderer || !portraitState.camera || !portraitState.container) return false;
+        const rect = portraitState.container.getBoundingClientRect();
+        const width = Math.max(72, Math.floor(rect.width || 0));
+        const height = Math.max(88, Math.floor(rect.height || 0));
+        portraitState.renderer.setSize(width, height, false);
+        portraitState.camera.aspect = width / height;
+        portraitState.camera.updateProjectionMatrix();
+        return true;
+    }
+
+    function isVisibleElement(element) {
+        if (!element || typeof window.getComputedStyle !== 'function') return false;
+        const style = window.getComputedStyle(element);
+        return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0;
+    }
+
+    function rectsOverlap(a, b) {
+        return !!(
+            a && b
+            && a.left < b.right
+            && a.right > b.left
+            && a.top < b.bottom
+            && a.bottom > b.top
+        );
+    }
+
+    function offsetRect(rect, dx, dy) {
+        return {
+            left: rect.left + dx,
+            right: rect.right + dx,
+            top: rect.top + dy,
+            bottom: rect.bottom + dy,
+            width: rect.width,
+            height: rect.height
+        };
+    }
+
+    function inflateRect(rect, amount) {
+        return {
+            left: rect.left - amount,
+            right: rect.right + amount,
+            top: rect.top - amount,
+            bottom: rect.bottom + amount,
+            width: rect.width + (amount * 2),
+            height: rect.height + (amount * 2)
+        };
+    }
+
+    function getHudBlockers() {
+        return [
+            { id: 'chat-box', axis: 'y' },
+            { id: 'main-ui-container', axis: 'x' },
+            { id: 'runToggleBtn', axis: 'x' }
+        ]
+            .map((entry) => {
+                const element = document.getElementById(entry.id);
+                if (!isVisibleElement(element)) return null;
+                const rect = element.getBoundingClientRect();
+                if (!rect || rect.width <= 0 || rect.height <= 0) return null;
+                return { rect, axis: entry.axis };
+            })
+            .filter(Boolean);
+    }
+
+    function positionNpcDialoguePanel() {
+        const panel = getPanelEl();
+        if (!panel || typeof window.requestAnimationFrame !== 'function') return;
+        panel.style.setProperty('--npc-dialogue-offset-x', '0px');
+        panel.style.setProperty('--npc-dialogue-offset-y', '0px');
+        window.requestAnimationFrame(() => {
+            if (!isOpen()) return;
+            const nextPanel = getPanelEl();
+            if (!nextPanel) return;
+            const panelRect = nextPanel.getBoundingClientRect();
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+            const gap = 14;
+            let dx = 0;
+            let dy = 0;
+            getHudBlockers().forEach((blocker) => {
+                const blockerRect = inflateRect(blocker.rect, gap);
+                const currentRect = offsetRect(panelRect, dx, dy);
+                if (!rectsOverlap(currentRect, blockerRect)) return;
+                if (blocker.axis === 'x') {
+                    dx += blockerRect.left - currentRect.right;
+                } else {
+                    dy += blockerRect.top - currentRect.bottom;
+                }
+            });
+
+            const movedRect = offsetRect(panelRect, dx, dy);
+            if (movedRect.left < gap) dx += gap - movedRect.left;
+            if (movedRect.right > viewportWidth - gap) dx -= movedRect.right - (viewportWidth - gap);
+            if (movedRect.top < gap) dy += gap - movedRect.top;
+            if (movedRect.bottom > viewportHeight - gap) dy -= movedRect.bottom - (viewportHeight - gap);
+
+            nextPanel.style.setProperty('--npc-dialogue-offset-x', `${Math.round(dx)}px`);
+            nextPanel.style.setProperty('--npc-dialogue-offset-y', `${Math.round(dy)}px`);
+        });
+    }
+
+    function clearPortraitRig() {
+        if (portraitState.rig && portraitState.scene) {
+            portraitState.scene.remove(portraitState.rig);
+        }
+        portraitState.rig = null;
+        portraitState.key = '';
+        const portrait = getPortraitEl();
+        if (portrait) portrait.classList.remove('has-live-model');
+    }
+
+    function createNpcPortraitRig(npc) {
+        const appearanceId = resolveNpcAppearanceId(npc);
+        let rig = null;
+        if (appearanceId && typeof window.createNpcHumanoidRigFromPreset === 'function') {
+            rig = window.createNpcHumanoidRigFromPreset(appearanceId);
+        }
+        if (!rig && typeof window.createHumanoidModel === 'function') {
+            rig = window.createHumanoidModel(resolveNpcModelType(npc));
+        }
+        return rig;
+    }
+
+    function createNpcPortraitRoot(modelRig) {
+        if (!modelRig || typeof THREE === 'undefined') return modelRig;
+        const portraitRoot = new THREE.Group();
+        portraitRoot.userData.modelRig = modelRig;
+        if (modelRig.rotation && typeof modelRig.rotation.set === 'function') {
+            modelRig.rotation.set(0, 0, 0);
+        } else if (modelRig.rotation) {
+            modelRig.rotation.y = 0;
+        }
+        portraitRoot.add(modelRig);
+        portraitRoot.position.set(0, -0.64, 0);
+        portraitRoot.rotation.y = 0;
+        portraitRoot.scale.setScalar(1.02);
+        return portraitRoot;
+    }
+
+    function renderNpcDialoguePortrait(npc) {
+        if (!ensurePortraitRuntime()) return false;
+        const nextKey = buildPortraitKey(npc);
+        if (!portraitState.rig || portraitState.key !== nextKey) {
+            clearPortraitRig();
+            const modelRig = createNpcPortraitRig(npc || {});
+            if (!modelRig || !portraitState.scene) return false;
+            const portraitRoot = createNpcPortraitRoot(modelRig);
+            portraitState.scene.add(portraitRoot);
+            portraitState.rig = portraitRoot;
+            portraitState.key = nextKey;
+        }
+        const portrait = getPortraitEl();
+        if (portrait) portrait.classList.add('has-live-model');
+        window.requestAnimationFrame(() => {
+            if (!isOpen() || !portraitState.renderer || !portraitState.scene || !portraitState.camera) return;
+            resizePortraitRuntime();
+            portraitState.renderer.render(portraitState.scene, portraitState.camera);
+        });
+        return true;
+    }
+
     function closeNpcDialogue() {
         activeNpc = null;
         activeDialogueId = '';
+        activeDialogueView = null;
         activeMessage = '';
+        activePageFlow = null;
+        const panel = getPanelEl();
+        if (panel) {
+            panel.style.setProperty('--npc-dialogue-offset-x', '0px');
+            panel.style.setProperty('--npc-dialogue-offset-y', '0px');
+        }
         const overlay = getOverlayEl();
         if (overlay) overlay.classList.add('hidden');
     }
@@ -147,18 +437,66 @@
         activeMessage = text || FALLBACK_GREETING;
     }
 
+    function showDialogueMessage(value) {
+        const pages = normalizeDialoguePages(value);
+        activePageFlow = pages.length > 1
+            ? { pages, pageIndex: 0 }
+            : null;
+        updateBodyText(pages[0] || FALLBACK_GREETING);
+    }
+
+    function advanceDialoguePage() {
+        if (!activePageFlow || !Array.isArray(activePageFlow.pages)) return false;
+        if (activePageFlow.pageIndex < activePageFlow.pages.length - 1) {
+            activePageFlow.pageIndex += 1;
+            updateBodyText(activePageFlow.pages[activePageFlow.pageIndex] || FALLBACK_GREETING);
+            renderDialogueOptions(activeNpc, activeDialogueView);
+            return true;
+        }
+        activePageFlow = null;
+        renderDialogueOptions(activeNpc, activeDialogueView);
+        return true;
+    }
+
+    function renderContinueOption(optionsEl) {
+        if (!optionsEl || !activePageFlow || !Array.isArray(activePageFlow.pages)) return false;
+        const currentPage = activePageFlow.pageIndex + 1;
+        const totalPages = activePageFlow.pages.length;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'npc-dialogue-option npc-dialogue-option-continue';
+        const icon = document.createElement('span');
+        icon.className = 'npc-dialogue-option-icon npc-dialogue-option-icon-arrow';
+        icon.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'npc-dialogue-option-label';
+        label.textContent = `Continue (${currentPage}/${totalPages})`;
+        button.appendChild(icon);
+        button.appendChild(label);
+        button.addEventListener('click', advanceDialoguePage);
+        optionsEl.appendChild(button);
+        return true;
+    }
+
     function refreshActiveDialogue(bodyTextOverride) {
         if (!activeNpc) return;
         const normalizedNpc = normalizeNpcData(activeNpc);
         const dialogueView = buildDialogueView(normalizedNpc);
+        activeDialogueView = dialogueView;
+        const overlay = getOverlayEl();
+        if (overlay) {
+            overlay.dataset.dialogueId = activeDialogueId || '';
+            overlay.dataset.npcName = normalizedNpc.name || '';
+        }
+        renderNpcDialoguePortrait(normalizedNpc);
 
         const titleEl = getTitleEl();
         if (titleEl) titleEl.textContent = dialogueView.title || FALLBACK_TITLE;
 
-        const nextBodyText = (typeof bodyTextOverride === 'string' && bodyTextOverride.trim())
-            ? bodyTextOverride.trim()
+        const nextBodyText = hasDialogueText(bodyTextOverride)
+            ? bodyTextOverride
             : dialogueView.greeting;
-        updateBodyText(nextBodyText);
+        showDialogueMessage(nextBodyText);
         renderDialogueOptions(normalizedNpc, dialogueView);
     }
 
@@ -166,6 +504,11 @@
         const optionsEl = getOptionsEl();
         if (!optionsEl) return;
         optionsEl.innerHTML = '';
+
+        if (activePageFlow && renderContinueOption(optionsEl)) {
+            positionNpcDialoguePanel();
+            return;
+        }
 
         const optionList = Array.isArray(dialogueView && dialogueView.options) ? dialogueView.options : [];
         const visibleOptions = [];
@@ -182,8 +525,15 @@
         visibleOptions.forEach((option) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'w-full rounded border border-[#4a4136] bg-[#241d16] px-3 py-2 text-left text-sm text-[#f1e2bf] transition-colors hover:bg-[#2f261d] hover:border-[#c8aa6e]';
-            button.textContent = option.label || 'Option';
+            button.className = 'npc-dialogue-option';
+            const icon = document.createElement('span');
+            icon.className = `npc-dialogue-option-icon ${resolveOptionIconClass(option)}`;
+            icon.setAttribute('aria-hidden', 'true');
+            const label = document.createElement('span');
+            label.className = 'npc-dialogue-option-label';
+            label.textContent = option.label || 'Option';
+            button.appendChild(icon);
+            button.appendChild(label);
             button.addEventListener('click', () => {
                 if (!activeNpc) return;
                 if (option.kind === 'trade') {
@@ -210,7 +560,7 @@
                         npc: activeNpc,
                         closeDialogue: closeNpcDialogue,
                         refreshDialogue: refreshActiveDialogue,
-                        updateBodyText: updateBodyText,
+                        updateBodyText: showDialogueMessage,
                         performBank: performBank,
                         performTrade: () => performTrade(activeNpc),
                         performTravel: () => performTravel(activeNpc, option)
@@ -223,17 +573,20 @@
                         refreshActiveDialogue(result.bodyText);
                         return;
                     }
-                    if (result && typeof result.bodyText === 'string' && result.bodyText.trim()) {
-                        updateBodyText(result.bodyText.trim());
+                    if (result && hasDialogueText(result.bodyText)) {
+                        showDialogueMessage(result.bodyText);
+                        renderDialogueOptions(activeNpc, activeDialogueView);
                         return;
                     }
                 }
-                if (typeof option.response === 'string' && option.response.trim()) {
-                    updateBodyText(option.response.trim());
+                if (hasDialogueText(option.response)) {
+                    showDialogueMessage(option.response);
+                    renderDialogueOptions(activeNpc, activeDialogueView);
                 }
             });
             optionsEl.appendChild(button);
         });
+        positionNpcDialoguePanel();
     }
 
     function openNpcDialogue(npc) {
@@ -271,6 +624,16 @@
         return !!(overlay && !overlay.classList.contains('hidden'));
     }
 
+    function getActivePageProgress() {
+        if (!activePageFlow || !Array.isArray(activePageFlow.pages)) {
+            return { page: 1, total: 1 };
+        }
+        return {
+            page: activePageFlow.pageIndex + 1,
+            total: activePageFlow.pages.length
+        };
+    }
+
     function handleOverlayClick(event) {
         if (event && event.target && event.currentTarget === event.target) {
             closeNpcDialogue();
@@ -297,6 +660,10 @@
         if (closeButtonEl) closeButtonEl.addEventListener('click', closeNpcDialogue);
 
         window.addEventListener('keydown', handleKeydown, true);
+        window.addEventListener('resize', () => {
+            if (isOpen() && activeNpc) renderNpcDialoguePortrait(activeNpc);
+            if (isOpen()) positionNpcDialoguePanel();
+        });
     }
 
     if (document.readyState === 'loading') {
@@ -312,7 +679,8 @@
         refreshActiveDialogue: refreshActiveDialogue,
         getActiveNpc: function () { return activeNpc ? Object.assign({}, activeNpc) : null; },
         getActiveDialogueId: function () { return activeDialogueId; },
-        getActiveMessage: function () { return activeMessage; }
+        getActiveMessage: function () { return activeMessage; },
+        getActivePageProgress: getActivePageProgress
     };
     window.openNpcDialogue = openNpcDialogue;
     window.closeNpcDialogue = closeNpcDialogue;

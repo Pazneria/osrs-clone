@@ -272,29 +272,32 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-013 - Shoreline terrain clipping cleanup
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `src/js/world/chunk-terrain-runtime.js`, `src/js/world/water-runtime.js`, `src/js/world/render-runtime.js`, `tools/tests/terrain-seam-guard.js`, `tools/tests/water-render-guard.js`, `tools/content/validate-world.js`
 - Repro:
   1. Inspect beach/sand around water boundaries.
 - Expected: Shoreline terrain blends cleanly without clipping.
-- Actual: Beach/sand clipping visible around water.
+- Actual: Shoreline terrain now blends through authored water-body contours, smooth shoreline ribbons, island-coastline visual suppression, water-height terrain underlap, and shore/dirt blend masks instead of exposing jagged beach/sand or grass slivers at water edges.
 - Frequency: Often
 - Owner: Pair
 - Plan v1:
   1. Identify clipping hotspots.
   2. Adjust shoreline mesh/tile transitions.
   3. Verify at multiple zoom levels/camera angles.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `chunk-terrain-runtime` now samples authored water bodies and applies shore/dirt blend masks near smooth pond and island-coastline contours, including water-height pull-down protection so land vertices meet water cleanly.
+  - `water-runtime` owns smooth pond overlays, shoreline ribbons, island coastline visuals, and near-coast tile-water suppression so visible water no longer follows jagged tile edges where authored contours exist.
+  - `render-runtime` keeps the shoreline ribbon material on the shared animated water path, preserving shallow-water feathering without white foam or exposed underside seams.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-014 - Tree spacing pass by tiered reserved areas
 - Status: Fixed
@@ -989,6 +992,65 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
+
+### HIT-074 - Runecrafting altar labels hid route status
+- Status: Fixed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Hover or right-click an elemental altar while carrying a secondary rune for a combination route.
+  2. Repeat while missing enough secondary runes for one scaled output, or while a queued altar craft target changes before resolution.
+- Expected: The altar UI should show the selected output route and immediate missing-input/lock hints, and queued altar interruption should explain why crafting stopped.
+- Actual: Altar labels only showed the altar name/output, and some target-change interruption states stopped without player-facing feedback.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Add selected-output and missing-input route hints to altar tooltip/context-menu labels.
+  2. Stop queued altar crafts if the selected target drifts before the craft tick.
+  3. Add focused runecrafting runtime coverage and sync the tracker docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Altar hover and context menu labels now include selected output plus route status such as `using air rune`, `need rune essence`, `need 2 air runes`, `need level N`, or `quest locked`.
+  - Queued altar crafts now stop with explicit feedback if the selected altar target/coordinates change before resolution, without consuming essence or granting output.
+  - Extended runecrafting runtime QA coverage for route labels and target-drift interruption.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-073 - Runecrafting combination failure lacked secondary-rune feedback
+- Status: Fixed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Reach level 50 Runecrafting with combination runecrafting unlocked.
+  2. Carry rune essence and only one matching secondary rune for a combination route, such as one air rune at the Ember Altar.
+  3. Attempt to craft the selected combination rune.
+- Expected: The altar action should explain that the carried secondary runes cannot support even one essence at the current output multiplier.
+- Actual: The selected combination action could start and then silently stop when the craft plan found too few secondary runes.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Validate the selected runecrafting craft plan before starting the altar action.
+  2. Reuse the same explicit failure message if secondary runes disappear before the craft tick.
+  3. Add focused runtime coverage for blocked, interrupted, and valid partial-secondary combination crafts.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added explicit secondary-rune requirement feedback for under-supplied combination routes before start and during tick-time revalidation.
+  - Preserved valid partial-secondary combination crafting when the carried secondary rune count can support at least one essence.
+  - Added `tools/tests/runecrafting-runtime-tests.js`, wired it to `npm.cmd run test:qa:runecrafting`, and included it in the package test suite manifest.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-072 - Runecrafting balance lacked travel-adjusted guardrails
 - Status: Fixed
@@ -1853,34 +1915,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-011 - Ground item stack count indicator (n)
-- Status: Fixed
-- Severity: S2
-- Area: WORLD
-- Source: Manual
-- Links: `src/js/input-render.js`
-- Repro:
-  1. Drop multiple items on same tile.
-- Expected: Tile/item indicator shows quantity as `(n)`.
-- Actual: Quantity indicator missing/insufficient.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Aggregate ground stack counts by tile.
-  2. Render count overlay/label.
-  3. Confirm updates on add/remove/pickup events.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added tile-level ground stack aggregation (`getGroundTileStackCount`) and label formatting (`formatGroundItemDisplayName`) helpers.
-  - Ground-item context menu and hover tooltip labels now append ` (n)` when multiple stacks share the same tile.
-  - Stack counts are computed live from `groundItems`, so indicators update automatically on drop/add/pickup changes.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-012 - Menu input behavior (middle-click outside)
 - Status: Fixed
 - Severity: S2
@@ -2135,6 +2169,35 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
+
+### HIT-011 - Ground item stack count indicator (n)
+- Status: Closed
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/input-target-interaction-runtime.js`, `tools/tests/input-target-interaction-runtime-guard.js`
+- Repro:
+  1. Drop multiple items on same tile.
+- Expected: Tile/item indicator shows quantity as `(n)`.
+- Actual: Ground-item context menu and hover labels now show tile stack counts as `(n)`.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Aggregate ground stack counts by tile.
+  2. Render count overlay/label.
+  3. Confirm updates on add/remove/pickup events.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added tile-level ground stack aggregation (`getGroundTileStackCount`) and label formatting (`formatGroundItemDisplayName`) helpers.
+  - Ground-item context menu and hover tooltip labels now append ` (n)` when multiple stacks share the same tile.
+  - Stack counts are computed live from `groundItems`, so indicators update automatically on drop/add/pickup changes.
+  - Verified the display-name contract with `node .\tools\tests\input-target-interaction-runtime-guard.js`.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-007 - Mining spot layout pass (spread out, avoid rows)
 - Status: Closed

@@ -288,21 +288,92 @@
         return qaTeleportTo(context, match.x, Math.max(0, match.y - 3), match.z, `near ${match.label}`);
     }
 
+    function makeQaTutorialStation(point, fallbackLabel) {
+        if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
+        return {
+            x: Math.round(Number(point.x)),
+            y: Math.round(Number(point.y)),
+            z: Number.isFinite(point.z) ? Math.round(Number(point.z)) : 0,
+            label: point.label || point.name || fallbackLabel
+        };
+    }
+
+    function findQaRouteStation(context, groupId, routeId, fallbackLabel) {
+        const routes = getWorldRouteGroup(context, groupId);
+        for (let i = 0; i < routes.length; i++) {
+            const route = routes[i];
+            if (!route) continue;
+            if (String(route.routeId || '').toLowerCase() === routeId) return makeQaTutorialStation(route, fallbackLabel);
+        }
+        return null;
+    }
+
+    function getQaWorldServices(context) {
+        const worldContext = getWorldGameContext(context);
+        const authoredServices = worldContext && worldContext.definition && Array.isArray(worldContext.definition.services)
+            ? worldContext.definition.services
+            : [];
+        if (authoredServices.length > 0) return authoredServices;
+        return getWorldMerchantServices(context);
+    }
+
+    function findQaServiceStation(context, serviceIds, fallbackLabel) {
+        const services = getQaWorldServices(context);
+        const ids = Array.isArray(serviceIds) ? serviceIds : [serviceIds];
+        for (let idIndex = 0; idIndex < ids.length; idIndex++) {
+            const id = String(ids[idIndex] || '').toLowerCase();
+            for (let serviceIndex = 0; serviceIndex < services.length; serviceIndex++) {
+                const service = services[serviceIndex];
+                if (!service || String(service.serviceId || '').toLowerCase() !== id) continue;
+                return makeQaTutorialStation(service, fallbackLabel);
+            }
+        }
+        return null;
+    }
+
+    function resolveQaTutorialStation(context, key) {
+        const routeStations = {
+            woodcutting: () => findQaRouteStation(context, 'woodcutting', 'tutorial_grove', 'tutorial woodcutting'),
+            fishing: () => findQaRouteStation(context, 'fishing', 'tutorial_pond', 'tutorial fishing'),
+            firemaking: () => findQaRouteStation(context, 'firemaking', 'tutorial_fire_lane', 'tutorial firemaking'),
+            cooking: () => findQaRouteStation(context, 'cooking', 'tutorial_fire', 'tutorial cooking'),
+            mining: () => findQaRouteStation(context, 'mining', 'tutorial_surface_mine', 'tutorial mining')
+        };
+        if (routeStations[key]) {
+            const station = routeStations[key]();
+            if (station) return station;
+        }
+
+        const serviceStations = {
+            arrival: () => findQaServiceStation(context, 'merchant:tutorial_guide', 'tutorial arrival'),
+            smithing: () => findQaServiceStation(context, ['station:tutorial_furnace', 'merchant:tutorial_mining_smithing_instructor'], 'tutorial smithing'),
+            combat: () => findQaServiceStation(context, 'merchant:tutorial_combat_instructor', 'tutorial combat'),
+            bank: () => findQaServiceStation(context, 'merchant:tutorial_bank_tutor', 'tutorial bank'),
+            exit: () => findQaServiceStation(context, 'merchant:tutorial_exit_guide', 'tutorial exit')
+        };
+        if (serviceStations[key]) {
+            const station = serviceStations[key]();
+            if (station) return station;
+        }
+
+        const fallbackStations = {
+            arrival: { x: 188, y: 236, z: 0, label: 'tutorial arrival' },
+            woodcutting: { x: 288, y: 261, z: 0, label: 'tutorial woodcutting' },
+            fishing: { x: 349, y: 316, z: 0, label: 'tutorial fishing' },
+            firemaking: { x: 376, y: 328, z: 0, label: 'tutorial firemaking' },
+            cooking: { x: 376, y: 328, z: 0, label: 'tutorial cooking' },
+            mining: { x: 475, y: 384, z: 0, label: 'tutorial mining' },
+            smithing: { x: 459, y: 395, z: 0, label: 'tutorial smithing' },
+            combat: { x: 427, y: 435, z: 0, label: 'tutorial combat' },
+            bank: { x: 269, y: 440, z: 0, label: 'tutorial bank' },
+            exit: { x: 333, y: 445, z: 0, label: 'tutorial exit' }
+        };
+        return fallbackStations[key] || null;
+    }
+
     function qaGotoTutorialStation(context, labelLike) {
         const key = String(labelLike || '').trim().toLowerCase();
-        const stations = {
-            arrival: { x: 157, y: 157, z: 0, label: 'tutorial arrival' },
-            woodcutting: { x: 171, y: 157, z: 0, label: 'tutorial woodcutting' },
-            fishing: { x: 187, y: 156, z: 0, label: 'tutorial fishing' },
-            firemaking: { x: 205, y: 175, z: 0, label: 'tutorial firemaking' },
-            cooking: { x: 205, y: 175, z: 0, label: 'tutorial cooking' },
-            mining: { x: 229, y: 183, z: 0, label: 'tutorial mining' },
-            smithing: { x: 229, y: 183, z: 0, label: 'tutorial smithing' },
-            combat: { x: 237, y: 159, z: 0, label: 'tutorial combat' },
-            bank: { x: 215, y: 149, z: 0, label: 'tutorial bank' },
-            exit: { x: 200, y: 148, z: 0, label: 'tutorial exit' }
-        };
-        const station = stations[key];
+        const station = resolveQaTutorialStation(context, key);
         if (!station) return false;
         return qaTeleportTo(context, station.x, station.y, station.z, station.label);
     }

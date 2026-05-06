@@ -151,6 +151,12 @@
         const tileIds = options.tileIds || {};
         const mapSize = options.mapSize;
         const stations = Array.isArray(options.smithingStations) ? options.smithingStations : [];
+        const context = {
+            heightMap: options.heightMap,
+            logicalMap,
+            rememberStaticNpcBaseTile: options.rememberStaticNpcBaseTile,
+            tileIds
+        };
         for (let i = 0; i < stations.length; i++) {
             const station = stations[i];
             if (!station || !inInteriorBounds(station.x, station.y, mapSize)) continue;
@@ -162,11 +168,11 @@
                         const sx = station.x + ox;
                         const sy = station.y + oy;
                         if (!inInteriorBounds(sx, sy, mapSize)) continue;
-                        logicalMap[0][sy][sx] = tileIds.SOLID_NPC;
+                        placeStaticNpcOccupancyTile(context, sx, sy, 0);
                     }
                 }
             } else {
-                logicalMap[0][station.y][station.x] = tileIds.SOLID_NPC;
+                placeStaticNpcOccupancyTile(context, station.x, station.y, 0);
             }
         }
     }
@@ -190,8 +196,13 @@
                 && (spot.tags.includes('smithing') || spot.tags.includes('crafting'))
                 ? 0.5
                 : null;
+            const rawRoamingRadiusOverride = Number(spot.roamingRadiusOverride);
+            const roamingRadiusOverride = spot.roamingRadiusOverride !== null && spot.roamingRadiusOverride !== undefined && Number.isFinite(rawRoamingRadiusOverride)
+                ? Math.max(0, Math.floor(rawRoamingRadiusOverride))
+                : null;
             placeStaticNpcOccupancyTile(context, spot.x, spot.y, 0, { height: merchantHeight });
             npcsToRender.push({
+                spawnId: spot.spawnId || null,
                 type: spot.type,
                 x: spot.x,
                 y: spot.y,
@@ -201,9 +212,11 @@
                 appearanceId: spot.appearanceId || null,
                 dialogueId: spot.dialogueId || null,
                 facingYaw: spot.facingYaw,
+                roamingRadiusOverride,
                 action: spot.action || 'Trade',
                 travelToWorldId: spot.travelToWorldId || null,
-                travelSpawn: spot.travelSpawn || null
+                travelSpawn: spot.travelSpawn || null,
+                tags: Array.isArray(spot.tags) ? spot.tags.slice() : []
             });
         }
         return { npcsToRender };
@@ -246,19 +259,15 @@
             const from = fence.points[pointIndex - 1];
             const to = fence.points[pointIndex];
             if (!from || !to) continue;
-            const dx = Math.sign(to.x - from.x);
-            const dy = Math.sign(to.y - from.y);
-            if (dx !== 0 && dy !== 0) continue;
             const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
-            let x = from.x;
-            let y = from.y;
             for (let step = 0; step <= steps; step++) {
+                const t = steps === 0 ? 0 : step / steps;
+                const x = Math.round(from.x + ((to.x - from.x) * t));
+                const y = Math.round(from.y + ((to.y - from.y) * t));
                 if (logicalMap[z] && logicalMap[z][y] && x > 0 && y > 0 && x < mapSize - 1 && y < mapSize - 1) {
                     logicalMap[z][y][x] = tileIds.FENCE;
                     heightMap[z][y][x] = Number.isFinite(fence.height) ? fence.height : 0.05;
                 }
-                x += dx;
-                y += dy;
             }
         }
     }
@@ -278,6 +287,7 @@
         const mapSize = options.mapSize;
         if (
             !approach
+            || approach.enabled === false
             || !Number.isInteger(approach.shoreX)
             || !Number.isInteger(approach.stairX)
             || !Number.isInteger(approach.yStart)
@@ -310,9 +320,11 @@
             const door = landmarks[i];
             if (!door || !Number.isInteger(door.x) || !Number.isInteger(door.y) || !Number.isInteger(door.z)) continue;
             const tileId = tileIds[door.tileId];
+            const isWoodenGate = tileId === tileIds.WOODEN_GATE_CLOSED || tileId === tileIds.WOODEN_GATE_OPEN;
             if (Number.isFinite(tileId) && logicalMap[door.z] && logicalMap[door.z][door.y]) {
                 logicalMap[door.z][door.y][door.x] = tileId;
-                heightMap[door.z][door.y][door.x] = Number.isFinite(door.height) ? door.height : heightMap[door.z][door.y][door.x];
+                const authoredHeight = Number.isFinite(door.height) ? door.height : heightMap[door.z][door.y][door.x];
+                heightMap[door.z][door.y][door.x] = isWoodenGate && authoredHeight <= 0.12 ? 0 : authoredHeight;
             }
             doorsToRender.push({
                 x: door.x,
@@ -328,10 +340,11 @@
                 openRot: door.openRot,
                 currentRotation: door.currentRotation,
                 targetRotation: door.targetRotation,
-                isWoodenGate: tileId === tileIds.WOODEN_GATE_CLOSED || tileId === tileIds.WOODEN_GATE_OPEN,
+                isWoodenGate,
                 closedTileId: tileId === tileIds.WOODEN_GATE_OPEN ? tileIds.WOODEN_GATE_CLOSED : tileId,
                 tutorialRequiredStep: Number.isFinite(door.tutorialRequiredStep) ? door.tutorialRequiredStep : null,
-                tutorialGateMessage: typeof door.tutorialGateMessage === 'string' ? door.tutorialGateMessage : ''
+                tutorialGateMessage: typeof door.tutorialGateMessage === 'string' ? door.tutorialGateMessage : '',
+                tutorialAutoOpenOnUnlock: door.tutorialAutoOpenOnUnlock !== false
             });
         }
         return { doorsToRender };
@@ -344,12 +357,34 @@
         }));
     }
 
+    function applyDecorPropLandmarks(options = {}) {
+        const logicalMap = options.logicalMap;
+        const tileIds = options.tileIds || {};
+        const mapSize = Number.isFinite(options.mapSize) ? options.mapSize : 0;
+        const decorPropsToRender = Array.isArray(options.decorPropsToRender) ? options.decorPropsToRender : [];
+        const landmarks = Array.isArray(options.decorPropLandmarks) ? options.decorPropLandmarks : [];
+        for (let i = 0; i < landmarks.length; i++) {
+            const prop = landmarks[i];
+            if (!prop || !Number.isInteger(prop.x) || !Number.isInteger(prop.y) || !Number.isInteger(prop.z)) continue;
+            if (prop.x <= 0 || prop.y <= 0 || prop.x >= mapSize - 1 || prop.y >= mapSize - 1) continue;
+            if (!logicalMap[prop.z] || !logicalMap[prop.z][prop.y]) continue;
+            decorPropsToRender.push(Object.assign({}, prop, {
+                tags: Array.isArray(prop.tags) ? prop.tags.slice() : []
+            }));
+            if (prop.blocksMovement !== true) continue;
+            logicalMap[prop.z][prop.y][prop.x] = tileIds.OBSTACLE;
+        }
+        return { decorPropsToRender };
+    }
+
     function applyStaticWorldAuthoring(options = {}) {
         const bankBoothsToRender = Array.isArray(options.bankBoothsToRender) ? options.bankBoothsToRender : [];
         const doorsToRender = Array.isArray(options.doorsToRender) ? options.doorsToRender : [];
+        const decorPropsToRender = Array.isArray(options.decorPropsToRender) ? options.decorPropsToRender : [];
         const npcsToRender = Array.isArray(options.npcsToRender) ? options.npcsToRender : [];
         const baseOptions = Object.assign({}, options, {
             bankBoothsToRender,
+            decorPropsToRender,
             doorsToRender,
             npcsToRender
         });
@@ -361,10 +396,12 @@
         applyFenceLandmarks(baseOptions);
         applySmithingHallApproach(baseOptions);
         applyDoorLandmarks(baseOptions);
+        applyDecorPropLandmarks(baseOptions);
 
         return {
             activeRoofLandmarks: cloneRoofLandmarks(options.roofLandmarks),
             bankBoothsToRender,
+            decorPropsToRender,
             doorsToRender,
             npcsToRender
         };
@@ -393,6 +430,7 @@
 
     window.WorldLogicalMapAuthoringRuntime = {
         applyAuthoredAltarCollision,
+        applyDecorPropLandmarks,
         applyFishingMerchantSpots,
         applyStaticWorldAuthoring,
         cloneRoofLandmarks,

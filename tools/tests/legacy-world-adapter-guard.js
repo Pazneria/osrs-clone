@@ -56,7 +56,11 @@ function run() {
   assert(adapterSource.includes("resolveKnownWorldId(getCurrentWorldId(), MAIN_OVERWORLD_WORLD_ID)"), "QA world summaries should mark the real active world through the canonical main-overworld constant");
   assert(adapterSource.includes("getCurrentWorldPayload"), "legacy world adapter should expose the legacy-ready world payload");
   assert(adapterSource.includes("waterRenderPayload"), "legacy world adapter should expose typed water render payloads");
+  assert(adapterSource.includes("islandWater"), "legacy world adapter should expose island water topology");
+  assert(adapterSource.includes("caveOpeningLandmarks"), "legacy world adapter should expose visual cave opening landmarks");
+  assert(adapterSource.includes("decorPropLandmarks"), "legacy world adapter should expose decorative prop landmarks");
   assert(adapterSource.includes("firemakingTrainingRouteDefs"), "legacy world adapter should expose firemaking training routes in the legacy-ready payload");
+  assert(adapterSource.includes('service.tags.includes("fishing") && !service.tags.includes("tutorial")'), "legacy world adapter should keep tutorial fishing instructors out of the special fishing merchant render path");
 
   assert(coreSource.includes("const worldAdapterRuntime = window.LegacyWorldAdapterRuntime || null;"), "core should resolve the typed legacy world adapter runtime");
   assert(coreSource.includes("worldAdapterRuntime.resolveTravelTarget"), "core should delegate travel target resolution");
@@ -169,9 +173,13 @@ function run() {
   assert(inventoryActionRuntimeSource.includes("handleItemAction"), "inventory action runtime should own item action dispatch");
   assert(proceduralRuntimeSource.includes("window.WorldProceduralRuntime"), "world procedural runtime should expose a runtime");
   assert(proceduralRuntimeSource.includes("buildGrassTextureCanvas"), "world procedural runtime should own generated grass texture canvases");
+  assert(proceduralRuntimeSource.includes("function samplePeriodicFractalNoise2D"), "world procedural runtime should support tileable grass texture noise");
+  assert(proceduralRuntimeSource.includes("function drawWrappedStroke"), "world procedural runtime should wrap grass strokes across texture edges");
+  assert(proceduralRuntimeSource.includes("const palette = {") && proceduralRuntimeSource.includes("straw: [118, 112, 58]"), "world procedural runtime should use a small lush grass palette");
   assert(proceduralRuntimeSource.includes("sampleFractalNoise2D"), "world procedural runtime should own deterministic terrain noise helpers");
   assert(sharedAssetsRuntimeSource.includes("window.WorldSharedAssetsRuntime"), "world shared asset runtime should expose a runtime");
   assert(sharedAssetsRuntimeSource.includes("function initSharedAssets(options = {})"), "world shared asset runtime should own shared asset setup");
+  assert(sharedAssetsRuntimeSource.includes("grassTex.repeat.set(1.85, 1.85);"), "world shared asset runtime should use a broad painted-ground grass texture repeat");
   assert(waterRuntimeSource.includes("window.WorldWaterRuntime"), "world water runtime should expose a runtime");
   assert(waterRuntimeSource.includes("appendChunkWaterTilesToBuilders"), "world water runtime should own chunk water batching");
   assert(terrainSetupRuntimeSource.includes("window.WorldTerrainSetupRuntime"), "world terrain setup runtime should expose a runtime");
@@ -234,7 +242,10 @@ function run() {
   assert(worldSource.includes("WorldRockNodeRuntime"), "world.js should delegate rock metadata helpers through the rock node runtime");
   assert(worldSource.includes("WorldFireRenderRuntime"), "world.js should delegate fire visuals through the fire render runtime");
   assert(worldSource.includes("waterRenderPayload"), "world.js should consume the typed water render payload");
+  assert(worldSource.includes("islandWater"), "world.js should consume island water topology");
   assert(worldSource.includes("firemakingTrainingRouteDefs"), "world.js should read firemaking training routes from the legacy-ready world payload");
+  assert(worldSource.includes("caveOpeningLandmarks"), "world.js should read visual cave opening landmarks from the legacy-ready world payload");
+  assert(worldSource.includes("decorPropLandmarks"), "world.js should read decorative prop landmarks from the legacy-ready world payload");
   assert(!worldSource.includes("getWorldLegacyConfig"), "world.js should not shape bootstrap payloads inline");
   assert(!worldSource.includes("staticMerchantServices.filter((service) => {"), "world.js should not translate static services into NPC render spots inline");
   assert(!worldSource.includes("travelToWorldId: typeof service.travelToWorldId === 'string'"), "world.js should not normalize travel metadata inline");
@@ -365,6 +376,20 @@ function run() {
     runtime.getWorldLegacyConfig("").worldId === starterTownLegacy.worldId,
     "legacy bridge legacy-config lookup should fall back for empty world ids"
   );
+  const tutorialPayload = adapterRuntime.getWorldPayload("tutorial_island");
+  const tutorialFishingMerchantSpots = tutorialPayload.fishingMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_fishing_instructor");
+  const tutorialStaticFishingSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_fishing_instructor");
+  assert(tutorialFishingMerchantSpots.length === 0, "tutorial fishing instructor should not render through the special fishing merchant path");
+  assert(tutorialStaticFishingSpots.length === 1, "tutorial fishing instructor should render once as a normal static tutorial merchant");
+  assert(tutorialStaticFishingSpots[0].appearanceId === "tutorial_fishing_instructor", "tutorial fishing instructor render spot should preserve the weathered angler appearance");
+  assert(tutorialStaticFishingSpots[0].roamingRadiusOverride === 0, "tutorial fishing instructor render spot should preserve stationary roaming");
+  const tutorialStaticFiremakingSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_firemaking_instructor");
+  assert(tutorialStaticFiremakingSpots.length === 1, "tutorial firemaking instructor should render once as a normal static tutorial merchant");
+  assert(tutorialStaticFiremakingSpots[0].appearanceId === "tutorial_firemaking_instructor", "tutorial firemaking instructor render spot should preserve the sooty worker appearance");
+  assert(tutorialStaticFiremakingSpots[0].roamingRadiusOverride === 0, "tutorial firemaking instructor render spot should preserve stationary roaming");
+  const tutorialStaticMiningSmithingSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_mining_smithing_instructor");
+  assert(tutorialStaticMiningSmithingSpots.length === 1, "tutorial mining and smithing instructor should render once as a normal static tutorial merchant");
+  assert(tutorialStaticMiningSmithingSpots[0].appearanceId === "tutorial_mining_smithing_instructor", "tutorial mining and smithing instructor render spot should preserve the aproned foreman appearance");
 
   console.log("Legacy world adapter guard passed.");
 }

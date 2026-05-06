@@ -62,6 +62,9 @@ function run() {
   assert(qaToolsSource.includes("function qaListWorlds(context)"), "QA tools should expose world listing");
   assert(qaToolsSource.includes("function qaTravelWorld(context, worldIdLike)"), "QA tools should expose world travel");
   assert(qaToolsSource.includes("if (!match) return false;") && qaToolsSource.includes("return true;"), "QA world travel should distinguish unknown world ids from recognized-but-blocked travel");
+  assert(qaToolsSource.includes("findQaRouteStation(context, 'mining', 'tutorial_surface_mine'"), "QA tutorial mining teleport should follow the active authored route");
+  assert(qaToolsSource.includes("mining: { x: 475, y: 384, z: 0, label: 'tutorial mining' }"), "QA tutorial mining fallback should use expanded world coordinates");
+  assert(!qaToolsSource.includes("mining: { x: 356, y: 288"), "QA tutorial mining fallback should not use raw authoring coordinates in the live expanded world");
   assert(qaCommandSource.includes("/qa worlds, /qa travel <worldId>"), "QA help should document world travel commands");
   assert(adapterSource.includes("matchQaWorld"), "legacy world adapter should expose QA world matching");
 
@@ -91,7 +94,11 @@ function run() {
   assert(worldSource.includes("WorldNpcRenderRuntime"), "world.js should delegate NPC hitbox rendering");
   assert(npcRenderRuntimeSource.includes("if (npc.travelToWorldId) npcUid.travelToWorldId = npc.travelToWorldId;"), "NPC render runtime should attach travel world metadata to NPC hitboxes");
   assert(npcRenderRuntimeSource.includes("if (appearanceId) npcUid.appearanceId = appearanceId;"), "NPC render runtime should attach appearance metadata to NPC hitboxes");
+  assert(npcRenderRuntimeSource.includes("if (Number.isFinite(npc.type)) npcUid.type = npc.type;"), "NPC render runtime should attach model type metadata to NPC hitboxes");
   assert(npcRenderRuntimeSource.includes("if (typeof npc.dialogueId === 'string' && npc.dialogueId.trim()) npcUid.dialogueId = npc.dialogueId.trim();"), "NPC render runtime should attach dialogue metadata to NPC hitboxes");
+  assert(npcDialogueRuntimeSource.includes("function renderNpcDialoguePortrait(npc)"), "npc dialogue runtime should render the active NPC model in the dialogue portrait");
+  assert(npcDialogueRuntimeSource.includes("window.createNpcHumanoidRigFromPreset(appearanceId)"), "npc dialogue runtime should reuse NPC humanoid presets for dialogue portraits");
+  assert(npcDialogueRuntimeSource.includes("window.createHumanoidModel(resolveNpcModelType(npc))"), "npc dialogue runtime should fall back to the live NPC model type for dialogue portraits");
 
   assert(inputSource.includes("InputArrivalInteractionRuntime"), "input handler should delegate arrival interactions");
   assert(inputArrivalInteractionSource.includes("playerState.targetUid.action === 'Travel'"), "input arrival interaction runtime should resolve travel NPC actions");
@@ -173,7 +180,8 @@ function run() {
   assert(coreTutorialRuntimeSource.includes("getMainOverworldWorldId(context)"), "dynamic tutorial exit option should carry the main-overworld target");
   assert(coreTutorialRuntimeSource.includes("travelSpawn: { x: 205, y: 210, z: 0 }"), "dynamic tutorial exit option should carry the starter-town spawn");
   assert(!coreTutorialRuntimeSource.includes("makeTutorialStepOption('Open the first gate'"), "tutorial guide should not expose a text option to open the first gate");
-  assert(coreTutorialRuntimeSource.includes("setTutorialStep({ context }, 1, 'tutorial_arrival_welcome')"), "tutorial guide welcome should advance the arrival step naturally");
+  assert(coreTutorialRuntimeSource.includes("'I am ready'"), "tutorial guide should expose an explicit readiness choice before unlocking the arrival gate");
+  assert(coreTutorialRuntimeSource.includes("setTutorialStep({ context }, step, reason)"), "tutorial ready option should own arrival-step advancement");
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('small_net', 1);"), "fishing instructor should grant the net before the completion check");
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_pickaxe', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('hammer', 1);"), "mining instructor should grant tools before the completion check");
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('cooked_shrimp', 2);"), "combat instructor should grant starter combat supplies before the completion check");

@@ -6,6 +6,14 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function sameTile(a, b) {
+  return a && b && a.x === b.x && a.y === b.y;
+}
+
+function samePath(actual, expected) {
+  return actual.length === expected.length && actual.every((step, index) => sameTile(step, expected[index]));
+}
+
 function makeGrid(size, fill) {
   return Array.from({ length: size }, () => Array.from({ length: size }, () => fill));
 }
@@ -60,7 +68,10 @@ function run() {
   assert(runtimeSource.includes("window.InputPathfindingRuntime"), "input pathfinding runtime should expose a window runtime");
   assert(runtimeSource.includes("function getPathTileId"), "input pathfinding runtime should own path tile resolution");
   assert(runtimeSource.includes("function isStandableTileForPath"), "input pathfinding runtime should own path standability checks");
-  assert(runtimeSource.includes("function findPath"), "input pathfinding runtime should own BFS pathfinding");
+  assert(runtimeSource.includes("function findPath"), "input pathfinding runtime should own pathfinding");
+  assert(runtimeSource.includes("function estimatePathDistanceToAnyTarget"), "input pathfinding should score routes toward the nearest valid target");
+  assert(runtimeSource.includes("function estimatePathLineDeviationToAnyTarget"), "input pathfinding should prefer equal-cost routes that stay close to the click line");
+  assert(runtimeSource.includes("Math.SQRT2"), "input pathfinding should price diagonal steps differently from cardinal steps");
   assert(runtimeSource.includes("if (blockX || blockY) continue;"), "input pathfinding runtime should reject diagonal corner cutting");
   assert(runtimeSource.includes("Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition"), "input pathfinding runtime should preserve the terrain height threshold");
   assert(runtimeSource.includes("restrictPierFishingToDeck"), "input pathfinding runtime should preserve pier fishing deck restriction");
@@ -84,6 +95,25 @@ function run() {
     context.logicalMap[0][0][1] = context.tileIds.OBSTACLE;
     const diagonalPath = runtime.findPath(context, 0, 0, 1, 1, false);
     assert(diagonalPath.length === 0, "pathfinding should not cut diagonally between blocked cardinal neighbors");
+  }
+
+  {
+    const context = makeContext({ mapSize: 6 });
+    const diagonalPath = runtime.findPath(context, 0, 0, 4, 4, false);
+    assert(
+      samePath(diagonalPath, [{ x: 1, y: 1 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 4 }]),
+      "open-terrain pathfinding should choose the direct diagonal route instead of walking two right-angle legs"
+    );
+  }
+
+  {
+    const context = makeContext({ mapSize: 8 });
+    const shallowPath = runtime.findPath(context, 0, 0, 6, 3, false);
+    assert(
+      samePath(shallowPath, [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 3 }, { x: 6, y: 3 }]),
+      "open-terrain pathfinding should distribute diagonal and cardinal steps along the straight click line"
+    );
+    assert(sameTile(shallowPath[shallowPath.length - 1], { x: 6, y: 3 }), "open-terrain path should still end on the clicked target");
   }
 
   {

@@ -123,7 +123,7 @@
             const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';
             const dummyTransform = options.dummyTransform || new THREE.Object3D();
             dummyTransform.position.set(x, tileHeight + zOffset, y);
-            dummyTransform.rotation.set(0, Math.random() * Math.PI * 2, 0);
+            dummyTransform.rotation.set(0, hash2D(x, y, 331.71) * Math.PI * 2, 0);
             setTreeVisualState(state.treeData, state.treeIndex, {
                 nodeId: treeNodeId,
                 position: dummyTransform.position.clone(),

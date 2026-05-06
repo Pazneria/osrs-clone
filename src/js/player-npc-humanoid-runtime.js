@@ -9,8 +9,41 @@
         return (h, s, l) => ((h & 63) << 10) | ((s & 7) << 7) | (l & 127);
     }
 
+    function normalizeNpcHumanoidId(value) {
+        return typeof value === 'string' ? value.trim().toLowerCase() : '';
+    }
+
+    function getNpcAppearanceCatalog() {
+        const catalog = window.NpcAppearanceCatalog || null;
+        return catalog && typeof catalog === 'object' ? catalog : null;
+    }
+
+    function getNpcAppearancePresetMap() {
+        const catalog = getNpcAppearanceCatalog();
+        return catalog && catalog.presets && typeof catalog.presets === 'object' ? catalog.presets : {};
+    }
+
+    function resolveCatalogNpcHumanoidPresetId(presetId) {
+        const normalizedPresetId = normalizeNpcHumanoidId(presetId);
+        if (!normalizedPresetId) return '';
+        const presets = getNpcAppearancePresetMap();
+        const catalog = getNpcAppearanceCatalog();
+        const aliases = catalog && catalog.aliases && typeof catalog.aliases === 'object' ? catalog.aliases : {};
+        const aliasedPresetId = normalizeNpcHumanoidId(aliases[normalizedPresetId]);
+        if (aliasedPresetId && presets[aliasedPresetId]) return aliasedPresetId;
+        return presets[normalizedPresetId] ? normalizedPresetId : '';
+    }
+
+    function getCatalogNpcHumanoidPreset(presetId) {
+        const catalogPresetId = resolveCatalogNpcHumanoidPresetId(presetId);
+        if (!catalogPresetId) return null;
+        return getNpcAppearancePresetMap()[catalogPresetId] || null;
+    }
+
     function normalizeNpcHumanoidPresetId(presetId) {
-        const normalizedPresetId = typeof presetId === 'string' ? presetId.trim().toLowerCase() : '';
+        const normalizedPresetId = normalizeNpcHumanoidId(presetId);
+        const catalogPresetId = resolveCatalogNpcHumanoidPresetId(normalizedPresetId);
+        if (catalogPresetId) return catalogPresetId;
         if (normalizedPresetId === 'tanner') return 'tanner_rusk';
         if (normalizedPresetId === 'goblin' || normalizedPresetId === 'guard' || normalizedPresetId === 'tanner_rusk') return normalizedPresetId;
         return '';
@@ -157,6 +190,58 @@
         return typeof options.rigNodeMap === 'function' ? options.rigNodeMap(rigRoot) : {};
     }
 
+    function cloneCatalogArray(value, fallback) {
+        return Array.isArray(value) ? value.slice() : fallback.slice();
+    }
+
+    function createCatalogHumanoidFragments(options = {}, preset = {}) {
+        const fragments = Array.isArray(preset.fragments) ? preset.fragments : [];
+        return fragments.map((fragment) => {
+            const cloned = fragment && typeof fragment === 'object' ? Object.assign({}, fragment) : {};
+            cloned.target = typeof cloned.target === 'string' ? cloned.target : '';
+            cloned.shape = typeof cloned.shape === 'string' ? cloned.shape : 'box';
+            cloned.size = cloneCatalogArray(cloned.size, [0.1, 0.1, 0.1]);
+            cloned.offset = cloneCatalogArray(cloned.offset, [0, 0, 0]);
+            if (Array.isArray(cloned.rotation)) cloned.rotation = cloned.rotation.slice();
+            if (Array.isArray(cloned.handleRelative)) cloned.handleRelative = cloned.handleRelative.slice();
+            if (Array.isArray(cloned.origin)) cloned.origin = cloned.origin.slice();
+            if (Array.isArray(cloned.localRotationAxis)) cloned.localRotationAxis = cloned.localRotationAxis.slice();
+            if (!Number.isFinite(cloned.color)) cloned.color = getPackJagexHsl(options)(0, 0, 64);
+            return cloned;
+        }).filter((fragment) => fragment.target);
+    }
+
+    function setVec3FromArray(vec, value, fallback) {
+        if (!vec || typeof vec.set !== 'function') return;
+        const source = Array.isArray(value) ? value : fallback;
+        const x = Number(source && source[0]);
+        const y = Number(source && source[1]);
+        const z = Number(source && source[2]);
+        vec.set(
+            Number.isFinite(x) ? x : fallback[0],
+            Number.isFinite(y) ? y : fallback[1],
+            Number.isFinite(z) ? z : fallback[2]
+        );
+    }
+
+    function applyCatalogRigBasePose(options = {}, rigRoot, preset = {}) {
+        const nodes = getRigNodeMap(options, rigRoot);
+        const pose = preset && preset.pose && typeof preset.pose === 'object' ? preset.pose : {};
+        const nodePose = pose.nodes && typeof pose.nodes === 'object' ? pose.nodes : {};
+        setVec3FromArray(rigRoot.position, pose.rootPosition, [0, 0, 0]);
+        if (Array.isArray(preset.scale)) {
+            setVec3FromArray(rigRoot.scale, preset.scale, [1, 1, 1]);
+        } else if (Number.isFinite(preset.scale) && rigRoot.scale && typeof rigRoot.scale.set === 'function') {
+            rigRoot.scale.set(preset.scale, preset.scale, preset.scale);
+        } else {
+            setVec3FromArray(rigRoot.scale, [1, 1, 1], [1, 1, 1]);
+        }
+        Object.keys(nodePose).forEach((nodeName) => {
+            if (!nodes[nodeName]) return;
+            setVec3FromArray(nodes[nodeName].position, nodePose[nodeName], [0, 0, 0]);
+        });
+    }
+
     function applyTannerRigBasePose(options = {}, rigRoot) {
         const nodes = getRigNodeMap(options, rigRoot);
         if (!nodes.torso || !nodes.head || !nodes.leftArm || !nodes.rightArm || !nodes.leftLeg || !nodes.rightLeg) return;
@@ -211,7 +296,8 @@
     function buildNpcHumanoidRigTemplate(options = {}, presetId) {
         const normalizedPresetId = normalizeNpcHumanoidPresetId(presetId);
         if (!normalizedPresetId || typeof options.createRigBones !== 'function' || typeof options.addFragmentsToRig !== 'function') return null;
-        const rigRoot = options.createRigBones({
+        const catalogPreset = getCatalogNpcHumanoidPreset(normalizedPresetId);
+        const rigRoot = options.createRigBones(catalogPreset && catalogPreset.armRigDefaults ? catalogPreset.armRigDefaults : {
             elbowPivot: {
                 x: 0,
                 y: -0.31,
@@ -220,7 +306,10 @@
         });
         if (!rigRoot) return null;
 
-        if (normalizedPresetId === 'goblin') {
+        if (catalogPreset) {
+            applyCatalogRigBasePose(options, rigRoot, catalogPreset);
+            options.addFragmentsToRig(rigRoot, createCatalogHumanoidFragments(options, catalogPreset), NPC_BODY_COLORS, []);
+        } else if (normalizedPresetId === 'goblin') {
             applyGoblinRigBasePose(options, rigRoot);
             options.addFragmentsToRig(rigRoot, createGoblinHumanoidFragments(options), NPC_BODY_COLORS, []);
         } else if (normalizedPresetId === 'guard') {
@@ -253,13 +342,42 @@
         return options.bindRigUserData(clone);
     }
 
+    function appendPreviewActor(actors, seen, actorId, label) {
+        const normalizedActorId = normalizeNpcHumanoidId(actorId);
+        if (!normalizedActorId || seen.has(normalizedActorId)) return;
+        seen.add(normalizedActorId);
+        actors.push({
+            actorId: normalizedActorId,
+            label: typeof label === 'string' && label.trim() ? label.trim() : normalizedActorId
+        });
+    }
+
+    function appendCatalogPreviewActors(actors, seen) {
+        const catalog = getNpcAppearanceCatalog();
+        const presets = getNpcAppearancePresetMap();
+        const previewActors = catalog && Array.isArray(catalog.previewActors) ? catalog.previewActors : [];
+        previewActors.forEach((entry) => {
+            if (!entry || typeof entry !== 'object') return;
+            const presetId = resolveCatalogNpcHumanoidPresetId(entry.actorId);
+            if (!presetId) return;
+            const preset = presets[presetId] || {};
+            appendPreviewActor(actors, seen, presetId, entry.label || preset.label);
+        });
+        Object.keys(presets).forEach((presetId) => {
+            const preset = presets[presetId] || {};
+            appendPreviewActor(actors, seen, presetId, preset.label);
+        });
+    }
+
     function listAnimationStudioPreviewActors() {
-        return [
-            { actorId: 'player', label: 'Player' },
-            { actorId: 'goblin', label: 'Goblin' },
-            { actorId: 'guard', label: 'Guard' },
-            { actorId: 'tanner_rusk', label: 'Tanner Rusk' }
-        ];
+        const actors = [];
+        const seen = new Set();
+        appendPreviewActor(actors, seen, 'player', 'Player');
+        appendCatalogPreviewActors(actors, seen);
+        appendPreviewActor(actors, seen, 'goblin', 'Goblin');
+        appendPreviewActor(actors, seen, 'guard', 'Guard');
+        appendPreviewActor(actors, seen, 'tanner_rusk', 'Tanner Rusk');
+        return actors;
     }
 
     function createAnimationStudioPreviewRig(options = {}, actorId) {
@@ -286,11 +404,14 @@
     }
 
     window.PlayerNpcHumanoidRuntime = {
+        resolveCatalogNpcHumanoidPresetId,
         normalizeNpcHumanoidPresetId,
         createLiteralRgbFragment,
+        createCatalogHumanoidFragments,
         createGoblinHumanoidFragments,
         createGuardHumanoidFragments,
         createTannerHumanoidFragments,
+        applyCatalogRigBasePose,
         applyTannerRigBasePose,
         applyGoblinRigBasePose,
         applyGuardRigBasePose,

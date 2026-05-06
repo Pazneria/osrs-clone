@@ -47,6 +47,8 @@ function run() {
   assert(qaCommandSource.includes("window.QaCommandRuntime"), "QA command runtime should expose a window runtime");
   assert(qaCommandSource.includes("handleQaCommand"), "QA command runtime should own QA command dispatch");
   assert(coreSource.includes("buildQaCommandContext"), "core should adapt gameplay callbacks into the QA command runtime");
+  assert(coreSource.includes("function qaOpenPlayerCreator()"), "core should provide a QA hook for reopening the player creator");
+  assert(coreSource.includes("qaOpenPlayerCreator,"), "core should wire the player creator QA hook into command context");
   assert(coreSource.includes("buildQaToolsContext"), "core should adapt live state into the QA tools runtime");
   assert(qaToolsSource.includes("window.QaToolsRuntime"), "QA tools runtime should expose a window runtime");
   assert(qaToolsSource.includes("createCommandHandlers"), "QA tools runtime should provide command callbacks");
@@ -65,6 +67,16 @@ function run() {
     formatQaOpenShopUsage: () => "Usage: /qa openshop <general_store>"
   });
   assert(qaMessages.some((entry) => entry.message.includes("/qa gotofire <starter|oak|willow|maple|yew>")), "QA command help should live in the QA command runtime");
+  assert(qaMessages.some((entry) => entry.message.includes("/qa creator")), "QA command help should advertise the player creator reopen command");
+  qaRuntime.handleQaCommand("creator", {
+    windowRef: qaCommandSandbox.window,
+    addChatMessage: (message, type) => qaMessages.push({ message, type }),
+    qaOpenPlayerCreator: () => {
+      qaCalls.push("creator");
+      return true;
+    }
+  });
+  assert(qaCalls.includes("creator"), "QA command runtime should dispatch creator through core-provided callbacks");
   qaRuntime.handleQaCommand("gotofire yew", {
     windowRef: qaCommandSandbox.window,
     addChatMessage: (message, type) => qaMessages.push({ message, type }),
@@ -85,6 +97,42 @@ function run() {
   vm.runInNewContext(qaToolsSource, qaToolsSandbox, { filename: "src/js/qa-tools-runtime.js" });
   const qaToolsRuntime = qaToolsSandbox.window.QaToolsRuntime;
   assert(qaToolsRuntime, "QA tools runtime should execute in isolation");
+
+  const tutorialHarness = {
+    messages: [],
+    playerState: { x: 0, y: 0, z: 0 },
+    windowRef: {},
+    addChatMessage(message, type) {
+      tutorialHarness.messages.push({ message, type });
+    },
+    getPlayerState() {
+      return tutorialHarness.playerState;
+    },
+    getWorldGameContext() {
+      return {
+        worldId: "tutorial_island",
+        definition: {
+          services: [
+            { serviceId: "station:tutorial_furnace", x: 459, y: 395, z: 0, label: "Tutorial Furnace" },
+            { serviceId: "merchant:tutorial_bank_tutor", x: 269, y: 440, z: 0, name: "Bank Tutor" }
+          ]
+        },
+        queries: {
+          getRouteGroup(groupId) {
+            if (groupId === "mining") {
+              return [{ routeId: "tutorial_surface_mine", x: 475, y: 384, z: 0, label: "Tutorial Surface Quarry" }];
+            }
+            return [];
+          }
+        }
+      };
+    }
+  };
+  const tutorialHandlers = qaToolsRuntime.createCommandHandlers(tutorialHarness);
+  assert(tutorialHandlers.qaGotoTutorialStation("mining"), "tutorial mining QA station should resolve from the active route registry");
+  assert(tutorialHarness.playerState.x === 475 && tutorialHarness.playerState.y === 384, "tutorial mining QA station should use expanded live-world coordinates");
+  assert(tutorialHandlers.qaGotoTutorialStation("smithing"), "tutorial smithing QA station should resolve from authored services");
+  assert(tutorialHarness.playerState.x === 459 && tutorialHarness.playerState.y === 395, "tutorial smithing QA station should use the authored furnace tile");
 
   const firemakingHarness = {
     typedRoutes: [],

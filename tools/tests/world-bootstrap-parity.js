@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 const { findShortestPathLength, isWalkable } = require("../content/world-pathing");
+const { TileId } = require("../content/tile-ids");
 const { loadWorldContent } = require("../content/world-content");
 const { loadTsModule } = require("../lib/ts-module-loader");
 const vm = require("vm");
@@ -245,11 +246,13 @@ function loadTreeVisualProfiles(root) {
   const absPath = path.join(root, "src", "js", "world", "tree-render-runtime.js");
   const source = fs.readFileSync(absPath, "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const sharedSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
   const resourceSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
   const objectLiteral = extractObjectLiteralAfter(source, "const TREE_VISUAL_PROFILES =", "TREE_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "TREE_VISUAL_PROFILES" }),
     source,
+    sharedSource,
     resourceSource,
     worldSource
   };
@@ -272,9 +275,12 @@ function loadRockVisualProfiles(root) {
 function treeVisualSignature(profile) {
   return JSON.stringify({
     trunkScale: profile.trunkScale,
+    rootFlareScale: profile.rootFlareScale || [],
+    stumpCapScale: profile.stumpCapScale || [],
     canopyScales: profile.canopyScales,
     canopyYOffset: profile.canopyYOffset,
     canopyOffsets: profile.canopyOffsets || [],
+    branchCanopyAttachments: profile.branchCanopyAttachments || {},
     branchScale: profile.branchScale || [],
     branch2Scale: profile.branch2Scale || [],
     branch3Scale: profile.branch3Scale || [],
@@ -284,22 +290,46 @@ function treeVisualSignature(profile) {
 }
 
 function assertTreeVisualProfiles(root) {
-  const { profiles, source, resourceSource, worldSource } = loadTreeVisualProfiles(root);
+  const { profiles, source, sharedSource, resourceSource, worldSource } = loadTreeVisualProfiles(root);
   const profileIds = Object.keys(profiles).sort().join(",");
   assert(profileIds === TREE_VISUAL_NODE_IDS.slice().sort().join(","), "tree render runtime should define one tree visual profile per woodcutting node type");
 
   const signatures = new Set(TREE_VISUAL_NODE_IDS.map((nodeId) => treeVisualSignature(profiles[nodeId])));
   assert(signatures.size === TREE_VISUAL_NODE_IDS.length, "tree visual profiles should not collapse to shared silhouettes");
-  assert(JSON.stringify(profiles.normal_tree.branchScale) === "[0,0,0]", "normal trees should remain the simple baseline profile");
+  assert(Array.isArray(profiles.normal_tree.branchScale) && profiles.normal_tree.branchScale[0] > 0.2 && profiles.normal_tree.branchScale[0] <= 0.32, "normal trees should keep one short slim side branch without looking beefy");
+  assert(Array.isArray(profiles.normal_tree.branch2Scale) && profiles.normal_tree.branch2Scale[0] > 0.54 && profiles.normal_tree.branch2Scale[0] <= 0.62, "normal trees should use their second branch as the longer upward side branch");
+  assert(Array.isArray(profiles.normal_tree.branch2Offset) && profiles.normal_tree.branch2Offset[0] > 0.02 && profiles.normal_tree.branch2Offset[0] <= 0.08 && profiles.normal_tree.branch2Offset[1] >= 0.56, "normal tree longer side branches should be anchored like the smaller branch, then rise outward");
+  assert(Math.abs(profiles.normal_tree.branch2Offset[0] - (0.066 * profiles.normal_tree.branch2Scale[0])) < 0.04, "normal tree longer side branches should start from the trunk instead of floating outside it");
+  assert(Math.abs(profiles.normal_tree.branch2Yaw - profiles.normal_tree.branchYaw) >= Math.PI / 4, "normal tree longer side branches should be radially separated from the smaller branch");
+  assert(profiles.normal_tree.branchCanopyAttachments && profiles.normal_tree.branchCanopyAttachments[3] && profiles.normal_tree.branchCanopyAttachments[3].branch === "branch2", "normal tree side canopy should attach to branch2 by reference");
+  assert(Array.isArray(profiles.normal_tree.rootFlareScale) && profiles.normal_tree.rootFlareScale.some((value) => value > 0), "normal trees should use a root flare so they read as planted");
+  assert(Array.isArray(profiles.normal_tree.stumpCapScale) && profiles.normal_tree.stumpCapScale.some((value) => value > 0), "normal tree stumps should have a cut cap that fits the trunk base");
+  assert(Math.abs((0.34 * profiles.normal_tree.stumpCapScale[0]) - (0.28 * profiles.normal_tree.trunkScale[0])) < 0.002, "normal tree stump cap tops should match the full trunk base diameter");
+  assert(profiles.normal_tree.stumpScale[0] <= 0.68 && profiles.normal_tree.stumpRootFlareScale[0] <= 0.5, "normal tree stumps should stay slimmer while keeping a modest root fan");
+  assert(profiles.normal_tree.trunkScale[0] < 0.75 && profiles.normal_tree.stumpScale[0] < 0.85, "normal trees and stumps should stay slim enough to read as beginner woodcutting trees");
+  assert(profiles.normal_tree.trunkScale[1] >= 0.98, "normal tree trunks should rise to meet the raised canopy without poking above it");
+  assert(profiles.normal_tree.canopyYOffset >= 0.9, "normal tree canopies should sit high enough that adjacent chopping players do not bury their heads in leaves");
+  assert(profiles.normal_tree.canopyScales[0][0] < 0.65 && profiles.normal_tree.canopyScales[0][1] < 0.5, "normal tree canopies should stay compact and thin");
+  assert(profiles.normal_tree.canopyScales[3][0] <= 0.25 && JSON.stringify(profiles.normal_tree.canopyOffsets[3]) === "[0,0,0]", "normal tree side canopy placement should come from branch attachment instead of guessed offsets");
+  assert(Array.isArray(profiles.normal_tree.canopyOffsets) && profiles.normal_tree.canopyOffsets.length === 4, "normal trees should use asymmetric canopy offsets");
   assert(profiles.oak_tree.trunkScale[0] > profiles.normal_tree.trunkScale[0], "oak trees should keep a broader trunk than normal trees");
+  assert(profiles.oak_tree.canopyScales[0][0] > profiles.normal_tree.canopyScales[0][0], "oak trees should keep a broader canopy than normal trees");
   assert(Array.isArray(profiles.willow_tree.drapeScales) && profiles.willow_tree.drapeScales.length === 8, "willow trees should keep dedicated hanging drape meshes");
   assert(profiles.maple_tree.canopyScales[0][0] > profiles.oak_tree.canopyScales[0][0], "maple trees should keep the broadest crown profile");
   assert(profiles.yew_tree.trunkScale[1] > profiles.willow_tree.trunkScale[1], "yew trees should keep the tallest trunk profile");
   assert(profiles.yew_tree.canopyScales[3][0] < profiles.willow_tree.canopyScales[3][0], "yew trees should keep the tight stacked top profile");
   assert(source.includes("function setTreeVisualState(input)"), "tree render runtime should own instanced tree visual state updates");
+  assert(sharedSource.includes("treeBranch2 = new THREE.CylinderGeometry(0.052, 0.09, 1.12, 6).rotateZ(-Math.PI / 2.8).translate(0.44, 1.54, -0.06);"), "shared branch2 geometry should mirror the attached small-branch construction instead of using the old detached branch");
+  assert(sharedSource.includes("treeBranch2.userData = { rootLocal: [-0.065, 1.297, -0.06], tipLocal: [0.945, 1.783, -0.06] };"), "shared branch2 geometry should expose its real tip for attached side canopies");
+  assert(sharedSource.includes("leaf4.userData = { branchAttachmentLocal: [-0.06, 2.4, 0.44] };"), "shared leaf4 geometry should expose a branch attachment point");
+  assert(source.includes("function computeBranchEndpointWorld(") && source.includes("const attachmentTarget = attachment"), "tree render runtime should compute side canopy placement from the referenced branch endpoint");
+  assert(!source.includes("iLeafShadow") && !source.includes("canopyShadowScale"), "normal tree leaf depth should stay in the main canopy meshes instead of a split-color shadow layer");
+  assert(source.includes("mesh.castShadow = false;"), "tree instanced meshes should avoid shadow-map casting for cheaper resource rendering");
   assert(worldSource.includes("WorldTreeRenderRuntime"), "world.js should delegate tree visuals through the tree render runtime");
   assert(worldSource.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk tree/rock placement through the chunk resource runtime");
   assert(resourceSource.includes("const treeNodeId = treeNode && treeNode.nodeId ? treeNode.nodeId : 'normal_tree';"), "chunk resource runtime should resolve a node-specific tree visual id");
+  assert(resourceSource.includes("hash2D(x, y, 331.71) * Math.PI * 2"), "chunk resource runtime should use deterministic tree rotation");
+  assert(!resourceSource.includes("Math.random() * Math.PI * 2"), "chunk resource runtime should not randomize tree rotation per rebuild");
   assert(resourceSource.includes("setTreeVisualState(state.treeData, state.treeIndex, {") && resourceSource.includes("nodeId: treeNodeId"), "chunk resource runtime should feed tree node id into the visual profile path");
   assert(resourceSource.includes("function setChunkTreeStumpVisual(options = {})"), "chunk resource runtime should own loaded tree stump/respawn visual updates");
 }
@@ -522,60 +552,104 @@ function assertTutorialIsland(root) {
   const tutorialBootstrap = bootstrap.buildWorldBootstrapResult("tutorial_island");
 
   assert(manifestEntry.worldId === "tutorial_island", "tutorial_island manifest world-id mismatch");
-  assert(manifestEntry.defaultSpawn.x === 118 && manifestEntry.defaultSpawn.y === 118 && manifestEntry.defaultSpawn.z === 0, "tutorial_island default spawn mismatch");
+  assert(manifestEntry.defaultSpawn.x === 138 && manifestEntry.defaultSpawn.y === 175 && manifestEntry.defaultSpawn.z === 0, "tutorial_island default spawn mismatch");
   assert(Array.isArray(manifestEntry.stampIds) && manifestEntry.stampIds.join(",") === "tutorial_start_cabin", "tutorial island should expose the starting cabin stamp");
   assert(Array.isArray(world.structures) && world.structures.length === 1 && world.structures[0].stampId === "tutorial_start_cabin", "tutorial island should place the starting cabin");
-  assert(Array.isArray(world.services) && world.services.length === 10, "tutorial island should expose guide, instructor, and station services");
-  assert(Array.isArray(world.combatSpawns) && world.combatSpawns.length === 2, "tutorial island should expose chicken combat spawns");
-  assert(world.combatSpawns.every((spawn) => spawn.enemyId === "enemy_chicken"), "tutorial island should use chickens instead of a training dummy");
-  assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 2, "tutorial island should expose copper and tin mining nodes");
-  assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 2, "tutorial island should expose a small woodcutting pocket");
-  const tutorialLessonGates = world.landmarks.doors.filter((door) => Number.isFinite(door.tutorialRequiredStep));
-  assert(tutorialLessonGates.length === 7, "tutorial island should expose locked lesson gates");
+  assert(world.version === "2026.05.surface_v2", "tutorial island should expose the surface-v2 layout");
+  assert(world.terrainPatches.islandWater && world.terrainPatches.islandWater.landPolygon.length >= 8, "tutorial island should expose an authored island landmass");
+  assert(Array.isArray(world.terrainPatches.paths) && world.terrainPatches.paths.length >= 5, "tutorial island should expose authored dirt path patches");
+  assert(world.terrainPatches.pier.enabled === false, "tutorial island should disable the fishing pier");
+  assert(Array.isArray(world.waterBodies) && world.waterBodies.some((body) => body.id === "tutorial_surrounding_sea"), "tutorial island should expose surrounding sea water");
+  assert(Array.isArray(world.services) && world.services.length === 10, "tutorial island surface-v2 should expose surface tutors and smithing stations");
+  assert(Array.isArray(world.combatSpawns) && world.combatSpawns.length === 3, "tutorial island surface-v2 should expose surface combat spawns");
+  assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 4, "tutorial island surface-v2 should expose surface mining nodes");
+  assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 6, "tutorial island should expose a denser survival-field grove");
+  const tutorialLessonGates = world.landmarks.doors.filter((door) => Number.isFinite(door.tutorialRequiredStep) && door.tileId === "WOODEN_GATE_CLOSED");
+  assert(tutorialLessonGates.length === 5, "tutorial island surface-v2 should expose arrival, quarry, combat, bank, and exit gates");
   assert(tutorialLessonGates.every((door) => door.tileId === "WOODEN_GATE_CLOSED"), "tutorial lesson gates should use wooden gate tiles");
-  assert(world.landmarks.doors.some((door) => door.landmarkId === "tutorial_start_cabin_door" && door.tileId === "DOOR_OPEN" && door.isOpen === true), "tutorial island should expose an open normal cabin door");
-  assert(Array.isArray(world.landmarks.fences) && world.landmarks.fences.length >= 7, "tutorial island should expose authored fence lines");
+  assert(
+    world.landmarks.doors.some((door) => (
+      door.landmarkId === "tutorial_start_cabin_door"
+      && door.tileId === "DOOR_CLOSED"
+      && door.isOpen === false
+      && door.tutorialRequiredStep === 1
+      && door.tutorialAutoOpenOnUnlock === false
+    )),
+    "tutorial island should expose a locked closed normal cabin door"
+  );
+  assert(Array.isArray(world.landmarks.fences) && world.landmarks.fences.length >= 5, "tutorial island should expose authored fence lines without boxing in the natural survival field");
   assert(Array.isArray(world.landmarks.roofs) && world.landmarks.roofs.some((roof) => roof.hideWhenPlayerInside === true), "tutorial island should expose a hideable starting cabin roof");
-  assert(Array.isArray(world.landmarks.altars) && world.landmarks.altars.length === 1, "tutorial island should expose one altar");
-  ["fishing", "cooking", "firemaking", "mining", "runecrafting", "woodcutting"].forEach((groupId) => {
+  assert(Array.isArray(world.landmarks.caveOpenings) && world.landmarks.caveOpenings.length === 0, "tutorial island surface-v2 should keep the full loop on the surface");
+  assert(Array.isArray(world.landmarks.altars) && world.landmarks.altars.length === 0, "tutorial island should not expose runecrafting altars");
+  assert(Array.isArray(world.skillRoutes.runecrafting) && world.skillRoutes.runecrafting.length === 0, "tutorial island should not expose runecrafting routes");
+  ["fishing", "cooking", "firemaking", "mining", "woodcutting"].forEach((groupId) => {
     assert(Array.isArray(world.skillRoutes[groupId]) && world.skillRoutes[groupId].length === 1, `tutorial island should expose one ${groupId} route`);
   });
+  assert(Array.isArray(world.skillRoutes.cooking[0].fireTiles) && world.skillRoutes.cooking[0].fireTiles.length === 0, "tutorial island surface-v2 should not render permanent cooking fires");
 
   const servicesById = Object.fromEntries(world.services.map((service) => [service.serviceId, service]));
   const guide = servicesById["merchant:tutorial_guide"];
   assert(guide.serviceId === "merchant:tutorial_guide", "tutorial guide service id mismatch");
+  assert(guide.x === 141 && guide.y === 177, "tutorial guide should stand still beside the cabin door");
+  assert(Math.abs(guide.facingYaw - Math.PI) < 0.000001, "tutorial guide should author a cardinal facing direction away from the cabin door");
+  assert(guide.roamingRadiusOverride === 0, "tutorial guide should preserve the authored stationary roam override");
   assert(guide.action === "Talk-to", "tutorial guide should require dialogue before travel");
   assert(guide.travelToWorldId === "main_overworld", "tutorial guide travel target mismatch");
   assert(guide.travelSpawn && guide.travelSpawn.x === 205 && guide.travelSpawn.y === 210 && guide.travelSpawn.z === 0, "tutorial guide travel spawn mismatch");
   assert(dialogueCatalog.resolveDialogueId(guide.dialogueId) === "tutorial_guide", "tutorial guide dialogue should resolve");
+  assert(servicesById["merchant:tutorial_woodcutting_instructor"].appearanceId === "tutorial_woodcutting_instructor", "woodcutting instructor should preserve the old woodsman appearance id");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_woodcutting_instructor"].dialogueId) === "tutorial_woodcutting_instructor", "woodcutting instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_fishing_instructor"].appearanceId === "tutorial_fishing_instructor", "fishing instructor should preserve the weathered angler appearance id");
+  assert(servicesById["merchant:tutorial_fishing_instructor"].x === 274 && servicesById["merchant:tutorial_fishing_instructor"].y === 240, "fishing instructor should stay on the southern pond bank");
+  assert(servicesById["merchant:tutorial_fishing_instructor"].roamingRadiusOverride === 0, "fishing instructor should preserve the stationary roam override");
+  assert(Math.abs(servicesById["merchant:tutorial_fishing_instructor"].facingYaw - Math.PI) < 0.000001, "fishing instructor should face north toward the pond");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_fishing_instructor"].dialogueId) === "tutorial_fishing_instructor", "fishing instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_firemaking_instructor"].appearanceId === "tutorial_firemaking_instructor", "firemaking instructor should preserve the sooty worker appearance id");
+  assert(servicesById["merchant:tutorial_firemaking_instructor"].roamingRadiusOverride === 0, "firemaking instructor should preserve the stationary roam override");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_firemaking_instructor"].dialogueId) === "tutorial_firemaking_instructor", "firemaking instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_mining_smithing_instructor"].appearanceId === "tutorial_mining_smithing_instructor", "mining and smithing instructor should preserve the aproned foreman appearance id");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_mining_smithing_instructor"].dialogueId) === "tutorial_mining_smithing_instructor", "mining and smithing instructor dialogue should resolve");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_combat_instructor"].dialogueId) === "tutorial_combat_instructor", "combat instructor dialogue should resolve");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_bank_tutor"].dialogueId) === "tutorial_bank_tutor", "bank tutor dialogue should resolve");
+  assert(servicesById["station:tutorial_furnace"].type === "FURNACE", "tutorial furnace should expose a smithing station");
+  assert(servicesById["station:tutorial_furnace"].facingYaw === -Math.PI / 2, "tutorial furnace mouth should face west");
+  assert(servicesById["station:tutorial_furnace"].footprintW === 2 && servicesById["station:tutorial_furnace"].footprintD === 3, "west-facing tutorial furnace should occupy a three-tile entrance span");
+  assert(servicesById["station:tutorial_anvil"].type === "ANVIL", "tutorial anvil should expose a smithing station");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].dialogueId === "tutorial_guide", "tutorial guide runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].roamingRadiusOverride === 0, "tutorial guide runtime NPC should preserve stationary roam override");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_woodcutting_instructor"].appearanceId === "tutorial_woodcutting_instructor", "woodcutting instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_fishing_instructor"].appearanceId === "tutorial_fishing_instructor", "fishing instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_fishing_instructor"].roamingRadiusOverride === 0, "fishing instructor runtime NPC should preserve stationary roam override");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_firemaking_instructor"].appearanceId === "tutorial_firemaking_instructor", "firemaking instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_firemaking_instructor"].roamingRadiusOverride === 0, "firemaking instructor runtime NPC should preserve stationary roam override");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_firemaking_instructor"].dialogueId === "tutorial_firemaking_instructor", "firemaking instructor runtime NPC should preserve dialogue");
-  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_combat_instructor"].dialogueId === "tutorial_combat_instructor", "combat instructor runtime NPC should preserve dialogue");
-  assert(tutorialBootstrap.legacy.fences.length >= 7, "tutorial bootstrap should carry authored fence lines into the legacy payload");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_mining_smithing_instructor"].appearanceId === "tutorial_mining_smithing_instructor", "mining and smithing instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_mining_smithing_instructor"].dialogueId === "tutorial_mining_smithing_instructor", "mining and smithing instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.legacy.fences.length >= 5, "tutorial bootstrap should carry authored fence lines into the legacy payload");
+  assert(tutorialBootstrap.legacy.islandWater && tutorialBootstrap.legacy.islandWater.landPolygon.length >= 8, "tutorial bootstrap should carry island-water topology into the legacy payload");
+  assert(tutorialBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "tutorial_fire_to_quarry_path"), "tutorial bootstrap should carry lowered dirt path patches");
+  assert(tutorialBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "tutorial_quarry_work_apron"), "tutorial bootstrap should carry the quarry work-apron terrain patch");
   assert(tutorialBootstrap.legacy.roofs.some((roof) => roof.landmarkId === "tutorial_start_cabin_roof"), "tutorial bootstrap should carry cabin roof metadata into the legacy payload");
+  assert(tutorialBootstrap.legacy.caveOpenings.length === 0, "tutorial bootstrap should preserve the no-cave surface-v2 layout");
+  assert(tutorialBootstrap.legacy.decorProps.length === 10, "tutorial bootstrap should carry arrival, grove, and quarry decor props into the legacy payload");
 
   const gameplayMap = buildWorldGameplayMap(tutorialBootstrap.definition, tutorialBootstrap.stamps);
   const scaledSpawn = {
-    x: Math.round(manifestEntry.defaultSpawn.x * (648 / 486)),
-    y: Math.round(manifestEntry.defaultSpawn.y * (648 / 486)),
+    x: tutorialBootstrap.definition.structures[0].x + (manifestEntry.defaultSpawn.x - world.structures[0].x),
+    y: tutorialBootstrap.definition.structures[0].y + (manifestEntry.defaultSpawn.y - world.structures[0].y),
     z: manifestEntry.defaultSpawn.z
   };
   const cabinDoor = tutorialBootstrap.legacy.doors.find((door) => door.landmarkId === "tutorial_start_cabin_door");
   const cabinSteps = tutorialBootstrap.legacy.staircases.find((staircase) => staircase.landmarkId === "tutorial_start_cabin_steps");
-  const arrivalGate = tutorialBootstrap.legacy.doors.find((door) => door.landmarkId === "tutorial_gate_arrival_to_woodcutting");
-  assert(cabinDoor && cabinDoor.x === 155 && cabinDoor.y === 159, "scaled tutorial cabin door should sit on the visible front wall");
-  assert(cabinSteps && cabinSteps.tiles && cabinSteps.tiles[0] && cabinSteps.tiles[0].x === 155 && cabinSteps.tiles[0].y === 160, "scaled tutorial cabin stairs should sit outside the visible front door");
-  assert(arrivalGate && arrivalGate.x === 168 && arrivalGate.y === 157, "scaled first tutorial gate should stay aligned with the cabin exit");
+  const arrivalGate = tutorialBootstrap.legacy.doors.find((door) => door.landmarkId === "tutorial_gate_arrival_to_survival_field");
+  assert(cabinDoor && cabinDoor.x === 184 && cabinDoor.y === 233, "scaled tutorial cabin door should sit on the visible front wall");
+  assert(cabinSteps && cabinSteps.tiles && cabinSteps.tiles[0] && cabinSteps.tiles[0].x === 184 && cabinSteps.tiles[0].y === 234, "scaled tutorial cabin stairs should sit outside the visible front door");
+  assert(arrivalGate && arrivalGate.x === 235 && arrivalGate.y === 248, "scaled first tutorial gate should sit at the survival-field entry");
   assert(isWalkable(gameplayMap, scaledSpawn.x, scaledSpawn.y, scaledSpawn.z), "scaled tutorial spawn should be walkable");
-  assert(isWalkable(gameplayMap, cabinDoor.x, cabinDoor.y, cabinDoor.z), "scaled tutorial cabin door should be walkable");
+  assert(!isWalkable(gameplayMap, cabinDoor.x, cabinDoor.y, cabinDoor.z), "scaled tutorial cabin door should block movement before the guide clears the player");
+  gameplayMap[cabinDoor.z][cabinDoor.y][cabinDoor.x] = TileId.DOOR_OPEN;
   assert(findShortestPathLength(gameplayMap, scaledSpawn, { x: cabinSteps.tiles[0].x, y: cabinSteps.tiles[0].y, z: cabinSteps.tiles[0].z }, { maxDistance: 16 }) !== null, "player should be able to walk from spawn to the cabin stairs");
-  assert(findShortestPathLength(gameplayMap, scaledSpawn, { x: arrivalGate.x - 1, y: arrivalGate.y, z: arrivalGate.z }, { maxDistance: 32 }) !== null, "player should be able to reach the first tutorial gate from the cabin");
+  assert(findShortestPathLength(gameplayMap, scaledSpawn, { x: arrivalGate.x - 1, y: arrivalGate.y, z: arrivalGate.z }, { maxDistance: 72 }) !== null, "player should be able to reach the first tutorial gate from the cabin");
 }
 
 function run() {
