@@ -23,7 +23,7 @@
         return floorMesh;
     }
 
-    function resolveFenceConnections(options) {
+    function isFenceNeighbor(options, dx, dy) {
         const logicalMap = options && options.logicalMap;
         const getVisualTileId = options && options.getVisualTileId;
         const isFenceConnectorTile = options && options.isFenceConnectorTile;
@@ -31,14 +31,26 @@
         const x = options && options.x;
         const y = options && options.y;
         const z = options && options.z;
+        const nx = x + dx;
+        const ny = y + dy;
         if (!logicalMap || typeof getVisualTileId !== 'function' || typeof isFenceConnectorTile !== 'function') {
-            return { hasNorth: false, hasSouth: false, hasWest: false, hasEast: false };
+            return false;
         }
+        if (nx < 0 || ny < 0 || nx >= mapSize || ny >= mapSize) return false;
+        if (!logicalMap[z] || !logicalMap[z][ny]) return false;
+        return isFenceConnectorTile(getVisualTileId(logicalMap[z][ny][nx], nx, ny, z));
+    }
+
+    function resolveFenceConnections(options) {
         return {
-            hasNorth: y > 0 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y - 1][x], x, y - 1, z)),
-            hasSouth: y < mapSize - 1 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y + 1][x], x, y + 1, z)),
-            hasWest: x > 0 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y][x - 1], x - 1, y, z)),
-            hasEast: x < mapSize - 1 && isFenceConnectorTile(getVisualTileId(logicalMap[z][y][x + 1], x + 1, y, z))
+            hasNorth: isFenceNeighbor(options, 0, -1),
+            hasSouth: isFenceNeighbor(options, 0, 1),
+            hasWest: isFenceNeighbor(options, -1, 0),
+            hasEast: isFenceNeighbor(options, 1, 0),
+            hasNorthWest: isFenceNeighbor(options, -1, -1),
+            hasNorthEast: isFenceNeighbor(options, 1, -1),
+            hasSouthWest: isFenceNeighbor(options, -1, 1),
+            hasSouthEast: isFenceNeighbor(options, 1, 1)
         };
     }
 
@@ -53,54 +65,42 @@
         const baseHeight = Number.isFinite(options && options.baseHeight) ? options.baseHeight : 0;
         const group = new THREE.Group();
         group.position.set(x, zOffset + baseHeight, y);
-        const material = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+        const postMaterial = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+        const railMaterial = sharedMaterials.boothWood || postMaterial;
 
         const connections = resolveFenceConnections(options);
-        const drawX = connections.hasEast || connections.hasWest || (!connections.hasNorth && !connections.hasSouth);
-        const drawZ = connections.hasNorth || connections.hasSouth;
 
-        const postPositions = [];
-        const addPost = (px, pz) => {
-            const key = `${px}:${pz}`;
-            if (postPositions.some((entry) => entry.key === key)) return;
-            postPositions.push({ key, x: px, z: pz });
-        };
-        if (drawX) {
-            addPost(-0.46, 0);
-            addPost(0.46, 0);
-        }
-        if (drawZ) {
-            addPost(0, -0.46);
-            addPost(0, 0.46);
-        }
-        if (!drawX && !drawZ) addPost(0, 0);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.05, 0.18), postMaterial);
+        post.position.set(0, 0.525, 0);
+        post.castShadow = true;
+        post.receiveShadow = true;
+        group.add(post);
 
-        for (let i = 0; i < postPositions.length; i++) {
-            const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.16), material);
-            post.position.set(postPositions[i].x, 0.475, postPositions[i].z);
-            post.castShadow = true;
-            post.receiveShadow = true;
-            group.add(post);
-        }
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.12, 0.26), postMaterial);
+        cap.position.set(0, 1.11, 0);
+        cap.castShadow = true;
+        cap.receiveShadow = true;
+        group.add(cap);
 
-        const addRail = (isX, railY) => {
-            const rail = new THREE.Mesh(
-                new THREE.BoxGeometry(isX ? 0.94 : 0.12, 0.12, isX ? 0.12 : 0.94),
-                material
-            );
-            rail.position.set(0, railY, 0);
+        const addFenceRail = (dx, dz, railY) => {
+            const length = Math.sqrt((dx * dx) + (dz * dz));
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(length, 0.11, 0.12), railMaterial);
+            rail.position.set(dx / 2, railY, dz / 2);
+            rail.rotation.y = -Math.atan2(dz, dx);
             rail.castShadow = true;
             rail.receiveShadow = true;
             group.add(rail);
         };
-        if (drawX) {
-            addRail(true, 0.42);
-            addRail(true, 0.68);
-        }
-        if (drawZ) {
-            addRail(false, 0.42);
-            addRail(false, 0.68);
-        }
+
+        const addFenceSegment = (dx, dz) => {
+            addFenceRail(dx, dz, 0.44);
+            addFenceRail(dx, dz, 0.72);
+        };
+
+        if (connections.hasEast) addFenceSegment(1, 0);
+        if (connections.hasSouth) addFenceSegment(0, 1);
+        if (connections.hasSouthEast) addFenceSegment(1, 1);
+        if (connections.hasSouthWest) addFenceSegment(-1, 1);
 
         group.children.forEach((child) => {
             child.userData = { type: 'WALL', gridX: x, gridY: y, z: z };
@@ -274,8 +274,9 @@
         if (!planeGroup) return false;
         const rawTile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
         const visualTile = options.visualTile;
-        const floorTile = rawTile === TileId.SOLID_NPC ? visualTile : rawTile;
+        const floorTile = rawTile === TileId.SOLID_NPC || rawTile === TileId.OBSTACLE ? visualTile : rawTile;
         if (floorTile === TileId.SOLID_NPC) return true;
+        if (floorTile === TileId.OBSTACLE) return true;
         if (floorTile === TileId.GRASS || floorTile === TileId.DIRT || floorTile === TileId.SHORE) return true;
         if (floorTile === TileId.FLOOR_WOOD && isPierDeckTile(pierConfig, x, y, z)) return true;
         let floorMat = sharedMaterials.floor7;
@@ -374,34 +375,75 @@
     function createWoodenGateVisualGroup(options) {
         const THREE = requireThree(options && options.THREE);
         const sharedMaterials = options && options.sharedMaterials ? options.sharedMaterials : {};
-        const door = options && options.door;
+        const gate = options && options.door;
         const zOffset = Number.isFinite(options && options.zOffset) ? options.zOffset : 0;
         const baseHeight = Number.isFinite(options && options.baseHeight) ? options.baseHeight : 0;
-        if (!door) return null;
+        if (!gate) return null;
         const group = new THREE.Group();
-        group.position.set(door.x + (door.hingeOffsetX || 0), zOffset + baseHeight, door.y + (door.hingeOffsetY || 0));
-        group.rotation.y = door.currentRotation;
-        const material = sharedMaterials.fenceWood || sharedMaterials.boothWood;
-        const meshOffsetX = door.hingeOffsetX ? -door.hingeOffsetX : 0;
-        const meshOffsetZ = door.hingeOffsetY ? -door.hingeOffsetY : 0;
-        const railW = door.isEW ? door.width : 0.12;
-        const railD = door.isEW ? 0.12 : door.width;
+        group.position.set(gate.x + (gate.hingeOffsetX || 0), zOffset + baseHeight, gate.y + (gate.hingeOffsetY || 0));
+        group.rotation.y = gate.currentRotation;
+        const postMaterial = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+        const railMaterial = sharedMaterials.boothWood || postMaterial;
+        const metalMaterial = sharedMaterials.rockIron || sharedMaterials.anvilIron || railMaterial;
+        const gateWidth = Number.isFinite(gate.width) ? gate.width : 1;
+        const meshOffsetX = gate.hingeOffsetX ? -gate.hingeOffsetX : 0;
+        const meshOffsetZ = gate.hingeOffsetY ? -gate.hingeOffsetY : 0;
+        const railW = gate.isEW ? gateWidth : 0.12;
+        const railD = gate.isEW ? 0.12 : gateWidth;
+        const slatW = gate.isEW ? 0.12 : 0.14;
+        const slatD = gate.isEW ? 0.14 : 0.12;
 
-        const uprightA = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.14), material);
-        uprightA.position.set(meshOffsetX + (door.isEW ? -door.width * 0.35 : 0), 0.475, meshOffsetZ + (door.isEW ? 0 : -door.width * 0.35));
-        const uprightB = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.14), material);
-        uprightB.position.set(meshOffsetX + (door.isEW ? door.width * 0.35 : 0), 0.475, meshOffsetZ + (door.isEW ? 0 : door.width * 0.35));
-        const railLower = new THREE.Mesh(new THREE.BoxGeometry(railW, 0.14, railD), material);
-        railLower.position.set(meshOffsetX, 0.38, meshOffsetZ);
-        const railUpper = new THREE.Mesh(new THREE.BoxGeometry(railW, 0.14, railD), material);
-        railUpper.position.set(meshOffsetX, 0.68, meshOffsetZ);
-        [uprightA, uprightB, railLower, railUpper].forEach((mesh) => {
+        const addBox = (width, height, depth, material, px, py, pz) => {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+            mesh.position.set(px, py, pz);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             group.add(mesh);
-        });
+            return mesh;
+        };
 
-        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(door.isEW ? door.width : 0.6, 1.2, door.isEW ? 0.6 : door.width), sharedMaterials.hiddenHitbox);
+        const addSlat = (offset) => {
+            addBox(
+                slatW,
+                1.02,
+                slatD,
+                postMaterial,
+                meshOffsetX + (gate.isEW ? offset : 0),
+                0.51,
+                meshOffsetZ + (gate.isEW ? 0 : offset)
+            );
+        };
+
+        addSlat(-gateWidth * 0.38);
+        addSlat(0);
+        addSlat(gateWidth * 0.38);
+        addBox(railW, 0.13, railD, railMaterial, meshOffsetX, 0.38, meshOffsetZ);
+        addBox(railW, 0.13, railD, railMaterial, meshOffsetX, 0.68, meshOffsetZ);
+        addBox(railW * (gate.isEW ? 0.78 : 1), 0.11, railD * (gate.isEW ? 1 : 0.78), railMaterial, meshOffsetX, 0.92, meshOffsetZ);
+
+        const braceLength = Math.sqrt((gateWidth * 0.82 * gateWidth * 0.82) + (0.48 * 0.48));
+        const braceAngle = Math.atan2(0.48, gateWidth * 0.82);
+        const brace = gate.isEW
+            ? new THREE.Mesh(new THREE.BoxGeometry(braceLength, 0.1, 0.1), railMaterial)
+            : new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, braceLength), railMaterial);
+        brace.position.set(meshOffsetX, 0.63, meshOffsetZ);
+        if (gate.isEW) brace.rotation.z = braceAngle;
+        else brace.rotation.x = -braceAngle;
+        brace.castShadow = true;
+        brace.receiveShadow = true;
+        group.add(brace);
+
+        addBox(
+            gate.isEW ? 0.12 : 0.08,
+            0.08,
+            gate.isEW ? 0.08 : 0.12,
+            metalMaterial,
+            meshOffsetX + (gate.isEW ? gateWidth * 0.32 : 0.07),
+            0.66,
+            meshOffsetZ + (gate.isEW ? 0.07 : gateWidth * 0.32)
+        );
+
+        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(gate.isEW ? gateWidth : 0.6, 1.2, gate.isEW ? 0.6 : gateWidth), sharedMaterials.hiddenHitbox);
         hitbox.position.set(meshOffsetX, 0.6, meshOffsetZ);
         group.add(hitbox);
         return group;
@@ -1349,7 +1391,7 @@
                 baseHeight: heightMap[z][door.y][door.x]
             });
             door.meshGroup = doorGroup;
-            addGroupChildrenToEnvironment(doorGroup, environmentMeshes, { type: 'DOOR', gridX: door.x, gridY: door.y, z, doorObj: door });
+            addGroupChildrenToEnvironment(doorGroup, environmentMeshes, { type: door.isWoodenGate ? 'GATE' : 'DOOR', gridX: door.x, gridY: door.y, z, doorObj: door });
             planeGroup.add(doorGroup);
             const floorHeight = heightMap[z][door.y][door.x];
             if (floorHeight > 0.12) {

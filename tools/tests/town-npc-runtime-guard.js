@@ -51,6 +51,7 @@ function run() {
   assert(runtimeSource.includes("function resolveTownNpcRoamBounds(options = {})"), "town NPC runtime should own NPC roam bounds resolution");
   assert(runtimeSource.includes("function resolveTownNpcRoamingRadius(npc, roamBounds)"), "town NPC runtime should own NPC roaming radius resolution");
   assert(runtimeSource.includes("let staticNpcBaseTiles = new Map();"), "town NPC runtime should own static NPC tile state");
+  assert(runtimeSource.includes("let staticObjectBaseTiles = new Map();"), "town NPC runtime should own static object base tile state");
   assert(runtimeSource.includes("let loadedChunkNpcActors = new Map();"), "town NPC runtime should own loaded chunk NPC actor state");
   assert(worldSource.includes("WorldTownNpcRuntime"), "world.js should delegate town NPC behavior");
   assert(worldSource.includes("worldTownNpcRuntime.updateWorldNpcRuntime(buildTownNpcRuntimeContext(), frameNowMs);"), "world.js should delegate NPC update ticks");
@@ -92,7 +93,9 @@ function run() {
 
   const TileId = {
     SOLID_NPC: 99,
+    OBSTACLE: 98,
     GRASS: 1,
+    FLOOR_WOOD: 8,
     FENCE: 2,
     WOODEN_GATE_CLOSED: 3,
     WOODEN_GATE_OPEN: 4,
@@ -103,6 +106,10 @@ function run() {
   runtime.resetStaticNpcBaseTiles();
   runtime.rememberStaticNpcBaseTile(5, 6, 0, TileId.GRASS);
   assert(runtime.getVisualTileId(TileId, TileId.SOLID_NPC, 5, 6, 0) === TileId.GRASS, "visual tile resolver should recover stored NPC base tiles");
+  runtime.rememberStaticObjectBaseTile(7, 8, 0, TileId.FLOOR_WOOD);
+  assert(runtime.getVisualTileId(TileId, TileId.OBSTACLE, 7, 8, 0) === TileId.FLOOR_WOOD, "visual tile resolver should recover stored object base tiles");
+  runtime.resetStaticNpcBaseTiles();
+  assert(runtime.getVisualTileId(TileId, TileId.OBSTACLE, 7, 8, 0) === TileId.OBSTACLE, "static tile reset should clear object base tiles too");
   assert(runtime.isFenceConnectorTile(TileId, TileId.WOODEN_GATE_OPEN), "wooden gates should remain fence connectors");
   assert(runtime.getDoorOpenTileId(TileId, { isWoodenGate: true }) === TileId.WOODEN_GATE_OPEN, "wooden gates should open as wooden gates");
 

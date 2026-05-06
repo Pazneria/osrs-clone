@@ -114,6 +114,7 @@ function run() {
   {
     assert(runtime.getRaycastHitPriority({ type: "ENEMY" }) < runtime.getRaycastHitPriority({ type: "GROUND_ITEM" }), "enemies should outrank ground items");
     assert(runtime.getRaycastHitPriority({ type: "DOOR" }) < runtime.getRaycastHitPriority({ type: "TREE" }), "doors should outrank resource nodes");
+    assert(runtime.getRaycastHitPriority({ type: "GATE" }) === runtime.getRaycastHitPriority({ type: "DOOR" }), "gates should share door raycast priority");
   }
 
   {

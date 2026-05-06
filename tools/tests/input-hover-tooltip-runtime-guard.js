@@ -96,7 +96,7 @@ function run() {
   assert(npcText.includes("Bank") && npcText.includes("Banker"), "NPC tooltip should respect preferred banker action");
 
   const gateText = runtime.formatHoverTooltipActionText({
-    hitData: { type: "DOOR", doorObj: { isOpen: false, isWoodenGate: true } }
+    hitData: { type: "GATE", doorObj: { isOpen: false, isWoodenGate: true } }
   });
   assert(gateText.includes("Open") && gateText.includes("Gate"), "wooden gate tooltip should name a gate instead of a generic door");
 

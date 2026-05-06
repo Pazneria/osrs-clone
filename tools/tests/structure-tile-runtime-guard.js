@@ -33,7 +33,13 @@ function run() {
   assert(structureRuntimeSource.includes("const bodyLocalW = frontIsX ? fd : fw;\n        const bodyLocalD = frontIsX ? fw : fd;"), "rotated furnaces should derive the long entrance side from the axis-aligned footprint");
   assert(!structureRuntimeSource.includes("quarterTurn ? fd : fw"), "furnace rotation should rotate the finished long-side body, not rebuild it with swapped dimensions");
   assert(structureRuntimeSource.includes("const hardy = new THREE.Mesh"), "structure runtime should give anvils a readable top detail");
-  assert(structureRuntimeSource.includes("if (floorTile === TileId.SOLID_NPC) return true;"), "unbased occupied object tiles should not synthesize generic stone floor slabs");
+  assert(structureRuntimeSource.includes("rawTile === TileId.SOLID_NPC || rawTile === TileId.OBSTACLE ? visualTile : rawTile"), "occupied object tiles should render using their remembered visual base tile");
+  assert(structureRuntimeSource.includes("if (floorTile === TileId.OBSTACLE) return true;"), "unbased occupied object tiles should not synthesize generic stone floor slabs");
+  assert(structureRuntimeSource.includes("hasSouthEast: isFenceNeighbor(options, 1, 1)"), "fence rendering should resolve diagonal neighbors");
+  assert(structureRuntimeSource.includes("if (connections.hasSouthEast) addFenceSegment(1, 1);"), "fence rendering should draw southeast diagonal rails");
+  assert(structureRuntimeSource.includes("if (connections.hasSouthWest) addFenceSegment(-1, 1);"), "fence rendering should draw southwest diagonal rails");
+  assert(structureRuntimeSource.includes("const braceLength ="), "wooden gates should render with redesigned bracing");
+  assert(structureRuntimeSource.includes("type: door.isWoodenGate ? 'GATE' : 'DOOR'"), "wooden gate meshes should advertise gate hit targets");
   assert(structureRuntimeSource.includes("if (floorHeight > 0.12)"), "low-height tutorial gates should not synthesize a stone floor tile under the door");
   assert(!structureRuntimeSource.includes("material: sharedMaterials.floor6 || sharedMaterials.floor7,\n                        x: prop.x"), "decor props should not synthesize a wood/stone floor patch under themselves");
 

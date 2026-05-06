@@ -128,6 +128,14 @@ function run() {
   {
     const logs = { queued: [], markers: [], chats: [] };
     const context = makeContext({ logs });
+    runtime.handlePrimaryInteractionHit(context, { type: "GATE", doorObj: { isWoodenGate: true }, gridX: 5, gridY: 6, point: { x: 5, y: 0, z: 6 } });
+    assert(logs.queued[0].obj === "DOOR", "gate primary clicks should route through door interaction handling");
+    assert(logs.queued[0].targetUid.isWoodenGate === true, "gate primary clicks should preserve gate door metadata");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    const context = makeContext({ logs });
     runtime.handlePrimaryInteractionHit(context, {
       type: "DECOR_PROP",
       uid: { propId: "tutorial_cabin_tool_rack", kind: "tool_rack", label: "Tool Rack" },

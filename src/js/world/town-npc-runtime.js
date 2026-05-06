@@ -1,5 +1,6 @@
 (function () {
     let staticNpcBaseTiles = new Map();
+    let staticObjectBaseTiles = new Map();
     let loadedChunkNpcActors = new Map();
 
     const TOWN_NPC_STEP_DIRS = Object.freeze([
@@ -15,6 +16,7 @@
 
     function resetStaticNpcBaseTiles() {
         staticNpcBaseTiles = new Map();
+        staticObjectBaseTiles = new Map();
     }
 
     function resetLoadedChunkNpcActors() {
@@ -24,6 +26,11 @@
     function rememberStaticNpcBaseTile(x, y, z, tileId) {
         if (!Number.isFinite(tileId)) return;
         staticNpcBaseTiles.set(occupiedTileKey(x, y, z), Math.floor(Number(tileId)));
+    }
+
+    function rememberStaticObjectBaseTile(x, y, z, tileId) {
+        if (!Number.isFinite(tileId)) return;
+        staticObjectBaseTiles.set(occupiedTileKey(x, y, z), Math.floor(Number(tileId)));
     }
 
     function resolveSolidNpcBaseTile(x, y, z) {
@@ -36,9 +43,21 @@
         return null;
     }
 
+    function resolveStaticObjectBaseTile(x, y, z) {
+        const staticBaseTile = staticObjectBaseTiles.get(occupiedTileKey(x, y, z));
+        return Number.isFinite(staticBaseTile) ? staticBaseTile : null;
+    }
+
     function getVisualTileId(TileId, tileId, x, y, z) {
-        if (!TileId || tileId !== TileId.SOLID_NPC) return tileId;
-        const baseTile = resolveSolidNpcBaseTile(x, y, z);
+        if (!TileId) return tileId;
+        let baseTile = null;
+        if (tileId === TileId.SOLID_NPC) {
+            baseTile = resolveSolidNpcBaseTile(x, y, z);
+        } else if (tileId === TileId.OBSTACLE) {
+            baseTile = resolveStaticObjectBaseTile(x, y, z);
+        } else {
+            return tileId;
+        }
         return Number.isFinite(baseTile) ? baseTile : tileId;
     }
 
@@ -690,9 +709,11 @@
         publishTutorialGateHooks,
         refreshTutorialGateStates,
         releaseTownNpcOccupiedTile,
+        rememberStaticObjectBaseTile,
         rememberStaticNpcBaseTile,
         resetLoadedChunkNpcActors,
         resetStaticNpcBaseTiles,
+        resolveStaticObjectBaseTile,
         resolveSolidNpcBaseTile,
         resolveTownNpcDefaultFacingYaw,
         resolveTownNpcRoamBounds,

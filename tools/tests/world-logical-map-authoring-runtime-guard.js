@@ -63,7 +63,9 @@ function run() {
   const logicalMap = [makePlane(mapSize, tileIds.GRASS), makePlane(mapSize, tileIds.GRASS)];
   const heightMap = [makePlane(mapSize, 0), makePlane(mapSize, 0)];
   const remembered = [];
+  const rememberedObjects = [];
   const rememberStaticNpcBaseTile = (x, y, z, tileId) => remembered.push({ x, y, z, tileId });
+  const rememberStaticObjectBaseTile = (x, y, z, tileId) => rememberedObjects.push({ x, y, z, tileId });
 
   const fishingResult = runtime.applyFishingMerchantSpots({
     fishingMerchantSpots: [{ type: 4, x: 4, y: 4, name: "Fisher", merchantId: "fisher", appearanceId: "fisher", dialogueId: "fish_talk" }],
@@ -106,11 +108,15 @@ function run() {
       targetRotation: 0
     }],
     doorsToRender: [],
-    fenceLandmarks: [{ z: 0, height: 0.1, points: [{ x: 1, y: 12 }, { x: 3, y: 12 }] }],
+    fenceLandmarks: [
+      { z: 0, height: 0.1, points: [{ x: 1, y: 12 }, { x: 3, y: 12 }] },
+      { z: 0, height: 0.1, points: [{ x: 4, y: 13 }, { x: 7, y: 16 }] }
+    ],
     heightMap,
     logicalMap,
     mapSize,
     npcsToRender: fishingResult.npcsToRender,
+    rememberStaticObjectBaseTile,
     rememberStaticNpcBaseTile,
     roofLandmarks,
     smithingHallApproach: { shoreX: 6, stairX: 7, yStart: 11, yEnd: 12 },
@@ -138,12 +144,14 @@ function run() {
   assert(Array.isArray(smithNpc.tags) && smithNpc.tags.includes("smithing"), "static merchant render data should preserve tags");
   assert(logicalMap[0][8][8] === tileIds.BANK_BOOTH && heightMap[0][8][8] === 0.25, "staircase landmark tiles should stamp tile and height");
   assert(logicalMap[0][12][1] === tileIds.FENCE && logicalMap[0][12][3] === tileIds.FENCE, "fence landmarks should stamp straight segments");
+  assert(logicalMap[0][13][4] === tileIds.FENCE && logicalMap[0][14][5] === tileIds.FENCE && logicalMap[0][15][6] === tileIds.FENCE && logicalMap[0][16][7] === tileIds.FENCE, "fence landmarks should stamp diagonal segments without gaps");
   assert(logicalMap[0][11][6] === tileIds.SHORE && logicalMap[0][12][7] === tileIds.STAIRS_RAMP, "smithing hall approach should stamp shore and stairs");
   assert(logicalMap[0][9][9] === tileIds.WOODEN_GATE_OPEN, "door landmarks should stamp door tile ids");
   assert(logicalMap[0][9][10] === tileIds.WOODEN_GATE_CLOSED && heightMap[0][9][10] === 0, "low wooden gates should not raise a square terrain tile under the door");
   assert(staticResult.doorsToRender[0].isWoodenGate && staticResult.doorsToRender[0].closedTileId === tileIds.WOODEN_GATE_CLOSED, "door render data should preserve wooden gate metadata");
   assert(staticResult.doorsToRender[0].tutorialAutoOpenOnUnlock === true, "door render data should default tutorial gates to auto-open on unlock");
   assert(logicalMap[0][8][13] === tileIds.OBSTACLE, "blocking decor props should reserve obstacle tiles");
+  assert(rememberedObjects.some((entry) => entry.x === 13 && entry.y === 8 && entry.tileId === tileIds.GRASS), "blocking decor props should remember whichever tile they covered");
   assert(staticResult.decorPropsToRender.length === 1 && staticResult.decorPropsToRender[0].propId === "test_notice", "decor props should be published for rendering");
   staticResult.activeRoofLandmarks[0].hideBounds.xMin = 99;
   assert(roofLandmarks[0].hideBounds.xMin === 1, "roof landmarks should be cloned for runtime ownership");

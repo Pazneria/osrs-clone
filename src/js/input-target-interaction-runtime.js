@@ -184,7 +184,7 @@
     function buildInteractionTargetData(context = {}, hitData) {
         if (!hitData) return null;
         let targetData = hitData.uid;
-        if (hitData.type === 'DOOR') {
+        if (hitData.type === 'DOOR' || hitData.type === 'GATE') {
             targetData = hitData.doorObj;
         } else if (hitData.type === 'DECOR_PROP') {
             const uid = hitData.uid && typeof hitData.uid === 'object' ? hitData.uid : {};
@@ -265,11 +265,12 @@
         }
 
         const targetData = buildInteractionTargetData(context, hitData);
+        const interactionType = hitData.type === 'GATE' ? 'DOOR' : hitData.type;
         if (typeof context.queueAction === 'function') {
-            context.queueAction('INTERACT', hitData.gridX, hitData.gridY, hitData.type, targetData);
+            context.queueAction('INTERACT', hitData.gridX, hitData.gridY, interactionType, targetData);
         }
         if (typeof context.spawnClickMarker === 'function') context.spawnClickMarker(hitData.point, true);
-        return { handled: true, action: 'INTERACT', targetType: hitData.type, targetData };
+        return { handled: true, action: 'INTERACT', targetType: interactionType, targetData };
     }
 
     window.InputTargetInteractionRuntime = {

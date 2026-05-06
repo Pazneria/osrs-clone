@@ -1180,7 +1180,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             bindRange('motion-step-swing', 'walkLegSwing');
             bindRange('motion-knee-lift', 'walkKneeLift');
             bindRange('motion-bounce', 'walkBounce');
-            bindRange('motion-cam-follow', 'cameraFollowY');
 
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'F7') {
@@ -1503,8 +1502,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 camera.position.z = nextCamZ;
                 camera.lookAt(freeCamTarget);
             } else {
-                const camBobOffset = playerRig.position.y - baseVisualY;
-                const cameraFollowY = baseVisualY + (camBobOffset * MOTION_TUNING.cameraFollowY);
+                // Keep camera follow anchored to terrain height; idle bob stays local to the player rig.
+                const cameraFollowY = baseVisualY;
                 camera.position.x = playerRig.position.x + cameraDist * Math.cos(cameraYaw) * Math.sin(cameraPitch);
                 camera.position.y = cameraFollowY + 1.0 + cameraDist * Math.cos(cameraPitch);
                 camera.position.z = playerRig.position.z + cameraDist * Math.sin(cameraYaw) * Math.sin(cameraPitch);

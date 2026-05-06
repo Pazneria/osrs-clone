@@ -143,6 +143,10 @@
             worldTownNpcRuntime.rememberStaticNpcBaseTile(x, y, z, tileId);
         }
 
+        function rememberStaticObjectBaseTile(x, y, z, tileId) {
+            worldTownNpcRuntime.rememberStaticObjectBaseTile(x, y, z, tileId);
+        }
+
         function getVisualTileId(tileId, x, y, z) {
             return worldTownNpcRuntime.getVisualTileId(TileId, tileId, x, y, z);
         }
@@ -1151,6 +1155,7 @@
                 logicalMap,
                 mapSize: MAP_SIZE,
                 npcsToRender,
+                rememberStaticObjectBaseTile,
                 rememberStaticNpcBaseTile,
                 roofLandmarks,
                 smithingHallApproach,

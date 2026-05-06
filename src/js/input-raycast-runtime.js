@@ -95,7 +95,7 @@
             }
             return null;
         }
-        if (data.type === 'DOOR') {
+        if (data.type === 'DOOR' || data.type === 'GATE') {
             return { type: data.type, gridX: data.gridX, gridY: data.gridY, point: hit.point, doorObj: data.doorObj };
         }
         return {
@@ -112,7 +112,7 @@
     function getRaycastHitKey(hitData) {
         if (!hitData) return null;
         if (hitData.uid !== undefined && hitData.uid !== null) return `${hitData.type}:uid:${hitData.uid}`;
-        if (hitData.type === 'DOOR' && hitData.doorObj) return `${hitData.type}:door:${hitData.gridX},${hitData.gridY}`;
+        if ((hitData.type === 'DOOR' || hitData.type === 'GATE') && hitData.doorObj) return `${hitData.type}:door:${hitData.gridX},${hitData.gridY}`;
         if (Number.isInteger(hitData.gridX) && Number.isInteger(hitData.gridY)) {
             return `${hitData.type}:${hitData.gridX},${hitData.gridY}:${hitData.name || ''}`;
         }
@@ -146,7 +146,7 @@
         if (hitData.type === 'ENEMY') return 0;
         if (hitData.type === 'NPC') return 1;
         if (hitData.type === 'GROUND_ITEM') return 2;
-        if (hitData.type === 'DOOR') return 3;
+        if (hitData.type === 'DOOR' || hitData.type === 'GATE') return 3;
         if (hitData.type === 'BANK_BOOTH' || hitData.type === 'SHOP_COUNTER' || hitData.type === 'DECOR_PROP') return 4;
         if (hitData.type === 'TREE' || hitData.type === 'ROCK' || hitData.type === 'FISHING_SPOT' || hitData.type === 'WATER' || hitData.type === 'FIRE') return 5;
         return 20;

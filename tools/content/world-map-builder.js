@@ -261,6 +261,39 @@ function applyStamp(map, stamp, startX, startY, z) {
   }
 }
 
+function normalizeFencePoint(point) {
+  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
+  return { x: Math.round(point.x), y: Math.round(point.y) };
+}
+
+function forEachFenceLineTile(from, to, visit) {
+  const start = normalizeFencePoint(from);
+  const end = normalizeFencePoint(to);
+  if (!start || !end || typeof visit !== "function") return;
+  let x0 = start.x;
+  let y0 = start.y;
+  const x1 = end.x;
+  const y1 = end.y;
+  const dx = Math.abs(x1 - x0);
+  const dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1;
+  const sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    visit(x0, y0);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = err * 2;
+    if (e2 >= dy) {
+      err += dy;
+      x0 += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y0 += sy;
+    }
+  }
+}
+
 function applyFenceSegment(map, fence) {
   if (!fence || !Array.isArray(fence.points) || fence.points.length < 2) return;
   const z = Number.isInteger(fence.z) ? fence.z : 0;
@@ -268,15 +301,11 @@ function applyFenceSegment(map, fence) {
     const from = fence.points[i - 1];
     const to = fence.points[i];
     if (!from || !to) continue;
-    const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
-    for (let step = 0; step <= steps; step++) {
-      const t = steps === 0 ? 0 : step / steps;
-      const x = Math.round(from.x + ((to.x - from.x) * t));
-      const y = Math.round(from.y + ((to.y - from.y) * t));
+    forEachFenceLineTile(from, to, (x, y) => {
       if (map[z] && map[z][y] && x >= 0 && y >= 0 && x < MAP_SIZE && y < MAP_SIZE) {
         map[z][y][x] = TileId.FENCE;
       }
-    }
+    });
   }
 }
 

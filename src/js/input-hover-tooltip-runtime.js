@@ -181,9 +181,9 @@
             return `<span class="text-gray-300">Search</span> <span class="text-cyan-400">${propName}</span>`;
         }
         if (hitData.type === 'WATER') return '<span class="text-gray-300">Fish</span> <span class="text-cyan-400">Water</span>';
-        if (hitData.type === 'DOOR') {
+        if (hitData.type === 'DOOR' || hitData.type === 'GATE') {
             const action = hitData.doorObj && hitData.doorObj.isOpen ? 'Close' : 'Open';
-            const label = hitData.doorObj && hitData.doorObj.isWoodenGate ? 'Gate' : 'Door';
+            const label = hitData.type === 'GATE' || (hitData.doorObj && hitData.doorObj.isWoodenGate) ? 'Gate' : 'Door';
             return `<span class="text-gray-300">${action}</span> <span class="text-cyan-400">${label}</span>`;
         }
         if (hitData.type === 'ENEMY') {

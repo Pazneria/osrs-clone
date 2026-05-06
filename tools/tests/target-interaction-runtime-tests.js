@@ -106,7 +106,7 @@ function createNpcContext(queueLog) {
   const examineLog = [];
   const options = registry.resolveOptions(
     {
-      type: "DOOR",
+      type: "GATE",
       gridX: 3,
       gridY: 4,
       doorObj: { isOpen: false, isWoodenGate: true }
@@ -117,6 +117,9 @@ function createNpcContext(queueLog) {
     }
   );
   assert.ok(options.some((option) => option.text === 'Open <span class="text-white">Gate</span>'), "wooden gates should expose a gate action label");
+  const openOption = options.find((option) => option.text === 'Open <span class="text-white">Gate</span>');
+  openOption.onSelect();
+  assert.strictEqual(queueLog[0].type, "DOOR", "wooden gate actions should still route through door interaction handling");
   const examineOption = options.find((option) => option.text === 'Examine <span class="text-white">Gate</span>');
   assert.ok(examineOption, "wooden gates should expose a gate examine label");
   examineOption.onSelect();

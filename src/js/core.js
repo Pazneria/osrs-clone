@@ -301,8 +301,7 @@
             walkKneeLift: 0.85,
             runBounce: 0.12,
             walkBounce: 0.1,
-            idleBounce: 0.0125,
-            cameraFollowY: 0.2
+            idleBounce: 0.0125
         };
 
         let motionDebugVisible = false;

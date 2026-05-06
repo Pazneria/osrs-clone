@@ -269,6 +269,8 @@ function run() {
   assert(inputSource.includes("window.updateMainDirectionalShadowFocus"), "input-render.js should keep directional shadow focus wired through the world shell");
   assert(inputSource.includes("window.updateSkyRuntime(camera.position, frameNowMs);"), "input-render.js should refresh the sky runtime from animate()");
   assert(inputSource.includes("window.updateTutorialGuidanceMarker(frameNowMs);"), "input-render.js should refresh tutorial guidance markers from animate()");
+  assert(inputSource.includes("const cameraFollowY = baseVisualY;"), "input-render.js should keep follow-camera height anchored to the unbobbed player base height");
+  assert(!inputSource.includes("camBobOffset"), "input-render.js should not feed local idle bob into camera follow height");
   assert(inputSource.includes("function syncPlayerRigSkillingToolVisual("), "input-render.js should reconcile temporary skilling tool visuals with live actions");
   assert(inputSource.includes("setPlayerRigToolVisual(playerRigRef, null);"), "input-render.js should clear temporary skilling tool visuals after skilling ends");
 

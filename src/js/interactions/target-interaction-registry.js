@@ -445,7 +445,7 @@
 
     function resolveOptions(hitData, context = {}) {
         if (!hitData || typeof hitData.type !== 'string') return [];
-        const targetType = hitData.type;
+        const targetType = hitData.type === 'GATE' ? 'DOOR' : hitData.type;
         const spec = TARGET_INTERACTION_SPECS[targetType];
         if (!spec) return [];
 
