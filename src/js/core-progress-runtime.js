@@ -357,6 +357,29 @@
         }
     }
 
+    function clearObsoleteProgressFromStorage(context = {}) {
+        const storage = getProgressStorage(context);
+        if (!storage || typeof storage.removeItem !== 'function') return { ok: false, reason: 'storage_unavailable' };
+        const consoleRef = context.consoleRef || console;
+        const currentKey = typeof context.storageKey === 'string' ? context.storageKey : '';
+        const poseEditorKey = typeof context.poseEditorStorageKey === 'string' ? context.poseEditorStorageKey : 'poseEditor.v1';
+        const obsoleteKeys = Array.isArray(context.obsoleteProgressStorageKeys)
+            ? context.obsoleteProgressStorageKeys
+            : [];
+        const clearedKeys = [];
+        try {
+            obsoleteKeys.forEach((key) => {
+                if (typeof key !== 'string' || !key || key === currentKey || key === poseEditorKey) return;
+                storage.removeItem(key);
+                clearedKeys.push(key);
+            });
+            return { ok: true, clearedKeys };
+        } catch (error) {
+            consoleRef.warn('Obsolete progress save clear failed', error);
+            return { ok: false, reason: 'clear_failed', error, clearedKeys };
+        }
+    }
+
     function shouldConsumeFreshSessionParam(paramValue) {
         if (paramValue === null || paramValue === undefined) return false;
         if (paramValue === '') return true;
@@ -375,9 +398,9 @@
         if (!requested) return false;
 
         if (typeof context.clearProgressFromStorage === 'function') {
-            context.clearProgressFromStorage({ clearPoseEditor: true });
+            context.clearProgressFromStorage({ clearPoseEditor: false });
         } else {
-            clearProgressFromStorage(context, { clearPoseEditor: true });
+            clearProgressFromStorage(context, { clearPoseEditor: false });
         }
 
         freshSessionParamKeys.forEach((key) => params.delete(key));
@@ -444,8 +467,8 @@
     function startFreshSession(context = {}) {
         const windowRef = context.windowRef || (typeof window !== 'undefined' ? window : null);
         const result = typeof context.clearProgressFromStorage === 'function'
-            ? context.clearProgressFromStorage({ clearPoseEditor: true })
-            : clearProgressFromStorage(context, { clearPoseEditor: true });
+            ? context.clearProgressFromStorage({ clearPoseEditor: false })
+            : clearProgressFromStorage(context, { clearPoseEditor: false });
         if (result && result.ok && windowRef && windowRef.location) windowRef.location.reload();
         return result;
     }
@@ -491,6 +514,7 @@
         canUseProgressStorage,
         saveProgressToStorage,
         clearProgressFromStorage,
+        clearObsoleteProgressFromStorage,
         shouldConsumeFreshSessionParam,
         consumeFreshSessionRequest,
         startProgressAutosave,

@@ -14,8 +14,9 @@ function run() {
   const sessionBridgeScript = fs.readFileSync(path.join(root, "src", "game", "platform", "session-bridge.ts"), "utf8");
 
   assert(
-    coreScript.includes("const PROGRESS_SAVE_KEY = 'osrsClone.progress.v1';"),
-    "core should define a stable progress save key"
+    coreScript.includes("const PROGRESS_SAVE_KEY = 'osrsClone.progress.v2';") &&
+      coreScript.includes("const OBSOLETE_PROGRESS_SAVE_KEYS = Object.freeze(['osrsClone.progress.v1']);"),
+    "core should define the current progress save key and obsolete player-save keys"
   );
   assert(
     coreScript.includes("const PROGRESS_SAVE_VERSION = 1;"),
@@ -50,6 +51,7 @@ function run() {
       coreProgressRuntimeScript.includes("creatorSelections: sanitizeCreatorSelections(context, appearanceState.creatorSelections)") &&
       coreProgressRuntimeScript.includes("function saveProgressToStorage(context = {}, reason = 'manual')") &&
       coreProgressRuntimeScript.includes("function clearProgressFromStorage(context = {}, options = {})") &&
+      coreProgressRuntimeScript.includes("function clearObsoleteProgressFromStorage(context = {})") &&
       coreProgressRuntimeScript.includes("function consumeFreshSessionRequest(context = {})") &&
       coreProgressRuntimeScript.includes("function startProgressAutosave(context = {})") &&
       coreProgressRuntimeScript.includes("function ensureProgressPersistenceLifecycle(context = {})") &&
@@ -69,6 +71,8 @@ function run() {
       coreScript.includes("window.playerAppearanceState.creatorSelections = Object.assign({}, appearance.creatorSelections || {});") &&
       coreScript.includes("getCoreProgressRuntime().saveProgressToStorage(buildCoreProgressRuntimeContext(), reason)") &&
       coreScript.includes("getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options)") &&
+      coreScript.includes("getCoreProgressRuntime().clearObsoleteProgressFromStorage(buildCoreProgressRuntimeContext())") &&
+      coreScript.includes("obsoleteProgressStorageKeys: OBSOLETE_PROGRESS_SAVE_KEYS") &&
       coreScript.includes("getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext())") &&
       coreScript.includes("getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext())") &&
       coreScript.includes("getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext())") &&

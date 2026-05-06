@@ -31,6 +31,7 @@ function run() {
   assert(runtimeSource.includes("function serializeAppearanceState(context = {})"), "runtime should own appearance serialization");
   assert(runtimeSource.includes("function saveProgressToStorage(context = {}, reason = 'manual')"), "runtime should own progress save storage wrapper");
   assert(runtimeSource.includes("function clearProgressFromStorage(context = {}, options = {})"), "runtime should own progress clear storage wrapper");
+  assert(runtimeSource.includes("function clearObsoleteProgressFromStorage(context = {})"), "runtime should own obsolete player-save cleanup");
   assert(runtimeSource.includes("function consumeFreshSessionRequest(context = {})"), "runtime should own fresh-session URL handling");
   assert(runtimeSource.includes("function startProgressAutosave(context = {})"), "runtime should own progress autosave scheduling");
   assert(runtimeSource.includes("function ensureProgressPersistenceLifecycle(context = {})"), "runtime should own progress persistence lifecycle hooks");
@@ -48,6 +49,8 @@ function run() {
   assert(coreSource.includes("getCoreProgressRuntime().serializeAppearanceState(buildCoreProgressRuntimeContext())"), "core.js should delegate appearance save serialization");
   assert(coreSource.includes("getCoreProgressRuntime().saveProgressToStorage(buildCoreProgressRuntimeContext(), reason)"), "core.js should delegate progress saves");
   assert(coreSource.includes("getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options)"), "core.js should delegate progress clearing");
+  assert(coreSource.includes("getCoreProgressRuntime().clearObsoleteProgressFromStorage(buildCoreProgressRuntimeContext())"), "core.js should delegate obsolete player-save cleanup");
+  assert(coreSource.includes("obsoleteProgressStorageKeys: OBSOLETE_PROGRESS_SAVE_KEYS"), "core.js should pass obsolete player-save keys to the progress runtime");
   assert(coreSource.includes("getCoreProgressRuntime().consumeFreshSessionRequest(buildCoreProgressRuntimeContext())"), "core.js should delegate fresh-session URL handling");
   assert(coreSource.includes("getCoreProgressRuntime().startProgressAutosave(buildCoreProgressRuntimeContext())"), "core.js should delegate progress autosave scheduling");
   assert(coreSource.includes("getCoreProgressRuntime().ensureProgressPersistenceLifecycle(buildCoreProgressRuntimeContext())"), "core.js should delegate progress lifecycle hooks");
@@ -76,6 +79,7 @@ function run() {
   assert(typeof runtime.sanitizePlayerProfile === "function", "runtime should expose sanitizePlayerProfile");
   assert(typeof runtime.saveProgressToStorage === "function", "runtime should expose saveProgressToStorage");
   assert(typeof runtime.clearProgressFromStorage === "function", "runtime should expose clearProgressFromStorage");
+  assert(typeof runtime.clearObsoleteProgressFromStorage === "function", "runtime should expose obsolete player-save cleanup");
   assert(typeof runtime.consumeFreshSessionRequest === "function", "runtime should expose consumeFreshSessionRequest");
   assert(typeof runtime.startProgressAutosave === "function", "runtime should expose startProgressAutosave");
   assert(typeof runtime.ensureProgressPersistenceLifecycle === "function", "runtime should expose ensureProgressPersistenceLifecycle");
@@ -244,11 +248,18 @@ function run() {
   const clearResult = runtime.clearProgressFromStorage(lifecycleContext, { clearPoseEditor: true });
   assert(clearResult.ok === true && clearResult.clearedPoseEditor === true, "runtime should clear progress storage");
   assert(removedKeys.join(",") === "progress.v1,poseEditor.v1", "runtime should clear progress and optional pose editor storage keys");
+  removedKeys.length = 0;
+  const obsoleteResult = runtime.clearObsoleteProgressFromStorage(Object.assign({}, lifecycleContext, {
+    storageKey: "progress.v2",
+    obsoleteProgressStorageKeys: ["progress.v1", "progress.v2", "", "poseEditor.v1"]
+  }));
+  assert(obsoleteResult.ok === true, "runtime should clear obsolete player progress storage");
+  assert(removedKeys.join(",") === "progress.v1", "runtime should clear only configured obsolete player-save keys and skip editor/current keys");
 
   assert(runtime.shouldConsumeFreshSessionParam("") === true, "runtime should accept empty fresh-session params");
   assert(runtime.shouldConsumeFreshSessionParam("YES") === true, "runtime should accept yes-like fresh-session params");
   assert(runtime.shouldConsumeFreshSessionParam("0") === false, "runtime should reject falsey fresh-session params");
-  let clearedFreshSession = false;
+  let clearedFreshSessionTouchedEditor = true;
   let replacedUrl = "";
   const freshConsumed = runtime.consumeFreshSessionRequest({
     windowRef: {
@@ -258,11 +269,11 @@ function run() {
     documentRef: { title: "Game" },
     URLSearchParamsRef: URLSearchParams,
     clearProgressFromStorage: (options) => {
-      clearedFreshSession = !!options.clearPoseEditor;
+      clearedFreshSessionTouchedEditor = !!options.clearPoseEditor;
       return { ok: true };
     }
   });
-  assert(freshConsumed === true && clearedFreshSession, "runtime should consume fresh-session requests and clear progress");
+  assert(freshConsumed === true && !clearedFreshSessionTouchedEditor, "runtime should consume fresh-session requests without clearing editor storage");
   assert(replacedUrl === "/game?foo=bar#spawn", "runtime should remove fresh-session params from the URL");
 
   const clearedIntervals = [];
@@ -307,9 +318,9 @@ function run() {
   assert(publicClear.ok === true && reloadCount === 1, "runtime should reload after successful public clear requests");
   const publicFresh = runtime.startFreshSession({
     windowRef: { location: { reload: () => { reloadCount += 1; } } },
-    clearProgressFromStorage: (options) => ({ ok: !!options.clearPoseEditor })
+    clearProgressFromStorage: (options) => ({ ok: options.clearPoseEditor === false })
   });
-  assert(publicFresh.ok === true && reloadCount === 2, "runtime should clear pose editor state and reload for fresh sessions");
+  assert(publicFresh.ok === true && reloadCount === 2, "runtime should clear player progress and reload for fresh sessions");
 
   {
     let buildContextCalls = 0;
@@ -336,7 +347,7 @@ function run() {
     assert(publishedClear.ok === true && publishedFresh.ok === true, "published progress hooks should delegate to runtime helpers");
     assert(buildContextCalls === 2, "published progress hooks should resolve context lazily per call");
     assert(clearedOptions[0].reload === true, "published clear hook should preserve clear options");
-    assert(clearedOptions[1].clearPoseEditor === true, "published fresh hook should clear pose editor state");
+    assert(clearedOptions[1].clearPoseEditor === false, "published fresh hook should preserve pose editor state");
     assert(hookReloads === 2, "published progress hooks should preserve successful reload behavior");
   }
 

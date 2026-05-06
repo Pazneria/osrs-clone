@@ -14,7 +14,8 @@
             amuletMouldUnlocked: false,
             tiaraMouldUnlocked: false
         });
-        const PROGRESS_SAVE_KEY = 'osrsClone.progress.v1';
+        const PROGRESS_SAVE_KEY = 'osrsClone.progress.v2';
+        const OBSOLETE_PROGRESS_SAVE_KEYS = Object.freeze(['osrsClone.progress.v1']);
         const PROGRESS_SAVE_VERSION = 1;
         const PROGRESS_AUTOSAVE_INTERVAL_MS = 10000;
         const MAX_PERSISTED_EAT_COOLDOWN_TICKS = 10;
@@ -917,6 +918,7 @@
                 setProgressAutosaveHandle: (handle) => {
                     progressAutosaveHandle = handle;
                 },
+                obsoleteProgressStorageKeys: OBSOLETE_PROGRESS_SAVE_KEYS,
                 startProgressAutosave,
                 storageKey: PROGRESS_SAVE_KEY,
                 tutorialExitStep: TUTORIAL_EXIT_STEP,
@@ -1166,6 +1168,10 @@
 
         function clearProgressFromStorage(options = {}) {
             return getCoreProgressRuntime().clearProgressFromStorage(buildCoreProgressRuntimeContext(), options);
+        }
+
+        function clearObsoleteProgressFromStorage() {
+            return getCoreProgressRuntime().clearObsoleteProgressFromStorage(buildCoreProgressRuntimeContext());
         }
 
         function shouldConsumeFreshSessionParam(paramValue) {
@@ -1712,6 +1718,7 @@
         }
 
         window.onload = function() {
+            clearObsoleteProgressFromStorage();
             const forcedFreshSession = consumeFreshSessionRequest();
             const loadProgressResult = loadProgressFromStorage();
             const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);
