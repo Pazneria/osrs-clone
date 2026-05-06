@@ -55,6 +55,11 @@ assert.ok(
   "inventory.js should delegate tooltip binding"
 );
 assert.ok(
+  inventorySource.includes("function showInventoryHoverTooltip(text, clientX, clientY, html = '')") &&
+    inventorySource.includes("runtime.showInventoryHoverTooltip(text, clientX, clientY, html, buildInventoryTooltipOptions())"),
+  "inventory.js should wrap skill tile tooltip display through the inventory tooltip runtime"
+);
+assert.ok(
   inventorySource.includes("inventoryTooltipRuntimeForPublication.publishInventoryTooltipHooks({"),
   "inventory.js should publish tooltip hooks through the inventory tooltip runtime"
 );

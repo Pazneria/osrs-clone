@@ -164,6 +164,13 @@
             }
         }
 
+        function showInventoryHoverTooltip(text, clientX, clientY, html = '') {
+            const runtime = getInventoryTooltipRuntime();
+            if (runtime && typeof runtime.showInventoryHoverTooltip === 'function') {
+                runtime.showInventoryHoverTooltip(text, clientX, clientY, html, buildInventoryTooltipOptions());
+            }
+        }
+
         function escapeTooltipHtml(value) {
             const runtime = getInventoryTooltipRuntime();
             return runtime && typeof runtime.escapeTooltipHtml === 'function'
