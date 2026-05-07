@@ -82,9 +82,9 @@
         <div id="xp-drop-container" class="absolute top-[25%] left-1/2 transform -translate-x-1/2 pointer-events-none flex flex-col items-center gap-1 z-[100]"></div>
 
         <!-- Minimap & Toggles Container -->
-        <div class="pointer-events-none absolute top-4 right-4 z-50 flex flex-col items-end gap-2">
+        <div id="top-right-hud" class="pointer-events-none absolute top-4 right-4 z-50 flex flex-col items-end gap-2">
             <div class="relative z-50 pointer-events-auto">
-                <div class="w-48 h-48 bg-black rounded-full border-[6px] border-[#5d5447] overflow-hidden shadow-2xl cursor-crosshair">
+                <div class="minimap-frame w-48 h-48 bg-black rounded-full border-[6px] border-[#5d5447] overflow-hidden shadow-2xl cursor-crosshair">
                     <div class="absolute top-1 w-full text-center text-red-500 font-bold text-sm z-10 select-none pointer-events-none drop-shadow-md">N</div>
                     <canvas id="minimap" width="192" height="192" class="w-full h-full block"></canvas>
                 </div>

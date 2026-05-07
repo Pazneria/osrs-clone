@@ -43,6 +43,15 @@ function run() {
     "top-right minimap HUD wrapper should not create a rectangular invisible hitbox around visible controls"
   );
   assert(
+    htmlSource.includes('id="top-right-hud"') &&
+      htmlSource.includes("minimap-frame w-48 h-48") &&
+      cssSource.includes("--hud-minimap-size: 12rem;") &&
+      cssSource.includes("@media (max-height: 760px)") &&
+      cssSource.includes("@media (max-height: 680px)") &&
+      cssSource.includes("@media (max-height: 610px)"),
+    "top-right minimap HUD and inventory should use shared responsive sizing for short viewports"
+  );
+  assert(
     htmlSource.indexOf('id="runToggleBtn"') !== -1 &&
       htmlSource.indexOf('id="runToggleBtn"') < htmlSource.indexOf('id="mapToggleBtn"') &&
       htmlSource.indexOf('id="runToggleBtn"') < htmlSource.indexOf('id="main-ui-container"'),

@@ -4,6 +4,14 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
 
         :root {
             --inv-scale: 1.2;
+            --hud-edge-offset: 1rem;
+            --hud-panel-gap: 0.5rem;
+            --hud-minimap-size: 12rem;
+            --hud-control-size: 3rem;
+            --hud-control-icon-size: 1.5rem;
+            --hud-freecam-font-size: 10px;
+            --hud-freecam-pad-y: 0.375rem;
+            --hud-freecam-pad-x: 0.75rem;
             --inv-slot-size: calc(32px * var(--inv-scale));
             --inv-gap-x: calc(5px * var(--inv-scale));
             --inv-gap-y: calc(3px * var(--inv-scale));
@@ -72,6 +80,31 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
         #main-ui-container {
             pointer-events: auto;
             cursor: default !important;
+            right: var(--hud-edge-offset);
+            bottom: var(--hud-edge-offset);
+        }
+        #top-right-hud {
+            top: var(--hud-edge-offset);
+            right: var(--hud-edge-offset);
+            gap: var(--hud-panel-gap);
+        }
+        #top-right-hud .minimap-frame {
+            width: var(--hud-minimap-size);
+            height: var(--hud-minimap-size);
+        }
+        #runToggleBtn,
+        #mapToggleBtn {
+            width: var(--hud-control-size);
+            height: var(--hud-control-size);
+        }
+        #runToggleBtn svg,
+        #mapToggleBtn svg {
+            width: var(--hud-control-icon-size);
+            height: var(--hud-control-icon-size);
+        }
+        #freeCamBtn {
+            font-size: var(--hud-freecam-font-size);
+            padding: var(--hud-freecam-pad-y) var(--hud-freecam-pad-x);
         }
         #ui-layer button:not(.npc-dialogue-close),
         #ui-layer [role="button"],
@@ -123,6 +156,54 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
             align-content: start;
             justify-content: start;
             margin: 0 auto;
+        }
+
+        @media (max-height: 760px) {
+            :root {
+                --inv-scale: 1.05;
+                --hud-edge-offset: 0.75rem;
+                --hud-panel-gap: 0.375rem;
+                --hud-minimap-size: 10.5rem;
+                --hud-control-size: 2.5rem;
+                --hud-control-icon-size: 1.25rem;
+                --hud-freecam-font-size: 9px;
+                --hud-freecam-pad-y: 0.25rem;
+                --hud-freecam-pad-x: 0.55rem;
+            }
+            #main-ui-container > .px-3.pt-3.pb-2 {
+                padding-top: 0.5rem;
+                padding-bottom: 0.375rem;
+            }
+        }
+
+        @media (max-height: 680px) {
+            :root {
+                --inv-scale: 0.92;
+                --hud-edge-offset: 0.5rem;
+                --hud-panel-gap: 0.3rem;
+                --hud-minimap-size: 9rem;
+                --hud-control-size: 2.25rem;
+                --hud-control-icon-size: 1.1rem;
+                --hud-freecam-font-size: 8px;
+                --hud-freecam-pad-y: 0.18rem;
+                --hud-freecam-pad-x: 0.45rem;
+            }
+            #main-ui-container > .px-3.pt-3.pb-2 {
+                padding-top: 0.375rem;
+                padding-bottom: 0.3rem;
+            }
+        }
+
+        @media (max-height: 610px) {
+            :root {
+                --inv-scale: 0.86;
+                --hud-minimap-size: 8rem;
+                --hud-control-size: 2rem;
+                --hud-control-icon-size: 1rem;
+            }
+            #freeCamBtn {
+                display: none;
+            }
         }
 
         .inventory-slot {
