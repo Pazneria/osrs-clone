@@ -35,6 +35,7 @@ function run() {
   assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 7;"), "core should define the tutorial exit gate step");
   assert(sessionContractSource.includes("tutorialBankDepositSource: string | null;"), "session profile should persist tutorial bank deposit evidence");
   assert(sessionContractSource.includes("tutorialBankWithdrawSource: string | null;"), "session profile should persist tutorial bank withdraw evidence");
+  assert(sessionContractSource.includes("tutorialInstructorVisits: Record<string, boolean>;"), "session profile should persist tutorial instructor visit evidence");
   assert(coreSource.includes("window.TutorialRuntime = {"), "core should expose tutorial progression for dialogue gating");
   assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "core should mark tutorial completion only when leaving tutorial for the main overworld");
   assert(coreSource.includes("Finish the Tutorial Island instructors before leaving for Starter Town."), "core should block early tutorial departure");
@@ -51,6 +52,7 @@ function run() {
   assert(defaultProfile.tutorialCompletedAt === null, "default profile should not mark tutorial complete");
   assert(defaultProfile.tutorialBankDepositSource === null, "default profile should not carry tutorial bank deposit evidence");
   assert(defaultProfile.tutorialBankWithdrawSource === null, "default profile should not carry tutorial bank withdraw evidence");
+  assert(Object.keys(defaultProfile.tutorialInstructorVisits).length === 0, "default profile should not carry tutorial instructor visits");
 
   const clonedProfile = progressRuntime.clonePlayerProfileState({
     name: "Tester",
@@ -60,12 +62,14 @@ function run() {
     tutorialStep: 6.8,
     tutorialCompletedAt: 30.2,
     tutorialBankDepositSource: "tutorial_bank_west",
-    tutorialBankWithdrawSource: "tutorial_bank_east"
+    tutorialBankWithdrawSource: "tutorial_bank_east",
+    tutorialInstructorVisits: { "1": true, "2": false, "3.9": true }
   });
   assert(clonedProfile.tutorialStep === 6, "profile clone should floor persisted tutorial step");
   assert(clonedProfile.tutorialCompletedAt === 30.2, "profile clone should preserve tutorial completion timestamp");
   assert(clonedProfile.tutorialBankDepositSource === "tutorial_bank_west", "profile clone should preserve tutorial bank deposit evidence");
   assert(clonedProfile.tutorialBankWithdrawSource === "tutorial_bank_east", "profile clone should preserve tutorial bank withdraw evidence");
+  assert(clonedProfile.tutorialInstructorVisits["1"] === true && clonedProfile.tutorialInstructorVisits["3"] === true && !clonedProfile.tutorialInstructorVisits["2"], "profile clone should sanitize tutorial instructor visits");
 
   const sanitizedProfile = progressRuntime.clonePlayerProfileState({
     name: "Tester",
@@ -75,12 +79,14 @@ function run() {
     tutorialStep: -2,
     tutorialCompletedAt: NaN,
     tutorialBankDepositSource: 12,
-    tutorialBankWithdrawSource: {}
+    tutorialBankWithdrawSource: {},
+    tutorialInstructorVisits: "bad"
   });
   assert(sanitizedProfile.tutorialStep === 0, "profile clone should clamp negative tutorial steps");
   assert(sanitizedProfile.tutorialCompletedAt === null, "profile clone should drop invalid tutorial completion timestamps");
   assert(sanitizedProfile.tutorialBankDepositSource === null, "profile clone should drop invalid tutorial bank deposit evidence");
   assert(sanitizedProfile.tutorialBankWithdrawSource === null, "profile clone should drop invalid tutorial bank withdraw evidence");
+  assert(Object.keys(sanitizedProfile.tutorialInstructorVisits).length === 0, "profile clone should drop invalid tutorial instructor visits");
 
   console.log("Game session guard passed.");
 }

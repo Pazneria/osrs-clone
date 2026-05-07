@@ -115,6 +115,18 @@
         return restored;
     }
 
+    function sanitizeTutorialInstructorVisits(savedVisits) {
+        const restored = {};
+        if (!savedVisits || typeof savedVisits !== 'object') return restored;
+        const keys = Object.keys(savedVisits);
+        for (let i = 0; i < keys.length; i++) {
+            const rawStep = Number(keys[i]);
+            if (!Number.isFinite(rawStep) || savedVisits[keys[i]] !== true) continue;
+            restored[String(Math.max(0, Math.floor(rawStep)))] = true;
+        }
+        return restored;
+    }
+
     function createEmptyPlayerProfile() {
         return {
             name: '',
@@ -124,7 +136,8 @@
             tutorialStep: 0,
             tutorialCompletedAt: null,
             tutorialBankDepositSource: null,
-            tutorialBankWithdrawSource: null
+            tutorialBankWithdrawSource: null,
+            tutorialInstructorVisits: {}
         };
     }
 
@@ -162,6 +175,7 @@
         playerProfileState.tutorialBankWithdrawSource = typeof safeProfile.tutorialBankWithdrawSource === 'string'
             ? safeProfile.tutorialBankWithdrawSource
             : null;
+        playerProfileState.tutorialInstructorVisits = sanitizeTutorialInstructorVisits(safeProfile.tutorialInstructorVisits);
         return playerProfileState;
     }
 
@@ -194,6 +208,7 @@
             restored.tutorialBankWithdrawSource = typeof savedProfile.tutorialBankWithdrawSource === 'string'
                 ? savedProfile.tutorialBankWithdrawSource
                 : null;
+            restored.tutorialInstructorVisits = sanitizeTutorialInstructorVisits(savedProfile.tutorialInstructorVisits);
         }
 
         if (allowLegacyFallback && !restored.name) restored.name = defaultName;
@@ -268,7 +283,8 @@
                 : null,
             tutorialBankWithdrawSource: typeof playerProfileState.tutorialBankWithdrawSource === 'string'
                 ? playerProfileState.tutorialBankWithdrawSource
-                : null
+                : null,
+            tutorialInstructorVisits: sanitizeTutorialInstructorVisits(playerProfileState.tutorialInstructorVisits)
         };
     }
 

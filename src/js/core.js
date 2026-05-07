@@ -210,7 +210,8 @@
             tutorialStep: 0,
             tutorialCompletedAt: null,
             tutorialBankDepositSource: null,
-            tutorialBankWithdrawSource: null
+            tutorialBankWithdrawSource: null,
+            tutorialInstructorVisits: {}
         };
         let questProgressState = gameSession && gameSession.progress && gameSession.progress.quests
             ? gameSession.progress.quests

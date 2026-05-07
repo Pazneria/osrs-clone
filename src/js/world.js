@@ -257,6 +257,53 @@
             tutorialGuidanceMarkerId = '';
         }
 
+        function normalizeTutorialGuidanceNpcKey(value) {
+            return typeof value === 'string' ? value.trim().toLowerCase() : '';
+        }
+
+        function findTutorialGuidanceNpcTarget(marker, markerZ) {
+            if (!marker || marker.targetKind !== 'npc' || !Array.isArray(npcsToRender)) return null;
+            const targetSpawnId = normalizeTutorialGuidanceNpcKey(marker.targetNpcSpawnId);
+            const targetDialogueId = normalizeTutorialGuidanceNpcKey(marker.targetNpcDialogueId);
+            const targetName = normalizeTutorialGuidanceNpcKey(marker.targetNpcName);
+            if (!targetSpawnId && !targetDialogueId && !targetName) return null;
+            for (let i = 0; i < npcsToRender.length; i++) {
+                const npc = npcsToRender[i];
+                if (!npc) continue;
+                const npcZ = Number.isFinite(npc.z) ? Math.floor(npc.z) : 0;
+                if (npcZ !== markerZ) continue;
+                if (targetSpawnId) {
+                    const actorId = normalizeTutorialGuidanceNpcKey(npc.actorId);
+                    const spawnId = normalizeTutorialGuidanceNpcKey(npc.spawnId);
+                    if (actorId === targetSpawnId || spawnId === targetSpawnId) return npc;
+                }
+                if (targetDialogueId && normalizeTutorialGuidanceNpcKey(npc.dialogueId) === targetDialogueId) return npc;
+                if (targetName && normalizeTutorialGuidanceNpcKey(npc.name) === targetName) return npc;
+            }
+            return null;
+        }
+
+        function resolveTutorialGuidanceMarkerPose(marker, markerZ) {
+            const npc = findTutorialGuidanceNpcTarget(marker, markerZ);
+            if (npc) {
+                const meshPosition = npc.mesh && npc.mesh.position ? npc.mesh.position : null;
+                return {
+                    x: meshPosition && Number.isFinite(meshPosition.x) ? meshPosition.x : (Number.isFinite(npc.visualX) ? npc.visualX : npc.x),
+                    y: meshPosition && Number.isFinite(meshPosition.z) ? meshPosition.z : (Number.isFinite(npc.visualY) ? npc.visualY : npc.y),
+                    baseY: meshPosition && Number.isFinite(meshPosition.y) ? meshPosition.y : (Number.isFinite(npc.visualBaseY) ? npc.visualBaseY : null),
+                    followsNpc: true,
+                    targetNpcActorId: typeof npc.actorId === 'string' ? npc.actorId : ''
+                };
+            }
+            return {
+                x: Number.isFinite(marker.x) ? marker.x : 0,
+                y: Number.isFinite(marker.y) ? marker.y : 0,
+                baseY: null,
+                followsNpc: false,
+                targetNpcActorId: ''
+            };
+        }
+
         function updateTutorialGuidanceMarker(frameNowMs) {
             const tutorialRuntime = window.TutorialRuntime || null;
             const marker = tutorialRuntime && typeof tutorialRuntime.getGuidanceMarker === 'function'
@@ -271,8 +318,9 @@
                 hideTutorialGuidanceMarker();
                 return;
             }
-            const markerX = Number.isFinite(marker.x) ? marker.x : 0;
-            const markerY = Number.isFinite(marker.y) ? marker.y : 0;
+            const markerPose = resolveTutorialGuidanceMarkerPose(marker, markerZ);
+            const markerX = markerPose.x;
+            const markerY = markerPose.y;
             const heightOffset = Number.isFinite(marker.heightOffset) ? marker.heightOffset : 2.35;
             if (!tutorialGuidanceMarkerGroup || tutorialGuidanceMarkerGroup.parent !== scene) {
                 if (tutorialGuidanceMarkerGroup && tutorialGuidanceMarkerGroup.parent) {
@@ -285,7 +333,9 @@
             const frameMs = Number.isFinite(frameNowMs) ? frameNowMs : performance.now();
             const bob = Math.sin(frameMs * 0.004) * 0.1;
             const scale = marker.targetKind === 'water' ? 0.92 : 1;
-            const groundHeight = getTileHeightSafe(Math.round(markerX), Math.round(markerY), markerZ);
+            const groundHeight = Number.isFinite(markerPose.baseY)
+                ? markerPose.baseY
+                : getTileHeightSafe(Math.round(markerX), Math.round(markerY), markerZ);
             tutorialGuidanceMarkerGroup.position.set(markerX, groundHeight + heightOffset + bob, markerY);
             tutorialGuidanceMarkerGroup.scale.set(scale, scale, scale);
             tutorialGuidanceMarkerGroup.visible = true;
@@ -293,6 +343,8 @@
             tutorialGuidanceMarkerGroup.userData.markerId = tutorialGuidanceMarkerId;
             tutorialGuidanceMarkerGroup.userData.label = typeof marker.label === 'string' ? marker.label : '';
             tutorialGuidanceMarkerGroup.userData.targetKind = typeof marker.targetKind === 'string' ? marker.targetKind : '';
+            tutorialGuidanceMarkerGroup.userData.followsNpc = markerPose.followsNpc;
+            tutorialGuidanceMarkerGroup.userData.targetNpcActorId = markerPose.targetNpcActorId;
         }
 
         function spawnMiningPoseReferences() {

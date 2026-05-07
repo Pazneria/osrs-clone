@@ -91,6 +91,7 @@ export interface PlayerProfileState {
   tutorialCompletedAt: number | null;
   tutorialBankDepositSource: string | null;
   tutorialBankWithdrawSource: string | null;
+  tutorialInstructorVisits: Record<string, boolean>;
 }
 
 export interface SaveAppearanceState {

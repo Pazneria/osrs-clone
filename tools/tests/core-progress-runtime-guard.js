@@ -107,7 +107,8 @@ function run() {
       tutorialStep: 0,
       tutorialCompletedAt: null,
       tutorialBankDepositSource: null,
-      tutorialBankWithdrawSource: null
+      tutorialBankWithdrawSource: null,
+      tutorialInstructorVisits: {}
     },
     sanitizePlayerName: (value) => String(value || "").replace(/[^A-Za-z0-9 _-]/g, "").trim().slice(0, 12),
     tutorialExitStep: 7,
@@ -183,6 +184,7 @@ function run() {
 
   const emptyProfile = runtime.createEmptyPlayerProfile();
   assert(emptyProfile.name === "" && emptyProfile.creationCompleted === false, "runtime should create empty player profiles");
+  assert(Object.keys(emptyProfile.tutorialInstructorVisits).length === 0, "runtime should default tutorial instructor visits to an empty map");
   const legacyProfile = runtime.sanitizePlayerProfile(context, null, { allowLegacyFallback: true, savedWorldId: "main_overworld" });
   assert(legacyProfile.name === "Adventurer", "runtime should apply legacy profile default names");
   assert(legacyProfile.creationCompleted === true, "runtime should mark legacy profiles as created");
@@ -193,12 +195,15 @@ function run() {
     creationCompleted: true,
     createdAt: 12.9,
     tutorialStep: 3.8,
-    tutorialBankDepositSource: "banker"
+    tutorialBankDepositSource: "banker",
+    tutorialInstructorVisits: { "1": true, bad: true, "2": false, "4.8": true }
   });
   assert(syncedProfile === context.playerProfileState, "runtime should mutate the provided profile object");
   assert(context.playerProfileState.name === "Alice" && context.playerProfileState.createdAt === 12, "runtime should sync profile scalar fields");
+  assert(context.playerProfileState.tutorialInstructorVisits["1"] === true && context.playerProfileState.tutorialInstructorVisits["4"] === true && !context.playerProfileState.tutorialInstructorVisits["2"], "runtime should sanitize tutorial instructor visits while syncing profile state");
   const serializedProfile = runtime.serializePlayerProfile(context);
   assert(serializedProfile.name === "Alice" && serializedProfile.tutorialStep === 3, "runtime should serialize profile state");
+  assert(serializedProfile.tutorialInstructorVisits["1"] === true && serializedProfile.tutorialInstructorVisits["4"] === true, "runtime should serialize tutorial instructor visits");
 
   const appearance = runtime.sanitizeAppearanceState(context, { gender: 1, colors: [4.8, "bad", 2] });
   assert(appearance.gender === 1, "runtime should restore appearance gender");

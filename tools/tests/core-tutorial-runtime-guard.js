@@ -21,6 +21,8 @@ function run() {
   assert(runtimeSource.includes("function isWalkTileAllowed"), "tutorial runtime should own tutorial walk gating");
   assert(runtimeSource.includes("function getRecoverySpawnForStep"), "tutorial runtime should own tutorial recovery spawn lookup");
   assert(runtimeSource.includes("function getGuidanceMarker"), "tutorial runtime should own tutorial objective marker selection");
+  assert(runtimeSource.includes("function markCurrentTutorialNpcVisit"), "tutorial runtime should remember when each step NPC has been visited");
+  assert(runtimeSource.includes("targetNpcSpawnId"), "tutorial guidance markers should carry NPC target metadata");
   assert(runtimeSource.includes("label: 'Leave for Starter Town'"), "tutorial runtime should own the dynamic tutorial exit option");
   assert(runtimeSource.includes("'I am ready'") && runtimeSource.includes("setTutorialStep({ context }, step, reason)"), "tutorial runtime should own explicit arrival readiness advancement");
   assert(runtimeSource.includes("context.ensureTutorialItem('small_net', 1);"), "tutorial runtime should own fishing supply grants");
@@ -63,7 +65,8 @@ function run() {
     playerProfileState: {
       tutorialStep: 0,
       tutorialBankDepositSource: null,
-      tutorialBankWithdrawSource: null
+      tutorialBankWithdrawSource: null,
+      tutorialInstructorVisits: {}
     },
     tutorialExitStep: 7,
     tutorialActiveBounds: { xMin: 72, xMax: 340, yMin: 76, yMax: 266, z: 0 },
@@ -108,8 +111,14 @@ function run() {
   assert(grants.some((entry) => entry.itemId === "bronze_axe"), "tutorial guide should grant the starter axe");
   assert(saves.includes("tutorial_arrival_welcome"), "tutorial guide advancement should persist progress");
   assert(gateRefreshes.length === 1, "tutorial guide advancement should refresh tutorial gates");
+  const firstNpcMarker = runtime.getGuidanceMarker(context);
+  assert(firstNpcMarker && firstNpcMarker.markerId === "tutorial:step1:woodcutting_instructor", "step one guidance should point at the next NPC before the task object");
+  assert(firstNpcMarker.targetNpcSpawnId === "npc:tutorial_woodcutting_instructor", "NPC guidance markers should carry a live NPC spawn target");
+  const firstWoodcuttingView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_woodcutting_instructor", name: "Woodcutting Instructor" }, null);
+  assert(context.playerProfileState.tutorialInstructorVisits["1"] === true, "speaking to the step NPC should mark that instructor visited");
+  assert(saves.includes("tutorial_instructor_visit"), "speaking to a step NPC should persist guidance visit state");
   const firstTreeMarker = runtime.getGuidanceMarker(context);
-  assert(firstTreeMarker && firstTreeMarker.markerId === "tutorial:step1:tutorial_tree", "step one guidance should point at a tutorial tree until logs are gathered");
+  assert(firstTreeMarker && firstTreeMarker.markerId === "tutorial:step1:tutorial_tree", "step one guidance should point at a tutorial tree after the instructor has been visited");
 
   assert(runtime.isInsideActiveBounds(context, 72, 76, 0), "tutorial bounds should include the lower corner");
   assert(runtime.isInsideActiveBounds(context, 340, 266, 0), "tutorial bounds should include the upper corner");
@@ -124,7 +133,7 @@ function run() {
   inventoryCounts.logs = 1;
   const woodcuttingReturnMarker = runtime.getGuidanceMarker(context);
   assert(woodcuttingReturnMarker && woodcuttingReturnMarker.markerId === "tutorial:step1:woodcutting_instructor", "step one guidance should return to the woodcutting instructor once logs exist");
-  const woodcuttingView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_woodcutting_instructor" }, null);
+  const woodcuttingView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_woodcutting_instructor", name: "Woodcutting Instructor" }, null);
   const woodcuttingGreeting = Array.isArray(woodcuttingView.greeting) ? woodcuttingView.greeting.join(" ") : String(woodcuttingView.greeting || "");
   assert(woodcuttingGreeting.includes("renewable resource"), "woodcutting instructor should frame trees as renewable resources");
   const choppingOption = woodcuttingView.options.find((option) => option && option.label === "Ask about chopping");
@@ -137,15 +146,21 @@ function run() {
   const completionText = Array.isArray(completionResult.bodyText) ? completionResult.bodyText.join(" ") : String(completionResult.bodyText || "");
   assert(completionText.includes("pond") && completionText.includes("Survival Field"), "woodcutting completion should point naturally to the survival pond");
   assert(context.playerProfileState.tutorialStep === 2, "woodcutting completion should advance to fishing");
+  const firstFishingNpcMarker = runtime.getGuidanceMarker(context);
+  assert(firstFishingNpcMarker && firstFishingNpcMarker.markerId === "tutorial:step2:fishing_instructor", "step two guidance should point at the Fishing Instructor before the pond");
+  runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_fishing_instructor", name: "Fishing Instructor" }, null);
   const pondMarker = runtime.getGuidanceMarker(context);
-  assert(pondMarker && pondMarker.markerId === "tutorial:step2:pond", "step two guidance should point at the pond until raw shrimp exists");
+  assert(pondMarker && pondMarker.markerId === "tutorial:step2:pond", "step two guidance should point at the pond after the instructor has been visited");
   inventoryCounts.raw_shrimp = 1;
   const fishingReturnMarker = runtime.getGuidanceMarker(context);
   assert(fishingReturnMarker && fishingReturnMarker.markerId === "tutorial:step2:fishing_instructor", "step two guidance should return to the fishing instructor once raw shrimp exists");
   assert(fishingReturnMarker.x === 365 && fishingReturnMarker.y === 320, "step two return guidance should use the southern-bank Fishing Instructor tile");
   context.playerProfileState.tutorialStep = 3;
+  const firstFiremakingNpcMarker = runtime.getGuidanceMarker(context);
+  assert(firstFiremakingNpcMarker && firstFiremakingNpcMarker.markerId === "tutorial:step3:firemaking_instructor", "step three guidance should point at the Firemaking Instructor before the clearing");
+  runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_firemaking_instructor", name: "Firemaking Instructor" }, null);
   const fireClearingMarker = runtime.getGuidanceMarker(context);
-  assert(fireClearingMarker && fireClearingMarker.markerId === "tutorial:step3:fire_clearing", "step three guidance should point at the fire clearing with raw shrimp ready");
+  assert(fireClearingMarker && fireClearingMarker.markerId === "tutorial:step3:fire_clearing", "step three guidance should point at the fire clearing with raw shrimp ready after the instructor visit");
   inventoryCounts.cooked_shrimp = 1;
   const firemakingReturnMarker = runtime.getGuidanceMarker(context);
   assert(firemakingReturnMarker && firemakingReturnMarker.markerId === "tutorial:step3:firemaking_instructor", "step three guidance should return to the firemaking instructor after cooked or burnt shrimp exists");

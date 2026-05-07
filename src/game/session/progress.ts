@@ -20,6 +20,19 @@ export const DEFAULT_EQUIPMENT_SLOTS = [
   "ring"
 ] as const;
 
+function sanitizeTutorialInstructorVisits(visits: unknown): Record<string, boolean> {
+  const restored: Record<string, boolean> = {};
+  if (!visits || typeof visits !== "object") return restored;
+  const input = visits as Record<string, unknown>;
+  const keys = Object.keys(input);
+  for (let i = 0; i < keys.length; i++) {
+    const rawStep = Number(keys[i]);
+    if (!Number.isFinite(rawStep) || input[keys[i]] !== true) continue;
+    restored[String(Math.max(0, Math.floor(rawStep)))] = true;
+  }
+  return restored;
+}
+
 export function createDefaultPlayerProfileState(): PlayerProfileState {
   return {
     name: "",
@@ -29,7 +42,8 @@ export function createDefaultPlayerProfileState(): PlayerProfileState {
     tutorialStep: 0,
     tutorialCompletedAt: null,
     tutorialBankDepositSource: null,
-    tutorialBankWithdrawSource: null
+    tutorialBankWithdrawSource: null,
+    tutorialInstructorVisits: {}
   };
 }
 
@@ -68,7 +82,8 @@ export function clonePlayerProfileState(profile: PlayerProfileState): PlayerProf
     tutorialStep: Number.isFinite(profile.tutorialStep) ? Math.max(0, Math.floor(profile.tutorialStep)) : 0,
     tutorialCompletedAt: Number.isFinite(profile.tutorialCompletedAt) ? Number(profile.tutorialCompletedAt) : null,
     tutorialBankDepositSource: typeof profile.tutorialBankDepositSource === "string" ? profile.tutorialBankDepositSource : null,
-    tutorialBankWithdrawSource: typeof profile.tutorialBankWithdrawSource === "string" ? profile.tutorialBankWithdrawSource : null
+    tutorialBankWithdrawSource: typeof profile.tutorialBankWithdrawSource === "string" ? profile.tutorialBankWithdrawSource : null,
+    tutorialInstructorVisits: sanitizeTutorialInstructorVisits(profile.tutorialInstructorVisits)
   };
 }
 

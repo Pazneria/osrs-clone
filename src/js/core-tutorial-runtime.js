@@ -120,9 +120,142 @@
         return callNumber(context, 'getInventoryItemCount', 0, itemId) > 0;
     }
 
-    function makeGuidanceMarker(markerId, label, targetKind, x, y, z = 0, heightOffset = 2.35) {
+    const TUTORIAL_GUIDANCE_NPC_TARGETS = Object.freeze({
+        0: Object.freeze({
+            markerId: 'tutorial:step0:tutorial_guide',
+            label: 'Talk to the Tutorial Guide',
+            spawnId: 'npc:tutorial_guide',
+            dialogueId: 'tutorial_guide',
+            name: 'Tutorial Guide',
+            x: 141,
+            y: 177,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        1: Object.freeze({
+            markerId: 'tutorial:step1:woodcutting_instructor',
+            label: 'Talk to the Woodcutting Instructor',
+            spawnId: 'npc:tutorial_woodcutting_instructor',
+            dialogueId: 'tutorial_woodcutting_instructor',
+            name: 'Woodcutting Instructor',
+            x: 250,
+            y: 212,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        2: Object.freeze({
+            markerId: 'tutorial:step2:fishing_instructor',
+            label: 'Talk to the Fishing Instructor',
+            spawnId: 'npc:tutorial_fishing_instructor',
+            dialogueId: 'tutorial_fishing_instructor',
+            name: 'Fishing Instructor',
+            x: 274,
+            y: 240,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        3: Object.freeze({
+            markerId: 'tutorial:step3:firemaking_instructor',
+            label: 'Talk to the Firemaking Instructor',
+            spawnId: 'npc:tutorial_firemaking_instructor',
+            dialogueId: 'tutorial_firemaking_instructor',
+            name: 'Firemaking Instructor',
+            x: 288,
+            y: 248,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        4: Object.freeze({
+            markerId: 'tutorial:step4:mining_smithing_instructor',
+            label: 'Talk to the Mining and Smithing Instructor',
+            spawnId: 'npc:tutorial_mining_smithing_instructor',
+            dialogueId: 'tutorial_mining_smithing_instructor',
+            name: 'Mining and Smithing Instructor',
+            x: 338,
+            y: 292,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        5: Object.freeze({
+            markerId: 'tutorial:step5:combat_instructor',
+            label: 'Talk to the Combat Instructor',
+            spawnId: 'npc:tutorial_combat_instructor',
+            dialogueId: 'tutorial_combat_instructor',
+            name: 'Combat Instructor',
+            x: 320,
+            y: 326,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        6: Object.freeze({
+            markerId: 'tutorial:step6:bank_tutor',
+            label: 'Talk to the Bank Tutor',
+            spawnId: 'npc:tutorial_bank_tutor',
+            dialogueId: 'tutorial_bank_tutor',
+            name: 'Bank Tutor',
+            x: 202,
+            y: 330,
+            z: 0,
+            heightOffset: 2.55
+        }),
+        7: Object.freeze({
+            markerId: 'tutorial:step7:exit_guide',
+            label: 'Talk to the Tutorial Guide',
+            spawnId: 'npc:tutorial_exit_guide',
+            dialogueId: 'tutorial_guide',
+            name: 'Tutorial Guide',
+            x: 250,
+            y: 334,
+            z: 0,
+            heightOffset: 2.55
+        })
+    });
+
+    function getTutorialInstructorVisits(profile) {
+        if (!profile || !profile.tutorialInstructorVisits || typeof profile.tutorialInstructorVisits !== 'object') return {};
+        return profile.tutorialInstructorVisits;
+    }
+
+    function hasVisitedTutorialStepNpc(context, step) {
+        const profile = context.playerProfileState || null;
+        const visits = getTutorialInstructorVisits(profile);
+        return visits[String(Math.max(0, Math.floor(Number(step) || 0)))] === true;
+    }
+
+    function markVisitedTutorialStepNpc(context, step) {
+        const profile = context.playerProfileState || null;
+        if (!profile) return false;
+        const safeStep = Math.max(0, Math.floor(Number(step) || 0));
+        const key = String(safeStep);
+        const visits = getTutorialInstructorVisits(profile);
+        if (visits[key] === true) return false;
+        profile.tutorialInstructorVisits = Object.assign({}, visits, { [key]: true });
+        if (typeof context.saveProgressToStorage === 'function') context.saveProgressToStorage('tutorial_instructor_visit');
+        return true;
+    }
+
+    function normalizeTutorialDialogueId(value) {
+        return typeof value === 'string' ? value.trim().toLowerCase() : '';
+    }
+
+    function markCurrentTutorialNpcVisit(context, dialogueId, step) {
+        const target = TUTORIAL_GUIDANCE_NPC_TARGETS[Math.max(0, Math.floor(Number(step) || 0))];
+        if (!target || step <= 0 || step >= getTutorialExitStep(context)) return false;
+        if (normalizeTutorialDialogueId(dialogueId) !== normalizeTutorialDialogueId(target.dialogueId)) return false;
+        return markVisitedTutorialStepNpc(context, step);
+    }
+
+    function attachGuidanceNpcTarget(marker, target) {
+        if (!marker || !target) return marker;
+        marker.targetNpcSpawnId = target.spawnId;
+        marker.targetNpcDialogueId = target.dialogueId;
+        marker.targetNpcName = target.name;
+        return marker;
+    }
+
+    function makeGuidanceMarker(markerId, label, targetKind, x, y, z = 0, heightOffset = 2.35, target = null) {
         const point = remapTutorialSurfacePoint(x, y, z);
-        return {
+        const marker = {
             markerId,
             label,
             targetKind,
@@ -131,6 +264,22 @@
             z: point.z,
             heightOffset
         };
+        return targetKind === 'npc' ? attachGuidanceNpcTarget(marker, target) : marker;
+    }
+
+    function makeNpcGuidanceMarker(step, labelOverride = null) {
+        const target = TUTORIAL_GUIDANCE_NPC_TARGETS[step];
+        if (!target) return null;
+        return makeGuidanceMarker(
+            target.markerId,
+            labelOverride || target.label,
+            'npc',
+            target.x,
+            target.y,
+            target.z,
+            target.heightOffset,
+            target
+        );
     }
 
     function getGuidanceMarker(options = {}) {
@@ -162,29 +311,14 @@
             : '';
 
         if (step <= 0) {
-            return makeGuidanceMarker(
-                'tutorial:step0:tutorial_guide',
-                'Talk to the Tutorial Guide',
-                'npc',
-                141,
-                177,
-                0,
-                2.55
-            );
+            return makeNpcGuidanceMarker(0);
         }
 
         if (step === 1) {
             if (hasLogs) {
-                return makeGuidanceMarker(
-                    'tutorial:step1:woodcutting_instructor',
-                    'Return to the Woodcutting Instructor',
-                    'npc',
-                    250,
-                    212,
-                    0,
-                    2.55
-                );
+                return makeNpcGuidanceMarker(1, 'Return to the Woodcutting Instructor');
             }
+            if (!hasVisitedTutorialStepNpc(context, 1)) return makeNpcGuidanceMarker(1);
             return makeGuidanceMarker(
                 'tutorial:step1:tutorial_tree',
                 'Cut a tree for logs',
@@ -198,16 +332,9 @@
 
         if (step === 2) {
             if (hasRawShrimp || hasCookedOrBurntShrimp) {
-                return makeGuidanceMarker(
-                    'tutorial:step2:fishing_instructor',
-                    'Return to the Fishing Instructor',
-                    'npc',
-                    274,
-                    240,
-                    0,
-                    2.55
-                );
+                return makeNpcGuidanceMarker(2, 'Return to the Fishing Instructor');
             }
+            if (!hasVisitedTutorialStepNpc(context, 2)) return makeNpcGuidanceMarker(2);
             return makeGuidanceMarker(
                 'tutorial:step2:pond',
                 'Fish at the pond',
@@ -221,16 +348,9 @@
 
         if (step === 3) {
             if (hasCookedOrBurntShrimp) {
-                return makeGuidanceMarker(
-                    'tutorial:step3:firemaking_instructor',
-                    'Report to the Firemaking Instructor',
-                    'npc',
-                    288,
-                    248,
-                    0,
-                    2.55
-                );
+                return makeNpcGuidanceMarker(3, 'Report to the Firemaking Instructor');
             }
+            if (!hasVisitedTutorialStepNpc(context, 3)) return makeNpcGuidanceMarker(3);
             if (hasRawShrimp) {
                 return makeGuidanceMarker(
                     'tutorial:step3:fire_clearing',
@@ -255,16 +375,9 @@
 
         if (step === 4) {
             if (hasBronzeSmithingOutput) {
-                return makeGuidanceMarker(
-                    'tutorial:step4:mining_smithing_instructor',
-                    'Report to the Mining and Smithing Instructor',
-                    'npc',
-                    338,
-                    292,
-                    0,
-                    2.55
-                );
+                return makeNpcGuidanceMarker(4, 'Report to the Mining and Smithing Instructor');
             }
+            if (!hasVisitedTutorialStepNpc(context, 4)) return makeNpcGuidanceMarker(4);
             if (hasBronzeBar) {
                 return makeGuidanceMarker(
                     'tutorial:step4:anvil',
@@ -300,16 +413,9 @@
 
         if (step === 5) {
             if (hasCombatPractice) {
-                return makeGuidanceMarker(
-                    'tutorial:step5:combat_instructor',
-                    'Report to the Combat Instructor',
-                    'npc',
-                    320,
-                    326,
-                    0,
-                    2.55
-                );
+                return makeNpcGuidanceMarker(5, 'Report to the Combat Instructor');
             }
+            if (!hasVisitedTutorialStepNpc(context, 5)) return makeNpcGuidanceMarker(5);
             return makeGuidanceMarker(
                 'tutorial:step5:chicken',
                 'Fight a chicken',
@@ -323,16 +429,9 @@
 
         if (step === 6) {
             if (callBoolean(context, 'hasTutorialBankProof')) {
-                return makeGuidanceMarker(
-                    'tutorial:step6:bank_tutor',
-                    'Report to the Bank Tutor',
-                    'npc',
-                    202,
-                    330,
-                    0,
-                    2.55
-                );
+                return makeNpcGuidanceMarker(6, 'Report to the Bank Tutor');
             }
+            if (!hasVisitedTutorialStepNpc(context, 6)) return makeNpcGuidanceMarker(6);
             if (depositSource && !withdrawSource) {
                 return makeGuidanceMarker(
                     'tutorial:step6:bank_withdraw',
@@ -356,15 +455,7 @@
         }
 
         if (step >= exitStep) {
-            return makeGuidanceMarker(
-                'tutorial:step7:exit_guide',
-                'Talk to the Tutorial Guide',
-                'npc',
-                250,
-                334,
-                0,
-                2.55
-            );
+            return makeNpcGuidanceMarker(7);
         }
 
         return null;
@@ -485,6 +576,7 @@
             || callNumber(context, 'getInventoryItemCount', 0, 'tin_ore') > 0
             || hasBronzeBar
             || hasBronzeSmithingOutput;
+        markCurrentTutorialNpcVisit(context, dialogueId, step);
 
         if (dialogueId === 'tutorial_guide' || nameKey === 'tutorial guide') {
             if (step >= exitStep) {

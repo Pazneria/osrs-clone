@@ -79,6 +79,8 @@ function run() {
   assert(worldSource.includes("function updateSkyRuntime"), "world.js should expose a sky update helper");
   assert(worldSource.includes("window.updateSkyRuntime = updateSkyRuntime;"), "world.js should keep sky updates wired through the world shell");
   assert(worldSource.includes("function updateTutorialGuidanceMarker"), "world.js should own the tutorial guidance marker renderer");
+  assert(worldSource.includes("function findTutorialGuidanceNpcTarget"), "world.js should resolve tutorial guidance markers against live NPC actors");
+  assert(worldSource.includes("tutorialGuidanceMarkerGroup.userData.followsNpc = markerPose.followsNpc;"), "tutorial guidance markers should expose whether they are following a live NPC");
   assert(worldSource.includes("window.updateTutorialGuidanceMarker = updateTutorialGuidanceMarker;"), "world.js should expose tutorial guidance marker updates through the world shell");
   assert(
     inputSource.includes("function getInputControllerRuntime()")
