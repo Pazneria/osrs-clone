@@ -75,7 +75,9 @@
                         float waveA = sin((worldPos.x * 0.17) + (uTime * 0.72) + (worldPos.z * 0.11));
                         float waveB = cos((worldPos.z * 0.21) - (uTime * 0.56) + (worldPos.x * 0.07));
                         float shoreCalm = mix(1.0, 0.34, clamp(waterData.y, 0.0, 1.0));
-                        float wave = (waveA + waveB) * 0.014 * (0.55 + (waterData.x * 0.45)) * shoreCalm;
+                        float cameraDistance = distance(worldPos.xz, cameraPosition.xz);
+                        float farWaveFade = 1.0 - smoothstep(48.0, 118.0, cameraDistance);
+                        float wave = (waveA + waveB) * 0.014 * (0.55 + (waterData.x * 0.45)) * shoreCalm * farWaveFade;
                         vec3 transformed = position;
                         transformed.y += wave;
                         vec4 displacedWorld = modelMatrix * vec4(transformed, 1.0);
@@ -102,8 +104,11 @@
                         float crossingWave = sin((vWorldPos.x * -0.22) + (vWorldPos.z * 0.28) + (uTime * 0.42));
                         float smallRipple = sin((vWorldPos.x * 0.76) - (vWorldPos.z * 0.58) + (uTime * 0.82));
                         float fineRipple = sin((vWorldPos.x * 1.42) + (vWorldPos.z * 1.16) - (uTime * 1.18));
-                        float rippleMix = (broadWave * 0.34) + (crossingWave * 0.28) + (smallRipple * 0.24) + (fineRipple * 0.14);
-                        float waveField = (broadWave * 0.48) + (crossingWave * 0.32) + (smallRipple * 0.2);
+                        float cameraDistance = distance(vWorldPos.xz, cameraPosition.xz);
+                        float farWaveFade = 1.0 - smoothstep(54.0, 126.0, cameraDistance);
+                        float farDetailFade = 1.0 - smoothstep(34.0, 82.0, cameraDistance);
+                        float rippleMix = (broadWave * 0.34 * farWaveFade) + (crossingWave * 0.28 * farWaveFade) + (smallRipple * 0.24 * farDetailFade) + (fineRipple * 0.14 * farDetailFade * farDetailFade);
+                        float waveField = (broadWave * 0.48 * farWaveFade) + (crossingWave * 0.32 * farWaveFade) + (smallRipple * 0.2 * farDetailFade);
                         float crestMask = smoothstep(0.56, 0.96, waveField);
                         float troughMask = smoothstep(0.54, 0.98, -waveField);
                         float depthMix = smoothstep(0.18, 0.96, vDepth);
@@ -113,12 +118,15 @@
                         float surfaceMottle = sin((vWorldPos.x * 0.41) + (vWorldPos.z * 0.67) + (uTime * 0.12))
                             * sin((vWorldPos.x * -0.59) + (vWorldPos.z * 0.36) - (uTime * 0.08));
                         color += uRippleColor * (rippleMix * 0.036);
-                        color = mix(color, color + (uHighlightColor * 0.04), smoothstep(0.22, 0.92, surfaceMottle) * (0.12 + (depthMix * 0.08)));
+                        color = mix(color, color + (uHighlightColor * 0.04), smoothstep(0.22, 0.92, surfaceMottle) * (0.12 + (depthMix * 0.08)) * farDetailFade);
                         color = mix(color, color + (uRippleColor * 0.052), crestMask * (0.16 + (offShore * 0.08)));
                         color = mix(color, color * 0.88, troughMask * 0.11);
                         color = mix(color, uShallowColor, smoothstep(0.34, 0.92, vShore) * (1.0 - depthMix) * 0.12);
-                        float highlight = smoothstep(0.52, 1.0, rippleMix) * (0.04 + (depthMix * 0.05));
+                        float highlight = smoothstep(0.52, 1.0, rippleMix) * (0.04 + (depthMix * 0.05)) * farDetailFade;
                         color += uHighlightColor * highlight;
+                        float farColorFade = 1.0 - smoothstep(72.0, 156.0, cameraDistance);
+                        vec3 calmFarColor = mix(uDeepColor, uShallowColor, 0.08);
+                        color = mix(calmFarColor, color, farColorFade);
                         gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
                     }
                 `
@@ -174,17 +182,19 @@
                         float laceA = sin((vWorldPos.x * 1.84) - (vWorldPos.z * 1.31) + (uTime * 0.92) + (vBreakSeed * 4.7)) * 0.5 + 0.5;
                         float laceB = sin((vWorldPos.x * -2.42) + (vWorldPos.z * 1.68) - (uTime * 0.74) + (vBreakSeed * 6.1)) * 0.5 + 0.5;
                         float ripple = sin((vWorldPos.x * 0.48) + (vWorldPos.z * 0.36) - (uTime * 0.42));
-                        float brokenFeather = smoothstep(0.34, 0.92, (laceA * 0.58) + (laceB * 0.42));
+                        float cameraDistance = distance(vWorldPos.xz, cameraPosition.xz);
+                        float farFoamFade = 1.0 - smoothstep(38.0, 88.0, cameraDistance);
+                        float brokenFeather = smoothstep(0.34, 0.92, (laceA * 0.58) + (laceB * 0.42)) * farFoamFade;
                         float featherCenter = 1.0 - smoothstep(0.0, 0.34, abs(vLane - 0.58));
                         float edgeFeather = featherCenter * (0.58 + (brokenFeather * 0.24));
                         float waterSide = 1.0 - smoothstep(0.18, 0.52, vLane);
                         float bankFade = smoothstep(0.56, 0.98, vLane);
                         vec3 outerWaterColor = mix(uShallowColor, uRippleColor, 0.14);
-                        vec3 color = outerWaterColor * (0.94 + (ripple * 0.03));
+                        vec3 color = outerWaterColor * (0.94 + (ripple * 0.03 * farFoamFade));
                         color = mix(color, uShoreColor, bankFade * 0.08);
-                        color += uRippleColor * (ripple * waterSide * 0.02);
+                        color += uRippleColor * (ripple * waterSide * 0.02 * farFoamFade);
                         color += uHighlightColor * (edgeFeather * 0.006);
-                        float alpha = vAlpha * (0.16 + (waterSide * 0.14) + (edgeFeather * 0.22));
+                        float alpha = vAlpha * (0.16 + (waterSide * 0.14) + (edgeFeather * 0.22)) * farFoamFade;
                         gl_FragColor = vec4(clamp(color, 0.0, 1.0), clamp(alpha, 0.0, 0.46));
                     }
                 `

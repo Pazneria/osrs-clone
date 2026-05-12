@@ -680,7 +680,7 @@
         }
 
         if (magicDemand.skillId !== 'magic') errors.push('magic rune demand must point at magic');
-        if (magicDemand.status !== 'future_sink_contract') errors.push('magic rune demand must stay marked as future_sink_contract until magic is live');
+        if (magicDemand.status !== 'live_runtime_sink') errors.push('magic rune demand must stay marked as live_runtime_sink while Magic consumes runes');
         if (magicDemand.purpose !== 'spell_resource') errors.push('magic rune demand purpose must be spell_resource');
 
         const elementalRuneIds = Array.isArray(magicDemand.elementalRuneItemIds) ? magicDemand.elementalRuneItemIds.slice() : [];
@@ -1779,7 +1779,7 @@
             { recipeId: 'fletch_willow_longbow', requiredLevel: 22, xp: 8, sell: 36, xpPerTick: 2.6667, sellPerTick: 12 },
             { recipeId: 'fletch_maple_longbow', requiredLevel: 32, xp: 12, sell: 62, xpPerTick: 4, sellPerTick: 20.6667 },
             { recipeId: 'fletch_yew_longbow', requiredLevel: 42, xp: 18, sell: 100, xpPerTick: 6, sellPerTick: 33.3333 },
-            { recipeId: 'fletch_normal_shortbow', requiredLevel: 5, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
+            { recipeId: 'fletch_normal_shortbow', requiredLevel: 1, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
             { recipeId: 'fletch_oak_shortbow', requiredLevel: 14, xp: 6, sell: 22, xpPerTick: 2, sellPerTick: 7.3333 },
             { recipeId: 'fletch_willow_shortbow', requiredLevel: 24, xp: 11, sell: 40, xpPerTick: 3.6667, sellPerTick: 13.3333 },
             { recipeId: 'fletch_maple_shortbow', requiredLevel: 34, xp: 16, sell: 68, xpPerTick: 5.3333, sellPerTick: 22.6667 },

@@ -17,6 +17,7 @@ function run() {
   const questCatalogSource = fs.readFileSync(path.join(root, "src", "js", "content", "quest-catalog.js"), "utf8");
   const questRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "quest-runtime.js"), "utf8");
   const progressRuntime = loadTsModule(path.join(root, "src", "game", "session", "progress.ts"));
+  const saveRuntime = loadTsModule(path.join(root, "src", "game", "session", "save.ts"));
 
   assert(sessionContractSource.includes("export interface GameSession"), "session contracts should define GameSession");
   assert(sessionContractSource.includes("export interface ProgressSavePayload"), "session contracts should define a versioned save payload");
@@ -32,7 +33,7 @@ function run() {
   assert(coreSource.includes("function getGameSession()"), "core should expose a game-session helper");
   assert(coreSource.includes("function syncGameSessionState()"), "core should synchronize legacy refs back into the session");
   assert(coreSource.includes("activeSession.progress.quests = questProgressState;"), "core should synchronize quests back into the session");
-  assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 7;"), "core should define the tutorial exit gate step");
+  assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 11;"), "core should define the tutorial exit gate step");
   assert(sessionContractSource.includes("tutorialBankDepositSource: string | null;"), "session profile should persist tutorial bank deposit evidence");
   assert(sessionContractSource.includes("tutorialBankWithdrawSource: string | null;"), "session profile should persist tutorial bank withdraw evidence");
   assert(sessionContractSource.includes("tutorialInstructorVisits: Record<string, boolean>;"), "session profile should persist tutorial instructor visit evidence");
@@ -47,12 +48,26 @@ function run() {
   new Function(questCatalogSource);
   new Function(questRuntimeSource);
 
+  const recoveryTableMatch = coreSource.match(/const TUTORIAL_RECOVERY_SPAWNS = Object\.freeze\(\[([\s\S]*?)\]\);/);
+  assert(!!recoveryTableMatch, "core should define the tutorial recovery spawn table");
+  const recoverySpawns = Array.from(recoveryTableMatch[1].matchAll(/\{\s*x:\s*(\d+),\s*y:\s*(\d+),\s*z:\s*(\d+)\s*\}/g))
+    .map((match) => ({ x: Number(match[1]), y: Number(match[2]), z: Number(match[3]) }));
+  assert(recoverySpawns.length === 12, "tutorial recovery spawn table should map exactly to tutorial steps 0-11");
+  assert(recoverySpawns[6].x === 427 && recoverySpawns[6].y === 406, "step 6 recovery should land by the Ranged Instructor");
+  assert(recoverySpawns[7].x === 376 && recoverySpawns[7].y === 423, "step 7 recovery should land by the Magic Instructor");
+  assert(recoverySpawns[8].x === 327 && recoverySpawns[8].y === 427, "step 8 recovery should land by the Runecrafting Instructor");
+  assert(recoverySpawns[9].x === 297 && recoverySpawns[9].y === 423, "step 9 recovery should land by the Crafting Instructor");
+  assert(recoverySpawns[10].x === 280 && recoverySpawns[10].y === 417, "step 10 recovery should land by the Bank Tutor");
+  assert(recoverySpawns[11].x === 331 && recoverySpawns[11].y === 421, "step 11 recovery should land by the exit Tutorial Guide");
+
   const defaultProfile = progressRuntime.createDefaultPlayerProfileState();
+  const defaultSkills = progressRuntime.createDefaultPlayerSkillsState();
   assert(defaultProfile.tutorialStep === 0, "default profile should start at tutorial step 0");
   assert(defaultProfile.tutorialCompletedAt === null, "default profile should not mark tutorial complete");
   assert(defaultProfile.tutorialBankDepositSource === null, "default profile should not carry tutorial bank deposit evidence");
   assert(defaultProfile.tutorialBankWithdrawSource === null, "default profile should not carry tutorial bank withdraw evidence");
   assert(Object.keys(defaultProfile.tutorialInstructorVisits).length === 0, "default profile should not carry tutorial instructor visits");
+  assert(defaultSkills.magic.level === 1 && defaultSkills.magic.xp === 0, "default skills should include Magic for tutorial spell practice");
 
   const clonedProfile = progressRuntime.clonePlayerProfileState({
     name: "Tester",
@@ -87,6 +102,46 @@ function run() {
   assert(sanitizedProfile.tutorialBankDepositSource === null, "profile clone should drop invalid tutorial bank deposit evidence");
   assert(sanitizedProfile.tutorialBankWithdrawSource === null, "profile clone should drop invalid tutorial bank withdraw evidence");
   assert(Object.keys(sanitizedProfile.tutorialInstructorVisits).length === 0, "profile clone should drop invalid tutorial instructor visits");
+
+  const equippedAmmo = { itemId: "bronze_arrows", amount: 12 };
+  const savePayload = saveRuntime.buildProgressSavePayload({
+    saveVersion: 3,
+    reason: "guard",
+    session: {
+      currentWorldId: "tutorial_island",
+      player: {
+        x: 1,
+        y: 2,
+        z: 0,
+        targetRotation: 0,
+        currentHitpoints: 10,
+        eatingCooldownEndTick: 0,
+        remainingAttackCooldown: 0,
+        lockedTargetId: null,
+        combatTargetKind: null,
+        selectedMeleeStyle: "attack",
+        autoRetaliateEnabled: true,
+        inCombat: false,
+        lastDamagerEnemyId: null,
+        unlockFlags: {},
+        merchantProgress: {}
+      },
+      ui: { runMode: false }
+    },
+    playerSkills: defaultSkills,
+    inventory: [],
+    bankItems: [],
+    equipment: { weapon: "training_bow", ammo: equippedAmmo },
+    userItemPrefs: {},
+    contentGrants: {},
+    quests: {},
+    profile: defaultProfile,
+    appearance: null
+  });
+  equippedAmmo.amount = 1;
+  assert(savePayload.state.equipment.weapon === "training_bow", "save payload should keep legacy string equipment slots");
+  assert(savePayload.state.equipment.ammo.amount === 12, "save payload should clone stacked equipment slots");
+  assert(savePayload.state.equipment.ammo !== equippedAmmo, "save payload should not alias stacked equipment slot objects");
 
   console.log("Game session guard passed.");
 }

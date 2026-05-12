@@ -348,6 +348,10 @@
             arrival: () => findQaServiceStation(context, 'merchant:tutorial_guide', 'tutorial arrival'),
             smithing: () => findQaServiceStation(context, ['station:tutorial_furnace', 'merchant:tutorial_mining_smithing_instructor'], 'tutorial smithing'),
             combat: () => findQaServiceStation(context, 'merchant:tutorial_combat_instructor', 'tutorial combat'),
+            ranged: () => findQaServiceStation(context, 'merchant:tutorial_ranged_instructor', 'tutorial ranged'),
+            magic: () => findQaServiceStation(context, 'merchant:tutorial_magic_instructor', 'tutorial magic'),
+            runecrafting: () => findQaServiceStation(context, 'merchant:tutorial_runecrafting_instructor', 'tutorial runecrafting'),
+            crafting: () => findQaServiceStation(context, 'merchant:tutorial_crafting_instructor', 'tutorial crafting'),
             bank: () => findQaServiceStation(context, 'merchant:tutorial_bank_tutor', 'tutorial bank'),
             exit: () => findQaServiceStation(context, 'merchant:tutorial_exit_guide', 'tutorial exit')
         };
@@ -357,16 +361,20 @@
         }
 
         const fallbackStations = {
-            arrival: { x: 188, y: 236, z: 0, label: 'tutorial arrival' },
-            woodcutting: { x: 288, y: 261, z: 0, label: 'tutorial woodcutting' },
-            fishing: { x: 349, y: 316, z: 0, label: 'tutorial fishing' },
-            firemaking: { x: 376, y: 328, z: 0, label: 'tutorial firemaking' },
-            cooking: { x: 376, y: 328, z: 0, label: 'tutorial cooking' },
-            mining: { x: 475, y: 384, z: 0, label: 'tutorial mining' },
-            smithing: { x: 459, y: 395, z: 0, label: 'tutorial smithing' },
-            combat: { x: 427, y: 435, z: 0, label: 'tutorial combat' },
-            bank: { x: 269, y: 440, z: 0, label: 'tutorial bank' },
-            exit: { x: 333, y: 445, z: 0, label: 'tutorial exit' }
+            arrival: { x: 212, y: 251, z: 0, label: 'tutorial arrival' },
+            woodcutting: { x: 295, y: 274, z: 0, label: 'tutorial woodcutting' },
+            fishing: { x: 344, y: 318, z: 0, label: 'tutorial fishing' },
+            firemaking: { x: 366, y: 327, z: 0, label: 'tutorial firemaking' },
+            cooking: { x: 366, y: 327, z: 0, label: 'tutorial cooking' },
+            mining: { x: 445, y: 372, z: 0, label: 'tutorial mining' },
+            smithing: { x: 435, y: 386, z: 0, label: 'tutorial smithing' },
+            combat: { x: 406, y: 413, z: 0, label: 'tutorial combat' },
+            ranged: { x: 427, y: 406, z: 0, label: 'tutorial ranged' },
+            magic: { x: 376, y: 423, z: 0, label: 'tutorial magic' },
+            runecrafting: { x: 327, y: 427, z: 0, label: 'tutorial runecrafting' },
+            crafting: { x: 297, y: 423, z: 0, label: 'tutorial crafting' },
+            bank: { x: 280, y: 417, z: 0, label: 'tutorial bank' },
+            exit: { x: 331, y: 421, z: 0, label: 'tutorial exit' }
         };
         return fallbackStations[key] || null;
     }
@@ -1068,6 +1076,19 @@
                 { itemId: 'hammer', amount: 1 },
                 { itemId: 'bronze_bar', amount: 1 }
             ]), 'logs');
+        }
+        if (name === 'ranged') {
+            return [
+                { itemId: 'normal_shortbow', amount: 1 },
+                { itemId: 'oak_shortbow', amount: 1 },
+                { itemId: 'willow_shortbow', amount: 1 },
+                { itemId: 'bronze_arrows', amount: 250 },
+                { itemId: 'iron_arrows', amount: 250 },
+                { itemId: 'steel_arrows', amount: 250 },
+                { itemId: 'mithril_arrows', amount: 250 },
+                { itemId: 'cooked_trout', amount: 5 },
+                { itemId: 'coins', amount: 1000 }
+            ];
         }
         if (name === 'icons') {
             const reviewBatch = typeof context.getActiveIconReviewBatch === 'function'

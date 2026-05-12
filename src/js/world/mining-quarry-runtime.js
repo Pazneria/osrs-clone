@@ -39,10 +39,10 @@
                 centerDepth: -0.34
             }),
             tutorial_surface_mine: Object.freeze({
-                centerX: 475,
-                centerY: 384,
-                anchorX: 475,
-                anchorY: 384,
+                centerX: 445,
+                centerY: 372,
+                anchorX: 445,
+                anchorY: 372,
                 radiusScale: 0.86,
                 dirtRadiusScale: 1.05,
                 edgeDepth: -0.16,

@@ -68,9 +68,10 @@
                     const levelCap = Math.max(tier.level, nextTierUnlock - 2);
                     for (let f = 0; f < forgeDefs.length; f++) {
                         const def = forgeDefs[f];
+                        const requiredLevel = Math.min(levelCap, tier.level + (Number.isFinite(def.levelOffset) ? def.levelOffset : 0));
                         recipes[`forge_${tier.tier}_${def.outputSuffix}`] = {
                             stationType: 'ANVIL',
-                            requiredLevel: Math.min(levelCap, tier.level + (Number.isFinite(def.levelOffset) ? def.levelOffset : 0)),
+                            requiredLevel: tier.tier === 'bronze' ? tier.level : requiredLevel,
                             requiredToolIds: ['hammer'],
                             inputs: [{ itemId: `${tier.tier}_bar`, amount: def.bars }],
                             output: { itemId: `${tier.tier}_${def.outputSuffix}`, amount: 1 },

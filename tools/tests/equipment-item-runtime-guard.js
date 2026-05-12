@@ -37,17 +37,20 @@ function run() {
   const bronzeShield = { id: "bronze_shield", name: "Bronze Shield", type: "shield" };
   const runeHarpoon = { id: "rune_harpoon", name: "Rune Harpoon", type: "weapon", weaponClass: "harpoon", requiredFishingLevel: 35 };
   const bronzeSword = { id: "bronze_sword", name: "Bronze Sword", type: "weapon", weaponClass: "sword", requiredAttackLevel: 1 };
+  const bronzeArrows = { id: "bronze_arrows", name: "Bronze Arrows x15", type: "ammo", stackable: true };
+  const fireStaff = { id: "fire_staff", name: "Fire staff", type: "weapon", weaponClass: "staff", requiredMagicLevel: 10 };
 
   function makeContext(overrides = {}) {
     const calls = [];
     const chat = [];
     return {
       context: {
-        equipment: overrides.equipment || { weapon: null, shield: overrides.oldShield || null },
+        equipment: overrides.equipment || { weapon: null, shield: overrides.oldShield || null, ammo: null },
         inventory: overrides.inventory || [{ itemData: runeShield, amount: 1 }, null],
         playerSkills: overrides.playerSkills || {
           attack: { level: 99 },
           fishing: { level: 99 },
+          magic: { level: 99 },
           defense: { level: overrides.defenseLevel == null ? 1 : overrides.defenseLevel }
         },
         addChatMessage: (message, tone) => chat.push({ message, tone }),
@@ -90,6 +93,17 @@ function run() {
   }
 
   {
+    const { context, chat } = makeContext({
+      equipment: { weapon: null, shield: null },
+      inventory: [{ itemData: fireStaff, amount: 1 }],
+      playerSkills: { attack: { level: 99 }, fishing: { level: 99 }, magic: { level: 1 }, defense: { level: 99 } }
+    });
+    assert(runtime.equipItem(context, 0) === false, "under-level magic equipment should fail");
+    assert(chat.length === 1 && chat[0].message === "You need Magic level 10 to equip the Fire staff.", "under-level magic equip should explain the Magic requirement");
+    assert(context.equipment.weapon === null, "failed magic equipment should not equip");
+  }
+
+  {
     const { context } = makeContext({
       equipment: { weapon: null, shield: null },
       inventory: [{ itemData: bronzeSword, amount: 1 }, null]
@@ -98,6 +112,30 @@ function run() {
     assert(runtime.autoEquipWeaponClass(context, "sword"), "auto equip should equip matching weapon class");
     assert(context.equipment.weapon.id === "bronze_sword", "auto equip should move weapon into equipment");
     assert(context.inventory[0] === null, "auto equip should clear the source inventory slot when no old weapon exists");
+  }
+
+  {
+    const { context } = makeContext({
+      equipment: { weapon: null, shield: null, ammo: null },
+      inventory: [{ itemData: bronzeArrows, amount: 150 }, null]
+    });
+    assert(runtime.equipItem(context, 0) === true, "ammo equip should succeed");
+    assert(context.equipment.ammo.itemData.id === "bronze_arrows", "ammo equip should place arrows into the ammo slot");
+    assert(context.equipment.ammo.amount === 150, "ammo equip should preserve the full stack amount");
+    assert(context.inventory[0] === null, "ammo equip should clear the source stack from inventory");
+    assert(runtime.unequipItem(context, "ammo") === true, "ammo unequip should succeed");
+    assert(context.equipment.ammo === null, "ammo unequip should clear the ammo slot");
+    assert(context.inventory[0].itemData.id === "bronze_arrows" && context.inventory[0].amount === 150, "ammo unequip should restore the full stack to inventory");
+  }
+
+  {
+    const { context } = makeContext({
+      equipment: { weapon: null, shield: null, ammo: { itemData: bronzeArrows, amount: 5 } },
+      inventory: [{ itemData: bronzeArrows, amount: 10 }, null]
+    });
+    assert(runtime.equipItem(context, 0) === true, "matching ammo equip should merge into the equipped stack");
+    assert(context.equipment.ammo.amount === 15, "matching ammo equip should add inventory arrows to equipped arrows");
+    assert(context.inventory[0] === null, "matching ammo equip should clear the source stack");
   }
 
   {

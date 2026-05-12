@@ -15,7 +15,7 @@
 - [x] RUNECRAFTING-010: Merchant runtime behavior alignment for rune trading, pouch unlock availability, and general-store fallback behavior.
 - [x] RUNECRAFTING-011: Altar route/training-location placement pass across elemental progression bands.
 - [x] RUNECRAFTING-013: Economy pass completed for runtime buy/sell parity with the authored rune/pouch tables (strict rune-merchant buy lists, pouch unlock-level coverage, and registry/contract guards).
-- [x] RUNECRAFTING-012: Cross-skill integration pass completed for mining essence supply and future magic rune demand (spec contract, registry summary helper, and doc parity coverage).
+- [x] RUNECRAFTING-012: Cross-skill integration pass completed for mining essence supply and live Magic rune demand (spec contract, registry summary helper, and doc parity coverage).
 - [x] RUNECRAFTING-014: Balance pass completed for elemental and combination rune XP/value pacing, with route-travel benchmark assumptions, registry summary helpers, spec guards, and roadmap parity coverage.
 - [x] RUNECRAFTING-015A: Altar feedback polish now blocks or stops under-supplied combination crafts with explicit secondary-rune requirement messaging while preserving valid partial-secondary crafting.
 - [x] RUNECRAFTING-015B: Route-readability and remaining altar interruption polish completed with output-aware altar labels, missing-input hints, and selected-target drift feedback.

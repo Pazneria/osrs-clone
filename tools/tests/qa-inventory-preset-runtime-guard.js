@@ -52,7 +52,15 @@ function run() {
     bait: { id: "bait" },
     coins: { id: "coins" },
     hammer: { id: "hammer" },
-    bronze_bar: { id: "bronze_bar" }
+    bronze_bar: { id: "bronze_bar" },
+    normal_shortbow: { id: "normal_shortbow" },
+    oak_shortbow: { id: "oak_shortbow" },
+    willow_shortbow: { id: "willow_shortbow" },
+    bronze_arrows: { id: "bronze_arrows" },
+    iron_arrows: { id: "iron_arrows" },
+    steel_arrows: { id: "steel_arrows" },
+    mithril_arrows: { id: "mithril_arrows" },
+    cooked_trout: { id: "cooked_trout" }
   };
   const fishFull = runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "fish_full");
   assert(fishFull.length === 28, "fish_full should fill the inventory");
@@ -62,6 +70,11 @@ function run() {
   const smithFullInv = runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "smith_fullinv");
   assert(smithFullInv.length === 28, "smith_fullinv should fill the inventory");
   assert(smithFullInv.some((slot) => slot.itemId === "bronze_bar"), "smith_fullinv should include bronze bar");
+
+  const ranged = runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "ranged");
+  assert(ranged.some((slot) => slot.itemId === "normal_shortbow"), "ranged preset should include a level-1 bow");
+  assert(ranged.some((slot) => slot.itemId === "willow_shortbow"), "ranged preset should include a mid-tier bow");
+  assert(ranged.some((slot) => slot.itemId === "mithril_arrows" && slot.amount === 250), "ranged preset should include a generous ammo stack");
 
   const iconSlots = runtime.buildQaInventoryPresetSlots({
     ITEM_DB: itemDb,

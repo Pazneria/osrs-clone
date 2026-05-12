@@ -63,6 +63,15 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
   distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 }
 });
 
+const MAIN_OVERWORLD_ROAD_IDS = Object.freeze([
+  "starter_town_east_road",
+  "starter_town_north_altar_road",
+  "starter_town_starter_mine_spur",
+  "starter_town_south_resource_road",
+  "starter_town_southwest_bank_road",
+  "starter_town_southeast_camp_road"
+]);
+
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:general_store": {
     spawnId: "npc:general_store_shopkeeper",
@@ -363,7 +372,7 @@ function assertRockVisualProfiles(root) {
   assert(source.includes("function setRockVisualState(options)"), "rock render runtime should own instanced rock transform updates");
   assert(worldSource.includes("WorldRockRenderRuntime"), "world.js should delegate rock visuals through the rock render runtime");
   assert(worldSource.includes("WorldChunkResourceRenderRuntime"), "world.js should delegate chunk tree/rock placement through the chunk resource runtime");
-  assert(resourceSource.includes("getRockVisualIdForNode(rockNode") && resourceSource.includes("counts.rockVisualCounts[visualId]"), "chunk resource runtime should bucket rocks by visual profile");
+  assert(/getRockVisualIdForNode\s*\(\s*rockNode\s*,\s*depleted\s*\)/.test(resourceSource) && /\.rockVisualCounts\[visualId\]\s*=/.test(resourceSource), "chunk resource runtime should bucket rocks by visual profile");
   assert(resourceSource.includes("setRockVisualState(state.rockData, visualId, rockIndex"), "chunk resource runtime should feed rock placements into the visual runtime");
 }
 
@@ -401,6 +410,11 @@ function assertStarterTown(root) {
   assert(Array.isArray(world.landmarks.staircases) && world.landmarks.staircases.length === Object.keys(STARTER_TOWN_STAIRCASE_LAYOUT).length, "starter-town staircase landmark count mismatch");
   assert(Array.isArray(world.landmarks.altars) && world.landmarks.altars.length === 4, "expected 4 authored altars");
   assert(Array.isArray(world.landmarks.showcaseTrees) && world.landmarks.showcaseTrees.length === 5, "expected 5 showcase trees");
+  assert(Array.isArray(world.terrainPatches.paths), "starter-town should expose authored road paths");
+  assert(
+    world.terrainPatches.paths.filter((pathPatch) => Array.isArray(pathPatch.tags) && pathPatch.tags.includes("road")).length === MAIN_OVERWORLD_ROAD_IDS.length,
+    "starter-town road path count mismatch"
+  );
   assert(
     world.services.filter((entry) => entry.type === "MERCHANT" && entry.name).length === Object.keys(STARTER_TOWN_NAMED_NPC_LAYOUT).length + Object.keys(STARTER_TOWN_BANK_LAYOUT).length,
     "starter-town named NPC service count mismatch"
@@ -439,6 +453,19 @@ function assertStarterTown(root) {
   assert(firemakingById.willow_fire_lane.x === 239 && firemakingById.willow_fire_lane.y === 62, "willow fire lane anchor mismatch");
   assert(firemakingById.maple_fire_lane.x === 402 && firemakingById.maple_fire_lane.y === 206, "maple fire lane anchor mismatch");
   assert(firemakingById.yew_fire_lane.x === 51 && firemakingById.yew_fire_lane.y === 8, "yew fire lane anchor mismatch");
+  const roadPathsById = Object.fromEntries(world.terrainPatches.paths.map((entry) => [entry.pathId, entry]));
+  MAIN_OVERWORLD_ROAD_IDS.forEach((pathId) => {
+    const road = roadPathsById[pathId];
+    assert(!!road, `starter-town road missing: ${pathId}`);
+    assert(road.tileId === "DIRT", `${pathId} should stamp dirt road tiles`);
+    assert(Array.isArray(road.tags) && road.tags.includes("spawn-protected"), `${pathId} should be spawn-protected`);
+  });
+  const gameplayMap = buildWorldGameplayMap(world, stamps);
+  [[282, 242], [197, 98], [158, 222], [240, 360], [74, 392], [370, 440]].forEach(([x, y]) => {
+    assert(gameplayMap[0][y][x] === TileId.DIRT, `starter road sample ${x},${y} should remain a dirt road tile`);
+  });
+  assert(starterBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "starter_town_east_road"), "starter bootstrap should publish the east road patch");
+  assert(starterBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "starter_town_southwest_bank_road"), "starter bootstrap should publish the southwest bank road patch");
 
   const servicesById = Object.fromEntries(world.services.map((entry) => [entry.serviceId, entry]));
   assert(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
@@ -560,12 +587,12 @@ function assertTutorialIsland(root) {
   assert(Array.isArray(world.terrainPatches.paths) && world.terrainPatches.paths.length >= 5, "tutorial island should expose authored dirt path patches");
   assert(world.terrainPatches.pier.enabled === false, "tutorial island should disable the fishing pier");
   assert(Array.isArray(world.waterBodies) && world.waterBodies.some((body) => body.id === "tutorial_surrounding_sea"), "tutorial island should expose surrounding sea water");
-  assert(Array.isArray(world.services) && world.services.length === 10, "tutorial island surface-v2 should expose surface tutors and smithing stations");
+  assert(Array.isArray(world.services) && world.services.length === 14, "tutorial island surface-v2 should expose surface tutors, late-skill tutors, and smithing stations");
   assert(Array.isArray(world.combatSpawns) && world.combatSpawns.length === 3, "tutorial island surface-v2 should expose surface combat spawns");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 4, "tutorial island surface-v2 should expose surface mining nodes");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 6, "tutorial island should expose a denser survival-field grove");
   const tutorialLessonGates = world.landmarks.doors.filter((door) => Number.isFinite(door.tutorialRequiredStep) && door.tileId === "WOODEN_GATE_CLOSED");
-  assert(tutorialLessonGates.length === 5, "tutorial island surface-v2 should expose arrival, quarry, combat, bank, and exit gates");
+  assert(tutorialLessonGates.length === 4, "tutorial island surface-v2 should expose quarry, combat, bank, and exit gates");
   assert(tutorialLessonGates.every((door) => door.tileId === "WOODEN_GATE_CLOSED"), "tutorial lesson gates should use wooden gate tiles");
   assert(
     world.landmarks.doors.some((door) => (
@@ -580,9 +607,16 @@ function assertTutorialIsland(root) {
   assert(Array.isArray(world.landmarks.fences) && world.landmarks.fences.length >= 5, "tutorial island should expose authored fence lines without boxing in the natural survival field");
   assert(Array.isArray(world.landmarks.roofs) && world.landmarks.roofs.some((roof) => roof.hideWhenPlayerInside === true), "tutorial island should expose a hideable starting cabin roof");
   assert(Array.isArray(world.landmarks.caveOpenings) && world.landmarks.caveOpenings.length === 0, "tutorial island surface-v2 should keep the full loop on the surface");
-  assert(Array.isArray(world.landmarks.altars) && world.landmarks.altars.length === 0, "tutorial island should not expose runecrafting altars");
-  assert(Array.isArray(world.skillRoutes.runecrafting) && world.skillRoutes.runecrafting.length === 0, "tutorial island should not expose runecrafting routes");
-  ["fishing", "cooking", "firemaking", "mining", "woodcutting"].forEach((groupId) => {
+  assert(Array.isArray(world.landmarks.altars) && world.landmarks.altars.length === 1, "tutorial island should expose the tutorial Ember Altar");
+  assert(world.landmarks.altars[0].routeId === "tutorial_ember_altar", "tutorial Ember Altar should reference the tutorial route");
+  assert(Array.isArray(world.landmarks.decorProps) && world.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_weapon_rack" && prop.kind === "weapon_rack"), "tutorial island should expose combat-yard weapon rack decor");
+  assert(world.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_training_dummy" && prop.kind === "training_dummy"), "tutorial island should expose combat-yard training dummy decor");
+  assert(world.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_archery_target" && prop.kind === "archery_target"), "tutorial island should expose combat-yard archery target decor");
+  assert(world.landmarks.decorProps.some((prop) => prop.propId === "tutorial_magic_lesson_board" && prop.kind === "notice_board"), "tutorial island should expose a magic lesson board prop");
+  assert(world.landmarks.decorProps.some((prop) => prop.propId === "tutorial_crafting_bench" && prop.kind === "desk"), "tutorial island should expose a crafting bench prop");
+  assert(Array.isArray(world.skillRoutes.runecrafting) && world.skillRoutes.runecrafting.length === 1, "tutorial island should expose one runecrafting route");
+  assert(world.skillRoutes.runecrafting[0].routeId === "tutorial_ember_altar", "tutorial island runecrafting route should point at the tutorial Ember Altar");
+  ["fishing", "cooking", "firemaking", "mining", "runecrafting", "woodcutting"].forEach((groupId) => {
     assert(Array.isArray(world.skillRoutes[groupId]) && world.skillRoutes[groupId].length === 1, `tutorial island should expose one ${groupId} route`);
   });
   assert(Array.isArray(world.skillRoutes.cooking[0].fireTiles) && world.skillRoutes.cooking[0].fireTiles.length === 0, "tutorial island surface-v2 should not render permanent cooking fires");
@@ -609,7 +643,22 @@ function assertTutorialIsland(root) {
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_firemaking_instructor"].dialogueId) === "tutorial_firemaking_instructor", "firemaking instructor dialogue should resolve");
   assert(servicesById["merchant:tutorial_mining_smithing_instructor"].appearanceId === "tutorial_mining_smithing_instructor", "mining and smithing instructor should preserve the aproned foreman appearance id");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_mining_smithing_instructor"].dialogueId) === "tutorial_mining_smithing_instructor", "mining and smithing instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_combat_instructor"].appearanceId === "tutorial_combat_instructor", "combat instructor should preserve the arms trainer appearance id");
+  assert(servicesById["merchant:tutorial_combat_instructor"].roamingRadiusOverride === 0, "combat instructor should preserve the stationary roam override");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_combat_instructor"].dialogueId) === "tutorial_combat_instructor", "combat instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_ranged_instructor"].x === 340 && servicesById["merchant:tutorial_ranged_instructor"].y === 320, "ranged instructor should stand beside the archery target");
+  assert(servicesById["merchant:tutorial_ranged_instructor"].appearanceId === "tutorial_ranged_instructor", "ranged instructor should preserve the archery trainer appearance id");
+  assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_ranged_instructor"].dialogueId) === "tutorial_ranged_instructor", "ranged instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_magic_instructor"].x === 292 && servicesById["merchant:tutorial_magic_instructor"].y === 336, "magic instructor should stand beside the late-skill lesson board");
+  assert(servicesById["merchant:tutorial_magic_instructor"].appearanceId === "tutorial_magic_instructor", "magic instructor should preserve the rune lesson appearance id");
+  assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_magic_instructor"].dialogueId) === "tutorial_magic_instructor", "magic instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_runecrafting_instructor"].x === 246 && servicesById["merchant:tutorial_runecrafting_instructor"].y === 340, "runecrafting instructor should stand beside the tutorial Ember Altar");
+  assert(servicesById["merchant:tutorial_runecrafting_instructor"].appearanceId === "tutorial_runecrafting_instructor", "runecrafting instructor should preserve the altar scribe appearance id");
+  assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_runecrafting_instructor"].dialogueId) === "tutorial_runecrafting_instructor", "runecrafting instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_crafting_instructor"].x === 218 && servicesById["merchant:tutorial_crafting_instructor"].y === 336, "crafting instructor should stand beside the crafting bench");
+  assert(servicesById["merchant:tutorial_crafting_instructor"].appearanceId === "tutorial_crafting_instructor", "crafting instructor should preserve the artisan appearance id");
+  assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_crafting_instructor"].dialogueId) === "tutorial_crafting_instructor", "crafting instructor dialogue should resolve");
+  assert(servicesById["merchant:tutorial_bank_tutor"].appearanceId === "tutorial_bank_tutor", "bank tutor should preserve the ledger tutor appearance id");
   assert(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_bank_tutor"].dialogueId) === "tutorial_bank_tutor", "bank tutor dialogue should resolve");
   assert(servicesById["station:tutorial_furnace"].type === "FURNACE", "tutorial furnace should expose a smithing station");
   assert(servicesById["station:tutorial_furnace"].facingYaw === -Math.PI / 2, "tutorial furnace mouth should face west");
@@ -617,6 +666,10 @@ function assertTutorialIsland(root) {
   assert(servicesById["station:tutorial_anvil"].type === "ANVIL", "tutorial anvil should expose a smithing station");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].dialogueId === "tutorial_guide", "tutorial guide runtime NPC should preserve dialogue");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].roamingRadiusOverride === 0, "tutorial guide runtime NPC should preserve stationary roam override");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].tutorialVisibleUntilStep === 10, "arrival tutorial guide runtime NPC should hide before the final exit step");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_exit_guide"].tutorialVisibleFromStep === 11, "center-yard tutorial guide runtime NPC should appear at the final exit step");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_exit_guide"].appearanceId === tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].appearanceId, "arrival and center-yard guide runtime NPCs should share the same appearance identity");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_exit_guide"].dialogueId === tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_guide"].dialogueId, "arrival and center-yard guide runtime NPCs should share the same dialogue identity");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_woodcutting_instructor"].appearanceId === "tutorial_woodcutting_instructor", "woodcutting instructor runtime NPC should preserve appearance id");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_fishing_instructor"].appearanceId === "tutorial_fishing_instructor", "fishing instructor runtime NPC should preserve appearance id");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_fishing_instructor"].roamingRadiusOverride === 0, "fishing instructor runtime NPC should preserve stationary roam override");
@@ -625,13 +678,30 @@ function assertTutorialIsland(root) {
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_firemaking_instructor"].dialogueId === "tutorial_firemaking_instructor", "firemaking instructor runtime NPC should preserve dialogue");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_mining_smithing_instructor"].appearanceId === "tutorial_mining_smithing_instructor", "mining and smithing instructor runtime NPC should preserve appearance id");
   assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_mining_smithing_instructor"].dialogueId === "tutorial_mining_smithing_instructor", "mining and smithing instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_combat_instructor"].appearanceId === "tutorial_combat_instructor", "combat instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_combat_instructor"].roamingRadiusOverride === 0, "combat instructor runtime NPC should preserve stationary roam override");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_combat_instructor"].dialogueId === "tutorial_combat_instructor", "combat instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_ranged_instructor"].appearanceId === "tutorial_ranged_instructor", "ranged instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_ranged_instructor"].dialogueId === "tutorial_ranged_instructor", "ranged instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_magic_instructor"].appearanceId === "tutorial_magic_instructor", "magic instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_magic_instructor"].dialogueId === "tutorial_magic_instructor", "magic instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_runecrafting_instructor"].appearanceId === "tutorial_runecrafting_instructor", "runecrafting instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_runecrafting_instructor"].dialogueId === "tutorial_runecrafting_instructor", "runecrafting instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_crafting_instructor"].appearanceId === "tutorial_crafting_instructor", "crafting instructor runtime NPC should preserve appearance id");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_crafting_instructor"].dialogueId === "tutorial_crafting_instructor", "crafting instructor runtime NPC should preserve dialogue");
+  assert(tutorialBootstrap.npcRegistry.bySpawnId["npc:tutorial_bank_tutor"].appearanceId === "tutorial_bank_tutor", "bank tutor runtime NPC should preserve appearance id");
   assert(tutorialBootstrap.legacy.fences.length >= 5, "tutorial bootstrap should carry authored fence lines into the legacy payload");
   assert(tutorialBootstrap.legacy.islandWater && tutorialBootstrap.legacy.islandWater.landPolygon.length >= 8, "tutorial bootstrap should carry island-water topology into the legacy payload");
   assert(tutorialBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "tutorial_fire_to_quarry_path"), "tutorial bootstrap should carry lowered dirt path patches");
   assert(tutorialBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "tutorial_quarry_work_apron"), "tutorial bootstrap should carry the quarry work-apron terrain patch");
   assert(tutorialBootstrap.legacy.roofs.some((roof) => roof.landmarkId === "tutorial_start_cabin_roof"), "tutorial bootstrap should carry cabin roof metadata into the legacy payload");
   assert(tutorialBootstrap.legacy.caveOpenings.length === 0, "tutorial bootstrap should preserve the no-cave surface-v2 layout");
-  assert(tutorialBootstrap.legacy.decorProps.length === 10, "tutorial bootstrap should carry arrival, grove, and quarry decor props into the legacy payload");
+  assert(tutorialBootstrap.legacy.decorProps.length === 18, "tutorial bootstrap should carry arrival, grove, quarry, combat, and late-skill yard decor props into the legacy payload");
+  assert(tutorialBootstrap.legacy.decorProps.some((prop) => prop.propId === "tutorial_combat_weapon_rack" && prop.kind === "weapon_rack"), "tutorial bootstrap should carry combat weapon rack decor");
+  assert(tutorialBootstrap.legacy.decorProps.some((prop) => prop.propId === "tutorial_combat_training_dummy" && prop.kind === "training_dummy"), "tutorial bootstrap should carry combat training dummy decor");
+  assert(tutorialBootstrap.legacy.decorProps.some((prop) => prop.propId === "tutorial_combat_archery_target" && prop.kind === "archery_target"), "tutorial bootstrap should carry combat archery target decor");
+  assert(tutorialBootstrap.legacy.decorProps.some((prop) => prop.propId === "tutorial_magic_lesson_board" && prop.kind === "notice_board"), "tutorial bootstrap should carry magic lesson board decor");
+  assert(tutorialBootstrap.legacy.decorProps.some((prop) => prop.propId === "tutorial_crafting_bench" && prop.kind === "desk"), "tutorial bootstrap should carry crafting bench decor");
 
   const gameplayMap = buildWorldGameplayMap(tutorialBootstrap.definition, tutorialBootstrap.stamps);
   const scaledSpawn = {
@@ -641,15 +711,16 @@ function assertTutorialIsland(root) {
   };
   const cabinDoor = tutorialBootstrap.legacy.doors.find((door) => door.landmarkId === "tutorial_start_cabin_door");
   const cabinSteps = tutorialBootstrap.legacy.staircases.find((staircase) => staircase.landmarkId === "tutorial_start_cabin_steps");
-  const arrivalGate = tutorialBootstrap.legacy.doors.find((door) => door.landmarkId === "tutorial_gate_arrival_to_survival_field");
-  assert(cabinDoor && cabinDoor.x === 184 && cabinDoor.y === 233, "scaled tutorial cabin door should sit on the visible front wall");
-  assert(cabinSteps && cabinSteps.tiles && cabinSteps.tiles[0] && cabinSteps.tiles[0].x === 184 && cabinSteps.tiles[0].y === 234, "scaled tutorial cabin stairs should sit outside the visible front door");
-  assert(arrivalGate && arrivalGate.x === 235 && arrivalGate.y === 248, "scaled first tutorial gate should sit at the survival-field entry");
+  const arrivalWestBoundaryFence = tutorialBootstrap.legacy.fences.find((fence) => fence.landmarkId === "tutorial_arrival_west_boundary_fence");
+  assert(cabinDoor && cabinDoor.x === 214 && cabinDoor.y === 254, "scaled tutorial cabin door should sit on the visible front wall");
+  assert(cabinSteps && cabinSteps.tiles && cabinSteps.tiles[0] && cabinSteps.tiles[0].x === 214 && cabinSteps.tiles[0].y === 255, "scaled tutorial cabin stairs should sit outside the visible front door");
+  assert(!tutorialBootstrap.legacy.doors.some((door) => door.landmarkId === "tutorial_gate_arrival_to_survival_field"), "scaled tutorial should omit the redundant first gate east of the cabin");
+  assert(arrivalWestBoundaryFence && arrivalWestBoundaryFence.points[0].x === 203 && arrivalWestBoundaryFence.points[0].y === 238, "scaled tutorial should keep the west arrival fence boundary closed off");
   assert(isWalkable(gameplayMap, scaledSpawn.x, scaledSpawn.y, scaledSpawn.z), "scaled tutorial spawn should be walkable");
   assert(!isWalkable(gameplayMap, cabinDoor.x, cabinDoor.y, cabinDoor.z), "scaled tutorial cabin door should block movement before the guide clears the player");
   gameplayMap[cabinDoor.z][cabinDoor.y][cabinDoor.x] = TileId.DOOR_OPEN;
   assert(findShortestPathLength(gameplayMap, scaledSpawn, { x: cabinSteps.tiles[0].x, y: cabinSteps.tiles[0].y, z: cabinSteps.tiles[0].z }, { maxDistance: 16 }) !== null, "player should be able to walk from spawn to the cabin stairs");
-  assert(findShortestPathLength(gameplayMap, scaledSpawn, { x: arrivalGate.x - 1, y: arrivalGate.y, z: arrivalGate.z }, { maxDistance: 72 }) !== null, "player should be able to reach the first tutorial gate from the cabin");
+  assert(findShortestPathLength(gameplayMap, scaledSpawn, { x: 331, y: 291, z: 0 }, { maxDistance: 160, maxVisited: 24000 }) !== null, "player should be able to reach the woodcutting instructor route from the cabin");
 }
 
 function run() {

@@ -42,6 +42,14 @@ function run() {
   assert(waterRuntimeSource.includes("appendWaterTileToBuilder"), "world water runtime should batch chunk water surfaces instead of spawning tile meshes");
   assert(waterRuntimeSource.includes("const WATER_EDGE_SUBDIVISIONS = 4;"), "world water runtime should use bounded subdivision for natural shoreline water tiles");
   assert(waterRuntimeSource.includes("function getWaterEdgeOverlap(worldX, worldY, edgeSeed)"), "world water runtime should vary natural shoreline overlap deterministically");
+  assert(renderRuntimeSource.includes("float farWaveFade = 1.0 - smoothstep(54.0, 126.0, cameraDistance);"), "water shader should attenuate wave detail with camera distance");
+  assert(renderRuntimeSource.includes("float farDetailFade = 1.0 - smoothstep(34.0, 82.0, cameraDistance);"), "water shader should fade high-frequency ripples before they alias in far water");
+  assert(renderRuntimeSource.includes("float farColorFade = 1.0 - smoothstep(72.0, 156.0, cameraDistance);"), "far water should converge to a calm single tone instead of keeping banded wave contrast");
+  assert(renderRuntimeSource.includes("float farFoamFade = 1.0 - smoothstep(38.0, 88.0, cameraDistance);"), "water shoreline foam should fade out in the far field");
+  assert(waterRuntimeSource.includes("const WATER_SEAM_BACKFILL_DROP = 0.045;"), "near water should keep a lowered water-colored backfill under tile seams");
+  assert(waterRuntimeSource.includes("const WATER_SEAM_BACKFILL_OVERLAP = 0.035;"), "near water backfill should overlap exact tile edges enough to hide grazing-angle voids");
+  assert(waterRuntimeSource.includes("function appendWaterSeamBackfillQuad(builder, context, x, y, surfaceY)"), "chunk water should generate seam backfill alongside visible water tiles");
+  assert(waterRuntimeSource.includes("type: 'WATER_VISUAL_BACKFILL'"), "water seam backfill should be tagged as visual-only");
   assert(waterRuntimeSource.includes("const subdivisions = (edges.north || edges.east || edges.south || edges.west) ? WATER_EDGE_SUBDIVISIONS : 1;"), "world water runtime should keep interior water cheap while smoothing edge tiles");
   assert(waterRuntimeSource.includes("function usesSmoothWaterShorelineRibbon(body, MAP_SIZE)"), "world water runtime should identify near-view bodies that use smooth shoreline ribbons");
   assert(waterRuntimeSource.includes("function buildSmoothWaterShorelineContourPoints(body)"), "world water runtime should build smooth authored-shape shoreline contours");
@@ -52,6 +60,8 @@ function run() {
   assert(waterRuntimeSource.includes("function getSmoothWaterVisualSurfaceY(body, zOffset)"), "smooth pond surface and shoreline ribbon should share the lowered visual water height");
   assert(waterRuntimeSource.includes("function appendSmoothWaterSurfaceOverlayToBuilder(builder, context, chunkBounds)"), "world water runtime should build smooth filled pond surfaces from the contour");
   assert(waterRuntimeSource.includes("function getWaterInteractionOnlyMaterial(THREE, sharedMaterials)"), "tile water should remain raycastable without drawing jagged visible color under smooth ponds");
+  assert(waterRuntimeSource.includes("sharedMaterials.waterInteractionOnlyMaterial = new THREE.MeshBasicMaterial({\n                visible: false,\n                side: THREE.DoubleSide"), "interaction-only water should remain raycastable while skipping renderer draw calls");
+  assert(!waterRuntimeSource.includes("colorWrite: false"), "interaction-only water should be hidden with material visibility instead of a transparent draw");
   assert(waterRuntimeSource.includes("WATER_VISUAL_SURFACE"), "smooth pond fill should be a visual-only water surface mesh");
   assert(waterRuntimeSource.includes("function appendWaterBodyShorelineRibbonToBuilder(builder, context, chunkBounds)"), "world water runtime should append non-interactive contour shoreline ribbons");
   assert(waterRuntimeSource.includes("if (builder.usesSmoothShorelineRibbon) return;"), "smooth contour bodies should skip the old per-tile shoreline fringe");
@@ -61,7 +71,12 @@ function run() {
   assert(waterRuntimeSource.includes("function getIslandCoastlineSurfaceOuterWidth(context)"), "island coastline visual water should use a continuous wide contour surface instead of near-shore tile water");
   assert(waterRuntimeSource.includes("function getIslandCoastlineTileVisualSuppressionWidth(context)"), "island coastline tile water should be hidden farther out than the contour edge");
   assert(waterRuntimeSource.includes("function isIslandCoastlineWaterTile(context, x, y)"), "surrounding sea tiles near the island contour should be detected separately from open ocean tiles");
-  assert(waterRuntimeSource.includes("return distance <= getIslandCoastlineTileVisualSuppressionWidth(context);"), "near-coast ocean tile visibility should be suppressed from the authored island polygon distance");
+  assert(waterRuntimeSource.includes("isIslandCoastlineWaterTile,"), "water runtime should expose island coastline tile suppression for simplified chunks");
+  assert(
+    waterRuntimeSource.includes("return distance <= width;")
+      && waterRuntimeSource.includes("function isIslandCoastlineWaterTileCached(context, x, y)"),
+    "near-coast ocean tile visibility should be suppressed from the authored island polygon distance with per-chunk caching"
+  );
   assert(waterRuntimeSource.includes("function createIslandCoastlineInteractionBody(body)"), "near-coast ocean tiles should keep interaction geometry without keeping jagged visible tile edges");
   assert(waterRuntimeSource.includes("forceInteractionOnly"), "near-coast ocean tile geometry should be able to remain raycastable while the contour owns the visible shoreline");
   assert(waterRuntimeSource.includes("if (builder.usesIslandCoastlineRibbon) return;"), "surrounding sea bodies should skip old per-tile shoreline fringe along the island coast");
@@ -75,9 +90,22 @@ function run() {
   assert(renderRuntimeSource.includes("function getWaterShorelineRibbonMaterial"), "world render runtime should cache smooth shoreline ribbon materials");
   assert(worldSource.includes("getWaterFringeMaterial"), "world.js should keep passing the compatible shoreline material factory into water rendering");
   assert(waterRuntimeSource.includes("function createWaterBackdropMesh(options = {})"), "world water runtime should expose a cheap ocean underlay for wide camera angles");
+  assert(waterRuntimeSource.includes("function normalizeWaterBackdropBoundsList(bounds)"), "world water runtime should merge ocean backdrop bands into one cheap mesh");
   assert(worldSource.includes("function refreshWorldOceanBackdrop()"), "world.js should refresh the ocean underlay when active water bodies change");
-  assert(worldSource.includes("- 0.12") && !worldSource.includes("- 2.0"), "world ocean underlay should sit just below water so unloaded ocean does not read gray");
+  assert(worldSource.includes("function getIslandWaterLandBounds(islandWater)"), "world ocean underlay should derive safe interior sea bands from the authored island footprint");
+  assert(worldSource.includes("function appendInteriorOceanBackdropBands(backdropBands, islandWater)"), "world ocean underlay should backfill distant surrounding-sea seams inside island maps");
+  assert(worldSource.includes("const ISLAND_OCEAN_BACKDROP_UNDERLAP = 9.0;"), "island ocean backdrop should underlap enough of the coastline to hide low-angle sky gaps");
+  assert(worldSource.includes("const WORLD_OCEAN_BACKDROP_SURFACE_DROP = 0.024;"), "world ocean backdrop should sit below visible water far enough to avoid low-angle z-fighting");
+  assert(worldSource.includes("appendInteriorOceanBackdropBands(backdropBands, sharedMaterials.activeIslandWater || null);"), "world ocean backdrop should include interior ocean bands only when island authoring is active");
+  assert(worldSource.includes("landBounds.yMin + underlap"), "island ocean backdrop north band should only underlap the near land edge");
+  assert(worldSource.includes("landBounds.yMax - underlap"), "island ocean backdrop south band should only underlap the near land edge");
+  assert(worldSource.includes("landBounds.xMin + underlap"), "island ocean backdrop west band should only underlap the near land edge");
+  assert(worldSource.includes("landBounds.xMax - underlap"), "island ocean backdrop east band should only underlap the near land edge");
+  assert(!worldSource.includes("if (yMin > 0.01) backdropBands.push({ xMin: 0, xMax: MAP_SIZE, yMin: 0, yMax });"), "island ocean backdrop should not cover the whole land-height span from the north");
+  assert(!worldSource.includes("if (xMin > 0.01) backdropBands.push({ xMin: 0, xMax, yMin, yMax });"), "island ocean backdrop should not cover the whole land-width span from the west");
+  assert(worldSource.includes("- WORLD_OCEAN_BACKDROP_SURFACE_DROP") && !worldSource.includes("- 2.0"), "world ocean underlay should sit just below water so unloaded ocean does not read gray");
   assert(worldSource.includes("const backdropBands = ["), "world ocean backdrop should be split into bands");
+  assert(worldSource.includes("const backdrop = createWaterBackdropMesh(backdropBands"), "world ocean backdrop bands should be submitted as one merged mesh");
   assert(worldSource.includes("{ xMin: -padding, xMax: MAP_SIZE + padding, yMin: -padding, yMax: 0 }"), "world ocean backdrop should fill north of the playable map");
   assert(worldSource.includes("{ xMin: MAP_SIZE, xMax: MAP_SIZE + padding, yMin: 0, yMax: MAP_SIZE }"), "world ocean backdrop should fill east of the playable map without sitting under interior land");
   assert(!worldSource.includes("xMin: -padding,\n                    xMax: MAP_SIZE + padding,\n                    yMin: -padding,\n                    yMax: MAP_SIZE + padding"), "world ocean backdrop should not be one full-map plane under walkable land");
@@ -91,8 +119,16 @@ function run() {
   assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedWaterMeshes(options = {})"), "chunk tier renderer should build water meshes for mid/far chunks");
   assert(chunkTierRenderRuntimeSource.includes("terrainGeo.setIndex(filteredTerrainIndices);"), "chunk tier renderer should filter simplified grass terrain away from water");
   assert(chunkTierRenderRuntimeSource.includes("let run = null;"), "chunk tier renderer should merge simplified water by exact tile runs instead of coarse shoreline slabs");
-  assert(chunkTierRenderRuntimeSource.includes("const isMixedChunk = hasLandCoverage && hasWaterCoverage;"), "chunk tier renderer should keep open ocean chunks cheap while preserving exact shore runs");
-  assert(chunkTierRenderRuntimeSource.includes("? CHUNK_SIZE"), "chunk tier renderer should use tile-accurate terrain cells for mixed land/water chunks");
+  assert(chunkTierRenderRuntimeSource.includes("appendMergedSimplifiedWaterRuns"), "chunk tier renderer should merge vertically adjacent simplified water runs");
+  assert(chunkTierRenderRuntimeSource.includes("shouldSuppressSimplifiedWaterTile"), "chunk tier renderer should suppress tile water beneath smooth island coastline visuals");
+  assert(chunkTierRenderRuntimeSource.includes("suppressedCoastWaterBodyIds"), "chunk tier renderer should suppress remaining sea tile runs inside coastline-touching simplified chunks");
+  assert(chunkTierRenderRuntimeSource.includes("suppressedCoastWaterBodies"), "chunk tier renderer should add continuous low coast fill under suppressed coastline chunks");
+  assert(chunkTierRenderRuntimeSource.includes("const isMixedChunk = (hasLandCoverage || hasSuppressedCoastWaterCoverage) && hasWaterCoverage;"), "chunk tier renderer should keep open ocean chunks cheap while preserving exact shore runs and suppressed coastline chunks");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_WATER_SEAM_BACKFILL_DROP"), "chunk tier renderer should give distant water a lowered seam backfill");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_WATER_SEAM_BACKFILL_OVERLAP"), "distant water backfill should overlap exact chunk and tile boundaries");
+  assert(chunkTierRenderRuntimeSource.includes("function getSimplifiedWaterStyleTokens"), "far simplified water should use toned-down highlight tokens to avoid distant shimmer aliasing as gaps");
+  assert(chunkTierRenderRuntimeSource.includes("const createSimplifiedTerrainRunMesh = () => {"), "chunk tier renderer should keep mixed land/water coverage exact with merged terrain runs");
+  assert(chunkTierRenderRuntimeSource.includes("runMerged: true"), "chunk tier renderer should tag merged terrain run meshes");
   assert(worldSource.includes("waterRenderBodies: Array.isArray(sharedMaterials.activeWaterRenderBodies)"), "world.js should pass water bodies into simplified chunk rendering");
   assert(worldSource.includes("resolveVisualWaterRenderBodyForTile,"), "world.js should pass water-body resolution into simplified chunk rendering");
   assert(waterRuntimeSource.includes("classifyWaterEdgeType"), "world water runtime should explicitly classify water edges before generating shoreline banks");
@@ -104,7 +140,11 @@ function run() {
   assert(worldSource.includes("isPierVisualCoverageTile"), "world.js should pass visual pier coverage into terrain/water consumers");
   assert(chunkTerrainRuntimeSource.includes("const sampleTerrainVertexHeight ="), "chunk terrain runtime should shape terrain edges from nearby renderable land tiles instead of pulling them toward empty water or pier space");
   assert(chunkTerrainRuntimeSource.includes("if (count > 0 && waterCount > 0) {"), "chunk terrain runtime should bend shoreline terrain vertices toward nearby flat water");
-  assert(waterRuntimeSource.includes("if (isPierVisualCoverageTile(pierConfig, tileX, tileY, z)) continue;"), "world water runtime should ignore pier coverage when computing shoreline intensity so dock water does not artifact");
+  assert(
+    waterRuntimeSource.includes("if (isPierVisualCoverageTile(activePierConfig, tileX, tileY, z)) continue;")
+      || waterRuntimeSource.includes("if (isPierVisualCoverageTile(pierConfig, tileX, tileY, z)) continue;"),
+    "world water runtime should ignore pier coverage when computing shoreline intensity so dock water does not artifact"
+  );
   assert(chunkTerrainRuntimeSource.includes("terrainGeo.setIndex(terrainIndices);"), "chunk terrain runtime should filter terrain triangles so grass does not render across water and manmade surfaces");
   assert(worldSource.includes("createTopAnchoredFloorMesh"), "world.js should build visible floor slabs even when authored floor tiles sit at or below ground height");
   assert(!worldSource.includes("} else if (isWaterTileId(tile)) {"), "world.js should not key primary water rendering directly off the legacy object tile loop");

@@ -36,6 +36,8 @@ export interface ServiceDescriptor extends Point3 {
   tags?: string[];
   dialogueId?: string | null;
   questHookIds?: string[];
+  tutorialVisibleFromStep?: number | null;
+  tutorialVisibleUntilStep?: number | null;
 }
 
 export interface NpcDescriptor extends Point3 {
@@ -51,6 +53,8 @@ export interface NpcDescriptor extends Point3 {
   facingYaw?: number;
   roamingRadiusOverride?: number | null;
   tags?: string[];
+  tutorialVisibleFromStep?: number | null;
+  tutorialVisibleUntilStep?: number | null;
 }
 
 export interface WorldStamp {
@@ -271,6 +275,8 @@ export interface DynamicMerchantSpawn {
   roamingRadiusOverride?: number | null;
   anchorRouteId: string;
   tags?: string[];
+  tutorialVisibleFromStep?: number | null;
+  tutorialVisibleUntilStep?: number | null;
 }
 
 export interface LandmarkTile extends Point3 {
@@ -550,6 +556,8 @@ export interface LegacyNpcRenderPlacement extends Point3 {
   facingYaw?: number;
   roamingRadiusOverride?: number | null;
   tags?: string[];
+  tutorialVisibleFromStep?: number | null;
+  tutorialVisibleUntilStep?: number | null;
 }
 
 export interface LegacyAltarRenderPlacement extends RunecraftingAltarPlacement {}

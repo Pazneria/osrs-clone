@@ -176,21 +176,24 @@
         if (!playerLockState || attackedThisTick) return;
         const playerState = context.playerState || {};
         const temporaryBlockState = context.playerPursuitStateTemporaryBlock || 'temporary-block';
+        const combatActionName = typeof context.getPlayerCombatActionName === 'function'
+            ? context.getPlayerCombatActionName()
+            : 'COMBAT: MELEE';
         if (playerState.action === 'SKILLING: FLETCHING') return;
         if (playerLockState.pursuitState === temporaryBlockState) {
             playerState.path = [];
-            playerState.action = 'COMBAT: MELEE';
+            playerState.action = combatActionName;
             return;
         }
         if (playerLockState.pursuitPath && playerLockState.pursuitPath.length > 0) {
             playerState.path = playerLockState.pursuitPath;
             playerState.action = 'WALKING';
         } else if (
-            typeof context.isWithinMeleeRange === 'function'
-            && context.isWithinMeleeRange(playerState, playerLockState.enemyState)
+            typeof context.isWithinPlayerAttackRange === 'function'
+            && context.isWithinPlayerAttackRange(playerState, playerLockState.enemyState)
         ) {
             if (typeof context.facePlayerTowards === 'function') context.facePlayerTowards(playerLockState.enemyState);
-            playerState.action = 'COMBAT: MELEE';
+            playerState.action = combatActionName;
         }
     }
 

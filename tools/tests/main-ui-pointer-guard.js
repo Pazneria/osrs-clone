@@ -22,9 +22,14 @@ function run() {
     "main UI cursor fixes should stay scoped instead of forcing every document descendant"
   );
   assert(
-    cssSource.includes("#canvas-container { width: 100%; height: 100%; display: block; cursor: default !important; }") &&
-      cssSource.includes("#canvas-container canvas { cursor: default !important; }"),
-    "game canvas should explicitly use the normal cursor"
+    cssSource.includes(".hidden { display: none !important; }"),
+    "core hidden utility should be available when CDN utility CSS is unavailable in local QA"
+  );
+  assert(
+    cssSource.includes("body { position: fixed; inset: 0; }") &&
+      cssSource.includes("#canvas-container { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; cursor: default !important; }") &&
+      cssSource.includes("#canvas-container canvas { display: block; width: 100%; height: 100%; cursor: default !important; }"),
+    "game canvas should stay fixed to the viewport with the normal cursor"
   );
   assert(
     !cssSource.includes("#game-cursor-hit-layer") &&
@@ -78,6 +83,15 @@ function run() {
   assert(
     cssSource.includes("#ui-layer button {\n            pointer-events: auto;"),
     "visible HUD buttons should stay clickable when their layout wrappers pass pointer events through"
+  );
+  assert(
+    cssSource.includes("#ui-layer { position: fixed; inset: 0;"),
+    "UI overlay should stay pinned to the viewport even if chat focus attempts to scroll the page"
+  );
+  assert(
+    cssSource.includes(".player-entry-overlay {\n            pointer-events: auto;\n            position: fixed;\n            inset: 0;") &&
+      cssSource.includes("height: 100%;\n            max-height: 100%;\n            min-height: 0;"),
+    "player entry should own its fixed overlay layout without relying on utility CSS"
   );
   assert(
     cssSource.includes("#main-ui-container button,") &&

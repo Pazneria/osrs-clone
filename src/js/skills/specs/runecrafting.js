@@ -54,7 +54,7 @@
                 },
                 magicRuneDemand: {
                     skillId: 'magic',
-                    status: 'future_sink_contract',
+                    status: 'live_runtime_sink',
                     purpose: 'spell_resource',
                     elementalRuneItemIds: ['ember_rune', 'water_rune', 'earth_rune', 'air_rune'],
                     combinationRuneItemIds: ['steam_rune', 'smoke_rune', 'lava_rune', 'mud_rune', 'mist_rune', 'dust_rune'],

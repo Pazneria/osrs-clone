@@ -390,6 +390,10 @@ function run() {
   const tutorialStaticMiningSmithingSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_mining_smithing_instructor");
   assert(tutorialStaticMiningSmithingSpots.length === 1, "tutorial mining and smithing instructor should render once as a normal static tutorial merchant");
   assert(tutorialStaticMiningSmithingSpots[0].appearanceId === "tutorial_mining_smithing_instructor", "tutorial mining and smithing instructor render spot should preserve the aproned foreman appearance");
+  const tutorialStaticCombatSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_combat_instructor");
+  assert(tutorialStaticCombatSpots.length === 1, "tutorial combat instructor should render once as a normal static tutorial merchant");
+  assert(tutorialStaticCombatSpots[0].appearanceId === "tutorial_combat_instructor", "tutorial combat instructor render spot should preserve the arms trainer appearance");
+  assert(tutorialStaticCombatSpots[0].roamingRadiusOverride === 0, "tutorial combat instructor render spot should preserve stationary roaming");
 
   console.log("Legacy world adapter guard passed.");
 }

@@ -99,7 +99,7 @@
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.buildEquipmentSlotViewModels === 'function') {
                 return runtime.buildEquipmentSlotViewModels({
-                    slots: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
+                    slots: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring', 'ammo'],
                     equipment
                 });
             }
@@ -143,6 +143,18 @@
             const classes = ['item-amt', colorClass];
             if (placementClass) classes.push(placementClass);
             return `<span class="${classes.join(' ')}">${text}</span>`;
+        }
+
+        function getEquipmentEntryItemData(entry) {
+            if (!entry || typeof entry !== 'object') return null;
+            if (entry.itemData && typeof entry.itemData === 'object') return entry.itemData;
+            return entry;
+        }
+
+        function getEquipmentEntryAmount(entry) {
+            if (!entry || typeof entry !== 'object') return 0;
+            const amount = Number(entry.amount);
+            return Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
         }
 
         function buildInventoryTooltipOptions() {
@@ -713,6 +725,9 @@
                 }
                 if (itemDataSlot) {
                     const item = itemDataSlot.itemData;
+                    slot.setAttribute('role', 'button');
+                    slot.setAttribute('tabindex', '0');
+                    slot.setAttribute('aria-label', item && item.name ? item.name : 'Inventory item');
                     slot.innerHTML = `<span class="inv-item-icon">${inventoryViewModel ? inventoryViewModel.icon : item.icon}</span>${formatStackSize(inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, 'item-amt-inv')}`;
                     slot.draggable = true;
                     slot.addEventListener('dragstart', (e) => {
@@ -851,17 +866,25 @@
                 const slotName = slotViewModel.slotName;
                 const el = document.getElementById(`eq-${slotName}`); if (!el) return;
                 el.className = 'w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl select-none hover:bg-[#1a1f24]';
-                const item = equipment[slotName];
+                const entry = equipment[slotName];
+                const item = getEquipmentEntryItemData(entry);
+                const amount = slotViewModel.amount || getEquipmentEntryAmount(entry);
                 if (slotViewModel.hasItem && item) {
-                    el.innerHTML = slotViewModel.icon;
+                    el.setAttribute('role', 'button');
+                    el.setAttribute('tabindex', '0');
+                    el.setAttribute('aria-label', item && item.name ? item.name : 'Equipped item');
+                    el.innerHTML = slotViewModel.icon + formatStackSize(amount, 'item-amt-inv');
                     bindInventorySlotTooltip(
                         el,
-                        buildItemTooltipText(item, { actionText: 'Click to unequip' }),
-                        buildItemTooltipHtml(item, { actionText: 'Click to unequip' })
+                        buildItemTooltipText(item, { amount, actionText: 'Click to unequip' }),
+                        buildItemTooltipHtml(item, { amount, actionText: 'Click to unequip' })
                     );
                     el.onclick = () => unequipItem(slotName);
                     el.style.cursor = 'default';
                 } else {
+                    el.removeAttribute('role');
+                    el.removeAttribute('tabindex');
+                    el.removeAttribute('aria-label');
                     el.innerHTML = '';
                     bindInventorySlotTooltip(el, '');
                     el.onclick = null;

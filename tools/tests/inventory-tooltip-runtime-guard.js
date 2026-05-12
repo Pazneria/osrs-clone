@@ -99,20 +99,25 @@ assert.strictEqual(
 );
 
 const item = {
-  name: "Rune Shield <safe>",
+  name: "Rune Staff <safe>",
   value: 32000,
+  requiredMagicLevel: 10,
   requiredDefenseLevel: 40,
-  stats: { def: 7 },
+  stats: { def: 7, mag: 4, mstr: 6 },
   combat: { attackProfile: { tickCycle: 4 } }
 };
 
 const text = runtime.buildItemTooltipText(item, { amount: 2, actionText: "Click to unequip" });
-assert.ok(text.includes("Rune Shield <safe>"), "plain tooltip text should include the item name");
+assert.ok(text.includes("Rune Staff <safe>"), "plain tooltip text should include the item name");
 assert.ok(text.includes("Amount: 2"), "plain tooltip text should include stack amounts");
+assert.ok(text.includes("Magic req.: 10"), "plain tooltip text should include magic requirements");
 assert.ok(text.includes("Defense req.: 40"), "plain tooltip text should include defense requirements");
 
 const html = runtime.buildItemTooltipHtml(item, { amount: 2 });
-assert.ok(html.includes("Rune Shield &lt;safe&gt;"), "HTML tooltip should escape item names");
+assert.ok(html.includes("Rune Staff &lt;safe&gt;"), "HTML tooltip should escape item names");
+assert.ok(html.includes("Magic bonus"), "HTML tooltip should include magic accuracy labels");
+assert.ok(html.includes("Magic str."), "HTML tooltip should include magic strength labels");
+assert.ok(html.includes("Magic req."), "HTML tooltip should include magic requirement labels");
 assert.ok(html.includes("Defense req."), "HTML tooltip should include defense requirement labels");
 assert.ok(html.includes("+7"), "HTML tooltip should include signed stat bonuses");
 

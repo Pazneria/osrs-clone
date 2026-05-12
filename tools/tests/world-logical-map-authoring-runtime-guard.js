@@ -27,6 +27,8 @@ function run() {
   assert(runtimeSource.includes("function applyStaticWorldAuthoring(options = {})"), "logical-map authoring runtime should own static world authoring");
   assert(runtimeSource.includes("function applyDecorPropLandmarks(options = {})"), "logical-map authoring runtime should own decor prop collision stamping");
   assert(runtimeSource.includes("function applyAuthoredAltarCollision(options = {})"), "logical-map authoring runtime should own altar collision stamping");
+  assert(runtimeSource.includes("function resolveFenceOrGateGroundHeight"), "logical-map authoring should keep fences and gates from lowering existing terrain");
+  assert(runtimeSource.includes("Math.max(existingHeight, Number(authoredHeight))"), "fence and gate authored heights should never carve depressions below their terrain");
   assert(worldSource.includes("WorldLogicalMapAuthoringRuntime"), "world.js should resolve the logical-map authoring runtime");
   assert(worldSource.includes("worldLogicalMapAuthoringRuntime.applyFishingMerchantSpots"), "world.js should delegate fishing merchant authoring");
   assert(worldSource.includes("worldLogicalMapAuthoringRuntime.applyStaticWorldAuthoring"), "world.js should delegate static map authoring");
@@ -82,6 +84,8 @@ function run() {
   assert(fishingResult.npcsToRender[0].action === "Trade", "fishing merchant should default to trade action");
 
   const roofLandmarks = [{ x: 2, y: 2, hideBounds: { xMin: 1, xMax: 3, yMin: 1, yMax: 3 } }];
+  heightMap[0][12][2] = 0.18;
+  heightMap[0][9][10] = 0.16;
   const staticResult = runtime.applyStaticWorldAuthoring({
     bankBoothsToRender: [],
     decorPropLandmarks: [{ propId: "test_notice", kind: "notice_board", x: 13, y: 8, z: 0, blocksMovement: true, tags: ["test"] }],
@@ -144,10 +148,11 @@ function run() {
   assert(Array.isArray(smithNpc.tags) && smithNpc.tags.includes("smithing"), "static merchant render data should preserve tags");
   assert(logicalMap[0][8][8] === tileIds.BANK_BOOTH && heightMap[0][8][8] === 0.25, "staircase landmark tiles should stamp tile and height");
   assert(logicalMap[0][12][1] === tileIds.FENCE && logicalMap[0][12][3] === tileIds.FENCE, "fence landmarks should stamp straight segments");
+  assert(heightMap[0][12][2] === 0.18, "fence landmarks should not lower existing terrain into a visible trench");
   assert(logicalMap[0][13][4] === tileIds.FENCE && logicalMap[0][14][5] === tileIds.FENCE && logicalMap[0][15][6] === tileIds.FENCE && logicalMap[0][16][7] === tileIds.FENCE, "fence landmarks should stamp diagonal segments without gaps");
   assert(logicalMap[0][11][6] === tileIds.SHORE && logicalMap[0][12][7] === tileIds.STAIRS_RAMP, "smithing hall approach should stamp shore and stairs");
   assert(logicalMap[0][9][9] === tileIds.WOODEN_GATE_OPEN, "door landmarks should stamp door tile ids");
-  assert(logicalMap[0][9][10] === tileIds.WOODEN_GATE_CLOSED && heightMap[0][9][10] === 0, "low wooden gates should not raise a square terrain tile under the door");
+  assert(logicalMap[0][9][10] === tileIds.WOODEN_GATE_CLOSED && heightMap[0][9][10] === 0.16, "low wooden gates should not lower existing terrain into a visible trench");
   assert(staticResult.doorsToRender[0].isWoodenGate && staticResult.doorsToRender[0].closedTileId === tileIds.WOODEN_GATE_CLOSED, "door render data should preserve wooden gate metadata");
   assert(staticResult.doorsToRender[0].tutorialAutoOpenOnUnlock === true, "door render data should default tutorial gates to auto-open on unlock");
   assert(logicalMap[0][8][13] === tileIds.OBSTACLE, "blocking decor props should reserve obstacle tiles");

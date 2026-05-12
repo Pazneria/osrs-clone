@@ -56,13 +56,15 @@ function run() {
   assert(!coreSource.includes("let minimapDestination"), "core.js should not own minimap destination state");
   assert(!inputSource.includes("minimapLocked &&"), "input-render.js should not read minimap lock state directly");
   assert(worldSource.includes("shadowFocusRevision"), "world.js should track shadow focus revision changes across scene reloads");
+  assert(worldSource.includes("renderer.shadowMap.autoUpdate = false;"), "world renderer should avoid rebuilding the shadow map every frame");
   assert(worldRenderSource.includes("window.WorldRenderRuntime"), "world render runtime should expose a runtime");
   assert(worldRenderSource.includes("function createWaterSurfaceMaterial"), "world render runtime should own water material construction");
   assert(worldRenderSource.includes("function createSkyDomeMaterial"), "world render runtime should own sky material construction");
   assert(worldRenderSource.includes("function initSkyRuntime"), "world render runtime should initialize the static sky runtime");
   assert(worldRenderSource.includes("mapSize: 512"), "world render runtime should keep the main shadow map on a cheaper 512px budget");
-  assert(worldSource.includes("renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));"), "world renderer should cap main canvas pixel ratio for performance");
-  assert(inputSource.includes("renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));"), "input resize should preserve the main canvas pixel-ratio cap");
+  assert(coreSource.includes("const RENDER_PIXEL_RATIO_CAP = 2.0;"), "renderer pixel-ratio cap should preserve high-DPI clarity while still bounding extreme displays");
+  assert(worldSource.includes("renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, RENDER_PIXEL_RATIO_CAP));"), "world renderer should cap main canvas pixel ratio for performance");
+  assert(inputSource.includes("renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, RENDER_PIXEL_RATIO_CAP));"), "input resize should preserve the main canvas pixel-ratio cap");
   assert(sharedAssetsSource.includes("window.WorldSharedAssetsRuntime"), "world shared asset runtime should expose a runtime");
   assert(sharedAssetsSource.includes("function initSharedAssets(options = {})"), "world shared asset runtime should own shared asset initialization");
   assert(worldSource.includes("WorldRenderRuntime"), "world.js should delegate render infrastructure through the world render runtime");
@@ -87,6 +89,9 @@ function run() {
       && inputSource.includes("return window.InputControllerRuntime || null;"),
     "input-render.js should adopt the input controller bridge lazily"
   );
+  assert(inputSource.includes("const SHADOW_MAP_REFRESH_INTERVAL_MS = 120;"), "input-render.js should throttle shadow-map refreshes while keeping shadows enabled");
+  assert(inputSource.includes("function requestShadowMapRefresh"), "input-render.js should own bounded shadow-map refresh requests");
+  assert(inputSource.includes("renderer.shadowMap.needsUpdate = true;"), "input-render.js should request shadow-map updates explicitly after disabling auto updates");
   assert(inputSource.includes("resolvePointerDown"), "input-render.js should delegate pointer decisions to the input controller bridge");
   assert(inputSource.includes("resolveMouseWheelCameraDistance"), "input-render.js should delegate zoom decisions to the input controller bridge");
   assert(inputQaCameraSource.includes("window.InputQaCameraRuntime"), "input QA camera runtime should expose a window runtime");
@@ -109,6 +114,10 @@ function run() {
   assert(inputHoverTooltipSource.includes("function positionHoverTooltip"), "input hover tooltip runtime should own hover tooltip positioning");
   assert(inputSource.includes("InputHoverTooltipRuntime"), "input-render.js should delegate hover tooltip display through the hover tooltip runtime");
   assert(inputSource.includes("buildInputHoverTooltipRuntimeContext"), "input-render.js should provide a narrow hover tooltip runtime context");
+  assert(inputSource.includes("const HOVER_TOOLTIP_EDGE_GUARD_PX = 8;"), "input-render.js should avoid world hover raycasts when the cursor is parked on a screen edge");
+  assert(inputSource.includes("currentMouseX <= HOVER_TOOLTIP_EDGE_GUARD_PX"), "hover tooltip should hide on edge pixels instead of raycasting through the world");
+  assert(inputSource.includes("if (!isDraggingCamera && !isFreeCam && !(poseEditor.enabled && poseEditor.activeHandle))"), "camera dragging should not dirty hover tooltip work on every pointer move");
+  assert(inputSource.includes("hoverTooltipDirty = true;\n                return;\n            }\n            if (decision && decision.handleInteractionRaycast)"), "starting a camera drag should hide the hover tooltip once before skipping interaction raycasts");
   assert(!inputSource.includes("tooltip.innerHTML = actionText"), "input-render.js should not own hover tooltip DOM updates");
   assert(!inputSource.includes("function resolveTooltipTargetTile"), "input-render.js should not own hover target tile resolution");
   assert(!inputSource.includes("const fireUnderCursor ="), "input-render.js should not own active-fire hover detection");

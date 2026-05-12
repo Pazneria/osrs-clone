@@ -1,6 +1,6 @@
 (function () {
-    const HELP_PRESETS = 'QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa icons, /qa default';
-    const HELP_TOOLS = 'QA tools: /qa worlds, /qa travel <worldId>, /qa creator, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa camera preset <tutorial_surface>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]';
+    const HELP_PRESETS = 'QA presets: /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa ranged, /qa icons, /qa default';
+    const HELP_TOOLS = 'QA tools: /qa worlds, /qa travel <worldId>, /qa creator, /qa perf, /qa setlevel <fishing|firemaking|mining|runecrafting|smithing|ranged> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|ranged|magic|runecrafting|crafting|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa camera preset <tutorial_surface|tutorial_late_yard>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]';
 
     function getWindowRef(context = {}) {
         return context.windowRef || (typeof window !== 'undefined' ? window : {});
@@ -59,7 +59,7 @@
                 ? context.setQaCameraAerialView
                 : (typeof windowRef.setQaCameraAerialView === 'function' ? windowRef.setQaCameraAerialView.bind(windowRef) : null);
             if (!presetId || !setter) {
-                addChat(context, 'Usage: /qa camera preset <tutorial_surface>', 'warn');
+                addChat(context, 'Usage: /qa camera preset <tutorial_surface|tutorial_late_yard>', 'warn');
                 return true;
             }
             const cameraState = setter(presetId);
@@ -67,6 +67,28 @@
             return true;
         }
         return false;
+    }
+
+    function handlePerfCommand(context) {
+        const windowRef = getWindowRef(context);
+        const snapshotReader = typeof context.getRuntimePerformanceSnapshot === 'function'
+            ? context.getRuntimePerformanceSnapshot
+            : (typeof windowRef.getRuntimePerformanceSnapshot === 'function' ? windowRef.getRuntimePerformanceSnapshot.bind(windowRef) : null);
+        if (!snapshotReader) {
+            addChat(context, '[QA perf] snapshot unavailable', 'warn');
+            return true;
+        }
+        const snapshot = snapshotReader() || {};
+        const drawingBuffer = Array.isArray(snapshot.drawingBuffer) ? snapshot.drawingBuffer.join('x') : 'unknown';
+        const pixelRatio = Number.isFinite(snapshot.pixelRatio) ? Number(snapshot.pixelRatio).toFixed(2) : 'unknown';
+        const renderCalls = Number.isFinite(snapshot.renderCalls) ? snapshot.renderCalls : 'unknown';
+        const triangles = Number.isFinite(snapshot.triangles) ? snapshot.triangles : 'unknown';
+        const chunkPreset = snapshot.chunkPolicyPreset || 'unknown';
+        const rendererLabel = snapshot.webglRenderer || 'unknown renderer';
+        const rendererMode = snapshot.softwareWebglRenderer ? 'software' : 'hardware';
+        addChat(context, `[QA perf] fps=${snapshot.fps || '?'} calls=${renderCalls} tris=${triangles} px=${pixelRatio} buffer=${drawingBuffer} chunks=${chunkPreset}`, 'info');
+        addChat(context, `[QA perf] webgl=${rendererMode}: ${rendererLabel}`, snapshot.softwareWebglRenderer ? 'warn' : 'info');
+        return true;
     }
 
     function handleUnlockCommand(parts, context) {
@@ -172,6 +194,7 @@
         if (cmd === 'creator' || cmd === 'appearance') return consumeHook(context, 'qaOpenPlayerCreator');
         if (cmd === 'combattargets') return consumeHook(context, 'qaListCombatTargets');
         if (cmd === 'npctargets') return consumeHook(context, 'qaListNpcTargets', parts.slice(1).join(' '));
+        if (cmd === 'perf') return handlePerfCommand(context);
         if (cmd === 'projecttile') return consumeHook(context, 'qaProjectTile', parts);
         if (cmd === 'raycast') return consumeHook(context, 'qaRaycast', parts);
         if (cmd === 'findhit') return consumeHook(context, 'qaFindHit', parts);
@@ -185,12 +208,12 @@
             const skill = String(parts[1] || '').toLowerCase();
             const lvl = parseInt(parts[2], 10);
             if (!Number.isFinite(lvl)) {
-                addChat(context, 'Usage: /qa setlevel <fishing|firemaking|mining|runecrafting|smithing> <1-99>', 'warn');
+                addChat(context, 'Usage: /qa setlevel <fishing|firemaking|mining|runecrafting|smithing|ranged> <1-99>', 'warn');
                 return true;
             }
             const ok = callHook(context, 'setQaSkillLevel', skill, lvl);
             if (!ok) {
-                addChat(context, 'Unknown skill for /qa setlevel. Use fishing, firemaking, mining, runecrafting, or smithing.', 'warn');
+                addChat(context, 'Unknown skill for /qa setlevel. Use fishing, firemaking, mining, runecrafting, smithing, or ranged.', 'warn');
                 return true;
             }
             addChat(context, `QA set level: ${skill}=${Math.max(1, Math.min(99, Math.floor(lvl)))}`, 'info');
@@ -229,7 +252,7 @@
         }
         if (cmd === 'gototutorial' && parts.length >= 2) {
             const ok = callHook(context, 'qaGotoTutorialStation', String(parts[1] || '').toLowerCase());
-            if (!ok) addChat(context, 'Usage: /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|bank|exit>', 'warn');
+            if (!ok) addChat(context, 'Usage: /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|ranged|magic|runecrafting|crafting|bank|exit>', 'warn');
             return true;
         }
         if (cmd === 'gotoaltar' && parts.length >= 2) {

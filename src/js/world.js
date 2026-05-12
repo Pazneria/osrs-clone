@@ -6,6 +6,7 @@
         let tutorialGuidanceMarkerId = '';
         let tutorialGuidanceMarkerMaterials = null;
         let tutorialGuidanceMarkerGeometries = null;
+        let farChunkBackdropBuilt = false;
 
         const worldProceduralRuntime = window.WorldProceduralRuntime || null;
         const worldRenderRuntime = window.WorldRenderRuntime || null;
@@ -153,6 +154,64 @@
 
         function isFenceConnectorTile(tileId) {
             return worldTownNpcRuntime.isFenceConnectorTile(TileId, tileId);
+        }
+
+        const FENCE_TERRAIN_BASE_CARDINAL_OFFSETS = Object.freeze([
+            { x: 0, y: -1 },
+            { x: 1, y: 0 },
+            { x: 0, y: 1 },
+            { x: -1, y: 0 }
+        ]);
+        const FENCE_TERRAIN_BASE_DIAGONAL_OFFSETS = Object.freeze([
+            { x: -1, y: -1 },
+            { x: 1, y: -1 },
+            { x: 1, y: 1 },
+            { x: -1, y: 1 }
+        ]);
+
+        function isPreferredFenceTerrainBaseTile(tileId) {
+            return tileId === TileId.GRASS
+                || tileId === TileId.DIRT
+                || tileId === TileId.SHORE
+                || tileId === TileId.STUMP
+                || tileId === TileId.ROCK;
+        }
+
+        function isFallbackFenceTerrainBaseTile(tileId) {
+            return tileId === TileId.FLOOR_WOOD
+                || tileId === TileId.FLOOR_STONE
+                || tileId === TileId.FLOOR_BRICK
+                || tileId === TileId.STAIRS_UP
+                || tileId === TileId.STAIRS_DOWN
+                || tileId === TileId.STAIRS_RAMP
+                || tileId === TileId.DOOR_OPEN;
+        }
+
+        function findFenceTerrainBaseTileFromOffsets(x, y, z, offsets, predicate) {
+            for (let i = 0; i < offsets.length; i++) {
+                const nx = x + offsets[i].x;
+                const ny = y + offsets[i].y;
+                if (!logicalMap[z] || !logicalMap[z][ny]) continue;
+                const tile = getVisualTileId(logicalMap[z][ny][nx], nx, ny, z);
+                if (isFenceConnectorTile(tile)) continue;
+                if (predicate(tile)) return tile;
+            }
+            return null;
+        }
+
+        function resolveFenceTerrainBaseTile(x, y, z) {
+            return findFenceTerrainBaseTileFromOffsets(x, y, z, FENCE_TERRAIN_BASE_CARDINAL_OFFSETS, isPreferredFenceTerrainBaseTile)
+                ?? findFenceTerrainBaseTileFromOffsets(x, y, z, FENCE_TERRAIN_BASE_DIAGONAL_OFFSETS, isPreferredFenceTerrainBaseTile)
+                ?? findFenceTerrainBaseTileFromOffsets(x, y, z, FENCE_TERRAIN_BASE_CARDINAL_OFFSETS, isFallbackFenceTerrainBaseTile)
+                ?? findFenceTerrainBaseTileFromOffsets(x, y, z, FENCE_TERRAIN_BASE_DIAGONAL_OFFSETS, isFallbackFenceTerrainBaseTile)
+                ?? TileId.GRASS;
+        }
+
+        function getTerrainVisualTileId(tileId, x, y, z) {
+            const visualTile = getVisualTileId(tileId, x, y, z);
+            return isFenceConnectorTile(visualTile)
+                ? resolveFenceTerrainBaseTile(x, y, z)
+                : visualTile;
         }
 
         function getDoorClosedTileId(door) {
@@ -365,11 +424,13 @@
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 900);
             scene.fog = null;
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, RENDER_PIXEL_RATIO_CAP));
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.outputColorSpace = THREE.SRGBColorSpace;
             renderer.shadowMap.enabled = !!MAIN_DIRECTIONAL_SHADOW_CONFIG.enabled;
             renderer.shadowMap.type = THREE.BasicShadowMap;
+            renderer.shadowMap.autoUpdate = false;
+            renderer.shadowMap.needsUpdate = true;
             container.appendChild(renderer.domElement);
             initSkyRuntime();
             scene.add(new THREE.HemisphereLight(0xfff2d6, 0xb0c29a, 1.08));
@@ -509,6 +570,7 @@
                 document,
                 playerSkills,
                 equipment,
+                inventory,
                 playerState,
                 uiDomainRuntime: window.UiDomainRuntime || null,
                 getCurrentHitpoints,
@@ -1277,6 +1339,9 @@
             };
             const miningQuarryLayoutOverrides = worldMiningQuarryRuntime.getMiningQuarryLayoutOverrides();
             const getMiningQuarryLayout = (routeId, clusterPoints) => worldMiningQuarryRuntime.getMiningQuarryLayout(routeId, clusterPoints);
+            const DRY_QUARRY_FLOOR_MIN_HEIGHT = -0.052;
+            const DRY_QUARRY_FLOOR_MAX_HEIGHT = -0.018;
+            const DRY_QUARRY_SHOULDER_MIN_HEIGHT = -0.035;
             const isQuarrySculptTile = (x, y) => {
                 if (x <= 1 || y <= 1 || x >= MAP_SIZE - 2 || y >= MAP_SIZE - 2) return false;
                 if (inTownCore(x, y)) return false;
@@ -1524,9 +1589,9 @@
                     const tile = logicalMap[0][coord.y][coord.x];
                     const currentHeight = heightMap[0][coord.y][coord.x];
                     if (tile === TileId.DIRT || tile === TileId.ROCK) {
-                        heightMap[0][coord.y][coord.x] = Math.min(-0.11, Math.max(-0.56, currentHeight));
+                        heightMap[0][coord.y][coord.x] = Math.min(DRY_QUARRY_FLOOR_MAX_HEIGHT, Math.max(DRY_QUARRY_FLOOR_MIN_HEIGHT, currentHeight));
                     } else {
-                        heightMap[0][coord.y][coord.x] = Math.max(-0.14, currentHeight);
+                        heightMap[0][coord.y][coord.x] = Math.max(DRY_QUARRY_SHOULDER_MIN_HEIGHT, currentHeight);
                     }
                 }
             };
@@ -1743,6 +1808,46 @@
             return null;
         }
 
+        function getIslandWaterLandBounds(islandWater) {
+            const points = islandWater && islandWater.enabled !== false && Array.isArray(islandWater.landPolygon)
+                ? islandWater.landPolygon
+                : [];
+            let xMin = Infinity;
+            let xMax = -Infinity;
+            let yMin = Infinity;
+            let yMax = -Infinity;
+            for (let i = 0; i < points.length; i++) {
+                const point = points[i];
+                if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+                xMin = Math.min(xMin, point.x);
+                xMax = Math.max(xMax, point.x);
+                yMin = Math.min(yMin, point.y);
+                yMax = Math.max(yMax, point.y);
+            }
+            if (!Number.isFinite(xMin) || !Number.isFinite(xMax) || !Number.isFinite(yMin) || !Number.isFinite(yMax)) return null;
+            return { xMin, xMax, yMin, yMax };
+        }
+
+        const ISLAND_OCEAN_BACKDROP_UNDERLAP = 9.0;
+        const WORLD_OCEAN_BACKDROP_SURFACE_DROP = 0.024;
+
+        function appendInteriorOceanBackdropBands(backdropBands, islandWater) {
+            const landBounds = getIslandWaterLandBounds(islandWater);
+            if (!landBounds) return;
+            const underlap = ISLAND_OCEAN_BACKDROP_UNDERLAP;
+            const topBandMaxY = Math.min(MAP_SIZE, Math.max(0, landBounds.yMin + underlap));
+            const bottomBandMinY = Math.min(MAP_SIZE, Math.max(0, landBounds.yMax - underlap));
+            const leftBandMaxX = Math.min(MAP_SIZE, Math.max(0, landBounds.xMin + underlap));
+            const rightBandMinX = Math.min(MAP_SIZE, Math.max(0, landBounds.xMax - underlap));
+            const sideBandMinY = topBandMaxY;
+            const sideBandMaxY = bottomBandMinY;
+            if (topBandMaxY > 0.01) backdropBands.push({ xMin: 0, xMax: MAP_SIZE, yMin: 0, yMax: topBandMaxY });
+            if (bottomBandMinY < MAP_SIZE - 0.01) backdropBands.push({ xMin: 0, xMax: MAP_SIZE, yMin: bottomBandMinY, yMax: MAP_SIZE });
+            if (sideBandMaxY <= sideBandMinY) return;
+            if (leftBandMaxX > 0.01) backdropBands.push({ xMin: 0, xMax: leftBandMaxX, yMin: sideBandMinY, yMax: sideBandMaxY });
+            if (rightBandMinX < MAP_SIZE - 0.01) backdropBands.push({ xMin: rightBandMinX, xMax: MAP_SIZE, yMin: sideBandMinY, yMax: sideBandMaxY });
+        }
+
         function refreshWorldOceanBackdrop() {
             removeWorldOceanBackdrop();
             if (!scene) return null;
@@ -1752,19 +1857,16 @@
             const oceanBody = findFullMapOceanBody(waterBodies);
             if (!oceanBody || !oceanBody.styleTokens) return null;
             const padding = Math.max(192, Math.floor(MAP_SIZE * 0.6));
-            const surfaceY = (Number.isFinite(oceanBody.surfaceY) ? oceanBody.surfaceY : -0.075) - 0.12;
-            const backdrop = new THREE.Group();
+            const surfaceY = (Number.isFinite(oceanBody.surfaceY) ? oceanBody.surfaceY : -0.075) - WORLD_OCEAN_BACKDROP_SURFACE_DROP;
             const backdropBands = [
                 { xMin: -padding, xMax: MAP_SIZE + padding, yMin: -padding, yMax: 0 },
                 { xMin: -padding, xMax: MAP_SIZE + padding, yMin: MAP_SIZE, yMax: MAP_SIZE + padding },
                 { xMin: -padding, xMax: 0, yMin: 0, yMax: MAP_SIZE },
                 { xMin: MAP_SIZE, xMax: MAP_SIZE + padding, yMin: 0, yMax: MAP_SIZE }
             ];
-            backdropBands.forEach((bounds) => {
-                const band = createWaterBackdropMesh(bounds, surfaceY, oceanBody.styleTokens, 1.0, 0.02);
-                if (band) backdrop.add(band);
-            });
-            if (backdrop.children.length <= 0) return null;
+            appendInteriorOceanBackdropBands(backdropBands, sharedMaterials.activeIslandWater || null);
+            const backdrop = createWaterBackdropMesh(backdropBands, surfaceY, oceanBody.styleTokens, 1.0, 0.02);
+            if (!backdrop) return null;
             backdrop.userData = Object.assign({}, backdrop.userData, { type: 'WATER_BACKDROP', waterBodyId: oceanBody.id });
             scene.add(backdrop);
             sharedMaterials.worldOceanBackdrop = backdrop;
@@ -1942,6 +2044,7 @@
                 worldChunksY: WORLD_CHUNKS_Y,
                 chunkSize: CHUNK_SIZE,
                 getChunkCenterPosition,
+                now: () => performance.now(),
                 hasPlayerRig: () => !!playerRig,
                 removeChunkGroupFromScene: (group) => {
                     if (scene && group) scene.remove(group);
@@ -1975,6 +2078,7 @@
         }
 
         function clearChunkTierGroups() {
+            farChunkBackdropBuilt = false;
             getWorldChunkSceneRuntime().clearChunkTierGroups(buildChunkSceneRuntimeContext());
         }
 
@@ -1996,12 +2100,15 @@
                     ? sharedMaterials.activeWaterRenderBodies
                     : [],
                 getVisualTileId,
+                getTerrainVisualTileId,
                 isTreeTileId,
                 isWaterTileId,
                 isPierVisualCoverageTile,
                 getActivePierConfig,
                 getWaterSurfaceMaterial,
                 resolveVisualWaterRenderBodyForTile,
+                islandWater: sharedMaterials.activeIslandWater || null,
+                isIslandCoastlineWaterTile: worldWaterRuntime.isIslandCoastlineWaterTile,
                 stampedStructures: Array.isArray(sharedMaterials.activeStampedStructures)
                     ? sharedMaterials.activeStampedStructures
                     : [],
@@ -2039,11 +2146,13 @@
 
         function ensureFarChunkBackdropBuilt() {
             if (!scene) return;
+            if (farChunkBackdropBuilt) return;
             for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
                 for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
                     ensureFarChunkGroup(cx, cy);
                 }
             }
+            farChunkBackdropBuilt = true;
         }
 
         function setChunkInteractionState(key, shouldRegisterInteraction) {
@@ -2070,6 +2179,7 @@
                 isWaterTileId,
                 isPierVisualCoverageTile,
                 getVisualTileId,
+                getTerrainVisualTileId,
                 getWaterSurfaceHeightForTile,
                 sampleFractalNoise2D
             });
@@ -2097,26 +2207,45 @@
                     buildChunkGroundMeshes(planeGroup, startX, startY, activePierConfig, waterRenderBodies);
                 }
 
-                let wCount = 0, cCount = 0;
-                const resourceCounts = worldChunkResourceRenderRuntime.collectChunkResourceVisualCounts({
+                let wCount = 0, cCount = 0, fenceCount = 0;
+                const floorCounts = { stone: 0, wood: 0, brick: 0 };
+                const visualTileRows = [];
+                const resourceCounts = worldChunkResourceRenderRuntime.createEmptyResourceVisualCounts();
+                const getChunkVisualTileId = (rawTile, tileX, tileY, tileZ) => {
+                    if (tileZ === z && tileX >= startX && tileX < endX && tileY >= startY && tileY < endY) {
+                        const row = visualTileRows[tileY - startY];
+                        if (row && row[tileX - startX] !== undefined) return row[tileX - startX];
+                    }
+                    return getVisualTileId(rawTile, tileX, tileY, tileZ);
+                };
+                const resourceCountOptions = {
                     TileId,
-                    logicalMap,
-                    startX,
-                    startY,
-                    endX,
-                    endY,
-                    z,
                     currentTick,
-                    getVisualTileId,
                     isTreeTileId,
                     getRockNodeAt,
                     getRockVisualIdForNode
-                });
+                };
                 for (let y = startY; y < endY; y++) {
+                    const visualTileRow = [];
+                    visualTileRows[y - startY] = visualTileRow;
                     for (let x = startX; x < endX; x++) {
-                        let tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
+                        const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
+                        visualTileRow[x - startX] = tile;
+                        worldChunkResourceRenderRuntime.countChunkResourceVisualTile(resourceCounts, resourceCountOptions, tile, x, y, z);
                         if (tile === TileId.WALL) wCount++;
                         else if (tile === TileId.TOWER) cCount++;
+                        else if (tile === TileId.FENCE) fenceCount++;
+                        const floorBucket = worldStructureRenderRuntime.getFloorTileRenderBucket({
+                            logicalMap,
+                            TileId,
+                            pierConfig: activePierConfig,
+                            isPierDeckTile,
+                            visualTile: tile,
+                            x,
+                            y,
+                            z
+                        });
+                        if (floorBucket && floorCounts[floorBucket] !== undefined) floorCounts[floorBucket]++;
                     }
                 }
 
@@ -2136,6 +2265,22 @@
                     wallCount: wCount,
                     towerCount: cCount
                 });
+                let fenceData = worldStructureRenderRuntime.createFenceRenderData({
+                    THREE,
+                    sharedGeometries,
+                    sharedMaterials,
+                    planeGroup,
+                    environmentMeshes,
+                    fenceCount
+                });
+                let floorData = worldStructureRenderRuntime.createFloorTileRenderData({
+                    THREE,
+                    sharedGeometries,
+                    sharedMaterials,
+                    planeGroup,
+                    environmentMeshes,
+                    floorCounts
+                });
 
                 const dummyTransform = new THREE.Object3D();
                 let wIdx = 0, cIdx = 0;
@@ -2144,7 +2289,7 @@
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
-                        const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
+                        const tile = visualTileRows[y - startY][x - startX];
 
                         if (worldChunkResourceRenderRuntime.appendChunkResourceVisual({
                             THREE,
@@ -2160,7 +2305,7 @@
                             y,
                             z,
                             zOffset: Z_OFFSET,
-                            getVisualTileId,
+                            getVisualTileId: getChunkVisualTileId,
                             isTreeTileId,
                             isWaterTileId,
                             isPierVisualCoverageTile,
@@ -2174,8 +2319,20 @@
                         })) {
                             continue;
                         } else if (tile === TileId.FENCE) {
-                            const fenceGroup = createFenceVisualGroup(x, y, z, Z_OFFSET, heightMap[z][y][x]);
-                            planeGroup.add(fenceGroup);
+                            worldStructureRenderRuntime.appendFenceVisualState({
+                                fenceData,
+                                dummyTransform,
+                                logicalMap,
+                                TileId,
+                                mapSize: MAP_SIZE,
+                                x,
+                                y,
+                                z,
+                                zOffset: Z_OFFSET,
+                                baseHeight: heightMap[z][y][x],
+                                getVisualTileId: getChunkVisualTileId,
+                                isFenceConnectorTile
+                            });
                         } else if (tile === TileId.WALL) {
                             wIdx = worldStructureRenderRuntime.setCastleWallVisualState({
                                 castleData,
@@ -2215,14 +2372,12 @@
                                 zOffset: Z_OFFSET
                             });
                         } else if (tile === TileId.FLOOR_STONE || tile === TileId.FLOOR_WOOD || tile === TileId.FLOOR_BRICK || tile === TileId.BANK_BOOTH || logicalMap[z][y][x] === TileId.SOLID_NPC) {
-                            worldStructureRenderRuntime.appendFloorTileVisual({
-                                THREE,
-                                sharedMaterials,
+                            worldStructureRenderRuntime.appendFloorTileVisualState({
+                                floorData,
+                                dummyTransform,
                                 logicalMap,
                                 heightMap,
                                 TileId,
-                                planeGroup,
-                                environmentMeshes,
                                 pierConfig: activePierConfig,
                                 isPierDeckTile,
                                 visualTile: tile,
@@ -2270,6 +2425,8 @@
                     markRockVisualsDirty
                 });
                 worldStructureRenderRuntime.markCastleRenderDataDirty(castleData);
+                worldStructureRenderRuntime.markFenceRenderDataDirty(fenceData);
+                worldStructureRenderRuntime.markFloorTileRenderDataDirty(floorData);
 
                 planeGroup.userData.trees = resourceRenderState.treeData;
                 planeGroup.userData.rocks = resourceRenderState.rockData;
@@ -2323,7 +2480,7 @@
             getWorldChunkSceneRuntime().setLoadedChunkPlaneVisibility(maxVisiblePlane, buildChunkSceneRuntimeContext());
         }
 
-        function unloadChunkGroup(key, group) {
+        function unloadChunkGroup(key, group, metadata = {}) {
             if (group) {
                 scene.remove(group);
                 activeRoofVisuals = activeRoofVisuals.filter((roofGroup) => {
@@ -2334,14 +2491,20 @@
                     }
                     return true;
                 });
-                environmentMeshes = environmentMeshes.filter(m => {
-                    let parent = m;
-                    while (parent) {
-                        if (parent === group) return false;
-                        parent = parent.parent;
-                    }
-                    return true;
-                });
+                const interactionMeshes = Array.isArray(metadata.interactionMeshes) ? metadata.interactionMeshes : null;
+                if (interactionMeshes && interactionMeshes.length > 0) {
+                    const removeSet = new Set(interactionMeshes);
+                    environmentMeshes = environmentMeshes.filter((mesh) => !removeSet.has(mesh));
+                } else {
+                    environmentMeshes = environmentMeshes.filter(m => {
+                        let parent = m;
+                        while (parent) {
+                            if (parent === group) return false;
+                            parent = parent.parent;
+                        }
+                        return true;
+                    });
+                }
             }
             const chunkNpcActors = worldTownNpcRuntime.getLoadedChunkNpcActors(key);
             for (let i = 0; i < chunkNpcActors.length; i++) {
@@ -2380,6 +2543,7 @@
             initSharedAssets();
             refreshWorldOceanBackdrop();
             clearPendingNearChunkBuilds();
+            farChunkBackdropBuilt = false;
             ensureFarChunkBackdropBuilt();
             markChunkPolicyDirty();
         }
@@ -2398,6 +2562,7 @@
                 hasPlayerRig: () => !!playerRig,
                 initLogicalMap,
                 resetChunkSceneState: () => {
+                    farChunkBackdropBuilt = false;
                     getWorldChunkSceneRuntime().resetForWorldReload(buildChunkSceneRuntimeContext());
                 },
                 clearCombatEnemyRenderers: () => {
@@ -2520,6 +2685,46 @@
         function updateMinimap(frameNowMs = performance.now(), forceRender = false) {
             getWorldMapHudRuntime().updateMinimap(frameNowMs, forceRender, buildMapHudRuntimeContext());
         }
+
+        function getRuntimePerformanceSnapshot() {
+            const canvas = renderer && renderer.domElement ? renderer.domElement : null;
+            let webglVendor = '';
+            let webglRenderer = '';
+            if (canvas && typeof canvas.getContext === 'function') {
+                const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    webglVendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+                    webglRenderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+                }
+            }
+            const size = { x: 0, y: 0, set(x, y) { this.x = x; this.y = y; return this; } };
+            if (renderer && typeof renderer.getDrawingBufferSize === 'function') renderer.getDrawingBufferSize(size);
+            const activePreset = typeof window.getActiveChunkRenderPolicyPreset === 'function'
+                ? window.getActiveChunkRenderPolicyPreset()
+                : null;
+            const chunkPolicy = typeof window.getChunkRenderPolicy === 'function'
+                ? window.getChunkRenderPolicy(activePreset || undefined)
+                : null;
+            const chunkStreaming = getWorldChunkSceneRuntime()
+                && typeof getWorldChunkSceneRuntime().getChunkStreamingQueueStats === 'function'
+                ? getWorldChunkSceneRuntime().getChunkStreamingQueueStats()
+                : null;
+            return {
+                fps: document.getElementById('fps-value') ? document.getElementById('fps-value').innerText : '',
+                renderCalls: renderer && renderer.info ? renderer.info.render.calls : null,
+                triangles: renderer && renderer.info ? renderer.info.render.triangles : null,
+                pixelRatio: renderer && typeof renderer.getPixelRatio === 'function' ? renderer.getPixelRatio() : null,
+                drawingBuffer: [size.x, size.y],
+                webglVendor,
+                webglRenderer,
+                softwareWebglRenderer: /swiftshader|software|llvmpipe|mesa offscreen/i.test(String(webglRenderer || '')),
+                chunkPolicyPreset: activePreset,
+                chunkPolicy,
+                chunkStreaming
+            };
+        }
+
         function resolveTreeRespawnTicks(gridX, gridY, z) {
             return worldTreeLifecycleRuntime.resolveTreeRespawnTicks(buildTreeLifecycleRuntimeContext(), gridX, gridY, z);
         }
@@ -2558,6 +2763,7 @@
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateWorldNpcRuntime = updateWorldNpcRuntime;
         window.updateMinimap = updateMinimap;
+        window.getRuntimePerformanceSnapshot = getRuntimePerformanceSnapshot;
         window.setLoadedChunkPlaneVisibility = setLoadedChunkPlaneVisibility;
         window.listQaNpcTargets = listQaNpcTargets;
         window.updateWorldMapPanel = updateWorldMapPanel;

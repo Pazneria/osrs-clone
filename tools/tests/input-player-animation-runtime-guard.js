@@ -25,10 +25,14 @@ function run() {
   assert(runtimeSource.includes("function getActiveSkillBaseClipId"), "input player animation runtime should own skill base clip policy");
   assert(runtimeSource.includes("function buildBaseClipOptions"), "input player animation runtime should own skill held-item clip options");
   assert(runtimeSource.includes("function buildFishingStartActionClipRequest"), "input player animation runtime should own fishing start-action clip policy");
+  assert(runtimeSource.includes("function buildCombatAttackActionClipRequest"), "input player animation runtime should own combat action clip policy");
+  assert(runtimeSource.includes("function getRangedBowShotFrame"), "input player animation runtime should expose ranged bow-shot timing");
 
   assert(inputSource.includes("function getInputPlayerAnimationRuntime()"), "input-render.js should resolve the input player animation runtime");
   assert(inputSource.includes("playerAnimationRuntime.buildBaseClipOptions"), "input-render.js should delegate base clip options to the player animation runtime");
   assert(inputSource.includes("playerAnimationRuntime.buildFishingStartActionClipRequest"), "input-render.js should delegate fishing action clip requests to the player animation runtime");
+  assert(inputSource.includes("playerAnimationRuntime.buildCombatAttackActionClipRequest"), "input-render.js should delegate combat action clip requests to the player animation runtime");
+  assert(inputSource.includes("playerAnimationRuntime.getRangedBowShotFrame"), "input-render.js should delegate bow-shot timing to the player animation runtime");
   assert(!inputSource.includes("function isMiningSkillAction("), "input-render.js should not own skill action clip predicates");
   assert(!inputSource.includes("const FISHING_START_ACTION_REQUEST_WINDOW_MS"), "input-render.js should not own fishing start action timing policy");
   assert(!inputSource.includes("function isHarpoonFishingMethodId("), "input-render.js should not own fishing method animation policy");
@@ -47,6 +51,25 @@ function run() {
   assert(runtime.getPlayerBaseClipId({ isMoving: true, logicalTilesMoved: 1, isRunning: false }) === "player/walk", "runtime should map normal movement to walk");
   assert(runtime.getPlayerBaseClipId({ isMoving: true, logicalTilesMoved: 1, isRunning: true }) === "player/run", "runtime should map running movement to run");
   assert(runtime.getPlayerBaseClipId({ isMoving: false, playerState: { action: "IDLE" } }) === "player/idle", "runtime should map idle state to idle");
+  assert(runtime.getCombatAttackClipDef("melee").clipId === "player/combat_slash", "runtime should keep melee attacks on the slash clip");
+  assert(runtime.getCombatAttackClipDef("ranged").clipId === "player/combat_bow_shot", "runtime should map ranged attacks to the bow shot clip");
+  const rangedAttackRequest = runtime.buildCombatAttackActionClipRequest({
+    rig: { attackStyleFamily: "ranged", attackAnimationStartedAt: 2000 },
+    frameNow: 2260,
+    isTimedAnimationActive: (startedAt, durationMs, frameNow) => startedAt === 2000 && durationMs === 900 && frameNow === 2260
+  });
+  assert(rangedAttackRequest.clipId === "player/combat_bow_shot", "runtime should request the ranged bow shot action clip");
+  assert(rangedAttackRequest.actionOptions.startKey === "ranged-attack:2000", "runtime should build style-specific combat action start keys");
+  const bowShotFrame = runtime.getRangedBowShotFrame({
+    rig: { attackStyleFamily: "ranged", attackAnimationStartedAt: 2000 },
+    frameNow: 2215
+  });
+  assert(bowShotFrame && bowShotFrame.drawProgress > 0 && bowShotFrame.released === false, "runtime should expose pre-release bow draw progress");
+  assert(bowShotFrame.releaseMs === 560, "runtime bow-shot release timing should match the authored held-draw clip timing");
+  assert(runtime.getRangedBowShotFrame({
+    rig: { attackStyleFamily: "melee", attackAnimationStartedAt: 2000 },
+    frameNow: 2215
+  }) === null, "runtime should only expose bow-shot frames for ranged attacks");
 
   const heldItems = runtime.normalizeSkillAnimationHeldItems({ rightHand: "knife", leftHand: null, ignored: "x" });
   assert(heldItems.rightHand === "knife" && heldItems.leftHand === null && heldItems.ignored === undefined, "runtime should normalize skill held item payloads");

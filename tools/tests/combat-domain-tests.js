@@ -22,11 +22,101 @@ function makeWeapon(overrides = {}) {
       bonuses: {
         meleeAccuracyBonus: overrides.meleeAccuracyBonus || 0,
         meleeStrengthBonus: overrides.meleeStrengthBonus || 0,
+        rangedAccuracyBonus: overrides.rangedAccuracyBonus || 0,
+        rangedStrengthBonus: overrides.rangedStrengthBonus || 0,
+        magicAccuracyBonus: overrides.magicAccuracyBonus || 0,
+        magicStrengthBonus: overrides.magicStrengthBonus || 0,
         meleeDefenseBonus: overrides.meleeDefenseBonus || 0,
         rangedDefenseBonus: overrides.rangedDefenseBonus || 0,
         magicDefenseBonus: overrides.magicDefenseBonus || 0
       },
       requiredAttackLevel: overrides.requiredAttackLevel || 1
+    }
+  };
+}
+
+function makeBow(overrides = {}) {
+  return {
+    combat: {
+      attackProfile: {
+        styleFamily: "ranged",
+        damageType: "ranged",
+        range: overrides.range || 7,
+        tickCycle: overrides.tickCycle || 4,
+        projectile: true,
+        ammoUse: true,
+        familyTag: "bow"
+      },
+      bonuses: {
+        meleeAccuracyBonus: 0,
+        meleeStrengthBonus: 0,
+        rangedAccuracyBonus: overrides.rangedAccuracyBonus || 0,
+        rangedStrengthBonus: overrides.rangedStrengthBonus || 0,
+        magicAccuracyBonus: 0,
+        magicStrengthBonus: 0,
+        meleeDefenseBonus: 0,
+        rangedDefenseBonus: 0,
+        magicDefenseBonus: 0
+      },
+      requiredAttackLevel: 1,
+      requiredRangedLevel: overrides.requiredRangedLevel || 1,
+      weaponFamily: "bow"
+    }
+  };
+}
+
+function makeStaff(overrides = {}) {
+  return {
+    combat: {
+      attackProfile: {
+        styleFamily: "magic",
+        damageType: "magic",
+        range: overrides.range || 6,
+        tickCycle: overrides.tickCycle || 4,
+        projectile: true,
+        ammoUse: true,
+        familyTag: "staff"
+      },
+      bonuses: {
+        meleeAccuracyBonus: 0,
+        meleeStrengthBonus: 0,
+        rangedAccuracyBonus: 0,
+        rangedStrengthBonus: 0,
+        magicAccuracyBonus: overrides.magicAccuracyBonus || 0,
+        magicStrengthBonus: overrides.magicStrengthBonus || 0,
+        meleeDefenseBonus: 0,
+        rangedDefenseBonus: 0,
+        magicDefenseBonus: 0
+      },
+      requiredAttackLevel: 1,
+      requiredMagicLevel: overrides.requiredMagicLevel || 1,
+      weaponFamily: "staff"
+    }
+  };
+}
+
+function makeAmmo(itemId, overrides = {}) {
+  return {
+    id: itemId,
+    ammo: {
+      damageType: "ranged",
+      ammoTier: overrides.ammoTier || 1,
+      rangedAccuracyBonus: overrides.rangedAccuracyBonus || 0,
+      rangedStrengthBonus: overrides.rangedStrengthBonus || 0,
+      compatibleWeaponFamilies: ["bow"]
+    }
+  };
+}
+
+function makeMagicRune(itemId, overrides = {}) {
+  return {
+    id: itemId,
+    ammo: {
+      damageType: "magic",
+      ammoTier: overrides.ammoTier || 1,
+      magicAccuracyBonus: overrides.magicAccuracyBonus || 0,
+      magicStrengthBonus: overrides.magicStrengthBonus || 0,
+      compatibleWeaponFamilies: ["staff"]
     }
   };
 }
@@ -123,6 +213,143 @@ function makeWeapon(overrides = {}) {
 }
 
 {
+  const rangedSnapshot = combatFormulas.computePlayerRangedCombatSnapshot({
+    playerSkills: {
+      ranged: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeBow({ rangedAccuracyBonus: 8, tickCycle: 4, range: 7, requiredRangedLevel: 10 }),
+      shield: makeWeapon({ meleeDefenseBonus: 5, rangedDefenseBonus: 5, magicDefenseBonus: 5, familyTag: "shield" })
+    },
+    inventory: [
+      { itemData: makeAmmo("bronze_arrows", { ammoTier: 1, rangedAccuracyBonus: 2, rangedStrengthBonus: 4 }), amount: 15 }
+    ],
+    playerState: {}
+  });
+
+  assert.strictEqual(rangedSnapshot.styleFamily, "ranged", "ranged snapshot should identify the active style family");
+  assert.strictEqual(rangedSnapshot.canAttack, true, "ranged attacks should be allowed when level and ammo requirements are met");
+  assert.strictEqual(rangedSnapshot.attackValue, 30, "ranged attack value should include bow and ammo accuracy");
+  assert.strictEqual(rangedSnapshot.defenseValue, 15, "ranged defense value should use ranged defense bonuses");
+  assert.strictEqual(rangedSnapshot.maxHit, 3, "ranged max hit should use ranged level and ammo strength");
+  assert.strictEqual(rangedSnapshot.attackRange, 7, "ranged snapshot should expose bow attack range");
+  assert.strictEqual(rangedSnapshot.attackTickCycle, 4, "ranged snapshot should expose bow attack cadence");
+  assert.strictEqual(rangedSnapshot.consumesAmmo, true, "ranged bow attacks should advertise ammo consumption");
+  assert.strictEqual(rangedSnapshot.ammoInventoryIndex, 0, "ranged snapshot should point at the selected ammo stack");
+  assert.strictEqual(rangedSnapshot.ammoEquipmentSlot, null, "inventory ammo selection should not claim an equipment ammo slot");
+
+  const equippedAmmoSnapshot = combatFormulas.computePlayerRangedCombatSnapshot({
+    playerSkills: {
+      ranged: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeBow({ rangedAccuracyBonus: 8, tickCycle: 4, range: 7, requiredRangedLevel: 10 }),
+      ammo: { itemData: makeAmmo("bronze_arrows", { ammoTier: 1, rangedAccuracyBonus: 2, rangedStrengthBonus: 4 }), amount: 15 }
+    },
+    inventory: [
+      { itemData: makeAmmo("iron_arrows", { ammoTier: 2, rangedAccuracyBonus: 3, rangedStrengthBonus: 5 }), amount: 15 }
+    ],
+    playerState: {}
+  });
+  assert.strictEqual(equippedAmmoSnapshot.canAttack, true, "equipped ammo should satisfy bow ammo requirements");
+  assert.strictEqual(equippedAmmoSnapshot.ammoEquipmentSlot, "ammo", "ranged snapshot should prefer the equipped ammo slot");
+  assert.strictEqual(equippedAmmoSnapshot.ammoInventoryIndex, null, "equipped ammo selection should not consume inventory ammo");
+  assert.strictEqual(equippedAmmoSnapshot.ammoItemId, "bronze_arrows", "equipped ammo should surface its item id");
+
+  const activeSnapshot = combatFormulas.computePlayerCombatSnapshot({
+    playerSkills: {
+      ranged: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeBow({ rangedAccuracyBonus: 8 })
+    },
+    inventory: [
+      { itemData: makeAmmo("iron_arrows", { ammoTier: 2, rangedAccuracyBonus: 3, rangedStrengthBonus: 5 }), amount: 1 }
+    ],
+    playerState: {}
+  });
+  assert.strictEqual(activeSnapshot.styleFamily, "ranged", "active combat snapshot should switch to ranged when a bow is equipped");
+
+  const noAmmoSnapshot = combatFormulas.computePlayerRangedCombatSnapshot({
+    playerSkills: {
+      ranged: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeBow({ rangedAccuracyBonus: 8 })
+    },
+    inventory: [],
+    playerState: {}
+  });
+  assert.strictEqual(noAmmoSnapshot.canAttack, false, "ammo-using ranged weapons should not attack without compatible ammo");
+}
+
+{
+  const magicSnapshot = combatFormulas.computePlayerMagicCombatSnapshot({
+    playerSkills: {
+      magic: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeStaff({ magicAccuracyBonus: 6, magicStrengthBonus: 4, tickCycle: 4, range: 6, requiredMagicLevel: 10 }),
+      shield: makeWeapon({ meleeDefenseBonus: 5, rangedDefenseBonus: 5, magicDefenseBonus: 5, familyTag: "shield" })
+    },
+    inventory: [
+      { itemData: makeMagicRune("ember_rune", { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }), amount: 5 }
+    ],
+    playerState: {}
+  });
+
+  assert.strictEqual(magicSnapshot.styleFamily, "magic", "magic snapshot should identify the active style family");
+  assert.strictEqual(magicSnapshot.damageType, "magic", "magic snapshot should identify the active damage type");
+  assert.strictEqual(magicSnapshot.canAttack, true, "magic attacks should be allowed when level and rune requirements are met");
+  assert.strictEqual(magicSnapshot.attackValue, 27, "magic attack value should include staff and rune accuracy");
+  assert.strictEqual(magicSnapshot.defenseValue, 15, "magic defense value should use magic defense bonuses");
+  assert.strictEqual(magicSnapshot.maxHit, 3, "magic max hit should use Magic level and rune strength");
+  assert.strictEqual(magicSnapshot.attackRange, 6, "magic snapshot should expose staff attack range");
+  assert.strictEqual(magicSnapshot.attackTickCycle, 4, "magic snapshot should expose staff cadence");
+  assert.strictEqual(magicSnapshot.consumesAmmo, true, "magic staff attacks should advertise rune consumption");
+  assert.strictEqual(magicSnapshot.ammoInventoryIndex, 0, "magic snapshot should point at the selected rune stack");
+  assert.strictEqual(magicSnapshot.ammoItemId, "ember_rune", "magic snapshot should surface the selected rune id");
+
+  const activeSnapshot = combatFormulas.computePlayerCombatSnapshot({
+    playerSkills: {
+      magic: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeStaff({ magicAccuracyBonus: 6, magicStrengthBonus: 4 })
+    },
+    inventory: [
+      { itemData: makeMagicRune("ember_rune", { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }), amount: 1 }
+    ],
+    playerState: {}
+  });
+  assert.strictEqual(activeSnapshot.styleFamily, "magic", "active combat snapshot should switch to magic when a staff is equipped");
+
+  const noRuneSnapshot = combatFormulas.computePlayerMagicCombatSnapshot({
+    playerSkills: {
+      magic: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeStaff({ magicAccuracyBonus: 6, magicStrengthBonus: 4 })
+    },
+    inventory: [],
+    playerState: {}
+  });
+  assert.strictEqual(noRuneSnapshot.canAttack, false, "magic staff attacks should not fire without compatible runes");
+}
+
+{
   const enemySnapshot = combatFormulas.computeEnemyMeleeCombatSnapshot(combatContent.getEnemyTypeDefinition("enemy_goblin_grunt"));
   assert.deepStrictEqual(
     enemySnapshot,
@@ -164,6 +391,7 @@ function makeWeapon(overrides = {}) {
 
   combatBridge.exposeCombatBridge();
   assert.strictEqual(window.CombatRuntime.computePlayerMaxHitpoints({ hitpoints: { xp: 0, level: 13 } }), 13, "combat bridge should expose player max hitpoints");
+  assert.strictEqual(typeof window.CombatRuntime.computePlayerMagicCombatSnapshot, "function", "combat bridge should expose magic player snapshots");
   assert.deepStrictEqual(
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),
     { currentHitpoints: 1, dealt: 5 },

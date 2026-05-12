@@ -224,8 +224,8 @@
     }
 
     const defaultSlotKits = {
-        0: ['kit_head_male', null, null, null, 'kit_body_male', null, 'kit_legs_male', 'kit_hands_male', 'kit_feet_male', null],
-        1: ['kit_head_female', null, null, null, 'kit_body_female', null, 'kit_legs_female', 'kit_hands_female', 'kit_feet_female', null]
+        0: ['kit_head_male', null, null, null, 'kit_body_male', null, 'kit_legs_male', 'kit_hands_male', 'kit_feet_male', null, null],
+        1: ['kit_head_female', null, null, null, 'kit_body_female', null, 'kit_legs_female', 'kit_hands_female', 'kit_feet_female', null, null]
     };
 
     const kitDefs = {
@@ -903,6 +903,51 @@
         g: '#874d43'
     });
 
+    const NORMAL_BOW_PALETTE = Object.freeze({
+        a: '#3a2515',
+        b: '#5c3920',
+        c: '#8a5a31',
+        d: '#b17a46',
+        e: '#cfd6dc',
+        f: '#ffffff'
+    });
+
+    const OAK_BOW_PALETTE = Object.freeze({
+        a: '#442816',
+        b: '#704124',
+        c: '#a45f33',
+        d: '#cb844a',
+        e: '#cfd6dc',
+        f: '#ffffff'
+    });
+
+    const WILLOW_BOW_PALETTE = Object.freeze({
+        a: '#3a2b18',
+        b: '#5d4826',
+        c: '#7b6235',
+        d: '#9a7a46',
+        e: '#cfd6dc',
+        f: '#ffffff'
+    });
+
+    const MAPLE_BOW_PALETTE = Object.freeze({
+        a: '#452716',
+        b: '#714126',
+        c: '#ad6236',
+        d: '#d98a4b',
+        e: '#cfd6dc',
+        f: '#ffffff'
+    });
+
+    const YEW_BOW_PALETTE = Object.freeze({
+        a: '#2f1d18',
+        b: '#4d2b24',
+        c: '#774137',
+        d: '#9f5c4f',
+        e: '#cfd6dc',
+        f: '#ffffff'
+    });
+
     const SMALL_NET_ICON_PIXELS = [
         '................................',
         '................................',
@@ -970,6 +1015,76 @@
         '....ddeed.......................',
         '....dddd........................',
         '....eed.........................',
+        '................................'
+    ];
+
+    const SHORTBOW_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '................................',
+        '................................',
+        '.....................afdd.......',
+        '....................abe.........',
+        '...................abcf.........',
+        '..................abcde.........',
+        '.................abcdf..........',
+        '................abcd.e..........',
+        '................abcd.f..........',
+        '...............abcd..e..........',
+        '..............abcdd..f..........',
+        '..............abcd...e..........',
+        '..............abcd...f..........',
+        '.............abcd....e..........',
+        '.............abcdd..f...........',
+        '.............abcd...e...........',
+        '.............abcd...f...........',
+        '.............abcd...e...........',
+        '.............abcdd..f...........',
+        '..............abcd..e...........',
+        '..............abcd..f...........',
+        '...............abcd.e...........',
+        '...............abcdf............',
+        '................abce............',
+        '................abcf............',
+        '.................abe............',
+        '..................afdd..........',
+        '................................',
+        '................................',
+        '................................'
+    ];
+
+    const LONGBOW_ICON_PIXELS = [
+        '................................',
+        '................................',
+        '......................afd.......',
+        '.....................abe........',
+        '....................abcfd.......',
+        '...................abcde........',
+        '..................abcd.f........',
+        '.................abcd.e.........',
+        '................abcdd.f.........',
+        '................abcd..e.........',
+        '...............abcd...f.........',
+        '...............abcd...e.........',
+        '..............abcdd...f.........',
+        '..............abcd....e.........',
+        '..............abcd....f.........',
+        '.............abcd.....e.........',
+        '.............abcdd...f..........',
+        '.............abcd....e..........',
+        '.............abcd....f..........',
+        '.............abcd....e..........',
+        '.............abcdd...f..........',
+        '..............abcd...e..........',
+        '..............abcd...f..........',
+        '..............abcd...e..........',
+        '...............abcdd.f..........',
+        '...............abcd..e..........',
+        '................abcdf...........',
+        '.................abce...........',
+        '.................abcfd..........',
+        '..................abe...........',
+        '...................afd..........',
         '................................'
     ];
 
@@ -1181,6 +1296,40 @@
             h: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.18,
             i: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.3,
             j: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.2
+        }
+    });
+
+    const SHORTBOW_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.08,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.22,
+        origin: [15.5, 16.5],
+        offset: [0.014, -0.018, 0.09],
+        localRotationAxis: [0, 1, 0],
+        localRotationAngle: Math.PI,
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.08,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.22,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.36,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.08,
+            e: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.18,
+            f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.16
+        }
+    });
+
+    const LONGBOW_HELD_MODEL = createRightHandHeldModel({
+        pixelSize: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.12,
+        depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.22,
+        origin: [15.5, 16.5],
+        offset: [0.016, -0.02, 0.09],
+        localRotationAxis: [0, 1, 0],
+        localRotationAngle: Math.PI,
+        depthBySymbol: {
+            a: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.08,
+            b: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.22,
+            c: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.36,
+            d: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 1.08,
+            e: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.18,
+            f: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.16
         }
     });
 
@@ -1485,6 +1634,90 @@
             maleFragments: cloneFragmentList(cloned),
             femaleFragments: cloneFragmentList(cloned)
         };
+    }
+
+    function createAmmoAppearanceItemDef(modelIds, fragments) {
+        const cloned = cloneFragmentList(fragments);
+        return {
+            slot: 'ammo',
+            maleModelIds: modelIds.male.slice(),
+            femaleModelIds: modelIds.female.slice(),
+            recolors: [],
+            fragments: cloneFragmentList(cloned),
+            maleFragments: cloneFragmentList(cloned),
+            femaleFragments: cloneFragmentList(cloned)
+        };
+    }
+
+    function createArrowQuiverFragmentsForTier(tierPalette) {
+        const armorFallbackColor = packJagexHsl(0, 0, 64);
+        const leatherDark = '#2b1a10';
+        const leatherMid = '#5c3920';
+        const leatherLight = '#9a6338';
+        const shaft = '#b7854d';
+        const fletching = '#efe2c8';
+        const quiverRotation = [0, 0, -0.28];
+        const arrowRotation = [0, 0, -0.22];
+        const quiverBackZ = -0.205;
+        const arrowBackZ = -0.225;
+        const fletchingBackZ = -0.255;
+        const tipHex = tierPalette.light || tierPalette.flat;
+        return [
+            createAppearanceShapeFragment('torso', 'cylinder', [0.055, 0.48, 0.055], [0.18, 0.01, quiverBackZ], {
+                rgbColor: leatherMid,
+                color: hexToPackedJagexHsl(leatherMid, armorFallbackColor),
+                rotation: quiverRotation
+            }),
+            createAppearanceBoxFragment('torso', [0.13, 0.035, 0.08], [0.12, 0.25, quiverBackZ], {
+                rgbColor: leatherLight,
+                color: hexToPackedJagexHsl(leatherLight, armorFallbackColor),
+                rotation: quiverRotation
+            }),
+            createAppearanceBoxFragment('torso', [0.12, 0.035, 0.075], [0.24, -0.22, quiverBackZ], {
+                rgbColor: leatherDark,
+                color: hexToPackedJagexHsl(leatherDark, armorFallbackColor),
+                rotation: quiverRotation
+            }),
+            createAppearanceBoxFragment('torso', [0.016, 0.34, 0.016], [0.08, 0.36, arrowBackZ], {
+                rgbColor: shaft,
+                color: hexToPackedJagexHsl(shaft, armorFallbackColor),
+                rotation: arrowRotation
+            }),
+            createAppearanceBoxFragment('torso', [0.016, 0.32, 0.016], [0.15, 0.39, arrowBackZ - 0.01], {
+                rgbColor: shaft,
+                color: hexToPackedJagexHsl(shaft, armorFallbackColor),
+                rotation: arrowRotation
+            }),
+            createAppearanceBoxFragment('torso', [0.016, 0.30, 0.016], [0.22, 0.36, arrowBackZ], {
+                rgbColor: shaft,
+                color: hexToPackedJagexHsl(shaft, armorFallbackColor),
+                rotation: arrowRotation
+            }),
+            createAppearanceShapeFragment('torso', 'cone', [0.026, 0.06, 4], [0.045, 0.53, arrowBackZ], {
+                rgbColor: tipHex,
+                color: hexToPackedJagexHsl(tipHex, armorFallbackColor),
+                rotation: arrowRotation
+            }),
+            createAppearanceShapeFragment('torso', 'cone', [0.026, 0.06, 4], [0.115, 0.56, arrowBackZ - 0.01], {
+                rgbColor: tipHex,
+                color: hexToPackedJagexHsl(tipHex, armorFallbackColor),
+                rotation: arrowRotation
+            }),
+            createAppearanceShapeFragment('torso', 'cone', [0.026, 0.06, 4], [0.185, 0.53, arrowBackZ], {
+                rgbColor: tipHex,
+                color: hexToPackedJagexHsl(tipHex, armorFallbackColor),
+                rotation: arrowRotation
+            }),
+            createAppearanceBoxFragment('torso', [0.06, 0.026, 0.012], [0.12, 0.22, fletchingBackZ], {
+                rgbColor: fletching,
+                color: hexToPackedJagexHsl(fletching, armorFallbackColor),
+                rotation: arrowRotation
+            })
+        ];
+    }
+
+    function createArrowQuiverAppearanceTierDef(itemId, modelIds) {
+        return createAmmoAppearanceItemDef(modelIds, createArrowQuiverFragmentsForTier(getMetalTierPalette(itemId)));
     }
 
     function createHelmetFragmentsForFit(fit, tierPalette) {
@@ -2337,6 +2570,19 @@
         female: [-1, -1, -1]
     };
 
+    const bowItemDefs = {
+        normal_shortbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SHORTBOW_ICON_PIXELS, SHORTBOW_HELD_MODEL, NORMAL_BOW_PALETTE),
+        normal_longbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LONGBOW_ICON_PIXELS, LONGBOW_HELD_MODEL, NORMAL_BOW_PALETTE),
+        oak_shortbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SHORTBOW_ICON_PIXELS, SHORTBOW_HELD_MODEL, OAK_BOW_PALETTE),
+        oak_longbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LONGBOW_ICON_PIXELS, LONGBOW_HELD_MODEL, OAK_BOW_PALETTE),
+        willow_shortbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SHORTBOW_ICON_PIXELS, SHORTBOW_HELD_MODEL, WILLOW_BOW_PALETTE),
+        willow_longbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LONGBOW_ICON_PIXELS, LONGBOW_HELD_MODEL, WILLOW_BOW_PALETTE),
+        maple_shortbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SHORTBOW_ICON_PIXELS, SHORTBOW_HELD_MODEL, MAPLE_BOW_PALETTE),
+        maple_longbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LONGBOW_ICON_PIXELS, LONGBOW_HELD_MODEL, MAPLE_BOW_PALETTE),
+        yew_shortbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, SHORTBOW_ICON_PIXELS, SHORTBOW_HELD_MODEL, YEW_BOW_PALETTE),
+        yew_longbow: createLiteralRightHandAppearanceItemDef(previewOnlyWeaponModelIds, LONGBOW_ICON_PIXELS, LONGBOW_HELD_MODEL, YEW_BOW_PALETTE)
+    };
+
     const fishingRodModelIds = {
         male: [1135, -1, -1],
         female: [1235, -1, -1]
@@ -2398,6 +2644,11 @@
         female: [-1, -1, -1]
     };
 
+    const previewOnlyAmmoModelIds = {
+        male: [-1, -1, -1],
+        female: [-1, -1, -1]
+    };
+
     const helmetItemDefs = {
         bronze_helmet: createHelmetAppearanceItemDef('bronze_helmet', previewOnlyHeadModelIds),
         iron_helmet: createHelmetAppearanceItemDef('iron_helmet', previewOnlyHeadModelIds),
@@ -2414,6 +2665,15 @@
         mithril_shield: createShieldAppearanceTierDef('mithril_shield', previewOnlyShieldModelIds),
         adamant_shield: createShieldAppearanceTierDef('adamant_shield', previewOnlyShieldModelIds),
         rune_shield: createShieldAppearanceTierDef('rune_shield', previewOnlyShieldModelIds)
+    };
+
+    const ammoItemDefs = {
+        bronze_arrows: createArrowQuiverAppearanceTierDef('bronze_arrows', previewOnlyAmmoModelIds),
+        iron_arrows: createArrowQuiverAppearanceTierDef('iron_arrows', previewOnlyAmmoModelIds),
+        steel_arrows: createArrowQuiverAppearanceTierDef('steel_arrows', previewOnlyAmmoModelIds),
+        mithril_arrows: createArrowQuiverAppearanceTierDef('mithril_arrows', previewOnlyAmmoModelIds),
+        adamant_arrows: createArrowQuiverAppearanceTierDef('adamant_arrows', previewOnlyAmmoModelIds),
+        rune_arrows: createArrowQuiverAppearanceTierDef('rune_arrows', previewOnlyAmmoModelIds)
     };
 
     const bootsItemDefs = {
@@ -2444,8 +2704,8 @@
     };
 
     window.PlayerAppearanceCatalog = {
-        version: '2026.03.m26',
-        slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'],
+        version: '2026.03.m28',
+        slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring', 'ammo'],
         bodyColorFind,
         bodyColorPalettes,
         bodyColorLabels,
@@ -2460,7 +2720,9 @@
             pickaxeItemDefs,
             axeItemDefs,
             swordItemDefs,
+            bowItemDefs,
             utilityToolItemDefs,
+            ammoItemDefs,
             helmetItemDefs,
             shieldItemDefs,
             platebodyItemDefs,

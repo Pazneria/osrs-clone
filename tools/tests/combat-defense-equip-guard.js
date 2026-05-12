@@ -47,7 +47,7 @@ function makeEquipContext(overrides = {}) {
   };
 
   const ctx = {
-    equipment: { shield: overrides.oldShield || null, weapon: null },
+    equipment: { shield: overrides.oldShield || null, weapon: null, ammo: null },
     inventory: [{
       itemData: {
         id: "rune_shield",

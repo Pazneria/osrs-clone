@@ -16,14 +16,18 @@ import type {
   SkillProgressViewModel,
   SkillTileDefinition,
   SkillTileViewModel,
-  UiItemData
+  UiItemData,
+  UiItemSlot
 } from "../contracts/ui";
 import type { MeleeStyleId } from "../contracts/combat";
 import type { PlayerProfileState, PlayerSkillMap } from "../contracts/session";
 
+type UiEquipmentEntry = UiItemData | UiItemSlot | null | undefined;
+
 export function buildCombatStatsViewModel(options: {
   playerSkills: PlayerSkillMap;
-  equipment: Record<string, UiItemData | null | undefined>;
+  equipment: Record<string, UiEquipmentEntry>;
+  inventory?: Array<{ itemData?: UiItemData | null; amount?: number } | UiItemData | null | undefined> | null;
   playerState?: {
     selectedMeleeStyle?: "attack" | "strength" | "defense";
   } | null;
@@ -31,6 +35,7 @@ export function buildCombatStatsViewModel(options: {
   return buildCombatStatsFromFormulas({
     playerSkills: options.playerSkills || {},
     equipment: options.equipment || {},
+    inventory: options.inventory || null,
     playerState: options.playerState || null
   });
 }
@@ -56,7 +61,8 @@ function computeCombatLevel(playerSkills: PlayerSkillMap): number {
 
 export function buildCombatTabViewModel(options: {
   playerSkills: PlayerSkillMap;
-  equipment: Record<string, UiItemData | null | undefined>;
+  equipment: Record<string, UiEquipmentEntry>;
+  inventory?: Array<{ itemData?: UiItemData | null; amount?: number } | UiItemData | null | undefined> | null;
   playerState?: {
     selectedMeleeStyle?: MeleeStyleId;
   } | null;
@@ -193,7 +199,7 @@ export function buildCombatStatusViewModel(options: {
 
 export function buildEquipmentSlotViewModels(options: {
   slots: string[];
-  equipment: Record<string, UiItemData | null | undefined>;
+  equipment: Record<string, UiEquipmentEntry>;
 }): EquipmentSlotViewModel[] {
   const viewModels: EquipmentSlotViewModel[] = [];
   const slots = Array.isArray(options.slots) ? options.slots : [];
@@ -201,17 +207,32 @@ export function buildEquipmentSlotViewModels(options: {
 
   for (let index = 0; index < slots.length; index += 1) {
     const slotName = slots[index];
-    const item = equipment[slotName] || null;
+    const entry = equipment[slotName] || null;
+    const item = getEquipmentEntryItem(entry);
     viewModels.push({
       slotName,
       itemId: item && typeof item.id === "string" ? item.id : null,
       itemName: item && typeof item.name === "string" ? item.name : "",
       icon: item && typeof item.icon === "string" ? item.icon : "",
+      amount: getEquipmentEntryAmount(entry),
       hasItem: !!item
     });
   }
 
   return viewModels;
+}
+
+function getEquipmentEntryItem(entry: UiEquipmentEntry): UiItemData | null {
+  if (!entry || typeof entry !== "object") return null;
+  const wrapped = (entry as { itemData?: unknown }).itemData;
+  if (wrapped && typeof wrapped === "object") return wrapped as UiItemData;
+  return entry as UiItemData;
+}
+
+function getEquipmentEntryAmount(entry: UiEquipmentEntry): number {
+  if (!entry || typeof entry !== "object") return 0;
+  const amount = Number((entry as { amount?: unknown }).amount);
+  return Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
 }
 
 export function buildSkillTileViewModels(options: {
@@ -307,6 +328,13 @@ const COMBAT_SKILL_REFERENCE_MILESTONES: Record<string, Array<{ level: number; l
     { level: 20, label: "Mid-band defense scaling bump" },
     { level: 30, label: "Advanced defense scaling bump" },
     { level: 40, label: "High-band defense scaling bump" }
+  ],
+  ranged: [
+    { level: 1, label: "Starter bow accuracy baseline" },
+    { level: 5, label: "Oak bow handling" },
+    { level: 20, label: "Willow bow handling" },
+    { level: 30, label: "Maple bow handling" },
+    { level: 40, label: "Yew bow handling" }
   ],
   hitpoints: [
     { level: 10, label: "Starter health pool baseline" },

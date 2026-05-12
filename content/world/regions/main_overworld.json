@@ -197,6 +197,208 @@
       "yEnd": 231,
       "entryY": 222
     },
+    "paths": [
+      {
+        "pathId": "starter_town_east_road",
+        "points": [
+          {
+            "x": 218,
+            "y": 216
+          },
+          {
+            "x": 244,
+            "y": 226
+          },
+          {
+            "x": 282,
+            "y": 242
+          },
+          {
+            "x": 318,
+            "y": 270
+          },
+          {
+            "x": 360,
+            "y": 272
+          },
+          {
+            "x": 394,
+            "y": 225
+          }
+        ],
+        "pathWidth": 2.6,
+        "height": -0.065,
+        "edgeSoftness": 0.7,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected"
+        ]
+      },
+      {
+        "pathId": "starter_town_north_altar_road",
+        "points": [
+          {
+            "x": 197,
+            "y": 190
+          },
+          {
+            "x": 197,
+            "y": 154
+          },
+          {
+            "x": 197,
+            "y": 98
+          },
+          {
+            "x": 197,
+            "y": 50
+          },
+          {
+            "x": 115,
+            "y": 32
+          },
+          {
+            "x": 96,
+            "y": 30
+          }
+        ],
+        "pathWidth": 2.6,
+        "height": -0.065,
+        "edgeSoftness": 0.7,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected"
+        ]
+      },
+      {
+        "pathId": "starter_town_starter_mine_spur",
+        "points": [
+          {
+            "x": 185,
+            "y": 222
+          },
+          {
+            "x": 158,
+            "y": 222
+          },
+          {
+            "x": 132,
+            "y": 224
+          },
+          {
+            "x": 118,
+            "y": 220
+          }
+        ],
+        "pathWidth": 2.2,
+        "height": -0.06,
+        "edgeSoftness": 0.55,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected"
+        ]
+      },
+      {
+        "pathId": "starter_town_south_resource_road",
+        "points": [
+          {
+            "x": 224,
+            "y": 242
+          },
+          {
+            "x": 232,
+            "y": 300
+          },
+          {
+            "x": 240,
+            "y": 360
+          },
+          {
+            "x": 245,
+            "y": 440
+          }
+        ],
+        "pathWidth": 2.8,
+        "height": -0.065,
+        "edgeSoftness": 0.75,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected"
+        ]
+      },
+      {
+        "pathId": "starter_town_southwest_bank_road",
+        "points": [
+          {
+            "x": 185,
+            "y": 218
+          },
+          {
+            "x": 150,
+            "y": 258
+          },
+          {
+            "x": 118,
+            "y": 318
+          },
+          {
+            "x": 74,
+            "y": 392
+          },
+          {
+            "x": 64,
+            "y": 456
+          }
+        ],
+        "pathWidth": 2.6,
+        "height": -0.065,
+        "edgeSoftness": 0.7,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected"
+        ]
+      },
+      {
+        "pathId": "starter_town_southeast_camp_road",
+        "points": [
+          {
+            "x": 245,
+            "y": 440
+          },
+          {
+            "x": 300,
+            "y": 445
+          },
+          {
+            "x": 370,
+            "y": 440
+          },
+          {
+            "x": 415,
+            "y": 429
+          }
+        ],
+        "pathWidth": 2.6,
+        "height": -0.065,
+        "edgeSoftness": 0.7,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected"
+        ]
+      }
+    ],
     "smithingHallApproach": {
       "shoreX": 220,
       "stairX": 221,
@@ -1027,7 +1229,8 @@
       "tags": [
         "merchant",
         "shop",
-        "starter"
+        "starter",
+        "home:shopkeeper_house"
       ]
     },
     {
@@ -1048,7 +1251,8 @@
         "fletching",
         "starter",
         "bank",
-        "processing"
+        "processing",
+        "home:general_store"
       ]
     },
     {
@@ -1072,7 +1276,8 @@
       "tags": [
         "travel",
         "starter",
-        "east-link"
+        "east-link",
+        "home:road_guide_hut"
       ]
     },
     {
@@ -1096,7 +1301,8 @@
       "tags": [
         "travel",
         "east",
-        "settlement"
+        "settlement",
+        "home:outpost_guide_house"
       ]
     },
     {
@@ -1116,7 +1322,8 @@
         "merchant",
         "fletching",
         "east",
-        "settlement"
+        "settlement",
+        "home:east_road_outpost"
       ]
     },
     {
@@ -1136,7 +1343,8 @@
         "merchant",
         "woodcutting",
         "east",
-        "settlement"
+        "settlement",
+        "home:east_road_outpost"
       ]
     },
     {
@@ -1154,7 +1362,8 @@
       "tags": [
         "bank",
         "east",
-        "settlement"
+        "settlement",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1173,7 +1382,8 @@
         "bank",
         "woodcutting",
         "willow",
-        "north"
+        "north",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1192,7 +1402,8 @@
         "bank",
         "woodcutting",
         "maple",
-        "east"
+        "east",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1211,7 +1422,8 @@
         "bank",
         "woodcutting",
         "yew",
-        "northwest"
+        "northwest",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1229,7 +1441,8 @@
       "tags": [
         "bank",
         "combat",
-        "south"
+        "south",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1247,7 +1460,8 @@
       "tags": [
         "bank",
         "combat",
-        "west"
+        "west",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1265,7 +1479,8 @@
       "tags": [
         "bank",
         "combat",
-        "southeast"
+        "southeast",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1284,7 +1499,8 @@
         "bank",
         "runecrafting",
         "air",
-        "northwest"
+        "northwest",
+        "home:distributed_bank_booths"
       ]
     },
     {
@@ -1367,7 +1583,8 @@
       "tags": [
         "merchant",
         "fishing",
-        "starter"
+        "starter",
+        "home:fishing_teacher_shack"
       ]
     },
     {
@@ -1386,7 +1603,8 @@
       "tags": [
         "merchant",
         "fishing",
-        "starter"
+        "starter",
+        "home:fishing_supplier_shack"
       ]
     },
     {
@@ -1405,7 +1623,8 @@
       "tags": [
         "merchant",
         "woodcutting",
-        "starter"
+        "starter",
+        "home:starter_grove"
       ]
     },
     {
@@ -1425,7 +1644,8 @@
       "tags": [
         "merchant",
         "smithing",
-        "starter"
+        "starter",
+        "home:borin_ironvein_house"
       ]
     },
     {
@@ -1444,7 +1664,8 @@
       "tags": [
         "merchant",
         "smithing",
-        "starter"
+        "starter",
+        "home:thrain_deepforge_house"
       ]
     },
     {
@@ -1463,7 +1684,8 @@
       "tags": [
         "merchant",
         "smithing",
-        "starter"
+        "starter",
+        "home:elira_gemhand_cottage"
       ]
     },
     {
@@ -1483,7 +1705,8 @@
       "tags": [
         "merchant",
         "crafting",
-        "starter"
+        "starter",
+        "home:crafting_teacher_cottage"
       ]
     },
     {
@@ -1503,7 +1726,8 @@
       "tags": [
         "merchant",
         "crafting",
-        "starter"
+        "starter",
+        "home:tanner_rusk_tannery"
       ]
     },
     {
@@ -1522,7 +1746,8 @@
       "tags": [
         "merchant",
         "runecrafting",
-        "starter"
+        "starter",
+        "home:rune_tutor_hut"
       ]
     },
     {
@@ -1541,7 +1766,8 @@
       "tags": [
         "merchant",
         "runecrafting",
-        "starter"
+        "starter",
+        "home:combination_sage_hut"
       ]
     }
   ],

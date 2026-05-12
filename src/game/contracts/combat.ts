@@ -1,8 +1,9 @@
 import type { Point3 } from "./world";
 
-export type CombatStyleFamily = "melee";
-export type CombatDamageType = "melee";
+export type CombatStyleFamily = "melee" | "ranged" | "magic";
+export type CombatDamageType = "melee" | "ranged" | "magic";
 export type MeleeStyleId = "attack" | "strength" | "defense";
+export type PlayerCombatStyleId = MeleeStyleId | "ranged" | "magic";
 export type CombatTargetKind = "enemy";
 export type EnemyAggroType = "passive" | "aggressive";
 export type EnemyRuntimeStateId = "idle" | "aggroed" | "returning" | "dead";
@@ -30,6 +31,10 @@ export interface CombatAttackProfile {
 export interface CombatBonuses {
   meleeAccuracyBonus: number;
   meleeStrengthBonus: number;
+  rangedAccuracyBonus: number;
+  rangedStrengthBonus: number;
+  magicAccuracyBonus: number;
+  magicStrengthBonus: number;
   meleeDefenseBonus: number;
   rangedDefenseBonus: number;
   magicDefenseBonus: number;
@@ -39,8 +44,20 @@ export interface CombatItemProfile {
   attackProfile: CombatAttackProfile;
   bonuses: CombatBonuses;
   requiredAttackLevel: number;
+  requiredRangedLevel?: number;
+  requiredMagicLevel?: number;
   weaponFamily?: string | null;
   toolFamily?: string | null;
+}
+
+export interface CombatAmmoProfile {
+  damageType: "ranged" | "magic";
+  ammoTier: number;
+  rangedAccuracyBonus?: number;
+  rangedStrengthBonus?: number;
+  magicAccuracyBonus?: number;
+  magicStrengthBonus?: number;
+  compatibleWeaponFamilies?: string[] | null;
 }
 
 export interface CombatEnemyAppearance {
@@ -84,7 +101,7 @@ export interface EnemyDropEntry {
 export interface EnemyTypeDefinition {
   enemyId: string;
   displayName: string;
-  combatFamily: "melee";
+  combatFamily: CombatStyleFamily;
   appearance: CombatEnemyAppearance;
   stats: EnemyCombatStats;
   bonuses: EnemyCombatBonuses;

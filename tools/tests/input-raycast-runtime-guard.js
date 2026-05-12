@@ -70,6 +70,7 @@ function run() {
   assert(runtimeSource.includes("function publishQaRaycastHooks"), "input raycast runtime should own QA raycast public hook publication");
   assert(runtimeSource.includes("data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER'"), "input raycast runtime should normalize world mesh hits");
   assert(runtimeSource.includes("!context.isWaterTileId(tile)"), "input raycast runtime should treat pier-overlaid walkable water hits as ground");
+  assert(runtimeSource.includes("data.ignoreRaycast || (data.uid && data.uid.tutorialHidden)"), "input raycast runtime should ignore hidden tutorial NPC hitboxes");
 
   assert(inputSource.includes("function getInputRaycastRuntime()"), "input-render.js should resolve the input raycast runtime");
   assert(inputSource.includes("buildInputRaycastRuntimeContext"), "input-render.js should provide a narrow raycast runtime context");
@@ -93,6 +94,13 @@ function run() {
     const context = makeContext();
     const hit = runtime.normalizeRaycastHit(context, makeHit("GROUND", 0.4, 1.4));
     assert(hit && hit.type === "GROUND" && hit.gridX === 0 && hit.gridY === 1, "runtime should normalize ground mesh hits to grid tiles");
+  }
+
+  {
+    const context = makeContext();
+    const ignoredByFlag = runtime.normalizeRaycastHit(context, makeHit("NPC", 1, 1, { ignoreRaycast: true, gridX: 1, gridY: 1, name: "Tutorial Guide" }));
+    const ignoredByUid = runtime.normalizeRaycastHit(context, makeHit("NPC", 1, 1, { uid: { tutorialHidden: true }, gridX: 1, gridY: 1, name: "Tutorial Guide" }));
+    assert(ignoredByFlag === null && ignoredByUid === null, "runtime should ignore hidden tutorial NPC raycast data");
   }
 
   {

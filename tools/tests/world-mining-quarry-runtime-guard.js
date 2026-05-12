@@ -30,6 +30,9 @@ function run() {
   assert(worldSource.includes("worldMiningQuarryRuntime.getMiningQuarryLayout"), "world.js should delegate quarry layout lookup");
   assert(worldSource.includes("worldMiningQuarryRuntime.thinMiningRockPlacements"), "world.js should delegate mining rock thinning");
   assert(worldSource.includes("worldMiningQuarryRuntime.redistributeMiningRockPlacements"), "world.js should delegate mining rock redistribution");
+  assert(worldSource.includes("const DRY_QUARRY_FLOOR_MIN_HEIGHT = -0.052;"), "world.js should keep dry quarry floors above the tutorial ocean/void plane");
+  assert(worldSource.includes("Math.max(DRY_QUARRY_FLOOR_MIN_HEIGHT, currentHeight)"), "quarry floor height clamp should enforce the dry floor minimum");
+  assert(!worldSource.includes("Math.min(-0.11, Math.max(-0.56, currentHeight))"), "quarry terrain should not be forced below the surrounding water surface");
   assert(!worldSource.includes("const MINING_QUARRY_LAYOUT_OVERRIDES = Object.freeze({"), "world.js should not own quarry layout overrides inline");
   assert(!worldSource.includes("const placementCoordKey = (placement) => {"), "world.js should not own mining placement coord keys inline");
   assert(!worldSource.includes("const thinMiningRockPlacements = (placements) => {"), "world.js should not own mining rock thinning inline");
@@ -43,12 +46,12 @@ function run() {
   const layoutOverrides = runtime.getMiningQuarryLayoutOverrides();
   assert(layoutOverrides.starter_mine.anchorX === 114 && layoutOverrides.starter_mine.anchorY === 204, "starter mine layout override should be exposed");
   assert(layoutOverrides.starter_mine.dirtRadiusScale === 0.98, "quarry dirt footprints should be pulled inward after terrain blending");
-  assert(layoutOverrides.tutorial_surface_mine.centerX === 475 && layoutOverrides.tutorial_surface_mine.centerY === 384, "tutorial surface mine override should center the live quarry yard around the QA mining target");
-  assert(layoutOverrides.tutorial_surface_mine.anchorX === 475 && layoutOverrides.tutorial_surface_mine.anchorY === 384, "tutorial surface mine override should keep the live route anchor in the shaped quarry apron");
+  assert(layoutOverrides.tutorial_surface_mine.centerX === 445 && layoutOverrides.tutorial_surface_mine.centerY === 372, "tutorial surface mine override should center the live quarry yard around the QA mining target");
+  assert(layoutOverrides.tutorial_surface_mine.anchorX === 445 && layoutOverrides.tutorial_surface_mine.anchorY === 372, "tutorial surface mine override should keep the live route anchor in the shaped quarry apron");
   const starterLayout = runtime.getMiningQuarryLayout("starter_mine", [{ x: 1, y: 2, z: 0 }]);
   assert(starterLayout.centerX === 114 && starterLayout.centerY === 204, "layout lookup should apply route overrides");
   const tutorialLayout = runtime.getMiningQuarryLayout("tutorial_surface_mine", [{ x: 467, y: 373, z: 0 }, { x: 491, y: 397, z: 0 }]);
-  assert(tutorialLayout.centerX === 475 && tutorialLayout.centerY === 384, "layout lookup should apply the tutorial surface mine override");
+  assert(tutorialLayout.centerX === 445 && tutorialLayout.centerY === 372, "layout lookup should apply the tutorial surface mine override");
   assert(tutorialLayout.dirtRadius > tutorialLayout.radius, "tutorial surface mine should render a soft dirt apron around the shaped pit");
 
   const sourcePlacements = [];

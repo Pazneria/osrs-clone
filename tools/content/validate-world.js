@@ -1,6 +1,7 @@
 const fs = require("fs");
 const vm = require("vm");
 const { TileId } = require("./tile-ids");
+const { MAP_SIZE } = require("./world-constants");
 const { buildWorldGameplayMap } = require("./world-map-builder");
 const {
   collectAdjacencyViolations,
@@ -210,6 +211,236 @@ const BUILTIN_STAIR_STAMP_TILES = new Set(["s", "S", "H", "U", "D"]);
 
 function pointKey(x, y, z) {
   return `${x}:${y}:${z}`;
+}
+
+function hasTag(entry, tag) {
+  const tags = Array.isArray(entry && entry.tags) ? entry.tags : [];
+  return tags.includes(tag);
+}
+
+function collectNpcHomeTargets(world) {
+  const targets = new Set();
+  const structures = Array.isArray(world && world.structures) ? world.structures : [];
+  for (let i = 0; i < structures.length; i++) {
+    const structureId = normalizeString(structures[i] && structures[i].structureId);
+    if (structureId) targets.add(structureId);
+  }
+
+  const areas = Array.isArray(world && world.areas) ? world.areas : [];
+  for (let i = 0; i < areas.length; i++) {
+    const areaId = normalizeString(areas[i] && areas[i].areaId);
+    if (areaId) targets.add(areaId);
+  }
+
+  const routeGroups = world && world.skillRoutes ? world.skillRoutes : {};
+  Object.keys(routeGroups || {}).forEach((groupKey) => {
+    const routes = Array.isArray(routeGroups[groupKey]) ? routeGroups[groupKey] : [];
+    for (let i = 0; i < routes.length; i++) {
+      const routeId = normalizeString(routes[i] && routes[i].routeId);
+      if (routeId) targets.add(routeId);
+    }
+  });
+
+  const landmarks = world && world.landmarks ? world.landmarks : {};
+  const landmarkGroups = ["staircases", "doors", "fences", "roofs", "caveOpenings"];
+  for (let i = 0; i < landmarkGroups.length; i++) {
+    const rows = Array.isArray(landmarks[landmarkGroups[i]]) ? landmarks[landmarkGroups[i]] : [];
+    for (let j = 0; j < rows.length; j++) {
+      const landmarkId = normalizeString(rows[j] && rows[j].landmarkId);
+      if (landmarkId) targets.add(landmarkId);
+    }
+  }
+
+  const props = Array.isArray(landmarks.decorProps) ? landmarks.decorProps : [];
+  for (let i = 0; i < props.length; i++) {
+    const propId = normalizeString(props[i] && props[i].propId);
+    if (propId) targets.add(propId);
+  }
+
+  return targets;
+}
+
+function getHomeTags(entry) {
+  const tags = Array.isArray(entry && entry.tags) ? entry.tags : [];
+  return tags.filter((tag) => typeof tag === "string" && tag.startsWith("home:") && tag.slice("home:".length).trim());
+}
+
+function validateMainOverworldNpcHomeTags(worldId, world) {
+  if (worldId !== "main_overworld") return;
+  const services = Array.isArray(world && world.services) ? world.services : [];
+  const npcServices = services.filter((service) => (
+    service
+    && service.type === "MERCHANT"
+    && service.interactionTarget === "NPC"
+  ));
+  const homeTargets = collectNpcHomeTargets(world);
+
+  assert(npcServices.length > 0, `${worldId}: missing NPC services for placement validation`);
+
+  for (let i = 0; i < npcServices.length; i++) {
+    const service = npcServices[i];
+    const homeTags = getHomeTags(service);
+    assert(
+      homeTags.length === 1,
+      `${worldId}: NPC service ${service.serviceId} must define exactly one home:<id> tag`
+    );
+    const homeId = homeTags[0].slice("home:".length).trim();
+    assert(
+      homeTargets.has(homeId),
+      `${worldId}: NPC service ${service.serviceId} references unknown home target ${homeId}`
+    );
+  }
+}
+
+function pointToSegmentDistance(px, py, ax, ay, bx, by) {
+  const vx = bx - ax;
+  const vy = by - ay;
+  const lengthSquared = (vx * vx) + (vy * vy);
+  if (lengthSquared <= 0.0001) return Math.hypot(px - ax, py - ay);
+  const t = Math.max(0, Math.min(1, (((px - ax) * vx) + ((py - ay) * vy)) / lengthSquared));
+  const cx = ax + (vx * t);
+  const cy = ay + (vy * t);
+  return Math.hypot(px - cx, py - cy);
+}
+
+function distanceToPath(points, x, y) {
+  if (!Array.isArray(points) || points.length === 0) return Infinity;
+  if (points.length === 1 && points[0]) return Math.hypot(x - points[0].x, y - points[0].y);
+  let best = Infinity;
+  for (let i = 1; i < points.length; i++) {
+    const from = points[i - 1];
+    const to = points[i];
+    if (!from || !to) continue;
+    best = Math.min(best, pointToSegmentDistance(x, y, from.x, from.y, to.x, to.y));
+  }
+  return best;
+}
+
+function collectProtectedRoadTiles(worldId, world) {
+  const roadTiles = new Map();
+  if (worldId !== "main_overworld") return roadTiles;
+
+  const paths = world && world.terrainPatches && Array.isArray(world.terrainPatches.paths)
+    ? world.terrainPatches.paths
+    : [];
+  const roadPaths = paths.filter((pathPatch) => hasTag(pathPatch, "road"));
+  const expectedRoadIds = [
+    "starter_town_east_road",
+    "starter_town_north_altar_road",
+    "starter_town_starter_mine_spur",
+    "starter_town_south_resource_road",
+    "starter_town_southwest_bank_road",
+    "starter_town_southeast_camp_road"
+  ];
+
+  assert(roadPaths.length >= expectedRoadIds.length, `${worldId}: main road network is missing authored road paths`);
+  for (let i = 0; i < expectedRoadIds.length; i++) {
+    const expectedId = expectedRoadIds[i];
+    assert(
+      roadPaths.some((pathPatch) => pathPatch.pathId === expectedId),
+      `${worldId}: main road network missing ${expectedId}`
+    );
+  }
+
+  for (let i = 0; i < roadPaths.length; i++) {
+    const pathPatch = roadPaths[i];
+    assert(hasTag(pathPatch, "spawn-protected"), `${worldId}: road ${pathPatch.pathId} must be tagged spawn-protected`);
+    assert(pathPatch.tileId === "DIRT", `${worldId}: road ${pathPatch.pathId} should stamp DIRT tiles`);
+
+    const points = Array.isArray(pathPatch.points) ? pathPatch.points : [];
+    const pathWidth = Number.isFinite(pathPatch.pathWidth) ? Math.max(0.5, Number(pathPatch.pathWidth)) : 3.0;
+    const edgeSoftness = Number.isFinite(pathPatch.edgeSoftness)
+      ? Math.max(0, Number(pathPatch.edgeSoftness))
+      : Math.max(0.5, (pathWidth / 2) * 0.45);
+    const protectedRadius = (pathWidth / 2) + edgeSoftness;
+    const z = Number.isInteger(pathPatch.z) ? pathPatch.z : 0;
+    let xMin = Infinity;
+    let xMax = -Infinity;
+    let yMin = Infinity;
+    let yMax = -Infinity;
+    for (let pointIndex = 0; pointIndex < points.length; pointIndex++) {
+      const point = points[pointIndex];
+      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+      xMin = Math.min(xMin, point.x);
+      xMax = Math.max(xMax, point.x);
+      yMin = Math.min(yMin, point.y);
+      yMax = Math.max(yMax, point.y);
+    }
+    if (!Number.isFinite(xMin)) continue;
+
+    for (let y = Math.max(1, Math.floor(yMin - protectedRadius - 1)); y <= Math.min(MAP_SIZE - 2, Math.ceil(yMax + protectedRadius + 1)); y++) {
+      for (let x = Math.max(1, Math.floor(xMin - protectedRadius - 1)); x <= Math.min(MAP_SIZE - 2, Math.ceil(xMax + protectedRadius + 1)); x++) {
+        const dist = distanceToPath(points, x + 0.5, y + 0.5);
+        if (dist > protectedRadius) continue;
+        const key = pointKey(x, y, z);
+        if (!roadTiles.has(key)) roadTiles.set(key, []);
+        roadTiles.get(key).push(pathPatch.pathId);
+      }
+    }
+  }
+
+  return roadTiles;
+}
+
+function assertNoProtectedRoadOverlap(worldId, roadTiles, point, label) {
+  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+  const z = Number.isFinite(point.z) ? point.z : 0;
+  const roads = roadTiles.get(pointKey(point.x, point.y, z));
+  assert(!roads, `${worldId}: ${label} overlaps protected road ${roads ? roads.join(", ") : ""}`);
+}
+
+function validateMainOverworldProtectedRoads(worldId, world) {
+  const roadTiles = collectProtectedRoadTiles(worldId, world);
+  if (roadTiles.size === 0) return;
+
+  const miningNodes = world && world.resourceNodes && Array.isArray(world.resourceNodes.mining)
+    ? world.resourceNodes.mining
+    : [];
+  for (let i = 0; i < miningNodes.length; i++) {
+    const node = miningNodes[i];
+    assertNoProtectedRoadOverlap(worldId, roadTiles, node, `mining node ${node && node.placementId}`);
+  }
+
+  const woodcuttingNodes = world && world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting)
+    ? world.resourceNodes.woodcutting
+    : [];
+  for (let i = 0; i < woodcuttingNodes.length; i++) {
+    const node = woodcuttingNodes[i];
+    assertNoProtectedRoadOverlap(worldId, roadTiles, node, `woodcutting node ${node && node.placementId}`);
+  }
+
+  const props = world && world.landmarks && Array.isArray(world.landmarks.decorProps)
+    ? world.landmarks.decorProps
+    : [];
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
+    if (!prop || prop.blocksMovement !== true) continue;
+    assertNoProtectedRoadOverlap(worldId, roadTiles, prop, `blocking decor prop ${prop.propId}`);
+  }
+
+  const combatSpawns = Array.isArray(world && world.combatSpawns) ? world.combatSpawns : [];
+  for (let i = 0; i < combatSpawns.length; i++) {
+    const spawn = combatSpawns[i];
+    if (!spawn) continue;
+    assertNoProtectedRoadOverlap(worldId, roadTiles, spawn.spawnTile, `combat spawn ${spawn.spawnNodeId}`);
+    if (spawn.homeTileOverride) {
+      assertNoProtectedRoadOverlap(worldId, roadTiles, spawn.homeTileOverride, `combat spawn ${spawn.spawnNodeId} home tile`);
+    }
+  }
+
+  const altars = world && world.landmarks && Array.isArray(world.landmarks.altars)
+    ? world.landmarks.altars
+    : [];
+  for (let i = 0; i < altars.length; i++) {
+    const altar = altars[i];
+    if (!altar) continue;
+    const z = Number.isFinite(altar.z) ? altar.z : 0;
+    for (let y = altar.y - 1; y <= altar.y + 2; y++) {
+      for (let x = altar.x - 1; x <= altar.x + 2; x++) {
+        assertNoProtectedRoadOverlap(worldId, roadTiles, { x, y, z }, `altar ${altar.routeId} footprint`);
+      }
+    }
+  }
 }
 
 function collectElevatedStructureAccessData(structure, stamp) {
@@ -518,7 +749,10 @@ function validateDecorProps(worldId, world) {
     "woodpile",
     "ore_pile",
     "coal_bin",
-    "barrel"
+    "barrel",
+    "weapon_rack",
+    "training_dummy",
+    "archery_target"
   ]);
   for (let i = 0; i < props.length; i++) {
     const prop = props[i];
@@ -639,6 +873,7 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   assert(!world.skillRoutes.woodcuttingZones, `${worldId} should not define legacy woodcuttingZones`);
   validateIslandWaterPatch(worldId, world);
   validateTerrainPathPatches(worldId, world);
+  validateMainOverworldProtectedRoads(worldId, world);
 
   const waterBodyIds = new Set();
   const waterBodies = Array.isArray(world.waterBodies) ? world.waterBodies : [];
@@ -786,6 +1021,7 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   validateCaveOpenings(worldId, world);
   validateDecorProps(worldId, world);
   validateCombatSpawns(worldId, manifestEntry, world, logicalMap, resolvedCombatCatalog);
+  validateMainOverworldNpcHomeTags(worldId, world);
   validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, logicalMap, resolvedNpcMetadataCatalogs);
   const adjacencyViolations = collectAdjacencyViolations(world, logicalMap);
   assert(adjacencyViolations.length === 0, adjacencyViolations.join("\n"));
@@ -831,5 +1067,10 @@ if (require.main === module) {
 
 module.exports = {
   validateWorld,
-  run
+  run,
+  __test: {
+    collectProtectedRoadTiles,
+    validateMainOverworldNpcHomeTags,
+    validateMainOverworldProtectedRoads
+  }
 };

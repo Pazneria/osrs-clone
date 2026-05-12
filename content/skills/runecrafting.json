@@ -146,7 +146,7 @@
       ],
       "purpose": "spell_resource",
       "skillId": "magic",
-      "status": "future_sink_contract"
+      "status": "live_runtime_sink"
     },
     "miningEssenceSource": {
       "itemId": "rune_essence",

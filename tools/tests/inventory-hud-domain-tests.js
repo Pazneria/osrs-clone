@@ -122,6 +122,26 @@ const ITEM_DB = {
 }
 
 {
+  const result = inventoryDomain.ensureUnlockedMerchantStock({
+    shopInventory: [
+      { itemData: ITEM_DB.shrimp, amount: 2, normalStock: true },
+      { itemData: ITEM_DB.logs, amount: 1, normalStock: true },
+      null
+    ],
+    merchantId: "general_store",
+    itemDb: ITEM_DB,
+    economy: {
+      hasMerchantConfig: () => false,
+      getMerchantDefaultSellItemIds: () => [],
+      getMerchantSeedStockRows: () => [{ itemId: "shrimp", stockAmount: 20 }]
+    }
+  });
+  assert.strictEqual(result[0].itemData.id, "shrimp", "fallback stock should survive merchant refresh");
+  assert.strictEqual(result[0].amount, 20, "fallback stock should restock to the seed amount");
+  assert.strictEqual(result[1], null, "stale fallback normal stock should be removed");
+}
+
+{
   const result = inventoryDomain.buyShopItem({
     inventory: [{ itemData: ITEM_DB.coins, amount: 100 }, null, null, null],
     shopInventory: [{ itemData: ITEM_DB.shrimp, amount: 5, normalStock: true }, null],

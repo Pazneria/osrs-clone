@@ -1,5 +1,9 @@
 (function () {
     let renderContext = {};
+    const enemyMaterialCache = Object.create(null);
+    let enemyHitboxMaterial = null;
+    const COMBAT_ENEMY_VISUAL_CULL_DISTANCE = 120;
+    const COMBAT_ENEMY_VISUAL_CULL_DISTANCE_SQ = COMBAT_ENEMY_VISUAL_CULL_DISTANCE * COMBAT_ENEMY_VISUAL_CULL_DISTANCE;
 
     function setRenderContext(options = {}) {
         renderContext = options && typeof options === 'object' ? options : {};
@@ -39,14 +43,31 @@
             : null;
     }
 
+    function getEnemyLambertMaterial(key, colorHex) {
+        if (!enemyMaterialCache[key]) {
+            enemyMaterialCache[key] = new THREE.MeshLambertMaterial({ color: colorHex, flatShading: true });
+        }
+        return enemyMaterialCache[key];
+    }
+
+    function createEnemyHitboxMaterial() {
+        if (!enemyHitboxMaterial) {
+            enemyHitboxMaterial = new THREE.MeshBasicMaterial({
+                visible: false,
+                side: THREE.DoubleSide
+            });
+        }
+        return enemyHitboxMaterial;
+    }
+
     function createRatRenderer(enemyState, enemyType) {
         const group = new THREE.Group();
         group.rotation.order = 'YXZ';
         const combatLevel = getEnemyCombatLevel(enemyType);
 
-        const furMaterial = new THREE.MeshLambertMaterial({ color: 0x6b6258, flatShading: true });
-        const bellyMaterial = new THREE.MeshLambertMaterial({ color: 0xcbb7a2, flatShading: true });
-        const tailMaterial = new THREE.MeshLambertMaterial({ color: 0xa7847a, flatShading: true });
+        const furMaterial = getEnemyLambertMaterial('rat:fur', 0x6b6258);
+        const bellyMaterial = getEnemyLambertMaterial('rat:belly', 0xcbb7a2);
+        const tailMaterial = getEnemyLambertMaterial('rat:tail', 0xa7847a);
 
         const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), furMaterial);
         body.scale.set(1.35, 0.72, 1.75);
@@ -73,7 +94,7 @@
 
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(0.8, 0.5, 0.9),
-            new THREE.MeshBasicMaterial({ visible: false })
+            createEnemyHitboxMaterial()
         );
         hitbox.position.y = 0.24;
         hitbox.userData = {
@@ -176,14 +197,14 @@
         group.rotation.order = 'YXZ';
         const combatLevel = getEnemyCombatLevel(enemyType);
 
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x7b5b3c, flatShading: true });
-        const backMaterial = new THREE.MeshLambertMaterial({ color: 0x65492f, flatShading: true });
-        const bellyMaterial = new THREE.MeshLambertMaterial({ color: 0xa57c56, flatShading: true });
-        const snoutMaterial = new THREE.MeshLambertMaterial({ color: 0x8b6748, flatShading: true });
-        const tuskMaterial = new THREE.MeshLambertMaterial({ color: 0xf2e6cb, flatShading: true });
-        const legMaterial = new THREE.MeshLambertMaterial({ color: 0x5a4330, flatShading: true });
-        const hoofMaterial = new THREE.MeshLambertMaterial({ color: 0x2f241d, flatShading: true });
-        const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x1a140f, flatShading: true });
+        const bodyMaterial = getEnemyLambertMaterial('boar:body', 0x7b5b3c);
+        const backMaterial = getEnemyLambertMaterial('boar:back', 0x65492f);
+        const bellyMaterial = getEnemyLambertMaterial('boar:belly', 0xa57c56);
+        const snoutMaterial = getEnemyLambertMaterial('boar:snout', 0x8b6748);
+        const tuskMaterial = getEnemyLambertMaterial('boar:tusk', 0xf2e6cb);
+        const legMaterial = getEnemyLambertMaterial('boar:leg', 0x5a4330);
+        const hoofMaterial = getEnemyLambertMaterial('boar:hoof', 0x2f241d);
+        const eyeMaterial = getEnemyLambertMaterial('boar:eye', 0x1a140f);
 
         const torsoGroup = new THREE.Group();
         const body = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.42, 0.98), bodyMaterial);
@@ -288,7 +309,7 @@
 
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.06, 0.92, 1.16),
-            new THREE.MeshBasicMaterial({ visible: false })
+            createEnemyHitboxMaterial()
         );
         hitbox.position.y = 0.45;
         hitbox.userData = {
@@ -344,13 +365,13 @@
         group.rotation.order = 'YXZ';
         const combatLevel = getEnemyCombatLevel(enemyType);
 
-        const furMaterial = new THREE.MeshLambertMaterial({ color: 0x6c645e, flatShading: true });
-        const furDarkMaterial = new THREE.MeshLambertMaterial({ color: 0x4d4844, flatShading: true });
-        const bellyMaterial = new THREE.MeshLambertMaterial({ color: 0x93867d, flatShading: true });
-        const muzzleMaterial = new THREE.MeshLambertMaterial({ color: 0x5a544f, flatShading: true });
-        const legMaterial = new THREE.MeshLambertMaterial({ color: 0x4c4743, flatShading: true });
-        const pawMaterial = new THREE.MeshLambertMaterial({ color: 0x241f1c, flatShading: true });
-        const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0xece7d5, flatShading: true });
+        const furMaterial = getEnemyLambertMaterial('wolf:fur', 0x6c645e);
+        const furDarkMaterial = getEnemyLambertMaterial('wolf:furDark', 0x4d4844);
+        const bellyMaterial = getEnemyLambertMaterial('wolf:belly', 0x93867d);
+        const muzzleMaterial = getEnemyLambertMaterial('wolf:muzzle', 0x5a544f);
+        const legMaterial = getEnemyLambertMaterial('wolf:leg', 0x4c4743);
+        const pawMaterial = getEnemyLambertMaterial('wolf:paw', 0x241f1c);
+        const eyeMaterial = getEnemyLambertMaterial('wolf:eye', 0xece7d5);
 
         const torsoGroup = new THREE.Group();
         const body = new THREE.Mesh(new THREE.SphereGeometry(0.31, 10, 10), furMaterial);
@@ -453,7 +474,7 @@
 
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.0, 0.92, 1.24),
-            new THREE.MeshBasicMaterial({ visible: false })
+            createEnemyHitboxMaterial()
         );
         hitbox.position.y = 0.48;
         hitbox.userData = {
@@ -503,61 +524,181 @@
         };
     }
 
+    function createChickenLegRig(basePosition, side, materials) {
+        const root = new THREE.Group();
+        const upperPivot = new THREE.Group();
+        const lowerPivot = new THREE.Group();
+        const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.029, 0.18, 5), materials.legMaterial);
+        const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.014, 0.16, 5), materials.legMaterial);
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.034, 0.18), materials.footMaterial);
+        const toeGeometry = new THREE.ConeGeometry(0.012, 0.065, 4);
+        const toeCenter = new THREE.Mesh(toeGeometry, materials.clawMaterial);
+        const toeInner = new THREE.Mesh(toeGeometry.clone(), materials.clawMaterial);
+        const toeOuter = new THREE.Mesh(toeGeometry.clone(), materials.clawMaterial);
+
+        root.position.copy(basePosition);
+        root.rotation.z = side * 0.05;
+        upper.position.y = -0.08;
+        lowerPivot.position.y = -0.17;
+        lower.position.y = -0.075;
+        foot.position.set(0, -0.16, 0.075);
+
+        [toeCenter, toeInner, toeOuter].forEach((toe) => {
+            toe.rotation.x = Math.PI / 2;
+            toe.position.y = -0.165;
+        });
+        toeCenter.position.z = 0.18;
+        toeInner.position.set(side * -0.035, -0.165, 0.15);
+        toeInner.rotation.z = side * -0.26;
+        toeOuter.position.set(side * 0.035, -0.165, 0.15);
+        toeOuter.rotation.z = side * 0.26;
+
+        lowerPivot.add(lower, foot, toeCenter, toeInner, toeOuter);
+        upperPivot.add(upper, lowerPivot);
+        root.add(upperPivot);
+
+        return {
+            root,
+            upperPivot,
+            lowerPivot,
+            foot,
+            toeCenter,
+            toeInner,
+            toeOuter,
+            baseX: basePosition.x,
+            baseY: basePosition.y,
+            baseZ: basePosition.z,
+            baseFootZ: foot.position.z,
+            side
+        };
+    }
+
+    function applyChickenLegPose(leg, phase, options = {}) {
+        if (!leg) return;
+        const walkActive = !!options.walkActive;
+        const stride = Math.sin(phase);
+        const liftWave = Math.max(0, Math.cos(phase));
+        const bob = Number.isFinite(options.bob) ? options.bob : 0;
+        const attackPulse = Number.isFinite(options.attackPulse) ? options.attackPulse : 0;
+        const hitPulse = Number.isFinite(options.hitPulse) ? options.hitPulse : 0;
+        const travel = walkActive ? 0.06 : 0.012;
+        const lift = liftWave * (walkActive ? 0.045 : 0.012);
+
+        leg.root.position.set(
+            leg.baseX + (stride * 0.012),
+            leg.baseY + (bob * 0.05) + (lift * 0.3) + (hitPulse * 0.01),
+            leg.baseZ + (stride * travel)
+        );
+        leg.root.rotation.z = (leg.side * 0.05) + (stride * leg.side * 0.03);
+        leg.upperPivot.rotation.x = -0.08 + (stride * (walkActive ? 0.52 : 0.12)) - (attackPulse * 0.08);
+        leg.lowerPivot.rotation.x = 0.12 + (Math.max(0, -stride) * 0.42) + (liftWave * (walkActive ? 0.16 : 0.04));
+        leg.foot.position.z = leg.baseFootZ + (stride * (walkActive ? 0.025 : 0.006));
+        leg.foot.rotation.x = -0.12 + (Math.max(0, stride) * 0.18) - (attackPulse * 0.04);
+    }
+
     function createChickenRenderer(enemyState, enemyType) {
         const group = new THREE.Group();
         group.rotation.order = 'YXZ';
         const combatLevel = getEnemyCombatLevel(enemyType);
 
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0xf0ead8, flatShading: true });
-        const wingMaterial = new THREE.MeshLambertMaterial({ color: 0xe6dbc2, flatShading: true });
-        const tailMaterial = new THREE.MeshLambertMaterial({ color: 0xc5ad72, flatShading: true });
-        const beakMaterial = new THREE.MeshLambertMaterial({ color: 0xe2a236, flatShading: true });
-        const legMaterial = new THREE.MeshLambertMaterial({ color: 0xcd9b34, flatShading: true });
-        const combMaterial = new THREE.MeshLambertMaterial({ color: 0xb2423b, flatShading: true });
-        const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x201712, flatShading: true });
+        const bodyMaterial = getEnemyLambertMaterial('chicken:body', 0xf4ecd8);
+        const chestMaterial = getEnemyLambertMaterial('chicken:chest', 0xfff7df);
+        const wingMaterial = getEnemyLambertMaterial('chicken:wing', 0xdfcfad);
+        const tailMaterial = getEnemyLambertMaterial('chicken:tail', 0xc8aa68);
+        const beakMaterial = getEnemyLambertMaterial('chicken:beak', 0xe5a534);
+        const legMaterial = getEnemyLambertMaterial('chicken:leg', 0xd0a03a);
+        const footMaterial = getEnemyLambertMaterial('chicken:foot', 0xb88524);
+        const combMaterial = getEnemyLambertMaterial('chicken:comb', 0xb23b38);
+        const eyeMaterial = getEnemyLambertMaterial('chicken:eye', 0x201712);
+        const clawMaterial = getEnemyLambertMaterial('chicken:claw', 0x4c3119);
 
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), bodyMaterial);
-        body.scale.set(1.2, 0.92, 1.48);
-        body.position.set(0, 0.28, 0);
+        const torsoGroup = new THREE.Group();
+        torsoGroup.name = 'chicken-torso';
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.42, 0.52), bodyMaterial);
+        body.position.set(0, 0.32, 0.01);
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6), chestMaterial);
+        chest.scale.set(1.08, 0.9, 1.0);
+        chest.position.set(0, 0.34, 0.24);
+        const rump = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.34, 0.34), bodyMaterial);
+        rump.position.set(0, 0.31, -0.22);
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), wingMaterial);
+        belly.scale.set(1.05, 0.52, 1.25);
+        belly.position.set(0, 0.17, 0.04);
+        torsoGroup.add(body, chest, rump, belly);
 
         const headGroup = new THREE.Group();
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 10), bodyMaterial);
-        head.scale.set(0.95, 0.9, 1.0);
-        const beak = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.16, 4), beakMaterial);
-        beak.rotation.x = Math.PI / 2;
-        beak.position.set(0, -0.01, 0.18);
-        const comb = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.1, 0.07), combMaterial);
-        comb.position.set(0, 0.16, 0.01);
+        headGroup.name = 'chicken-head';
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.25, 0.26), bodyMaterial);
+        head.position.set(0, 0, 0);
+        const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), chestMaterial);
+        cheek.scale.set(1.15, 0.78, 0.9);
+        cheek.position.set(0, -0.03, 0.08);
+        const beakUpper = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.17, 4), beakMaterial);
+        beakUpper.rotation.x = Math.PI / 2;
+        beakUpper.position.set(0, -0.01, 0.21);
+        const beakLower = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.09), beakMaterial);
+        beakLower.position.set(0, -0.055, 0.145);
+        const combFront = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.11, 0.045), combMaterial);
+        const combMid = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.05), combMaterial);
+        const combBack = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.1, 0.045), combMaterial);
+        combFront.position.set(0, 0.16, 0.08);
+        combMid.position.set(0, 0.18, 0);
+        combBack.position.set(0, 0.145, -0.08);
+        const wattleLeft = new THREE.Mesh(new THREE.SphereGeometry(0.034, 6, 6), combMaterial);
+        const wattleRight = wattleLeft.clone();
+        wattleLeft.scale.set(0.75, 1.25, 0.65);
+        wattleRight.scale.copy(wattleLeft.scale);
+        wattleLeft.position.set(0.035, -0.13, 0.1);
+        wattleRight.position.set(-0.035, -0.13, 0.1);
         const eyeLeft = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), eyeMaterial);
         const eyeRight = eyeLeft.clone();
-        eyeLeft.position.set(0.06, 0.03, 0.08);
-        eyeRight.position.set(-0.06, 0.03, 0.08);
-        headGroup.add(head, beak, comb, eyeLeft, eyeRight);
-        headGroup.position.set(0, 0.54, 0.34);
+        eyeLeft.position.set(0.075, 0.035, 0.105);
+        eyeRight.position.set(-0.075, 0.035, 0.105);
+        headGroup.add(head, cheek, beakUpper, beakLower, combFront, combMid, combBack, wattleLeft, wattleRight, eyeLeft, eyeRight);
+        headGroup.position.set(0, 0.57, 0.36);
 
-        const wingLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.26), wingMaterial);
+        const wingLeftGroup = new THREE.Group();
+        const wingRightGroup = new THREE.Group();
+        wingLeftGroup.name = 'chicken-wing-left';
+        wingRightGroup.name = 'chicken-wing-right';
+        const wingLeft = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.25, 0.32), wingMaterial);
         const wingRight = wingLeft.clone();
-        wingLeft.position.set(0.22, 0.28, 0.02);
-        wingRight.position.set(-0.22, 0.28, 0.02);
+        const wingLeftTip = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.25), tailMaterial);
+        const wingRightTip = wingLeftTip.clone();
+        wingLeft.position.set(0, 0, 0);
+        wingRight.position.set(0, 0, 0);
+        wingLeftTip.position.set(0.01, -0.11, -0.02);
+        wingRightTip.position.set(-0.01, -0.11, -0.02);
+        wingLeftGroup.position.set(0.255, 0.32, 0.03);
+        wingRightGroup.position.set(-0.255, 0.32, 0.03);
+        wingLeftGroup.rotation.z = -0.22;
+        wingRightGroup.rotation.z = 0.22;
+        wingLeftGroup.add(wingLeft, wingLeftTip);
+        wingRightGroup.add(wingRight, wingRightTip);
 
-        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 4), tailMaterial);
-        tail.rotation.x = -Math.PI / 2;
-        tail.rotation.z = Math.PI;
-        tail.position.set(0, 0.38, -0.27);
+        const tailGroup = new THREE.Group();
+        tailGroup.name = 'chicken-tail-fan';
+        tailGroup.position.set(0, 0.4, -0.36);
+        const tailCenter = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.08), tailMaterial);
+        const tailLeft = tailCenter.clone();
+        const tailRight = tailCenter.clone();
+        tailCenter.position.set(0, 0.05, -0.06);
+        tailCenter.rotation.x = -0.65;
+        tailLeft.position.set(0.09, 0.03, -0.045);
+        tailLeft.rotation.set(-0.58, 0.08, -0.42);
+        tailRight.position.set(-0.09, 0.03, -0.045);
+        tailRight.rotation.set(-0.58, -0.08, 0.42);
+        tailGroup.add(tailCenter, tailLeft, tailRight);
 
-        const legGeometry = new THREE.CylinderGeometry(0.018, 0.014, 0.28, 5);
-        const legLeft = new THREE.Mesh(legGeometry, legMaterial);
-        const legRight = new THREE.Mesh(legGeometry.clone(), legMaterial);
-        legLeft.position.set(0.1, 0.04, -0.08);
-        legRight.position.set(-0.1, 0.04, -0.08);
-        legLeft.rotation.z = -0.08;
-        legRight.rotation.z = 0.08;
+        const legMaterials = { legMaterial, footMaterial, clawMaterial };
+        const legLeft = createChickenLegRig(new THREE.Vector3(0.12, 0.22, -0.05), 1, legMaterials);
+        const legRight = createChickenLegRig(new THREE.Vector3(-0.12, 0.22, -0.05), -1, legMaterials);
 
         const hitbox = new THREE.Mesh(
-            new THREE.BoxGeometry(0.9, 0.95, 1.0),
-            new THREE.MeshBasicMaterial({ visible: false })
+            new THREE.BoxGeometry(1.35, 1.25, 1.35),
+            createEnemyHitboxMaterial()
         );
-        hitbox.position.y = 0.5;
+        hitbox.position.y = 0.62;
         hitbox.userData = {
             type: 'ENEMY',
             gridX: enemyState.x,
@@ -568,16 +709,36 @@
             uid: enemyState.runtimeId
         };
 
-        group.add(body, headGroup, wingLeft, wingRight, tail, legLeft, legRight, hitbox);
+        group.add(torsoGroup, headGroup, wingLeftGroup, wingRightGroup, tailGroup, legLeft.root, legRight.root, hitbox);
         return {
             group,
             hitbox,
             kind: 'chicken',
+            torsoGroup,
             body,
+            chest,
+            rump,
+            belly,
             headGroup,
+            head,
+            cheek,
+            beakUpper,
+            beakLower,
+            combFront,
+            combMid,
+            combBack,
+            wattleLeft,
+            wattleRight,
+            wingLeftGroup,
+            wingRightGroup,
             wingLeft,
             wingRight,
-            tail,
+            wingLeftTip,
+            wingRightTip,
+            tailGroup,
+            tailCenter,
+            tailLeft,
+            tailRight,
             legLeft,
             legRight
         };
@@ -596,7 +757,7 @@
         const combatLevel = getEnemyCombatLevel(enemyType);
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.0, 2.0, 1.0),
-            new THREE.MeshBasicMaterial({ visible: false })
+            createEnemyHitboxMaterial()
         );
         hitbox.position.y = 1.0;
         hitbox.userData = {
@@ -773,43 +934,61 @@
     function updateChickenRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY) {
         const walkActive = visuallyMoving || useWalkBaseClip;
         const gaitPhase = (frameNow / 170) + (currentVisualX * 0.27) + (currentVisualY * 0.31);
-        const walkPulse = walkActive ? Math.sin(gaitPhase * Math.PI * 2) : Math.sin(idlePhase * 1.7) * 0.25;
+        const gaitAngle = gaitPhase * Math.PI * 2;
+        const walkPulse = walkActive ? Math.sin(gaitAngle) : Math.sin(idlePhase * 1.7) * 0.25;
         const attackAge = frameNow - (enemyState.attackTriggerAt || 0);
         const attackPulse = attackAge >= 0 && attackAge < 360 ? Math.sin((attackAge / 360) * Math.PI) : 0;
         const hitAge = frameNow - (enemyState.hitReactionTriggerAt || 0);
         const hitPulse = hitAge >= 0 && hitAge < 360 ? Math.sin((hitAge / 360) * Math.PI) : 0;
-        const bob = Math.sin(idlePhase * 2.1) * 0.02 + (walkActive ? Math.abs(walkPulse) * 0.018 : 0);
-        const legStride = walkActive ? walkPulse * 0.35 : Math.sin(idlePhase * 2.4) * 0.06;
-        const wingFlap = (walkActive ? Math.sin(gaitPhase * Math.PI * 4) * 0.18 : Math.sin(idlePhase * 2.2) * 0.1) + attackPulse * 0.26 - hitPulse * 0.14;
+        const bob = Math.sin(idlePhase * 2.1) * 0.018 + (walkActive ? Math.abs(Math.sin(gaitAngle * 2)) * 0.026 : 0);
+        const idlePeck = walkActive ? 0 : Math.max(0, Math.sin(idlePhase * 1.35 - 0.65));
+        const peckPulse = idlePeck * idlePeck * idlePeck;
+        const headTilt = walkActive ? walkPulse * 0.035 : Math.sin(idlePhase * 1.6) * 0.022;
+        const wingFlap = (walkActive ? Math.sin(gaitAngle * 2.0) * 0.22 : Math.sin(idlePhase * 2.35) * 0.08)
+            + (attackPulse * 0.3)
+            - (hitPulse * 0.16);
+        const tailFlick = (walkActive ? Math.sin(gaitAngle * 2.0 + 0.7) * 0.2 : Math.sin(idlePhase * 2.0) * 0.1)
+            + (attackPulse * 0.1)
+            - (hitPulse * 0.12);
 
-        renderer.group.rotation.x = -0.02 + (walkActive ? walkPulse * 0.03 : Math.sin(idlePhase * 1.4) * 0.01) - attackPulse * 0.1 + hitPulse * 0.06;
+        renderer.group.rotation.x = -0.018 + (walkActive ? walkPulse * 0.025 : Math.sin(idlePhase * 1.4) * 0.01) - attackPulse * 0.08 + hitPulse * 0.05;
+        renderer.torsoGroup.position.set(0, bob - attackPulse * 0.035 + hitPulse * 0.03, 0);
+        renderer.torsoGroup.rotation.set(-attackPulse * 0.06 + hitPulse * 0.04, 0, walkActive ? walkPulse * 0.018 : Math.sin(idlePhase * 1.15) * 0.01);
 
-        renderer.body.position.set(0, 0.28 + bob - attackPulse * 0.03 + hitPulse * 0.03, 0);
-        renderer.body.scale.set(1.18 - hitPulse * 0.04, 0.92 - attackPulse * 0.08 + hitPulse * 0.02, 1.46 + attackPulse * 0.08 - hitPulse * 0.04);
+        renderer.body.scale.set(1.0 - hitPulse * 0.025, 1.0 - attackPulse * 0.055 + hitPulse * 0.02, 1.0 + attackPulse * 0.06 - hitPulse * 0.025);
+        renderer.chest.position.set(0, 0.34 - attackPulse * 0.025 + hitPulse * 0.018, 0.24 + attackPulse * 0.055 - hitPulse * 0.03);
+        renderer.rump.position.set(0, 0.31 + hitPulse * 0.015, -0.22 - attackPulse * 0.025);
+        renderer.belly.position.set(0, 0.17 - attackPulse * 0.015, 0.04);
 
-        renderer.headGroup.position.set(0, 0.54 + bob * 0.7 - attackPulse * 0.06 + hitPulse * 0.04, 0.34 + attackPulse * 0.2 - hitPulse * 0.08);
+        renderer.headGroup.position.set(
+            0,
+            0.57 + (bob * 0.65) - (peckPulse * 0.045) - (attackPulse * 0.055) + (hitPulse * 0.04),
+            0.36 + (peckPulse * 0.075) + (attackPulse * 0.2) - (hitPulse * 0.085)
+        );
         renderer.headGroup.rotation.set(
-            -attackPulse * 0.18 + hitPulse * 0.12,
+            -0.02 - (peckPulse * 0.34) - (attackPulse * 0.2) + (hitPulse * 0.12),
             0,
-            walkActive ? walkPulse * 0.03 : Math.sin(idlePhase * 1.6) * 0.015
+            headTilt
         );
+        renderer.combFront.scale.set(1, 1 + attackPulse * 0.08 - hitPulse * 0.04, 1);
+        renderer.combMid.scale.set(1, 1 + attackPulse * 0.1 - hitPulse * 0.05, 1);
+        renderer.wattleLeft.position.y = -0.13 - (attackPulse * 0.015) + (hitPulse * 0.01);
+        renderer.wattleRight.position.y = renderer.wattleLeft.position.y;
 
-        renderer.wingLeft.position.set(0.22, 0.28 + bob * 0.3, 0.02);
-        renderer.wingRight.position.set(-0.22, 0.28 + bob * 0.3, 0.02);
-        renderer.wingLeft.rotation.set(0, 0, -0.14 - wingFlap);
-        renderer.wingRight.rotation.set(0, 0, 0.14 + wingFlap);
+        renderer.wingLeftGroup.position.set(0.255, 0.32 + bob * 0.32 - hitPulse * 0.015, 0.03);
+        renderer.wingRightGroup.position.set(-0.255, 0.32 + bob * 0.32 - hitPulse * 0.015, 0.03);
+        renderer.wingLeftGroup.rotation.set(0.02 + attackPulse * 0.04, 0, -0.22 - wingFlap);
+        renderer.wingRightGroup.rotation.set(0.02 + attackPulse * 0.04, 0, 0.22 + wingFlap);
+        renderer.wingLeftTip.rotation.x = 0.08 + wingFlap * 0.25;
+        renderer.wingRightTip.rotation.x = 0.08 + wingFlap * 0.25;
 
-        renderer.legLeft.position.set(0.1 + (walkActive ? legStride * 0.03 : 0), 0.04 + bob * 0.05, -0.08);
-        renderer.legRight.position.set(-0.1 - (walkActive ? legStride * 0.03 : 0), 0.04 + bob * 0.05, -0.08);
-        renderer.legLeft.rotation.z = -0.08 - legStride * 0.45 + attackPulse * 0.05;
-        renderer.legRight.rotation.z = 0.08 + legStride * 0.45 - attackPulse * 0.05;
+        renderer.tailGroup.position.set(0, 0.4 + bob * 0.22 - hitPulse * 0.03, -0.36 - attackPulse * 0.025);
+        renderer.tailGroup.rotation.set(-0.08 - attackPulse * 0.08 + hitPulse * 0.04, 0, tailFlick);
+        renderer.tailLeft.rotation.z = -0.42 + tailFlick * 0.28;
+        renderer.tailRight.rotation.z = 0.42 + tailFlick * 0.28;
 
-        renderer.tail.position.set(0, 0.38 + bob * 0.25 - hitPulse * 0.03, -0.27);
-        renderer.tail.rotation.set(
-            -Math.PI / 2 - attackPulse * 0.08 + hitPulse * 0.04,
-            0,
-            Math.sin(idlePhase * 2.2) * 0.16 + attackPulse * 0.08
-        );
+        applyChickenLegPose(renderer.legLeft, gaitAngle, { walkActive, bob, attackPulse, hitPulse });
+        applyChickenLegPose(renderer.legRight, gaitAngle + Math.PI, { walkActive, bob, attackPulse, hitPulse });
     }
 
 
@@ -1041,6 +1220,21 @@
         return typeof context.getVisualHeight === 'function' ? context.getVisualHeight(x, y, z) : 0;
     }
 
+    function shouldRenderEnemyVisualFrame(options = {}, enemyState, currentVisualX, currentVisualY) {
+        if (!enemyState) return false;
+        const playerState = options.playerState || {};
+        const playerTargetId = options.playerTargetId || 'player';
+        if (enemyState.currentState === 'aggroed' || enemyState.lockedTargetId === playerTargetId) return true;
+        if (playerState.lockedTargetId === enemyState.runtimeId) return true;
+        if (typeof options.isEnemyPendingDefeat === 'function' && options.isEnemyPendingDefeat(enemyState)) return true;
+        if (enemyState.z !== playerState.z) return false;
+        const playerX = Number.isFinite(playerState.x) ? playerState.x : currentVisualX;
+        const playerY = Number.isFinite(playerState.y) ? playerState.y : currentVisualY;
+        const dx = currentVisualX - playerX;
+        const dy = currentVisualY - playerY;
+        return ((dx * dx) + (dy * dy)) <= COMBAT_ENEMY_VISUAL_CULL_DISTANCE_SQ;
+    }
+
     function updateEnemyVisualFrame(options = {}) {
         setRenderContext(options);
         const enemyState = options.enemyState || null;
@@ -1064,6 +1258,8 @@
         const idlePhase = ((frameNow + (currentVisualX * 37) + (currentVisualY * 19)) % 1200) / 1200 * Math.PI * 2;
         const idleBob = Math.sin(idlePhase) * 0.04;
         renderer.group.position.set(currentVisualX, currentVisualHeight + idleBob, currentVisualY);
+        const shouldRenderVisual = shouldRenderEnemyVisualFrame(options, enemyState, currentVisualX, currentVisualY);
+        renderer.group.visible = shouldRenderVisual;
 
         let targetYaw = enemyState.facingYaw;
         let snapCombatFacing = false;
@@ -1110,6 +1306,7 @@
         }
         renderer.group.updateMatrixWorld(true);
 
+        if (!shouldRenderVisual) return;
         updateEnemyVisualRenderer(Object.assign({}, options, {
             idlePhase,
             visuallyMoving,

@@ -33,6 +33,44 @@ const FISHING_HELD_ITEMS = [
   "rune_harpoon"
 ];
 
+const RANGED_BOW_ITEMS = [
+  "normal_shortbow",
+  "normal_longbow",
+  "oak_shortbow",
+  "oak_longbow",
+  "willow_shortbow",
+  "willow_longbow",
+  "maple_shortbow",
+  "maple_longbow",
+  "yew_shortbow",
+  "yew_longbow"
+];
+
+const RANGED_AMMO_ITEMS = [
+  "bronze_arrows",
+  "iron_arrows",
+  "steel_arrows",
+  "mithril_arrows",
+  "adamant_arrows",
+  "rune_arrows"
+];
+
+const MAGIC_STAFF_ITEMS = [
+  "plain_staff_wood",
+  "plain_staff_oak",
+  "plain_staff_willow",
+  "plain_staff_maple",
+  "plain_staff_yew",
+  "fire_staff",
+  "water_staff",
+  "earth_staff",
+  "air_staff"
+];
+
+const MAGIC_RUNE_ITEMS = [
+  "ember_rune"
+];
+
 const ARMOR_ITEMS = [
   "bronze_boots",
   "bronze_helmet",
@@ -67,6 +105,54 @@ for (const itemId of FISHING_HELD_ITEMS) {
   assert.strictEqual(item.combat.attackProfile.styleFamily, "melee", `${itemId} should still be authored as a melee attack source`);
   assert.ok(Number.isFinite(item.requiredFishingLevel), `${itemId} should expose a required Fishing level`);
   assert.ok(!Number.isFinite(item.requiredAttackLevel), `${itemId} should not expose an Attack gate`);
+}
+
+for (const itemId of RANGED_BOW_ITEMS) {
+  const item = itemDefs[itemId];
+  assert.ok(item, `${itemId} should exist in the runtime item catalog`);
+  assert.strictEqual(item.type, "weapon", `${itemId} should be equippable as a weapon`);
+  assert.strictEqual(item.weaponClass, "bow", `${itemId} should use the bow weapon class`);
+  assert.ok(item.combat, `${itemId} should expose explicit ranged combat data`);
+  assert.strictEqual(item.combat.attackProfile.styleFamily, "ranged", `${itemId} should be authored as a ranged attack source`);
+  assert.strictEqual(item.combat.attackProfile.projectile, true, `${itemId} should launch projectiles`);
+  assert.strictEqual(item.combat.attackProfile.ammoUse, true, `${itemId} should require ammunition`);
+  assert.ok(Number.isFinite(item.requiredRangedLevel), `${itemId} should expose a required Ranged level`);
+}
+
+for (const itemId of RANGED_AMMO_ITEMS) {
+  const item = itemDefs[itemId];
+  assert.ok(item, `${itemId} should exist in the runtime item catalog`);
+  assert.strictEqual(item.type, "ammo", `${itemId} should be marked as ammunition`);
+  assert.strictEqual(item.stackable, true, `${itemId} should stack for ammo consumption`);
+  assert.strictEqual(item.defaultAction, "Equip", `${itemId} should default to Equip for quiver use`);
+  assert.ok(Array.isArray(item.actions) && item.actions.includes("Equip"), `${itemId} should expose an Equip action`);
+  assert.ok(item.ammo, `${itemId} should expose an ammo profile`);
+  assert.strictEqual(item.ammo.damageType, "ranged", `${itemId} ammo should feed ranged attacks`);
+  assert.ok(item.ammo.rangedStrengthBonus > 0, `${itemId} should contribute ranged strength`);
+}
+
+for (const itemId of MAGIC_STAFF_ITEMS) {
+  const item = itemDefs[itemId];
+  assert.ok(item, `${itemId} should exist in the runtime item catalog`);
+  assert.strictEqual(item.type, "weapon", `${itemId} should be equippable as a weapon`);
+  assert.strictEqual(item.weaponClass, "staff", `${itemId} should use the staff weapon class`);
+  assert.ok(item.combat, `${itemId} should expose explicit magic combat data`);
+  assert.strictEqual(item.combat.attackProfile.styleFamily, "magic", `${itemId} should be authored as a magic attack source`);
+  assert.strictEqual(item.combat.attackProfile.projectile, true, `${itemId} should launch magic projectiles`);
+  assert.strictEqual(item.combat.attackProfile.ammoUse, true, `${itemId} should require runes`);
+  assert.ok(Number.isFinite(item.requiredMagicLevel), `${itemId} should expose a required Magic level`);
+  assert.ok(item.combat.bonuses.magicAccuracyBonus > 0, `${itemId} should contribute magic accuracy`);
+  assert.ok(item.combat.bonuses.magicStrengthBonus > 0, `${itemId} should contribute magic strength`);
+}
+
+for (const itemId of MAGIC_RUNE_ITEMS) {
+  const item = itemDefs[itemId];
+  assert.ok(item, `${itemId} should exist in the runtime item catalog`);
+  assert.strictEqual(item.stackable, true, `${itemId} should stack for spell fuel`);
+  assert.ok(item.ammo, `${itemId} should expose an ammo profile for spell consumption`);
+  assert.strictEqual(item.ammo.damageType, "magic", `${itemId} ammo should feed magic attacks`);
+  assert.ok(item.ammo.magicStrengthBonus > 0, `${itemId} should contribute magic strength`);
+  assert.ok(item.ammo.compatibleWeaponFamilies.includes("staff"), `${itemId} should be compatible with staffs`);
 }
 
 for (const itemId of ARMOR_ITEMS) {

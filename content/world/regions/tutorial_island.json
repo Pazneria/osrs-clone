@@ -346,6 +346,65 @@
           "combat",
           "bank"
         ]
+      },
+      {
+        "pathId": "tutorial_advanced_skill_yard_apron",
+        "points": [
+          {
+            "x": 286,
+            "y": 328
+          },
+          {
+            "x": 262,
+            "y": 336
+          },
+          {
+            "x": 232,
+            "y": 338
+          },
+          {
+            "x": 202,
+            "y": 330
+          }
+        ],
+        "pathWidth": 4.6,
+        "height": -0.092,
+        "edgeSoftness": 1.05,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path",
+          "ranged",
+          "magic",
+          "runecrafting",
+          "crafting",
+          "bank"
+        ]
+      },
+      {
+        "pathId": "tutorial_ember_altar_spur",
+        "points": [
+          {
+            "x": 246,
+            "y": 338
+          },
+          {
+            "x": 236,
+            "y": 342
+          }
+        ],
+        "pathWidth": 2.4,
+        "height": -0.09,
+        "edgeSoftness": 0.8,
+        "tileId": "DIRT",
+        "tags": [
+          "tutorial",
+          "surface-v2",
+          "path",
+          "runecrafting",
+          "altar"
+        ]
       }
     ],
     "smithingHallApproach": {
@@ -426,6 +485,7 @@
       "z": 0,
       "facingYaw": 3.141592653589793,
       "roamingRadiusOverride": 0,
+      "tutorialVisibleUntilStep": 10,
       "action": "Talk-to",
       "travelToWorldId": "main_overworld",
       "travelSpawn": {
@@ -557,14 +617,93 @@
       "interactionTarget": "NPC",
       "name": "Combat Instructor",
       "npcType": 3,
+      "appearanceId": "tutorial_combat_instructor",
       "x": 320,
       "y": 326,
       "z": 0,
+      "roamingRadiusOverride": 0,
       "action": "Talk-to",
       "dialogueId": "tutorial_combat_instructor",
       "tags": [
         "tutorial",
         "combat"
+      ]
+    },
+    {
+      "serviceId": "merchant:tutorial_ranged_instructor",
+      "spawnId": "npc:tutorial_ranged_instructor",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Ranged Instructor",
+      "npcType": 3,
+      "appearanceId": "tutorial_ranged_instructor",
+      "x": 340,
+      "y": 320,
+      "z": 0,
+      "roamingRadiusOverride": 0,
+      "action": "Talk-to",
+      "dialogueId": "tutorial_ranged_instructor",
+      "tags": [
+        "tutorial",
+        "combat",
+        "ranged"
+      ]
+    },
+    {
+      "serviceId": "merchant:tutorial_magic_instructor",
+      "spawnId": "npc:tutorial_magic_instructor",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Magic Instructor",
+      "npcType": 3,
+      "appearanceId": "tutorial_magic_instructor",
+      "x": 292,
+      "y": 336,
+      "z": 0,
+      "roamingRadiusOverride": 0,
+      "action": "Talk-to",
+      "dialogueId": "tutorial_magic_instructor",
+      "tags": [
+        "tutorial",
+        "magic"
+      ]
+    },
+    {
+      "serviceId": "merchant:tutorial_runecrafting_instructor",
+      "spawnId": "npc:tutorial_runecrafting_instructor",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Runecrafting Instructor",
+      "npcType": 3,
+      "appearanceId": "tutorial_runecrafting_instructor",
+      "x": 246,
+      "y": 340,
+      "z": 0,
+      "roamingRadiusOverride": 0,
+      "action": "Talk-to",
+      "dialogueId": "tutorial_runecrafting_instructor",
+      "tags": [
+        "tutorial",
+        "runecrafting"
+      ]
+    },
+    {
+      "serviceId": "merchant:tutorial_crafting_instructor",
+      "spawnId": "npc:tutorial_crafting_instructor",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Crafting Instructor",
+      "npcType": 3,
+      "appearanceId": "tutorial_crafting_instructor",
+      "x": 218,
+      "y": 336,
+      "z": 0,
+      "roamingRadiusOverride": 0,
+      "action": "Talk-to",
+      "dialogueId": "tutorial_crafting_instructor",
+      "tags": [
+        "tutorial",
+        "crafting"
       ]
     },
     {
@@ -574,6 +713,7 @@
       "interactionTarget": "NPC",
       "name": "Bank Tutor",
       "npcType": 3,
+      "appearanceId": "tutorial_bank_tutor",
       "x": 202,
       "y": 330,
       "z": 0,
@@ -595,6 +735,8 @@
       "x": 250,
       "y": 334,
       "z": 0,
+      "roamingRadiusOverride": 0,
+      "tutorialVisibleFromStep": 11,
       "action": "Talk-to",
       "travelToWorldId": "main_overworld",
       "travelSpawn": {
@@ -785,7 +927,21 @@
         ]
       }
     ],
-    "runecrafting": [],
+    "runecrafting": [
+      {
+        "routeId": "tutorial_ember_altar",
+        "alias": "tutorial",
+        "label": "Ember Altar",
+        "x": 236,
+        "y": 342,
+        "z": 0,
+        "tags": [
+          "tutorial",
+          "runecrafting",
+          "altar"
+        ]
+      }
+    ],
     "woodcutting": [
       {
         "routeId": "tutorial_grove",
@@ -837,7 +993,7 @@
     ],
     "fences": [
       {
-        "landmarkId": "tutorial_arrival_yard_fence",
+        "landmarkId": "tutorial_arrival_path_north_fence",
         "z": 0,
         "height": 0.05,
         "points": [
@@ -850,101 +1006,336 @@
             "y": 162
           },
           {
-            "x": 176,
-            "y": 186
+            "x": 184,
+            "y": 174
+          },
+          {
+            "x": 216,
+            "y": 184
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_arrival_path_south_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 130,
+            "y": 192
           },
           {
             "x": 150,
             "y": 200
           },
           {
-            "x": 130,
-            "y": 192
+            "x": 178,
+            "y": 198
           },
+          {
+            "x": 216,
+            "y": 208
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_arrival_west_boundary_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
           {
             "x": 130,
             "y": 162
+          },
+          {
+            "x": 130,
+            "y": 192
           }
         ]
       },
       {
-        "landmarkId": "tutorial_quarry_yard_fence",
+        "landmarkId": "tutorial_survival_path_north_fence",
         "z": 0,
         "height": 0.05,
         "points": [
           {
-            "x": 332,
-            "y": 256
+            "x": 216,
+            "y": 184
           },
           {
-            "x": 376,
-            "y": 256
+            "x": 238,
+            "y": 188
           },
           {
-            "x": 390,
-            "y": 288
-          },
-          {
-            "x": 368,
-            "y": 316
-          },
-          {
-            "x": 320,
-            "y": 306
-          }
-        ]
-      },
-      {
-        "landmarkId": "tutorial_combat_yard_fence",
-        "z": 0,
-        "height": 0.05,
-        "points": [
-          {
-            "x": 350,
-            "y": 306
-          },
-          {
-            "x": 358,
-            "y": 332
-          },
-          {
-            "x": 320,
-            "y": 346
+            "x": 256,
+            "y": 196
           },
           {
             "x": 282,
-            "y": 336
+            "y": 205
+          },
+          {
+            "x": 302,
+            "y": 218
+          },
+          {
+            "x": 304,
+            "y": 236
           }
         ]
       },
       {
-        "landmarkId": "tutorial_bank_exit_fence",
+        "landmarkId": "tutorial_survival_path_south_fence",
         "z": 0,
         "height": 0.05,
         "points": [
           {
-            "x": 162,
-            "y": 304
+            "x": 214,
+            "y": 208
           },
           {
-            "x": 242,
-            "y": 300
-          },
-          {
-            "x": 284,
-            "y": 324
+            "x": 232,
+            "y": 220
           },
           {
             "x": 250,
-            "y": 350
+            "y": 244
           },
           {
-            "x": 170,
+            "x": 276,
+            "y": 258
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_survival_gate_upper_threshold_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 324,
+            "y": 252
+          },
+          {
+            "x": 324,
+            "y": 257
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_survival_gate_lower_threshold_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 324,
+            "y": 263
+          },
+          {
+            "x": 324,
+            "y": 268
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_quarry_path_north_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 288,
+            "y": 238
+          },
+          {
+            "x": 328,
+            "y": 252
+          },
+          {
+            "x": 360,
+            "y": 272
+          },
+          {
+            "x": 368,
+            "y": 288
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_quarry_path_south_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 276,
+            "y": 256
+          },
+          {
+            "x": 318,
+            "y": 270
+          },
+          {
+            "x": 344,
+            "y": 288
+          },
+          {
+            "x": 336,
+            "y": 304
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_quarry_gate_upper_threshold_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 342,
+            "y": 296
+          },
+          {
+            "x": 342,
+            "y": 300
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_quarry_gate_lower_threshold_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 342,
+            "y": 308
+          },
+          {
+            "x": 342,
+            "y": 312
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_combat_bank_path_north_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 360,
+            "y": 292
+          },
+          {
+            "x": 350,
+            "y": 312
+          },
+          {
+            "x": 326,
+            "y": 338
+          },
+          {
+            "x": 286,
+            "y": 340
+          },
+          {
+            "x": 246,
+            "y": 338
+          },
+          {
+            "x": 204,
+            "y": 342
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_combat_bank_path_south_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 342,
+            "y": 282
+          },
+          {
+            "x": 332,
+            "y": 298
+          },
+          {
+            "x": 316,
+            "y": 314
+          },
+          {
+            "x": 286,
+            "y": 316
+          },
+          {
+            "x": 246,
+            "y": 314
+          },
+          {
+            "x": 204,
+            "y": 318
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_combat_gate_upper_threshold_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 284,
+            "y": 314
+          },
+          {
+            "x": 284,
+            "y": 320
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_combat_gate_lower_threshold_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 284,
+            "y": 328
+          },
+          {
+            "x": 284,
+            "y": 337
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_exit_path_north_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 204,
             "y": 342
           },
           {
-            "x": 162,
-            "y": 304
+            "x": 236,
+            "y": 346
+          },
+          {
+            "x": 250,
+            "y": 352
+          }
+        ]
+      },
+      {
+        "landmarkId": "tutorial_exit_path_south_fence",
+        "z": 0,
+        "height": 0.05,
+        "points": [
+          {
+            "x": 246,
+            "y": 338
+          },
+          {
+            "x": 270,
+            "y": 348
           }
         ]
       },
@@ -987,26 +1378,6 @@
         "isEW": true,
         "closedRot": 0,
         "openRot": -1.5707963267948966,
-        "currentRotation": 0,
-        "targetRotation": 0
-      },
-      {
-        "landmarkId": "tutorial_gate_arrival_to_survival_field",
-        "x": 176,
-        "y": 186,
-        "z": 0,
-        "tileId": "WOODEN_GATE_CLOSED",
-        "height": 0.05,
-        "isOpen": false,
-        "tutorialRequiredStep": 1,
-        "tutorialGateMessage": "Tell the Tutorial Guide you are ready before entering the survival field.",
-        "hingeOffsetX": 0,
-        "hingeOffsetY": 0.45,
-        "thickness": 0.12,
-        "width": 0.9,
-        "isEW": false,
-        "closedRot": 0,
-        "openRot": 1.5707963267948966,
         "currentRotation": 0,
         "targetRotation": 0
       },
@@ -1059,7 +1430,7 @@
         "height": 0.05,
         "isOpen": false,
         "tutorialRequiredStep": 6,
-        "tutorialGateMessage": "Finish the combat lesson first.",
+        "tutorialGateMessage": "Finish the first combat lesson before entering the advanced practice yard.",
         "hingeOffsetX": 0,
         "hingeOffsetY": 0.45,
         "thickness": 0.12,
@@ -1078,8 +1449,8 @@
         "tileId": "WOODEN_GATE_CLOSED",
         "height": 0.05,
         "isOpen": false,
-        "tutorialRequiredStep": 7,
-        "tutorialGateMessage": "Use both bank booths and report to the Bank Tutor first.",
+        "tutorialRequiredStep": 11,
+        "tutorialGateMessage": "Finish ranged, magic, runecrafting, crafting, and banking before leaving Tutorial Island.",
         "hingeOffsetX": 0,
         "hingeOffsetY": 0.45,
         "thickness": 0.12,
@@ -1246,6 +1617,128 @@
           "smithing",
           "quarry"
         ]
+      },
+      {
+        "propId": "tutorial_combat_weapon_rack",
+        "kind": "weapon_rack",
+        "label": "Weapon Rack",
+        "x": 312,
+        "y": 322,
+        "z": 0,
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "combat",
+          "yard"
+        ]
+      },
+      {
+        "propId": "tutorial_combat_training_dummy",
+        "kind": "training_dummy",
+        "label": "Training Dummy",
+        "x": 306,
+        "y": 338,
+        "z": 0,
+        "facingYaw": -0.7853981633974483,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "combat",
+          "yard"
+        ]
+      },
+      {
+        "propId": "tutorial_combat_archery_target",
+        "kind": "archery_target",
+        "label": "Archery Target",
+        "x": 350,
+        "y": 320,
+        "z": 0,
+        "facingYaw": -1.5707963267948966,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "combat",
+          "yard",
+          "ranged"
+        ]
+      },
+      {
+        "propId": "tutorial_ranged_arrow_crate",
+        "kind": "crate",
+        "label": "Arrow Crate",
+        "x": 342,
+        "y": 322,
+        "z": 0,
+        "facingYaw": 0,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "combat",
+          "ranged",
+          "yard"
+        ]
+      },
+      {
+        "propId": "tutorial_magic_lesson_board",
+        "kind": "notice_board",
+        "label": "Magic Lesson Board",
+        "x": 294,
+        "y": 338,
+        "z": 0,
+        "facingYaw": -1.5707963267948966,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "magic",
+          "yard"
+        ]
+      },
+      {
+        "propId": "tutorial_runecrafting_essence_crate",
+        "kind": "crate",
+        "label": "Rune Essence Crate",
+        "x": 241,
+        "y": 343,
+        "z": 0,
+        "facingYaw": 0,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "runecrafting",
+          "altar"
+        ]
+      },
+      {
+        "propId": "tutorial_crafting_bench",
+        "kind": "desk",
+        "label": "Crafting Bench",
+        "x": 222,
+        "y": 336,
+        "z": 0,
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "crafting",
+          "yard"
+        ]
+      },
+      {
+        "propId": "tutorial_crafting_supply_crate",
+        "kind": "crate",
+        "label": "Crafting Supplies",
+        "x": 218,
+        "y": 338,
+        "z": 0,
+        "facingYaw": 0,
+        "blocksMovement": true,
+        "tags": [
+          "tutorial",
+          "crafting",
+          "yard"
+        ]
       }
     ],
     "roofs": [
@@ -1268,7 +1761,23 @@
         }
       }
     ],
-    "altars": [],
+    "altars": [
+      {
+        "landmarkId": "tutorial_ember_altar",
+        "routeId": "tutorial_ember_altar",
+        "alias": "tutorial",
+        "label": "Ember Altar",
+        "x": 236,
+        "y": 342,
+        "z": 0,
+        "variant": 4,
+        "tags": [
+          "tutorial",
+          "runecrafting",
+          "altar"
+        ]
+      }
+    ],
     "showcaseTrees": [
       {
         "nodeId": "normal_tree",

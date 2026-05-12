@@ -1690,6 +1690,10 @@
             bonuses: {
                 meleeAccuracyBonus: accuracyBonus,
                 meleeStrengthBonus: strengthBonus,
+                rangedAccuracyBonus: 0,
+                rangedStrengthBonus: 0,
+                magicAccuracyBonus: 0,
+                magicStrengthBonus: 0,
                 meleeDefenseBonus: meleeDefenseBonus,
                 rangedDefenseBonus: rangedDefenseBonus,
                 magicDefenseBonus: magicDefenseBonus
@@ -1702,15 +1706,104 @@
         };
     }
 
+    function createRangedCombatProfile(options) {
+        const accuracyBonus = Number.isFinite(options && options.rangedAccuracyBonus) ? Math.floor(options.rangedAccuracyBonus) : 0;
+        const strengthBonus = Number.isFinite(options && options.rangedStrengthBonus) ? Math.floor(options.rangedStrengthBonus) : 0;
+        return {
+            attackProfile: {
+                styleFamily: 'ranged',
+                damageType: 'ranged',
+                range: Number.isFinite(options && options.range) ? Math.max(1, Math.floor(options.range)) : 7,
+                tickCycle: Number.isFinite(options && options.tickCycle) ? Math.max(1, Math.floor(options.tickCycle)) : 4,
+                projectile: true,
+                ammoUse: true,
+                familyTag: typeof options.familyTag === 'string' ? options.familyTag : 'bow'
+            },
+            bonuses: {
+                meleeAccuracyBonus: 0,
+                meleeStrengthBonus: 0,
+                rangedAccuracyBonus: accuracyBonus,
+                rangedStrengthBonus: strengthBonus,
+                magicAccuracyBonus: 0,
+                magicStrengthBonus: 0,
+                meleeDefenseBonus: 0,
+                rangedDefenseBonus: 0,
+                magicDefenseBonus: 0
+            },
+            requiredAttackLevel: 1,
+            requiredRangedLevel: Number.isFinite(options && options.requiredRangedLevel)
+                ? Math.max(1, Math.floor(options.requiredRangedLevel))
+                : 1,
+            weaponFamily: typeof options.weaponFamily === 'string' ? options.weaponFamily : 'bow',
+            toolFamily: null
+        };
+    }
+
+    function createMagicCombatProfile(options) {
+        const accuracyBonus = Number.isFinite(options && options.magicAccuracyBonus) ? Math.floor(options.magicAccuracyBonus) : 0;
+        const strengthBonus = Number.isFinite(options && options.magicStrengthBonus) ? Math.floor(options.magicStrengthBonus) : 0;
+        return {
+            attackProfile: {
+                styleFamily: 'magic',
+                damageType: 'magic',
+                range: Number.isFinite(options && options.range) ? Math.max(1, Math.floor(options.range)) : 6,
+                tickCycle: Number.isFinite(options && options.tickCycle) ? Math.max(1, Math.floor(options.tickCycle)) : 4,
+                projectile: true,
+                ammoUse: true,
+                familyTag: typeof options.familyTag === 'string' ? options.familyTag : 'staff'
+            },
+            bonuses: {
+                meleeAccuracyBonus: 0,
+                meleeStrengthBonus: 0,
+                rangedAccuracyBonus: 0,
+                rangedStrengthBonus: 0,
+                magicAccuracyBonus: accuracyBonus,
+                magicStrengthBonus: strengthBonus,
+                meleeDefenseBonus: 0,
+                rangedDefenseBonus: 0,
+                magicDefenseBonus: 0
+            },
+            requiredAttackLevel: 1,
+            requiredMagicLevel: Number.isFinite(options && options.requiredMagicLevel)
+                ? Math.max(1, Math.floor(options.requiredMagicLevel))
+                : 1,
+            weaponFamily: typeof options.weaponFamily === 'string' ? options.weaponFamily : 'staff',
+            toolFamily: null
+        };
+    }
+
+    function createRangedAmmoProfile(options) {
+        return {
+            damageType: 'ranged',
+            ammoTier: Number.isFinite(options && options.ammoTier) ? Math.max(1, Math.floor(options.ammoTier)) : 1,
+            rangedAccuracyBonus: Number.isFinite(options && options.rangedAccuracyBonus) ? Math.floor(options.rangedAccuracyBonus) : 0,
+            rangedStrengthBonus: Number.isFinite(options && options.rangedStrengthBonus) ? Math.floor(options.rangedStrengthBonus) : 0,
+            compatibleWeaponFamilies: ['bow']
+        };
+    }
+
+    function createMagicRuneProfile(options) {
+        return {
+            damageType: 'magic',
+            ammoTier: Number.isFinite(options && options.ammoTier) ? Math.max(1, Math.floor(options.ammoTier)) : 1,
+            magicAccuracyBonus: Number.isFinite(options && options.magicAccuracyBonus) ? Math.floor(options.magicAccuracyBonus) : 0,
+            magicStrengthBonus: Number.isFinite(options && options.magicStrengthBonus) ? Math.floor(options.magicStrengthBonus) : 0,
+            compatibleWeaponFamilies: ['staff']
+        };
+    }
+
     function cloneCombatProfile(profile) {
         if (!profile || typeof profile !== 'object') return null;
-        return {
+        const cloned = {
             attackProfile: Object.assign({}, profile.attackProfile || {}),
             bonuses: Object.assign({}, profile.bonuses || {}),
             requiredAttackLevel: Number.isFinite(profile.requiredAttackLevel) ? Math.floor(profile.requiredAttackLevel) : 1,
             weaponFamily: typeof profile.weaponFamily === 'string' ? profile.weaponFamily : null,
             toolFamily: typeof profile.toolFamily === 'string' ? profile.toolFamily : null
         };
+        if (Number.isFinite(profile.requiredRangedLevel)) cloned.requiredRangedLevel = Math.max(1, Math.floor(profile.requiredRangedLevel));
+        if (Number.isFinite(profile.requiredMagicLevel)) cloned.requiredMagicLevel = Math.max(1, Math.floor(profile.requiredMagicLevel));
+        return cloned;
     }
 
     function applyCombatProfiles(itemDefs) {
@@ -1738,6 +1831,44 @@
             fishing_rod: { meleeAccuracyBonus: 8, meleeStrengthBonus: 4, tickCycle: 5, requiredAttackLevel: 1, toolFamily: 'fishing_rod', familyTag: 'fishing_rod' },
             harpoon: { meleeAccuracyBonus: 18, meleeStrengthBonus: 9, tickCycle: 5, requiredAttackLevel: 30, toolFamily: 'harpoon', familyTag: 'harpoon' },
             rune_harpoon: { meleeAccuracyBonus: 24, meleeStrengthBonus: 12, tickCycle: 5, requiredAttackLevel: 40, toolFamily: 'harpoon', familyTag: 'harpoon' }
+        };
+
+        const bowRows = {
+            normal_shortbow: { rangedAccuracyBonus: 4, tickCycle: 4, range: 7, requiredRangedLevel: 1 },
+            normal_longbow: { rangedAccuracyBonus: 6, tickCycle: 5, range: 9, requiredRangedLevel: 1 },
+            oak_shortbow: { rangedAccuracyBonus: 8, tickCycle: 4, range: 7, requiredRangedLevel: 5 },
+            oak_longbow: { rangedAccuracyBonus: 10, tickCycle: 5, range: 9, requiredRangedLevel: 5 },
+            willow_shortbow: { rangedAccuracyBonus: 14, tickCycle: 4, range: 7, requiredRangedLevel: 20 },
+            willow_longbow: { rangedAccuracyBonus: 16, tickCycle: 5, range: 9, requiredRangedLevel: 20 },
+            maple_shortbow: { rangedAccuracyBonus: 22, tickCycle: 4, range: 7, requiredRangedLevel: 30 },
+            maple_longbow: { rangedAccuracyBonus: 25, tickCycle: 5, range: 9, requiredRangedLevel: 30 },
+            yew_shortbow: { rangedAccuracyBonus: 32, tickCycle: 4, range: 7, requiredRangedLevel: 40 },
+            yew_longbow: { rangedAccuracyBonus: 36, tickCycle: 5, range: 9, requiredRangedLevel: 40 }
+        };
+
+        const arrowRows = {
+            bronze_arrows: { ammoTier: 1, rangedAccuracyBonus: 1, rangedStrengthBonus: 2 },
+            iron_arrows: { ammoTier: 2, rangedAccuracyBonus: 2, rangedStrengthBonus: 3 },
+            steel_arrows: { ammoTier: 3, rangedAccuracyBonus: 4, rangedStrengthBonus: 5 },
+            mithril_arrows: { ammoTier: 4, rangedAccuracyBonus: 7, rangedStrengthBonus: 8 },
+            adamant_arrows: { ammoTier: 5, rangedAccuracyBonus: 11, rangedStrengthBonus: 12 },
+            rune_arrows: { ammoTier: 6, rangedAccuracyBonus: 16, rangedStrengthBonus: 18 }
+        };
+
+        const staffRows = {
+            plain_staff_wood: { magicAccuracyBonus: 2, magicStrengthBonus: 1, tickCycle: 4, range: 6, requiredMagicLevel: 1 },
+            plain_staff_oak: { magicAccuracyBonus: 4, magicStrengthBonus: 2, tickCycle: 4, range: 6, requiredMagicLevel: 5 },
+            plain_staff_willow: { magicAccuracyBonus: 7, magicStrengthBonus: 4, tickCycle: 4, range: 6, requiredMagicLevel: 15 },
+            plain_staff_maple: { magicAccuracyBonus: 11, magicStrengthBonus: 7, tickCycle: 4, range: 6, requiredMagicLevel: 25 },
+            plain_staff_yew: { magicAccuracyBonus: 16, magicStrengthBonus: 10, tickCycle: 4, range: 6, requiredMagicLevel: 35 },
+            fire_staff: { magicAccuracyBonus: 8, magicStrengthBonus: 6, tickCycle: 4, range: 7, requiredMagicLevel: 10 },
+            water_staff: { magicAccuracyBonus: 12, magicStrengthBonus: 9, tickCycle: 4, range: 7, requiredMagicLevel: 20 },
+            earth_staff: { magicAccuracyBonus: 18, magicStrengthBonus: 13, tickCycle: 4, range: 7, requiredMagicLevel: 30 },
+            air_staff: { magicAccuracyBonus: 25, magicStrengthBonus: 18, tickCycle: 4, range: 8, requiredMagicLevel: 40 }
+        };
+
+        const magicRuneRows = {
+            ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }
         };
 
         const armorRows = {
@@ -1836,6 +1967,80 @@
             }
         }
 
+        const bowIds = Object.keys(bowRows);
+        for (let i = 0; i < bowIds.length; i++) {
+            const itemId = bowIds[i];
+            const def = itemDefs[itemId];
+            if (!def) continue;
+            const row = bowRows[itemId];
+            def.type = 'weapon';
+            def.weaponClass = 'bow';
+            def.combat = createRangedCombatProfile(Object.assign({ weaponFamily: 'bow', familyTag: 'bow' }, row));
+            def.requiredRangedLevel = def.combat.requiredRangedLevel;
+            def.stats = {
+                atk: 0,
+                def: 0,
+                str: 0,
+                rng: row.rangedAccuracyBonus,
+                rstr: 0
+            };
+            def.actions = ['Equip', 'Use', 'Drop'];
+            def.defaultAction = 'Equip';
+        }
+
+        const arrowIds = Object.keys(arrowRows);
+        for (let i = 0; i < arrowIds.length; i++) {
+            const itemId = arrowIds[i];
+            const def = itemDefs[itemId];
+            if (!def) continue;
+            const row = arrowRows[itemId];
+            def.type = 'ammo';
+            def.stackable = true;
+            def.actions = ['Equip', 'Use', 'Drop'];
+            def.defaultAction = 'Equip';
+            def.ammo = createRangedAmmoProfile(row);
+            def.stats = {
+                atk: 0,
+                def: 0,
+                str: 0,
+                rng: row.rangedAccuracyBonus,
+                rstr: row.rangedStrengthBonus
+            };
+        }
+
+        const staffIds = Object.keys(staffRows);
+        for (let i = 0; i < staffIds.length; i++) {
+            const itemId = staffIds[i];
+            const def = itemDefs[itemId];
+            if (!def) continue;
+            const row = staffRows[itemId];
+            def.type = 'weapon';
+            def.weaponClass = 'staff';
+            def.combat = createMagicCombatProfile(Object.assign({ weaponFamily: 'staff', familyTag: 'staff' }, row));
+            def.requiredMagicLevel = def.combat.requiredMagicLevel;
+            def.stats = {
+                atk: 0,
+                def: 0,
+                str: 0,
+                mag: row.magicAccuracyBonus,
+                mstr: row.magicStrengthBonus
+            };
+            def.actions = ['Equip', 'Use', 'Drop'];
+            def.defaultAction = 'Equip';
+        }
+
+        const magicRuneIds = Object.keys(magicRuneRows);
+        for (let i = 0; i < magicRuneIds.length; i++) {
+            const itemId = magicRuneIds[i];
+            const def = itemDefs[itemId];
+            if (!def) continue;
+            def.ammo = createMagicRuneProfile(magicRuneRows[itemId]);
+            def.stats = Object.assign({}, def.stats || {}, {
+                mag: magicRuneRows[itemId].magicAccuracyBonus,
+                mstr: magicRuneRows[itemId].magicStrengthBonus
+            });
+        }
+
         const armorIds = Object.keys(armorRows);
         for (let i = 0; i < armorIds.length; i++) {
             const itemId = armorIds[i];
@@ -1898,7 +2103,10 @@
             if (Number.isFinite(def.speedBonusTicks)) db[id].speedBonusTicks = def.speedBonusTicks;
             if (def.stats) db[id].stats = Object.assign({}, def.stats);
             if (def.combat) db[id].combat = cloneCombatProfile(def.combat);
+            if (def.ammo) db[id].ammo = Object.assign({}, def.ammo);
             if (Number.isFinite(def.requiredAttackLevel)) db[id].requiredAttackLevel = Math.max(1, Math.floor(def.requiredAttackLevel));
+            if (Number.isFinite(def.requiredRangedLevel)) db[id].requiredRangedLevel = Math.max(1, Math.floor(def.requiredRangedLevel));
+            if (Number.isFinite(def.requiredMagicLevel)) db[id].requiredMagicLevel = Math.max(1, Math.floor(def.requiredMagicLevel));
             if (Number.isFinite(def.requiredFishingLevel)) db[id].requiredFishingLevel = Math.max(1, Math.floor(def.requiredFishingLevel));
             if (Number.isFinite(def.requiredDefenseLevel)) db[id].requiredDefenseLevel = Math.max(1, Math.floor(def.requiredDefenseLevel));
             if (def.cookResultId) db[id].cookResultId = def.cookResultId;

@@ -6,6 +6,7 @@ import type {
   ProgressSaveWriteResult,
   QuestProgressState,
   SaveAppearanceState,
+  SerializedEquipmentSlot,
   SerializedItemSlot,
   StorageLike
 } from "../contracts/session";
@@ -38,7 +39,7 @@ declare global {
         playerSkills: Record<string, { xp: number; level: number }>;
         inventory: Array<SerializedItemSlot | null>;
         bankItems: Array<SerializedItemSlot | null>;
-        equipment: Record<string, string | null>;
+        equipment: Record<string, SerializedEquipmentSlot>;
         userItemPrefs: Record<string, string>;
         contentGrants: Record<string, Record<string, boolean> | undefined>;
         quests: QuestProgressState;

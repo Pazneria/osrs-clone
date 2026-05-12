@@ -151,6 +151,14 @@ function run() {
   assert(runtimeSource.includes("function spawnClickMarker"), "transient visual runtime should own click marker creation");
   assert(runtimeSource.includes("function spawnHitsplat"), "transient visual runtime should own hitsplat creation");
   assert(runtimeSource.includes("function playLevelUpAnimation"), "transient visual runtime should own level-up burst creation");
+  assert(runtimeSource.includes("function spawnRangedProjectile"), "transient visual runtime should own ranged projectile creation");
+  assert(runtimeSource.includes("function spawnMagicProjectile"), "transient visual runtime should own magic projectile creation");
+  assert(runtimeSource.includes("function createMagicProjectileMesh"), "transient visual runtime should own magic projectile mesh creation");
+  assert(runtimeSource.includes("function updateRangedBowDrawVisual"), "transient visual runtime should own temporary bow draw visuals");
+  assert(runtimeSource.includes("const RANGED_BOW_NOCK_MS = 150"), "transient visual runtime should delay the temporary arrow until the nock moment");
+  assert(runtimeSource.includes("function resolveRangedDrawHandLocalPoint"), "transient visual runtime should resolve the bow-string draw point from the left hand");
+  assert(runtimeSource.includes("weaponNode.worldToLocal(handWorldPoint.clone())"), "bow-string draw visuals should track the left hand in bow-local space");
+  assert(runtimeSource.includes("group.userData.arrowVisible = arrowVisible"), "bow draw visual should expose arrow visibility for smoke/debug checks");
   assert(runtimeSource.includes("function updateTransientVisuals"), "transient visual runtime should own transient frame updates");
   assert(runtimeSource.includes("function updatePlayerOverheadText"), "transient visual runtime should own player overhead text projection");
 
@@ -158,6 +166,7 @@ function run() {
   assert(inputSource.includes("function getTransientVisualRuntime()"), "input-render.js should resolve the transient visual runtime");
   assert(inputSource.includes("runtime.spawnClickMarker({ THREE, scene, clickMarkers, position, isAction })"), "input-render.js should delegate click marker creation");
   assert(inputSource.includes("transientVisualRuntime.updateTransientVisuals({"), "input-render.js should delegate transient visual frame updates");
+  assert(inputSource.includes("transientVisualRuntime.updateRangedBowDrawVisual({"), "input-render.js should delegate bow draw visual updates");
   assert(inputSource.includes("runtime.updatePlayerOverheadText({"), "input-render.js should delegate overhead text updates");
   assert(!inputSource.includes("const color = isAction ? 0xff0000 : 0xffff00"), "input-render.js should not own click marker material policy");
   assert(!inputSource.includes("for (let i = activeHitsplats.length - 1; i >= 0; i--)"), "input-render.js should not own hitsplat frame updates");

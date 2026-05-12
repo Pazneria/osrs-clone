@@ -73,7 +73,8 @@
         const playerState = context.playerState || {};
         if (!enemyState || (typeof context.isEnemyAlive === 'function' && !context.isEnemyAlive(enemyState))) return null;
         if (enemyState.z !== playerState.z) return null;
-        if (typeof context.isWithinMeleeRange === 'function' && context.isWithinMeleeRange(playerState, enemyState)) return [];
+        if (typeof context.isWithinPlayerAttackRange === 'function' && context.isWithinPlayerAttackRange(playerState, enemyState)) return [];
+        if (typeof context.isWithinPlayerAttackRange !== 'function' && typeof context.isWithinMeleeRange === 'function' && context.isWithinMeleeRange(playerState, enemyState)) return [];
         if (typeof context.findPath !== 'function') return null;
         const path = context.findPath(playerState.x, playerState.y, enemyState.x, enemyState.y, true, 'ENEMY', pathOptions);
         return Array.isArray(path) && path.length > 0 ? path : null;
@@ -119,7 +120,11 @@
             .map((step) => cloneCombatPathStep(context, step));
         if (approachPath.length === 0) return null;
         const attackTile = approachPath[approachPath.length - 1];
-        if (typeof context.isWithinMeleeRange === 'function' && !context.isWithinMeleeRange(attackTile, playerLockState.enemyState)) return null;
+        if (typeof context.isWithinPlayerAttackRange === 'function') {
+            if (!context.isWithinPlayerAttackRange(attackTile, playerLockState.enemyState)) return null;
+        } else if (typeof context.isWithinMeleeRange === 'function' && !context.isWithinMeleeRange(attackTile, playerLockState.enemyState)) {
+            return null;
+        }
         return {
             attackTile,
             approachPath

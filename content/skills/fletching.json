@@ -1,7 +1,17 @@
 {
   "economy": {
     "generalStoreFallback": {
-      "buyPolicy": "half_price_floor"
+      "buyPolicy": "half_price_floor",
+      "defaultStock": [
+        {
+          "itemId": "normal_shortbow",
+          "stockAmount": 5
+        },
+        {
+          "itemId": "bronze_arrows",
+          "stockAmount": 150
+        }
+      ]
     },
     "merchantTable": {
       "advanced_fletcher": {
@@ -559,7 +569,7 @@
         "itemId": "normal_shortbow"
       },
       "recipeFamily": "bow_strung",
-      "requiredLevel": 5,
+      "requiredLevel": 1,
       "xpPerAction": 4
     },
     "fletch_normal_shortbow_u": {

@@ -12,6 +12,7 @@ import type {
   QuestProgressState,
   QuestStatus,
   SaveAppearanceState,
+  SerializedEquipmentSlot,
   SerializedItemSlot,
   StorageLike
 } from "../contracts/session";
@@ -34,8 +35,15 @@ function cloneSerializedItemSlots(slots: Array<SerializedItemSlot | null>): Arra
     : [];
 }
 
-function cloneEquipmentState(equipment: Record<string, string | null>): Record<string, string | null> {
-  return { ...equipment };
+function cloneEquipmentState(equipment: Record<string, SerializedEquipmentSlot>): Record<string, SerializedEquipmentSlot> {
+  const cloned: Record<string, SerializedEquipmentSlot> = {};
+  const slotNames = Object.keys(equipment || {});
+  for (let i = 0; i < slotNames.length; i++) {
+    const slotName = slotNames[i];
+    const slot = equipment[slotName];
+    cloned[slotName] = slot && typeof slot === "object" ? { itemId: slot.itemId, amount: slot.amount } : slot;
+  }
+  return cloned;
 }
 
 export function buildProgressSavePayload(options: {
@@ -45,7 +53,7 @@ export function buildProgressSavePayload(options: {
   playerSkills: PlayerSkillMap;
   inventory: Array<SerializedItemSlot | null>;
   bankItems: Array<SerializedItemSlot | null>;
-  equipment: Record<string, string | null>;
+  equipment: Record<string, SerializedEquipmentSlot>;
   userItemPrefs: Record<string, string>;
   contentGrants: ContentGrantState;
   quests: QuestProgressState;

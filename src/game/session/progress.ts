@@ -17,7 +17,8 @@ export const DEFAULT_EQUIPMENT_SLOTS = [
   "legs",
   "hands",
   "feet",
-  "ring"
+  "ring",
+  "ammo"
 ] as const;
 
 function sanitizeTutorialInstructorVisits(visits: unknown): Record<string, boolean> {
@@ -54,6 +55,8 @@ export function createDefaultPlayerSkillsState(): PlayerSkillMap {
     mining: { xp: 0, level: 1 },
     strength: { xp: 0, level: 1 },
     defense: { xp: 0, level: 1 },
+    ranged: { xp: 0, level: 1 },
+    magic: { xp: 0, level: 1 },
     woodcutting: { xp: 0, level: 1 },
     firemaking: { xp: 0, level: 1 },
     fishing: { xp: 0, level: 1 },

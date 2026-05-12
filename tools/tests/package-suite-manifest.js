@@ -197,6 +197,8 @@ const TEST_RUN_FILES = [
   "tools/tests/combat-training-dummy-guard.js",
   "tools/tests/quest-tanner-runtime-guard.js",
   "tools/tests/world-registry-guard.js",
+  "tools/tests/npc-home-validation-guard.js",
+  "tools/tests/protected-road-validation-guard.js",
   "tools/tests/world-authoring-domain-tests.js",
   "tools/tests/world-bootstrap-parity.js",
   "tools/tests/world-water-payload-proof.js",

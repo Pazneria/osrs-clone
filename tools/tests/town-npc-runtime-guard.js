@@ -43,7 +43,11 @@ function run() {
   assert(runtimeSource.includes("window.WorldTownNpcRuntime"), "town NPC runtime should expose a window runtime");
   assert(runtimeSource.includes("function updateWorldNpcRuntime(context = {}, frameNowMs)"), "town NPC runtime should own NPC roaming update");
   assert(runtimeSource.includes("function applyTownNpcRigAnimation(actor, frameNowMs, visualBaseY)"), "town NPC runtime should own NPC rig animation");
+  assert(runtimeSource.includes("const TOWN_NPC_SHADOW_CULL_DISTANCE = 38;"), "town NPC runtime should keep a bounded NPC shadow budget");
+  assert(runtimeSource.includes("function applyTownNpcShadowBudget(context = {}, actor, visualX, visualY)"), "town NPC runtime should own distance-based NPC shadow casting");
   assert(runtimeSource.includes("function refreshTutorialGateStates(context = {})"), "town NPC runtime should own tutorial gate refresh behavior");
+  assert(runtimeSource.includes("function refreshTutorialActorStates(context = {})"), "town NPC runtime should own tutorial NPC visibility refresh behavior");
+  assert(runtimeSource.includes("function isTutorialActorVisible(context, actor)"), "town NPC runtime should own tutorial NPC step visibility policy");
   assert(runtimeSource.includes("function publishTutorialGateHooks"), "town NPC runtime should own tutorial gate public hook publication");
   assert(runtimeSource.includes("function buildStructureBoundsList(options = {})"), "town NPC runtime should own structure-bound shaping for NPC roam policy");
   assert(runtimeSource.includes("function createTownNpcActorRecord(options = {})"), "town NPC runtime should own town NPC actor record shaping");
@@ -89,7 +93,10 @@ function run() {
   assert(typeof runtime.resolveTownNpcRoamBounds === "function", "town NPC runtime should expose roam bounds resolver");
   assert(typeof runtime.resolveTownNpcRoamingRadius === "function", "town NPC runtime should expose roaming radius resolver");
   assert(typeof runtime.updateWorldNpcRuntime === "function", "town NPC runtime should expose NPC update runtime");
+  assert(typeof runtime.applyTownNpcShadowBudget === "function", "town NPC runtime should expose NPC shadow budgeting");
   assert(typeof runtime.publishTutorialGateHooks === "function", "town NPC runtime should expose tutorial gate hook publication");
+  assert(typeof runtime.refreshTutorialActorStates === "function", "town NPC runtime should expose tutorial actor visibility refresh");
+  assert(typeof runtime.isTutorialActorVisible === "function", "town NPC runtime should expose tutorial actor visibility policy");
 
   const TileId = {
     SOLID_NPC: 99,
@@ -140,6 +147,24 @@ function run() {
   assert(runtime.resolveTownNpcRoamingRadius(nearbyTravelNpc, travelBounds) === 1, "travel NPCs without dialogue should stay tightly anchored");
   assert(runtime.resolveTownNpcRoamingRadius({ name: "Banker", x: 1, y: 1, z: 0 }, null) === 0, "bankers should not roam");
   assert(runtime.resolveTownNpcRoamingRadius({ name: "King Arthur", x: 1, y: 1, z: 0 }, null) === 1, "royal NPCs should have minimal pacing");
+  {
+    const bodyMesh = { isMesh: true, castShadow: true, userData: {} };
+    const hitboxMesh = { isMesh: true, castShadow: false, userData: { type: "NPC" } };
+    const shadowActor = {
+      x: 100,
+      y: 100,
+      z: 0,
+      mesh: {
+        visible: true,
+        traverse: (fn) => [bodyMesh, hitboxMesh].forEach(fn)
+      }
+    };
+    runtime.applyTownNpcShadowBudget({ playerState: { x: 0, y: 0, z: 0 } }, shadowActor, 100, 100);
+    assert(bodyMesh.castShadow === false, "far NPC body meshes should stop casting shadow-map work");
+    assert(hitboxMesh.castShadow === false, "NPC interaction hitboxes should not be changed by shadow budgeting");
+    runtime.applyTownNpcShadowBudget({ playerState: { x: 0, y: 0, z: 0 } }, shadowActor, 1, 1);
+    assert(bodyMesh.castShadow === true, "near NPC body meshes should restore shadow casting");
+  }
   const builtStructureBounds = runtime.buildStructureBoundsList({
     stampedStructures: [
       { structureId: "shop", z: 0 },
@@ -172,6 +197,57 @@ function run() {
     structureBoundsList
   });
   assert(stationaryActorRecord.actorId === "tutorial:guide" && stationaryActorRecord.roamingRadius === 0 && !stationaryActorRecord.roamEnabled, "stationary actor records should preserve authored no-roam overrides");
+  assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 4 } }, { tutorialVisibleFromStep: 5 }) === false, "tutorial actor visibility should hide actors before their start step");
+  assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 5 } }, { tutorialVisibleFromStep: 5 }) === true, "tutorial actor visibility should show actors on their start step");
+  assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 11 } }, { tutorialVisibleUntilStep: 10 }) === false, "tutorial actor visibility should hide actors after their end step");
+
+  {
+    runtime.resetStaticNpcBaseTiles();
+    const logicalMap = [[
+      [TileId.GRASS, TileId.GRASS, TileId.GRASS],
+      [TileId.GRASS, TileId.SOLID_NPC, TileId.GRASS],
+      [TileId.GRASS, TileId.GRASS, TileId.GRASS]
+    ]];
+    runtime.rememberStaticNpcBaseTile(1, 1, 0, TileId.GRASS);
+    const stepGatedActor = runtime.createTownNpcActorRecord({
+      actorNowMs: 1000,
+      getTileHeightSafe: () => 0.5,
+      index: 5,
+      mapSize: 8,
+      npc: {
+        spawnId: "npc:relocated_guide",
+        name: "Tutorial Guide",
+        x: 1,
+        y: 1,
+        z: 0,
+        roamingRadiusOverride: 0,
+        tutorialVisibleFromStep: 2
+      },
+      structureBoundsList: []
+    });
+    stepGatedActor.mesh = { visible: true };
+    stepGatedActor.hitbox = { visible: true, userData: { uid: {} } };
+    let tutorialStep = 1;
+    const visibilityContext = {
+      TileId,
+      logicalMap,
+      npcsToRender: [stepGatedActor],
+      TutorialRuntime: { getStep: () => tutorialStep },
+      getTileHeightSafe: () => 0.5,
+      now: () => 2000
+    };
+    runtime.refreshTutorialActorStates(visibilityContext);
+    assert(stepGatedActor.tutorialVisibilityActive === false, "tutorial actor refresh should hide actors before their authored step");
+    assert(logicalMap[0][1][1] === TileId.GRASS, "hidden tutorial actors should release their occupied tile");
+    assert(stepGatedActor.mesh.visible === false && stepGatedActor.hitbox.userData.ignoreRaycast === true, "hidden tutorial actors should hide visuals and raycasts");
+
+    tutorialStep = 2;
+    runtime.refreshTutorialActorStates(visibilityContext);
+    assert(stepGatedActor.tutorialVisibilityActive === true, "tutorial actor refresh should reveal actors at their authored step");
+    assert(logicalMap[0][1][1] === TileId.SOLID_NPC, "revealed tutorial actors should reclaim their occupied tile");
+    assert(stepGatedActor.mesh.visible === true && stepGatedActor.hitbox.userData.ignoreRaycast === false, "revealed tutorial actors should restore visuals and raycasts");
+  }
+
   const stationaryRig = {
     torso: makeRigNode(),
     head: makeRigNode(),
@@ -285,6 +361,7 @@ function run() {
   assert(qaTargets[0].visualX === 5.5 && qaTargets[0].visualY === 6.5, "QA target snapshot should preserve explicit visual positions");
   assert(qaTargets[1].actorId === "" && qaTargets[1].visualX === 2 && qaTargets[1].visualY === 3, "QA target snapshot should default missing identity and visual positions");
   assert(qaTargets[1].z === 0 && !qaTargets[1].rendered, "QA target snapshot should default missing z and hitbox state");
+  assert(qaTargets[0].tutorialVisibilityActive === true && qaTargets[0].tutorialVisibleFromStep === null, "QA target snapshot should expose default tutorial visibility");
 
   {
     let buildContextCalls = 0;

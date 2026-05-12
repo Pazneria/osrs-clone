@@ -78,13 +78,14 @@
         const playerSkills = context.playerSkills || {};
         const equipment = context.equipment || {};
         const playerState = context.playerState || {};
+        const inventory = Array.isArray(context.inventory) ? context.inventory : [];
         const combatTabViewModel = uiDomainRuntime && typeof uiDomainRuntime.buildCombatTabViewModel === 'function'
-            ? uiDomainRuntime.buildCombatTabViewModel({ playerSkills, equipment, playerState })
+            ? uiDomainRuntime.buildCombatTabViewModel({ playerSkills, equipment, inventory, playerState })
             : null;
         const statsViewModel = combatTabViewModel && combatTabViewModel.combatStats
             ? combatTabViewModel.combatStats
             : (uiDomainRuntime && typeof uiDomainRuntime.buildCombatStatsViewModel === 'function'
-                ? uiDomainRuntime.buildCombatStatsViewModel({ playerSkills, equipment, playerState })
+                ? uiDomainRuntime.buildCombatStatsViewModel({ playerSkills, equipment, inventory, playerState })
                 : { attack: 0, defense: 0, strength: 0 });
 
         setText(documentRef, 'stat-atk', statsViewModel.attack);

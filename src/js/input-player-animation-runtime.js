@@ -1,6 +1,11 @@
 (function () {
     const FISHING_START_ACTION_STARTED_AT_STATE_KEY = 'fishingCastStartedAt';
     const FISHING_START_ACTION_REQUEST_WINDOW_MS = 250;
+    const MELEE_ATTACK_CLIP_ID = 'player/combat_slash';
+    const RANGED_ATTACK_CLIP_ID = 'player/combat_bow_shot';
+    const MELEE_ATTACK_CLIP_DURATION_MS = 1100;
+    const RANGED_ATTACK_CLIP_DURATION_MS = 900;
+    const RANGED_BOW_SHOT_RELEASE_MS = 560;
 
     function getActionName(playerState) {
         return playerState && typeof playerState.action === 'string' ? playerState.action : '';
@@ -171,6 +176,62 @@
         return getActiveSkillBaseClipId(options.playerState || null) || 'player/idle';
     }
 
+    function normalizeCombatStyleFamily(styleFamily) {
+        if (styleFamily === 'magic') return 'magic';
+        return styleFamily === 'ranged' ? 'ranged' : 'melee';
+    }
+
+    function getCombatAttackClipDef(styleFamily) {
+        const normalizedStyleFamily = normalizeCombatStyleFamily(styleFamily);
+        return normalizedStyleFamily === 'ranged'
+            ? { clipId: RANGED_ATTACK_CLIP_ID, durationMs: RANGED_ATTACK_CLIP_DURATION_MS }
+            : { clipId: MELEE_ATTACK_CLIP_ID, durationMs: MELEE_ATTACK_CLIP_DURATION_MS };
+    }
+
+    function getRigCombatStyleFamily(rig) {
+        return normalizeCombatStyleFamily(rig && typeof rig.attackStyleFamily === 'string' ? rig.attackStyleFamily : null);
+    }
+
+    function buildCombatAttackActionClipRequest(options = {}) {
+        const rig = options.rig || null;
+        const frameNow = Number(options.frameNow);
+        const startedAt = rig ? Number(rig.attackAnimationStartedAt) : NaN;
+        if (!Number.isFinite(startedAt) || !Number.isFinite(frameNow)) return null;
+        const styleFamily = getRigCombatStyleFamily(rig);
+        const clipDef = getCombatAttackClipDef(styleFamily);
+        const isActive = typeof options.isTimedAnimationActive === 'function'
+            ? options.isTimedAnimationActive(startedAt, clipDef.durationMs, frameNow)
+            : ((frameNow - startedAt) >= 0 && (frameNow - startedAt) <= clipDef.durationMs);
+        if (!isActive) return null;
+        return {
+            clipId: clipDef.clipId,
+            actionOptions: {
+                startedAtMs: startedAt,
+                startKey: `${styleFamily}-attack:${startedAt}`,
+                priority: 2
+            }
+        };
+    }
+
+    function getRangedBowShotFrame(options = {}) {
+        const rig = options.rig || null;
+        const frameNow = Number(options.frameNow);
+        const startedAt = rig ? Number(rig.attackAnimationStartedAt) : NaN;
+        if (getRigCombatStyleFamily(rig) !== 'ranged') return null;
+        if (!Number.isFinite(startedAt) || !Number.isFinite(frameNow)) return null;
+        const ageMs = frameNow - startedAt;
+        if (ageMs < 0 || ageMs > RANGED_ATTACK_CLIP_DURATION_MS) return null;
+        const drawProgress = Math.max(0, Math.min(1, ageMs / Math.max(1, RANGED_BOW_SHOT_RELEASE_MS)));
+        return {
+            clipId: RANGED_ATTACK_CLIP_ID,
+            ageMs,
+            drawProgress,
+            released: ageMs >= RANGED_BOW_SHOT_RELEASE_MS,
+            releaseMs: RANGED_BOW_SHOT_RELEASE_MS,
+            durationMs: RANGED_ATTACK_CLIP_DURATION_MS
+        };
+    }
+
     function buildBaseClipOptions(options = {}) {
         const skillRuntime = options.skillRuntime || null;
         const heldItems = getActiveSkillAnimationHeldItems(skillRuntime);
@@ -235,6 +296,10 @@
         getActiveSkillAnimationSuppressEquipmentVisual,
         shouldShowRigToolVisual,
         getPlayerBaseClipId,
+        normalizeCombatStyleFamily,
+        getCombatAttackClipDef,
+        buildCombatAttackActionClipRequest,
+        getRangedBowShotFrame,
         buildBaseClipOptions,
         buildFishingStartActionClipRequest
     };

@@ -98,7 +98,9 @@ function run() {
   assert(clamped.pitch === 0.1, "QA camera state should clamp pitch");
   assert(clamped.distance === 30, "QA camera state should clamp distance");
   const aerial = runtime.resolveQaAerialCameraViewState({ presetId: "tutorial_surface" });
-  assert(aerial.targetX === 330 && aerial.targetY === 328 && aerial.distance === 520, "tutorial surface aerial preset should frame the full spread-out island footprint");
+  assert(aerial.targetX === 330 && aerial.targetY === 328 && aerial.distance === 420, "tutorial surface aerial preset should frame the smaller island footprint");
+  const lateYard = runtime.resolveQaAerialCameraViewState({ presetId: "tutorial_late_yard" });
+  assert(lateYard.targetX === 330 && lateYard.targetY === 424 && lateYard.distance === 125, "tutorial late yard aerial preset should frame the advanced stations");
 
   const projected = runtime.projectWorldTileToScreen({
     THREERef: { Vector3: FakeVector3 },
@@ -167,7 +169,9 @@ function run() {
     assert(resetState.yaw === Number((Math.PI * 1.25).toFixed(4)) && resetState.distance === 16, "published reset hook should restore default QA camera state");
     assert(syncCalls === 3, "published reset hook should sync render state after applying camera state");
     const aerialState = windowRef.setQaCameraAerialView("tutorial_surface");
-    assert(aerialState.presetId === "tutorial_surface" && aerialState.targetX === 330 && aerialState.distance === 520, "published aerial hook should apply the tutorial surface preset");
+    assert(aerialState.presetId === "tutorial_surface" && aerialState.targetX === 330 && aerialState.distance === 420, "published aerial hook should apply the tutorial surface preset");
+    const lateYardState = windowRef.setQaCameraAerialView("tutorial_late_yard");
+    assert(lateYardState.presetId === "tutorial_late_yard" && lateYardState.targetX === 330 && lateYardState.distance === 125, "published aerial hook should apply the tutorial late yard preset");
   }
 
   console.log("Input QA camera runtime guard passed.");

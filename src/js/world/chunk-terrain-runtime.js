@@ -25,6 +25,28 @@
         uvs.needsUpdate = true;
     }
 
+    function applyWorldSpaceLinearTerrainUvs(geometry, startX, startY, segments, chunkSize) {
+        const uvs = geometry && geometry.attributes ? geometry.attributes.uv : null;
+        if (!uvs || !Number.isFinite(segments) || segments <= 0 || !Number.isFinite(chunkSize) || chunkSize <= 0) return;
+        for (let vy = 0; vy <= segments; vy++) {
+            for (let vx = 0; vx <= segments; vx++) {
+                const idx = (vy * (segments + 1)) + vx;
+                const worldX = startX - 0.5 + ((vx / segments) * chunkSize);
+                const worldY = startY - 0.5 + ((vy / segments) * chunkSize);
+                uvs.setXY(idx, worldX / chunkSize, worldY / chunkSize);
+            }
+        }
+        uvs.needsUpdate = true;
+    }
+
+    function collapseTerrainGeometryDrawGroups(geometry, indexCount) {
+        if (!geometry || typeof geometry.clearGroups !== 'function' || typeof geometry.addGroup !== 'function') return;
+        geometry.clearGroups();
+        if (Number.isFinite(indexCount) && indexCount > 0) {
+            geometry.addGroup(0, indexCount, 0);
+        }
+    }
+
     function hash01(x, y, seed = 0) {
         const value = Math.sin((x * 127.1) + (y * 311.7) + (seed * 74.7)) * 43758.5453123;
         return value - Math.floor(value);
@@ -273,7 +295,7 @@
         return tile !== TileId.DIRT && tile !== TileId.ROCK && tile !== TileId.SHORE;
     }
 
-    const TERRAIN_BLEND_SUBDIVISIONS = 2;
+    const TERRAIN_BLEND_SUBDIVISIONS = 1;
     const TERRAIN_BLEND_SOURCE_RADIUS = 2;
 
     function distanceToTileRect(worldX, worldY, tileX, tileY) {
@@ -290,7 +312,9 @@
         const worldTileX = options.worldTileX;
         const worldTileY = options.worldTileY;
         const activePierConfig = options.activePierConfig || null;
-        const getVisualTileId = typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile;
+        const getVisualTileId = typeof options.getTerrainVisualTileId === 'function'
+            ? options.getTerrainVisualTileId
+            : (typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile);
         const isWaterTileId = typeof options.isWaterTileId === 'function' ? options.isWaterTileId : () => false;
         const isPierVisualCoverageTile = typeof options.isPierVisualCoverageTile === 'function' ? options.isPierVisualCoverageTile : () => false;
         const radius = Number.isFinite(options.radius) ? Math.max(1, Math.floor(options.radius)) : 2;
@@ -352,7 +376,9 @@
         const isNaturalTileId = typeof options.isNaturalTileId === 'function' ? options.isNaturalTileId : () => false;
         const isWaterTileId = typeof options.isWaterTileId === 'function' ? options.isWaterTileId : () => false;
         const isPierVisualCoverageTile = typeof options.isPierVisualCoverageTile === 'function' ? options.isPierVisualCoverageTile : () => false;
-        const getVisualTileId = typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile;
+        const getVisualTileId = typeof options.getTerrainVisualTileId === 'function'
+            ? options.getTerrainVisualTileId
+            : (typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile);
         const sourceCache = options.sourceCache || null;
         const waterRenderBodies = Array.isArray(options.waterRenderBodies) ? options.waterRenderBodies : [];
         const islandWater = options.islandWater || null;
@@ -385,7 +411,7 @@
                     worldTileX,
                     worldTileY,
                     activePierConfig,
-                    getVisualTileId,
+                    getTerrainVisualTileId: getVisualTileId,
                     isWaterTileId,
                     isPierVisualCoverageTile,
                     radius: TERRAIN_BLEND_SOURCE_RADIUS
@@ -400,7 +426,7 @@
                 worldTileX,
                 worldTileY,
                 activePierConfig,
-                getVisualTileId,
+                getTerrainVisualTileId: getVisualTileId,
                 isWaterTileId,
                 isPierVisualCoverageTile,
                 radius: TERRAIN_BLEND_SOURCE_RADIUS
@@ -462,7 +488,9 @@
         const isNaturalTileId = typeof options.isNaturalTileId === 'function' ? options.isNaturalTileId : () => false;
         const isWaterTileId = typeof options.isWaterTileId === 'function' ? options.isWaterTileId : () => false;
         const isPierVisualCoverageTile = typeof options.isPierVisualCoverageTile === 'function' ? options.isPierVisualCoverageTile : () => false;
-        const getVisualTileId = typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile;
+        const getVisualTileId = typeof options.getTerrainVisualTileId === 'function'
+            ? options.getTerrainVisualTileId
+            : (typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile);
         const getWaterSurfaceHeightForTile = typeof options.getWaterSurfaceHeightForTile === 'function'
             ? options.getWaterSurfaceHeightForTile
             : () => null;
@@ -475,6 +503,8 @@
         const isRenderableUnderlayTile = (tileType) => !isWaterTileId(tileType);
         const isManmadeLandTile = (tileType) => !isNaturalTile(tileType) && !isWaterTileId(tileType);
         const UNDERLAY_DROP = 0.08;
+        const TERRAIN_SKIRT_DROP = 0.24;
+        const TERRAIN_WATER_SKIRT_DROP = 0.18;
         const TERRAIN_EDGE_BLEND_CAP = 0.28;
         const TERRAIN_EDGE_BLEND_FACTOR = 0.4;
         const SHORELINE_TERRAIN_UNDERLAP = 0.022;
@@ -484,6 +514,27 @@
         const SMOOTH_WATER_DIRT_UNDERLAY_BANK_LIFT = 0.006;
         const SMOOTH_WATER_DIRT_UNDERLAY_BED_DROP = 0.16;
         const terrainVertexHeightCache = new Map();
+        const underlayVertexHeightCache = new Map();
+        const smoothWaterDirtUnderlayVertexHeightCache = new Map();
+        const smoothWaterDirtUnderlayCellCache = new Map();
+        const smoothWaterDirtUnderlayBodyCache = new Map();
+        const visualTileCache = new Map();
+        const isInTerrainBounds = (worldTileX, worldTileY) => (
+            worldTileX >= 0
+            && worldTileY >= 0
+            && worldTileX < MAP_SIZE
+            && worldTileY < MAP_SIZE
+            && logicalMap[0]
+            && logicalMap[0][worldTileY]
+        );
+        const getVisualTileAt = (worldTileX, worldTileY) => {
+            const tileKey = `${worldTileX},${worldTileY}`;
+            if (visualTileCache.has(tileKey)) return visualTileCache.get(tileKey);
+            if (!isInTerrainBounds(worldTileX, worldTileY)) return null;
+            const tile = getVisualTileId(logicalMap[0][worldTileY][worldTileX], worldTileX, worldTileY, 0);
+            visualTileCache.set(tileKey, tile);
+            return tile;
+        };
 
         const isInsideSmoothWaterTerrainMask = (worldX, worldY) => !!findSmoothTerrainWaterBodyAtPoint(
             waterRenderBodies,
@@ -501,17 +552,28 @@
             SMOOTH_WATER_TERRAIN_NEAR_INSET
         );
 
-        const getSmoothWaterDirtUnderlayBody = (worldX, worldY) => findSmoothTerrainWaterBodyAtPoint(
-            waterRenderBodies,
-            MAP_SIZE,
-            worldX,
-            worldY,
-            SMOOTH_WATER_DIRT_UNDERLAY_INSET
-        );
+        const getSmoothWaterDirtUnderlayBody = (worldX, worldY) => {
+            const bodyKey = `${worldX},${worldY}`;
+            if (smoothWaterDirtUnderlayBodyCache.has(bodyKey)) return smoothWaterDirtUnderlayBodyCache.get(bodyKey);
+            const body = findSmoothTerrainWaterBodyAtPoint(
+                waterRenderBodies,
+                MAP_SIZE,
+                worldX,
+                worldY,
+                SMOOTH_WATER_DIRT_UNDERLAY_INSET
+            );
+            smoothWaterDirtUnderlayBodyCache.set(bodyKey, body || null);
+            return body || null;
+        };
 
         const shouldUseSmoothWaterDirtUnderlayCell = (worldTileX, worldTileY) => {
+            const cellKey = `${worldTileX},${worldTileY}`;
+            if (smoothWaterDirtUnderlayCellCache.has(cellKey)) return smoothWaterDirtUnderlayCellCache.get(cellKey);
+            let shouldUse = false;
             if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) return false;
-            return !!getSmoothWaterDirtUnderlayBody(worldTileX, worldTileY);
+            shouldUse = !!getSmoothWaterDirtUnderlayBody(worldTileX, worldTileY);
+            smoothWaterDirtUnderlayCellCache.set(cellKey, shouldUse);
+            return shouldUse;
         };
 
         const shouldRenderTerrainCell = (tile, worldX, worldY) => {
@@ -520,6 +582,42 @@
             if (isWaterTileId(tile)) return false;
             return isRenderableTerrainTile(tile);
         };
+
+        const shouldRenderUnderlayCell = (tile, worldTileX, worldTileY) => {
+            if (!isRenderableUnderlayTile(tile)) return false;
+            if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) return false;
+            if (shouldUseSmoothWaterDirtUnderlayCell(worldTileX, worldTileY)) return false;
+            if (isManmadeLandTile(tile)) return true;
+            for (let ny = worldTileY - 1; ny <= worldTileY + 1; ny++) {
+                for (let nx = worldTileX - 1; nx <= worldTileX + 1; nx++) {
+                    if (nx === worldTileX && ny === worldTileY) continue;
+                    if (!isInTerrainBounds(nx, ny)) return true;
+                    if (isPierVisualCoverageTile(activePierConfig, nx, ny, 0)) return true;
+                    if (shouldUseSmoothWaterDirtUnderlayCell(nx, ny)) return true;
+                    const neighborTile = getVisualTileAt(nx, ny);
+                    if (neighborTile === null || isWaterTileId(neighborTile)) return true;
+                    if (isManmadeLandTile(neighborTile)) return true;
+                }
+            }
+            return false;
+        };
+
+        const sampleTerrainBlendForPoint = (worldX, worldY, terrainBlendSourceCache) => sampleTerrainBlendInfo({
+            logicalMap,
+            MAP_SIZE,
+            TileId,
+            worldX,
+            worldY,
+            activePierConfig,
+            getVisualTileId,
+            isNaturalTileId,
+            isWaterTileId,
+            isPierVisualCoverageTile,
+            waterRenderBodies,
+            islandWater,
+            sampleFractalNoise2D,
+            sourceCache: terrainBlendSourceCache
+        });
 
         const sampleTerrainVertexHeight = (cornerX, cornerY) => {
             const tx0 = Math.floor(cornerX);
@@ -595,6 +693,8 @@
         const sampleUnderlayVertexHeight = (cornerX, cornerY) => {
             const tx0 = Math.floor(cornerX);
             const ty0 = Math.floor(cornerY);
+            const heightKey = `${tx0},${ty0}`;
+            if (underlayVertexHeightCache.has(heightKey)) return underlayVertexHeightCache.get(heightKey);
             const sampleTiles = [
                 { x: tx0, y: ty0 },
                 { x: tx0 + 1, y: ty0 },
@@ -612,56 +712,174 @@
                 sum += heightMap[0][sample.y][sample.x];
                 count++;
             }
-            if (count <= 0) return -UNDERLAY_DROP;
-            return (sum / count) - UNDERLAY_DROP;
+            const height = count <= 0 ? -UNDERLAY_DROP : (sum / count) - UNDERLAY_DROP;
+            underlayVertexHeightCache.set(heightKey, height);
+            return height;
         };
 
         const sampleSmoothWaterDirtUnderlayVertexHeight = (cornerX, cornerY) => {
+            const heightKey = `${cornerX},${cornerY}`;
+            if (smoothWaterDirtUnderlayVertexHeightCache.has(heightKey)) {
+                return smoothWaterDirtUnderlayVertexHeightCache.get(heightKey);
+            }
             const bankY = sampleUnderlayVertexHeight(cornerX, cornerY) + SMOOTH_WATER_DIRT_UNDERLAY_BANK_LIFT;
             const body = getSmoothWaterDirtUnderlayBody(cornerX, cornerY);
-            if (!body || !body.shape) return bankY;
+            if (!body || !body.shape) {
+                smoothWaterDirtUnderlayVertexHeightCache.set(heightKey, bankY);
+                return bankY;
+            }
             const surfaceY = Number.isFinite(body.surfaceY) ? Number(body.surfaceY) : -0.075;
             const bedY = surfaceY - SMOOTH_WATER_DIRT_UNDERLAY_BED_DROP;
             const distance = getEllipseSignedShoreDistance(body.shape, cornerX, cornerY);
-            if (!Number.isFinite(distance)) return Math.min(bankY, bedY);
+            if (!Number.isFinite(distance)) {
+                const height = Math.min(bankY, bedY);
+                smoothWaterDirtUnderlayVertexHeightCache.set(heightKey, height);
+                return height;
+            }
             const bankBlend = smoothstep(-0.2, 1.15, distance);
-            return bedY + ((bankY - bedY) * bankBlend);
+            const height = bedY + ((bankY - bedY) * bankBlend);
+            smoothWaterDirtUnderlayVertexHeightCache.set(heightKey, height);
+            return height;
         };
 
-        const underlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
-        underlayGeo.rotateX(-Math.PI / 2);
-        applyWorldSpaceTerrainUvs(underlayGeo, startX, startY, CHUNK_SIZE, CHUNK_SIZE, sampleFractalNoise2D);
-        const underlayPositions = underlayGeo.attributes.position;
-        for (let vy = 0; vy <= CHUNK_SIZE; vy++) {
-            for (let vx = 0; vx <= CHUNK_SIZE; vx++) {
-                const idx = (vy * (CHUNK_SIZE + 1)) + vx;
-                const cornerX = startX - 0.5 + vx;
-                const cornerY = startY - 0.5 + vy;
-                const h = sampleUnderlayVertexHeight(cornerX, cornerY);
-                underlayPositions.setY(idx, h);
-            }
-        }
-        underlayPositions.needsUpdate = true;
+        const shouldAddTerrainSkirtForNeighbor = (currentTile, worldTileX, worldTileY, neighborX, neighborY) => {
+            if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) return false;
+            if (!shouldRenderTerrainCell(currentTile, worldTileX, worldTileY)) return false;
+            if (!isInTerrainBounds(neighborX, neighborY)) return true;
+            if (isPierVisualCoverageTile(activePierConfig, neighborX, neighborY, 0)) return true;
+            const neighborTile = getVisualTileAt(neighborX, neighborY);
+            if (neighborTile === null) return true;
+            return !shouldRenderTerrainCell(neighborTile, neighborX, neighborY);
+        };
 
-        const baseUnderlayIndices = underlayGeo.index ? underlayGeo.index.array : [];
-        const underlayIndices = [];
+        const isTerrainSkirtWaterEdge = (neighborX, neighborY) => {
+            if (!isInTerrainBounds(neighborX, neighborY)) return false;
+            const neighborTile = getVisualTileAt(neighborX, neighborY);
+            if (neighborTile !== null && isWaterTileId(neighborTile)) return true;
+            return getWaterSurfaceHeightForTile(waterRenderBodies, neighborX, neighborY, 0) !== null;
+        };
+
+        const sampleTerrainSkirtBottomHeight = (worldX, worldY, edgeKind) => {
+            const topHeight = sampleTerrainSurfaceHeight(sampleTerrainVertexHeight, worldX, worldY);
+            const baseDrop = edgeKind === 'water' ? TERRAIN_WATER_SKIRT_DROP : TERRAIN_SKIRT_DROP;
+            let bottom = Math.min(sampleUnderlayVertexHeight(worldX, worldY), topHeight - baseDrop);
+            if (edgeKind === 'water') {
+                const sampleX = clampValue(Math.floor(worldX + 0.5), 0, MAP_SIZE - 1);
+                const sampleY = clampValue(Math.floor(worldY + 0.5), 0, MAP_SIZE - 1);
+                const waterSurface = getWaterSurfaceHeightForTile(waterRenderBodies, sampleX, sampleY, 0);
+                if (waterSurface !== null) bottom = Math.min(bottom, waterSurface - SHORELINE_TERRAIN_UNDERLAP);
+            }
+            return bottom;
+        };
+
+        const appendTerrainSkirtSegment = (positions, meshOriginX, meshOriginY, x0, y0, x1, y1, edgeKind) => {
+            const top0 = sampleTerrainSurfaceHeight(sampleTerrainVertexHeight, x0, y0);
+            const top1 = sampleTerrainSurfaceHeight(sampleTerrainVertexHeight, x1, y1);
+            const bottom0 = sampleTerrainSkirtBottomHeight(x0, y0, edgeKind);
+            const bottom1 = sampleTerrainSkirtBottomHeight(x1, y1, edgeKind);
+            const localX0 = x0 - meshOriginX;
+            const localY0 = y0 - meshOriginY;
+            const localX1 = x1 - meshOriginX;
+            const localY1 = y1 - meshOriginY;
+            positions.push(
+                localX0, top0, localY0,
+                localX1, bottom1, localY1,
+                localX1, top1, localY1,
+                localX0, top0, localY0,
+                localX0, bottom0, localY0,
+                localX1, bottom1, localY1
+            );
+        };
+
+        const pushSparseTerrainVertex = (positions, uvs, meshOriginX, meshOriginY, worldX, height, worldY, warpedUvs = false) => {
+            positions.push(worldX - meshOriginX, height, worldY - meshOriginY);
+            if (warpedUvs) {
+                const warpU = sampleTerrainUvWarp(sampleFractalNoise2D, worldX + 31.7, worldY - 14.3, 173.41);
+                const warpV = sampleTerrainUvWarp(sampleFractalNoise2D, worldX - 48.9, worldY + 22.5, 281.73);
+                uvs.push((worldX / CHUNK_SIZE) + warpU, (worldY / CHUNK_SIZE) + warpV);
+            } else {
+                uvs.push(worldX / CHUNK_SIZE, worldY / CHUNK_SIZE);
+            }
+        };
+
+        const appendSparseTerrainCellQuad = (positions, uvs, meshOriginX, meshOriginY, tileX, tileY, sampleHeight, warpedUvs = false) => {
+            const x0 = startX - 0.5 + tileX;
+            const x1 = x0 + 1;
+            const y0 = startY - 0.5 + tileY;
+            const y1 = y0 + 1;
+            pushSparseTerrainVertex(positions, uvs, meshOriginX, meshOriginY, x0, sampleHeight(x0, y0), y0, warpedUvs);
+            pushSparseTerrainVertex(positions, uvs, meshOriginX, meshOriginY, x1, sampleHeight(x1, y1), y1, warpedUvs);
+            pushSparseTerrainVertex(positions, uvs, meshOriginX, meshOriginY, x1, sampleHeight(x1, y0), y0, warpedUvs);
+            pushSparseTerrainVertex(positions, uvs, meshOriginX, meshOriginY, x0, sampleHeight(x0, y0), y0, warpedUvs);
+            pushSparseTerrainVertex(positions, uvs, meshOriginX, meshOriginY, x0, sampleHeight(x0, y1), y1, warpedUvs);
+            pushSparseTerrainVertex(positions, uvs, meshOriginX, meshOriginY, x1, sampleHeight(x1, y1), y1, warpedUvs);
+        };
+
+        const buildTerrainSkirtGeometry = (cells = null) => {
+            const positions = [];
+            const meshOriginX = startX + (CHUNK_SIZE / 2) - 0.5;
+            const meshOriginY = startY + (CHUNK_SIZE / 2) - 0.5;
+            const sourceCells = Array.isArray(cells) ? cells : [];
+            for (let cellIndex = 0; cellIndex < sourceCells.length; cellIndex++) {
+                const cell = sourceCells[cellIndex];
+                const worldTileX = startX + cell.tileX;
+                const worldTileY = startY + cell.tileY;
+                const tile = getVisualTileAt(worldTileX, worldTileY);
+                if (tile === null) continue;
+                const x0 = worldTileX - 0.5;
+                const x1 = worldTileX + 0.5;
+                const y0 = worldTileY - 0.5;
+                const y1 = worldTileY + 0.5;
+                if (shouldAddTerrainSkirtForNeighbor(tile, worldTileX, worldTileY, worldTileX, worldTileY - 1)) {
+                    appendTerrainSkirtSegment(positions, meshOriginX, meshOriginY, x0, y0, x1, y0, isTerrainSkirtWaterEdge(worldTileX, worldTileY - 1) ? 'water' : 'land');
+                }
+                if (shouldAddTerrainSkirtForNeighbor(tile, worldTileX, worldTileY, worldTileX + 1, worldTileY)) {
+                    appendTerrainSkirtSegment(positions, meshOriginX, meshOriginY, x1, y0, x1, y1, isTerrainSkirtWaterEdge(worldTileX + 1, worldTileY) ? 'water' : 'land');
+                }
+                if (shouldAddTerrainSkirtForNeighbor(tile, worldTileX, worldTileY, worldTileX, worldTileY + 1)) {
+                    appendTerrainSkirtSegment(positions, meshOriginX, meshOriginY, x1, y1, x0, y1, isTerrainSkirtWaterEdge(worldTileX, worldTileY + 1) ? 'water' : 'land');
+                }
+                if (shouldAddTerrainSkirtForNeighbor(tile, worldTileX, worldTileY, worldTileX - 1, worldTileY)) {
+                    appendTerrainSkirtSegment(positions, meshOriginX, meshOriginY, x0, y1, x0, y0, isTerrainSkirtWaterEdge(worldTileX - 1, worldTileY) ? 'water' : 'land');
+                }
+            }
+            if (positions.length <= 0) return null;
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.computeVertexNormals();
+            geometry.computeBoundingSphere();
+            return geometry;
+        };
+
+        const underlayCells = [];
+        const smoothWaterDirtUnderlayCells = [];
+        const terrainCells = [];
         for (let tileY = 0; tileY < CHUNK_SIZE; tileY++) {
             for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
                 const worldTileX = startX + tileX;
                 const worldTileY = startY + tileY;
-                const tile = getVisualTileId(logicalMap[0][worldTileY][worldTileX], worldTileX, worldTileY, 0);
-                if (!isRenderableUnderlayTile(tile)) continue;
-                if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
-                if (shouldUseSmoothWaterDirtUnderlayCell(worldTileX, worldTileY)) continue;
-                const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
-                for (let i = 0; i < 6; i++) {
-                    underlayIndices.push(baseUnderlayIndices[cellIndexOffset + i]);
-                }
+                const tile = getVisualTileAt(worldTileX, worldTileY);
+                if (tile === null) continue;
+                if (shouldRenderUnderlayCell(tile, worldTileX, worldTileY)) underlayCells.push({ tileX, tileY });
+                if (shouldUseSmoothWaterDirtUnderlayCell(worldTileX, worldTileY)) smoothWaterDirtUnderlayCells.push({ tileX, tileY });
+                if (shouldRenderTerrainCell(tile, worldTileX, worldTileY)) terrainCells.push({ tileX, tileY });
             }
         }
-        underlayGeo.setIndex(underlayIndices);
-        underlayGeo.computeVertexNormals();
-        if (underlayIndices.length > 0) {
+
+        if (underlayCells.length > 0) {
+            const underlayPositions = [];
+            const underlayUvs = [];
+            const meshOriginX = startX + (CHUNK_SIZE / 2) - 0.5;
+            const meshOriginY = startY + (CHUNK_SIZE / 2) - 0.5;
+            for (let cellIndex = 0; cellIndex < underlayCells.length; cellIndex++) {
+                const cell = underlayCells[cellIndex];
+                appendSparseTerrainCellQuad(underlayPositions, underlayUvs, meshOriginX, meshOriginY, cell.tileX, cell.tileY, sampleUnderlayVertexHeight, false);
+            }
+            const underlayGeo = new THREE.BufferGeometry();
+            underlayGeo.setAttribute('position', new THREE.Float32BufferAttribute(underlayPositions, 3));
+            underlayGeo.setAttribute('uv', new THREE.Float32BufferAttribute(underlayUvs, 2));
+            underlayGeo.computeVertexNormals();
+            underlayGeo.computeBoundingSphere();
             const underlayMesh = new THREE.Mesh(underlayGeo, sharedMaterials.terrainUnderlay);
             underlayMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
             underlayMesh.receiveShadow = false;
@@ -672,37 +890,20 @@
             if (environmentMeshes) environmentMeshes.push(underlayMesh);
         }
 
-        const smoothWaterDirtUnderlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
-        smoothWaterDirtUnderlayGeo.rotateX(-Math.PI / 2);
-        applyWorldSpaceTerrainUvs(smoothWaterDirtUnderlayGeo, startX, startY, CHUNK_SIZE, CHUNK_SIZE, sampleFractalNoise2D);
-        const smoothWaterDirtUnderlayPositions = smoothWaterDirtUnderlayGeo.attributes.position;
-        for (let vy = 0; vy <= CHUNK_SIZE; vy++) {
-            for (let vx = 0; vx <= CHUNK_SIZE; vx++) {
-                const idx = (vy * (CHUNK_SIZE + 1)) + vx;
-                const cornerX = startX - 0.5 + vx;
-                const cornerY = startY - 0.5 + vy;
-                const h = sampleSmoothWaterDirtUnderlayVertexHeight(cornerX, cornerY);
-                smoothWaterDirtUnderlayPositions.setY(idx, h);
+        if (smoothWaterDirtUnderlayCells.length > 0) {
+            const smoothWaterDirtUnderlayPositions = [];
+            const smoothWaterDirtUnderlayUvs = [];
+            const meshOriginX = startX + (CHUNK_SIZE / 2) - 0.5;
+            const meshOriginY = startY + (CHUNK_SIZE / 2) - 0.5;
+            for (let cellIndex = 0; cellIndex < smoothWaterDirtUnderlayCells.length; cellIndex++) {
+                const cell = smoothWaterDirtUnderlayCells[cellIndex];
+                appendSparseTerrainCellQuad(smoothWaterDirtUnderlayPositions, smoothWaterDirtUnderlayUvs, meshOriginX, meshOriginY, cell.tileX, cell.tileY, sampleSmoothWaterDirtUnderlayVertexHeight, true);
             }
-        }
-        smoothWaterDirtUnderlayPositions.needsUpdate = true;
-
-        const baseSmoothWaterDirtUnderlayIndices = smoothWaterDirtUnderlayGeo.index ? smoothWaterDirtUnderlayGeo.index.array : [];
-        const smoothWaterDirtUnderlayIndices = [];
-        for (let tileY = 0; tileY < CHUNK_SIZE; tileY++) {
-            for (let tileX = 0; tileX < CHUNK_SIZE; tileX++) {
-                const worldTileX = startX + tileX;
-                const worldTileY = startY + tileY;
-                if (!shouldUseSmoothWaterDirtUnderlayCell(worldTileX, worldTileY)) continue;
-                const cellIndexOffset = ((tileY * CHUNK_SIZE) + tileX) * 6;
-                for (let i = 0; i < 6; i++) {
-                    smoothWaterDirtUnderlayIndices.push(baseSmoothWaterDirtUnderlayIndices[cellIndexOffset + i]);
-                }
-            }
-        }
-        smoothWaterDirtUnderlayGeo.setIndex(smoothWaterDirtUnderlayIndices);
-        smoothWaterDirtUnderlayGeo.computeVertexNormals();
-        if (smoothWaterDirtUnderlayIndices.length > 0) {
+            const smoothWaterDirtUnderlayGeo = new THREE.BufferGeometry();
+            smoothWaterDirtUnderlayGeo.setAttribute('position', new THREE.Float32BufferAttribute(smoothWaterDirtUnderlayPositions, 3));
+            smoothWaterDirtUnderlayGeo.setAttribute('uv', new THREE.Float32BufferAttribute(smoothWaterDirtUnderlayUvs, 2));
+            smoothWaterDirtUnderlayGeo.computeVertexNormals();
+            smoothWaterDirtUnderlayGeo.computeBoundingSphere();
             const smoothWaterDirtUnderlayMesh = new THREE.Mesh(smoothWaterDirtUnderlayGeo, sharedMaterials.dirtTile);
             smoothWaterDirtUnderlayMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
             smoothWaterDirtUnderlayMesh.receiveShadow = false;
@@ -712,7 +913,20 @@
             if (planeGroup) planeGroup.add(smoothWaterDirtUnderlayMesh);
         }
 
-        const terrainSegments = CHUNK_SIZE * TERRAIN_BLEND_SUBDIVISIONS;
+        const terrainSkirtGeometry = buildTerrainSkirtGeometry(terrainCells);
+        if (terrainSkirtGeometry) {
+            const terrainSkirtMesh = new THREE.Mesh(terrainSkirtGeometry, sharedMaterials.terrainUnderlay);
+            terrainSkirtMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
+            terrainSkirtMesh.receiveShadow = false;
+            terrainSkirtMesh.castShadow = false;
+            terrainSkirtMesh.renderOrder = -0.9;
+            terrainSkirtMesh.userData = { type: 'GROUND_VISUAL_SKIRT', z: 0 };
+            if (planeGroup) planeGroup.add(terrainSkirtMesh);
+        }
+
+        const terrainSubdivisionMultiplier = TERRAIN_BLEND_SUBDIVISIONS;
+        const terrainSegments = CHUNK_SIZE * terrainSubdivisionMultiplier;
+        if (terrainCells.length <= 0) return;
         const terrainGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, terrainSegments, terrainSegments);
         terrainGeo.rotateX(-Math.PI / 2);
         applyWorldSpaceTerrainUvs(terrainGeo, startX, startY, terrainSegments, CHUNK_SIZE, sampleFractalNoise2D);
@@ -730,60 +944,72 @@
         positions.needsUpdate = true;
         const baseTerrainIndices = terrainGeo.index ? terrainGeo.index.array : [];
         const terrainIndices = [];
-        for (let cellY = 0; cellY < terrainSegments; cellY++) {
-            for (let cellX = 0; cellX < terrainSegments; cellX++) {
-                const sampleWorldX = startX - 0.5 + (((cellX + 0.5) / terrainSegments) * CHUNK_SIZE);
-                const sampleWorldY = startY - 0.5 + (((cellY + 0.5) / terrainSegments) * CHUNK_SIZE);
-                const worldTileX = clampValue(Math.floor(sampleWorldX + 0.5), 0, MAP_SIZE - 1);
-                const worldTileY = clampValue(Math.floor(sampleWorldY + 0.5), 0, MAP_SIZE - 1);
-                const tile = getVisualTileId(logicalMap[0][worldTileY][worldTileX], worldTileX, worldTileY, 0);
-                if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
-                if (!shouldRenderTerrainCell(tile, sampleWorldX, sampleWorldY)) continue;
-                const cellIndexOffset = ((cellY * terrainSegments) + cellX) * 6;
+        const shouldTrackUsedTerrainVertices = terrainCells.length < CHUNK_SIZE * CHUNK_SIZE * 0.9 || terrainSubdivisionMultiplier !== 1;
+        const usedTerrainVertexIndices = shouldTrackUsedTerrainVertices ? new Set() : null;
+        if (terrainSubdivisionMultiplier === 1) {
+            for (let cellIndex = 0; cellIndex < terrainCells.length; cellIndex++) {
+                const cell = terrainCells[cellIndex];
+                const cellIndexOffset = ((cell.tileY * terrainSegments) + cell.tileX) * 6;
                 for (let i = 0; i < 6; i++) {
-                    terrainIndices.push(baseTerrainIndices[cellIndexOffset + i]);
+                    const vertexIndex = baseTerrainIndices[cellIndexOffset + i];
+                    terrainIndices.push(vertexIndex);
+                    if (usedTerrainVertexIndices) usedTerrainVertexIndices.add(vertexIndex);
+                }
+            }
+        } else {
+            for (let cellY = 0; cellY < terrainSegments; cellY++) {
+                for (let cellX = 0; cellX < terrainSegments; cellX++) {
+                    const sampleWorldX = startX - 0.5 + (((cellX + 0.5) / terrainSegments) * CHUNK_SIZE);
+                    const sampleWorldY = startY - 0.5 + (((cellY + 0.5) / terrainSegments) * CHUNK_SIZE);
+                    const worldTileX = clampValue(Math.floor(sampleWorldX + 0.5), 0, MAP_SIZE - 1);
+                    const worldTileY = clampValue(Math.floor(sampleWorldY + 0.5), 0, MAP_SIZE - 1);
+                    const tile = getVisualTileAt(worldTileX, worldTileY);
+                    if (tile === null) continue;
+                    if (isPierVisualCoverageTile(activePierConfig, worldTileX, worldTileY, 0)) continue;
+                    if (!shouldRenderTerrainCell(tile, sampleWorldX, sampleWorldY)) continue;
+                    const cellIndexOffset = ((cellY * terrainSegments) + cellX) * 6;
+                    for (let i = 0; i < 6; i++) {
+                        const vertexIndex = baseTerrainIndices[cellIndexOffset + i];
+                        terrainIndices.push(vertexIndex);
+                        if (usedTerrainVertexIndices) usedTerrainVertexIndices.add(vertexIndex);
+                    }
                 }
             }
         }
+        if (terrainIndices.length <= 0) {
+            terrainGeo.dispose();
+            return;
+        }
         terrainGeo.setIndex(terrainIndices);
+        collapseTerrainGeometryDrawGroups(terrainGeo, terrainIndices.length);
         terrainGeo.computeVertexNormals();
 
-        if (terrainIndices.length > 0) {
+        if (terrainGeo && terrainGeo.index && terrainGeo.index.count > 0) {
             const normals = terrainGeo.attributes.normal;
-            const terrainVertexCount = (terrainSegments + 1) * (terrainSegments + 1);
+            const positions = terrainGeo.attributes.position;
+            const meshOriginX = startX + (CHUNK_SIZE / 2) - 0.5;
+            const meshOriginY = startY + (CHUNK_SIZE / 2) - 0.5;
+            const terrainVertexCount = positions.count;
             const vertexColors = new Float32Array(terrainVertexCount * 3);
             const terrainBlend = new Float32Array(terrainVertexCount);
             const terrainBlendSourceCache = new Map();
-            for (let vy = 0; vy <= terrainSegments; vy++) {
-                for (let vx = 0; vx <= terrainSegments; vx++) {
-                    const idx = (vy * (terrainSegments + 1)) + vx;
-                    const worldX = startX - 0.5 + ((vx / terrainSegments) * CHUNK_SIZE);
-                    const worldY = startY - 0.5 + ((vy / terrainSegments) * CHUNK_SIZE);
-                    const normalY = normals ? normals.getY(idx) : 1;
-                    const slope = 1 - THREE.MathUtils.clamp(normalY, 0, 1);
-                    const blendInfo = sampleTerrainBlendInfo({
-                        logicalMap,
-                        MAP_SIZE,
-                        TileId,
-                        worldX,
-                        worldY,
-                        activePierConfig,
-                        getVisualTileId,
-                        isNaturalTileId,
-                        isWaterTileId,
-                        isPierVisualCoverageTile,
-                        waterRenderBodies,
-                        islandWater,
-                        sampleFractalNoise2D,
-                        sourceCache: terrainBlendSourceCache
-                    });
-                    const color = getTerrainVertexColor(sampleFractalNoise2D, worldX, worldY, slope, blendInfo);
-                    const colorIndex = idx * 3;
-                    vertexColors[colorIndex] = color[0];
-                    vertexColors[colorIndex + 1] = color[1];
-                    vertexColors[colorIndex + 2] = color[2];
-                    terrainBlend[idx] = blendInfo.blend;
-                }
+            const colorTerrainVertex = (idx) => {
+                const worldX = meshOriginX + positions.getX(idx);
+                const worldY = meshOriginY + positions.getZ(idx);
+                const normalY = normals ? normals.getY(idx) : 1;
+                const slope = 1 - THREE.MathUtils.clamp(normalY, 0, 1);
+                const blendInfo = sampleTerrainBlendForPoint(worldX, worldY, terrainBlendSourceCache);
+                const color = getTerrainVertexColor(sampleFractalNoise2D, worldX, worldY, slope, blendInfo);
+                const colorIndex = idx * 3;
+                vertexColors[colorIndex] = color[0];
+                vertexColors[colorIndex + 1] = color[1];
+                vertexColors[colorIndex + 2] = color[2];
+                terrainBlend[idx] = blendInfo.blend;
+            };
+            if (usedTerrainVertexIndices && usedTerrainVertexIndices.size > 0 && usedTerrainVertexIndices.size < terrainVertexCount * 0.9) {
+                usedTerrainVertexIndices.forEach((idx) => colorTerrainVertex(idx));
+            } else {
+                for (let idx = 0; idx < terrainVertexCount; idx++) colorTerrainVertex(idx);
             }
             terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
             terrainGeo.setAttribute('terrainBlend', new THREE.Float32BufferAttribute(terrainBlend, 1));
@@ -793,7 +1019,7 @@
             terrainMesh.position.set(startX + CHUNK_SIZE / 2 - 0.5, 0, startY + CHUNK_SIZE / 2 - 0.5);
             terrainMesh.receiveShadow = true;
             terrainMesh.castShadow = false;
-            terrainMesh.userData = { type: 'GROUND', z: 0 };
+            terrainMesh.userData = { type: 'GROUND', z: 0, terrainSubdivisionMultiplier };
             if (planeGroup) planeGroup.add(terrainMesh);
             if (environmentMeshes) environmentMeshes.push(terrainMesh);
         }

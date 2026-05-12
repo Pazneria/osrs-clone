@@ -140,10 +140,16 @@
     }
 
     function getPlayerCombatSnapshot() {
-        if (!combatRuntime || typeof combatRuntime.computePlayerMeleeCombatSnapshot !== 'function') return null;
-        return combatRuntime.computePlayerMeleeCombatSnapshot({
+        if (!combatRuntime) return null;
+        const snapshotBuilder = typeof combatRuntime.computePlayerCombatSnapshot === 'function'
+            ? combatRuntime.computePlayerCombatSnapshot
+            : combatRuntime.computePlayerMeleeCombatSnapshot;
+        if (typeof snapshotBuilder !== 'function') return null;
+        const playerInventory = typeof inventory !== 'undefined' && Array.isArray(inventory) ? inventory : [];
+        return snapshotBuilder({
             playerSkills: playerSkills || {},
             equipment: equipment || {},
+            inventory: playerInventory,
             playerState
         });
     }
@@ -164,6 +170,12 @@
         const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
         if (!rig || typeof triggerKey !== 'string' || !triggerKey) return;
         rig[triggerKey] = Number.isFinite(triggerAt) ? triggerAt : Date.now();
+    }
+
+    function markPlayerRigAttackStyle(styleFamily) {
+        const rig = playerRig && playerRig.userData ? playerRig.userData.rig : null;
+        if (!rig) return;
+        rig.attackStyleFamily = styleFamily === 'magic' ? 'magic' : (styleFamily === 'ranged' ? 'ranged' : 'melee');
     }
 
     function isEnemyAlive(enemyState) {
@@ -378,7 +390,7 @@
             playerState.targetObj = null;
             playerState.targetUid = null;
         }
-        if (playerState.action === 'COMBAT: MELEE' || (hadEnemyTarget && playerState.action === 'WALKING')) playerState.action = 'IDLE';
+        if (playerState.action === 'COMBAT: MELEE' || playerState.action === 'COMBAT: RANGED' || playerState.action === 'COMBAT: MAGIC' || (hadEnemyTarget && playerState.action === 'WALKING')) playerState.action = 'IDLE';
         return true;
     }
 
@@ -460,6 +472,8 @@
             isEnemyAlive,
             isPlayerAlive,
             isWithinMeleeRange,
+            isWithinPlayerAttackRange,
+            getPlayerCombatActionName,
             recordPlayerPursuitDebug,
             resolvePathToEnemy,
             resolvePathToPlayer
@@ -481,6 +495,7 @@
             getPlayerLockedEnemy,
             isEnemyAlive,
             isWithinMeleeRange,
+            isWithinPlayerAttackRange,
             playerState,
             playerTargetId: PLAYER_TARGET_ID
         };
@@ -590,6 +605,23 @@
         return getSquareRange(attacker, target, 1);
     }
 
+    function getPlayerAttackRange(snapshot = null) {
+        const resolvedSnapshot = snapshot || getPlayerCombatSnapshot();
+        return resolvedSnapshot && Number.isFinite(resolvedSnapshot.attackRange)
+            ? Math.max(1, Math.floor(resolvedSnapshot.attackRange))
+            : 1;
+    }
+
+    function getPlayerCombatActionName() {
+        const snapshot = getPlayerCombatSnapshot();
+        if (snapshot && snapshot.styleFamily === 'magic') return 'COMBAT: MAGIC';
+        return snapshot && snapshot.styleFamily === 'ranged' ? 'COMBAT: RANGED' : 'COMBAT: MELEE';
+    }
+
+    function isWithinPlayerAttackRange(attacker, target, snapshot = null) {
+        return getSquareRange(attacker, target, getPlayerAttackRange(snapshot));
+    }
+
     function isPlayerAlive() {
         return typeof getCurrentHitpoints === 'function' ? getCurrentHitpoints() > 0 : playerState.currentHitpoints > 0;
     }
@@ -639,6 +671,7 @@
             isTrainingDummyEnemy,
             isWalkableTileId,
             isWithinMeleeRange,
+            isWithinPlayerAttackRange,
             logicalMap,
             mapSize: MAP_SIZE,
             moveEnemyToStep,
@@ -811,10 +844,109 @@
         markCombatEnemyOccupancyDirty();
     }
 
-    function resolvePlayerAttackSkill() {
+    function resolvePlayerAttackSkill(attackResult = null) {
+        if (attackResult && attackResult.styleFamily === 'magic') return 'magic';
+        if (attackResult && attackResult.styleFamily === 'ranged') return 'ranged';
         if (playerState.selectedMeleeStyle === 'strength') return 'strength';
         if (playerState.selectedMeleeStyle === 'defense') return 'defense';
         return 'attack';
+    }
+
+    function consumePlayerCombatAmmo(attackResult) {
+        if (!attackResult || !attackResult.consumesAmmo) return false;
+        if (typeof attackResult.ammoEquipmentSlot === 'string' && attackResult.ammoEquipmentSlot) {
+            const playerEquipment = typeof equipment !== 'undefined' && equipment && typeof equipment === 'object' ? equipment : {};
+            const slotName = attackResult.ammoEquipmentSlot;
+            const entry = playerEquipment[slotName] || null;
+            const amount = entry && Number.isFinite(entry.amount) ? Math.max(1, Math.floor(entry.amount)) : 1;
+            if (!entry) return false;
+            if (entry.itemData && amount > 1) entry.amount = amount - 1;
+            else playerEquipment[slotName] = null;
+            if (typeof renderEquipment === 'function') renderEquipment();
+            if (typeof window.updateStats === 'function') window.updateStats();
+            if (typeof updatePlayerModel === 'function') updatePlayerModel();
+            return true;
+        }
+        if (!Number.isFinite(attackResult.ammoInventoryIndex)) return false;
+        const ammoIndex = Math.max(0, Math.floor(attackResult.ammoInventoryIndex));
+        const playerInventory = typeof inventory !== 'undefined' && Array.isArray(inventory) ? inventory : [];
+        const slot = playerInventory[ammoIndex] || null;
+        if (!slot || !slot.itemData) return false;
+        const amount = Number.isFinite(slot.amount) ? Math.max(1, Math.floor(slot.amount)) : 1;
+        if (amount <= 1) playerInventory[ammoIndex] = null;
+        else slot.amount = amount - 1;
+        if (typeof renderInventory === 'function') renderInventory();
+        if (typeof window.updateStats === 'function') window.updateStats();
+        return true;
+    }
+
+    function getCombatProjectileWorldY(gridX, gridY, plane, lift) {
+        const resolvedPlane = Number.isFinite(plane) ? Math.floor(plane) : 0;
+        const zOffset = resolvedPlane * 3.0;
+        const mapRef = typeof heightMap !== 'undefined' ? heightMap : null;
+        const tileHeight = mapRef
+            && mapRef[resolvedPlane]
+            && mapRef[resolvedPlane][gridY]
+            && Number.isFinite(mapRef[resolvedPlane][gridY][gridX])
+            ? mapRef[resolvedPlane][gridY][gridX]
+            : 0;
+        return tileHeight + zOffset + (Number.isFinite(lift) ? lift : 1.1);
+    }
+
+    function spawnPlayerRangedProjectile(attackResult, enemyState) {
+        if (!attackResult || attackResult.styleFamily !== 'ranged' || !enemyState) return null;
+        const runtime = window.TransientVisualRuntime || null;
+        if (!runtime || typeof runtime.spawnRangedProjectile !== 'function') return null;
+        if (typeof THREE === 'undefined' || typeof scene === 'undefined' || !scene) return null;
+        const plane = Number.isFinite(playerState.z) ? Math.floor(playerState.z) : 0;
+        const start = new THREE.Vector3(
+            playerState.x,
+            getCombatProjectileWorldY(playerState.x, playerState.y, plane, 1.35),
+            playerState.y
+        );
+        const end = new THREE.Vector3(
+            enemyState.x,
+            getCombatProjectileWorldY(enemyState.x, enemyState.y, plane, 1.1),
+            enemyState.y
+        );
+        return runtime.spawnRangedProjectile({
+            THREE,
+            scene,
+            start,
+            end,
+            ammoItemId: attackResult.ammoItemId,
+            delayMs: 560,
+            durationMs: 360,
+            nowMs: Date.now()
+        });
+    }
+
+    function spawnPlayerMagicProjectile(attackResult, enemyState) {
+        if (!attackResult || attackResult.styleFamily !== 'magic' || !enemyState) return null;
+        const runtime = window.TransientVisualRuntime || null;
+        if (!runtime || typeof runtime.spawnMagicProjectile !== 'function') return null;
+        if (typeof THREE === 'undefined' || typeof scene === 'undefined' || !scene) return null;
+        const plane = Number.isFinite(playerState.z) ? Math.floor(playerState.z) : 0;
+        const start = new THREE.Vector3(
+            playerState.x,
+            getCombatProjectileWorldY(playerState.x, playerState.y, plane, 1.4),
+            playerState.y
+        );
+        const end = new THREE.Vector3(
+            enemyState.x,
+            getCombatProjectileWorldY(enemyState.x, enemyState.y, plane, 1.18),
+            enemyState.y
+        );
+        return runtime.spawnMagicProjectile({
+            THREE,
+            scene,
+            start,
+            end,
+            runeItemId: attackResult.ammoItemId,
+            delayMs: 440,
+            durationMs: 420,
+            nowMs: Date.now()
+        });
     }
 
     function applyPlayerDefeat() {
@@ -849,7 +981,7 @@
         const attacks = [];
         const playerSnapshot = getPlayerCombatSnapshot();
         if (playerLockState && playerSnapshot && playerSnapshot.canAttack && playerState.remainingAttackCooldown === 0) {
-            if (isWithinMeleeRange(playerState, playerLockState.enemyState)) {
+            if (isWithinPlayerAttackRange(playerState, playerLockState.enemyState, playerSnapshot)) {
                 facePlayerTowards(playerLockState.enemyState);
                 attacks.push({
                     attackerKind: 'player',
@@ -914,9 +1046,15 @@
                     attackerId: PLAYER_TARGET_ID,
                     targetKind: 'enemy',
                     targetId: enemyState.runtimeId,
+                    styleFamily: attack.snapshot.styleFamily || 'melee',
+                    damageType: attack.snapshot.damageType || 'melee',
                     landed,
                     damage,
                     tickCycle: attack.snapshot.attackTickCycle,
+                    consumesAmmo: !!attack.snapshot.consumesAmmo,
+                    ammoInventoryIndex: Number.isFinite(attack.snapshot.ammoInventoryIndex) ? Math.floor(attack.snapshot.ammoInventoryIndex) : null,
+                    ammoEquipmentSlot: typeof attack.snapshot.ammoEquipmentSlot === 'string' ? attack.snapshot.ammoEquipmentSlot : null,
+                    ammoItemId: typeof attack.snapshot.ammoItemId === 'string' ? attack.snapshot.ammoItemId : null,
                     approachPath: Array.isArray(attack.approachPath) ? attack.approachPath.map((step) => cloneCombatPathStep(step)) : []
                 });
                 continue;
@@ -958,19 +1096,24 @@
             const result = results[i];
             if (result.attackerKind === 'player') {
                 playerState.lastAttackTick = currentTick;
+                if (result.styleFamily === 'magic') playerState.lastCastTick = currentTick;
                 playerState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));
                 playerState.inCombat = true;
+                consumePlayerCombatAmmo(result);
+                markPlayerRigAttackStyle(result.styleFamily);
                 markPlayerRigAnimationTrigger('attackTick', currentTick);
                 markPlayerRigAnimationTrigger('attackAnimationStartedAt');
                 const enemyState = getCombatEnemyState(result.targetId);
                 if (!enemyState || !isEnemyAlive(enemyState)) continue;
                 enemyState.lastDamagerId = PLAYER_TARGET_ID;
+                spawnPlayerRangedProjectile(result, enemyState);
+                spawnPlayerMagicProjectile(result, enemyState);
                 if (typeof spawnHitsplat === 'function') spawnHitsplat(result.damage, enemyState.x, enemyState.y);
                 if (result.damage > 0) {
                     enemyState.currentHealth = Math.max(0, enemyState.currentHealth - result.damage);
                     enemyState.hitReactionTriggerAt = Date.now();
                     if (typeof addSkillXp === 'function') {
-                        addSkillXp(resolvePlayerAttackSkill(), result.damage * 4);
+                        addSkillXp(resolvePlayerAttackSkill(result), result.damage * 4);
                         addSkillXp('hitpoints', result.damage);
                     }
                 }
@@ -1094,7 +1237,7 @@
         const playerAttackedThisTick = !!playerAttackResult;
 
         if (playerAttackedThisTick && isPlayerAlive()) {
-            playerState.action = 'COMBAT: MELEE';
+            playerState.action = getPlayerCombatActionName();
             playerState.path = (playerAttackResult && Array.isArray(playerAttackResult.approachPath) && playerAttackResult.approachPath.length > 0)
                 ? playerAttackResult.approachPath.map((step) => cloneCombatPathStep(step))
                 : [];
@@ -1108,7 +1251,7 @@
         syncMeleeCombatFacing();
         refreshCombatEnemyOccupancy();
 
-        if (!playerState.lockedTargetId && playerState.action === 'COMBAT: MELEE') playerState.action = 'IDLE';
+        if (!playerState.lockedTargetId && (playerState.action === 'COMBAT: MELEE' || playerState.action === 'COMBAT: RANGED' || playerState.action === 'COMBAT: MAGIC')) playerState.action = 'IDLE';
     }
 
     function ensureCombatEnemyRenderLayer() {

@@ -15,6 +15,9 @@ function run() {
   assert(structureRuntimeSource.includes("function setCastleTowerVisualState(options = {})"), "structure runtime should own castle tower instance transforms");
   assert(structureRuntimeSource.includes("function appendShopCounterVisual(options = {})"), "structure runtime should own shop counter visuals");
   assert(structureRuntimeSource.includes("function appendFloorTileVisual(options = {})"), "structure runtime should own static floor tile visuals");
+  assert(structureRuntimeSource.includes("function createFloorTileRenderData(options = {})"), "structure runtime should own instanced floor tile render setup");
+  assert(structureRuntimeSource.includes("function appendFloorTileVisualState(options = {})"), "structure runtime should own instanced floor tile transforms");
+  assert(structureRuntimeSource.includes("function markFloorTileRenderDataDirty(floorData)"), "structure runtime should finalize instanced floor tile counts");
   assert(structureRuntimeSource.includes("function appendStairBlockVisual(options = {})"), "structure runtime should own stair block visuals");
   assert(structureRuntimeSource.includes("function appendStairRampVisual(options = {})"), "structure runtime should own ramp stair visuals");
   assert(structureRuntimeSource.includes("createEquipmentVisualMeshes(itemId, 'axe'"), "structure runtime should reuse held-item assets for decorative tool racks");
@@ -23,6 +26,16 @@ function run() {
   assert(structureRuntimeSource.includes("addToolRackAsset('bronze_axe'"), "structure runtime should mount a real axe visual on the tutorial tool rack");
   assert(structureRuntimeSource.includes("addToolRackAsset('bronze_pickaxe'"), "structure runtime should mount a real pickaxe visual on the tutorial tool rack");
   assert(structureRuntimeSource.includes("addToolRackAsset('hammer'"), "structure runtime should mount a real hammer visual on the tutorial tool rack");
+  assert(structureRuntimeSource.includes("prop.kind === 'weapon_rack'"), "structure runtime should render combat-yard weapon racks");
+  assert(structureRuntimeSource.includes("addToolRackAsset('bronze_sword'"), "combat weapon racks should reuse the real bronze sword visual");
+  assert(structureRuntimeSource.includes("addToolRackAsset('normal_shortbow'"), "combat weapon racks should reuse the real starter bow visual");
+  assert(structureRuntimeSource.includes("prop.kind === 'training_dummy'"), "structure runtime should render decorative combat training dummies");
+  assert(structureRuntimeSource.includes("prop.kind === 'archery_target'"), "structure runtime should render decorative archery targets");
+  assert(structureRuntimeSource.includes("function mergeStaticVisualDescendantsByMaterial(THREE, group, options = {})"), "structure runtime should batch nested static decor meshes");
+  assert(structureRuntimeSource.includes("mergeStaticVisualDescendantsByMaterial(THREE, group, { excludedMaterial: sharedMaterials.hiddenHitbox });"), "decor props should flatten nested static visuals while preserving hidden hitboxes");
+  assert(structureRuntimeSource.includes("weapon_rack: { w: 1.62, h: 1.62, d: 0.85 }"), "combat weapon racks should expose a stable generous hitbox");
+  assert(structureRuntimeSource.includes("training_dummy: { w: 1.16, h: 1.55, d: 0.95 }"), "decorative training dummies should expose a stable hitbox");
+  assert(structureRuntimeSource.includes("archery_target: { w: 1.28, h: 1.68, d: 0.92 }"), "archery targets should expose a stable hitbox");
   assert(structureRuntimeSource.includes("prop.kind === 'ore_pile'"), "structure runtime should render tutorial quarry ore piles");
   assert(structureRuntimeSource.includes("prop.kind === 'coal_bin'"), "structure runtime should render tutorial quarry coal bins");
   assert(structureRuntimeSource.includes("prop.kind === 'barrel'"), "structure runtime should render tutorial quarry barrels");
@@ -46,6 +59,9 @@ function run() {
   assert(worldSource.includes("worldStructureRenderRuntime.createCastleRenderData"), "world.js should delegate castle render setup");
   assert(worldSource.includes("worldStructureRenderRuntime.appendShopCounterVisual"), "world.js should delegate shop counter rendering");
   assert(worldSource.includes("worldStructureRenderRuntime.appendFloorTileVisual"), "world.js should delegate floor tile rendering");
+  assert(worldSource.includes("worldStructureRenderRuntime.createFloorTileRenderData"), "world.js should delegate floor tile instanced render setup");
+  assert(worldSource.includes("worldStructureRenderRuntime.getFloorTileRenderBucket"), "world.js should count floor tile material buckets through structure rendering");
+  assert(worldSource.includes("worldStructureRenderRuntime.markFloorTileRenderDataDirty"), "world.js should finalize instanced floor tile state");
   assert(worldSource.includes("worldStructureRenderRuntime.appendStairBlockVisual"), "world.js should delegate stair block rendering");
   assert(worldSource.includes("worldStructureRenderRuntime.appendStairRampVisual"), "world.js should delegate ramp stair rendering");
   assert(worldSource.includes("createEquipmentVisualMeshes: typeof window.createEquipmentVisualMeshes === 'function'"), "world.js should pass held-item visual creation into structure rendering");

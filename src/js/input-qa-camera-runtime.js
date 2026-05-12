@@ -40,7 +40,19 @@
                 targetHeight: 1.2,
                 yaw: Math.PI * 1.5,
                 pitch: 0.12,
-                distance: 520
+                distance: 420
+            };
+        }
+        if (key === 'tutorial_late_yard' || key === 'tutorial-late-yard' || key === 'late_yard') {
+            return {
+                presetId: 'tutorial_late_yard',
+                targetX: 330,
+                targetY: 424,
+                targetZ: 0,
+                targetHeight: 1.1,
+                yaw: Math.PI * 1.5,
+                pitch: 0.42,
+                distance: 125
             };
         }
         return null;

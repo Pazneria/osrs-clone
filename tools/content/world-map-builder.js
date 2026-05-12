@@ -151,10 +151,10 @@ function applyIslandWaterPatch(map, world) {
   const patch = world.terrainPatches && world.terrainPatches.islandWater;
   if (!patch || patch.enabled === false || !patch.waterBounds || !Array.isArray(patch.landPolygon) || patch.landPolygon.length < 3) return;
   const bounds = patch.waterBounds;
-  const xMin = Math.max(1, Math.floor(bounds.xMin));
-  const xMax = Math.min(MAP_SIZE - 2, Math.ceil(bounds.xMax));
-  const yMin = Math.max(1, Math.floor(bounds.yMin));
-  const yMax = Math.min(MAP_SIZE - 2, Math.ceil(bounds.yMax));
+  const xMin = Math.max(0, Math.floor(bounds.xMin));
+  const xMax = Math.min(MAP_SIZE - 1, Math.ceil(bounds.xMax));
+  const yMin = Math.max(0, Math.floor(bounds.yMin));
+  const yMax = Math.min(MAP_SIZE - 1, Math.ceil(bounds.yMax));
   const shoreWidth = Number.isFinite(patch.shoreWidth) ? Math.max(0, Number(patch.shoreWidth)) : 2.2;
   const shallowDistance = Number.isFinite(patch.shallowDistance) ? Math.max(0.5, Number(patch.shallowDistance)) : 4.0;
 

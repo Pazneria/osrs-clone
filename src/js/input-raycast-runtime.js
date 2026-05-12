@@ -21,6 +21,7 @@
             data = hit.object.userData.instanceMap[hit.instanceId];
         }
         if (!data || data.z !== getPlayerPlane(context)) return null;
+        if (data.ignoreRaycast || (data.uid && data.uid.tutorialHidden)) return null;
 
         if (data.type === 'GROUND' || data.type === 'WALL' || data.type === 'TOWER' || data.type === 'WATER') {
             let gridX = Math.floor(hit.point.x + 0.5);

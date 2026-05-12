@@ -147,6 +147,18 @@
             if (Number.isFinite(stats.str) && Math.floor(stats.str) !== 0) {
                 bonusLines.push({ label: 'Strength bonus', value: formatSignedTooltipStat(stats.str) });
             }
+            if (Number.isFinite(stats.rng) && Math.floor(stats.rng) !== 0) {
+                bonusLines.push({ label: 'Ranged bonus', value: formatSignedTooltipStat(stats.rng) });
+            }
+            if (Number.isFinite(stats.rstr) && Math.floor(stats.rstr) !== 0) {
+                bonusLines.push({ label: 'Ranged str.', value: formatSignedTooltipStat(stats.rstr) });
+            }
+            if (Number.isFinite(stats.mag) && Math.floor(stats.mag) !== 0) {
+                bonusLines.push({ label: 'Magic bonus', value: formatSignedTooltipStat(stats.mag) });
+            }
+            if (Number.isFinite(stats.mstr) && Math.floor(stats.mstr) !== 0) {
+                bonusLines.push({ label: 'Magic str.', value: formatSignedTooltipStat(stats.mstr) });
+            }
         }
 
         const requiredAttackLevel = Number.isFinite(item.requiredAttackLevel)
@@ -154,6 +166,18 @@
             : 0;
         if (requiredAttackLevel > 1) {
             requirementLines.push({ label: 'Attack req.', value: String(requiredAttackLevel) });
+        }
+        const requiredRangedLevel = Number.isFinite(item.requiredRangedLevel)
+            ? Math.max(1, Math.floor(item.requiredRangedLevel))
+            : 0;
+        if (requiredRangedLevel > 1) {
+            requirementLines.push({ label: 'Ranged req.', value: String(requiredRangedLevel) });
+        }
+        const requiredMagicLevel = Number.isFinite(item.requiredMagicLevel)
+            ? Math.max(1, Math.floor(item.requiredMagicLevel))
+            : 0;
+        if (requiredMagicLevel > 1) {
+            requirementLines.push({ label: 'Magic req.', value: String(requiredMagicLevel) });
         }
         const requiredFishingLevel = Number.isFinite(item.requiredFishingLevel)
             ? Math.max(1, Math.floor(item.requiredFishingLevel))

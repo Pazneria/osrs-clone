@@ -13,8 +13,11 @@ import {
   buildPlayerCombatDefaults,
   clampPlayerCurrentHitpoints,
   computeEnemyMeleeCombatSnapshot,
+  computePlayerCombatSnapshot,
   computePlayerMaxHitpoints,
   computePlayerMeleeCombatSnapshot,
+  computePlayerMagicCombatSnapshot,
+  computePlayerRangedCombatSnapshot,
   decrementCooldown,
   applyPlayerHitpointDamage,
   applyPlayerHitpointHealing,
@@ -63,7 +66,10 @@ declare global {
       applyPlayerHitpointHealing: typeof applyPlayerHitpointHealing;
       applyPlayerHitpointDamage: typeof applyPlayerHitpointDamage;
       buildCombatStatsViewModel: typeof buildCombatStatsViewModel;
+      computePlayerCombatSnapshot: typeof computePlayerCombatSnapshot;
       computePlayerMeleeCombatSnapshot: typeof computePlayerMeleeCombatSnapshot;
+      computePlayerRangedCombatSnapshot: typeof computePlayerRangedCombatSnapshot;
+      computePlayerMagicCombatSnapshot: typeof computePlayerMagicCombatSnapshot;
       computeEnemyMeleeCombatSnapshot: typeof computeEnemyMeleeCombatSnapshot;
       decrementCooldown: typeof decrementCooldown;
       rollOpposedHitCheck: typeof rollOpposedHitCheck;
@@ -258,7 +264,10 @@ export function exposeCombatBridge(): void {
     applyPlayerHitpointHealing,
     applyPlayerHitpointDamage,
     buildCombatStatsViewModel,
+    computePlayerCombatSnapshot,
     computePlayerMeleeCombatSnapshot,
+    computePlayerRangedCombatSnapshot,
+    computePlayerMagicCombatSnapshot,
     computeEnemyMeleeCombatSnapshot,
     decrementCooldown,
     rollOpposedHitCheck,

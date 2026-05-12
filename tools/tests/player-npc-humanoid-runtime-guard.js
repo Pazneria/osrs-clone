@@ -398,6 +398,181 @@ function assertTutorialMiningSmithingInstructorHumanoidAssembly(preset) {
   });
 }
 
+function assertTutorialCombatInstructorHumanoidAssembly(preset) {
+  assert(preset && preset.construction, "Combat Instructor preset should expose construction measurements");
+  assert(preset.archetype === "yard_arms_trainer", "Combat Instructor preset should declare the yard arms trainer archetype");
+  assert(preset.construction.minContactOverlap >= 0.02, "Combat Instructor joints should be built with explicit contact overlap");
+  assert(Array.isArray(preset.fragments) && preset.fragments.length > 0, "Combat Instructor preset should contain fragments");
+
+  const torso = catalogFragmentExtentY(preset, "torso", "torso_core");
+  const neck = catalogFragmentExtentY(preset, "torso", "neck");
+  const head = catalogFragmentExtentY(preset, "head", "head_core");
+  const headCore = catalogFragment(preset, "head", "head_core");
+  const shavedScalp = catalogFragment(preset, "head", "shaved_scalp");
+  const leftEar = catalogFragment(preset, "head", "left_ear");
+  const rightEar = catalogFragment(preset, "head", "right_ear");
+  const leftEye = catalogFragment(preset, "head", "left_eye");
+  const rightEye = catalogFragment(preset, "head", "right_eye");
+  const leftBrow = catalogFragment(preset, "head", "left_brow");
+  const rightBrow = catalogFragment(preset, "head", "right_brow");
+  const noseBridge = catalogFragment(preset, "head", "nose_bridge");
+  const mouth = catalogFragment(preset, "head", "mouth");
+  const chinShadow = catalogFragment(preset, "head", "chin_shadow");
+  const leftCheekShadow = catalogFragment(preset, "head", "left_cheek_shadow");
+  const rightCheekShadow = catalogFragment(preset, "head", "right_cheek_shadow");
+  const breastplate = catalogFragment(preset, "torso", "breastplate_front");
+  const breastplateBack = catalogFragment(preset, "torso", "breastplate_back");
+  const breastplateRidge = catalogFragment(preset, "torso", "breastplate_center_ridge");
+  const gorget = catalogFragment(preset, "torso", "gorget");
+  const capeBackPanel = catalogFragment(preset, "torso", "cape_back_panel");
+  const capeLeftFold = catalogFragment(preset, "torso", "cape_left_fold");
+  const capeRightFold = catalogFragment(preset, "torso", "cape_right_fold");
+  const capeBottomShadow = catalogFragment(preset, "torso", "cape_bottom_shadow");
+  const leftCapeClasp = catalogFragment(preset, "torso", "left_cape_clasp");
+  const rightCapeClasp = catalogFragment(preset, "torso", "right_cape_clasp");
+  const leftPauldron = catalogFragment(preset, "torso", "left_pauldron");
+  const rightPauldron = catalogFragment(preset, "torso", "right_pauldron");
+  const belt = catalogFragment(preset, "torso", "battle_belt");
+  const buckle = catalogFragment(preset, "torso", "belt_buckle");
+  const mailSkirt = catalogFragment(preset, "torso", "front_mail_skirt");
+  const leftTasset = catalogFragment(preset, "torso", "left_waist_tasset");
+  const rightTasset = catalogFragment(preset, "torso", "right_waist_tasset");
+  const leftRerebrace = catalogFragment(preset, "leftArm", "left_rerebrace");
+  const rightRerebrace = catalogFragment(preset, "rightArm", "right_rerebrace");
+  const leftVambrace = catalogFragment(preset, "leftLowerArm", "left_vambrace");
+  const rightVambrace = catalogFragment(preset, "rightLowerArm", "right_vambrace");
+  const leftGauntlet = catalogFragment(preset, "leftLowerArm", "left_gauntlet_plate");
+  const rightGauntlet = catalogFragment(preset, "rightLowerArm", "right_gauntlet_plate");
+  const rightHand = catalogFragment(preset, "rightLowerArm", "hand");
+  const heldSwordGrip = catalogFragment(preset, "axe", "right_hand_sword_grip");
+  const heldSwordBlade = catalogFragment(preset, "axe", "right_hand_sword_blade");
+  const heldSwordGuard = catalogFragment(preset, "axe", "right_hand_sword_guard");
+  const heldSwordFuller = catalogFragment(preset, "axe", "right_hand_sword_fuller");
+  const heldSwordPommel = catalogFragment(preset, "axe", "right_hand_sword_pommel");
+  const shieldBackstrap = catalogFragment(preset, "leftLowerArm", "left_arm_shield_backstrap");
+  const shieldFace = catalogFragment(preset, "leftLowerArm", "left_arm_shield_face");
+  const shieldPlate = catalogFragment(preset, "leftLowerArm", "left_arm_shield_plate");
+  const shieldBoss = catalogFragment(preset, "leftLowerArm", "left_arm_shield_boss");
+  const wristCuff = catalogFragment(preset, "leftLowerArm", "cuff");
+  const gloveHand = catalogFragment(preset, "leftLowerArm", "hand");
+
+  assertVerticalContact(head, neck, "combat instructor neck/head");
+  assert(headCore.rgbColor === "#c58c68", "Combat Instructor no-helmet variant should expose a skin-toned head");
+  assert(shavedScalp.rgbColor === "#6e4d38" && shavedScalp.offset[1] > 0.18, "Combat Instructor no-helmet variant should include a close-cropped scalp");
+  assert(leftEar.offset[0] > 0.25 && rightEar.offset[0] < -0.25, "Combat Instructor exposed head should include ears on both sides");
+  assert(leftEye.rgbColor === "#121614" && rightEye.rgbColor === "#121614" && leftEye.offset[2] > 0.2 && rightEye.offset[2] > 0.2, "Combat Instructor exposed head should keep readable forward eyes");
+  assert(leftBrow.rgbColor === "#2c211b" && rightBrow.rgbColor === "#2c211b", "Combat Instructor exposed head should keep stern dark brows");
+  assert(noseBridge.offset[2] > 0.22 && mouth.offset[2] > 0.21, "Combat Instructor exposed face should have readable nose and mouth features");
+  assert(chinShadow.rgbColor === "#9b654d" && leftCheekShadow.rgbColor === "#9b654d" && rightCheekShadow.rgbColor === "#9b654d", "Combat Instructor exposed head should include face shadow details");
+  assert(breastplate.rgbColor === "#9aa5a2" && breastplate.size[0] >= 0.66 && breastplate.offset[2] > 0.23, "Combat Instructor should have an obvious steel breastplate front");
+  assert(breastplateBack.target === "torso" && breastplateBack.offset[2] < -0.23, "Combat Instructor should have a back plate instead of only front armor");
+  assert(breastplateRidge.rgbColor === "#c4ccca" && breastplateRidge.offset[2] > breastplate.offset[2], "Combat Instructor breastplate should have a raised center ridge");
+  assert(gorget.target === "torso" && gorget.offset[1] > 0.28, "Combat Instructor armor should include a neck-protecting gorget");
+  assert(capeBackPanel.target === "torso" && capeBackPanel.rgbColor === "#8a2f2a" && capeBackPanel.offset[2] < breastplateBack.offset[2] - 0.08, "Combat Instructor should wear a red cape behind the back armor");
+  assert(capeLeftFold.offset[0] > 0.25 && capeRightFold.offset[0] < -0.25 && capeLeftFold.rgbColor === "#4f1f1c" && capeRightFold.rgbColor === "#4f1f1c", "Combat Instructor cape should have darker side folds");
+  assert(capeBottomShadow.offset[1] < -0.5, "Combat Instructor cape should hang below the torso armor");
+  assert(leftCapeClasp.rgbColor === "#b89545" && rightCapeClasp.rgbColor === "#b89545" && leftCapeClasp.offset[2] > breastplate.offset[2], "Combat Instructor cape should attach with visible front shoulder clasps");
+  assert(leftPauldron.target === "torso" && rightPauldron.target === "torso", "Combat Instructor metal pauldrons should attach to the torso");
+  assert(leftPauldron.size[0] >= 0.32 && rightPauldron.size[0] >= 0.32, "Combat Instructor pauldrons should be large enough to read as armor from the game camera");
+  assert(belt.rgbColor === "#5b3b27" && buckle.rgbColor === "#a9793d", "Combat Instructor should keep a simple leather belt with a bronze buckle");
+  assert(mailSkirt.target === "torso" && mailSkirt.offset[1] < -0.30, "Combat Instructor should include mail under the breastplate waist");
+  assert(leftTasset.target === "torso" && rightTasset.target === "torso", "Combat Instructor should include waist tassets over the hips");
+  assert(leftRerebrace.target === "leftArm" && rightRerebrace.target === "rightArm", "Combat Instructor upper arms should be armored with rerebraces");
+  assert(leftVambrace.target === "leftLowerArm" && rightVambrace.target === "rightLowerArm", "Combat Instructor lower arms should be armored with vambraces");
+  assert(leftGauntlet.target === "leftLowerArm" && rightGauntlet.target === "rightLowerArm", "Combat Instructor hands should read as armored gauntlets");
+  assert(heldSwordGrip.target === "axe" && Math.abs(heldSwordGrip.offset[0]) <= 0.02 && heldSwordGrip.offset[1] > -0.08 && heldSwordGrip.offset[1] < 0, "Combat Instructor sword grip should be authored on the right-hand tool holder at the fist");
+  assert(Array.isArray(heldSwordGrip.rotation) && heldSwordGrip.rotation[2] < 0 && Math.abs(heldSwordGrip.rotation[2]) < 0.3, "Combat Instructor sword grip should use a lowered harpoon-like side hold, not the old sideways pose");
+  assert(heldSwordGuard.target === "axe" && heldSwordGuard.size[0] >= 0.20 && heldSwordGuard.offset[1] < heldSwordGrip.offset[1], "Combat Instructor held sword should have a readable guard just below the fist");
+  assert(heldSwordBlade.target === "axe" && heldSwordBlade.size[1] >= 0.45 && heldSwordBlade.offset[1] < heldSwordGuard.offset[1] - 0.18, "Combat Instructor sword blade should drop from the right hand like the harpoon hold");
+  assert(Math.abs(heldSwordBlade.offset[0] - heldSwordGrip.offset[0]) <= 0.08, "Combat Instructor sword blade should stay close to the hand instead of jutting sideways");
+  assert(heldSwordFuller.offset[2] > heldSwordBlade.offset[2], "Combat Instructor sword should keep the fuller slightly forward of the blade");
+  assert(heldSwordPommel.offset[1] > heldSwordGrip.offset[1] + 0.08, "Combat Instructor sword should include a pommel above the grip");
+  assert(!preset.fragments.some((fragment) => String(fragment.role || "").startsWith("right_hand_sword") && fragment.target !== "axe"), "Combat Instructor sword fragments should live on the right-hand tool holder");
+  assert(shieldBackstrap.target === "leftLowerArm" && shieldBackstrap.offset[0] > 0.10 && shieldBackstrap.offset[2] <= 0.08, "Combat Instructor shield strap should sit on the outside/back of the left forearm");
+  assert(shieldFace.target === "leftLowerArm" && shieldFace.size[0] >= 0.32 && shieldFace.size[0] <= 0.38 && shieldFace.offset[0] > 0.20 && shieldFace.offset[2] <= 0.08, "Combat Instructor should carry a normal-sized shield on the outside of the left arm");
+  assert(Array.isArray(shieldFace.rotation) && Math.abs(shieldFace.rotation[1] - 1.5708) < 0.001, "Combat Instructor shield face should be rotated perpendicular to the body");
+  assert(shieldPlate.target === "leftLowerArm" && shieldPlate.offset[0] > shieldFace.offset[0], "Combat Instructor shield plate should sit farther outside than the shield face");
+  assert(shieldBoss.target === "leftLowerArm" && shieldBoss.offset[0] > shieldPlate.offset[0], "Combat Instructor shield boss should be the outermost shield detail");
+  assert(wristCuff.size[1] <= 0.05 && gloveHand.size[0] <= 0.16 && gloveHand.offset[2] <= 0.02, "Combat Instructor wrist and hand armor should stay compact to avoid forearm clipping");
+  assert(leftVambrace.size[0] > gloveHand.size[0] && leftVambrace.size[2] > gloveHand.size[2], "Combat Instructor vambraces should cover the lower-arm silhouette around the gauntlet");
+  assert(!preset.fragments.some((fragment) => {
+    const role = String(fragment.role || "");
+    return role.includes("tunic")
+      || role.includes("shirt")
+      || role.includes("plaid")
+      || role.includes("vest")
+      || role.includes("hair")
+      || role.includes("helmet")
+      || role.includes("stubble")
+      || role.includes("moustache")
+      || role.includes("beard")
+      || role.includes("platebody")
+      || role.includes("chainmail_hem")
+      || role.includes("metal_bracer")
+      || role.includes("belt_sword")
+      || role.includes("back_quiver")
+      || role.includes("back_arrow")
+      || role.includes("back_bow");
+  }), "Combat Instructor should be a dedicated armored preset without inherited clothing or back-ranged clutter");
+  assert(!preset.fragments.some((fragment) => {
+    const role = String(fragment.role || "");
+    return role.includes("tinderbox") || role.includes("log_bundle") || role.includes("apron_");
+  }), "Combat Instructor should not inherit firemaking apron or belt props");
+  assertShouldersMeetTorsoTop(preset, "Combat Instructor");
+
+  ["left", "right"].forEach((side) => {
+    const upperArm = catalogFragmentExtentY(preset, `${side}Arm`, "upper_arm");
+    const lowerArm = catalogFragmentExtentY(preset, `${side}LowerArm`, "lower_arm");
+    const hand = catalogFragmentExtentY(preset, `${side}LowerArm`, "hand");
+    const upperLeg = catalogFragmentExtentY(preset, `${side}Leg`, "upper_leg");
+    const lowerLeg = catalogFragmentExtentY(preset, `${side}LowerLeg`, "lower_leg");
+    const boot = catalogFragmentExtentY(preset, `${side}LowerLeg`, "boot");
+    const bootFragment = catalogFragment(preset, `${side}LowerLeg`, "boot");
+    const cuisse = catalogFragment(preset, `${side}Leg`, `${side}_cuisse`);
+    const kneeGuard = catalogFragment(preset, `${side}LowerLeg`, `${side}_knee_guard`);
+    const greave = catalogFragment(preset, `${side}LowerLeg`, `${side}_greave`);
+    const sabaton = catalogFragment(preset, `${side}LowerLeg`, `${side}_sabaton_toe`);
+
+    assertVerticalContact(upperArm, lowerArm, `${side} combat instructor elbow`);
+    assertVerticalContact(lowerArm, hand, `${side} combat instructor wrist`);
+    assertVerticalContact(torso, upperLeg, `${side} combat instructor hip`);
+    assertVerticalContact(upperLeg, lowerLeg, `${side} combat instructor knee`);
+    assertVerticalContact(lowerLeg, boot, `${side} combat instructor ankle`);
+    assert(Math.abs(boot.bottom) <= 0.001, `${side} combat instructor boot should land on the rig floor, bottom=${boot.bottom.toFixed(4)}`);
+    assert(cuisse.target === `${side}Leg` && cuisse.size[1] >= 0.30, `${side} combat instructor upper leg should have a readable cuisse`);
+    assert(kneeGuard.target === `${side}LowerLeg` && kneeGuard.offset[1] > -0.02, `${side} combat instructor knee should have a raised knee guard`);
+    assert(greave.target === `${side}LowerLeg` && greave.size[1] >= 0.24, `${side} combat instructor lower leg should have a greave`);
+    assert(sabaton.target === `${side}LowerLeg` && sabaton.offset[2] > bootFragment.offset[2], `${side} combat instructor boot should have a forward sabaton toe`);
+  });
+}
+
+function assertTutorialRunecraftingInstructorHumanoidAssembly(preset) {
+  assert(preset && preset.label === "Runecrafting Instructor", "Runecrafting Instructor preset should keep its role label");
+  assert(preset.archetype === "ember_altar_scribe", "Runecrafting Instructor should use the altar-scribe archetype");
+  const hoodTop = catalogFragment(preset, "head", "runecrafter_hood_top");
+  const hoodLeft = catalogFragment(preset, "head", "runecrafter_hood_left");
+  const hoodRight = catalogFragment(preset, "head", "runecrafter_hood_right");
+  const hoodBack = catalogFragment(preset, "head", "runecrafter_hood_back");
+  const mantle = catalogFragment(preset, "torso", "runecrafter_shoulder_mantle");
+  const tabard = catalogFragment(preset, "torso", "runecrafter_front_tabard");
+  const tabardGlyph = catalogFragment(preset, "torso", "tabard_ember_glyph");
+  const essencePouch = catalogFragment(preset, "torso", "essence_pouch");
+  const runeTablet = catalogFragment(preset, "rightLowerArm", "rune_tablet");
+  const tabletGlyph = catalogFragment(preset, "rightLowerArm", "tablet_ember_glyph");
+  const stylus = catalogFragment(preset, "axe", "runecrafter_stylus");
+  const stylusTip = catalogFragment(preset, "axe", "stylus_ember_tip");
+
+  assert(hoodTop.size[0] > 0.5 && hoodTop.rgbColor === "#183447", "Runecrafting Instructor should have a broad dark hood top");
+  assert(hoodLeft.offset[0] > 0.2 && hoodRight.offset[0] < -0.2 && hoodBack.offset[2] < -0.2, "Runecrafting Instructor hood should wrap the head instead of reading like guide hair");
+  assert(mantle.size[0] > 0.7 && mantle.rgbColor === "#183447", "Runecrafting Instructor should have a distinct shoulder mantle");
+  assert(tabard.offset[2] > 0.2 && tabard.rgbColor === "#315a6d", "Runecrafting Instructor should have a front rune tabard");
+  assert(tabardGlyph.rgbColor === "#f0a04b" && tabardGlyph.offset[2] > tabard.offset[2], "Runecrafting Instructor tabard should carry a visible ember glyph");
+  assert(essencePouch.rgbColor === "#6a5847" && essencePouch.offset[0] > 0.2, "Runecrafting Instructor should carry an essence pouch");
+  assert(runeTablet.target === "rightLowerArm" && tabletGlyph.offset[2] > runeTablet.offset[2], "Runecrafting Instructor should hold a readable rune tablet");
+  assert(stylus.target === "axe" && stylus.size[1] > 0.45, "Runecrafting Instructor should carry a stylus on the right-hand tool holder");
+  assert(stylusTip.rgbColor === "#f0a04b" && stylusTip.offset[1] > stylus.offset[1], "Runecrafting Instructor stylus should have an ember tip");
+}
+
 function assertNpcCatalogPreviewActors(catalog) {
   assert(catalog && catalog.presets && typeof catalog.presets === "object", "NPC appearance catalog should expose presets");
   assert(Array.isArray(catalog.previewActors), "NPC appearance catalog should expose preview actors");
@@ -426,6 +601,7 @@ function run() {
   const catalogPath = path.join(root, "src", "js", "content", "npc-appearance-catalog.js");
   const runtimeSource = fs.readFileSync(runtimePath, "utf8");
   const catalogSource = fs.readFileSync(catalogPath, "utf8");
+  const tutorialIsland = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "tutorial_island.json"), "utf8"));
   const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
   const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
 
@@ -446,6 +622,12 @@ function run() {
   assert(catalogSource.includes("tutorial_fishing_instructor"), "NPC appearance catalog should define the Fishing Instructor preset");
   assert(catalogSource.includes("tutorial_firemaking_instructor"), "NPC appearance catalog should define the Firemaking Instructor preset");
   assert(catalogSource.includes("tutorial_mining_smithing_instructor"), "NPC appearance catalog should define the Mining and Smithing Instructor preset");
+  assert(catalogSource.includes("tutorial_combat_instructor"), "NPC appearance catalog should define the Combat Instructor preset");
+  assert(catalogSource.includes("tutorial_ranged_instructor"), "NPC appearance catalog should define the Ranged Instructor preset");
+  assert(catalogSource.includes("tutorial_magic_instructor"), "NPC appearance catalog should define the Magic Instructor preset");
+  assert(catalogSource.includes("tutorial_runecrafting_instructor"), "NPC appearance catalog should define the Runecrafting Instructor preset");
+  assert(catalogSource.includes("tutorial_crafting_instructor"), "NPC appearance catalog should define the Crafting Instructor preset");
+  assert(catalogSource.includes("tutorial_bank_tutor"), "NPC appearance catalog should define the Bank Tutor preset");
   assert(runtimeSource.includes("window.PlayerNpcHumanoidRuntime"), "NPC humanoid runtime should expose a window runtime");
   assert(runtimeSource.includes("function resolveCatalogNpcHumanoidPresetId"), "NPC humanoid runtime should resolve catalog presets");
   assert(runtimeSource.includes("function createGuardHumanoidFragments"), "NPC humanoid runtime should own guard preset fragments");
@@ -477,29 +659,53 @@ function run() {
   assert(runtime, "NPC humanoid runtime should execute in isolation");
   assert(sandbox.window.NpcAppearanceCatalog, "NPC appearance catalog should execute in isolation");
   assertNpcCatalogPreviewActors(sandbox.window.NpcAppearanceCatalog);
+  const tutorialAppearanceIds = Array.from(new Set((tutorialIsland.services || [])
+    .filter((service) => service && typeof service.spawnId === "string" && service.spawnId.startsWith("npc:tutorial"))
+    .map((service) => {
+      assert(typeof service.appearanceId === "string" && service.appearanceId, `${service.spawnId} should declare a Tutorial Island appearance id`);
+      return service.appearanceId;
+    }))).sort();
+  const previewActorIds = new Set(runtime.listAnimationStudioPreviewActors().map((entry) => entry.actorId));
+  assert(tutorialAppearanceIds.length >= 11, "Tutorial Island should have custom appearance coverage for every tutor role");
+  tutorialAppearanceIds.forEach((appearanceId) => {
+    const preset = sandbox.window.NpcAppearanceCatalog.presets[appearanceId];
+    assert(preset, `Tutorial Island appearance '${appearanceId}' should resolve to a catalog preset`);
+    assert(Array.isArray(preset.fragments) && preset.fragments.length > 0, `Tutorial Island appearance '${appearanceId}' should define custom fragments`);
+    assert(previewActorIds.has(appearanceId), `Tutorial Island appearance '${appearanceId}' should be available in animation preview actors`);
+    assert(runtime.normalizeNpcHumanoidPresetId(appearanceId) === appearanceId, `runtime should normalize Tutorial Island appearance '${appearanceId}' to itself`);
+    assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, preset).length > 0, `runtime should build fragments for Tutorial Island appearance '${appearanceId}'`);
+  });
   assertTutorialGuideHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_guide);
   assertTutorialWoodcuttingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_woodcutting_instructor);
   assertTutorialFishingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_fishing_instructor);
   assertTutorialFiremakingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_firemaking_instructor);
   assertTutorialMiningSmithingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_mining_smithing_instructor);
+  assertTutorialCombatInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_combat_instructor);
+  assertTutorialRunecraftingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_runecrafting_instructor);
   assert(runtime.normalizeNpcHumanoidPresetId("tanner") === "tanner_rusk", "runtime should preserve tanner alias normalization");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_guide") === "tutorial_guide", "runtime should resolve catalog-backed Tutorial Guide preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_woodcutting_instructor") === "tutorial_woodcutting_instructor", "runtime should resolve catalog-backed Woodcutting Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_fishing_instructor") === "tutorial_fishing_instructor", "runtime should resolve catalog-backed Fishing Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_firemaking_instructor") === "tutorial_firemaking_instructor", "runtime should resolve catalog-backed Firemaking Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_mining_smithing_instructor") === "tutorial_mining_smithing_instructor", "runtime should resolve catalog-backed Mining and Smithing Instructor preset");
+  assert(runtime.normalizeNpcHumanoidPresetId("tutorial_combat_instructor") === "tutorial_combat_instructor", "runtime should resolve catalog-backed Combat Instructor preset");
+  assert(runtime.normalizeNpcHumanoidPresetId("tutorial_runecrafting_instructor") === "tutorial_runecrafting_instructor", "runtime should resolve catalog-backed Runecrafting Instructor preset");
   assert(runtime.createGuardHumanoidFragments({ packJagexHsl: () => 64 }).length > 0, "runtime should build guard fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_guide).length > 0, "runtime should build catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_woodcutting_instructor).length > 0, "runtime should build Woodcutting Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_fishing_instructor).length > 0, "runtime should build Fishing Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_firemaking_instructor).length > 0, "runtime should build Firemaking Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_mining_smithing_instructor).length > 0, "runtime should build Mining and Smithing Instructor catalog fragments");
+  assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_combat_instructor).length > 0, "runtime should build Combat Instructor catalog fragments");
+  assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_runecrafting_instructor).length > 0, "runtime should build Runecrafting Instructor catalog fragments");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "guard"), "runtime should list guard preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_guide"), "runtime should list Tutorial Guide preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_woodcutting_instructor"), "runtime should list Woodcutting Instructor preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_fishing_instructor"), "runtime should list Fishing Instructor preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_firemaking_instructor"), "runtime should list Firemaking Instructor preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_mining_smithing_instructor"), "runtime should list Mining and Smithing Instructor preview actor");
+  assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_combat_instructor"), "runtime should list Combat Instructor preview actor");
+  assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_runecrafting_instructor"), "runtime should list Runecrafting Instructor preview actor");
 
   const publishedWindow = {};
   const createNpcHumanoidRigFromPreset = () => ({ npc: true });
@@ -546,6 +752,15 @@ function run() {
   const miningSmithingTemplate = runtime.buildNpcHumanoidRigTemplate(options, "tutorial_mining_smithing_instructor");
   assert(miningSmithingTemplate && miningSmithingTemplate.userData.npcPresetId === "tutorial_mining_smithing_instructor", "runtime should build catalog-backed Mining and Smithing Instructor templates");
   assert(added.length === 6 && added[5] > 0, "runtime should attach Mining and Smithing Instructor catalog fragments through the player-model callback");
+  const combatInstructorTemplate = runtime.buildNpcHumanoidRigTemplate(options, "tutorial_combat_instructor");
+  assert(combatInstructorTemplate && combatInstructorTemplate.userData.npcPresetId === "tutorial_combat_instructor", "runtime should build catalog-backed Combat Instructor templates");
+  assert(added.length === 7 && added[6] > 0, "runtime should attach Combat Instructor catalog fragments through the player-model callback");
+  const templateCountBeforeTutorialAudit = added.length;
+  tutorialAppearanceIds.forEach((appearanceId) => {
+    const tutorialTemplate = runtime.buildNpcHumanoidRigTemplate(options, appearanceId);
+    assert(tutorialTemplate && tutorialTemplate.userData.npcPresetId === appearanceId, `runtime should build catalog-backed Tutorial Island template '${appearanceId}'`);
+  });
+  assert(added.length === templateCountBeforeTutorialAudit + tutorialAppearanceIds.length, "runtime should attach fragments for every Tutorial Island NPC appearance");
   const rig = runtime.createNpcHumanoidRigFromPreset(options, "tanner");
   assert(rig && rig.userData.bound === true && rig.userData.npcPresetId === "tanner_rusk", "runtime should create bound NPC rig clones");
   const playerPreview = runtime.createAnimationStudioPreviewRig(options, "player");

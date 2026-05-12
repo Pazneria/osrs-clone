@@ -63,7 +63,7 @@ function run() {
   assert(qaToolsSource.includes("function qaTravelWorld(context, worldIdLike)"), "QA tools should expose world travel");
   assert(qaToolsSource.includes("if (!match) return false;") && qaToolsSource.includes("return true;"), "QA world travel should distinguish unknown world ids from recognized-but-blocked travel");
   assert(qaToolsSource.includes("findQaRouteStation(context, 'mining', 'tutorial_surface_mine'"), "QA tutorial mining teleport should follow the active authored route");
-  assert(qaToolsSource.includes("mining: { x: 475, y: 384, z: 0, label: 'tutorial mining' }"), "QA tutorial mining fallback should use expanded world coordinates");
+  assert(qaToolsSource.includes("mining: { x: 445, y: 372, z: 0, label: 'tutorial mining' }"), "QA tutorial mining fallback should use expanded world coordinates");
   assert(!qaToolsSource.includes("mining: { x: 356, y: 288"), "QA tutorial mining fallback should not use raw authoring coordinates in the live expanded world");
   assert(qaCommandSource.includes("/qa worlds, /qa travel <worldId>"), "QA help should document world travel commands");
   assert(adapterSource.includes("matchQaWorld"), "legacy world adapter should expose QA world matching");
@@ -76,7 +76,8 @@ function run() {
   assert(initCall !== -1, "core startup should initialize the world map");
   assert(loadCall < activateCall && activateCall < initCall, "startup should activate the current world after loading progress and before initLogicalMap");
   assert(coreSource.includes("const TUTORIAL_WORLD_ID = 'tutorial_island';"), "core should define the tutorial island world id");
-  assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 7;"), "core should define the tutorial exit gate step");
+  assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 11;"), "core should define the tutorial exit gate step");
+  assert(coreSource.includes("function getEquipmentItemCount"), "core should expose equipped tutorial item counts to the tutorial runtime");
   assert(coreSource.includes("const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);"), "core should detect fresh profile startup");
   assert(coreSource.includes("? TUTORIAL_WORLD_ID"), "fresh profile startup should route to tutorial island");
   assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for the main overworld");
@@ -180,11 +181,26 @@ function run() {
   assert(coreTutorialRuntimeSource.includes("getMainOverworldWorldId(context)"), "dynamic tutorial exit option should carry the main-overworld target");
   assert(coreTutorialRuntimeSource.includes("travelSpawn: { x: 205, y: 210, z: 0 }"), "dynamic tutorial exit option should carry the starter-town spawn");
   assert(!coreTutorialRuntimeSource.includes("makeTutorialStepOption('Open the first gate'"), "tutorial guide should not expose a text option to open the first gate");
-  assert(coreTutorialRuntimeSource.includes("'I am ready'"), "tutorial guide should expose an explicit readiness choice before unlocking the arrival gate");
+  assert(coreTutorialRuntimeSource.includes("'I am ready'"), "tutorial guide should expose an explicit readiness choice before unlocking the cabin door");
   assert(coreTutorialRuntimeSource.includes("setTutorialStep({ context }, step, reason)"), "tutorial ready option should own arrival-step advancement");
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('small_net', 1);"), "fishing instructor should grant the net before the completion check");
-  assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_pickaxe', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('hammer', 1);"), "mining instructor should grant tools before the completion check");
-  assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);") && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('cooked_shrimp', 2);"), "combat instructor should grant starter combat supplies before the completion check");
+  assert(
+    coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_pickaxe', 1);")
+      && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('hammer', 1);")
+      && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('wooden_handle_strapped', 1);"),
+    "mining instructor should grant tools and a real strapped handle before the completion check"
+  );
+  assert(
+    !coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);")
+      && !coreTutorialRuntimeSource.includes("context.ensureTutorialItem('normal_shortbow', 1);")
+      && !coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_arrows', 150);")
+      && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('normal_shortbow_u', 1);")
+      && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bow_string', 1);")
+      && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('wooden_headless_arrows', 1);")
+      && !coreTutorialRuntimeSource.includes("context.ensureTutorialItem('bronze_arrowheads', 1);")
+      && coreTutorialRuntimeSource.includes("context.ensureTutorialItem('cooked_shrimp', 2);"),
+    "tutorial combat flow should use real components and forged arrowheads instead of finished melee/ranged handouts"
+  );
   assert(coreTutorialRuntimeSource.includes("context.ensureTutorialItem('coins', 1);"), "bank tutor should grant the tutorial token before the completion check");
   assert(townNpcRuntimeSource.includes("function isTutorialGateLocked(context, door)"), "town NPC runtime should keep tutorial gates locked until their required step");
   assert(townNpcRuntimeSource.includes("function publishTutorialGateHooks"), "town NPC runtime should publish tutorial gate hooks for input/core consumers");

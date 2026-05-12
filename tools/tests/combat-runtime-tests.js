@@ -86,6 +86,7 @@ function ensureCombatRuntimeLoaded(root) {
   global.currentTick = 1;
   global.playerSkills = {};
   global.equipment = {};
+  global.inventory = [];
   global.playerState = {};
   global.spawnHitsplat = () => {};
   global.spawnGroundItem = () => {};
@@ -257,9 +258,12 @@ function resetCombatEnvironment(options = {}) {
     attack: { level: 40, xp: 0 },
     strength: { level: 40, xp: 0 },
     defense: { level: 40, xp: 0 },
+    ranged: { level: 40, xp: 0 },
+    magic: { level: 40, xp: 0 },
     hitpoints: { level: 10, xp: 0 }
   };
-  global.equipment = {};
+  global.equipment = options.equipment || {};
+  global.inventory = Array.isArray(options.inventory) ? options.inventory : [];
   global.playerState = Object.assign({
     x: 5,
     y: 5,
@@ -586,6 +590,165 @@ function run() {
     assert.strictEqual(idleEnemy.currentState, "aggroed");
     assert.strictEqual(idleEnemy.lockedTargetId, "player");
     assert.strictEqual(idleEnemy.remainingAttackCooldown, 1);
+  });
+
+  test("Ranged player attacks from bow range and consumes ammo", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        ranged_target: createEnemyDefinition("ranged_target", { hitpoints: 6 })
+      },
+      spawnNodes: [
+        createSpawnNode("ranged-target", "ranged_target", 10, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "ranged",
+        damageType: "ranged",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 7,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "bronze_arrows"
+      },
+      inventory: [
+        { itemData: { id: "bronze_arrows", name: "Bronze Arrows x15" }, amount: 2 }
+      ],
+      pathResolver() {
+        return [{ x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }];
+      }
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("ranged-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("ranged-target");
+    assert.strictEqual(target.currentHealth, 5, "ranged attack should damage targets outside melee range");
+    assert.strictEqual(playerState.action, "COMBAT: RANGED", "ranged attacks should mark ranged combat intent");
+    assert.strictEqual(playerState.path.length, 0, "ranged attacks should not step toward an already in-range target");
+    assert.strictEqual(playerState.remainingAttackCooldown, 4, "ranged attack should set bow cooldown");
+    assert.strictEqual(inventory[0].amount, 1, "ranged attack should consume one arrow from the selected stack");
+  });
+
+  test("Magic player attacks from staff range, consumes runes, and trains Magic", () => {
+    const xpAwards = [];
+    const previousAddSkillXp = global.addSkillXp;
+    global.addSkillXp = (skillId, amount) => {
+      xpAwards.push({ skillId, amount });
+    };
+
+    try {
+      resetCombatEnvironment({
+        enemyDefs: {
+          magic_target: createEnemyDefinition("magic_target", { hitpoints: 6 })
+        },
+        spawnNodes: [
+          createSpawnNode("magic-target", "magic_target", 10, 5)
+        ],
+        playerSnapshot: {
+          styleFamily: "magic",
+          damageType: "magic",
+          canAttack: true,
+          attackValue: 100,
+          defenseValue: 10,
+          maxHit: 1,
+          attackRange: 6,
+          attackTickCycle: 4,
+          consumesAmmo: true,
+          ammoInventoryIndex: 0,
+          ammoItemId: "ember_rune"
+        },
+        inventory: [
+          { itemData: { id: "ember_rune", name: "Ember rune" }, amount: 2 }
+        ],
+        pathResolver() {
+          return [{ x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }];
+        }
+      });
+
+      assert.ok(window.lockPlayerCombatTarget("magic-target"));
+      window.processCombatTick();
+
+      const target = getEnemy("magic-target");
+      assert.strictEqual(target.currentHealth, 5, "magic attack should damage targets outside melee range");
+      assert.strictEqual(playerState.action, "COMBAT: MAGIC", "magic attacks should mark magic combat intent");
+      assert.strictEqual(playerState.path.length, 0, "magic attacks should not step toward an already in-range target");
+      assert.strictEqual(playerState.remainingAttackCooldown, 4, "magic attack should set staff cooldown");
+      assert.strictEqual(playerState.lastCastTick, 1, "magic attacks should record the cast tick");
+      assert.strictEqual(inventory[0].amount, 1, "magic attack should consume one rune from the selected stack");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "magic" && entry.amount === 4), "magic damage should award Magic XP");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "hitpoints" && entry.amount === 1), "magic damage should award Hitpoints XP");
+    } finally {
+      global.addSkillXp = previousAddSkillXp;
+    }
+  });
+
+  test("Ranged player attacks consume equipped ammo before inventory ammo", () => {
+    const bronzeArrows = { id: "bronze_arrows", name: "Bronze Arrows x15", stackable: true };
+    let rebuiltRigForAmmoRefresh = false;
+    const previousUpdatePlayerModel = global.updatePlayerModel;
+    global.playerRig = {
+      userData: {
+        rig: {
+          attackTick: -1,
+          attackStyleFamily: "melee",
+          attackAnimationStartedAt: -1
+        }
+      }
+    };
+    global.updatePlayerModel = () => {
+      rebuiltRigForAmmoRefresh = true;
+      global.playerRig = {
+        userData: {
+          rig: {
+            attackTick: -1,
+            attackStyleFamily: "melee",
+            attackAnimationStartedAt: -1
+          }
+        }
+      };
+    };
+    resetCombatEnvironment({
+      enemyDefs: {
+        ranged_target: createEnemyDefinition("ranged_target", { hitpoints: 6 })
+      },
+      spawnNodes: [
+        createSpawnNode("ranged-target", "ranged_target", 10, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "ranged",
+        damageType: "ranged",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 7,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: null,
+        ammoEquipmentSlot: "ammo",
+        ammoItemId: "bronze_arrows"
+      },
+      equipment: {
+        ammo: { itemData: bronzeArrows, amount: 2 }
+      },
+      inventory: [
+        { itemData: bronzeArrows, amount: 25 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("ranged-target"));
+    window.processCombatTick();
+
+    assert.strictEqual(equipment.ammo.amount, 1, "ranged attack should consume one arrow from equipped ammo");
+    assert.strictEqual(inventory[0].amount, 25, "inventory ammo should stay untouched while equipped ammo is selected");
+    assert.strictEqual(rebuiltRigForAmmoRefresh, true, "equipped ammo consumption should refresh the player model");
+    assert.strictEqual(global.playerRig.userData.rig.attackStyleFamily, "ranged", "ranged attack style should be restored after ammo refresh");
+    assert.strictEqual(global.playerRig.userData.rig.attackTick, 1, "attack tick should be written to the refreshed rig");
+    assert.ok(Number.isFinite(global.playerRig.userData.rig.attackAnimationStartedAt), "attack animation start should be written to the refreshed rig");
+    global.updatePlayerModel = previousUpdatePlayerModel;
   });
 
   test("Same-tick eat restriction still blocks eating after an attack tick", () => {

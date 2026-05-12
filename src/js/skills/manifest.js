@@ -5,6 +5,8 @@
         { skillId: 'mining', displayName: 'Mining', icon: 'MIN', levelKey: 'min' },
         { skillId: 'strength', displayName: 'Strength', icon: 'STR', levelKey: 'str' },
         { skillId: 'defense', displayName: 'Defense', icon: 'DEF', levelKey: 'def' },
+        { skillId: 'ranged', displayName: 'Ranged', icon: 'RNG', levelKey: 'rng' },
+        { skillId: 'magic', displayName: 'Magic', icon: 'MAG', levelKey: 'mag' },
         { skillId: 'woodcutting', displayName: 'Woodcutting', icon: 'WC', levelKey: 'wc' },
         { skillId: 'firemaking', displayName: 'Firemaking', icon: 'FM', levelKey: 'fm' },
         { skillId: 'fishing', displayName: 'Fishing', icon: 'FIS', levelKey: 'fish' },

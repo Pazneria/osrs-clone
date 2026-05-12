@@ -1,0 +1,121 @@
+{
+  "clipId": "player/combat_bow_shot",
+  "rigId": "player_humanoid_v1",
+  "durationMs": 900,
+  "loopMode": "once",
+  "maskId": "upperBody",
+  "poses": {
+    "ready": {},
+    "raise": {
+      "torso": {
+        "position": { "x": 0, "y": 1.05, "z": 0 },
+        "rotationDeg": { "x": -1.5, "y": -12, "z": -1 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "leftArm": {
+        "position": { "x": 0.38, "y": 0.29000000000000004, "z": 0.07 },
+        "rotationDeg": { "x": -78, "y": 22, "z": -18 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "leftLowerArm": {
+        "position": { "x": 0, "y": -0.354, "z": -0.1 },
+        "rotationDeg": { "x": -10, "y": 0, "z": -6 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "rightArm": {
+        "position": { "x": -0.38, "y": 0.29000000000000004, "z": 0.07 },
+        "rotationDeg": { "x": -70, "y": -16, "z": 22 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "rightLowerArm": {
+        "position": { "x": 0, "y": -0.354, "z": -0.1 },
+        "rotationDeg": { "x": -38, "y": 8, "z": 16 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "weapon": {
+        "position": { "x": -0.02, "y": -0.35, "z": 0.035 },
+        "rotationDeg": { "x": 10, "y": -45, "z": 12 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      }
+    },
+    "draw": {
+      "torso": {
+        "position": { "x": 0.025, "y": 1.05, "z": 0.02 },
+        "rotationDeg": { "x": -4.5, "y": 8, "z": 4 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "leftArm": {
+        "position": { "x": 0.35, "y": 0.31, "z": -0.02 },
+        "rotationDeg": { "x": -62, "y": 48, "z": -42 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "leftLowerArm": {
+        "position": { "x": 0, "y": -0.354, "z": -0.1 },
+        "rotationDeg": { "x": -82, "y": -10, "z": -28 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "rightArm": {
+        "position": { "x": -0.38, "y": 0.29000000000000004, "z": 0.07 },
+        "rotationDeg": { "x": -70, "y": -16, "z": 22 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "rightLowerArm": {
+        "position": { "x": 0, "y": -0.354, "z": -0.1 },
+        "rotationDeg": { "x": -38, "y": 8, "z": 16 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "weapon": {
+        "position": { "x": -0.02, "y": -0.35, "z": 0.035 },
+        "rotationDeg": { "x": 10, "y": -45, "z": 12 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      }
+    },
+    "release": {
+      "torso": {
+        "position": { "x": 0.01, "y": 1.05, "z": 0.01 },
+        "rotationDeg": { "x": -2, "y": -2, "z": 2 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "leftArm": {
+        "position": { "x": 0.37, "y": 0.3, "z": 0.03 },
+        "rotationDeg": { "x": -72, "y": 30, "z": -28 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "leftLowerArm": {
+        "position": { "x": 0, "y": -0.354, "z": -0.1 },
+        "rotationDeg": { "x": -36, "y": -3, "z": -12 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "rightArm": {
+        "position": { "x": -0.38, "y": 0.29000000000000004, "z": 0.07 },
+        "rotationDeg": { "x": -70, "y": -16, "z": 22 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "rightLowerArm": {
+        "position": { "x": 0, "y": -0.354, "z": -0.1 },
+        "rotationDeg": { "x": -38, "y": 8, "z": 16 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      },
+      "weapon": {
+        "position": { "x": -0.02, "y": -0.35, "z": 0.035 },
+        "rotationDeg": { "x": 10, "y": -45, "z": 12 },
+        "scale": { "x": 1, "y": 1, "z": 1 }
+      }
+    },
+    "recover": {}
+  },
+  "keys": [
+    { "poseId": "ready", "atMs": 0, "ease": "easeInOut" },
+    { "poseId": "raise", "atMs": 110, "ease": "easeInOut" },
+    { "poseId": "draw", "atMs": 320, "ease": "easeInOut" },
+    { "poseId": "release", "atMs": 560, "ease": "easeOut" },
+    { "poseId": "recover", "atMs": 760, "ease": "easeInOut" },
+    { "poseId": "ready", "atMs": 900, "ease": "easeInOut" }
+  ],
+  "markers": [
+    { "markerId": "nock", "atMs": 150 },
+    { "markerId": "full_draw", "atMs": 320 },
+    { "markerId": "release", "atMs": 560 },
+    { "markerId": "recover_start", "atMs": 760 }
+  ]
+}

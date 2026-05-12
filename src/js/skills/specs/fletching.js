@@ -182,7 +182,7 @@
 
                     recipes[`fletch_${def.shortbowItemId}`] = {
                         recipeFamily: 'bow_strung',
-                        requiredLevel: leveled(def.baseLevel, 4),
+                        requiredLevel: def.tierId === 'wooden' ? def.baseLevel : leveled(def.baseLevel, 4),
                         inputs: [
                             { itemId: def.shortbowUnstrungItemId, amount: 1 },
                             { itemId: 'bow_string', amount: 1 }
@@ -336,7 +336,11 @@
                     }
                 },
                 generalStoreFallback: {
-                    buyPolicy: 'half_price_floor'
+                    buyPolicy: 'half_price_floor',
+                    defaultStock: [
+                        { itemId: 'normal_shortbow', stockAmount: 5 },
+                        { itemId: 'bronze_arrows', stockAmount: 150 }
+                    ]
                 }
             }
         };

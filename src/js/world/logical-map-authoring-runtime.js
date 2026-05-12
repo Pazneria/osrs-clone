@@ -7,6 +7,20 @@
         return logicalMap && logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y] : null;
     }
 
+    function getHeightMapValue(heightMap, z, y, x, fallback = 0) {
+        const value = heightMap && heightMap[z] && heightMap[z][y]
+            ? heightMap[z][y][x]
+            : null;
+        return Number.isFinite(value) ? value : fallback;
+    }
+
+    function resolveFenceOrGateGroundHeight(heightMap, z, y, x, authoredHeight, fallback = 0) {
+        const existingHeight = getHeightMapValue(heightMap, z, y, x, fallback);
+        return Number.isFinite(authoredHeight)
+            ? Math.max(existingHeight, Number(authoredHeight))
+            : existingHeight;
+    }
+
     function placeStaticNpcOccupancyTile(context = {}, x, y, z = 0, options = {}) {
         const logicalMap = context.logicalMap;
         const heightMap = context.heightMap;
@@ -216,6 +230,8 @@
                 action: spot.action || 'Trade',
                 travelToWorldId: spot.travelToWorldId || null,
                 travelSpawn: spot.travelSpawn || null,
+                tutorialVisibleFromStep: Number.isFinite(spot.tutorialVisibleFromStep) ? Math.max(0, Math.floor(Number(spot.tutorialVisibleFromStep))) : null,
+                tutorialVisibleUntilStep: Number.isFinite(spot.tutorialVisibleUntilStep) ? Math.max(0, Math.floor(Number(spot.tutorialVisibleUntilStep))) : null,
                 tags: Array.isArray(spot.tags) ? spot.tags.slice() : []
             });
         }
@@ -295,7 +311,7 @@
             forEachFenceLineTile(from, to, (x, y) => {
                 if (logicalMap[z] && logicalMap[z][y] && x > 0 && y > 0 && x < mapSize - 1 && y < mapSize - 1) {
                     logicalMap[z][y][x] = tileIds.FENCE;
-                    heightMap[z][y][x] = Number.isFinite(fence.height) ? fence.height : 0.05;
+                    heightMap[z][y][x] = resolveFenceOrGateGroundHeight(heightMap, z, y, x, fence.height, 0.05);
                 }
             });
         }
@@ -352,8 +368,12 @@
             const isWoodenGate = tileId === tileIds.WOODEN_GATE_CLOSED || tileId === tileIds.WOODEN_GATE_OPEN;
             if (Number.isFinite(tileId) && logicalMap[door.z] && logicalMap[door.z][door.y]) {
                 logicalMap[door.z][door.y][door.x] = tileId;
-                const authoredHeight = Number.isFinite(door.height) ? door.height : heightMap[door.z][door.y][door.x];
-                heightMap[door.z][door.y][door.x] = isWoodenGate && authoredHeight <= 0.12 ? 0 : authoredHeight;
+                const authoredHeight = Number.isFinite(door.height) ? Number(door.height) : null;
+                heightMap[door.z][door.y][door.x] = isWoodenGate
+                    ? resolveFenceOrGateGroundHeight(heightMap, door.z, door.y, door.x, authoredHeight, 0)
+                    : (Number.isFinite(authoredHeight)
+                        ? authoredHeight
+                        : getHeightMapValue(heightMap, door.z, door.y, door.x, 0));
             }
             doorsToRender.push({
                 x: door.x,

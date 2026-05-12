@@ -160,6 +160,7 @@ function startViteServer(url) {
   const child = spawn(npmCommand, ["run", "dev", "--", "--host", parsed.hostname, "--port", port], {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
+    shell: process.platform === "win32",
     windowsHide: true
   });
   child.stdout.on("data", (chunk) => process.stdout.write(`[visual-server] ${chunk}`));
@@ -212,6 +213,11 @@ async function captureScene(page, scene, config, paths) {
     await sendQaCommand(page, command);
     await wait(220);
   }
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }).catch(() => {});
   await applyVisualRegressionChrome(page, scene);
   if (scene.mouse && Number.isFinite(scene.mouse.x) && Number.isFinite(scene.mouse.y)) {
     await page.mouse.move(scene.mouse.x, scene.mouse.y);
@@ -427,6 +433,11 @@ async function runHarness(rawOptions) {
     if (result.comparison.status === "diff-failed") failures.push(`${result.sceneId}: mismatch ratio ${result.comparison.mismatchRatio} > ${result.comparison.maxMismatchRatio}`);
   }
   if (pageErrors.length > 0) failures.push(`page errors: ${pageErrors.length}`);
+  const blockingConsoleMessages = consoleMessages.filter((entry) => {
+    const text = entry && typeof entry.text === "string" ? entry.text : "";
+    return entry.type === "error" || /WebGLProgram: Shader Error|program not valid/i.test(text);
+  });
+  if (blockingConsoleMessages.length > 0) failures.push(`blocking console errors: ${blockingConsoleMessages.length}`);
 
   const report = {
     ok: failures.length === 0,

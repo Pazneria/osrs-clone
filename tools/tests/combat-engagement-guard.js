@@ -55,7 +55,8 @@ function run() {
     moveTowardTargetBody.includes("const temporaryBlockState = context.playerPursuitStateTemporaryBlock || 'temporary-block';")
       && moveTowardTargetBody.includes("if (playerLockState.pursuitState === temporaryBlockState) {")
       && moveTowardTargetBody.includes("playerState.path = [];")
-      && moveTowardTargetBody.includes("playerState.action = 'COMBAT: MELEE';"),
+      && moveTowardTargetBody.includes("const combatActionName = typeof context.getPlayerCombatActionName === 'function'")
+      && moveTowardTargetBody.includes("playerState.action = combatActionName;"),
     "temporary occupancy blocks should keep the lock while stopping stale pursuit movement"
   );
   assert(
@@ -67,8 +68,8 @@ function run() {
   assert(chaseAttackOpportunityBody, "combat enemy movement runtime should define resolvePlayerChaseAttackOpportunity");
   assert(
     chaseAttackOpportunityBody.includes("const stepBudget = Math.max(1, Math.floor(getPlayerCombatMovementStepCount(context)));")
-      && chaseAttackOpportunityBody.includes("!context.isWithinMeleeRange(attackTile, playerLockState.enemyState)"),
-    "combat chase attacks should check whether the player's within-tick movement reaches melee range"
+      && chaseAttackOpportunityBody.includes("context.isWithinPlayerAttackRange(attackTile, playerLockState.enemyState)"),
+    "combat chase attacks should check whether the player's within-tick movement reaches active attack range"
   );
 
   const idleEnemyMovementBody = getFunctionBody(combatEnemyMovementRuntimeSource, "updateIdleEnemyMovement");
@@ -100,7 +101,7 @@ function run() {
     combatSource.includes("const chaseAttackOpportunity = resolvePlayerChaseAttackOpportunity(playerLockState);")
       && combatSource.includes("approachPath: chaseAttackOpportunity.approachPath")
       && combatSource.includes("playerState.path = (playerAttackResult && Array.isArray(playerAttackResult.approachPath) && playerAttackResult.approachPath.length > 0)"),
-    "player melee attacks should be able to resolve off the same-tick chase approach and keep the approach movement so running can catch moving enemies"
+    "player attacks should be able to resolve off the same-tick chase approach and keep the approach movement so running can catch moving enemies"
   );
   assert(
     combatSource.includes("enemyState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));")

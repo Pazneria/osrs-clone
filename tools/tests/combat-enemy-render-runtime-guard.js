@@ -48,6 +48,10 @@ function run() {
   assert(runtimeSource.includes("function unmountEnemyVisualRenderer(options = {})"), "render runtime should own enemy visual unmounting");
   assert(runtimeSource.includes("function updateEnemyVisualRenderer(options = {})"), "render runtime should own enemy visual pose updates");
   assert(runtimeSource.includes("function updateEnemyVisualFrame(options = {})"), "render runtime should own enemy visual frame placement");
+  assert(runtimeSource.includes("const COMBAT_ENEMY_VISUAL_CULL_DISTANCE = 120;"), "render runtime should cap far enemy visual rendering distance");
+  assert(runtimeSource.includes("function shouldRenderEnemyVisualFrame(options = {}, enemyState, currentVisualX, currentVisualY)"), "render runtime should centralize enemy visual culling");
+  assert(runtimeSource.includes("renderer.group.visible = shouldRenderVisual;"), "render runtime should hide far enemy visual groups without unmounting hitboxes");
+  assert(runtimeSource.includes("if (!shouldRenderVisual) return;"), "render runtime should skip far enemy pose work after syncing hitbox state");
   assert(runtimeSource.includes("function getEnemyVisualMoveProgress(context = {}, enemyState, frameNow)"), "render runtime should own enemy visual move progress");
   assert(runtimeSource.includes("function shouldEnemyUseWalkBaseClip(context = {}, enemyState, frameNow)"), "render runtime should own enemy walk-base policy");
   assert(runtimeSource.includes("function createQuadrupedLegRig(basePosition, options)"), "render runtime should own active quadruped leg rig creation");
@@ -58,6 +62,22 @@ function run() {
   assert(runtimeSource.includes("function updateWolfRenderer(enemyState, renderer, frameNow"), "render runtime should own wolf pose updates");
   assert(runtimeSource.includes("function createChickenRenderer(enemyState, enemyType)"), "render runtime should own chicken renderer creation");
   assert(runtimeSource.includes("function updateChickenRenderer(enemyState, renderer, frameNow"), "render runtime should own chicken pose updates");
+  assert(runtimeSource.includes("function createChickenLegRig(basePosition, side, materials)"), "chicken renderer should use a grouped leg rig for feet and claws");
+  assert(runtimeSource.includes("function applyChickenLegPose(leg, phase, options = {})"), "chicken renderer should animate legs through a narrow helper");
+  assert(runtimeSource.includes("torsoGroup.name = 'chicken-torso'"), "chicken renderer should build a grouped chunky torso");
+  assert(runtimeSource.includes("headGroup.name = 'chicken-head'"), "chicken renderer should build a distinct head group");
+  assert(runtimeSource.includes("const wattleLeft = new THREE.Mesh"), "chicken renderer should include red wattles");
+  assert(runtimeSource.includes("const tailLeft = tailCenter.clone()"), "chicken renderer should include a three-feather tail fan");
+  assert(runtimeSource.includes("const toeCenter = new THREE.Mesh"), "chicken renderer should include visible toe/claw meshes");
+  assert(runtimeSource.includes("wingLeftGroup.name = 'chicken-wing-left'"), "chicken renderer should animate grouped wings");
+  assert(runtimeSource.includes("const peckPulse = idlePeck * idlePeck * idlePeck"), "chicken update should include idle peck motion");
+  assert(runtimeSource.includes("applyChickenLegPose(renderer.legLeft"), "chicken update should pose the grouped left leg");
+  assert(runtimeSource.includes("renderer.tailGroup.rotation.set"), "chicken update should animate the tail fan group");
+  assert(runtimeSource.includes("new THREE.BoxGeometry(1.35, 1.25, 1.35)"), "chicken interaction hitbox should be generous enough to click the visible model");
+  assert(runtimeSource.includes("function createEnemyHitboxMaterial()"), "render runtime should centralize enemy hitbox material creation");
+  assert(countOccurrences(runtimeSource, "new THREE.MeshBasicMaterial({") === 1, "enemy hitboxes should share one interaction-only material");
+  assert(runtimeSource.includes("visible: false") && runtimeSource.includes("side: THREE.DoubleSide"), "enemy hitbox material should stay raycastable while skipping renderer draw calls");
+  assert(!runtimeSource.includes("transparent: true") && !runtimeSource.includes("opacity: 0"), "enemy hitboxes should not render as transparent draw calls");
 
   assert(combatSource.includes("const combatEnemyRenderRuntime = window.CombatEnemyRenderRuntime || null;"), "combat.js should resolve the enemy render runtime");
   assert(combatSource.includes("combatEnemyRenderRuntime.mountEnemyVisualRenderer({"), "combat.js should delegate enemy visual mounting");
@@ -168,6 +188,7 @@ function run() {
     renderer: frameRenderer,
     frameNow: 350,
     enemyMoveLerpDurationMs: 500,
+    playerState: { x: 1, y: 1, z: 0 },
     getVisualHeight: () => 0,
     getEnemyDefinition: () => ({ stats: { hitpoints: 3 } }),
     getEnemyCombatLevel: () => 2,
@@ -178,6 +199,36 @@ function run() {
   assert(frameRenderer.hitbox.userData.gridX === 2, "runtime should sync hitbox grid X during frame update");
   assert(frameRenderer.hitbox.userData.combatLevel === 2, "runtime should populate hitbox combat level during frame update");
   assert(frameRenderer.group.updateMatrixWorldCalled === true, "runtime should update renderer matrices during frame update");
+  assert(frameRenderer.group.visible === true, "runtime should keep nearby enemy visuals visible");
+
+  const farRenderer = {
+    kind: "rat",
+    group: {
+      visible: true,
+      position: { value: null, set(x, y, z) { this.value = [x, y, z]; } },
+      rotation: { y: 0 },
+      updateMatrixWorldCalled: false,
+      updateMatrixWorld() { this.updateMatrixWorldCalled = true; }
+    },
+    hitbox: { userData: {} },
+    body: { scale: { set(x, y, z) { this.value = [x, y, z]; } } },
+    head: { position: { z: 0 } },
+    tail: { rotation: makeRotationTarget() }
+  };
+  runtime.updateEnemyVisualFrame({
+    enemyState: { runtimeId: "enemy-far", enemyId: "enemy_rat", x: 300, y: 300, z: 0, prevX: 300, prevY: 300, facingYaw: 0 },
+    renderer: farRenderer,
+    frameNow: 500,
+    playerState: { x: 1, y: 1, z: 0 },
+    getVisualHeight: () => 0,
+    getEnemyDefinition: () => ({ stats: { hitpoints: 3 } }),
+    getEnemyCombatLevel: () => 2,
+    hasTrackedEnemyLocomotionIntent: () => false,
+    isEnemyActionAnimationActive: () => false
+  });
+  assert(farRenderer.group.visible === false, "runtime should hide enemy visuals beyond the culling distance");
+  assert(farRenderer.hitbox.userData.gridX === 300, "runtime should keep far enemy hitboxes in sync while visuals are culled");
+  assert(farRenderer.group.updateMatrixWorldCalled === true, "runtime should keep far enemy matrices current for hitbox raycasts");
 
   console.log("Combat enemy render runtime guard passed.");
 }

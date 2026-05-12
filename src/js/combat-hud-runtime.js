@@ -53,9 +53,9 @@
         const getEnemyDefinition = typeof context.getEnemyDefinition === 'function'
             ? context.getEnemyDefinition
             : null;
-        const isWithinMeleeRange = typeof context.isWithinMeleeRange === 'function'
-            ? context.isWithinMeleeRange
-            : null;
+        const isWithinAttackRange = typeof context.isWithinPlayerAttackRange === 'function'
+            ? context.isWithinPlayerAttackRange
+            : (typeof context.isWithinMeleeRange === 'function' ? context.isWithinMeleeRange : null);
         const focus = resolveCombatHudFocusEnemy(context);
         const enemyState = focus.enemyState;
         const enemyType = enemyState && getEnemyDefinition ? getEnemyDefinition(enemyState.enemyId) : null;
@@ -77,7 +77,7 @@
                         : 0,
                     state: enemyState.currentState || '',
                     distance: getChebyshevDistance(playerState, enemyState),
-                    inMeleeRange: isWithinMeleeRange ? isWithinMeleeRange(playerState, enemyState) : false
+                    inMeleeRange: isWithinAttackRange ? isWithinAttackRange(playerState, enemyState) : false
                 }
                 : null
         };

@@ -4,6 +4,7 @@
         const WORLD_CHUNKS_X = 8;
         const WORLD_CHUNKS_Y = 8;
         const MAP_SIZE = CHUNK_SIZE * WORLD_CHUNKS_X; // 648
+        const RENDER_PIXEL_RATIO_CAP = 2.0;
         
         // NEW: Max Planes (Z-Levels)
         const PLANES = 2; // Floor 0 (Ground), Floor 1 (Second Floor)
@@ -25,23 +26,27 @@
         const PLAYER_NAME_MAX_LENGTH = 12;
         const TUTORIAL_WORLD_ID = 'tutorial_island';
         const MAIN_OVERWORLD_WORLD_ID = 'main_overworld';
-        const TUTORIAL_EXIT_STEP = 7;
+        const TUTORIAL_EXIT_STEP = 11;
         const TUTORIAL_ACTIVE_BOUNDS = Object.freeze({
-            xMin: 92,
-            xMax: 568,
-            yMin: 164,
-            yMax: 492,
+            xMin: 138,
+            xMax: 519,
+            yMin: 196,
+            yMax: 458,
             z: 0
         });
         const TUTORIAL_RECOVERY_SPAWNS = Object.freeze([
-            { x: 187, y: 232, z: 0 },
-            { x: 187, y: 232, z: 0 },
-            { x: 280, y: 269, z: 0 },
-            { x: 440, y: 299, z: 0 },
-            { x: 373, y: 331, z: 0 },
-            { x: 475, y: 384, z: 0 },
-            { x: 427, y: 435, z: 0 },
-            { x: 269, y: 440, z: 0 }
+            { x: 212, y: 251, z: 0 },
+            { x: 295, y: 274, z: 0 },
+            { x: 344, y: 318, z: 0 },
+            { x: 366, y: 327, z: 0 },
+            { x: 445, y: 372, z: 0 },
+            { x: 406, y: 413, z: 0 },
+            { x: 427, y: 406, z: 0 },
+            { x: 376, y: 423, z: 0 },
+            { x: 327, y: 427, z: 0 },
+            { x: 297, y: 423, z: 0 },
+            { x: 280, y: 417, z: 0 },
+            { x: 331, y: 421, z: 0 }
         ]);
 
         // --- Game State (Logical & Terrain) ---
@@ -338,7 +343,7 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260317l";
+        const ASSET_VERSION_TAG = "20260317m";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
         function sanitizeIconReviewItemIds(itemIds) {
             return getCoreIconReviewRuntime().sanitizeIconReviewItemIds(buildCoreIconReviewRuntimeContext(), itemIds);
@@ -521,6 +526,17 @@
             }, 0);
         }
 
+        function getEquipmentItemCount(itemId) {
+            const safeItemId = sanitizeItemId(itemId);
+            if (!safeItemId || !equipment || typeof equipment !== 'object') return 0;
+            return EQUIPMENT_SLOT_ORDER.reduce((sum, slotName) => {
+                const slot = equipment[slotName];
+                const itemData = slot && slot.itemData ? slot.itemData : slot;
+                if (!itemData || itemData.id !== safeItemId) return sum;
+                return sum + (Number.isFinite(slot && slot.amount) ? Math.max(0, Math.floor(slot.amount)) : 1);
+            }, 0);
+        }
+
         function grantInventoryItem(itemId, amount = 1) {
             const safeItemId = sanitizeItemId(itemId);
             const itemData = safeItemId ? ITEM_DB[safeItemId] : null;
@@ -602,6 +618,7 @@
                 setTutorialStep,
                 getTutorialStep,
                 getInventoryItemCount,
+                getEquipmentItemCount,
                 getSkillXp,
                 hasTutorialBankProof,
                 saveProgressToStorage,
@@ -831,7 +848,16 @@
                 tileId: TileId
             };
         }
-        let equipment = gameSession ? gameSession.progress.equipment : { head: null, cape: null, neck: null, weapon: null, body: null, shield: null, legs: null, hands: null, feet: null, ring: null };
+        const EQUIPMENT_SLOT_ORDER = Object.freeze(['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring', 'ammo']);
+        function ensureEquipmentStateSlots(source) {
+            const equipmentState = source && typeof source === 'object' ? source : {};
+            for (let i = 0; i < EQUIPMENT_SLOT_ORDER.length; i++) {
+                const slotName = EQUIPMENT_SLOT_ORDER[i];
+                if (!Object.prototype.hasOwnProperty.call(equipmentState, slotName)) equipmentState[slotName] = null;
+            }
+            return equipmentState;
+        }
+        let equipment = ensureEquipmentStateSlots(gameSession ? gameSession.progress.equipment : null);
         let baseStats = { atk: 10, def: 10, str: 10 };
         let userItemPrefs = gameSession ? gameSession.progress.userItemPrefs : {};
         let playerSkills = gameSession ? gameSession.progress.playerSkills : {
@@ -840,6 +866,8 @@
             mining: { xp: 0, level: 1 },
             strength: { xp: 0, level: 1 },
             defense: { xp: 0, level: 1 },
+            ranged: { xp: 0, level: 1 },
+            magic: { xp: 0, level: 1 },
             woodcutting: { xp: 0, level: 1 },
             firemaking: { xp: 0, level: 1 },
             fishing: { xp: 0, level: 1 },
@@ -1575,6 +1603,7 @@
                 resetQaCameraView: (typeof window.resetQaCameraView === 'function') ? window.resetQaCameraView : null,
                 setQaCameraView: (typeof window.setQaCameraView === 'function') ? window.setQaCameraView : null,
                 setQaCameraAerialView: (typeof window.setQaCameraAerialView === 'function') ? window.setQaCameraAerialView : null,
+                getRuntimePerformanceSnapshot: (typeof window.getRuntimePerformanceSnapshot === 'function') ? window.getRuntimePerformanceSnapshot : null,
                 setQaSkillLevel,
                 setQaUnlockFlag,
                 qaOpenPlayerCreator,
@@ -1599,6 +1628,56 @@
             addChatMessage(text, 'game');
             showPlayerOverheadText(text);
         }
+
+        const STARTUP_QA_SCENE_COMMANDS = Object.freeze({
+            'arrival-default': Object.freeze([
+                '/qa travel tutorial_island',
+                '/qa gototutorial arrival',
+                '/qa camera reset'
+            ]),
+            'firemaking-coast-low': Object.freeze([
+                '/qa travel tutorial_island',
+                '/qa gototutorial firemaking',
+                '/qa camera set 3.95 1.22 17'
+            ]),
+            'water-seam-low': Object.freeze([
+                '/qa travel tutorial_island',
+                '/qa gototutorial fishing',
+                '/qa camera set 4.45 1.48 5'
+            ]),
+            'mining-smithing-yard': Object.freeze([
+                '/qa travel tutorial_island',
+                '/qa gototutorial smithing',
+                '/qa camera set 4.25 1.08 15'
+            ])
+        });
+
+        function getStartupQaSceneIdFromUrl() {
+            try {
+                const params = new URLSearchParams(window.location.search || '');
+                return String(params.get('qaScene') || params.get('qa_scene') || '').trim().toLowerCase();
+            } catch (error) {
+                return '';
+            }
+        }
+
+        function applyStartupQaSceneFromUrl() {
+            const sceneId = getStartupQaSceneIdFromUrl();
+            if (!sceneId) return false;
+            const commands = STARTUP_QA_SCENE_COMMANDS[sceneId];
+            if (!commands) {
+                addChatMessage(`[QA scene] Unknown startup scene: ${sceneId}`, 'warn');
+                return false;
+            }
+            if (isPlayerEntryFlowOpen()) {
+                addChatMessage(`[QA scene] ${sceneId} waits until player entry is complete.`, 'warn');
+                return false;
+            }
+            commands.forEach((command) => sendChatMessage(command));
+            addChatMessage(`[QA scene] Loaded ${sceneId}.`, 'info');
+            return true;
+        }
+
         function initChatInput() {
             const input = document.getElementById('chat-input');
             if (!input) return;
@@ -1774,6 +1853,7 @@
                 window.AnimationStudioBridge.init();
             }
             initPlayerEntryFlow(loadProgressResult);
+            applyStartupQaSceneFromUrl();
             const iconGrantResult = applyInventoryIconReviewGrant();
             if (iconGrantResult.changed && typeof renderInventory === 'function') {
                 renderInventory();

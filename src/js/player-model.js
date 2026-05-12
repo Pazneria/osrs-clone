@@ -288,7 +288,70 @@ function createMeshesForTarget(targetName, fragments, bodyColors, recolors) {
         mesh.castShadow = true;
         meshes.push(mesh);
     });
-    return meshes;
+    return mergeTargetMeshes(meshes);
+}
+
+function copyBufferAttribute(attribute, target, offset) {
+    if (!attribute || !target || !attribute.array) return;
+    target.set(attribute.array, offset);
+}
+
+function mergeTargetMeshBucket(meshes) {
+    if (!Array.isArray(meshes) || meshes.length <= 1) return meshes || [];
+    let vertexCount = 0;
+    const geometries = [];
+    for (let i = 0; i < meshes.length; i++) {
+        const mesh = meshes[i];
+        if (!mesh || !mesh.geometry || !mesh.geometry.attributes || !mesh.geometry.attributes.position) return meshes;
+        const geometry = mesh.geometry.clone();
+        mesh.updateMatrix();
+        geometry.applyMatrix4(mesh.matrix);
+        geometries.push(geometry);
+        vertexCount += geometry.attributes.position.count;
+    }
+    if (vertexCount <= 0) return meshes;
+
+    const positions = new Float32Array(vertexCount * 3);
+    const normals = new Float32Array(vertexCount * 3);
+    const colors = new Float32Array(vertexCount * 3);
+    let vertexOffset = 0;
+    for (let i = 0; i < geometries.length; i++) {
+        const geometry = geometries[i];
+        const attrOffset = vertexOffset * 3;
+        copyBufferAttribute(geometry.attributes.position, positions, attrOffset);
+        copyBufferAttribute(geometry.attributes.normal, normals, attrOffset);
+        copyBufferAttribute(geometry.attributes.color, colors, attrOffset);
+        vertexOffset += geometry.attributes.position.count;
+        geometry.dispose();
+    }
+
+    const mergedGeometry = new THREE.BufferGeometry();
+    mergedGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    mergedGeometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    mergedGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    mergedGeometry.computeBoundingBox();
+    mergedGeometry.computeBoundingSphere();
+
+    const mergedMesh = new THREE.Mesh(mergedGeometry, meshes[0].material);
+    mergedMesh.castShadow = true;
+    return [mergedMesh];
+}
+
+function mergeTargetMeshes(meshes) {
+    if (!Array.isArray(meshes) || meshes.length <= 1) return meshes || [];
+    const buckets = new Map();
+    for (let i = 0; i < meshes.length; i++) {
+        const mesh = meshes[i];
+        const key = mesh && mesh.material && mesh.material.uuid ? mesh.material.uuid : `mesh-${i}`;
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push(mesh);
+    }
+    const mergedMeshes = [];
+    buckets.forEach((bucket) => {
+        const merged = mergeTargetMeshBucket(bucket);
+        for (let i = 0; i < merged.length; i++) mergedMeshes.push(merged[i]);
+    });
+    return mergedMeshes;
 }
 
 function addFragmentsToRig(rigRoot, fragments, bodyColors, recolors) {
@@ -483,6 +546,7 @@ function bindRigUserData(rigRoot) {
         axe: nodes.axe,
         elbowPivot,
         attackTick: -1,
+        attackStyleFamily: 'melee',
         attackAnimationStartedAt: -1,
         hitReactionTick: -1,
         hitReactionStartedAt: -1
@@ -509,11 +573,17 @@ function createPlayerRigFromAppearance(appearance) {
     return bindRigUserData(clone);
 }
 
+function getEquipmentEntryItemData(entry) {
+    if (!entry || typeof entry !== 'object') return null;
+    if (entry.itemData && typeof entry.itemData === 'object') return entry.itemData;
+    return entry;
+}
+
 function buildAppearanceFromEquipment() {
     const gender = playerAppearanceState.gender === 1 ? 1 : 0;
     const defaults = PLAYER_DEFAULT_SLOT_KITS[gender] || PLAYER_DEFAULT_SLOT_KITS[0];
     const slots = PLAYER_APPEARANCE_SLOT_ORDER.map((slotName, index) => {
-        const equipped = equipment && equipment[slotName];
+        const equipped = getEquipmentEntryItemData(equipment && equipment[slotName]);
         if (equipped && PLAYER_ITEM_DEFS[equipped.id]) {
             return { kind: 'item', id: equipped.id };
         }

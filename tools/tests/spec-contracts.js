@@ -369,7 +369,7 @@ function run() {
     { recipeId: "fletch_willow_longbow", level: 22, xp: 8, sell: 36, xpPerTick: 2.6667, sellPerTick: 12 },
     { recipeId: "fletch_maple_longbow", level: 32, xp: 12, sell: 62, xpPerTick: 4, sellPerTick: 20.6667 },
     { recipeId: "fletch_yew_longbow", level: 42, xp: 18, sell: 100, xpPerTick: 6, sellPerTick: 33.3333 },
-    { recipeId: "fletch_normal_shortbow", level: 5, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
+    { recipeId: "fletch_normal_shortbow", level: 1, xp: 4, sell: 12, xpPerTick: 1.3333, sellPerTick: 4 },
     { recipeId: "fletch_oak_shortbow", level: 14, xp: 6, sell: 22, xpPerTick: 2, sellPerTick: 7.3333 },
     { recipeId: "fletch_willow_shortbow", level: 24, xp: 11, sell: 40, xpPerTick: 3.6667, sellPerTick: 13.3333 },
     { recipeId: "fletch_maple_shortbow", level: 34, xp: 16, sell: 68, xpPerTick: 5.3333, sellPerTick: 22.6667 },
@@ -599,7 +599,7 @@ function run() {
   assert(runecraftingIntegration.essenceSource.rewardMatches === true, "rune essence mining reward should feed runecrafting input");
   assert(runecraftingIntegration.essenceSource.valueMatches === true, "rune essence value should match between mining and runecrafting");
   assert(runecraftingIntegration.magicDemand.skillId === "magic", "runecrafting magic demand skill mismatch");
-  assert(runecraftingIntegration.magicDemand.status === "future_sink_contract", "runecrafting magic demand should remain a future sink contract");
+  assert(runecraftingIntegration.magicDemand.status === "live_runtime_sink", "runecrafting magic demand should be a live Magic runtime sink");
   assert(runecraftingIntegration.magicDemand.purpose === "spell_resource", "runecrafting magic demand purpose mismatch");
   assert(runecraftingIntegration.magicDemand.elementalRuneItemIds.join(",") === "ember_rune,water_rune,earth_rune,air_rune", "runecrafting elemental magic-demand coverage mismatch");
   assert(runecraftingIntegration.magicDemand.combinationRuneItemIds.join(",") === "steam_rune,smoke_rune,lava_rune,mud_rune,mist_rune,dust_rune", "runecrafting combination magic-demand coverage mismatch");
@@ -736,6 +736,8 @@ function run() {
   assert(generalStoreSeedById.tinderbox === 10, "general store fallback stock should include tinderbox");
   assert(generalStoreSeedById.knife === 10, "general store fallback stock should include knife");
   assert(generalStoreSeedById.iron_pickaxe === 5, "general store fallback stock should include iron pickaxe");
+  assert(generalStoreSeedById.normal_shortbow === 5, "general store fallback stock should include starter shortbows");
+  assert(generalStoreSeedById.bronze_arrows === 150, "general store fallback stock should include starter arrows");
   assert(shopEconomy.hasFallbackStockPolicy("general_store"), "general store should have fallback stock policy");
   assert(shopEconomy.hasStockPolicy("general_store"), "general store should pass stock-policy validation");
   assert(shopEconomy.hasStockPolicy("fishing_supplier"), "configured merchants should pass stock-policy validation");
@@ -1126,6 +1128,10 @@ function run() {
   assert(shopEconomy.canMerchantSellItem("knife", "fletching_supplier"), "fletching supplier should sell knife");
   assert(shopEconomy.canMerchantSellItem("feathers_bundle", "fletching_supplier"), "fletching supplier should sell feathers bundle");
   assert(shopEconomy.canMerchantSellItem("bow_string", "fletching_supplier"), "fletching supplier should sell bow string");
+  assert(!shopEconomy.canMerchantSellItem("normal_shortbow", "fletching_supplier"), "fletching supplier should not sell finished bows");
+  assert(!shopEconomy.canMerchantSellItem("bronze_arrows", "fletching_supplier"), "fletching supplier should not sell finished arrows");
+  assert(!shopEconomy.canMerchantBuyItem("normal_shortbow", "fletching_supplier"), "fletching supplier should not buy finished bows");
+  assert(!shopEconomy.canMerchantBuyItem("bronze_arrows", "fletching_supplier"), "fletching supplier should not buy finished arrows");
   assert(!shopEconomy.canMerchantSellItem("yew_logs", "fletching_supplier"), "fletching supplier should not sell logs");
   assert(!shopEconomy.canMerchantBuyItem("yew_logs", "fletching_supplier"), "fletching supplier should not buy logs");
   assert(shopEconomy.resolveBuyPrice("knife", "fletching_supplier") === itemDefs.knife.value, "fletching supplier knife buy price mismatch");

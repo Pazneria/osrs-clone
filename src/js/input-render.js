@@ -1,4 +1,4 @@
-function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0)); renderer.setSize(window.innerWidth, window.innerHeight); }
+function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, RENDER_PIXEL_RATIO_CAP)); renderer.setSize(window.innerWidth, window.innerHeight); }
         function getInputPoseEditorRuntime() {
             return window.InputPoseEditorRuntime || null;
         }
@@ -50,6 +50,10 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         // Keep tooltip range well under the pathfinding iteration budget on large maps.
         const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
+        const HOVER_TOOLTIP_REFRESH_INTERVAL_MS = 250;
+        const HOVER_TOOLTIP_EDGE_GUARD_PX = 8;
+        let hoverTooltipDirty = true;
+        let lastHoverTooltipUpdateMs = 0;
         function getInputControllerRuntime() {
             return window.InputControllerRuntime || null;
         }
@@ -117,11 +121,13 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (decision.nextPreviousMousePosition) {
                     previousMousePosition = decision.nextPreviousMousePosition;
                 }
+                hoverTooltipDirty = true;
                 return;
             }
             if (decision && decision.handleInteractionRaycast) {
                 handleInteractionRaycast(event.clientX, event.clientY);
             }
+            hoverTooltipDirty = true;
         }
 
         function onPointerMove(event) {
@@ -136,6 +142,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
             currentMouseX = decision && decision.nextCurrentMousePosition ? decision.nextCurrentMousePosition.x : event.clientX;
             currentMouseY = decision && decision.nextCurrentMousePosition ? decision.nextCurrentMousePosition.y : event.clientY;
+            if (!isDraggingCamera && !isFreeCam && !(poseEditor.enabled && poseEditor.activeHandle)) {
+                hoverTooltipDirty = true;
+            }
             
             if (poseEditor.enabled && poseEditor.activeHandle) {
                 updatePoseEditorDrag(event.clientX, event.clientY);
@@ -175,6 +184,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 return;
             }
             if ((decision && decision.endCameraDrag) || event.button === 1 || (isFreeCam && event.button === 0)) isDraggingCamera = false;
+            hoverTooltipDirty = true;
         }
         
         function onMouseWheel(event) { 
@@ -184,6 +194,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             cameraDist = inputControllerRuntime && typeof inputControllerRuntime.resolveMouseWheelCameraDistance === 'function'
                 ? inputControllerRuntime.resolveMouseWheelCameraDistance(cameraDist, event.deltaY)
                 : Math.max(5, Math.min(30, cameraDist + (Math.sign(event.deltaY) * 1.5))); 
+            hoverTooltipDirty = true;
 
         }
 
@@ -664,12 +675,25 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             animationRuntimeBridge.beginLegacyFrame(playerRigRef, rigId);
             animationRuntimeBridge.setLegacyBaseClip(playerRigRef, rigId, getPlayerBaseClipId(isMoving, logicalTilesMoved), frameNow, baseClipPolicy.baseClipOptions);
 
-            if (isTimedAnimationActive(rig.attackAnimationStartedAt, 1100, frameNow)) {
-                animationRuntimeBridge.requestLegacyActionClip(playerRigRef, rigId, 'player/combat_slash', {
-                    startedAtMs: rig.attackAnimationStartedAt,
-                    startKey: `attack:${rig.attackAnimationStartedAt}`,
-                    priority: 2
-                });
+            const combatAttackActionClipRequest = playerAnimationRuntime && typeof playerAnimationRuntime.buildCombatAttackActionClipRequest === 'function'
+                ? playerAnimationRuntime.buildCombatAttackActionClipRequest({ rig, frameNow, isTimedAnimationActive })
+                : (isTimedAnimationActive(rig.attackAnimationStartedAt, 1100, frameNow)
+                    ? {
+                        clipId: 'player/combat_slash',
+                        actionOptions: {
+                            startedAtMs: rig.attackAnimationStartedAt,
+                            startKey: `attack:${rig.attackAnimationStartedAt}`,
+                            priority: 2
+                        }
+                    }
+                    : null);
+            if (combatAttackActionClipRequest) {
+                animationRuntimeBridge.requestLegacyActionClip(
+                    playerRigRef,
+                    rigId,
+                    combatAttackActionClipRequest.clipId,
+                    combatAttackActionClipRequest.actionOptions
+                );
             }
 
             if (Number.isFinite(rig.hitReactionTick)
@@ -701,6 +725,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
 
             animationRuntimeBridge.applyLegacyFrame(playerRigRef, rigId, frameNow);
+            const transientVisualRuntime = getTransientVisualRuntime();
+            if (transientVisualRuntime && typeof transientVisualRuntime.updateRangedBowDrawVisual === 'function') {
+                transientVisualRuntime.updateRangedBowDrawVisual({
+                    THREE,
+                    rig,
+                    drawFrame: playerAnimationRuntime && typeof playerAnimationRuntime.getRangedBowShotFrame === 'function'
+                        ? playerAnimationRuntime.getRangedBowShotFrame({ rig, frameNow })
+                        : null
+                });
+            }
             return true;
         }
         function resetPlayerRigAnimationState(rig, playerRigRef, baseVisualY, showToolVisual) {
@@ -972,15 +1006,22 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
         }
 
-        function updateHoverTooltip() {
+        function updateHoverTooltip(frameNowMs = performance.now()) {
             const runtime = getInputHoverTooltipRuntime();
             if (!runtime || typeof runtime.updateHoverTooltipDisplay !== 'function') return;
+            const nowMs = Number.isFinite(frameNowMs) ? frameNowMs : performance.now();
+            if (!hoverTooltipDirty && (nowMs - lastHoverTooltipUpdateMs) < HOVER_TOOLTIP_REFRESH_INTERVAL_MS) return;
+            hoverTooltipDirty = false;
+            lastHoverTooltipUpdateMs = nowMs;
 
             const hoveredElement = document.elementFromPoint(currentMouseX, currentMouseY);
             const shouldHide = isDraggingCamera
                 || isFreeCam
                 || isBankOpen
-                || currentMouseX === 0
+                || currentMouseX <= HOVER_TOOLTIP_EDGE_GUARD_PX
+                || currentMouseY <= HOVER_TOOLTIP_EDGE_GUARD_PX
+                || currentMouseX >= window.innerWidth - HOVER_TOOLTIP_EDGE_GUARD_PX
+                || currentMouseY >= window.innerHeight - HOVER_TOOLTIP_EDGE_GUARD_PX
                 || !!(hoveredElement && hoveredElement.tagName !== 'CANVAS');
             const hitData = shouldHide ? null : getRaycastHit(currentMouseX, currentMouseY);
             const displayOptions = typeof runtime.buildHoverTooltipDisplayOptions === 'function'
@@ -1234,7 +1275,9 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         const SHADOW_FOCUS_TILE_EPSILON = 0.25;
         const SHADOW_FOCUS_HEIGHT_EPSILON = 0.15;
         const SHADOW_FOCUS_UPDATE_INTERVAL_MS = 120;
+        const SHADOW_MAP_REFRESH_INTERVAL_MS = 120;
         let lastShadowFocusUpdateMs = 0;
+        let lastShadowMapRefreshMs = 0;
         let lastShadowFocusX = null;
         let lastShadowFocusY = null;
         let lastShadowFocusZ = null;
@@ -1243,7 +1286,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
         let lastShadowFocusRevision = -1;
 
         function maybeUpdateMainDirectionalShadowFocus(focusX, focusY, focusZ, frameNowMs) {
-            if (typeof window.updateMainDirectionalShadowFocus !== 'function') return;
+            if (typeof window.updateMainDirectionalShadowFocus !== 'function') return false;
             const shadowFocusRevision = (sharedMaterials && Number.isFinite(sharedMaterials.shadowFocusRevision))
                 ? Math.floor(sharedMaterials.shadowFocusRevision)
                 : 0;
@@ -1262,7 +1305,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 && deltaY < SHADOW_FOCUS_HEIGHT_EPSILON
                 && !intervalElapsed
             ) {
-                return;
+                return false;
             }
 
             window.updateMainDirectionalShadowFocus(focusX, focusY, focusZ);
@@ -1273,6 +1316,16 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             lastShadowFocusFreeCam = !!isFreeCam;
             lastShadowFocusPlane = playerState.z;
             lastShadowFocusRevision = shadowFocusRevision;
+            return true;
+        }
+
+        function requestShadowMapRefresh(frameNowMs, forceUpdate = false) {
+            if (!renderer || !renderer.shadowMap || !renderer.shadowMap.enabled) return;
+            const nowMs = Number.isFinite(frameNowMs) ? frameNowMs : performance.now();
+            const intervalElapsed = (nowMs - lastShadowMapRefreshMs) >= SHADOW_MAP_REFRESH_INTERVAL_MS;
+            if (!forceUpdate && !intervalElapsed) return;
+            renderer.shadowMap.needsUpdate = true;
+            lastShadowMapRefreshMs = nowMs;
         }
 
         function animate(nowMs) {
@@ -1376,6 +1429,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
                 if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
                 if (typeof window.updateWorldNpcRuntime === 'function') window.updateWorldNpcRuntime(frameNowMs);
                 if (typeof window.updateTutorialGuidanceMarker === 'function') window.updateTutorialGuidanceMarker(frameNowMs);
+                requestShadowMapRefresh(frameNowMs);
                 renderer.render(scene, camera);
                 if (typeof window.updateCombatEnemyOverlays === 'function') window.updateCombatEnemyOverlays();
                 return;
@@ -1389,7 +1443,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (!rig) {
                 updateCombatAnimationDebugPanel(null, playerRig, frameNow);
                 const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
-                maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, baseVisualY, shadowFocus.z, frameNowMs);
+                const shadowFocusUpdated = maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, baseVisualY, shadowFocus.z, frameNowMs);
+                requestShadowMapRefresh(frameNowMs, shadowFocusUpdated);
                 if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
                 if (typeof window.updateTutorialGuidanceMarker === 'function') window.updateTutorialGuidanceMarker(frameNowMs);
                 renderer.render(scene, camera);
@@ -1463,6 +1518,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             const transientVisualRuntime = getTransientVisualRuntime();
             if (transientVisualRuntime && typeof transientVisualRuntime.updateTransientVisuals === 'function') {
                 transientVisualRuntime.updateTransientVisuals({
+                    THREE,
                     windowRef: window,
                     scene,
                     camera,
@@ -1514,7 +1570,8 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
             const shadowFocus = isFreeCam ? freeCamTarget : playerRig.position;
             const shadowFocusY = isFreeCam ? freeCamTarget.y : baseVisualY;
-            maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z, frameNowMs);
+            const shadowFocusUpdated = maybeUpdateMainDirectionalShadowFocus(shadowFocus.x, shadowFocusY, shadowFocus.z, frameNowMs);
+            requestShadowMapRefresh(frameNowMs, shadowFocusUpdated);
             if (typeof window.updateSkyRuntime === 'function') window.updateSkyRuntime(camera.position, frameNowMs);
             if (typeof window.updateWorldNpcRuntime === 'function') window.updateWorldNpcRuntime(frameNowMs);
             if (typeof window.updateTutorialGuidanceMarker === 'function') window.updateTutorialGuidanceMarker(frameNowMs);
@@ -1523,7 +1580,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             if (uiPlayerRig && !document.getElementById('view-equip').classList.contains('hidden')) uiRenderer.render(uiScene, uiCamera);
             
             updatePlayerOverheadText();
-            updateHoverTooltip();
+            updateHoverTooltip(frameNowMs);
         }
 
 

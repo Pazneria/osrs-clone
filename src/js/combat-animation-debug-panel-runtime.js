@@ -87,7 +87,9 @@
         const winningClipId = controllerDebug && controllerDebug.winningRequest
             ? controllerDebug.winningRequest.clipId
             : 'none';
-        const blockedByPriority = attackActive && recoilRequested && winningClipId === 'player/combat_slash';
+        const blockedByPriority = attackActive
+            && recoilRequested
+            && (winningClipId === 'player/combat_slash' || winningClipId === 'player/combat_bow_shot');
         const actionAgeMs = (controllerDebug && Number.isFinite(controllerDebug.actionAgeMs))
             ? Math.floor(controllerDebug.actionAgeMs)
             : null;

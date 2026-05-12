@@ -135,7 +135,7 @@ Bows use a two-step process: first the player cuts an unstrung bow from a log wi
 | Willow Longbow (u) | 22 | 1 Willow Log | Knife | 14 | Mid-band unstrung longbow |
 | Maple Longbow (u) | 32 | 1 Maple Log | Knife | 20 | Higher-tier unstrung longbow |
 | Yew Longbow (u) | 42 | 1 Yew Log | Knife | 30 | Top-band unstrung longbow |
-| Normal Shortbow | 5 | 1 Normal Shortbow (u) + 1 Bow String | None | 4 | Entry-level bow |
+| Normal Shortbow | 1 | 1 Normal Shortbow (u) + 1 Bow String | None | 4 | Entry-level bow; stringing a prepared normal shortbow is available immediately |
 | Normal Longbow | 3 | 1 Normal Longbow (u) + 1 Bow String | None | 3 | Entry-level longbow |
 | Oak Shortbow | 14 | 1 Oak Shortbow (u) + 1 Bow String | None | 6 | Early upgrade bow |
 | Willow Shortbow | 24 | 1 Willow Shortbow (u) + 1 Bow String | None | 11 | Mid-band bow |
@@ -300,7 +300,7 @@ Fletching creates value by converting logs into more specialized items and by su
 | Output | Required Level | XP per Action | Sell Value | XP per Tick | Sell Value per Tick |
 | ------ | -------------- | ------------- | ---------- | ----------- | ------------------- |
 | Normal Longbow | 3 | 3 | 10 | 1 | 3.3333 |
-| Normal Shortbow | 5 | 4 | 12 | 1.3333 | 4 |
+| Normal Shortbow | 1 | 4 | 12 | 1.3333 | 4 |
 | Oak Longbow | 12 | 5 | 20 | 1.6667 | 6.6667 |
 | Oak Shortbow | 14 | 6 | 22 | 2 | 7.3333 |
 | Willow Longbow | 22 | 8 | 36 | 2.6667 | 12 |
@@ -478,7 +478,7 @@ Current implementation uses the starter-town supplier for the bank-adjacent proc
 | Willow Longbow (u) | Unstrung Bow | 22 | null | 26 | Cut from 1 willow log |
 | Maple Longbow (u) | Unstrung Bow | 32 | null | 44 | Cut from 1 maple log |
 | Yew Longbow (u) | Unstrung Bow | 42 | null | 70 | Cut from 1 yew log |
-| Normal Shortbow | Bow | 5 | null | 12 | Strung from normal shortbow (u); can use bronze and iron arrows |
+| Normal Shortbow | Bow | 1 | null | 12 | Strung from normal shortbow (u); can use bronze and iron arrows |
 | Normal Longbow | Bow | 3 | null | 10 | Strung from normal longbow (u); can use bronze and iron arrows |
 | Oak Shortbow | Bow | 14 | null | 22 | Strung from oak shortbow (u); can use bronze, iron, and steel arrows |
 | Willow Shortbow | Bow | 24 | null | 40 | Strung from willow shortbow (u); can use bronze through mithril arrows |

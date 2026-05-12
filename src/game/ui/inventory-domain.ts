@@ -340,6 +340,34 @@ export function ensureUnlockedMerchantStock(options: {
   if (!economy || typeof economy.getMerchantDefaultSellItemIds !== "function") return shopInventory;
 
   const defaults = economy.getMerchantDefaultSellItemIds(options.merchantId);
+  const seedRows = typeof economy.getMerchantSeedStockRows === "function"
+    ? economy.getMerchantSeedStockRows(options.merchantId)
+    : [];
+  const hasExplicitMerchantConfig = typeof economy.hasMerchantConfig === "function"
+    ? economy.hasMerchantConfig(options.merchantId)
+    : false;
+  if (defaults.length === 0 && seedRows.length > 0 && !hasExplicitMerchantConfig) {
+    const seedSet = new Set(seedRows.map((row) => row.itemId).filter(Boolean));
+    for (let index = 0; index < shopInventory.length; index += 1) {
+      const slot = shopInventory[index];
+      if (!slot || !slot.itemData || !slot.normalStock) continue;
+      if (!seedSet.has(slot.itemData.id)) shopInventory[index] = null;
+    }
+    for (let index = 0; index < seedRows.length; index += 1) {
+      const row = seedRows[index] || { itemId: "", stockAmount: 0 };
+      if (!row.itemId) continue;
+      const desiredStock = Math.max(1, Math.floor(row.stockAmount || 1));
+      const existing = shopInventory.find((slot) => slot && slot.itemData && slot.itemData.id === row.itemId);
+      if (existing) {
+        existing.normalStock = true;
+        if (existing.amount < desiredStock) existing.amount = desiredStock;
+        continue;
+      }
+      seedShopInventorySlot(shopInventory, options.itemDb, row.itemId, desiredStock, true);
+    }
+    return shopInventory;
+  }
+
   const defaultSet = new Set(defaults);
   for (let index = 0; index < shopInventory.length; index += 1) {
     const slot = shopInventory[index];

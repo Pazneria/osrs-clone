@@ -77,29 +77,32 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-002 - NPC world placement pass
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `content/world/regions/main_overworld.json`, `tools/content/validate-world.js`, `tools/tests/world-authoring-domain-tests.js`
 - Repro:
   1. Survey current NPC spawns.
 - Expected: Every NPC has a set location and associated building/home/base.
-- Actual: Some NPC placement feels unattached/abstract.
+- Actual: Main-overworld NPC services now carry explicit `home:<id>` placement tags that anchor each named merchant, travel guide, and banker to an authored structure, route, or bank-booth landmark.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Produce NPC placement manifest.
   2. Map each NPC to a home/base location.
   3. Implement and smoke test travel/interaction paths.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added `home:<id>` tags to the authored main-overworld NPC services, reusing existing service tags instead of introducing a second placement source of truth.
+  - Added world validation that requires each main-overworld NPC service to define exactly one home/base tag and verifies that the target exists as an authored structure, route, area, or landmark.
+  - Extended world-authoring domain coverage so the home/base tags survive the typed/scaled world-definition path.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-003 - Service distribution pass (add 8+ banks)
 - Status: Fixed
@@ -130,29 +133,32 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-004 - Road network pass with protected tiles
-- Status: Backlog
+- Status: Fixed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `content/world/regions/main_overworld.json`, `tools/content/validate-world.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
 - Repro:
   1. Inspect map traversal and spawn overlap.
 - Expected: Roads exist broadly and are protected from resource/prop/world spawns.
-- Actual: Road coverage/protection is incomplete.
+- Actual: The main overworld now authors a protected dirt-road network across the east road, north altar road, starter-mine spur, south resource road, southwest bank road, and southeast camp road; validators reject resource nodes, combat spawns, blocking props, and altar footprints inside protected road tiles.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Add road layer/metadata.
   2. Mark road tiles as spawn-protected.
   3. Validate no resource/prop overlap on roads.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added six `terrainPatches.paths` entries tagged `road` + `spawn-protected` to `main_overworld` so the existing path-patch runtime stamps lowered dirt routes without adding a new world source of truth.
+  - Extended world validation with a protected-road footprint check covering mining nodes, woodcutting nodes, combat spawn/home tiles, blocking decor props, and authored altar footprints.
+  - Updated world authoring/bootstrap guards to lock the road IDs, tags, dirt tile treatment, scaling behavior, legacy payload publication, and representative stamped road tiles.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-005 - Dock/coastline pass for dark-water fishing access
 - Status: Fixed
@@ -1800,7 +1806,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-043 - Eat cooldown can lock for hundreds/thousands of ticks after reload
-- Status: Fixed
+- Status: Closed
 - Severity: S1
 - Area: BUG
 - Source: Manual
@@ -1810,7 +1816,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   2. Save/reload or continue a session with persisted combat state.
   3. Try to eat again and observe an unexpectedly large remaining-ticks warning.
 - Expected: Eat cooldown should remain short (food-defined delay) and never restore as a long multi-hundred tick lockout.
-- Actual: Persisted absolute cooldown ticks could survive restarts and produce very long wait times before eating again.
+- Actual: Stale persisted cooldown ticks are clamped on load and impossible live cooldown deltas self-heal before wait messaging.
 - Frequency: Sometimes
 - Owner: Pair
 - Plan v1:
@@ -1825,7 +1831,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 

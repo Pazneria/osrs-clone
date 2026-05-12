@@ -2,6 +2,10 @@
     const CLICK_MARKER_LIFETIME_MS = 400;
     const HITSPLAT_LIFETIME_MS = 1200;
     const LEVEL_UP_LIFETIME_MS = 1500;
+    const RANGED_PROJECTILE_GROUP_NAME = 'ranged-projectile';
+    const RANGED_BOW_DRAW_VISUAL_GROUP_NAME = 'pm-rangedBowDrawVisual';
+    const RANGED_BOW_NOCK_MS = 150;
+    const activeRangedProjectiles = [];
 
     function getNow(options = {}) {
         return Number.isFinite(options.nowMs) ? options.nowMs : Date.now();
@@ -90,6 +94,275 @@
         const animation = { mesh: group, start: getNow(options), type: 8, target };
         levelUpAnimations.push(animation);
         return animation;
+    }
+
+    function createBasicMaterial(THREERef, color, transparent = false, opacity = 1) {
+        return new THREERef.MeshBasicMaterial({
+            color,
+            transparent,
+            opacity,
+            depthTest: true
+        });
+    }
+
+    function orientCylinderSegment(THREERef, mesh, from, to, baseRadiusScale = 1) {
+        if (!THREERef || !mesh || !from || !to) return false;
+        const delta = new THREERef.Vector3().subVectors(to, from);
+        const length = delta.length();
+        if (length <= 0.0001) {
+            mesh.visible = false;
+            return false;
+        }
+        const midpoint = new THREERef.Vector3().addVectors(from, to).multiplyScalar(0.5);
+        mesh.visible = true;
+        mesh.position.copy(midpoint);
+        mesh.quaternion.setFromUnitVectors(new THREERef.Vector3(0, 1, 0), delta.normalize());
+        mesh.scale.set(baseRadiusScale, length, baseRadiusScale);
+        return true;
+    }
+
+    function clampNumber(value, min, max, fallback = 0) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return fallback;
+        return Math.max(min, Math.min(max, numeric));
+    }
+
+    function smoothstep(value) {
+        const t = clampNumber(value, 0, 1, 0);
+        return t * t * (3 - (2 * t));
+    }
+
+    function getRangedDrawHandWorldPoint(THREERef, rig) {
+        if (!THREERef || !rig) return null;
+        const leftTool = rig.leftTool || null;
+        if (leftTool && typeof leftTool.getWorldPosition === 'function') {
+            if (typeof leftTool.updateWorldMatrix === 'function') leftTool.updateWorldMatrix(true, false);
+            return leftTool.getWorldPosition(new THREERef.Vector3());
+        }
+        const leftLowerArm = rig.leftLowerArm || null;
+        if (leftLowerArm && typeof leftLowerArm.localToWorld === 'function') {
+            if (typeof leftLowerArm.updateWorldMatrix === 'function') leftLowerArm.updateWorldMatrix(true, false);
+            return leftLowerArm.localToWorld(new THREERef.Vector3(0, -0.35, 0));
+        }
+        return null;
+    }
+
+    function resolveRangedDrawHandLocalPoint(THREERef, rig, weaponNode) {
+        if (!THREERef || !rig || !weaponNode || typeof weaponNode.worldToLocal !== 'function') return null;
+        const handWorldPoint = getRangedDrawHandWorldPoint(THREERef, rig);
+        if (!handWorldPoint) return null;
+        if (typeof weaponNode.updateWorldMatrix === 'function') weaponNode.updateWorldMatrix(true, false);
+        const localPoint = weaponNode.worldToLocal(handWorldPoint.clone());
+        return new THREERef.Vector3(
+            clampNumber(localPoint.x, -0.08, 0.62, 0.48),
+            clampNumber(localPoint.y, -0.24, 0.24, 0),
+            clampNumber(localPoint.z, -0.42, 0.04, -0.28)
+        );
+    }
+
+    function createRangedProjectileMesh(THREERef, ammoItemId = null) {
+        const group = new THREERef.Group();
+        group.name = RANGED_PROJECTILE_GROUP_NAME;
+        const tipColor = /rune/.test(String(ammoItemId || '')) ? 0x8ad7ff
+            : (/adamant/.test(String(ammoItemId || '')) ? 0x7fd68a
+                : (/mithril/.test(String(ammoItemId || '')) ? 0x85c9d8
+                    : (/steel/.test(String(ammoItemId || '')) ? 0xcfd5da
+                        : (/iron/.test(String(ammoItemId || '')) ? 0xb8b0a8 : 0xd49a4a))));
+        const shaft = new THREERef.Mesh(
+            new THREERef.CylinderGeometry(0.018, 0.018, 1, 6),
+            createBasicMaterial(THREERef, 0xb7854d)
+        );
+        shaft.name = 'shaft';
+        const tip = new THREERef.Mesh(
+            new THREERef.ConeGeometry(0.045, 0.12, 6),
+            createBasicMaterial(THREERef, tipColor)
+        );
+        tip.name = 'tip';
+        tip.position.y = 0.41;
+        const fletching = new THREERef.Mesh(
+            new THREERef.BoxGeometry(0.13, 0.045, 0.025),
+            createBasicMaterial(THREERef, 0xefe2c8)
+        );
+        fletching.name = 'fletching';
+        fletching.position.y = -0.36;
+        group.add(shaft, tip, fletching);
+        return group;
+    }
+
+    function createMagicProjectileMesh(THREERef, runeItemId = null) {
+        const group = new THREERef.Group();
+        group.name = 'magic-projectile';
+        const isEmber = /ember/.test(String(runeItemId || ''));
+        const coreColor = isEmber ? 0xff8a3d : 0x8ad7ff;
+        const haloColor = isEmber ? 0xffd36a : 0xaad7ff;
+        const core = new THREERef.Mesh(
+            new THREERef.SphereGeometry(0.10, 12, 8),
+            createBasicMaterial(THREERef, coreColor)
+        );
+        core.name = 'core';
+        const halo = new THREERef.Mesh(
+            new THREERef.TorusGeometry(0.14, 0.012, 6, 16),
+            createBasicMaterial(THREERef, haloColor, true, 0.72)
+        );
+        halo.name = 'halo';
+        halo.rotation.x = Math.PI / 2;
+        const trail = new THREERef.Mesh(
+            new THREERef.CylinderGeometry(0.025, 0.06, 0.34, 8),
+            createBasicMaterial(THREERef, coreColor, true, 0.55)
+        );
+        trail.name = 'trail';
+        trail.position.y = -0.18;
+        group.add(core, halo, trail);
+        return group;
+    }
+
+    function spawnRangedProjectile(options = {}) {
+        const THREERef = options.THREE;
+        const scene = options.scene;
+        const start = options.start;
+        const end = options.end;
+        if (!THREERef || !scene || !start || !end) return null;
+        const travel = new THREERef.Vector3().subVectors(end, start);
+        if (travel.lengthSq() < 0.0001) return null;
+        const mesh = createRangedProjectileMesh(THREERef, options.ammoItemId || null);
+        mesh.position.copy(start);
+        mesh.quaternion.setFromUnitVectors(new THREERef.Vector3(0, 1, 0), travel.clone().normalize());
+        scene.add(mesh);
+        const projectile = {
+            mesh,
+            scene,
+            start: start.clone(),
+            end: end.clone(),
+            startAt: getNow(options) + (Number.isFinite(options.delayMs) ? Math.max(0, options.delayMs) : 0),
+            durationMs: Number.isFinite(options.durationMs) ? Math.max(80, options.durationMs) : 360
+        };
+        mesh.visible = projectile.startAt <= getNow(options);
+        activeRangedProjectiles.push(projectile);
+        return projectile;
+    }
+
+    function spawnMagicProjectile(options = {}) {
+        const THREERef = options.THREE;
+        const scene = options.scene;
+        const start = options.start;
+        const end = options.end;
+        if (!THREERef || !scene || !start || !end) return null;
+        const travel = new THREERef.Vector3().subVectors(end, start);
+        if (travel.lengthSq() < 0.0001) return null;
+        const mesh = createMagicProjectileMesh(THREERef, options.runeItemId || null);
+        mesh.position.copy(start);
+        mesh.quaternion.setFromUnitVectors(new THREERef.Vector3(0, 1, 0), travel.clone().normalize());
+        scene.add(mesh);
+        const projectile = {
+            mesh,
+            scene,
+            start: start.clone(),
+            end: end.clone(),
+            startAt: getNow(options) + (Number.isFinite(options.delayMs) ? Math.max(0, options.delayMs) : 0),
+            durationMs: Number.isFinite(options.durationMs) ? Math.max(80, options.durationMs) : 420
+        };
+        mesh.visible = projectile.startAt <= getNow(options);
+        activeRangedProjectiles.push(projectile);
+        return projectile;
+    }
+
+    function updateRangedProjectiles(options = {}) {
+        const THREERef = options.THREE;
+        const frameNow = getNow(options);
+        for (let i = activeRangedProjectiles.length - 1; i >= 0; i--) {
+            const projectile = activeRangedProjectiles[i];
+            const age = frameNow - projectile.startAt;
+            if (age < 0) {
+                projectile.mesh.visible = false;
+                continue;
+            }
+            if (age > projectile.durationMs) {
+                if (projectile.scene) projectile.scene.remove(projectile.mesh);
+                activeRangedProjectiles.splice(i, 1);
+                continue;
+            }
+            projectile.mesh.visible = true;
+            const t = Math.max(0, Math.min(1, age / projectile.durationMs));
+            const eased = 1 - Math.pow(1 - t, 2);
+            projectile.mesh.position.lerpVectors(projectile.start, projectile.end, eased);
+            projectile.mesh.position.y += Math.sin(t * Math.PI) * 0.18;
+            if (THREERef) {
+                const direction = new THREERef.Vector3().subVectors(projectile.end, projectile.start).normalize();
+                projectile.mesh.quaternion.setFromUnitVectors(new THREERef.Vector3(0, 1, 0), direction);
+            }
+        }
+    }
+
+    function ensureRangedBowDrawVisual(options = {}, weaponNode) {
+        const THREERef = options.THREE;
+        if (!THREERef || !weaponNode) return null;
+        let group = weaponNode.getObjectByName(RANGED_BOW_DRAW_VISUAL_GROUP_NAME);
+        if (group && group.parent === weaponNode) return group;
+        group = new THREERef.Group();
+        group.name = RANGED_BOW_DRAW_VISUAL_GROUP_NAME;
+        const stringMaterial = createBasicMaterial(THREERef, 0xf3ead0);
+        const shaftMaterial = createBasicMaterial(THREERef, 0xb7854d);
+        const tipMaterial = createBasicMaterial(THREERef, 0xd49a4a);
+        const createSegment = (name, radius, material) => {
+            const mesh = new THREERef.Mesh(new THREERef.CylinderGeometry(radius, radius, 1, 6), material);
+            mesh.name = name;
+            group.add(mesh);
+            return mesh;
+        };
+        createSegment('stringTop', 0.006, stringMaterial);
+        createSegment('stringBottom', 0.006, stringMaterial);
+        createSegment('arrowShaft', 0.011, shaftMaterial);
+        const arrowTip = new THREERef.Mesh(new THREERef.ConeGeometry(0.026, 0.07, 6), tipMaterial);
+        arrowTip.name = 'arrowTip';
+        group.add(arrowTip);
+        weaponNode.add(group);
+        return group;
+    }
+
+    function updateRangedBowDrawVisual(options = {}) {
+        const THREERef = options.THREE;
+        const rig = options.rig || null;
+        const drawFrame = options.drawFrame || null;
+        const weaponNode = rig ? (rig.rightTool || rig.axe || null) : null;
+        const group = ensureRangedBowDrawVisual(options, weaponNode);
+        if (!group) return null;
+        const active = !!(drawFrame && !drawFrame.released && Number.isFinite(drawFrame.drawProgress));
+        group.visible = active;
+        if (!active) return group;
+
+        const progress = Math.max(0, Math.min(1, drawFrame.drawProgress));
+        const releaseMs = Number.isFinite(drawFrame.releaseMs) ? Math.max(RANGED_BOW_NOCK_MS + 1, drawFrame.releaseMs) : 560;
+        const ageMs = Number.isFinite(drawFrame.ageMs) ? Math.max(0, drawFrame.ageMs) : (progress * releaseMs);
+        const nockProgress = smoothstep((ageMs - (RANGED_BOW_NOCK_MS - 50)) / 120);
+        const fallbackHandPoint = new THREERef.Vector3(0.05 + (0.46 * progress), 0, -0.13 - (0.17 * progress));
+        const handPoint = resolveRangedDrawHandLocalPoint(THREERef, rig, weaponNode) || fallbackHandPoint;
+        const bowTop = new THREERef.Vector3(0.015, 0.31, -0.11);
+        const bowBottom = new THREERef.Vector3(0.015, -0.31, -0.11);
+        const stringRestPoint = new THREERef.Vector3(0.025, 0, -0.12);
+        const drawPoint = stringRestPoint.clone().lerp(handPoint, nockProgress);
+        const arrowTipPoint = new THREERef.Vector3(0.015, 0, 0.34);
+        const arrowTailPoint = drawPoint.clone();
+        const arrowVisible = ageMs >= RANGED_BOW_NOCK_MS;
+
+        orientCylinderSegment(THREERef, group.getObjectByName('stringTop'), bowTop, drawPoint);
+        orientCylinderSegment(THREERef, group.getObjectByName('stringBottom'), bowBottom, drawPoint);
+        const arrowShaft = group.getObjectByName('arrowShaft');
+        if (arrowShaft) {
+            arrowShaft.visible = arrowVisible;
+            if (arrowVisible) orientCylinderSegment(THREERef, arrowShaft, arrowTailPoint, arrowTipPoint);
+        }
+        const arrowTip = group.getObjectByName('arrowTip');
+        if (arrowTip) {
+            arrowTip.visible = arrowVisible;
+            if (arrowVisible) {
+                const arrowDirection = new THREERef.Vector3().subVectors(arrowTipPoint, arrowTailPoint).normalize();
+                arrowTip.position.copy(arrowTipPoint);
+                arrowTip.quaternion.setFromUnitVectors(new THREERef.Vector3(0, 1, 0), arrowDirection);
+            }
+        }
+        group.userData.drawPoint = { x: drawPoint.x, y: drawPoint.y, z: drawPoint.z };
+        group.userData.arrowVisible = arrowVisible;
+        return group;
     }
 
     function updatePlayerOverheadText(options = {}) {
@@ -212,12 +485,17 @@
         updateClickMarkers(options);
         updateHitsplats(options);
         updateLevelUpAnimations(options);
+        updateRangedProjectiles(options);
     }
 
     window.TransientVisualRuntime = {
         spawnClickMarker,
         spawnHitsplat,
         playLevelUpAnimation,
+        spawnMagicProjectile,
+        spawnRangedProjectile,
+        updateRangedProjectiles,
+        updateRangedBowDrawVisual,
         updatePlayerOverheadText,
         updateClickMarkers,
         updateHitsplats,

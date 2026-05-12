@@ -11,23 +11,37 @@
             nearRadius: 2,
             midRadius: 4,
             interactionRadius: 1,
-            farMode: 'all'
+            nearMode: 'square',
+            nearMargin: 0,
+            farMode: 'all',
+            farRadius: 5
         }),
         balanced: Object.freeze({
             nearRadius: 1,
             midRadius: 3,
             interactionRadius: 1,
-            farMode: 'all'
+            nearMode: 'square',
+            nearMargin: 0,
+            farMode: 'all',
+            farRadius: 4
         }),
         safe: Object.freeze({
             nearRadius: 1,
             midRadius: 2,
             interactionRadius: 1,
-            farMode: 'all'
+            nearMode: 'square',
+            nearMargin: 0,
+            farMode: 'all',
+            farRadius: 3
         })
     });
     const CHUNK_RENDER_POLICY_ORDER = Object.freeze(['safe', 'balanced', 'high']);
     const CHUNK_RENDER_DEFAULT_PRESET = 'balanced';
+    const CHUNK_STREAMING_NEAR_UNLOAD_GRACE_MS = 2200;
+    const CHUNK_STREAMING_FRAME_BUDGET_MS = 6;
+    const CHUNK_STREAMING_NEAR_BUILD_INTERVAL_MS = 120;
+    const CHUNK_STREAMING_SIMPLIFIED_BUILD_INTERVAL_MS = 40;
+    const CHUNK_STREAMING_NEAR_UNLOAD_INTERVAL_MS = 120;
 
     const nearGroups = {};
     const midGroups = {};
@@ -37,13 +51,21 @@
     const chunkTierStateByKey = new Map();
     const chunkInteractionMeshes = new Map();
     const pendingNearChunkBuilds = new Map();
+    const pendingSimplifiedChunkBuilds = new Map();
+    const pendingNearChunkUnloads = new Map();
     let pendingNearChunkBuildSequence = 0;
+    let pendingSimplifiedChunkBuildSequence = 0;
+    let pendingNearChunkUnloadSequence = 0;
     let chunkPolicyDirty = true;
     let lastChunkPolicyCenterX = null;
     let lastChunkPolicyCenterY = null;
+    let lastChunkPolicyNearActivationKey = null;
     let lastChunkPolicyRevision = -1;
     let activeChunkRenderPolicyPreset = CHUNK_RENDER_DEFAULT_PRESET;
     let chunkRenderPolicyRevision = 0;
+    let lastNearChunkBuildMs = -Infinity;
+    let lastSimplifiedChunkBuildMs = -Infinity;
+    let lastNearChunkUnloadMs = -Infinity;
     const chunkAutoQualityState = {
         windowStartMs: 0,
         accumulatedFps: 0,
@@ -59,6 +81,13 @@
         return undefined;
     }
 
+    function getNowMs(context = {}) {
+        const hookedNow = callHook(context, 'now');
+        if (Number.isFinite(hookedNow)) return hookedNow;
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') return performance.now();
+        return Date.now();
+    }
+
     function chunkKey(cx, cy) {
         return `${cx},${cy}`;
     }
@@ -67,6 +96,7 @@
         chunkPolicyDirty = true;
         lastChunkPolicyCenterX = null;
         lastChunkPolicyCenterY = null;
+        lastChunkPolicyNearActivationKey = null;
     }
 
     function resolveChunkRenderPolicyPresetName(presetName) {
@@ -87,7 +117,10 @@
             nearRadius: Math.max(0, Math.floor(Number.isFinite(preset.nearRadius) ? preset.nearRadius : 1)),
             midRadius: Math.max(0, Math.floor(Number.isFinite(preset.midRadius) ? preset.midRadius : 3)),
             interactionRadius: Math.max(0, Math.floor(Number.isFinite(preset.interactionRadius) ? preset.interactionRadius : 1)),
-            farMode: preset.farMode === 'all' ? 'all' : 'window'
+            nearMode: preset.nearMode === 'edge' ? 'edge' : 'square',
+            nearMargin: Math.max(0, Math.floor(Number.isFinite(preset.nearMargin) ? preset.nearMargin : 0)),
+            farMode: preset.farMode === 'all' ? 'all' : 'window',
+            farRadius: Math.max(0, Math.floor(Number.isFinite(preset.farRadius) ? preset.farRadius : ((preset.midRadius || 0) + 1)))
         };
     }
 
@@ -132,12 +165,41 @@
         pendingNearChunkBuilds.clear();
     }
 
+    function clearPendingSimplifiedChunkBuilds(key = null) {
+        if (typeof key === 'string' && key) {
+            pendingSimplifiedChunkBuilds.delete(key);
+            return;
+        }
+        pendingSimplifiedChunkBuilds.clear();
+    }
+
+    function clearPendingNearChunkUnloads(key = null) {
+        if (typeof key === 'string' && key) {
+            pendingNearChunkUnloads.delete(key);
+            return;
+        }
+        pendingNearChunkUnloads.clear();
+    }
+
+    function resetChunkStreamingCadence() {
+        lastNearChunkBuildMs = -Infinity;
+        lastSimplifiedChunkBuildMs = -Infinity;
+        lastNearChunkUnloadMs = -Infinity;
+    }
+
+    function clearPendingChunkStreamingWork(key = null) {
+        clearPendingNearChunkBuilds(key);
+        clearPendingSimplifiedChunkBuilds(key);
+        clearPendingNearChunkUnloads(key);
+        if (!key) resetChunkStreamingCadence();
+    }
+
     function clearChunkTierGroups(context = {}) {
         removeGroupMapFromScene(midGroups, context);
         removeGroupMapFromScene(farGroups, context);
         chunkTierStateByKey.clear();
         chunkInteractionMeshes.clear();
-        clearPendingNearChunkBuilds();
+        clearPendingChunkStreamingWork();
         resetAutoQualityWindow();
         markChunkPolicyDirty();
     }
@@ -148,17 +210,20 @@
         loadedChunks.add(key);
         loadedChunkInteractionState.set(key, !!metadata.registerInteraction);
         chunkInteractionMeshes.set(key, Array.isArray(metadata.interactionMeshes) ? metadata.interactionMeshes.slice() : []);
+        clearPendingNearChunkUnloads(key);
         return true;
     }
 
     function unregisterNearChunk(key, context = {}) {
         if (typeof key !== 'string' || !key) return false;
         const group = nearGroups[key] || null;
-        if (group) callHook(context, 'unloadNearChunkGroup', key, group);
+        const interactionMeshes = chunkInteractionMeshes.get(key) || [];
+        if (group) callHook(context, 'unloadNearChunkGroup', key, group, { interactionMeshes });
         delete nearGroups[key];
         loadedChunks.delete(key);
         loadedChunkInteractionState.delete(key);
         chunkInteractionMeshes.delete(key);
+        clearPendingNearChunkUnloads(key);
         return true;
     }
 
@@ -167,6 +232,7 @@
         loadedChunks.clear();
         loadedChunkInteractionState.clear();
         Object.keys(nearGroups).forEach((key) => delete nearGroups[key]);
+        clearPendingChunkStreamingWork();
         clearChunkTierGroups(context);
         lastChunkPolicyRevision = -1;
         callHook(context, 'bumpShadowFocusRevision');
@@ -214,14 +280,47 @@
         loadedChunkInteractionState.set(key, targetState);
     }
 
-    function collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, nearRadius, midRadius, worldChunksX, worldChunksY) {
+    function shouldPromoteEdgeAwareNearChunk(dx, dy, nearOptions = {}) {
+        if (dx === 0 && dy === 0) return true;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) return false;
+        const chunkSize = Math.max(1, Math.floor(Number.isFinite(nearOptions.chunkSize) ? nearOptions.chunkSize : 1));
+        const margin = Math.max(0, Math.min(chunkSize, Math.floor(Number.isFinite(nearOptions.nearMargin) ? nearOptions.nearMargin : 0)));
+        const localX = Math.max(0, Math.min(chunkSize - 0.0001, Number.isFinite(nearOptions.localX) ? nearOptions.localX : 0));
+        const localY = Math.max(0, Math.min(chunkSize - 0.0001, Number.isFinite(nearOptions.localY) ? nearOptions.localY : 0));
+        if (dx < 0 && localX > margin) return false;
+        if (dx > 0 && localX < chunkSize - margin) return false;
+        if (dy < 0 && localY > margin) return false;
+        if (dy > 0 && localY < chunkSize - margin) return false;
+        return true;
+    }
+
+    function getEdgeAwareNearActivationKey(policy, chunkSize, localX, localY) {
+        if (!policy || policy.nearMode !== 'edge') return 'square';
+        const resolvedChunkSize = Math.max(1, Math.floor(Number.isFinite(chunkSize) ? chunkSize : 1));
+        const margin = Math.max(0, Math.min(resolvedChunkSize, Math.floor(Number.isFinite(policy.nearMargin) ? policy.nearMargin : 0)));
+        const safeLocalX = Math.max(0, Math.min(resolvedChunkSize - 0.0001, Number.isFinite(localX) ? localX : 0));
+        const safeLocalY = Math.max(0, Math.min(resolvedChunkSize - 0.0001, Number.isFinite(localY) ? localY : 0));
+        const horizontal = safeLocalX <= margin ? 'west' : (safeLocalX >= resolvedChunkSize - margin ? 'east' : 'center-x');
+        const vertical = safeLocalY <= margin ? 'north' : (safeLocalY >= resolvedChunkSize - margin ? 'south' : 'center-y');
+        return `${horizontal}:${vertical}`;
+    }
+
+    function collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, nearRadius, midRadius, farRadius, farMode, worldChunksX, worldChunksY, nearOptions = {}) {
         const assignments = new Map();
+        const effectiveFarRadius = Math.max(midRadius, Math.floor(Number.isFinite(farRadius) ? farRadius : (midRadius + 1)));
+        const shouldAssignFar = farMode === 'all'
+            ? () => true
+            : (dist) => dist <= effectiveFarRadius;
+        const edgeAwareNear = nearOptions.nearMode === 'edge';
         for (let cy = 0; cy < worldChunksY; cy++) {
             for (let cx = 0; cx < worldChunksX; cx++) {
-                const dist = Math.max(Math.abs(cx - centerChunkX), Math.abs(cy - centerChunkY));
+                const dx = cx - centerChunkX;
+                const dy = cy - centerChunkY;
+                const dist = Math.max(Math.abs(dx), Math.abs(dy));
                 let tier = CHUNK_TIER_FAR;
-                if (dist <= nearRadius) tier = CHUNK_TIER_NEAR;
+                if (dist <= nearRadius && (!edgeAwareNear || shouldPromoteEdgeAwareNearChunk(dx, dy, nearOptions))) tier = CHUNK_TIER_NEAR;
                 else if (dist <= midRadius) tier = CHUNK_TIER_MID;
+                else if (!shouldAssignFar(dist)) continue;
                 assignments.set(chunkKey(cx, cy), tier);
             }
         }
@@ -244,15 +343,27 @@
     function resolveActiveChunkRenderPolicy(context = {}) {
         const fallback = getChunkRenderPolicy();
         const policy = callHook(context, 'getChunkRenderPolicy') || fallback;
+        const policyPresetDefaults = policy && typeof policy.preset === 'string'
+            ? getChunkRenderPolicy(policy.preset)
+            : fallback;
         const nearRadius = Math.max(0, Math.floor(Number.isFinite(policy && policy.nearRadius) ? policy.nearRadius : fallback.nearRadius));
         const midRadius = Math.max(nearRadius, Math.floor(Number.isFinite(policy && policy.midRadius) ? policy.midRadius : fallback.midRadius));
         const interactionRadius = Math.max(0, Math.min(nearRadius, Math.floor(Number.isFinite(policy && policy.interactionRadius) ? policy.interactionRadius : fallback.interactionRadius)));
+        const nearMode = (policy && policy.nearMode === 'edge')
+            ? 'edge'
+            : ((policy && policy.nearMode === 'square') ? 'square' : policyPresetDefaults.nearMode);
+        const nearMargin = Math.max(0, Math.floor(Number.isFinite(policy && policy.nearMargin) ? policy.nearMargin : policyPresetDefaults.nearMargin));
+        const farMode = (policy && policy.farMode === 'all') ? 'all' : fallback.farMode;
+        const rawFarRadius = Number.isFinite(policy && policy.farRadius) ? policy.farRadius : fallback.farRadius;
         return {
             preset: (policy && typeof policy.preset === 'string') ? policy.preset : fallback.preset,
             nearRadius,
             midRadius,
             interactionRadius,
-            farMode: 'all'
+            nearMode,
+            nearMargin,
+            farMode,
+            farRadius: Math.max(midRadius, Math.floor(Number.isFinite(rawFarRadius) ? rawFarRadius : (midRadius + 1)))
         };
     }
 
@@ -316,7 +427,8 @@
             return;
         }
 
-        if (chunkAutoQualityState.highWindows >= 3 && stepChunkRenderPolicyPreset(1, now, context)) {
+        const policy = resolveActiveChunkRenderPolicy(context);
+        if (chunkAutoQualityState.highWindows >= 3 && policy.preset === 'safe' && stepChunkRenderPolicyPreset(1, now, context)) {
             chunkAutoQualityState.lowWindows = 0;
             chunkAutoQualityState.highWindows = 0;
         }
@@ -332,14 +444,24 @@
         const pZ = Number.isFinite(playerPosition.z) ? playerPosition.z : 0;
         const centerChunkX = Math.max(0, Math.min(worldChunksX - 1, Math.floor(pX / chunkSize)));
         const centerChunkY = Math.max(0, Math.min(worldChunksY - 1, Math.floor(pZ / chunkSize)));
+        const localX = pX - (centerChunkX * chunkSize);
+        const localY = pZ - (centerChunkY * chunkSize);
         const policy = resolveActiveChunkRenderPolicy(context);
         const visiblePlane = Number.isFinite(playerPosition.visiblePlane) ? Math.floor(playerPosition.visiblePlane) : 0;
+        const nearActivationKey = getEdgeAwareNearActivationKey(policy, chunkSize, localX, localY);
         return {
             centerChunkX,
             centerChunkY,
             visiblePlane,
             policy,
-            desiredTierByKey: collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, policy.nearRadius, policy.midRadius, worldChunksX, worldChunksY),
+            nearActivationKey,
+            desiredTierByKey: collectDesiredChunkTierAssignments(centerChunkX, centerChunkY, policy.nearRadius, policy.midRadius, policy.farRadius, policy.farMode, worldChunksX, worldChunksY, {
+                nearMode: policy.nearMode,
+                nearMargin: policy.nearMargin,
+                chunkSize,
+                localX,
+                localY
+            }),
             desiredInteractionChunks: collectDesiredChunks(
                 centerChunkX,
                 centerChunkY,
@@ -375,6 +497,46 @@
         return request;
     }
 
+    function enqueuePendingSimplifiedChunkBuild(cx, cy, key, targetTier, maxVisiblePlane) {
+        if (targetTier !== CHUNK_TIER_MID && targetTier !== CHUNK_TIER_FAR) return null;
+        const existingRequest = pendingSimplifiedChunkBuilds.get(key);
+        if (existingRequest) {
+            existingRequest.targetTier = targetTier;
+            existingRequest.maxVisiblePlane = Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0;
+            existingRequest.cx = cx;
+            existingRequest.cy = cy;
+            return existingRequest;
+        }
+
+        const request = {
+            key,
+            cx,
+            cy,
+            targetTier,
+            maxVisiblePlane: Number.isFinite(maxVisiblePlane) ? Math.floor(maxVisiblePlane) : 0,
+            sequence: pendingSimplifiedChunkBuildSequence++
+        };
+        pendingSimplifiedChunkBuilds.set(key, request);
+        return request;
+    }
+
+    function enqueuePendingNearChunkUnload(key, context = {}) {
+        if (typeof key !== 'string' || !key || !getNearChunkGroup(key)) return null;
+        const now = getNowMs(context);
+        const existingRequest = pendingNearChunkUnloads.get(key);
+        if (existingRequest) {
+            existingRequest.unloadAfterMs = Math.max(existingRequest.unloadAfterMs, now + CHUNK_STREAMING_NEAR_UNLOAD_GRACE_MS);
+            return existingRequest;
+        }
+        const request = {
+            key,
+            unloadAfterMs: now + CHUNK_STREAMING_NEAR_UNLOAD_GRACE_MS,
+            sequence: pendingNearChunkUnloadSequence++
+        };
+        pendingNearChunkUnloads.set(key, request);
+        return request;
+    }
+
     function showPendingNearChunkFallback(cx, cy, key, maxVisiblePlane, context = {}) {
         const midGroup = getMidChunkGroup(key);
         if (midGroup) {
@@ -391,37 +553,48 @@
         callHook(context, 'setChunkGroupPlaneVisibility', farGroup, maxVisiblePlane);
     }
 
-    function processPendingNearChunkBuilds(options = {}) {
-        const context = options.context || options;
-        const maxBuilds = Number.isFinite(options.maxBuilds) ? options.maxBuilds : (Number.isFinite(options) ? options : 1);
-        if (!callHook(context, 'hasPlayerRig') || pendingNearChunkBuilds.size === 0) return 0;
-        const buildLimit = Math.max(0, Math.floor(Number.isFinite(maxBuilds) ? maxBuilds : 1));
-        if (buildLimit <= 0) return 0;
+    function getRequestDistanceFromPolicyCenter(request, policyState) {
+        if (!request || !policyState) return Infinity;
+        return Math.max(
+            Math.abs(request.cx - policyState.centerChunkX),
+            Math.abs(request.cy - policyState.centerChunkY)
+        );
+    }
 
-        const policyState = buildCurrentChunkPolicyState(context);
-        if (!policyState) return 0;
-
-        const requests = Array.from(pendingNearChunkBuilds.values()).sort((left, right) => {
-            const leftDistance = Math.max(
-                Math.abs(left.cx - policyState.centerChunkX),
-                Math.abs(left.cy - policyState.centerChunkY)
-            );
-            const rightDistance = Math.max(
-                Math.abs(right.cx - policyState.centerChunkX),
-                Math.abs(right.cy - policyState.centerChunkY)
-            );
+    function sortStreamingRequestsByDistance(requests, policyState) {
+        return requests.sort((left, right) => {
+            const leftDistance = getRequestDistanceFromPolicyCenter(left, policyState);
+            const rightDistance = getRequestDistanceFromPolicyCenter(right, policyState);
             if (leftDistance !== rightDistance) return leftDistance - rightDistance;
-            return left.sequence - right.sequence;
+            const leftTierPriority = left && left.targetTier === CHUNK_TIER_MID ? 0 : 1;
+            const rightTierPriority = right && right.targetTier === CHUNK_TIER_MID ? 0 : 1;
+            if (leftTierPriority !== rightTierPriority) return leftTierPriority - rightTierPriority;
+            return (left.sequence || 0) - (right.sequence || 0);
         });
+    }
+
+    function isStreamingBudgetSpent(startMs, context = {}) {
+        return (getNowMs(context) - startMs) >= CHUNK_STREAMING_FRAME_BUDGET_MS;
+    }
+
+    function processNearChunkBuildQueue(context, policyState, buildLimit, frameStartMs, useCadence = true) {
+        if (pendingNearChunkBuilds.size === 0) return 0;
+        const now = getNowMs(context);
+        if (useCadence && now - lastNearChunkBuildMs < CHUNK_STREAMING_NEAR_BUILD_INTERVAL_MS) return 0;
+
+        const requests = sortStreamingRequestsByDistance(Array.from(pendingNearChunkBuilds.values()), policyState);
 
         let processed = 0;
         for (let i = 0; i < requests.length && processed < buildLimit; i++) {
+            if (processed > 0 && isStreamingBudgetSpent(frameStartMs, context)) break;
             const request = requests[i];
             if (!request) continue;
 
             const key = request.key;
-            if (getNearChunkGroup(key)) {
+            const existingNearGroup = getNearChunkGroup(key);
+            if (existingNearGroup) {
                 clearPendingNearChunkBuilds(key);
+                clearPendingNearChunkUnloads(key);
                 continue;
             }
 
@@ -446,18 +619,163 @@
             setChunkInteractionState(key, shouldRegisterInteraction, context);
             chunkTierStateByKey.set(key, CHUNK_TIER_NEAR);
             clearPendingNearChunkBuilds(key);
+            clearPendingSimplifiedChunkBuilds(key);
+            clearPendingNearChunkUnloads(key);
             processed += 1;
+            lastNearChunkBuildMs = getNowMs(context);
+            if (useCadence) break;
         }
 
         return processed;
+    }
+
+    function processPendingSimplifiedChunkBuilds(options = {}) {
+        const context = options.context || options;
+        const policyState = options.policyState || buildCurrentChunkPolicyState(context);
+        const maxBuilds = Math.max(0, Math.floor(Number.isFinite(options.maxBuilds) ? options.maxBuilds : 1));
+        const frameStartMs = Number.isFinite(options.frameStartMs) ? options.frameStartMs : getNowMs(context);
+        const useCadence = options.useCadence !== false && maxBuilds <= 1;
+        if (!policyState || pendingSimplifiedChunkBuilds.size === 0 || maxBuilds <= 0) return 0;
+        const now = getNowMs(context);
+        if (useCadence && now - lastSimplifiedChunkBuildMs < CHUNK_STREAMING_SIMPLIFIED_BUILD_INTERVAL_MS) return 0;
+
+        const requests = sortStreamingRequestsByDistance(Array.from(pendingSimplifiedChunkBuilds.values()), policyState);
+        let processed = 0;
+        for (let i = 0; i < requests.length && processed < maxBuilds; i++) {
+            if (processed > 0 && isStreamingBudgetSpent(frameStartMs, context)) break;
+            const request = requests[i];
+            if (!request) continue;
+            const key = request.key;
+            const desiredTier = policyState.desiredTierByKey.get(key);
+            if (!desiredTier || desiredTier === CHUNK_TIER_NEAR || desiredTier !== request.targetTier) {
+                clearPendingSimplifiedChunkBuilds(key);
+                continue;
+            }
+
+            if (request.targetTier === CHUNK_TIER_MID) {
+                const midGroup = getMidChunkGroup(key) || callHook(context, 'ensureMidChunkGroup', request.cx, request.cy);
+                if (midGroup) {
+                    midGroup.visible = true;
+                    callHook(context, 'setChunkGroupPlaneVisibility', midGroup, policyState.visiblePlane);
+                    const farGroup = getFarChunkGroup(key);
+                    if (farGroup) farGroup.visible = false;
+                    const nearGroup = getNearChunkGroup(key);
+                    if (nearGroup) {
+                        nearGroup.visible = false;
+                        setChunkInteractionState(key, false, context);
+                        enqueuePendingNearChunkUnload(key, context);
+                    }
+                    chunkTierStateByKey.set(key, CHUNK_TIER_MID);
+                    clearPendingSimplifiedChunkBuilds(key);
+                    processed += 1;
+                    lastSimplifiedChunkBuildMs = getNowMs(context);
+                    if (useCadence) break;
+                }
+                continue;
+            }
+
+            const farGroup = getFarChunkGroup(key) || callHook(context, 'ensureFarChunkGroup', request.cx, request.cy);
+            if (farGroup) {
+                farGroup.visible = true;
+                callHook(context, 'setChunkGroupPlaneVisibility', farGroup, policyState.visiblePlane);
+                const midGroup = getMidChunkGroup(key);
+                const nearGroup = getNearChunkGroup(key);
+                if (midGroup) midGroup.visible = false;
+                if (nearGroup) {
+                    nearGroup.visible = false;
+                    setChunkInteractionState(key, false, context);
+                    enqueuePendingNearChunkUnload(key, context);
+                }
+                chunkTierStateByKey.set(key, CHUNK_TIER_FAR);
+                clearPendingSimplifiedChunkBuilds(key);
+                processed += 1;
+                lastSimplifiedChunkBuildMs = getNowMs(context);
+                if (useCadence) break;
+            }
+        }
+
+        return processed;
+    }
+
+    function processPendingNearChunkUnloads(options = {}) {
+        const context = options.context || options;
+        const policyState = options.policyState || buildCurrentChunkPolicyState(context);
+        const maxUnloads = Math.max(0, Math.floor(Number.isFinite(options.maxUnloads) ? options.maxUnloads : 1));
+        const now = getNowMs(context);
+        const useCadence = options.useCadence !== false && maxUnloads <= 1;
+        if (!policyState || pendingNearChunkUnloads.size === 0 || maxUnloads <= 0) return 0;
+        if (useCadence && now - lastNearChunkUnloadMs < CHUNK_STREAMING_NEAR_UNLOAD_INTERVAL_MS) return 0;
+
+        const requests = Array.from(pendingNearChunkUnloads.values()).sort((left, right) => {
+            if (left.unloadAfterMs !== right.unloadAfterMs) return left.unloadAfterMs - right.unloadAfterMs;
+            return left.sequence - right.sequence;
+        });
+
+        let processed = 0;
+        for (let i = 0; i < requests.length && processed < maxUnloads; i++) {
+            const request = requests[i];
+            if (!request || request.unloadAfterMs > now) break;
+            const key = request.key;
+            const targetTier = policyState.desiredTierByKey.get(key);
+            if (targetTier === CHUNK_TIER_NEAR) {
+                clearPendingNearChunkUnloads(key);
+                continue;
+            }
+            if (!getNearChunkGroup(key)) {
+                clearPendingNearChunkUnloads(key);
+                continue;
+            }
+            if (targetTier === CHUNK_TIER_MID && !getMidChunkGroup(key)) {
+                request.unloadAfterMs = now + 250;
+                continue;
+            }
+            setChunkInteractionState(key, false, context);
+            unregisterNearChunk(key, context);
+            processed += 1;
+            lastNearChunkUnloadMs = getNowMs(context);
+            if (useCadence) break;
+        }
+
+        return processed;
+    }
+
+    function processPendingNearChunkBuilds(options = {}) {
+        const context = options.context || options;
+        const maxBuilds = Number.isFinite(options.maxBuilds) ? options.maxBuilds : (Number.isFinite(options) ? options : 1);
+        if (!callHook(context, 'hasPlayerRig')) return 0;
+        const buildLimit = Math.max(0, Math.floor(Number.isFinite(maxBuilds) ? maxBuilds : 1));
+        const maxSimplifiedBuilds = Math.max(0, Math.floor(Number.isFinite(options.maxSimplifiedBuilds) ? options.maxSimplifiedBuilds : 1));
+        const maxUnloads = Math.max(0, Math.floor(Number.isFinite(options.maxUnloads) ? options.maxUnloads : 1));
+        if (buildLimit <= 0 && maxSimplifiedBuilds <= 0 && maxUnloads <= 0) return 0;
+
+        const policyState = buildCurrentChunkPolicyState(context);
+        if (!policyState) return 0;
+        const frameStartMs = getNowMs(context);
+        const useNearBuildCadence = options.useCadence !== false && buildLimit <= 1;
+        const hadPendingNearBuilds = pendingNearChunkBuilds.size > 0;
+        const nearBuilds = buildLimit > 0
+            ? processNearChunkBuildQueue(context, policyState, buildLimit, frameStartMs, useNearBuildCadence)
+            : 0;
+        const stillPendingNearBuilds = pendingNearChunkBuilds.size > 0;
+        const lowerPriorityWorkAllowed = nearBuilds === 0 && !hadPendingNearBuilds && !stillPendingNearBuilds && !isStreamingBudgetSpent(frameStartMs, context);
+        const simplifiedBuilds = lowerPriorityWorkAllowed
+            ? processPendingSimplifiedChunkBuilds({ context, policyState, maxBuilds: maxSimplifiedBuilds, frameStartMs, useCadence: options.useCadence })
+            : 0;
+        const nearUnloads = lowerPriorityWorkAllowed && simplifiedBuilds === 0
+            ? processPendingNearChunkUnloads({ context, policyState, maxUnloads, useCadence: options.useCadence })
+            : 0;
+        return nearBuilds + simplifiedBuilds + nearUnloads;
     }
 
     function applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, maxVisiblePlane, context = {}) {
         const nearGroup = getNearChunkGroup(key);
         const midGroup = getMidChunkGroup(key);
         const farGroup = getFarChunkGroup(key);
+        const currentTier = chunkTierStateByKey.get(key);
 
         if (targetTier === CHUNK_TIER_NEAR) {
+            clearPendingSimplifiedChunkBuilds(key);
+            clearPendingNearChunkUnloads(key);
             if (nearGroup) {
                 clearPendingNearChunkBuilds(key);
                 if (midGroup) midGroup.visible = false;
@@ -476,26 +794,64 @@
         }
 
         clearPendingNearChunkBuilds(key);
-        if (nearGroup) unregisterNearChunk(key, context);
 
         if (targetTier === CHUNK_TIER_MID) {
+            if (nearGroup) {
+                nearGroup.visible = false;
+                setChunkInteractionState(key, false, context);
+                enqueuePendingNearChunkUnload(key, context);
+            }
             if (farGroup) farGroup.visible = false;
-            const nextMidGroup = midGroup || callHook(context, 'ensureMidChunkGroup', cx, cy);
+            const nextMidGroup = midGroup;
             if (nextMidGroup) {
                 nextMidGroup.visible = true;
                 callHook(context, 'setChunkGroupPlaneVisibility', nextMidGroup, maxVisiblePlane);
+                clearPendingSimplifiedChunkBuilds(key);
+                chunkTierStateByKey.set(key, CHUNK_TIER_MID);
+                return;
             }
-            chunkTierStateByKey.set(key, CHUNK_TIER_MID);
+            if (farGroup) {
+                farGroup.visible = true;
+                callHook(context, 'setChunkGroupPlaneVisibility', farGroup, maxVisiblePlane);
+            } else {
+                enqueuePendingSimplifiedChunkBuild(cx, cy, key, CHUNK_TIER_FAR, maxVisiblePlane);
+            }
+            enqueuePendingSimplifiedChunkBuild(cx, cy, key, CHUNK_TIER_MID, maxVisiblePlane);
+            chunkTierStateByKey.set(key, currentTier === CHUNK_TIER_MID ? CHUNK_TIER_MID : CHUNK_TIER_FAR);
             return;
         }
 
+        if (nearGroup) {
+            nearGroup.visible = false;
+            setChunkInteractionState(key, false, context);
+            enqueuePendingNearChunkUnload(key, context);
+        }
         if (midGroup) midGroup.visible = false;
-        const nextFarGroup = farGroup || callHook(context, 'ensureFarChunkGroup', cx, cy);
+        clearPendingSimplifiedChunkBuilds(key);
+        const nextFarGroup = farGroup;
         if (nextFarGroup) {
             nextFarGroup.visible = true;
             callHook(context, 'setChunkGroupPlaneVisibility', nextFarGroup, maxVisiblePlane);
+        } else {
+            enqueuePendingSimplifiedChunkBuild(cx, cy, key, CHUNK_TIER_FAR, maxVisiblePlane);
         }
         chunkTierStateByKey.set(key, CHUNK_TIER_FAR);
+    }
+
+    function deactivateChunkTierForKey(key, context = {}) {
+        clearPendingNearChunkBuilds(key);
+        clearPendingSimplifiedChunkBuilds(key);
+        if (getNearChunkGroup(key)) {
+            setChunkInteractionState(key, false, context);
+            const nearGroup = getNearChunkGroup(key);
+            if (nearGroup) nearGroup.visible = false;
+            enqueuePendingNearChunkUnload(key, context);
+        }
+        const midGroup = getMidChunkGroup(key);
+        const farGroup = getFarChunkGroup(key);
+        if (midGroup) midGroup.visible = false;
+        if (farGroup) farGroup.visible = false;
+        chunkTierStateByKey.delete(key);
     }
 
     function manageChunks(options = {}) {
@@ -516,6 +872,7 @@
             && !chunkPolicyDirty
             && lastChunkPolicyCenterX === pCX
             && lastChunkPolicyCenterY === pCY
+            && lastChunkPolicyNearActivationKey === policyState.nearActivationKey
             && lastChunkPolicyRevision === policyRevision
         ) {
             return;
@@ -529,7 +886,11 @@
         for (let cy = 0; cy < worldChunksY; cy++) {
             for (let cx = 0; cx < worldChunksX; cx++) {
                 const key = chunkKey(cx, cy);
-                const targetTier = policyState.desiredTierByKey.get(key) || CHUNK_TIER_FAR;
+                const targetTier = policyState.desiredTierByKey.get(key);
+                if (!targetTier) {
+                    deactivateChunkTierForKey(key, context);
+                    continue;
+                }
                 const shouldRegisterInteraction = targetTier === CHUNK_TIER_NEAR && policyState.desiredInteractionChunks.has(key);
                 applyChunkTierForKey(cx, cy, key, targetTier, shouldRegisterInteraction, visiblePlane, context);
             }
@@ -537,6 +898,7 @@
 
         lastChunkPolicyCenterX = pCX;
         lastChunkPolicyCenterY = pCY;
+        lastChunkPolicyNearActivationKey = policyState.nearActivationKey;
         lastChunkPolicyRevision = policyRevision;
         chunkPolicyDirty = false;
     }
@@ -545,6 +907,17 @@
         Object.values(nearGroups).forEach((group) => callHook(context, 'setChunkGroupPlaneVisibility', group, maxVisiblePlane));
         Object.values(midGroups).forEach((group) => callHook(context, 'setChunkGroupPlaneVisibility', group, maxVisiblePlane));
         Object.values(farGroups).forEach((group) => callHook(context, 'setChunkGroupPlaneVisibility', group, maxVisiblePlane));
+    }
+
+    function getChunkStreamingQueueStats() {
+        return {
+            pendingNearBuilds: pendingNearChunkBuilds.size,
+            pendingSimplifiedBuilds: pendingSimplifiedChunkBuilds.size,
+            pendingNearUnloads: pendingNearChunkUnloads.size,
+            nearGroups: Object.keys(nearGroups).length,
+            midGroups: Object.keys(midGroups).length,
+            farGroups: Object.keys(farGroups).length
+        };
     }
 
     window.WorldChunkSceneRuntime = {
@@ -573,7 +946,8 @@
         setMidChunkGroup,
         setFarChunkGroup,
         setChunkInteractionState,
-        setLoadedChunkPlaneVisibility
+        setLoadedChunkPlaneVisibility,
+        getChunkStreamingQueueStats
     };
 
     window.getChunkRenderPolicy = getChunkRenderPolicy;

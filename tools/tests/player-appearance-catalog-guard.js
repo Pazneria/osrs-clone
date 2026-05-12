@@ -49,6 +49,9 @@ function run() {
   assert(catalogScript.includes("knife"), "player appearance catalog should define knife held fragments");
   assert(catalogScript.includes("oak_logs"), "player appearance catalog should define log-bundle held fragments");
   assert(catalogScript.includes("yew_logs"), "player appearance catalog should define high-tier log-bundle held fragments");
+  assert(catalogScript.includes("normal_shortbow"), "player appearance catalog should define starter bow held fragments");
+  assert(catalogScript.includes("yew_longbow"), "player appearance catalog should define high-tier bow held fragments");
+  assert(catalogScript.includes("bronze_arrows"), "player appearance catalog should define starter arrow quiver fragments");
   assert(catalogScript.includes("bronze_helmet"), "player appearance catalog should define bronze helmet head fragments");
   assert(catalogScript.includes("rune_helmet"), "player appearance catalog should define rune helmet head fragments");
   assert(catalogScript.includes("bronze_shield"), "player appearance catalog should define bronze shield left-hand fragments");
@@ -67,6 +70,49 @@ function run() {
     catalog.bodyColorPalettes.every((palette) => palette.join(",") === catalog.bodyColorPalettes[0].join(",")),
     "creator color rows should share the same colors in the same order"
   );
+  assert(catalog.slotOrder[catalog.slotOrder.length - 1] === "ammo", "ammo should be appended to the appearance slot order");
+  [
+    "normal_shortbow",
+    "normal_longbow",
+    "oak_shortbow",
+    "oak_longbow",
+    "willow_shortbow",
+    "willow_longbow",
+    "maple_shortbow",
+    "maple_longbow",
+    "yew_shortbow",
+    "yew_longbow"
+  ].forEach((itemId) => {
+    const itemDef = catalog.itemDefs[itemId];
+    assert(itemDef && itemDef.slot === "weapon", `${itemId} should be available as a weapon appearance item`);
+    assert(
+      Array.isArray(itemDef.fragments) && itemDef.fragments.some((fragment) => fragment.target === "axe" && fragment.shape === "pixelExtrude"),
+      `${itemId} should render a right-hand pixel-extruded bow`
+    );
+  });
+  [
+    "bronze_arrows",
+    "iron_arrows",
+    "steel_arrows",
+    "mithril_arrows",
+    "adamant_arrows",
+    "rune_arrows"
+  ].forEach((itemId) => {
+    const itemDef = catalog.itemDefs[itemId];
+    assert(itemDef && itemDef.slot === "ammo", `${itemId} should be available as an ammo appearance item`);
+    assert(
+      Array.isArray(itemDef.fragments) && itemDef.fragments.some((fragment) => fragment.target === "torso" && fragment.shape === "cylinder"),
+      `${itemId} should render a torso-mounted quiver`
+    );
+    assert(
+      itemDef.fragments.some((fragment) => fragment.target === "torso" && Array.isArray(fragment.offset) && fragment.offset[2] <= -0.2),
+      `${itemId} quiver should sit behind the torso far enough to avoid back clipping`
+    );
+    assert(
+      itemDef.fragments.some((fragment) => fragment.target === "torso" && fragment.shape === "cone"),
+      `${itemId} should render visible arrow tips`
+    );
+  });
   assert(catalog.creatorSlotOrder.join(",") === "hairStyle,faceStyle,facialHair,bodyStyle,legStyle,feetStyle", "creator slots should stay in OSRS selector order");
   assert(catalog.creatorDefaults.hairStyle === "short" && catalog.creatorDefaults.bodyStyle === "plain_tunic", "creator defaults should be shared starter selections");
   assert(catalog.creatorSlots.hairStyle.options.map((option) => option.id).join(",") === "bald,short,swept,long", "creator hair options should match the starter catalog");

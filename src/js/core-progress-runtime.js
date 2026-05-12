@@ -47,16 +47,37 @@
         return restored;
     }
 
+    function getEquipmentEntryItem(entry) {
+        if (!entry || typeof entry !== 'object') return null;
+        if (entry.itemData && typeof entry.itemData === 'object') return entry.itemData;
+        return entry;
+    }
+
+    function getEquipmentEntryAmount(entry) {
+        if (!entry || typeof entry !== 'object') return 0;
+        const amount = Number(entry.amount);
+        return Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+    }
+
     function serializeEquipmentState(context = {}) {
         const equipment = context.equipment || {};
         const out = {};
         const slotNames = Object.keys(equipment);
         for (let i = 0; i < slotNames.length; i++) {
             const slotName = slotNames[i];
-            const equippedItem = equipment[slotName];
-            out[slotName] = equippedItem && typeof equippedItem.id === 'string'
+            const entry = equipment[slotName];
+            const equippedItem = getEquipmentEntryItem(entry);
+            const itemId = equippedItem && typeof equippedItem.id === 'string'
                 ? sanitizeItemId(equippedItem.id)
-                : null;
+                : '';
+            if (!itemId) {
+                out[slotName] = null;
+                continue;
+            }
+            const amount = getEquipmentEntryAmount(entry);
+            out[slotName] = equippedItem.stackable || amount > 1
+                ? { itemId, amount: Math.max(1, amount) }
+                : itemId;
         }
         return out;
     }
@@ -68,10 +89,22 @@
         const slotNames = Object.keys(equipment);
         for (let i = 0; i < slotNames.length; i++) {
             const slotName = slotNames[i];
-            const itemId = savedEquipment && typeof savedEquipment === 'object'
-                ? sanitizeItemId(savedEquipment[slotName])
-                : '';
-            restored[slotName] = itemId && itemDb[itemId] ? itemDb[itemId] : null;
+            const savedEntry = savedEquipment && typeof savedEquipment === 'object'
+                ? savedEquipment[slotName]
+                : null;
+            const itemId = typeof savedEntry === 'string'
+                ? sanitizeItemId(savedEntry)
+                : sanitizeItemId(savedEntry && typeof savedEntry === 'object' ? savedEntry.itemId : '');
+            if (!itemId || !itemDb[itemId]) {
+                restored[slotName] = null;
+                continue;
+            }
+            const itemData = itemDb[itemId];
+            const rawAmount = savedEntry && typeof savedEntry === 'object' ? Number(savedEntry.amount) : 1;
+            const amount = Number.isFinite(rawAmount) ? Math.max(1, Math.floor(rawAmount)) : 1;
+            restored[slotName] = itemData.stackable || amount > 1
+                ? { itemData, amount }
+                : itemData;
         }
         return restored;
     }

@@ -4,6 +4,202 @@
         return three;
     }
 
+    function appendFloatAttributeValues(target, attribute) {
+        if (!attribute || !attribute.array) return;
+        const array = attribute.array;
+        for (let i = 0; i < array.length; i++) target.push(array[i]);
+    }
+
+    function cloneMeshGeometryForMerge(mesh) {
+        if (!mesh || !mesh.geometry || !mesh.geometry.attributes || !mesh.geometry.attributes.position) return null;
+        const geometry = mesh.geometry.index && typeof mesh.geometry.toNonIndexed === 'function'
+            ? mesh.geometry.toNonIndexed()
+            : mesh.geometry.clone();
+        mesh.updateMatrix();
+        geometry.applyMatrix4(mesh.matrix);
+        return geometry;
+    }
+
+    function cloneMeshGeometryForMergeRoot(THREE, mesh, root, rootInverse) {
+        if (!mesh || !root || !mesh.geometry || !mesh.geometry.attributes || !mesh.geometry.attributes.position) return null;
+        const geometry = mesh.geometry.index && typeof mesh.geometry.toNonIndexed === 'function'
+            ? mesh.geometry.toNonIndexed()
+            : mesh.geometry.clone();
+        mesh.updateMatrixWorld(true);
+        const matrix = new THREE.Matrix4().multiplyMatrices(rootInverse, mesh.matrixWorld);
+        geometry.applyMatrix4(matrix);
+        return geometry;
+    }
+
+    function canMergeStaticVisualMesh(mesh, excludedMaterial) {
+        if (!mesh || !mesh.isMesh || !mesh.geometry || !mesh.material) return false;
+        if (mesh.material === excludedMaterial) return false;
+        if (mesh.visible === false || mesh.material.visible === false) return false;
+        if (Array.isArray(mesh.material) || mesh.isSkinnedMesh) return false;
+        if (!mesh.geometry.attributes || !mesh.geometry.attributes.position) return false;
+        if (mesh.material.transparent || mesh.material.opacity < 1) return false;
+        return true;
+    }
+
+    function getStaticVisualMergeKey(mesh) {
+        const material = mesh && mesh.material;
+        if (!material) return '';
+        return [
+            material.uuid || '',
+            mesh.castShadow ? 'cast' : 'nocast',
+            mesh.receiveShadow ? 'receive' : 'noreceive',
+            Number.isFinite(mesh.renderOrder) ? mesh.renderOrder : 0
+        ].join('|');
+    }
+
+    function createMergedStaticVisualMesh(THREE, meshes) {
+        if (!Array.isArray(meshes) || meshes.length < 2) return null;
+        const material = meshes[0].material;
+        const geometries = [];
+        for (let i = 0; i < meshes.length; i++) {
+            const geometry = cloneMeshGeometryForMerge(meshes[i]);
+            if (!geometry) return null;
+            geometries.push(geometry);
+        }
+
+        const shouldPreserveUvs = !!(material && material.map);
+        const hasAllUvs = geometries.every((geometry) => !!(geometry.attributes && geometry.attributes.uv));
+        const hasAllColors = geometries.every((geometry) => !!(geometry.attributes && geometry.attributes.color));
+        if (shouldPreserveUvs && !hasAllUvs) return null;
+        if (material && material.vertexColors && !hasAllColors) return null;
+
+        const positions = [];
+        const normals = [];
+        const uvs = [];
+        const colors = [];
+        let preserveNormals = true;
+        for (let i = 0; i < geometries.length; i++) {
+            const geometry = geometries[i];
+            const attrs = geometry.attributes || {};
+            appendFloatAttributeValues(positions, attrs.position);
+            if (attrs.normal) appendFloatAttributeValues(normals, attrs.normal);
+            else preserveNormals = false;
+            if ((shouldPreserveUvs || hasAllUvs) && attrs.uv) appendFloatAttributeValues(uvs, attrs.uv);
+            if (hasAllColors && attrs.color) appendFloatAttributeValues(colors, attrs.color);
+        }
+        if (!positions.length) return null;
+
+        const mergedGeometry = new THREE.BufferGeometry();
+        mergedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        if (preserveNormals && normals.length === positions.length) mergedGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        else mergedGeometry.computeVertexNormals();
+        if ((shouldPreserveUvs || hasAllUvs) && uvs.length === (positions.length / 3) * 2) mergedGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        if (hasAllColors && colors.length === positions.length) mergedGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        mergedGeometry.computeBoundingBox();
+        mergedGeometry.computeBoundingSphere();
+
+        const mergedMesh = new THREE.Mesh(mergedGeometry, material);
+        mergedMesh.castShadow = meshes[0].castShadow;
+        mergedMesh.receiveShadow = meshes[0].receiveShadow;
+        mergedMesh.renderOrder = meshes[0].renderOrder;
+        mergedMesh.frustumCulled = meshes.every((mesh) => mesh.frustumCulled !== false);
+        return mergedMesh;
+    }
+
+    function createMergedStaticVisualDescendantMesh(THREE, root, meshes) {
+        if (!Array.isArray(meshes) || meshes.length < 2 || !root) return null;
+        root.updateMatrixWorld(true);
+        const rootInverse = new THREE.Matrix4().copy(root.matrixWorld).invert();
+        const material = meshes[0].material;
+        const geometries = [];
+        for (let i = 0; i < meshes.length; i++) {
+            const geometry = cloneMeshGeometryForMergeRoot(THREE, meshes[i], root, rootInverse);
+            if (!geometry) return null;
+            geometries.push(geometry);
+        }
+        return createMergedStaticVisualMeshFromGeometries(THREE, material, geometries, meshes);
+    }
+
+    function createMergedStaticVisualMeshFromGeometries(THREE, material, geometries, sourceMeshes) {
+        if (!Array.isArray(geometries) || geometries.length < 2) return null;
+        const shouldPreserveUvs = !!(material && material.map);
+        const hasAllUvs = geometries.every((geometry) => !!(geometry.attributes && geometry.attributes.uv));
+        const hasAllColors = geometries.every((geometry) => !!(geometry.attributes && geometry.attributes.color));
+        if (shouldPreserveUvs && !hasAllUvs) return null;
+        if (material && material.vertexColors && !hasAllColors) return null;
+
+        const positions = [];
+        const normals = [];
+        const uvs = [];
+        const colors = [];
+        let preserveNormals = true;
+        for (let i = 0; i < geometries.length; i++) {
+            const geometry = geometries[i];
+            const attrs = geometry.attributes || {};
+            appendFloatAttributeValues(positions, attrs.position);
+            if (attrs.normal) appendFloatAttributeValues(normals, attrs.normal);
+            else preserveNormals = false;
+            if ((shouldPreserveUvs || hasAllUvs) && attrs.uv) appendFloatAttributeValues(uvs, attrs.uv);
+            if (hasAllColors && attrs.color) appendFloatAttributeValues(colors, attrs.color);
+            geometry.dispose();
+        }
+        if (!positions.length) return null;
+
+        const mergedGeometry = new THREE.BufferGeometry();
+        mergedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        if (preserveNormals && normals.length === positions.length) mergedGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        else mergedGeometry.computeVertexNormals();
+        if ((shouldPreserveUvs || hasAllUvs) && uvs.length === (positions.length / 3) * 2) mergedGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        if (hasAllColors && colors.length === positions.length) mergedGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        mergedGeometry.computeBoundingBox();
+        mergedGeometry.computeBoundingSphere();
+
+        const mergedMesh = new THREE.Mesh(mergedGeometry, material);
+        const firstMesh = sourceMeshes[0];
+        mergedMesh.castShadow = !!(firstMesh && firstMesh.castShadow);
+        mergedMesh.receiveShadow = !!(firstMesh && firstMesh.receiveShadow);
+        mergedMesh.renderOrder = firstMesh && Number.isFinite(firstMesh.renderOrder) ? firstMesh.renderOrder : 0;
+        mergedMesh.frustumCulled = sourceMeshes.every((mesh) => mesh.frustumCulled !== false);
+        return mergedMesh;
+    }
+
+    function mergeStaticVisualChildrenByMaterial(THREE, group, options = {}) {
+        if (!group || !Array.isArray(group.children)) return;
+        const excludedMaterial = options.excludedMaterial || null;
+        const buckets = new Map();
+        group.children.slice().forEach((child) => {
+            if (!canMergeStaticVisualMesh(child, excludedMaterial)) return;
+            const key = getStaticVisualMergeKey(child);
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push(child);
+        });
+
+        buckets.forEach((meshes) => {
+            if (meshes.length < 2) return;
+            const mergedMesh = createMergedStaticVisualMesh(THREE, meshes);
+            if (!mergedMesh) return;
+            meshes.forEach((mesh) => group.remove(mesh));
+            group.add(mergedMesh);
+        });
+    }
+
+    function mergeStaticVisualDescendantsByMaterial(THREE, group, options = {}) {
+        if (!group || typeof group.traverse !== 'function') return;
+        const excludedMaterial = options.excludedMaterial || null;
+        const buckets = new Map();
+        group.traverse((child) => {
+            if (child === group || !canMergeStaticVisualMesh(child, excludedMaterial)) return;
+            const key = getStaticVisualMergeKey(child);
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push(child);
+        });
+
+        buckets.forEach((meshes) => {
+            if (meshes.length < 2) return;
+            const mergedMesh = createMergedStaticVisualDescendantMesh(THREE, group, meshes);
+            if (!mergedMesh) return;
+            meshes.forEach((mesh) => {
+                if (mesh.parent) mesh.parent.remove(mesh);
+            });
+            group.add(mergedMesh);
+        });
+    }
+
     function createTopAnchoredFloorMesh(options) {
         const THREE = requireThree(options && options.THREE);
         const material = options && options.material;
@@ -21,6 +217,131 @@
         floorMesh.castShadow = true;
         floorMesh.userData = { type: 'GROUND', gridX: x, gridY: y, z: z };
         return floorMesh;
+    }
+
+    function getFloorTileRenderBucket(options = {}) {
+        const logicalMap = options.logicalMap || [];
+        const TileId = options.TileId || {};
+        const isPierDeckTile = typeof options.isPierDeckTile === 'function' ? options.isPierDeckTile : () => false;
+        const pierConfig = options.pierConfig || null;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const rawTile = logicalMap[z] && logicalMap[z][y] ? logicalMap[z][y][x] : null;
+        const visualTile = options.visualTile;
+        const floorTile = rawTile === TileId.SOLID_NPC || rawTile === TileId.OBSTACLE ? visualTile : rawTile;
+        if (floorTile === TileId.SOLID_NPC) return null;
+        if (floorTile === TileId.OBSTACLE) return null;
+        if (floorTile === TileId.GRASS || floorTile === TileId.DIRT || floorTile === TileId.SHORE) return null;
+        if (floorTile === TileId.FLOOR_WOOD && isPierDeckTile(pierConfig, x, y, z)) return null;
+        if (floorTile === TileId.FLOOR_WOOD) return 'wood';
+        if (floorTile === TileId.FLOOR_BRICK) return 'brick';
+        if (floorTile === TileId.FLOOR_STONE || floorTile === TileId.BANK_BOOTH) return 'stone';
+        return null;
+    }
+
+    function ensureFloorTileGeometries(THREE, sharedGeometries) {
+        if (!sharedGeometries.floorTileBox) sharedGeometries.floorTileBox = new THREE.BoxGeometry(1, 1, 1);
+    }
+
+    function createFloorTileInstancedMesh(THREE, geometry, material, count, instanceMap) {
+        if (!geometry || !material || count <= 0) return null;
+        const mesh = new THREE.InstancedMesh(geometry, material, count);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.matrixAutoUpdate = false;
+        mesh.frustumCulled = false;
+        mesh.count = 0;
+        mesh.userData = { instanceMap };
+        return mesh;
+    }
+
+    function createFloorTileRenderData(options = {}) {
+        const counts = options.floorCounts || {};
+        const floorData = {
+            stoneIndex: 0,
+            woodIndex: 0,
+            brickIndex: 0,
+            stoneMap: [],
+            woodMap: [],
+            brickMap: [],
+            iStone: null,
+            iWood: null,
+            iBrick: null
+        };
+        const fallbackCount = Number.isFinite(options.floorCount) ? Math.max(0, Math.floor(options.floorCount)) : 0;
+        const stoneCount = Number.isFinite(counts.stone) ? Math.max(0, Math.floor(counts.stone)) : fallbackCount;
+        const woodCount = Number.isFinite(counts.wood) ? Math.max(0, Math.floor(counts.wood)) : fallbackCount;
+        const brickCount = Number.isFinite(counts.brick) ? Math.max(0, Math.floor(counts.brick)) : fallbackCount;
+        if (stoneCount <= 0 && woodCount <= 0 && brickCount <= 0) return floorData;
+
+        const THREE = requireThree(options.THREE);
+        const sharedGeometries = options.sharedGeometries || {};
+        const sharedMaterials = options.sharedMaterials || {};
+        const planeGroup = options.planeGroup || null;
+        const environmentMeshes = Array.isArray(options.environmentMeshes) ? options.environmentMeshes : null;
+        ensureFloorTileGeometries(THREE, sharedGeometries);
+
+        floorData.iStone = createFloorTileInstancedMesh(THREE, sharedGeometries.floorTileBox, sharedMaterials.floor7, stoneCount, floorData.stoneMap);
+        floorData.iWood = createFloorTileInstancedMesh(THREE, sharedGeometries.floorTileBox, sharedMaterials.floor6, woodCount, floorData.woodMap);
+        floorData.iBrick = createFloorTileInstancedMesh(THREE, sharedGeometries.floorTileBox, sharedMaterials.floor8, brickCount, floorData.brickMap);
+
+        [floorData.iStone, floorData.iWood, floorData.iBrick].forEach((mesh) => {
+            if (!mesh) return;
+            if (planeGroup) planeGroup.add(mesh);
+            if (environmentMeshes) environmentMeshes.push(mesh);
+        });
+
+        return floorData;
+    }
+
+    function appendFloorTileVisualState(options = {}) {
+        const floorData = options.floorData || {};
+        const dummyTransform = options.dummyTransform;
+        if (!dummyTransform) return false;
+        const bucket = getFloorTileRenderBucket(options);
+        if (!bucket) return false;
+        const meshKey = bucket === 'wood' ? 'iWood' : (bucket === 'brick' ? 'iBrick' : 'iStone');
+        const mapKey = bucket === 'wood' ? 'woodMap' : (bucket === 'brick' ? 'brickMap' : 'stoneMap');
+        const indexKey = bucket === 'wood' ? 'woodIndex' : (bucket === 'brick' ? 'brickIndex' : 'stoneIndex');
+        const mesh = floorData[meshKey];
+        const instanceMap = floorData[mapKey];
+        const index = floorData[indexKey] || 0;
+        if (!mesh || !Array.isArray(instanceMap)) return false;
+
+        const heightMap = options.heightMap || [];
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        const floorHeight = heightMap[z] && heightMap[z][y] ? heightMap[z][y][x] : 0;
+        const minThickness = 0.08;
+        const thickness = floorHeight > 0 ? floorHeight : minThickness;
+        const centerY = zOffset + (floorHeight > 0 ? (floorHeight / 2) : (floorHeight - (thickness / 2)));
+        dummyTransform.position.set(x, centerY, y);
+        dummyTransform.rotation.set(0, 0, 0);
+        dummyTransform.scale.set(1, thickness, 1);
+        dummyTransform.updateMatrix();
+        mesh.setMatrixAt(index, dummyTransform.matrix);
+        instanceMap[index] = { type: 'GROUND', gridX: x, gridY: y, z };
+        floorData[indexKey] = index + 1;
+        return true;
+    }
+
+    function markFloorTileRenderDataDirty(floorData) {
+        if (!floorData) return;
+        if (floorData.iStone) {
+            floorData.iStone.count = floorData.stoneIndex;
+            floorData.iStone.instanceMatrix.needsUpdate = true;
+        }
+        if (floorData.iWood) {
+            floorData.iWood.count = floorData.woodIndex;
+            floorData.iWood.instanceMatrix.needsUpdate = true;
+        }
+        if (floorData.iBrick) {
+            floorData.iBrick.count = floorData.brickIndex;
+            floorData.iBrick.instanceMatrix.needsUpdate = true;
+        }
     }
 
     function isFenceNeighbor(options, dx, dy) {
@@ -107,6 +428,150 @@
             if (Array.isArray(environmentMeshes)) environmentMeshes.push(child);
         });
         return group;
+    }
+
+    function ensureFenceGeometries(THREE, sharedGeometries) {
+        if (!sharedGeometries.fencePost) sharedGeometries.fencePost = new THREE.BoxGeometry(0.18, 1.05, 0.18);
+        if (!sharedGeometries.fenceCap) sharedGeometries.fenceCap = new THREE.BoxGeometry(0.26, 0.12, 0.26);
+        if (!sharedGeometries.fenceRail) sharedGeometries.fenceRail = new THREE.BoxGeometry(1, 0.11, 0.12);
+    }
+
+    function createFenceInstancedMesh(THREE, geometry, material, count, instanceMap) {
+        if (!geometry || !material || count <= 0) return null;
+        const mesh = new THREE.InstancedMesh(geometry, material, count);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.matrixAutoUpdate = false;
+        mesh.frustumCulled = false;
+        mesh.count = 0;
+        mesh.userData = { instanceMap };
+        return mesh;
+    }
+
+    function createFenceRenderData(options = {}) {
+        const fenceCount = Number.isFinite(options.fenceCount) ? Math.max(0, Math.floor(options.fenceCount)) : 0;
+        const fenceData = {
+            postIndex: 0,
+            capIndex: 0,
+            railIndex: 0,
+            postMap: [],
+            capMap: [],
+            railMap: [],
+            iPost: null,
+            iCap: null,
+            iRail: null
+        };
+        if (fenceCount <= 0) return fenceData;
+
+        const THREE = requireThree(options.THREE);
+        const sharedGeometries = options.sharedGeometries || {};
+        const sharedMaterials = options.sharedMaterials || {};
+        const planeGroup = options.planeGroup || null;
+        const environmentMeshes = Array.isArray(options.environmentMeshes) ? options.environmentMeshes : null;
+        const postMaterial = sharedMaterials.fenceWood || sharedMaterials.boothWood;
+        const railMaterial = sharedMaterials.boothWood || postMaterial;
+        ensureFenceGeometries(THREE, sharedGeometries);
+
+        fenceData.iPost = createFenceInstancedMesh(THREE, sharedGeometries.fencePost, postMaterial, fenceCount, fenceData.postMap);
+        fenceData.iCap = createFenceInstancedMesh(THREE, sharedGeometries.fenceCap, postMaterial, fenceCount, fenceData.capMap);
+        fenceData.iRail = createFenceInstancedMesh(THREE, sharedGeometries.fenceRail, railMaterial, fenceCount * 8, fenceData.railMap);
+
+        [fenceData.iPost, fenceData.iCap, fenceData.iRail].forEach((mesh) => {
+            if (!mesh) return;
+            if (planeGroup) planeGroup.add(mesh);
+            if (environmentMeshes) environmentMeshes.push(mesh);
+        });
+
+        return fenceData;
+    }
+
+    function setFenceInstance(mesh, instanceMap, index, dummyTransform, tileMeta) {
+        if (!mesh || !dummyTransform) return index;
+        mesh.setMatrixAt(index, dummyTransform.matrix);
+        instanceMap[index] = tileMeta;
+        return index + 1;
+    }
+
+    function appendFenceRailInstance(fenceData, dummyTransform, x, baseY, y, dx, dz, railY, tileMeta) {
+        if (!fenceData || !fenceData.iRail || !dummyTransform) return;
+        const length = Math.sqrt((dx * dx) + (dz * dz));
+        dummyTransform.position.set(x + (dx / 2), baseY + railY, y + (dz / 2));
+        dummyTransform.rotation.set(0, -Math.atan2(dz, dx), 0);
+        dummyTransform.scale.set(length, 1, 1);
+        dummyTransform.updateMatrix();
+        fenceData.railIndex = setFenceInstance(
+            fenceData.iRail,
+            fenceData.railMap,
+            fenceData.railIndex,
+            dummyTransform,
+            tileMeta
+        );
+    }
+
+    function appendFenceSegmentInstances(fenceData, dummyTransform, x, baseY, y, dx, dz, tileMeta) {
+        appendFenceRailInstance(fenceData, dummyTransform, x, baseY, y, dx, dz, 0.44, tileMeta);
+        appendFenceRailInstance(fenceData, dummyTransform, x, baseY, y, dx, dz, 0.72, tileMeta);
+    }
+
+    function appendFenceVisualState(options = {}) {
+        const fenceData = options.fenceData || {};
+        const dummyTransform = options.dummyTransform;
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
+        const baseHeight = Number.isFinite(options.baseHeight) ? options.baseHeight : 0;
+        if (!dummyTransform || (!fenceData.iPost && !fenceData.iCap && !fenceData.iRail)) return false;
+
+        const tileMeta = { type: 'WALL', gridX: x, gridY: y, z };
+        const baseY = zOffset + baseHeight;
+        const connections = resolveFenceConnections(options);
+
+        dummyTransform.position.set(x, baseY + 0.525, y);
+        dummyTransform.rotation.set(0, 0, 0);
+        dummyTransform.scale.set(1, 1, 1);
+        dummyTransform.updateMatrix();
+        fenceData.postIndex = setFenceInstance(
+            fenceData.iPost,
+            fenceData.postMap,
+            fenceData.postIndex,
+            dummyTransform,
+            tileMeta
+        );
+
+        dummyTransform.position.set(x, baseY + 1.11, y);
+        dummyTransform.rotation.set(0, 0, 0);
+        dummyTransform.scale.set(1, 1, 1);
+        dummyTransform.updateMatrix();
+        fenceData.capIndex = setFenceInstance(
+            fenceData.iCap,
+            fenceData.capMap,
+            fenceData.capIndex,
+            dummyTransform,
+            tileMeta
+        );
+
+        if (connections.hasEast) appendFenceSegmentInstances(fenceData, dummyTransform, x, baseY, y, 1, 0, tileMeta);
+        if (connections.hasSouth) appendFenceSegmentInstances(fenceData, dummyTransform, x, baseY, y, 0, 1, tileMeta);
+        if (connections.hasSouthEast) appendFenceSegmentInstances(fenceData, dummyTransform, x, baseY, y, 1, 1, tileMeta);
+        if (connections.hasSouthWest) appendFenceSegmentInstances(fenceData, dummyTransform, x, baseY, y, -1, 1, tileMeta);
+        return true;
+    }
+
+    function markFenceRenderDataDirty(fenceData) {
+        if (!fenceData) return;
+        if (fenceData.iPost) {
+            fenceData.iPost.count = fenceData.postIndex;
+            fenceData.iPost.instanceMatrix.needsUpdate = true;
+        }
+        if (fenceData.iCap) {
+            fenceData.iCap.count = fenceData.capIndex;
+            fenceData.iCap.instanceMatrix.needsUpdate = true;
+        }
+        if (fenceData.iRail) {
+            fenceData.iRail.count = fenceData.railIndex;
+            fenceData.iRail.instanceMatrix.needsUpdate = true;
+        }
     }
 
     function createCastleRenderData(options = {}) {
@@ -446,6 +911,7 @@
         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(gate.isEW ? gateWidth : 0.6, 1.2, gate.isEW ? 0.6 : gateWidth), sharedMaterials.hiddenHitbox);
         hitbox.position.set(meshOffsetX, 0.6, meshOffsetZ);
         group.add(hitbox);
+        mergeStaticVisualDescendantsByMaterial(THREE, group, { excludedMaterial: sharedMaterials.hiddenHitbox });
         return group;
     }
 
@@ -572,6 +1038,7 @@
         const bankTextPlane = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.2), sharedMaterials.bankTexPlaneMat);
         bankTextPlane.position.set(0, 2.3, 0.31);
         boothGroup.add(bankTextPlane);
+        mergeStaticVisualChildrenByMaterial(THREE, boothGroup);
         return boothGroup;
     }
 
@@ -732,6 +1199,7 @@
         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(bodyLocalW, 1.6, bodyLocalD), sharedMaterials.hiddenHitbox);
         hitbox.position.set(0, 0.8, 0);
         furnaceGroup.add(base, frontFrame, mouth, glow, lintel, leftButtress, rightButtress, chimney, cap, smoke, heat, hitbox);
+        mergeStaticVisualChildrenByMaterial(THREE, furnaceGroup, { excludedMaterial: sharedMaterials.hiddenHitbox });
         return furnaceGroup;
     }
 
@@ -773,6 +1241,7 @@
         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.3), sharedMaterials.hiddenHitbox);
         hitbox.position.set(0, 0.4, 0);
         anvilGroup.add(stand, waist, top, horn, heel, hardy, hitbox);
+        mergeStaticVisualChildrenByMaterial(THREE, anvilGroup, { excludedMaterial: sharedMaterials.hiddenHitbox });
         return anvilGroup;
     }
 
@@ -794,6 +1263,7 @@
         faceBack.position.set(0, 1.55, -0.055);
         faceBack.rotation.y = Math.PI;
         signGroup.add(post, board, faceFront, faceBack);
+        mergeStaticVisualChildrenByMaterial(THREE, signGroup);
         return signGroup;
     }
 
@@ -818,6 +1288,9 @@
         const accentMat = sharedMaterials.rockIron || sharedMaterials.floor7 || woodMat;
         const paperMat = sharedMaterials.parchmentMat || sharedMaterials.directionSignMat || accentMat;
         const noticeMat = sharedMaterials.tutorialNoticeMat || sharedMaterials.directionSignMat || paperMat;
+        const strawMat = sharedMaterials.thatchMat || sharedMaterials.floor6 || paperMat;
+        const redPaintMat = sharedMaterials.tutorialNoticeMat || accentMat;
+        const darkMat = sharedMaterials.caveMouth || darkWoodMat;
         const addBox = (w, h, d, mat, x, y, z) => {
             const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
             mesh.position.set(x || 0, y || 0, z || 0);
@@ -830,6 +1303,15 @@
             const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, h, 8), mat);
             mesh.position.set(x || 0, y || 0, z || 0);
             if (Number.isFinite(rotationZ)) mesh.rotation.z = rotationZ;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        };
+        const addDisk = (radius, depth, mat, x, y, z, segments) => {
+            const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, depth, segments || 16), mat);
+            mesh.position.set(x || 0, y || 0, z || 0);
+            mesh.rotation.x = Math.PI / 2;
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             group.add(mesh);
@@ -909,6 +1391,38 @@
             addToolRackAsset('bronze_axe', -0.48, 0.88, 0.43, 1.18, -0.64 + (Math.PI / 2));
             addToolRackAsset('bronze_pickaxe', 0, 0.88, 0.43, 1.14, -0.64 + (Math.PI / 2));
             addToolRackAsset('hammer', 0.48, 0.88, 0.43, 1.44, 0);
+        } else if (prop.kind === 'weapon_rack') {
+            addBox(0.16, 1.38, 0.12, darkWoodMat, -0.72, 0.69, -0.1);
+            addBox(0.16, 1.38, 0.12, darkWoodMat, 0.72, 0.69, -0.1);
+            addBox(1.34, 0.14, 0.12, woodMat, 0, 1.18, 0.08);
+            addBox(1.22, 0.12, 0.12, woodMat, 0, 0.54, 0.08);
+            addBox(0.12, 0.08, 0.34, darkWoodMat, -0.42, 0.96, 0.28);
+            addBox(0.12, 0.08, 0.34, darkWoodMat, 0.26, 0.96, 0.28);
+            addToolRackAsset('bronze_sword', -0.34, 0.88, 0.43, 1.28, 0.22);
+            addToolRackAsset('normal_shortbow', 0.34, 0.88, 0.43, 0.94, -0.18);
+            addBox(0.12, 0.48, 0.12, darkWoodMat, 0.02, 0.54, 0.36);
+            addBox(0.055, 0.66, 0.055, accentMat, -0.03, 0.76, 0.48, 0);
+            addBox(0.055, 0.62, 0.055, accentMat, 0.04, 0.74, 0.48, 0);
+        } else if (prop.kind === 'training_dummy') {
+            addCylinder(0.12, 0.16, 1.32, darkWoodMat, 0, 0.66, 0);
+            addBox(0.88, 0.09, 0.12, darkWoodMat, 0, 1.06, 0);
+            addBox(0.44, 0.52, 0.32, strawMat, 0, 0.82, 0.02);
+            addBox(0.34, 0.30, 0.30, strawMat, 0, 1.26, 0.02);
+            addBox(0.50, 0.08, 0.34, darkWoodMat, 0, 0.98, 0.03);
+            addBox(0.12, 0.09, 0.05, redPaintMat, 0, 1.28, 0.19);
+            addBox(0.12, 0.035, 0.045, darkMat, 0, 1.19, 0.195);
+            addBox(0.82, 0.12, 0.40, darkWoodMat, 0, 0.06, 0);
+        } else if (prop.kind === 'archery_target') {
+            addBox(0.12, 1.28, 0.12, darkWoodMat, -0.44, 0.64, -0.08);
+            addBox(0.12, 1.28, 0.12, darkWoodMat, 0.44, 0.64, -0.08);
+            addBox(1.0, 0.12, 0.12, woodMat, 0, 0.34, -0.08);
+            addDisk(0.54, 0.10, strawMat, 0, 1.08, 0.02, 18);
+            addDisk(0.41, 0.115, redPaintMat, 0, 1.08, 0.08, 18);
+            addDisk(0.28, 0.13, paperMat, 0, 1.08, 0.145, 18);
+            addDisk(0.13, 0.145, darkMat, 0, 1.08, 0.22, 16);
+            addBox(0.055, 0.46, 0.055, accentMat, 0.16, 1.08, 0.34, 0);
+            addBox(0.045, 0.15, 0.045, paperMat, 0.16, 1.30, 0.34, 0);
+            addBox(0.78, 0.12, 0.42, darkWoodMat, 0, 0.06, -0.12);
         } else if (prop.kind === 'notice_board') {
             addBox(0.14, 1.45, 0.14, darkWoodMat, 0, 0.72, 0);
             addBox(1.45, 0.82, 0.12, woodMat, 0, 1.48, 0);
@@ -959,7 +1473,10 @@
             woodpile: { w: 1.35, h: 0.55, d: 0.95 },
             ore_pile: { w: 1.25, h: 0.68, d: 1.0 },
             coal_bin: { w: 1.25, h: 0.95, d: 1.0 },
-            barrel: { w: 0.85, h: 0.98, d: 0.85 }
+            barrel: { w: 0.85, h: 0.98, d: 0.85 },
+            weapon_rack: { w: 1.62, h: 1.62, d: 0.85 },
+            training_dummy: { w: 1.16, h: 1.55, d: 0.95 },
+            archery_target: { w: 1.28, h: 1.68, d: 0.92 }
         };
         const hitboxSize = hitboxSizeByKind[prop.kind] || { w: 1.0, h: 1.0, d: 1.0 };
         const hitbox = new THREE.Mesh(
@@ -983,6 +1500,7 @@
                 label: prop.label || 'Decorative prop'
             }
         };
+        mergeStaticVisualChildrenByMaterial(THREE, group, { excludedMaterial: sharedMaterials.hiddenHitbox });
         return group;
     }
 
@@ -1058,6 +1576,7 @@
             altarGroup.add(bowl, flameL, flameR, emberCore, baseRing, midPlinthRing);
         }
 
+        mergeStaticVisualChildrenByMaterial(THREE, altarGroup);
         return altarGroup;
     }
 
@@ -1161,6 +1680,7 @@
         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(hw, doorHeight, hd), sharedMaterials.hiddenHitbox);
         hitbox.position.set(meshOffsetX, doorHeight / 2, meshOffsetZ);
         doorGroup.add(doorMesh, braceLower, braceUpper, topPanel, bottomPanel, threshold, jambA, jambB, knobInside, knobOutside, hitbox);
+        mergeStaticVisualChildrenByMaterial(THREE, doorGroup, { excludedMaterial: sharedMaterials.hiddenHitbox });
         return doorGroup;
     }
 
@@ -1235,6 +1755,7 @@
                 visualOnly: true
             };
         });
+        mergeStaticVisualChildrenByMaterial(THREE, caveGroup);
         return caveGroup;
     }
 
@@ -1568,6 +2089,7 @@
         appendChunkLandmarkVisuals,
         appendPierVisualsToChunk,
         appendFloorTileVisual,
+        appendFloorTileVisualState,
         appendShopCounterVisual,
         appendStairBlockVisual,
         appendStairRampVisual,
@@ -1579,13 +2101,19 @@
         createDecorPropVisualGroup,
         createDirectionalSignVisualGroup,
         createDoorVisualGroup,
+        createFenceRenderData,
         createFenceVisualGroup,
+        createFloorTileRenderData,
         createFurnaceVisualGroup,
         getFurnaceInteractionTile,
+        getFloorTileRenderBucket,
         createRoofVisualGroup,
         createTopAnchoredFloorMesh,
         createWoodenGateVisualGroup,
+        appendFenceVisualState,
         markCastleRenderDataDirty,
+        markFenceRenderDataDirty,
+        markFloorTileRenderDataDirty,
         resolveFenceConnections,
         setCastleTowerVisualState,
         setCastleWallVisualState,

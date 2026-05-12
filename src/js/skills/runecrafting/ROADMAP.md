@@ -385,10 +385,10 @@ Rune essence must continue to come from the mining `rune_essence` node, and that
 
 | Sink Skill | Demand Status | Rune Family | Rune Items |
 | ---------- | ------------- | ----------- | ---------- |
-| Magic | future_sink_contract | Elemental runes | Ember Rune, Water Rune, Earth Rune, Air Rune |
-| Magic | future_sink_contract | Combination runes | Steam Rune, Smoke Rune, Lava Rune, Mud Rune, Mist Rune, Dust Rune |
+| Magic | live_runtime_sink | Elemental runes | Ember Rune, Water Rune, Earth Rune, Air Rune |
+| Magic | live_runtime_sink | Combination runes | Steam Rune, Smoke Rune, Lava Rune, Mud Rune, Mist Rune, Dust Rune |
 
-All runes in the demand contract must stay stackable, craftable through runecrafting recipes, and present in the runecrafting economy table. The `future_sink_contract` status means the Magic skill is not live yet, but future spell costs should consume these item IDs rather than defining a parallel rune set.
+All runes in the demand contract must stay stackable, craftable through runecrafting recipes, and present in the runecrafting economy table. The `live_runtime_sink` status means the Magic combat runtime now consumes these item IDs directly instead of defining a parallel rune set.
 
 ## Possible Rules
 

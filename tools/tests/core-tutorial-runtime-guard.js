@@ -27,7 +27,14 @@ function run() {
   assert(runtimeSource.includes("'I am ready'") && runtimeSource.includes("setTutorialStep({ context }, step, reason)"), "tutorial runtime should own explicit arrival readiness advancement");
   assert(runtimeSource.includes("context.ensureTutorialItem('small_net', 1);"), "tutorial runtime should own fishing supply grants");
   assert(runtimeSource.includes("context.ensureTutorialItem('bronze_pickaxe', 1);"), "tutorial runtime should own mining supply grants");
-  assert(runtimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);"), "tutorial runtime should own combat supply grants");
+  assert(runtimeSource.includes("context.ensureTutorialItem('wooden_handle_strapped', 1);"), "tutorial runtime should own real sword-handle component grants");
+  assert(!runtimeSource.includes("context.ensureTutorialItem('bronze_sword', 1);"), "combat instructor should not hand out a finished bronze sword");
+  assert(runtimeSource.includes("context.ensureTutorialItem('normal_shortbow_u', 1);"), "tutorial runtime should own ranged unstrung bow component grants");
+  assert(runtimeSource.includes("context.ensureTutorialItem('bow_string', 1);"), "tutorial runtime should own ranged bow string grants");
+  assert(runtimeSource.includes("context.ensureTutorialItem('wooden_headless_arrows', 1);"), "tutorial runtime should own ranged headless-arrow component grants");
+  assert(!runtimeSource.includes("context.ensureTutorialItem('bronze_arrowheads', 1);"), "ranged instructor should not hand out arrowheads that belong to the smithing lesson");
+  assert(!runtimeSource.includes("context.ensureTutorialItem('normal_shortbow', 1);"), "ranged instructor should not hand out a finished shortbow");
+  assert(!runtimeSource.includes("context.ensureTutorialItem('bronze_arrows', 150);"), "ranged instructor should not hand out finished bronze arrows");
   assert(runtimeSource.includes("context.ensureTutorialItem('coins', 1);"), "tutorial runtime should own banking proof supply grants");
 
   assert(manifestSource.indexOf('id: "core-tutorial-runtime"') !== -1, "legacy manifest should include the tutorial runtime");
@@ -59,8 +66,9 @@ function run() {
   const saves = [];
   const grants = [];
   const gateRefreshes = [];
-  const inventoryCounts = { logs: 0, raw_shrimp: 0, cooked_shrimp: 0, coins: 1 };
-  const skills = { attack: 0, strength: 0, defense: 0 };
+  const inventoryCounts = { logs: 0, raw_shrimp: 0, cooked_shrimp: 0, coins: 1, ember_rune: 0, soft_clay: 0, imprinted_ring_mould: 0 };
+  const equipmentCounts = {};
+  const skills = { attack: 0, strength: 0, defense: 0, ranged: 0, magic: 0, runecrafting: 0, crafting: 0 };
   const context = {
     playerProfileState: {
       tutorialStep: 0,
@@ -68,7 +76,7 @@ function run() {
       tutorialBankWithdrawSource: null,
       tutorialInstructorVisits: {}
     },
-    tutorialExitStep: 7,
+    tutorialExitStep: 11,
     tutorialActiveBounds: { xMin: 72, xMax: 340, yMin: 76, yMax: 266, z: 0 },
     tutorialRecoverySpawns: [
       { x: 157, y: 157, z: 0 },
@@ -79,6 +87,7 @@ function run() {
     isTutorialWorldActive: () => true,
     ensureTutorialItem: (itemId, amount) => grants.push({ itemId, amount }),
     getInventoryItemCount: (itemId) => inventoryCounts[itemId] || 0,
+    getEquipmentItemCount: (itemId) => equipmentCounts[itemId] || 0,
     getSkillXp: (skillId) => skills[skillId] || 0,
     hasTutorialBankProof: () => !!(context.playerProfileState.tutorialBankDepositSource && context.playerProfileState.tutorialBankWithdrawSource),
     saveProgressToStorage: (reason) => saves.push(reason),
@@ -88,7 +97,7 @@ function run() {
   const guideView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_guide", name: "Tutorial Guide" }, null);
   const arrivalMarker = runtime.getGuidanceMarker(context);
   assert(arrivalMarker && arrivalMarker.markerId === "tutorial:step0:tutorial_guide", "step zero guidance should point at the Tutorial Guide");
-  assert(arrivalMarker.x === 185 && arrivalMarker.y === 232, "step zero guidance should use the live arrival cabin Guide tile");
+  assert(arrivalMarker.x === 215 && arrivalMarker.y === 253, "step zero guidance should use the live arrival cabin Guide tile");
   assert(guideView.title === "Tutorial Guide", "tutorial guide dialogue should resolve");
   const guideGreetingText = Array.isArray(guideView.greeting) ? guideView.greeting.join(" ") : String(guideView.greeting || "");
   assert(Array.isArray(guideView.greeting) && guideView.greeting.length >= 2, "tutorial guide greeting should support multiple dialogue pages");
@@ -100,6 +109,8 @@ function run() {
   assert(!grants.some((entry) => entry.itemId === "bronze_axe"), "tutorial guide greeting should not grant the starter axe before the ready choice");
   const movementOption = guideView.options.find((option) => option && option.label === "Ask about movement");
   assert(movementOption && Array.isArray(movementOption.response) && movementOption.response.length >= 2, "tutorial guide movement option should support paged guidance");
+  const movementText = movementOption.response.join(" ");
+  assert(movementText.includes("Use") && movementText.includes("inventory"), "movement guidance should explain item-on-item and item-on-world use");
   const readyOption = guideView.options.find((option) => option && option.label === "I am ready");
   assert(readyOption && readyOption.kind === "tutorial", "tutorial guide should expose an explicit ready option");
   const readyResult = readyOption.onSelect({ refreshDialogue: () => {} });
@@ -154,7 +165,7 @@ function run() {
   inventoryCounts.raw_shrimp = 1;
   const fishingReturnMarker = runtime.getGuidanceMarker(context);
   assert(fishingReturnMarker && fishingReturnMarker.markerId === "tutorial:step2:fishing_instructor", "step two guidance should return to the fishing instructor once raw shrimp exists");
-  assert(fishingReturnMarker.x === 365 && fishingReturnMarker.y === 320, "step two return guidance should use the southern-bank Fishing Instructor tile");
+  assert(fishingReturnMarker.x === 357 && fishingReturnMarker.y === 321, "step two return guidance should use the southern-bank Fishing Instructor tile");
   context.playerProfileState.tutorialStep = 3;
   const firstFiremakingNpcMarker = runtime.getGuidanceMarker(context);
   assert(firstFiremakingNpcMarker && firstFiremakingNpcMarker.markerId === "tutorial:step3:firemaking_instructor", "step three guidance should point at the Firemaking Instructor before the clearing");
@@ -165,22 +176,134 @@ function run() {
   const firemakingReturnMarker = runtime.getGuidanceMarker(context);
   assert(firemakingReturnMarker && firemakingReturnMarker.markerId === "tutorial:step3:firemaking_instructor", "step three guidance should return to the firemaking instructor after cooked or burnt shrimp exists");
 
+  context.playerProfileState.tutorialStep = 4;
+  const miningView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_mining_smithing_instructor" }, null);
+  const metalOption = miningView.options.find((option) => option && option.label === "Ask about mining and smithing");
+  const metalText = Array.isArray(metalOption.response) ? metalOption.response.join(" ") : String(metalOption && metalOption.response || "");
+  assert(metalText.includes("three bronze bars") && metalText.includes("Bronze Sword Blade") && metalText.includes("Bronze Arrowheads") && metalText.includes("Wooden Handle w/ Strap"), "mining and smithing guidance should name the real sword and arrowhead production choices");
+  const metalCompletion = miningView.options.find((option) => option && option.label === "I made a sword and arrowheads");
+  assert(metalCompletion, "mining and smithing instructor should require both sword and arrowhead proof");
+  inventoryCounts.bronze_sword = 1;
+  let metalResult = metalCompletion.onSelect({ refreshDialogue: () => {} });
+  assert(metalResult.refresh === true && context.playerProfileState.tutorialStep === 4, "mining completion should not accept only a finished sword");
+  const arrowheadMarker = runtime.getGuidanceMarker(context);
+  assert(arrowheadMarker && arrowheadMarker.markerId === "tutorial:step4:quarry_arrowheads", "step four guidance should keep the player in smithing until arrowheads are forged");
+  inventoryCounts.bronze_bar = 1;
+  const arrowheadAnvilMarker = runtime.getGuidanceMarker(context);
+  assert(arrowheadAnvilMarker && arrowheadAnvilMarker.markerId === "tutorial:step4:anvil_arrowheads", "step four guidance should point a spare bronze bar to the arrowhead anvil recipe");
+  inventoryCounts.bronze_arrowheads = 1;
+  metalResult = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_mining_smithing_instructor" }, null).options
+    .find((option) => option && option.label === "I made a sword and arrowheads")
+    .onSelect({ refreshDialogue: () => {} });
+  assert(metalResult.refresh === true && context.playerProfileState.tutorialStep === 5, "mining completion should advance only after sword and arrowheads exist");
+
   context.playerProfileState.tutorialStep = 6;
+  const rangedGrantStart = grants.length;
+  const rangedView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_ranged_instructor" }, null);
+  const rangedGrants = grants.slice(rangedGrantStart);
+  assert(rangedGrants.some((entry) => entry.itemId === "normal_shortbow_u"), "ranged instructor should grant a real unstrung shortbow component");
+  assert(rangedGrants.some((entry) => entry.itemId === "bow_string"), "ranged instructor should grant a real bow string component");
+  assert(rangedGrants.some((entry) => entry.itemId === "wooden_headless_arrows"), "ranged instructor should grant real headless arrows");
+  assert(!rangedGrants.some((entry) => entry.itemId === "bronze_arrowheads"), "ranged instructor should rely on the arrowheads forged during smithing");
+  const rangedHelpOption = rangedView.options.find((option) => option && option.label === "Ask about ranged combat");
+  const rangedHelpText = Array.isArray(rangedHelpOption.response) ? rangedHelpOption.response.join(" ") : String(rangedHelpOption && rangedHelpOption.response || "");
+  assert(rangedHelpText.includes("Normal Shortbow (u)") && rangedHelpText.includes("bronze arrows can stay in your pack"), "ranged guidance should explain finishing real gear and inventory ammo use");
+  inventoryCounts.normal_shortbow_u = 1;
+  inventoryCounts.bow_string = 1;
+  inventoryCounts.wooden_headless_arrows = 1;
+  inventoryCounts.bronze_arrowheads = 1;
+  const stringBowMarker = runtime.getGuidanceMarker(context);
+  assert(stringBowMarker && stringBowMarker.markerId === "tutorial:step6:string_shortbow", "step six guidance should point at bow stringing before ranged practice");
+  equipmentCounts.normal_shortbow = 1;
+  inventoryCounts.bronze_arrows = 1;
+  const rangedMarker = runtime.getGuidanceMarker(context);
+  assert(rangedMarker && rangedMarker.markerId === "tutorial:step6:ranged_chicken", "step six guidance should point at ranged chicken practice after the real gear is finished, even when the bow is equipped");
+  const rangedCompletion = rangedView.options.find((option) => option && option.label === "I landed a ranged hit");
+  assert(rangedCompletion, "ranged instructor should expose a ranged completion check");
+  let rangedResult = rangedCompletion.onSelect({ refreshDialogue: () => {} });
+  assert(rangedResult.refresh === true && context.playerProfileState.tutorialStep === 6, "ranged completion should wait for ranged XP");
+  skills.ranged = 1;
+  const rangedReturnView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_ranged_instructor" }, null);
+  rangedResult = rangedReturnView.options.find((option) => option && option.label === "I landed a ranged hit").onSelect({ refreshDialogue: () => {} });
+  assert(rangedResult.refresh === true && context.playerProfileState.tutorialStep === 7, "ranged completion should advance to magic orientation");
+
+  const magicView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_magic_instructor" }, null);
+  assert(grants.some((entry) => entry.itemId === "plain_staff_wood"), "magic instructor should grant a plain staff");
+  assert(grants.some((entry) => entry.itemId === "ember_rune"), "magic instructor should grant starter ember runes");
+  const magicHelpOption = magicView.options.find((option) => option && option.label === "Ask about magic");
+  const magicHelpText = Array.isArray(magicHelpOption.response) ? magicHelpOption.response.join(" ") : String(magicHelpOption && magicHelpOption.response || "");
+  assert(magicHelpText.includes("uses an ember rune automatically"), "magic guidance should explain staff-driven rune consumption");
+  const magicMarker = runtime.getGuidanceMarker(context);
+  assert(magicMarker && magicMarker.markerId === "tutorial:step7:magic_chicken", "step seven guidance should point at magic chicken practice after the instructor visit");
+  const magicOption = magicView.options.find((option) => option && option.label === "I cast a spell");
+  assert(magicOption && magicOption.kind === "tutorial", "magic instructor should expose a spellcast completion check");
+  let magicResult = magicOption.onSelect({ refreshDialogue: () => {} });
+  assert(magicResult.refresh === true && context.playerProfileState.tutorialStep === 7, "magic completion should wait for Magic XP");
+  skills.magic = 1;
+  const magicReturnView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_magic_instructor" }, null);
+  magicResult = magicReturnView.options.find((option) => option && option.label === "I cast a spell").onSelect({ refreshDialogue: () => {} });
+  assert(magicResult.refresh === true && context.playerProfileState.tutorialStep === 8, "magic completion should advance to runecrafting");
+
+  const runecraftingView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_runecrafting_instructor" }, null);
+  assert(grants.some((entry) => entry.itemId === "rune_essence"), "runecrafting instructor should grant rune essence");
+  const runecraftingHelpOption = runecraftingView.options.find((option) => option && option.label === "Ask about runecrafting");
+  const runecraftingHelpText = Array.isArray(runecraftingHelpOption.response) ? runecraftingHelpOption.response.join(" ") : String(runecraftingHelpOption && runecraftingHelpOption.response || "");
+  assert(runecraftingHelpText.includes("Craft-rune") && runecraftingHelpText.includes("essence on the altar"), "runecrafting guidance should name both altar interaction paths");
+  const runecraftingMarker = runtime.getGuidanceMarker(context);
+  assert(runecraftingMarker && runecraftingMarker.markerId === "tutorial:step8:ember_altar", "step eight guidance should point at the tutorial Ember Altar after the instructor visit");
+  const runecraftingCompletion = runecraftingView.options.find((option) => option && option.label === "I crafted ember runes");
+  assert(runecraftingCompletion, "runecrafting instructor should expose an ember-rune completion check");
+  let runecraftingResult = runecraftingCompletion.onSelect({ refreshDialogue: () => {} });
+  assert(runecraftingResult.refresh === true && context.playerProfileState.tutorialStep === 8, "runecrafting completion should wait for crafted runes");
+  skills.runecrafting = 1;
+  const runecraftingReturnView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_runecrafting_instructor" }, null);
+  runecraftingResult = runecraftingReturnView.options.find((option) => option && option.label === "I crafted ember runes").onSelect({ refreshDialogue: () => {} });
+  assert(runecraftingResult.refresh === true && context.playerProfileState.tutorialStep === 9, "runecrafting completion should advance to crafting");
+
+  const craftingView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_crafting_instructor" }, null);
+  assert(grants.some((entry) => entry.itemId === "clay"), "crafting instructor should grant clay");
+  assert(grants.some((entry) => entry.itemId === "borrowed_ring"), "crafting instructor should grant a borrowed ring");
+  const craftingHelpOption = craftingView.options.find((option) => option && option.label === "Ask about crafting");
+  const craftingHelpText = Array.isArray(craftingHelpOption.response) ? craftingHelpOption.response.join(" ") : String(craftingHelpOption && craftingHelpOption.response || "");
+  assert(craftingHelpText.includes("borrowed ring in your inventory"), "crafting guidance should clarify the bench is a place, not the clicked target");
+  assert(craftingHelpText.includes("bench as your work area"), "crafting guidance should explain the bench is a work-area cue");
+  const craftingMarker = runtime.getGuidanceMarker(context);
+  assert(craftingMarker && craftingMarker.markerId === "tutorial:step9:pond_soft_clay", "step nine guidance should point at the pond for soft clay");
+  const craftingCompletion = craftingView.options.find((option) => option && option.label === "I shaped a mould");
+  assert(craftingCompletion, "crafting instructor should expose a mould-shaping completion check");
+  let craftingResult = craftingCompletion.onSelect({ refreshDialogue: () => {} });
+  assert(craftingResult.refresh === true && context.playerProfileState.tutorialStep === 9, "crafting completion should wait for a shaped mould");
+  inventoryCounts.soft_clay = 1;
+  const craftingBenchMarker = runtime.getGuidanceMarker(context);
+  assert(craftingBenchMarker && craftingBenchMarker.markerId === "tutorial:step9:crafting_bench", "step nine guidance should return to the crafting bench once soft clay exists");
+  assert(craftingBenchMarker.label.includes("borrowed ring"), "step nine bench marker should name the inventory target");
+  const softClayOnlyView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_crafting_instructor" }, null);
+  craftingResult = softClayOnlyView.options.find((option) => option && option.label === "I shaped a mould").onSelect({ refreshDialogue: () => {} });
+  assert(craftingResult.refresh === true && context.playerProfileState.tutorialStep === 9, "crafting completion should not accept only soft clay");
+  inventoryCounts.imprinted_ring_mould = 1;
+  const craftingReturnView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_crafting_instructor" }, null);
+  craftingResult = craftingReturnView.options.find((option) => option && option.label === "I shaped a mould").onSelect({ refreshDialogue: () => {} });
+  assert(craftingResult.refresh === true && context.playerProfileState.tutorialStep === 10, "crafting completion should advance to banking");
+
+  context.playerProfileState.tutorialStep = 10;
   const bankView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_bank_tutor" }, null);
   assert(grants.some((entry) => entry.itemId === "coins"), "bank tutor should grant the tutorial coin");
   assert(bankView.options.some((option) => option && option.label === "I used both bank booths"), "bank tutor should expose proof check");
+  const bankHelpOption = bankView.options.find((option) => option && option.label === "Ask about the bank");
+  const bankHelpText = Array.isArray(bankHelpOption.response) ? bankHelpOption.response.join(" ") : String(bankHelpOption && bankHelpOption.response || "");
+  assert(bankHelpText.includes("bank grid"), "bank guidance should explain where the withdrawal comes from");
   const bankDepositMarker = runtime.getGuidanceMarker(context);
-  assert(bankDepositMarker && bankDepositMarker.markerId === "tutorial:step6:bank_deposit", "step six guidance should start at the first bank booth");
+  assert(bankDepositMarker && bankDepositMarker.markerId === "tutorial:step10:bank_deposit", "step ten guidance should start at the first bank booth");
   assert(runtime.recordBankAction(context, "deposit", "booth:a", "coins", 1) === true, "deposit proof should record");
   const bankWithdrawMarker = runtime.getGuidanceMarker(context);
-  assert(bankWithdrawMarker && bankWithdrawMarker.markerId === "tutorial:step6:bank_withdraw", "step six guidance should move to the second bank booth after deposit");
+  assert(bankWithdrawMarker && bankWithdrawMarker.markerId === "tutorial:step10:bank_withdraw", "step ten guidance should move to the second bank booth after deposit");
   assert(runtime.recordBankAction(context, "withdraw", "booth:b", "coins", 1) === true, "withdraw proof should record from a different booth");
   const bankTutorMarker = runtime.getGuidanceMarker(context);
-  assert(bankTutorMarker && bankTutorMarker.markerId === "tutorial:step6:bank_tutor", "step six guidance should return to the bank tutor after both booth actions");
+  assert(bankTutorMarker && bankTutorMarker.markerId === "tutorial:step10:bank_tutor", "step ten guidance should return to the bank tutor after both booth actions");
 
-  context.playerProfileState.tutorialStep = 7;
+  context.playerProfileState.tutorialStep = 11;
   const exitMarker = runtime.getGuidanceMarker(context);
-  assert(exitMarker && exitMarker.markerId === "tutorial:step7:exit_guide", "exit-ready guidance should point at the exit Tutorial Guide");
+  assert(exitMarker && exitMarker.markerId === "tutorial:step11:exit_guide", "exit-ready guidance should point at the exit Tutorial Guide");
   const exitView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_guide" }, null);
   const travelOption = exitView.options.find((option) => option && option.kind === "travel");
   assert(travelOption && travelOption.travelToWorldId === "main_overworld", "tutorial exit option should travel to main overworld");

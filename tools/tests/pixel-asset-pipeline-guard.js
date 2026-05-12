@@ -9,6 +9,33 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function getSolidBounds(source) {
+  let xMin = Infinity;
+  let yMin = Infinity;
+  let xMax = -Infinity;
+  let yMax = -Infinity;
+  for (let y = 0; y < source.pixels.length; y += 1) {
+    const row = source.pixels[y];
+    for (let x = 0; x < row.length; x += 1) {
+      const symbol = row[x];
+      if (!symbol || symbol === "." || source.palette[symbol] === "transparent") continue;
+      xMin = Math.min(xMin, x);
+      yMin = Math.min(yMin, y);
+      xMax = Math.max(xMax, x);
+      yMax = Math.max(yMax, y);
+    }
+  }
+  if (!Number.isFinite(xMin)) return null;
+  return {
+    xMin,
+    yMin,
+    xMax,
+    yMax,
+    width: xMax - xMin + 1,
+    height: yMax - yMin + 1
+  };
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const indexPath = path.join(root, "index.html");
@@ -65,6 +92,26 @@ function run() {
 
   const size = readPngSize(builtIconPath);
   assert(size.width === 32 && size.height === 32, "generated runtime icon must be 32x32");
+
+  [
+    "normal_shortbow",
+    "normal_longbow",
+    "oak_shortbow",
+    "oak_longbow",
+    "willow_shortbow",
+    "willow_longbow",
+    "maple_shortbow",
+    "maple_longbow",
+    "yew_shortbow",
+    "yew_longbow"
+  ].forEach((assetId) => {
+    const bowSource = loadPixelSource(root, assetId);
+    const bounds = getSolidBounds(bowSource);
+    assert(bounds, `${assetId} should contain visible pixels`);
+    assert(bounds.width >= 10, `${assetId} should be wide enough to read in the inventory`);
+    assert(bounds.height >= 24, `${assetId} should fill enough vertical space to read in the inventory`);
+    assert(bounds.yMin <= 4, `${assetId} should not be tucked into the lower part of the icon canvas`);
+  });
 
   console.log("Pixel asset pipeline guard passed.");
 }

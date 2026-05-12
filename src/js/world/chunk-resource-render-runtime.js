@@ -11,15 +11,30 @@
         };
     }
 
-    function collectChunkResourceVisualCounts(options = {}) {
-        const counts = createEmptyResourceVisualCounts();
+    function countChunkResourceVisualTile(counts, options = {}, tile, x, y, z) {
+        const targetCounts = counts || createEmptyResourceVisualCounts();
         const TileId = options.TileId || {};
-        const logicalMap = options.logicalMap || [];
-        const getVisualTileId = typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile;
         const isTreeTileId = typeof options.isTreeTileId === 'function' ? options.isTreeTileId : () => false;
         const getRockNodeAt = typeof options.getRockNodeAt === 'function' ? options.getRockNodeAt : () => null;
         const getRockVisualIdForNode = typeof options.getRockVisualIdForNode === 'function' ? options.getRockVisualIdForNode : () => 'copper';
         const currentTick = Number.isFinite(options.currentTick) ? options.currentTick : 0;
+        if (isTreeTileId(tile)) {
+            targetCounts.treeCount += 1;
+            return targetCounts;
+        }
+        if (tile === TileId.ROCK) {
+            const rockNode = getRockNodeAt(x, y, z);
+            const depleted = !!(rockNode && rockNode.depletedUntilTick > currentTick);
+            const visualId = getRockVisualIdForNode(rockNode, depleted);
+            targetCounts.rockVisualCounts[visualId] = (targetCounts.rockVisualCounts[visualId] || 0) + 1;
+        }
+        return targetCounts;
+    }
+
+    function collectChunkResourceVisualCounts(options = {}) {
+        const counts = createEmptyResourceVisualCounts();
+        const logicalMap = options.logicalMap || [];
+        const getVisualTileId = typeof options.getVisualTileId === 'function' ? options.getVisualTileId : (tile) => tile;
         const z = options.z;
         const startX = options.startX;
         const startY = options.startY;
@@ -31,14 +46,7 @@
             if (!logicalMap[z][y]) continue;
             for (let x = startX; x < endX; x++) {
                 const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
-                if (isTreeTileId(tile)) {
-                    counts.treeCount += 1;
-                } else if (tile === TileId.ROCK) {
-                    const rockNode = getRockNodeAt(x, y, z);
-                    const depleted = !!(rockNode && rockNode.depletedUntilTick > currentTick);
-                    const visualId = getRockVisualIdForNode(rockNode, depleted);
-                    counts.rockVisualCounts[visualId] = (counts.rockVisualCounts[visualId] || 0) + 1;
-                }
+                countChunkResourceVisualTile(counts, options, tile, x, y, z);
             }
         }
         return counts;
@@ -205,6 +213,7 @@
     window.WorldChunkResourceRenderRuntime = {
         appendChunkResourceVisual,
         collectChunkResourceVisualCounts,
+        countChunkResourceVisualTile,
         createChunkResourceRenderState,
         createEmptyResourceVisualCounts,
         markChunkResourceVisualsDirty,

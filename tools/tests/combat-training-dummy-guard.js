@@ -70,10 +70,20 @@ function run() {
 
   assert(
     combatSource.includes("markPlayerRigAnimationTrigger('attackTick', currentTick);")
+      && combatSource.includes("markPlayerRigAttackStyle(result.styleFamily);")
       && combatSource.includes("markPlayerRigAnimationTrigger('attackAnimationStartedAt');")
       && combatSource.includes("markPlayerRigAnimationTrigger('hitReactionTick', currentTick);")
       && combatSource.includes("markPlayerRigAnimationTrigger('hitReactionStartedAt');"),
-    "combat runtime should drive the player rig animation markers used by the new combat feedback"
+    "combat runtime should drive the player rig animation markers and attack style used by combat feedback"
+  );
+  assert(
+    combatSource.indexOf("consumePlayerCombatAmmo(result);") < combatSource.indexOf("markPlayerRigAnimationTrigger('attackAnimationStartedAt');"),
+    "equipped-ammo model refresh should happen before attack animation markers are written to the live rig"
+  );
+  assert(
+    combatSource.includes("function spawnPlayerRangedProjectile")
+      && combatSource.includes("runtime.spawnRangedProjectile({"),
+    "combat runtime should hand ranged projectile visuals to the transient visual runtime"
   );
 
   console.log("Combat training dummy guard passed.");

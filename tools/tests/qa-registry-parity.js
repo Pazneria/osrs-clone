@@ -68,6 +68,7 @@ function run() {
   });
   assert(qaMessages.some((entry) => entry.message.includes("/qa gotofire <starter|oak|willow|maple|yew>")), "QA command help should live in the QA command runtime");
   assert(qaMessages.some((entry) => entry.message.includes("/qa creator")), "QA command help should advertise the player creator reopen command");
+  assert(qaMessages.some((entry) => entry.message.includes("/qa perf")), "QA command help should advertise the performance snapshot command");
   qaRuntime.handleQaCommand("creator", {
     windowRef: qaCommandSandbox.window,
     addChatMessage: (message, type) => qaMessages.push({ message, type }),
@@ -86,6 +87,22 @@ function run() {
     }
   });
   assert(qaCalls.includes("gotofire:yew"), "QA command runtime should dispatch gotofire through core-provided callbacks");
+  qaRuntime.handleQaCommand("perf", {
+    windowRef: qaCommandSandbox.window,
+    addChatMessage: (message, type) => qaMessages.push({ message, type }),
+    getRuntimePerformanceSnapshot: () => ({
+      fps: "50",
+      renderCalls: 123,
+      triangles: 456,
+      pixelRatio: 2,
+      drawingBuffer: [1240, 941],
+      chunkPolicyPreset: "safe",
+      webglRenderer: "Test GPU",
+      softwareWebglRenderer: false
+    })
+  });
+  assert(qaMessages.some((entry) => entry.message.includes("[QA perf] fps=50")), "QA command runtime should print performance snapshots");
+  assert(coreSource.includes("getRuntimePerformanceSnapshot:"), "core should wire performance snapshot into the QA command context");
   qaRuntime.handleChatMessage("hello there", {
     addChatMessage: (message, type) => qaMessages.push({ message, type }),
     showPlayerOverheadText: (message) => qaCalls.push(`overhead:${message}`)
@@ -113,14 +130,14 @@ function run() {
         worldId: "tutorial_island",
         definition: {
           services: [
-            { serviceId: "station:tutorial_furnace", x: 459, y: 395, z: 0, label: "Tutorial Furnace" },
-            { serviceId: "merchant:tutorial_bank_tutor", x: 269, y: 440, z: 0, name: "Bank Tutor" }
+            { serviceId: "station:tutorial_furnace", x: 435, y: 386, z: 0, label: "Tutorial Furnace" },
+            { serviceId: "merchant:tutorial_bank_tutor", x: 280, y: 417, z: 0, name: "Bank Tutor" }
           ]
         },
         queries: {
           getRouteGroup(groupId) {
             if (groupId === "mining") {
-              return [{ routeId: "tutorial_surface_mine", x: 475, y: 384, z: 0, label: "Tutorial Surface Quarry" }];
+              return [{ routeId: "tutorial_surface_mine", x: 445, y: 372, z: 0, label: "Tutorial Surface Quarry" }];
             }
             return [];
           }
@@ -130,9 +147,9 @@ function run() {
   };
   const tutorialHandlers = qaToolsRuntime.createCommandHandlers(tutorialHarness);
   assert(tutorialHandlers.qaGotoTutorialStation("mining"), "tutorial mining QA station should resolve from the active route registry");
-  assert(tutorialHarness.playerState.x === 475 && tutorialHarness.playerState.y === 384, "tutorial mining QA station should use expanded live-world coordinates");
+  assert(tutorialHarness.playerState.x === 445 && tutorialHarness.playerState.y === 372, "tutorial mining QA station should use expanded live-world coordinates");
   assert(tutorialHandlers.qaGotoTutorialStation("smithing"), "tutorial smithing QA station should resolve from authored services");
-  assert(tutorialHarness.playerState.x === 459 && tutorialHarness.playerState.y === 395, "tutorial smithing QA station should use the authored furnace tile");
+  assert(tutorialHarness.playerState.x === 435 && tutorialHarness.playerState.y === 386, "tutorial smithing QA station should use the authored furnace tile");
 
   const firemakingHarness = {
     typedRoutes: [],

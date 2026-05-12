@@ -48,7 +48,13 @@ function renderPlacementToNpcDescriptor(entry: LegacyNpcRenderPlacement, index: 
     dialogueId: typeof entry.dialogueId === "string" ? entry.dialogueId.trim() || null : null,
     action: entry.action || "Trade",
     facingYaw: entry.facingYaw,
-    tags: Array.isArray(entry.tags) ? entry.tags.slice() : []
+    tags: Array.isArray(entry.tags) ? entry.tags.slice() : [],
+    tutorialVisibleFromStep: Number.isFinite(entry.tutorialVisibleFromStep)
+      ? Math.max(0, Math.floor(Number(entry.tutorialVisibleFromStep)))
+      : null,
+    tutorialVisibleUntilStep: Number.isFinite(entry.tutorialVisibleUntilStep)
+      ? Math.max(0, Math.floor(Number(entry.tutorialVisibleUntilStep)))
+      : null
   };
 }
 

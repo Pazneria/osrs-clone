@@ -42,6 +42,38 @@
       "minUniqueColors": 180
     },
     {
+      "id": "fence-seam-low",
+      "label": "Fence line at an ultra-low camera for void seam checks",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial smithing",
+        "/qa camera set 4.25 1.48 5"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 1200,
+      "minUniqueColors": 150
+    },
+    {
+      "id": "water-seam-low",
+      "label": "Water and fence line at an ultra-low camera for void seam checks",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial fishing",
+        "/qa camera set 4.45 1.48 5"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 1200,
+      "minUniqueColors": 150
+    },
+    {
       "id": "tutorial-overhead",
       "label": "Full Tutorial Island aerial QA camera",
       "commands": [
@@ -71,6 +103,22 @@
       },
       "waitMs": 1100,
       "minUniqueColors": 180
+    },
+    {
+      "id": "late-skill-yard",
+      "label": "Late skill yard with ranged, magic, runecrafting, crafting, and bank stations",
+      "commands": [
+        "/qa travel tutorial_island",
+        "/qa gototutorial runecrafting",
+        "/qa camera preset tutorial_late_yard"
+      ],
+      "hideUi": true,
+      "mouse": {
+        "x": 4,
+        "y": 4
+      },
+      "waitMs": 1200,
+      "minUniqueColors": 185
     },
     {
       "id": "inventory-hud",

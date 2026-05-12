@@ -39,6 +39,8 @@
     const WATER_SHORELINE_OUTER_WIDTH = 1.18;
     const WATER_SHORELINE_FEATHER_WIDTH = 0.42;
     const WATER_SHORELINE_SURFACE_OFFSET = 0.026;
+    const WATER_SEAM_BACKFILL_DROP = 0.045;
+    const WATER_SEAM_BACKFILL_OVERLAP = 0.035;
     const WATER_SMOOTH_SURFACE_EDGE_OVERLAP = 2.35;
     const WATER_SMOOTH_SURFACE_Y_OFFSET = -0.052;
     const ISLAND_COASTLINE_SURFACE_LIFT = 0.032;
@@ -132,11 +134,7 @@
     function getWaterInteractionOnlyMaterial(THREE, sharedMaterials) {
         if (!sharedMaterials.waterInteractionOnlyMaterial) {
             sharedMaterials.waterInteractionOnlyMaterial = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                transparent: true,
-                opacity: 0,
-                depthWrite: false,
-                colorWrite: false,
+                visible: false,
                 side: THREE.DoubleSide
             });
         }
@@ -455,9 +453,32 @@
     function isIslandCoastlineWaterTile(context, x, y) {
         const points = getIslandWaterLandPolygon(context.islandWater);
         if (points.length < 3 || pointInPolygon(points, x, y)) return false;
+        const width = getIslandCoastlineTileVisualSuppressionWidth(context);
+        const bounds = getPointBounds(points);
+        if (
+            bounds
+            && (
+                x < bounds.xMin - width
+                || x > bounds.xMax + width
+                || y < bounds.yMin - width
+                || y > bounds.yMax + width
+            )
+        ) {
+            return false;
+        }
         const distance = distanceToPolygonEdge(points, x, y);
         if (!Number.isFinite(distance)) return false;
-        return distance <= getIslandCoastlineTileVisualSuppressionWidth(context);
+        return distance <= width;
+    }
+
+    function isIslandCoastlineWaterTileCached(context, x, y) {
+        if (!context) return false;
+        const cache = context.islandCoastlineWaterTileCache || (context.islandCoastlineWaterTileCache = Object.create(null));
+        const key = `${x},${y}`;
+        if (cache[key] !== undefined) return cache[key];
+        const value = isIslandCoastlineWaterTile(context, x, y);
+        cache[key] = value;
+        return value;
     }
 
     function createIslandCoastlineInteractionBody(body) {
@@ -516,31 +537,30 @@
         return null;
     }
 
-    function resolveVisualWaterRenderBodyForTile(options = {}) {
-        const waterBodies = Array.isArray(options.waterBodies) ? options.waterBodies : [];
-        const logicalMap = options.logicalMap || [];
-        const MAP_SIZE = options.MAP_SIZE;
-        const isWaterTileId = typeof options.isWaterTileId === 'function' ? options.isWaterTileId : () => false;
-        const isPierVisualCoverageTile = typeof options.isPierVisualCoverageTile === 'function'
-            ? options.isPierVisualCoverageTile
+    function resolveVisualWaterRenderBodyAtTile(context = {}, waterBodies = [], x, y, z) {
+        const bodies = Array.isArray(waterBodies) ? waterBodies : [];
+        const logicalMap = context.logicalMap || [];
+        const MAP_SIZE = context.MAP_SIZE;
+        const isWaterTileId = typeof context.isWaterTileId === 'function' ? context.isWaterTileId : () => false;
+        const isPierVisualCoverageTile = typeof context.isPierVisualCoverageTile === 'function'
+            ? context.isPierVisualCoverageTile
             : () => false;
-        const getActivePierConfig = typeof options.getActivePierConfig === 'function'
-            ? options.getActivePierConfig
+        const getActivePierConfig = typeof context.getActivePierConfig === 'function'
+            ? context.getActivePierConfig
             : () => null;
-        const x = options.x;
-        const y = options.y;
-        const z = options.z;
+        const activePierConfig = context.activePierConfig !== undefined ? context.activePierConfig : getActivePierConfig();
         if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
+        if (!logicalMap[z] || !logicalMap[z][y]) return null;
         const tile = logicalMap[z][y][x];
-        const pierCovered = isPierVisualCoverageTile(getActivePierConfig(), x, y, z);
+        const pierCovered = isPierVisualCoverageTile(activePierConfig, x, y, z);
         if (!isWaterTileId(tile) && !pierCovered) return null;
 
-        const directBody = resolveWaterRenderBodyForTile(waterBodies, x, y);
+        const directBody = resolveWaterRenderBodyForTile(bodies, x, y);
         if (directBody) return directBody;
         if (isWaterTileId(tile)) return getDefaultWaterRenderBody();
         if (pierCovered) {
             return findNearbyWaterRenderBodyForTile({
-                waterBodies,
+                waterBodies: bodies,
                 x,
                 y,
                 z,
@@ -550,6 +570,14 @@
             }) || getDefaultWaterRenderBody();
         }
         return null;
+    }
+
+    function resolveVisualWaterRenderBodyForTile(options = {}) {
+        const waterBodies = Array.isArray(options.waterBodies) ? options.waterBodies : [];
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        return resolveVisualWaterRenderBodyAtTile(options, waterBodies, x, y, z);
     }
 
     function getWaterSurfaceHeightForTile(options = {}) {
@@ -644,6 +672,7 @@
         const getActivePierConfig = typeof options.getActivePierConfig === 'function'
             ? options.getActivePierConfig
             : () => null;
+        const activePierConfig = options.activePierConfig !== undefined ? options.activePierConfig : getActivePierConfig();
         const worldX = options.worldX;
         const worldY = options.worldY;
         const z = options.z;
@@ -655,12 +684,10 @@
         const minY = Math.max(0, Math.floor(worldY - searchRadius));
         const maxY = Math.min(MAP_SIZE - 1, Math.ceil(worldY + searchRadius));
         let minDistance = resolvedShorelineWidth;
-        const pierConfig = getActivePierConfig();
-
         for (let tileY = minY; tileY <= maxY; tileY++) {
             for (let tileX = minX; tileX <= maxX; tileX++) {
                 if (isWaterTileId(logicalMap[z][tileY][tileX])) continue;
-                if (isPierVisualCoverageTile(pierConfig, tileX, tileY, z)) continue;
+                if (isPierVisualCoverageTile(activePierConfig, tileX, tileY, z)) continue;
                 minDistance = Math.min(minDistance, distanceToTileRect(worldX, worldY, tileX, tileY));
                 if (minDistance <= 0.001) return 1;
             }
@@ -669,21 +696,43 @@
         return 1 - Math.min(1, minDistance / resolvedShorelineWidth);
     }
 
+    function getWaterSurfaceVertexData(builder, context, worldX, worldY) {
+        const cacheKey = `${Number(worldX).toFixed(3)},${Number(worldY).toFixed(3)}`;
+        if (builder.surfaceVertexDataCache && builder.surfaceVertexDataCache[cacheKey]) {
+            return builder.surfaceVertexDataCache[cacheKey];
+        }
+        const depthContext = builder.depthSampleContext || Object.assign({}, context, { z: builder.z });
+        depthContext.worldX = worldX;
+        depthContext.worldY = worldY;
+        builder.depthSampleContext = depthContext;
+        const depth = getWaterDepthWeightAtPoint(depthContext);
+        let shoreStrength = null;
+        if (builder.usesIslandCoastlineRibbon) {
+            shoreStrength = getIslandCoastlineWaterShoreStrength(context, worldX, worldY);
+        } else {
+            const shoreContext = builder.shoreSampleContext || Object.assign({}, context, {
+                z: builder.z,
+                shorelineWidth: builder.body.shoreline.width
+            });
+            shoreContext.worldX = worldX;
+            shoreContext.worldY = worldY;
+            builder.shoreSampleContext = shoreContext;
+            shoreStrength = getWaterShoreStrengthAtPoint(shoreContext);
+        }
+        const data = {
+            depth,
+            shoreStrength
+        };
+        if (builder.surfaceVertexDataCache) builder.surfaceVertexDataCache[cacheKey] = data;
+        return data;
+    }
+
     function pushWaterVertex(builder, context, worldX, worldY, surfaceY) {
-        const islandCoastlineShoreStrength = builder.usesIslandCoastlineRibbon
-            ? getIslandCoastlineWaterShoreStrength(context, worldX, worldY)
-            : null;
+        const vertexData = getWaterSurfaceVertexData(builder, context, worldX, worldY);
         builder.surfacePositions.push(worldX, surfaceY, worldY);
         builder.surfaceData.push(
-            getWaterDepthWeightAtPoint(Object.assign({}, context, { worldX, worldY, z: builder.z })),
-            Number.isFinite(islandCoastlineShoreStrength)
-                ? islandCoastlineShoreStrength
-                : getWaterShoreStrengthAtPoint(Object.assign({}, context, {
-                    worldX,
-                    worldY,
-                    z: builder.z,
-                    shorelineWidth: builder.body.shoreline.width
-                }))
+            vertexData.depth,
+            vertexData.shoreStrength
         );
     }
 
@@ -698,34 +747,113 @@
             shorelineRibbonAppended: false,
             islandCoastlineAppended: false,
             smoothSurfaceAppended: false,
+            surfaceVertexDataCache: Object.create(null),
+            depthSampleContext: null,
+            shoreSampleContext: null,
+            flatSurfaceRows: Object.create(null),
             surfacePositions: [],
             surfaceData: [],
             smoothSurfacePositions: [],
             smoothSurfaceData: [],
+            seamBackfillRows: Object.create(null),
+            seamBackfillPositions: [],
+            seamBackfillData: [],
             fringePositions: [],
             fringeData: [],
             fringeAlpha: []
         };
     }
 
-    function classifyWaterEdgeType(options = {}) {
-        const sharedMaterials = options.sharedMaterials || {};
-        const logicalMap = options.logicalMap || [];
-        const heightMap = options.heightMap || [];
-        const MAP_SIZE = options.MAP_SIZE;
-        const isWaterTileId = typeof options.isWaterTileId === 'function' ? options.isWaterTileId : () => false;
-        const isPierVisualCoverageTile = typeof options.isPierVisualCoverageTile === 'function'
-            ? options.isPierVisualCoverageTile
+    function isInteriorFullMapOceanTile(context, body, x, y, z, useCoastInteractionOnly) {
+        if (useCoastInteractionOnly || !isFullMapOceanBody(body, context.MAP_SIZE)) return false;
+        const logicalMap = context.logicalMap || [];
+        const isWaterTileId = typeof context.isWaterTileId === 'function' ? context.isWaterTileId : () => false;
+        const isPierVisualCoverageTile = typeof context.isPierVisualCoverageTile === 'function'
+            ? context.isPierVisualCoverageTile
             : () => false;
-        const getActivePierConfig = typeof options.getActivePierConfig === 'function'
-            ? options.getActivePierConfig
+        const getActivePierConfig = typeof context.getActivePierConfig === 'function'
+            ? context.getActivePierConfig
             : () => null;
-        const x = options.x;
-        const y = options.y;
-        const z = options.z;
-        const nx = x + options.dx;
-        const ny = y + options.dy;
-        const waterSurfaceY = options.waterSurfaceY;
+        if (!logicalMap[z] || !logicalMap[z][y] || !isWaterTileId(logicalMap[z][y][x])) return false;
+        const pierConfig = context.activePierConfig !== undefined ? context.activePierConfig : getActivePierConfig();
+        if (isPierVisualCoverageTile(pierConfig, x, y, z)) return false;
+        if (usesIslandCoastlineRibbon(body, context) && isIslandCoastlineWaterTileCached(context, x, y)) return false;
+        const neighbors = [
+            { x, y: y - 1 },
+            { x: x + 1, y },
+            { x, y: y + 1 },
+            { x: x - 1, y }
+        ];
+        for (let i = 0; i < neighbors.length; i++) {
+            const neighbor = neighbors[i];
+            if (neighbor.x < 0 || neighbor.y < 0 || neighbor.x >= context.MAP_SIZE || neighbor.y >= context.MAP_SIZE) return false;
+            if (!logicalMap[z][neighbor.y] || !isWaterTileId(logicalMap[z][neighbor.y][neighbor.x])) return false;
+            if (isPierVisualCoverageTile(pierConfig, neighbor.x, neighbor.y, z)) return false;
+        }
+        return true;
+    }
+
+    function appendFlatWaterRunTile(builder, y, x, surfaceY) {
+        const key = `${y}:${Number.isFinite(surfaceY) ? surfaceY.toFixed(3) : 'water'}`;
+        const row = builder.flatSurfaceRows[key] || (builder.flatSurfaceRows[key] = {
+            y,
+            surfaceY,
+            xs: []
+        });
+        row.xs.push(x);
+    }
+
+    function appendFlatWaterSurfaceRun(builder, context, x0, x1, y, surfaceY) {
+        const left = x0 - 0.5;
+        const right = x1 + 0.5;
+        const north = y - 0.5;
+        const south = y + 0.5;
+        pushWaterVertex(builder, context, left, north, surfaceY);
+        pushWaterVertex(builder, context, right, south, surfaceY);
+        pushWaterVertex(builder, context, right, north, surfaceY);
+        pushWaterVertex(builder, context, left, north, surfaceY);
+        pushWaterVertex(builder, context, left, south, surfaceY);
+        pushWaterVertex(builder, context, right, south, surfaceY);
+    }
+
+    function appendFlatWaterSurfaceRuns(builder, context) {
+        const rows = builder && builder.flatSurfaceRows ? Object.keys(builder.flatSurfaceRows) : [];
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+            const row = builder.flatSurfaceRows[rows[rowIndex]];
+            if (!row || !Array.isArray(row.xs) || row.xs.length <= 0) continue;
+            const xs = row.xs.slice().sort((a, b) => a - b);
+            let runStart = xs[0];
+            let runEnd = xs[0];
+            const flushRun = () => {
+                appendFlatWaterSurfaceRun(builder, context, runStart, runEnd, row.y, row.surfaceY);
+            };
+            for (let i = 1; i < xs.length; i++) {
+                const x = xs[i];
+                if (x === runEnd + 1) {
+                    runEnd = x;
+                    continue;
+                }
+                flushRun();
+                runStart = x;
+                runEnd = x;
+            }
+            flushRun();
+        }
+    }
+
+    function classifyWaterEdgeTypeAtTile(context = {}, waterBodies = [], x, y, dx, dy, z, waterSurfaceY) {
+        const logicalMap = context.logicalMap || [];
+        const heightMap = context.heightMap || [];
+        const MAP_SIZE = context.MAP_SIZE;
+        const isWaterTileId = typeof context.isWaterTileId === 'function' ? context.isWaterTileId : () => false;
+        const isPierVisualCoverageTile = typeof context.isPierVisualCoverageTile === 'function'
+            ? context.isPierVisualCoverageTile
+            : () => false;
+        const getActivePierConfig = typeof context.getActivePierConfig === 'function'
+            ? context.getActivePierConfig
+            : () => null;
+        const nx = x + dx;
+        const ny = y + dy;
         const planeOffset = z * 3.0;
         if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) {
             return {
@@ -735,12 +863,9 @@
         }
 
         if (isWaterTileId(logicalMap[z][ny][nx])) return null;
-        const waterBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies)
-            ? sharedMaterials.activeWaterRenderBodies
-            : [];
-        if (resolveVisualWaterRenderBodyForTile(Object.assign({}, options, { waterBodies, x: nx, y: ny, z }))) return null;
+        if (resolveVisualWaterRenderBodyAtTile(context, waterBodies, nx, ny, z)) return null;
 
-        const pierConfig = getActivePierConfig();
+        const pierConfig = context.activePierConfig !== undefined ? context.activePierConfig : getActivePierConfig();
         if (isPierVisualCoverageTile(pierConfig, nx, ny, z)) {
             return {
                 kind: 'structural_cover',
@@ -752,6 +877,23 @@
             kind: 'natural_bank',
             topY: heightMap[z][ny][nx] + planeOffset
         };
+    }
+
+    function classifyWaterEdgeType(options = {}) {
+        const sharedMaterials = options.sharedMaterials || {};
+        const waterBodies = Array.isArray(sharedMaterials.activeWaterRenderBodies)
+            ? sharedMaterials.activeWaterRenderBodies
+            : [];
+        return classifyWaterEdgeTypeAtTile(
+            options,
+            waterBodies,
+            options.x,
+            options.y,
+            options.dx,
+            options.dy,
+            options.z,
+            options.waterSurfaceY
+        );
     }
 
     function isSoftWaterEdge(edge) {
@@ -800,6 +942,58 @@
 
     function pushWaterCellVertex(builder, context, vertex) {
         pushWaterVertex(builder, context, vertex.x, vertex.y, vertex.h);
+    }
+
+    function pushWaterSeamBackfillVertex(builder, worldX, worldY, surfaceY, depthWeight, shoreStrength) {
+        builder.seamBackfillPositions.push(worldX, surfaceY - WATER_SEAM_BACKFILL_DROP, worldY);
+        builder.seamBackfillData.push(clampValue(depthWeight, 0, 1), clampValue(shoreStrength, 0, 1));
+    }
+
+    function appendWaterSeamBackfillQuad(builder, context, x, y, surfaceY) {
+        if (builder.forceInteractionOnly || builder.usesSmoothSurfaceOverlay) return;
+        const key = `${y}:${Number.isFinite(surfaceY) ? surfaceY.toFixed(3) : 'water'}`;
+        const row = builder.seamBackfillRows[key] || (builder.seamBackfillRows[key] = {
+            y,
+            surfaceY,
+            xs: []
+        });
+        row.xs.push(x);
+    }
+
+    function appendWaterSeamBackfillRuns(builder) {
+        const rows = builder && builder.seamBackfillRows ? Object.keys(builder.seamBackfillRows) : [];
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+            const row = builder.seamBackfillRows[rows[rowIndex]];
+            if (!row || !Array.isArray(row.xs) || row.xs.length <= 0) continue;
+            const xs = row.xs.slice().sort((a, b) => a - b);
+            let runStart = xs[0];
+            let runEnd = xs[0];
+            const flushRun = () => {
+                const x0 = runStart - 0.5 - WATER_SEAM_BACKFILL_OVERLAP;
+                const x1 = runEnd + 0.5 + WATER_SEAM_BACKFILL_OVERLAP;
+                const y0 = row.y - 0.5 - WATER_SEAM_BACKFILL_OVERLAP;
+                const y1 = row.y + 0.5 + WATER_SEAM_BACKFILL_OVERLAP;
+                const depthWeight = 0.72;
+                const shoreStrength = 0.18;
+                pushWaterSeamBackfillVertex(builder, x0, y0, row.surfaceY, depthWeight, shoreStrength);
+                pushWaterSeamBackfillVertex(builder, x1, y1, row.surfaceY, depthWeight, shoreStrength);
+                pushWaterSeamBackfillVertex(builder, x1, y0, row.surfaceY, depthWeight, shoreStrength);
+                pushWaterSeamBackfillVertex(builder, x0, y0, row.surfaceY, depthWeight, shoreStrength);
+                pushWaterSeamBackfillVertex(builder, x0, y1, row.surfaceY, depthWeight, shoreStrength);
+                pushWaterSeamBackfillVertex(builder, x1, y1, row.surfaceY, depthWeight, shoreStrength);
+            };
+            for (let i = 1; i < xs.length; i++) {
+                const x = xs[i];
+                if (x <= runEnd + 1) {
+                    runEnd = x;
+                    continue;
+                }
+                flushRun();
+                runStart = x;
+                runEnd = x;
+            }
+            flushRun();
+        }
     }
 
     function pushWaterFringeVertex(builder, worldX, worldY, surfaceY, alpha, lane = 0.24, breakSeed = 1.0) {
@@ -1128,13 +1322,17 @@
     }
 
     function appendWaterTileToBuilder(builder, context, x, y, surfaceY) {
-        const pierConfig = context.getActivePierConfig();
+        const waterBodies = Array.isArray(context.sharedMaterials && context.sharedMaterials.activeWaterRenderBodies)
+            ? context.sharedMaterials.activeWaterRenderBodies
+            : [];
+        const pierConfig = context.activePierConfig !== undefined ? context.activePierConfig : context.getActivePierConfig();
         const isPierCoveredTile = context.isPierVisualCoverageTile(pierConfig, x, y, builder.z);
+        appendWaterSeamBackfillQuad(builder, context, x, y, surfaceY);
         const edges = {
-            north: classifyWaterEdgeType(Object.assign({}, context, { x, y, dx: 0, dy: -1, z: builder.z, waterSurfaceY: surfaceY })),
-            east: classifyWaterEdgeType(Object.assign({}, context, { x, y, dx: 1, dy: 0, z: builder.z, waterSurfaceY: surfaceY })),
-            south: classifyWaterEdgeType(Object.assign({}, context, { x, y, dx: 0, dy: 1, z: builder.z, waterSurfaceY: surfaceY })),
-            west: classifyWaterEdgeType(Object.assign({}, context, { x, y, dx: -1, dy: 0, z: builder.z, waterSurfaceY: surfaceY }))
+            north: classifyWaterEdgeTypeAtTile(context, waterBodies, x, y, 0, -1, builder.z, surfaceY),
+            east: classifyWaterEdgeTypeAtTile(context, waterBodies, x, y, 1, 0, builder.z, surfaceY),
+            south: classifyWaterEdgeTypeAtTile(context, waterBodies, x, y, 0, 1, builder.z, surfaceY),
+            west: classifyWaterEdgeTypeAtTile(context, waterBodies, x, y, -1, 0, builder.z, surfaceY)
         };
         const subdivisions = (edges.north || edges.east || edges.south || edges.west) ? WATER_EDGE_SUBDIVISIONS : 1;
         const cellSize = 1 / subdivisions;
@@ -1169,27 +1367,40 @@
         const bodies = Array.isArray(options.waterBodies) ? options.waterBodies : [];
         const z = options.z;
         const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
-        for (let y = options.startY; y < options.endY; y++) {
-            for (let x = options.startX; x < options.endX; x++) {
-                const visualBody = resolveVisualWaterRenderBodyForTile(Object.assign({}, options, { waterBodies: bodies, x, y, z }));
+        if (z !== 0) return;
+        const activePierConfig = typeof options.getActivePierConfig === 'function'
+            ? options.getActivePierConfig()
+            : null;
+        const context = Object.assign({}, options, {
+            activePierConfig,
+            islandCoastlineWaterTileCache: Object.create(null),
+            getActivePierConfig: () => activePierConfig
+        });
+        for (let y = context.startY; y < context.endY; y++) {
+            for (let x = context.startX; x < context.endX; x++) {
+                const visualBody = resolveVisualWaterRenderBodyAtTile(context, bodies, x, y, z);
                 if (!visualBody) continue;
-                const islandCoastlineBody = usesIslandCoastlineRibbon(visualBody, options);
-                const useCoastInteractionOnly = islandCoastlineBody && isIslandCoastlineWaterTile(options, x, y);
+                const islandCoastlineBody = usesIslandCoastlineRibbon(visualBody, context);
+                const useCoastInteractionOnly = islandCoastlineBody && isIslandCoastlineWaterTileCached(context, x, y);
                 const builderBody = useCoastInteractionOnly
                     ? createIslandCoastlineInteractionBody(visualBody)
                     : visualBody;
                 if (!builders[builderBody.id]) {
                     builders[builderBody.id] = createChunkWaterBuilder(builderBody, z);
                 }
-                builders[builderBody.id].usesSmoothShorelineRibbon = usesSmoothWaterShorelineRibbon(visualBody, options.MAP_SIZE);
-                builders[builderBody.id].usesSmoothSurfaceOverlay = usesSmoothWaterSurfaceOverlay(visualBody, options.MAP_SIZE);
+                builders[builderBody.id].usesSmoothShorelineRibbon = usesSmoothWaterShorelineRibbon(visualBody, context.MAP_SIZE);
+                builders[builderBody.id].usesSmoothSurfaceOverlay = usesSmoothWaterSurfaceOverlay(visualBody, context.MAP_SIZE);
                 builders[builderBody.id].usesIslandCoastlineRibbon = islandCoastlineBody;
                 builders[builderBody.id].forceInteractionOnly = !!useCoastInteractionOnly;
                 const surfaceY = zOffset + (Number.isFinite(visualBody.surfaceY) ? visualBody.surfaceY : -0.075);
-                appendWaterTileToBuilder(builders[builderBody.id], options, x, y, surfaceY);
+                if (isInteriorFullMapOceanTile(context, visualBody, x, y, z, useCoastInteractionOnly)) {
+                    appendFlatWaterRunTile(builders[builderBody.id], y, x, surfaceY);
+                    continue;
+                }
+                appendWaterTileToBuilder(builders[builderBody.id], context, x, y, surfaceY);
             }
         }
-        appendSmoothWaterShorelineRibbonsForChunk(Object.assign({}, options, { zOffset }), builders);
+        appendSmoothWaterShorelineRibbonsForChunk(Object.assign({}, context, { zOffset }), builders);
     }
 
     function appendSmoothWaterShorelineRibbonsForChunk(options = {}, builders = {}) {
@@ -1243,6 +1454,21 @@
         Object.keys(builders).forEach((bodyId) => {
             const builder = builders[bodyId];
             if (!builder) return;
+            appendFlatWaterSurfaceRuns(builder, options);
+            appendWaterSeamBackfillRuns(builder);
+
+            if (builder.seamBackfillPositions.length > 0) {
+                const backfillGeometry = new THREE.BufferGeometry();
+                backfillGeometry.setAttribute('position', new THREE.Float32BufferAttribute(builder.seamBackfillPositions, 3));
+                backfillGeometry.setAttribute('waterData', new THREE.Float32BufferAttribute(builder.seamBackfillData, 2));
+                backfillGeometry.computeBoundingSphere();
+                const backfillMesh = new THREE.Mesh(backfillGeometry, getWaterSurfaceMaterial(builder.body.styleTokens));
+                backfillMesh.userData = { type: 'WATER_VISUAL_BACKFILL', z: builder.z, waterBodyId: builder.body.id };
+                backfillMesh.receiveShadow = false;
+                backfillMesh.castShadow = false;
+                backfillMesh.renderOrder = 2;
+                if (planeGroup) planeGroup.add(backfillMesh);
+            }
 
             if (builder.surfacePositions.length > 0) {
                 const surfaceGeometry = new THREE.BufferGeometry();
@@ -1348,27 +1574,38 @@
         return mesh;
     }
 
+    function normalizeWaterBackdropBoundsList(bounds) {
+        return Array.isArray(bounds) ? bounds : [bounds];
+    }
+
     function createWaterBackdropMesh(options = {}) {
         const THREE = requireThree(options.THREE);
-        const bounds = options.bounds;
+        const boundsList = normalizeWaterBackdropBoundsList(options.bounds);
         const surfaceY = options.surfaceY;
         const styleTokens = options.styleTokens;
-        if (!bounds || !styleTokens) return null;
-        const xMin = Number.isFinite(bounds.xMin) ? bounds.xMin : 0;
-        const xMax = Number.isFinite(bounds.xMax) ? bounds.xMax : 0;
-        const yMin = Number.isFinite(bounds.yMin) ? bounds.yMin : 0;
-        const yMax = Number.isFinite(bounds.yMax) ? bounds.yMax : 0;
-        if ((xMax - xMin) <= 0.01 || (yMax - yMin) <= 0.01) return null;
+        if (!styleTokens || boundsList.length <= 0) return null;
 
+        const positions = [];
+        for (let i = 0; i < boundsList.length; i++) {
+            const bounds = boundsList[i];
+            if (!bounds) continue;
+            const xMin = Number.isFinite(bounds.xMin) ? bounds.xMin : 0;
+            const xMax = Number.isFinite(bounds.xMax) ? bounds.xMax : 0;
+            const yMin = Number.isFinite(bounds.yMin) ? bounds.yMin : 0;
+            const yMax = Number.isFinite(bounds.yMax) ? bounds.yMax : 0;
+            if ((xMax - xMin) <= 0.01 || (yMax - yMin) <= 0.01) continue;
+            positions.push(
+                xMin, surfaceY, yMin,
+                xMax, surfaceY, yMax,
+                xMax, surfaceY, yMin,
+                xMin, surfaceY, yMin,
+                xMin, surfaceY, yMax,
+                xMax, surfaceY, yMax
+            );
+        }
+        if (positions.length <= 0) return null;
         const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute([
-            xMin, surfaceY, yMin,
-            xMax, surfaceY, yMax,
-            xMax, surfaceY, yMin,
-            xMin, surfaceY, yMin,
-            xMin, surfaceY, yMax,
-            xMax, surfaceY, yMax
-        ], 3));
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         geometry.computeBoundingSphere();
 
         const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
@@ -1398,6 +1635,7 @@
         findNearbyWaterRenderBodyForTile,
         flushChunkWaterBuilders,
         getDefaultWaterRenderBody,
+        isIslandCoastlineWaterTile,
         getWaterSurfaceHeightForTile,
         resolveVisualWaterRenderBodyForTile,
         resolveWaterRenderBodyForTile,

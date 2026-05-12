@@ -15,8 +15,9 @@ function run() {
 
   const schema = schemaModule.PLAYER_HUMANOID_V1_RIG;
   const descriptors = registry.listAnimationClipDescriptors();
-  assert(descriptors.length >= 18, "expected animation clip descriptors");
+  assert(descriptors.length >= 19, "expected animation clip descriptors");
   assert(!!registry.getAnimationClip("player/mining1"), "expected mining1 clip to be registered");
+  assert(!!registry.getAnimationClip("player/combat_bow_shot"), "expected combat_bow_shot clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_net1"), "expected fishing_net1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_rod_hold1"), "expected fishing_rod_hold1 clip to be registered");
   assert(!!registry.getAnimationClip("player/fishing_rod_cast1"), "expected fishing_rod_cast1 clip to be registered");
@@ -44,6 +45,40 @@ function run() {
   assert(!registry.getAnimationClip("player/smithing_smelting1").heldItemId, "expected smithing_smelting1 to rely on runtime-held-item selection");
   assert(!registry.getAnimationClip("player/smithing_forging1").heldItemId, "expected smithing_forging1 to rely on runtime-held-item selection");
   assert(registry.getAnimationClip("player/firemaking1").heldItemSlot === "leftHand", "expected firemaking1 to default its held item slot to the left hand");
+  const bowShotClip = registry.getAnimationClip("player/combat_bow_shot");
+  assert(
+    JSON.stringify(bowShotClip.poses.draw.rightArm) === JSON.stringify(bowShotClip.poses.raise.rightArm)
+      && JSON.stringify(bowShotClip.poses.draw.rightLowerArm) === JSON.stringify(bowShotClip.poses.raise.rightLowerArm)
+      && JSON.stringify(bowShotClip.poses.draw.weapon) === JSON.stringify(bowShotClip.poses.raise.weapon),
+    "combat_bow_shot draw should keep the bow arm and weapon pinned from the raise pose"
+  );
+  assert(
+    bowShotClip.poses.draw.leftArm.rotationDeg.y > bowShotClip.poses.raise.leftArm.rotationDeg.y
+      && bowShotClip.poses.draw.leftLowerArm.rotationDeg.x < bowShotClip.poses.raise.leftLowerArm.rotationDeg.x
+      && bowShotClip.poses.draw.torso.rotationDeg.y > bowShotClip.poses.raise.torso.rotationDeg.y,
+    "combat_bow_shot draw should pull the string with the left arm and torso"
+  );
+  assert(
+    bowShotClip.poses.raise.weapon.rotationDeg.y <= -35
+      && bowShotClip.poses.raise.weapon.rotationDeg.z >= 8
+      && bowShotClip.poses.raise.rightLowerArm.rotationDeg.y > 0,
+    "combat_bow_shot should cant the bow wrist so the left hand can reach the string side"
+  );
+  const bowShotReleaseKey = bowShotClip.keys.find((key) => key.poseId === "release");
+  const bowShotDrawKey = bowShotClip.keys.find((key) => key.poseId === "draw");
+  const bowShotReleaseMarker = bowShotClip.markers.find((marker) => marker.markerId === "release");
+  assert(
+    bowShotDrawKey && bowShotReleaseKey && (bowShotReleaseKey.atMs - bowShotDrawKey.atMs) >= 200,
+    "combat_bow_shot should hold full draw before release"
+  );
+  assert(
+    bowShotReleaseMarker && bowShotReleaseKey && bowShotReleaseMarker.atMs === bowShotReleaseKey.atMs,
+    "combat_bow_shot release marker should stay aligned with the release pose"
+  );
+  assert(
+    !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/combat_bow_shot.json"),
+    "expected to resolve combat_bow_shot descriptors by source path"
+  );
   assert(
     !!registry.getAnimationClipDescriptorBySourcePath("src/game/animation/clips/player/mining1.json"),
     "expected to resolve descriptors by source path"

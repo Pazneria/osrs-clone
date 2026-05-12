@@ -72,11 +72,11 @@
             options: [
                 createTextOption('Ask about movement', [
                     'Left-click the ground to walk. Right-click people, doors, resources, and objects when you want the full set of actions.',
-                    'If you are unsure, use Examine to learn what something is, or Use when a tool and object belong together.'
+                    'If a lesson says to use one thing on another, open your inventory, choose Use on the first item, then click the target.'
                 ]),
                 createTextOption('Ask about the island', [
                     'Tutorial Island is a guided route for first-time adventurers. Each instructor covers one basic skill and then points you to the next stop.',
-                    'You will gather wood, catch fish, light fires, cook, mine, smith, fight chickens, use the bank, then leave for Starter Town.'
+                    'You will gather wood, catch fish, cook, mine, smith, fight with melee, ranged, and magic, craft runes, shape clay, use the bank, then leave for Starter Town.'
                 ]),
                 createActionOption('Goodbye', 'close')
             ]
@@ -93,7 +93,7 @@
             title: 'Firemaking Instructor',
             greeting: 'This clearing finishes the Survival Field: logs become fire, and fire turns raw food into something useful.',
             options: [
-                createTextOption('Ask about fires', 'Use a tinderbox with logs near the clearing, then cook raw shrimp on your own fire. Burnt shrimp still proves the loop.'),
+                createTextOption('Ask about fires', 'In your inventory, use a tinderbox with logs near the clearing, then use raw shrimp on your own fire. Burnt shrimp still proves the loop.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
@@ -101,7 +101,7 @@
             title: 'Fishing Instructor',
             greeting: 'The pond is part of the Survival Field: gather food here, then carry it to your own fire.',
             options: [
-                createTextOption('Ask about fishing', 'Use a small net on the pond until you catch raw shrimp, then take it to the fire clearing.'),
+                createTextOption('Ask about fishing', 'Stand by the water and use a small net on the pond until raw shrimp appears in your inventory, then take it to the fire clearing.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
@@ -109,7 +109,7 @@
             title: 'Mining and Smithing Instructor',
             greeting: 'Ore becomes bars, and bars become useful parts if you work them in order.',
             options: [
-                createTextOption('Ask about metal', 'Mine copper and tin, smelt a bronze bar at the furnace, then forge bronze arrowheads at the anvil.'),
+                createTextOption('Ask about metal', 'Mine enough copper and tin for three Bronze Bars, choose Bronze Sword Blade and Bronze Arrowheads at the anvil, then use the blade on a Wooden Handle w/ Strap to make a real Bronze Sword.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
@@ -117,7 +117,39 @@
             title: 'Combat Instructor',
             greeting: 'The chicken pen is here to teach targeting, styles, and patience.',
             options: [
-                createTextOption('Ask about combat', 'Attack a chicken and watch your combat tab. Even a little practice is enough for the first lesson.'),
+                createTextOption('Ask about combat', 'Equip the sword from your inventory, attack a chicken up close, and watch your combat tab. Even a little practice is enough for the first lesson.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_ranged_instructor: {
+            title: 'Ranged Instructor',
+            greeting: 'Distance is a tool. Bows let you start the fight before claws and teeth are in your face.',
+            options: [
+                createTextOption('Ask about ranged', 'Use Bow String on a Normal Shortbow (u), use the Bronze Arrowheads you forged on Wooden Headless Arrows, then equip the finished shortbow and attack from a few tiles away.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_magic_instructor: {
+            title: 'Magic Instructor',
+            greeting: 'Magic starts with focus, a staff, and runes that hold the shape of the spell.',
+            options: [
+                createTextOption('Ask about magic', 'Equip the staff, keep ember runes in your inventory, and attack from range. Each cast spends a rune.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_runecrafting_instructor: {
+            title: 'Runecrafting Instructor',
+            greeting: 'Rune essence is quiet until an altar gives it a purpose.',
+            options: [
+                createTextOption('Ask about runecrafting', 'Carry rune essence to the Ember Altar and choose Craft-rune, or use the essence on the altar. The altar turns essence into ember runes.'),
+                createActionOption('Goodbye', 'close')
+            ]
+        },
+        tutorial_crafting_instructor: {
+            title: 'Crafting Instructor',
+            greeting: 'Crafting turns plain materials into useful parts by choosing the right preparation step.',
+            options: [
+                createTextOption('Ask about crafting', 'Use clay on pond water to make soft clay. Then stand by the bench as your work area and use the soft clay on the borrowed ring in your inventory.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
@@ -125,7 +157,7 @@
             title: 'Bank Tutor',
             greeting: 'A bank is shared storage. Two booths, one bank.',
             options: [
-                createTextOption('Ask about banking', 'Deposit a coin at one booth, withdraw it at the other, then talk to me.'),
+                createTextOption('Ask about banking', 'Open one booth and deposit a coin from your inventory. Open the other booth and withdraw that coin from the bank grid.'),
                 createActionOption('Goodbye', 'close')
             ]
         },
@@ -288,6 +320,14 @@
         tutorial_mining_smithing_instructor: 'tutorial_mining_smithing_instructor',
         combat_instructor: 'tutorial_combat_instructor',
         tutorial_combat_instructor: 'tutorial_combat_instructor',
+        ranged_instructor: 'tutorial_ranged_instructor',
+        tutorial_ranged_instructor: 'tutorial_ranged_instructor',
+        magic_instructor: 'tutorial_magic_instructor',
+        tutorial_magic_instructor: 'tutorial_magic_instructor',
+        runecrafting_instructor: 'tutorial_runecrafting_instructor',
+        tutorial_runecrafting_instructor: 'tutorial_runecrafting_instructor',
+        crafting_instructor: 'tutorial_crafting_instructor',
+        tutorial_crafting_instructor: 'tutorial_crafting_instructor',
         bank_tutor: 'tutorial_bank_tutor',
         tutorial_bank_tutor: 'tutorial_bank_tutor',
         fishing_teacher: 'fishing_teacher',

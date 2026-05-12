@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-04-12T18:00:47.928Z",
+  "generatedAt": "2026-05-11T18:47:20.689Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -19,17 +19,34 @@
     },
     "adamant_arrows": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "bow"
+        ],
+        "damageType": "ranged",
+        "rangedAccuracyBonus": 11,
+        "rangedStrengthBonus": 12
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "adamant_arrows",
         "kind": "pixel"
       },
       "name": "Adamant Arrows x15",
-      "stackable": false,
-      "type": "component",
+      "stackable": true,
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 11,
+        "rstr": 12,
+        "str": 0
+      },
+      "type": "ammo",
       "value": 50
     },
     "adamant_axe": {
@@ -49,11 +66,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 21,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 10,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 30,
         "toolFamily": "axe",
@@ -124,11 +145,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 7,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 7,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 7
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 7,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -166,11 +191,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 17,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 17,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 17
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 17,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -223,11 +252,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 21,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 10,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 30,
         "toolFamily": "pickaxe",
@@ -283,11 +316,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 30,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 30,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 30
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 30,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -325,11 +362,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 25,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 25,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 25
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 25,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -367,11 +408,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 21,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 21,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 21
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 21,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -410,11 +455,15 @@
           "tickCycle": 4
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 21,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 21,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 30,
         "toolFamily": null,
@@ -468,18 +517,54 @@
     },
     "air_staff": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 8,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 25,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 18,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 40,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "air_staff",
         "kind": "pixel"
       },
       "name": "Air Staff",
+      "requiredMagicLevel": 40,
       "stackable": false,
-      "type": "component",
-      "value": 550
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 25,
+        "mstr": 18,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 550,
+      "weaponClass": "staff"
     },
     "amulet_mould": {
       "actions": [
@@ -628,17 +713,34 @@
     },
     "bronze_arrows": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "ammo": {
+        "ammoTier": 1,
+        "compatibleWeaponFamilies": [
+          "bow"
+        ],
+        "damageType": "ranged",
+        "rangedAccuracyBonus": 1,
+        "rangedStrengthBonus": 2
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "bronze_arrows",
         "kind": "pixel"
       },
       "name": "Bronze Arrows x15",
-      "stackable": false,
-      "type": "component",
+      "stackable": true,
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 1,
+        "rstr": 2,
+        "str": 0
+      },
+      "type": "ammo",
       "value": 8
     },
     "bronze_axe": {
@@ -658,11 +760,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 4,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 2,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "axe",
@@ -733,11 +839,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 1,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 1,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 1
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 1,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -775,11 +885,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 3,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 3,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 3
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 3,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -818,11 +932,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 4,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 2,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "pickaxe",
@@ -878,11 +996,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 7,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 7,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 7
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 7,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -920,11 +1042,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 5,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 5,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 5
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 5,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -962,11 +1088,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 4,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 4,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 4
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 4,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -1005,11 +1135,15 @@
           "tickCycle": 4
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 4,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 4,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -1501,23 +1635,68 @@
     },
     "earth_staff": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 18,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 13,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 30,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "earth_staff",
         "kind": "pixel"
       },
       "name": "Earth Staff",
+      "requiredMagicLevel": 30,
       "stackable": false,
-      "type": "component",
-      "value": 320
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 18,
+        "mstr": 13,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 320,
+      "weaponClass": "staff"
     },
     "ember_rune": {
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 1,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 1,
+        "magicStrengthBonus": 2
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "ember_rune",
@@ -1525,6 +1704,10 @@
       },
       "name": "Ember rune",
       "stackable": true,
+      "stats": {
+        "mag": 1,
+        "mstr": 2
+      },
       "type": "resource",
       "value": 10
     },
@@ -1590,18 +1773,54 @@
     },
     "fire_staff": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 8,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 6,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 10,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "fire_staff",
         "kind": "pixel"
       },
       "name": "Fire Staff",
+      "requiredMagicLevel": 10,
       "stackable": false,
-      "type": "component",
-      "value": 80
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 8,
+        "mstr": 6,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 80,
+      "weaponClass": "staff"
     },
     "fishing_rod": {
       "actions": [
@@ -1620,11 +1839,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 8,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 4,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "fishing_rod",
@@ -1798,11 +2021,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 18,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 9,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "harpoon",
@@ -1884,17 +2111,34 @@
     },
     "iron_arrows": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "ammo": {
+        "ammoTier": 2,
+        "compatibleWeaponFamilies": [
+          "bow"
+        ],
+        "damageType": "ranged",
+        "rangedAccuracyBonus": 2,
+        "rangedStrengthBonus": 3
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "iron_arrows",
         "kind": "pixel"
       },
       "name": "Iron Arrows x15",
-      "stackable": false,
-      "type": "component",
+      "stackable": true,
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 2,
+        "rstr": 3,
+        "str": 0
+      },
+      "type": "ammo",
       "value": 12
     },
     "iron_axe": {
@@ -1914,11 +2158,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 6,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 3,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "axe",
@@ -1989,11 +2237,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 2,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 2,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 2
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 2,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2031,11 +2283,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 5,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 5,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 5
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 5,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2088,11 +2344,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 6,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 3,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "pickaxe",
@@ -2148,11 +2408,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 10,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 10,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 10
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 10,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2190,11 +2454,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 8,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 8,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 8
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 8,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2232,11 +2500,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 6,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 6,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 6
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 6,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2275,11 +2547,15 @@
           "tickCycle": 4
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 6,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 6,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2438,18 +2714,54 @@
     },
     "maple_longbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 9,
+          "styleFamily": "ranged",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 25,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 30,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "maple_longbow",
         "kind": "pixel"
       },
       "name": "Maple Longbow",
+      "requiredRangedLevel": 30,
       "stackable": false,
-      "type": "component",
-      "value": 62
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 25,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 62,
+      "weaponClass": "bow"
     },
     "maple_longbow_u": {
       "actions": [
@@ -2483,18 +2795,54 @@
     },
     "maple_shortbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "ranged",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 22,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 30,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "maple_shortbow",
         "kind": "pixel"
       },
       "name": "Maple Shortbow",
+      "requiredRangedLevel": 30,
       "stackable": false,
-      "type": "component",
-      "value": 68
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 22,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 68,
+      "weaponClass": "bow"
     },
     "maple_shortbow_u": {
       "actions": [
@@ -2557,17 +2905,34 @@
     },
     "mithril_arrows": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "ammo": {
+        "ammoTier": 4,
+        "compatibleWeaponFamilies": [
+          "bow"
+        ],
+        "damageType": "ranged",
+        "rangedAccuracyBonus": 7,
+        "rangedStrengthBonus": 8
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "mithril_arrows",
         "kind": "pixel"
       },
       "name": "Mithril Arrows x15",
-      "stackable": false,
-      "type": "component",
+      "stackable": true,
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 7,
+        "rstr": 8,
+        "str": 0
+      },
+      "type": "ammo",
       "value": 32
     },
     "mithril_axe": {
@@ -2587,11 +2952,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 15,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 7,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 20,
         "toolFamily": "axe",
@@ -2662,11 +3031,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 5,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 5,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 5
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 5,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2704,11 +3077,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 12,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 12,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 12
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 12,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2761,11 +3138,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 15,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 7,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 20,
         "toolFamily": "pickaxe",
@@ -2821,11 +3202,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 22,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 22,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 22
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 22,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2863,11 +3248,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 18,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 18,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 18
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 18,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2905,11 +3294,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 15,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 15,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 15
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 15,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -2948,11 +3341,15 @@
           "tickCycle": 4
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 15,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 15,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 20,
         "toolFamily": null,
@@ -3036,18 +3433,54 @@
     },
     "normal_longbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 9,
+          "styleFamily": "ranged",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 6,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "normal_longbow",
         "kind": "pixel"
       },
       "name": "Normal Longbow",
+      "requiredRangedLevel": 1,
       "stackable": false,
-      "type": "component",
-      "value": 10
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 6,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 10,
+      "weaponClass": "bow"
     },
     "normal_longbow_u": {
       "actions": [
@@ -3066,18 +3499,54 @@
     },
     "normal_shortbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "ranged",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 4,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "normal_shortbow",
         "kind": "pixel"
       },
       "name": "Normal Shortbow",
+      "requiredRangedLevel": 1,
       "stackable": false,
-      "type": "component",
-      "value": 12
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 4,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 12,
+      "weaponClass": "bow"
     },
     "normal_shortbow_u": {
       "actions": [
@@ -3156,18 +3625,54 @@
     },
     "oak_longbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 9,
+          "styleFamily": "ranged",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 10,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 5,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "oak_longbow",
         "kind": "pixel"
       },
       "name": "Oak Longbow",
+      "requiredRangedLevel": 5,
       "stackable": false,
-      "type": "component",
-      "value": 20
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 10,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 20,
+      "weaponClass": "bow"
     },
     "oak_longbow_u": {
       "actions": [
@@ -3201,18 +3706,54 @@
     },
     "oak_shortbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "ranged",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 8,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 5,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "oak_shortbow",
         "kind": "pixel"
       },
       "name": "Oak Shortbow",
+      "requiredRangedLevel": 5,
       "stackable": false,
-      "type": "component",
-      "value": 22
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 8,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 22,
+      "weaponClass": "bow"
     },
     "oak_shortbow_u": {
       "actions": [
@@ -3231,78 +3772,258 @@
     },
     "plain_staff_maple": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 6,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 11,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 7,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 25,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "plain_staff_maple",
         "kind": "pixel"
       },
       "name": "Plain Staff (Maple)",
+      "requiredMagicLevel": 25,
       "stackable": false,
-      "type": "component",
-      "value": 32
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 11,
+        "mstr": 7,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 32,
+      "weaponClass": "staff"
     },
     "plain_staff_oak": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 6,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 4,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 2,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 5,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "plain_staff_oak",
         "kind": "pixel"
       },
       "name": "Plain Staff (Oak)",
+      "requiredMagicLevel": 5,
       "stackable": false,
-      "type": "component",
-      "value": 12
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 4,
+        "mstr": 2,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 12,
+      "weaponClass": "staff"
     },
     "plain_staff_willow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 6,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 7,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 4,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 15,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "plain_staff_willow",
         "kind": "pixel"
       },
       "name": "Plain Staff (Willow)",
+      "requiredMagicLevel": 15,
       "stackable": false,
-      "type": "component",
-      "value": 20
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 7,
+        "mstr": 4,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 20,
+      "weaponClass": "staff"
     },
     "plain_staff_wood": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 6,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 2,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 1,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 1,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "plain_staff_wood",
         "kind": "pixel"
       },
       "name": "Plain Staff (Wood)",
+      "requiredMagicLevel": 1,
       "stackable": false,
-      "type": "component",
-      "value": 6
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 2,
+        "mstr": 1,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 6,
+      "weaponClass": "staff"
     },
     "plain_staff_yew": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 6,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 16,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 10,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 35,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "plain_staff_yew",
         "kind": "pixel"
       },
       "name": "Plain Staff (Yew)",
+      "requiredMagicLevel": 35,
       "stackable": false,
-      "type": "component",
-      "value": 50
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 16,
+        "mstr": 10,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 50,
+      "weaponClass": "staff"
     },
     "rat_tail": {
       "actions": [
@@ -3576,17 +4297,34 @@
     },
     "rune_arrows": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "ammo": {
+        "ammoTier": 6,
+        "compatibleWeaponFamilies": [
+          "bow"
+        ],
+        "damageType": "ranged",
+        "rangedAccuracyBonus": 16,
+        "rangedStrengthBonus": 18
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "rune_arrows",
         "kind": "pixel"
       },
       "name": "Rune Arrows x15",
-      "stackable": false,
-      "type": "component",
+      "stackable": true,
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 16,
+        "rstr": 18,
+        "str": 0
+      },
+      "type": "ammo",
       "value": 80
     },
     "rune_axe": {
@@ -3606,11 +4344,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 28,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 14,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 40,
         "toolFamily": "axe",
@@ -3681,11 +4423,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 10,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 10,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 10
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 10,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -3738,11 +4484,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 24,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 12,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": "harpoon",
@@ -3781,11 +4531,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 24,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 24,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 24
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 24,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -3838,11 +4592,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 28,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 14,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 40,
         "toolFamily": "pickaxe",
@@ -3898,11 +4656,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 40,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 40,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 40
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 40,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -3940,11 +4702,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 34,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 34,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 34
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 34,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -3982,11 +4748,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 28,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 28,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 28
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 28,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -4025,11 +4795,15 @@
           "tickCycle": 4
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 28,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 28,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 40,
         "toolFamily": null,
@@ -4321,17 +5095,34 @@
     },
     "steel_arrows": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "ammo": {
+        "ammoTier": 3,
+        "compatibleWeaponFamilies": [
+          "bow"
+        ],
+        "damageType": "ranged",
+        "rangedAccuracyBonus": 4,
+        "rangedStrengthBonus": 5
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "steel_arrows",
         "kind": "pixel"
       },
       "name": "Steel Arrows x15",
-      "stackable": false,
-      "type": "component",
+      "stackable": true,
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 4,
+        "rstr": 5,
+        "str": 0
+      },
+      "type": "ammo",
       "value": 20
     },
     "steel_axe": {
@@ -4351,11 +5142,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 10,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 5,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 10,
         "toolFamily": "axe",
@@ -4426,11 +5221,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 3,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 3,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 3
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 3,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -4468,11 +5267,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 8,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 8,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 8
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 8,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -4511,11 +5314,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 10,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 5,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 10,
         "toolFamily": "pickaxe",
@@ -4571,11 +5378,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 15,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 15,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 15
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 15,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -4613,11 +5424,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 12,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 12,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 12
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 12,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -4655,11 +5470,15 @@
           "tickCycle": 5
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 10,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 0,
           "meleeDefenseBonus": 10,
           "meleeStrengthBonus": 0,
-          "rangedDefenseBonus": 10
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 10,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 1,
         "toolFamily": null,
@@ -4698,11 +5517,15 @@
           "tickCycle": 4
         },
         "bonuses": {
+          "magicAccuracyBonus": 0,
           "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
           "meleeAccuracyBonus": 10,
           "meleeDefenseBonus": 0,
           "meleeStrengthBonus": 10,
-          "rangedDefenseBonus": 0
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
         },
         "requiredAttackLevel": 10,
         "toolFamily": null,
@@ -4872,18 +5695,54 @@
     },
     "water_staff": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "magic",
+          "familyTag": "staff",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "magic",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 12,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 9,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 0,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredMagicLevel": 20,
+        "toolFamily": null,
+        "weaponFamily": "staff"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "water_staff",
         "kind": "pixel"
       },
       "name": "Water Staff",
+      "requiredMagicLevel": 20,
       "stackable": false,
-      "type": "component",
-      "value": 180
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "mag": 12,
+        "mstr": 9,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 180,
+      "weaponClass": "staff"
     },
     "willow_handle": {
       "actions": [
@@ -4947,18 +5806,54 @@
     },
     "willow_longbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 9,
+          "styleFamily": "ranged",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 16,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 20,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "willow_longbow",
         "kind": "pixel"
       },
       "name": "Willow Longbow",
+      "requiredRangedLevel": 20,
       "stackable": false,
-      "type": "component",
-      "value": 36
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 16,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 36,
+      "weaponClass": "bow"
     },
     "willow_longbow_u": {
       "actions": [
@@ -4992,18 +5887,54 @@
     },
     "willow_shortbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "ranged",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 14,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 20,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "willow_shortbow",
         "kind": "pixel"
       },
       "name": "Willow Shortbow",
+      "requiredRangedLevel": 20,
       "stackable": false,
-      "type": "component",
-      "value": 40
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 14,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 40,
+      "weaponClass": "bow"
     },
     "willow_shortbow_u": {
       "actions": [
@@ -5172,18 +6103,54 @@
     },
     "yew_longbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 9,
+          "styleFamily": "ranged",
+          "tickCycle": 5
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 36,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 40,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "yew_longbow",
         "kind": "pixel"
       },
       "name": "Yew Longbow",
+      "requiredRangedLevel": 40,
       "stackable": false,
-      "type": "component",
-      "value": 100
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 36,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 100,
+      "weaponClass": "bow"
     },
     "yew_longbow_u": {
       "actions": [
@@ -5217,18 +6184,54 @@
     },
     "yew_shortbow": {
       "actions": [
+        "Equip",
         "Use",
         "Drop"
       ],
-      "defaultAction": "Use",
+      "combat": {
+        "attackProfile": {
+          "ammoUse": true,
+          "damageType": "ranged",
+          "familyTag": "bow",
+          "projectile": true,
+          "range": 7,
+          "styleFamily": "ranged",
+          "tickCycle": 4
+        },
+        "bonuses": {
+          "magicAccuracyBonus": 0,
+          "magicDefenseBonus": 0,
+          "magicStrengthBonus": 0,
+          "meleeAccuracyBonus": 0,
+          "meleeDefenseBonus": 0,
+          "meleeStrengthBonus": 0,
+          "rangedAccuracyBonus": 32,
+          "rangedDefenseBonus": 0,
+          "rangedStrengthBonus": 0
+        },
+        "requiredAttackLevel": 1,
+        "requiredRangedLevel": 40,
+        "toolFamily": null,
+        "weaponFamily": "bow"
+      },
+      "defaultAction": "Equip",
       "icon": {
         "assetId": "yew_shortbow",
         "kind": "pixel"
       },
       "name": "Yew Shortbow",
+      "requiredRangedLevel": 40,
       "stackable": false,
-      "type": "component",
-      "value": 110
+      "stats": {
+        "atk": 0,
+        "def": 0,
+        "rng": 32,
+        "rstr": 0,
+        "str": 0
+      },
+      "type": "weapon",
+      "value": 110,
+      "weaponClass": "bow"
     },
     "yew_shortbow_u": {
       "actions": [

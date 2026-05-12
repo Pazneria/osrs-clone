@@ -36,19 +36,32 @@ function run() {
   );
   assert(
     chunkTerrainRuntimeSource.includes("const isRenderableUnderlayTile = (tileType) => !isWaterTileId(tileType);"),
-    "terrain underlay should include all non-water land tiles"
+    "terrain underlay should classify non-water land tiles"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("const shouldRenderUnderlayCell = (tile, worldTileX, worldTileY) => {"),
+    "terrain underlay should be trimmed to seam-adjacent cells instead of full land chunks"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("if (isManmadeLandTile(tile)) return true;"),
+    "terrain underlay should keep coverage below authored manmade floors and structures"
   );
   assert(
     chunkTerrainRuntimeSource.includes("const sampleUnderlayVertexHeight = (cornerX, cornerY) => {"),
     "chunk terrain runtime should sample per-vertex heights for the terrain underlay"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("const underlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);"),
-    "chunk terrain runtime should build underlay geometry at tile resolution"
+    chunkTerrainRuntimeSource.includes("const appendSparseTerrainCellQuad = (positions, uvs, meshOriginX, meshOriginY, tileX, tileY, sampleHeight, warpedUvs = false) => {"),
+    "chunk terrain runtime should build sparse underlay quads instead of full hidden tile grids"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("underlayGeo.setIndex(underlayIndices);"),
-    "chunk terrain runtime should filter underlay geometry to land tile indices"
+    chunkTerrainRuntimeSource.includes("appendSparseTerrainCellQuad(underlayPositions, underlayUvs, meshOriginX, meshOriginY, cell.tileX, cell.tileY, sampleUnderlayVertexHeight, false);"),
+    "terrain underlay should only emit seam-adjacent cells"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("function collapseTerrainGeometryDrawGroups(geometry, indexCount)")
+      && chunkTerrainRuntimeSource.includes("collapseTerrainGeometryDrawGroups(terrainGeo, terrainIndices.length);"),
+    "filtered near-terrain geometry should collapse inherited PlaneGeometry groups to one draw group per material"
   );
   assert(
     chunkTerrainRuntimeSource.includes("const SMOOTH_WATER_DIRT_UNDERLAY_INSET = 2.65;"),
@@ -71,12 +84,16 @@ function run() {
     "smooth pond dirt underlay should resolve authored pond contours"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("if (shouldUseSmoothWaterDirtUnderlayCell(worldTileX, worldTileY)) continue;"),
+    chunkTerrainRuntimeSource.includes("if (shouldUseSmoothWaterDirtUnderlayCell(worldTileX, worldTileY)) return false;"),
     "grass terrain underlay should not occupy the smooth pond dirt-underlay footprint"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("const smoothWaterDirtUnderlayGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);"),
-    "smooth pond dirt underlay should be built as a tile-resolution bed"
+    chunkTerrainRuntimeSource.includes("if (shouldRenderUnderlayCell(tile, worldTileX, worldTileY)) underlayCells.push({ tileX, tileY });"),
+    "terrain underlay should pre-scan and skip interior cells that cannot reveal underside seams"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("appendSparseTerrainCellQuad(smoothWaterDirtUnderlayPositions, smoothWaterDirtUnderlayUvs, meshOriginX, meshOriginY, cell.tileX, cell.tileY, sampleSmoothWaterDirtUnderlayVertexHeight, true);"),
+    "smooth pond dirt underlay should be built from sparse tile cells"
   );
   assert(
     chunkTerrainRuntimeSource.includes("const smoothWaterDirtUnderlayMesh = new THREE.Mesh(smoothWaterDirtUnderlayGeo, sharedMaterials.dirtTile);"),
@@ -87,8 +104,28 @@ function run() {
     "smooth pond dirt underlay should remain visual-only"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("if (underlayIndices.length > 0) {"),
-    "chunk terrain runtime should only instantiate underlay meshes when the chunk has land coverage"
+    chunkTerrainRuntimeSource.includes("const TERRAIN_SKIRT_DROP = 0.24;") && chunkTerrainRuntimeSource.includes("const TERRAIN_WATER_SKIRT_DROP = 0.18;"),
+    "terrain skirts should drop below exposed land and water edges to cover void seams"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("const buildTerrainSkirtGeometry = (cells = null) => {"),
+    "chunk terrain runtime should build visual skirts along exposed terrain boundaries"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("isTerrainSkirtWaterEdge(worldTileX"),
+    "terrain skirts should detect water-facing edges separately from dry land edges"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("terrainSkirtMesh.userData = { type: 'GROUND_VISUAL_SKIRT', z: 0 };"),
+    "terrain skirt meshes should be marked as visual-only ground seam covers"
+  );
+  assert(
+    !chunkTerrainRuntimeSource.includes("environmentMeshes.push(terrainSkirtMesh)"),
+    "terrain skirt meshes should not become raycast or collision targets"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("if (underlayCells.length > 0) {"),
+    "chunk terrain runtime should only build underlay geometry when the chunk has seam coverage"
   );
   assert(
     chunkTerrainRuntimeSource.includes("function applyWorldSpaceTerrainUvs"),
@@ -99,8 +136,9 @@ function run() {
     "terrain UVs should support deterministic world-space warp to break long-distance repeat lines"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("applyWorldSpaceTerrainUvs(underlayGeo, startX, startY, CHUNK_SIZE, CHUNK_SIZE, sampleFractalNoise2D);"),
-    "terrain underlay UVs should continue in world space across chunk boundaries"
+    chunkTerrainRuntimeSource.includes("function applyWorldSpaceLinearTerrainUvs")
+      || chunkTerrainRuntimeSource.includes("uvs.push(worldX / CHUNK_SIZE, worldY / CHUNK_SIZE);"),
+    "terrain underlay UVs should continue in world space across chunk boundaries without paying the warped visible-terrain cost"
   );
   assert(
     chunkTerrainRuntimeSource.includes("applyWorldSpaceTerrainUvs(terrainGeo, startX, startY, terrainSegments, CHUNK_SIZE, sampleFractalNoise2D);"),
@@ -109,6 +147,12 @@ function run() {
   assert(
     chunkTierRenderRuntimeSource.includes("applyWorldSpaceTerrainUvs(terrainGeo, startX, startY, segments, CHUNK_SIZE, sampleFractalNoise2D);"),
     "simplified terrain UVs should continue in world space across chunk boundaries"
+  );
+  assert(
+    chunkTierRenderRuntimeSource.includes("function createSimplifiedTerrainHeightSampler(options = {})")
+      && chunkTierRenderRuntimeSource.includes("SIMPLIFIED_TERRAIN_FAR_HEIGHT_FLATTEN")
+      && chunkTierRenderRuntimeSource.includes("sampleSimplifiedTerrainHeightAtWorld(worldX, worldY)"),
+    "simplified mid/far terrain should use a shared world-space smoothing sampler so unloaded chunks stay flatter without opening void seams"
   );
   assert(
     chunkTerrainRuntimeSource.includes("function getTerrainBlendMaterial(THREE, sharedMaterials)"),
@@ -127,12 +171,20 @@ function run() {
     "terrain blend shader should mix grass and dirt samples instead of switching materials"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("const TERRAIN_BLEND_SUBDIVISIONS = 2;"),
-    "near terrain should use bounded visual subdivision so transition masks stay smooth without overloading chunks"
+    chunkTerrainRuntimeSource.includes("const TERRAIN_BLEND_SUBDIVISIONS = 1;"),
+    "near terrain should use the cheaper guarded subdivision density now that visual skirts and water backfills cover exposed seams"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("const terrainSegments = CHUNK_SIZE * TERRAIN_BLEND_SUBDIVISIONS;"),
-    "near terrain should use a denser continuous mesh for material blending"
+    chunkTerrainRuntimeSource.includes("const terrainSubdivisionMultiplier = TERRAIN_BLEND_SUBDIVISIONS;"),
+    "near terrain should use one consistent subdivision density so elevation seams do not form T-junction lines"
+  );
+  assert(
+    !chunkTerrainRuntimeSource.includes("function createAdaptiveTerrainGeometry"),
+    "near terrain should not mix dense and sparse cells inside one elevation mesh because that creates visible T-junction lines"
+  );
+  assert(
+    !chunkTerrainRuntimeSource.includes("TERRAIN_BASE_SUBDIVISIONS"),
+    "near terrain should not mix base and blend subdivision tiers across adjacent elevated chunks"
   );
   assert(
     chunkTerrainRuntimeSource.includes("new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, terrainSegments, terrainSegments);"),
@@ -215,7 +267,7 @@ function run() {
     "terrain blending should avoid separate transition interaction meshes"
   );
   assert(
-    chunkTerrainRuntimeSource.includes("terrainMesh.userData = { type: 'GROUND', z: 0 };"),
+    chunkTerrainRuntimeSource.includes("terrainMesh.userData = { type: 'GROUND', z: 0, terrainSubdivisionMultiplier };"),
     "the blended terrain mesh should remain the gameplay ground"
   );
   assert(
@@ -274,7 +326,7 @@ function run() {
     chunkTerrainRuntimeSource.includes("waterRenderBodies,"),
     "terrain blend vertex sampling should receive authored water bodies for smooth shoreline masks"
   );
-  const pierCoverageSkips = chunkTerrainRuntimeSource.match(/if \(isPierVisualCoverageTile\(activePierConfig, worldTileX, worldTileY, 0\)\) continue;/g) || [];
+  const pierCoverageSkips = chunkTerrainRuntimeSource.match(/if \(isPierVisualCoverageTile\(activePierConfig, worldTileX, worldTileY, 0\)\) (?:continue|return false);/g) || [];
   assert(
     pierCoverageSkips.length >= 2,
     "both terrain and underlay paths should skip pier visual-coverage tiles"

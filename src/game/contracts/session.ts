@@ -151,6 +151,8 @@ export interface SerializedItemSlot {
   amount: number;
 }
 
+export type SerializedEquipmentSlot = string | SerializedItemSlot | null;
+
 export interface ProgressSavePlayerState extends Point3 {
   targetRotation: number;
   currentHitpoints: number;
@@ -172,7 +174,7 @@ export interface ProgressSaveState {
   playerSkills: PlayerSkillMap;
   inventory: Array<SerializedItemSlot | null>;
   bankItems: Array<SerializedItemSlot | null>;
-  equipment: Record<string, string | null>;
+  equipment: Record<string, SerializedEquipmentSlot>;
   userItemPrefs: Record<string, string>;
   contentGrants: ContentGrantState;
   quests: QuestProgressState;

@@ -1,4 +1,4 @@
-import type { CombatItemProfile, MeleeStyleId } from "./combat";
+import type { CombatAmmoProfile, CombatItemProfile, MeleeStyleId } from "./combat";
 
 export interface UiItemStats {
   atk?: number;
@@ -15,7 +15,9 @@ export interface UiItemData {
   value?: number;
   stats?: UiItemStats;
   combat?: CombatItemProfile;
+  ammo?: CombatAmmoProfile;
   requiredAttackLevel?: number;
+  requiredRangedLevel?: number;
   requiredDefenseLevel?: number;
   [key: string]: unknown;
 }
@@ -89,6 +91,7 @@ export interface EquipmentSlotViewModel {
   itemId: string | null;
   itemName: string;
   icon: string;
+  amount: number;
   hasItem: boolean;
 }
 

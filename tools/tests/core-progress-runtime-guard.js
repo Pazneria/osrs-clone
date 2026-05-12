@@ -87,13 +87,15 @@ function run() {
 
   const itemDb = {
     coins: { id: "coins", stackable: true },
-    bronze_sword: { id: "bronze_sword", stackable: false }
+    bronze_sword: { id: "bronze_sword", stackable: false },
+    bronze_arrows: { id: "bronze_arrows", stackable: true }
   };
   const context = {
     ITEM_DB: itemDb,
-    equipment: { weapon: itemDb.bronze_sword, shield: null },
+    equipment: { weapon: itemDb.bronze_sword, shield: null, ammo: { itemData: itemDb.bronze_arrows, amount: 150 } },
     playerSkills: {
       attack: { xp: 0, level: 1 },
+      magic: { xp: 0, level: 1 },
       hitpoints: { xp: 1154, level: 10 }
     },
     maxSkillLevel: 99,
@@ -111,7 +113,7 @@ function run() {
       tutorialInstructorVisits: {}
     },
     sanitizePlayerName: (value) => String(value || "").replace(/[^A-Za-z0-9 _-]/g, "").trim().slice(0, 12),
-    tutorialExitStep: 7,
+    tutorialExitStep: 11,
     tutorialWorldId: "tutorial_island",
     now: () => 12345,
     windowRef: {
@@ -169,8 +171,10 @@ function run() {
 
   const serializedEquipment = runtime.serializeEquipmentState(context);
   assert(serializedEquipment.weapon === "bronze_sword" && serializedEquipment.shield === null, "runtime should serialize equipment by slot");
-  const restoredEquipment = runtime.deserializeEquipmentState(context, { weapon: "coins", shield: "missing" });
-  assert(restoredEquipment.weapon === itemDb.coins && restoredEquipment.shield === null, "runtime should restore equipment from item db");
+  assert(serializedEquipment.ammo.itemId === "bronze_arrows" && serializedEquipment.ammo.amount === 150, "runtime should serialize stackable equipped ammo with amount");
+  const restoredEquipment = runtime.deserializeEquipmentState(context, { weapon: "coins", shield: "missing", ammo: { itemId: "bronze_arrows", amount: 125 } });
+  assert(restoredEquipment.weapon.itemData === itemDb.coins && restoredEquipment.shield === null, "runtime should restore stackable equipment from item db");
+  assert(restoredEquipment.ammo.itemData === itemDb.bronze_arrows && restoredEquipment.ammo.amount === 125, "runtime should restore equipped ammo stack amounts");
 
   const prefs = runtime.sanitizeUserItemPrefs({ coins: "Use", bad: 7, "": "Drop" });
   assert(prefs.coins === "Use" && !("bad" in prefs) && !("" in prefs), "runtime should sanitize user item preferences");
@@ -189,7 +193,7 @@ function run() {
   assert(legacyProfile.name === "Adventurer", "runtime should apply legacy profile default names");
   assert(legacyProfile.creationCompleted === true, "runtime should mark legacy profiles as created");
   assert(legacyProfile.createdAt === 12345, "runtime should stamp legacy createdAt");
-  assert(legacyProfile.tutorialCompletedAt === 12345 && legacyProfile.tutorialStep === 7, "runtime should infer tutorial completion for legacy overworld saves");
+  assert(legacyProfile.tutorialCompletedAt === 12345 && legacyProfile.tutorialStep === 11, "runtime should infer tutorial completion for legacy overworld saves");
   const syncedProfile = runtime.syncPlayerProfileState(context, {
     name: "Alice",
     creationCompleted: true,

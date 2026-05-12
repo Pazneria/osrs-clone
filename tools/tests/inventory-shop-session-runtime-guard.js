@@ -17,6 +17,7 @@ function run() {
   const inventorySource = read(root, "src/js/inventory.js");
   const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
   const packageSource = read(root, "package.json");
+  const packageSuiteManifestSource = read(root, "tools/tests/package-suite-manifest.js");
 
   const runtimeIndex = manifestSource.indexOf('id: "inventory-shop-session-runtime"');
   const inventoryIndex = manifestSource.indexOf('id: "inventory"');
@@ -28,7 +29,7 @@ function run() {
   assert(runtimeIndex !== -1, "legacy manifest should include inventory shop session runtime");
   assert(inventoryIndex !== -1 && runtimeIndex < inventoryIndex, "legacy manifest should load shop session runtime before inventory.js");
   assert(packageSource.includes('"test:inventory-shop-session:guard"'), "package should expose a targeted inventory shop session guard");
-  assert(packageSource.includes("--check ./src/js/inventory-shop-session-runtime.js"), "package check should syntax-check the inventory shop session runtime");
+  assert(packageSuiteManifestSource.includes('"src/js/inventory-shop-session-runtime.js"'), "package check should syntax-check the inventory shop session runtime");
 
   assert(inventorySource.includes("function getInventoryShopSessionRuntime()"), "inventory.js should resolve the shop session runtime");
   assert(inventorySource.includes("inventoryShopSessionRuntime.createShopSession({ defaultMerchantId: 'general_store', inventorySize: 100 })"), "inventory.js should initialize shop state through the runtime");

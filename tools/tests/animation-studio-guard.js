@@ -31,6 +31,7 @@ function run() {
   assert(inputSource.includes("function isAnimationStudioActive()"), "input-render.js should gate runtime input while the studio is open");
   assert(inputSource.includes("applyClipDrivenPlayerAnimation"), "input-render.js should use clip-driven player animation");
   assert(inputSource.includes("player/combat_slash"), "input-render.js should request the combat slash clip");
+  assert(inputSource.includes("buildCombatAttackActionClipRequest"), "input-render.js should route combat action clips through the player animation runtime");
   assert(inputSource.includes("player/hit_recoil"), "input-render.js should request the hit recoil clip");
   assert(debugPanelSource.includes("window.CombatAnimationDebugPanelRuntime"), "combat animation debug panel runtime should expose a window runtime");
   assert(debugPanelSource.includes("combat-animation-debug-panel"), "combat animation debug panel runtime should own the panel DOM");

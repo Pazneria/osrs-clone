@@ -9,6 +9,8 @@
         { x: 0, y: 1 },
         { x: -1, y: 0 }
     ]);
+    const TOWN_NPC_SHADOW_CULL_DISTANCE = 38;
+    const TOWN_NPC_SHADOW_CULL_DISTANCE_SQ = TOWN_NPC_SHADOW_CULL_DISTANCE * TOWN_NPC_SHADOW_CULL_DISTANCE;
 
     function occupiedTileKey(x, y, z = 0) {
         return `${z}:${x}:${y}`;
@@ -284,7 +286,10 @@
             z: Number.isFinite(npc && npc.z) ? npc.z : 0,
             visualX: Number.isFinite(npc && npc.visualX) ? npc.visualX : (Number.isFinite(npc && npc.x) ? npc.x : 0),
             visualY: Number.isFinite(npc && npc.visualY) ? npc.visualY : (Number.isFinite(npc && npc.y) ? npc.y : 0),
-            rendered: !!(npc && npc.hitbox)
+            rendered: !!(npc && npc.hitbox),
+            tutorialVisibilityActive: npc && npc.tutorialVisibilityActive !== false,
+            tutorialVisibleFromStep: normalizeTutorialStepValue(npc && npc.tutorialVisibleFromStep),
+            tutorialVisibleUntilStep: normalizeTutorialStepValue(npc && npc.tutorialVisibleUntilStep)
         }));
     }
 
@@ -309,6 +314,73 @@
     function getTutorialStep(context) {
         const tutorial = context && context.TutorialRuntime ? context.TutorialRuntime : (window ? window.TutorialRuntime : null);
         return tutorial && typeof tutorial.getStep === 'function' ? tutorial.getStep() : 0;
+    }
+
+    function normalizeTutorialStepValue(value) {
+        const rawValue = Number(value);
+        return Number.isFinite(rawValue) ? Math.max(0, Math.floor(rawValue)) : null;
+    }
+
+    function hasTutorialVisibilityWindow(actor) {
+        if (!actor || typeof actor !== 'object') return false;
+        return normalizeTutorialStepValue(actor.tutorialVisibleFromStep) !== null
+            || normalizeTutorialStepValue(actor.tutorialVisibleUntilStep) !== null;
+    }
+
+    function isTutorialActorVisible(context, actor) {
+        if (!hasTutorialVisibilityWindow(actor)) return true;
+        const currentStep = Math.max(0, Math.floor(Number(getTutorialStep(context)) || 0));
+        const fromStep = normalizeTutorialStepValue(actor.tutorialVisibleFromStep);
+        const untilStep = normalizeTutorialStepValue(actor.tutorialVisibleUntilStep);
+        if (fromStep !== null && currentStep < fromStep) return false;
+        if (untilStep !== null && currentStep > untilStep) return false;
+        return true;
+    }
+
+    function applyTownNpcActorVisibility(actor, visible) {
+        if (!actor || typeof actor !== 'object') return;
+        actor.tutorialVisibilityActive = !!visible;
+        if (actor.mesh) actor.mesh.visible = !!visible;
+        if (actor.hitbox) {
+            actor.hitbox.visible = !!visible;
+            if (!actor.hitbox.userData) actor.hitbox.userData = {};
+            actor.hitbox.userData.ignoreRaycast = !visible;
+            if (actor.hitbox.userData.uid && typeof actor.hitbox.userData.uid === 'object') {
+                actor.hitbox.userData.uid.tutorialHidden = !visible;
+            }
+        }
+    }
+
+    function syncTutorialActorVisibility(context = {}, actor) {
+        if (!actor || !hasTutorialVisibilityWindow(actor)) return true;
+        const visible = isTutorialActorVisible(context, actor);
+        const wasVisible = actor.tutorialVisibilityActive !== false;
+        if (visible === wasVisible) {
+            applyTownNpcActorVisibility(actor, visible);
+            return visible;
+        }
+        if (!visible) {
+            releaseTownNpcOccupiedTile(context, actor);
+            actor.moveDurationMs = 0;
+            actor.moveStartedAtMs = 0;
+        } else {
+            occupyTownNpcTile(context, actor, actor.x, actor.y);
+            const getTileHeightSafe = typeof context.getTileHeightSafe === 'function' ? context.getTileHeightSafe : () => 0;
+            const currentHeight = getTileHeightSafe(actor.x, actor.y, actor.z);
+            actor.visualX = actor.x;
+            actor.visualY = actor.y;
+            actor.visualBaseY = currentHeight + (actor.z * 3.0);
+            actor.idleUntilMs = (typeof context.now === 'function' ? context.now() : Date.now()) + 700;
+        }
+        applyTownNpcActorVisibility(actor, visible);
+        return visible;
+    }
+
+    function refreshTutorialActorStates(context = {}) {
+        const npcsToRender = Array.isArray(context.npcsToRender) ? context.npcsToRender : [];
+        for (let i = 0; i < npcsToRender.length; i++) {
+            syncTutorialActorVisibility(context, npcsToRender[i]);
+        }
     }
 
     function isTutorialGateUnlocked(context, door) {
@@ -336,6 +408,7 @@
                 logicalMap[door.z][door.y][door.x] = (unlocked && door.isOpen) ? getDoorOpenTileId(TileId, door) : getDoorClosedTileId(TileId, door);
             }
         }
+        refreshTutorialActorStates(context);
         if (typeof context.updateMinimapCanvas === 'function') context.updateMinimapCanvas();
     }
 
@@ -532,6 +605,30 @@
         if (rig.rightLowerLeg) rig.rightLowerLeg.rotation.x = (defaultNodes.rightLowerLeg ? defaultNodes.rightLowerLeg.rotation.x : 0) + rightKnee;
     }
 
+    function shouldCastTownNpcShadow(context = {}, actor, visualX, visualY) {
+        if (!actor || !actor.mesh || actor.mesh.visible === false) return false;
+        const playerState = context.playerState;
+        if (!playerState || typeof playerState !== 'object') return true;
+        if (Number.isFinite(actor.z) && Number.isFinite(playerState.z) && actor.z !== playerState.z) return false;
+        const dx = (Number.isFinite(visualX) ? visualX : actor.x) - playerState.x;
+        const dy = (Number.isFinite(visualY) ? visualY : actor.y) - playerState.y;
+        if (!Number.isFinite(dx) || !Number.isFinite(dy)) return true;
+        return ((dx * dx) + (dy * dy)) <= TOWN_NPC_SHADOW_CULL_DISTANCE_SQ;
+    }
+
+    function applyTownNpcShadowBudget(context = {}, actor, visualX, visualY) {
+        if (!actor || !actor.mesh || typeof actor.mesh.traverse !== 'function') return;
+        const shouldCastShadow = shouldCastTownNpcShadow(context, actor, visualX, visualY);
+        if (actor.shadowCastingActive === shouldCastShadow) return;
+        actor.mesh.traverse((child) => {
+            if (!child || !child.isMesh) return;
+            const userData = child.userData || {};
+            if (userData.type === 'NPC') return;
+            child.castShadow = shouldCastShadow;
+        });
+        actor.shadowCastingActive = shouldCastShadow;
+    }
+
     function shouldPauseTownNpcRoaming(context = {}, actor) {
         const playerState = context.playerState;
         if (!actor || typeof playerState !== 'object' || playerState == null) return false;
@@ -587,12 +684,14 @@
         for (let i = 0; i < npcsToRender.length; i++) {
             const actor = npcsToRender[i];
             if (!actor || !Number.isFinite(actor.x) || !Number.isFinite(actor.y) || !Number.isFinite(actor.z)) continue;
+            if (!syncTutorialActorVisibility(context, actor)) continue;
             occupiedTiles.add(occupiedTileKey(actor.x, actor.y, actor.z));
         }
 
         for (let i = 0; i < npcsToRender.length; i++) {
             const actor = npcsToRender[i];
             if (!actor || !Number.isFinite(actor.x) || !Number.isFinite(actor.y) || !Number.isFinite(actor.z)) continue;
+            if (!syncTutorialActorVisibility(context, actor)) continue;
 
             const currentHeight = getTileHeightSafe(actor.x, actor.y, actor.z);
             let visualX = Number.isFinite(actor.visualX) ? actor.visualX : actor.x;
@@ -653,6 +752,7 @@
             if (actor.mesh) {
                 actor.mesh.position.set(visualX, visualBaseY, visualY);
                 actor.mesh.rotation.y = actor.visualFacingYaw;
+                applyTownNpcShadowBudget(context, actor, visualX, visualY);
                 applyTownNpcRigAnimation(actor, frameNow, visualBaseY);
             }
             if (actor.hitbox && actor.hitbox.userData) {
@@ -680,6 +780,8 @@
 
     window.WorldTownNpcRuntime = {
         TOWN_NPC_STEP_DIRS,
+        TOWN_NPC_SHADOW_CULL_DISTANCE,
+        applyTownNpcShadowBudget,
         applyTownNpcRigAnimation,
         buildStructureBoundsList,
         buildTownNpcActorId,
@@ -698,6 +800,7 @@
         isFenceConnectorTile,
         isTownNpcStepTraversable,
         isTownNpcStepWithinBounds,
+        isTutorialActorVisible,
         isTutorialGateLocked,
         isTutorialGateUnlocked,
         isWoodenGateTileIdSafe,
@@ -707,6 +810,7 @@
         occupyTownNpcTile,
         openTownNpcDoorAt,
         publishTutorialGateHooks,
+        refreshTutorialActorStates,
         refreshTutorialGateStates,
         releaseTownNpcOccupiedTile,
         rememberStaticObjectBaseTile,

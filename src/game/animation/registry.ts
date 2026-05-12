@@ -6,6 +6,7 @@ import idleClipJson from "./clips/player/idle.json";
 import walkClipJson from "./clips/player/walk.json";
 import runClipJson from "./clips/player/run.json";
 import combatSlashClipJson from "./clips/player/combat_slash.json";
+import combatBowShotClipJson from "./clips/player/combat_bow_shot.json";
 import hitRecoilClipJson from "./clips/player/hit_recoil.json";
 import mining1ClipJson from "./clips/player/mining1.json";
 import fishingNet1ClipJson from "./clips/player/fishing_net1.json";
@@ -67,6 +68,14 @@ const clipRecords: AnimationClipRecord[] = [
       sourcePath: "src/game/animation/clips/player/combat_slash.json"
     },
     clip: combatSlashClipJson as AnimationClip
+  },
+  {
+    descriptor: {
+      clipId: "player/combat_bow_shot",
+      rigId: "player_humanoid_v1",
+      sourcePath: "src/game/animation/clips/player/combat_bow_shot.json"
+    },
+    clip: combatBowShotClipJson as AnimationClip
   },
   {
     descriptor: {

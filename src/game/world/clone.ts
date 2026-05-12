@@ -117,7 +117,13 @@ export function createMerchantNpcDescriptor(service: ServiceDescriptor): NpcDesc
     roamingRadiusOverride: Number.isFinite(service.roamingRadiusOverride)
       ? Math.max(0, Math.floor(Number(service.roamingRadiusOverride)))
       : null,
-    tags: Array.isArray(service.tags) ? service.tags.slice() : []
+    tags: Array.isArray(service.tags) ? service.tags.slice() : [],
+    tutorialVisibleFromStep: Number.isFinite(service.tutorialVisibleFromStep)
+      ? Math.max(0, Math.floor(Number(service.tutorialVisibleFromStep)))
+      : null,
+    tutorialVisibleUntilStep: Number.isFinite(service.tutorialVisibleUntilStep)
+      ? Math.max(0, Math.floor(Number(service.tutorialVisibleUntilStep)))
+      : null
   };
 }
 

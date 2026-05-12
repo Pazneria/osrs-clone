@@ -16,6 +16,9 @@ const starterTown = require(path.join(root, "content", "world", "regions", "main
 const tutorialIsland = require(path.join(root, "content", "world", "regions", "tutorial_island.json"));
 
 const WORLD_COORD_SCALE = 648 / 486;
+const TUTORIAL_WORLD_COORD_SCALE = WORLD_COORD_SCALE * 0.8;
+const LEGACY_WORLD_CENTER = 486 / 2;
+const EXPANDED_WORLD_CENTER = 648 / 2;
 const STARTER_TOWN_STAMP_IDS = Object.freeze([
   "castle_floor0",
   "castle_floor1",
@@ -68,6 +71,15 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
   distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 }
 });
 
+const MAIN_OVERWORLD_ROAD_IDS = Object.freeze([
+  "starter_town_east_road",
+  "starter_town_north_altar_road",
+  "starter_town_starter_mine_spur",
+  "starter_town_south_resource_road",
+  "starter_town_southwest_bank_road",
+  "starter_town_southeast_camp_road"
+]);
+
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:general_store": { x: 170, y: 239, z: 0, dialogueId: "shopkeeper", scaledX: 225, scaledY: 316 },
   "merchant:fletching_supplier": { x: 183, y: 238, z: 0, dialogueId: "fletching_supplier", scaledX: 242, scaledY: 315 },
@@ -98,8 +110,31 @@ const STARTER_TOWN_BANK_LAYOUT = Object.freeze({
   "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0, scaledX: 128, scaledY: 41 }
 });
 
+const STARTER_TOWN_NPC_HOME_TAGS = Object.freeze({
+  "merchant:general_store": "home:shopkeeper_house",
+  "merchant:fletching_supplier": "home:general_store",
+  "merchant:starter_caravan_guide": "home:road_guide_hut",
+  "merchant:east_outpost_caravan_guide": "home:outpost_guide_house",
+  "merchant:advanced_fletcher": "home:east_road_outpost",
+  "merchant:advanced_woodsman": "home:east_road_outpost",
+  "merchant:fishing_teacher": "home:fishing_teacher_shack",
+  "merchant:fishing_supplier": "home:fishing_supplier_shack",
+  "merchant:forester_teacher": "home:starter_grove",
+  "merchant:borin_ironvein": "home:borin_ironvein_house",
+  "merchant:thrain_deepforge": "home:thrain_deepforge_house",
+  "merchant:elira_gemhand": "home:elira_gemhand_cottage",
+  "merchant:crafting_teacher": "home:crafting_teacher_cottage",
+  "merchant:tanner_rusk": "home:tanner_rusk_tannery",
+  "merchant:rune_tutor": "home:rune_tutor_hut",
+  "merchant:combination_sage": "home:combination_sage_hut"
+});
+
 function scaleAxis(value) {
   return Math.round(value * WORLD_COORD_SCALE);
+}
+
+function tutorialScaleAxis(value) {
+  return Math.round(EXPANDED_WORLD_CENTER + ((value - LEGACY_WORLD_CENTER) * TUTORIAL_WORLD_COORD_SCALE));
 }
 
 function scaleRadius(value) {
@@ -210,6 +245,7 @@ function setSparseTile(map, x, y, z, tileId) {
   const rawGuide = tutorialIsland.services.find((entry) => entry.serviceId === "merchant:tutorial_guide");
   const scaledGuide = tutorialDefinition.services.find((entry) => entry.serviceId === "merchant:tutorial_guide");
   const servicesById = Object.fromEntries(tutorialIsland.services.map((entry) => [entry.serviceId, entry]));
+  const scaledServicesById = Object.fromEntries(tutorialDefinition.services.map((entry) => [entry.serviceId, entry]));
 
   assert.ok(rawGuide, "raw tutorial island should include the tutorial guide");
   assert.ok(scaledGuide, "scaled tutorial island should include the tutorial guide");
@@ -230,6 +266,8 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.deepStrictEqual(
     tutorialIsland.terrainPatches.paths.map((pathPatch) => pathPatch.pathId).sort(),
     [
+      "tutorial_advanced_skill_yard_apron",
+      "tutorial_ember_altar_spur",
       "tutorial_fire_clearing_patch",
       "tutorial_fire_to_quarry_path",
       "tutorial_quarry_work_apron",
@@ -284,20 +322,20 @@ function setSparseTile(map, x, y, z, tileId) {
     );
   }
   assert.ok(Array.isArray(tutorialIsland.waterBodies) && tutorialIsland.waterBodies.some((body) => body.id === "tutorial_surrounding_sea"), "raw tutorial island should include a surrounding sea render body");
-  assert.strictEqual(tutorialIsland.services.length, 10, "raw tutorial island surface-v2 should include all surface tutors and smithing stations");
+  assert.strictEqual(tutorialIsland.services.length, 14, "raw tutorial island surface-v2 should include all surface tutors, late-skill tutors, and smithing stations");
   const tutorialLessonGates = tutorialIsland.landmarks.doors.filter((door) => Number.isFinite(door.tutorialRequiredStep) && door.tileId === "WOODEN_GATE_CLOSED");
   assert.strictEqual(tutorialIsland.combatSpawns.length, 3, "raw tutorial island surface-v2 should include a small surface combat yard");
   assert.strictEqual(tutorialIsland.resourceNodes.mining.length, 4, "raw tutorial island surface-v2 should include a small surface quarry");
   assert.strictEqual(tutorialIsland.resourceNodes.woodcutting.length, 6, "raw tutorial island should include a denser survival-field grove");
   assert.strictEqual(tutorialIsland.structures.length, 1, "raw tutorial island should include the starting cabin structure");
   assert.strictEqual(tutorialIsland.structures[0].stampId, "tutorial_start_cabin", "raw tutorial island cabin should use the tutorial cabin stamp");
-  assert.strictEqual(tutorialLessonGates.length, 5, "raw tutorial island surface-v2 should include arrival, quarry, combat, bank, and exit gates");
+  assert.strictEqual(tutorialLessonGates.length, 4, "raw tutorial island surface-v2 should include quarry, combat, bank, and exit gates");
   assert.ok(tutorialLessonGates.every((door) => door.tileId === "WOODEN_GATE_CLOSED"), "tutorial lesson gates should use wooden gate tiles");
-  assert.ok(tutorialLessonGates.some((door) => door.landmarkId === "tutorial_gate_arrival_to_survival_field" && door.tutorialRequiredStep === 1), "surface-v2 should gate the survival field after arrival");
+  assert.ok(!tutorialIsland.landmarks.doors.some((door) => door.landmarkId === "tutorial_gate_arrival_to_survival_field"), "surface-v2 should not keep a redundant gate east of the arrival cabin");
   assert.ok(tutorialLessonGates.some((door) => door.landmarkId === "tutorial_gate_survival_to_quarry_yard" && door.tutorialRequiredStep === 4), "surface-v2 should gate the quarry yard after cooking");
   assert.ok(tutorialLessonGates.some((door) => door.landmarkId === "tutorial_gate_quarry_to_combat_yard" && door.tutorialRequiredStep === 5), "surface-v2 should gate combat after mining and smithing");
   assert.ok(tutorialLessonGates.some((door) => door.landmarkId === "tutorial_gate_combat_to_bank" && door.tutorialRequiredStep === 6), "surface-v2 should gate banking after combat");
-  assert.ok(tutorialLessonGates.some((door) => door.landmarkId === "tutorial_gate_bank_to_exit" && door.tutorialRequiredStep === 7), "surface-v2 should keep the final exit behind the banking proof");
+  assert.ok(tutorialLessonGates.some((door) => door.landmarkId === "tutorial_gate_bank_to_exit" && door.tutorialRequiredStep === 11), "surface-v2 should keep the final exit behind the expanded tutorial proof");
   assert.ok(
     tutorialIsland.landmarks.doors.some((door) => (
       door.landmarkId === "tutorial_start_cabin_door"
@@ -310,13 +348,93 @@ function setSparseTile(map, x, y, z, tileId) {
   );
   assert.ok(Array.isArray(tutorialIsland.landmarks.fences) && tutorialIsland.landmarks.fences.length >= 5, "tutorial island should author real fence landmarks without enclosing the natural survival field");
   assert.ok(!tutorialIsland.landmarks.fences.some((fence) => fence.landmarkId === "tutorial_survival_field_fence"), "natural survival field should stay open instead of being boxed by a huge fence");
+  {
+    const fenceIds = new Set(tutorialIsland.landmarks.fences.map((fence) => fence.landmarkId));
+    [
+      "tutorial_arrival_path_north_fence",
+      "tutorial_arrival_path_south_fence",
+      "tutorial_arrival_west_boundary_fence",
+      "tutorial_quarry_path_north_fence",
+      "tutorial_quarry_path_south_fence",
+      "tutorial_combat_bank_path_north_fence",
+      "tutorial_combat_bank_path_south_fence",
+      "tutorial_exit_path_north_fence",
+      "tutorial_exit_path_south_fence",
+      "tutorial_survival_gate_upper_threshold_fence",
+      "tutorial_survival_gate_lower_threshold_fence",
+      "tutorial_quarry_gate_upper_threshold_fence",
+      "tutorial_quarry_gate_lower_threshold_fence",
+      "tutorial_combat_gate_upper_threshold_fence",
+      "tutorial_combat_gate_lower_threshold_fence"
+    ].forEach((fenceId) => {
+      assert.ok(fenceIds.has(fenceId), `tutorial island should use path-following fence rail ${fenceId}`);
+    });
+    assert.ok(
+      tutorialIsland.landmarks.fences.every((fence) => {
+        const first = fence.points[0];
+        const last = fence.points[fence.points.length - 1];
+        return !first || !last || first.x !== last.x || first.y !== last.y;
+      }),
+      "tutorial fence landmarks should be open path rails rather than closed polygons that cut across the route"
+    );
+    function distanceToSegment(point, start, end) {
+      const vx = end.x - start.x;
+      const vy = end.y - start.y;
+      const wx = point.x - start.x;
+      const wy = point.y - start.y;
+      const lengthSquared = (vx * vx) + (vy * vy);
+      const t = lengthSquared > 0 ? Math.max(0, Math.min(1, ((wx * vx) + (wy * vy)) / lengthSquared)) : 0;
+      return Math.hypot(point.x - (start.x + (t * vx)), point.y - (start.y + (t * vy)));
+    }
+    const looseGateIds = tutorialLessonGates.filter((gate) => {
+      let nearestFence = Infinity;
+      tutorialIsland.landmarks.fences.forEach((fence) => {
+        for (let i = 1; i < fence.points.length; i++) {
+          nearestFence = Math.min(nearestFence, distanceToSegment(gate, fence.points[i - 1], fence.points[i]));
+        }
+      });
+      return nearestFence > 4.1;
+    }).map((gate) => gate.landmarkId);
+    assert.deepStrictEqual(looseGateIds, [], "tutorial lesson gates should sit in nearby fence-threshold breaks instead of floating on the path");
+  }
+  {
+    const pond = tutorialIsland.terrainPatches.castleFrontPond;
+    function isInsidePond(point) {
+      const rotation = Number.isFinite(pond.rotationRadians) ? -pond.rotationRadians : 0;
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      const dx = point.x - pond.cx;
+      const dy = point.y - pond.cy;
+      const localX = (dx * cos) - (dy * sin);
+      const localY = (dx * sin) + (dy * cos);
+      return ((localX * localX) / (pond.rx * pond.rx)) + ((localY * localY) / (pond.ry * pond.ry)) <= 1;
+    }
+    function segmentCrossesPond(start, end) {
+      for (let i = 0; i <= 64; i++) {
+        const t = i / 64;
+        if (isInsidePond({ x: start.x + ((end.x - start.x) * t), y: start.y + ((end.y - start.y) * t) })) {
+          return true;
+        }
+      }
+      return false;
+    }
+    const pondFenceCrossings = [];
+    tutorialIsland.landmarks.fences.forEach((fence) => {
+      for (let i = 1; i < fence.points.length; i++) {
+        if (segmentCrossesPond(fence.points[i - 1], fence.points[i])) {
+          pondFenceCrossings.push(`${fence.landmarkId}:${i - 1}-${i}`);
+        }
+      }
+    });
+    assert.deepStrictEqual(pondFenceCrossings, [], "tutorial fences should wrap around the survival pond instead of crossing its water");
+  }
   const tutorialCabinRoof = Array.isArray(tutorialIsland.landmarks.roofs)
     ? tutorialIsland.landmarks.roofs.find((roof) => roof.landmarkId === "tutorial_start_cabin_roof")
     : null;
   assert.ok(tutorialCabinRoof && tutorialCabinRoof.hideWhenPlayerInside === true, "tutorial cabin should author a hideable roof");
   assert.strictEqual(tutorialCabinRoof.height, 3.02, "tutorial cabin roof eaves should sit just above the 3.0-tile cabin walls");
   assert.ok(Array.isArray(tutorialIsland.landmarks.caveOpenings) && tutorialIsland.landmarks.caveOpenings.length === 0, "tutorial island surface-v2 should keep the full tutorial loop on the surface");
-  assert.ok(Array.isArray(tutorialIsland.landmarks.decorProps) && tutorialIsland.landmarks.decorProps.length === 10, "tutorial island should author focused arrival, grove, and quarry decorative props");
+  assert.ok(Array.isArray(tutorialIsland.landmarks.decorProps) && tutorialIsland.landmarks.decorProps.length === 18, "tutorial island should author focused arrival, grove, quarry, combat, and late-skill yard decorative props");
   assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_cabin_desk" && prop.kind === "desk" && prop.blocksMovement === true), "tutorial cabin should include a blocking tutor desk prop");
   assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_cabin_tool_rack" && prop.kind === "tool_rack" && prop.blocksMovement === true), "tutorial cabin tool rack should block movement");
   assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_arrival_notice_board" && prop.kind === "notice_board"), "tutorial arrival yard should include a notice board prop");
@@ -326,12 +444,23 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_quarry_ore_pile" && prop.kind === "ore_pile" && prop.blocksMovement === false), "tutorial quarry should include a non-blocking sorted ore pile prop");
   assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_quarry_coal_bin" && prop.kind === "coal_bin" && prop.blocksMovement === true), "tutorial quarry should include a blocking coal bin prop");
   assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_quarry_barrel" && prop.kind === "barrel" && prop.blocksMovement === true), "tutorial quarry should include a blocking quench barrel prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_weapon_rack" && prop.kind === "weapon_rack" && prop.blocksMovement === true), "tutorial combat yard should include a blocking weapon rack prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_training_dummy" && prop.kind === "training_dummy" && prop.blocksMovement === true), "tutorial combat yard should include a blocking decorative training dummy prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_archery_target" && prop.kind === "archery_target" && prop.blocksMovement === true), "tutorial combat yard should include a blocking archery target prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_ranged_arrow_crate" && prop.kind === "crate" && prop.blocksMovement === true), "tutorial ranged station should include a blocking arrow crate prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_magic_lesson_board" && prop.kind === "notice_board" && prop.blocksMovement === true), "tutorial magic station should include a lesson board prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_runecrafting_essence_crate" && prop.kind === "crate" && prop.blocksMovement === true), "tutorial runecrafting station should include a blocking essence crate prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_crafting_bench" && prop.kind === "desk" && prop.blocksMovement === true), "tutorial crafting station should include a blocking crafting bench prop");
+  assert.ok(tutorialIsland.landmarks.decorProps.some((prop) => prop.propId === "tutorial_crafting_supply_crate" && prop.kind === "crate" && prop.blocksMovement === true), "tutorial crafting station should include a blocking supplies crate prop");
   assert.ok(
     !tutorialIsland.landmarks.staircases.some((landmark) => landmark.landmarkId === "tutorial_fences" || landmark.tiles.some((tile) => tile.tileId === "WALL" && tile.height === 0.2)),
     "tutorial island should not use WALL landmark tiles as pseudo fences"
   );
-  assert.strictEqual(tutorialIsland.landmarks.altars.length, 0, "raw tutorial island should not include runecrafting altars");
-  assert.deepStrictEqual(tutorialIsland.skillRoutes.runecrafting, [], "raw tutorial island should not include runecrafting routes");
+  assert.strictEqual(tutorialIsland.landmarks.altars.length, 1, "raw tutorial island should include the tutorial Ember Altar");
+  assert.strictEqual(tutorialIsland.landmarks.altars[0].routeId, "tutorial_ember_altar", "tutorial Ember Altar should reference the tutorial route");
+  assert.strictEqual(tutorialIsland.landmarks.altars[0].variant, 4, "tutorial Ember Altar should use the ember altar visual variant");
+  assert.strictEqual(tutorialIsland.skillRoutes.runecrafting.length, 1, "raw tutorial island should include one runecrafting route");
+  assert.strictEqual(tutorialIsland.skillRoutes.runecrafting[0].routeId, "tutorial_ember_altar", "raw tutorial island runecrafting route should point at the tutorial Ember Altar");
   assert.ok(
     Math.abs(tutorialIsland.terrainPatches.castleFrontPond.rotationRadians - (Math.PI / 4)) < 0.000001,
     "raw tutorial survival pond should be angled with the road bend"
@@ -356,9 +485,27 @@ function setSparseTile(map, x, y, z, tileId) {
     assert.strictEqual(servicesById["merchant:tutorial_firemaking_instructor"].roamingRadiusOverride, 0, "firemaking instructor should stand still for visual inspection");
     assert.strictEqual(servicesById["merchant:tutorial_mining_smithing_instructor"].appearanceId, "tutorial_mining_smithing_instructor", "mining and smithing instructor should use the authored aproned foreman appearance");
     assert.ok(routeById.tutorial_surface_mine.x >= 340 && routeById.tutorial_surface_mine.x <= 370 && routeById.tutorial_surface_mine.y >= 280 && routeById.tutorial_surface_mine.y <= 300, "surface grid should place mining in the south-east surface quarry");
-    assert.strictEqual(routeById.tutorial_altar, undefined, "surface grid should not place a tutorial altar");
+    assert.strictEqual(servicesById["merchant:tutorial_combat_instructor"].appearanceId, "tutorial_combat_instructor", "combat instructor should use the authored arms trainer appearance");
+    assert.strictEqual(servicesById["merchant:tutorial_combat_instructor"].roamingRadiusOverride, 0, "combat instructor should stand still for visual inspection");
+    assert.strictEqual(scaledServicesById["merchant:tutorial_combat_instructor"].appearanceId, "tutorial_combat_instructor", "combat instructor appearance should survive authoring scale");
+    assert.strictEqual(scaledServicesById["merchant:tutorial_combat_instructor"].roamingRadiusOverride, 0, "combat instructor stationary roaming should survive authoring scale");
+    assert.ok(routeById.tutorial_ember_altar && routeById.tutorial_ember_altar.x === 236 && routeById.tutorial_ember_altar.y === 342, "surface grid should place the tutorial Ember Altar in the late-skill yard");
+    assert.ok(servicesById["merchant:tutorial_ranged_instructor"].x >= 330 && servicesById["merchant:tutorial_ranged_instructor"].x <= 345, "surface grid should place the ranged instructor by the archery target");
+    assert.strictEqual(servicesById["merchant:tutorial_ranged_instructor"].appearanceId, "tutorial_ranged_instructor", "ranged instructor should use the authored archery trainer appearance");
+    assert.ok(servicesById["merchant:tutorial_magic_instructor"].x >= 285 && servicesById["merchant:tutorial_magic_instructor"].x <= 300, "surface grid should place the magic instructor by the lesson board");
+    assert.strictEqual(servicesById["merchant:tutorial_magic_instructor"].appearanceId, "tutorial_magic_instructor", "magic instructor should use the authored rune lesson appearance");
+    assert.ok(servicesById["merchant:tutorial_runecrafting_instructor"].x >= 240 && servicesById["merchant:tutorial_runecrafting_instructor"].x <= 252, "surface grid should place the runecrafting instructor by the Ember Altar");
+    assert.strictEqual(servicesById["merchant:tutorial_runecrafting_instructor"].appearanceId, "tutorial_runecrafting_instructor", "runecrafting instructor should use the authored altar scribe appearance");
+    assert.ok(servicesById["merchant:tutorial_crafting_instructor"].x >= 212 && servicesById["merchant:tutorial_crafting_instructor"].x <= 224, "surface grid should place the crafting instructor by the crafting bench");
+    assert.strictEqual(servicesById["merchant:tutorial_crafting_instructor"].appearanceId, "tutorial_crafting_instructor", "crafting instructor should use the authored artisan appearance");
+    assert.strictEqual(servicesById["merchant:tutorial_bank_tutor"].appearanceId, "tutorial_bank_tutor", "bank tutor should use the authored ledger tutor appearance");
     assert.ok(servicesById["merchant:tutorial_bank_tutor"].x >= 190 && servicesById["merchant:tutorial_bank_tutor"].x <= 215 && servicesById["merchant:tutorial_bank_tutor"].y >= 320, "surface grid should keep the bank tutor in the south-west bank area");
     assert.ok(servicesById["merchant:tutorial_exit_guide"].x >= 240 && servicesById["merchant:tutorial_exit_guide"].y >= 330, "surface grid should keep the exit guide near the south bank exit");
+    assert.strictEqual(servicesById["merchant:tutorial_guide"].tutorialVisibleUntilStep, 10, "arrival Tutorial Guide should hide before the final center-yard exit step");
+    assert.strictEqual(servicesById["merchant:tutorial_exit_guide"].tutorialVisibleFromStep, 11, "center-yard Tutorial Guide should only appear for the final exit step");
+    assert.strictEqual(servicesById["merchant:tutorial_exit_guide"].roamingRadiusOverride, 0, "center-yard Tutorial Guide should stand still at the exit handoff");
+    assert.strictEqual(servicesById["merchant:tutorial_exit_guide"].appearanceId, servicesById["merchant:tutorial_guide"].appearanceId, "arrival and exit Tutorial Guide placements should share the same identity appearance");
+    assert.strictEqual(servicesById["merchant:tutorial_exit_guide"].dialogueId, servicesById["merchant:tutorial_guide"].dialogueId, "arrival and exit Tutorial Guide placements should share the same dialogue identity");
   }
   assert.strictEqual(dialogueCatalog.resolveDialogueId(rawGuide.dialogueId), "tutorial_guide", "tutorial guide dialogue should resolve");
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_woodcutting_instructor"].dialogueId), "tutorial_woodcutting_instructor", "woodcutting instructor dialogue should resolve");
@@ -366,6 +513,10 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_firemaking_instructor"].dialogueId), "tutorial_firemaking_instructor", "firemaking instructor dialogue should resolve");
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_mining_smithing_instructor"].dialogueId), "tutorial_mining_smithing_instructor", "mining and smithing instructor dialogue should resolve");
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_combat_instructor"].dialogueId), "tutorial_combat_instructor", "combat instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_ranged_instructor"].dialogueId), "tutorial_ranged_instructor", "ranged instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_magic_instructor"].dialogueId), "tutorial_magic_instructor", "magic instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_runecrafting_instructor"].dialogueId), "tutorial_runecrafting_instructor", "runecrafting instructor dialogue should resolve");
+  assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_crafting_instructor"].dialogueId), "tutorial_crafting_instructor", "crafting instructor dialogue should resolve");
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_bank_tutor"].dialogueId), "tutorial_bank_tutor", "bank tutor dialogue should resolve");
   assert.ok(
     fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8").includes("!spot.tags.includes('tutorial')"),
@@ -382,7 +533,7 @@ function setSparseTile(map, x, y, z, tileId) {
   );
   assert.deepStrictEqual(
     scaledGuide.travelSpawn,
-    { x: scaleAxis(rawGuide.travelSpawn.x), y: scaleAxis(rawGuide.travelSpawn.y), z: rawGuide.travelSpawn.z },
+    { x: tutorialScaleAxis(rawGuide.travelSpawn.x), y: tutorialScaleAxis(rawGuide.travelSpawn.y), z: rawGuide.travelSpawn.z },
     "tutorial guide travel spawn should scale through the authoring bridge"
   );
   assert.ok(
@@ -397,11 +548,15 @@ function setSparseTile(map, x, y, z, tileId) {
     tutorialDefinition.landmarks.decorProps.some((prop) => prop.propId === "tutorial_cabin_desk" && prop.x === tutorialDefinition.structures[0].x + 3),
     "scaled tutorial island should preserve cabin decor props as local cabin offsets"
   );
+  assert.ok(
+    tutorialDefinition.landmarks.decorProps.some((prop) => prop.propId === "tutorial_combat_weapon_rack" && prop.x === tutorialScaleAxis(312) && prop.kind === "weapon_rack"),
+    "scaled tutorial island should preserve combat yard decor props"
+  );
   assert.strictEqual(tutorialDefinition.landmarks.caveOpenings.length, 0, "scaled tutorial island should preserve the no-cave surface-v2 layout");
   assert.ok(
     Array.isArray(tutorialDefinition.terrainPatches.paths)
-      && tutorialDefinition.terrainPatches.paths.some((pathPatch) => pathPatch.pathId === "tutorial_fire_to_quarry_path" && pathPatch.points[2].x === scaleAxis(352))
-      && tutorialDefinition.terrainPatches.paths.some((pathPatch) => pathPatch.pathId === "tutorial_quarry_work_apron" && pathPatch.points[1].x === scaleAxis(352)),
+      && tutorialDefinition.terrainPatches.paths.some((pathPatch) => pathPatch.pathId === "tutorial_fire_to_quarry_path" && pathPatch.points[2].x === tutorialScaleAxis(352))
+      && tutorialDefinition.terrainPatches.paths.some((pathPatch) => pathPatch.pathId === "tutorial_quarry_work_apron" && pathPatch.points[1].x === tutorialScaleAxis(352)),
     "scaled tutorial island should scale terrain path patch points"
   );
 
@@ -417,14 +572,31 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.strictEqual(gameplayMap[0][171][143], TileId.OBSTACLE, "blocking cabin tool rack should reserve an obstacle tile");
   assert.strictEqual(gameplayMap[0][210][214], TileId.OBSTACLE, "blocking grove chopping block should reserve an obstacle tile");
   assert.strictEqual(gameplayMap[0][210][226], TileId.OBSTACLE, "blocking grove woodpile should reserve an obstacle tile");
+  assert.strictEqual(gameplayMap[0][322][312], TileId.OBSTACLE, "blocking combat weapon rack should reserve an obstacle tile");
+  assert.strictEqual(gameplayMap[0][338][306], TileId.OBSTACLE, "blocking combat training dummy should reserve an obstacle tile");
+  assert.strictEqual(gameplayMap[0][320][350], TileId.OBSTACLE, "blocking combat archery target should reserve an obstacle tile");
   assert.strictEqual(gameplayMap[0][178][140], TileId.DOOR_CLOSED, "tutorial cabin exit should start as a closed normal door tile");
   assert.strictEqual(isWalkable(gameplayMap, 140, 178, 0), false, "closed tutorial cabin doors should block movement before the guide clears the player");
   gameplayMap[0][178][140] = TileId.DOOR_OPEN;
   assert.strictEqual(isWalkable(gameplayMap, 140, 178, 0), true, "open tutorial cabin doors should be walkable after the guide clears the player");
-  assert.strictEqual(gameplayMap[0][186][176], TileId.WOODEN_GATE_CLOSED, "tutorial gates should expand into closed wooden gate tiles");
-  assert.strictEqual(isWalkable(gameplayMap, 176, 186, 0), false, "closed wooden gates should block movement");
-  gameplayMap[0][186][176] = TileId.WOODEN_GATE_OPEN;
-  assert.strictEqual(isWalkable(gameplayMap, 176, 186, 0), true, "open wooden gates should be walkable");
+  assert.notStrictEqual(gameplayMap[0][186][176], TileId.WOODEN_GATE_CLOSED, "arrival corridor should not keep the removed east-side wooden gate tile");
+  assert.strictEqual(gameplayMap[0][260][324], TileId.WOODEN_GATE_CLOSED, "tutorial gates should expand into closed wooden gate tiles");
+  assert.strictEqual(isWalkable(gameplayMap, 324, 260, 0), false, "closed wooden gates should block movement");
+  gameplayMap[0][260][324] = TileId.WOODEN_GATE_OPEN;
+  assert.strictEqual(isWalkable(gameplayMap, 324, 260, 0), true, "open wooden gates should be walkable");
+  {
+    const unlockedTutorialMap = buildWorldGameplayMap(tutorialContent.world, tutorialContent.stamps);
+    unlockedTutorialMap[0][178][140] = TileId.DOOR_OPEN;
+    tutorialLessonGates.forEach((gate) => {
+      unlockedTutorialMap[gate.z][gate.y][gate.x] = TileId.WOODEN_GATE_OPEN;
+      assert.strictEqual(isWalkable(unlockedTutorialMap, gate.x, gate.y, gate.z), true, `${gate.landmarkId} should be walkable after it unlocks`);
+    });
+    assert.notStrictEqual(
+      findShortestPathLength(unlockedTutorialMap, { x: 140, y: 179, z: 0 }, { x: 250, y: 350, z: 0 }, { maxDistance: 380, maxVisited: 100000 }),
+      null,
+      "opened tutorial lesson gates and their threshold fences should preserve the forward spiral route to the exit"
+    );
+  }
   assert.strictEqual(gameplayMap[0][280][350], TileId.ROCK, "tutorial quarry should stamp the north-west tin training rock");
   assert.strictEqual(gameplayMap[0][280][358], TileId.ROCK, "tutorial quarry should stamp the north copper training rock");
   assert.strictEqual(gameplayMap[0][287][368], TileId.ROCK, "tutorial quarry should stamp the east tin training rock");
@@ -441,18 +613,24 @@ function setSparseTile(map, x, y, z, tileId) {
   const scaledTutorialMap = buildWorldGameplayMap(scaledTutorialDefinition, {
     tutorial_start_cabin: require(path.join(root, "content", "world", "stamps", "tutorial_start_cabin.json"))
   });
-  assert.strictEqual(scaledTutorialMap[0][384][475], TileId.DIRT, "expanded tutorial mining route anchor should land on the walkable quarry apron, not pond water");
+  const scaledTutorialMine = scaledTutorialDefinition.skillRoutes.mining.find((route) => route.routeId === "tutorial_surface_mine");
+  assert(scaledTutorialMine, "scaled tutorial should preserve the mining route anchor");
+  assert.strictEqual(scaledTutorialMap[0][scaledTutorialMine.y][scaledTutorialMine.x], TileId.DIRT, "scaled tutorial mining route anchor should land on the walkable quarry apron, not pond water");
   assert.notStrictEqual(scaledTutorialMap[0][288][356], TileId.GRASS, "raw tutorial mining coordinates should not be treated as the expanded-world quarry anchor");
+  assert.strictEqual(scaledTutorialDefinition.terrainPatches.islandWater.waterBounds.xMin, 0, "scaled tutorial sea should keep full-map west coverage");
+  assert.strictEqual(scaledTutorialDefinition.terrainPatches.islandWater.waterBounds.xMax, 648, "scaled tutorial sea should keep full-map east coverage");
+  assert.strictEqual(scaledTutorialMap[0][0][0], TileId.WATER_DEEP, "scaled tutorial outer edge should be ocean, not grass or rocks");
+  assert.strictEqual(scaledTutorialMap[0][647][647], TileId.WATER_DEEP, "scaled tutorial far outer edge should be ocean, not grass or rocks");
   for (const gate of scaledTutorialDefinition.landmarks.doors) {
     if (Number.isFinite(gate.tutorialRequiredStep) && gate.tutorialRequiredStep <= 4 && gate.tileId === "WOODEN_GATE_CLOSED") {
       scaledTutorialMap[gate.z][gate.y][gate.x] = TileId.WOODEN_GATE_OPEN;
     }
   }
   assert.strictEqual(
-    findShortestPathLength(scaledTutorialMap, { x: 475, y: 384, z: 0 }, { x: 475, y: 520, z: 0 }, {
+    findShortestPathLength(scaledTutorialMap, { x: scaledTutorialMine.x, y: scaledTutorialMine.y, z: 0 }, { x: scaledTutorialMine.x, y: 520, z: 0 }, {
       maxDistance: 220,
       maxVisited: 50000,
-      allowedBounds: { xMin: 92, xMax: 568, yMin: 164, yMax: 492, z: 0 }
+      allowedBounds: { xMin: 138, xMax: 519, yMin: 196, yMax: 458, z: 0 }
     }),
     null,
     "tutorial movement bounds should prevent pathing from the mine approach into the surrounding sea"
@@ -577,6 +755,34 @@ function setSparseTile(map, x, y, z, tileId) {
       `${routeId} should preserve its firemaking alias while scaling its anchor`
     );
   });
+  const rawRoadPaths = Array.isArray(starterTown.terrainPatches.paths)
+    ? starterTown.terrainPatches.paths.filter((pathPatch) => Array.isArray(pathPatch.tags) && pathPatch.tags.includes("road"))
+    : [];
+  const scaledRoadPaths = Array.isArray(starterDefinition.terrainPatches.paths)
+    ? starterDefinition.terrainPatches.paths.filter((pathPatch) => Array.isArray(pathPatch.tags) && pathPatch.tags.includes("road"))
+    : [];
+  const rawRoadPathsById = Object.fromEntries(rawRoadPaths.map((pathPatch) => [pathPatch.pathId, pathPatch]));
+  const scaledRoadPathsById = Object.fromEntries(scaledRoadPaths.map((pathPatch) => [pathPatch.pathId, pathPatch]));
+  assert.deepStrictEqual(
+    rawRoadPaths.map((pathPatch) => pathPatch.pathId).sort(),
+    MAIN_OVERWORLD_ROAD_IDS.slice().sort(),
+    "raw main overworld should author the protected road network"
+  );
+  MAIN_OVERWORLD_ROAD_IDS.forEach((pathId) => {
+    const rawRoad = rawRoadPathsById[pathId];
+    const scaledRoad = scaledRoadPathsById[pathId];
+    assert.ok(rawRoad, `raw main overworld should include road ${pathId}`);
+    assert.ok(scaledRoad, `scaled main overworld should include road ${pathId}`);
+    assert.ok(rawRoad.tags.includes("spawn-protected"), `${pathId} should be tagged spawn-protected`);
+    assert.strictEqual(rawRoad.tileId, "DIRT", `${pathId} should stamp dirt road tiles`);
+    assert.deepStrictEqual(
+      scaledRoad.points,
+      rawRoad.points.map((point) => ({ x: scaleAxis(point.x), y: scaleAxis(point.y) })),
+      `${pathId} road points should scale with the authored world`
+    );
+    assert.strictEqual(scaledRoad.pathWidth, scaleRadius(rawRoad.pathWidth), `${pathId} path width should scale with the authored world`);
+    assert.strictEqual(scaledRoad.edgeSoftness, scaleRadius(rawRoad.edgeSoftness), `${pathId} edge softness should scale with the authored world`);
+  });
   assert.ok(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog should expose resolveDialogueId");
   Object.entries(STARTER_TOWN_NAMED_NPC_LAYOUT).forEach(([serviceId, expected]) => {
     const rawService = rawServicesById[serviceId];
@@ -597,6 +803,10 @@ function setSparseTile(map, x, y, z, tileId) {
       `${serviceId} should land in the scaled homestead/dialogue layout`
     );
     assert.strictEqual(scaledService.dialogueId, rawService.dialogueId, `${serviceId} dialogueId should survive authoring scale`);
+    const homeTag = STARTER_TOWN_NPC_HOME_TAGS[serviceId];
+    assert.ok(homeTag, `${serviceId} should have an expected NPC home tag`);
+    assert.ok(rawService.tags.includes(homeTag), `${serviceId} should keep the authored NPC home/base tag`);
+    assert.ok(scaledService.tags.includes(homeTag), `${serviceId} NPC home/base tag should survive authoring scale`);
     if (Object.prototype.hasOwnProperty.call(expected, "appearanceId")) {
       assert.strictEqual(rawService.appearanceId, expected.appearanceId, `${serviceId} should keep the authored appearanceId`);
       assert.strictEqual(scaledService.appearanceId, expected.appearanceId, `${serviceId} appearanceId should survive authoring scale`);
@@ -623,6 +833,8 @@ function setSparseTile(map, x, y, z, tileId) {
       `${serviceId} should scale with the authored bank placement`
     );
     assert.strictEqual(dialogueCatalog.resolveDialogueId(rawService.dialogueId), "banker", `${serviceId} dialogueId should resolve to banker`);
+    assert.ok(rawService.tags.includes("home:distributed_bank_booths"), `${serviceId} should keep the authored bank-booth home tag`);
+    assert.ok(scaledService.tags.includes("home:distributed_bank_booths"), `${serviceId} bank-booth home tag should survive authoring scale`);
   });
   assert.deepStrictEqual(
     { x: scaledTrainingDummy.spawnTile.x, y: scaledTrainingDummy.spawnTile.y, z: scaledTrainingDummy.spawnTile.z },

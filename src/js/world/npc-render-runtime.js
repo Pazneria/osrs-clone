@@ -32,6 +32,19 @@
         return npcUid;
     }
 
+    function applyNpcRenderVisibility(npc, mesh, hitbox) {
+        const visible = !(npc && npc.tutorialVisibilityActive === false);
+        if (mesh) mesh.visible = visible;
+        if (hitbox) {
+            hitbox.visible = visible;
+            if (!hitbox.userData) hitbox.userData = {};
+            hitbox.userData.ignoreRaycast = !visible;
+            if (hitbox.userData.uid && typeof hitbox.userData.uid === 'object') {
+                hitbox.userData.uid.tutorialHidden = !visible;
+            }
+        }
+    }
+
     function createNpcRenderData(options = {}) {
         const THREE = requireThree(options.THREE);
         const npc = options.npc;
@@ -75,6 +88,7 @@
             uid: createNpcInteractionUid(npc, appearanceId)
         };
         mesh.add(hitbox);
+        applyNpcRenderVisibility(npc, mesh, hitbox);
 
         return {
             appearanceId,
@@ -111,6 +125,7 @@
     }
 
     window.WorldNpcRenderRuntime = {
+        applyNpcRenderVisibility,
         appendChunkNpcVisuals,
         createNpcInteractionUid,
         createNpcRenderData,
