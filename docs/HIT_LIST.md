@@ -77,7 +77,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-002 - NPC world placement pass
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -105,7 +105,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-003 - Service distribution pass (add 8+ banks)
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -133,7 +133,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-004 - Road network pass with protected tiles
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -161,7 +161,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-005 - Dock/coastline pass for dark-water fishing access
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -191,7 +191,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-006 - Terrain shaping pass for mining depressions/quarries
-- Status: Fixed
+- Status: Closed
 - Severity: S3
 - Area: WORLD
 - Source: Manual
@@ -223,7 +223,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-008 - Player creation menu
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -282,7 +282,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-013 - Shoreline terrain clipping cleanup
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -310,7 +310,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-014 - Tree spacing pass by tiered reserved areas
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WC
 - Source: Manual
@@ -338,7 +338,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-015 - Unique tree models per type
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WC
 - Source: Manual
@@ -368,7 +368,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-016 - Tree habitat placement rules
-- Status: Fixed
+- Status: Closed
 - Severity: S3
 - Area: WC
 - Source: Manual
