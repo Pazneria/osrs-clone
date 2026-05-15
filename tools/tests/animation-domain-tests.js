@@ -1,10 +1,7 @@
+const assert = require("assert");
 const path = require("path");
 const THREE = require("three");
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");

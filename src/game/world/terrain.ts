@@ -11,6 +11,7 @@ export function createLegacyTerrainView(
   | "deepWaterCenter"
   | "pier"
   | "pathPatches"
+  | "landformPatches"
   | "smithingHallApproach"
   | "castleRouteAnchor"
   | "woodcuttingRouteAnchor"
@@ -43,6 +44,13 @@ export function createLegacyTerrainView(
           ...pathPatch,
           points: Array.isArray(pathPatch.points) ? pathPatch.points.map((point) => ({ ...point })) : [],
           tags: Array.isArray(pathPatch.tags) ? pathPatch.tags.slice() : []
+        }))
+      : [],
+    landformPatches: Array.isArray(definition.terrainPatches.landforms)
+      ? definition.terrainPatches.landforms.map((landformPatch) => ({
+          ...landformPatch,
+          points: Array.isArray(landformPatch.points) ? landformPatch.points.map((point) => ({ ...point })) : undefined,
+          tags: Array.isArray(landformPatch.tags) ? landformPatch.tags.slice() : []
         }))
       : [],
     smithingHallApproach: { ...definition.terrainPatches.smithingHallApproach },

@@ -25,20 +25,6 @@
         uvs.needsUpdate = true;
     }
 
-    function applyWorldSpaceLinearTerrainUvs(geometry, startX, startY, segments, chunkSize) {
-        const uvs = geometry && geometry.attributes ? geometry.attributes.uv : null;
-        if (!uvs || !Number.isFinite(segments) || segments <= 0 || !Number.isFinite(chunkSize) || chunkSize <= 0) return;
-        for (let vy = 0; vy <= segments; vy++) {
-            for (let vx = 0; vx <= segments; vx++) {
-                const idx = (vy * (segments + 1)) + vx;
-                const worldX = startX - 0.5 + ((vx / segments) * chunkSize);
-                const worldY = startY - 0.5 + ((vy / segments) * chunkSize);
-                uvs.setXY(idx, worldX / chunkSize, worldY / chunkSize);
-            }
-        }
-        uvs.needsUpdate = true;
-    }
-
     function collapseTerrainGeometryDrawGroups(geometry, indexCount) {
         if (!geometry || typeof geometry.clearGroups !== 'function' || typeof geometry.addGroup !== 'function') return;
         geometry.clearGroups();
@@ -286,13 +272,14 @@
         if (isWaterTileId(tile)) return 'shore';
         if (tile === TileId.WATER_SHALLOW || tile === TileId.WATER_DEEP) return 'shore';
         if (tile === TileId.SHORE) return 'shore';
+        if (tile === TileId.SAND) return 'sand';
         if (tile === TileId.DIRT || tile === TileId.ROCK) return 'dirt';
         return null;
     }
 
     function isTerrainTransitionTarget(tile, TileId, isNaturalTileId, isWaterTileId) {
         if (!isNaturalTileId(tile) || isWaterTileId(tile)) return false;
-        return tile !== TileId.DIRT && tile !== TileId.ROCK && tile !== TileId.SHORE;
+        return tile !== TileId.DIRT && tile !== TileId.ROCK && tile !== TileId.SHORE && tile !== TileId.SAND;
     }
 
     const TERRAIN_BLEND_SUBDIVISIONS = 1;
@@ -459,10 +446,13 @@
         ];
         const blend = blendInfo && Number.isFinite(blendInfo.blend) ? clampValue(blendInfo.blend, 0, 1) : 0;
         if (blend <= 0) return grassColor;
-        const dirtShade = 0.9 + (hash01(worldX * 7.7, worldY * 9.3, blendInfo.kind === 'shore' ? 42.1 : 17.9) * 0.14);
-        const dirtColor = blendInfo.kind === 'shore'
+        const sourceKind = blendInfo.kind || 'dirt';
+        const dirtShade = 0.9 + (hash01(worldX * 7.7, worldY * 9.3, sourceKind === 'shore' ? 42.1 : (sourceKind === 'sand' ? 58.6 : 17.9)) * 0.14);
+        const dirtColor = sourceKind === 'shore'
             ? [clampValue(1.02 * dirtShade, 0, 1), clampValue(0.94 * dirtShade, 0, 1), clampValue(0.74 * dirtShade, 0, 1)]
-            : [clampValue(0.98 * dirtShade, 0, 1), clampValue(0.92 * dirtShade, 0, 1), clampValue(0.84 * dirtShade, 0, 1)];
+            : (sourceKind === 'sand'
+                ? [clampValue(1.06 * dirtShade, 0, 1), clampValue(0.88 * dirtShade, 0, 1), clampValue(0.55 * dirtShade, 0, 1)]
+                : [clampValue(0.98 * dirtShade, 0, 1), clampValue(0.92 * dirtShade, 0, 1), clampValue(0.84 * dirtShade, 0, 1)]);
         return [
             grassColor[0] + ((dirtColor[0] - grassColor[0]) * blend),
             grassColor[1] + ((dirtColor[1] - grassColor[1]) * blend),

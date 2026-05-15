@@ -1,10 +1,7 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
 
 function createFakeReq(method, url, body = "") {
   return {

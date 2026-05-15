@@ -11,7 +11,7 @@ function cloneUnlockFlags(defaultUnlockFlags: PlayerUnlockFlags): PlayerUnlockFl
   return { ...defaultUnlockFlags };
 }
 
-export function cloneMerchantProgressEntry(entry: MerchantProgressEntry): MerchantProgressEntry {
+function cloneMerchantProgressEntry(entry: MerchantProgressEntry): MerchantProgressEntry {
   return {
     soldCounts: { ...entry.soldCounts },
     unlockedItems: { ...entry.unlockedItems }

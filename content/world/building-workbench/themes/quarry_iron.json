@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "themeId": "quarry_iron",
+  "label": "Quarry Iron",
+  "settlementUse": [
+    "mining hamlet",
+    "smithing yard",
+    "resource camp"
+  ],
+  "materialPalette": {
+    "wall": "stone lower walls with dark timber bracing",
+    "floor": "heavy plank and hard-packed work floor",
+    "roof": "dark slate and patched metal sheets",
+    "trim": "iron bands, soot-dark beams, and coal bins",
+    "accent": "ore piles, weapon racks, barrels, and notice boards"
+  },
+  "decorKinds": [
+    "ore_pile",
+    "coal_bin",
+    "tool_rack",
+    "weapon_rack",
+    "crate",
+    "barrel",
+    "notice_board",
+    "quarry_cart",
+    "rubble_pile"
+  ],
+  "wallArtMotifs": [
+    "mine safety board",
+    "ore vein sketch",
+    "charcoal forge diagram"
+  ],
+  "notes": [
+    "Use blockier footprints and yards so the settlement reads as work-first.",
+    "Keep roads wider around carts and ore staging."
+  ]
+}

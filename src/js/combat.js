@@ -60,6 +60,29 @@
         };
     }
 
+    function clonePatrolRoute(route) {
+        if (!Array.isArray(route) || route.length < 2) return null;
+        const clonedRoute = route
+            .filter((point) => point && Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z))
+            .map(clonePoint);
+        return clonedRoute.length >= 2 ? clonedRoute : null;
+    }
+
+    function resolvePatrolRouteIndexForTile(route, tile) {
+        if (!Array.isArray(route) || route.length === 0 || !tile) return null;
+        let bestIndex = 0;
+        let bestDistance = Number.MAX_SAFE_INTEGER;
+        for (let i = 0; i < route.length; i++) {
+            const point = route[i];
+            const distance = Math.max(Math.abs(point.x - tile.x), Math.abs(point.y - tile.y));
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
+    }
+
     function normalizeWorldId(worldId) {
         return String(worldId || '').trim();
     }
@@ -811,6 +834,7 @@
         const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
             ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
             : enemyType.behavior.roamingRadius;
+        const resolvedPatrolRoute = clonePatrolRoute(spawnNode.patrolRoute);
         enemyState.prevX = spawnTile.x;
         enemyState.prevY = spawnTile.y;
         enemyState.x = spawnTile.x;
@@ -822,6 +846,9 @@
         enemyState.remainingAttackCooldown = 0;
         enemyState.resolvedHomeTile = homeTile;
         enemyState.resolvedSpawnTile = clonePoint(spawnTile);
+        enemyState.resolvedPatrolRoute = resolvedPatrolRoute;
+        enemyState.patrolRouteIndex = resolvePatrolRouteIndexForTile(resolvedPatrolRoute, spawnTile);
+        enemyState.patrolTargetIndex = null;
         enemyState.resolvedRoamingRadius = resolvedRoamingRadius;
         enemyState.resolvedChaseRange = Math.max(enemyType.behavior.chaseRange, resolvedRoamingRadius + 2);
         enemyState.resolvedAggroRadius = enemyType.behavior.aggroRadius;
@@ -975,6 +1002,10 @@
 
     function acquireAggressiveEnemyTargets() {
         getCombatEngagementRuntime().acquireAggressiveEnemyTargets(buildCombatEngagementRuntimeContext());
+    }
+
+    function acquireAssistingEnemyTargets() {
+        getCombatEngagementRuntime().acquireAssistingEnemyTargets(buildCombatEngagementRuntimeContext());
     }
 
     function collectReadyAttacks(playerLockState) {
@@ -1229,6 +1260,7 @@
         }
 
         acquireAggressiveEnemyTargets();
+        acquireAssistingEnemyTargets();
 
         const playerLockState = validatePlayerTargetLock();
         const attacks = collectReadyAttacks(playerLockState);

@@ -678,8 +678,6 @@
         closeNpcDialogue: closeNpcDialogue,
         refreshActiveDialogue: refreshActiveDialogue,
         getActiveNpc: function () { return activeNpc ? Object.assign({}, activeNpc) : null; },
-        getActiveDialogueId: function () { return activeDialogueId; },
-        getActiveMessage: function () { return activeMessage; },
         getActivePageProgress: getActivePageProgress
     };
     window.openNpcDialogue = openNpcDialogue;

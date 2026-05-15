@@ -3,6 +3,7 @@ const path = require("path");
 const { buildRgbaBuffer } = require("./pixel-source");
 const { writePng } = require("./pixel-png");
 const { buildObjFromPixelSource } = require("./pixel-model");
+const { parsePixelAssetArgs } = require("./pixel-cli-args");
 const {
   getProjectRoot,
   ensureDir,
@@ -12,31 +13,6 @@ const {
   loadPixelSource,
   listPixelSourceIds
 } = require("./pixel-project");
-
-function parseArgs(argv) {
-  const args = {
-    all: false,
-    assetIds: []
-  };
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i];
-    if (token === "--all") {
-      args.all = true;
-      continue;
-    }
-    if (token === "--asset" || token === "-AssetId") {
-      const next = argv[i + 1];
-      if (!next) throw new Error(`${token} requires a value`);
-      args.assetIds.push(next);
-      i += 1;
-      continue;
-    }
-    throw new Error(`Unknown argument: ${token}`);
-  }
-
-  return args;
-}
 
 function buildAsset(projectRoot, assetId) {
   const source = loadPixelSource(projectRoot, assetId);
@@ -59,7 +35,7 @@ function buildAsset(projectRoot, assetId) {
 
 function main() {
   const projectRoot = getProjectRoot();
-  const args = parseArgs(process.argv.slice(2));
+  const args = parsePixelAssetArgs(process.argv.slice(2), { allowAll: true });
   let assetIds = args.assetIds.slice();
   if (args.all || assetIds.length === 0) {
     assetIds = listPixelSourceIds(projectRoot);

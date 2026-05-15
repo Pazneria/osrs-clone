@@ -141,6 +141,9 @@ export interface EnemySpawnNodeDefinition {
   spawnTile: Point3;
   homeTileOverride?: Point3 | null;
   roamingRadiusOverride?: number | null;
+  patrolRoute?: Point3[] | null;
+  assistGroupId?: string | null;
+  assistRadiusOverride?: number | null;
   respawnTicks?: number | null;
   spawnEnabled: boolean;
   facingYaw?: number;
@@ -157,6 +160,12 @@ export interface EnemyRuntimeState extends Point3 {
   remainingAttackCooldown: number;
   resolvedHomeTile: Point3;
   resolvedSpawnTile: Point3;
+  spawnGroupId?: string | null;
+  assistGroupId?: string | null;
+  resolvedAssistRadius: number;
+  resolvedPatrolRoute?: Point3[] | null;
+  patrolRouteIndex?: number | null;
+  patrolTargetIndex?: number | null;
   resolvedRoamingRadius: number;
   resolvedChaseRange: number;
   resolvedAggroRadius: number;

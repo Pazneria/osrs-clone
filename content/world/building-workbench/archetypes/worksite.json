@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "worksite",
+  "label": "Worksite",
+  "categories": [
+    "workshop",
+    "storehouse",
+    "resource_camp"
+  ],
+  "footprintTags": [
+    "loading_apron",
+    "wide_front",
+    "storage_floor"
+  ],
+  "typicalRoles": [
+    "ore storage",
+    "crafting support",
+    "foreman workspace"
+  ],
+  "promotionHints": [
+    "Keep roads wide around loading aprons and resource staging.",
+    "Promote storage decor only where it will not block player pathing."
+  ]
+}

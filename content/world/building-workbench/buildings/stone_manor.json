@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "stone_manor",
+  "label": "Stone Manor",
+  "category": "mansion",
+  "archetypeId": "mansion",
+  "themeId": "stone_market",
+  "materialProfileId": "city_stone_slate",
+  "conditionId": "weathered",
+  "variantTags": [
+    "mansion",
+    "estate",
+    "stone",
+    "quest_hub"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWWWWWC",
+      "WFFFFFFFFFFFW",
+      "WFFFFFFFFFFFW",
+      "WFFFVFFFFFFFW",
+      "WFFFFFFFFFFFW",
+      "WFFFFFFFFFFFW",
+      "WFFFFFFFFFFFW",
+      "WFFFFFFFFFFFW",
+      "CWWWWFFFWWWWC",
+      "     FFF     "
+    ],
+    "legend": {
+      "C": "stone corner pier",
+      "W": "estate wall",
+      "F": "worn stone floor",
+      "V": "formal desk or counter",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "formal_front",
+      "x": 6,
+      "y": 8,
+      "facing": "south",
+      "approach": {
+        "x": 6,
+        "y": 9
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 1.72,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "estate_desk",
+      "kind": "desk",
+      "x": 3,
+      "y": 3,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "estate"
+      ]
+    },
+    {
+      "id": "estate_notice",
+      "kind": "notice_board",
+      "x": 10,
+      "y": 5,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "quest"
+      ]
+    },
+    {
+      "id": "family_painting",
+      "kind": "wall_painting",
+      "x": 6,
+      "y": 2,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "mansion",
+        "painting"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "family_portrait",
+      "surface": "north",
+      "x": 6,
+      "y": 1,
+      "motif": "weathered family portrait"
+    },
+    {
+      "id": "estate_map",
+      "surface": "east",
+      "x": 11,
+      "y": 4,
+      "motif": "estate map"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_stone_manor",
+    "structureLabel": "Stone Manor"
+  },
+  "notes": [
+    "Large reusable mansion shell for estates or quest-heavy towns.",
+    "Needs extra pathing review before live placement because of its footprint."
+  ]
+}

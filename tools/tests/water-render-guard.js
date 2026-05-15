@@ -1,27 +1,24 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const contractsSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "world.ts"), "utf8");
-  const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
-  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const renderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
-  const pierRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "pier-runtime.js"), "utf8");
-  const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
-  const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
-  const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
-  const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const inputPierInteractionRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pier-interaction-runtime.js"), "utf8");
-  const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
-  const inputRaycastRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
-  const inputTickMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
+  const contractsSource = readRepoFile(root, "src/game/contracts/world.ts");
+  const bootstrapSource = readRepoFile(root, "src/game/world/bootstrap.ts");
+  const adapterSource = readRepoFile(root, "src/game/platform/legacy-world-adapter.ts");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const renderRuntimeSource = readRepoFile(root, "src/js/world/render-runtime.js");
+  const pierRuntimeSource = readRepoFile(root, "src/js/world/pier-runtime.js");
+  const waterRuntimeSource = readRepoFile(root, "src/js/world/water-runtime.js");
+  const chunkTerrainRuntimeSource = readRepoFile(root, "src/js/world/chunk-terrain-runtime.js");
+  const chunkTierRenderRuntimeSource = readRepoFile(root, "src/js/world/chunk-tier-render-runtime.js");
+  const inputRenderSource = readRepoFile(root, "src/js/input-render.js");
+  const inputPierInteractionRuntimeSource = readRepoFile(root, "src/js/input-pier-interaction-runtime.js");
+  const inputPathfindingRuntimeSource = readRepoFile(root, "src/js/input-pathfinding-runtime.js");
+  const inputRaycastRuntimeSource = readRepoFile(root, "src/js/input-raycast-runtime.js");
+  const inputTickMovementRuntimeSource = readRepoFile(root, "src/js/input-tick-movement-runtime.js");
 
   assert(contractsSource.includes("waterBodies?: WaterBodyDefinition[];"), "world contract should expose optional authored water bodies");
   assert(contractsSource.includes("export interface WaterRenderPayload"), "world contract should expose a typed water render payload");
@@ -48,7 +45,7 @@ function run() {
   assert(renderRuntimeSource.includes("float farFoamFade = 1.0 - smoothstep(38.0, 88.0, cameraDistance);"), "water shoreline foam should fade out in the far field");
   assert(waterRuntimeSource.includes("const WATER_SEAM_BACKFILL_DROP = 0.045;"), "near water should keep a lowered water-colored backfill under tile seams");
   assert(waterRuntimeSource.includes("const WATER_SEAM_BACKFILL_OVERLAP = 0.035;"), "near water backfill should overlap exact tile edges enough to hide grazing-angle voids");
-  assert(waterRuntimeSource.includes("function appendWaterSeamBackfillQuad(builder, context, x, y, surfaceY)"), "chunk water should generate seam backfill alongside visible water tiles");
+  assert(waterRuntimeSource.includes("function appendWaterSeamBackfillQuad(builder, x, y, surfaceY)"), "chunk water should generate seam backfill alongside visible water tiles");
   assert(waterRuntimeSource.includes("type: 'WATER_VISUAL_BACKFILL'"), "water seam backfill should be tagged as visual-only");
   assert(waterRuntimeSource.includes("const subdivisions = (edges.north || edges.east || edges.south || edges.west) ? WATER_EDGE_SUBDIVISIONS : 1;"), "world water runtime should keep interior water cheap while smoothing edge tiles");
   assert(waterRuntimeSource.includes("function usesSmoothWaterShorelineRibbon(body, MAP_SIZE)"), "world water runtime should identify near-view bodies that use smooth shoreline ribbons");

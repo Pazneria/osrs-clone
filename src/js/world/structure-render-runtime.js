@@ -4,6 +4,94 @@
         return three;
     }
 
+    const DEFAULT_STRUCTURE_MATERIAL_PROFILE_ID = 'castle_granite_slate';
+    const STRUCTURE_MATERIAL_PROFILE_IDS = Object.freeze([
+        'timber_thatch',
+        'quarry_stone_slate',
+        'city_stone_slate',
+        'painted_plaster_tile',
+        'castle_granite_slate',
+        'burnt_timber_ash'
+    ]);
+
+    const STRUCTURE_VISUAL_PROFILES = Object.freeze({
+        timber_thatch: Object.freeze({ wallHeightScale: 0.78, towerHeightScale: 0.72, towerFootprintScale: 0.86, eaveHeight: 2.42, roofOverhang: 1.42, roofPitchScale: 1.2, maxRidgeRise: 2.55 }),
+        quarry_stone_slate: Object.freeze({ wallHeightScale: 0.9, towerHeightScale: 0.86, towerFootprintScale: 0.95, eaveHeight: 2.78, roofOverhang: 1.12, roofPitchScale: 0.98, maxRidgeRise: 2.35 }),
+        city_stone_slate: Object.freeze({ wallHeightScale: 0.96, towerHeightScale: 0.92, towerFootprintScale: 0.98, eaveHeight: 2.96, roofOverhang: 1.18, roofPitchScale: 1.08, maxRidgeRise: 2.65 }),
+        painted_plaster_tile: Object.freeze({ wallHeightScale: 0.86, towerHeightScale: 0.82, towerFootprintScale: 0.9, eaveHeight: 2.66, roofOverhang: 1.26, roofPitchScale: 1.12, maxRidgeRise: 2.45 }),
+        castle_granite_slate: Object.freeze({ wallHeightScale: 1.06, towerHeightScale: 1.0, towerFootprintScale: 1.02, eaveHeight: 3.24, roofOverhang: 0.78, roofPitchScale: 0.94, maxRidgeRise: 2.35 }),
+        burnt_timber_ash: Object.freeze({ wallHeightScale: 0.52, towerHeightScale: 0.46, towerFootprintScale: 0.82, eaveHeight: 1.62, roofOverhang: 0.9, roofPitchScale: 0.76, maxRidgeRise: 1.35 })
+    });
+
+    function normalizeStructureMaterialProfileId(value) {
+        const key = typeof value === 'string' ? value.trim().toLowerCase() : '';
+        return STRUCTURE_MATERIAL_PROFILE_IDS.includes(key) ? key : DEFAULT_STRUCTURE_MATERIAL_PROFILE_ID;
+    }
+
+    function resolveStructureMaterialProfileId(entry) {
+        if (!entry || typeof entry !== 'object') return DEFAULT_STRUCTURE_MATERIAL_PROFILE_ID;
+        if (entry.conditionId === 'burnt') return 'burnt_timber_ash';
+        return normalizeStructureMaterialProfileId(entry.materialProfileId);
+    }
+
+    function getStructureVisualProfile(profileId) {
+        return STRUCTURE_VISUAL_PROFILES[normalizeStructureMaterialProfileId(profileId)] || STRUCTURE_VISUAL_PROFILES[DEFAULT_STRUCTURE_MATERIAL_PROFILE_ID];
+    }
+
+    function makeStructureTileKey(x, y, z) {
+        return `${Math.round(Number(z) || 0)}:${Math.round(Number(x) || 0)}:${Math.round(Number(y) || 0)}`;
+    }
+
+    function buildStructureVisualStyleLookup(options = {}) {
+        const stampedStructures = Array.isArray(options.stampedStructures) ? options.stampedStructures : [];
+        const stampMap = options.stampMap || {};
+        const lookup = Object.create(null);
+        stampedStructures.forEach((structure) => {
+            if (!structure || !Array.isArray(stampMap[structure.stampId])) return;
+            const rows = stampMap[structure.stampId];
+            const materialProfileId = resolveStructureMaterialProfileId(structure);
+            for (let y = 0; y < rows.length; y++) {
+                const row = rows[y];
+                if (typeof row !== 'string') continue;
+                for (let x = 0; x < row.length; x++) {
+                    const char = row[x];
+                    if (char === ' ') continue;
+                    lookup[makeStructureTileKey(structure.x + x, structure.y + y, structure.z)] = {
+                        char,
+                        structureId: structure.structureId || '',
+                        themeId: structure.themeId || '',
+                        conditionId: structure.conditionId || 'intact',
+                        materialProfileId
+                    };
+                }
+            }
+        });
+        return lookup;
+    }
+
+    function getStructureVisualStyleAt(lookup, x, y, z) {
+        if (!lookup) return null;
+        return lookup[makeStructureTileKey(x, y, z)] || null;
+    }
+
+    function getStructureMaterial(sharedMaterials, groupKey, profileId, fallbackMaterial) {
+        const profiles = sharedMaterials && sharedMaterials[groupKey] ? sharedMaterials[groupKey] : null;
+        const material = profiles ? profiles[normalizeStructureMaterialProfileId(profileId)] : null;
+        return material || fallbackMaterial || (sharedMaterials ? sharedMaterials.castleStone : null);
+    }
+
+    function getStructureWallMaterial(sharedMaterials, profileId) {
+        return getStructureMaterial(sharedMaterials, 'structureWallMaterials', profileId, sharedMaterials && sharedMaterials.castleStone);
+    }
+
+    function getStructureCornerMaterial(sharedMaterials, profileId) {
+        return getStructureMaterial(sharedMaterials, 'structureCornerMaterials', profileId, sharedMaterials && sharedMaterials.castleStone);
+    }
+
+    function getStructureRoofMaterial(sharedMaterials, profileId) {
+        return getStructureMaterial(sharedMaterials, 'structureRoofMaterials', profileId, sharedMaterials && (sharedMaterials.roofThatch || sharedMaterials.boothWood));
+    }
+
     function appendFloatAttributeValues(target, attribute) {
         if (!attribute || !attribute.array) return;
         const array = attribute.array;
@@ -582,7 +670,51 @@
         const environmentMeshes = options.environmentMeshes;
         const wallCount = Number.isFinite(options.wallCount) ? options.wallCount : 0;
         const towerCount = Number.isFinite(options.towerCount) ? options.towerCount : 0;
-        const castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null };
+        const wallCountsByStyle = options.wallCountsByStyle || null;
+        const towerCountsByStyle = options.towerCountsByStyle || null;
+        const castleData = { wallMap: [], iWall: null, towerMap: [], iTower: null, styleBuckets: null };
+
+        if (wallCountsByStyle || towerCountsByStyle) {
+            castleData.styleBuckets = Object.create(null);
+            const styleIds = new Set([
+                ...Object.keys(wallCountsByStyle || {}),
+                ...Object.keys(towerCountsByStyle || {})
+            ]);
+            styleIds.forEach((rawStyleId) => {
+                const styleId = normalizeStructureMaterialProfileId(rawStyleId);
+                const styleWallCount = Number.isFinite(wallCountsByStyle && wallCountsByStyle[rawStyleId]) ? wallCountsByStyle[rawStyleId] : 0;
+                const styleTowerCount = Number.isFinite(towerCountsByStyle && towerCountsByStyle[rawStyleId]) ? towerCountsByStyle[rawStyleId] : 0;
+                const bucket = {
+                    wallIndex: 0,
+                    wallMap: [],
+                    iWall: null,
+                    towerIndex: 0,
+                    towerMap: [],
+                    iTower: null
+                };
+                if (styleWallCount > 0) {
+                    bucket.iWall = new THREE.InstancedMesh(sharedGeometries.castleWall, getStructureWallMaterial(sharedMaterials, styleId), styleWallCount);
+                    bucket.iWall.castShadow = true;
+                    bucket.iWall.receiveShadow = true;
+                    bucket.iWall.matrixAutoUpdate = false;
+                    bucket.iWall.userData = { instanceMap: bucket.wallMap, materialProfileId: styleId };
+                    if (planeGroup) planeGroup.add(bucket.iWall);
+                    if (Array.isArray(environmentMeshes)) environmentMeshes.push(bucket.iWall);
+                }
+                if (styleTowerCount > 0) {
+                    bucket.iTower = new THREE.InstancedMesh(sharedGeometries.castleTower, getStructureCornerMaterial(sharedMaterials, styleId), styleTowerCount);
+                    bucket.iTower.castShadow = true;
+                    bucket.iTower.receiveShadow = true;
+                    bucket.iTower.matrixAutoUpdate = false;
+                    bucket.iTower.userData = { instanceMap: bucket.towerMap, materialProfileId: styleId };
+                    if (planeGroup) planeGroup.add(bucket.iTower);
+                    if (Array.isArray(environmentMeshes)) environmentMeshes.push(bucket.iTower);
+                }
+                castleData.styleBuckets[styleId] = bucket;
+            });
+            return castleData;
+        }
+
         if (wallCount > 0) {
             castleData.iWall = new THREE.InstancedMesh(sharedGeometries.castleWall, sharedMaterials.castleStone, wallCount);
             castleData.iWall.castShadow = true;
@@ -604,6 +736,12 @@
         return castleData;
     }
 
+    function getCastleStyleBucket(castleData, styleId) {
+        if (!castleData || !castleData.styleBuckets) return castleData;
+        const normalizedStyleId = normalizeStructureMaterialProfileId(styleId);
+        return castleData.styleBuckets[normalizedStyleId] || castleData.styleBuckets[DEFAULT_STRUCTURE_MATERIAL_PROFILE_ID] || castleData;
+    }
+
     function isCastleTile(options, tx, ty) {
         const logicalMap = options.logicalMap || [];
         const TileId = options.TileId || {};
@@ -619,11 +757,14 @@
         const castleData = options.castleData || {};
         const dummyTransform = options.dummyTransform;
         const wallIndex = Number.isFinite(options.wallIndex) ? options.wallIndex : 0;
+        const bucket = getCastleStyleBucket(castleData, options.materialProfileId);
+        const targetWallIndex = castleData.styleBuckets ? bucket.wallIndex : wallIndex;
+        const profile = getStructureVisualProfile(options.materialProfileId);
         const x = options.x;
         const y = options.y;
         const z = options.z;
         const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
-        if (!castleData.iWall || !dummyTransform) return wallIndex;
+        if (!bucket.iWall || !dummyTransform) return wallIndex;
 
         const hasNorth = isCastleTile(options, x, y - 1);
         const hasSouth = isCastleTile(options, x, y + 1);
@@ -635,36 +776,61 @@
 
         dummyTransform.position.set(x, zOffset, y);
         dummyTransform.rotation.set(0, 0, 0);
-        if (linkNS && !linkEW) dummyTransform.scale.set(wallThin, 1, 1);
-        else if (linkEW && !linkNS) dummyTransform.scale.set(1, 1, wallThin);
-        else if (!linkNS && !linkEW) dummyTransform.scale.set(0.88, 1, 0.88);
-        else dummyTransform.scale.set(1, 1, 1);
+        if (linkNS && !linkEW) dummyTransform.scale.set(wallThin, profile.wallHeightScale, 1);
+        else if (linkEW && !linkNS) dummyTransform.scale.set(1, profile.wallHeightScale, wallThin);
+        else if (!linkNS && !linkEW) dummyTransform.scale.set(0.88, profile.wallHeightScale, 0.88);
+        else dummyTransform.scale.set(1, profile.wallHeightScale, 1);
         dummyTransform.updateMatrix();
-        castleData.iWall.setMatrixAt(wallIndex, dummyTransform.matrix);
-        castleData.wallMap[wallIndex] = { type: 'WALL', gridX: x, gridY: y, z };
-        return wallIndex + 1;
+        bucket.iWall.setMatrixAt(targetWallIndex, dummyTransform.matrix);
+        bucket.wallMap[targetWallIndex] = { type: 'WALL', gridX: x, gridY: y, z };
+        if (castleData.styleBuckets) {
+            bucket.wallIndex = targetWallIndex + 1;
+            return wallIndex;
+        }
+        return targetWallIndex + 1;
     }
 
     function setCastleTowerVisualState(options = {}) {
         const castleData = options.castleData || {};
         const dummyTransform = options.dummyTransform;
         const towerIndex = Number.isFinite(options.towerIndex) ? options.towerIndex : 0;
+        const bucket = getCastleStyleBucket(castleData, options.materialProfileId);
+        const targetTowerIndex = castleData.styleBuckets ? bucket.towerIndex : towerIndex;
+        const profile = getStructureVisualProfile(options.materialProfileId);
         const x = options.x;
         const y = options.y;
         const z = options.z;
         const zOffset = Number.isFinite(options.zOffset) ? options.zOffset : 0;
-        if (!castleData.iTower || !dummyTransform) return towerIndex;
+        if (!bucket.iTower || !dummyTransform) return towerIndex;
         dummyTransform.position.set(x, zOffset, y);
         dummyTransform.rotation.set(0, 0, 0);
-        dummyTransform.scale.set(1, 1, 1);
+        dummyTransform.scale.set(profile.towerFootprintScale, profile.towerHeightScale, profile.towerFootprintScale);
         dummyTransform.updateMatrix();
-        castleData.iTower.setMatrixAt(towerIndex, dummyTransform.matrix);
-        castleData.towerMap[towerIndex] = { type: 'TOWER', gridX: x, gridY: y, z };
-        return towerIndex + 1;
+        bucket.iTower.setMatrixAt(targetTowerIndex, dummyTransform.matrix);
+        bucket.towerMap[targetTowerIndex] = { type: 'TOWER', gridX: x, gridY: y, z };
+        if (castleData.styleBuckets) {
+            bucket.towerIndex = targetTowerIndex + 1;
+            return towerIndex;
+        }
+        return targetTowerIndex + 1;
     }
 
     function markCastleRenderDataDirty(castleData) {
         if (!castleData) return;
+        if (castleData.styleBuckets) {
+            Object.keys(castleData.styleBuckets).forEach((styleId) => {
+                const bucket = castleData.styleBuckets[styleId];
+                if (bucket.iWall) {
+                    bucket.iWall.count = bucket.wallIndex;
+                    bucket.iWall.instanceMatrix.needsUpdate = true;
+                }
+                if (bucket.iTower) {
+                    bucket.iTower.count = bucket.towerIndex;
+                    bucket.iTower.instanceMatrix.needsUpdate = true;
+                }
+            });
+            return;
+        }
         if (castleData.iWall) castleData.iWall.instanceMatrix.needsUpdate = true;
         if (castleData.iTower) castleData.iTower.instanceMatrix.needsUpdate = true;
     }
@@ -930,27 +1096,47 @@
         const roof = options && options.roof;
         const zOffset = Number.isFinite(options && options.zOffset) ? options.zOffset : 0;
         if (!roof) return null;
+        const roofIntegrity = Number.isFinite(roof.roofIntegrity) ? roof.roofIntegrity : 1;
+        if (roofIntegrity <= 0.2) return null;
         const width = Math.max(1, Number.isFinite(roof.width) ? roof.width : 1);
         const depth = Math.max(1, Number.isFinite(roof.depth) ? roof.depth : 1);
-        const height = Number.isFinite(roof.height) ? roof.height : 2.3;
-        const roofMat = (sharedMaterials.roofThatch || sharedMaterials.boothWood).clone();
+        const profile = getStructureVisualProfile(roof.materialProfileId);
+        const wallTopHeight = Number.isFinite(roof.eaveHeight) ? Math.max(1.2, roof.eaveHeight) : profile.eaveHeight;
+        const roofPitchHeight = Number.isFinite(roof.height) ? Math.max(0.65, roof.height) : 1.35;
+        const roofMat = getStructureRoofMaterial(sharedMaterials, roof.materialProfileId).clone();
         roofMat.transparent = true;
         roofMat.opacity = 1;
         roofMat.side = THREE.DoubleSide;
+        const roofMaterials = [roofMat];
+        const makeRoofDetailMaterial = (sourceMaterial, colorHex) => {
+            const detailMaterial = (sourceMaterial || roofMat).clone();
+            if (Number.isFinite(colorHex) && detailMaterial.color && typeof detailMaterial.color.setHex === 'function') {
+                detailMaterial.color.setHex(colorHex);
+            }
+            detailMaterial.transparent = true;
+            detailMaterial.opacity = 1;
+            detailMaterial.flatShading = true;
+            detailMaterial.needsUpdate = true;
+            roofMaterials.push(detailMaterial);
+            return detailMaterial;
+        };
         const group = new THREE.Group();
-        group.position.set(roof.x + ((width - 1) / 2), zOffset + height, roof.y + ((depth - 1) / 2));
+        group.position.set(roof.x + ((width - 1) / 2), zOffset + wallTopHeight, roof.y + ((depth - 1) / 2));
         group.userData = {
             roofLandmark: roof,
             roofMaterial: roofMat,
+            roofMaterials,
             targetOpacity: 1
         };
 
         const ridgeAlongX = roof.ridgeAxis !== 'y';
-        const roofWidth = width + 1.2;
-        const roofDepth = depth + 1.2;
+        const roofOverhang = Number.isFinite(roof.overhang) ? Math.max(0.2, roof.overhang) : profile.roofOverhang;
+        const roofWidth = width + roofOverhang;
+        const roofDepth = depth + roofOverhang;
         const halfWidth = roofWidth / 2;
         const halfDepth = roofDepth / 2;
-        const ridgeRise = Math.max(1.15, Math.min(2.35, (ridgeAlongX ? roofDepth : roofWidth) * 0.22));
+        const footprintRise = (ridgeAlongX ? roofDepth : roofWidth) * 0.22;
+        const ridgeRise = Math.max(1.05, Math.min(profile.maxRidgeRise, Math.max(footprintRise, roofPitchHeight * profile.roofPitchScale)));
         let vertices = null;
         let indices = null;
         if (ridgeAlongX) {
@@ -993,6 +1179,59 @@
         roofMesh.receiveShadow = true;
         roofMesh.userData = { type: 'ROOF', gridX: roof.x, gridY: roof.y, z: roof.z };
         group.add(roofMesh);
+
+        const profileId = normalizeStructureMaterialProfileId(roof.materialProfileId);
+        const timberAccentMat = makeRoofDetailMaterial(sharedMaterials.boothWood || sharedMaterials.fenceWood || roofMat, 0x6d431f);
+        const stoneAccentMat = makeRoofDetailMaterial(sharedMaterials.castleStone || sharedMaterials.floor7 || roofMat, 0x7c817e);
+        const darkAccentMat = makeRoofDetailMaterial(sharedMaterials.caveMouth || sharedMaterials.rockCoal || stoneAccentMat, 0x343637);
+        const tileAccentMat = makeRoofDetailMaterial(sharedMaterials.floor8 || roofMat, 0x8c5535);
+        const ridgeCapMat = profileId === 'timber_thatch' || profileId === 'burnt_timber_ash'
+            ? timberAccentMat
+            : (profileId === 'painted_plaster_tile' ? tileAccentMat : stoneAccentMat);
+        const addRoofBox = (boxWidth, boxHeight, boxDepth, material, x, y, z) => {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth), material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        };
+        if (ridgeAlongX) {
+            addRoofBox(Math.max(1.2, roofWidth * 0.92), 0.12, 0.18, ridgeCapMat, 0, ridgeRise + 0.06, 0);
+        } else {
+            addRoofBox(0.18, 0.12, Math.max(1.2, roofDepth * 0.92), ridgeCapMat, 0, ridgeRise + 0.06, 0);
+        }
+        if (profileId === 'timber_thatch') {
+            const braceMat = timberAccentMat;
+            const braceInset = ridgeAlongX ? Math.max(1.2, roofWidth * 0.28) : Math.max(1.2, roofDepth * 0.28);
+            if (ridgeAlongX) {
+                addRoofBox(0.12, 0.08, Math.max(0.8, roofDepth * 0.8), braceMat, -braceInset, ridgeRise * 0.48, 0);
+                addRoofBox(0.12, 0.08, Math.max(0.8, roofDepth * 0.8), braceMat, braceInset, ridgeRise * 0.48, 0);
+            } else {
+                addRoofBox(Math.max(0.8, roofWidth * 0.8), 0.08, 0.12, braceMat, 0, ridgeRise * 0.48, -braceInset);
+                addRoofBox(Math.max(0.8, roofWidth * 0.8), 0.08, 0.12, braceMat, 0, ridgeRise * 0.48, braceInset);
+            }
+        } else if (profileId === 'painted_plaster_tile') {
+            const trimOffset = ridgeAlongX ? halfDepth * 0.74 : halfWidth * 0.74;
+            if (ridgeAlongX) {
+                addRoofBox(Math.max(1.0, roofWidth * 0.55), 0.06, 0.12, tileAccentMat, 0, ridgeRise * 0.42, -trimOffset);
+                addRoofBox(Math.max(1.0, roofWidth * 0.55), 0.06, 0.12, tileAccentMat, 0, ridgeRise * 0.42, trimOffset);
+            } else {
+                addRoofBox(0.12, 0.06, Math.max(1.0, roofDepth * 0.55), tileAccentMat, -trimOffset, ridgeRise * 0.42, 0);
+                addRoofBox(0.12, 0.06, Math.max(1.0, roofDepth * 0.55), tileAccentMat, trimOffset, ridgeRise * 0.42, 0);
+            }
+        } else if (profileId === 'quarry_stone_slate' || profileId === 'city_stone_slate') {
+            addRoofBox(0.52, 0.74, 0.52, stoneAccentMat, -halfWidth * 0.28, ridgeRise * 0.62, -halfDepth * 0.22);
+            addRoofBox(0.34, 0.18, 0.34, darkAccentMat, -halfWidth * 0.28, ridgeRise + 0.36, -halfDepth * 0.22);
+        } else if (profileId === 'castle_granite_slate') {
+            const merlonY = ridgeRise * 0.36;
+            addRoofBox(0.48, 0.34, 0.48, stoneAccentMat, -halfWidth * 0.72, merlonY, -halfDepth * 0.72);
+            addRoofBox(0.48, 0.34, 0.48, stoneAccentMat, halfWidth * 0.72, merlonY, -halfDepth * 0.72);
+            addRoofBox(0.48, 0.34, 0.48, stoneAccentMat, -halfWidth * 0.72, merlonY, halfDepth * 0.72);
+            addRoofBox(0.48, 0.34, 0.48, stoneAccentMat, halfWidth * 0.72, merlonY, halfDepth * 0.72);
+        } else if (profileId === 'burnt_timber_ash') {
+            addRoofBox(Math.max(0.8, roofWidth * 0.5), 0.1, 0.16, darkAccentMat, 0, ridgeRise * 0.45, 0);
+        }
         return group;
     }
 
@@ -1291,6 +1530,13 @@
         const strawMat = sharedMaterials.thatchMat || sharedMaterials.floor6 || paperMat;
         const redPaintMat = sharedMaterials.tutorialNoticeMat || accentMat;
         const darkMat = sharedMaterials.caveMouth || darkWoodMat;
+        const bankSignMat = sharedMaterials.bankTexPlaneMat || noticeMat;
+        const shopSignMat = sharedMaterials.shopSignMat || noticeMat;
+        const paintingMat = sharedMaterials.galleryPaintingMat || paperMat;
+        const bannerMat = sharedMaterials.castleBannerMat || redPaintMat;
+        const clothMat = sharedMaterials.awningClothMat || redPaintMat;
+        const stoneMat = sharedMaterials.castleStone || sharedMaterials.floor7 || accentMat;
+        const burntWoodMat = sharedMaterials.caveMouth || darkWoodMat;
         const addBox = (w, h, d, mat, x, y, z) => {
             const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
             mesh.position.set(x || 0, y || 0, z || 0);
@@ -1314,6 +1560,14 @@
             mesh.rotation.x = Math.PI / 2;
             mesh.castShadow = true;
             mesh.receiveShadow = true;
+            group.add(mesh);
+            return mesh;
+        };
+        const addPlane = (w, h, mat, x, y, z) => {
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+            mesh.position.set(x || 0, y || 0, z || 0);
+            mesh.castShadow = false;
+            mesh.receiveShadow = false;
             group.add(mesh);
             return mesh;
         };
@@ -1423,6 +1677,63 @@
             addBox(0.055, 0.46, 0.055, accentMat, 0.16, 1.08, 0.34, 0);
             addBox(0.045, 0.15, 0.045, paperMat, 0.16, 1.30, 0.34, 0);
             addBox(0.78, 0.12, 0.42, darkWoodMat, 0, 0.06, -0.12);
+        } else if (prop.kind === 'bank_sign') {
+            addBox(0.14, 1.52, 0.14, darkWoodMat, -0.54, 0.76, 0);
+            addBox(0.14, 1.52, 0.14, darkWoodMat, 0.54, 0.76, 0);
+            addBox(1.42, 0.58, 0.12, woodMat, 0, 1.34, 0);
+            addPlane(1.22, 0.36, bankSignMat, 0, 1.34, 0.065);
+            addBox(1.28, 0.08, 0.16, accentMat, 0, 1.67, 0);
+        } else if (prop.kind === 'shop_sign') {
+            addBox(1.34, 0.12, 0.12, darkWoodMat, 0, 1.72, -0.03);
+            addBox(0.08, 0.42, 0.08, darkWoodMat, -0.48, 1.52, 0);
+            addBox(0.08, 0.42, 0.08, darkWoodMat, 0.48, 1.52, 0);
+            addBox(1.36, 0.48, 0.10, woodMat, 0, 1.28, 0);
+            addPlane(1.16, 0.34, shopSignMat, 0, 1.28, 0.055);
+        } else if (prop.kind === 'market_awning') {
+            addBox(0.10, 1.12, 0.10, darkWoodMat, -0.86, 0.56, -0.36);
+            addBox(0.10, 1.12, 0.10, darkWoodMat, 0.86, 0.56, -0.36);
+            addBox(0.10, 0.92, 0.10, darkWoodMat, -0.86, 0.46, 0.44);
+            addBox(0.10, 0.92, 0.10, darkWoodMat, 0.86, 0.46, 0.44);
+            const canopy = addBox(1.96, 0.13, 1.06, clothMat, 0, 1.18, 0.04);
+            canopy.rotation.x = -0.16;
+            addBox(1.96, 0.08, 0.12, darkWoodMat, 0, 1.25, -0.52);
+            addBox(1.96, 0.08, 0.12, darkWoodMat, 0, 1.07, 0.56);
+        } else if (prop.kind === 'wall_painting') {
+            addBox(1.24, 0.84, 0.08, darkWoodMat, 0, 1.18, 0);
+            addPlane(1.02, 0.62, paintingMat, 0, 1.18, 0.045);
+            addBox(0.08, 0.76, 0.08, woodMat, -0.48, 0.52, -0.22);
+            addBox(0.08, 0.76, 0.08, woodMat, 0.48, 0.52, -0.22);
+            addBox(1.04, 0.08, 0.08, woodMat, 0, 0.64, -0.22);
+        } else if (prop.kind === 'castle_banner') {
+            addBox(0.10, 2.15, 0.10, stoneMat, -0.54, 1.08, -0.02);
+            addBox(0.10, 2.15, 0.10, stoneMat, 0.54, 1.08, -0.02);
+            addBox(1.26, 0.10, 0.12, stoneMat, 0, 2.08, -0.02);
+            addPlane(0.92, 1.42, bannerMat, 0, 1.33, 0.045);
+        } else if (prop.kind === 'rubble_pile') {
+            addOreChunk(sharedGeometries.rockDepleted, sharedMaterials.rockDepleted || stoneMat, -0.34, 0.06, -0.12, 0.78, -0.35);
+            addOreChunk(sharedGeometries.rockDepleted, stoneMat, 0.08, 0.08, 0.12, 0.64, 0.42);
+            addOreChunk(sharedGeometries.rockCoal, darkMat, 0.34, 0.06, -0.05, 0.44, -0.18);
+            addBox(1.12, 0.11, 0.13, burntWoodMat, -0.02, 0.22, 0.18).rotation.y = 0.48;
+            addBox(0.92, 0.09, 0.12, burntWoodMat, 0.12, 0.32, -0.22).rotation.y = -0.36;
+            addBox(0.52, 0.06, 0.08, accentMat, -0.38, 0.17, 0.32);
+        } else if (prop.kind === 'quarry_cart') {
+            addBox(1.22, 0.44, 0.78, woodMat, 0, 0.48, 0);
+            addBox(1.34, 0.12, 0.90, darkWoodMat, 0, 0.76, 0);
+            addBox(0.12, 0.52, 0.90, darkWoodMat, -0.64, 0.48, 0);
+            addBox(0.12, 0.52, 0.90, darkWoodMat, 0.64, 0.48, 0);
+            addCylinder(0.22, 0.22, 0.10, darkWoodMat, -0.72, 0.22, -0.34, Math.PI / 2);
+            addCylinder(0.22, 0.22, 0.10, darkWoodMat, 0.72, 0.22, -0.34, Math.PI / 2);
+            addCylinder(0.22, 0.22, 0.10, darkWoodMat, -0.72, 0.22, 0.34, Math.PI / 2);
+            addCylinder(0.22, 0.22, 0.10, darkWoodMat, 0.72, 0.22, 0.34, Math.PI / 2);
+            addOreChunk(sharedGeometries.rockIron, sharedMaterials.rockIron || accentMat, -0.22, 0.86, -0.02, 0.48, -0.2);
+            addOreChunk(sharedGeometries.rockCoal, sharedMaterials.rockCoal || accentMat, 0.16, 0.84, 0.10, 0.42, 0.6);
+        } else if (prop.kind === 'thatch_bundle') {
+            addCylinder(0.12, 0.12, 1.18, strawMat, -0.02, 0.22, -0.22, Math.PI / 2);
+            addCylinder(0.12, 0.12, 1.12, strawMat, 0.02, 0.23, 0.02, Math.PI / 2);
+            addCylinder(0.11, 0.11, 1.04, strawMat, -0.04, 0.42, -0.10, Math.PI / 2);
+            addCylinder(0.10, 0.10, 0.96, strawMat, 0.04, 0.42, 0.14, Math.PI / 2);
+            addBox(1.18, 0.06, 0.06, darkWoodMat, 0, 0.31, -0.10);
+            addBox(1.02, 0.05, 0.05, darkWoodMat, 0, 0.50, 0.03);
         } else if (prop.kind === 'notice_board') {
             addBox(0.14, 1.45, 0.14, darkWoodMat, 0, 0.72, 0);
             addBox(1.45, 0.82, 0.12, woodMat, 0, 1.48, 0);
@@ -1476,7 +1787,15 @@
             barrel: { w: 0.85, h: 0.98, d: 0.85 },
             weapon_rack: { w: 1.62, h: 1.62, d: 0.85 },
             training_dummy: { w: 1.16, h: 1.55, d: 0.95 },
-            archery_target: { w: 1.28, h: 1.68, d: 0.92 }
+            archery_target: { w: 1.28, h: 1.68, d: 0.92 },
+            bank_sign: { w: 1.62, h: 1.75, d: 0.42 },
+            shop_sign: { w: 1.54, h: 1.88, d: 0.46 },
+            market_awning: { w: 2.1, h: 1.36, d: 1.28 },
+            wall_painting: { w: 1.34, h: 1.55, d: 0.46 },
+            castle_banner: { w: 1.4, h: 2.22, d: 0.42 },
+            rubble_pile: { w: 1.35, h: 0.62, d: 1.04 },
+            quarry_cart: { w: 1.62, h: 1.02, d: 1.08 },
+            thatch_bundle: { w: 1.35, h: 0.62, d: 0.72 }
         };
         const hitboxSize = hitboxSizeByKind[prop.kind] || { w: 1.0, h: 1.0, d: 1.0 };
         const hitbox = new THREE.Mesh(
@@ -2071,7 +2390,10 @@
             const group = activeRoofVisuals[i];
             const roof = group && group.userData ? group.userData.roofLandmark : null;
             const material = group && group.userData ? group.userData.roofMaterial : null;
-            if (!roof || !material || !roof.hideWhenPlayerInside || !roof.hideBounds) continue;
+            const materials = group && group.userData && Array.isArray(group.userData.roofMaterials)
+                ? group.userData.roofMaterials
+                : (material ? [material] : []);
+            if (!roof || materials.length === 0 || !roof.hideWhenPlayerInside || !roof.hideBounds) continue;
             const bounds = roof.hideBounds;
             const inside = playerState.z === bounds.z
                 && playerState.x >= bounds.xMin
@@ -2079,8 +2401,11 @@
                 && playerState.y >= bounds.yMin
                 && playerState.y <= bounds.yMax;
             const targetOpacity = inside ? 0.04 : 1;
-            material.opacity += (targetOpacity - material.opacity) * 0.22;
-            material.visible = material.opacity > 0.03;
+            materials.forEach((entry) => {
+                if (!entry) return;
+                entry.opacity += (targetOpacity - entry.opacity) * 0.22;
+                entry.visible = entry.opacity > 0.03;
+            });
         }
     }
 
@@ -2088,6 +2413,7 @@
         chunkIntersectsRoof,
         appendChunkLandmarkVisuals,
         appendPierVisualsToChunk,
+        buildStructureVisualStyleLookup,
         appendFloorTileVisual,
         appendFloorTileVisualState,
         appendShopCounterVisual,
@@ -2107,6 +2433,7 @@
         createFurnaceVisualGroup,
         getFurnaceInteractionTile,
         getFloorTileRenderBucket,
+        getStructureVisualStyleAt,
         createRoofVisualGroup,
         createTopAnchoredFloorMesh,
         createWoodenGateVisualGroup,

@@ -1,18 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const humanoidModelRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const npcRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const humanoidModelRuntimeSource = readRepoFile(root, "src/js/humanoid-model-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const npcRuntimeSource = readRepoFile(root, "src/js/world/npc-render-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const humanoidModelRuntimeIndex = manifestSource.indexOf('id: "humanoid-model-runtime"');
   const npcRuntimeIndex = manifestSource.indexOf('id: "world-npc-render-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');

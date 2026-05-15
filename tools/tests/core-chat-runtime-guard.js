@@ -1,26 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function makeClassList() {
-  const values = new Set();
-  return {
-    values,
-    add(value) { values.add(value); },
-    remove(value) { values.delete(value); },
-    contains(value) { return values.has(value); },
-    toggle(value, force) {
-      const shouldAdd = typeof force === "boolean" ? force : !values.has(value);
-      if (shouldAdd) values.add(value);
-      else values.delete(value);
-      return shouldAdd;
-    }
-  };
-}
+const { makeClassList } = require("./dom-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeElement(tagName) {
   let ownInnerText = "";
@@ -96,9 +78,9 @@ function makeDocument() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "core-chat-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/core-chat-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(runtimeSource.includes("window.CoreChatRuntime"), "core chat runtime should expose a window runtime");
   assert(runtimeSource.includes("function addChatMessage"), "core chat runtime should own chat message DOM writes");

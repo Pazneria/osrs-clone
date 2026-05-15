@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "materialProfileId": "timber_thatch",
+  "label": "Timber And Thatch",
+  "themeId": "frontier_timber",
+  "family": "timber",
+  "previewPalette": {
+    "ground": "#d9e2c5",
+    "floor": "#a66f34",
+    "wall": "#684526",
+    "corner": "#7c6347",
+    "roof": "#a77f3c",
+    "roofDark": "#76572a",
+    "accent": "#d8aa54"
+  },
+  "roofMaterial": "thatch and weathered bark",
+  "wallMaterial": "rough timber walls with visible corner posts",
+  "tags": [
+    "frontier",
+    "timber",
+    "thatch"
+  ],
+  "promotionNotes": [
+    "Use as the normal frontier baseline before applying weathering or damage.",
+    "Avoid repeating the same footprint without changing role, yard, or condition."
+  ]
+}

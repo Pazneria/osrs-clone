@@ -1,22 +1,16 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "inventory-bank-session-runtime.js");
-  const runtimeSource = read(root, "src/js/inventory-bank-session-runtime.js");
-  const inventorySource = read(root, "src/js/inventory.js");
-  const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
-  const packageSource = read(root, "package.json");
+  const runtimeSource = readRepoFile(root, "src/js/inventory-bank-session-runtime.js");
+  const inventorySource = readRepoFile(root, "src/js/inventory.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const packageSource = readRepoFile(root, "package.json");
+  const packageSuiteManifestSource = readRepoFile(root, "tools/tests/package-suite-manifest.js");
 
   const runtimeIndex = manifestSource.indexOf('id: "inventory-bank-session-runtime"');
   const inventoryIndex = manifestSource.indexOf('id: "inventory"');
@@ -30,7 +24,7 @@ function run() {
   assert(runtimeSource.includes("function normalizeBankSource(sourceKey)"), "bank session runtime should own source normalization");
   assert(runtimeSource.includes("function publishBankSessionHooks(options = {})"), "bank session runtime should own bank hook publication");
   assert(packageSource.includes('"test:inventory-bank-session:guard"'), "package should expose a targeted inventory bank session guard");
-  assert(packageSource.includes("--check ./src/js/inventory-bank-session-runtime.js"), "package check should syntax-check the inventory bank session runtime");
+  assert(packageSuiteManifestSource.includes('"src/js/inventory-bank-session-runtime.js"'), "package check should syntax-check the inventory bank session runtime");
 
   assert(inventorySource.includes("function getInventoryBankSessionRuntime()"), "inventory.js should resolve the bank session runtime");
   assert(inventorySource.includes("inventoryBankSessionRuntime.createBankSession({"), "inventory.js should create bank session through the runtime");

@@ -201,10 +201,6 @@
         });
     }
 
-    function createWaterFringeMaterial(three, tokens) {
-        return createWaterShorelineRibbonMaterial(three, tokens);
-    }
-
     function getWaterSurfaceMaterial(options) {
         const THREE = requireThree(options && options.THREE);
         const sharedMaterials = requireSharedMaterials(options && options.sharedMaterials);
@@ -417,7 +413,6 @@
     window.WorldRenderRuntime = {
         MAIN_DIRECTIONAL_SHADOW_CONFIG,
         buildWaterMaterialKey,
-        createWaterFringeMaterial,
         createWaterShorelineRibbonMaterial,
         createWaterSurfaceMaterial,
         createSkyDomeMaterial,

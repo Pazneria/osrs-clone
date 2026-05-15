@@ -145,6 +145,27 @@
             return `<span class="${classes.join(' ')}">${text}</span>`;
         }
 
+        function resolveInventoryItemData(itemData) {
+            if (!itemData || typeof itemData !== 'object') return null;
+            const itemId = typeof itemData.id === 'string' ? itemData.id.trim().toLowerCase() : '';
+            if (itemId && ITEM_DB && ITEM_DB[itemId]) return ITEM_DB[itemId];
+            return itemData;
+        }
+
+        function resolveInventoryIconHtml(itemData, fallbackIcon = '') {
+            const canonicalItem = resolveInventoryItemData(itemData);
+            const icon = canonicalItem && canonicalItem.icon !== undefined ? canonicalItem.icon : fallbackIcon;
+            if (typeof icon === 'string' && icon.trim()) return icon;
+            if (icon && typeof icon === 'object' && icon.kind === 'pixel') {
+                const assetId = typeof icon.assetId === 'string' ? icon.assetId.trim() : '';
+                if (assetId && typeof makeIconFromImage === 'function') {
+                    return makeIconFromImage(`./assets/pixel/${assetId}.png?v=${ASSET_VERSION_TAG}`);
+                }
+            }
+            if (typeof fallbackIcon === 'string' && fallbackIcon.trim()) return fallbackIcon;
+            return typeof makeMissingIconSprite === 'function' ? makeMissingIconSprite() : '';
+        }
+
         function getEquipmentEntryItemData(entry) {
             if (!entry || typeof entry !== 'object') return null;
             if (entry.itemData && typeof entry.itemData === 'object') return entry.itemData;
@@ -295,14 +316,6 @@
 
         let rememberedDepositXAmount = null;
 
-        function collectMatchingInventorySlots(itemId, preferredIndex, maxCount) {
-            const runtime = getUiDomainRuntime();
-            if (runtime && typeof runtime.collectMatchingSlotIndexes === 'function') {
-                return runtime.collectMatchingSlotIndexes(inventory, itemId, preferredIndex, maxCount);
-            }
-            return [];
-        }
-
         function renderBank() {
             const container = document.getElementById('bank-grid');
             hideInventoryHoverTooltip();
@@ -324,11 +337,13 @@
                 });
                     if (bItem) {
                     usedSlots++;
-                    slot.innerHTML = `${bankViewModel ? bankViewModel.icon : bItem.itemData.icon}${formatStackSize(bankViewModel ? bankViewModel.amount : bItem.amount)}`;
+                    const item = resolveInventoryItemData(bItem.itemData) || bItem.itemData;
+                    const amount = bankViewModel ? bankViewModel.amount : bItem.amount;
+                    slot.innerHTML = `${resolveInventoryIconHtml(bItem.itemData, bankViewModel ? bankViewModel.icon : '')}${formatStackSize(amount)}`;
                     bindInventorySlotTooltip(
                         slot,
-                        buildItemTooltipText(bItem.itemData, { amount: bankViewModel ? bankViewModel.amount : bItem.amount }),
-                        buildItemTooltipHtml(bItem.itemData, { amount: bankViewModel ? bankViewModel.amount : bItem.amount })
+                        buildItemTooltipText(item, { amount }),
+                        buildItemTooltipHtml(item, { amount })
                     );
                     
                     slot.draggable = true;
@@ -338,7 +353,7 @@
                         slot.style.opacity = '0.4';
                     });
                     slot.addEventListener('dragend', () => { slot.style.opacity = '1'; });
-                    const bankActionPrefKey = getItemMenuPreferenceKey('bank', bItem.itemData.id);
+                    const bankActionPrefKey = getItemMenuPreferenceKey('bank', item.id);
                     const bankActions = ['Withdraw-1', 'Withdraw-5', 'Withdraw-10', 'Withdraw-All', 'Withdraw-X'];
                     const runBankAction = (actionName) => {
                         if (actionName === 'Withdraw-1') withdrawBankItem(i, 1);
@@ -356,11 +371,11 @@
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
                         clearContextMenuOptions();
-                        addContextMenuOption(`Withdraw-1 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-1'));
-                        addContextMenuOption(`Withdraw-5 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-5'));
-                        addContextMenuOption(`Withdraw-10 <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-10'));
-                        addContextMenuOption(`Withdraw-All <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-All'));
-                        addContextMenuOption(`Withdraw-X <span class="text-white">${bItem.itemData.name}</span>`, () => runBankAction('Withdraw-X'));
+                        addContextMenuOption(`Withdraw-1 <span class="text-white">${item.name}</span>`, () => runBankAction('Withdraw-1'));
+                        addContextMenuOption(`Withdraw-5 <span class="text-white">${item.name}</span>`, () => runBankAction('Withdraw-5'));
+                        addContextMenuOption(`Withdraw-10 <span class="text-white">${item.name}</span>`, () => runBankAction('Withdraw-10'));
+                        addContextMenuOption(`Withdraw-All <span class="text-white">${item.name}</span>`, () => runBankAction('Withdraw-All'));
+                        addContextMenuOption(`Withdraw-X <span class="text-white">${item.name}</span>`, () => runBankAction('Withdraw-X'));
                         showContextMenuAt(e.clientX, e.clientY);
                         appendSwapLeftClickControl(bankActionPrefKey, bankActions, () => { renderBank(); renderInventory(); });
                     };
@@ -509,14 +524,6 @@
             return Math.floor(base * 0.4);
         }
 
-        function seedShopInventorySlot(inventoryArray, itemId, amount, normalStock = true) {
-            if (!ITEM_DB[itemId] || !Number.isFinite(amount) || amount <= 0) return false;
-            const idx = inventoryArray.indexOf(null);
-            if (idx === -1) return false;
-            inventoryArray[idx] = { itemData: ITEM_DB[itemId], amount: Math.floor(amount), normalStock: !!normalStock };
-            return true;
-        }
-
         function createShopInventoryForMerchant(merchantId) {
             const runtime = getUiDomainRuntime();
             if (runtime && typeof runtime.createShopInventoryForMerchant === 'function') {
@@ -608,14 +615,16 @@
                 const sItem = shopInventory[i];
                 const shopViewModel = shopSlotViewModels[i] || null;
                 if (sItem && sItem.amount > 0) {
-                    slot.innerHTML = `${shopViewModel ? shopViewModel.icon : sItem.itemData.icon}${formatStackSize(shopViewModel ? shopViewModel.amount : sItem.amount)}`;
-                    const buyPrice = shopViewModel ? shopViewModel.buyPrice : resolveMerchantBuyPrice(sItem.itemData.id);
+                    const item = resolveInventoryItemData(sItem.itemData) || sItem.itemData;
+                    const amount = shopViewModel ? shopViewModel.amount : sItem.amount;
+                    slot.innerHTML = `${resolveInventoryIconHtml(sItem.itemData, shopViewModel ? shopViewModel.icon : '')}${formatStackSize(amount)}`;
+                    const buyPrice = shopViewModel ? shopViewModel.buyPrice : resolveMerchantBuyPrice(item.id);
                     bindInventorySlotTooltip(
                         slot,
-                        buildItemTooltipText(sItem.itemData, { amount: shopViewModel ? shopViewModel.amount : sItem.amount, priceText: `Buy: ${buyPrice.toLocaleString()} coins` }),
-                        buildItemTooltipHtml(sItem.itemData, { amount: shopViewModel ? shopViewModel.amount : sItem.amount, priceText: `Buy: ${buyPrice.toLocaleString()} coins` })
+                        buildItemTooltipText(item, { amount, priceText: `Buy: ${buyPrice.toLocaleString()} coins` }),
+                        buildItemTooltipHtml(item, { amount, priceText: `Buy: ${buyPrice.toLocaleString()} coins` })
                     );
-                    const shopActionPrefKey = getItemMenuPreferenceKey('shop', sItem.itemData.id);
+                    const shopActionPrefKey = getItemMenuPreferenceKey('shop', item.id);
                     const shopActions = ['Buy-1', 'Buy-5', 'Buy-10', 'Buy-50', 'Buy-X'];
                     const runShopAction = (actionName) => {
                         if (actionName === 'Buy-1') buyItem(i, 1);
@@ -632,12 +641,12 @@
                     slot.oncontextmenu = (e) => {
                         e.preventDefault(); e.stopPropagation(); closeContextMenu();
                         clearContextMenuOptions();
-                        addContextMenuOption(`Value <span class="text-white">${sItem.itemData.name}</span>`, () => console.log(`${sItem.itemData.name} costs ${resolveMerchantBuyPrice(sItem.itemData.id)} coins.`));
-                        addContextMenuOption(`Buy-1 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-1'));
-                        addContextMenuOption(`Buy-5 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-5'));
-                        addContextMenuOption(`Buy-10 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-10'));
-                        addContextMenuOption(`Buy-50 <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-50'));
-                        addContextMenuOption(`Buy-X <span class="text-white">${sItem.itemData.name}</span>`, () => runShopAction('Buy-X'));
+                        addContextMenuOption(`Value <span class="text-white">${item.name}</span>`, () => console.log(`${item.name} costs ${resolveMerchantBuyPrice(item.id)} coins.`));
+                        addContextMenuOption(`Buy-1 <span class="text-white">${item.name}</span>`, () => runShopAction('Buy-1'));
+                        addContextMenuOption(`Buy-5 <span class="text-white">${item.name}</span>`, () => runShopAction('Buy-5'));
+                        addContextMenuOption(`Buy-10 <span class="text-white">${item.name}</span>`, () => runShopAction('Buy-10'));
+                        addContextMenuOption(`Buy-50 <span class="text-white">${item.name}</span>`, () => runShopAction('Buy-50'));
+                        addContextMenuOption(`Buy-X <span class="text-white">${item.name}</span>`, () => runShopAction('Buy-X'));
                         showContextMenuAt(e.clientX, e.clientY);
                         appendSwapLeftClickControl(shopActionPrefKey, shopActions, () => { renderShop(); renderInventory(); });
                     };
@@ -724,11 +733,12 @@
                     slot.classList.add('item-slot-selected');
                 }
                 if (itemDataSlot) {
-                    const item = itemDataSlot.itemData;
+                    const item = resolveInventoryItemData(itemDataSlot.itemData) || itemDataSlot.itemData;
+                    const amount = inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount;
                     slot.setAttribute('role', 'button');
                     slot.setAttribute('tabindex', '0');
                     slot.setAttribute('aria-label', item && item.name ? item.name : 'Inventory item');
-                    slot.innerHTML = `<span class="inv-item-icon">${inventoryViewModel ? inventoryViewModel.icon : item.icon}</span>${formatStackSize(inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, 'item-amt-inv')}`;
+                    slot.innerHTML = `<span class="inv-item-icon">${resolveInventoryIconHtml(itemDataSlot.itemData, inventoryViewModel ? inventoryViewModel.icon : '')}</span>${formatStackSize(amount, 'item-amt-inv')}`;
                     slot.draggable = true;
                     slot.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('application/json', JSON.stringify({ source: 'inv', index: i }));
@@ -757,8 +767,8 @@
                         };
                         bindInventorySlotTooltip(
                             slot,
-                            buildItemTooltipText(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Deposit', priceText: `Value: ${Math.floor(item.value || 0).toLocaleString()} coins` }),
-                            buildItemTooltipHtml(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Deposit', priceText: `Value: ${Math.floor(item.value || 0).toLocaleString()} coins` })
+                            buildItemTooltipText(item, { amount, actionText: 'Deposit', priceText: `Value: ${Math.floor(item.value || 0).toLocaleString()} coins` }),
+                            buildItemTooltipHtml(item, { amount, actionText: 'Deposit', priceText: `Value: ${Math.floor(item.value || 0).toLocaleString()} coins` })
                         );
                         slot.onclick = () => {
                             const defaultAction = getPreferredMenuAction(depositActionPrefKey, depositActions);
@@ -788,8 +798,8 @@
                         };
                         bindInventorySlotTooltip(
                             slot,
-                            buildItemTooltipText(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Sell', priceText: `Sell: ${resolveMerchantSellPrice(item.id).toLocaleString()} coins` }),
-                            buildItemTooltipHtml(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: 'Sell', priceText: `Sell: ${resolveMerchantSellPrice(item.id).toLocaleString()} coins` })
+                            buildItemTooltipText(item, { amount, actionText: 'Sell', priceText: `Sell: ${resolveMerchantSellPrice(item.id).toLocaleString()} coins` }),
+                            buildItemTooltipHtml(item, { amount, actionText: 'Sell', priceText: `Sell: ${resolveMerchantSellPrice(item.id).toLocaleString()} coins` })
                         );
                         slot.onclick = () => {
                             const defaultAction = getPreferredMenuAction(sellActionPrefKey, sellActions);
@@ -814,8 +824,8 @@
                         const orderedActions = getOrderedItemActions(item);
                         bindInventorySlotTooltip(
                             slot,
-                            buildItemTooltipText(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: `Left-click: ${defaultAction}` }),
-                            buildItemTooltipHtml(item, { amount: inventoryViewModel ? inventoryViewModel.amount : itemDataSlot.amount, actionText: `Left-click: ${defaultAction}` })
+                            buildItemTooltipText(item, { amount, actionText: `Left-click: ${defaultAction}` }),
+                            buildItemTooltipHtml(item, { amount, actionText: `Left-click: ${defaultAction}` })
                         );
                         slot.onclick = () => handleInventorySlotClick(i);
                         slot.oncontextmenu = (e) => {
@@ -867,13 +877,14 @@
                 const el = document.getElementById(`eq-${slotName}`); if (!el) return;
                 el.className = 'w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl select-none hover:bg-[#1a1f24]';
                 const entry = equipment[slotName];
-                const item = getEquipmentEntryItemData(entry);
+                const entryItem = getEquipmentEntryItemData(entry);
+                const item = resolveInventoryItemData(entryItem) || entryItem;
                 const amount = slotViewModel.amount || getEquipmentEntryAmount(entry);
                 if (slotViewModel.hasItem && item) {
                     el.setAttribute('role', 'button');
                     el.setAttribute('tabindex', '0');
                     el.setAttribute('aria-label', item && item.name ? item.name : 'Equipped item');
-                    el.innerHTML = slotViewModel.icon + formatStackSize(amount, 'item-amt-inv');
+                    el.innerHTML = resolveInventoryIconHtml(entryItem, slotViewModel.icon) + formatStackSize(amount, 'item-amt-inv');
                     bindInventorySlotTooltip(
                         el,
                         buildItemTooltipText(item, { amount, actionText: 'Click to unequip' }),
@@ -1253,4 +1264,3 @@
             if (typeof window.updateStats === 'function') window.updateStats();
             updatePlayerModel();
         }
-        window.renderQuestLog = renderQuestLog;

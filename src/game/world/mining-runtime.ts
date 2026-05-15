@@ -7,7 +7,7 @@ import type {
   WeightedOreType
 } from "../contracts/world";
 
-export interface MiningRuntimeResult {
+interface MiningRuntimeResult {
   miningRoutes: RouteDescriptor[];
   miningRockPlacements: MiningRockPlacement[];
   runeEssenceRocks: Point3[];

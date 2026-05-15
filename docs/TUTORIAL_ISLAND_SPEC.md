@@ -478,7 +478,7 @@ Checks:
 
 Checks:
 
-- `node tools/visual/tutorial-island-visual-harness.js --url http://127.0.0.1:5173/ --scene tutorial-overhead --scene late-skill-yard`
+- `node tools/visual/tutorial-island-visual-harness.js --url http://127.0.0.1:5502/ --scene tutorial-overhead --scene late-skill-yard`
 - In-app browser overhead and close camera checks.
 
 ## Acceptance Criteria

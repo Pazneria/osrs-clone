@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
-const http = require("http");
 const path = require("path");
 const { spawn } = require("child_process");
+const { writeJsonFile } = require("../lib/json-file-utils");
 const {
   getPackageSearchPaths,
-  loadSceneConfig
+  loadSceneConfig,
+  probeUrl,
+  sendQaCommand
 } = require("../visual/tutorial-island-visual-harness.js");
 
 const ROOT = path.resolve(__dirname, "..", "..");
@@ -116,20 +118,6 @@ function withFreshSessionParam(url) {
   return url.includes("?") ? `${url}&fresh=${Date.now()}` : `${url}?fresh=${Date.now()}`;
 }
 
-function probeUrl(url, timeoutMs = 2000) {
-  return new Promise((resolve) => {
-    const request = http.get(url, { timeout: timeoutMs }, (response) => {
-      response.resume();
-      resolve(response.statusCode >= 200 && response.statusCode < 500);
-    });
-    request.on("timeout", () => {
-      request.destroy();
-      resolve(false);
-    });
-    request.on("error", () => resolve(false));
-  });
-}
-
 function startViteServer(url) {
   const parsed = new URL(url);
   const port = parsed.port || (parsed.protocol === "https:" ? "443" : "80");
@@ -143,6 +131,25 @@ function startViteServer(url) {
   child.stdout.on("data", (chunk) => process.stdout.write(`[perf-server] ${chunk}`));
   child.stderr.on("data", (chunk) => process.stderr.write(`[perf-server] ${chunk}`));
   return child;
+}
+
+function stopProcessTree(child) {
+  if (!child || !child.pid) return Promise.resolve();
+  if (process.platform === "win32") {
+    return new Promise((resolve) => {
+      const killer = spawn("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+        stdio: "ignore",
+        windowsHide: true
+      });
+      killer.on("close", () => resolve());
+      killer.on("error", () => {
+        child.kill();
+        resolve();
+      });
+    });
+  }
+  child.kill();
+  return Promise.resolve();
 }
 
 async function waitForReachableUrl(url, timeoutMs) {
@@ -162,13 +169,6 @@ async function ensureProfileReady(page) {
   await page.locator("#player-entry-primary").click();
   await overlay.waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
   return true;
-}
-
-async function sendQaCommand(page, command) {
-  const input = page.locator("#chat-input");
-  await input.waitFor({ state: "visible", timeout: 10000 });
-  await input.fill(command);
-  await input.press("Enter");
 }
 
 async function installPerfHooks(page) {
@@ -421,10 +421,6 @@ function buildQualityIssues(metrics, viewport) {
   return issues;
 }
 
-function isSoftwareWebglRenderer(rendererName) {
-  return /swiftshader|software|llvmpipe|mesa offscreen/i.test(String(rendererName || ""));
-}
-
 async function readRuntimeMetrics(page, viewport) {
   return page.evaluate((viewportIn) => {
     const rendererRef = (typeof renderer !== "undefined") ? renderer : window.renderer;
@@ -598,8 +594,14 @@ async function ensureRunModeOn(page) {
   await page.waitForTimeout(120);
 }
 
-async function runChunkStreamRoute(page, sampleMs) {
-  await sendQaCommand(page, "/qa camera preset tutorial_surface");
+async function runChunkStreamRoute(page, sampleMs, scene = null) {
+  const routeCommands = Array.isArray(scene && scene.chunkStreamCommands) && scene.chunkStreamCommands.length > 0
+    ? scene.chunkStreamCommands
+    : ["/qa camera preset tutorial_surface"];
+  for (const command of routeCommands) {
+    await sendQaCommand(page, command);
+    await page.waitForTimeout(220);
+  }
   await ensureRunModeOn(page);
   await page.locator("#chat-input").evaluate((el) => el.blur()).catch(() => {});
   await page.waitForTimeout(500);
@@ -642,7 +644,7 @@ async function measureScene(page, scene, config, options, viewport) {
   }
   try {
     if (options.chunkStreamRoute) {
-      await runChunkStreamRoute(page, options.sampleMs);
+      await runChunkStreamRoute(page, options.sampleMs, scene);
     } else if (options.pointerCameraDrag) {
       await runPointerCameraDrag(page, options.sampleMs, viewport);
     } else {
@@ -728,7 +730,7 @@ async function runHarness(rawOptions) {
     }
   } finally {
     await browser.close().catch(() => {});
-    if (serverProcess) serverProcess.kill();
+    if (serverProcess) await stopProcessTree(serverProcess);
   }
 
   const failures = [];
@@ -774,7 +776,7 @@ async function runHarness(rawOptions) {
   };
 
   ensureDir(options.outputDir);
-  fs.writeFileSync(path.join(options.outputDir, "report.json"), JSON.stringify(report, null, 2));
+  writeJsonFile(path.join(options.outputDir, "report.json"), report, { trailingNewline: false });
   return report;
 }
 
@@ -816,6 +818,5 @@ module.exports = {
   DEFAULT_CONFIG,
   DEFAULT_OUTPUT_DIR,
   parseArgs,
-  runHarness,
-  summarizeSamples
+  runHarness
 };

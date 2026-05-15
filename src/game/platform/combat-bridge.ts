@@ -35,7 +35,6 @@ import {
   getCombatProgressionBandForEnemy,
   getEnemyTypeDefinition,
   listCombatProgressionBands,
-  listCombatProgressionBandWorldSummaries,
   listEnemySpawnNodesForWorld as listLegacyEnemySpawnNodesForWorld,
   listEnemyTypes
 } from "../combat/content";
@@ -101,6 +100,23 @@ function isPoint3Like(value: unknown): value is Point3 {
     && Number.isFinite((value as Point3).z);
 }
 
+function normalizePoint3(value: unknown): Point3 | null {
+  if (!isPoint3Like(value)) return null;
+  return clonePoint3({
+    x: Math.floor(Number(value.x)),
+    y: Math.floor(Number(value.y)),
+    z: Math.floor(Number(value.z))
+  });
+}
+
+function normalizePatrolRoute(value: unknown): Point3[] | null {
+  if (!Array.isArray(value) || value.length < 2) return null;
+  const route = value
+    .map(normalizePoint3)
+    .filter((point): point is Point3 => !!point);
+  return route.length >= 2 ? route : null;
+}
+
 function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | null {
   if (!definition || typeof definition !== "object") return null;
   const spawnNode = definition as Record<string, unknown>;
@@ -117,11 +133,8 @@ function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | nul
   const spawnTileLike: unknown = spawnNode.spawnTile ?? spawnNode.spawn ?? spawnNode.position ?? null;
   if (!spawnNodeId || !enemyId || !isPoint3Like(spawnTileLike)) return null;
 
-  const spawnTile = clonePoint3({
-    x: Math.floor(Number(spawnTileLike.x)),
-    y: Math.floor(Number(spawnTileLike.y)),
-    z: Math.floor(Number(spawnTileLike.z))
-  });
+  const spawnTile = normalizePoint3(spawnTileLike);
+  if (!spawnTile) return null;
   const homeTileOverrideLike: unknown = spawnNode.homeTileOverride ?? spawnNode.homeTile ?? null;
   const roamingRadiusOverride = Number.isFinite(Number(spawnNode.roamingRadiusOverride))
     ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
@@ -137,19 +150,25 @@ function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | nul
       ? spawnNode.spawnGroupId
       : (typeof spawnNode.groupId === "string" ? spawnNode.groupId : null)
   ) || null;
+  const assistGroupId = normalizeWorldId(
+    typeof spawnNode.assistGroupId === "string"
+      ? spawnNode.assistGroupId
+      : (typeof spawnNode.groupAssistId === "string" ? spawnNode.groupAssistId : null)
+  ) || null;
+  const assistRadiusOverride = Number.isFinite(Number(spawnNode.assistRadiusOverride))
+    ? Math.max(0, Math.floor(Number(spawnNode.assistRadiusOverride)))
+    : (Number.isFinite(Number(spawnNode.assistRadius)) ? Math.max(0, Math.floor(Number(spawnNode.assistRadius))) : null);
+  const patrolRoute = normalizePatrolRoute(spawnNode.patrolRoute ?? spawnNode.patrolPoints ?? spawnNode.patrol ?? null);
 
   return {
     spawnNodeId,
     enemyId,
     spawnTile,
-    homeTileOverride: isPoint3Like(homeTileOverrideLike)
-      ? clonePoint3({
-          x: Math.floor(Number(homeTileOverrideLike.x)),
-          y: Math.floor(Number(homeTileOverrideLike.y)),
-          z: Math.floor(Number(homeTileOverrideLike.z))
-        })
-      : null,
+    homeTileOverride: normalizePoint3(homeTileOverrideLike),
     roamingRadiusOverride,
+    patrolRoute,
+    assistGroupId,
+    assistRadiusOverride,
     respawnTicks,
     spawnEnabled: spawnNode.spawnEnabled !== false && spawnNode.enabled !== false,
     facingYaw,

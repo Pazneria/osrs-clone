@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { readJsonFile, writeJsonFile } = require("../lib/json-file-utils");
 const { validatePixelSource } = require("./pixel-source");
 const {
   getProjectRoot,
@@ -19,12 +20,12 @@ function main() {
 
   for (let i = 0; i < files.length; i += 1) {
     const filePath = path.join(sourceDir, files[i]);
-    const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const raw = readJsonFile(filePath);
     const validation = validatePixelSource(raw);
     if (validation.errors.length > 0) {
       throw new Error(`${files[i]}: ${validation.errors.join("; ")}`);
     }
-    fs.writeFileSync(filePath, JSON.stringify(validation.normalized, null, 2) + "\n", "utf8");
+    writeJsonFile(filePath, validation.normalized);
   }
 
   console.log(`Normalized ${files.length} pixel source file(s).`);

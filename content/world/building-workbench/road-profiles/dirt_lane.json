@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "roadProfileId": "dirt_lane",
+  "label": "Dirt Lane",
+  "tileId": "DIRT",
+  "defaultPathWidth": 2,
+  "previewColor": "#a8874f",
+  "tags": [
+    "road",
+    "spawn-protected",
+    "lane"
+  ],
+  "promotionNotes": [
+    "Use for house approaches and small settlement lanes.",
+    "Promotion should become DIRT tile intent plus road tags."
+  ]
+}

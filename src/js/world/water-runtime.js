@@ -917,7 +917,7 @@
         return clampValue(bankOverlapY, surfaceY, surfaceY + WATER_EDGE_SURFACE_LIFT_CAP);
     }
 
-    function getWaterEdgeVertex(builder, context, x, y, localX, localY, surfaceY, edges, isPierCoveredTile) {
+    function getWaterEdgeVertex(x, y, localX, localY, surfaceY, edges, isPierCoveredTile) {
         let worldX = x - 0.5 + localX;
         let worldY = y - 0.5 + localY;
         let edgeSurfaceY = surfaceY;
@@ -949,7 +949,7 @@
         builder.seamBackfillData.push(clampValue(depthWeight, 0, 1), clampValue(shoreStrength, 0, 1));
     }
 
-    function appendWaterSeamBackfillQuad(builder, context, x, y, surfaceY) {
+    function appendWaterSeamBackfillQuad(builder, x, y, surfaceY) {
         if (builder.forceInteractionOnly || builder.usesSmoothSurfaceOverlay) return;
         const key = `${y}:${Number.isFinite(surfaceY) ? surfaceY.toFixed(3) : 'water'}`;
         const row = builder.seamBackfillRows[key] || (builder.seamBackfillRows[key] = {
@@ -1327,7 +1327,7 @@
             : [];
         const pierConfig = context.activePierConfig !== undefined ? context.activePierConfig : context.getActivePierConfig();
         const isPierCoveredTile = context.isPierVisualCoverageTile(pierConfig, x, y, builder.z);
-        appendWaterSeamBackfillQuad(builder, context, x, y, surfaceY);
+        appendWaterSeamBackfillQuad(builder, x, y, surfaceY);
         const edges = {
             north: classifyWaterEdgeTypeAtTile(context, waterBodies, x, y, 0, -1, builder.z, surfaceY),
             east: classifyWaterEdgeTypeAtTile(context, waterBodies, x, y, 1, 0, builder.z, surfaceY),
@@ -1342,10 +1342,10 @@
                 const y0 = row * cellSize;
                 const x1 = x0 + cellSize;
                 const y1 = y0 + cellSize;
-                const nw = getWaterEdgeVertex(builder, context, x, y, x0, y0, surfaceY, edges, isPierCoveredTile);
-                const ne = getWaterEdgeVertex(builder, context, x, y, x1, y0, surfaceY, edges, isPierCoveredTile);
-                const se = getWaterEdgeVertex(builder, context, x, y, x1, y1, surfaceY, edges, isPierCoveredTile);
-                const sw = getWaterEdgeVertex(builder, context, x, y, x0, y1, surfaceY, edges, isPierCoveredTile);
+                const nw = getWaterEdgeVertex(x, y, x0, y0, surfaceY, edges, isPierCoveredTile);
+                const ne = getWaterEdgeVertex(x, y, x1, y0, surfaceY, edges, isPierCoveredTile);
+                const se = getWaterEdgeVertex(x, y, x1, y1, surfaceY, edges, isPierCoveredTile);
+                const sw = getWaterEdgeVertex(x, y, x0, y1, surfaceY, edges, isPierCoveredTile);
                 pushWaterCellVertex(builder, context, nw);
                 pushWaterCellVertex(builder, context, se);
                 pushWaterCellVertex(builder, context, ne);

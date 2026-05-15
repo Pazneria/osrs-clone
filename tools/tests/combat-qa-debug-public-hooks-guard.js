@@ -1,21 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
+const { readRepoFile } = require("./repo-file-test-utils");
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "combat-qa-debug-runtime.js");
-  const runtimeSource = read(root, "src/js/combat-qa-debug-runtime.js");
-  const coreSource = read(root, "src/js/core.js");
-  const packageSource = read(root, "package.json");
+  const runtimeSource = readRepoFile(root, "src/js/combat-qa-debug-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const packageSource = readRepoFile(root, "package.json");
 
   assert(runtimeSource.includes("function publishWindowHooks(options = {})"), "combat QA debug runtime should own public hook publication");
   assert(runtimeSource.includes("windowRef.getQaCombatDebugSnapshot = function getQaCombatDebugSnapshot()"), "runtime should publish the snapshot hook");

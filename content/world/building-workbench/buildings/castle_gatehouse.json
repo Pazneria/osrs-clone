@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "castle_gatehouse",
+  "label": "Castle Gatehouse",
+  "category": "castle",
+  "archetypeId": "castle_gatehouse",
+  "themeId": "stone_market",
+  "materialProfileId": "castle_granite_slate",
+  "conditionId": "intact",
+  "variantTags": [
+    "castle",
+    "gatehouse",
+    "defensive",
+    "stone"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWWWWWC",
+      "WFFFFFFFFFFFW",
+      "WFFFFFGFFFFFW",
+      "WFFFFFFFFFFFW",
+      "WFFFFFFFFFFFW",
+      "CWWWWWGWWWWWC",
+      "      G      "
+    ],
+    "legend": {
+      "C": "granite corner tower",
+      "W": "castle wall",
+      "F": "stone floor",
+      "G": "gate passage",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "gate_passage",
+      "x": 6,
+      "y": 5,
+      "facing": "south",
+      "approach": {
+        "x": 6,
+        "y": 6
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "y",
+    "height": 1.65,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "gate_weapon_rack",
+      "kind": "weapon_rack",
+      "x": 2,
+      "y": 2,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "guard"
+      ]
+    },
+    {
+      "id": "gate_notice",
+      "kind": "notice_board",
+      "x": 10,
+      "y": 2,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "notice"
+      ]
+    },
+    {
+      "id": "gate_banner",
+      "kind": "castle_banner",
+      "x": 6,
+      "y": 1,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "castle",
+        "banner"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "old_banner",
+      "surface": "north",
+      "x": 6,
+      "y": 1,
+      "motif": "faded castle banner"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_castle_gatehouse",
+    "structureLabel": "Castle Gatehouse"
+  },
+  "notes": [
+    "The gate passage must translate to walkable region data; the Three.js arch is only visual draft intent.",
+    "Use for castles, roadholds, and fortified town thresholds."
+  ]
+}

@@ -1,22 +1,16 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
+const { readRepoFile } = require("./repo-file-test-utils");
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const qaToolsPath = path.join(root, "src", "js", "qa-tools-runtime.js");
-  const qaToolsSource = read(root, "src/js/qa-tools-runtime.js");
-  const qaCommandSource = read(root, "src/js/qa-command-runtime.js");
-  const coreSource = read(root, "src/js/core.js");
-  const packageSource = read(root, "package.json");
+  const qaToolsSource = readRepoFile(root, "src/js/qa-tools-runtime.js");
+  const qaCommandSource = readRepoFile(root, "src/js/qa-command-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const packageSource = readRepoFile(root, "package.json");
 
   assert(qaToolsSource.includes("function buildQaInventoryPresetSlots(context, presetName)"), "QA tools runtime should own inventory preset slot building");
   assert(qaToolsSource.includes("function applyQaInventoryPreset(context, presetName)"), "QA tools runtime should own inventory preset application");
@@ -62,6 +56,11 @@ function run() {
     mithril_arrows: { id: "mithril_arrows" },
     cooked_trout: { id: "cooked_trout" }
   };
+  ["bronze", "iron", "steel", "mithril", "adamant", "rune"].forEach((tier) => {
+    ["boots", "helmet", "shield", "platelegs", "platebody"].forEach((slot) => {
+      itemDb[`${tier}_${slot}`] = { id: `${tier}_${slot}` };
+    });
+  });
   const fishFull = runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "fish_full");
   assert(fishFull.length === 28, "fish_full should fill the inventory");
   assert(fishFull.some((slot) => slot.itemId === "rune_harpoon"), "fish_full should include rune harpoon");
@@ -75,6 +74,14 @@ function run() {
   assert(ranged.some((slot) => slot.itemId === "normal_shortbow"), "ranged preset should include a level-1 bow");
   assert(ranged.some((slot) => slot.itemId === "willow_shortbow"), "ranged preset should include a mid-tier bow");
   assert(ranged.some((slot) => slot.itemId === "mithril_arrows" && slot.amount === 250), "ranged preset should include a generous ammo stack");
+
+  const armorLadder = runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "armor_ladder");
+  assert(armorLadder.length === 30, "armor_ladder should include every current metal armor piece");
+  assert(armorLadder[0].itemId === "bronze_boots", "armor_ladder should start at bronze boots for tier-order review");
+  assert(armorLadder[armorLadder.length - 1].itemId === "rune_platebody", "armor_ladder should end at rune platebody");
+  assert(runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "armor_sets").length === 30, "armor_sets alias should cover the armor ladder");
+  const runeArmor = runtime.buildQaInventoryPresetSlots({ ITEM_DB: itemDb }, "armor_rune");
+  assert(runeArmor.map((slot) => slot.itemId).join(",") === "rune_boots,rune_helmet,rune_shield,rune_platelegs,rune_platebody", "armor_rune should provide one reviewable full set");
 
   const iconSlots = runtime.buildQaInventoryPresetSlots({
     ITEM_DB: itemDb,

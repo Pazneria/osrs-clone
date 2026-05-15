@@ -352,6 +352,66 @@
             sharedMaterials.castleStone.flatShading = true;
             sharedMaterials.castleStone.needsUpdate = true;
 
+            const makeProfileMaterial = (texture, tintHex = 0xffffff) => {
+                const material = new THREE.MeshLambertMaterial({ color: tintHex, map: texture || null, flatShading: true });
+                material.needsUpdate = true;
+                return material;
+            };
+            const makeProfileTexture = (kind, baseHex, mortarHex) => {
+                if (kind === 'wood') {
+                    const tex = makeWoodGrainTexture(baseHex);
+                    tex.repeat.set(1.2, 2.8);
+                    return tex;
+                }
+                if (kind === 'brick') {
+                    const tex = makeBrickTexture(baseHex, mortarHex || 0x6f675e, 12);
+                    tex.repeat.set(1.35, 1.75);
+                    return tex;
+                }
+                const tex = makeNoiseTexture(baseHex, -18, 18, 620, 54, 8);
+                tex.repeat.set(1.5, 1.5);
+                return tex;
+            };
+
+            const timberWallTex = makeProfileTexture('wood', 0x684526);
+            const quarryWallTex = makeProfileTexture('brick', 0x5c5d58, 0x454743);
+            const cityWallTex = makeProfileTexture('brick', 0x9a9283, 0x776f65);
+            const plasterWallTex = makeProfileTexture('noise', 0xd9c99f);
+            const graniteWallTex = makeProfileTexture('brick', 0x6f716c, 0x565852);
+            const burntWallTex = makeProfileTexture('wood', 0x2e2923);
+            const slateRoofTex = makeProfileTexture('noise', 0x535c66);
+            const citySlateRoofTex = makeProfileTexture('noise', 0x596879);
+            const tileRoofTex = makeProfileTexture('brick', 0xb65a3b, 0x7c352d);
+            const castleSlateRoofTex = makeProfileTexture('noise', 0x3f4a55);
+            const burntRoofTex = makeProfileTexture('noise', 0x3d2b22);
+            const thatchRoofTex = makeProfileTexture('noise', 0xa77f3c);
+            thatchRoofTex.repeat.set(1.2, 2.2);
+
+            sharedMaterials.structureWallMaterials = {
+                timber_thatch: makeProfileMaterial(timberWallTex),
+                quarry_stone_slate: makeProfileMaterial(quarryWallTex),
+                city_stone_slate: makeProfileMaterial(cityWallTex),
+                painted_plaster_tile: makeProfileMaterial(plasterWallTex),
+                castle_granite_slate: makeProfileMaterial(graniteWallTex),
+                burnt_timber_ash: makeProfileMaterial(burntWallTex)
+            };
+            sharedMaterials.structureCornerMaterials = {
+                timber_thatch: makeProfileMaterial(timberWallTex, 0xb8a082),
+                quarry_stone_slate: makeProfileMaterial(quarryWallTex, 0xb4b1a4),
+                city_stone_slate: makeProfileMaterial(cityWallTex, 0xcac3b4),
+                painted_plaster_tile: makeProfileMaterial(plasterWallTex, 0xb79b72),
+                castle_granite_slate: makeProfileMaterial(graniteWallTex, 0xb0b1a9),
+                burnt_timber_ash: makeProfileMaterial(burntWallTex, 0x8f8172)
+            };
+            sharedMaterials.structureRoofMaterials = {
+                timber_thatch: makeProfileMaterial(thatchRoofTex),
+                quarry_stone_slate: makeProfileMaterial(slateRoofTex),
+                city_stone_slate: makeProfileMaterial(citySlateRoofTex),
+                painted_plaster_tile: makeProfileMaterial(tileRoofTex),
+                castle_granite_slate: makeProfileMaterial(castleSlateRoofTex),
+                burnt_timber_ash: makeProfileMaterial(burntRoofTex)
+            };
+
             const floorWoodTex = makeWoodGrainTexture(0x86603a);
             floorWoodTex.repeat.set(1.8, 1.8);
             sharedMaterials.floor6.color.setHex(0xffffff);
@@ -442,6 +502,61 @@
             sharedMaterials.bankTexPlaneMat = new THREE.MeshBasicMaterial({
                 map: applyColorTextureSettings(new THREE.CanvasTexture(bankCanvas))
             });
+
+            const shopCanvas = document.createElement('canvas');
+            shopCanvas.width = 256; shopCanvas.height = 96;
+            const shopCtx = shopCanvas.getContext('2d');
+            shopCtx.fillStyle = '#5a351b';
+            shopCtx.fillRect(0, 0, 256, 96);
+            shopCtx.strokeStyle = '#d9c08a';
+            shopCtx.lineWidth = 7;
+            shopCtx.strokeRect(5, 5, 246, 86);
+            shopCtx.fillStyle = '#f0dfb4';
+            shopCtx.font = 'bold 44px monospace';
+            shopCtx.textAlign = 'center';
+            shopCtx.textBaseline = 'middle';
+            shopCtx.fillText('SHOP', 128, 52);
+            sharedMaterials.shopSignMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(shopCanvas))
+            });
+
+            const paintingCanvas = document.createElement('canvas');
+            paintingCanvas.width = 128; paintingCanvas.height = 128;
+            const paintCtx = paintingCanvas.getContext('2d');
+            paintCtx.fillStyle = '#6b4527';
+            paintCtx.fillRect(0, 0, 128, 128);
+            paintCtx.fillStyle = '#e5d1a0';
+            paintCtx.fillRect(10, 10, 108, 108);
+            paintCtx.fillStyle = '#5d83b8';
+            paintCtx.fillRect(18, 18, 92, 38);
+            paintCtx.fillStyle = '#6d9f58';
+            paintCtx.fillRect(18, 55, 92, 44);
+            paintCtx.fillStyle = '#d9a84f';
+            paintCtx.fillRect(70, 30, 18, 18);
+            paintCtx.fillStyle = 'rgba(78, 49, 29, 0.32)';
+            paintCtx.fillRect(28, 72, 48, 8);
+            sharedMaterials.galleryPaintingMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(paintingCanvas))
+            });
+
+            const bannerCanvas = document.createElement('canvas');
+            bannerCanvas.width = 96; bannerCanvas.height = 160;
+            const bannerCtx = bannerCanvas.getContext('2d');
+            bannerCtx.fillStyle = '#7b2020';
+            bannerCtx.fillRect(0, 0, 96, 160);
+            bannerCtx.fillStyle = '#d7b35d';
+            bannerCtx.fillRect(16, 0, 12, 142);
+            bannerCtx.fillRect(68, 0, 12, 142);
+            bannerCtx.fillRect(32, 42, 32, 14);
+            bannerCtx.fillRect(38, 56, 20, 48);
+            bannerCtx.clearRect(0, 140, 28, 20);
+            bannerCtx.clearRect(68, 140, 28, 20);
+            sharedMaterials.castleBannerMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(bannerCanvas)),
+                side: THREE.DoubleSide,
+                transparent: true
+            });
+            sharedMaterials.awningClothMat = new THREE.MeshLambertMaterial({ color: 0x8f3248, flatShading: true });
         
     }
 

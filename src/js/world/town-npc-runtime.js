@@ -317,6 +317,7 @@
     }
 
     function normalizeTutorialStepValue(value) {
+        if (value === null || value === undefined || value === '') return null;
         const rawValue = Number(value);
         return Number.isFinite(rawValue) ? Math.max(0, Math.floor(rawValue)) : null;
     }

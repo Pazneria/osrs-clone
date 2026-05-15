@@ -1,21 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function createClassList() {
-  const classes = new Set();
-  return {
-    classes,
-    toggle(name, enabled) {
-      if (enabled) classes.add(name);
-      else classes.delete(name);
-    }
-  };
-}
+const { makeClassList } = require("./dom-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function createFakeDocument() {
   const ids = [
@@ -45,7 +32,7 @@ function createFakeDocument() {
       id,
       innerText: "",
       style: {},
-      classList: createClassList(),
+      classList: makeClassList(),
       attributes: {},
       setAttribute(name, value) {
         this.attributes[name] = value;
@@ -63,9 +50,9 @@ function createFakeDocument() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "world", "status-hud-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/world/status-hud-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const statusHudIndex = manifestSource.indexOf('id: "world-status-hud-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
 

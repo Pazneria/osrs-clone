@@ -7,7 +7,7 @@ import type {
   SaveAppearanceState
 } from "../contracts/session";
 
-export const DEFAULT_EQUIPMENT_SLOTS = [
+const DEFAULT_EQUIPMENT_SLOTS = [
   "head",
   "cape",
   "neck",
@@ -68,7 +68,7 @@ export function createDefaultPlayerSkillsState(): PlayerSkillMap {
   };
 }
 
-export function createDefaultEquipmentState(): Record<string, unknown> {
+function createDefaultEquipmentState(): Record<string, unknown> {
   const equipment: Record<string, unknown> = {};
   for (let i = 0; i < DEFAULT_EQUIPMENT_SLOTS.length; i++) {
     equipment[DEFAULT_EQUIPMENT_SLOTS[i]] = null;

@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "stone_townhouse",
+  "label": "Stone Townhouse",
+  "category": "shop_house",
+  "archetypeId": "shop_house",
+  "themeId": "stone_market",
+  "materialProfileId": "city_stone_slate",
+  "conditionId": "intact",
+  "variantTags": [
+    "city",
+    "stone",
+    "market",
+    "shopfront"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWC",
+      "WFFFFFFFW",
+      "WFFFFFFFW",
+      "WFFVFFFFW",
+      "WFFFFFFFW",
+      "WFFFFFFFW",
+      "CWWFFFWWC",
+      "   FFF   "
+    ],
+    "legend": {
+      "C": "stone corner pier",
+      "W": "stone wall",
+      "F": "stone floor or front step",
+      "V": "shop counter",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "street_front",
+      "x": 4,
+      "y": 6,
+      "facing": "south",
+      "approach": {
+        "x": 4,
+        "y": 7
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 1.45,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "merchant_desk",
+      "kind": "desk",
+      "x": 2,
+      "y": 2,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "merchant"
+      ]
+    },
+    {
+      "id": "street_barrel",
+      "kind": "barrel",
+      "x": 7,
+      "y": 7,
+      "facingYaw": 0.4,
+      "blocksMovement": true,
+      "tags": [
+        "street",
+        "market"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "guild_painting",
+      "surface": "north",
+      "x": 5,
+      "y": 1,
+      "motif": "merchant guild painting"
+    },
+    {
+      "id": "town_charter",
+      "surface": "east",
+      "x": 7,
+      "y": 3,
+      "motif": "town charter placard"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_stone_townhouse",
+    "structureLabel": "Stone Townhouse"
+  },
+  "notes": [
+    "Use for city streets where the facade should feel more permanent than a timber cottage.",
+    "The counter makes this usable as a merchant home or shop once services are authored."
+  ]
+}

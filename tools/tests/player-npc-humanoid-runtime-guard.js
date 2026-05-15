@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeVec() {
   return {
@@ -443,7 +440,7 @@ function assertTutorialCombatInstructorHumanoidAssembly(preset) {
   const rightVambrace = catalogFragment(preset, "rightLowerArm", "right_vambrace");
   const leftGauntlet = catalogFragment(preset, "leftLowerArm", "left_gauntlet_plate");
   const rightGauntlet = catalogFragment(preset, "rightLowerArm", "right_gauntlet_plate");
-  const rightHand = catalogFragment(preset, "rightLowerArm", "hand");
+  catalogFragment(preset, "rightLowerArm", "hand");
   const heldSwordGrip = catalogFragment(preset, "axe", "right_hand_sword_grip");
   const heldSwordBlade = catalogFragment(preset, "axe", "right_hand_sword_blade");
   const heldSwordGuard = catalogFragment(preset, "axe", "right_hand_sword_guard");
@@ -599,11 +596,11 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "player-npc-humanoid-runtime.js");
   const catalogPath = path.join(root, "src", "js", "content", "npc-appearance-catalog.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const catalogSource = fs.readFileSync(catalogPath, "utf8");
-  const tutorialIsland = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "tutorial_island.json"), "utf8"));
-  const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/player-npc-humanoid-runtime.js");
+  const catalogSource = readRepoFile(root, "src/js/content/npc-appearance-catalog.js");
+  const tutorialIsland = JSON.parse(readRepoFile(root, "content/world/regions/tutorial_island.json"));
+  const playerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const visualRuntimeIndex = manifestSource.indexOf('id: "player-model-visual-runtime"');
   const npcCatalogIndex = manifestSource.indexOf('id: "npc-appearance-catalog"');

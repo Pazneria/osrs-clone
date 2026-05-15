@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "materialProfileId": "quarry_stone_slate",
+  "label": "Quarry Stone And Slate",
+  "themeId": "quarry_iron",
+  "family": "stone",
+  "previewPalette": {
+    "ground": "#d7decf",
+    "floor": "#8a714f",
+    "wall": "#5c5d58",
+    "corner": "#6d6a61",
+    "roof": "#535c66",
+    "roofDark": "#343b43",
+    "accent": "#d2a24b"
+  },
+  "roofMaterial": "dark slate and patched metal sheets",
+  "wallMaterial": "stone lower walls with dark timber bracing",
+  "tags": [
+    "quarry",
+    "iron",
+    "worksite"
+  ],
+  "promotionNotes": [
+    "Good for resource towns, smithing yards, and mine support buildings.",
+    "Pair with wider road profiles around loading aprons."
+  ]
+}

@@ -1,14 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function countOccurrences(source, pattern) {
-  return source.split(pattern).length - 1;
-}
+const { readRepoFile } = require("./repo-file-test-utils");
+const { countOccurrences } = require("./source-block-utils");
 
 function makeRotationTarget() {
   return {
@@ -25,11 +19,11 @@ function makeRotationTarget() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "combat-enemy-render-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const humanoidModelRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/combat-enemy-render-runtime.js");
+  const humanoidModelRuntimeSource = readRepoFile(root, "src/js/humanoid-model-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const combatSource = readRepoFile(root, "src/js/combat.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const humanoidModelRuntimeIndex = manifestSource.indexOf('id: "humanoid-model-runtime"');
   const renderIndex = manifestSource.indexOf('id: "combat-enemy-render-runtime"');
   const overlayIndex = manifestSource.indexOf('id: "combat-enemy-overlay-runtime"');

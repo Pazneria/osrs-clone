@@ -1,36 +1,34 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { makeClassList } = require("./dom-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const renderContracts = fs.readFileSync(path.join(root, "src", "game", "contracts", "render.ts"), "utf8");
-  const renderInputBridge = fs.readFileSync(path.join(root, "src", "game", "platform", "render-input-bridge.ts"), "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const mapHudSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
-  const worldRenderSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
-  const sharedAssetsSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
-  const humanoidModelSource = fs.readFileSync(path.join(root, "src", "js", "humanoid-model-runtime.js"), "utf8");
-  const transientVisualSource = fs.readFileSync(path.join(root, "src", "js", "transient-visual-runtime.js"), "utf8");
-  const inputQaCameraSource = fs.readFileSync(path.join(root, "src", "js", "input-qa-camera-runtime.js"), "utf8");
-  const inputHoverTooltipSource = fs.readFileSync(path.join(root, "src", "js", "input-hover-tooltip-runtime.js"), "utf8");
-  const inputStationInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-station-interaction-runtime.js"), "utf8");
-  const inputPoseEditorSource = fs.readFileSync(path.join(root, "src", "js", "input-pose-editor-runtime.js"), "utf8");
-  const inputPlayerAnimationSource = fs.readFileSync(path.join(root, "src", "js", "input-player-animation-runtime.js"), "utf8");
-  const inputPathfindingSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
-  const inputPierInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-pier-interaction-runtime.js"), "utf8");
-  const inputRaycastSource = fs.readFileSync(path.join(root, "src", "js", "input-raycast-runtime.js"), "utf8");
-  const inputTickMovementSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
-  const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
-  const inputActionQueueSource = fs.readFileSync(path.join(root, "src", "js", "input-action-queue-runtime.js"), "utf8");
-  const inputTargetInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-target-interaction-runtime.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const renderContracts = readRepoFile(root, "src/game/contracts/render.ts");
+  const renderInputBridge = readRepoFile(root, "src/game/platform/render-input-bridge.ts");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const mapHudSource = readRepoFile(root, "src/js/world/map-hud-runtime.js");
+  const worldRenderSource = readRepoFile(root, "src/js/world/render-runtime.js");
+  const sharedAssetsSource = readRepoFile(root, "src/js/world/shared-assets-runtime.js");
+  const humanoidModelSource = readRepoFile(root, "src/js/humanoid-model-runtime.js");
+  const transientVisualSource = readRepoFile(root, "src/js/transient-visual-runtime.js");
+  const inputQaCameraSource = readRepoFile(root, "src/js/input-qa-camera-runtime.js");
+  const inputHoverTooltipSource = readRepoFile(root, "src/js/input-hover-tooltip-runtime.js");
+  const inputStationInteractionSource = readRepoFile(root, "src/js/input-station-interaction-runtime.js");
+  const inputPoseEditorSource = readRepoFile(root, "src/js/input-pose-editor-runtime.js");
+  const inputPlayerAnimationSource = readRepoFile(root, "src/js/input-player-animation-runtime.js");
+  const inputPathfindingSource = readRepoFile(root, "src/js/input-pathfinding-runtime.js");
+  const inputPierInteractionSource = readRepoFile(root, "src/js/input-pier-interaction-runtime.js");
+  const inputRaycastSource = readRepoFile(root, "src/js/input-raycast-runtime.js");
+  const inputTickMovementSource = readRepoFile(root, "src/js/input-tick-movement-runtime.js");
+  const inputArrivalInteractionSource = readRepoFile(root, "src/js/input-arrival-interaction-runtime.js");
+  const inputActionQueueSource = readRepoFile(root, "src/js/input-action-queue-runtime.js");
+  const inputTargetInteractionSource = readRepoFile(root, "src/js/input-target-interaction-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
 
   assert(renderContracts.includes("export interface RenderSnapshot"), "render contracts should define RenderSnapshot");
   assert(renderContracts.includes("export interface InputControllerContext"), "render contracts should define InputControllerContext");
@@ -313,7 +311,7 @@ function run() {
     height: 2,
     dataset: {},
     style: {},
-    classList: { contains: () => false },
+    classList: makeClassList(),
     getContext: () => fakeContext,
     getBoundingClientRect: () => ({ width: 2, height: 2, left: 0, top: 0 }),
     addEventListener: () => {}

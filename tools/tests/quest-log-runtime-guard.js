@@ -1,11 +1,8 @@
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
 const assert = require("assert");
+const { createRepoFileReader } = require("./repo-file-test-utils");
 
-function read(relPath) {
-  return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
-}
+const read = createRepoFileReader(__dirname);
 
 const runtimeSource = read("src/js/quest-log-runtime.js");
 const inventorySource = read("src/js/inventory.js");

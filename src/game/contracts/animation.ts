@@ -1,4 +1,3 @@
-export type AnimationAxisId = "x" | "y" | "z";
 export type AnimationEaseId = "linear" | "easeIn" | "easeOut" | "easeInOut" | "hold";
 export type AnimationLoopMode = "loop" | "once";
 export type AnimationMaskId = "fullBody" | "upperBody";

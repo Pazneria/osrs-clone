@@ -1,24 +1,22 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
-  const authoringSource = fs.readFileSync(path.join(root, "src", "game", "world", "authoring.ts"), "utf8");
-  const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
-  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
-  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const manifest = JSON.parse(readRepoFile(root, "content/world/manifest.json"));
+  const authoringSource = readRepoFile(root, "src/game/world/authoring.ts");
+  const bootstrapSource = readRepoFile(root, "src/game/world/bootstrap.ts");
+  const bridgeSource = readRepoFile(root, "src/game/platform/legacy-bridge.ts");
+  const adapterSource = readRepoFile(root, "src/game/platform/legacy-world-adapter.ts");
+  const worldSource = readRepoFile(root, "src/js/world.js");
   const deletedRegionPath = path.join(root, "content", "world", "regions", "north_road_camp.json");
 
   assert(manifest && Array.isArray(manifest.worlds), "world manifest should define a worlds array");
   assert(manifest.worlds.length === 2, "world manifest should publish main overworld and tutorial island");
   assert(manifest.worlds[0] && manifest.worlds[0].worldId === "main_overworld", "main_overworld should remain the canonical authored world");
-  assert(manifest.worlds.some((entry) => entry && entry.worldId === "tutorial_island"), "tutorial_island should be registered for fresh-start routing");
+  assert(manifest.worlds.some((entry) => entry && entry.worldId === "tutorial_island"), "tutorial_island should remain registered for explicit tutorial routing");
   assert(!fs.existsSync(deletedRegionPath), "north_road_camp region file should be deleted");
   assert(authoringSource.includes("worldManifestJson"), "authoring registry should load the manifest");
   assert(authoringSource.includes("getWorldManifestEntry(worldId: string)"), "authoring registry should expose manifest entry lookup by world id");

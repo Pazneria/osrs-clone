@@ -14,7 +14,7 @@ interface LegacyScriptLoadOrderEntry {
   codeVariable: string;
 }
 
-export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = [
+const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = [
   { id: "item-catalog", filename: "src/js/content/item-catalog.js", rawPath: "../../js/content/item-catalog.js?raw", codeVariable: "itemCatalogScript" },
   { id: "icon-review-catalog", filename: "src/js/content/icon-review-catalog.js", rawPath: "../../js/content/icon-review-catalog.js?raw", codeVariable: "iconReviewCatalogScript" },
   { id: "player-appearance-catalog", filename: "src/js/content/player-appearance-catalog.js", rawPath: "../../js/content/player-appearance-catalog.js?raw", codeVariable: "playerAppearanceCatalogScript" },
@@ -105,7 +105,6 @@ export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = 
   { id: "target-interaction-registry", filename: "src/js/interactions/target-interaction-registry.js", rawPath: "../../js/interactions/target-interaction-registry.js?raw", codeVariable: "targetInteractionRegistryScript" },
   { id: "skills-shared-utils", filename: "src/js/skills/shared/utils.js", rawPath: "../../js/skills/shared/utils.js?raw", codeVariable: "skillSharedUtilsScript" },
   { id: "skills-shared-action-resolution", filename: "src/js/skills/shared/action-resolution.js", rawPath: "../../js/skills/shared/action-resolution.js?raw", codeVariable: "skillActionResolutionScript" },
-  { id: "runecrafting-constants", filename: "src/js/skills/runecrafting/constants.js", rawPath: "../../js/skills/runecrafting/constants.js?raw", codeVariable: "runecraftingConstantsScript" },
   { id: "skills-mining", filename: "src/js/skills/mining/index.js", rawPath: "../../js/skills/mining/index.js?raw", codeVariable: "miningSkillScript" },
   { id: "skills-woodcutting", filename: "src/js/skills/woodcutting/index.js", rawPath: "../../js/skills/woodcutting/index.js?raw", codeVariable: "woodcuttingSkillScript" },
   { id: "skills-fishing", filename: "src/js/skills/fishing/index.js", rawPath: "../../js/skills/fishing/index.js?raw", codeVariable: "fishingSkillScript" },

@@ -2,6 +2,7 @@
     const GENERAL_STORE_ID = 'general_store';
     const FALLBACK_SELL_RATIO = 0.4;
     const FISH_UNLOCK_DEFAULT_THRESHOLD = 50;
+    const fallbackPlayerState = {};
 
     function getSkillSpecs() {
         const root = window.SkillSpecs;
@@ -34,8 +35,7 @@
         const session = getGameSession();
         if (session && session.player) return session.player;
         if (typeof playerState === 'object' && playerState) return playerState;
-        if (!window.__shopEconomyFallbackPlayerState) window.__shopEconomyFallbackPlayerState = {};
-        return window.__shopEconomyFallbackPlayerState;
+        return fallbackPlayerState;
     }
 
     function getProgressState() {

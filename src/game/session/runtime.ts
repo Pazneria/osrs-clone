@@ -5,7 +5,7 @@ import type {
   PlayerEntryFlowState
 } from "../contracts/session";
 
-export function createDefaultPlayerEntryFlowState(): PlayerEntryFlowState {
+function createDefaultPlayerEntryFlowState(): PlayerEntryFlowState {
   return {
     isOpen: false,
     hasLoadedSave: false,

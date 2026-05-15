@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "artisan_shop",
+  "label": "Artisan Shop",
+  "categories": [
+    "artisan_shop",
+    "shop_house"
+  ],
+  "footprintTags": [
+    "street_front",
+    "display_counter",
+    "wall_art"
+  ],
+  "typicalRoles": [
+    "specialty merchant",
+    "crafting flavor",
+    "town notice wall"
+  ],
+  "promotionHints": [
+    "Promote display counters as service-facing props only after the merchant service exists.",
+    "Keep wall art as workbench intent until wall-mounted visuals are supported by the runtime."
+  ]
+}

@@ -1,21 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { countMessages, expectMessage } = require("./message-test-utils");
 
 function createFiremakingContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});
@@ -136,14 +122,6 @@ function createFiremakingContext(options = {}) {
   context._activeFires = activeFires;
   context._renderCount = 0;
   return context;
-}
-
-function countMessages(context, expectedText) {
-  return context._messages.filter((entry) => entry && entry.message === expectedText).length;
-}
-
-function expectMessage(context, expectedText, testName) {
-  assert(countMessages(context, expectedText) > 0, testName + ': expected message "' + expectedText + '"');
 }
 
 function run() {

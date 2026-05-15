@@ -1,14 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
+const { readRepoFile } = require("./repo-file-test-utils");
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
 
 function createFakeDocument() {
   const elementsById = new Map();
@@ -53,9 +47,9 @@ function createFakeDocument() {
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const runtimeSource = read(root, "src/js/skill-panel-render-runtime.js");
-  const inventorySource = read(root, "src/js/inventory.js");
-  const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
+  const runtimeSource = readRepoFile(root, "src/js/skill-panel-render-runtime.js");
+  const inventorySource = readRepoFile(root, "src/js/inventory.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const skillPanelIndex = manifestSource.indexOf('id: "skill-panel-runtime"');
   const skillPanelRenderIndex = manifestSource.indexOf('id: "skill-panel-render-runtime"');

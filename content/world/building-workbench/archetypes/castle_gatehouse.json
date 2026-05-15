@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "castle_gatehouse",
+  "label": "Castle Gatehouse",
+  "categories": [
+    "castle",
+    "gatehouse",
+    "defense"
+  ],
+  "footprintTags": [
+    "wide_wall",
+    "passage",
+    "defensive_corner"
+  ],
+  "typicalRoles": [
+    "town threshold",
+    "castle entrance",
+    "guard post"
+  ],
+  "promotionHints": [
+    "Gate tiles should become walkable route or doorway data, not generic wall blockers.",
+    "Use this to define settlement boundaries before placing guards or combat spawns."
+  ]
+}

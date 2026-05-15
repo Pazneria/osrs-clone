@@ -1,21 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function nearlyEqual(actual, expected, epsilon = 0.000001) {
-  return Math.abs(actual - expected) <= epsilon;
-}
+const { approximatelyEqual } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "combat-facing-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/combat-facing-runtime.js");
+  const combatSource = readRepoFile(root, "src/js/combat.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const facingIndex = manifestSource.indexOf('id: "combat-facing-runtime"');
   const combatIndex = manifestSource.indexOf('id: "combat"');
 
@@ -46,16 +40,16 @@ function run() {
   assert(typeof runtime.isPlayerCombatFacingReady === "function", "runtime should expose isPlayerCombatFacingReady");
   assert(typeof runtime.syncMeleeCombatFacing === "function", "runtime should expose syncMeleeCombatFacing");
 
-  assert(nearlyEqual(runtime.resolveFacingYaw({ x: 1, y: 1 }, { x: 2, y: 1 }), Math.PI / 2), "runtime should compute east-facing yaw");
+  assert(approximatelyEqual(runtime.resolveFacingYaw({ x: 1, y: 1 }, { x: 2, y: 1 }), Math.PI / 2, 0.000001), "runtime should compute east-facing yaw");
   assert(runtime.resolveFacingYaw({ x: 1, y: 1 }, { x: 1, y: 1 }) === null, "runtime should ignore zero-distance facing");
 
   const playerState = { x: 1, y: 1, z: 0, prevX: 1, prevY: 1, midX: null, midY: null, path: [], inCombat: true };
   const enemyState = { x: 3, y: 1, z: 0, currentState: "aggroed", lockedTargetId: "player" };
   assert(runtime.isPlayerCombatFacingReady({ playerState }) === true, "runtime should allow stationary player facing");
   runtime.facePlayerTowards({ playerState }, enemyState);
-  assert(nearlyEqual(playerState.targetRotation, Math.PI / 2), "runtime should rotate player toward enemy");
+  assert(approximatelyEqual(playerState.targetRotation, Math.PI / 2, 0.000001), "runtime should rotate player toward enemy");
   runtime.faceEnemyTowards(enemyState, playerState);
-  assert(nearlyEqual(enemyState.facingYaw, -Math.PI / 2), "runtime should rotate enemy toward player");
+  assert(approximatelyEqual(enemyState.facingYaw, -Math.PI / 2, 0.000001), "runtime should rotate enemy toward player");
 
   enemyState.facingYaw = 0;
   playerState.targetRotation = 0;
@@ -67,8 +61,8 @@ function run() {
     playerTargetId: "player",
     resolveCombatHudFocusEnemy: () => ({ enemyState })
   });
-  assert(nearlyEqual(playerState.targetRotation, Math.PI / 2), "runtime should sync player facing toward HUD focus enemy");
-  assert(nearlyEqual(enemyState.facingYaw, -Math.PI / 2), "runtime should sync aggroed enemy facing toward player");
+  assert(approximatelyEqual(playerState.targetRotation, Math.PI / 2, 0.000001), "runtime should sync player facing toward HUD focus enemy");
+  assert(approximatelyEqual(enemyState.facingYaw, -Math.PI / 2, 0.000001), "runtime should sync aggroed enemy facing toward player");
 
   playerState.path = [{ x: 2, y: 1 }];
   assert(runtime.isPlayerCombatFacingReady({ playerState }) === false, "runtime should block combat facing while pathing");

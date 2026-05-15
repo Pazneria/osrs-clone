@@ -5,6 +5,7 @@ const http = require("http");
 const os = require("os");
 const path = require("path");
 const { spawn } = require("child_process");
+const { writeJsonFile } = require("../lib/json-file-utils");
 
 const ROOT = path.resolve(__dirname, "..", "..");
 const DEFAULT_CONFIG = path.join(__dirname, "tutorial-island-visual-scenes.json");
@@ -457,7 +458,7 @@ async function runHarness(rawOptions) {
     ]
   };
   ensureDir(paths.outputDir);
-  fs.writeFileSync(path.join(paths.outputDir, "report.json"), JSON.stringify(report, null, 2));
+  writeJsonFile(path.join(paths.outputDir, "report.json"), report, { trailingNewline: false });
 
   return report;
 }
@@ -494,10 +495,10 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_CONFIG,
   DEFAULT_OUTPUT_DIR,
-  DEFAULT_BASELINE_DIR,
-  getCodexRuntimeNodeModules,
   getPackageSearchPaths,
   loadSceneConfig,
   parseArgs,
-  runHarness
+  probeUrl,
+  runHarness,
+  sendQaCommand
 };

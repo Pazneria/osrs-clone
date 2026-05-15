@@ -126,6 +126,7 @@ function buildMainOverworldSkillRuntimeDraft(root) {
       GRASS: TileId.GRASS,
       TREE: TileId.TREE,
       ROCK: TileId.ROCK,
+      SAND: TileId.SAND,
       OBSTACLE: TileId.OBSTACLE,
       FLOOR_WOOD: TileId.FLOOR_WOOD,
       FLOOR_STONE: TileId.FLOOR_STONE,
@@ -201,11 +202,6 @@ function buildMainOverworldSkillRuntimeDraft(root) {
 module.exports = {
   WORLD_ID,
   buildMainOverworldSkillRuntimeDraft,
-  buildStaticMerchantRenderPlacements,
-  buildDeterministicFeatureCandidates,
   cloneCookingRoute,
-  cloneFreezeSource,
-  cloneRoute,
-  createHeightMap,
-  inTownCore
+  cloneRoute
 };

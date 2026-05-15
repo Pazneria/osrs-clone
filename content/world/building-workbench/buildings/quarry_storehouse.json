@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "quarry_storehouse",
+  "label": "Quarry Storehouse",
+  "category": "workshop",
+  "archetypeId": "worksite",
+  "themeId": "quarry_iron",
+  "materialProfileId": "quarry_stone_slate",
+  "conditionId": "weathered",
+  "variantTags": [
+    "storage",
+    "mining",
+    "wide_front",
+    "work_yard"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWWWC",
+      "WLLLLLLLLLW",
+      "WLLLLLLLLLW",
+      "WLLLLLLLLLW",
+      "WLLLLLLLLLW",
+      "WLLLLLLLLLW",
+      "CWWWLLLWWWC",
+      "   LLLL    "
+    ],
+    "legend": {
+      "C": "stone corner pier",
+      "W": "stone and timber wall",
+      "L": "heavy plank floor or loading apron",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "loading_front",
+      "x": 5,
+      "y": 6,
+      "facing": "south",
+      "approach": {
+        "x": 5,
+        "y": 7
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "y",
+    "height": 1.34,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "ore_sorting_pile",
+      "kind": "ore_pile",
+      "x": 2,
+      "y": 3,
+      "facingYaw": 0.25,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "mining"
+      ]
+    },
+    {
+      "id": "coal_storage_bin",
+      "kind": "coal_bin",
+      "x": 8,
+      "y": 3,
+      "facingYaw": -0.2,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "smithing"
+      ]
+    },
+    {
+      "id": "loading_notice",
+      "kind": "notice_board",
+      "x": 8,
+      "y": 7,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "yard",
+        "notice"
+      ]
+    },
+    {
+      "id": "loading_cart",
+      "kind": "quarry_cart",
+      "x": 5,
+      "y": 7,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "yard",
+        "mining",
+        "quarry"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "ore_vein_sketch",
+      "surface": "west",
+      "x": 1,
+      "y": 2,
+      "motif": "ore vein sketch"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_quarry_storehouse",
+    "structureLabel": "Quarry Storehouse"
+  },
+  "notes": [
+    "Use beside mines, furnaces, and ore roads.",
+    "The front apron makes carts and NPC staging feel plausible."
+  ]
+}

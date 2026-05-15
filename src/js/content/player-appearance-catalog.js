@@ -140,6 +140,16 @@
         ];
     }
 
+    function scaleTriplet(values, scale) {
+        const safeValues = cloneTriplet(values);
+        const safeScale = Number.isFinite(scale) ? scale : 1;
+        return [
+            safeValues[0] * safeScale,
+            safeValues[1] * safeScale,
+            safeValues[2] * safeScale
+        ];
+    }
+
     function createAppearanceBoxFragment(target, size, offset, options = {}) {
         const fragment = {
             target,
@@ -738,7 +748,7 @@
         metalSymbols: ['f', 'g']
     });
 
-    function resolveSwordBladeDepth(symbol, x, y, defaultDepth, heldModel) {
+    function resolveSwordBladeDepth(symbol, _x, y, defaultDepth, heldModel) {
         if (!/[def]/.test(symbol)) return defaultDepth;
         const pixelSize = heldModel && Number.isFinite(heldModel.pixelSize)
             ? heldModel.pixelSize
@@ -780,14 +790,61 @@
         accent: '#8fefff',
         light: '#efffff'
     });
-
-    const RIGHT_HAND_METAL_TIER_COLORS = Object.freeze({
-        bronze: RIGHT_HAND_METAL_TIER_PALETTES.bronze.flat,
-        iron: RIGHT_HAND_METAL_TIER_PALETTES.iron.flat,
-        steel: RIGHT_HAND_METAL_TIER_PALETTES.steel.flat,
-        mithril: RIGHT_HAND_METAL_TIER_PALETTES.mithril.flat,
-        adamant: RIGHT_HAND_METAL_TIER_PALETTES.adamant.flat,
-        rune: RIGHT_HAND_METAL_TIER_PALETTES.rune.flat
+    const ARMOR_TIER_STYLE_PROFILES = Object.freeze({
+        bronze: Object.freeze({
+            shellScale: 1.04,
+            trimScale: 0.88,
+            plateScale: 0.9,
+            guardScale: 0.9,
+            shieldScale: 0.94,
+            detailLevel: 0,
+            accentRole: 'light'
+        }),
+        iron: Object.freeze({
+            shellScale: 1,
+            trimScale: 0.96,
+            plateScale: 0.96,
+            guardScale: 0.98,
+            shieldScale: 0.97,
+            detailLevel: 1,
+            accentRole: 'light'
+        }),
+        steel: Object.freeze({
+            shellScale: 1,
+            trimScale: 1.04,
+            plateScale: 1,
+            guardScale: 1,
+            shieldScale: 1,
+            detailLevel: 1,
+            accentRole: 'light'
+        }),
+        mithril: Object.freeze({
+            shellScale: 0.96,
+            trimScale: 1.08,
+            plateScale: 0.94,
+            guardScale: 0.96,
+            shieldScale: 0.98,
+            detailLevel: 1,
+            accentRole: 'light'
+        }),
+        adamant: Object.freeze({
+            shellScale: 1.07,
+            trimScale: 1.14,
+            plateScale: 1.08,
+            guardScale: 1.08,
+            shieldScale: 1.06,
+            detailLevel: 2,
+            accentRole: 'light'
+        }),
+        rune: Object.freeze({
+            shellScale: 1.05,
+            trimScale: 1.22,
+            plateScale: 1.1,
+            guardScale: 1.1,
+            shieldScale: 1.08,
+            detailLevel: 2,
+            accentRole: 'accent'
+        })
     });
 
     const PICKAXE_HANDLE_PALETTE = Object.freeze({
@@ -1229,41 +1286,6 @@
         '................................'
     ];
 
-    const HAMMER_ICON_PIXELS = [
-        '................................',
-        '................................',
-        '................................',
-        '................................',
-        '................................',
-        '................................',
-        '.........bbbbbbbbbbbb...........',
-        '...........bbccccccccbb.........',
-        '.............bbccccccccbb.......',
-        '...............bbbbbbbbbbbb.....',
-        '................aaa.............',
-        '...............aaa..............',
-        '..............aaa...............',
-        '.............aaa................',
-        '............aaa.................',
-        '...........aaa..................',
-        '..........aaa...................',
-        '.........aaa....................',
-        '........aaa.....................',
-        '.......aaa......................',
-        '......aaa.......................',
-        '.....aaa........................',
-        '....aaa.........................',
-        '...aaa..........................',
-        '..aaa...........................',
-        '.aa.............................',
-        '..a.............................',
-        '................................',
-        '................................',
-        '................................',
-        '................................',
-        '................................'
-    ];
-
     const SMALL_NET_HELD_MODEL = createRightHandHeldModel({
         depth: STANDARD_RIGHT_HAND_WEAPON_HOLD.pixelSize * 0.42,
         origin: [6.5, 18.5],
@@ -1461,6 +1483,20 @@
     function getMetalTierPalette(itemId) {
         const metalTier = getRightHandMetalTier(itemId);
         return RIGHT_HAND_METAL_TIER_PALETTES[metalTier] || RIGHT_HAND_METAL_TIER_PALETTES.iron;
+    }
+
+    function getArmorTierStyle(itemId) {
+        const metalTier = getRightHandMetalTier(itemId);
+        return ARMOR_TIER_STYLE_PROFILES[metalTier] || ARMOR_TIER_STYLE_PROFILES.iron;
+    }
+
+    function getArmorTierPalette(itemId) {
+        return getRightHandMetalTier(itemId) === 'rune' ? RUNE_ARMOR_TIER_PALETTE : getMetalTierPalette(itemId);
+    }
+
+    function getArmorAccentHex(tierPalette, tierStyle) {
+        const role = tierStyle && tierStyle.accentRole;
+        return (role && tierPalette[role]) || tierPalette.light || tierPalette.flat || tierPalette.mid;
     }
 
     function buildRightHandPalette(handlePalette, itemId, heldModel) {
@@ -1720,23 +1756,26 @@
         return createAmmoAppearanceItemDef(modelIds, createArrowQuiverFragmentsForTier(getMetalTierPalette(itemId)));
     }
 
-    function createHelmetFragmentsForFit(fit, tierPalette) {
+    function createHelmetFragmentsForFit(fit, tierPalette, tierStyle) {
         const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const shellSize = addTriplets(fit.size, HEAD_ARMOR_SHELL_GROWTH);
+        const style = tierStyle || ARMOR_TIER_STYLE_PROFILES.iron;
+        const accentHex = getArmorAccentHex(tierPalette, style);
+        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
+        const shellSize = addTriplets(fit.size, scaleTriplet(HEAD_ARMOR_SHELL_GROWTH, style.shellScale));
         const crownSize = [
-            shellSize[0] * 0.82,
-            Math.min(0.11, shellSize[1] * 0.24),
-            shellSize[2] * 0.82
+            shellSize[0] * (0.76 + (style.trimScale * 0.04)),
+            Math.min(0.13, shellSize[1] * (0.21 + (style.trimScale * 0.03))),
+            shellSize[2] * (0.76 + (style.trimScale * 0.04))
         ];
         const crownOffset = [
             fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.24),
+            fit.offset[1] + (shellSize[1] * (0.22 + (style.detailLevel * 0.015))),
             fit.offset[2]
         ];
         const browBandSize = [
-            shellSize[0] * 0.92,
-            Math.min(0.1, shellSize[1] * 0.2),
-            shellSize[2] * 0.9
+            shellSize[0] * (0.86 + (style.trimScale * 0.06)),
+            Math.min(0.11, shellSize[1] * (0.17 + (style.trimScale * 0.025))),
+            shellSize[2] * (0.84 + (style.trimScale * 0.05))
         ];
         const browBandOffset = [
             fit.offset[0],
@@ -1744,8 +1783,8 @@
             fit.offset[2] + 0.005
         ];
         const faceGuardSize = [
-            shellSize[0] * 0.4,
-            shellSize[1] * 0.52,
+            shellSize[0] * (0.32 + (style.guardScale * 0.08)),
+            shellSize[1] * (0.46 + (style.guardScale * 0.05)),
             Math.min(0.12, shellSize[2] * 0.55)
         ];
         const faceGuardOffset = [
@@ -1774,7 +1813,7 @@
             faceGuardOffset[2] + ((faceGuardSize[2] - mouthSlitSize[2]) * 0.5) + 0.004
         ];
 
-        return [
+        const fragments = [
             createAppearanceBoxFragment('head', shellSize, fit.offset, {
                 rgbColor: tierPalette.mid,
                 color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
@@ -1800,152 +1839,68 @@
                 bodyColorIndex: 4
             })
         ];
-    }
-
-    function createRuneHelmetFragmentsForFit(fit, tierPalette) {
-        const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const accentHex = tierPalette.accent || tierPalette.light;
-        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
-        const shellSize = addTriplets(fit.size, [0.08, 0.09, 0.08]);
-        const crownSize = [
-            shellSize[0] * 0.72,
-            Math.min(0.16, shellSize[1] * 0.3),
-            shellSize[2] * 0.74
-        ];
-        const crownOffset = [
-            fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.28),
-            fit.offset[2] - 0.01
-        ];
-        const browBandSize = [
-            shellSize[0] * 0.98,
-            Math.min(0.12, shellSize[1] * 0.22),
-            shellSize[2] * 0.94
-        ];
-        const browBandOffset = [
-            fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.08),
-            fit.offset[2] + 0.008
-        ];
-        const faceGuardSize = [
-            shellSize[0] * 0.34,
-            shellSize[1] * 0.6,
-            Math.min(0.13, shellSize[2] * 0.54)
-        ];
-        const faceGuardOffset = [
-            fit.offset[0],
-            fit.offset[1] - 0.01,
-            fit.offset[2] + ((shellSize[2] - faceGuardSize[2]) * 0.5) + 0.02
-        ];
-        const eyeSlitSize = [
-            shellSize[0] * 0.32,
-            Math.min(0.036, shellSize[1] * 0.09),
-            Math.min(0.028, shellSize[2] * 0.14)
-        ];
-        const eyeSlitOffset = [
-            fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.05),
-            faceGuardOffset[2] + ((faceGuardSize[2] - eyeSlitSize[2]) * 0.5) + 0.004
-        ];
-        const mouthSlitSize = [
-            shellSize[0] * 0.18,
-            Math.min(0.03, shellSize[1] * 0.08),
-            Math.min(0.026, shellSize[2] * 0.12)
-        ];
-        const mouthSlitOffset = [
-            fit.offset[0],
-            fit.offset[1] - (shellSize[1] * 0.22),
-            faceGuardOffset[2] + ((faceGuardSize[2] - mouthSlitSize[2]) * 0.5) + 0.005
-        ];
-        const wingSize = [
-            shellSize[0] * 0.26,
-            Math.min(0.09, shellSize[1] * 0.18),
-            shellSize[2] * 0.42
-        ];
-        const leftWingOffset = [
-            fit.offset[0] - (shellSize[0] * 0.54),
-            fit.offset[1] + (shellSize[1] * 0.1),
-            fit.offset[2] - 0.01
-        ];
-        const rightWingOffset = [
-            fit.offset[0] + (shellSize[0] * 0.54),
-            fit.offset[1] + (shellSize[1] * 0.1),
-            fit.offset[2] - 0.01
-        ];
-        const crestSize = [
-            shellSize[0] * 0.18,
-            Math.min(0.08, shellSize[1] * 0.15),
-            shellSize[2] * 0.18
-        ];
-        const crestOffset = [
-            fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.22),
-            fit.offset[2] + (shellSize[2] * 0.16)
-        ];
-
-        return [
-            createAppearanceBoxFragment('head', shellSize, fit.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('head', crownSize, crownOffset, {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('head', browBandSize, browBandOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('head', faceGuardSize, faceGuardOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('head', wingSize, leftWingOffset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor),
-                rotation: [0, 0, -0.38]
-            }),
-            createAppearanceBoxFragment('head', wingSize, rightWingOffset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor),
-                rotation: [0, 0, 0.38]
-            }),
-            createAppearanceBoxFragment('head', crestSize, crestOffset, {
+        if (style.detailLevel >= 1) {
+            const cheekSize = [
+                shellSize[0] * (0.08 + (style.trimScale * 0.02)),
+                shellSize[1] * 0.34,
+                Math.min(0.08, shellSize[2] * 0.32)
+            ];
+            const cheekX = shellSize[0] * (0.31 + (style.trimScale * 0.015));
+            const cheekY = fit.offset[1] - (shellSize[1] * 0.08);
+            const cheekZ = faceGuardOffset[2] - 0.01;
+            fragments.push(
+                createAppearanceBoxFragment('head', cheekSize, [fit.offset[0] - cheekX, cheekY, cheekZ], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
+                    rotation: [0, 0, -0.08]
+                }),
+                createAppearanceBoxFragment('head', cheekSize, [fit.offset[0] + cheekX, cheekY, cheekZ], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
+                    rotation: [0, 0, 0.08]
+                })
+            );
+        }
+        if (style.detailLevel >= 2) {
+            const crestSize = [
+                shellSize[0] * (0.1 + (style.trimScale * 0.04)),
+                Math.min(0.07, shellSize[1] * 0.14),
+                shellSize[2] * (0.14 + (style.trimScale * 0.04))
+            ];
+            const crestOffset = [
+                fit.offset[0],
+                fit.offset[1] + (shellSize[1] * 0.24),
+                fit.offset[2] + (shellSize[2] * 0.18)
+            ];
+            fragments.push(createAppearanceBoxFragment('head', crestSize, crestOffset, {
                 rgbColor: accentHex,
                 color: accentColor
-            }),
-            createAppearanceBoxFragment('head', eyeSlitSize, eyeSlitOffset, {
-                color: bodyColorFind[4],
-                bodyColorIndex: 4
-            }),
-            createAppearanceBoxFragment('head', mouthSlitSize, mouthSlitOffset, {
-                color: bodyColorFind[4],
-                bodyColorIndex: 4
-            })
-        ];
+            }));
+        }
+        return fragments;
     }
 
     function createHelmetAppearanceItemDef(itemId, modelIds) {
-        const tierPalette = itemId === 'rune_helmet' ? RUNE_ARMOR_TIER_PALETTE : getMetalTierPalette(itemId);
+        const tierPalette = getArmorTierPalette(itemId);
+        const tierStyle = getArmorTierStyle(itemId);
         return createHeadAppearanceItemDef(modelIds, {
-            male: itemId === 'rune_helmet'
-                ? createRuneHelmetFragmentsForFit(HEAD_SLOT_FITS.male, tierPalette)
-                : createHelmetFragmentsForFit(HEAD_SLOT_FITS.male, tierPalette),
-            female: itemId === 'rune_helmet'
-                ? createRuneHelmetFragmentsForFit(HEAD_SLOT_FITS.female, tierPalette)
-                : createHelmetFragmentsForFit(HEAD_SLOT_FITS.female, tierPalette)
+            male: createHelmetFragmentsForFit(HEAD_SLOT_FITS.male, tierPalette, tierStyle),
+            female: createHelmetFragmentsForFit(HEAD_SLOT_FITS.female, tierPalette, tierStyle)
         });
     }
 
-    function createPlatebodyFragmentsForFit(fit, tierPalette) {
+    function createPlatebodyFragmentsForFit(fit, tierPalette, tierStyle) {
         const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const torsoShellSize = addTriplets(fit.torso.size, BODY_ARMOR_SHELL_GROWTH.torso);
-        const upperArmShellSize = addTriplets(fit.upperArm.size, BODY_ARMOR_SHELL_GROWTH.upperArm);
-        const lowerArmShellSize = addTriplets(fit.lowerArm.size, BODY_ARMOR_SHELL_GROWTH.lowerArm);
+        const style = tierStyle || ARMOR_TIER_STYLE_PROFILES.iron;
+        const accentHex = getArmorAccentHex(tierPalette, style);
+        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
+        const torsoShellSize = addTriplets(fit.torso.size, scaleTriplet(BODY_ARMOR_SHELL_GROWTH.torso, style.shellScale));
+        const upperArmShellSize = addTriplets(fit.upperArm.size, scaleTriplet(BODY_ARMOR_SHELL_GROWTH.upperArm, style.shellScale));
+        const lowerArmShellSize = addTriplets(fit.lowerArm.size, scaleTriplet(BODY_ARMOR_SHELL_GROWTH.lowerArm, style.shellScale));
         const chestPlateSize = [
-            torsoShellSize[0] * 0.72,
-            torsoShellSize[1] * 0.58,
-            Math.min(0.12, torsoShellSize[2] * 0.62)
+            torsoShellSize[0] * (0.62 + (style.plateScale * 0.1)),
+            torsoShellSize[1] * (0.5 + (style.plateScale * 0.08)),
+            Math.min(0.14, torsoShellSize[2] * (0.54 + (style.plateScale * 0.08)))
         ];
         const chestPlateOffset = [
             fit.torso.offset[0],
@@ -1953,8 +1908,8 @@
             fit.torso.offset[2] + ((torsoShellSize[2] - chestPlateSize[2]) * 0.5) + 0.01
         ];
         const shoulderBandSize = [
-            torsoShellSize[0] * 0.9,
-            Math.min(0.12, torsoShellSize[1] * 0.18),
+            torsoShellSize[0] * (0.8 + (style.trimScale * 0.08)),
+            Math.min(0.13, torsoShellSize[1] * (0.15 + (style.trimScale * 0.03))),
             Math.min(0.07, torsoShellSize[2] * 0.38)
         ];
         const shoulderBandOffset = [
@@ -1963,7 +1918,7 @@
             fit.torso.offset[2] + ((torsoShellSize[2] - shoulderBandSize[2]) * 0.5) - 0.01
         ];
 
-        return [
+        const fragments = [
             createAppearanceBoxFragment('torso', torsoShellSize, fit.torso.offset, {
                 rgbColor: tierPalette.mid,
                 color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
@@ -1993,144 +1948,89 @@
                 color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
             })
         ];
-    }
-
-    function createRunePlatebodyFragmentsForFit(fit, tierPalette) {
-        const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const accentHex = tierPalette.accent || tierPalette.light;
-        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
-        const torsoShellSize = addTriplets(fit.torso.size, [0.08, 0.06, 0.08]);
-        const upperArmShellSize = addTriplets(fit.upperArm.size, [0.05, 0.03, 0.04]);
-        const lowerArmShellSize = addTriplets(fit.lowerArm.size, [0.04, 0.03, 0.03]);
-        const shoulderWingSize = [
-            torsoShellSize[0] * 0.24,
-            Math.min(0.16, torsoShellSize[1] * 0.22),
-            torsoShellSize[2] * 0.58
-        ];
-        const leftShoulderWingOffset = [
-            fit.torso.offset[0] - (torsoShellSize[0] * 0.52),
-            fit.torso.offset[1] + (torsoShellSize[1] * 0.28),
-            fit.torso.offset[2] - 0.01
-        ];
-        const rightShoulderWingOffset = [
-            fit.torso.offset[0] + (torsoShellSize[0] * 0.52),
-            fit.torso.offset[1] + (torsoShellSize[1] * 0.28),
-            fit.torso.offset[2] - 0.01
-        ];
-        const chestWingSize = [
-            torsoShellSize[0] * 0.24,
-            torsoShellSize[1] * 0.34,
-            Math.min(0.1, torsoShellSize[2] * 0.45)
-        ];
-        const leftChestWingOffset = [
-            fit.torso.offset[0] - (torsoShellSize[0] * 0.16),
-            fit.torso.offset[1] + 0.05,
-            fit.torso.offset[2] + ((torsoShellSize[2] - chestWingSize[2]) * 0.5) + 0.02
-        ];
-        const rightChestWingOffset = [
-            fit.torso.offset[0] + (torsoShellSize[0] * 0.16),
-            fit.torso.offset[1] + 0.05,
-            fit.torso.offset[2] + ((torsoShellSize[2] - chestWingSize[2]) * 0.5) + 0.02
-        ];
-        const sternumSize = [
-            torsoShellSize[0] * 0.14,
-            torsoShellSize[1] * 0.46,
-            Math.min(0.13, torsoShellSize[2] * 0.68)
-        ];
-        const sternumOffset = [
-            fit.torso.offset[0],
-            fit.torso.offset[1] + 0.02,
-            fit.torso.offset[2] + ((torsoShellSize[2] - sternumSize[2]) * 0.5) + 0.03
-        ];
-        const waistGuardSize = [
-            torsoShellSize[0] * 0.28,
-            Math.min(0.1, torsoShellSize[1] * 0.14),
-            torsoShellSize[2] * 0.6
-        ];
-        const waistGuardOffset = [
-            fit.torso.offset[0],
-            fit.torso.offset[1] - (torsoShellSize[1] * 0.26),
-            fit.torso.offset[2] + 0.01
-        ];
-
-        return [
-            createAppearanceBoxFragment('torso', torsoShellSize, fit.torso.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('torso', shoulderWingSize, leftShoulderWingOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
-                rotation: [0, 0, -0.3]
-            }),
-            createAppearanceBoxFragment('torso', shoulderWingSize, rightShoulderWingOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
-                rotation: [0, 0, 0.3]
-            }),
-            createAppearanceBoxFragment('torso', chestWingSize, leftChestWingOffset, {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor),
-                rotation: [0, 0, -0.34]
-            }),
-            createAppearanceBoxFragment('torso', chestWingSize, rightChestWingOffset, {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor),
-                rotation: [0, 0, 0.34]
-            }),
-            createAppearanceBoxFragment('torso', sternumSize, sternumOffset, {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('torso', waistGuardSize, waistGuardOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftArm', upperArmShellSize, fit.upperArm.offset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightArm', upperArmShellSize, fit.upperArm.offset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLowerArm', lowerArmShellSize, fit.lowerArm.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerArm', lowerArmShellSize, fit.lowerArm.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            })
-        ];
+        if (style.detailLevel >= 1) {
+            const waistGuardSize = [
+                torsoShellSize[0] * (0.42 + (style.trimScale * 0.05)),
+                Math.min(0.08, torsoShellSize[1] * 0.12),
+                torsoShellSize[2] * 0.58
+            ];
+            const waistGuardOffset = [
+                fit.torso.offset[0],
+                fit.torso.offset[1] - (torsoShellSize[1] * 0.28),
+                fit.torso.offset[2] + 0.01
+            ];
+            const sternumSize = [
+                torsoShellSize[0] * (0.08 + (style.trimScale * 0.035)),
+                torsoShellSize[1] * (0.34 + (style.plateScale * 0.08)),
+                Math.min(0.09, torsoShellSize[2] * 0.48)
+            ];
+            const sternumOffset = [
+                fit.torso.offset[0],
+                fit.torso.offset[1] + 0.02,
+                fit.torso.offset[2] + ((torsoShellSize[2] - sternumSize[2]) * 0.5) + 0.026
+            ];
+            fragments.push(
+                createAppearanceBoxFragment('torso', waistGuardSize, waistGuardOffset, {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
+                }),
+                createAppearanceBoxFragment('torso', sternumSize, sternumOffset, {
+                    rgbColor: accentHex,
+                    color: accentColor
+                })
+            );
+        }
+        if (style.detailLevel >= 2) {
+            const pauldronSize = [
+                torsoShellSize[0] * 0.2,
+                Math.min(0.13, torsoShellSize[1] * 0.18),
+                torsoShellSize[2] * 0.46
+            ];
+            const pauldronY = fit.torso.offset[1] + (torsoShellSize[1] * 0.29);
+            const pauldronZ = fit.torso.offset[2] - 0.01;
+            const pauldronX = torsoShellSize[0] * 0.5;
+            fragments.push(
+                createAppearanceBoxFragment('torso', pauldronSize, [fit.torso.offset[0] - pauldronX, pauldronY, pauldronZ], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
+                    rotation: [0, 0, -0.22]
+                }),
+                createAppearanceBoxFragment('torso', pauldronSize, [fit.torso.offset[0] + pauldronX, pauldronY, pauldronZ], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
+                    rotation: [0, 0, 0.22]
+                })
+            );
+        }
+        return fragments;
     }
 
     function createPlatebodyAppearanceItemDef(itemId, modelIds) {
-        const tierPalette = itemId === 'rune_platebody' ? RUNE_ARMOR_TIER_PALETTE : getMetalTierPalette(itemId);
+        const tierPalette = getArmorTierPalette(itemId);
+        const tierStyle = getArmorTierStyle(itemId);
         return createBodyAppearanceItemDef(modelIds, {
-            male: itemId === 'rune_platebody'
-                ? createRunePlatebodyFragmentsForFit(BODY_SLOT_FITS.male, tierPalette)
-                : createPlatebodyFragmentsForFit(BODY_SLOT_FITS.male, tierPalette),
-            female: itemId === 'rune_platebody'
-                ? createRunePlatebodyFragmentsForFit(BODY_SLOT_FITS.female, tierPalette)
-                : createPlatebodyFragmentsForFit(BODY_SLOT_FITS.female, tierPalette)
+            male: createPlatebodyFragmentsForFit(BODY_SLOT_FITS.male, tierPalette, tierStyle),
+            female: createPlatebodyFragmentsForFit(BODY_SLOT_FITS.female, tierPalette, tierStyle)
         });
     }
 
-    function createPlatelegsFragmentsForFit(fit, tierPalette) {
+    function createPlatelegsFragmentsForFit(fit, tierPalette, tierStyle) {
         const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const upperLegShellSize = addTriplets(fit.upperLeg.size, PLATELEGS_ARMOR_SHELL_GROWTH.upperLeg);
-        const lowerLegShellSize = addTriplets(fit.lowerLeg.size, PLATELEGS_ARMOR_SHELL_GROWTH.lowerLeg);
+        const style = tierStyle || ARMOR_TIER_STYLE_PROFILES.iron;
+        const accentHex = getArmorAccentHex(tierPalette, style);
+        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
+        const upperLegShellSize = addTriplets(fit.upperLeg.size, scaleTriplet(PLATELEGS_ARMOR_SHELL_GROWTH.upperLeg, style.shellScale));
+        const lowerLegShellSize = addTriplets(fit.lowerLeg.size, scaleTriplet(PLATELEGS_ARMOR_SHELL_GROWTH.lowerLeg, style.shellScale));
         const waistBandSize = [
-            (upperLegShellSize[0] * 2) * 0.88,
-            Math.min(0.11, upperLegShellSize[1] * 0.22),
-            Math.max(upperLegShellSize[2], lowerLegShellSize[2]) * 0.9
+            (upperLegShellSize[0] * 2) * (0.78 + (style.trimScale * 0.08)),
+            Math.min(0.12, upperLegShellSize[1] * (0.18 + (style.trimScale * 0.03))),
+            Math.max(upperLegShellSize[2], lowerLegShellSize[2]) * (0.82 + (style.trimScale * 0.05))
         ];
         const waistBandOffset = [0, fit.upperLeg.offset[1] + (upperLegShellSize[1] * 0.34), 0];
         const kneeGuardSize = [
-            lowerLegShellSize[0] * 0.82,
-            Math.min(0.11, lowerLegShellSize[1] * 0.28),
-            lowerLegShellSize[2] * 0.9
+            lowerLegShellSize[0] * (0.72 + (style.guardScale * 0.08)),
+            Math.min(0.13, lowerLegShellSize[1] * (0.24 + (style.guardScale * 0.04))),
+            lowerLegShellSize[2] * (0.78 + (style.guardScale * 0.08))
         ];
         const kneeGuardOffset = [
             0,
@@ -2138,7 +2038,7 @@
             fit.lowerLeg.offset[2] + 0.02
         ];
 
-        return [
+        const fragments = [
             createAppearanceBoxFragment('leftLeg', upperLegShellSize, fit.upperLeg.offset, {
                 rgbColor: tierPalette.mid,
                 color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
@@ -2168,120 +2068,75 @@
                 color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
             })
         ];
-    }
-
-    function createRunePlatelegsFragmentsForFit(fit, tierPalette) {
-        const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const accentHex = tierPalette.accent || tierPalette.light;
-        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
-        const upperLegShellSize = addTriplets(fit.upperLeg.size, [0.05, 0.04, 0.05]);
-        const lowerLegShellSize = addTriplets(fit.lowerLeg.size, [0.04, 0.03, 0.04]);
-        const thighFacetSize = [
-            upperLegShellSize[0] * 0.78,
-            upperLegShellSize[1] * 0.34,
-            upperLegShellSize[2] * 0.42
-        ];
-        const outerGuardSize = [
-            upperLegShellSize[0] * 0.36,
-            upperLegShellSize[1] * 0.4,
-            upperLegShellSize[2] * 0.46
-        ];
-        const kneeGuardSize = [
-            lowerLegShellSize[0] * 0.86,
-            Math.min(0.14, lowerLegShellSize[1] * 0.32),
-            lowerLegShellSize[2] * 0.48
-        ];
-        const shinGuardSize = [
-            lowerLegShellSize[0] * 0.62,
-            lowerLegShellSize[1] * 0.24,
-            lowerLegShellSize[2] * 0.34
-        ];
-        const codpieceSize = [
-            upperLegShellSize[0] * 0.56,
-            Math.min(0.14, upperLegShellSize[1] * 0.34),
-            upperLegShellSize[2] * 0.42
-        ];
-        const codpieceOffset = [
-            0,
-            fit.upperLeg.offset[1] + (upperLegShellSize[1] * 0.35),
-            0.03
-        ];
-
-        return [
-            createAppearanceBoxFragment('leftLeg', upperLegShellSize, fit.upperLeg.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLeg', upperLegShellSize, fit.upperLeg.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLeg', thighFacetSize, [0, 0.05, upperLegShellSize[2] * 0.18], {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLeg', thighFacetSize, [0, 0.05, upperLegShellSize[2] * 0.18], {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLeg', outerGuardSize, [upperLegShellSize[0] * 0.38, 0.04, 0], {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLeg', outerGuardSize, [-upperLegShellSize[0] * 0.38, 0.04, 0], {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', lowerLegShellSize, fit.lowerLeg.offset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', lowerLegShellSize, fit.lowerLeg.offset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', kneeGuardSize, [0, fit.lowerLeg.offset[1] + 0.05, lowerLegShellSize[2] * 0.2], {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', kneeGuardSize, [0, fit.lowerLeg.offset[1] + 0.05, lowerLegShellSize[2] * 0.2], {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', shinGuardSize, [0, fit.lowerLeg.offset[1] - 0.08, lowerLegShellSize[2] * 0.16], {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', shinGuardSize, [0, fit.lowerLeg.offset[1] - 0.08, lowerLegShellSize[2] * 0.16], {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('torso', codpieceSize, codpieceOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            })
-        ];
+        if (style.detailLevel >= 1) {
+            const thighPlateSize = [
+                upperLegShellSize[0] * (0.48 + (style.plateScale * 0.12)),
+                upperLegShellSize[1] * 0.26,
+                upperLegShellSize[2] * 0.36
+            ];
+            fragments.push(
+                createAppearanceBoxFragment('leftLeg', thighPlateSize, [0, 0.03, upperLegShellSize[2] * 0.18], {
+                    rgbColor: accentHex,
+                    color: accentColor
+                }),
+                createAppearanceBoxFragment('rightLeg', thighPlateSize, [0, 0.03, upperLegShellSize[2] * 0.18], {
+                    rgbColor: accentHex,
+                    color: accentColor
+                })
+            );
+        }
+        if (style.detailLevel >= 2) {
+            const outerGuardSize = [
+                upperLegShellSize[0] * 0.28,
+                upperLegShellSize[1] * 0.34,
+                upperLegShellSize[2] * 0.36
+            ];
+            const shinGuardSize = [
+                lowerLegShellSize[0] * 0.52,
+                Math.min(0.09, lowerLegShellSize[1] * 0.26),
+                lowerLegShellSize[2] * 0.3
+            ];
+            fragments.push(
+                createAppearanceBoxFragment('leftLeg', outerGuardSize, [upperLegShellSize[0] * 0.34, 0.03, 0], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
+                }),
+                createAppearanceBoxFragment('rightLeg', outerGuardSize, [-upperLegShellSize[0] * 0.34, 0.03, 0], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
+                }),
+                createAppearanceBoxFragment('leftLowerLeg', shinGuardSize, [0, fit.lowerLeg.offset[1] - 0.07, lowerLegShellSize[2] * 0.14], {
+                    rgbColor: tierPalette.mid,
+                    color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
+                }),
+                createAppearanceBoxFragment('rightLowerLeg', shinGuardSize, [0, fit.lowerLeg.offset[1] - 0.07, lowerLegShellSize[2] * 0.14], {
+                    rgbColor: tierPalette.mid,
+                    color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
+                })
+            );
+        }
+        return fragments;
     }
 
     function createPlatelegsAppearanceItemDef(itemId, modelIds) {
-        const tierPalette = itemId === 'rune_platelegs' ? RUNE_ARMOR_TIER_PALETTE : getMetalTierPalette(itemId);
+        const tierPalette = getArmorTierPalette(itemId);
+        const tierStyle = getArmorTierStyle(itemId);
         return createLegsAppearanceItemDef(modelIds, {
-            male: itemId === 'rune_platelegs'
-                ? createRunePlatelegsFragmentsForFit(LEGS_SLOT_FITS.male, tierPalette)
-                : createPlatelegsFragmentsForFit(LEGS_SLOT_FITS.male, tierPalette),
-            female: itemId === 'rune_platelegs'
-                ? createRunePlatelegsFragmentsForFit(LEGS_SLOT_FITS.female, tierPalette)
-                : createPlatelegsFragmentsForFit(LEGS_SLOT_FITS.female, tierPalette)
+            male: createPlatelegsFragmentsForFit(LEGS_SLOT_FITS.male, tierPalette, tierStyle),
+            female: createPlatelegsFragmentsForFit(LEGS_SLOT_FITS.female, tierPalette, tierStyle)
         });
     }
 
-    function createBootsFragmentsForFit(fit, tierPalette) {
+    function createBootsFragmentsForFit(fit, tierPalette, tierStyle) {
         const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const shellSize = addTriplets(fit.size, BOOTS_ARMOR_SHELL_GROWTH);
+        const style = tierStyle || ARMOR_TIER_STYLE_PROFILES.iron;
+        const accentHex = getArmorAccentHex(tierPalette, style);
+        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
+        const shellSize = addTriplets(fit.size, scaleTriplet(BOOTS_ARMOR_SHELL_GROWTH, style.shellScale));
         const cuffSize = [
-            shellSize[0] * 0.78,
-            Math.min(0.07, shellSize[1] * 0.9),
-            shellSize[2] * 0.7
+            shellSize[0] * (0.68 + (style.trimScale * 0.08)),
+            Math.min(0.08, shellSize[1] * (0.78 + (style.trimScale * 0.09))),
+            shellSize[2] * (0.62 + (style.trimScale * 0.06))
         ];
         const cuffOffset = [
             fit.offset[0],
@@ -2289,9 +2144,9 @@
             fit.offset[2] - 0.01
         ];
         const toeCapSize = [
-            shellSize[0] * 0.76,
-            Math.max(0.05, shellSize[1] * 0.72),
-            shellSize[2] * 0.48
+            shellSize[0] * (0.66 + (style.plateScale * 0.08)),
+            Math.max(0.05, shellSize[1] * (0.64 + (style.plateScale * 0.08))),
+            shellSize[2] * (0.42 + (style.guardScale * 0.05))
         ];
         const toeCapOffset = [
             fit.offset[0],
@@ -2299,7 +2154,7 @@
             fit.offset[2] + (shellSize[2] * 0.18)
         ];
 
-        return [
+        const fragments = [
             createAppearanceBoxFragment('leftLowerLeg', shellSize, fit.offset, {
                 rgbColor: tierPalette.mid,
                 color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
@@ -2325,199 +2180,117 @@
                 color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor)
             })
         ];
-    }
-
-    function createRuneBootsFragmentsForFit(fit, tierPalette) {
-        const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const accentHex = tierPalette.accent || tierPalette.light;
-        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
-        const shellSize = addTriplets(fit.size, [0.06, 0.03, 0.08]);
-        const cuffSize = [
-            shellSize[0] * 0.82,
-            Math.min(0.08, shellSize[1] * 0.95),
-            shellSize[2] * 0.68
-        ];
-        const cuffOffset = [
-            fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.48),
-            fit.offset[2] - 0.02
-        ];
-        const toeCapSize = [
-            shellSize[0] * 0.84,
-            Math.max(0.055, shellSize[1] * 0.72),
-            shellSize[2] * 0.5
-        ];
-        const toeCapOffset = [
-            fit.offset[0],
-            fit.offset[1] - 0.005,
-            fit.offset[2] + (shellSize[2] * 0.22)
-        ];
-        const toePointSize = [
-            shellSize[0] * 0.52,
-            Math.max(0.045, shellSize[1] * 0.5),
-            shellSize[2] * 0.22
-        ];
-        const toePointOffset = [
-            fit.offset[0],
-            fit.offset[1] - 0.005,
-            fit.offset[2] + (shellSize[2] * 0.38)
-        ];
-        const shinPlateSize = [
-            shellSize[0] * 0.56,
-            Math.min(0.06, shellSize[1] * 0.6),
-            shellSize[2] * 0.18
-        ];
-        const shinPlateOffset = [
-            fit.offset[0],
-            fit.offset[1] + (shellSize[1] * 0.18),
-            fit.offset[2] + (shellSize[2] * 0.14)
-        ];
-        const heelGuardSize = [
-            shellSize[0] * 0.36,
-            Math.min(0.04, shellSize[1] * 0.44),
-            shellSize[2] * 0.16
-        ];
-        const heelGuardOffset = [
-            fit.offset[0],
-            fit.offset[1] - 0.02,
-            fit.offset[2] - (shellSize[2] * 0.18)
-        ];
-
-        return [
-            createAppearanceBoxFragment('leftLowerLeg', shellSize, fit.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', shellSize, fit.offset, {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', cuffSize, cuffOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', cuffSize, cuffOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', toeCapSize, toeCapOffset, {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', toeCapSize, toeCapOffset, {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', toePointSize, toePointOffset, {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', toePointSize, toePointOffset, {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', shinPlateSize, shinPlateOffset, {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', shinPlateSize, shinPlateOffset, {
-                rgbColor: accentHex,
-                color: accentColor
-            }),
-            createAppearanceBoxFragment('leftLowerLeg', heelGuardSize, heelGuardOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            }),
-            createAppearanceBoxFragment('rightLowerLeg', heelGuardSize, heelGuardOffset, {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
-            })
-        ];
+        if (style.detailLevel >= 1) {
+            const shinPlateSize = [
+                shellSize[0] * (0.42 + (style.trimScale * 0.06)),
+                Math.min(0.055, shellSize[1] * 0.58),
+                shellSize[2] * 0.18
+            ];
+            const shinPlateOffset = [
+                fit.offset[0],
+                fit.offset[1] + (shellSize[1] * 0.18),
+                fit.offset[2] + (shellSize[2] * 0.14)
+            ];
+            fragments.push(
+                createAppearanceBoxFragment('leftLowerLeg', shinPlateSize, shinPlateOffset, {
+                    rgbColor: accentHex,
+                    color: accentColor
+                }),
+                createAppearanceBoxFragment('rightLowerLeg', shinPlateSize, shinPlateOffset, {
+                    rgbColor: accentHex,
+                    color: accentColor
+                })
+            );
+        }
+        if (style.detailLevel >= 2) {
+            const heelGuardSize = [
+                shellSize[0] * 0.34,
+                Math.min(0.04, shellSize[1] * 0.42),
+                shellSize[2] * 0.16
+            ];
+            const heelGuardOffset = [
+                fit.offset[0],
+                fit.offset[1] - 0.02,
+                fit.offset[2] - (shellSize[2] * 0.18)
+            ];
+            fragments.push(
+                createAppearanceBoxFragment('leftLowerLeg', heelGuardSize, heelGuardOffset, {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
+                }),
+                createAppearanceBoxFragment('rightLowerLeg', heelGuardSize, heelGuardOffset, {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor)
+                })
+            );
+        }
+        return fragments;
     }
 
     function createBootsAppearanceItemDef(itemId, modelIds) {
-        const tierPalette = itemId === 'rune_boots' ? RUNE_ARMOR_TIER_PALETTE : getMetalTierPalette(itemId);
+        const tierPalette = getArmorTierPalette(itemId);
+        const tierStyle = getArmorTierStyle(itemId);
         return createFeetAppearanceItemDef(modelIds, {
-            male: itemId === 'rune_boots'
-                ? createRuneBootsFragmentsForFit(FEET_SLOT_FITS.male, tierPalette)
-                : createBootsFragmentsForFit(FEET_SLOT_FITS.male, tierPalette),
-            female: itemId === 'rune_boots'
-                ? createRuneBootsFragmentsForFit(FEET_SLOT_FITS.female, tierPalette)
-                : createBootsFragmentsForFit(FEET_SLOT_FITS.female, tierPalette)
+            male: createBootsFragmentsForFit(FEET_SLOT_FITS.male, tierPalette, tierStyle),
+            female: createBootsFragmentsForFit(FEET_SLOT_FITS.female, tierPalette, tierStyle)
         });
     }
 
-    function createShieldFragmentsForTier(tierPalette) {
+    function createShieldFragmentsForTier(tierPalette, tierStyle) {
         const armorFallbackColor = packJagexHsl(0, 0, 64);
+        const style = tierStyle || ARMOR_TIER_STYLE_PROFILES.iron;
+        const accentHex = getArmorAccentHex(tierPalette, style);
+        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
         const shieldRotation = [Math.PI / 2, Math.PI / 2, 0];
-        return [
-            createAppearanceBoxFragment('leftTool', [0.34, 0.44, 0.08], [0.17, 0.02, 0.03], {
+        const shieldScale = style.shieldScale || 1;
+        const fragments = [
+            createAppearanceBoxFragment('leftTool', [0.34 * shieldScale, 0.44 * shieldScale, 0.08], [0.17, 0.02, 0.03], {
                 rgbColor: tierPalette.mid,
                 color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor),
                 rotation: shieldRotation
             }),
-            createAppearanceBoxFragment('leftTool', [0.21, 0.28, 0.04], [0.18, 0.03, 0.04], {
+            createAppearanceBoxFragment('leftTool', [0.2 * (0.9 + (style.plateScale * 0.12)), 0.27 * (0.9 + (style.plateScale * 0.12)), 0.04], [0.18, 0.03, 0.04], {
                 rgbColor: tierPalette.light,
                 color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor),
                 rotation: shieldRotation
             }),
-            createAppearanceBoxFragment('leftTool', [0.08, 0.10, 0.1], [0.18, 0.03, 0.08], {
+            createAppearanceBoxFragment('leftTool', [0.075 * (0.9 + (style.trimScale * 0.1)), 0.095 * (0.9 + (style.trimScale * 0.1)), 0.1], [0.18, 0.03, 0.08], {
                 rgbColor: tierPalette.dark,
                 color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
                 rotation: shieldRotation
             }),
-            createAppearanceBoxFragment('leftTool', [0.08, 0.24, 0.04], [0.08, 0.02, 0.0], {
+            createAppearanceBoxFragment('leftTool', [0.08, 0.24 * shieldScale, 0.04], [0.08, 0.02, 0.0], {
                 rgbColor: tierPalette.dark,
                 color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
                 rotation: shieldRotation
             })
         ];
-    }
-
-    function createRuneShieldFragmentsForTier(tierPalette) {
-        const armorFallbackColor = packJagexHsl(0, 0, 64);
-        const accentHex = tierPalette.accent || tierPalette.light;
-        const accentColor = hexToPackedJagexHsl(accentHex, armorFallbackColor);
-        const shieldRotation = [Math.PI / 2, Math.PI / 2, 0];
-        return [
-            createAppearanceBoxFragment('leftTool', [0.38, 0.48, 0.08], [0.17, 0.02, 0.03], {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
-                rotation: shieldRotation
-            }),
-            createAppearanceBoxFragment('leftTool', [0.3, 0.38, 0.04], [0.18, 0.03, 0.036], {
-                rgbColor: tierPalette.mid,
-                color: hexToPackedJagexHsl(tierPalette.mid, armorFallbackColor),
-                rotation: shieldRotation
-            }),
-            createAppearanceBoxFragment('leftTool', [0.22, 0.28, 0.016], [0.18, 0.03, 0.042], {
-                rgbColor: tierPalette.light,
-                color: hexToPackedJagexHsl(tierPalette.light, armorFallbackColor),
-                rotation: shieldRotation
-            }),
-            createAppearanceBoxFragment('leftTool', [0.05, 0.24, 0.012], [0.18, 0.03, 0.046], {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
-                rotation: shieldRotation
-            }),
-            createAppearanceBoxFragment('leftTool', [0.07, 0.09, 0.014], [0.18, 0.03, 0.05], {
+        if (style.detailLevel >= 1) {
+            fragments.push(createAppearanceBoxFragment('leftTool', [0.045, 0.29 * shieldScale, 0.018], [0.18, 0.03, 0.052], {
                 rgbColor: accentHex,
                 color: accentColor,
                 rotation: shieldRotation
-            }),
-            createAppearanceBoxFragment('leftTool', [0.08, 0.28, 0.03], [0.08, 0.02, 0.01], {
-                rgbColor: tierPalette.dark,
-                color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
-                rotation: shieldRotation
-            })
-        ];
+            }));
+        }
+        if (style.detailLevel >= 2) {
+            fragments.push(
+                createAppearanceBoxFragment('leftTool', [0.24 * shieldScale, 0.04, 0.02], [0.18, 0.03, 0.054], {
+                    rgbColor: tierPalette.dark,
+                    color: hexToPackedJagexHsl(tierPalette.dark, armorFallbackColor),
+                    rotation: shieldRotation
+                }),
+                createAppearanceBoxFragment('leftTool', [0.07, 0.09, 0.016], [0.18, 0.03, 0.066], {
+                    rgbColor: accentHex,
+                    color: accentColor,
+                    rotation: shieldRotation
+                })
+            );
+        }
+        return fragments;
     }
 
     function createShieldAppearanceTierDef(itemId, modelIds) {
-        if (itemId === 'rune_shield') {
-            return createShieldAppearanceItemDef(modelIds, createRuneShieldFragmentsForTier(RUNE_ARMOR_TIER_PALETTE));
-        }
-        return createShieldAppearanceItemDef(modelIds, createShieldFragmentsForTier(getMetalTierPalette(itemId)));
+        return createShieldAppearanceItemDef(modelIds, createShieldFragmentsForTier(getArmorTierPalette(itemId), getArmorTierStyle(itemId)));
     }
 
     const pickaxeModelIds = {
@@ -2704,7 +2477,7 @@
     };
 
     window.PlayerAppearanceCatalog = {
-        version: '2026.03.m28',
+        version: '2026.05.armor-a',
         slotOrder: ['head', 'cape', 'neck', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring', 'ammo'],
         bodyColorFind,
         bodyColorPalettes,

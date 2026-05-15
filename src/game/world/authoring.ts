@@ -9,6 +9,15 @@ import type {
 import { canonicalizeWorldId } from "./ids";
 
 import worldManifestJson from "../../../content/world/manifest.json";
+import bwBurntCottage from "../../../content/world/stamps/bw_burnt_cottage.json";
+import bwCastleGatehouse from "../../../content/world/stamps/bw_castle_gatehouse.json";
+import bwFrontierBank from "../../../content/world/stamps/bw_frontier_bank.json";
+import bwFrontierCottage from "../../../content/world/stamps/bw_frontier_cottage.json";
+import bwPaintedGallery from "../../../content/world/stamps/bw_painted_gallery.json";
+import bwQuarryBunkhouse from "../../../content/world/stamps/bw_quarry_bunkhouse.json";
+import bwQuarryStorehouse from "../../../content/world/stamps/bw_quarry_storehouse.json";
+import bwStoneManor from "../../../content/world/stamps/bw_stone_manor.json";
+import bwStoneTownhouse from "../../../content/world/stamps/bw_stone_townhouse.json";
 import castleFloor0 from "../../../content/world/stamps/castle_floor0.json";
 import castleFloor1 from "../../../content/world/stamps/castle_floor1.json";
 import generalStore from "../../../content/world/stamps/general_store.json";
@@ -24,6 +33,15 @@ import mainOverworld from "../../../content/world/regions/main_overworld.json";
 import tutorialIsland from "../../../content/world/regions/tutorial_island.json";
 
 const allStamps: Record<string, WorldStamp> = {
+  [bwBurntCottage.stampId]: bwBurntCottage,
+  [bwCastleGatehouse.stampId]: bwCastleGatehouse,
+  [bwFrontierBank.stampId]: bwFrontierBank,
+  [bwFrontierCottage.stampId]: bwFrontierCottage,
+  [bwPaintedGallery.stampId]: bwPaintedGallery,
+  [bwQuarryBunkhouse.stampId]: bwQuarryBunkhouse,
+  [bwQuarryStorehouse.stampId]: bwQuarryStorehouse,
+  [bwStoneManor.stampId]: bwStoneManor,
+  [bwStoneTownhouse.stampId]: bwStoneTownhouse,
   [castleFloor0.stampId]: castleFloor0,
   [castleFloor1.stampId]: castleFloor1,
   [generalStore.stampId]: generalStore,
@@ -39,11 +57,14 @@ const allStamps: Record<string, WorldStamp> = {
 
 const manifest = worldManifestJson as WorldManifest;
 const LEGACY_WORLD_MAP_SIZE = 486;
-const EXPANDED_WORLD_MAP_SIZE = 648;
+const EXPANDED_WORLD_MAP_SIZE = 1296;
+const TUTORIAL_LAYOUT_WORLD_MAP_SIZE = 648;
 const WORLD_COORD_SCALE = EXPANDED_WORLD_MAP_SIZE / LEGACY_WORLD_MAP_SIZE;
 const TUTORIAL_ISLAND_WORLD_SCALE = 0.8;
+const TUTORIAL_LAYOUT_WORLD_COORD_SCALE = (TUTORIAL_LAYOUT_WORLD_MAP_SIZE / LEGACY_WORLD_MAP_SIZE) * TUTORIAL_ISLAND_WORLD_SCALE;
 const LEGACY_WORLD_CENTER = LEGACY_WORLD_MAP_SIZE / 2;
 const EXPANDED_WORLD_CENTER = EXPANDED_WORLD_MAP_SIZE / 2;
+const TUTORIAL_LAYOUT_WORLD_CENTER = TUTORIAL_LAYOUT_WORLD_MAP_SIZE / 2;
 
 const AXIS_COORD_KEYS = new Set([
   "x",
@@ -85,6 +106,7 @@ interface StructureShiftBounds {
 interface WorldScaleTransform {
   axisScale: number;
   centered: boolean;
+  center?: number;
 }
 
 const DEFAULT_WORLD_SCALE_TRANSFORM: WorldScaleTransform = Object.freeze({
@@ -95,8 +117,9 @@ const DEFAULT_WORLD_SCALE_TRANSFORM: WorldScaleTransform = Object.freeze({
 function createWorldScaleTransform(worldId: string): WorldScaleTransform {
   if (worldId === tutorialIsland.worldId) {
     return {
-      axisScale: WORLD_COORD_SCALE * TUTORIAL_ISLAND_WORLD_SCALE,
-      centered: true
+      axisScale: TUTORIAL_LAYOUT_WORLD_COORD_SCALE,
+      centered: true,
+      center: TUTORIAL_LAYOUT_WORLD_CENTER
     };
   }
   return DEFAULT_WORLD_SCALE_TRANSFORM;
@@ -105,7 +128,8 @@ function createWorldScaleTransform(worldId: string): WorldScaleTransform {
 function scaleAxis(value: number, transform: WorldScaleTransform = DEFAULT_WORLD_SCALE_TRANSFORM): number {
   if (!Number.isFinite(value)) return value;
   if (transform.centered) {
-    return Math.round(EXPANDED_WORLD_CENTER + ((value - LEGACY_WORLD_CENTER) * transform.axisScale));
+    const center = Number.isFinite(transform.center) ? Number(transform.center) : EXPANDED_WORLD_CENTER;
+    return Math.round(center + ((value - LEGACY_WORLD_CENTER) * transform.axisScale));
   }
   return Math.round(value * transform.axisScale);
 }
@@ -232,6 +256,16 @@ function remapPoint3WithStructureShift(
   };
 }
 
+function remapPoint3ListWithStructureShift(
+  bounds: StructureShiftBounds[],
+  points: { x: number; y: number; z: number }[] | undefined | null,
+  margin = 0,
+  transform: WorldScaleTransform = DEFAULT_WORLD_SCALE_TRANSFORM
+): { x: number; y: number; z: number }[] | null {
+  if (!Array.isArray(points) || points.length < 2) return null;
+  return points.map((point) => remapPoint3WithStructureShift(bounds, point, margin, transform));
+}
+
 function remapPoint2WithStructureShift(
   bounds: StructureShiftBounds[],
   point: { x: number; y: number },
@@ -289,10 +323,17 @@ function applyStructureLocalAlignment(
     const mappedHomeTile = rawSpawn.homeTileOverride
       ? remapPoint3WithStructureShift(structureShiftBounds, rawSpawn.homeTileOverride, 0, transform)
       : scaledSpawn.homeTileOverride;
+    const mappedPatrolRoute = remapPoint3ListWithStructureShift(
+      structureShiftBounds,
+      rawSpawn.patrolRoute,
+      0,
+      transform
+    );
     return {
       ...scaledSpawn,
       spawnTile: mappedSpawnTile,
-      homeTileOverride: mappedHomeTile || null
+      homeTileOverride: mappedHomeTile || null,
+      patrolRoute: mappedPatrolRoute || null
     };
   });
 
@@ -526,7 +567,7 @@ function getStampedSubset(entry: WorldManifestEntry): Record<string, WorldStamp>
   return stamps;
 }
 
-export const worldRegistry: WorldRegistry = {
+const worldRegistry: WorldRegistry = {
   get manifest(): WorldManifest {
     return cloneManifest();
   },

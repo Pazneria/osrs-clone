@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { loadNpcDialogueCatalog } = require("../content/npc-dialogue-catalog-loader");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const STARTER_TOWN_NAMED_NPC_DIALOGUES = Object.freeze({
   "merchant:general_store": "shopkeeper",
@@ -23,36 +20,28 @@ const STARTER_TOWN_NAMED_NPC_DIALOGUES = Object.freeze({
   "merchant:combination_sage": "combination_sage"
 });
 
-function loadNpcDialogueCatalog(root) {
-  const absPath = path.join(root, "src", "js", "content", "npc-dialogue-catalog.js");
-  const sandbox = { window: {}, console };
-  const source = fs.readFileSync(absPath, "utf8");
-  vm.runInNewContext(source, sandbox, { filename: absPath });
-  return sandbox.window && sandbox.window.NpcDialogueCatalog ? sandbox.window.NpcDialogueCatalog : null;
-}
-
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const dialogueCatalog = loadNpcDialogueCatalog(root);
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
-  const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
-  const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "town-npc-runtime.js"), "utf8");
-  const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
-  const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
-  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
-  const inventorySource = fs.readFileSync(path.join(root, "src", "js", "inventory.js"), "utf8");
-  const targetSource = fs.readFileSync(path.join(root, "src", "js", "interactions", "target-interaction-registry.js"), "utf8");
-  const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src", "js", "content", "npc-dialogue-catalog.js"), "utf8");
-  const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "npc-dialogue-runtime.js"), "utf8");
-  const coreTutorialRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "core-tutorial-runtime.js"), "utf8");
-  const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
-  const starterTown = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "main_overworld.json"), "utf8"));
-  const tutorialIsland = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "tutorial_island.json"), "utf8"));
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const qaCommandSource = readRepoFile(root, "src/js/qa-command-runtime.js");
+  const qaToolsSource = readRepoFile(root, "src/js/qa-tools-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const logicalMapAuthoringRuntimeSource = readRepoFile(root, "src/js/world/logical-map-authoring-runtime.js");
+  const townNpcRuntimeSource = readRepoFile(root, "src/js/world/town-npc-runtime.js");
+  const npcRenderRuntimeSource = readRepoFile(root, "src/js/world/npc-render-runtime.js");
+  const sceneLifecycleSource = readRepoFile(root, "src/js/world/scene-lifecycle.js");
+  const adapterSource = readRepoFile(root, "src/game/platform/legacy-world-adapter.ts");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const inputArrivalInteractionSource = readRepoFile(root, "src/js/input-arrival-interaction-runtime.js");
+  const inventorySource = readRepoFile(root, "src/js/inventory.js");
+  const targetSource = readRepoFile(root, "src/js/interactions/target-interaction-registry.js");
+  const npcDialogueCatalogSource = readRepoFile(root, "src/js/content/npc-dialogue-catalog.js");
+  const npcDialogueRuntimeSource = readRepoFile(root, "src/js/npc-dialogue-runtime.js");
+  const coreTutorialRuntimeSource = readRepoFile(root, "src/js/core-tutorial-runtime.js");
+  const manifest = JSON.parse(readRepoFile(root, "content/world/manifest.json"));
+  const starterTown = JSON.parse(readRepoFile(root, "content/world/regions/main_overworld.json"));
+  const tutorialIsland = JSON.parse(readRepoFile(root, "content/world/regions/tutorial_island.json"));
 
   assert(Array.isArray(manifest.worlds) && manifest.worlds.length === 2, "proof pass should register starter town and tutorial island");
   assert(manifest.worlds.some((entry) => entry && entry.worldId === "tutorial_island"), "proof pass should register tutorial island");
@@ -79,7 +68,7 @@ function run() {
   assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 11;"), "core should define the tutorial exit gate step");
   assert(coreSource.includes("function getEquipmentItemCount"), "core should expose equipped tutorial item counts to the tutorial runtime");
   assert(coreSource.includes("const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);"), "core should detect fresh profile startup");
-  assert(coreSource.includes("? TUTORIAL_WORLD_ID"), "fresh profile startup should route to tutorial island");
+  assert(coreSource.includes("? MAIN_OVERWORLD_WORLD_ID"), "fresh profile startup should route directly to the mainland");
   assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for the main overworld");
   assert(coreSource.includes("window.TutorialRuntime = {"), "tutorial progression should be exposed to dialogue runtime");
   assert(coreSource.includes("coreTutorialRuntime.buildNpcDialogueView(buildTutorialRuntimeContext(), npc, baseView)"), "tutorial progression should delegate dynamic dialogue to the tutorial runtime");

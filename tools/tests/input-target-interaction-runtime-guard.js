@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeContext(overrides = {}) {
   const logs = overrides.logs || { queued: [], markers: [], chats: [] };
@@ -36,9 +33,9 @@ function makeContext(overrides = {}) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "input-target-interaction-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/input-target-interaction-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const actionQueueIndex = manifestSource.indexOf('id: "input-action-queue-runtime"');
   const targetInteractionIndex = manifestSource.indexOf('id: "input-target-interaction-runtime"');

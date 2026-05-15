@@ -1,14 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  sortKeysDeep,
-  loadRuntimeSkillSpecs
-} = require("./runtime-skill-specs");
-
-function writeJson(filePath, value) {
-  const json = `${JSON.stringify(value, null, 2)}\n`;
-  fs.writeFileSync(filePath, json, "utf8");
-}
+const { sortKeysDeep } = require("./object-utils");
+const { loadRuntimeSkillSpecs } = require("./runtime-skill-specs");
+const { writeJsonFile } = require("../lib/json-file-utils");
 
 function main() {
   const root = path.resolve(__dirname, "..", "..");
@@ -27,7 +21,7 @@ function main() {
   for (const skillId of skillIds) {
     const payload = sortKeysDeep({ skillId, ...runtime.skills[skillId] });
     const outPath = path.join(outDir, `${skillId}.json`);
-    writeJson(outPath, payload);
+    writeJsonFile(outPath, payload);
   }
 
   console.log(`Synced ${skillIds.length} skill spec mirror file(s) from runtime version ${runtime.version}.`);

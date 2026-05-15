@@ -45,11 +45,6 @@ interface ResolvedHeldItemSelection {
   heldItemSlot: AnimationHeldItemSlot | null;
 }
 
-const EMPTY_HELD_ITEMS: AnimationResolvedHeldItemMap = Object.freeze({
-  rightHand: null,
-  leftHand: null
-});
-
 function normalizeHeldItemSlot(slot?: AnimationHeldItemSlot | null): AnimationHeldItemSlot {
   return slot === "leftHand" ? "leftHand" : "rightHand";
 }
@@ -603,5 +598,3 @@ export function applyAnimationControllerFrame(
   });
   return pose;
 }
-
-export const DEFAULT_RESOLVED_HELD_ITEMS = EMPTY_HELD_ITEMS;

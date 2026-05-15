@@ -1,15 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  isObject,
-  sortKeysDeep,
-  loadRuntimeSkillSpecs
-} = require("./runtime-skill-specs");
-
-function readJson(filePath) {
-  const raw = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(raw);
-}
+const { isObject, sortKeysDeep } = require("./object-utils");
+const { loadRuntimeSkillSpecs } = require("./runtime-skill-specs");
+const { readJsonFile: readJson } = require("../lib/json-file-utils");
 
 function formatPath(basePath, segment) {
   if (!basePath) return segment;
@@ -84,7 +77,7 @@ function deepDiff(expected, actual, basePath = "", diffs = []) {
   return diffs;
 }
 
-function getComparableSkillRows(skillId, expected, actual) {
+function getComparableSkillRows(expected, actual) {
   return { expected, actual };
 }
 
@@ -171,7 +164,7 @@ function validateSkillDirectory(skillsDir, canonicalRows) {
     if (!actualRows.has(skillId)) continue;
     const expected = canonicalRows.get(skillId);
     const actual = actualRows.get(skillId);
-    const comparable = getComparableSkillRows(skillId, expected, actual);
+    const comparable = getComparableSkillRows(expected, actual);
     const diffs = deepDiff(comparable.expected, comparable.actual);
     if (diffs.length > 0) {
       errors.push(`content mismatch for skill '${skillId}':\n  - ${diffs.join("\n  - ")}`);
@@ -213,8 +206,6 @@ function main() {
 
 module.exports = {
   readJson,
-  deepDiff,
-  getComparableSkillRows,
   getCanonicalSkillRows,
   validateSkillDirectory
 };

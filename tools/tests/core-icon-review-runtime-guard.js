@@ -1,28 +1,21 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "core-icon-review-runtime.js");
-  const runtimeSource = read(root, "src/js/core-icon-review-runtime.js");
-  const coreSource = read(root, "src/js/core.js");
-  const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
-  const packageSource = read(root, "package.json");
+  const runtimeSource = readRepoFile(root, "src/js/core-icon-review-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const packageSuiteManifestSource = readRepoFile(root, "tools/tests/package-suite-manifest.js");
   const runtimeIndex = manifestSource.indexOf('id: "core-icon-review-runtime"');
   const coreIndex = manifestSource.indexOf('id: "core"');
 
   assert(runtimeIndex !== -1, "legacy manifest should include core icon review runtime");
   assert(coreIndex !== -1 && runtimeIndex < coreIndex, "legacy manifest should load core icon review runtime before core.js");
-  assert(packageSource.includes("--check ./src/js/core-icon-review-runtime.js"), "package checks should syntax-check core icon review runtime");
+  assert(packageSuiteManifestSource.includes('"src/js/core-icon-review-runtime.js"'), "check suite should syntax-check core icon review runtime");
   assert(runtimeSource.includes("window.CoreIconReviewRuntime"), "icon review runtime should expose a window runtime");
   assert(runtimeSource.includes("function sanitizeIconReviewItemIds(context = {}, itemIds)"), "runtime should own icon review item id sanitization");
   assert(runtimeSource.includes("function getActiveIconReviewBatch(context = {})"), "runtime should own active icon review batch resolution");
@@ -103,7 +96,7 @@ function run() {
       }
     },
     URLSearchParamsRef: URLSearchParams,
-    hasContentGrantItem: (grantId, itemId) => itemId === "coins",
+    hasContentGrantItem: (_grantId, itemId) => itemId === "coins",
     markContentGrantItem: (grantId, itemId) => marked.push(`${grantId}:${itemId}`),
     setInventorySlots: (slots) => replacedSlots.push(...slots)
   });

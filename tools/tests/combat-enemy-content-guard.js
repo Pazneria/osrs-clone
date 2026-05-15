@@ -1,15 +1,16 @@
 const assert = require("assert");
-const fs = require("fs");
 const path = require("path");
 
 const { loadTsModule } = require("../lib/ts-module-loader");
 const { loadRuntimeItemCatalog } = require("../content/runtime-item-catalog");
+const { assertRegex, escapeRegex: escapeRegExp } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const root = path.resolve(__dirname, "..", "..");
-const combatContentSource = fs.readFileSync(path.resolve(root, "src/game/combat/content.ts"), "utf8");
-const combatRoadmapSource = fs.readFileSync(path.resolve(root, "src/js/skills/combat/ROADMAP.md"), "utf8");
-const combatStatusSource = fs.readFileSync(path.resolve(root, "src/js/skills/combat/STATUS.md"), "utf8");
-const skillsIndexSource = fs.readFileSync(path.resolve(root, "src/js/skills/_index.md"), "utf8");
+const combatContentSource = readRepoFile(root, "src/game/combat/content.ts");
+const combatRoadmapSource = readRepoFile(root, "src/js/skills/combat/ROADMAP.md");
+const combatStatusSource = readRepoFile(root, "src/js/skills/combat/STATUS.md");
+const skillsIndexSource = readRepoFile(root, "src/js/skills/_index.md");
 const combatContent = loadTsModule(path.resolve(root, "src/game/combat/content.ts"));
 const combatFormulas = loadTsModule(path.resolve(root, "src/game/combat/formulas.ts"));
 const { itemDefs } = loadRuntimeItemCatalog(root);
@@ -109,14 +110,6 @@ const EXPECTED_PROGRESSION_BANDS = [
     maxExpectedSellValuePerKill: null
   }
 ];
-
-function escapeRegExp(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function assertRegex(source, regex, message) {
-  assert(regex.test(source), message);
-}
 
 function getGeneralStoreSellValue(itemId) {
   const item = itemDefs[itemId];
@@ -550,18 +543,33 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /- \[x\] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by topology and world parity guards\./,
+  /- \[x\] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by content and world parity guards\./,
   "combat status should mark COMBAT-015 complete with the camp-threat encounter rollout"
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-016:/,
-  "combat status should advance COMBAT-016 into the current focus slot"
+  /- \[x\] COMBAT-016A: Opt-in ally-assist\/group-aggro behavior now lets authored assist groups pull nearby idle allies into combat, with the southeast camp-threat pocket using the first live assist group\./,
+  "combat status should mark COMBAT-016A complete with the assist-group rollout"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-016B: Authored patrol routes now drive idle movement for opt-in spawn nodes, with the southeast camp fast striker using the first live patrol route and guards locking route authoring, bridge, and runtime behavior\./,
+  "combat status should mark COMBAT-016B complete with the patrol-route rollout"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-017:/,
+  "combat status should advance COMBAT-017 into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear\/brute\/striker spawns \| Advanced roaming, patrols, ally-assist\/group-aggro behavior, and richer encounter-state logic \| None \|/,
-  "skills index should reflect the completed encounter rollout and next advanced-logic focus"
+  /\| Combat \| In Progress \| The southeast camp-threat pocket now uses opt-in ally-assist plus an authored fast-striker patrol route \| Ranged combat on top of the shared combat core \| None \|/,
+  "skills index should reflect the patrol-route rollout and next ranged-combat focus"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Authored patrol-route movement for spawn nodes \| Complete \|/,
+  "combat roadmap should mark authored patrol-route movement complete"
 );
 
 assertRegex(
@@ -576,7 +584,7 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /\| Starter Town \| Camp Threat \| `camp_southeast_ruins` \| 3 \|/,
+  /\| Main Overworld \| Camp Threat \| `camp_southeast_ruins` \| 3 \|/,
   "combat roadmap should document the live southeast camp-threat spawn coverage"
 );
 assertRegex(

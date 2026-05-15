@@ -1,26 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function makeClassList() {
-  const values = new Set();
-  return {
-    values,
-    add(value) { values.add(value); },
-    remove(value) { values.delete(value); },
-    contains(value) { return values.has(value); },
-    toggle(value, force) {
-      const shouldAdd = typeof force === "boolean" ? force : !values.has(value);
-      if (shouldAdd) values.add(value);
-      else values.delete(value);
-      return shouldAdd;
-    }
-  };
-}
+const { makeClassList } = require("./dom-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeElement(tagName) {
   const element = {
@@ -99,9 +81,9 @@ function makeDocument() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "core-player-entry-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/core-player-entry-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(runtimeSource.includes("window.CorePlayerEntryRuntime"), "player-entry runtime should expose a window runtime");
   assert(runtimeSource.includes("function sanitizePlayerName"), "player-entry runtime should own name sanitation");
@@ -245,7 +227,7 @@ function run() {
       statusText: "Fresh character profile",
       isContinueFlow: false,
       titleText: "Create Your Adventurer",
-      subtitleText: "Choose a starter identity before you arrive on Tutorial Island.",
+      subtitleText: "Choose a starter identity before you arrive on the mainland.",
       primaryActionText: "Start Adventure",
       noteText: "Progress will begin autosaving locally in this browser once you arrive."
     })

@@ -1,14 +1,11 @@
+const assert = require("assert");
 const path = require("path");
 const { loadWorldContent } = require("../content/world-content");
 const { loadTsModule } = require("../lib/ts-module-loader");
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
 function assertDeepWaterPreserved(world, bodies) {
-  const pond = bodies.find((body) => body.id === "legacy-castle-front-pond");
-  assert(!!pond, `${world.worldId}: missing compatibility castle-front-pond water body`);
+  const pond = bodies.find((body) => body.id === "castle_front_pond");
+  assert(!!pond, `${world.worldId}: missing authored castle-front pond water body`);
   assert(pond.depthProfile && pond.depthProfile.mode === "tile_truth", `${world.worldId}: pond depth profile should default to tile_truth`);
   assert(Array.isArray(pond.depthProfile.deepZones) && pond.depthProfile.deepZones.length === 1, `${world.worldId}: pond should preserve one deep-water zone`);
   const deepShape = pond.depthProfile.deepZones[0].shape;
@@ -44,8 +41,10 @@ function run() {
   const starterTown = loadWorldContent(root, "main_overworld").world;
 
   const starterBodies = getWorldWaterBodies(starterTown);
-  assert(starterBodies.length === 7, "starter_town should normalize 5 lakes, 1 pond, and 1 river water body");
-  assert(starterBodies.some((body) => body.id === "legacy-east-river" && body.shape.kind === "polygon"), "starter_town should include the compatibility river water body");
+  assert(starterBodies.length === 8, "main_overworld should normalize 5 lakes, 1 pond, and 2 small pools");
+  assert(!starterBodies.some((body) => body.id === "legacy-east-river"), "main_overworld should not include the old north-south compatibility river");
+  assert(starterBodies.some((body) => body.id === "east_marsh_pool" && body.shape.kind === "ellipse"), "main_overworld should keep the east marsh pool");
+  assert(starterBodies.some((body) => body.id === "south_brook_pool" && body.shape.kind === "ellipse"), "main_overworld should keep the south brook pool");
   assertDeepWaterPreserved(starterTown, starterBodies);
   assertRenderPayloadDeterministic(buildWaterRenderPayload, starterTown);
 

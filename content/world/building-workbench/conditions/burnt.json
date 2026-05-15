@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "conditionId": "burnt",
+  "label": "Burnt",
+  "damageLevel": 0.82,
+  "wallHeightScale": 0.58,
+  "roofIntegrity": 0.18,
+  "tint": "#3c3028",
+  "tags": [
+    "burnt",
+    "ash",
+    "ruined"
+  ],
+  "promotionNotes": [
+    "Burnt structures should use material tinting or a dedicated stamp variant.",
+    "Avoid active home/service wiring unless the story explicitly supports it."
+  ]
+}

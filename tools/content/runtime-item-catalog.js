@@ -1,20 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-
-function isObject(value) {
-  return !!value && typeof value === "object" && !Array.isArray(value);
-}
-
-function sortKeysDeep(value) {
-  if (Array.isArray(value)) return value.map(sortKeysDeep);
-  if (!isObject(value)) return value;
-
-  const out = {};
-  const keys = Object.keys(value).sort();
-  for (const key of keys) out[key] = sortKeysDeep(value[key]);
-  return out;
-}
+const { isObject } = require("./object-utils");
 
 function loadRuntimeItemCatalog(projectRoot) {
   const catalogPath = path.join(projectRoot, "src", "js", "content", "item-catalog.js");
@@ -34,7 +21,5 @@ function loadRuntimeItemCatalog(projectRoot) {
 }
 
 module.exports = {
-  isObject,
-  sortKeysDeep,
   loadRuntimeItemCatalog
 };

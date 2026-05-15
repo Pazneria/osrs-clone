@@ -1,20 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function makePlane(size, fill = 0) {
-  return Array(size).fill(0).map(() => Array(size).fill(fill));
-}
+const { makeSquareGrid: makePlane } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const runtimeSource = readRepoFile(root, "src/js/world/logical-map-authoring-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const authoringRuntimeIndex = manifestSource.indexOf('id: "world-logical-map-authoring-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
 

@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "settlementId": "old_roadhold",
+  "worldId": "main_overworld",
+  "label": "Old Roadhold",
+  "kind": "outpost",
+  "status": "draft",
+  "placementMode": "preview_only",
+  "themeMix": [
+    "stone_market",
+    "frontier_timber"
+  ],
+  "intent": {
+    "role": "A damaged fortified road stop with an old gatehouse, a burnt cottage, and a weathered manor shell.",
+    "differenceFromStarterTown": "This reads as old, damaged, and defensive rather than cozy or commercial.",
+    "playerRead": "A place where the mainland can show history, danger, and partial ruin without becoming random clutter."
+  },
+  "anchorBounds": {
+    "xMin": 390,
+    "yMin": 100,
+    "xMax": 470,
+    "yMax": 180
+  },
+  "placements": [
+    {
+      "structureId": "old_road_gatehouse",
+      "buildingId": "castle_gatehouse",
+      "x": 428,
+      "y": 118,
+      "z": 0,
+      "role": "old defensive threshold and route landmark"
+    },
+    {
+      "structureId": "old_road_burnt_cottage",
+      "buildingId": "burnt_cottage",
+      "x": 400,
+      "y": 150,
+      "z": 0,
+      "role": "burnt roadside home"
+    },
+    {
+      "structureId": "old_road_manor",
+      "buildingId": "stone_manor",
+      "x": 448,
+      "y": 146,
+      "z": 0,
+      "role": "weathered estate shell for quest or lore use"
+    }
+  ],
+  "roads": [
+    {
+      "pathId": "old_roadhold_gate_road",
+      "roadProfileId": "cart_road",
+      "points": [
+        {
+          "x": 400,
+          "y": 170
+        },
+        {
+          "x": 420,
+          "y": 150
+        },
+        {
+          "x": 436,
+          "y": 132
+        },
+        {
+          "x": 464,
+          "y": 118
+        }
+      ],
+      "pathWidth": 2.8,
+      "edgeSoftness": 0.65,
+      "tileId": "DIRT",
+      "tags": [
+        "main-overworld",
+        "road",
+        "spawn-protected",
+        "settlement-draft"
+      ]
+    },
+    {
+      "pathId": "old_roadhold_ash_track",
+      "roadProfileId": "ash_track",
+      "points": [
+        {
+          "x": 392,
+          "y": 166
+        },
+        {
+          "x": 404,
+          "y": 164
+        },
+        {
+          "x": 418,
+          "y": 160
+        }
+      ],
+      "pathWidth": 1.8,
+      "edgeSoftness": 0.5,
+      "tileId": "DIRT",
+      "tags": [
+        "main-overworld",
+        "road",
+        "spawn-protected",
+        "settlement-draft"
+      ]
+    }
+  ],
+  "npcPlan": [
+    {
+      "serviceId": "merchant:old_road_scavenger",
+      "home": "old_road_gatehouse",
+      "role": "ruin flavor, warnings, and salvage rumors"
+    }
+  ],
+  "promotionChecklist": [
+    "Review gate passage pathing before promoting the castle gatehouse stamp.",
+    "Keep burnt and broken states as explicit condition data so ruins do not become bespoke clutter.",
+    "Promote ash tracks as dirt tile/road metadata, not preview geometry.",
+    "Do not wire normal homes or banks here unless the damaged settlement becomes inhabited."
+  ]
+}

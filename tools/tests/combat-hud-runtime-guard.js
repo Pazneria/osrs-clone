@@ -1,13 +1,8 @@
-const fs = require("fs");
-const path = require("path");
 const assert = require("assert");
 const vm = require("vm");
+const { createRepoFileReader } = require("./repo-file-test-utils");
 
-const root = path.resolve(__dirname, "..", "..");
-
-function read(relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
+const read = createRepoFileReader(__dirname);
 
 const runtimeSource = read("src/js/combat-hud-runtime.js");
 const combatSource = read("src/js/combat.js");

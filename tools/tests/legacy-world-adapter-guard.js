@@ -1,50 +1,47 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const proceduralRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "procedural-runtime.js"), "utf8");
-  const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
-  const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
-  const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
-  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
-  const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-quarry-runtime.js"), "utf8");
-  const pierRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "pier-runtime.js"), "utf8");
-  const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
-  const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "npc-render-runtime.js"), "utf8");
-  const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
-  const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-pose-reference-runtime.js"), "utf8");
-  const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "town-npc-runtime.js"), "utf8");
-  const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "fire-lifecycle-runtime.js"), "utf8");
-  const groundItemLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "ground-item-lifecycle-runtime.js"), "utf8");
-  const treeLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "tree-lifecycle-runtime.js"), "utf8");
-  const rockLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "rock-lifecycle-runtime.js"), "utf8");
-  const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
-  const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
-  const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
-  const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
-  const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
-  const statusHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "status-hud-runtime.js"), "utf8");
-  const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "skill-progress-runtime.js"), "utf8");
-  const inventoryItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "inventory-item-runtime.js"), "utf8");
-  const equipmentItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "equipment-item-runtime.js"), "utf8");
-  const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
-  const inventoryActionRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "inventory-action-runtime.js"), "utf8");
-  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
-  const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
-  const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
-  const placementsSource = fs.readFileSync(path.join(root, "src", "game", "world", "placements.ts"), "utf8");
-  const cloneSource = fs.readFileSync(path.join(root, "src", "game", "world", "clone.ts"), "utf8");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const qaToolsSource = readRepoFile(root, "src/js/qa-tools-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const proceduralRuntimeSource = readRepoFile(root, "src/js/world/procedural-runtime.js");
+  const sharedAssetsRuntimeSource = readRepoFile(root, "src/js/world/shared-assets-runtime.js");
+  const waterRuntimeSource = readRepoFile(root, "src/js/world/water-runtime.js");
+  const terrainSetupRuntimeSource = readRepoFile(root, "src/js/world/terrain-setup-runtime.js");
+  const logicalMapAuthoringRuntimeSource = readRepoFile(root, "src/js/world/logical-map-authoring-runtime.js");
+  const miningQuarryRuntimeSource = readRepoFile(root, "src/js/world/mining-quarry-runtime.js");
+  const pierRuntimeSource = readRepoFile(root, "src/js/world/pier-runtime.js");
+  const chunkTierRenderRuntimeSource = readRepoFile(root, "src/js/world/chunk-tier-render-runtime.js");
+  const npcRenderRuntimeSource = readRepoFile(root, "src/js/world/npc-render-runtime.js");
+  const chunkResourceRenderRuntimeSource = readRepoFile(root, "src/js/world/chunk-resource-render-runtime.js");
+  const miningPoseReferenceRuntimeSource = readRepoFile(root, "src/js/world/mining-pose-reference-runtime.js");
+  const townNpcRuntimeSource = readRepoFile(root, "src/js/world/town-npc-runtime.js");
+  const fireLifecycleRuntimeSource = readRepoFile(root, "src/js/world/fire-lifecycle-runtime.js");
+  const groundItemLifecycleRuntimeSource = readRepoFile(root, "src/js/world/ground-item-lifecycle-runtime.js");
+  const treeLifecycleRuntimeSource = readRepoFile(root, "src/js/world/tree-lifecycle-runtime.js");
+  const rockLifecycleRuntimeSource = readRepoFile(root, "src/js/world/rock-lifecycle-runtime.js");
+  const sceneStateSource = readRepoFile(root, "src/js/world/scene-state.js");
+  const sceneLifecycleSource = readRepoFile(root, "src/js/world/scene-lifecycle.js");
+  const chunkRuntimeSource = readRepoFile(root, "src/js/world/chunk-scene-runtime.js");
+  const mapHudRuntimeSource = readRepoFile(root, "src/js/world/map-hud-runtime.js");
+  const trainingLocationRuntimeSource = readRepoFile(root, "src/js/world/training-location-runtime.js");
+  const statusHudRuntimeSource = readRepoFile(root, "src/js/world/status-hud-runtime.js");
+  const skillProgressRuntimeSource = readRepoFile(root, "src/js/skill-progress-runtime.js");
+  const inventoryItemRuntimeSource = readRepoFile(root, "src/js/inventory-item-runtime.js");
+  const equipmentItemRuntimeSource = readRepoFile(root, "src/js/equipment-item-runtime.js");
+  const foodItemRuntimeSource = readRepoFile(root, "src/js/food-item-runtime.js");
+  const inventoryActionRuntimeSource = readRepoFile(root, "src/js/inventory-action-runtime.js");
+  const bridgeSource = readRepoFile(root, "src/game/platform/legacy-bridge.ts");
+  const legacyManifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const adapterSource = readRepoFile(root, "src/game/platform/legacy-world-adapter.ts");
+  const bootstrapSource = readRepoFile(root, "src/game/world/bootstrap.ts");
+  const placementsSource = readRepoFile(root, "src/game/world/placements.ts");
+  const cloneSource = readRepoFile(root, "src/game/world/clone.ts");
   global.window = {};
   const { exposeLegacyBridge } = loadTsModule(path.join(root, "src", "game", "platform", "legacy-bridge.ts"));
   const { exposeLegacyWorldAdapter } = loadTsModule(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"));
@@ -57,6 +54,7 @@ function run() {
   assert(adapterSource.includes("getCurrentWorldPayload"), "legacy world adapter should expose the legacy-ready world payload");
   assert(adapterSource.includes("waterRenderPayload"), "legacy world adapter should expose typed water render payloads");
   assert(adapterSource.includes("islandWater"), "legacy world adapter should expose island water topology");
+  assert(adapterSource.includes("landformPatches"), "legacy world adapter should expose authored terrain landform patches");
   assert(adapterSource.includes("caveOpeningLandmarks"), "legacy world adapter should expose visual cave opening landmarks");
   assert(adapterSource.includes("decorPropLandmarks"), "legacy world adapter should expose decorative prop landmarks");
   assert(adapterSource.includes("firemakingTrainingRouteDefs"), "legacy world adapter should expose firemaking training routes in the legacy-ready payload");
@@ -376,11 +374,30 @@ function run() {
     runtime.getWorldLegacyConfig("").worldId === starterTownLegacy.worldId,
     "legacy bridge legacy-config lookup should fall back for empty world ids"
   );
+  const mainOverworldPayload = adapterRuntime.getWorldPayload("main_overworld");
+  assert(
+    mainOverworldPayload.landformPatches.some((landform) => landform.landformId === "sunspur_foothill_rise"),
+    "legacy world adapter payload should publish authored landform patches"
+  );
+  const clonedLandform = mainOverworldPayload.landformPatches.find((landform) => landform.landformId === "sunspur_foothill_rise");
+  clonedLandform.points[0].x = -999;
+  clonedLandform.tags.push("mutated-test-tag");
+  const freshMainOverworldPayload = adapterRuntime.getWorldPayload("main_overworld");
+  const freshLandform = freshMainOverworldPayload.landformPatches.find((landform) => landform.landformId === "sunspur_foothill_rise");
+  assert(freshLandform.points[0].x !== -999, "legacy world adapter should deep-clone landform path points per payload lookup");
+  assert(!freshLandform.tags.includes("mutated-test-tag"), "legacy world adapter should clone landform tag arrays per payload lookup");
   const tutorialPayload = adapterRuntime.getWorldPayload("tutorial_island");
+  const tutorialGuideSpot = tutorialPayload.staticMerchantSpots.find((spot) => spot && spot.dialogueId === "tutorial_guide" && spot.spawnId === "npc:tutorial_guide");
+  const tutorialExitGuideSpot = tutorialPayload.staticMerchantSpots.find((spot) => spot && spot.dialogueId === "tutorial_guide" && spot.spawnId === "npc:tutorial_exit_guide");
+  assert(tutorialGuideSpot, "tutorial guide render spot should preserve its authored spawn id");
+  assert(tutorialGuideSpot.tutorialVisibleUntilStep === 10, "tutorial guide render spot should preserve its authored visibility window");
+  assert(tutorialExitGuideSpot, "tutorial exit guide render spot should preserve its authored spawn id");
+  assert(tutorialExitGuideSpot.tutorialVisibleFromStep === 11, "tutorial exit guide render spot should preserve its authored visibility window");
   const tutorialFishingMerchantSpots = tutorialPayload.fishingMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_fishing_instructor");
   const tutorialStaticFishingSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_fishing_instructor");
   assert(tutorialFishingMerchantSpots.length === 0, "tutorial fishing instructor should not render through the special fishing merchant path");
   assert(tutorialStaticFishingSpots.length === 1, "tutorial fishing instructor should render once as a normal static tutorial merchant");
+  assert(tutorialStaticFishingSpots[0].spawnId === "npc:tutorial_fishing_instructor", "tutorial fishing instructor render spot should preserve its authored spawn id");
   assert(tutorialStaticFishingSpots[0].appearanceId === "tutorial_fishing_instructor", "tutorial fishing instructor render spot should preserve the weathered angler appearance");
   assert(tutorialStaticFishingSpots[0].roamingRadiusOverride === 0, "tutorial fishing instructor render spot should preserve stationary roaming");
   const tutorialStaticFiremakingSpots = tutorialPayload.staticMerchantSpots.filter((spot) => spot && spot.dialogueId === "tutorial_firemaking_instructor");

@@ -11,6 +11,7 @@
     };
 
     const skillRegistry = {};
+    const fallbackPlayerState = {};
 
     function debugCookingUse(message) {
         if (!window.DEBUG_COOKING_USE) return;
@@ -33,8 +34,7 @@
         const session = getGameSession();
         if (session && session.player) return session.player;
         if (typeof playerState === 'object' && playerState) return playerState;
-        if (!window.__skillRuntimeFallbackPlayerState) window.__skillRuntimeFallbackPlayerState = {};
-        return window.__skillRuntimeFallbackPlayerState;
+        return fallbackPlayerState;
     }
 
     function getActiveProgressState() {
@@ -114,11 +114,6 @@
 
     function hasToolClass(toolClass) {
         return !!getBestToolByClass(toolClass);
-    }
-
-    function autoEquipToolClass(toolClass) {
-        // Kept for backward compatibility with older modules, now intentionally no-op.
-        return hasToolClass(toolClass);
     }
 
     function giveItemById(itemId, amount = 1) {
@@ -285,23 +280,6 @@
             },
             hasToolClass,
             getBestToolByClass,
-            autoEquipToolClass,
-            setToolVisualById: (itemId, heldItemSlot = null) => {
-                if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) {
-                    setPlayerRigToolVisual(overrides.playerRig, itemId, heldItemSlot);
-                }
-            },
-            setToolVisuals: (heldItems, primaryHeldItemSlot = null) => {
-                if (typeof setPlayerRigToolVisuals === 'function' && overrides.playerRig) {
-                    setPlayerRigToolVisuals(overrides.playerRig, heldItems, primaryHeldItemSlot);
-                    return;
-                }
-                if (typeof setPlayerRigToolVisual === 'function' && overrides.playerRig) {
-                    const desiredSlot = primaryHeldItemSlot === 'leftHand' ? 'leftHand' : 'rightHand';
-                    const desiredId = heldItems && typeof heldItems === 'object' ? heldItems[desiredSlot] : null;
-                    setPlayerRigToolVisual(overrides.playerRig, desiredId || null, desiredSlot);
-                }
-            },
             hasItem,
             canAcceptItemById,
             getItemDataById,
@@ -620,16 +598,3 @@
         getSkillAnimationSuppressEquipmentVisual
     };
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-

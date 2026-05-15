@@ -1,9 +1,9 @@
 // Engine Constants & Chunk Architecture
         const TICK_RATE_MS = 600;
         const CHUNK_SIZE = 81;
-        const WORLD_CHUNKS_X = 8;
-        const WORLD_CHUNKS_Y = 8;
-        const MAP_SIZE = CHUNK_SIZE * WORLD_CHUNKS_X; // 648
+        const WORLD_CHUNKS_X = 16;
+        const WORLD_CHUNKS_Y = 16;
+        const MAP_SIZE = CHUNK_SIZE * WORLD_CHUNKS_X; // 1296
         const RENDER_PIXEL_RATIO_CAP = 2.0;
         
         // NEW: Max Planes (Z-Levels)
@@ -222,7 +222,6 @@
             ? gameSession.progress.quests
             : {};
         window.playerProfileState = playerProfileState;
-        const TEST_MINING_ROCK = { x: 205, y: 211, z: 0 };
         let RUNE_ESSENCE_ROCKS = [];
 
         // Shared shoulder pivot for player rig/animations.
@@ -298,20 +297,6 @@
                 uiBound: false
             };
 
-        const MOTION_TUNING = {
-            runArmSwing: 0.8,
-            runLegSwing: 0.78,
-            runKneeLift: 1.0,
-            walkArmSwing: 0.3,
-            walkLegSwing: 0.62,
-            walkKneeLift: 0.85,
-            runBounce: 0.12,
-            walkBounce: 0.1,
-            idleBounce: 0.0125
-        };
-
-        let motionDebugVisible = false;
-
         function formatRuntimeError(errorLike) {
             if (!errorLike) return 'Unknown runtime error.';
             if (errorLike.stack) return String(errorLike.stack);
@@ -343,7 +328,7 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260317m";
+        const ASSET_VERSION_TAG = "20260513a";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
         function sanitizeIconReviewItemIds(itemIds) {
             return getCoreIconReviewRuntime().sanitizeIconReviewItemIds(buildCoreIconReviewRuntimeContext(), itemIds);
@@ -836,6 +821,11 @@
                 getWorldGameContext,
                 getWorldAdapterRuntime: () => worldAdapterRuntime,
                 travelToWorld,
+                completeTutorialForQa: () => {
+                    if (!playerProfileState) return false;
+                    playerProfileState.tutorialStep = TUTORIAL_EXIT_STEP;
+                    return true;
+                },
                 getRunecraftingAltarLocations: (typeof getRunecraftingAltarLocations === 'function') ? getRunecraftingAltarLocations : null,
                 getFiremakingTrainingLocations: (typeof getFiremakingTrainingLocations === 'function') ? getFiremakingTrainingLocations : null,
                 getPlayerState: () => playerState,
@@ -858,7 +848,6 @@
             return equipmentState;
         }
         let equipment = ensureEquipmentStateSlots(gameSession ? gameSession.progress.equipment : null);
-        let baseStats = { atk: 10, def: 10, str: 10 };
         let userItemPrefs = gameSession ? gameSession.progress.userItemPrefs : {};
         let playerSkills = gameSession ? gameSession.progress.playerSkills : {
             attack: { xp: 0, level: 1 },
@@ -1227,11 +1216,6 @@
 
         installProgressHooks();
 
-        // Temporary interaction diagnostics for QA flows.
-        if (!gameSessionRuntime && typeof window.DEBUG_COOKING_USE === 'undefined') window.DEBUG_COOKING_USE = false;
-        if (!gameSessionRuntime && typeof window.QA_COMBAT_DEBUG === 'undefined') window.QA_COMBAT_DEBUG = false;
-        if (!gameSessionRuntime && typeof window.QA_PIER_DEBUG === 'undefined') window.QA_PIER_DEBUG = false;
-
         // UI Elements
         const contextMenuEl = document.getElementById('context-menu');
         const contextOptionsListEl = document.getElementById('context-options-list');
@@ -1440,7 +1424,7 @@
                     return Object.assign({}, viewModel, {
                         isContinueFlow: false,
                         titleText: 'Create Your Adventurer',
-                        subtitleText: 'Choose a starter identity before you arrive on Tutorial Island.',
+                        subtitleText: 'Choose a starter identity before you arrive on the mainland.',
                         primaryActionText: 'Start Adventure',
                         noteText: 'Creator reopened for QA. Changes save when you start adventure.'
                     });
@@ -1802,7 +1786,7 @@
             const loadProgressResult = loadProgressFromStorage();
             const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);
             const startupRequestedWorldId = isFreshProfileStartup
-                ? TUTORIAL_WORLD_ID
+                ? MAIN_OVERWORLD_WORLD_ID
                 : (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                 ? gameSessionRuntime.resolveCurrentWorldId()
                 : MAIN_OVERWORLD_WORLD_ID;
@@ -1977,7 +1961,3 @@
             fpsSampleLast = performance.now();
             animate();
         };
-
-
-
-

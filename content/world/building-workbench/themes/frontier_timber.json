@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "themeId": "frontier_timber",
+  "label": "Frontier Timber",
+  "settlementUse": [
+    "roadside outpost",
+    "woodcutting hamlet",
+    "small farmstead"
+  ],
+  "materialPalette": {
+    "wall": "rough timber walls with visible corner posts",
+    "floor": "warm plank floor",
+    "roof": "thatch and weathered bark",
+    "trim": "dark fence-wood braces",
+    "accent": "tool racks, chopping blocks, crates, and stacked logs"
+  },
+  "decorKinds": [
+    "crate",
+    "tool_rack",
+    "notice_board",
+    "chopping_block",
+    "woodpile",
+    "barrel",
+    "shop_sign",
+    "market_awning",
+    "thatch_bundle"
+  ],
+  "wallArtMotifs": [
+    "carved trail marker",
+    "hunting tally board",
+    "simple landscape painting"
+  ],
+  "notes": [
+    "Use for settlements that should feel handmade and temporary.",
+    "Avoid making every house the same footprint; pair cottages with sheds and lean-to porches."
+  ]
+}

@@ -1,15 +1,9 @@
-const fs = require("fs");
-const path = require("path");
 const assert = require("assert");
 const vm = require("vm");
+const { createRepoFileReader } = require("./repo-file-test-utils");
+const { countOccurrences } = require("./source-block-utils");
 
-function read(relPath) {
-  return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
-}
-
-function countOccurrences(source, pattern) {
-  return source.split(pattern).length - 1;
-}
+const read = createRepoFileReader(__dirname);
 
 const legacyManifest = read("src/game/platform/legacy-script-manifest.ts");
 const mainSource = read("src/main.ts");

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "themeId": "painted_plaster",
+  "label": "Painted Plaster",
+  "settlementUse": [
+    "artisan street",
+    "river crossing",
+    "small civic square"
+  ],
+  "materialPalette": {
+    "wall": "limewashed plaster walls with colored trim and exposed timber ends",
+    "floor": "worn plank floors with painted threshold boards",
+    "roof": "red-brown tile and patched slate",
+    "trim": "blue shutters, hanging signs, and small awnings",
+    "accent": "framed paintings, dye crates, notice boards, barrels, and work desks"
+  },
+  "decorKinds": [
+    "desk",
+    "crate",
+    "notice_board",
+    "barrel",
+    "tool_rack",
+    "shop_sign",
+    "market_awning",
+    "wall_painting"
+  ],
+  "wallArtMotifs": [
+    "portrait study",
+    "painted town map",
+    "river crossing mural"
+  ],
+  "notes": [
+    "Use when a settlement needs color and civic life without becoming a stone city.",
+    "Pair with market or townhouse forms so the plaster reads as a local material choice, not a one-off gimmick."
+  ]
+}

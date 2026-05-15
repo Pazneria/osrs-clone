@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "frontier_bank",
+  "label": "Frontier Bank",
+  "category": "bank",
+  "archetypeId": "bank",
+  "themeId": "frontier_timber",
+  "materialProfileId": "timber_thatch",
+  "conditionId": "intact",
+  "variantTags": [
+    "bank",
+    "frontier",
+    "service",
+    "thatch"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWWC",
+      "WTTTTTTTTW",
+      "WTT$TTTTTW",
+      "WTTTTTTTTW",
+      "WTTTTTTTTW",
+      "CWWTTTTWWC",
+      "   TTTT   "
+    ],
+    "legend": {
+      "C": "timber corner post",
+      "W": "timber wall",
+      "T": "plank floor or step",
+      "$": "bank counter",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "bank_front",
+      "x": 3,
+      "y": 5,
+      "facing": "south",
+      "approach": {
+        "x": 3,
+        "y": 6
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 1.22,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "bank_desk",
+      "kind": "desk",
+      "x": 2,
+      "y": 2,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "bank"
+      ]
+    },
+    {
+      "id": "deposit_crate",
+      "kind": "crate",
+      "x": 8,
+      "y": 4,
+      "facingYaw": 0.2,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "storage"
+      ]
+    },
+    {
+      "id": "front_bank_sign",
+      "kind": "bank_sign",
+      "x": 5,
+      "y": 6,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "exterior",
+        "bank",
+        "signage"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "deposit_notice",
+      "surface": "north",
+      "x": 5,
+      "y": 1,
+      "motif": "deposit rules placard"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_frontier_bank",
+    "structureLabel": "Frontier Bank"
+  },
+  "notes": [
+    "A small reusable bank shell for hamlets and road towns.",
+    "Service wiring should stay out until a settlement chooses this as a live bank home."
+  ]
+}

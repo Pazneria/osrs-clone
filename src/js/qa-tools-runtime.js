@@ -50,6 +50,33 @@
         return context.tileId || context.TileId || getWindowRef(context).TileId || {};
     }
 
+    const QA_MAINLAND_TOUR_SPOTS = Object.freeze({
+        starter: Object.freeze({ x: 547, y: 560, z: 0, label: 'Starter Town' }),
+        market: Object.freeze({ x: 1162, y: 1052, z: 0, label: 'Market Crossing' }),
+        woodwatch: Object.freeze({ x: 252, y: 200, z: 0, label: 'North Woodwatch' }),
+        roadhold: Object.freeze({ x: 1158, y: 338, z: 0, label: 'Old Roadhold' }),
+        quarry: Object.freeze({ x: 864, y: 1056, z: 0, label: 'South Quarry Hamlet' })
+    });
+
+    const QA_MAINLAND_TOUR_ALIASES = Object.freeze({
+        start: 'starter',
+        town: 'starter',
+        starter_town: 'starter',
+        crossing: 'market',
+        market_crossing: 'market',
+        wood: 'woodwatch',
+        woods: 'woodwatch',
+        north: 'woodwatch',
+        north_woodwatch: 'woodwatch',
+        road: 'roadhold',
+        hold: 'roadhold',
+        old_roadhold: 'roadhold',
+        quarry_hamlet: 'quarry',
+        south: 'quarry',
+        south_quarry: 'quarry',
+        south_quarry_hamlet: 'quarry'
+    });
+
     function getWorldGameContext(context) {
         const worldContext = callHook(context, 'getWorldGameContext');
         if (worldContext) return worldContext;
@@ -267,6 +294,44 @@
         }
         addChat(context, `Teleported to ${label || 'target'}.`, 'info');
         return true;
+    }
+
+    function resolveQaMainlandTourSpot(targetLike) {
+        const key = String(targetLike || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+        if (!key) return null;
+        return QA_MAINLAND_TOUR_SPOTS[QA_MAINLAND_TOUR_ALIASES[key] || key] || null;
+    }
+
+    function qaGotoMainlandSpot(context, targetLike) {
+        const spot = resolveQaMainlandTourSpot(targetLike);
+        if (!spot) return false;
+
+        callHook(context, 'completeTutorialForQa');
+        const travel = context.travelToWorld || getWindowRef(context).travelToWorld;
+        if (typeof travel === 'function') {
+            const ok = travel('main_overworld', {
+                spawn: { x: spot.x, y: spot.y, z: spot.z },
+                label: spot.label
+            });
+            if (ok) {
+                addChat(context, `[QA mainland] ${spot.label} @ (${spot.x},${spot.y},${spot.z})`, 'info');
+                return true;
+            }
+        }
+
+        const worldContext = getWorldGameContext(context);
+        const activeWorldId = worldContext && typeof worldContext.worldId === 'string'
+            ? worldContext.worldId.toLowerCase()
+            : '';
+        if (activeWorldId === 'main_overworld') {
+            return qaTeleportTo(context, spot.x, spot.y, spot.z, spot.label);
+        }
+
+        return false;
     }
 
     function qaGotoAltar(context, labelLike) {
@@ -953,10 +1018,30 @@
         ];
     }
 
+    function getQaArmorLadderSlots(onlyTier) {
+        const tiers = ['bronze', 'iron', 'steel', 'mithril', 'adamant', 'rune'];
+        const slots = ['boots', 'helmet', 'shield', 'platelegs', 'platebody'];
+        const armorSlots = [];
+        for (let tierIndex = 0; tierIndex < tiers.length; tierIndex++) {
+            if (onlyTier && tiers[tierIndex] !== onlyTier) continue;
+            for (let slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+                armorSlots.push({ itemId: tiers[tierIndex] + '_' + slots[slotIndex], amount: 1 });
+            }
+        }
+        return armorSlots;
+    }
+
     function buildQaInventoryPresetSlots(context, presetName) {
         const name = String(presetName || '').trim().toLowerCase();
         const tools = getQaToolSlots();
 
+        if (name === 'armor_ladder' || name === 'armor_sets') {
+            return getQaArmorLadderSlots();
+        }
+        const armorTierMatch = /^armor_(bronze|iron|steel|mithril|adamant|rune)$/.exec(name);
+        if (armorTierMatch) {
+            return getQaArmorLadderSlots(armorTierMatch[1]);
+        }
         if (name === 'fish_full') {
             return makeFilledSlots(context, tools.concat([
                 { itemId: 'fishing_rod', amount: 1 },
@@ -1180,6 +1265,7 @@
             qaGotoFiremakingSpot: (nameLike) => qaGotoFiremakingSpot(context, nameLike),
             qaGotoFishingMerchant: (nameLike) => qaGotoFishingMerchant(context, nameLike),
             qaGotoMerchant: (targetLike) => qaGotoMerchant(context, targetLike),
+            qaGotoMainlandSpot: (targetLike) => qaGotoMainlandSpot(context, targetLike),
             qaGotoTutorialStation: (labelLike) => qaGotoTutorialStation(context, labelLike),
             qaGotoAltar: (labelLike) => qaGotoAltar(context, labelLike),
             qaDiagShop: (merchantIdInput) => qaDiagShop(context, merchantIdInput),
@@ -1199,6 +1285,7 @@
         getWorldMerchantServices,
         getQaFiremakingSpots,
         qaGotoFiremakingSpot,
+        qaGotoMainlandSpot,
         getQaDiscoveredMerchants,
         getQaOpenableMerchantIds,
         formatQaOpenShopUsage,

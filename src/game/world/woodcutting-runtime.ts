@@ -8,7 +8,7 @@ import type {
   WoodcuttingTreePlacement
 } from "../contracts/world";
 
-export interface WoodcuttingRuntimeResult {
+interface WoodcuttingRuntimeResult {
   woodcuttingRoutes: RouteDescriptor[];
   woodcuttingTreePlacements: WoodcuttingTreePlacement[];
   showcasePlacements: ShowcaseTree[];

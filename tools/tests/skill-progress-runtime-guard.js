@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function createFakeDocument() {
   const nodes = {};
@@ -40,9 +37,9 @@ function createFakeDocument() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "skill-progress-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/skill-progress-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const skillProgressIndex = manifestSource.indexOf('id: "skill-progress-runtime"');
   const coreIndex = manifestSource.indexOf('id: "core"');
   const worldIndex = manifestSource.indexOf('id: "world"');

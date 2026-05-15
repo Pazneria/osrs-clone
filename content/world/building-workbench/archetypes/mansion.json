@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "mansion",
+  "label": "Mansion",
+  "categories": [
+    "mansion",
+    "estate",
+    "large_home"
+  ],
+  "footprintTags": [
+    "large_footprint",
+    "formal_entry",
+    "multi_room_shell"
+  ],
+  "typicalRoles": [
+    "estate owner home",
+    "quest hub",
+    "wealth signal"
+  ],
+  "promotionHints": [
+    "Check route clearance and camera readability before promoting large estate footprints.",
+    "Prefer one reusable mansion shell with material variants over multiple bespoke estate stamps."
+  ]
+}

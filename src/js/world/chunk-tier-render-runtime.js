@@ -32,7 +32,8 @@
         rock: 3,
         wood: 4,
         stone: 5,
-        brick: 6
+        brick: 6,
+        sand: 7
     });
     const SIMPLIFIED_TERRAIN_SKIRT_DROP = 0.26;
     const SIMPLIFIED_TERRAIN_RUN_UNDERLAY_DROP = 0.075;
@@ -169,7 +170,8 @@
                 rock: 0x7a786e,
                 wood: 0x8a663f,
                 stone: 0x898982,
-                brick: 0x8a4e42
+                brick: 0x8a4e42,
+                sand: 0xc7a35f
             }
             : {
                 grass: 0xffffff,
@@ -178,7 +180,8 @@
                 rock: 0x918c7f,
                 wood: 0xffffff,
                 stone: 0xffffff,
-                brick: 0xffffff
+                brick: 0xffffff,
+                sand: 0xf1c875
             };
         const materials = [
             syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Grass`, tint.grass, grassMap),
@@ -187,7 +190,8 @@
             syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Rock`, tint.rock, dirtMap),
             syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Wood`, tint.wood, woodMap),
             syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Stone`, tint.stone, stoneMap),
-            syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Brick`, tint.brick, brickMap)
+            syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Brick`, tint.brick, brickMap),
+            syncChunkTierTerrainMaterial(THREE, sharedMaterials, `${prefix}Sand`, tint.sand, dirtMap)
         ];
         sharedMaterials[`${prefix}Materials`] = materials;
         sharedMaterials[prefix] = materials[SIMPLIFIED_TERRAIN_MATERIAL_INDEX.grass];
@@ -223,7 +227,8 @@
             0x5e5d55,
             0x61472d,
             0x62625d,
-            0x684037
+            0x684037,
+            0x8f7341
         ];
         const midColors = [
             0x667a3f,
@@ -232,7 +237,8 @@
             0x67665d,
             0x765638,
             0x6d6d67,
-            0x75463c
+            0x75463c,
+            0xaa8548
         ];
         const colors = far ? farColors : midColors;
         return colors[Math.max(0, Math.min(colors.length - 1, materialIndex))] || colors[0];
@@ -261,6 +267,7 @@
     function getSimplifiedTerrainMaterialIndex(tile, TileId) {
         if (tile === TileId.DIRT) return SIMPLIFIED_TERRAIN_MATERIAL_INDEX.dirt;
         if (tile === TileId.SHORE) return SIMPLIFIED_TERRAIN_MATERIAL_INDEX.shore;
+        if (tile === TileId.SAND) return SIMPLIFIED_TERRAIN_MATERIAL_INDEX.sand;
         if (tile === TileId.ROCK) return SIMPLIFIED_TERRAIN_MATERIAL_INDEX.rock;
         if (
             tile === TileId.FLOOR_WOOD

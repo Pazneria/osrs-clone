@@ -797,7 +797,7 @@ export function buildPlayerProfileSummaryViewModel(options: {
   const savedAt = Number.isFinite(playerEntryFlow.savedAt) ? Number(playerEntryFlow.savedAt) : null;
   const isContinueFlow = hasLoadedSave && !!profile.creationCompleted;
 
-  let subtitleText = "Choose a starter identity before you arrive on Tutorial Island.";
+  let subtitleText = "Choose a starter identity before you arrive on the mainland.";
   if (loadReason === "parse_failed" || loadReason === "invalid_payload") {
     subtitleText = "Previous save data could not be read, so this run starts from fresh defaults.";
   } else if (saveWasLegacyProfile) {

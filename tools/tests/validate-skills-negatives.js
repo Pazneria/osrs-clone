@@ -1,3 +1,4 @@
+const assert = require("assert");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -5,18 +6,8 @@ const {
   getCanonicalSkillRows,
   validateSkillDirectory
 } = require("../content/validate-skills.js");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function writeJson(filePath, value) {
-  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
+const { cloneJson: clone } = require("./collection-test-utils");
+const { writeJsonFile: writeJson } = require("../lib/json-file-utils");
 
 function writeCanonicalSkillSet(targetDir, canonicalRows, options = {}) {
   fs.mkdirSync(targetDir, { recursive: true });

@@ -1,6 +1,6 @@
 (function () {
-    const GROUND_ITEM_ICON_ASSET_VERSION = '20260317m';
-    const GROUND_PIXEL_SOURCE_ASSET_VERSION = '20260317j';
+    const GROUND_ITEM_ICON_ASSET_VERSION = '20260513a';
+    const GROUND_PIXEL_SOURCE_ASSET_VERSION = '20260513a';
 
     const FISH_GROUND_SPECIES_PROFILES = Object.freeze({
         shrimp: { scaleMultiplier: 0.34, depthMultiplier: 0.8, spriteY: 0.16, spriteScale: 0.38, pitch: -0.78 },
@@ -329,7 +329,7 @@
             new THREE.MeshLambertMaterial({ color: 0x3d2a1c })
         );
         base.position.set(0, -0.05, 0);
-        addGroundItemSprite({ THREE, group, path: './assets/pixel/logs.png?v=20260313a', y: 0.2, scale: 0.5 });
+        addGroundItemSprite({ THREE, group, path: './assets/pixel/regular_logs.png?v=20260313a', y: 0.2, scale: 0.5 });
         group.add(base);
     }
 

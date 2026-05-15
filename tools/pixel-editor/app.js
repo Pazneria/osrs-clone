@@ -384,38 +384,6 @@
         renderCanvas();
     }
 
-    function commitAuthoringRows(payload) {
-        const safePayload = payload && typeof payload === "object" ? payload : {};
-        const rows = Array.isArray(safePayload.rows) ? safePayload.rows.slice() : PixelSource.createBlankRows(EDITOR_CANVAS_SIZE, EDITOR_CANVAS_SIZE);
-        if (rows.length !== EDITOR_CANVAS_SIZE) {
-            throw new Error(`authoring rows must contain ${EDITOR_CANVAS_SIZE} rows`);
-        }
-        for (let i = 0; i < rows.length; i += 1) {
-            if (typeof rows[i] !== "string" || rows[i].length !== EDITOR_CANVAS_SIZE) {
-                throw new Error(`authoring row ${i} must be a ${EDITOR_CANVAS_SIZE}-character string`);
-            }
-        }
-
-        state.grid = PixelSource.rowsToGrid(rows);
-        const canonicalValidation = PixelSource.validatePixelSource({
-            id: typeof safePayload.id === "string" ? safePayload.id : "",
-            width: EXPORT_CANVAS_SIZE,
-            height: EXPORT_CANVAS_SIZE,
-            palette: Object.assign({}, safePayload.palette || {}),
-            pixels: exportRowsFromGrid(),
-            model: Object.assign({}, safePayload.model || {})
-        }, { requireId: false });
-
-        if (canonicalValidation.errors.length > 0) {
-            throw new Error(canonicalValidation.errors.join("; "));
-        }
-
-        state.source = canonicalValidation.normalized;
-        assetIdInput.value = state.source.id;
-        renderPalette();
-        renderCanvas();
-    }
-
     function newDocument() {
         const next = PixelSource.createBlankPixelSource(assetIdInput.value.trim());
         commitCanonicalSource(next);

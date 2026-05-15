@@ -25,7 +25,7 @@ function collectRequestBody(req: { on: (event: string, listener: (...args: any[]
   });
 }
 
-export function listAnimationClipSourceFiles(projectRoot: string): string[] {
+function listAnimationClipSourceFiles(projectRoot: string): string[] {
   const clipsRoot = path.resolve(projectRoot, ANIMATION_STUDIO_CLIPS_ROOT);
   if (!fs.existsSync(clipsRoot)) return [];
   const results: string[] = [];
@@ -50,7 +50,7 @@ export function listAnimationClipSourceFiles(projectRoot: string): string[] {
   return results;
 }
 
-export function resolveAnimationClipWritePath(projectRoot: string, sourcePath: string): string | null {
+function resolveAnimationClipWritePath(projectRoot: string, sourcePath: string): string | null {
   const clipsRoot = path.resolve(projectRoot, ANIMATION_STUDIO_CLIPS_ROOT);
   const requested = path.resolve(projectRoot, sourcePath);
   const normalizedRoot = `${clipsRoot}${path.sep}`;

@@ -61,6 +61,19 @@ function isWaterTileId(tileId) {
   return tileId === TileId.WATER_SHALLOW || tileId === TileId.WATER_DEEP;
 }
 
+function isNaturalTerrainTileId(tileId) {
+  return tileId === TileId.GRASS
+    || tileId === TileId.DIRT
+    || tileId === TileId.SAND
+    || tileId === TileId.SHORE
+    || tileId === TileId.STUMP;
+}
+
+function resolveTerrainTileId(tileKey) {
+  const key = typeof tileKey === "string" ? tileKey.trim() : "";
+  return key && Number.isFinite(TileId[key]) ? TileId[key] : null;
+}
+
 function getEllipseRotation(ellipse) {
   return Number.isFinite(ellipse && ellipse.rotationRadians) ? Number(ellipse.rotationRadians) : 0;
 }
@@ -147,6 +160,89 @@ function getPathBounds(points, padding) {
   };
 }
 
+function getPaddedEllipseBounds(ellipse, padding) {
+  const bounds = getEllipseBounds(ellipse);
+  return {
+    xMin: Math.max(1, Math.floor(bounds.xMin - padding)),
+    xMax: Math.min(MAP_SIZE - 2, Math.ceil(bounds.xMax + padding)),
+    yMin: Math.max(1, Math.floor(bounds.yMin - padding)),
+    yMax: Math.min(MAP_SIZE - 2, Math.ceil(bounds.yMax + padding))
+  };
+}
+
+function getLandformEllipseStrength(ellipse, x, y, edgeSoftness) {
+  if (!ellipse || !Number.isFinite(ellipse.rx) || !Number.isFinite(ellipse.ry) || ellipse.rx <= 0 || ellipse.ry <= 0) return 0;
+  const rotation = getEllipseRotation(ellipse);
+  const dx = x - ellipse.cx;
+  const dy = y - ellipse.cy;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const localX = (dx * cos) + (dy * sin);
+  const localY = (-dx * sin) + (dy * cos);
+  const nx = localX / ellipse.rx;
+  const ny = localY / ellipse.ry;
+  const d = Math.sqrt((nx * nx) + (ny * ny));
+  if (d <= 1) return 1;
+  if (edgeSoftness <= 0) return 0;
+  const edgeDistance = (d - 1) * Math.min(ellipse.rx, ellipse.ry);
+  return Math.max(0, Math.min(1, 1 - (edgeDistance / edgeSoftness)));
+}
+
+function stampLandformTile(map, landformPatch, x, y, z, strength) {
+  if (strength <= 0.16 || inTownCore(x, y) || !map[z] || !map[z][y]) return;
+  const tile = map[z][y][x];
+  if (isWaterTileId(tile) || !isNaturalTerrainTileId(tile)) return;
+  const landformTileId = resolveTerrainTileId(landformPatch.tileId);
+  if (Number.isFinite(landformTileId)) map[z][y][x] = landformTileId;
+}
+
+function applyTerrainLandformPatches(map, world) {
+  const landforms = world.terrainPatches && Array.isArray(world.terrainPatches.landforms)
+    ? world.terrainPatches.landforms
+    : [];
+  for (let landformIndex = 0; landformIndex < landforms.length; landformIndex++) {
+    const landformPatch = landforms[landformIndex];
+    if (!landformPatch || !landformPatch.tileId) continue;
+    const z = Number.isInteger(landformPatch.z) ? landformPatch.z : 0;
+    if (!map[z]) continue;
+    const edgeSoftness = Number.isFinite(landformPatch.edgeSoftness)
+      ? Math.max(0, Number(landformPatch.edgeSoftness))
+      : 3.0;
+
+    if (landformPatch.kind === "ellipse") {
+      const bounds = getPaddedEllipseBounds(landformPatch, edgeSoftness + 1);
+      for (let y = bounds.yMin; y <= bounds.yMax; y++) {
+        if (!map[z][y]) continue;
+        for (let x = bounds.xMin; x <= bounds.xMax; x++) {
+          const strength = getLandformEllipseStrength(landformPatch, x + 0.5, y + 0.5, edgeSoftness);
+          stampLandformTile(map, landformPatch, x, y, z, strength);
+        }
+      }
+      continue;
+    }
+
+    if (landformPatch.kind === "path") {
+      const points = Array.isArray(landformPatch.points) ? landformPatch.points : [];
+      const pathWidth = Number.isFinite(landformPatch.pathWidth) ? Math.max(0.5, Number(landformPatch.pathWidth)) : 6.0;
+      const halfWidth = pathWidth / 2;
+      const pathEdgeSoftness = Number.isFinite(landformPatch.edgeSoftness)
+        ? Math.max(0, Number(landformPatch.edgeSoftness))
+        : Math.max(1.0, halfWidth * 0.65);
+      const bounds = getPathBounds(points, halfWidth + pathEdgeSoftness + 1);
+      if (!bounds) continue;
+      for (let y = bounds.yMin; y <= bounds.yMax; y++) {
+        if (!map[z][y]) continue;
+        for (let x = bounds.xMin; x <= bounds.xMax; x++) {
+          const dist = distanceToPath(points, x + 0.5, y + 0.5);
+          if (dist > halfWidth + pathEdgeSoftness) continue;
+          const edgeT = pathEdgeSoftness <= 0 ? 1 : Math.max(0, Math.min(1, 1 - ((dist - halfWidth) / pathEdgeSoftness)));
+          stampLandformTile(map, landformPatch, x, y, z, dist <= halfWidth ? 1 : edgeT);
+        }
+      }
+    }
+  }
+}
+
 function applyIslandWaterPatch(map, world) {
   const patch = world.terrainPatches && world.terrainPatches.islandWater;
   if (!patch || patch.enabled === false || !patch.waterBounds || !Array.isArray(patch.landPolygon) || patch.landPolygon.length < 3) return;
@@ -225,7 +321,7 @@ function applyTerrainPathPatches(map, world) {
       for (let x = bounds.xMin; x <= bounds.xMax; x++) {
         const tile = map[z][y][x];
         if (isWaterTileId(tile)) continue;
-        if (!(tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.SHORE || tile === TileId.STUMP)) continue;
+        if (!(tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.SAND || tile === TileId.SHORE || tile === TileId.STUMP)) continue;
         const dist = distanceToPath(points, x + 0.5, y + 0.5);
         if (dist <= halfWidth + edgeSoftness) map[z][y][x] = pathTileId;
       }
@@ -372,6 +468,7 @@ function setCookingRouteTiles(map, world) {
 function buildWorldLogicalMap(world, stamps) {
   const map = createEmptyMap();
   applyWaterFeatures(map, world);
+  applyTerrainLandformPatches(map, world);
   applyTerrainPathPatches(map, world);
   applyStructures(map, world, stamps);
   applyLandmarks(map, world);
@@ -425,9 +522,7 @@ function buildWorldGameplayMap(world, stamps) {
 }
 
 module.exports = {
-  applyAuthoredTopology,
   buildWorldGameplayMap,
   buildWorldLogicalMap,
-  createEmptyMap,
   inTownCore
 };

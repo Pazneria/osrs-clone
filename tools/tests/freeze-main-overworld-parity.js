@@ -1,13 +1,10 @@
+const assert = require("assert");
 const path = require("path");
 
 const { loadWorldContent } = require("../content/world-content");
 const { buildFrozenMainOverworld } = require("../content/freeze-main-overworld-world");
 
 const WORLD_ID = "main_overworld";
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
 
 function stableJson(value) {
   return JSON.stringify(value, null, 2);

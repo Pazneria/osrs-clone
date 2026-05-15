@@ -578,7 +578,7 @@ const ITEM_DB = {
   });
   assert.strictEqual(profile.titleText, "Create Your Adventurer");
   assert.strictEqual(profile.primaryActionText, "Start Adventure");
-  assert.strictEqual(profile.subtitleText, "Choose a starter identity before you arrive on Tutorial Island.");
+  assert.strictEqual(profile.subtitleText, "Choose a starter identity before you arrive on the mainland.");
   assert.strictEqual(profile.noteText, "Progress will begin autosaving locally in this browser once you arrive.");
   assert.strictEqual(profile.statusText, "Fresh character profile");
   assert.strictEqual(profile.bodyTypeLabel, "Male");

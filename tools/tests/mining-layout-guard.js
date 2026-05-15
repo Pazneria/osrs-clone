@@ -1,10 +1,7 @@
+const assert = require("assert");
 const path = require("path");
 
 const { loadWorldContent } = require("../content/world-content");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
 
 function countStraightTriples(nodes) {
   const nodeKeys = new Set(nodes.map((node) => `${node.x},${node.y}`));

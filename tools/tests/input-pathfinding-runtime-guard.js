@@ -1,10 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { makeSquareGrid: makeGrid } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function sameTile(a, b) {
   return a && b && a.x === b.x && a.y === b.y;
@@ -12,10 +10,6 @@ function sameTile(a, b) {
 
 function samePath(actual, expected) {
   return actual.length === expected.length && actual.every((step, index) => sameTile(step, expected[index]));
-}
-
-function makeGrid(size, fill) {
-  return Array.from({ length: size }, () => Array.from({ length: size }, () => fill));
 }
 
 function makeContext(overrides = {}) {
@@ -53,9 +47,9 @@ function makeContext(overrides = {}) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "input-pathfinding-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/input-pathfinding-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const playerAnimationRuntimeIndex = manifestSource.indexOf('id: "input-player-animation-runtime"');
   const pathfindingRuntimeIndex = manifestSource.indexOf('id: "input-pathfinding-runtime"');
@@ -114,6 +108,27 @@ function run() {
       "open-terrain pathfinding should distribute diagonal and cardinal steps along the straight click line"
     );
     assert(sameTile(shallowPath[shallowPath.length - 1], { x: 6, y: 3 }), "open-terrain path should still end on the clicked target");
+  }
+
+  {
+    const context = makeContext({ mapSize: 5 });
+    context.heightMap[0][0][1] = 0.12;
+    context.heightMap[0][0][2] = 0.24;
+    context.heightMap[0][0][3] = 0.36;
+    const slopePath = runtime.findPath(context, 0, 0, 3, 0, false);
+    assert(
+      samePath(slopePath, [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]),
+      "pathfinding should allow gentle authored elevation grades"
+    );
+  }
+
+  {
+    const context = makeContext({ mapSize: 4 });
+    for (let y = 0; y < context.mapSize; y++) {
+      context.heightMap[0][y][1] = 0.36;
+    }
+    const cliffPath = runtime.findPath(context, 0, 1, 3, 1, false);
+    assert(cliffPath.length === 0, "pathfinding should reject non-ramp cliff-height jumps");
   }
 
   {

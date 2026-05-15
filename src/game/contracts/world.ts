@@ -85,6 +85,9 @@ export interface StructurePlacement extends Point3 {
   structureId: string;
   stampId: string;
   label: string;
+  themeId?: string;
+  materialProfileId?: string;
+  conditionId?: string;
 }
 
 export interface TerrainEllipse {
@@ -119,6 +122,27 @@ export interface TerrainPathPatch {
   tileId?: string;
   height?: number;
   edgeSoftness?: number;
+  tags?: string[];
+}
+
+export type TerrainLandformKind = "ellipse" | "path";
+export type TerrainLandformMode = "set" | "raise" | "lower";
+
+export interface TerrainLandformPatch {
+  landformId: string;
+  kind: TerrainLandformKind;
+  height: number;
+  mode?: TerrainLandformMode;
+  z?: number;
+  cx?: number;
+  cy?: number;
+  rx?: number;
+  ry?: number;
+  rotationRadians?: number;
+  points?: Point2[];
+  pathWidth?: number;
+  edgeSoftness?: number;
+  tileId?: string;
   tags?: string[];
 }
 
@@ -321,6 +345,10 @@ export interface RoofLandmark extends Point3 {
   depth: number;
   height: number;
   ridgeAxis: "x" | "y";
+  themeId?: string;
+  materialProfileId?: string;
+  conditionId?: string;
+  roofIntegrity?: number;
   hideWhenPlayerInside?: boolean;
   hideBounds?: TerrainBox2D & { z: number };
 }
@@ -347,7 +375,18 @@ export type DecorPropKind =
   | "woodpile"
   | "ore_pile"
   | "coal_bin"
-  | "barrel";
+  | "barrel"
+  | "weapon_rack"
+  | "training_dummy"
+  | "archery_target"
+  | "bank_sign"
+  | "shop_sign"
+  | "market_awning"
+  | "wall_painting"
+  | "castle_banner"
+  | "rubble_pile"
+  | "quarry_cart"
+  | "thatch_bundle";
 
 export interface DecorPropLandmark extends Point3 {
   propId: string;
@@ -378,6 +417,7 @@ export interface WorldDefinition {
     deepWaterCenter: TerrainBox2D;
     pier: TerrainPier;
     paths?: TerrainPathPatch[];
+    landforms?: TerrainLandformPatch[];
     smithingHallApproach: {
       enabled?: boolean;
       shoreX: number;
@@ -444,6 +484,7 @@ export interface WorldLegacyView {
   deepWaterCenter: TerrainBox2D;
   pier: TerrainPier;
   pathPatches: TerrainPathPatch[];
+  landformPatches: TerrainLandformPatch[];
   waterBodies: WaterBodyDefinition[];
   smithingHallApproach: {
     enabled?: boolean;
@@ -547,6 +588,7 @@ export interface WoodcuttingNodePlacement extends Point3, LegacyAreaGateDescript
 }
 
 export interface LegacyNpcRenderPlacement extends Point3 {
+  spawnId?: string | null;
   type: number;
   name?: string;
   merchantId?: string | null;

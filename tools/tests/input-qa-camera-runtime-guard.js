@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 class FakeVector3 {
   constructor(x = 0, y = 0, z = 0) {
@@ -53,9 +50,9 @@ function makeRig() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "input-qa-camera-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/input-qa-camera-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(runtimeSource.includes("window.InputQaCameraRuntime"), "QA camera runtime should expose a window runtime");
   assert(runtimeSource.includes("function projectWorldTileToScreen"), "QA camera runtime should own projection helper");

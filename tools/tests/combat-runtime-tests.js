@@ -1,13 +1,9 @@
 const assert = require("assert");
-const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
+const { loadBrowserScript } = require("./browser-script-test-utils");
+const { makeSquareGrid: createGrid } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function createEnemyDefinition(enemyId, overrides = {}) {
   const displayName = overrides.displayName || enemyId;
@@ -43,10 +39,6 @@ function createSpawnNode(spawnNodeId, enemyId, x, y, z = 0) {
     spawnEnabled: true,
     facingYaw: Math.PI
   };
-}
-
-function createGrid(size, value) {
-  return Array.from({ length: size }, () => Array(size).fill(value));
 }
 
 const runtimeState = {
@@ -305,7 +297,7 @@ function getEnemy(enemyId) {
 }
 
 function createEatSandbox(root, options = {}) {
-  const foodRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
+  const foodRuntimeSource = readRepoFile(root, "src/js/food-item-runtime.js");
   const messages = [];
   const sandbox = {
     window: {},

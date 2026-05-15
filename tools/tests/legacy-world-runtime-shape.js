@@ -1,25 +1,22 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const sceneStateSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-state.js"), "utf8");
-  const sceneLifecycleSource = fs.readFileSync(path.join(root, "src", "js", "world", "scene-lifecycle.js"), "utf8");
-  const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
-  const mapHudRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "map-hud-runtime.js"), "utf8");
-  const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "terrain-setup-runtime.js"), "utf8");
-  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8");
-  const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-quarry-runtime.js"), "utf8");
-  const pierRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "pier-runtime.js"), "utf8");
-  const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
-  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
-  const adapterSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-world-adapter.ts"), "utf8");
-  const contractsSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "world.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const sceneStateSource = readRepoFile(root, "src/js/world/scene-state.js");
+  const sceneLifecycleSource = readRepoFile(root, "src/js/world/scene-lifecycle.js");
+  const chunkRuntimeSource = readRepoFile(root, "src/js/world/chunk-scene-runtime.js");
+  const mapHudRuntimeSource = readRepoFile(root, "src/js/world/map-hud-runtime.js");
+  const terrainSetupRuntimeSource = readRepoFile(root, "src/js/world/terrain-setup-runtime.js");
+  const logicalMapAuthoringRuntimeSource = readRepoFile(root, "src/js/world/logical-map-authoring-runtime.js");
+  const miningQuarryRuntimeSource = readRepoFile(root, "src/js/world/mining-quarry-runtime.js");
+  const pierRuntimeSource = readRepoFile(root, "src/js/world/pier-runtime.js");
+  const trainingLocationRuntimeSource = readRepoFile(root, "src/js/world/training-location-runtime.js");
+  const bridgeSource = readRepoFile(root, "src/game/platform/legacy-bridge.ts");
+  const adapterSource = readRepoFile(root, "src/game/platform/legacy-world-adapter.ts");
+  const contractsSource = readRepoFile(root, "src/game/contracts/world.ts");
   const worldDefinitionStart = contractsSource.indexOf("export interface WorldDefinition");
   const worldDefinitionEnd = contractsSource.indexOf("export interface RouteRegistry");
   const worldDefinitionSection = worldDefinitionStart >= 0 && worldDefinitionEnd > worldDefinitionStart

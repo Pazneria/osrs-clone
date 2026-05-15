@@ -2671,13 +2671,6 @@ function setPreviewPickRay(clientX: number, clientY: number): boolean {
   return true;
 }
 
-function isManipulatorHit(clientX: number, clientY: number): boolean {
-  if (!state.transformControls) return false;
-  if (!setPreviewPickRay(clientX, clientY)) return false;
-  const hits = previewPickRaycaster.intersectObject(state.transformControls.getHelper(), true);
-  return hits.length > 0;
-}
-
 function isManipulatorAxisHot(): boolean {
   return !!state.transformControls?.axis;
 }
@@ -3323,7 +3316,7 @@ function bindUI(): void {
   window.addEventListener("resize", resizeRenderer);
 }
 
-export function initAnimationStudio(): void {
+function initAnimationStudio(): void {
   if (state.initialized) return;
   state.initialized = true;
   state.overlay = createOverlay();
@@ -3345,7 +3338,7 @@ export function initAnimationStudio(): void {
   });
 }
 
-export function toggleAnimationStudio(nextState?: boolean): void {
+function toggleAnimationStudio(nextState?: boolean): void {
   if (!state.initialized) initAnimationStudio();
   state.active = typeof nextState === "boolean" ? nextState : !state.active;
   if (state.overlay) state.overlay.classList.toggle("hidden", !state.active);
@@ -3384,7 +3377,7 @@ export function toggleAnimationStudio(nextState?: boolean): void {
   state.rafId = window.requestAnimationFrame(tick);
 }
 
-export function isAnimationStudioActive(): boolean {
+function isAnimationStudioActive(): boolean {
   return state.active;
 }
 

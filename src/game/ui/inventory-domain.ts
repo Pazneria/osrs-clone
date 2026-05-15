@@ -274,7 +274,7 @@ export function resolveMerchantSellPrice(
   return Math.floor(getBaseValue(itemDb, itemId) * 0.4);
 }
 
-export function seedShopInventorySlot(
+function seedShopInventorySlot(
   inventorySlots: Array<UiItemSlot | null>,
   itemDb: Record<string, UiItemData>,
   itemId: string,

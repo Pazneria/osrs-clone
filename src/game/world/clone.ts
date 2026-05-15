@@ -19,6 +19,7 @@ import type {
   StructurePlacement,
   TerrainBox2D,
   TerrainEllipse,
+  TerrainLandformPatch,
   TerrainPathPatch,
   TerrainPier,
   WaterBodyDefinition,
@@ -33,7 +34,7 @@ import type {
   WoodcuttingNodePlacement
 } from "../contracts/world";
 
-export function clonePoint2(point: Point2): Point2 {
+function clonePoint2(point: Point2): Point2 {
   return { x: point.x, y: point.y };
 }
 
@@ -131,7 +132,8 @@ export function cloneCombatSpawnNode(spawnNode: EnemySpawnNodeDefinition): Enemy
   return {
     ...spawnNode,
     spawnTile: clonePoint3(spawnNode.spawnTile),
-    homeTileOverride: spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : null
+    homeTileOverride: spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : null,
+    patrolRoute: Array.isArray(spawnNode.patrolRoute) ? spawnNode.patrolRoute.map(clonePoint3) : null
   };
 }
 
@@ -170,6 +172,14 @@ export function cloneTerrainPathPatch(pathPatch: TerrainPathPatch): TerrainPathP
   };
 }
 
+export function cloneTerrainLandformPatch(landformPatch: TerrainLandformPatch): TerrainLandformPatch {
+  return {
+    ...landformPatch,
+    points: Array.isArray(landformPatch.points) ? landformPatch.points.map(clonePoint2) : undefined,
+    tags: Array.isArray(landformPatch.tags) ? landformPatch.tags.slice() : []
+  };
+}
+
 export function cloneIslandWaterPatch(patch: IslandWaterPatch): IslandWaterPatch {
   return {
     ...patch,
@@ -178,7 +188,7 @@ export function cloneIslandWaterPatch(patch: IslandWaterPatch): IslandWaterPatch
   };
 }
 
-export function cloneWaterBodyShape(shape: WaterBodyShape): WaterBodyShape {
+function cloneWaterBodyShape(shape: WaterBodyShape): WaterBodyShape {
   if (shape.kind === "polygon") {
     return {
       kind: "polygon",
@@ -188,25 +198,25 @@ export function cloneWaterBodyShape(shape: WaterBodyShape): WaterBodyShape {
   return { ...shape };
 }
 
-export function cloneWaterDepthZone(zone: WaterDepthZone): WaterDepthZone {
+function cloneWaterDepthZone(zone: WaterDepthZone): WaterDepthZone {
   return {
     shape: cloneWaterBodyShape(zone.shape),
     weight: Number.isFinite(zone.weight) ? Number(zone.weight) : undefined
   };
 }
 
-export function cloneWaterDepthProfile(profile: WaterDepthProfile): WaterDepthProfile {
+function cloneWaterDepthProfile(profile: WaterDepthProfile): WaterDepthProfile {
   return {
     mode: profile.mode,
     deepZones: Array.isArray(profile.deepZones) ? profile.deepZones.map(cloneWaterDepthZone) : []
   };
 }
 
-export function cloneWaterShoreline(shoreline: WaterShoreline): WaterShoreline {
+function cloneWaterShoreline(shoreline: WaterShoreline): WaterShoreline {
   return { ...shoreline };
 }
 
-export function cloneWaterStyleTokens(tokens: WaterStyleTokens): WaterStyleTokens {
+function cloneWaterStyleTokens(tokens: WaterStyleTokens): WaterStyleTokens {
   return { ...tokens };
 }
 
@@ -221,7 +231,7 @@ export function cloneWaterBodyDefinition(body: WaterBodyDefinition): WaterBodyDe
   };
 }
 
-export function cloneWaterRenderBody(body: WaterRenderBody): WaterRenderBody {
+function cloneWaterRenderBody(body: WaterRenderBody): WaterRenderBody {
   return {
     id: body.id,
     shape: cloneWaterBodyShape(body.shape),

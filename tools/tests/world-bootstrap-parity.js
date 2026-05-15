@@ -1,15 +1,13 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 const { findShortestPathLength, isWalkable } = require("../content/world-pathing");
 const { TileId } = require("../content/tile-ids");
+const { loadNpcDialogueCatalog } = require("../content/npc-dialogue-catalog-loader");
 const { loadWorldContent } = require("../content/world-content");
 const { loadTsModule } = require("../lib/ts-module-loader");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const STARTER_TOWN_STAMP_IDS = Object.freeze([
   "castle_floor0",
@@ -21,7 +19,16 @@ const STARTER_TOWN_STAMP_IDS = Object.freeze([
   "timber_longhouse",
   "timber_shack",
   "timber_workshop",
-  "timber_hut"
+  "timber_hut",
+  "bw_frontier_cottage",
+  "bw_quarry_bunkhouse",
+  "bw_quarry_storehouse",
+  "bw_frontier_bank",
+  "bw_stone_townhouse",
+  "bw_painted_gallery",
+  "bw_castle_gatehouse",
+  "bw_burnt_cottage",
+  "bw_stone_manor"
 ]);
 
 const STARTER_TOWN_STRUCTURE_LAYOUT = Object.freeze({
@@ -41,7 +48,21 @@ const STARTER_TOWN_STRUCTURE_LAYOUT = Object.freeze({
   outpost_guide_house: { stampId: "timber_cottage", x: 257, y: 250, z: 0 },
   thrain_deepforge_house: { stampId: "timber_longhouse", x: 268, y: 250, z: 0 },
   rune_tutor_hut: { stampId: "timber_hut", x: 216, y: 176, z: 0 },
-  combination_sage_hut: { stampId: "timber_hut", x: 146, y: 176, z: 0 }
+  combination_sage_hut: { stampId: "timber_hut", x: 146, y: 176, z: 0 },
+  north_woodwatch_lodge: { stampId: "bw_frontier_cottage", x: 78, y: 50, z: 0 },
+  north_woodwatch_bunkhouse: { stampId: "bw_quarry_bunkhouse", x: 104, y: 56, z: 0 },
+  north_woodwatch_fletchers_workshop: { stampId: "timber_workshop", x: 86, y: 66, z: 0 },
+  south_quarry_storehouse: { stampId: "bw_quarry_storehouse", x: 318, y: 386, z: 0 },
+  south_quarry_cottage_west: { stampId: "bw_frontier_cottage", x: 300, y: 404, z: 0 },
+  south_quarry_cottage_east: { stampId: "bw_frontier_cottage", x: 344, y: 404, z: 0 },
+  market_crossing_bank: { stampId: "bw_frontier_bank", x: 416, y: 376, z: 0 },
+  market_crossing_townhouse: { stampId: "bw_stone_townhouse", x: 432, y: 384, z: 0 },
+  market_crossing_gallery: { stampId: "bw_painted_gallery", x: 448, y: 398, z: 0 },
+  market_crossing_cottage: { stampId: "bw_frontier_cottage", x: 414, y: 404, z: 0 },
+  market_crossing_bunkhouse: { stampId: "bw_quarry_bunkhouse", x: 462, y: 376, z: 0 },
+  old_road_gatehouse: { stampId: "bw_castle_gatehouse", x: 428, y: 118, z: 0 },
+  old_road_burnt_cottage: { stampId: "bw_burnt_cottage", x: 400, y: 150, z: 0 },
+  old_road_manor: { stampId: "bw_stone_manor", x: 448, y: 146, z: 0 }
 });
 
 const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
@@ -60,7 +81,21 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
   thrain_deepforge_house_stairs: { x: 272, y: 258, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   rune_tutor_hut_stairs: { x: 218, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   combination_sage_hut_stairs: { x: 148, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
-  distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 }
+  distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 },
+  north_woodwatch_lodge_stairs: { x: 81, y: 56, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  north_woodwatch_bunkhouse_stairs: { x: 108, y: 62, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  north_woodwatch_fletchers_workshop_stairs: { x: 91, y: 73, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  south_quarry_storehouse_stairs: { x: 323, y: 393, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  south_quarry_cottage_west_stairs: { x: 303, y: 410, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  south_quarry_cottage_east_stairs: { x: 347, y: 410, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_bank_stairs: { x: 419, y: 382, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_townhouse_stairs: { x: 436, y: 391, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_gallery_stairs: { x: 453, y: 405, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_cottage_stairs: { x: 417, y: 410, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_bunkhouse_stairs: { x: 466, y: 382, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  old_road_gatehouse_stairs: { x: 434, y: 124, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  old_road_burnt_cottage_stairs: { x: 403, y: 156, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  old_road_manor_stairs: { x: 454, y: 155, z: 0, tileId: "STAIRS_RAMP", height: 0.25 }
 });
 
 const MAIN_OVERWORLD_ROAD_IDS = Object.freeze([
@@ -69,7 +104,16 @@ const MAIN_OVERWORLD_ROAD_IDS = Object.freeze([
   "starter_town_starter_mine_spur",
   "starter_town_south_resource_road",
   "starter_town_southwest_bank_road",
-  "starter_town_southeast_camp_road"
+  "starter_town_southeast_camp_road",
+  "north_woodwatch_track",
+  "north_woodwatch_fletchers_lane",
+  "south_quarry_hamlet_road",
+  "market_crossing_main_road",
+  "market_crossing_gallery_lane",
+  "old_roadhold_gate_road",
+  "old_roadhold_ash_track",
+  "starter_to_sunspur_checkpoint_road",
+  "sunspur_trade_outpost_worn_road"
 ]);
 
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
@@ -84,8 +128,8 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:fletching_supplier": {
     spawnId: "npc:fletching_supplier",
     merchantId: "fletching_supplier",
-    x: 183,
-    y: 238,
+    x: 91,
+    y: 72,
     z: 0,
     dialogueId: "fletching_supplier"
   },
@@ -106,16 +150,16 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:advanced_fletcher": {
     spawnId: "npc:advanced_fletcher",
     merchantId: "advanced_fletcher",
-    x: 365,
-    y: 253,
+    x: 92,
+    y: 71,
     z: 0,
     dialogueId: "advanced_fletcher"
   },
   "merchant:advanced_woodsman": {
     spawnId: "npc:advanced_woodsman",
     merchantId: "advanced_woodsman",
-    x: 366,
-    y: 255,
+    x: 82,
+    y: 54,
     z: 0,
     dialogueId: "advanced_woodsman"
   },
@@ -146,43 +190,78 @@ const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
   "merchant:borin_ironvein": {
     spawnId: "npc:borin_ironvein",
     merchantId: "borin_ironvein",
-    x: 246,
-    y: 227,
+    x: 303,
+    y: 409,
     z: 0,
     dialogueId: "borin_ironvein"
   },
   "merchant:thrain_deepforge": {
     spawnId: "npc:thrain_deepforge",
     merchantId: "thrain_deepforge",
-    x: 272,
-    y: 257,
+    x: 347,
+    y: 409,
     z: 0,
     dialogueId: "thrain_deepforge"
   },
   "merchant:elira_gemhand": {
     spawnId: "npc:elira_gemhand",
     merchantId: "elira_gemhand",
-    x: 170,
-    y: 195,
+    x: 322,
+    y: 392,
     z: 0,
     dialogueId: "elira_gemhand"
   },
   "merchant:crafting_teacher": {
     spawnId: "npc:crafting_teacher",
     merchantId: "crafting_teacher",
-    x: 179,
-    y: 250,
+    x: 450,
+    y: 403,
     z: 0,
     dialogueId: "crafting_teacher"
   },
   "merchant:tanner_rusk": {
     spawnId: "npc:tanner_rusk",
     merchantId: "tanner_rusk",
-    x: 247,
-    y: 237,
+    x: 417,
+    y: 409,
     z: 0,
     dialogueId: "tanner_rusk",
     appearanceId: "tanner_rusk"
+  },
+  "merchant:north_woodwatch_guide": {
+    spawnId: "npc:north_woodwatch_guide",
+    x: 81,
+    y: 56,
+    z: 0,
+    dialogueId: "outpost_guide"
+  },
+  "merchant:south_quarry_foreman": {
+    spawnId: "npc:south_quarry_foreman",
+    x: 323,
+    y: 392,
+    z: 0,
+    dialogueId: "outpost_guide"
+  },
+  "merchant:market_crossing_trader": {
+    spawnId: "npc:market_crossing_trader",
+    x: 436,
+    y: 391,
+    z: 0,
+    dialogueId: "shopkeeper"
+  },
+  "merchant:market_crossing_painter": {
+    spawnId: "npc:market_crossing_painter",
+    x: 453,
+    y: 405,
+    z: 0,
+    dialogueId: "shopkeeper"
+  },
+  "merchant:old_road_scavenger": {
+    spawnId: "npc:old_road_scavenger",
+    x: 434,
+    y: 124,
+    z: 0,
+    dialogueId: "outpost_guide"
   },
   "merchant:rune_tutor": {
     spawnId: "npc:rune_tutor",
@@ -210,16 +289,10 @@ const STARTER_TOWN_BANK_LAYOUT = Object.freeze({
   "bank:south_field": { spawnId: "npc:banker_south_field", x: 256, y: 444, z: 0 },
   "bank:west_range": { spawnId: "npc:banker_west_range", x: 64, y: 456, z: 0 },
   "bank:southeast_camp": { spawnId: "npc:banker_southeast_camp", x: 416, y: 430, z: 0 },
-  "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0 }
+  "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0 },
+  "bank:south_quarry": { spawnId: "npc:banker_south_quarry", x: 324, y: 393, z: 0 },
+  "bank:market_crossing": { spawnId: "npc:banker_market_crossing", x: 419, y: 382, z: 0 }
 });
-
-function loadNpcDialogueCatalog(root) {
-  const absPath = path.join(root, "src", "js", "content", "npc-dialogue-catalog.js");
-  const sandbox = { window: {}, console };
-  const source = fs.readFileSync(absPath, "utf8");
-  vm.runInNewContext(source, sandbox, { filename: absPath });
-  return sandbox.window && sandbox.window.NpcDialogueCatalog ? sandbox.window.NpcDialogueCatalog : null;
-}
 
 const TREE_VISUAL_NODE_IDS = Object.freeze(["normal_tree", "oak_tree", "willow_tree", "maple_tree", "yew_tree"]);
 const ROCK_VISUAL_NODE_IDS = Object.freeze([
@@ -252,11 +325,10 @@ function extractObjectLiteralAfter(source, token, label) {
 }
 
 function loadTreeVisualProfiles(root) {
-  const absPath = path.join(root, "src", "js", "world", "tree-render-runtime.js");
-  const source = fs.readFileSync(absPath, "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const sharedSource = fs.readFileSync(path.join(root, "src", "js", "world", "shared-assets-runtime.js"), "utf8");
-  const resourceSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
+  const source = readRepoFile(root, "src/js/world/tree-render-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const sharedSource = readRepoFile(root, "src/js/world/shared-assets-runtime.js");
+  const resourceSource = readRepoFile(root, "src/js/world/chunk-resource-render-runtime.js");
   const objectLiteral = extractObjectLiteralAfter(source, "const TREE_VISUAL_PROFILES =", "TREE_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "TREE_VISUAL_PROFILES" }),
@@ -268,10 +340,9 @@ function loadTreeVisualProfiles(root) {
 }
 
 function loadRockVisualProfiles(root) {
-  const absPath = path.join(root, "src", "js", "world", "rock-render-runtime.js");
-  const source = fs.readFileSync(absPath, "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const resourceSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-resource-render-runtime.js"), "utf8");
+  const source = readRepoFile(root, "src/js/world/rock-render-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const resourceSource = readRepoFile(root, "src/js/world/chunk-resource-render-runtime.js");
   const objectLiteral = extractObjectLiteralAfter(source, "const ROCK_VISUAL_PROFILES =", "ROCK_VISUAL_PROFILES");
   return {
     profiles: vm.runInNewContext(`(${objectLiteral})`, {}, { filename: "ROCK_VISUAL_PROFILES" }),
@@ -396,8 +467,8 @@ function assertStarterTown(root) {
   assert(manifestEntry.defaultSpawn.x === 205 && manifestEntry.defaultSpawn.y === 210 && manifestEntry.defaultSpawn.z === 0, "starter_town default spawn mismatch");
   assert(manifestEntry.stampIds.join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town stamp kit mismatch");
   assert(Object.keys(stamps).join(",") === STARTER_TOWN_STAMP_IDS.join(","), "starter-town loaded stamps should match manifest kit");
-  assert(Array.isArray(world.structures) && world.structures.length === Object.keys(STARTER_TOWN_STRUCTURE_LAYOUT).length, "expected 17 starter-town structures");
-  assert(Array.isArray(world.services) && world.services.length === 28, "expected 28 authored starter-town services");
+  assert(Array.isArray(world.structures) && world.structures.length === Object.keys(STARTER_TOWN_STRUCTURE_LAYOUT).length, "expected authored main-overworld structure layout");
+  assert(Array.isArray(world.services) && world.services.length === 35, "expected 35 authored main-overworld services");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.mining) && world.resourceNodes.mining.length === 114, "expected 114 authored mining nodes");
   assert(world.resourceNodes && Array.isArray(world.resourceNodes.woodcutting) && world.resourceNodes.woodcutting.length === 82, "expected 82 authored woodcutting nodes");
   assert(Array.isArray(world.skillRoutes.fishing) && world.skillRoutes.fishing.length === 3, "expected 3 fishing routes");
@@ -461,11 +532,14 @@ function assertStarterTown(root) {
     assert(Array.isArray(road.tags) && road.tags.includes("spawn-protected"), `${pathId} should be spawn-protected`);
   });
   const gameplayMap = buildWorldGameplayMap(world, stamps);
-  [[282, 242], [197, 98], [158, 222], [240, 360], [74, 392], [370, 440]].forEach(([x, y]) => {
+  [[282, 242], [197, 98], [158, 222], [240, 360], [74, 392], [370, 440], [410, 354], [460, 398]].forEach(([x, y]) => {
     assert(gameplayMap[0][y][x] === TileId.DIRT, `starter road sample ${x},${y} should remain a dirt road tile`);
   });
   assert(starterBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "starter_town_east_road"), "starter bootstrap should publish the east road patch");
   assert(starterBootstrap.legacy.pathPatches.some((pathPatch) => pathPatch.pathId === "starter_town_southwest_bank_road"), "starter bootstrap should publish the southwest bank road patch");
+  assert(Array.isArray(starterBootstrap.legacy.landformPatches), "starter bootstrap should publish authored terrain landforms");
+  assert(starterBootstrap.legacy.landformPatches.some((landform) => landform.landformId === "east_marsh_lower_bank"), "starter bootstrap should publish the lowered riverbank landform");
+  assert(starterBootstrap.legacy.landformPatches.some((landform) => landform.landformId === "sunspur_foothill_rise"), "starter bootstrap should publish the foothill rise landform");
 
   const servicesById = Object.fromEntries(world.services.map((entry) => [entry.serviceId, entry]));
   assert(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
@@ -474,8 +548,8 @@ function assertStarterTown(root) {
   assert(servicesById["merchant:east_outpost_caravan_guide"].travelToWorldId === "main_overworld", "east outpost caravan travel target mismatch");
   assert(servicesById["merchant:east_outpost_caravan_guide"].travelSpawn.x === 205 && servicesById["merchant:east_outpost_caravan_guide"].travelSpawn.y === 210, "east outpost caravan travel spawn mismatch");
   assert(servicesById["station:starter_furnace"].footprintW === 2, "furnace footprint mismatch");
-  assert(servicesById["station:east_outpost_furnace"].x === 374 && servicesById["station:east_outpost_furnace"].y === 254, "east outpost furnace placement mismatch");
-  assert(servicesById["station:east_outpost_anvil"].x === 374 && servicesById["station:east_outpost_anvil"].y === 257, "east outpost anvil placement mismatch");
+  assert(servicesById["station:south_quarry_furnace"].x === 331 && servicesById["station:south_quarry_furnace"].y === 393, "south quarry furnace placement mismatch");
+  assert(servicesById["station:south_quarry_anvil"].x === 334 && servicesById["station:south_quarry_anvil"].y === 393, "south quarry anvil placement mismatch");
   Object.entries(STARTER_TOWN_NAMED_NPC_LAYOUT).forEach(([serviceId, expected]) => {
     const service = servicesById[serviceId];
     assert(!!service, `starter-town named NPC service missing: ${serviceId}`);
@@ -555,6 +629,19 @@ function assertStarterTown(root) {
   assert(combatSpawnsById["enemy_spawn_heavy_brute_southeast_camp_anchor"].spawnTile.x === 450 && combatSpawnsById["enemy_spawn_heavy_brute_southeast_camp_anchor"].spawnTile.y === 456, "southeast camp brute anchor mismatch");
   assert(combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].spawnTile.x === 456 && combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].spawnTile.y === 468, "southeast camp striker spawn mismatch");
   assert(combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].spawnGroupId === "camp_southeast_ruins", "southeast camp spawn group mismatch");
+  assert(combatSpawnsById["enemy_spawn_bear_southeast_camp_west"].assistGroupId === "camp_southeast_ruins", "southeast camp bear assist group mismatch");
+  assert(combatSpawnsById["enemy_spawn_heavy_brute_southeast_camp_anchor"].assistRadiusOverride === 14, "southeast camp brute assist radius mismatch");
+  assert(combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].assistGroupId === "camp_southeast_ruins", "southeast camp striker assist group mismatch");
+  assert(
+    JSON.stringify(combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].patrolRoute) ===
+      JSON.stringify([
+        { x: 456, y: 468, z: 0 },
+        { x: 456, y: 462, z: 0 },
+        { x: 462, y: 462, z: 0 },
+        { x: 462, y: 468, z: 0 }
+      ]),
+    "southeast camp striker patrol route mismatch"
+  );
 
   const miningIds = world.skillRoutes.mining.map((entry) => entry.routeId).join(",");
   assert(miningIds === "starter_mine,iron_mine,coal_mine,precious_mine,gem_mine,rune_essence_mine", "starter mining route order mismatch");

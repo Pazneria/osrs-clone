@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "materialProfileId": "city_stone_slate",
+  "label": "City Stone And Slate",
+  "themeId": "stone_market",
+  "family": "stone",
+  "previewPalette": {
+    "ground": "#dfe2cf",
+    "floor": "#b9b5a8",
+    "wall": "#9a9283",
+    "corner": "#b4ad9f",
+    "roof": "#596879",
+    "roofDark": "#384754",
+    "accent": "#b78d40"
+  },
+  "roofMaterial": "dark slate roof",
+  "wallMaterial": "pale city stone",
+  "tags": [
+    "city",
+    "stone",
+    "market"
+  ],
+  "promotionNotes": [
+    "Works best in denser streets, plazas, and estate edges.",
+    "Use trim and wall art to differentiate shops without changing the footprint."
+  ]
+}

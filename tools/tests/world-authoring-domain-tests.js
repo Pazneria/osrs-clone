@@ -1,13 +1,13 @@
 const assert = require("assert");
-const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
 
 const { loadTsModule } = require("../lib/ts-module-loader");
+const { loadNpcDialogueCatalog } = require("../content/npc-dialogue-catalog-loader");
 const { TileId } = require("../content/tile-ids");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 const { findShortestPathLength, isWalkable } = require("../content/world-pathing");
 const { loadWorldContent } = require("../content/world-content");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const root = path.resolve(__dirname, "..", "..");
 const authoring = loadTsModule(path.join(root, "src", "game", "world", "authoring.ts"));
@@ -15,10 +15,12 @@ const manifest = require(path.join(root, "content", "world", "manifest.json"));
 const starterTown = require(path.join(root, "content", "world", "regions", "main_overworld.json"));
 const tutorialIsland = require(path.join(root, "content", "world", "regions", "tutorial_island.json"));
 
-const WORLD_COORD_SCALE = 648 / 486;
-const TUTORIAL_WORLD_COORD_SCALE = WORLD_COORD_SCALE * 0.8;
+const MAIN_OVERWORLD_MAP_SIZE = 1296;
+const TUTORIAL_LAYOUT_WORLD_MAP_SIZE = 648;
+const WORLD_COORD_SCALE = MAIN_OVERWORLD_MAP_SIZE / 486;
+const TUTORIAL_WORLD_COORD_SCALE = (TUTORIAL_LAYOUT_WORLD_MAP_SIZE / 486) * 0.8;
 const LEGACY_WORLD_CENTER = 486 / 2;
-const EXPANDED_WORLD_CENTER = 648 / 2;
+const TUTORIAL_LAYOUT_WORLD_CENTER = TUTORIAL_LAYOUT_WORLD_MAP_SIZE / 2;
 const STARTER_TOWN_STAMP_IDS = Object.freeze([
   "castle_floor0",
   "castle_floor1",
@@ -29,7 +31,16 @@ const STARTER_TOWN_STAMP_IDS = Object.freeze([
   "timber_longhouse",
   "timber_shack",
   "timber_workshop",
-  "timber_hut"
+  "timber_hut",
+  "bw_frontier_cottage",
+  "bw_quarry_bunkhouse",
+  "bw_quarry_storehouse",
+  "bw_frontier_bank",
+  "bw_stone_townhouse",
+  "bw_painted_gallery",
+  "bw_castle_gatehouse",
+  "bw_burnt_cottage",
+  "bw_stone_manor"
 ]);
 
 const STARTER_TOWN_STRUCTURE_LAYOUT = Object.freeze({
@@ -49,7 +60,21 @@ const STARTER_TOWN_STRUCTURE_LAYOUT = Object.freeze({
   outpost_guide_house: { stampId: "timber_cottage", x: 257, y: 250, z: 0 },
   thrain_deepforge_house: { stampId: "timber_longhouse", x: 268, y: 250, z: 0 },
   rune_tutor_hut: { stampId: "timber_hut", x: 216, y: 176, z: 0 },
-  combination_sage_hut: { stampId: "timber_hut", x: 146, y: 176, z: 0 }
+  combination_sage_hut: { stampId: "timber_hut", x: 146, y: 176, z: 0 },
+  north_woodwatch_lodge: { stampId: "bw_frontier_cottage", x: 78, y: 50, z: 0 },
+  north_woodwatch_bunkhouse: { stampId: "bw_quarry_bunkhouse", x: 104, y: 56, z: 0 },
+  north_woodwatch_fletchers_workshop: { stampId: "timber_workshop", x: 86, y: 66, z: 0 },
+  south_quarry_storehouse: { stampId: "bw_quarry_storehouse", x: 318, y: 386, z: 0 },
+  south_quarry_cottage_west: { stampId: "bw_frontier_cottage", x: 300, y: 404, z: 0 },
+  south_quarry_cottage_east: { stampId: "bw_frontier_cottage", x: 344, y: 404, z: 0 },
+  market_crossing_bank: { stampId: "bw_frontier_bank", x: 416, y: 376, z: 0 },
+  market_crossing_townhouse: { stampId: "bw_stone_townhouse", x: 432, y: 384, z: 0 },
+  market_crossing_gallery: { stampId: "bw_painted_gallery", x: 448, y: 398, z: 0 },
+  market_crossing_cottage: { stampId: "bw_frontier_cottage", x: 414, y: 404, z: 0 },
+  market_crossing_bunkhouse: { stampId: "bw_quarry_bunkhouse", x: 462, y: 376, z: 0 },
+  old_road_gatehouse: { stampId: "bw_castle_gatehouse", x: 428, y: 118, z: 0 },
+  old_road_burnt_cottage: { stampId: "bw_burnt_cottage", x: 400, y: 150, z: 0 },
+  old_road_manor: { stampId: "bw_stone_manor", x: 448, y: 146, z: 0 }
 });
 
 const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
@@ -68,7 +93,21 @@ const STARTER_TOWN_STAIRCASE_LAYOUT = Object.freeze({
   thrain_deepforge_house_stairs: { x: 272, y: 258, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   rune_tutor_hut_stairs: { x: 218, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
   combination_sage_hut_stairs: { x: 148, y: 182, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
-  distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 }
+  distributed_bank_booths: { x: 362, y: 252, z: 0, tileId: "BANK_BOOTH", height: 0.05 },
+  north_woodwatch_lodge_stairs: { x: 81, y: 56, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  north_woodwatch_bunkhouse_stairs: { x: 108, y: 62, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  north_woodwatch_fletchers_workshop_stairs: { x: 91, y: 73, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  south_quarry_storehouse_stairs: { x: 323, y: 393, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  south_quarry_cottage_west_stairs: { x: 303, y: 410, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  south_quarry_cottage_east_stairs: { x: 347, y: 410, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_bank_stairs: { x: 419, y: 382, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_townhouse_stairs: { x: 436, y: 391, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_gallery_stairs: { x: 453, y: 405, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_cottage_stairs: { x: 417, y: 410, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  market_crossing_bunkhouse_stairs: { x: 466, y: 382, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  old_road_gatehouse_stairs: { x: 434, y: 124, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  old_road_burnt_cottage_stairs: { x: 403, y: 156, z: 0, tileId: "STAIRS_RAMP", height: 0.25 },
+  old_road_manor_stairs: { x: 454, y: 155, z: 0, tileId: "STAIRS_RAMP", height: 0.25 }
 });
 
 const MAIN_OVERWORLD_ROAD_IDS = Object.freeze([
@@ -77,54 +116,75 @@ const MAIN_OVERWORLD_ROAD_IDS = Object.freeze([
   "starter_town_starter_mine_spur",
   "starter_town_south_resource_road",
   "starter_town_southwest_bank_road",
-  "starter_town_southeast_camp_road"
+  "starter_town_southeast_camp_road",
+  "north_woodwatch_track",
+  "north_woodwatch_fletchers_lane",
+  "south_quarry_hamlet_road",
+  "market_crossing_main_road",
+  "market_crossing_gallery_lane",
+  "old_roadhold_gate_road",
+  "old_roadhold_ash_track",
+  "starter_to_sunspur_checkpoint_road",
+  "sunspur_trade_outpost_worn_road"
 ]);
 
 const STARTER_TOWN_NAMED_NPC_LAYOUT = Object.freeze({
-  "merchant:general_store": { x: 170, y: 239, z: 0, dialogueId: "shopkeeper", scaledX: 225, scaledY: 316 },
-  "merchant:fletching_supplier": { x: 183, y: 238, z: 0, dialogueId: "fletching_supplier", scaledX: 242, scaledY: 315 },
-  "merchant:starter_caravan_guide": { x: 223, y: 221, z: 0, dialogueId: "road_guide", scaledX: 297, scaledY: 293 },
-  "merchant:east_outpost_caravan_guide": { x: 260, y: 257, z: 0, dialogueId: "outpost_guide", scaledX: 346, scaledY: 340 },
-  "merchant:advanced_fletcher": { x: 365, y: 253, z: 0, dialogueId: "advanced_fletcher", scaledX: 485, scaledY: 336 },
-  "merchant:advanced_woodsman": { x: 366, y: 255, z: 0, dialogueId: "advanced_woodsman", scaledX: 486, scaledY: 338 },
-  "merchant:fishing_teacher": { x: 170, y: 221, z: 0, dialogueId: "fishing_teacher", scaledX: 226, scaledY: 293 },
-  "merchant:fishing_supplier": { x: 234, y: 221, z: 0, dialogueId: "fishing_supplier", scaledX: 311, scaledY: 293 },
-  "merchant:forester_teacher": { x: 219, y: 205, z: 0, dialogueId: "forester_teacher", scaledX: 282, scaledY: 268 },
-  "merchant:borin_ironvein": { x: 246, y: 227, z: 0, dialogueId: "borin_ironvein", scaledX: 327, scaledY: 300 },
-  "merchant:thrain_deepforge": { x: 272, y: 257, z: 0, dialogueId: "thrain_deepforge", scaledX: 361, scaledY: 340 },
-  "merchant:elira_gemhand": { x: 170, y: 195, z: 0, dialogueId: "elira_gemhand", scaledX: 226, scaledY: 258 },
-  "merchant:crafting_teacher": { x: 179, y: 250, z: 0, dialogueId: "crafting_teacher", scaledX: 238, scaledY: 331 },
-  "merchant:tanner_rusk": { x: 247, y: 237, z: 0, dialogueId: "tanner_rusk", appearanceId: "tanner_rusk", scaledX: 328, scaledY: 314 },
-  "merchant:rune_tutor": { x: 218, y: 181, z: 0, dialogueId: "rune_tutor", scaledX: 290, scaledY: 240 },
-  "merchant:combination_sage": { x: 148, y: 181, z: 0, dialogueId: "combination_sage", scaledX: 197, scaledY: 240 }
+  "merchant:general_store": { x: 170, y: 239, z: 0, dialogueId: "shopkeeper", scaledX: 447, scaledY: 626 },
+  "merchant:fletching_supplier": { x: 91, y: 72, z: 0, dialogueId: "fletching_supplier", scaledX: 234, scaledY: 182 },
+  "merchant:starter_caravan_guide": { x: 223, y: 221, z: 0, dialogueId: "road_guide", scaledX: 591, scaledY: 581 },
+  "merchant:east_outpost_caravan_guide": { x: 260, y: 257, z: 0, dialogueId: "outpost_guide", scaledX: 688, scaledY: 674 },
+  "merchant:advanced_fletcher": { x: 92, y: 71, z: 0, dialogueId: "advanced_fletcher", scaledX: 235, scaledY: 181 },
+  "merchant:advanced_woodsman": { x: 82, y: 54, z: 0, dialogueId: "advanced_woodsman", scaledX: 212, scaledY: 137 },
+  "merchant:fishing_teacher": { x: 170, y: 221, z: 0, dialogueId: "fishing_teacher", scaledX: 448, scaledY: 581 },
+  "merchant:fishing_supplier": { x: 234, y: 221, z: 0, dialogueId: "fishing_supplier", scaledX: 619, scaledY: 581 },
+  "merchant:forester_teacher": { x: 219, y: 205, z: 0, dialogueId: "forester_teacher", scaledX: 536, scaledY: 522 },
+  "merchant:borin_ironvein": { x: 303, y: 409, z: 0, dialogueId: "borin_ironvein", scaledX: 803, scaledY: 1082 },
+  "merchant:thrain_deepforge": { x: 347, y: 409, z: 0, dialogueId: "thrain_deepforge", scaledX: 920, scaledY: 1082 },
+  "merchant:elira_gemhand": { x: 322, y: 392, z: 0, dialogueId: "elira_gemhand", scaledX: 852, scaledY: 1035 },
+  "merchant:crafting_teacher": { x: 450, y: 403, z: 0, dialogueId: "crafting_teacher", scaledX: 1197, scaledY: 1066 },
+  "merchant:tanner_rusk": { x: 417, y: 409, z: 0, dialogueId: "tanner_rusk", appearanceId: "tanner_rusk", scaledX: 1107, scaledY: 1082 },
+  "merchant:north_woodwatch_guide": { x: 81, y: 56, z: 0, dialogueId: "outpost_guide", scaledX: 211, scaledY: 139 },
+  "merchant:south_quarry_foreman": { x: 323, y: 392, z: 0, dialogueId: "outpost_guide", scaledX: 853, scaledY: 1035 },
+  "merchant:market_crossing_trader": { x: 436, y: 391, z: 0, dialogueId: "shopkeeper", scaledX: 1156, scaledY: 1031 },
+  "merchant:market_crossing_painter": { x: 453, y: 405, z: 0, dialogueId: "shopkeeper", scaledX: 1200, scaledY: 1068 },
+  "merchant:old_road_scavenger": { x: 434, y: 124, z: 0, dialogueId: "outpost_guide", scaledX: 1147, scaledY: 321 },
+  "merchant:rune_tutor": { x: 218, y: 181, z: 0, dialogueId: "rune_tutor", scaledX: 578, scaledY: 474 },
+  "merchant:combination_sage": { x: 148, y: 181, z: 0, dialogueId: "combination_sage", scaledX: 391, scaledY: 474 }
 });
 
 const STARTER_TOWN_BANK_LAYOUT = Object.freeze({
-  "bank:east_outpost": { spawnId: "npc:banker_east_outpost", x: 364, y: 252, z: 0, scaledX: 484, scaledY: 335 },
-  "bank:willow_bend": { spawnId: "npc:banker_willow_bend", x: 244, y: 66, z: 0, scaledX: 325, scaledY: 88 },
-  "bank:maple_ridge": { spawnId: "npc:banker_maple_ridge", x: 399, y: 205, z: 0, scaledX: 532, scaledY: 273 },
-  "bank:yew_frontier": { spawnId: "npc:banker_yew_frontier", x: 58, y: 16, z: 0, scaledX: 77, scaledY: 21 },
-  "bank:south_field": { spawnId: "npc:banker_south_field", x: 256, y: 444, z: 0, scaledX: 341, scaledY: 592 },
-  "bank:west_range": { spawnId: "npc:banker_west_range", x: 64, y: 456, z: 0, scaledX: 85, scaledY: 608 },
-  "bank:southeast_camp": { spawnId: "npc:banker_southeast_camp", x: 416, y: 430, z: 0, scaledX: 555, scaledY: 573 },
-  "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0, scaledX: 128, scaledY: 41 }
+  "bank:east_outpost": { spawnId: "npc:banker_east_outpost", x: 364, y: 252, z: 0, scaledX: 964, scaledY: 669, homeTag: "home:distributed_bank_booths" },
+  "bank:willow_bend": { spawnId: "npc:banker_willow_bend", x: 244, y: 66, z: 0, scaledX: 651, scaledY: 176, homeTag: "home:distributed_bank_booths" },
+  "bank:maple_ridge": { spawnId: "npc:banker_maple_ridge", x: 399, y: 205, z: 0, scaledX: 1064, scaledY: 547, homeTag: "home:distributed_bank_booths" },
+  "bank:yew_frontier": { spawnId: "npc:banker_yew_frontier", x: 58, y: 16, z: 0, scaledX: 155, scaledY: 43, homeTag: "home:distributed_bank_booths" },
+  "bank:south_field": { spawnId: "npc:banker_south_field", x: 256, y: 444, z: 0, scaledX: 683, scaledY: 1184, homeTag: "home:distributed_bank_booths" },
+  "bank:west_range": { spawnId: "npc:banker_west_range", x: 64, y: 456, z: 0, scaledX: 171, scaledY: 1216, homeTag: "home:distributed_bank_booths" },
+  "bank:southeast_camp": { spawnId: "npc:banker_southeast_camp", x: 416, y: 430, z: 0, scaledX: 1109, scaledY: 1147, homeTag: "home:distributed_bank_booths" },
+  "bank:air_altar": { spawnId: "npc:banker_air_altar", x: 96, y: 31, z: 0, scaledX: 256, scaledY: 83, homeTag: "home:distributed_bank_booths" },
+  "bank:south_quarry": { spawnId: "npc:banker_south_quarry", x: 324, y: 393, z: 0, scaledX: 854, scaledY: 1036, homeTag: "home:south_quarry_storehouse" },
+  "bank:market_crossing": { spawnId: "npc:banker_market_crossing", x: 419, y: 382, z: 0, scaledX: 1112, scaledY: 1009, homeTag: "home:market_crossing_bank" }
 });
 
 const STARTER_TOWN_NPC_HOME_TAGS = Object.freeze({
   "merchant:general_store": "home:shopkeeper_house",
-  "merchant:fletching_supplier": "home:general_store",
+  "merchant:fletching_supplier": "home:north_woodwatch_fletchers_workshop",
   "merchant:starter_caravan_guide": "home:road_guide_hut",
   "merchant:east_outpost_caravan_guide": "home:outpost_guide_house",
-  "merchant:advanced_fletcher": "home:east_road_outpost",
-  "merchant:advanced_woodsman": "home:east_road_outpost",
+  "merchant:advanced_fletcher": "home:north_woodwatch_fletchers_workshop",
+  "merchant:advanced_woodsman": "home:north_woodwatch_lodge",
   "merchant:fishing_teacher": "home:fishing_teacher_shack",
   "merchant:fishing_supplier": "home:fishing_supplier_shack",
   "merchant:forester_teacher": "home:starter_grove",
-  "merchant:borin_ironvein": "home:borin_ironvein_house",
-  "merchant:thrain_deepforge": "home:thrain_deepforge_house",
-  "merchant:elira_gemhand": "home:elira_gemhand_cottage",
-  "merchant:crafting_teacher": "home:crafting_teacher_cottage",
-  "merchant:tanner_rusk": "home:tanner_rusk_tannery",
+  "merchant:borin_ironvein": "home:south_quarry_cottage_west",
+  "merchant:thrain_deepforge": "home:south_quarry_cottage_east",
+  "merchant:elira_gemhand": "home:south_quarry_storehouse",
+  "merchant:crafting_teacher": "home:market_crossing_gallery",
+  "merchant:tanner_rusk": "home:market_crossing_cottage",
+  "merchant:north_woodwatch_guide": "home:north_woodwatch_lodge",
+  "merchant:south_quarry_foreman": "home:south_quarry_storehouse",
+  "merchant:market_crossing_trader": "home:market_crossing_townhouse",
+  "merchant:market_crossing_painter": "home:market_crossing_gallery",
+  "merchant:old_road_scavenger": "home:old_road_gatehouse",
   "merchant:rune_tutor": "home:rune_tutor_hut",
   "merchant:combination_sage": "home:combination_sage_hut"
 });
@@ -134,19 +194,11 @@ function scaleAxis(value) {
 }
 
 function tutorialScaleAxis(value) {
-  return Math.round(EXPANDED_WORLD_CENTER + ((value - LEGACY_WORLD_CENTER) * TUTORIAL_WORLD_COORD_SCALE));
+  return Math.round(TUTORIAL_LAYOUT_WORLD_CENTER + ((value - LEGACY_WORLD_CENTER) * TUTORIAL_WORLD_COORD_SCALE));
 }
 
 function scaleRadius(value) {
   return Math.max(0.05, Number((value * WORLD_COORD_SCALE).toFixed(3)));
-}
-
-function loadNpcDialogueCatalog() {
-  const absPath = path.join(root, "src", "js", "content", "npc-dialogue-catalog.js");
-  const sandbox = { window: {}, console };
-  const source = fs.readFileSync(absPath, "utf8");
-  vm.runInNewContext(source, sandbox, { filename: absPath });
-  return sandbox.window && sandbox.window.NpcDialogueCatalog ? sandbox.window.NpcDialogueCatalog : null;
 }
 
 function makeSparseGameplayMap() {
@@ -240,7 +292,7 @@ function setSparseTile(map, x, y, z, tileId) {
 
 {
   const tutorialDefinition = authoring.getWorldDefinition("tutorial_island");
-  const dialogueCatalog = loadNpcDialogueCatalog();
+  const dialogueCatalog = loadNpcDialogueCatalog(root);
   const tutorialManifestEntry = manifest.worlds.find((entry) => entry.worldId === "tutorial_island");
   const rawGuide = tutorialIsland.services.find((entry) => entry.serviceId === "merchant:tutorial_guide");
   const scaledGuide = tutorialDefinition.services.find((entry) => entry.serviceId === "merchant:tutorial_guide");
@@ -519,7 +571,7 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_crafting_instructor"].dialogueId), "tutorial_crafting_instructor", "crafting instructor dialogue should resolve");
   assert.strictEqual(dialogueCatalog.resolveDialogueId(servicesById["merchant:tutorial_bank_tutor"].dialogueId), "tutorial_bank_tutor", "bank tutor dialogue should resolve");
   assert.ok(
-    fs.readFileSync(path.join(root, "src", "js", "world", "logical-map-authoring-runtime.js"), "utf8").includes("!spot.tags.includes('tutorial')"),
+    readRepoFile(root, "src/js/world/logical-map-authoring-runtime.js").includes("!spot.tags.includes('tutorial')"),
     "tutorial instructors should not inherit raised smithing/crafting merchant floor height"
   );
   assert.deepStrictEqual(
@@ -618,7 +670,7 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.strictEqual(scaledTutorialMap[0][scaledTutorialMine.y][scaledTutorialMine.x], TileId.DIRT, "scaled tutorial mining route anchor should land on the walkable quarry apron, not pond water");
   assert.notStrictEqual(scaledTutorialMap[0][288][356], TileId.GRASS, "raw tutorial mining coordinates should not be treated as the expanded-world quarry anchor");
   assert.strictEqual(scaledTutorialDefinition.terrainPatches.islandWater.waterBounds.xMin, 0, "scaled tutorial sea should keep full-map west coverage");
-  assert.strictEqual(scaledTutorialDefinition.terrainPatches.islandWater.waterBounds.xMax, 648, "scaled tutorial sea should keep full-map east coverage");
+  assert.strictEqual(scaledTutorialDefinition.terrainPatches.islandWater.waterBounds.xMax, 1296, "scaled tutorial sea should keep full-map east coverage");
   assert.strictEqual(scaledTutorialMap[0][0][0], TileId.WATER_DEEP, "scaled tutorial outer edge should be ocean, not grass or rocks");
   assert.strictEqual(scaledTutorialMap[0][647][647], TileId.WATER_DEEP, "scaled tutorial far outer edge should be ocean, not grass or rocks");
   for (const gate of scaledTutorialDefinition.landmarks.doors) {
@@ -635,7 +687,7 @@ function setSparseTile(map, x, y, z, tileId) {
     null,
     "tutorial movement bounds should prevent pathing from the mine approach into the surrounding sea"
   );
-  const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
+  const inputPathfindingRuntimeSource = readRepoFile(root, "src/js/input-pathfinding-runtime.js");
   assert.ok(
     inputPathfindingRuntimeSource.includes("if (blockX || blockY) continue;"),
     "runtime pathing should reject diagonal corner-cutting along fence and gate corners"
@@ -649,7 +701,7 @@ function setSparseTile(map, x, y, z, tileId) {
 {
   const starterDefinition = authoring.getWorldDefinition("main_overworld");
   const legacyStarterDefinition = authoring.getWorldDefinition("starter_town");
-  const dialogueCatalog = loadNpcDialogueCatalog();
+  const dialogueCatalog = loadNpcDialogueCatalog(root);
   const rawStructuresById = Object.fromEntries(starterTown.structures.map((entry) => [entry.structureId, entry]));
   const scaledStructuresById = Object.fromEntries(starterDefinition.structures.map((entry) => [entry.structureId, entry]));
   const rawCastle = rawStructuresById.castle_ground;
@@ -663,7 +715,6 @@ function setSparseTile(map, x, y, z, tileId) {
   assert.ok(Array.isArray(rawCombatSpawns) && rawCombatSpawns.length === 53, "raw starter_town data should include 53 combat spawns");
   assert.ok(Array.isArray(starterTown.skillRoutes.firemaking) && starterTown.skillRoutes.firemaking.length === 5, "raw starter_town should include 5 authored firemaking routes");
 
-  const rawTrainingDummy = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_training_dummy_hub");
   const rawChicken = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_chicken_south_field");
   const rawBoar = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_east_field_center");
   const rawWolf = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_wolf_outer_north");
@@ -671,6 +722,7 @@ function setSparseTile(map, x, y, z, tileId) {
   const rawBoarWestSouth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const rawBoarEastNorth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
   const rawSoutheastCampAnchor = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
+  const rawSoutheastCampPatroller = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_fast_striker_southeast_camp_east");
 
   const scaledCastle = scaledStructuresById.castle_ground;
   const scaledPond = starterDefinition.terrainPatches.castleFrontPond;
@@ -685,6 +737,7 @@ function setSparseTile(map, x, y, z, tileId) {
   const scaledBoarWestSouth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const scaledBoarEastNorth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
   const scaledSoutheastCampAnchor = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
+  const scaledSoutheastCampPatroller = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_fast_striker_southeast_camp_east");
 
   assert.strictEqual(legacyStarterDefinition.worldId, "main_overworld", "legacy starter_town lookup should return the main overworld definition");
   assert.ok(
@@ -783,6 +836,22 @@ function setSparseTile(map, x, y, z, tileId) {
     assert.strictEqual(scaledRoad.pathWidth, scaleRadius(rawRoad.pathWidth), `${pathId} path width should scale with the authored world`);
     assert.strictEqual(scaledRoad.edgeSoftness, scaleRadius(rawRoad.edgeSoftness), `${pathId} edge softness should scale with the authored world`);
   });
+  const rawLandformsById = Object.fromEntries((starterTown.terrainPatches.landforms || []).map((landform) => [landform.landformId, landform]));
+  const scaledLandformsById = Object.fromEntries((starterDefinition.terrainPatches.landforms || []).map((landform) => [landform.landformId, landform]));
+  ["east_marsh_lower_bank", "sunspur_foothill_rise", "sunspur_far_ridge_silhouette"].forEach((landformId) => {
+    assert.ok(rawLandformsById[landformId], `raw main overworld should include terrain landform ${landformId}`);
+    assert.ok(scaledLandformsById[landformId], `scaled main overworld should include terrain landform ${landformId}`);
+    assert.strictEqual(scaledLandformsById[landformId].height, rawLandformsById[landformId].height, `${landformId} height should not scale with map axes`);
+  });
+  assert.strictEqual(scaledLandformsById.east_marsh_lower_bank.cx, scaleAxis(rawLandformsById.east_marsh_lower_bank.cx), "lower-bank landform cx should scale");
+  assert.strictEqual(scaledLandformsById.east_marsh_lower_bank.ry, scaleRadius(rawLandformsById.east_marsh_lower_bank.ry), "lower-bank landform radius should scale");
+  assert.deepStrictEqual(
+    scaledLandformsById.sunspur_foothill_rise.points,
+    rawLandformsById.sunspur_foothill_rise.points.map((point) => ({ x: scaleAxis(point.x), y: scaleAxis(point.y) })),
+    "foothill landform path points should scale"
+  );
+  assert.strictEqual(scaledLandformsById.sunspur_foothill_rise.pathWidth, scaleRadius(rawLandformsById.sunspur_foothill_rise.pathWidth), "foothill landform width should scale");
+  assert.strictEqual(scaledLandformsById.sunspur_foothill_rise.edgeSoftness, scaleRadius(rawLandformsById.sunspur_foothill_rise.edgeSoftness), "foothill landform softness should scale");
   assert.ok(dialogueCatalog && typeof dialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog should expose resolveDialogueId");
   Object.entries(STARTER_TOWN_NAMED_NPC_LAYOUT).forEach(([serviceId, expected]) => {
     const rawService = rawServicesById[serviceId];
@@ -833,12 +902,12 @@ function setSparseTile(map, x, y, z, tileId) {
       `${serviceId} should scale with the authored bank placement`
     );
     assert.strictEqual(dialogueCatalog.resolveDialogueId(rawService.dialogueId), "banker", `${serviceId} dialogueId should resolve to banker`);
-    assert.ok(rawService.tags.includes("home:distributed_bank_booths"), `${serviceId} should keep the authored bank-booth home tag`);
-    assert.ok(scaledService.tags.includes("home:distributed_bank_booths"), `${serviceId} bank-booth home tag should survive authoring scale`);
+    assert.ok(rawService.tags.includes(expected.homeTag), `${serviceId} should keep the authored bank/home tag`);
+    assert.ok(scaledService.tags.includes(expected.homeTag), `${serviceId} bank/home tag should survive authoring scale`);
   });
-  assert.deepStrictEqual(
-    { x: scaledTrainingDummy.spawnTile.x, y: scaledTrainingDummy.spawnTile.y, z: scaledTrainingDummy.spawnTile.z },
-    { x: 273, y: 274, z: 0 },
+    assert.deepStrictEqual(
+      { x: scaledTrainingDummy.spawnTile.x, y: scaledTrainingDummy.spawnTile.y, z: scaledTrainingDummy.spawnTile.z },
+    { x: 527, y: 528, z: 0 },
     "world definition combat spawns should keep the training dummy aligned to the castle pocket"
   );
   assert.deepStrictEqual(
@@ -903,6 +972,25 @@ function setSparseTile(map, x, y, z, tileId) {
       z: rawSoutheastCampAnchor.spawnTile.z
     },
     "world definition combat spawns should keep the southeast camp anchor alignment"
+  );
+  assert.deepStrictEqual(
+    scaledSoutheastCampPatroller.patrolRoute,
+    rawSoutheastCampPatroller.patrolRoute.map((point) => ({
+      x: scaleAxis(point.x),
+      y: scaleAxis(point.y),
+      z: point.z
+    })),
+    "world definition combat patrol routes should scale with the authored world"
+  );
+  assert.deepStrictEqual(
+    scaledSoutheastCampPatroller.patrolRoute[0],
+    scaledSoutheastCampPatroller.spawnTile,
+    "world definition combat patrol routes should preserve their spawn-tile anchor after authoring remaps"
+  );
+  assert.notStrictEqual(
+    scaledSoutheastCampPatroller.patrolRoute,
+    rawSoutheastCampPatroller.patrolRoute,
+    "world definition combat patrol routes should be cloned instead of sharing authored route arrays"
   );
 }
 

@@ -1,17 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const cssSource = fs.readFileSync(path.join(root, "src", "styles", "main.css"), "utf8").replace(/\r\n/g, "\n");
-  const htmlSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  const inventorySource = fs.readFileSync(path.join(root, "src", "js", "inventory.js"), "utf8");
-  const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const cssSource = readRepoFile(root, "src/styles/main.css").replace(/\r\n/g, "\n");
+  const htmlSource = readRepoFile(root, "index.html");
+  const inventorySource = readRepoFile(root, "src/js/inventory.js");
+  const inputRenderSource = readRepoFile(root, "src/js/input-render.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
 
   assert(
     cssSource.includes("#main-ui-container {\n            pointer-events: auto;"),

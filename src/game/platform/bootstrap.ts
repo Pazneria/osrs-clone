@@ -24,7 +24,7 @@ const platformBridgeInitializers: ReadonlyArray<PlatformBridgeInitializer> = [
   exposeCodexLinkBridge
 ];
 
-export function exposePlatformBridges(): void {
+function exposePlatformBridges(): void {
   platformBridgeInitializers.forEach((initializeBridge) => initializeBridge());
 }
 
