@@ -65,38 +65,147 @@
         group.rotation.order = 'YXZ';
         const combatLevel = getEnemyCombatLevel(enemyType);
 
-        const furMaterial = getEnemyLambertMaterial('rat:fur', 0x6b6258);
-        const bellyMaterial = getEnemyLambertMaterial('rat:belly', 0xcbb7a2);
-        const tailMaterial = getEnemyLambertMaterial('rat:tail', 0xa7847a);
+        const furMaterial = getEnemyLambertMaterial('rat:fur', 0x6f665d);
+        const darkFurMaterial = getEnemyLambertMaterial('rat:furDark', 0x4f4942);
+        const bellyMaterial = getEnemyLambertMaterial('rat:belly', 0xbca893);
+        const earMaterial = getEnemyLambertMaterial('rat:ear', 0x8e6f68);
+        const noseMaterial = getEnemyLambertMaterial('rat:nose', 0x2a1c1a);
+        const eyeMaterial = getEnemyLambertMaterial('rat:eye', 0x11100e);
+        const whiskerMaterial = getEnemyLambertMaterial('rat:whisker', 0xe2d4bf);
+        const tailMaterial = getEnemyLambertMaterial('rat:tail', 0xb08a80);
+        const pawMaterial = getEnemyLambertMaterial('rat:paw', 0x6a564f);
 
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), furMaterial);
-        body.scale.set(1.35, 0.72, 1.75);
-        body.position.set(0, 0.2, 0);
+        const torsoGroup = new THREE.Group();
+        torsoGroup.name = 'rat-torso';
+        const body = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), furMaterial);
+        body.scale.set(1.15, 0.58, 1.72);
+        body.position.set(0, 0.25, 0.02);
 
-        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 10), bellyMaterial);
-        belly.scale.set(1.0, 0.55, 1.1);
-        belly.position.set(0, 0.12, 0.1);
+        const chest = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18, 0), furMaterial);
+        chest.scale.set(0.96, 0.68, 0.92);
+        chest.position.set(0, 0.28, 0.34);
 
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), furMaterial);
-        head.scale.set(1.0, 0.92, 1.15);
-        head.position.set(0, 0.24, 0.34);
+        const haunch = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), darkFurMaterial);
+        haunch.scale.set(1.18, 0.68, 1.08);
+        haunch.position.set(0, 0.23, -0.32);
 
-        const earLeft = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), furMaterial);
+        const belly = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16, 0), bellyMaterial);
+        belly.scale.set(1.05, 0.36, 1.42);
+        belly.position.set(0, 0.13, 0.02);
+
+        const backStripe = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.7), darkFurMaterial);
+        backStripe.position.set(0, 0.39, 0.0);
+
+        const headGroup = new THREE.Group();
+        headGroup.name = 'rat-head';
+        headGroup.position.set(0, 0.31, 0.55);
+        const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.15, 0), furMaterial);
+        head.scale.set(0.96, 0.72, 1.04);
+        const snoutGeometry = new THREE.ConeGeometry(0.078, 0.2, 4);
+        snoutGeometry.rotateX(Math.PI / 2);
+        const snout = new THREE.Mesh(snoutGeometry, bellyMaterial);
+        snout.position.set(0, -0.02, 0.16);
+        const nose = new THREE.Mesh(new THREE.DodecahedronGeometry(0.027, 0), noseMaterial);
+        nose.scale.set(1.2, 0.78, 0.9);
+        nose.position.set(0, -0.02, 0.27);
+        const cheekLeft = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), bellyMaterial);
+        const cheekRight = cheekLeft.clone();
+        cheekLeft.scale.set(1.0, 0.65, 0.8);
+        cheekRight.scale.copy(cheekLeft.scale);
+        cheekLeft.position.set(0.055, -0.035, 0.11);
+        cheekRight.position.set(-0.055, -0.035, 0.11);
+        const earGeometry = new THREE.ConeGeometry(0.052, 0.065, 4);
+        const earLeft = new THREE.Mesh(earGeometry, earMaterial);
         const earRight = earLeft.clone();
-        earLeft.position.set(0.09, 0.35, 0.35);
-        earRight.position.set(-0.09, 0.35, 0.35);
+        earLeft.position.set(0.095, 0.075, -0.035);
+        earRight.position.set(-0.095, 0.075, -0.035);
+        earLeft.rotation.set(0.18, 0.05, -0.55);
+        earRight.rotation.set(0.18, -0.05, 0.55);
+        const eyeLeft = new THREE.Mesh(new THREE.DodecahedronGeometry(0.018, 0), eyeMaterial);
+        const eyeRight = eyeLeft.clone();
+        eyeLeft.position.set(0.06, 0.025, 0.08);
+        eyeRight.position.set(-0.06, 0.025, 0.08);
+        const whiskerGeometry = new THREE.BoxGeometry(0.17, 0.004, 0.004);
+        const whiskerLeftUpper = new THREE.Mesh(whiskerGeometry, whiskerMaterial);
+        const whiskerLeftLower = whiskerLeftUpper.clone();
+        const whiskerRightUpper = whiskerLeftUpper.clone();
+        const whiskerRightLower = whiskerLeftUpper.clone();
+        whiskerLeftUpper.position.set(0.12, -0.015, 0.17);
+        whiskerLeftLower.position.set(0.12, -0.04, 0.15);
+        whiskerRightUpper.position.set(-0.12, -0.015, 0.17);
+        whiskerRightLower.position.set(-0.12, -0.04, 0.15);
+        whiskerLeftUpper.rotation.set(0, -0.2, 0.1);
+        whiskerLeftLower.rotation.set(0, -0.28, -0.12);
+        whiskerRightUpper.rotation.set(0, 0.2, -0.1);
+        whiskerRightLower.rotation.set(0, 0.28, 0.12);
+        headGroup.add(
+            head,
+            snout,
+            nose,
+            cheekLeft,
+            cheekRight,
+            earLeft,
+            earRight,
+            eyeLeft,
+            eyeRight,
+            whiskerLeftUpper,
+            whiskerLeftLower,
+            whiskerRightUpper,
+            whiskerRightLower
+        );
 
-        const tailGeometry = new THREE.CylinderGeometry(0.022, 0.012, 0.48, 5);
-        tailGeometry.rotateX(Math.PI / 2);
-        const tail = new THREE.Mesh(tailGeometry, tailMaterial);
-        tail.position.set(0, 0.14, -0.42);
-        tail.rotation.x = Math.PI / 8;
+        const tailGroup = new THREE.Group();
+        tailGroup.name = 'rat-tail';
+        tailGroup.position.set(0, 0.19, -0.49);
+        const tailSegmentGeometry = new THREE.CylinderGeometry(0.022, 0.017, 0.22, 5);
+        tailSegmentGeometry.rotateX(Math.PI / 2);
+        const tailMiddleGeometry = new THREE.CylinderGeometry(0.017, 0.012, 0.2, 5);
+        tailMiddleGeometry.rotateX(Math.PI / 2);
+        const tailTipGeometry = new THREE.ConeGeometry(0.012, 0.18, 5);
+        tailTipGeometry.rotateX(-Math.PI / 2);
+        const tail = new THREE.Mesh(tailSegmentGeometry, tailMaterial);
+        const tailMiddle = new THREE.Mesh(tailMiddleGeometry, tailMaterial);
+        const tailTip = new THREE.Mesh(tailTipGeometry, tailMaterial);
+        tail.position.set(0, 0, -0.1);
+        tailMiddle.position.set(0.035, 0.006, -0.27);
+        tailMiddle.rotation.y = 0.24;
+        tailTip.position.set(0.082, 0.01, -0.42);
+        tailTip.rotation.y = 0.42;
+        tailGroup.add(tail, tailMiddle, tailTip);
+
+        const legOptions = {
+            upperLength: 0.14,
+            lowerLength: 0.115,
+            upperRadiusTop: 0.017,
+            upperRadiusBottom: 0.02,
+            lowerRadiusTop: 0.014,
+            lowerRadiusBottom: 0.011,
+            pawSize: [0.052, 0.024, 0.082],
+            pawForwardOffset: 0.028,
+            upperMaterial: darkFurMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        };
+        const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.15, 0.22, 0.27), legOptions);
+        const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.15, 0.22, 0.27), legOptions);
+        const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.17, 0.2, -0.25), Object.assign({}, legOptions, {
+            upperLength: 0.13,
+            lowerLength: 0.105,
+            pawSize: [0.056, 0.024, 0.078],
+            pawForwardOffset: 0.018
+        }));
+        const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.17, 0.2, -0.25), Object.assign({}, legOptions, {
+            upperLength: 0.13,
+            lowerLength: 0.105,
+            pawSize: [0.056, 0.024, 0.078],
+            pawForwardOffset: 0.018
+        }));
 
         const hitbox = new THREE.Mesh(
-            new THREE.BoxGeometry(0.8, 0.5, 0.9),
+            new THREE.BoxGeometry(0.86, 0.58, 1.08),
             createEnemyHitboxMaterial()
         );
-        hitbox.position.y = 0.24;
+        hitbox.position.y = 0.29;
         hitbox.userData = {
             type: 'ENEMY',
             gridX: enemyState.x,
@@ -107,8 +216,48 @@
             uid: enemyState.runtimeId
         };
 
-        group.add(body, belly, head, earLeft, earRight, tail, hitbox);
-        return { group, hitbox, kind: 'rat', body, head, tail };
+        torsoGroup.add(body, chest, haunch, belly, backStripe, headGroup, tailGroup);
+        group.add(
+            torsoGroup,
+            frontLeftLeg.root,
+            frontRightLeg.root,
+            backLeftLeg.root,
+            backRightLeg.root,
+            hitbox
+        );
+        return {
+            group,
+            hitbox,
+            kind: 'rat',
+            torsoGroup,
+            body,
+            chest,
+            haunch,
+            belly,
+            backStripe,
+            headGroup,
+            head,
+            snout,
+            nose,
+            cheekLeft,
+            cheekRight,
+            earLeft,
+            earRight,
+            eyeLeft,
+            eyeRight,
+            whiskerLeftUpper,
+            whiskerLeftLower,
+            whiskerRightUpper,
+            whiskerRightLower,
+            tailGroup,
+            tail,
+            tailMiddle,
+            tailTip,
+            frontLeftLeg,
+            frontRightLeg,
+            backLeftLeg,
+            backRightLeg
+        };
     }
 
     function createQuadrupedLegRig(basePosition, options) {
@@ -524,6 +673,205 @@
         };
     }
 
+    function addPawClaws(paw, material, options = {}) {
+        if (!paw) return [];
+        const z = Number.isFinite(options.z) ? options.z : 0.065;
+        const y = Number.isFinite(options.y) ? options.y : -0.004;
+        const spread = Number.isFinite(options.spread) ? options.spread : 0.036;
+        const length = Number.isFinite(options.length) ? options.length : 0.07;
+        const radius = Number.isFinite(options.radius) ? options.radius : 0.012;
+        const geometry = new THREE.ConeGeometry(radius, length, 4);
+        const claws = [-spread, 0, spread].map((xOffset) => {
+            const claw = new THREE.Mesh(geometry.clone(), material);
+            claw.rotation.x = Math.PI / 2;
+            claw.position.set(xOffset, y, z);
+            paw.add(claw);
+            return claw;
+        });
+        return claws;
+    }
+
+    function createBearRenderer(enemyState, enemyType) {
+        const group = new THREE.Group();
+        group.rotation.order = 'YXZ';
+        const combatLevel = getEnemyCombatLevel(enemyType);
+
+        const furMaterial = getEnemyLambertMaterial('bear:fur', 0x5b3d25);
+        const darkFurMaterial = getEnemyLambertMaterial('bear:furDark', 0x342418);
+        const muzzleMaterial = getEnemyLambertMaterial('bear:muzzle', 0x8a6a4a);
+        const bellyMaterial = getEnemyLambertMaterial('bear:belly', 0x735034);
+        const pawMaterial = getEnemyLambertMaterial('bear:paw', 0x2a1c14);
+        const clawMaterial = getEnemyLambertMaterial('bear:claw', 0xe3d5bd);
+        const eyeMaterial = getEnemyLambertMaterial('bear:eye', 0x110c08);
+        const noseMaterial = getEnemyLambertMaterial('bear:nose', 0x18100c);
+
+        const torsoGroup = new THREE.Group();
+        torsoGroup.name = 'bear-torso';
+        const body = new THREE.Mesh(new THREE.DodecahedronGeometry(0.36, 0), furMaterial);
+        body.scale.set(1.32, 0.82, 1.72);
+        body.position.set(0, 0.5, 0.02);
+        const shoulderHump = new THREE.Mesh(new THREE.DodecahedronGeometry(0.32, 0), darkFurMaterial);
+        shoulderHump.scale.set(1.36, 0.74, 0.96);
+        shoulderHump.position.set(0, 0.68, 0.28);
+        const rump = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3, 0), furMaterial);
+        rump.scale.set(1.18, 0.78, 1.04);
+        rump.position.set(0, 0.48, -0.38);
+        const belly = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), bellyMaterial);
+        belly.scale.set(1.12, 0.58, 1.34);
+        belly.position.set(0, 0.3, 0.02);
+        const backRidge = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.74), darkFurMaterial);
+        backRidge.position.set(0, 0.78, 0.02);
+
+        const headGroup = new THREE.Group();
+        headGroup.name = 'bear-head';
+        headGroup.position.set(0, 0.74, 0.72);
+        const neck = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), darkFurMaterial);
+        neck.scale.set(1.08, 0.78, 0.82);
+        neck.position.set(0, -0.03, -0.2);
+        const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.23, 0), furMaterial);
+        head.scale.set(1.08, 0.9, 1.06);
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.13), darkFurMaterial);
+        brow.position.set(0, 0.08, 0.08);
+        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.15, 0.28), muzzleMaterial);
+        muzzle.position.set(0, -0.06, 0.25);
+        const nose = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), noseMaterial);
+        nose.scale.set(1.3, 0.8, 0.8);
+        nose.position.set(0, -0.045, 0.41);
+        const earGeometry = new THREE.ConeGeometry(0.07, 0.08, 5);
+        const earLeft = new THREE.Mesh(earGeometry, darkFurMaterial);
+        const earRight = earLeft.clone();
+        earLeft.position.set(0.14, 0.15, -0.03);
+        earRight.position.set(-0.14, 0.15, -0.03);
+        earLeft.rotation.set(0.18, 0, -0.38);
+        earRight.rotation.set(0.18, 0, 0.38);
+        const eyeLeft = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 8), eyeMaterial);
+        const eyeRight = eyeLeft.clone();
+        eyeLeft.position.set(0.078, 0.03, 0.14);
+        eyeRight.position.set(-0.078, 0.03, 0.14);
+        headGroup.add(neck, head, brow, muzzle, nose, earLeft, earRight, eyeLeft, eyeRight);
+
+        const tailGroup = new THREE.Group();
+        tailGroup.name = 'bear-tail';
+        tailGroup.position.set(0, 0.5, -0.68);
+        const tailNub = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07, 0), darkFurMaterial);
+        tailNub.scale.set(1, 0.8, 0.72);
+        tailGroup.add(tailNub);
+
+        const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.27, 0.44, 0.32), {
+            upperLength: 0.28,
+            lowerLength: 0.24,
+            upperRadiusTop: 0.062,
+            upperRadiusBottom: 0.068,
+            lowerRadiusTop: 0.052,
+            lowerRadiusBottom: 0.046,
+            pawSize: [0.15, 0.07, 0.19],
+            pawForwardOffset: 0.035,
+            upperMaterial: furMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        });
+        const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.27, 0.44, 0.32), {
+            upperLength: 0.28,
+            lowerLength: 0.24,
+            upperRadiusTop: 0.062,
+            upperRadiusBottom: 0.068,
+            lowerRadiusTop: 0.052,
+            lowerRadiusBottom: 0.046,
+            pawSize: [0.15, 0.07, 0.19],
+            pawForwardOffset: 0.035,
+            upperMaterial: furMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        });
+        const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.25, 0.4, -0.34), {
+            upperLength: 0.27,
+            lowerLength: 0.23,
+            upperRadiusTop: 0.07,
+            upperRadiusBottom: 0.076,
+            lowerRadiusTop: 0.054,
+            lowerRadiusBottom: 0.048,
+            pawSize: [0.16, 0.075, 0.2],
+            pawForwardOffset: 0.02,
+            upperMaterial: furMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        });
+        const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.25, 0.4, -0.34), {
+            upperLength: 0.27,
+            lowerLength: 0.23,
+            upperRadiusTop: 0.07,
+            upperRadiusBottom: 0.076,
+            lowerRadiusTop: 0.054,
+            lowerRadiusBottom: 0.048,
+            pawSize: [0.16, 0.075, 0.2],
+            pawForwardOffset: 0.02,
+            upperMaterial: furMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        });
+
+        const frontLeftClaws = addPawClaws(frontLeftLeg.paw, clawMaterial, { spread: 0.04, length: 0.08, z: 0.085 });
+        const frontRightClaws = addPawClaws(frontRightLeg.paw, clawMaterial, { spread: 0.04, length: 0.08, z: 0.085 });
+        const backLeftClaws = addPawClaws(backLeftLeg.paw, clawMaterial, { spread: 0.045, length: 0.075, z: 0.075 });
+        const backRightClaws = addPawClaws(backRightLeg.paw, clawMaterial, { spread: 0.045, length: 0.075, z: 0.075 });
+
+        const hitbox = new THREE.Mesh(
+            new THREE.BoxGeometry(1.18, 1.16, 1.38),
+            createEnemyHitboxMaterial()
+        );
+        hitbox.position.y = 0.58;
+        hitbox.userData = {
+            type: 'ENEMY',
+            gridX: enemyState.x,
+            gridY: enemyState.y,
+            z: enemyState.z,
+            name: enemyType.displayName,
+            combatLevel,
+            uid: enemyState.runtimeId
+        };
+
+        torsoGroup.add(body, shoulderHump, rump, belly, backRidge, headGroup, tailGroup);
+        group.add(
+            torsoGroup,
+            frontLeftLeg.root,
+            frontRightLeg.root,
+            backLeftLeg.root,
+            backRightLeg.root,
+            hitbox
+        );
+        return {
+            group,
+            hitbox,
+            kind: 'bear',
+            torsoGroup,
+            body,
+            shoulderHump,
+            rump,
+            belly,
+            backRidge,
+            headGroup,
+            neck,
+            head,
+            brow,
+            muzzle,
+            nose,
+            earLeft,
+            earRight,
+            eyeLeft,
+            eyeRight,
+            tailGroup,
+            tailNub,
+            frontLeftLeg,
+            frontRightLeg,
+            backLeftLeg,
+            backRightLeg,
+            frontLeftClaws,
+            frontRightClaws,
+            backLeftClaws,
+            backRightClaws
+        };
+    }
+
     function createChickenLegRig(basePosition, side, materials) {
         const root = new THREE.Group();
         const upperPivot = new THREE.Group();
@@ -809,7 +1157,7 @@
         renderer.tailGroup.rotation.set(-0.1 + attackPulse * 0.06, 0, -0.18 + tailSwing);
 
         const leadPhase = gaitAngle;
-        const followPhase = gaitAngle + Math.PI;
+        const followPhase = leadPhase + Math.PI;
         applyQuadrupedLegPose(renderer.frontLeftLeg, resolveQuadrupedLegPose(leadPhase, {
             travel: walkActive ? 0.065 : 0.012,
             lift: walkActive ? 0.03 : 0.008,
@@ -931,6 +1279,86 @@
         }));
     }
 
+    function updateBearRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY) {
+        const walkActive = visuallyMoving || useWalkBaseClip;
+        const gaitPhase = (frameNow / 225) + (currentVisualX * 0.14) + (currentVisualY * 0.12);
+        const gaitAngle = gaitPhase * Math.PI * 2;
+        const attackAge = frameNow - (enemyState.attackTriggerAt || 0);
+        const attackPulse = attackAge >= 0 && attackAge < 520 ? Math.sin((attackAge / 520) * Math.PI) : 0;
+        const hitAge = frameNow - (enemyState.hitReactionTriggerAt || 0);
+        const hitPulse = hitAge >= 0 && hitAge < 420 ? Math.sin((hitAge / 420) * Math.PI) : 0;
+        const idleBob = Math.sin(idlePhase * 1.35) * 0.014;
+        const walkBob = walkActive ? Math.abs(Math.sin(gaitAngle * 2)) * 0.02 : 0;
+        const bob = idleBob + walkBob;
+        const shoulderRoll = walkActive ? Math.sin(gaitAngle * 2) * 0.018 : Math.sin(idlePhase * 1.05) * 0.008;
+        const headSwing = walkActive ? Math.sin(gaitAngle) * 0.035 : Math.sin(idlePhase * 1.4) * 0.018;
+        const tailFlick = walkActive ? Math.sin(gaitAngle * 2 + 0.3) * 0.08 : Math.sin(idlePhase * 1.8) * 0.035;
+
+        renderer.group.rotation.x = -0.025 + shoulderRoll * 0.18 - attackPulse * 0.08 + hitPulse * 0.05;
+        renderer.torsoGroup.position.set(0, bob - attackPulse * 0.045 + hitPulse * 0.04, 0);
+        renderer.torsoGroup.rotation.set(-attackPulse * 0.06 + hitPulse * 0.04, 0, shoulderRoll * 0.22);
+        renderer.body.scale.set(1.32 + hitPulse * 0.025, 0.82 - attackPulse * 0.04 + hitPulse * 0.02, 1.72 + attackPulse * 0.06);
+        renderer.shoulderHump.position.set(0, 0.68 + shoulderRoll * 0.35 - attackPulse * 0.02, 0.28 + attackPulse * 0.03);
+        renderer.shoulderHump.scale.set(1.36 + attackPulse * 0.04, 0.74 + walkBob * 1.15, 0.96);
+        renderer.rump.position.set(0, 0.48 - shoulderRoll * 0.2 + hitPulse * 0.025, -0.38 - attackPulse * 0.035);
+        renderer.belly.position.set(0, 0.3 - attackPulse * 0.015 + hitPulse * 0.02, 0.02);
+        renderer.backRidge.rotation.z = shoulderRoll * 0.2;
+        renderer.headGroup.position.set(0, 0.74 + bob * 0.28 - attackPulse * 0.055 + hitPulse * 0.035, 0.72 + attackPulse * 0.17 - hitPulse * 0.065);
+        renderer.headGroup.rotation.set(0.02 + headSwing * 0.35 - attackPulse * 0.18 + hitPulse * 0.08, 0, headSwing * 0.18);
+        renderer.brow.position.y = 0.08 + attackPulse * 0.01 - hitPulse * 0.005;
+        renderer.muzzle.position.z = 0.25 + attackPulse * 0.035;
+        renderer.earLeft.rotation.z = -0.38 + headSwing * 0.24 - attackPulse * 0.035;
+        renderer.earRight.rotation.z = 0.38 - headSwing * 0.24 + attackPulse * 0.035;
+        renderer.tailGroup.rotation.set(0.08 + hitPulse * 0.03, 0, tailFlick - attackPulse * 0.05);
+
+        const leadPhase = gaitAngle;
+        const followPhase = gaitAngle + Math.PI;
+        applyQuadrupedLegPose(renderer.frontLeftLeg, resolveQuadrupedLegPose(leadPhase, {
+            travel: walkActive ? 0.07 : 0.008,
+            lift: walkActive ? 0.024 : 0.005,
+            upperSwing: walkActive ? 0.46 : 0.08,
+            kneeBend: 0.5,
+            kneeLift: 0.08,
+            pawFlex: 0.1,
+            upperBias: 0.1,
+            lowerBias: -0.08,
+            splay: 0.035
+        }));
+        applyQuadrupedLegPose(renderer.frontRightLeg, resolveQuadrupedLegPose(followPhase, {
+            travel: walkActive ? 0.07 : 0.008,
+            lift: walkActive ? 0.024 : 0.005,
+            upperSwing: walkActive ? 0.46 : 0.08,
+            kneeBend: 0.5,
+            kneeLift: 0.08,
+            pawFlex: 0.1,
+            upperBias: 0.1,
+            lowerBias: -0.08,
+            splay: -0.035
+        }));
+        applyQuadrupedLegPose(renderer.backLeftLeg, resolveQuadrupedLegPose(followPhase, {
+            travel: walkActive ? 0.058 : 0.007,
+            lift: walkActive ? 0.02 : 0.004,
+            upperSwing: walkActive ? 0.4 : 0.07,
+            kneeBend: 0.44,
+            kneeLift: 0.07,
+            pawFlex: 0.08,
+            upperBias: -0.08,
+            lowerBias: 0.04,
+            splay: 0.025
+        }));
+        applyQuadrupedLegPose(renderer.backRightLeg, resolveQuadrupedLegPose(leadPhase, {
+            travel: walkActive ? 0.058 : 0.007,
+            lift: walkActive ? 0.02 : 0.004,
+            upperSwing: walkActive ? 0.4 : 0.07,
+            kneeBend: 0.44,
+            kneeLift: 0.07,
+            pawFlex: 0.08,
+            upperBias: -0.08,
+            lowerBias: 0.04,
+            splay: -0.025
+        }));
+    }
+
     function updateChickenRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY) {
         const walkActive = visuallyMoving || useWalkBaseClip;
         const gaitPhase = (frameNow / 170) + (currentVisualX * 0.27) + (currentVisualY * 0.31);
@@ -992,13 +1420,117 @@
     }
 
 
-    function updateRatRenderer(enemyState, renderer, frameNow, idlePhase) {
+    function updateRatRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY) {
+        const walkActive = !!visuallyMoving || !!useWalkBaseClip;
+        const gaitPhase = (frameNow / 280) + (currentVisualX * 0.18) + (currentVisualY * 0.14);
+        const gaitAngle = gaitPhase * Math.PI * 2;
         const attackAge = frameNow - (enemyState.attackTriggerAt || 0);
         const attackPulse = attackAge >= 0 && attackAge < 420 ? Math.sin((attackAge / 420) * Math.PI) : 0;
-        renderer.body.scale.set(1.35, 0.72 + (attackPulse * 0.08), 1.75 - (attackPulse * 0.08));
-        renderer.head.position.z = 0.34 + (attackPulse * 0.14);
-        renderer.tail.rotation.y = Math.sin(idlePhase * 2) * 0.35;
-        renderer.tail.rotation.x = Math.PI / 8;
+        const hitAge = frameNow - (enemyState.hitReactionTriggerAt || 0);
+        const hitPulse = hitAge >= 0 && hitAge < 320 ? Math.sin((hitAge / 320) * Math.PI) : 0;
+        const idleBob = Math.sin(idlePhase * 2.35) * 0.01;
+        const walkBob = walkActive ? Math.abs(Math.sin(gaitAngle * 2)) * 0.012 : 0;
+        const bob = idleBob + walkBob;
+        const sniff = walkActive ? Math.sin(gaitAngle) * 0.028 : Math.sin(idlePhase * 1.9) * 0.02;
+        const spineWave = walkActive ? Math.sin(gaitAngle * 2) * 0.018 : Math.sin(idlePhase * 1.45) * 0.008;
+        const tailSwing = (walkActive ? Math.sin(gaitAngle * 2.2 + 0.4) * 0.28 : Math.sin(idlePhase * 2.15) * 0.16)
+            + (attackPulse * 0.08) - (hitPulse * 0.1);
+
+        if (renderer.group) renderer.group.rotation.x = -0.02 + spineWave * 0.25 - attackPulse * 0.055 + hitPulse * 0.045;
+        if (renderer.torsoGroup && renderer.torsoGroup.position) {
+            renderer.torsoGroup.position.set(0, bob - attackPulse * 0.026 + hitPulse * 0.026, 0);
+        }
+        if (renderer.torsoGroup && renderer.torsoGroup.rotation) {
+            renderer.torsoGroup.rotation.set(-attackPulse * 0.045 + hitPulse * 0.04, 0, spineWave * 0.32);
+        }
+        if (renderer.body && renderer.body.scale) {
+            renderer.body.scale.set(1.15 + hitPulse * 0.025, 0.58 - attackPulse * 0.035 + hitPulse * 0.02, 1.72 + attackPulse * 0.075 + spineWave);
+        }
+        if (renderer.chest && renderer.chest.position) {
+            renderer.chest.position.set(0, 0.28 + spineWave * 0.25 - attackPulse * 0.018, 0.34 + attackPulse * 0.04);
+        }
+        if (renderer.haunch && renderer.haunch.position) {
+            renderer.haunch.position.set(0, 0.23 - spineWave * 0.22 + hitPulse * 0.015, -0.32 - attackPulse * 0.026);
+        }
+        if (renderer.belly && renderer.belly.position) {
+            renderer.belly.position.set(0, 0.13 - attackPulse * 0.012 + hitPulse * 0.012, 0.02);
+        }
+        if (renderer.backStripe && renderer.backStripe.rotation) renderer.backStripe.rotation.z = spineWave * 0.25;
+        if (renderer.headGroup && renderer.headGroup.position) {
+            renderer.headGroup.position.set(
+                0,
+                0.31 + bob * 0.42 - attackPulse * 0.035 + hitPulse * 0.02,
+                0.55 + sniff + attackPulse * 0.16 - hitPulse * 0.05
+            );
+        } else if (renderer.head && renderer.head.position) {
+            renderer.head.position.z = 0.34 + attackPulse * 0.14;
+        }
+        if (renderer.headGroup && renderer.headGroup.rotation) {
+            renderer.headGroup.rotation.set(-0.04 + sniff * 0.55 - attackPulse * 0.16 + hitPulse * 0.08, 0, sniff * 0.35);
+        }
+        if (renderer.head && renderer.head.position) renderer.head.position.z = attackPulse * 0.012;
+        if (renderer.earLeft && renderer.earLeft.rotation) renderer.earLeft.rotation.z = -0.55 + sniff * 0.8 - attackPulse * 0.06;
+        if (renderer.earRight && renderer.earRight.rotation) renderer.earRight.rotation.z = 0.55 - sniff * 0.8 + attackPulse * 0.06;
+        if (renderer.whiskerLeftUpper && renderer.whiskerLeftUpper.rotation) renderer.whiskerLeftUpper.rotation.z = 0.1 + sniff * 0.9;
+        if (renderer.whiskerLeftLower && renderer.whiskerLeftLower.rotation) renderer.whiskerLeftLower.rotation.z = -0.12 + sniff * 0.7;
+        if (renderer.whiskerRightUpper && renderer.whiskerRightUpper.rotation) renderer.whiskerRightUpper.rotation.z = -0.1 - sniff * 0.9;
+        if (renderer.whiskerRightLower && renderer.whiskerRightLower.rotation) renderer.whiskerRightLower.rotation.z = 0.12 - sniff * 0.7;
+        if (renderer.tailGroup && renderer.tailGroup.rotation) {
+            renderer.tailGroup.rotation.set(0.08 + attackPulse * 0.04 - hitPulse * 0.04, Math.sin(idlePhase * 1.75) * 0.08, -0.18 + tailSwing);
+        }
+        if (renderer.tail && renderer.tail.rotation) {
+            renderer.tail.rotation.y = Math.sin(idlePhase * 2) * 0.12;
+            renderer.tail.rotation.x = 0;
+        }
+        if (renderer.tailMiddle && renderer.tailMiddle.rotation) renderer.tailMiddle.rotation.y = 0.24 + tailSwing * 0.28;
+        if (renderer.tailTip && renderer.tailTip.rotation) renderer.tailTip.rotation.y = 0.42 + tailSwing * 0.4;
+
+        const leadPhase = walkActive ? gaitAngle : idlePhase * 0.35;
+        const followPhase = gaitAngle + Math.PI;
+        applyQuadrupedLegPose(renderer.frontLeftLeg, resolveQuadrupedLegPose(leadPhase, {
+            travel: walkActive ? 0.036 : 0.001,
+            lift: walkActive ? 0.024 : 0.001,
+            upperSwing: walkActive ? 0.34 : 0.02,
+            kneeBend: walkActive ? 0.36 : 0.035,
+            kneeLift: walkActive ? 0.07 : 0.01,
+            pawFlex: walkActive ? 0.08 : 0.01,
+            upperBias: 0.04,
+            lowerBias: -0.06,
+            splay: 0.035
+        }));
+        applyQuadrupedLegPose(renderer.frontRightLeg, resolveQuadrupedLegPose(followPhase, {
+            travel: walkActive ? 0.036 : 0.001,
+            lift: walkActive ? 0.024 : 0.001,
+            upperSwing: walkActive ? 0.34 : 0.02,
+            kneeBend: walkActive ? 0.36 : 0.035,
+            kneeLift: walkActive ? 0.07 : 0.01,
+            pawFlex: walkActive ? 0.08 : 0.01,
+            upperBias: 0.04,
+            lowerBias: -0.06,
+            splay: -0.035
+        }));
+        applyQuadrupedLegPose(renderer.backLeftLeg, resolveQuadrupedLegPose(followPhase, {
+            travel: walkActive ? 0.032 : 0.001,
+            lift: walkActive ? 0.018 : 0.001,
+            upperSwing: walkActive ? 0.3 : 0.018,
+            kneeBend: walkActive ? 0.32 : 0.03,
+            kneeLift: walkActive ? 0.06 : 0.008,
+            pawFlex: walkActive ? 0.06 : 0.008,
+            upperBias: -0.06,
+            lowerBias: 0.03,
+            splay: 0.025
+        }));
+        applyQuadrupedLegPose(renderer.backRightLeg, resolveQuadrupedLegPose(leadPhase, {
+            travel: walkActive ? 0.032 : 0.001,
+            lift: walkActive ? 0.018 : 0.001,
+            upperSwing: walkActive ? 0.3 : 0.018,
+            kneeBend: walkActive ? 0.32 : 0.03,
+            kneeLift: walkActive ? 0.06 : 0.008,
+            pawFlex: walkActive ? 0.06 : 0.008,
+            upperBias: -0.06,
+            lowerBias: 0.03,
+            splay: -0.025
+        }));
     }
 
     function updateHumanoidEnemyRenderer(enemyState, renderer, frameNow, idlePhase, useWalkBaseClip) {
@@ -1070,10 +1602,12 @@
         const enemyState = options.enemyState || null;
         const enemyType = options.enemyType || null;
         if (!enemyState || !enemyType) return null;
-        if (enemyState.enemyId === 'enemy_boar') return createBoarRenderer(enemyState, enemyType);
-        if (enemyState.enemyId === 'enemy_wolf') return createWolfRenderer(enemyState, enemyType);
-        if (enemyType.appearance && enemyType.appearance.kind === 'rat') return createRatRenderer(enemyState, enemyType);
-        if (enemyType.appearance && enemyType.appearance.kind === 'chicken') return createChickenRenderer(enemyState, enemyType);
+        const appearanceKind = enemyType.appearance && enemyType.appearance.kind;
+        if (appearanceKind === 'boar') return createBoarRenderer(enemyState, enemyType);
+        if (appearanceKind === 'wolf') return createWolfRenderer(enemyState, enemyType);
+        if (appearanceKind === 'bear') return createBearRenderer(enemyState, enemyType);
+        if (appearanceKind === 'rat') return createRatRenderer(enemyState, enemyType);
+        if (appearanceKind === 'chicken') return createChickenRenderer(enemyState, enemyType);
         return createHumanoidEnemyRenderer(enemyState, enemyType);
     }
 
@@ -1095,6 +1629,7 @@
         if (renderer.kind === 'chicken') return 0.88;
         if (renderer.kind === 'boar') return 0.82;
         if (renderer.kind === 'wolf') return 0.9;
+        if (renderer.kind === 'bear') return 0.98;
         return 1.15;
     }
 
@@ -1170,7 +1705,7 @@
         const currentVisualY = Number.isFinite(options.currentVisualY) ? options.currentVisualY : 0;
         if (!enemyState || !renderer) return;
         if (renderer.kind === 'rat') {
-            updateRatRenderer(enemyState, renderer, frameNow, idlePhase);
+            updateRatRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY);
             return;
         }
         if (renderer.kind === 'boar') {
@@ -1179,6 +1714,10 @@
         }
         if (renderer.kind === 'wolf') {
             updateWolfRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY);
+            return;
+        }
+        if (renderer.kind === 'bear') {
+            updateBearRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY);
             return;
         }
         if (renderer.kind === 'chicken') {

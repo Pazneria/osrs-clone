@@ -47,6 +47,7 @@ function run() {
 
   assert(runtimeSource.includes("window.InputTargetInteractionRuntime"), "input target interaction runtime should expose a window runtime");
   assert(runtimeSource.includes("function resolveTargetInteractionOptions"), "input target interaction runtime should own context-menu target option resolution");
+  assert(runtimeSource.includes("function isDirectSelectedItemUseTarget"), "input target interaction runtime should own direct selected-item target policy");
   assert(runtimeSource.includes("function formatGroundItemDisplayName"), "input target interaction runtime should own target menu ground item display names");
   assert(runtimeSource.includes("function formatEnemyDisplayName"), "input target interaction runtime should own target menu enemy display names");
   assert(runtimeSource.includes("function buildInteractionTargetData"), "input target interaction runtime should own primary target data shaping");
@@ -161,6 +162,36 @@ function run() {
     assert(result.used, "selected item primary clicks should try skill target use");
     assert(logs.cleared, "selected item primary clicks should clear the selected use state");
     assert(logs.markers.length === 1 && logs.markers[0].isAction, "successful selected item use should spawn an action marker");
+  }
+
+  {
+    const logs = { queued: [], markers: [], chats: [] };
+    let skillUseAttempts = 0;
+    let worldUseAttempts = 0;
+    const context = makeContext({
+      logs,
+      skillRuntime: {
+        tryUseItemOnTarget: () => {
+          skillUseAttempts += 1;
+          return true;
+        }
+      },
+      tryUseItemOnWorld: () => {
+        worldUseAttempts += 1;
+        return true;
+      }
+    });
+    const result = runtime.handlePrimaryInteractionHit(
+      context,
+      { type: "GROUND", gridX: 2, gridY: 2, point: { x: 2, y: 0, z: 2 } },
+      { selectedItem: { id: "tinderbox" }, selectedUseInvIndex: 5 }
+    );
+    assert(result.handled && !result.used, "selected item clicks on plain ground should be handled but not used");
+    assert(skillUseAttempts === 0, "plain ground should not be forwarded to skill item-use handlers");
+    assert(worldUseAttempts === 0, "plain ground should not be forwarded to world item-use handlers");
+    assert(logs.cleared, "plain ground selected-item clicks should clear the selected use state");
+    assert(logs.markers.length === 0, "failed selected item use on plain ground should not spawn an action marker");
+    assert(logs.queued.length === 0, "failed selected item use on plain ground should not queue a walk or interaction");
   }
 
   {

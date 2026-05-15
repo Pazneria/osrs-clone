@@ -7,7 +7,7 @@ export type PlayerCombatStyleId = MeleeStyleId | "ranged" | "magic";
 export type CombatTargetKind = "enemy";
 export type EnemyAggroType = "passive" | "aggressive";
 export type EnemyRuntimeStateId = "idle" | "aggroed" | "returning" | "dead";
-export type EnemyAppearanceKind = "rat" | "humanoid" | "chicken";
+export type EnemyAppearanceKind = "rat" | "humanoid" | "chicken" | "boar" | "wolf" | "bear";
 export type EnemyDropKind = "nothing" | "item" | "coins";
 export type CombatProgressionBandId =
   | "starter_opt_in"

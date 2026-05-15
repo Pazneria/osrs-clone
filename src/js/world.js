@@ -2168,6 +2168,7 @@
                 startY,
                 logicalMap,
                 heightMap,
+                sharedGeometries,
                 sharedMaterials,
                 waterRenderBodies,
                 islandWater: sharedMaterials.activeIslandWater || null,

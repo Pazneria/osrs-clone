@@ -1575,6 +1575,18 @@
             return true;
         }
 
+        function qaOpenNpcModelGallery() {
+            const runtime = window.NpcModelGalleryRuntime || null;
+            if (!runtime || typeof runtime.openGallery !== 'function') {
+                addChatMessage('NPC model gallery unavailable.', 'warn');
+                return false;
+            }
+            const opened = runtime.openGallery({ windowRef: window, documentRef: document });
+            if (opened) addChatMessage('Opened NPC model gallery.', 'info');
+            else addChatMessage('NPC model gallery could not open.', 'warn');
+            return !!opened;
+        }
+
         function buildQaCommandContext() {
             const qaToolsRuntime = window.QaToolsRuntime || null;
             const qaToolHandlers = qaToolsRuntime && typeof qaToolsRuntime.createCommandHandlers === 'function'
@@ -1591,6 +1603,7 @@
                 setQaSkillLevel,
                 setQaUnlockFlag,
                 qaOpenPlayerCreator,
+                qaOpenNpcModelGallery,
                 emitQaCombatDebugSnapshot: (typeof window.emitQaCombatDebugSnapshot === 'function') ? window.emitQaCombatDebugSnapshot : null,
                 emitQaCombatDebugClearHistory: (typeof window.emitQaCombatDebugClearHistory === 'function') ? window.emitQaCombatDebugClearHistory : null,
                 openShopForMerchant: (typeof window.openShopForMerchant === 'function') ? window.openShopForMerchant : null,

@@ -334,7 +334,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
       kind: "humanoid",
       npcType: 3,
       facingYaw: Math.PI,
-      modelPresetId: "goblin",
+      modelPresetId: "enemy_goblin_grunt",
       animationSetId: "goblin_basic"
     },
     stats: {
@@ -412,7 +412,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Boar",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "boar",
       facingYaw: Math.PI
     },
     stats: {
@@ -470,7 +470,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Wolf",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "wolf",
       facingYaw: Math.PI
     },
     stats: {
@@ -531,7 +531,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
       kind: "humanoid",
       npcType: 2,
       facingYaw: Math.PI,
-      modelPresetId: "guard",
+      modelPresetId: "enemy_guard",
       animationSetId: "guard_basic"
     },
     stats: {
@@ -637,7 +637,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Bear",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "bear",
       facingYaw: Math.PI
     },
     stats: {
@@ -697,7 +697,8 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 1,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "enemy_heavy_brute"
     },
     stats: {
       hitpoints: 22,
@@ -769,7 +770,8 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 3,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "enemy_fast_striker"
     },
     stats: {
       hitpoints: 12,
@@ -841,7 +843,8 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 2,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "enemy_training_dummy"
     },
     stats: {
       hitpoints: 250,

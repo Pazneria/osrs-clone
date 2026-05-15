@@ -74,6 +74,12 @@ assertRoadOverlapRejected(
 );
 
 assertRoadOverlapRejected(
+  "blocking service",
+  { services: [{ serviceId: "merchant:road_shop", type: "MERCHANT", interactionTarget: "NPC", x: 15, y: 10, z: 0, blocksMovement: true }] },
+  "blocking service merchant:road_shop overlaps protected road starter_town_east_road"
+);
+
+assertRoadOverlapRejected(
   "combat spawn tile",
   { combatSpawns: [{ spawnNodeId: "rat_on_road", spawnTile: { x: 15, y: 10 }, enemyId: "rat" }] },
   "combat spawn rat_on_road overlaps protected road starter_town_east_road"

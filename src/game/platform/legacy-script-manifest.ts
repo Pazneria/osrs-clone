@@ -123,6 +123,7 @@ const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = [
   { id: "player-hitpoints-runtime", filename: "src/js/player-hitpoints-runtime.js", rawPath: "../../js/player-hitpoints-runtime.js?raw", codeVariable: "playerHitpointsRuntimeScript" },
   { id: "humanoid-model-runtime", filename: "src/js/humanoid-model-runtime.js", rawPath: "../../js/humanoid-model-runtime.js?raw", codeVariable: "humanoidModelRuntimeScript" },
   { id: "transient-visual-runtime", filename: "src/js/transient-visual-runtime.js", rawPath: "../../js/transient-visual-runtime.js?raw", codeVariable: "transientVisualRuntimeScript" },
+  { id: "npc-model-gallery-runtime", filename: "src/js/npc-model-gallery-runtime.js", rawPath: "../../js/npc-model-gallery-runtime.js?raw", codeVariable: "npcModelGalleryRuntimeScript" },
   { id: "world", filename: "src/js/world.js", rawPath: "../../js/world.js?raw", codeVariable: "worldScript" },
   { id: "combat", filename: "src/js/combat.js", rawPath: "../../js/combat.js?raw", codeVariable: "combatScript" },
   { id: "input-qa-camera-runtime", filename: "src/js/input-qa-camera-runtime.js", rawPath: "../../js/input-qa-camera-runtime.js?raw", codeVariable: "inputQaCameraRuntimeScript" },

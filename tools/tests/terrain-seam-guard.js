@@ -1,5 +1,7 @@
 const assert = require("assert");
 const path = require("path");
+const vm = require("vm");
+const THREE = require("three");
 const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
@@ -26,6 +28,16 @@ function run() {
   assert(
     sharedAssetsRuntimeSource.includes("grassTex.repeat.set(1.85, 1.85);"),
     "grass texture repeat should be broad enough to avoid obvious short-pattern tiling"
+  );
+  assert(
+    sharedAssetsRuntimeSource.includes("sharedGeometries.grassTuft = createGrassTuftGeometry(THREE);")
+      && sharedAssetsRuntimeSource.includes("sharedGeometries.bushClump = addWhiteVertexColorAttribute")
+      && sharedAssetsRuntimeSource.includes("sharedMaterials.bushLeaves = new THREE.MeshLambertMaterial"),
+    "shared assets should include reusable tinted 3D grass and bush details for landscape variety"
+  );
+  assert(
+    sharedAssetsRuntimeSource.includes("geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));"),
+    "landscape detail geometry should provide a white vertex-color base so instance tints render visibly"
   );
   assert(
     !worldSource.includes("sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial"),
@@ -272,6 +284,29 @@ function run() {
     "chunk terrain runtime should classify manmade land separately for edge blending"
   );
   assert(
+    chunkTerrainRuntimeSource.includes("function buildLandscapeDetailMeshes(options = {})"),
+    "chunk terrain runtime should own visual-only grass, bush, and pebble landscape detail placement"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("const LANDSCAPE_GRASS_PATCH_THRESHOLD = 0.48;"),
+    "landscape grass tufts should be patch-gated instead of appearing on every grass tile"
+  );
+  assert(
+    chunkTerrainRuntimeSource.includes("mesh.userData = { type: 'LANDSCAPE_DETAIL', detailKind, visualOnly: true, z: 0 };"),
+    "landscape detail meshes should be explicitly tagged as visual-only"
+  );
+  assert(
+    !chunkTerrainRuntimeSource.includes("environmentMeshes.push(grassMesh)")
+      && !chunkTerrainRuntimeSource.includes("environmentMeshes.push(bushMesh)")
+      && !chunkTerrainRuntimeSource.includes("environmentMeshes.push(pebbleMesh)"),
+    "landscape detail meshes should not become gameplay interaction meshes"
+  );
+  assert(
+    worldSource.includes("sharedGeometries,")
+      && worldSource.includes("worldChunkTerrainRuntime.buildChunkGroundMeshes({"),
+    "world.js should pass shared detail geometries into chunk terrain rendering"
+  );
+  assert(
     chunkTerrainRuntimeSource.includes("if (count > 0 && manmadeCount > 0) {"),
     "terrain edge blending should occur at natural-to-manmade boundaries"
   );
@@ -337,6 +372,62 @@ function run() {
     inputPathfindingRuntimeSource.includes("Math.abs(currentHeight - nextHeight) > 0.3 && !isStairTransition"),
     "input pathfinding runtime height threshold must remain unchanged"
   );
+
+  global.window = {};
+  vm.runInThisContext(chunkTerrainRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-terrain-runtime.js") });
+  const terrainRuntime = window.WorldChunkTerrainRuntime;
+  assert(terrainRuntime, "chunk terrain runtime should execute in isolation");
+  {
+    const TileId = { GRASS: 0, DIRT: 3, SHORE: 20, WATER_SHALLOW: 21, WATER_DEEP: 22, SAND: 26 };
+    const size = 16;
+    const logicalMap = [Array.from({ length: size }, (_, y) => (
+      Array.from({ length: size }, (_, x) => (y === 0 || x === 0 ? TileId.DIRT : TileId.GRASS))
+    ))];
+    const heightMap = [Array.from({ length: size }, () => Array.from({ length: size }, () => 0))];
+    const planeGroup = new THREE.Group();
+    const environmentMeshes = [];
+    terrainRuntime.buildChunkGroundMeshes({
+      THREE,
+      CHUNK_SIZE: size,
+      MAP_SIZE: size,
+      TileId,
+      startX: 0,
+      startY: 0,
+      logicalMap,
+      heightMap,
+      sharedGeometries: {
+        grassTuft: new THREE.BoxGeometry(0.08, 0.32, 0.08).translate(0, 0.16, 0),
+        bushClump: new THREE.DodecahedronGeometry(0.28, 0).translate(0, 0.24, 0),
+        groundPebble: new THREE.DodecahedronGeometry(0.08, 0).translate(0, 0.04, 0)
+      },
+      sharedMaterials: {
+        terrainUnderlay: new THREE.MeshBasicMaterial(),
+        grassTile: new THREE.MeshBasicMaterial({ vertexColors: true }),
+        dirtTile: new THREE.MeshBasicMaterial(),
+        grassTuft: new THREE.MeshBasicMaterial({ vertexColors: true }),
+        bushLeaves: new THREE.MeshBasicMaterial({ vertexColors: true }),
+        groundPebble: new THREE.MeshBasicMaterial({ vertexColors: true })
+      },
+      planeGroup,
+      environmentMeshes,
+      waterRenderBodies: [],
+      isNaturalTileId: (tile) => tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.SHORE || tile === TileId.SAND,
+      isWaterTileId: (tile) => tile === TileId.WATER_SHALLOW || tile === TileId.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getVisualTileId: (tile) => tile,
+      getTerrainVisualTileId: (tile) => tile,
+      getWaterSurfaceHeightForTile: () => null,
+      sampleFractalNoise2D: () => 0.82
+    });
+    const detailMeshes = planeGroup.children.filter((child) => child.userData && child.userData.type === "LANDSCAPE_DETAIL");
+    const grassMesh = detailMeshes.find((child) => child.userData.detailKind === "grass_tuft");
+    const bushMesh = detailMeshes.find((child) => child.userData.detailKind === "bush");
+    assert(grassMesh && grassMesh.count > 0, "landscape pass should render 3D grass tuft instances on grass chunks");
+    assert(grassMesh.count < size * size, "grass tufts should be sparse patches instead of one per terrain tile");
+    assert(bushMesh && bushMesh.count > 0, "landscape pass should render occasional bush instances");
+    assert(detailMeshes.every((mesh) => mesh.userData.visualOnly === true), "all landscape detail meshes should be marked visual-only");
+    assert(!environmentMeshes.some((mesh) => mesh.userData && mesh.userData.type === "LANDSCAPE_DETAIL"), "landscape detail meshes should stay out of raycast environment meshes");
+  }
 
   console.log("Terrain seam guard passed.");
 }

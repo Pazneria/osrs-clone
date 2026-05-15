@@ -262,26 +262,36 @@ assert.ok(
     combatEnemyRenderRuntimeSource.includes("function updateBoarRenderer(enemyState, renderer, frameNow") &&
     combatEnemyRenderRuntimeSource.includes("function createWolfRenderer(enemyState, enemyType)") &&
     combatEnemyRenderRuntimeSource.includes("function updateWolfRenderer(enemyState, renderer, frameNow") &&
-    combatEnemyRenderRuntimeSource.includes("if (enemyState.enemyId === 'enemy_boar') return createBoarRenderer(enemyState, enemyType);") &&
-    combatEnemyRenderRuntimeSource.includes("if (enemyState.enemyId === 'enemy_wolf') return createWolfRenderer(enemyState, enemyType);"),
-  "combat enemy render runtime should give boars and wolves dedicated quadruped renderers"
+    combatEnemyRenderRuntimeSource.includes("function createBearRenderer(enemyState, enemyType)") &&
+    combatEnemyRenderRuntimeSource.includes("function updateBearRenderer(enemyState, renderer, frameNow") &&
+    combatEnemyRenderRuntimeSource.includes("if (appearanceKind === 'boar') return createBoarRenderer(enemyState, enemyType);") &&
+    combatEnemyRenderRuntimeSource.includes("if (appearanceKind === 'wolf') return createWolfRenderer(enemyState, enemyType);") &&
+    combatEnemyRenderRuntimeSource.includes("if (appearanceKind === 'bear') return createBearRenderer(enemyState, enemyType);"),
+  "combat enemy render runtime should give boars, wolves, and bears dedicated quadruped renderers"
 );
 assert.strictEqual(countOccurrences(combatSource, "function createBoarRenderer("), 0, "combat.js should delegate boar renderer declarations");
 assert.strictEqual(countOccurrences(combatSource, "function createWolfRenderer("), 0, "combat.js should delegate wolf renderer declarations");
+assert.strictEqual(countOccurrences(combatSource, "function createBearRenderer("), 0, "combat.js should delegate bear renderer declarations");
 assert.strictEqual(countOccurrences(combatSource, "function updateBoarRenderer("), 0, "combat.js should delegate boar update declarations");
 assert.strictEqual(countOccurrences(combatSource, "function updateWolfRenderer("), 0, "combat.js should delegate wolf update declarations");
+assert.strictEqual(countOccurrences(combatSource, "function updateBearRenderer("), 0, "combat.js should delegate bear update declarations");
 assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function createBoarRenderer("), 1, "combat enemy render runtime should have one boar renderer declaration");
 assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function createWolfRenderer("), 1, "combat enemy render runtime should have one wolf renderer declaration");
+assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function createBearRenderer("), 1, "combat enemy render runtime should have one bear renderer declaration");
 assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function updateBoarRenderer("), 1, "combat enemy render runtime should have one boar update declaration");
 assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function updateWolfRenderer("), 1, "combat enemy render runtime should have one wolf update declaration");
+assert.strictEqual(countOccurrences(combatEnemyRenderRuntimeSource, "function updateBearRenderer("), 1, "combat enemy render runtime should have one bear update declaration");
 assert.ok(!combatSource.includes("function createQuadrupedLimbRig("), "combat.js should not keep the dead quadruped limb rig helper generation");
 assert.ok(!combatSource.includes("function poseQuadrupedLimbRig("), "combat.js should not keep the dead quadruped limb pose helper generation");
 assert.ok(
-  combatContentSource.includes('modelPresetId: "guard"') &&
+  combatContentSource.includes('modelPresetId: "enemy_guard"') &&
     combatContentSource.includes('animationSetId: "guard_basic"') &&
     combatContentSource.includes('kind: "chicken"') &&
-    combatContractSource.includes('EnemyAppearanceKind = "rat" | "humanoid" | "chicken"'),
-  "combat content/contracts should expose the guard presentation wiring and chicken appearance kind"
+    combatContentSource.includes('kind: "boar"') &&
+    combatContentSource.includes('kind: "wolf"') &&
+    combatContentSource.includes('kind: "bear"') &&
+    combatContractSource.includes('EnemyAppearanceKind = "rat" | "humanoid" | "chicken" | "boar" | "wolf" | "bear"'),
+  "combat content/contracts should expose dedicated humanoid and creature appearance kinds"
 );
 assert.ok(
   playerNpcHumanoidRuntimeSource.includes("function createGuardHumanoidFragments") &&

@@ -68,6 +68,54 @@
         return geometry;
     }
 
+    function addWhiteVertexColorAttribute(THREE, geometry) {
+        const positionAttribute = geometry && typeof geometry.getAttribute === 'function'
+            ? geometry.getAttribute('position')
+            : null;
+        if (!positionAttribute || !Number.isFinite(positionAttribute.count)) return geometry;
+        const colors = [];
+        for (let i = 0; i < positionAttribute.count; i++) {
+            colors.push(1, 1, 1);
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        return geometry;
+    }
+
+    function createGrassTuftGeometry(THREE) {
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+
+        const addBlade = (yaw, width, height, offsetX, offsetZ, bend) => {
+            const baseIndex = positions.length / 3;
+            const sideX = Math.cos(yaw) * width * 0.5;
+            const sideZ = Math.sin(yaw) * width * 0.5;
+            const forwardX = -Math.sin(yaw) * bend;
+            const forwardZ = Math.cos(yaw) * bend;
+            positions.push(
+                offsetX - sideX, 0, offsetZ - sideZ,
+                offsetX + sideX, 0, offsetZ + sideZ,
+                offsetX + (sideX * 0.34) + forwardX, height, offsetZ + (sideZ * 0.34) + forwardZ,
+                offsetX - (sideX * 0.34) + forwardX, height, offsetZ - (sideZ * 0.34) + forwardZ
+            );
+            uvs.push(0, 0, 1, 0, 1, 1, 0, 1);
+            indices.push(baseIndex, baseIndex + 1, baseIndex + 2, baseIndex, baseIndex + 2, baseIndex + 3);
+        };
+
+        addBlade(0, 0.08, 0.38, 0, 0, 0.035);
+        addBlade(Math.PI * 0.42, 0.07, 0.32, -0.035, 0.025, 0.025);
+        addBlade(Math.PI * 0.83, 0.06, 0.28, 0.04, -0.02, 0.02);
+        addBlade(Math.PI * 1.22, 0.055, 0.24, -0.02, -0.04, 0.018);
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        geometry.computeBoundingSphere();
+        return addWhiteVertexColorAttribute(THREE, geometry);
+    }
+
     function initSharedAssets(options = {}) {
         const THREE = requireThree(options.THREE);
         const document = requireDocument(options.document);
@@ -92,6 +140,15 @@
             sharedGeometries.ground.rotateX(-Math.PI / 2);
             sharedGeometries.tileColumn = new THREE.BoxGeometry(1, 1, 1);
             sharedGeometries.fishingSpotMarker = new THREE.CylinderGeometry(0.15, 0.15, 0.25, 10);
+            sharedGeometries.grassTuft = createGrassTuftGeometry(THREE);
+            sharedGeometries.bushClump = addWhiteVertexColorAttribute(
+                THREE,
+                new THREE.DodecahedronGeometry(0.34, 0).scale(1.22, 0.66, 1.06).translate(0, 0.28, 0)
+            );
+            sharedGeometries.groundPebble = addWhiteVertexColorAttribute(
+                THREE,
+                new THREE.DodecahedronGeometry(0.1, 0).scale(1.6, 0.42, 1.08).translate(0, 0.04, 0)
+            );
 
             sharedGeometries.treeTrunk = new THREE.CylinderGeometry(0.16, 0.28, 2.0, 6).translate(0, 1.0, 0);
             sharedGeometries.treeRootFlare = new THREE.CylinderGeometry(0.36, 0.62, 0.2, 6).translate(0, 0.1, 0);
@@ -148,6 +205,9 @@
             sharedMaterials.dirtTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
             sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
+            sharedMaterials.grassTuft = new THREE.MeshLambertMaterial({ color: 0x7fab4e, flatShading: true, side: THREE.DoubleSide, vertexColors: true });
+            sharedMaterials.bushLeaves = new THREE.MeshLambertMaterial({ color: 0x426f35, flatShading: true, vertexColors: true });
+            sharedMaterials.groundPebble = new THREE.MeshLambertMaterial({ color: 0x8b8271, flatShading: true, vertexColors: true });
             sharedMaterials.rockClay = new THREE.MeshLambertMaterial({ color: 0xa78668, flatShading: true });
             sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xc8754d, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0xb8c3c9, flatShading: true });

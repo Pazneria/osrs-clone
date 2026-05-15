@@ -1,6 +1,7 @@
 const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
+const THREE = require("three");
 const { readRepoFile } = require("./repo-file-test-utils");
 const { countOccurrences } = require("./source-block-utils");
 
@@ -54,6 +55,28 @@ function run() {
   assert(runtimeSource.includes("function updateBoarRenderer(enemyState, renderer, frameNow"), "render runtime should own boar pose updates");
   assert(runtimeSource.includes("function createWolfRenderer(enemyState, enemyType)"), "render runtime should own wolf renderer creation");
   assert(runtimeSource.includes("function updateWolfRenderer(enemyState, renderer, frameNow"), "render runtime should own wolf pose updates");
+  assert(runtimeSource.includes("function createBearRenderer(enemyState, enemyType)"), "render runtime should own bear renderer creation");
+  assert(runtimeSource.includes("function updateBearRenderer(enemyState, renderer, frameNow"), "render runtime should own bear pose updates");
+  assert(runtimeSource.includes("const appearanceKind = enemyType.appearance && enemyType.appearance.kind;"), "render runtime should route creature renderers through appearance kind");
+  assert(runtimeSource.includes("if (appearanceKind === 'boar') return createBoarRenderer(enemyState, enemyType);"), "boar renderer should be selected by appearance kind");
+  assert(runtimeSource.includes("if (appearanceKind === 'wolf') return createWolfRenderer(enemyState, enemyType);"), "wolf renderer should be selected by appearance kind");
+  assert(runtimeSource.includes("if (appearanceKind === 'bear') return createBearRenderer(enemyState, enemyType);"), "bear renderer should be selected by appearance kind");
+  assert(runtimeSource.includes("torsoGroup.name = 'bear-torso'"), "bear renderer should build a named torso group");
+  assert(runtimeSource.includes("headGroup.name = 'bear-head'"), "bear renderer should build a distinct head group");
+  assert(runtimeSource.includes("tailGroup.name = 'bear-tail'"), "bear renderer should build a visible tail group");
+  assert(runtimeSource.includes("const frontLeftClaws = addPawClaws"), "bear renderer should include visible paw claws");
+  assert(runtimeSource.includes("torsoGroup.name = 'rat-torso'"), "rat renderer should build a named torso group instead of a loose sphere stack");
+  assert(runtimeSource.includes("headGroup.name = 'rat-head'"), "rat renderer should build a distinct animated head group");
+  assert(runtimeSource.includes("tailGroup.name = 'rat-tail'"), "rat renderer should build a segmented tail group");
+  assert(runtimeSource.includes("const whiskerLeftUpper = new THREE.Mesh"), "rat renderer should include visible whisker geometry");
+  assert(runtimeSource.includes("const tailMiddle = new THREE.Mesh"), "rat renderer should include more than one tail segment");
+  assert(runtimeSource.includes("createQuadrupedLegRig(new THREE.Vector3(0.15"), "rat renderer should use the shared quadruped leg rig for front paws");
+  assert(runtimeSource.includes("new THREE.BoxGeometry(0.86, 0.58, 1.08)"), "rat interaction hitbox should continue to cover the rebuilt low rat model");
+  assert(runtimeSource.includes("function updateRatRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY)"), "rat pose updates should receive the same locomotion context as larger quadrupeds");
+  assert(runtimeSource.includes("const gaitPhase = (frameNow / 280)"), "rat gait should stay slower than the first-pass frantic paw cycle");
+  assert(runtimeSource.includes("const leadPhase = walkActive ? gaitAngle : idlePhase * 0.35;"), "rat idle leg phase should be slow and decoupled from walk gait");
+  assert(runtimeSource.includes("travel: walkActive ? 0.036 : 0.001"), "rat front paws should use restrained travel, especially while idle");
+  assert(runtimeSource.includes("upperSwing: walkActive ? 0.3 : 0.018"), "rat rear paws should keep a small idle swing instead of sprinting in place");
   assert(runtimeSource.includes("function createChickenRenderer(enemyState, enemyType)"), "render runtime should own chicken renderer creation");
   assert(runtimeSource.includes("function updateChickenRenderer(enemyState, renderer, frameNow"), "render runtime should own chicken pose updates");
   assert(runtimeSource.includes("function createChickenLegRig(basePosition, side, materials)"), "chicken renderer should use a grouped leg rig for feet and claws");
@@ -85,14 +108,18 @@ function run() {
   assert(!combatSource.includes("snapCombatFacing = true;"), "combat.js should not own enemy render-facing snap policy inline");
   assert(countOccurrences(combatSource, "function createBoarRenderer(") === 0, "combat.js should not define boar renderer creation inline");
   assert(countOccurrences(combatSource, "function createWolfRenderer(") === 0, "combat.js should not define wolf renderer creation inline");
+  assert(countOccurrences(combatSource, "function createBearRenderer(") === 0, "combat.js should not define bear renderer creation inline");
   assert(countOccurrences(combatSource, "function updateBoarRenderer(") === 0, "combat.js should not define boar pose updates inline");
   assert(countOccurrences(combatSource, "function updateWolfRenderer(") === 0, "combat.js should not define wolf pose updates inline");
+  assert(countOccurrences(combatSource, "function updateBearRenderer(") === 0, "combat.js should not define bear pose updates inline");
   assert(countOccurrences(runtimeSource, "function createBoarRenderer(") === 1, "render runtime should have one boar renderer declaration");
   assert(countOccurrences(runtimeSource, "function createWolfRenderer(") === 1, "render runtime should have one wolf renderer declaration");
+  assert(countOccurrences(runtimeSource, "function createBearRenderer(") === 1, "render runtime should have one bear renderer declaration");
   assert(countOccurrences(runtimeSource, "function updateBoarRenderer(") === 1, "render runtime should have one boar update declaration");
   assert(countOccurrences(runtimeSource, "function updateWolfRenderer(") === 1, "render runtime should have one wolf update declaration");
+  assert(countOccurrences(runtimeSource, "function updateBearRenderer(") === 1, "render runtime should have one bear update declaration");
 
-  const sandbox = { window: {} };
+  const sandbox = { window: {}, THREE };
   vm.runInNewContext(runtimeSource, sandbox, { filename: runtimePath });
   const runtime = sandbox.window.CombatEnemyRenderRuntime;
   assert(runtime, "combat enemy render runtime should evaluate in isolation");
@@ -106,6 +133,92 @@ function run() {
   assert(typeof runtime.getEnemyVisualMoveProgress === "function", "runtime should expose getEnemyVisualMoveProgress");
   assert(typeof runtime.isEnemyVisuallyMoving === "function", "runtime should expose isEnemyVisuallyMoving");
   assert(typeof runtime.shouldEnemyUseWalkBaseClip === "function", "runtime should expose shouldEnemyUseWalkBaseClip");
+
+  const ratVisual = runtime.createEnemyVisualRenderer({
+    enemyState: { runtimeId: "rat-visual", enemyId: "enemy_rat", x: 7, y: 8, z: 0, facingYaw: 0 },
+    enemyType: { displayName: "Rat", appearance: { kind: "rat" }, stats: { hitpoints: 3 } },
+    getEnemyCombatLevel: () => 2
+  });
+  assert(ratVisual && ratVisual.kind === "rat", "runtime should create the dedicated rat renderer");
+  assert(ratVisual.torsoGroup && ratVisual.torsoGroup.name === "rat-torso", "rat renderer should expose its torso group");
+  assert(ratVisual.headGroup && ratVisual.headGroup.name === "rat-head", "rat renderer should expose its head group");
+  assert(ratVisual.tailGroup && ratVisual.tailGroup.name === "rat-tail", "rat renderer should expose its tail group");
+  assert(ratVisual.frontLeftLeg && ratVisual.frontRightLeg && ratVisual.backLeftLeg && ratVisual.backRightLeg, "rat renderer should expose four small leg rigs");
+  assert(ratVisual.whiskerLeftUpper && ratVisual.whiskerRightLower, "rat renderer should expose whisker meshes");
+  assert(ratVisual.tail && ratVisual.tailMiddle && ratVisual.tailTip, "rat renderer should expose a segmented tail");
+  assert(ratVisual.hitbox.geometry.parameters.width === 0.86, "rebuilt rat should keep a stable interaction hitbox width");
+  runtime.updateEnemyVisualRenderer({
+    enemyState: { runtimeId: "rat-visual", enemyId: "enemy_rat", attackTriggerAt: 100, hitReactionTriggerAt: 0 },
+    renderer: ratVisual,
+    frameNow: 235,
+    idlePhase: 0.6,
+    visuallyMoving: true,
+    currentVisualX: 7.25,
+    currentVisualY: 8.5
+  });
+  assert(Number.isFinite(ratVisual.torsoGroup.position.y), "rat pose update should move the torso group");
+  assert(Number.isFinite(ratVisual.headGroup.position.z), "rat pose update should move the head group");
+  assert(Number.isFinite(ratVisual.tailGroup.rotation.z), "rat pose update should animate the tail group");
+  assert(Number.isFinite(ratVisual.frontLeftLeg.root.position.y), "rat pose update should animate leg rig roots");
+  runtime.updateEnemyVisualRenderer({
+    enemyState: { runtimeId: "rat-visual", enemyId: "enemy_rat", attackTriggerAt: 0, hitReactionTriggerAt: 0 },
+    renderer: ratVisual,
+    frameNow: 1000,
+    idlePhase: 0,
+    visuallyMoving: false,
+    useWalkBaseClip: false,
+    currentVisualX: 7,
+    currentVisualY: 8
+  });
+  const idlePawY = ratVisual.frontLeftLeg.root.position.y;
+  const idlePawZ = ratVisual.frontLeftLeg.root.position.z;
+  runtime.updateEnemyVisualRenderer({
+    enemyState: { runtimeId: "rat-visual", enemyId: "enemy_rat", attackTriggerAt: 0, hitReactionTriggerAt: 0 },
+    renderer: ratVisual,
+    frameNow: 1300,
+    idlePhase: 1,
+    visuallyMoving: false,
+    useWalkBaseClip: false,
+    currentVisualX: 7,
+    currentVisualY: 8
+  });
+  assert(Math.abs(ratVisual.frontLeftLeg.root.position.y - idlePawY) < 0.004, "idle rat paws should stay nearly planted vertically");
+  assert(Math.abs(ratVisual.frontLeftLeg.root.position.z - idlePawZ) < 0.004, "idle rat paws should stay nearly planted front-to-back");
+
+  const boarVisual = runtime.createEnemyVisualRenderer({
+    enemyState: { runtimeId: "boar-visual", enemyId: "enemy_boar", x: 1, y: 2, z: 0, facingYaw: 0 },
+    enemyType: { displayName: "Boar", appearance: { kind: "boar" }, stats: { hitpoints: 7 } },
+    getEnemyCombatLevel: () => 6
+  });
+  assert(boarVisual && boarVisual.kind === "boar", "runtime should create the dedicated boar renderer from appearance kind");
+
+  const wolfVisual = runtime.createEnemyVisualRenderer({
+    enemyState: { runtimeId: "wolf-visual", enemyId: "enemy_wolf", x: 1, y: 2, z: 0, facingYaw: 0 },
+    enemyType: { displayName: "Wolf", appearance: { kind: "wolf" }, stats: { hitpoints: 10 } },
+    getEnemyCombatLevel: () => 9
+  });
+  assert(wolfVisual && wolfVisual.kind === "wolf", "runtime should create the dedicated wolf renderer from appearance kind");
+
+  const bearVisual = runtime.createEnemyVisualRenderer({
+    enemyState: { runtimeId: "bear-visual", enemyId: "enemy_bear", x: 1, y: 2, z: 0, facingYaw: 0 },
+    enemyType: { displayName: "Bear", appearance: { kind: "bear" }, stats: { hitpoints: 20 } },
+    getEnemyCombatLevel: () => 14
+  });
+  assert(bearVisual && bearVisual.kind === "bear", "runtime should create the dedicated bear renderer");
+  assert(bearVisual.torsoGroup && bearVisual.torsoGroup.name === "bear-torso", "bear renderer should expose its torso group");
+  assert(bearVisual.headGroup && bearVisual.headGroup.name === "bear-head", "bear renderer should expose its head group");
+  assert(bearVisual.frontLeftClaws.length === 3 && bearVisual.backRightClaws.length === 3, "bear renderer should expose claw groups");
+  runtime.updateEnemyVisualRenderer({
+    enemyState: { runtimeId: "bear-visual", enemyId: "enemy_bear", attackTriggerAt: 100, hitReactionTriggerAt: 0 },
+    renderer: bearVisual,
+    frameNow: 260,
+    idlePhase: 0.7,
+    visuallyMoving: true,
+    currentVisualX: 1.5,
+    currentVisualY: 2.5
+  });
+  assert(Number.isFinite(bearVisual.headGroup.position.z), "bear pose update should move the head group");
+  assert(Number.isFinite(bearVisual.frontLeftLeg.root.position.y), "bear pose update should animate leg rig roots");
 
   const renderer = {
     kind: "rat",

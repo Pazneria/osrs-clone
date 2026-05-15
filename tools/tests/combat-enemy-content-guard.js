@@ -179,7 +179,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 8, attack: 4, strength: 4, defense: 3 },
     bonuses: { meleeAccuracyBonus: 2, meleeDefenseBonus: 1, enemyMaxHit: 2 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 6, roamingRadius: 1 },
-    expectedAppearance: { kind: "humanoid", modelPresetId: "goblin", animationSetId: "goblin_basic" },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_goblin_grunt", animationSetId: "goblin_basic" },
     respawnTicks: 34,
     attackTickCycle: 5,
     expectedDropTable: [
@@ -197,6 +197,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 7, attack: 5, strength: 5, defense: 3 },
     bonuses: { meleeAccuracyBonus: 2, meleeDefenseBonus: 1, enemyMaxHit: 2 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 5, roamingRadius: 2 },
+    expectedAppearance: { kind: "boar" },
     respawnTicks: 30,
     attackTickCycle: 5,
     expectedDropTable: [
@@ -211,6 +212,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 10, attack: 8, strength: 7, defense: 4 },
     bonuses: { meleeAccuracyBonus: 4, meleeDefenseBonus: 1, enemyMaxHit: 3 },
     behavior: { aggroType: "aggressive", aggroRadius: 5, chaseRange: 7, roamingRadius: 3 },
+    expectedAppearance: { kind: "wolf" },
     respawnTicks: 30,
     attackTickCycle: 4,
     expectedDropTable: [
@@ -225,7 +227,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 14, attack: 8, strength: 8, defense: 8 },
     bonuses: { meleeAccuracyBonus: 4, meleeDefenseBonus: 4, enemyMaxHit: 3 },
     behavior: { aggroType: "aggressive", aggroRadius: 5, chaseRange: 7, roamingRadius: 0 },
-    expectedAppearance: { kind: "humanoid", modelPresetId: "guard", animationSetId: "guard_basic" },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_guard", animationSetId: "guard_basic" },
     respawnTicks: 42,
     attackTickCycle: 5,
     expectedDropTable: [
@@ -247,6 +249,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 20, attack: 9, strength: 11, defense: 10 },
     bonuses: { meleeAccuracyBonus: 3, meleeDefenseBonus: 5, enemyMaxHit: 5 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 6, roamingRadius: 2 },
+    expectedAppearance: { kind: "bear" },
     respawnTicks: 50,
     attackTickCycle: 6,
     expectedDropTable: [
@@ -261,6 +264,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 22, attack: 10, strength: 12, defense: 12 },
     bonuses: { meleeAccuracyBonus: 4, meleeDefenseBonus: 6, enemyMaxHit: 5 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 6, roamingRadius: 1 },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_heavy_brute" },
     respawnTicks: 50,
     attackTickCycle: 6,
     expectedDropTable: [
@@ -277,6 +281,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 12, attack: 12, strength: 9, defense: 5 },
     bonuses: { meleeAccuracyBonus: 6, meleeDefenseBonus: 1, enemyMaxHit: 4 },
     behavior: { aggroType: "aggressive", aggroRadius: 5, chaseRange: 7, roamingRadius: 2 },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_fast_striker" },
     respawnTicks: 40,
     attackTickCycle: 4,
     expectedDropTable: [
@@ -293,6 +298,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 250, attack: 1, strength: 1, defense: 0 },
     bonuses: { meleeAccuracyBonus: 0, meleeDefenseBonus: 0, enemyMaxHit: 0 },
     behavior: { aggroType: "passive", aggroRadius: 0, chaseRange: 2, roamingRadius: 0 },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_training_dummy" },
     respawnTicks: 8,
     attackTickCycle: 4,
     expectedDropTable: [

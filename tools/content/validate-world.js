@@ -411,6 +411,13 @@ function validateMainOverworldProtectedRoads(worldId, world) {
     assertNoProtectedRoadOverlap(worldId, roadTiles, prop, `blocking decor prop ${prop.propId}`);
   }
 
+  const services = Array.isArray(world && world.services) ? world.services : [];
+  for (let i = 0; i < services.length; i++) {
+    const service = services[i];
+    if (!service || service.blocksMovement !== true) continue;
+    assertNoProtectedRoadOverlap(worldId, roadTiles, service, `blocking service ${service.serviceId}`);
+  }
+
   const combatSpawns = Array.isArray(world && world.combatSpawns) ? world.combatSpawns : [];
   for (let i = 0; i < combatSpawns.length; i++) {
     const spawn = combatSpawns[i];
