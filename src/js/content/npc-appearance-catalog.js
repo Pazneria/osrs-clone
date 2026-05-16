@@ -1245,7 +1245,33 @@
                 bank: '#d1b45a'
             },
             [
-                box('torso', 'banker_till_key', [0.07, 0.16, 0.035], [-0.25, -0.16, 0.255], '#d1b45a', { rotation: [0, 0, 0.2] })
+                box('head', 'banker_clerk_cap_crown', [0.46, 0.09, 0.40], [0, 0.205, -0.005], '#17283a'),
+                box('head', 'banker_clerk_cap_band', [0.50, 0.055, 0.43], [0, 0.155, 0.015], '#c9b35c'),
+                box('head', 'banker_quill_stem', [0.028, 0.30, 0.028], [-0.23, 0.075, 0.155], '#d8c594', { rotation: [0.10, 0, -0.42] }),
+                box('head', 'banker_quill_feather', [0.085, 0.16, 0.025], [-0.31, 0.175, 0.16], '#f0e6c8', { rotation: [0.10, 0, -0.42] }),
+                box('torso', 'banker_left_lapel_trim', [0.055, 0.40, 0.045], [0.135, 0.015, 0.252], '#b99d4e', { rotation: [0, 0, -0.18] }),
+                box('torso', 'banker_right_lapel_trim', [0.055, 0.40, 0.045], [-0.135, 0.015, 0.252], '#b99d4e', { rotation: [0, 0, 0.18] }),
+                box('torso', 'banker_high_collar_left', [0.12, 0.15, 0.08], [0.12, 0.235, 0.245], '#17283a', { rotation: [0, 0, -0.16] }),
+                box('torso', 'banker_high_collar_right', [0.12, 0.15, 0.08], [-0.12, 0.235, 0.245], '#17283a', { rotation: [0, 0, 0.16] }),
+                box('torso', 'banker_badge_shadow', [0.145, 0.105, 0.032], [0.225, 0.135, 0.268], '#7b642e'),
+                box('torso', 'banker_badge_face', [0.105, 0.075, 0.035], [0.225, 0.145, 0.292], '#d8c56b'),
+                box('torso', 'banker_badge_mark', [0.055, 0.022, 0.02], [0.225, 0.145, 0.315], '#58431f'),
+                box('torso', 'banker_receipt_slips', [0.14, 0.10, 0.035], [-0.195, -0.105, 0.272], '#e7d8aa', { rotation: [0, 0, -0.08] }),
+                box('torso', 'banker_receipt_red_line', [0.11, 0.015, 0.02], [-0.195, -0.08, 0.295], '#8c2f2f', { rotation: [0, 0, -0.08] }),
+                box('torso', 'banker_chain_drop', [0.16, 0.025, 0.03], [-0.25, -0.155, 0.285], '#b99d4e', { rotation: [0, 0, -0.2] }),
+                box('torso', 'banker_key_ring_top', [0.12, 0.025, 0.032], [-0.32, -0.18, 0.292], '#d1b45a'),
+                box('torso', 'banker_key_ring_bottom', [0.12, 0.025, 0.032], [-0.32, -0.255, 0.292], '#a98f43'),
+                box('torso', 'banker_key_ring_left', [0.025, 0.10, 0.032], [-0.37, -0.217, 0.292], '#b99d4e'),
+                box('torso', 'banker_key_ring_right', [0.025, 0.10, 0.032], [-0.27, -0.217, 0.292], '#b99d4e'),
+                box('torso', 'banker_key_tooth_a', [0.035, 0.15, 0.025], [-0.355, -0.31, 0.292], '#d1b45a', { rotation: [0, 0, 0.18] }),
+                box('torso', 'banker_key_tooth_b', [0.035, 0.12, 0.025], [-0.295, -0.305, 0.292], '#c0a24a', { rotation: [0, 0, -0.18] }),
+                box('leftLowerArm', 'banker_ledger_strap', [0.035, 0.17, 0.024], [0.145, -0.278, 0.182], '#46301f', { rotation: [0.15, 0, 0.18] }),
+                box('leftLowerArm', 'banker_ledger_line_1', [0.13, 0.012, 0.018], [0.04, -0.244, 0.182], '#1f2426', { rotation: [0.15, 0, 0.18] }),
+                box('leftLowerArm', 'banker_ledger_line_2', [0.12, 0.012, 0.018], [0.045, -0.282, 0.182], '#1f2426', { rotation: [0.15, 0, 0.18] }),
+                box('leftLowerArm', 'banker_wax_seal', [0.055, 0.055, 0.025], [0.13, -0.215, 0.188], '#8c2f2f', { rotation: [0.15, 0, 0.18] }),
+                box('rightLowerArm', 'banker_coin_tray', [0.20, 0.055, 0.12], [-0.025, -0.305, 0.112], '#5b3b24', { rotation: [0, 0, -0.12] }),
+                box('rightLowerArm', 'banker_coin_stack_left', [0.042, 0.028, 0.04], [0.035, -0.29, 0.185], '#d8c56b', { rotation: [0, 0, -0.12] }),
+                box('rightLowerArm', 'banker_coin_stack_right', [0.035, 0.024, 0.035], [-0.035, -0.292, 0.185], '#c9b35c', { rotation: [0, 0, -0.12] })
             ]
         );
     }
