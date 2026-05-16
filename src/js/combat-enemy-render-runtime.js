@@ -749,35 +749,35 @@
         const torsoGroup = new THREE.Group();
         torsoGroup.name = 'bear-torso';
         const body = new THREE.Mesh(new THREE.DodecahedronGeometry(0.36, 0), furMaterial);
-        body.scale.set(1.38, 0.82, 1.76);
-        body.position.set(0, 0.5, 0.02);
+        body.scale.set(1.42, 0.88, 1.64);
+        body.position.set(0, 0.51, 0);
         const shoulderHump = new THREE.Mesh(new THREE.DodecahedronGeometry(0.32, 0), darkFurMaterial);
-        shoulderHump.scale.set(1.50, 0.84, 1.02);
-        shoulderHump.position.set(0, 0.72, 0.30);
+        shoulderHump.scale.set(1.60, 0.94, 1.08);
+        shoulderHump.position.set(0, 0.76, 0.25);
         const rump = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3, 0), furMaterial);
-        rump.scale.set(1.10, 0.70, 1.02);
-        rump.position.set(0, 0.44, -0.40);
+        rump.scale.set(1.16, 0.72, 0.96);
+        rump.position.set(0, 0.43, -0.38);
         const belly = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), bellyMaterial);
-        belly.scale.set(1.12, 0.58, 1.34);
-        belly.position.set(0, 0.3, 0.02);
-        const backRidge = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.78), darkFurMaterial);
-        backRidge.position.set(0, 0.83, 0.05);
+        belly.scale.set(1.18, 0.60, 1.22);
+        belly.position.set(0, 0.31, 0);
+        const backRidge = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.13, 0.68), darkFurMaterial);
+        backRidge.position.set(0, 0.86, 0.01);
 
         const headGroup = new THREE.Group();
         headGroup.name = 'bear-head';
-        headGroup.position.set(0, 0.74, 0.72);
+        headGroup.position.set(0, 0.74, 0.64);
         const neck = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), darkFurMaterial);
-        neck.scale.set(1.08, 0.78, 0.82);
-        neck.position.set(0, -0.03, -0.2);
+        neck.scale.set(1.14, 0.86, 0.90);
+        neck.position.set(0, -0.035, -0.18);
         const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.23, 0), furMaterial);
-        head.scale.set(1.08, 0.9, 1.06);
-        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.13), darkFurMaterial);
-        brow.position.set(0, 0.08, 0.08);
-        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.17, 0.32), muzzleMaterial);
-        muzzle.position.set(0, -0.06, 0.29);
+        head.scale.set(1.14, 0.94, 0.98);
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.08, 0.12), darkFurMaterial);
+        brow.position.set(0, 0.075, 0.075);
+        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.17, 0.22), muzzleMaterial);
+        muzzle.position.set(0, -0.065, 0.235);
         const nose = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), noseMaterial);
-        nose.scale.set(1.5, 0.86, 0.9);
-        nose.position.set(0, -0.045, 0.465);
+        nose.scale.set(1.45, 0.86, 0.82);
+        nose.position.set(0, -0.05, 0.355);
         const earGeometry = new THREE.ConeGeometry(0.07, 0.08, 5);
         const earLeft = new THREE.Mesh(earGeometry, darkFurMaterial);
         const earRight = earLeft.clone();
@@ -789,10 +789,10 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.078, 0.03, 0.14);
         eyeRight.position.set(-0.078, 0.03, 0.14);
-        const cheekLeft = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.08), muzzleMaterial);
+        const cheekLeft = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.09, 0.07), muzzleMaterial);
         const cheekRight = cheekLeft.clone();
-        cheekLeft.position.set(0.10, -0.08, 0.23);
-        cheekRight.position.set(-0.10, -0.08, 0.23);
+        cheekLeft.position.set(0.105, -0.08, 0.19);
+        cheekRight.position.set(-0.105, -0.08, 0.19);
         headGroup.add(neck, head, brow, muzzle, nose, cheekLeft, cheekRight, earLeft, earRight, eyeLeft, eyeRight);
 
         const tailGroup = new THREE.Group();
@@ -802,54 +802,54 @@
         tailNub.scale.set(1, 0.8, 0.72);
         tailGroup.add(tailNub);
 
-        const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.27, 0.44, 0.32), {
-            upperLength: 0.28,
+        const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.29, 0.46, 0.31), {
+            upperLength: 0.30,
+            lowerLength: 0.25,
+            upperRadiusTop: 0.088,
+            upperRadiusBottom: 0.096,
+            lowerRadiusTop: 0.074,
+            lowerRadiusBottom: 0.066,
+            pawSize: [0.24, 0.09, 0.27],
+            pawForwardOffset: 0.045,
+            upperMaterial: furMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        });
+        const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.29, 0.46, 0.31), {
+            upperLength: 0.30,
+            lowerLength: 0.25,
+            upperRadiusTop: 0.088,
+            upperRadiusBottom: 0.096,
+            lowerRadiusTop: 0.074,
+            lowerRadiusBottom: 0.066,
+            pawSize: [0.24, 0.09, 0.27],
+            pawForwardOffset: 0.045,
+            upperMaterial: furMaterial,
+            lowerMaterial: darkFurMaterial,
+            pawMaterial
+        });
+        const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.27, 0.42, -0.34), {
+            upperLength: 0.29,
             lowerLength: 0.24,
-            upperRadiusTop: 0.062,
-            upperRadiusBottom: 0.068,
-            lowerRadiusTop: 0.052,
-            lowerRadiusBottom: 0.046,
-            pawSize: [0.18, 0.075, 0.22],
-            pawForwardOffset: 0.035,
+            upperRadiusTop: 0.086,
+            upperRadiusBottom: 0.096,
+            lowerRadiusTop: 0.072,
+            lowerRadiusBottom: 0.064,
+            pawSize: [0.22, 0.09, 0.25],
+            pawForwardOffset: 0.025,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
             pawMaterial
         });
-        const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.27, 0.44, 0.32), {
-            upperLength: 0.28,
+        const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.27, 0.42, -0.34), {
+            upperLength: 0.29,
             lowerLength: 0.24,
-            upperRadiusTop: 0.062,
-            upperRadiusBottom: 0.068,
-            lowerRadiusTop: 0.052,
-            lowerRadiusBottom: 0.046,
-            pawSize: [0.18, 0.075, 0.22],
-            pawForwardOffset: 0.035,
-            upperMaterial: furMaterial,
-            lowerMaterial: darkFurMaterial,
-            pawMaterial
-        });
-        const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.25, 0.4, -0.34), {
-            upperLength: 0.27,
-            lowerLength: 0.23,
-            upperRadiusTop: 0.07,
-            upperRadiusBottom: 0.076,
-            lowerRadiusTop: 0.054,
-            lowerRadiusBottom: 0.048,
-            pawSize: [0.16, 0.075, 0.2],
-            pawForwardOffset: 0.02,
-            upperMaterial: furMaterial,
-            lowerMaterial: darkFurMaterial,
-            pawMaterial
-        });
-        const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.25, 0.4, -0.34), {
-            upperLength: 0.27,
-            lowerLength: 0.23,
-            upperRadiusTop: 0.07,
-            upperRadiusBottom: 0.076,
-            lowerRadiusTop: 0.054,
-            lowerRadiusBottom: 0.048,
-            pawSize: [0.16, 0.075, 0.2],
-            pawForwardOffset: 0.02,
+            upperRadiusTop: 0.086,
+            upperRadiusBottom: 0.096,
+            lowerRadiusTop: 0.072,
+            lowerRadiusBottom: 0.064,
+            pawSize: [0.22, 0.09, 0.25],
+            pawForwardOffset: 0.025,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
             pawMaterial
