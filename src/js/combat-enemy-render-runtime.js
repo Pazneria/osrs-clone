@@ -269,6 +269,24 @@
         };
     }
 
+    function createQuadrupedPawMesh(pawSize, pawMaterial, options = {}) {
+        const shape = options.pawShape === 'rounded' ? 'rounded' : 'box';
+        const geometry = shape === 'rounded'
+            ? new THREE.SphereGeometry(0.5, 10, 6)
+            : new THREE.BoxGeometry(pawSize[0], pawSize[1], pawSize[2]);
+        if (shape === 'rounded') {
+            geometry.scale(pawSize[0], pawSize[1], pawSize[2]);
+        }
+        const paw = new THREE.Mesh(geometry, pawMaterial);
+        paw.userData.pawShape = shape;
+        paw.userData.pawSize = {
+            width: pawSize[0],
+            height: pawSize[1],
+            depth: pawSize[2]
+        };
+        return paw;
+    }
+
     function createQuadrupedLegRig(basePosition, options) {
         const root = new THREE.Group();
         const upperPivot = new THREE.Group();
@@ -294,7 +312,7 @@
         const pawMaterial = options.pawMaterial || lowerMaterial;
         const upper = new THREE.Mesh(upperGeometry, upperMaterial);
         const lower = new THREE.Mesh(lowerGeometry, lowerMaterial);
-        const paw = new THREE.Mesh(new THREE.BoxGeometry(pawSize[0], pawSize[1], pawSize[2]), pawMaterial);
+        const paw = createQuadrupedPawMesh(pawSize, pawMaterial, options);
 
         root.position.copy(basePosition);
         upper.position.y = -upperLength * 0.5;
@@ -813,7 +831,8 @@
             pawForwardOffset: 0.045,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
-            pawMaterial
+            pawMaterial,
+            pawShape: 'rounded'
         });
         const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.29, 0.46, 0.31), {
             upperLength: 0.30,
@@ -826,7 +845,8 @@
             pawForwardOffset: 0.045,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
-            pawMaterial
+            pawMaterial,
+            pawShape: 'rounded'
         });
         const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.27, 0.42, -0.34), {
             upperLength: 0.29,
@@ -839,7 +859,8 @@
             pawForwardOffset: 0.025,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
-            pawMaterial
+            pawMaterial,
+            pawShape: 'rounded'
         });
         const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.27, 0.42, -0.34), {
             upperLength: 0.29,
@@ -852,13 +873,14 @@
             pawForwardOffset: 0.025,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
-            pawMaterial
+            pawMaterial,
+            pawShape: 'rounded'
         });
 
-        const frontLeftClaws = addPawClaws(frontLeftLeg.paw, clawMaterial, { spread: 0.04, length: 0.08, z: 0.085 });
-        const frontRightClaws = addPawClaws(frontRightLeg.paw, clawMaterial, { spread: 0.04, length: 0.08, z: 0.085 });
-        const backLeftClaws = addPawClaws(backLeftLeg.paw, clawMaterial, { spread: 0.045, length: 0.075, z: 0.075 });
-        const backRightClaws = addPawClaws(backRightLeg.paw, clawMaterial, { spread: 0.045, length: 0.075, z: 0.075 });
+        const frontLeftClaws = addPawClaws(frontLeftLeg.paw, clawMaterial, { spread: 0.045, length: 0.08, z: 0.105 });
+        const frontRightClaws = addPawClaws(frontRightLeg.paw, clawMaterial, { spread: 0.045, length: 0.08, z: 0.105 });
+        const backLeftClaws = addPawClaws(backLeftLeg.paw, clawMaterial, { spread: 0.04, length: 0.075, z: 0.095 });
+        const backRightClaws = addPawClaws(backRightLeg.paw, clawMaterial, { spread: 0.04, length: 0.075, z: 0.095 });
 
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.18, 1.16, 1.38),

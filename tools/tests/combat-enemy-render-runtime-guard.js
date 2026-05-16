@@ -49,6 +49,7 @@ function run() {
   assert(runtimeSource.includes("if (!shouldRenderVisual) return;"), "render runtime should skip far enemy pose work after syncing hitbox state");
   assert(runtimeSource.includes("function getEnemyVisualMoveProgress(context = {}, enemyState, frameNow)"), "render runtime should own enemy visual move progress");
   assert(runtimeSource.includes("function shouldEnemyUseWalkBaseClip(context = {}, enemyState, frameNow)"), "render runtime should own enemy walk-base policy");
+  assert(runtimeSource.includes("function createQuadrupedPawMesh(pawSize, pawMaterial, options = {})"), "render runtime should centralize quadruped paw mesh creation");
   assert(runtimeSource.includes("function createQuadrupedLegRig(basePosition, options)"), "render runtime should own active quadruped leg rig creation");
   assert(runtimeSource.includes("function applyQuadrupedLegPose(leg, pose)"), "render runtime should own active quadruped leg posing");
   assert(runtimeSource.includes("function createBoarRenderer(enemyState, enemyType)"), "render runtime should own boar renderer creation");
@@ -221,9 +222,13 @@ function run() {
   assert(bearVisual.shoulderHump.scale.y >= 0.9 && bearVisual.shoulderHump.scale.x >= 1.55, "bear should keep a heavy shoulder/forequarter silhouette");
   assert(bearVisual.frontLeftLeg.upper.geometry.parameters.radiusTop >= 0.08, "bear front upper legs should stay thick");
   assert(bearVisual.frontLeftLeg.lower.geometry.parameters.radiusBottom >= 0.06, "bear front lower legs should stay planted and sturdy");
-  assert(bearVisual.frontLeftLeg.paw.geometry.parameters.width >= 0.23 && bearVisual.frontLeftLeg.paw.geometry.parameters.depth >= 0.26, "bear front paws should stay broad");
-  assert(bearVisual.backLeftLeg.paw.geometry.parameters.width >= 0.21 && bearVisual.backLeftLeg.paw.geometry.parameters.depth >= 0.24, "bear rear paws should stay broad");
+  assert(bearVisual.frontLeftLeg.paw.userData.pawShape === "rounded", "bear front paws should use rounded paw meshes");
+  assert(bearVisual.backLeftLeg.paw.userData.pawShape === "rounded", "bear rear paws should use rounded paw meshes");
+  assert(bearVisual.frontLeftLeg.paw.geometry.type === "SphereGeometry", "bear rounded paws should be ellipsoid meshes instead of box blocks");
+  assert(bearVisual.frontLeftLeg.paw.userData.pawSize.width >= 0.23 && bearVisual.frontLeftLeg.paw.userData.pawSize.depth >= 0.26, "bear front paws should stay broad");
+  assert(bearVisual.backLeftLeg.paw.userData.pawSize.width >= 0.21 && bearVisual.backLeftLeg.paw.userData.pawSize.depth >= 0.24, "bear rear paws should stay broad");
   assert(bearVisual.frontLeftClaws.length === 3 && bearVisual.backRightClaws.length === 3, "bear renderer should expose claw groups");
+  assert(bearVisual.frontLeftClaws[1].position.z >= 0.1, "bear front claws should sit near the front of the rounded paw");
   runtime.updateEnemyVisualRenderer({
     enemyState: { runtimeId: "bear-visual", enemyId: "enemy_bear", attackTriggerAt: 100, hitReactionTriggerAt: 0 },
     renderer: bearVisual,
