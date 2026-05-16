@@ -24,6 +24,7 @@
     const THUMB_SIZE = 148;
 
     let activeEntries = [];
+    let activeFocusedViewer = null;
 
     function getWindowRef(context = {}) {
         return context.windowRef || (typeof window !== 'undefined' ? window : {});
@@ -368,12 +369,214 @@
         group.position.z -= fittedCenter.z;
     }
 
+    function normalizeModelForFocusedViewer(THREERef, group) {
+        if (!THREERef || !group) return;
+        group.rotation.y = 0;
+        group.updateMatrixWorld(true);
+        const box = new THREERef.Box3().setFromObject(group);
+        if (!Number.isFinite(box.min.x) || !Number.isFinite(box.max.x)) return;
+        const size = new THREERef.Vector3();
+        box.getSize(size);
+        const fit = Math.max(size.y || 1, size.x || 1, size.z || 1);
+        const scale = fit > 0 ? Math.min(3.2, 2.65 / fit) : 1;
+        group.scale.multiplyScalar(scale);
+        group.updateMatrixWorld(true);
+        const fittedBox = new THREERef.Box3().setFromObject(group);
+        const fittedCenter = new THREERef.Vector3();
+        fittedBox.getCenter(fittedCenter);
+        group.position.x -= fittedCenter.x;
+        group.position.y -= fittedCenter.y;
+        group.position.z -= fittedCenter.z;
+    }
+
     function createModelForEntry(entry, windowRef) {
         const group = entry.kind === 'combat_enemy'
             ? createEnemyModel(entry, windowRef)
             : createWorldNpcModel(entry, windowRef);
         hideRuntimeHitboxes(group);
         return group;
+    }
+
+    function closeFocusedModelViewer(panel) {
+        const root = panel && panel.querySelector ? panel.querySelector('[data-gallery-focus]') : null;
+        if (activeFocusedViewer && typeof activeFocusedViewer.dispose === 'function') {
+            activeFocusedViewer.dispose();
+        }
+        activeFocusedViewer = null;
+        if (root) {
+            root.classList.remove('is-open');
+            root.setAttribute('aria-hidden', 'true');
+        }
+        return true;
+    }
+
+    function openFocusedModelViewer(panel, entry, context = {}) {
+        const windowRef = getWindowRef(context);
+        const documentRef = getDocumentRef(context);
+        const THREERef = windowRef.THREE || (typeof THREE !== 'undefined' ? THREE : null);
+        const root = panel && panel.querySelector ? panel.querySelector('[data-gallery-focus]') : null;
+        const viewport = root && root.querySelector ? root.querySelector('[data-gallery-focus-viewport]') : null;
+        const title = root && root.querySelector ? root.querySelector('[data-gallery-focus-title]') : null;
+        const meta = root && root.querySelector ? root.querySelector('[data-gallery-focus-meta]') : null;
+        if (!panel || !entry || !documentRef || !THREERef || !viewport || typeof THREERef.WebGLRenderer !== 'function') return false;
+
+        closeFocusedModelViewer(panel);
+        clearElement(viewport);
+        if (title) title.textContent = entry.displayName || 'NPC Model';
+        if (meta) {
+            const placementText = Number.isFinite(entry.placementCount) && entry.placementCount > 1
+                ? `${entry.placementCount} placements`
+                : entry.subtitle || entry.entryId;
+            meta.textContent = [placementText, entry.modelSource || '', entry.worldLabel || ''].filter(Boolean).join(' · ');
+        }
+
+        let renderer = null;
+        let model = null;
+        let scene = null;
+        let camera = null;
+        let pivot = null;
+        let resizeObserver = null;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let startRotationX = 0;
+        let startRotationY = 0;
+
+        function render() {
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        function resize() {
+            if (!renderer || !camera) return;
+            const rect = viewport.getBoundingClientRect();
+            const width = Math.max(320, Math.floor(rect.width || 720));
+            const height = Math.max(300, Math.floor(rect.height || 520));
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            if (typeof camera.updateProjectionMatrix === 'function') camera.updateProjectionMatrix();
+            render();
+        }
+
+        function resetRotation() {
+            if (!pivot) return;
+            pivot.rotation.x = -0.08;
+            pivot.rotation.y = -0.42;
+            pivot.rotation.z = 0;
+            render();
+        }
+
+        function onPointerDown(event) {
+            if (!pivot) return;
+            isDragging = true;
+            dragStartX = event.clientX;
+            dragStartY = event.clientY;
+            startRotationX = pivot.rotation.x;
+            startRotationY = pivot.rotation.y;
+            if (renderer && renderer.domElement && typeof renderer.domElement.setPointerCapture === 'function') {
+                renderer.domElement.setPointerCapture(event.pointerId);
+            }
+            event.preventDefault();
+        }
+
+        function onPointerMove(event) {
+            if (!isDragging || !pivot) return;
+            const deltaX = event.clientX - dragStartX;
+            const deltaY = event.clientY - dragStartY;
+            pivot.rotation.y = startRotationY + (deltaX * 0.01);
+            pivot.rotation.x = Math.max(-0.65, Math.min(0.65, startRotationX + (deltaY * 0.006)));
+            render();
+        }
+
+        function onPointerUp(event) {
+            isDragging = false;
+            if (renderer && renderer.domElement && typeof renderer.domElement.releasePointerCapture === 'function') {
+                try {
+                    renderer.domElement.releasePointerCapture(event.pointerId);
+                } catch (error) {
+                    return;
+                }
+            }
+        }
+
+        try {
+            renderer = new THREERef.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(2, Number(windowRef.devicePixelRatio) || 1));
+            renderer.setClearColor(0x000000, 0);
+            renderer.domElement.className = 'npc-model-focus-canvas';
+            renderer.domElement.setAttribute('aria-label', `${entry.displayName || 'NPC'} 3D model`);
+
+            scene = new THREERef.Scene();
+            camera = new THREERef.PerspectiveCamera(34, 1, 0.1, 40);
+            camera.position.set(0, 0.2, 5.2);
+            camera.lookAt(0, 0, 0);
+
+            const ambient = new THREERef.AmbientLight(0xffffff, 0.78);
+            const key = new THREERef.DirectionalLight(0xffffff, 1.28);
+            key.position.set(2.6, 4.3, 5.2);
+            const rim = new THREERef.DirectionalLight(0xffd4a0, 0.52);
+            rim.position.set(-3.2, 2.1, -2.8);
+            const fill = new THREERef.DirectionalLight(0x9fb7ff, 0.45);
+            fill.position.set(-3.4, 2.6, 3.4);
+            scene.add(ambient, key, rim, fill);
+
+            pivot = new THREERef.Group();
+            model = createModelForEntry(entry, windowRef);
+            if (!model) throw new Error('Model unavailable');
+            normalizeModelForFocusedViewer(THREERef, model);
+            pivot.add(model);
+            scene.add(pivot);
+
+            viewport.appendChild(renderer.domElement);
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+            renderer.domElement.addEventListener('pointermove', onPointerMove);
+            renderer.domElement.addEventListener('pointerup', onPointerUp);
+            renderer.domElement.addEventListener('pointercancel', onPointerUp);
+            renderer.domElement.addEventListener('lostpointercapture', () => {
+                isDragging = false;
+            });
+
+            activeFocusedViewer = {
+                dispose() {
+                    if (resizeObserver && typeof resizeObserver.disconnect === 'function') resizeObserver.disconnect();
+                    if (windowRef.removeEventListener) windowRef.removeEventListener('resize', resize);
+                    if (renderer && renderer.domElement) {
+                        renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+                        renderer.domElement.removeEventListener('pointermove', onPointerMove);
+                        renderer.domElement.removeEventListener('pointerup', onPointerUp);
+                        renderer.domElement.removeEventListener('pointercancel', onPointerUp);
+                    }
+                    if (model && pivot) pivot.remove(model);
+                    if (pivot && scene) scene.remove(pivot);
+                    if (renderer && renderer.domElement && renderer.domElement.parentNode) {
+                        renderer.domElement.parentNode.removeChild(renderer.domElement);
+                    }
+                    if (renderer && typeof renderer.dispose === 'function') renderer.dispose();
+                },
+                resetRotation
+            };
+
+            if (typeof windowRef.ResizeObserver === 'function') {
+                resizeObserver = new windowRef.ResizeObserver(resize);
+                resizeObserver.observe(viewport);
+            }
+            if (windowRef.addEventListener) windowRef.addEventListener('resize', resize);
+            if (root) {
+                root.classList.add('is-open');
+                root.setAttribute('aria-hidden', 'false');
+            }
+            resetRotation();
+            resize();
+            return true;
+        } catch (error) {
+            if (renderer && typeof renderer.dispose === 'function') renderer.dispose();
+            clearElement(viewport);
+            appendText(viewport, 'span', 'npc-model-focus-empty', 'No preview');
+            if (root) {
+                root.classList.add('is-open');
+                root.setAttribute('aria-hidden', 'false');
+            }
+            return false;
+        }
     }
 
     function renderEntryThumbnails(entries, context = {}) {
@@ -543,6 +746,15 @@
                 min-width: 0;
                 border: 1px solid #3e3529;
                 background: #1b1510;
+                cursor: pointer;
+                text-align: left;
+                transition: border-color 120ms ease, transform 120ms ease;
+            }
+            .npc-model-gallery-card:hover,
+            .npc-model-gallery-card:focus {
+                border-color: #a9824d;
+                outline: none;
+                transform: translateY(-1px);
             }
             .npc-model-gallery-thumb {
                 height: 148px;
@@ -612,6 +824,87 @@
                 background: #183018;
                 color: #b6e8a6;
             }
+            .npc-model-focus {
+                position: absolute;
+                inset: 0;
+                z-index: 2;
+                display: none;
+                padding: 18px;
+                background: rgba(5, 7, 9, 0.88);
+            }
+            .npc-model-focus.is-open {
+                display: flex;
+            }
+            .npc-model-focus-shell {
+                width: min(980px, calc(100vw - 36px));
+                height: min(780px, calc(100vh - 36px));
+                margin: auto;
+                display: flex;
+                flex-direction: column;
+                border: 2px solid #6d5d48;
+                background: #15110d;
+                box-shadow: 0 18px 62px rgba(0, 0, 0, 0.78);
+            }
+            .npc-model-focus-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 58px;
+                padding: 10px 14px;
+                border-bottom: 1px solid #3e3529;
+                background: #211b14;
+            }
+            .npc-model-focus-title-wrap {
+                min-width: 0;
+                flex: 1;
+            }
+            .npc-model-focus-title {
+                margin: 0;
+                overflow: hidden;
+                color: #ff981f;
+                font-size: 18px;
+                line-height: 1.2;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .npc-model-focus-meta {
+                margin-top: 4px;
+                overflow: hidden;
+                color: #c9bda9;
+                font-size: 12px;
+                line-height: 1.25;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .npc-model-focus-stage {
+                position: relative;
+                flex: 1;
+                min-height: 0;
+                background:
+                    radial-gradient(circle at 50% 42%, rgba(139, 105, 66, 0.24), transparent 42%),
+                    linear-gradient(180deg, #201912 0%, #0f0e0d 100%);
+            }
+            .npc-model-focus-viewport {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+            .npc-model-focus-canvas {
+                width: 100%;
+                height: 100%;
+                cursor: grab;
+                touch-action: none;
+            }
+            .npc-model-focus-canvas:active {
+                cursor: grabbing;
+            }
+            .npc-model-focus-empty {
+                color: #b8aa95;
+                font-size: 13px;
+            }
             @media (max-width: 720px) {
                 .npc-model-gallery-shell {
                     width: 100vw;
@@ -627,6 +920,17 @@
                 .npc-model-gallery-select,
                 .npc-model-gallery-button {
                     flex: 1;
+                }
+                .npc-model-focus {
+                    padding: 0;
+                }
+                .npc-model-focus-shell {
+                    width: 100vw;
+                    height: 100vh;
+                }
+                .npc-model-focus-header {
+                    align-items: stretch;
+                    flex-direction: column;
                 }
             }
         `;
@@ -698,10 +1002,24 @@
         return groups;
     }
 
-    function appendCard(grid, entry, imageSrc) {
+    function appendCard(grid, entry, imageSrc, panel) {
         const documentRef = grid.ownerDocument;
         const card = documentRef.createElement('article');
         card.className = 'npc-model-gallery-card';
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Open ${entry.displayName} 3D model`);
+        card.dataset.galleryEntryId = entry.entryId;
+        const openFocused = () => openFocusedModelViewer(panel, entry, {
+            documentRef,
+            windowRef: panel && panel._npcGalleryWindowRef ? panel._npcGalleryWindowRef : getWindowRef()
+        });
+        card.addEventListener('click', openFocused);
+        card.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            openFocused();
+        });
 
         const thumb = documentRef.createElement('div');
         thumb.className = 'npc-model-gallery-thumb';
@@ -751,7 +1069,7 @@
             appendText(section, 'h3', 'npc-model-gallery-section-title', `${group.label} (${group.entries.length})`);
             const grid = contentRoot.ownerDocument.createElement('div');
             grid.className = 'npc-model-gallery-grid';
-            group.entries.forEach((entry) => appendCard(grid, entry, images[entry.entryId]));
+            group.entries.forEach((entry) => appendCard(grid, entry, images[entry.entryId], panel));
             section.appendChild(grid);
             contentRoot.appendChild(section);
         });
@@ -762,6 +1080,7 @@
         if (!documentRef) return false;
         const panel = documentRef.getElementById(GALLERY_ID);
         if (!panel) return false;
+        closeFocusedModelViewer(panel);
         panel.classList.remove('is-open');
         panel.setAttribute('aria-hidden', 'true');
         return true;
@@ -804,14 +1123,52 @@
                 <div class="npc-model-gallery-summary" data-gallery-summary></div>
                 <main class="npc-model-gallery-content" data-gallery-content></main>
             </div>
+            <div class="npc-model-focus" data-gallery-focus aria-hidden="true">
+                <div class="npc-model-focus-shell" role="dialog" aria-modal="true" aria-labelledby="npc-model-focus-title">
+                    <header class="npc-model-focus-header">
+                        <div class="npc-model-focus-title-wrap">
+                            <h3 class="npc-model-focus-title" id="npc-model-focus-title" data-gallery-focus-title>NPC Model</h3>
+                            <div class="npc-model-focus-meta" data-gallery-focus-meta></div>
+                        </div>
+                        <div class="npc-model-gallery-actions">
+                            <button class="npc-model-gallery-button" type="button" data-gallery-focus-reset>Reset</button>
+                            <button class="npc-model-gallery-button" type="button" data-gallery-focus-close>Close</button>
+                        </div>
+                    </header>
+                    <div class="npc-model-focus-stage">
+                        <div class="npc-model-focus-viewport" data-gallery-focus-viewport></div>
+                    </div>
+                </div>
+            </div>
         `;
         panel.addEventListener('mousedown', (event) => {
             if (event.target === panel) closeGallery({ documentRef });
         });
         const closeButton = panel.querySelector('[data-gallery-close]');
         if (closeButton) closeButton.addEventListener('click', () => closeGallery({ documentRef }));
+        const focusRoot = panel.querySelector('[data-gallery-focus]');
+        if (focusRoot) {
+            focusRoot.addEventListener('mousedown', (event) => {
+                if (event.target === focusRoot) closeFocusedModelViewer(panel);
+            });
+        }
+        const focusCloseButton = panel.querySelector('[data-gallery-focus-close]');
+        if (focusCloseButton) focusCloseButton.addEventListener('click', () => closeFocusedModelViewer(panel));
+        const focusResetButton = panel.querySelector('[data-gallery-focus-reset]');
+        if (focusResetButton) {
+            focusResetButton.addEventListener('click', () => {
+                if (activeFocusedViewer && typeof activeFocusedViewer.resetRotation === 'function') {
+                    activeFocusedViewer.resetRotation();
+                }
+            });
+        }
         const refreshButton = panel.querySelector('[data-gallery-refresh]');
-        if (refreshButton) refreshButton.addEventListener('click', () => openGallery({ documentRef, windowRef: getWindowRef(context), forceRefresh: true }));
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => {
+                closeFocusedModelViewer(panel);
+                openGallery({ documentRef, windowRef: getWindowRef(context), forceRefresh: true });
+            });
+        }
         const filter = panel.querySelector('[data-gallery-filter]');
         if (filter) {
             filter.addEventListener('change', () => {
@@ -820,7 +1177,14 @@
             });
         }
         documentRef.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && panel.classList.contains('is-open')) closeGallery({ documentRef });
+            if (event.key === 'Escape' && panel.classList.contains('is-open')) {
+                const focusViewer = panel.querySelector('[data-gallery-focus]');
+                if (focusViewer && focusViewer.classList.contains('is-open')) {
+                    closeFocusedModelViewer(panel);
+                    return;
+                }
+                closeGallery({ documentRef });
+            }
         });
         documentRef.body.appendChild(panel);
         return panel;
@@ -830,6 +1194,8 @@
         const panel = ensureGalleryPanel(context);
         if (!panel) return false;
         const filter = panel.querySelector('[data-gallery-filter]');
+        panel._npcGalleryWindowRef = getWindowRef(context);
+        closeFocusedModelViewer(panel);
         activeEntries = collectNpcModelGalleryEntries(context);
         panel.classList.add('is-open');
         panel.setAttribute('aria-hidden', 'false');
@@ -861,8 +1227,10 @@
         collectEnemyEntries,
         collectWorldNpcEntries,
         collectNpcModelGalleryEntries,
+        closeFocusedModelViewer,
         closeGallery,
         isOldModelStatus,
+        openFocusedModelViewer,
         openGallery,
         renderEntryThumbnails,
         summarizeEntries

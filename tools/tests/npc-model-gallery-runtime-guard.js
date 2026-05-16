@@ -21,6 +21,12 @@ const mainOverworld = JSON.parse(read("content/world/regions/main_overworld.json
 
 assert(runtimeSource.includes("function collectNpcModelGalleryEntries"), "NPC gallery runtime should expose entry collection");
 assert(runtimeSource.includes("function renderEntryThumbnails"), "NPC gallery runtime should render model thumbnails");
+assert(runtimeSource.includes("function openFocusedModelViewer"), "NPC gallery runtime should expose a focused 3D model viewer");
+assert(runtimeSource.includes("function normalizeModelForFocusedViewer"), "focused NPC viewer should normalize full-size model framing separately from thumbnails");
+assert(runtimeSource.includes("data-gallery-focus-viewport"), "NPC gallery should include a focused model viewport");
+assert(runtimeSource.includes("dataset.galleryEntryId"), "NPC gallery cards should retain entry ids for focused model opening");
+assert(runtimeSource.includes("setPointerCapture") && runtimeSource.includes("pointermove"), "focused NPC viewer should support drag rotation with pointer capture");
+assert(runtimeSource.includes("data-gallery-focus-reset"), "focused NPC viewer should expose a reset control");
 assert(runtimeSource.includes("Math.min(2.3, 1.78 / fit)"), "NPC gallery thumbnails should scale low creature models up enough to read");
 assert(runtimeSource.includes("group.position.y += 0.86 - fittedCenter.y;"), "NPC gallery thumbnails should center models vertically instead of floor-aligning tiny creatures");
 assert(runtimeSource.includes("WorldBootstrapRuntime"), "NPC gallery runtime should read authored world NPCs from the world runtime");
