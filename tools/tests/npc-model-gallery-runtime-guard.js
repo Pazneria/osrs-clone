@@ -21,6 +21,8 @@ const mainOverworld = JSON.parse(read("content/world/regions/main_overworld.json
 
 assert(runtimeSource.includes("function collectNpcModelGalleryEntries"), "NPC gallery runtime should expose entry collection");
 assert(runtimeSource.includes("function renderEntryThumbnails"), "NPC gallery runtime should render model thumbnails");
+assert(runtimeSource.includes("Math.min(2.3, 1.78 / fit)"), "NPC gallery thumbnails should scale low creature models up enough to read");
+assert(runtimeSource.includes("group.position.y += 0.86 - fittedCenter.y;"), "NPC gallery thumbnails should center models vertically instead of floor-aligning tiny creatures");
 assert(runtimeSource.includes("WorldBootstrapRuntime"), "NPC gallery runtime should read authored world NPCs from the world runtime");
 assert(runtimeSource.includes("CombatRuntime"), "NPC gallery runtime should read combat enemy definitions from the combat runtime");
 assert(runtimeSource.includes("function getWorldNpcModelKey(entry)"), "NPC gallery should dedupe repeated world NPC model appearances");

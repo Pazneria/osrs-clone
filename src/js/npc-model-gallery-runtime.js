@@ -357,14 +357,14 @@
         const size = new THREERef.Vector3();
         box.getSize(size);
         const fit = Math.max(size.y || 1, size.x * 1.4 || 1, size.z * 1.25 || 1);
-        const scale = fit > 0 ? Math.min(1.35, 1.62 / fit) : 1;
+        const scale = fit > 0 ? Math.min(2.3, 1.78 / fit) : 1;
         group.scale.multiplyScalar(scale);
         group.updateMatrixWorld(true);
         const fittedBox = new THREERef.Box3().setFromObject(group);
         const fittedCenter = new THREERef.Vector3();
         fittedBox.getCenter(fittedCenter);
         group.position.x -= fittedCenter.x;
-        group.position.y -= fittedBox.min.y;
+        group.position.y += 0.86 - fittedCenter.y;
         group.position.z -= fittedCenter.z;
     }
 

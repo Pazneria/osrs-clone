@@ -74,6 +74,7 @@
         const whiskerMaterial = getEnemyLambertMaterial('rat:whisker', 0xe2d4bf);
         const tailMaterial = getEnemyLambertMaterial('rat:tail', 0xb08a80);
         const pawMaterial = getEnemyLambertMaterial('rat:paw', 0x6a564f);
+        const toothMaterial = getEnemyLambertMaterial('rat:tooth', 0xe7dcc3);
 
         const torsoGroup = new THREE.Group();
         torsoGroup.name = 'rat-torso';
@@ -125,6 +126,10 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.06, 0.025, 0.08);
         eyeRight.position.set(-0.06, 0.025, 0.08);
+        const toothLeft = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.052, 0.012), toothMaterial);
+        const toothRight = toothLeft.clone();
+        toothLeft.position.set(0.018, -0.078, 0.25);
+        toothRight.position.set(-0.018, -0.078, 0.25);
         const whiskerGeometry = new THREE.BoxGeometry(0.17, 0.004, 0.004);
         const whiskerLeftUpper = new THREE.Mesh(whiskerGeometry, whiskerMaterial);
         const whiskerLeftLower = whiskerLeftUpper.clone();
@@ -148,6 +153,8 @@
             earRight,
             eyeLeft,
             eyeRight,
+            toothLeft,
+            toothRight,
             whiskerLeftUpper,
             whiskerLeftLower,
             whiskerRightUpper,
@@ -245,6 +252,8 @@
             earRight,
             eyeLeft,
             eyeRight,
+            toothLeft,
+            toothRight,
             whiskerLeftUpper,
             whiskerLeftLower,
             whiskerRightUpper,
@@ -354,35 +363,46 @@
         const legMaterial = getEnemyLambertMaterial('boar:leg', 0x5a4330);
         const hoofMaterial = getEnemyLambertMaterial('boar:hoof', 0x2f241d);
         const eyeMaterial = getEnemyLambertMaterial('boar:eye', 0x1a140f);
+        const noseMaterial = getEnemyLambertMaterial('boar:nose', 0x241812);
 
         const torsoGroup = new THREE.Group();
         const body = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.42, 0.98), bodyMaterial);
-        const shoulderHump = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.26, 0.34), backMaterial);
-        const rump = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.32, 0.38), bodyMaterial);
+        const shoulderHump = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.32, 0.42), backMaterial);
+        const rump = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.28, 0.38), bodyMaterial);
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), bellyMaterial);
         const spine = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.66), backMaterial);
         body.position.set(0, 0.36, 0.03);
-        shoulderHump.position.set(0, 0.48, 0.2);
-        rump.position.set(0, 0.33, -0.24);
+        shoulderHump.position.set(0, 0.51, 0.22);
+        rump.position.set(0, 0.30, -0.30);
         belly.scale.set(1.12, 0.72, 1.28);
         belly.position.set(0, 0.23, 0.05);
         spine.position.set(0, 0.57, 0.02);
+        const bristleGeometry = new THREE.ConeGeometry(0.045, 0.16, 4);
+        const bristles = [-0.26, -0.10, 0.06, 0.22, 0.36].map((zOffset, index) => {
+            const bristle = new THREE.Mesh(bristleGeometry.clone(), backMaterial);
+            bristle.position.set(0, 0.66 - (index * 0.018), zOffset);
+            bristle.rotation.set(0, 0, Math.PI / 4);
+            bristle.scale.set(1, 1 - (index * 0.08), 1);
+            return bristle;
+        });
 
         const headGroup = new THREE.Group();
         headGroup.position.set(0, 0.41, 0.56);
         const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.36), bodyMaterial);
-        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.3), snoutMaterial);
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.17, 0.36), snoutMaterial);
+        const noseCap = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.10, 0.07), noseMaterial);
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.08, 0.16), backMaterial);
         head.position.set(0, 0, 0);
-        snout.position.set(0, -0.03, 0.28);
+        snout.position.set(0, -0.03, 0.31);
+        noseCap.position.set(0, -0.03, 0.515);
         brow.position.set(0, 0.08, 0.08);
-        const tuskGeometry = new THREE.ConeGeometry(0.024, 0.15, 4);
+        const tuskGeometry = new THREE.ConeGeometry(0.032, 0.20, 4);
         const tuskLeft = new THREE.Mesh(tuskGeometry, tuskMaterial);
         const tuskRight = tuskLeft.clone();
-        tuskLeft.rotation.set(Math.PI / 2, 0, -0.42);
-        tuskRight.rotation.set(Math.PI / 2, 0, 0.42);
-        tuskLeft.position.set(0.09, -0.08, 0.38);
-        tuskRight.position.set(-0.09, -0.08, 0.38);
+        tuskLeft.rotation.set(Math.PI / 2, 0, -0.55);
+        tuskRight.rotation.set(Math.PI / 2, 0, 0.55);
+        tuskLeft.position.set(0.105, -0.075, 0.44);
+        tuskRight.position.set(-0.105, -0.075, 0.44);
         const earGeometry = new THREE.BoxGeometry(0.08, 0.1, 0.03);
         const earLeft = new THREE.Mesh(earGeometry, bodyMaterial);
         const earRight = earLeft.clone();
@@ -394,7 +414,7 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.08, 0.04, 0.15);
         eyeRight.position.set(-0.08, 0.04, 0.15);
-        headGroup.add(head, snout, brow, tuskLeft, tuskRight, earLeft, earRight, eyeLeft, eyeRight);
+        headGroup.add(head, snout, noseCap, brow, tuskLeft, tuskRight, earLeft, earRight, eyeLeft, eyeRight);
 
         const tailGroup = new THREE.Group();
         tailGroup.position.set(0, 0.43, -0.54);
@@ -455,6 +475,11 @@
             lowerMaterial: legMaterial,
             pawMaterial: hoofMaterial
         });
+        [frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg].forEach((leg) => {
+            const hoofSplit = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.056, 0.018), noseMaterial);
+            hoofSplit.position.set(0, -0.004, 0.052);
+            leg.paw.add(hoofSplit);
+        });
 
         const hitbox = new THREE.Mesh(
             new THREE.BoxGeometry(1.06, 0.92, 1.16),
@@ -471,7 +496,7 @@
             uid: enemyState.runtimeId
         };
 
-        torsoGroup.add(body, shoulderHump, rump, belly, spine, headGroup, tailGroup);
+        torsoGroup.add(body, shoulderHump, rump, belly, spine, ...bristles, headGroup, tailGroup);
         group.add(
             torsoGroup,
             frontLeftLeg.root,
@@ -493,7 +518,9 @@
             headGroup,
             head,
             snout,
+            noseCap,
             brow,
+            bristles,
             tuskLeft,
             tuskRight,
             earLeft,
@@ -521,6 +548,7 @@
         const legMaterial = getEnemyLambertMaterial('wolf:leg', 0x4c4743);
         const pawMaterial = getEnemyLambertMaterial('wolf:paw', 0x241f1c);
         const eyeMaterial = getEnemyLambertMaterial('wolf:eye', 0xece7d5);
+        const fangMaterial = getEnemyLambertMaterial('wolf:fang', 0xd8d1bd);
 
         const torsoGroup = new THREE.Group();
         const body = new THREE.Mesh(new THREE.SphereGeometry(0.31, 10, 10), furMaterial);
@@ -528,6 +556,7 @@
         const chest = new THREE.Mesh(new THREE.SphereGeometry(0.23, 10, 10), furMaterial);
         const haunch = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), furDarkMaterial);
         const backLine = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.7), furDarkMaterial);
+        const neckRuff = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.22), furDarkMaterial);
         body.scale.set(1.2, 0.72, 1.72);
         body.position.set(0, 0.42, 0.02);
         belly.scale.set(1.06, 0.58, 1.22);
@@ -537,14 +566,16 @@
         haunch.scale.set(0.98, 0.78, 1.04);
         haunch.position.set(0, 0.39, -0.3);
         backLine.position.set(0, 0.58, 0.02);
+        neckRuff.position.set(0, 0.54, 0.43);
+        neckRuff.rotation.x = -0.08;
 
         const headGroup = new THREE.Group();
         headGroup.position.set(0, 0.53, 0.68);
         const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.34), furMaterial);
-        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.24), muzzleMaterial);
+        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.14, 0.31), muzzleMaterial);
         const neck = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, 0.18), furDarkMaterial);
         head.position.set(0, 0, 0);
-        muzzle.position.set(0, -0.02, 0.28);
+        muzzle.position.set(0, -0.02, 0.315);
         neck.position.set(0, -0.04, -0.2);
         const earGeometry = new THREE.BoxGeometry(0.07, 0.14, 0.03);
         const earLeft = new THREE.Mesh(earGeometry, furDarkMaterial);
@@ -557,15 +588,22 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.06, 0.04, 0.12);
         eyeRight.position.set(-0.06, 0.04, 0.12);
-        headGroup.add(head, muzzle, neck, earLeft, earRight, eyeLeft, eyeRight);
+        const fangGeometry = new THREE.ConeGeometry(0.014, 0.07, 4);
+        const fangLeft = new THREE.Mesh(fangGeometry, fangMaterial);
+        const fangRight = fangLeft.clone();
+        fangLeft.rotation.x = Math.PI;
+        fangRight.rotation.x = Math.PI;
+        fangLeft.position.set(0.045, -0.095, 0.40);
+        fangRight.position.set(-0.045, -0.095, 0.40);
+        headGroup.add(head, muzzle, neck, earLeft, earRight, eyeLeft, eyeRight, fangLeft, fangRight);
 
         const tailGroup = new THREE.Group();
         tailGroup.position.set(0, 0.49, -0.62);
-        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.01, 0.44, 5), furDarkMaterial);
+        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.024, 0.48, 5), furDarkMaterial);
         tail.rotation.x = Math.PI / 2;
         tail.position.set(0, 0, -0.12);
-        const tailTip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.1), furMaterial);
-        tailTip.position.set(0, 0, -0.34);
+        const tailTip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.13), furMaterial);
+        tailTip.position.set(0, 0, -0.37);
         tailGroup.add(tail, tailTip);
 
         const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.18, 0.37, 0.34), {
@@ -636,7 +674,7 @@
             uid: enemyState.runtimeId
         };
 
-        torsoGroup.add(body, belly, chest, haunch, backLine, headGroup, tailGroup);
+        torsoGroup.add(body, belly, chest, haunch, backLine, neckRuff, headGroup, tailGroup);
         group.add(
             torsoGroup,
             frontLeftLeg.root,
@@ -655,6 +693,7 @@
             chest,
             haunch,
             backLine,
+            neckRuff,
             headGroup,
             head,
             muzzle,
@@ -663,6 +702,8 @@
             earRight,
             eyeLeft,
             eyeRight,
+            fangLeft,
+            fangRight,
             tailGroup,
             tail,
             tailTip,
@@ -708,19 +749,19 @@
         const torsoGroup = new THREE.Group();
         torsoGroup.name = 'bear-torso';
         const body = new THREE.Mesh(new THREE.DodecahedronGeometry(0.36, 0), furMaterial);
-        body.scale.set(1.32, 0.82, 1.72);
+        body.scale.set(1.38, 0.82, 1.76);
         body.position.set(0, 0.5, 0.02);
         const shoulderHump = new THREE.Mesh(new THREE.DodecahedronGeometry(0.32, 0), darkFurMaterial);
-        shoulderHump.scale.set(1.36, 0.74, 0.96);
-        shoulderHump.position.set(0, 0.68, 0.28);
+        shoulderHump.scale.set(1.50, 0.84, 1.02);
+        shoulderHump.position.set(0, 0.72, 0.30);
         const rump = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3, 0), furMaterial);
-        rump.scale.set(1.18, 0.78, 1.04);
-        rump.position.set(0, 0.48, -0.38);
+        rump.scale.set(1.10, 0.70, 1.02);
+        rump.position.set(0, 0.44, -0.40);
         const belly = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), bellyMaterial);
         belly.scale.set(1.12, 0.58, 1.34);
         belly.position.set(0, 0.3, 0.02);
-        const backRidge = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.74), darkFurMaterial);
-        backRidge.position.set(0, 0.78, 0.02);
+        const backRidge = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.78), darkFurMaterial);
+        backRidge.position.set(0, 0.83, 0.05);
 
         const headGroup = new THREE.Group();
         headGroup.name = 'bear-head';
@@ -732,11 +773,11 @@
         head.scale.set(1.08, 0.9, 1.06);
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.13), darkFurMaterial);
         brow.position.set(0, 0.08, 0.08);
-        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.15, 0.28), muzzleMaterial);
-        muzzle.position.set(0, -0.06, 0.25);
+        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.17, 0.32), muzzleMaterial);
+        muzzle.position.set(0, -0.06, 0.29);
         const nose = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), noseMaterial);
-        nose.scale.set(1.3, 0.8, 0.8);
-        nose.position.set(0, -0.045, 0.41);
+        nose.scale.set(1.5, 0.86, 0.9);
+        nose.position.set(0, -0.045, 0.465);
         const earGeometry = new THREE.ConeGeometry(0.07, 0.08, 5);
         const earLeft = new THREE.Mesh(earGeometry, darkFurMaterial);
         const earRight = earLeft.clone();
@@ -748,7 +789,11 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.078, 0.03, 0.14);
         eyeRight.position.set(-0.078, 0.03, 0.14);
-        headGroup.add(neck, head, brow, muzzle, nose, earLeft, earRight, eyeLeft, eyeRight);
+        const cheekLeft = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.08), muzzleMaterial);
+        const cheekRight = cheekLeft.clone();
+        cheekLeft.position.set(0.10, -0.08, 0.23);
+        cheekRight.position.set(-0.10, -0.08, 0.23);
+        headGroup.add(neck, head, brow, muzzle, nose, cheekLeft, cheekRight, earLeft, earRight, eyeLeft, eyeRight);
 
         const tailGroup = new THREE.Group();
         tailGroup.name = 'bear-tail';
@@ -764,7 +809,7 @@
             upperRadiusBottom: 0.068,
             lowerRadiusTop: 0.052,
             lowerRadiusBottom: 0.046,
-            pawSize: [0.15, 0.07, 0.19],
+            pawSize: [0.18, 0.075, 0.22],
             pawForwardOffset: 0.035,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
@@ -777,7 +822,7 @@
             upperRadiusBottom: 0.068,
             lowerRadiusTop: 0.052,
             lowerRadiusBottom: 0.046,
-            pawSize: [0.15, 0.07, 0.19],
+            pawSize: [0.18, 0.075, 0.22],
             pawForwardOffset: 0.035,
             upperMaterial: furMaterial,
             lowerMaterial: darkFurMaterial,
@@ -855,6 +900,8 @@
             brow,
             muzzle,
             nose,
+            cheekLeft,
+            cheekRight,
             earLeft,
             earRight,
             eyeLeft,
@@ -954,6 +1001,7 @@
         const wingMaterial = getEnemyLambertMaterial('chicken:wing', 0xdfcfad);
         const tailMaterial = getEnemyLambertMaterial('chicken:tail', 0xc8aa68);
         const beakMaterial = getEnemyLambertMaterial('chicken:beak', 0xe5a534);
+        const beakTipMaterial = getEnemyLambertMaterial('chicken:beakTip', 0xc98222);
         const legMaterial = getEnemyLambertMaterial('chicken:leg', 0xd0a03a);
         const footMaterial = getEnemyLambertMaterial('chicken:foot', 0xb88524);
         const combMaterial = getEnemyLambertMaterial('chicken:comb', 0xb23b38);
@@ -964,6 +1012,8 @@
         torsoGroup.name = 'chicken-torso';
         const body = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.42, 0.52), bodyMaterial);
         body.position.set(0, 0.32, 0.01);
+        const bodyTopPlane = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.055, 0.42), chestMaterial);
+        bodyTopPlane.position.set(0, 0.535, 0.02);
         const chest = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6), chestMaterial);
         chest.scale.set(1.08, 0.9, 1.0);
         chest.position.set(0, 0.34, 0.24);
@@ -972,7 +1022,7 @@
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), wingMaterial);
         belly.scale.set(1.05, 0.52, 1.25);
         belly.position.set(0, 0.17, 0.04);
-        torsoGroup.add(body, chest, rump, belly);
+        torsoGroup.add(body, bodyTopPlane, chest, rump, belly);
 
         const headGroup = new THREE.Group();
         headGroup.name = 'chicken-head';
@@ -983,9 +1033,12 @@
         cheek.position.set(0, -0.03, 0.08);
         const beakUpper = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.17, 4), beakMaterial);
         beakUpper.rotation.x = Math.PI / 2;
-        beakUpper.position.set(0, -0.01, 0.21);
+        beakUpper.position.set(0, -0.01, 0.235);
         const beakLower = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.09), beakMaterial);
-        beakLower.position.set(0, -0.055, 0.145);
+        beakLower.position.set(0, -0.055, 0.17);
+        const beakTip = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.08, 4), beakTipMaterial);
+        beakTip.rotation.x = Math.PI / 2;
+        beakTip.position.set(0, -0.012, 0.325);
         const combFront = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.11, 0.045), combMaterial);
         const combMid = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.05), combMaterial);
         const combBack = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.1, 0.045), combMaterial);
@@ -1002,7 +1055,7 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.075, 0.035, 0.105);
         eyeRight.position.set(-0.075, 0.035, 0.105);
-        headGroup.add(head, cheek, beakUpper, beakLower, combFront, combMid, combBack, wattleLeft, wattleRight, eyeLeft, eyeRight);
+        headGroup.add(head, cheek, beakUpper, beakLower, beakTip, combFront, combMid, combBack, wattleLeft, wattleRight, eyeLeft, eyeRight);
         headGroup.position.set(0, 0.57, 0.36);
 
         const wingLeftGroup = new THREE.Group();
@@ -1027,15 +1080,15 @@
         const tailGroup = new THREE.Group();
         tailGroup.name = 'chicken-tail-fan';
         tailGroup.position.set(0, 0.4, -0.36);
-        const tailCenter = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.08), tailMaterial);
+        const tailCenter = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.30, 0.085), tailMaterial);
         const tailLeft = tailCenter.clone();
         const tailRight = tailCenter.clone();
-        tailCenter.position.set(0, 0.05, -0.06);
-        tailCenter.rotation.x = -0.65;
-        tailLeft.position.set(0.09, 0.03, -0.045);
-        tailLeft.rotation.set(-0.58, 0.08, -0.42);
-        tailRight.position.set(-0.09, 0.03, -0.045);
-        tailRight.rotation.set(-0.58, -0.08, 0.42);
+        tailCenter.position.set(0, 0.075, -0.075);
+        tailCenter.rotation.x = -0.72;
+        tailLeft.position.set(0.105, 0.045, -0.055);
+        tailLeft.rotation.set(-0.62, 0.10, -0.52);
+        tailRight.position.set(-0.105, 0.045, -0.055);
+        tailRight.rotation.set(-0.62, -0.10, 0.52);
         tailGroup.add(tailCenter, tailLeft, tailRight);
 
         const legMaterials = { legMaterial, footMaterial, clawMaterial };
@@ -1064,6 +1117,7 @@
             kind: 'chicken',
             torsoGroup,
             body,
+            bodyTopPlane,
             chest,
             rump,
             belly,
@@ -1072,6 +1126,7 @@
             cheek,
             beakUpper,
             beakLower,
+            beakTip,
             combFront,
             combMid,
             combBack,

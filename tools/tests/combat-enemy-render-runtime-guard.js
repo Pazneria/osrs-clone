@@ -70,6 +70,7 @@ function run() {
   assert(runtimeSource.includes("tailGroup.name = 'rat-tail'"), "rat renderer should build a segmented tail group");
   assert(runtimeSource.includes("const whiskerLeftUpper = new THREE.Mesh"), "rat renderer should include visible whisker geometry");
   assert(runtimeSource.includes("const tailMiddle = new THREE.Mesh"), "rat renderer should include more than one tail segment");
+  assert(runtimeSource.includes("const toothLeft = new THREE.Mesh"), "rat renderer should include tiny front teeth for close-read identity");
   assert(runtimeSource.includes("createQuadrupedLegRig(new THREE.Vector3(0.15"), "rat renderer should use the shared quadruped leg rig for front paws");
   assert(runtimeSource.includes("new THREE.BoxGeometry(0.86, 0.58, 1.08)"), "rat interaction hitbox should continue to cover the rebuilt low rat model");
   assert(runtimeSource.includes("function updateRatRenderer(enemyState, renderer, frameNow, idlePhase, visuallyMoving, useWalkBaseClip, currentVisualX, currentVisualY)"), "rat pose updates should receive the same locomotion context as larger quadrupeds");
@@ -83,6 +84,8 @@ function run() {
   assert(runtimeSource.includes("function applyChickenLegPose(leg, phase, options = {})"), "chicken renderer should animate legs through a narrow helper");
   assert(runtimeSource.includes("torsoGroup.name = 'chicken-torso'"), "chicken renderer should build a grouped chunky torso");
   assert(runtimeSource.includes("headGroup.name = 'chicken-head'"), "chicken renderer should build a distinct head group");
+  assert(runtimeSource.includes("const beakTip = new THREE.Mesh"), "chicken renderer should include a projected beak tip for thumbnail readability");
+  assert(runtimeSource.includes("bodyTopPlane"), "chicken renderer should include a simple top plane to keep the pale body faceted");
   assert(runtimeSource.includes("const wattleLeft = new THREE.Mesh"), "chicken renderer should include red wattles");
   assert(runtimeSource.includes("const tailLeft = tailCenter.clone()"), "chicken renderer should include a three-feather tail fan");
   assert(runtimeSource.includes("const toeCenter = new THREE.Mesh"), "chicken renderer should include visible toe/claw meshes");
@@ -191,6 +194,8 @@ function run() {
     getEnemyCombatLevel: () => 6
   });
   assert(boarVisual && boarVisual.kind === "boar", "runtime should create the dedicated boar renderer from appearance kind");
+  assert(Array.isArray(boarVisual.bristles) && boarVisual.bristles.length >= 5, "boar renderer should expose a chunky dorsal bristle ridge");
+  assert(boarVisual.noseCap, "boar renderer should expose a dark nose cap on the snout");
 
   const wolfVisual = runtime.createEnemyVisualRenderer({
     enemyState: { runtimeId: "wolf-visual", enemyId: "enemy_wolf", x: 1, y: 2, z: 0, facingYaw: 0 },
@@ -198,6 +203,8 @@ function run() {
     getEnemyCombatLevel: () => 9
   });
   assert(wolfVisual && wolfVisual.kind === "wolf", "runtime should create the dedicated wolf renderer from appearance kind");
+  assert(wolfVisual.neckRuff, "wolf renderer should expose a dark neck ruff to separate it from boar/bear silhouettes");
+  assert(wolfVisual.fangLeft && wolfVisual.fangRight, "wolf renderer should expose small fang markers");
 
   const bearVisual = runtime.createEnemyVisualRenderer({
     enemyState: { runtimeId: "bear-visual", enemyId: "enemy_bear", x: 1, y: 2, z: 0, facingYaw: 0 },
@@ -207,6 +214,7 @@ function run() {
   assert(bearVisual && bearVisual.kind === "bear", "runtime should create the dedicated bear renderer");
   assert(bearVisual.torsoGroup && bearVisual.torsoGroup.name === "bear-torso", "bear renderer should expose its torso group");
   assert(bearVisual.headGroup && bearVisual.headGroup.name === "bear-head", "bear renderer should expose its head group");
+  assert(bearVisual.cheekLeft && bearVisual.cheekRight, "bear renderer should expose broader muzzle cheek blocks");
   assert(bearVisual.frontLeftClaws.length === 3 && bearVisual.backRightClaws.length === 3, "bear renderer should expose claw groups");
   runtime.updateEnemyVisualRenderer({
     enemyState: { runtimeId: "bear-visual", enemyId: "enemy_bear", attackTriggerAt: 100, hitReactionTriggerAt: 0 },

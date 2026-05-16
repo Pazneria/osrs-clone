@@ -1488,7 +1488,7 @@
     }
 
     function buildEnemyTrainingDummyPreset() {
-        return buildGuideVariantPreset(
+        const preset = buildGuideVariantPreset(
             'Training Dummy',
             'yard_training_dummy',
             {
@@ -1511,13 +1511,23 @@
                 box('torso', 'dummy_target_core', [0.10, 0.10, 0.055], [0, 0.03, 0.345], '#efe0aa'),
                 box('torso', 'dummy_straw_wrap', [0.62, 0.08, 0.41], [0, -0.20, 0.01], '#c6a05d'),
                 box('leftArm', 'dummy_left_crossbar', [0.42, 0.08, 0.08], [0.08, -0.16, 0.02], '#7a4f2a', { rotation: [0, 0, -0.55] }),
-                box('rightArm', 'dummy_right_crossbar', [0.42, 0.08, 0.08], [-0.08, -0.16, 0.02], '#7a4f2a', { rotation: [0, 0, 0.55] })
+                box('rightArm', 'dummy_right_crossbar', [0.42, 0.08, 0.08], [-0.08, -0.16, 0.02], '#7a4f2a', { rotation: [0, 0, 0.55] }),
+                box('head', 'dummy_head_straw_band', [0.48, 0.08, 0.40], [0, 0.03, 0.02], '#cfae66'),
+                box('head', 'dummy_face_slash_left', [0.08, 0.22, 0.035], [0.08, -0.04, 0.225], '#5d3a21', { rotation: [0, 0, 0.58] }),
+                box('head', 'dummy_face_slash_right', [0.08, 0.22, 0.035], [-0.08, -0.04, 0.225], '#5d3a21', { rotation: [0, 0, -0.58] }),
+                box('torso', 'dummy_center_stake', [0.16, 0.76, 0.16], [0, -0.08, -0.18], '#6b4526'),
+                box('torso', 'dummy_rope_lashing_top', [0.70, 0.055, 0.44], [0, 0.22, 0.025], '#d7bd78'),
+                box('torso', 'dummy_rope_lashing_bottom', [0.66, 0.055, 0.43], [0, -0.31, 0.025], '#d7bd78'),
+                box('leftLowerLeg', 'dummy_left_ground_peg', [0.16, 0.12, 0.24], [0, -0.23, 0.08], '#5a371f'),
+                box('rightLowerLeg', 'dummy_right_ground_peg', [0.16, 0.12, 0.24], [0, -0.23, 0.08], '#5a371f')
             ]
         );
+        preset.scale = [0.96, 0.98, 0.96];
+        return preset;
     }
 
     function buildEnemyGoblinGruntPreset() {
-        return buildGuideVariantPreset(
+        const preset = buildGuideVariantPreset(
             'Goblin Grunt',
             'starter_road_goblin',
             {
@@ -1535,15 +1545,25 @@
                 mouth: '#3f2b1f'
             },
             [
-                box('head', 'goblin_left_long_ear', [0.08, 0.28, 0.075], [0.31, 0.03, -0.02], '#6fa74d', { rotation: [0, 0, -0.62] }),
-                box('head', 'goblin_right_long_ear', [0.08, 0.28, 0.075], [-0.31, 0.03, -0.02], '#6fa74d', { rotation: [0, 0, 0.62] }),
-                box('head', 'goblin_brow_left', [0.12, 0.035, 0.035], [0.10, 0.09, 0.225], '#395628'),
-                box('head', 'goblin_brow_right', [0.12, 0.035, 0.035], [-0.10, 0.09, 0.225], '#395628'),
-                box('torso', 'goblin_rope_belt', [0.62, 0.055, 0.39], [0, -0.21, 0.02], '#c29a58'),
-                box('axe', 'goblin_club_handle', [0.09, 0.56, 0.09], [0.02, -0.22, 0.08], '#6b4729', { rotation: [0.1, 0, -0.2] }),
-                box('axe', 'goblin_club_head', [0.18, 0.18, 0.16], [-0.05, 0.08, 0.10], '#4a3424', { rotation: [0.1, 0, -0.2] })
+                box('head', 'goblin_left_long_ear', [0.10, 0.34, 0.08], [0.34, 0.015, -0.035], '#74ad52', { rotation: [0, 0, -0.76] }),
+                box('head', 'goblin_right_long_ear', [0.10, 0.32, 0.08], [-0.335, 0.005, -0.025], '#6fa74d', { rotation: [0, 0, 0.68] }),
+                box('head', 'goblin_brow_left', [0.15, 0.045, 0.045], [0.10, 0.09, 0.238], '#395628'),
+                box('head', 'goblin_brow_right', [0.15, 0.045, 0.045], [-0.10, 0.09, 0.238], '#395628'),
+                box('head', 'goblin_jaw_slab', [0.24, 0.08, 0.055], [0, -0.145, 0.228], '#4f7c36'),
+                box('head', 'goblin_tooth_left', [0.045, 0.06, 0.025], [0.06, -0.18, 0.258], '#d8d0b6'),
+                box('head', 'goblin_tooth_right', [0.045, 0.06, 0.025], [-0.06, -0.18, 0.258], '#d8d0b6'),
+                box('torso', 'goblin_rope_belt', [0.66, 0.07, 0.41], [0, -0.21, 0.035], '#c29a58'),
+                box('torso', 'goblin_torn_tunic_left', [0.16, 0.16, 0.055], [0.18, -0.30, 0.24], '#53311b', { rotation: [0, 0, -0.16] }),
+                box('torso', 'goblin_torn_tunic_right', [0.14, 0.14, 0.055], [-0.19, -0.29, 0.24], '#5b361f', { rotation: [0, 0, 0.18] }),
+                box('leftLowerLeg', 'goblin_left_wrapped_foot', [0.24, 0.08, 0.32], [0.02, -0.30, 0.075], '#352a1f'),
+                box('rightLowerLeg', 'goblin_right_wrapped_foot', [0.24, 0.08, 0.32], [-0.02, -0.30, 0.075], '#352a1f'),
+                box('axe', 'goblin_club_handle', [0.10, 0.58, 0.09], [0.02, -0.22, 0.08], '#6b4729', { rotation: [0.1, 0, -0.24] }),
+                box('axe', 'goblin_club_head', [0.22, 0.20, 0.18], [-0.055, 0.10, 0.10], '#4a3424', { rotation: [0.1, 0, -0.24] }),
+                box('axe', 'goblin_club_worn_edge', [0.10, 0.05, 0.19], [-0.13, 0.16, 0.115], '#6b4b31', { rotation: [0.1, 0, -0.24] })
             ]
         );
+        preset.scale = [0.94, 0.88, 0.96];
+        return preset;
     }
 
     function buildEnemyGuardPreset() {
@@ -1564,13 +1584,23 @@
                 shield: '#2f5279'
             },
             [
-                box('torso', 'guard_blue_crest', [0.11, 0.13, 0.05], [0.22, 0.13, 0.31], '#315f93')
+                box('head', 'guard_steel_med_helm', [0.52, 0.16, 0.42], [0, 0.19, -0.01], '#7b8992'),
+                box('head', 'guard_steel_brow_band', [0.42, 0.07, 0.08], [0, 0.095, 0.235], '#53616a'),
+                box('head', 'guard_steel_nasal_bar', [0.055, 0.22, 0.045], [0, -0.02, 0.255], '#9aa4aa'),
+                box('head', 'guard_left_cheek_plate', [0.08, 0.18, 0.04], [0.19, -0.015, 0.235], '#64727b', { rotation: [0, 0, -0.16] }),
+                box('head', 'guard_right_cheek_plate', [0.08, 0.18, 0.04], [-0.19, -0.015, 0.235], '#64727b', { rotation: [0, 0, 0.16] }),
+                box('torso', 'guard_blue_tabard', [0.24, 0.48, 0.065], [0, -0.02, 0.325], '#284f7c'),
+                box('torso', 'guard_bronze_tabard_pin', [0.11, 0.11, 0.045], [0, 0.18, 0.37], '#c09a4a'),
+                box('torso', 'guard_blue_crest', [0.15, 0.15, 0.05], [0.22, 0.13, 0.34], '#315f93'),
+                box('leftLowerArm', 'guard_blue_shield_face', [0.31, 0.40, 0.07], [0.275, -0.04, 0.11], '#2f5279', { rotation: [0, 1.5708, 0] }),
+                box('leftLowerArm', 'guard_bronze_shield_rim', [0.36, 0.055, 0.085], [0.29, 0.16, 0.11], '#c09a4a', { rotation: [0, 1.5708, 0] }),
+                box('leftLowerArm', 'guard_bronze_shield_boss', [0.12, 0.12, 0.09], [0.325, -0.04, 0.11], '#c09a4a', { rotation: [0, 1.5708, 0] })
             ]
         );
     }
 
     function buildEnemyHeavyBrutePreset() {
-        return buildSmithVariantPreset(
+        const preset = buildSmithVariantPreset(
             'Heavy Brute',
             'camp_heavy_brute',
             {
@@ -1583,16 +1613,27 @@
                 ore: '#6d5140'
             },
             [
-                box('torso', 'brute_shoulder_pad_left', [0.22, 0.14, 0.20], [0.37, 0.22, 0.04], '#5b4a3e'),
-                box('torso', 'brute_shoulder_pad_right', [0.22, 0.14, 0.20], [-0.37, 0.22, 0.04], '#5b4a3e'),
-                box('axe', 'brute_maul_handle', [0.07, 0.76, 0.07], [0.02, -0.24, 0.08], '#5a3924', { rotation: [0.18, 0, -0.22] }),
-                box('axe', 'brute_maul_head', [0.26, 0.18, 0.18], [-0.07, 0.14, 0.10], '#77736b', { rotation: [0.18, 0, -0.22] })
+                box('head', 'brute_brow_band', [0.36, 0.08, 0.05], [0, 0.095, 0.23], '#2a211b'),
+                box('head', 'brute_broken_nose', [0.08, 0.14, 0.045], [0, -0.02, 0.245], '#8f5f46'),
+                box('head', 'brute_beard_block', [0.30, 0.12, 0.065], [0, -0.15, 0.215], '#35261e'),
+                box('torso', 'brute_shoulder_pad_left', [0.30, 0.18, 0.24], [0.42, 0.22, 0.05], '#5b4a3e'),
+                box('torso', 'brute_shoulder_pad_right', [0.30, 0.18, 0.24], [-0.42, 0.22, 0.05], '#5b4a3e'),
+                box('torso', 'brute_left_pad_rivet', [0.07, 0.07, 0.055], [0.42, 0.24, 0.205], '#8e8a82'),
+                box('torso', 'brute_right_pad_rivet', [0.07, 0.07, 0.055], [-0.42, 0.24, 0.205], '#8e8a82'),
+                box('torso', 'brute_belly_strap', [0.78, 0.075, 0.44], [0, -0.08, 0.03], '#2b211a', { rotation: [0, 0, -0.08] }),
+                box('leftLowerLeg', 'brute_left_boot_plate', [0.25, 0.09, 0.28], [0, -0.22, 0.12], '#3b332d'),
+                box('rightLowerLeg', 'brute_right_boot_plate', [0.25, 0.09, 0.28], [0, -0.22, 0.12], '#3b332d'),
+                box('axe', 'brute_maul_handle', [0.08, 0.82, 0.08], [0.02, -0.26, 0.08], '#5a3924', { rotation: [0.18, 0, -0.22] }),
+                box('axe', 'brute_maul_head', [0.34, 0.22, 0.22], [-0.08, 0.17, 0.10], '#77736b', { rotation: [0.18, 0, -0.22] }),
+                box('axe', 'brute_maul_iron_band', [0.38, 0.055, 0.24], [-0.08, 0.17, 0.115], '#a39d91', { rotation: [0.18, 0, -0.22] })
             ]
         );
+        preset.scale = [1.08, 1.05, 1.08];
+        return preset;
     }
 
     function buildEnemyFastStrikerPreset() {
-        return buildGuideVariantPreset(
+        const preset = buildGuideVariantPreset(
             'Fast Striker',
             'camp_fast_striker',
             {
@@ -1606,11 +1647,20 @@
             },
             [
                 box('torso', 'striker_sash', [0.12, 0.70, 0.055], [-0.17, 0.00, 0.25], '#8b2f2b', { rotation: [0, 0, -0.35] }),
+                box('torso', 'striker_sash_tail', [0.13, 0.26, 0.06], [-0.28, -0.27, 0.22], '#782724', { rotation: [0, 0, -0.62] }),
+                box('head', 'striker_mask_wrap', [0.34, 0.075, 0.045], [0, -0.08, 0.225], '#211a15'),
+                box('torso', 'striker_hip_scabbard', [0.08, 0.36, 0.06], [0.26, -0.20, 0.25], '#2a2019', { rotation: [0, 0, 0.52] }),
+                box('leftLowerArm', 'striker_left_wrist_wrap', [0.20, 0.055, 0.17], [0, -0.20, 0.02], '#4a3020'),
+                box('rightLowerArm', 'striker_right_wrist_wrap', [0.20, 0.055, 0.17], [0, -0.20, 0.02], '#4a3020'),
                 box('axe', 'striker_dagger_grip', [0.045, 0.18, 0.045], [0.00, -0.08, 0.08], '#4a3020', { rotation: [0.12, 0, -0.34] }),
                 box('axe', 'striker_dagger_blade', [0.055, 0.34, 0.035], [-0.055, -0.25, 0.10], '#b9bec0', { rotation: [0.12, 0, -0.34] }),
+                box('axe', 'striker_main_blade_tip', [0.07, 0.11, 0.038], [-0.09, -0.46, 0.105], '#d0d5d6', { rotation: [0.12, 0, -0.34] }),
+                box('leftLowerArm', 'striker_offhand_grip', [0.055, 0.13, 0.044], [0.04, -0.16, 0.085], '#4a3020', { rotation: [0.12, 0, 0.28] }),
                 box('leftLowerArm', 'striker_offhand_blade', [0.045, 0.30, 0.032], [0.08, -0.25, 0.10], '#aeb5b8', { rotation: [0.12, 0, 0.28] })
             ]
         );
+        preset.scale = [0.95, 1.0, 0.92];
+        return preset;
     }
 
     const PRESETS = {
