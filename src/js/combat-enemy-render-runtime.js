@@ -384,43 +384,43 @@
         const noseMaterial = getEnemyLambertMaterial('boar:nose', 0x241812);
 
         const torsoGroup = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.42, 0.98), bodyMaterial);
-        const shoulderHump = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.32, 0.42), backMaterial);
-        const rump = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.28, 0.38), bodyMaterial);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.50, 1.04), bodyMaterial);
+        const shoulderHump = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.38, 0.48), backMaterial);
+        const rump = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.34, 0.42), bodyMaterial);
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), bellyMaterial);
-        const spine = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.66), backMaterial);
-        body.position.set(0, 0.36, 0.03);
-        shoulderHump.position.set(0, 0.51, 0.22);
-        rump.position.set(0, 0.30, -0.30);
-        belly.scale.set(1.12, 0.72, 1.28);
-        belly.position.set(0, 0.23, 0.05);
-        spine.position.set(0, 0.57, 0.02);
-        const bristleGeometry = new THREE.ConeGeometry(0.045, 0.16, 4);
-        const bristles = [-0.26, -0.10, 0.06, 0.22, 0.36].map((zOffset, index) => {
+        const spine = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.72), backMaterial);
+        body.position.set(0, 0.39, 0.03);
+        shoulderHump.position.set(0, 0.58, 0.20);
+        rump.position.set(0, 0.34, -0.32);
+        belly.scale.set(1.22, 0.82, 1.36);
+        belly.position.set(0, 0.26, 0.04);
+        spine.position.set(0, 0.66, 0.01);
+        const bristleGeometry = new THREE.ConeGeometry(0.055, 0.21, 4);
+        const bristles = [-0.34, -0.21, -0.08, 0.06, 0.19, 0.31, 0.42].map((zOffset, index) => {
             const bristle = new THREE.Mesh(bristleGeometry.clone(), backMaterial);
-            bristle.position.set(0, 0.66 - (index * 0.018), zOffset);
+            bristle.position.set(0, 0.77 - (index * 0.016), zOffset);
             bristle.rotation.set(0, 0, Math.PI / 4);
-            bristle.scale.set(1, 1 - (index * 0.08), 1);
+            bristle.scale.set(1, 1 - (index * 0.055), 1);
             return bristle;
         });
 
         const headGroup = new THREE.Group();
-        headGroup.position.set(0, 0.41, 0.56);
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.36), bodyMaterial);
-        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.17, 0.36), snoutMaterial);
-        const noseCap = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.10, 0.07), noseMaterial);
-        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.08, 0.16), backMaterial);
+        headGroup.position.set(0, 0.43, 0.58);
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.26, 0.34), bodyMaterial);
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.18, 0.34), snoutMaterial);
+        const noseCap = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.11, 0.08), noseMaterial);
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.085, 0.16), backMaterial);
         head.position.set(0, 0, 0);
-        snout.position.set(0, -0.03, 0.31);
-        noseCap.position.set(0, -0.03, 0.515);
+        snout.position.set(0, -0.03, 0.30);
+        noseCap.position.set(0, -0.03, 0.495);
         brow.position.set(0, 0.08, 0.08);
         const tuskGeometry = new THREE.ConeGeometry(0.032, 0.20, 4);
         const tuskLeft = new THREE.Mesh(tuskGeometry, tuskMaterial);
         const tuskRight = tuskLeft.clone();
         tuskLeft.rotation.set(Math.PI / 2, 0, -0.55);
         tuskRight.rotation.set(Math.PI / 2, 0, 0.55);
-        tuskLeft.position.set(0.105, -0.075, 0.44);
-        tuskRight.position.set(-0.105, -0.075, 0.44);
+        tuskLeft.position.set(0.13, -0.075, 0.43);
+        tuskRight.position.set(-0.13, -0.075, 0.43);
         const earGeometry = new THREE.BoxGeometry(0.08, 0.1, 0.03);
         const earLeft = new THREE.Mesh(earGeometry, bodyMaterial);
         const earRight = earLeft.clone();
@@ -441,66 +441,75 @@
         tail.position.set(0, 0, -0.06);
         tailGroup.add(tail);
 
-        const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.25, 0.31, 0.27), {
-            upperLength: 0.22,
-            lowerLength: 0.18,
-            upperRadiusTop: 0.04,
-            upperRadiusBottom: 0.048,
-            lowerRadiusTop: 0.034,
-            lowerRadiusBottom: 0.03,
-            pawSize: [0.09, 0.05, 0.13],
+        const frontLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.29, 0.36, 0.29), {
+            upperLength: 0.25,
+            lowerLength: 0.20,
+            upperRadiusTop: 0.068,
+            upperRadiusBottom: 0.078,
+            lowerRadiusTop: 0.058,
+            lowerRadiusBottom: 0.052,
+            pawSize: [0.16, 0.075, 0.18],
+            pawForwardOffset: 0.026,
+            upperMaterial: legMaterial,
+            lowerMaterial: legMaterial,
+            pawMaterial: hoofMaterial
+        });
+        const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.29, 0.36, 0.29), {
+            upperLength: 0.25,
+            lowerLength: 0.20,
+            upperRadiusTop: 0.068,
+            upperRadiusBottom: 0.078,
+            lowerRadiusTop: 0.058,
+            lowerRadiusBottom: 0.052,
+            pawSize: [0.16, 0.075, 0.18],
+            pawForwardOffset: 0.026,
+            upperMaterial: legMaterial,
+            lowerMaterial: legMaterial,
+            pawMaterial: hoofMaterial
+        });
+        const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.28, 0.36, -0.27), {
+            upperLength: 0.24,
+            lowerLength: 0.20,
+            upperRadiusTop: 0.074,
+            upperRadiusBottom: 0.084,
+            lowerRadiusTop: 0.060,
+            lowerRadiusBottom: 0.054,
+            pawSize: [0.17, 0.078, 0.19],
             pawForwardOffset: 0.02,
             upperMaterial: legMaterial,
             lowerMaterial: legMaterial,
             pawMaterial: hoofMaterial
         });
-        const frontRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.25, 0.31, 0.27), {
-            upperLength: 0.22,
-            lowerLength: 0.18,
-            upperRadiusTop: 0.04,
-            upperRadiusBottom: 0.048,
-            lowerRadiusTop: 0.034,
-            lowerRadiusBottom: 0.03,
-            pawSize: [0.09, 0.05, 0.13],
+        const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.28, 0.36, -0.27), {
+            upperLength: 0.24,
+            lowerLength: 0.20,
+            upperRadiusTop: 0.074,
+            upperRadiusBottom: 0.084,
+            lowerRadiusTop: 0.060,
+            lowerRadiusBottom: 0.054,
+            pawSize: [0.17, 0.078, 0.19],
             pawForwardOffset: 0.02,
             upperMaterial: legMaterial,
             lowerMaterial: legMaterial,
             pawMaterial: hoofMaterial
         });
-        const backLeftLeg = createQuadrupedLegRig(new THREE.Vector3(0.24, 0.29, -0.24), {
-            upperLength: 0.2,
-            lowerLength: 0.18,
-            upperRadiusTop: 0.045,
-            upperRadiusBottom: 0.05,
-            lowerRadiusTop: 0.036,
-            lowerRadiusBottom: 0.032,
-            pawSize: [0.1, 0.05, 0.13],
-            pawForwardOffset: 0.015,
-            upperMaterial: legMaterial,
-            lowerMaterial: legMaterial,
-            pawMaterial: hoofMaterial
-        });
-        const backRightLeg = createQuadrupedLegRig(new THREE.Vector3(-0.24, 0.29, -0.24), {
-            upperLength: 0.2,
-            lowerLength: 0.18,
-            upperRadiusTop: 0.045,
-            upperRadiusBottom: 0.05,
-            lowerRadiusTop: 0.036,
-            lowerRadiusBottom: 0.032,
-            pawSize: [0.1, 0.05, 0.13],
-            pawForwardOffset: 0.015,
-            upperMaterial: legMaterial,
-            lowerMaterial: legMaterial,
-            pawMaterial: hoofMaterial
-        });
-        [frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg].forEach((leg) => {
-            const hoofSplit = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.056, 0.018), noseMaterial);
-            hoofSplit.position.set(0, -0.004, 0.052);
-            leg.paw.add(hoofSplit);
+        const hoofSplitGeometry = new THREE.BoxGeometry(0.022, 0.072, 0.026);
+        const hoofToeGeometry = new THREE.BoxGeometry(0.062, 0.054, 0.074);
+        const hoofToePairs = [frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg].map((leg) => {
+            const hoofSplit = new THREE.Mesh(hoofSplitGeometry.clone(), noseMaterial);
+            const hoofToeLeft = new THREE.Mesh(hoofToeGeometry.clone(), hoofMaterial);
+            const hoofToeRight = hoofToeLeft.clone();
+            hoofSplit.position.set(0, -0.002, 0.074);
+            hoofToeLeft.position.set(0.038, -0.004, 0.084);
+            hoofToeRight.position.set(-0.038, -0.004, 0.084);
+            hoofToeLeft.rotation.y = -0.12;
+            hoofToeRight.rotation.y = 0.12;
+            leg.paw.add(hoofToeLeft, hoofToeRight, hoofSplit);
+            return [hoofToeLeft, hoofToeRight, hoofSplit];
         });
 
         const hitbox = new THREE.Mesh(
-            new THREE.BoxGeometry(1.06, 0.92, 1.16),
+            new THREE.BoxGeometry(1.18, 1.02, 1.36),
             createEnemyHitboxMaterial()
         );
         hitbox.position.y = 0.45;
@@ -550,7 +559,8 @@
             frontLeftLeg,
             frontRightLeg,
             backLeftLeg,
-            backRightLeg
+            backRightLeg,
+            hoofToePairs
         };
     }
 
@@ -1226,8 +1236,8 @@
         renderer.body.scale.set(1.02 + hitPulse * 0.03, 1.0 - attackPulse * 0.05 + hitPulse * 0.02, 1.0 + attackPulse * 0.05);
         renderer.shoulderHump.scale.set(1.0 + attackPulse * 0.05, 1.0 + walkBob * 1.2, 1.0);
         renderer.rump.scale.set(1.0 - attackPulse * 0.02, 1.0 + hitPulse * 0.03, 1.0);
-        renderer.belly.position.set(0, 0.23 - attackPulse * 0.02 + hitPulse * 0.02, 0.05);
-        renderer.headGroup.position.set(0, 0.41 + bob * 0.35 - attackPulse * 0.06 + hitPulse * 0.03, 0.56 + attackPulse * 0.14 - hitPulse * 0.05);
+        renderer.belly.position.set(0, 0.26 - attackPulse * 0.02 + hitPulse * 0.02, 0.04);
+        renderer.headGroup.position.set(0, 0.43 + bob * 0.35 - attackPulse * 0.06 + hitPulse * 0.03, 0.58 + attackPulse * 0.14 - hitPulse * 0.05);
         renderer.headGroup.rotation.set(0.06 + headSwing - attackPulse * 0.18 + hitPulse * 0.08, 0, headSwing * 0.24);
         renderer.earLeft.rotation.z = -0.35 + headSwing * 0.5 - attackPulse * 0.04;
         renderer.earRight.rotation.z = 0.35 - headSwing * 0.5 + attackPulse * 0.04;

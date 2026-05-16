@@ -195,8 +195,17 @@ function run() {
     getEnemyCombatLevel: () => 6
   });
   assert(boarVisual && boarVisual.kind === "boar", "runtime should create the dedicated boar renderer from appearance kind");
-  assert(Array.isArray(boarVisual.bristles) && boarVisual.bristles.length >= 5, "boar renderer should expose a chunky dorsal bristle ridge");
+  assert(Array.isArray(boarVisual.bristles) && boarVisual.bristles.length >= 7, "boar renderer should expose a chunky dorsal bristle ridge");
   assert(boarVisual.noseCap, "boar renderer should expose a dark nose cap on the snout");
+  assert(boarVisual.body.geometry.parameters.width >= 0.85 && boarVisual.body.geometry.parameters.height >= 0.49, "boar body should stay compact and heavy");
+  assert(boarVisual.shoulderHump.geometry.parameters.height >= 0.37, "boar shoulder hump should keep a heavy front silhouette");
+  assert(boarVisual.frontLeftLeg.upper.geometry.parameters.radiusTop >= 0.065, "boar front upper legs should stay thick");
+  assert(boarVisual.frontLeftLeg.lower.geometry.parameters.radiusBottom >= 0.05, "boar front lower legs should stay stout");
+  assert(boarVisual.backLeftLeg.upper.geometry.parameters.radiusBottom >= 0.08, "boar rear upper legs should stay thick");
+  assert(boarVisual.frontLeftLeg.paw.userData.pawSize.width >= 0.15 && boarVisual.frontLeftLeg.paw.userData.pawSize.depth >= 0.17, "boar front hooves should stay broad");
+  assert(boarVisual.backLeftLeg.paw.userData.pawSize.width >= 0.16 && boarVisual.backLeftLeg.paw.userData.pawSize.depth >= 0.18, "boar rear hooves should stay broad");
+  assert(Array.isArray(boarVisual.hoofToePairs) && boarVisual.hoofToePairs.length === 4, "boar renderer should expose cloven toe blocks for each hoof");
+  assert(boarVisual.hoofToePairs[0].length === 3 && boarVisual.hoofToePairs[0][0].position.z >= 0.08, "boar hoof toe blocks should sit at the front of the hoof");
 
   const wolfVisual = runtime.createEnemyVisualRenderer({
     enemyState: { runtimeId: "wolf-visual", enemyId: "enemy_wolf", x: 1, y: 2, z: 0, facingYaw: 0 },
