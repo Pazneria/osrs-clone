@@ -238,8 +238,17 @@ function run() {
   assert(bearVisual.headGroup && bearVisual.headGroup.name === "bear-head", "bear renderer should expose its head group");
   assert(bearVisual.cheekLeft && bearVisual.cheekRight, "bear renderer should expose broader muzzle cheek blocks");
   assert(bearVisual.headGroup.position.z <= 0.66, "bear head should sit close to the shoulders instead of stretching the snout silhouette");
-  assert(bearVisual.muzzle.geometry.parameters.depth <= 0.23, "bear muzzle should stay compact and blunt");
+  assert(bearVisual.muzzle.geometry.type === "DodecahedronGeometry", "bear muzzle should use a rounded low-poly mesh instead of a block");
+  assert(bearVisual.muzzle.userData.bearShape === "faceted-ellipsoid", "bear muzzle should stay rounded and faceted");
+  assert(bearVisual.muzzle.userData.bearSize.depth <= 0.23, "bear muzzle should stay compact and blunt");
   assert(bearVisual.nose.position.z <= 0.37, "bear nose should stay pulled back after shortening the snout");
+  assert(bearVisual.cheekLeft.geometry.type === "DodecahedronGeometry", "bear cheeks should stay rounded instead of boxy");
+  assert(bearVisual.nostrilLeft && bearVisual.nostrilRight, "bear renderer should expose nostril dots on the nose");
+  assert(bearVisual.nostrilLeft.position.z > bearVisual.nose.position.z, "bear nostrils should sit on the front of the nose");
+  assert(bearVisual.eyeSocketLeft && bearVisual.eyeSocketRight, "bear renderer should expose darker eye sockets");
+  assert(bearVisual.eyeLeft.geometry.parameters.radius >= 0.03, "bear eyes should stay readable at gallery distance");
+  assert(bearVisual.pupilLeft && bearVisual.pupilRight, "bear renderer should expose dark pupils");
+  assert(bearVisual.pupilLeft.position.z > bearVisual.eyeLeft.position.z, "bear pupils should sit in front of the eye meshes");
   assert(bearVisual.shoulderHump.scale.y >= 0.9 && bearVisual.shoulderHump.scale.x >= 1.55, "bear should keep a heavy shoulder/forequarter silhouette");
   assert(bearVisual.frontLeftLeg.upper.geometry.parameters.radiusTop >= 0.08, "bear front upper legs should stay thick");
   assert(bearVisual.frontLeftLeg.lower.geometry.parameters.radiusBottom >= 0.06, "bear front lower legs should stay planted and sturdy");

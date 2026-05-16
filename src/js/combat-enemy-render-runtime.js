@@ -825,6 +825,7 @@
         const pawMaterial = getEnemyLambertMaterial('bear:paw', 0x2a1c14);
         const clawMaterial = getEnemyLambertMaterial('bear:claw', 0xe3d5bd);
         const eyeMaterial = getEnemyLambertMaterial('bear:eye', 0x110c08);
+        const eyeIrisMaterial = getEnemyLambertMaterial('bear:eyeIris', 0xd3a04a);
         const noseMaterial = getEnemyLambertMaterial('bear:nose', 0x18100c);
 
         const torsoGroup = new THREE.Group();
@@ -854,11 +855,19 @@
         head.scale.set(1.14, 0.94, 0.98);
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.08, 0.12), darkFurMaterial);
         brow.position.set(0, 0.075, 0.075);
-        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.17, 0.22), muzzleMaterial);
-        muzzle.position.set(0, -0.065, 0.235);
+        const muzzleGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        muzzleGeometry.scale(0.28, 0.18, 0.22);
+        const muzzle = new THREE.Mesh(muzzleGeometry, muzzleMaterial);
+        muzzle.userData.bearShape = 'faceted-ellipsoid';
+        muzzle.userData.bearSize = { width: 0.28, height: 0.18, depth: 0.22 };
+        muzzle.position.set(0, -0.065, 0.225);
         const nose = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 0), noseMaterial);
-        nose.scale.set(1.45, 0.86, 0.82);
-        nose.position.set(0, -0.05, 0.355);
+        nose.scale.set(1.7, 0.92, 0.9);
+        nose.position.set(0, -0.052, 0.345);
+        const nostrilLeft = new THREE.Mesh(new THREE.DodecahedronGeometry(0.011, 0), eyeMaterial);
+        const nostrilRight = nostrilLeft.clone();
+        nostrilLeft.position.set(0.035, -0.058, 0.377);
+        nostrilRight.position.set(-0.035, -0.058, 0.377);
         const earGeometry = new THREE.ConeGeometry(0.07, 0.08, 5);
         const earLeft = new THREE.Mesh(earGeometry, darkFurMaterial);
         const earRight = earLeft.clone();
@@ -866,15 +875,46 @@
         earRight.position.set(-0.14, 0.15, -0.03);
         earLeft.rotation.set(0.18, 0, -0.38);
         earRight.rotation.set(0.18, 0, 0.38);
-        const eyeLeft = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 8), eyeMaterial);
+        const eyeSocketGeometry = new THREE.DodecahedronGeometry(0.04, 0);
+        const eyeSocketLeft = new THREE.Mesh(eyeSocketGeometry, darkFurMaterial);
+        const eyeSocketRight = eyeSocketLeft.clone();
+        eyeSocketLeft.scale.set(1.05, 0.72, 0.72);
+        eyeSocketRight.scale.copy(eyeSocketLeft.scale);
+        eyeSocketLeft.position.set(0.085, 0.035, 0.145);
+        eyeSocketRight.position.set(-0.085, 0.035, 0.145);
+        const eyeLeft = new THREE.Mesh(new THREE.SphereGeometry(0.031, 8, 8), eyeIrisMaterial);
         const eyeRight = eyeLeft.clone();
-        eyeLeft.position.set(0.078, 0.03, 0.14);
-        eyeRight.position.set(-0.078, 0.03, 0.14);
-        const cheekLeft = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.09, 0.07), muzzleMaterial);
+        eyeLeft.position.set(0.086, 0.035, 0.172);
+        eyeRight.position.set(-0.086, 0.035, 0.172);
+        const pupilLeft = new THREE.Mesh(new THREE.SphereGeometry(0.013, 6, 6), eyeMaterial);
+        const pupilRight = pupilLeft.clone();
+        pupilLeft.position.set(0.091, 0.033, 0.198);
+        pupilRight.position.set(-0.091, 0.033, 0.198);
+        const cheekGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        cheekGeometry.scale(0.13, 0.09, 0.08);
+        const cheekLeft = new THREE.Mesh(cheekGeometry, muzzleMaterial);
         const cheekRight = cheekLeft.clone();
-        cheekLeft.position.set(0.105, -0.08, 0.19);
-        cheekRight.position.set(-0.105, -0.08, 0.19);
-        headGroup.add(neck, head, brow, muzzle, nose, cheekLeft, cheekRight, earLeft, earRight, eyeLeft, eyeRight);
+        cheekLeft.position.set(0.108, -0.08, 0.18);
+        cheekRight.position.set(-0.108, -0.08, 0.18);
+        headGroup.add(
+            neck,
+            head,
+            brow,
+            muzzle,
+            nose,
+            nostrilLeft,
+            nostrilRight,
+            cheekLeft,
+            cheekRight,
+            earLeft,
+            earRight,
+            eyeSocketLeft,
+            eyeSocketRight,
+            eyeLeft,
+            eyeRight,
+            pupilLeft,
+            pupilRight
+        );
 
         const tailGroup = new THREE.Group();
         tailGroup.name = 'bear-tail';
@@ -985,12 +1025,18 @@
             brow,
             muzzle,
             nose,
+            nostrilLeft,
+            nostrilRight,
             cheekLeft,
             cheekRight,
             earLeft,
             earRight,
+            eyeSocketLeft,
+            eyeSocketRight,
             eyeLeft,
             eyeRight,
+            pupilLeft,
+            pupilRight,
             tailGroup,
             tailNub,
             frontLeftLeg,
