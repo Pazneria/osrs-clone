@@ -1442,6 +1442,51 @@
         );
     }
 
+    function buildTannerRuskPreset() {
+        const preset = buildGuideVariantPreset(
+            'Tanner Rusk',
+            'frontier_tannery_owner',
+            {
+                coat: '#596f4a',
+                shirt: '#d2bf92',
+                trim: '#8a633a',
+                belt: '#3e2a1f',
+                trouser: '#53483d',
+                boot: '#2b211a',
+                hair: '#4a2f20'
+            },
+            [
+                box('head', 'rusk_weathered_brow', [0.34, 0.045, 0.035], [0, 0.085, 0.235], '#3a281f'),
+                box('head', 'rusk_square_beard', [0.30, 0.13, 0.06], [0, -0.145, 0.218], '#3f291d'),
+                box('head', 'rusk_moustache', [0.25, 0.045, 0.045], [0, -0.055, 0.24], '#3f291d'),
+                box('torso', 'rusk_apron_front', [0.46, 0.48, 0.095], [0, -0.045, 0.255], '#7f542f'),
+                box('torso', 'rusk_apron_shadow_panel', [0.42, 0.18, 0.10], [0, -0.175, 0.31], '#4e321e'),
+                box('torso', 'rusk_apron_side_tie_left', [0.06, 0.34, 0.05], [0.25, -0.02, 0.285], '#3e2a1f', { rotation: [0, 0, -0.18] }),
+                box('torso', 'rusk_apron_side_tie_right', [0.06, 0.34, 0.05], [-0.25, -0.02, 0.285], '#3e2a1f', { rotation: [0, 0, 0.18] }),
+                box('torso', 'rusk_lime_stain', [0.13, 0.055, 0.035], [-0.11, 0.06, 0.325], '#d8d2bb', { rotation: [0, 0, -0.08] }),
+                box('torso', 'rusk_hide_roll', [0.15, 0.32, 0.15], [0.30, -0.13, 0.235], '#9d6b3c', { rotation: [0, 0, -0.28] }),
+                box('torso', 'rusk_hide_roll_dark_edge', [0.17, 0.05, 0.16], [0.255, -0.255, 0.245], '#6f4726', { rotation: [0, 0, -0.28] }),
+                box('torso', 'rusk_hide_roll_binding', [0.19, 0.035, 0.16], [0.305, -0.14, 0.255], '#3e2a1f', { rotation: [0, 0, -0.28] }),
+                box('torso', 'rusk_strap_sample_normal', [0.06, 0.30, 0.045], [-0.17, -0.11, 0.34], '#9d6b3c'),
+                box('torso', 'rusk_strap_sample_wolf', [0.06, 0.27, 0.045], [-0.08, -0.125, 0.345], '#6b5a48'),
+                box('torso', 'rusk_strap_sample_bear', [0.06, 0.32, 0.045], [0.01, -0.115, 0.345], '#3e2a1f'),
+                box('torso', 'rusk_bark_pouch', [0.17, 0.16, 0.08], [-0.27, -0.20, 0.285], '#5b3b24'),
+                box('torso', 'rusk_thread_spool', [0.12, 0.12, 0.065], [-0.27, -0.055, 0.30], '#d8d2bb'),
+                box('torso', 'rusk_frontier_tally_charm', [0.075, 0.13, 0.035], [0.175, -0.235, 0.33], '#c8bca2', { rotation: [0, 0, 0.18] }),
+                box('leftLowerArm', 'rusk_left_work_glove', [0.19, 0.17, 0.15], [0, -0.26, 0.035], '#5b3a24'),
+                box('leftLowerArm', 'rusk_folded_hide_sheet', [0.27, 0.18, 0.065], [0.06, -0.205, 0.135], '#b07a45', { rotation: [0.08, 0, 0.18] }),
+                box('leftLowerArm', 'rusk_folded_hide_edge', [0.28, 0.035, 0.075], [0.06, -0.29, 0.16], '#6f4726', { rotation: [0.08, 0, 0.18] }),
+                box('rightLowerArm', 'rusk_right_work_glove', [0.19, 0.17, 0.15], [0, -0.26, 0.035], '#5b3a24'),
+                box('rightLowerArm', 'rusk_scraper_handle', [0.045, 0.21, 0.045], [-0.015, -0.295, 0.125], '#5b3a24', { rotation: [0.12, 0, -0.42] }),
+                box('rightLowerArm', 'rusk_scraper_blade', [0.09, 0.15, 0.035], [-0.095, -0.395, 0.145], '#b8aa8e', { rotation: [0.12, 0, -0.42] }),
+                box('leftLowerLeg', 'rusk_left_boot_wet_hem', [0.22, 0.07, 0.25], [0, -0.205, 0.09], '#1f1a15'),
+                box('rightLowerLeg', 'rusk_right_boot_wet_hem', [0.22, 0.07, 0.25], [0, -0.205, 0.09], '#1f1a15')
+            ]
+        );
+        preset.scale = [1.02, 1.0, 1.02];
+        return preset;
+    }
+
     function buildMainlandCraftingTeacherPreset() {
         return clonePresetWithTheme(
             buildTutorialCraftingInstructorPreset(),
@@ -1744,6 +1789,7 @@
         mainland_borin_ironvein: buildMainlandBorinIronveinPreset(),
         mainland_thrain_deepforge: buildMainlandThrainDeepforgePreset(),
         mainland_elira_gemhand: buildMainlandEliraGemhandPreset(),
+        tanner_rusk: buildTannerRuskPreset(),
         mainland_crafting_teacher: buildMainlandCraftingTeacherPreset(),
         mainland_market_trader: buildMainlandMarketTraderPreset(),
         mainland_painter: buildMainlandPainterPreset(),
@@ -1760,7 +1806,9 @@
 
     window.NpcAppearanceCatalog = {
         presets: PRESETS,
-        aliases: {},
+        aliases: {
+            tanner: 'tanner_rusk'
+        },
         previewActors: [
             { actorId: 'tutorial_guide', label: 'Tutorial Guide' },
             { actorId: 'tutorial_woodcutting_instructor', label: 'Woodcutting Instructor' },
@@ -1786,6 +1834,7 @@
             { actorId: 'mainland_borin_ironvein', label: 'Borin Ironvein' },
             { actorId: 'mainland_thrain_deepforge', label: 'Thrain Deepforge' },
             { actorId: 'mainland_elira_gemhand', label: 'Elira Gemhand' },
+            { actorId: 'tanner_rusk', label: 'Tanner Rusk' },
             { actorId: 'mainland_crafting_teacher', label: 'Crafting Teacher' },
             { actorId: 'mainland_market_trader', label: 'Crossing Trader' },
             { actorId: 'mainland_painter', label: 'Painter' },

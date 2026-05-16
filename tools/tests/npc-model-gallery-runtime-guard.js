@@ -56,8 +56,8 @@ mainOverworldMerchants.forEach((service) => {
   const appearanceId = typeof service.appearanceId === "string" ? service.appearanceId.trim() : "";
   assert(appearanceId, `${service.serviceId} should declare a catalog appearanceId for the NPC gallery`);
   assert(
-    appearanceId === "tanner_rusk" || npcCatalogSource.includes(`${appearanceId}:`),
-    `${service.serviceId} appearanceId ${appearanceId} should resolve to a catalog preset or known runtime preset`
+    npcCatalogSource.includes(`${appearanceId}:`),
+    `${service.serviceId} appearanceId ${appearanceId} should resolve to a catalog preset`
   );
 });
 
