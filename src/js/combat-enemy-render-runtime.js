@@ -418,14 +418,36 @@
 
         const headGroup = new THREE.Group();
         headGroup.position.set(0, 0.43, 0.58);
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.26, 0.34), bodyMaterial);
-        const snout = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.18, 0.34), snoutMaterial);
-        const noseCap = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.11, 0.08), noseMaterial);
+        const headGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        headGeometry.scale(0.40, 0.29, 0.36);
+        const snoutGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        snoutGeometry.scale(0.34, 0.20, 0.34);
+        const noseCapGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        noseCapGeometry.scale(0.30, 0.12, 0.10);
+        const cheekGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        cheekGeometry.scale(0.13, 0.12, 0.18);
+        const head = new THREE.Mesh(headGeometry, bodyMaterial);
+        const snout = new THREE.Mesh(snoutGeometry, snoutMaterial);
+        const noseCap = new THREE.Mesh(noseCapGeometry, noseMaterial);
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.085, 0.16), backMaterial);
+        const cheekLeft = new THREE.Mesh(cheekGeometry.clone(), snoutMaterial);
+        const cheekRight = cheekLeft.clone();
+        const nostrilLeft = new THREE.Mesh(new THREE.DodecahedronGeometry(0.018, 0), noseMaterial);
+        const nostrilRight = nostrilLeft.clone();
+        head.userData.boarShape = 'faceted-ellipsoid';
+        head.userData.boarSize = { width: 0.40, height: 0.29, depth: 0.36 };
+        snout.userData.boarShape = 'faceted-ellipsoid';
+        snout.userData.boarSize = { width: 0.34, height: 0.20, depth: 0.34 };
+        noseCap.userData.boarShape = 'faceted-ellipsoid';
+        noseCap.userData.boarSize = { width: 0.30, height: 0.12, depth: 0.10 };
         head.position.set(0, 0, 0);
-        snout.position.set(0, -0.03, 0.30);
-        noseCap.position.set(0, -0.03, 0.495);
+        snout.position.set(0, -0.035, 0.29);
+        noseCap.position.set(0, -0.035, 0.49);
         brow.position.set(0, 0.08, 0.08);
+        cheekLeft.position.set(0.145, -0.055, 0.24);
+        cheekRight.position.set(-0.145, -0.055, 0.24);
+        nostrilLeft.position.set(0.06, -0.045, 0.545);
+        nostrilRight.position.set(-0.06, -0.045, 0.545);
         const tuskGeometry = new THREE.ConeGeometry(0.032, 0.20, 4);
         const tuskLeft = new THREE.Mesh(tuskGeometry, tuskMaterial);
         const tuskRight = tuskLeft.clone();
@@ -444,7 +466,22 @@
         const eyeRight = eyeLeft.clone();
         eyeLeft.position.set(0.08, 0.04, 0.15);
         eyeRight.position.set(-0.08, 0.04, 0.15);
-        headGroup.add(head, snout, noseCap, brow, tuskLeft, tuskRight, earLeft, earRight, eyeLeft, eyeRight);
+        headGroup.add(
+            head,
+            snout,
+            noseCap,
+            cheekLeft,
+            cheekRight,
+            nostrilLeft,
+            nostrilRight,
+            brow,
+            tuskLeft,
+            tuskRight,
+            earLeft,
+            earRight,
+            eyeLeft,
+            eyeRight
+        );
 
         const tailGroup = new THREE.Group();
         tailGroup.position.set(0, 0.43, -0.54);
@@ -559,6 +596,10 @@
             snout,
             noseCap,
             brow,
+            cheekLeft,
+            cheekRight,
+            nostrilLeft,
+            nostrilRight,
             bristles,
             tuskLeft,
             tuskRight,

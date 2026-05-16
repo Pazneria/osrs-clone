@@ -203,6 +203,14 @@ function run() {
   assert(boarVisual.body.userData.boarShape === "faceted-ellipsoid", "boar body should stay rounded and faceted");
   assert(boarVisual.body.userData.boarSize.width >= 0.85 && boarVisual.body.userData.boarSize.height >= 0.49, "boar body should stay compact and heavy");
   assert(boarVisual.shoulderHump.userData.boarSize.height >= 0.37, "boar shoulder hump should keep a heavy front silhouette");
+  assert(boarVisual.head.geometry.type === "DodecahedronGeometry", "boar head should use a faceted organic mesh instead of a cube");
+  assert(boarVisual.snout.geometry.type === "DodecahedronGeometry", "boar snout should use a faceted organic mesh instead of a cube");
+  assert(boarVisual.noseCap.geometry.type === "DodecahedronGeometry", "boar nose cap should use a faceted organic mesh instead of a cube");
+  assert(boarVisual.head.userData.boarSize.width >= 0.39 && boarVisual.snout.userData.boarSize.width >= 0.33, "boar head and snout should stay broad and blunt");
+  assert(boarVisual.cheekLeft && boarVisual.cheekRight, "boar renderer should expose rounded cheek/jowl masses");
+  assert(boarVisual.cheekLeft.geometry.type === "DodecahedronGeometry", "boar cheek/jowl masses should be rounded low-poly meshes");
+  assert(boarVisual.nostrilLeft && boarVisual.nostrilRight, "boar renderer should expose nostril dots on the snout");
+  assert(boarVisual.nostrilLeft.position.z > boarVisual.noseCap.position.z, "boar nostrils should sit on the front of the nose cap");
   assert(boarVisual.frontLeftLeg.upper.geometry.parameters.radiusTop >= 0.065, "boar front upper legs should stay thick");
   assert(boarVisual.frontLeftLeg.lower.geometry.parameters.radiusBottom >= 0.05, "boar front lower legs should stay stout");
   assert(boarVisual.backLeftLeg.upper.geometry.parameters.radiusBottom >= 0.08, "boar rear upper legs should stay thick");
