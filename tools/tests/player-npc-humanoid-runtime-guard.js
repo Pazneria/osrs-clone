@@ -596,6 +596,41 @@ function assertMainlandBankerPreset(preset) {
   assert(coinTray.target === "rightLowerArm" && coinTray.size[0] <= 0.22, "Mainland Banker coin tray should stay compact in the hand");
 }
 
+function assertMainlandEliraGemhandPreset(preset) {
+  assert(preset && preset.label === "Elira Gemhand", "Elira Gemhand preset should keep its role label");
+  assert(preset.archetype === "market_gem_cutter", "Elira Gemhand should keep the gem-cutter archetype");
+  assert(
+    !preset.fragments.some((fragment) => ["moustache", "short_beard"].includes(String(fragment && fragment.role || ""))),
+    "Elira Gemhand should not inherit masculine smith facial-hair fragments"
+  );
+  assert(
+    !preset.fragments.some((fragment) => String(fragment && fragment.role || "").startsWith("belt_hammer") || String(fragment && fragment.role || "").startsWith("belt_tongs")),
+    "Elira Gemhand should not inherit smith hammer or tongs props"
+  );
+
+  const hairBun = catalogFragment(preset, "head", "elira_hair_bun");
+  const braid = catalogFragment(preset, "head", "elira_braid_drop");
+  const earring = catalogFragment(preset, "head", "elira_left_earring");
+  const apron = catalogFragment(preset, "torso", "gemhand_apron_front");
+  const tray = catalogFragment(preset, "torso", "gemhand_display_tray");
+  const ruby = catalogFragment(preset, "torso", "gemhand_tray_ruby");
+  const sapphire = catalogFragment(preset, "torso", "gemhand_tray_sapphire");
+  const emerald = catalogFragment(preset, "torso", "gemhand_tray_emerald");
+  const diamond = catalogFragment(preset, "torso", "gemhand_tray_diamond");
+  const tiara = catalogFragment(preset, "torso", "gemhand_tiara_example");
+  const dopStick = catalogFragment(preset, "rightLowerArm", "gemhand_dop_stick");
+  const chisel = catalogFragment(preset, "leftLowerArm", "gemhand_chisel_blade");
+
+  assert(hairBun.offset[2] < -0.2 && braid.offset[0] > 0.2, "Elira Gemhand should have distinct tied-back hair and a side braid");
+  assert(earring.rgbColor === "#c8a34a" && earring.offset[0] > 0.25, "Elira Gemhand should have a visible gold earring accent");
+  assert(apron.rgbColor === "#3b303e" && apron.offset[2] > 0.24, "Elira Gemhand should wear a front jeweler apron");
+  assert(tray.size[0] >= 0.34 && tray.offset[2] > 0.32, "Elira Gemhand should present a readable gem display tray");
+  assert(ruby.rgbColor === "#b63d4a" && sapphire.rgbColor === "#3f7fc4" && emerald.rgbColor === "#3fa463" && diamond.rgbColor === "#dcefff", "Elira Gemhand tray should carry the four gem-color reads");
+  assert(tiara.rgbColor === "#c8a34a" && tiara.size[0] >= 0.1, "Elira Gemhand should carry a tiara mould/jewelry cue");
+  assert(dopStick.target === "rightLowerArm" && dopStick.size[1] >= 0.3, "Elira Gemhand should hold a jeweler dop stick");
+  assert(chisel.target === "leftLowerArm" && chisel.rgbColor === "#c7c8c2", "Elira Gemhand should carry a small chisel blade");
+}
+
 function assertNpcCatalogPreviewActors(catalog) {
   assert(catalog && catalog.presets && typeof catalog.presets === "object", "NPC appearance catalog should expose presets");
   assert(Array.isArray(catalog.previewActors), "NPC appearance catalog should expose preview actors");
@@ -706,6 +741,7 @@ function run() {
   assertTutorialCombatInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_combat_instructor);
   assertTutorialRunecraftingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_runecrafting_instructor);
   assertMainlandBankerPreset(sandbox.window.NpcAppearanceCatalog.presets.mainland_banker);
+  assertMainlandEliraGemhandPreset(sandbox.window.NpcAppearanceCatalog.presets.mainland_elira_gemhand);
   assert(runtime.normalizeNpcHumanoidPresetId("tanner") === "tanner_rusk", "runtime should preserve tanner alias normalization");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_guide") === "tutorial_guide", "runtime should resolve catalog-backed Tutorial Guide preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_woodcutting_instructor") === "tutorial_woodcutting_instructor", "runtime should resolve catalog-backed Woodcutting Instructor preset");
@@ -715,6 +751,7 @@ function run() {
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_combat_instructor") === "tutorial_combat_instructor", "runtime should resolve catalog-backed Combat Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_runecrafting_instructor") === "tutorial_runecrafting_instructor", "runtime should resolve catalog-backed Runecrafting Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("mainland_banker") === "mainland_banker", "runtime should resolve catalog-backed Mainland Banker preset");
+  assert(runtime.normalizeNpcHumanoidPresetId("mainland_elira_gemhand") === "mainland_elira_gemhand", "runtime should resolve catalog-backed Elira Gemhand preset");
   assert(runtime.createGuardHumanoidFragments({ packJagexHsl: () => 64 }).length > 0, "runtime should build guard fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_guide).length > 0, "runtime should build catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_woodcutting_instructor).length > 0, "runtime should build Woodcutting Instructor catalog fragments");
@@ -724,6 +761,7 @@ function run() {
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_combat_instructor).length > 0, "runtime should build Combat Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_runecrafting_instructor).length > 0, "runtime should build Runecrafting Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.mainland_banker).length > 0, "runtime should build Mainland Banker catalog fragments");
+  assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.mainland_elira_gemhand).length > 0, "runtime should build Elira Gemhand catalog fragments");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "guard"), "runtime should list guard preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_guide"), "runtime should list Tutorial Guide preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_woodcutting_instructor"), "runtime should list Woodcutting Instructor preview actor");

@@ -1401,13 +1401,43 @@
     }
 
     function buildMainlandEliraGemhandPreset() {
-        return buildSmithVariantPreset(
+        return buildGuideVariantPreset(
             'Elira Gemhand',
             'market_gem_cutter',
-            { apron: '#5a4d5d', shirt: '#5c4268', metal: '#a9a4b7', ore: '#8b6d9b' },
+            {
+                coat: '#4c354f',
+                shirt: '#7b6a82',
+                trim: '#c8a34a',
+                belt: '#3a292f',
+                trouser: '#35303a',
+                boot: '#211b1f',
+                hair: '#4a2f2a'
+            },
             [
-                box('rightLowerArm', 'gem_sample', [0.10, 0.10, 0.10], [0.02, -0.28, 0.12], '#69b8d7'),
-                box('torso', 'gemhand_pouch', [0.18, 0.15, 0.08], [-0.23, -0.18, 0.28], '#4c354f')
+                box('head', 'elira_hair_side_left', [0.08, 0.27, 0.08], [0.225, -0.03, 0.165], '#3a2421'),
+                box('head', 'elira_hair_side_right', [0.08, 0.27, 0.08], [-0.225, -0.03, 0.165], '#3a2421'),
+                box('head', 'elira_hair_bun', [0.22, 0.18, 0.16], [0, 0.035, -0.235], '#3a2421'),
+                box('head', 'elira_braid_drop', [0.09, 0.34, 0.075], [0.25, -0.18, -0.02], '#4a2f2a', { rotation: [0, 0, -0.18] }),
+                box('head', 'elira_braid_tie', [0.11, 0.045, 0.05], [0.275, -0.315, -0.005], '#c8a34a', { rotation: [0, 0, -0.18] }),
+                box('head', 'elira_loupe_headband', [0.54, 0.045, 0.45], [0, 0.105, 0.035], '#c7c8c2'),
+                box('head', 'elira_loupe_lens', [0.11, 0.11, 0.035], [-0.145, 0.065, 0.238], '#9fd5e8'),
+                box('head', 'elira_left_earring', [0.045, 0.08, 0.035], [0.285, -0.055, 0.03], '#c8a34a'),
+                box('head', 'elira_right_earring', [0.045, 0.08, 0.035], [-0.285, -0.055, 0.03], '#c8a34a'),
+                box('torso', 'gemhand_apron_front', [0.38, 0.45, 0.08], [0, -0.04, 0.255], '#3b303e'),
+                box('torso', 'gemhand_apron_pocket', [0.18, 0.12, 0.045], [-0.13, -0.12, 0.305], '#2b242d'),
+                box('torso', 'gemhand_polishing_cloth', [0.15, 0.11, 0.04], [0.16, -0.16, 0.31], '#e6dcc6', { rotation: [0, 0, 0.18] }),
+                box('torso', 'gemhand_display_tray', [0.36, 0.075, 0.16], [0, -0.245, 0.335], '#5a3b2d'),
+                box('torso', 'gemhand_tray_ruby', [0.075, 0.07, 0.055], [0.13, -0.20, 0.43], '#b63d4a', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_tray_sapphire', [0.075, 0.07, 0.055], [0.045, -0.20, 0.43], '#3f7fc4', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_tray_emerald', [0.075, 0.07, 0.055], [-0.045, -0.20, 0.43], '#3fa463', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_tray_diamond', [0.075, 0.07, 0.055], [-0.13, -0.20, 0.43], '#dcefff', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_ring_example', [0.07, 0.07, 0.025], [0.255, -0.11, 0.305], '#c8a34a'),
+                box('torso', 'gemhand_amulet_example', [0.075, 0.095, 0.025], [0.255, -0.205, 0.305], '#c7c8c2'),
+                box('torso', 'gemhand_tiara_example', [0.12, 0.045, 0.025], [0.255, -0.295, 0.305], '#c8a34a'),
+                box('rightLowerArm', 'gemhand_dop_stick', [0.035, 0.34, 0.035], [0.02, -0.26, 0.12], '#8a633a', { rotation: [0.18, 0, -0.45] }),
+                box('rightLowerArm', 'gemhand_dop_gem', [0.09, 0.09, 0.08], [-0.07, -0.39, 0.135], '#9fd5e8', { rotation: [0.18, 0, 0.65] }),
+                box('leftLowerArm', 'gemhand_chisel_handle', [0.045, 0.18, 0.035], [0.03, -0.29, 0.105], '#5b3a24', { rotation: [0.1, 0, 0.28] }),
+                box('leftLowerArm', 'gemhand_chisel_blade', [0.045, 0.14, 0.03], [0.075, -0.37, 0.118], '#c7c8c2', { rotation: [0.1, 0, 0.28] })
             ]
         );
     }
