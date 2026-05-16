@@ -131,8 +131,28 @@
             statusId: model.statusId,
             oldModel: isOldModelStatus(model.statusId),
             appearanceId: model.appearanceId,
-            npcType: Number.isFinite(service.npcType) ? service.npcType : 2
+            npcType: Number.isFinite(service.npcType) ? service.npcType : 2,
+            placementCount: 1
         };
+    }
+
+    function getWorldNpcModelKey(entry) {
+        if (!entry) return '';
+        if (entry.appearanceId) return `appearance:${entry.appearanceId}`;
+        return `generic:${Number.isFinite(entry.npcType) ? entry.npcType : '?'}:${normalizeId(entry.displayName)}`;
+    }
+
+    function mergeWorldNpcModelEntry(existing, next) {
+        if (!existing || !next) return;
+        existing.placementCount = (Number.isFinite(existing.placementCount) ? existing.placementCount : 1) + 1;
+        if (!existing.relatedServiceIds) existing.relatedServiceIds = [existing.serviceId].filter(Boolean);
+        if (next.serviceId && !existing.relatedServiceIds.includes(next.serviceId)) {
+            existing.relatedServiceIds.push(next.serviceId);
+        }
+        if (!existing.relatedSpawnIds) existing.relatedSpawnIds = [existing.spawnId].filter(Boolean);
+        if (next.spawnId && !existing.relatedSpawnIds.includes(next.spawnId)) {
+            existing.relatedSpawnIds.push(next.spawnId);
+        }
     }
 
     function collectWorldNpcEntries(context = {}) {
@@ -144,10 +164,19 @@
             const definition = getWorldDefinition(windowRef, worldId);
             const services = definition && Array.isArray(definition.services) ? definition.services : [];
             const worldLabel = getWorldLabel(windowRef, worldId);
+            const seenModelEntries = new Map();
             for (let i = 0; i < services.length; i++) {
                 const service = services[i];
                 if (!service || service.type !== 'MERCHANT') continue;
-                entries.push(makeWorldNpcEntry(windowRef, worldId, worldLabel, service, i));
+                const entry = makeWorldNpcEntry(windowRef, worldId, worldLabel, service, i);
+                const modelKey = getWorldNpcModelKey(entry);
+                const scopedModelKey = `${worldId}:${modelKey}`;
+                if (modelKey && seenModelEntries.has(scopedModelKey)) {
+                    mergeWorldNpcModelEntry(seenModelEntries.get(scopedModelKey), entry);
+                    continue;
+                }
+                seenModelEntries.set(scopedModelKey, entry);
+                entries.push(entry);
             }
         }
         return entries;
@@ -294,7 +323,20 @@
             attackTriggerAt: 0,
             hitReactionTriggerAt: 0
         };
-        const renderer = renderRuntime.createEnemyVisualRenderer({ enemyState, enemyType });
+        const renderer = renderRuntime.createEnemyVisualRenderer({
+            enemyState,
+            enemyType,
+            windowRef,
+            createHumanoidModel: typeof windowRef.createHumanoidModel === 'function'
+                ? windowRef.createHumanoidModel
+                : null,
+            getEnemyCombatLevel: typeof combatRuntime.getEnemyCombatLevel === 'function'
+                ? combatRuntime.getEnemyCombatLevel
+                : () => 1,
+            resolveEnemyModelPresetId: (type) => normalizeId(type && type.appearance && type.appearance.modelPresetId) || null,
+            resolveEnemyAnimationSetId: (type) => normalizeId(type && type.appearance && type.appearance.animationSetId) || null,
+            resolveEnemyAnimationSetDef: () => null
+        });
         return renderer && renderer.group ? renderer.group : null;
     }
 
@@ -677,6 +719,9 @@
         body.className = 'npc-model-gallery-card-body';
         appendText(body, 'div', 'npc-model-gallery-card-name', entry.displayName);
         appendText(body, 'div', 'npc-model-gallery-card-meta', entry.subtitle || entry.entryId);
+        if (Number.isFinite(entry.placementCount) && entry.placementCount > 1) {
+            appendText(body, 'div', 'npc-model-gallery-card-meta', `${entry.placementCount} placements`);
+        }
         appendText(body, 'div', 'npc-model-gallery-card-meta', entry.modelSource || 'unknown model source');
         appendText(body, 'div', 'npc-model-gallery-card-meta', entry.worldLabel || '');
 
@@ -737,7 +782,7 @@
                 <header class="npc-model-gallery-header">
                     <div class="npc-model-gallery-title">
                         <h2 id="npc-model-gallery-title">NPC Model Gallery</h2>
-                        <p>Live world NPCs and combat enemies, grouped by source and labeled by model status.</p>
+                        <p>Distinct world NPC models and combat enemies, grouped by source and labeled by model status.</p>
                     </div>
                     <div class="npc-model-gallery-actions">
                         <select class="npc-model-gallery-select" data-gallery-filter aria-label="Filter NPC models">

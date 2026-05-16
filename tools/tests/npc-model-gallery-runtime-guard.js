@@ -23,6 +23,9 @@ assert(runtimeSource.includes("function collectNpcModelGalleryEntries"), "NPC ga
 assert(runtimeSource.includes("function renderEntryThumbnails"), "NPC gallery runtime should render model thumbnails");
 assert(runtimeSource.includes("WorldBootstrapRuntime"), "NPC gallery runtime should read authored world NPCs from the world runtime");
 assert(runtimeSource.includes("CombatRuntime"), "NPC gallery runtime should read combat enemy definitions from the combat runtime");
+assert(runtimeSource.includes("function getWorldNpcModelKey(entry)"), "NPC gallery should dedupe repeated world NPC model appearances");
+assert(runtimeSource.includes("resolveEnemyModelPresetId: (type)"), "NPC gallery should pass enemy humanoid preset ids into thumbnail rendering");
+assert(runtimeSource.includes("createHumanoidModel: typeof windowRef.createHumanoidModel === 'function'"), "NPC gallery should pass the humanoid fallback builder into enemy thumbnails");
 assert(runtimeSource.includes("old_generic") && runtimeSource.includes("old_preset") && runtimeSource.includes("placeholder"), "NPC gallery should label old and placeholder model statuses");
 assert(runtimeSource.includes("data-gallery-filter"), "NPC gallery should expose at-a-glance status/source filtering");
 assert(runtimeSource.includes("openNpcModelGallery"), "NPC gallery runtime should publish a window opener");
@@ -81,6 +84,22 @@ const fakeWindow = {
               type: "MERCHANT",
               name: "Generic Shopkeeper",
               npcType: 2
+            },
+            {
+              serviceId: "bank:east_outpost",
+              spawnId: "npc:banker_east_outpost",
+              type: "MERCHANT",
+              name: "Banker",
+              npcType: 2,
+              appearanceId: "mainland_banker"
+            },
+            {
+              serviceId: "bank:market_crossing",
+              spawnId: "npc:banker_market_crossing",
+              type: "MERCHANT",
+              name: "Banker",
+              npcType: 2,
+              appearanceId: "mainland_banker"
             }
           ]
     })
@@ -112,8 +131,11 @@ assert(runtime, "NPC gallery runtime should publish a window API");
 const entries = runtime.collectNpcModelGalleryEntries({ windowRef: fakeWindow });
 const bySubtitle = new Map(entries.map((entry) => [entry.subtitle, entry]));
 const byEnemy = new Map(entries.filter((entry) => entry.enemyId).map((entry) => [entry.enemyId, entry]));
+const bankers = entries.filter((entry) => entry.displayName === "Banker");
 
 assert(bySubtitle.get("merchant:generic_shop").statusId === "old_generic", "generic mainland service NPCs should be labeled old generic");
+assert(bankers.length === 1, "repeated banker services should collapse into one model-gallery card");
+assert(bankers[0].placementCount === 2, "deduped banker card should retain placement count");
 assert(bySubtitle.get("merchant:tutorial_guide").statusId === "catalog", "appearanceId NPCs should be labeled catalog");
 assert(byEnemy.get("enemy_rat").statusId === "bespoke", "rebuilt rats should be labeled bespoke");
 assert(byEnemy.get("enemy_chicken").statusId === "bespoke", "rebuilt chickens should be labeled bespoke");
