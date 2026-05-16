@@ -19,11 +19,6 @@ const VALID_HELD_ITEM_SLOTS: ReadonlySet<AnimationHeldItemSlot> = new Set(["righ
 const DEFAULT_SCALE = Object.freeze({ x: 1, y: 1, z: 1 });
 const DEFAULT_ZERO = Object.freeze({ x: 0, y: 0, z: 0 });
 
-function cloneVector3<T extends AnimationVector3>(value?: T): T | undefined {
-  if (!value) return undefined;
-  return { ...value };
-}
-
 function validateHeldItemMap(heldItems: AnimationHeldItemMap | null | undefined, errors: string[]): void {
   if (heldItems === undefined || heldItems === null) return;
   if (typeof heldItems !== "object" || Array.isArray(heldItems)) {
@@ -202,7 +197,7 @@ export function validateAnimationClip(clip: AnimationClip, schema: AnimationRigS
   return errors;
 }
 
-export function createEmptyResolvedPose(schema: AnimationRigSchema): AnimationResolvedPose {
+function createEmptyResolvedPose(schema: AnimationRigSchema): AnimationResolvedPose {
   return schema.nodeOrder.reduce<AnimationResolvedPose>((acc, nodeId) => {
     acc[nodeId] = createResolvedTransform(undefined, undefined);
     return acc;

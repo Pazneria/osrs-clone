@@ -1,15 +1,16 @@
 const assert = require("assert");
-const fs = require("fs");
 const path = require("path");
 
 const { loadTsModule } = require("../lib/ts-module-loader");
 const { loadRuntimeItemCatalog } = require("../content/runtime-item-catalog");
+const { assertRegex, escapeRegex: escapeRegExp } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const root = path.resolve(__dirname, "..", "..");
-const combatContentSource = fs.readFileSync(path.resolve(root, "src/game/combat/content.ts"), "utf8");
-const combatRoadmapSource = fs.readFileSync(path.resolve(root, "src/js/skills/combat/ROADMAP.md"), "utf8");
-const combatStatusSource = fs.readFileSync(path.resolve(root, "src/js/skills/combat/STATUS.md"), "utf8");
-const skillsIndexSource = fs.readFileSync(path.resolve(root, "src/js/skills/_index.md"), "utf8");
+const combatContentSource = readRepoFile(root, "src/game/combat/content.ts");
+const combatRoadmapSource = readRepoFile(root, "src/js/skills/combat/ROADMAP.md");
+const combatStatusSource = readRepoFile(root, "src/js/skills/combat/STATUS.md");
+const skillsIndexSource = readRepoFile(root, "src/js/skills/_index.md");
 const combatContent = loadTsModule(path.resolve(root, "src/game/combat/content.ts"));
 const combatFormulas = loadTsModule(path.resolve(root, "src/game/combat/formulas.ts"));
 const { itemDefs } = loadRuntimeItemCatalog(root);
@@ -110,14 +111,6 @@ const EXPECTED_PROGRESSION_BANDS = [
   }
 ];
 
-function escapeRegExp(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function assertRegex(source, regex, message) {
-  assert(regex.test(source), message);
-}
-
 function getGeneralStoreSellValue(itemId) {
   const item = itemDefs[itemId];
   if (!item || !Number.isFinite(item.value)) return 0;
@@ -186,7 +179,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 8, attack: 4, strength: 4, defense: 3 },
     bonuses: { meleeAccuracyBonus: 2, meleeDefenseBonus: 1, enemyMaxHit: 2 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 6, roamingRadius: 1 },
-    expectedAppearance: { kind: "humanoid", modelPresetId: "goblin", animationSetId: "goblin_basic" },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_goblin_grunt", animationSetId: "goblin_basic" },
     respawnTicks: 34,
     attackTickCycle: 5,
     expectedDropTable: [
@@ -204,6 +197,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 7, attack: 5, strength: 5, defense: 3 },
     bonuses: { meleeAccuracyBonus: 2, meleeDefenseBonus: 1, enemyMaxHit: 2 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 5, roamingRadius: 2 },
+    expectedAppearance: { kind: "boar" },
     respawnTicks: 30,
     attackTickCycle: 5,
     expectedDropTable: [
@@ -218,6 +212,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 10, attack: 8, strength: 7, defense: 4 },
     bonuses: { meleeAccuracyBonus: 4, meleeDefenseBonus: 1, enemyMaxHit: 3 },
     behavior: { aggroType: "aggressive", aggroRadius: 5, chaseRange: 7, roamingRadius: 3 },
+    expectedAppearance: { kind: "wolf" },
     respawnTicks: 30,
     attackTickCycle: 4,
     expectedDropTable: [
@@ -232,7 +227,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 14, attack: 8, strength: 8, defense: 8 },
     bonuses: { meleeAccuracyBonus: 4, meleeDefenseBonus: 4, enemyMaxHit: 3 },
     behavior: { aggroType: "aggressive", aggroRadius: 5, chaseRange: 7, roamingRadius: 0 },
-    expectedAppearance: { kind: "humanoid", modelPresetId: "guard", animationSetId: "guard_basic" },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_guard", animationSetId: "guard_basic" },
     respawnTicks: 42,
     attackTickCycle: 5,
     expectedDropTable: [
@@ -254,6 +249,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 20, attack: 9, strength: 11, defense: 10 },
     bonuses: { meleeAccuracyBonus: 3, meleeDefenseBonus: 5, enemyMaxHit: 5 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 6, roamingRadius: 2 },
+    expectedAppearance: { kind: "bear" },
     respawnTicks: 50,
     attackTickCycle: 6,
     expectedDropTable: [
@@ -268,6 +264,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 22, attack: 10, strength: 12, defense: 12 },
     bonuses: { meleeAccuracyBonus: 4, meleeDefenseBonus: 6, enemyMaxHit: 5 },
     behavior: { aggroType: "aggressive", aggroRadius: 4, chaseRange: 6, roamingRadius: 1 },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_heavy_brute" },
     respawnTicks: 50,
     attackTickCycle: 6,
     expectedDropTable: [
@@ -284,6 +281,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 12, attack: 12, strength: 9, defense: 5 },
     bonuses: { meleeAccuracyBonus: 6, meleeDefenseBonus: 1, enemyMaxHit: 4 },
     behavior: { aggroType: "aggressive", aggroRadius: 5, chaseRange: 7, roamingRadius: 2 },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_fast_striker" },
     respawnTicks: 40,
     attackTickCycle: 4,
     expectedDropTable: [
@@ -300,6 +298,7 @@ const EXPECTED_ENEMIES = {
     stats: { hitpoints: 250, attack: 1, strength: 1, defense: 0 },
     bonuses: { meleeAccuracyBonus: 0, meleeDefenseBonus: 0, enemyMaxHit: 0 },
     behavior: { aggroType: "passive", aggroRadius: 0, chaseRange: 2, roamingRadius: 0 },
+    expectedAppearance: { kind: "humanoid", modelPresetId: "enemy_training_dummy" },
     respawnTicks: 8,
     attackTickCycle: 4,
     expectedDropTable: [
@@ -550,18 +549,33 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /- \[x\] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by topology and world parity guards\./,
+  /- \[x\] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by content and world parity guards\./,
   "combat status should mark COMBAT-015 complete with the camp-threat encounter rollout"
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-016:/,
-  "combat status should advance COMBAT-016 into the current focus slot"
+  /- \[x\] COMBAT-016A: Opt-in ally-assist\/group-aggro behavior now lets authored assist groups pull nearby idle allies into combat, with the southeast camp-threat pocket using the first live assist group\./,
+  "combat status should mark COMBAT-016A complete with the assist-group rollout"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-016B: Authored patrol routes now drive idle movement for opt-in spawn nodes, with the southeast camp fast striker using the first live patrol route and guards locking route authoring, bridge, and runtime behavior\./,
+  "combat status should mark COMBAT-016B complete with the patrol-route rollout"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-017:/,
+  "combat status should advance COMBAT-017 into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear\/brute\/striker spawns \| Advanced roaming, patrols, ally-assist\/group-aggro behavior, and richer encounter-state logic \| None \|/,
-  "skills index should reflect the completed encounter rollout and next advanced-logic focus"
+  /\| Combat \| In Progress \| The southeast camp-threat pocket now uses opt-in ally-assist plus an authored fast-striker patrol route \| Ranged combat on top of the shared combat core \| None \|/,
+  "skills index should reflect the patrol-route rollout and next ranged-combat focus"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Authored patrol-route movement for spawn nodes \| Complete \|/,
+  "combat roadmap should mark authored patrol-route movement complete"
 );
 
 assertRegex(
@@ -576,7 +590,7 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /\| Starter Town \| Camp Threat \| `camp_southeast_ruins` \| 3 \|/,
+  /\| Main Overworld \| Camp Threat \| `camp_southeast_ruins` \| 3 \|/,
   "combat roadmap should document the live southeast camp-threat spawn coverage"
 );
 assertRegex(

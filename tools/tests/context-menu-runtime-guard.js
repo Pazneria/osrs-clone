@@ -1,26 +1,9 @@
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
 const assert = require("assert");
+const { makeClassList } = require("./dom-test-utils");
+const { createRepoFileReader } = require("./repo-file-test-utils");
 
-function read(relPath) {
-  return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
-}
-
-function makeClassList(initial = []) {
-  const values = new Set(initial);
-  return {
-    add(value) {
-      values.add(value);
-    },
-    remove(value) {
-      values.delete(value);
-    },
-    contains(value) {
-      return values.has(value);
-    }
-  };
-}
+const read = createRepoFileReader(__dirname);
 
 const runtimeSource = read("src/js/context-menu-runtime.js");
 const coreSource = read("src/js/core.js");

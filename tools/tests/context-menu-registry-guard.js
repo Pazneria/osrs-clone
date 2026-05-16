@@ -1,25 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const inputRenderPath = path.join(root, "src/js/input-render.js");
-  const inputTargetInteractionRuntimePath = path.join(root, "src/js/input-target-interaction-runtime.js");
-  const contextMenuRuntimePath = path.join(root, "src/js/context-menu-runtime.js");
-  const registryPath = path.join(root, "src/js/interactions/target-interaction-registry.js");
-  const indexPath = path.join(root, "index.html");
-  const legacyManifestPath = path.join(root, "src/game/platform/legacy-script-manifest.ts");
-
-  const inputRenderScript = fs.readFileSync(inputRenderPath, "utf8");
-  const inputTargetInteractionRuntimeScript = fs.readFileSync(inputTargetInteractionRuntimePath, "utf8");
-  const contextMenuRuntimeScript = fs.readFileSync(contextMenuRuntimePath, "utf8");
-  const registryScript = fs.readFileSync(registryPath, "utf8");
-  const indexHtml = fs.readFileSync(indexPath, "utf8");
-  const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
+  const inputRenderScript = readRepoFile(root, "src/js/input-render.js");
+  const inputTargetInteractionRuntimeScript = readRepoFile(root, "src/js/input-target-interaction-runtime.js");
+  const contextMenuRuntimeScript = readRepoFile(root, "src/js/context-menu-runtime.js");
+  const registryScript = readRepoFile(root, "src/js/interactions/target-interaction-registry.js");
+  const indexHtml = readRepoFile(root, "index.html");
+  const legacyManifest = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const contextMenuStart = inputRenderScript.indexOf("function onContextMenu(event)");
   const contextMenuEnd = inputRenderScript.indexOf("function emitPierDebug", contextMenuStart);

@@ -1,8 +1,6 @@
 (function () {
     const SKILL_ID = 'runecrafting';
-
-    const domain = window.RunecraftingDomain || {};
-    const TARGETS = domain.TARGETS || { ALTAR_CANDIDATE: 'ALTAR_CANDIDATE' };
+    const TARGETS = { ALTAR_CANDIDATE: 'ALTAR_CANDIDATE' };
 
     const POUCH_DEFS = {
         small_pouch: { capacity: 6, requiredLevel: 10 },
@@ -122,13 +120,6 @@
         }
 
         return tryEmptyPouchToInventory(context, pouchItemId);
-    }
-
-    function buildPouchLabel(context, pouchItemId) {
-        const def = POUCH_DEFS[pouchItemId];
-        const state = ensurePouchState(context.playerState);
-        const stored = state[pouchItemId] ? state[pouchItemId].storedEssence : 0;
-        return `${pouchItemId.replace(/_/g, ' ')} (${stored}/${def.capacity})`;
     }
 
     function getRecipeSet(context) {
@@ -618,30 +609,9 @@
             const forceEmpty = !!(options && options.forceEmpty);
             return tryUsePouchWithAutoMode(context, pouchItemId, forceEmpty);
         },
-        getPouchLabel(context, pouchItemId) {
-            if (!POUCH_DEFS[pouchItemId]) return null;
-            return buildPouchLabel(context, pouchItemId);
-        },
         getPouchStoredEssence(context, pouchItemId) {
             return getPouchStoredEssence(context, pouchItemId);
         }
     };
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

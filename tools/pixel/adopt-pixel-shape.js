@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { readJsonFile } = require("../lib/json-file-utils");
 const PixelSource = require("./pixel-source");
 const { getProjectRoot, loadPixelSource, writePixelSource } = require("./pixel-project");
 
@@ -41,7 +42,7 @@ function parseArgs(argv) {
 function loadSourceFromRef(projectRoot, ref) {
   const asPath = path.resolve(projectRoot, ref);
   if (fs.existsSync(asPath)) {
-    const raw = JSON.parse(fs.readFileSync(asPath, "utf8"));
+    const raw = readJsonFile(asPath);
     const validation = PixelSource.validatePixelSource(raw);
     if (validation.errors.length > 0) {
       throw new Error(`${path.relative(projectRoot, asPath)}: ${validation.errors.join("; ")}`);

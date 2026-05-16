@@ -1,26 +1,21 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const indexPath = path.join(root, "index.html");
-  const playerModelPath = path.join(root, "src/js/player-model.js");
   const catalogPath = path.join(root, "src/js/content/player-appearance-catalog.js");
-  const legacyManifestPath = path.join(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(fs.existsSync(catalogPath), "player appearance catalog file missing");
 
-  const indexHtml = fs.readFileSync(indexPath, "utf8");
-  const playerModelScript = fs.readFileSync(playerModelPath, "utf8");
-  const playerModelVisualRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-model-visual-runtime.js"), "utf8");
-  const playerHeldItemRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-held-item-runtime.js"), "utf8");
-  const catalogScript = fs.readFileSync(catalogPath, "utf8");
-  const legacyManifest = fs.readFileSync(legacyManifestPath, "utf8");
+  const indexHtml = readRepoFile(root, "index.html");
+  const playerModelScript = readRepoFile(root, "src/js/player-model.js");
+  const playerModelVisualRuntimeScript = readRepoFile(root, "src/js/player-model-visual-runtime.js");
+  const playerHeldItemRuntimeScript = readRepoFile(root, "src/js/player-held-item-runtime.js");
+  const catalogScript = readRepoFile(root, "src/js/content/player-appearance-catalog.js");
+  const legacyManifest = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const catalogSandbox = { window: {}, Math, Number, Object, String, Array, parseInt };
   vm.runInNewContext(catalogScript, catalogSandbox, { filename: catalogPath });
   const catalog = catalogSandbox.window.PlayerAppearanceCatalog;
@@ -62,6 +57,7 @@ function run() {
   assert(catalogScript.includes("rune_platelegs"), "player appearance catalog should define rune platelegs leg fragments");
   assert(catalogScript.includes("bronze_boots"), "player appearance catalog should define bronze boots feet fragments");
   assert(catalogScript.includes("rune_boots"), "player appearance catalog should define rune boots feet fragments");
+  assert(catalogScript.includes("ARMOR_TIER_STYLE_PROFILES"), "player appearance catalog should define tier style profiles for metal armor");
   assert(catalog, "player appearance catalog should execute in isolation");
   assert(catalog.bodyColorLabels.join(",") === "Hair,Top,Bottom,Footwear,Skin", "creator color labels should match the entry UI contract");
   assert(catalog.bodyColorPalettes.length === 5, "creator color palettes should cover every body color row");
@@ -112,6 +108,44 @@ function run() {
       itemDef.fragments.some((fragment) => fragment.target === "torso" && fragment.shape === "cone"),
       `${itemId} should render visible arrow tips`
     );
+  });
+  const armorTiers = ["bronze", "iron", "steel", "mithril", "adamant", "rune"];
+  const armorSlots = {
+    boots: { slot: "feet", targets: ["leftLowerLeg", "rightLowerLeg"] },
+    helmet: { slot: "head", targets: ["head"] },
+    shield: { slot: "shield", targets: ["leftTool"] },
+    platelegs: { slot: "legs", targets: ["leftLeg", "rightLeg", "leftLowerLeg", "rightLowerLeg", "torso"] },
+    platebody: { slot: "body", targets: ["torso", "leftArm", "rightArm", "leftLowerArm", "rightLowerArm"] }
+  };
+  const geometrySignatureBySlot = {};
+  function numericTriplet(values) {
+    return Array.isArray(values)
+      ? values.slice(0, 3).map((value) => Number(value || 0).toFixed(3)).join(",")
+      : "0.000,0.000,0.000";
+  }
+  function fragmentGeometrySignature(fragments) {
+    return fragments.map((fragment) => [
+      fragment.target,
+      fragment.shape,
+      numericTriplet(fragment.size),
+      numericTriplet(fragment.offset),
+      numericTriplet(fragment.rotation)
+    ].join("/")).join("|");
+  }
+  Object.keys(armorSlots).forEach((suffix) => {
+    geometrySignatureBySlot[suffix] = new Set();
+    armorTiers.forEach((tier) => {
+      const itemId = `${tier}_${suffix}`;
+      const itemDef = catalog.itemDefs[itemId];
+      assert(itemDef && itemDef.slot === armorSlots[suffix].slot, `${itemId} should expose the correct equipment slot`);
+      assert(Array.isArray(itemDef.maleFragments) && itemDef.maleFragments.length > 0, `${itemId} should expose male armor fragments`);
+      assert(Array.isArray(itemDef.femaleFragments) && itemDef.femaleFragments.length > 0, `${itemId} should expose female armor fragments`);
+      armorSlots[suffix].targets.forEach((target) => {
+        assert(itemDef.maleFragments.some((fragment) => fragment.target === target), `${itemId} should render ${target} armor fragments`);
+      });
+      geometrySignatureBySlot[suffix].add(fragmentGeometrySignature(itemDef.maleFragments));
+    });
+    assert(geometrySignatureBySlot[suffix].size >= 3, `${suffix} armor should have tier-shaped geometry, not only recolors`);
   });
   assert(catalog.creatorSlotOrder.join(",") === "hairStyle,faceStyle,facialHair,bodyStyle,legStyle,feetStyle", "creator slots should stay in OSRS selector order");
   assert(catalog.creatorDefaults.hairStyle === "short" && catalog.creatorDefaults.bodyStyle === "plain_tunic", "creator defaults should be shared starter selections");

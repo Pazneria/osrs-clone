@@ -33,6 +33,7 @@
             smithingHallApproach: payload.smithingHallApproach || DEFAULT_SMITHING_HALL_APPROACH,
             islandWater: payload.islandWater || null,
             pathPatches: Array.isArray(payload.pathPatches) ? payload.pathPatches : [],
+            landformPatches: Array.isArray(payload.landformPatches) ? payload.landformPatches : [],
             fenceLandmarks: Array.isArray(payload.fenceLandmarks) ? payload.fenceLandmarks : [],
             roofLandmarks: Array.isArray(payload.roofLandmarks) ? payload.roofLandmarks : [],
             caveOpeningLandmarks: Array.isArray(payload.caveOpeningLandmarks) ? payload.caveOpeningLandmarks : [],

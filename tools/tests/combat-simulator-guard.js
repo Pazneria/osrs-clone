@@ -1,14 +1,13 @@
 const assert = require("assert");
-const fs = require("fs");
 const path = require("path");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const root = path.resolve(__dirname, "..", "..");
-const simulatorPath = path.join(root, "tools", "sim", "melee-sim.js");
-const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-const simulatorSource = fs.readFileSync(simulatorPath, "utf8");
-const combatRoadmapSource = fs.readFileSync(path.join(root, "src", "js", "skills", "combat", "ROADMAP.md"), "utf8");
-const combatStatusSource = fs.readFileSync(path.join(root, "src", "js", "skills", "combat", "STATUS.md"), "utf8");
-const skillsIndexSource = fs.readFileSync(path.join(root, "src", "js", "skills", "_index.md"), "utf8");
+const packageJson = JSON.parse(readRepoFile(root, "package.json"));
+const simulatorSource = readRepoFile(root, "tools/sim/melee-sim.js");
+const combatRoadmapSource = readRepoFile(root, "src/js/skills/combat/ROADMAP.md");
+const combatStatusSource = readRepoFile(root, "src/js/skills/combat/STATUS.md");
+const skillsIndexSource = readRepoFile(root, "src/js/skills/_index.md");
 const { runSimulation } = require("../sim/melee-sim");
 
 assert(
@@ -38,15 +37,16 @@ assert(
   "combat roadmap should document the canonical melee simulator"
 );
 assert(
-  /- \[x\] COMBAT-013: Rebuilt the combat simulator/.test(combatStatusSource) &&
+    /- \[x\] COMBAT-013: Rebuilt the combat simulator/.test(combatStatusSource) &&
     /- \[x\] COMBAT-014: Combat progression bands/.test(combatStatusSource) &&
     /- \[x\] COMBAT-015:/.test(combatStatusSource) &&
-    /## Now\s*- \[ \] COMBAT-016:/.test(combatStatusSource),
-  "combat status should keep COMBAT-013 complete and advance beyond COMBAT-015"
+    /- \[x\] COMBAT-016B:/.test(combatStatusSource) &&
+    /## Now\s*- \[ \] COMBAT-017:/.test(combatStatusSource),
+  "combat status should keep COMBAT-013 through COMBAT-016B complete and advance to COMBAT-017"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear/brute/striker spawns | Advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic | None |"),
-  "skills index should reflect the completed first-pass encounter coverage"
+  skillsIndexSource.includes("| Combat | In Progress | The southeast camp-threat pocket now uses opt-in ally-assist plus an authored fast-striker patrol route | Ranged combat on top of the shared combat core | None |"),
+  "skills index should reflect the completed patrol-route encounter coverage"
 );
 
 const summary = runSimulation({

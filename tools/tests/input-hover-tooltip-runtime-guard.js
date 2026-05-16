@@ -1,10 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { makeClassList } = require("./dom-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeTooltip() {
   return {
@@ -12,21 +10,16 @@ function makeTooltip() {
     offsetWidth: 80,
     offsetHeight: 20,
     style: {},
-    classList: {
-      values: new Set(["hidden"]),
-      add(value) { this.values.add(value); },
-      remove(value) { this.values.delete(value); },
-      contains(value) { return this.values.has(value); }
-    }
+    classList: makeClassList(["hidden"])
   };
 }
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "input-hover-tooltip-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/input-hover-tooltip-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(runtimeSource.includes("window.InputHoverTooltipRuntime"), "hover tooltip runtime should expose a window runtime");
   assert(runtimeSource.includes("function formatHoverTooltipActionText"), "hover tooltip runtime should own action text formatting");

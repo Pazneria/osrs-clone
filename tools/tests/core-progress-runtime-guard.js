@@ -1,21 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "core-progress-runtime.js");
-  const runtimeSource = read(root, "src/js/core-progress-runtime.js");
-  const coreSource = read(root, "src/js/core.js");
-  const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
+  const runtimeSource = readRepoFile(root, "src/js/core-progress-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const runtimeIndex = manifestSource.indexOf('id: "core-progress-runtime"');
   const coreIndex = manifestSource.indexOf('id: "core"');
 
@@ -273,7 +266,7 @@ function run() {
   const freshConsumed = runtime.consumeFreshSessionRequest({
     windowRef: {
       location: { search: "?fresh=1&foo=bar&clearSave=0", pathname: "/game", hash: "#spawn" },
-      history: { replaceState: (state, title, url) => { replacedUrl = url; } }
+      history: { replaceState: (_state, _title, url) => { replacedUrl = url; } }
     },
     documentRef: { title: "Game" },
     URLSearchParamsRef: URLSearchParams,

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "conditionId": "intact",
+  "label": "Intact",
+  "damageLevel": 0,
+  "wallHeightScale": 1,
+  "roofIntegrity": 1,
+  "tint": "#ffffff",
+  "tags": [
+    "usable",
+    "complete",
+    "service_ready"
+  ],
+  "promotionNotes": [
+    "Intact structures are eligible for normal services and NPC homes after placement promotion.",
+    "Still validate doors, roads, and service adjacency before promotion."
+  ]
+}

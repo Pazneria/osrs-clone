@@ -7,7 +7,7 @@ import type {
   ServiceDescriptor
 } from "../contracts/world";
 
-export interface RuntimePublishResult {
+interface RuntimePublishResult {
   merchantNpcDescriptors: NpcDescriptor[];
   publishedWorldState: RuntimeWorldStateInput;
 }

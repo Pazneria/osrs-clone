@@ -1,10 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  isObject,
-  sortKeysDeep,
-  loadRuntimeItemCatalog
-} = require("./runtime-item-catalog");
+const { isObject, sortKeysDeep } = require("./object-utils");
+const { loadRuntimeItemCatalog } = require("./runtime-item-catalog");
 const {
   ICON_STATUS_FILENAME,
   ICON_STATUS_GENERATED_FROM,
@@ -26,10 +23,7 @@ const {
   getPixelArtifactPaths
 } = require("../pixel/pixel-project");
 const { readPngSize } = require("../pixel/pixel-png");
-
-function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
+const { readJsonFile: readJson } = require("../lib/json-file-utils");
 
 function isString(value) {
   return typeof value === "string" && value.trim().length > 0;
@@ -352,7 +346,7 @@ function main() {
           }
 
           if (errors.length === iconStatusErrorCount) {
-            const expectedManifest = buildIconStatusManifest(projectRoot, runtimeItemDefs, iconStatusManifest);
+            const expectedManifest = buildIconStatusManifest(runtimeItemDefs, iconStatusManifest);
             const actualItems = sortKeysDeep(iconStatusItems);
             const expectedItems = sortKeysDeep(expectedManifest.items);
             if (JSON.stringify(actualItems) !== JSON.stringify(expectedItems)) {

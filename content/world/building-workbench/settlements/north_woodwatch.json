@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "settlementId": "north_woodwatch",
+  "worldId": "main_overworld",
+  "label": "North Woodwatch",
+  "kind": "outpost",
+  "status": "draft",
+  "placementMode": "preview_only",
+  "themeMix": [
+    "frontier_timber",
+    "quarry_iron"
+  ],
+  "intent": {
+    "role": "A small northern woodcutting watch post that gives the northwest frontier a real structure anchor.",
+    "differenceFromStarterTown": "Sparse, practical, and tree-line focused instead of cozy or civic.",
+    "playerRead": "A quiet timber checkpoint where roads, yew trees, and northern travel start to feel occupied."
+  },
+  "anchorBounds": {
+    "xMin": 72,
+    "yMin": 38,
+    "xMax": 126,
+    "yMax": 88
+  },
+  "placements": [
+    {
+      "structureId": "north_woodwatch_lodge",
+      "buildingId": "frontier_cottage",
+      "x": 78,
+      "y": 50,
+      "z": 0,
+      "role": "woodwatch lodge and route shelter"
+    },
+    {
+      "structureId": "north_woodwatch_bunkhouse",
+      "buildingId": "quarry_bunkhouse",
+      "x": 104,
+      "y": 56,
+      "z": 0,
+      "role": "forester and guard bunkhouse"
+    }
+  ],
+  "roads": [
+    {
+      "pathId": "north_woodwatch_track",
+      "roadProfileId": "dirt_lane",
+      "points": [
+        {
+          "x": 82,
+          "y": 84
+        },
+        {
+          "x": 88,
+          "y": 70
+        },
+        {
+          "x": 96,
+          "y": 62
+        },
+        {
+          "x": 112,
+          "y": 62
+        }
+      ],
+      "pathWidth": 2,
+      "edgeSoftness": 0.55,
+      "tileId": "DIRT",
+      "tags": [
+        "main-overworld",
+        "road",
+        "spawn-protected",
+        "settlement-draft"
+      ]
+    }
+  ],
+  "npcPlan": [
+    {
+      "serviceId": "merchant:north_woodwatch_guide",
+      "home": "north_woodwatch_lodge",
+      "role": "northwest road guide and yew frontier flavor"
+    }
+  ],
+  "promotionChecklist": [
+    "Keep this outpost small so the northwest remains wild.",
+    "Use existing frontier cottage and bunkhouse stamps rather than making a bespoke forester building.",
+    "Check yew frontier nodes and bank services before promotion.",
+    "Promote the road as DIRT tile metadata, not preview geometry."
+  ]
+}

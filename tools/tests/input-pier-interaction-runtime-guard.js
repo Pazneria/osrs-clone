@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeContext(overrides = {}) {
   const tileIds = {
@@ -39,9 +36,9 @@ function makeContext(overrides = {}) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "input-pier-interaction-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/input-pier-interaction-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const pathfindingIndex = manifestSource.indexOf('id: "input-pathfinding-runtime"');
   const pierIndex = manifestSource.indexOf('id: "input-pier-interaction-runtime"');
@@ -96,7 +93,7 @@ function run() {
   {
     const context = makeContext({
       playerState: { x: 0, y: 1, z: 0 },
-      isStandableTile: (x, y) => y <= 1
+      isStandableTile: (_x, y) => y <= 1
     });
     const edge = runtime.findNearestFishableWaterEdgeTile(context, 0, 2);
     assert(edge && edge.x === 0 && edge.y === 2, "runtime should resolve dry bank fishing approaches");

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "materialProfileId": "burnt_timber_ash",
+  "label": "Burnt Timber And Ash",
+  "themeId": "frontier_timber",
+  "family": "timber",
+  "previewPalette": {
+    "ground": "#d2d5c4",
+    "floor": "#4f3b2b",
+    "wall": "#2e2923",
+    "corner": "#1f1c19",
+    "roof": "#3d2b22",
+    "roofDark": "#191615",
+    "accent": "#b35a37"
+  },
+  "roofMaterial": "charred thatch and broken bark",
+  "wallMaterial": "burnt timber frame with ash-black panels",
+  "tags": [
+    "burnt",
+    "timber",
+    "ruin_ready"
+  ],
+  "promotionNotes": [
+    "Requires runtime support for burnt tinting or a dedicated burnt stamp variant.",
+    "Keep walkable doorway data intact even if walls look damaged."
+  ]
+}

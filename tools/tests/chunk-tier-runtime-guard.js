@@ -1,20 +1,17 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
 const THREE = require("three");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
-  const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const chunkRuntimeSource = readRepoFile(root, "src/js/world/chunk-scene-runtime.js");
+  const chunkTierRenderRuntimeSource = readRepoFile(root, "src/js/world/chunk-tier-render-runtime.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const legacyManifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(chunkRuntimeSource.includes("CHUNK_RENDER_POLICY_PRESETS"), "chunk scene runtime should define chunk render policy presets");
   assert(chunkRuntimeSource.includes("applyChunkRenderPolicyPreset"), "chunk scene runtime should expose chunk policy preset mutation");
@@ -25,7 +22,8 @@ function run() {
   assert(chunkRuntimeSource.includes("collectDesiredChunkTierAssignments"), "chunk scene runtime should build tier assignments for chunks");
   assert(chunkRuntimeSource.includes("policy.nearMode !== 'edge'") || chunkRuntimeSource.includes("policy.nearMode === 'edge'"), "chunk scene runtime should keep optional edge-aware near chunk promotion support");
   assert(chunkRuntimeSource.includes("function shouldPromoteEdgeAwareNearChunk"), "chunk scene runtime should keep edge-aware near-chunk decisions centralized");
-  assert(worldSource.includes("ensureFarChunkBackdropBuilt"), "world.js should prebuild far chunk backdrops");
+  assert(worldSource.includes("ensureFarChunkBackdropBuilt"), "world.js should keep an optional far chunk backdrop hook for legacy all-far policies");
+  assert(worldSource.includes("FAR_CHUNK_BACKDROP_EAGER_CHUNK_LIMIT"), "world.js should cap eager far chunk backdrop construction for large worlds");
   assert(chunkRuntimeSource.includes("applyChunkTierForKey"), "chunk scene runtime should apply tier transitions by chunk");
   assert(chunkRuntimeSource.includes("pendingNearChunkBuilds"), "chunk scene runtime should track pending near-chunk builds");
   assert(chunkRuntimeSource.includes("pendingSimplifiedChunkBuilds"), "chunk scene runtime should queue simplified mid/far builds instead of building them inside manageChunks");
@@ -366,13 +364,14 @@ function run() {
       FLOOR_BRICK: 8,
       SHORE: 20,
       WATER_SHALLOW: 21,
-      WATER_DEEP: 22
+      WATER_DEEP: 22,
+      SAND: 26
     };
     const mixedTerrainMap = [[
       [tileIds.GRASS, tileIds.DIRT, tileIds.DIRT, tileIds.FLOOR_WOOD],
       [tileIds.SHORE, tileIds.DIRT, tileIds.FLOOR_STONE, tileIds.FLOOR_WOOD],
       [tileIds.GRASS, tileIds.GRASS, tileIds.FLOOR_BRICK, tileIds.FLOOR_STONE],
-      [tileIds.GRASS, tileIds.DIRT, tileIds.GRASS, tileIds.GRASS]
+      [tileIds.SAND, tileIds.DIRT, tileIds.GRASS, tileIds.GRASS]
     ]];
     const heightMap = [[
       [0, 0, 0, 0],
@@ -414,7 +413,7 @@ function run() {
     const planeGroup = group.children[0];
     const terrainMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND");
     assert(terrainMesh, "mixed non-water far chunks should render simplified terrain");
-    assert(Array.isArray(terrainMesh.material) && terrainMesh.material.length >= 7, "simplified terrain should use a tile-aware material array");
+    assert(Array.isArray(terrainMesh.material) && terrainMesh.material.length >= 8, "simplified terrain should use a tile-aware material array");
     assert(terrainMesh.userData.runMerged, "far terrain with authored paths and floors should use exact merged land runs");
     assert(terrainMesh.geometry.attributes.position.count <= 264, "far terrain with authored paths and floors should avoid dense grid geometry even with an in-mesh void seal");
     const groupMaterialIndices = new Set(terrainMesh.geometry.groups.map((group) => group.materialIndex));
@@ -423,6 +422,7 @@ function run() {
     assert(groupMaterialIndices.has(4), "far terrain should keep wood floor tiles visible before near chunks load");
     assert(groupMaterialIndices.has(5), "far terrain should keep stone floor tiles visible before near chunks load");
     assert(groupMaterialIndices.has(6), "far terrain should keep brick floor tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(7), "far terrain should keep sand transition tiles visible before near chunks load");
   }
   {
     const tileIds = {
@@ -553,6 +553,7 @@ function run() {
   const runtime = window.WorldChunkSceneRuntime;
   assert(runtime, "chunk scene runtime should expose a window runtime");
   assert(window.getChunkRenderPolicy().preset === "balanced", "chunk scene runtime should expose balanced default policy through legacy window API");
+  assert(window.getChunkRenderPolicy().farMode === "window", "balanced default policy should keep far chunks windowed for large mainland streaming");
   assert(window.applyChunkRenderPolicyPreset("high") === true, "chunk scene runtime should mutate policy through legacy window API");
   assert(window.getChunkRenderPolicy().preset === "high", "chunk scene runtime should report updated active policy");
   assert(window.getChunkRenderPolicyRevision() === 1, "chunk scene runtime should track policy revisions");

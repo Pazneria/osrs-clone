@@ -158,6 +158,5 @@ module.exports = {
   collectAdjacencyViolations,
   findShortestPathLength,
   getChebyshevDistance,
-  hasAdjacentWalkableTile,
   isWalkable
 };

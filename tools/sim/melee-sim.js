@@ -325,8 +325,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-  createSeededRandom,
-  parseArgs,
-  runSimulation,
-  simulateFight
+  runSimulation
 };

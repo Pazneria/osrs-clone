@@ -55,7 +55,7 @@
       "maxRadius": 48,
       "radiusStep": 6,
       "targetCount": 20,
-      "minSpacing": 2.2,
+      "minSpacing": 2.3,
       "tags": ["mining", "qa", "starter"],
       "oreWeights": [
         { "oreType": "coal", "weight": 8 },

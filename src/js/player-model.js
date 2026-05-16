@@ -679,7 +679,6 @@ function rebuildPlayerRigsFromAppearance() {
     }
 }
 
-window.syncPlayerAppearanceFromEquipment = syncPlayerAppearanceFromEquipment;
 window.rebuildPlayerRigsFromAppearance = rebuildPlayerRigsFromAppearance;
 window.createPlayerRigFromAppearance = createPlayerRigFromAppearance;
 window.createPlayerRigFromCurrentAppearance = createPlayerRigFromCurrentAppearance;
@@ -693,52 +692,6 @@ if (playerNpcHumanoidRuntimeForPublication && typeof playerNpcHumanoidRuntimeFor
         createAnimationStudioPreviewRig
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 function setPlayerRigToolVisuals(rigRoot, heldItems, primaryHeldItemSlot = null) {

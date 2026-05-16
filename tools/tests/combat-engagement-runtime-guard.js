@@ -1,13 +1,8 @@
-const fs = require("fs");
-const path = require("path");
 const assert = require("assert");
 const vm = require("vm");
+const { createRepoFileReader } = require("./repo-file-test-utils");
 
-const root = path.resolve(__dirname, "..", "..");
-
-function read(relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
+const read = createRepoFileReader(__dirname);
 
 const runtimeSource = read("src/js/combat-engagement-runtime.js");
 const combatSource = read("src/js/combat.js");
@@ -17,6 +12,7 @@ assert.ok(runtimeSource.includes("window.CombatEngagementRuntime"), "combat enga
 assert.ok(runtimeSource.includes("function validatePlayerTargetLock(context = {})"), "engagement runtime should own player lock validation");
 assert.ok(runtimeSource.includes("function pickAutoRetaliateTarget(context = {})"), "engagement runtime should own auto-retaliate selection");
 assert.ok(runtimeSource.includes("function acquireAggressiveEnemyTargets(context = {})"), "engagement runtime should own aggressive acquisition");
+assert.ok(runtimeSource.includes("function acquireAssistingEnemyTargets(context = {})"), "engagement runtime should own ally-assist acquisition");
 assert.ok(runtimeSource.includes("function movePlayerTowardLockedTarget(context = {}, playerLockState, attackedThisTick)"), "engagement runtime should own player pursuit action shaping");
 assert.ok(manifestSource.includes("../../js/combat-engagement-runtime.js?raw"), "legacy manifest should import combat engagement runtime");
 assert.ok(
@@ -29,6 +25,7 @@ assert.ok(combatSource.includes("function buildCombatEngagementRuntimeContext()"
 assert.ok(combatSource.includes("return getCombatEngagementRuntime().validatePlayerTargetLock(buildCombatEngagementRuntimeContext());"), "combat.js should delegate player lock validation");
 assert.ok(combatSource.includes("return getCombatEngagementRuntime().pickAutoRetaliateTarget(buildCombatEngagementRuntimeContext());"), "combat.js should delegate auto-retaliate target picking");
 assert.ok(combatSource.includes("getCombatEngagementRuntime().acquireAggressiveEnemyTargets(buildCombatEngagementRuntimeContext());"), "combat.js should delegate aggressive enemy acquisition");
+assert.ok(combatSource.includes("getCombatEngagementRuntime().acquireAssistingEnemyTargets(buildCombatEngagementRuntimeContext());"), "combat.js should delegate ally-assist acquisition");
 assert.ok(combatSource.includes("getCombatEngagementRuntime().movePlayerTowardLockedTarget(buildCombatEngagementRuntimeContext(), playerLockState, attackedThisTick);"), "combat.js should delegate player pursuit movement shaping");
 assert.ok(!combatSource.includes("const occupancyIgnoredPursuitPath = resolvePathToEnemy(lockedEnemy, {"), "combat.js should not own occupancy-ignored lock validation inline");
 assert.ok(!combatSource.includes("const candidates = combatEnemyStates.filter((enemyState) => isValidAutoRetaliateCandidate(enemyState));"), "combat.js should not own auto-retaliate candidate sorting inline");
@@ -153,6 +150,70 @@ assert.strictEqual(aggroEnemy.currentState, "aggroed", "aggressive enemies shoul
 assert.strictEqual(aggroEnemy.lockedTargetId, "player", "aggressive enemies should lock the player target");
 assert.strictEqual(facedEnemy, "enemy-aggro", "aggressive acquisition should face the player");
 assert.strictEqual(clearedIdle, true, "aggressive acquisition should clear idle wander state");
+
+const assistAnchor = {
+  runtimeId: "enemy-anchor",
+  enemyId: "enemy_heavy_brute",
+  currentState: "aggroed",
+  lockedTargetId: "player",
+  x: 5,
+  y: 5,
+  z: 0,
+  assistGroupId: "camp-alpha",
+  resolvedHomeTile: { x: 5, y: 5, z: 0 },
+  resolvedSpawnTile: { x: 5, y: 5, z: 0 },
+  resolvedChaseRange: 10
+};
+const assistingEnemy = {
+  runtimeId: "enemy-assist",
+  enemyId: "enemy_fast_striker",
+  currentState: "idle",
+  lockedTargetId: null,
+  x: 7,
+  y: 5,
+  z: 0,
+  assistGroupId: "camp-alpha",
+  resolvedAssistRadius: 4,
+  resolvedHomeTile: { x: 7, y: 5, z: 0 },
+  resolvedSpawnTile: { x: 7, y: 5, z: 0 },
+  resolvedChaseRange: 10,
+  remainingAttackCooldown: 0
+};
+const bystanderEnemy = {
+  runtimeId: "enemy-bystander",
+  enemyId: "enemy_rat",
+  currentState: "idle",
+  lockedTargetId: null,
+  x: 8,
+  y: 5,
+  z: 0,
+  assistGroupId: "other-camp",
+  resolvedAssistRadius: 8,
+  resolvedHomeTile: { x: 8, y: 5, z: 0 },
+  resolvedSpawnTile: { x: 8, y: 5, z: 0 },
+  resolvedChaseRange: 10,
+  remainingAttackCooldown: 0
+};
+let assistFaced = null;
+let assistCleared = false;
+runtime.acquireAssistingEnemyTargets({
+  combatEnemyStates: [assistAnchor, assistingEnemy, bystanderEnemy],
+  playerState: { x: 1, y: 5, z: 0 },
+  playerTargetId: "player",
+  isPlayerAlive: () => true,
+  isEnemyAlive: () => true,
+  getSquareRange: (left, right, range) => Math.max(Math.abs(left.x - right.x), Math.abs(left.y - right.y)) <= range,
+  resolvePathToPlayer: () => [{ x: 6, y: 5 }],
+  faceEnemyTowards: (enemy) => { assistFaced = enemy.runtimeId; },
+  clearEnemyIdleWanderState: () => { assistCleared = true; }
+});
+assert.strictEqual(assistingEnemy.currentState, "aggroed", "same assist-group enemies should assist a fighting ally");
+assert.strictEqual(assistingEnemy.lockedTargetId, "player", "assisting enemies should lock the player");
+assert.strictEqual(assistingEnemy.remainingAttackCooldown, 1, "assisting enemies should wait at least one tick before attacking");
+assert.strictEqual(assistingEnemy.assistTargetRuntimeId, "enemy-anchor", "assisting enemies should record the ally they assisted");
+assert.strictEqual(bystanderEnemy.currentState, "idle", "different assist groups should not be pulled");
+assert.strictEqual(assistFaced, "enemy-assist", "assisting enemies should face the player");
+assert.strictEqual(assistCleared, true, "assisting enemies should clear idle wander state");
 
 const pursuitPlayerState = { action: "IDLE", path: [] };
 runtime.movePlayerTowardLockedTarget({

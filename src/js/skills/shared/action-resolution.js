@@ -128,27 +128,6 @@
         return handler(session);
     }
 
-    function runOneShotConversion(context, options) {
-        if (typeof options.validate === 'function') {
-            const validation = options.validate(context);
-            if (!validation || validation.ok !== true) {
-                return createActionResolution('blocked', validation && validation.reasonCode ? validation.reasonCode : 'INVALID');
-            }
-        }
-
-        const conversion = typeof options.convert === 'function' ? options.convert(context) : null;
-        if (!conversion || conversion.ok !== true) {
-            return createActionResolution('blocked', conversion && conversion.reasonCode ? conversion.reasonCode : 'CONVERSION_FAILED');
-        }
-
-        return createActionResolution('success', 'CONVERSION_SUCCESS', {
-            consumed: conversion.consumed || [],
-            produced: conversion.produced || [],
-            xpGained: conversion.xpGained || 0,
-            nextTick: null
-        });
-    }
-
     function stopSkill(context, skillId, reasonCode = 'STOPPED') {
         clearSkillSession(context.playerState, skillId);
         context.stopAction();
@@ -165,7 +144,6 @@
         runGatherAttempt,
         startProcessingSession,
         tickProcessingSession,
-        runOneShotConversion,
         stopSkill
     };
 })();

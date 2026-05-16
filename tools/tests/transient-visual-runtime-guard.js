@@ -1,10 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { makeClassList } = require("./dom-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function createFakeThree() {
   class FakeVector3 {
@@ -113,13 +111,9 @@ function createDocument() {
         innerText: "",
         style: {},
         removed: false,
+        classList: makeClassList(),
         remove() {
           el.removed = true;
-        },
-        classList: {
-          classes: new Set(),
-          add(value) { this.classes.add(value); },
-          remove(value) { this.classes.delete(value); }
         }
       };
       this.created.push(el);
@@ -134,10 +128,10 @@ function createDocument() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "transient-visual-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/transient-visual-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const transientIndex = manifestSource.indexOf('id: "transient-visual-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
@@ -273,7 +267,7 @@ function run() {
       nowMs: 100
     });
     assert(documentRef.overhead.innerText === "Hello", "overhead text should be rendered while active");
-    assert(!documentRef.overhead.classList.classes.has("hidden"), "active overhead text should be visible");
+    assert(!documentRef.overhead.classList.contains("hidden"), "active overhead text should be visible");
     runtime.updatePlayerOverheadText({
       windowRef: { innerWidth: 1000, innerHeight: 800 },
       documentRef,
@@ -282,7 +276,7 @@ function run() {
       playerOverheadText: { text: "Hello", expiresAt: 50 },
       nowMs: 100
     });
-    assert(documentRef.overhead.classList.classes.has("hidden"), "expired overhead text should be hidden");
+    assert(documentRef.overhead.classList.contains("hidden"), "expired overhead text should be hidden");
   }
 
   console.log("Transient visual runtime guard passed.");

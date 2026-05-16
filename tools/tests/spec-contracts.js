@@ -1,41 +1,16 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { sortKeysDeep } = require("../content/object-utils");
 const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function approxEq(actual, expected, epsilon = 1e-9) {
-  return Math.abs(actual - expected) <= epsilon;
-}
-
-function sortKeysDeep(value) {
-  if (Array.isArray(value)) return value.map(sortKeysDeep);
-  if (!value || typeof value !== "object") return value;
-  const out = {};
-  const keys = Object.keys(value).sort();
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    out[key] = sortKeysDeep(value[key]);
-  }
-  return out;
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { approximatelyEqual: approxEq, expectThrown } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function readSkillSpecShardSource(root) {
   return SKILL_SPEC_SCRIPT_PATHS
-    .map((relPath) => fs.readFileSync(path.join(root, relPath), "utf8"))
+    .map((relPath) => readRepoFile(root, relPath))
     .join("\n");
 }
 
@@ -69,18 +44,14 @@ function expectMutatedSpecsFailure(root, mutate, expectedMessageRegex, label) {
   const mutated = mutate(original);
   const sandbox = { window: {} };
 
-  let failed = null;
-  try {
-    vm.runInNewContext(mutated, sandbox, { filename: abs });
-  } catch (error) {
-    failed = error;
-  }
-
-  assert(!!failed, label + ": expected mutated specs load to fail");
-  if (expectedMessageRegex) {
-    const msg = String(failed && failed.message ? failed.message : failed);
-    assert(expectedMessageRegex.test(msg), label + ": unexpected error message: " + msg);
-  }
+  expectThrown(
+    () => vm.runInNewContext(mutated, sandbox, { filename: abs }),
+    expectedMessageRegex,
+    {
+      expectedFailure: label + ": expected mutated specs load to fail",
+      unexpectedMessage: (message) => label + ": unexpected error message: " + message
+    }
+  );
 }
 
 function run() {
@@ -555,7 +526,7 @@ function run() {
   assert(!!itemDefs, "item catalog missing");
   const runtimeMirrorPath = path.join(root, "content", "items", "runtime-item-catalog.json");
   assert(fs.existsSync(runtimeMirrorPath), "runtime item-catalog mirror missing");
-  const runtimeMirror = JSON.parse(fs.readFileSync(runtimeMirrorPath, "utf8"));
+  const runtimeMirror = JSON.parse(readRepoFile(root, "content/items/runtime-item-catalog.json"));
   assert(!!runtimeMirror && !!runtimeMirror.itemDefs, "runtime item-catalog mirror missing itemDefs");
   const runtimeSorted = JSON.stringify(sortKeysDeep(itemDefs));
   const mirrorSorted = JSON.stringify(sortKeysDeep(runtimeMirror.itemDefs));
@@ -659,7 +630,7 @@ function run() {
   });
   const iconStatusPath = path.join(root, "content", "icon-status.json");
   assert(fs.existsSync(iconStatusPath), "icon-status report missing");
-  const iconStatus = JSON.parse(fs.readFileSync(iconStatusPath, "utf8"));
+  const iconStatus = JSON.parse(readRepoFile(root, "content/icon-status.json"));
   [
     ["raw_chicken", "raw_chicken", "todo", "bespoke"],
     ["cooked_chicken", "cooked_chicken", "done", "bespoke"],
@@ -1756,7 +1727,6 @@ function run() {
     const messages = [];
     let started = false;
     let unlockedState = !!unlocked;
-    const toolVisualCalls = [];
 
     const context = {
       targetObj: "ROCK",
@@ -1780,9 +1750,6 @@ function run() {
       isTargetTile: (tileId) => tileId === 2,
       canAcceptItemById: () => true,
       addChatMessage: (message, tone) => messages.push({ message, tone }),
-      setToolVisualById: (itemId) => {
-        toolVisualCalls.push(itemId || null);
-      },
       startSkillingAction: () => {
         context.playerState.action = "SKILLING: ROCK";
         started = true;
@@ -1803,7 +1770,6 @@ function run() {
     return {
       context,
       messages,
-      toolVisualCalls,
       wasStarted: () => started,
       setUnlocked: (value) => {
         unlockedState = !!value;
@@ -1846,48 +1812,48 @@ function run() {
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "harpoon", "fishing should surface the harpoon visual during harpoon clip playback");
   fishingAnimateContext.playerState.fishingActiveMethodId = "deep_rune_harpoon";
   assert(skillModules.fishing.getAnimationHeldItemId(fishingAnimateContext) === "rune_harpoon", "fishing should surface the rune harpoon visual during rune-harpoon clip playback");
-  const worldScript = fs.readFileSync(path.join(root, "src/js/world.js"), "utf8");
-  const sharedAssetsRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/shared-assets-runtime.js"), "utf8");
-  const terrainSetupRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/terrain-setup-runtime.js"), "utf8");
-  const logicalMapAuthoringRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/logical-map-authoring-runtime.js"), "utf8");
-  const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-terrain-runtime.js"), "utf8");
-  const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-tier-render-runtime.js"), "utf8");
-  const groundItemRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-render-runtime.js"), "utf8");
-  const groundItemLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/ground-item-lifecycle-runtime.js"), "utf8");
-  const npcRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/npc-render-runtime.js"), "utf8");
-  const townNpcRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/town-npc-runtime.js"), "utf8");
-  const structureRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/structure-render-runtime.js"), "utf8");
-  const pierRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/pier-runtime.js"), "utf8");
-  const treeNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-node-runtime.js"), "utf8");
-  const treeRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-render-runtime.js"), "utf8");
-  const treeLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/tree-lifecycle-runtime.js"), "utf8");
-  const rockNodeRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-node-runtime.js"), "utf8");
-  const rockLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/rock-lifecycle-runtime.js"), "utf8");
-  const chunkResourceRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/chunk-resource-render-runtime.js"), "utf8");
-  const miningPoseReferenceRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-pose-reference-runtime.js"), "utf8");
-  const fireRenderRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-render-runtime.js"), "utf8");
-  const fireLifecycleRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/fire-lifecycle-runtime.js"), "utf8");
-  const miningQuarryRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/mining-quarry-runtime.js"), "utf8");
-  const trainingLocationRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/training-location-runtime.js"), "utf8");
-  const statusHudRuntimeSource = fs.readFileSync(path.join(root, "src/js/world/status-hud-runtime.js"), "utf8");
-  const skillProgressRuntimeSource = fs.readFileSync(path.join(root, "src/js/skill-progress-runtime.js"), "utf8");
-  const inventoryItemRuntimeSource = fs.readFileSync(path.join(root, "src/js/inventory-item-runtime.js"), "utf8");
-  const equipmentItemRuntimeSource = fs.readFileSync(path.join(root, "src/js/equipment-item-runtime.js"), "utf8");
-  const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src/js/food-item-runtime.js"), "utf8");
-  const inventoryActionRuntimeSource = fs.readFileSync(path.join(root, "src/js/inventory-action-runtime.js"), "utf8");
-  const worldContractsSource = fs.readFileSync(path.join(root, "src/game/contracts/world.ts"), "utf8");
-  const runtimePublishSource = fs.readFileSync(path.join(root, "src/game/world/runtime-publish.ts"), "utf8");
-  const cloneSource = fs.readFileSync(path.join(root, "src/game/world/clone.ts"), "utf8");
-  const miningRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/mining-runtime.ts"), "utf8");
-  const runecraftingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/runecrafting-runtime.ts"), "utf8");
-  const woodcuttingRuntimeSource = fs.readFileSync(path.join(root, "src/game/world/woodcutting-runtime.ts"), "utf8");
-  const inputRenderSource = fs.readFileSync(path.join(root, "src/js/input-render.js"), "utf8");
-  const inputArrivalInteractionRuntimeSource = fs.readFileSync(path.join(root, "src/js/input-arrival-interaction-runtime.js"), "utf8");
-  const npcDialogueCatalogSource = fs.readFileSync(path.join(root, "src/js/content/npc-dialogue-catalog.js"), "utf8");
-  const npcDialogueRuntimeSource = fs.readFileSync(path.join(root, "src/js/npc-dialogue-runtime.js"), "utf8");
-  const npcPlayerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
-  const playerNpcHumanoidRuntimeSource = fs.readFileSync(path.join(root, "src/js/player-npc-humanoid-runtime.js"), "utf8");
-  const starterTownWorld = JSON.parse(fs.readFileSync(path.join(root, "content/world/regions/main_overworld.json"), "utf8"));
+  const worldScript = readRepoFile(root, "src/js/world.js");
+  const sharedAssetsRuntimeSource = readRepoFile(root, "src/js/world/shared-assets-runtime.js");
+  const terrainSetupRuntimeSource = readRepoFile(root, "src/js/world/terrain-setup-runtime.js");
+  const logicalMapAuthoringRuntimeSource = readRepoFile(root, "src/js/world/logical-map-authoring-runtime.js");
+  const chunkTerrainRuntimeSource = readRepoFile(root, "src/js/world/chunk-terrain-runtime.js");
+  const chunkTierRenderRuntimeSource = readRepoFile(root, "src/js/world/chunk-tier-render-runtime.js");
+  const groundItemRenderRuntimeSource = readRepoFile(root, "src/js/world/ground-item-render-runtime.js");
+  const groundItemLifecycleRuntimeSource = readRepoFile(root, "src/js/world/ground-item-lifecycle-runtime.js");
+  const npcRenderRuntimeSource = readRepoFile(root, "src/js/world/npc-render-runtime.js");
+  const townNpcRuntimeSource = readRepoFile(root, "src/js/world/town-npc-runtime.js");
+  const structureRenderRuntimeSource = readRepoFile(root, "src/js/world/structure-render-runtime.js");
+  const pierRuntimeSource = readRepoFile(root, "src/js/world/pier-runtime.js");
+  const treeNodeRuntimeSource = readRepoFile(root, "src/js/world/tree-node-runtime.js");
+  const treeRenderRuntimeSource = readRepoFile(root, "src/js/world/tree-render-runtime.js");
+  const treeLifecycleRuntimeSource = readRepoFile(root, "src/js/world/tree-lifecycle-runtime.js");
+  const rockNodeRuntimeSource = readRepoFile(root, "src/js/world/rock-node-runtime.js");
+  const rockLifecycleRuntimeSource = readRepoFile(root, "src/js/world/rock-lifecycle-runtime.js");
+  const chunkResourceRenderRuntimeSource = readRepoFile(root, "src/js/world/chunk-resource-render-runtime.js");
+  const miningPoseReferenceRuntimeSource = readRepoFile(root, "src/js/world/mining-pose-reference-runtime.js");
+  const fireRenderRuntimeSource = readRepoFile(root, "src/js/world/fire-render-runtime.js");
+  const fireLifecycleRuntimeSource = readRepoFile(root, "src/js/world/fire-lifecycle-runtime.js");
+  const miningQuarryRuntimeSource = readRepoFile(root, "src/js/world/mining-quarry-runtime.js");
+  const trainingLocationRuntimeSource = readRepoFile(root, "src/js/world/training-location-runtime.js");
+  const statusHudRuntimeSource = readRepoFile(root, "src/js/world/status-hud-runtime.js");
+  const skillProgressRuntimeSource = readRepoFile(root, "src/js/skill-progress-runtime.js");
+  const inventoryItemRuntimeSource = readRepoFile(root, "src/js/inventory-item-runtime.js");
+  const equipmentItemRuntimeSource = readRepoFile(root, "src/js/equipment-item-runtime.js");
+  const foodItemRuntimeSource = readRepoFile(root, "src/js/food-item-runtime.js");
+  const inventoryActionRuntimeSource = readRepoFile(root, "src/js/inventory-action-runtime.js");
+  const worldContractsSource = readRepoFile(root, "src/game/contracts/world.ts");
+  const runtimePublishSource = readRepoFile(root, "src/game/world/runtime-publish.ts");
+  const cloneSource = readRepoFile(root, "src/game/world/clone.ts");
+  const miningRuntimeSource = readRepoFile(root, "src/game/world/mining-runtime.ts");
+  const runecraftingRuntimeSource = readRepoFile(root, "src/game/world/runecrafting-runtime.ts");
+  const woodcuttingRuntimeSource = readRepoFile(root, "src/game/world/woodcutting-runtime.ts");
+  const inputRenderSource = readRepoFile(root, "src/js/input-render.js");
+  const inputArrivalInteractionRuntimeSource = readRepoFile(root, "src/js/input-arrival-interaction-runtime.js");
+  const npcDialogueCatalogSource = readRepoFile(root, "src/js/content/npc-dialogue-catalog.js");
+  const npcDialogueRuntimeSource = readRepoFile(root, "src/js/npc-dialogue-runtime.js");
+  const npcPlayerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const playerNpcHumanoidRuntimeSource = readRepoFile(root, "src/js/player-npc-humanoid-runtime.js");
+  const starterTownWorld = JSON.parse(readRepoFile(root, "content/world/regions/main_overworld.json"));
   assert(!!NpcDialogueCatalog && typeof NpcDialogueCatalog.resolveDialogueId === "function", "npc dialogue catalog resolver missing");
   assert(worldContractsSource.includes("appearanceId?: string | null;"), "world contracts should expose appearanceId on NPC/service descriptors");
   assert(worldContractsSource.includes("dialogueId?: string | null;"), "world contracts should expose dialogueId on NPC/service descriptors");
@@ -2205,7 +2171,7 @@ function run() {
   assert(miningPoseReferenceRuntimeSource.includes("const MINING_REFERENCE_VARIANTS = Object.freeze(["), "mining pose reference runtime should own variant metadata");
   assert(!worldScript.includes("function applyMiningReferenceVariant"), "world.js should not own mining pose variant math");
 
-  const smithRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/smithing/index.js"), "utf8");
+  const smithRuntimeScript = readRepoFile(root, "src/js/skills/smithing/index.js");
   assert(starterTownWorld.services.some((entry) => entry.type === "FURNACE"), "furnace world placement missing");
   assert(starterTownWorld.services.some((entry) => entry.type === "ANVIL"), "anvil world placement missing");
   assert(smithRuntimeScript.includes("const SKILL_ID = 'smithing'"), "smithing runtime module missing skill id");
@@ -2215,8 +2181,8 @@ function run() {
   assert(!smithRuntimeScript.includes("applyCookingStylePose"), "smithing runtime should remove the old shared procedural smithing pose");
 
   const inputRenderScript = inputRenderSource;
-  const inputStationInteractionRuntimeScript = fs.readFileSync(path.join(root, "src/js/input-station-interaction-runtime.js"), "utf8");
-  const inputPlayerAnimationRuntimeScript = fs.readFileSync(path.join(root, "src/js/input-player-animation-runtime.js"), "utf8");
+  const inputStationInteractionRuntimeScript = readRepoFile(root, "src/js/input-station-interaction-runtime.js");
+  const inputPlayerAnimationRuntimeScript = readRepoFile(root, "src/js/input-player-animation-runtime.js");
   assert(inputRenderScript.includes("if (typeof window.tickFireLifecycle === 'function') window.tickFireLifecycle();"), "tick fire lifecycle hook missing from processTick");
   assert(inputRenderScript.includes("function getActiveSkillAnimationHeldItems()"), "input render should resolve dual-hand skill props");
   assert(inputRenderScript.includes("function resolveInteractionFacingRotation("), "input render should expose station-aware interaction facing");
@@ -2240,12 +2206,12 @@ function run() {
   assert(inputPlayerAnimationRuntimeScript.includes("'player/fishing_harpoon_strike1'"), "input player animation runtime should request the harpoon startup action clip");
   assert(!inputRenderScript.includes("function applyPlayerCombatPose"), "legacy hardcoded combat-pose fallback should be removed");
   assert(!inputRenderScript.includes("function applyRockMiningPose"), "legacy hardcoded mining pose should be removed");
-  const legacyManifestScript = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
+  const legacyManifestScript = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   assert(!legacyManifestScript.includes("skills-shared-animations"), "legacy manifest should not load the removed shared skill animations script");
   assert(!fs.existsSync(path.join(root, "src/js/skills/shared/animations.js")), "unused shared skill animations script should be deleted");
-  const coreScript = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
-  const qaCommandScript = fs.readFileSync(path.join(root, "src/js/qa-command-runtime.js"), "utf8");
-  const qaToolsScript = fs.readFileSync(path.join(root, "src/js/qa-tools-runtime.js"), "utf8");
+  const coreScript = readRepoFile(root, "src/js/core.js");
+  const qaCommandScript = readRepoFile(root, "src/js/qa-command-runtime.js");
+  const qaToolsScript = readRepoFile(root, "src/js/qa-tools-runtime.js");
   assert(coreScript.includes("typeof window.resolveInteractionFacingRotation === 'function'"), "core facing turns should consult station-aware interaction facing");
   assert(qaToolsScript.includes("function getQaDiscoveredMerchants(context)"), "QA tools merchant discovery helper missing");
   assert(qaToolsScript.includes("getWorldRouteGroup(context, 'fishing')"), "QA tools fishing-spot discovery should read world registry");
@@ -2261,47 +2227,47 @@ function run() {
   assert(coreScript.includes("tiaraMouldUnlocked: false"), "core player unlock flags missing tiara mould default");
   assert(qaCommandScript.includes("/qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>"), "QA unlock help missing mould toggle options");
   assert(qaCommandScript.includes("setQaUnlockFlag', 'gemMineUnlocked', enabled"), "QA gem mine unlock handler missing");
-  const manifestScript = fs.readFileSync(path.join(root, "src/js/skills/manifest.js"), "utf8");
+  const manifestScript = readRepoFile(root, "src/js/skills/manifest.js");
   assert(manifestScript.includes("'crafting'"), "skill manifest missing crafting ordering");
   assert(manifestScript.includes("CRAFTING: 'crafting'"), "skill manifest missing crafting action mapping");
   assert(manifestScript.includes("skillTiles"), "skill manifest missing skill tile metadata");
   assert(manifestScript.includes("levelKey"), "skill manifest skill-tile level key metadata missing");
-  const indexHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const indexHtml = readRepoFile(root, "index.html");
   assert(indexHtml.includes('/src/main.ts'), "index missing Vite module entry");
   assert(!indexHtml.includes("npc-dialogue-action"), "NPC dialogue panel should not hard-code the NPC action under the name");
-  const legacyBridgeManifestScript = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
+  const legacyBridgeManifestScript = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   assert(legacyBridgeManifestScript.includes("../../js/skills/crafting/index.js?raw"), "legacy manifest missing crafting runtime bridge include");
   assert(!indexHtml.includes('data-skill="attack"'), "stats view should not hard-code attack tile markup");
   assert(!indexHtml.includes('id="stat-atk-level"'), "stats view should not hard-code skill level ids");
-  const skillRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runtime.js"), "utf8");
+  const skillRuntimeScript = readRepoFile(root, "src/js/skills/runtime.js");
   assert(skillRuntimeScript.includes("requireAreaAccess"), "skill runtime area-access hook missing");
   assert(skillRuntimeScript.includes("getTreeNodeAt"), "skill runtime tree-node hook missing");
   assert(skillRuntimeScript.includes("return handled !== false;"), "skill runtime should allow onAnimate hooks to pass through into clip playback");
   assert(skillRuntimeScript.includes("getSkillAnimationHeldItems"), "skill runtime should expose dual-hand held-item overrides");
   assert(skillRuntimeScript.includes("getSkillAnimationHeldItemSlot"), "skill runtime should expose held-item hand overrides");
   assert(skillRuntimeScript.includes("getSkillAnimationSuppressEquipmentVisual"), "skill runtime should expose animation equipment-visibility overrides");
-  const fishingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/fishing/index.js"), "utf8");
-  const playerModelSource = fs.readFileSync(path.join(root, "src/js/player-model.js"), "utf8");
-  const playerModelVisualRuntimeScript = fs.readFileSync(path.join(root, "src/js/player-model-visual-runtime.js"), "utf8");
+  const fishingRuntimeScript = readRepoFile(root, "src/js/skills/fishing/index.js");
+  const playerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const playerModelVisualRuntimeScript = readRepoFile(root, "src/js/player-model-visual-runtime.js");
   assert(fishingRuntimeScript.includes("getAnimationHeldItemId(context)"), "fishing runtime should still resolve held-tool visuals");
   assert(playerModelVisualRuntimeScript.includes("function publishPixelSourceVisualHooks(options = {})"), "player model visual runtime should own pixel-source hook publication");
   assert(playerModelSource.includes("playerModelVisualRuntimeForPublication.publishPixelSourceVisualHooks({"), "player-model should expose pixel-source visual mesh builder through the visual runtime");
   assert(!fishingRuntimeScript.includes("alignTorsoToUpperLegFrontHinge"), "fishing runtime should remove the legacy procedural fishing pose");
-  const cookingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/cooking/index.js"), "utf8");
+  const cookingRuntimeScript = readRepoFile(root, "src/js/skills/cooking/index.js");
   assert(cookingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "cooking runtime should request empty hands during clip playback");
   assert(!cookingRuntimeScript.includes("applyCookingStylePose"), "cooking runtime should remove the legacy procedural cooking pose");
-  const craftingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/crafting/index.js"), "utf8");
+  const craftingRuntimeScript = readRepoFile(root, "src/js/skills/crafting/index.js");
   assert(craftingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "crafting runtime should request empty hands during clip playback");
-  const firemakingRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/firemaking/index.js"), "utf8");
+  const firemakingRuntimeScript = readRepoFile(root, "src/js/skills/firemaking/index.js");
   assert(firemakingRuntimeScript.includes("getAnimationHeldItemId"), "firemaking runtime should surface the tinderbox prop during clip playback");
   assert(firemakingRuntimeScript.includes("getAnimationHeldItemSlot"), "firemaking runtime should request the left-hand prop slot");
   assert(firemakingRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "firemaking runtime should hide equipped weapons during clip playback");
   assert(!firemakingRuntimeScript.includes("rig.rightLowerArm.rotation.set(-0.6 + (s * 0.35), -0.1, 0);"), "firemaking runtime should remove the legacy procedural firemaking pose");
-  const woodcutRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/woodcutting/index.js"), "utf8");
+  const woodcutRuntimeScript = readRepoFile(root, "src/js/skills/woodcutting/index.js");
   assert(woodcutRuntimeScript.includes("const TREE_NODE_NAMES ="), "woodcutting runtime tree naming table missing");
   assert(woodcutRuntimeScript.includes("context.getTreeNodeAt"), "woodcutting runtime tree-node resolver missing");
   assert(woodcutRuntimeScript.includes("you must be level ${requiredLevel} woodcutting to chop this tree"), "woodcutting level warning message missing");
-  const rcRuntimeScript = fs.readFileSync(path.join(root, "src/js/skills/runecrafting/index.js"), "utf8");
+  const rcRuntimeScript = readRepoFile(root, "src/js/skills/runecrafting/index.js");
   assert(rcRuntimeScript.includes("function tryFillPouchFromInventory"), "runecrafting pouch fill handler missing");
   assert(rcRuntimeScript.includes("function tryEmptyPouchToInventory"), "runecrafting pouch empty handler missing");
   assert(rcRuntimeScript.includes("getAnimationSuppressEquipmentVisual"), "runecrafting runtime should hide equipped gear during clip playback");

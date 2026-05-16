@@ -8,11 +8,6 @@
         return Math.max(0, Math.min(1, value));
     }
 
-    function fallbackSmoothstep(edge0, edge1, value) {
-        const t = fallbackClamp01((value - edge0) / Math.max(0.000001, edge1 - edge0));
-        return t * t * (3 - (2 * t));
-    }
-
     function fallbackFractalNoise2D(x, y, seed = 0) {
         return fallbackHash2D(x, y, seed);
     }
@@ -20,7 +15,6 @@
     function createPlanningRuntime(options = {}) {
         const hash2D = typeof options.hash2D === 'function' ? options.hash2D : fallbackHash2D;
         const clamp01 = typeof options.clamp01 === 'function' ? options.clamp01 : fallbackClamp01;
-        const smoothstep = typeof options.smoothstep === 'function' ? options.smoothstep : fallbackSmoothstep;
         const sampleFractalNoise2D = typeof options.sampleFractalNoise2D === 'function' ? options.sampleFractalNoise2D : fallbackFractalNoise2D;
         const heightMap = Array.isArray(options.heightMap) ? options.heightMap : [[[0]]];
         const logicalMap = Array.isArray(options.logicalMap) ? options.logicalMap : [[]];

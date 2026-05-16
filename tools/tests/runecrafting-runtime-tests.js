@@ -1,21 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { expectMessage } = require("./message-test-utils");
 
 function createRunecraftingContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});
@@ -112,11 +98,6 @@ function createRunecraftingContext(options = {}) {
   context._queued = 0;
   context._renderCount = 0;
   return context;
-}
-
-function expectMessage(context, expectedText, testName) {
-  const hasMessage = context._messages.some((entry) => entry && entry.message === expectedText);
-  assert(hasMessage, testName + ': expected message "' + expectedText + '"');
 }
 
 function run() {

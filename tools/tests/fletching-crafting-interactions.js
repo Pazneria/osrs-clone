@@ -1,58 +1,10 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { makeClassNameList } = require("./dom-test-utils");
+const { expectMessage, expectMessageContaining, expectMessageTone } = require("./message-test-utils");
 
 function createDomShim() {
-  class MockClassList {
-    constructor(el) {
-      this.el = el;
-    }
-
-    _tokens() {
-      return String(this.el.className || "")
-        .split(/\s+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-    }
-
-    _write(tokens) {
-      this.el.className = tokens.join(" ");
-    }
-
-    add(...classes) {
-      const set = new Set(this._tokens());
-      classes.forEach((c) => {
-        if (c) set.add(c);
-      });
-      this._write(Array.from(set));
-    }
-
-    remove(...classes) {
-      const removeSet = new Set(classes.filter(Boolean));
-      const next = this._tokens().filter((token) => !removeSet.has(token));
-      this._write(next);
-    }
-
-    contains(cls) {
-      return this._tokens().includes(cls);
-    }
-  }
-
   class MockElement {
     constructor(tagName, doc) {
       this.tagName = String(tagName || "div").toUpperCase();
@@ -70,7 +22,7 @@ function createDomShim() {
       this.disabled = false;
       this.title = "";
       this._innerHTML = "";
-      this.classList = new MockClassList(this);
+      this.classList = makeClassNameList(this);
     }
 
     set innerHTML(value) {
@@ -288,25 +240,6 @@ function createSkillContext(options = {}) {
   };
 
   return context;
-}
-
-function expectMessage(context, expectedText, testName) {
-  const hasMessage = context._messages.some((entry) => entry && entry.message === expectedText);
-  assert(hasMessage, testName + ': expected message "' + expectedText + '"');
-}
-
-function expectMessageContaining(context, expectedFragment, testName) {
-  const hasMessage = context._messages.some(
-    (entry) => entry && typeof entry.message === "string" && entry.message.includes(expectedFragment)
-  );
-  assert(hasMessage, testName + ': expected message containing "' + expectedFragment + '"');
-}
-
-function expectMessageTone(context, expectedText, expectedTone, testName) {
-  const hasTone = context._messages.some(
-    (entry) => entry && entry.message === expectedText && entry.tone === expectedTone
-  );
-  assert(hasTone, testName + ': expected "' + expectedText + '" with tone "' + expectedTone + '"');
 }
 
 function run() {

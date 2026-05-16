@@ -10,6 +10,7 @@ const {
   buildCodexEntityPath,
   getCodexRouteTemplates
 } = require("../common/codex-link-contract");
+const { cloneJson, readJsonFile: readJson, writeJsonFile } = require("../lib/json-file-utils");
 
 const CODEX_EXPORT_SCHEMA_VERSION = 1;
 const CODEX_EXPORT_FILENAMES = Object.freeze({
@@ -22,14 +23,6 @@ const CODEX_EXPORT_FILENAMES = Object.freeze({
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function cloneJson(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function readJson(absPath) {
-  return JSON.parse(fs.readFileSync(absPath, "utf8"));
 }
 
 function slugify(value) {
@@ -557,11 +550,11 @@ function buildCodexExportBundle(root, options = {}) {
 function writeCodexExportBundle(bundle, outDir) {
   const resolvedOutDir = path.resolve(outDir);
   fs.mkdirSync(resolvedOutDir, { recursive: true });
-  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.manifest), `${JSON.stringify(bundle.manifest, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.items), `${JSON.stringify(bundle.items, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.skills), `${JSON.stringify(bundle.skills, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.worlds), `${JSON.stringify(bundle.worlds, null, 2)}\n`);
-  fs.writeFileSync(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.enemies), `${JSON.stringify(bundle.enemies, null, 2)}\n`);
+  writeJsonFile(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.manifest), bundle.manifest);
+  writeJsonFile(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.items), bundle.items);
+  writeJsonFile(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.skills), bundle.skills);
+  writeJsonFile(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.worlds), bundle.worlds);
+  writeJsonFile(path.join(resolvedOutDir, CODEX_EXPORT_FILENAMES.enemies), bundle.enemies);
   return resolvedOutDir;
 }
 
@@ -573,9 +566,6 @@ function exportCodexBundle(root, outDir, options = {}) {
 
 module.exports = {
   CODEX_EXPORT_SCHEMA_VERSION,
-  CODEX_EXPORT_FILENAMES,
-  buildCodexExportBundle,
   validateCodexExportBundle,
-  writeCodexExportBundle,
   exportCodexBundle
 };

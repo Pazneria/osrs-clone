@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { readJsonFile } = require("../lib/json-file-utils");
 const {
   getProjectRoot,
   ensureDir,
@@ -81,7 +82,7 @@ function main() {
   const projectRoot = getProjectRoot();
   const args = parseArgs(process.argv.slice(2));
   const specPath = path.resolve(projectRoot, args.specPath);
-  const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
+  const spec = readJsonFile(specPath);
   const compiled = compilePixelSpec(spec, { projectRoot });
   const source = compiled.source;
   const analysis = analyzePixelSource(source);

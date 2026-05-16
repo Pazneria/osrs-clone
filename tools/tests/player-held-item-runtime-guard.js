@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 class FakeGroup {
   constructor() {
@@ -54,9 +51,9 @@ function makeRig() {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "player-held-item-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/player-held-item-runtime.js");
+  const playerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const heldItemIndex = manifestSource.indexOf('id: "player-held-item-runtime"');
   const playerModelIndex = manifestSource.indexOf('id: "player-model"');
 

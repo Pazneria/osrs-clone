@@ -7,7 +7,7 @@ export type PlayerCombatStyleId = MeleeStyleId | "ranged" | "magic";
 export type CombatTargetKind = "enemy";
 export type EnemyAggroType = "passive" | "aggressive";
 export type EnemyRuntimeStateId = "idle" | "aggroed" | "returning" | "dead";
-export type EnemyAppearanceKind = "rat" | "humanoid" | "chicken";
+export type EnemyAppearanceKind = "rat" | "humanoid" | "chicken" | "boar" | "wolf" | "bear";
 export type EnemyDropKind = "nothing" | "item" | "coins";
 export type CombatProgressionBandId =
   | "starter_opt_in"
@@ -141,6 +141,9 @@ export interface EnemySpawnNodeDefinition {
   spawnTile: Point3;
   homeTileOverride?: Point3 | null;
   roamingRadiusOverride?: number | null;
+  patrolRoute?: Point3[] | null;
+  assistGroupId?: string | null;
+  assistRadiusOverride?: number | null;
   respawnTicks?: number | null;
   spawnEnabled: boolean;
   facingYaw?: number;
@@ -157,6 +160,12 @@ export interface EnemyRuntimeState extends Point3 {
   remainingAttackCooldown: number;
   resolvedHomeTile: Point3;
   resolvedSpawnTile: Point3;
+  spawnGroupId?: string | null;
+  assistGroupId?: string | null;
+  resolvedAssistRadius: number;
+  resolvedPatrolRoute?: Point3[] | null;
+  patrolRouteIndex?: number | null;
+  patrolTargetIndex?: number | null;
   resolvedRoamingRadius: number;
   resolvedChaseRange: number;
   resolvedAggroRadius: number;

@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { readJsonFile, writeJsonFile } = require("../lib/json-file-utils");
 const { validatePixelSource } = require("./pixel-source");
 
 function getProjectRoot() {
@@ -35,13 +36,9 @@ function getPixelArtifactPaths(projectRoot, assetId) {
   };
 }
 
-function getRuntimePixelIconPath(assetId) {
-  return `./assets/pixel/${assetId}.png`;
-}
-
 function loadPixelSource(projectRoot, assetId) {
   const filePath = getPixelSourcePath(projectRoot, assetId);
-  const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const raw = readJsonFile(filePath);
   const validation = validatePixelSource(raw);
   if (validation.errors.length > 0) {
     throw new Error(`${path.basename(filePath)}: ${validation.errors.join("; ")}`);
@@ -66,7 +63,7 @@ function writePixelSource(projectRoot, source) {
   const normalized = validation.normalized;
   ensureDir(getPixelSourceDir(projectRoot));
   const targetPath = getPixelSourcePath(projectRoot, normalized.id);
-  fs.writeFileSync(targetPath, JSON.stringify(normalized, null, 2) + "\n", "utf8");
+  writeJsonFile(targetPath, normalized);
   return targetPath;
 }
 
@@ -78,7 +75,6 @@ module.exports = {
   getModelOutputDir,
   getPixelSourcePath,
   getPixelArtifactPaths,
-  getRuntimePixelIconPath,
   loadPixelSource,
   listPixelSourceIds,
   writePixelSource

@@ -17,6 +17,7 @@ import { MAIN_OVERWORLD_WORLD_ID, canonicalizeWorldId } from "../world/ids";
 import {
   cloneCaveOpeningLandmark,
   cloneCombatSpawnNode,
+  cloneDecorPropLandmark,
   cloneDoorLandmark,
   cloneFenceLandmark,
   cloneIslandWaterPatch,
@@ -32,6 +33,7 @@ import {
   cloneStructurePlacement,
   cloneTerrainBox2D,
   cloneTerrainEllipse,
+  cloneTerrainLandformPatch,
   cloneTerrainPathPatch,
   cloneTerrainPier,
   cloneTravelSpawn,
@@ -82,6 +84,7 @@ interface LegacyWorldPayload {
   deepWaterCenter: WorldBootstrapResult["legacy"]["deepWaterCenter"];
   pierConfig: WorldBootstrapResult["legacy"]["pier"];
   pathPatches: WorldBootstrapResult["legacy"]["pathPatches"];
+  landformPatches: WorldBootstrapResult["legacy"]["landformPatches"];
   smithingHallApproach: WorldBootstrapResult["legacy"]["smithingHallApproach"];
   waterBodies: WorldBootstrapResult["legacy"]["waterBodies"];
   stampedStructures: WorldBootstrapResult["legacy"]["stampedStructures"];
@@ -340,6 +343,7 @@ function toMerchantRenderPlacement(
 ): LegacyMerchantNpcRenderPlacement | null {
   if (!service || service.type !== "MERCHANT") return null;
   return {
+    spawnId: service.spawnId || null,
     type: Number.isFinite(service.npcType) ? Number(service.npcType) : 2,
     x: service.x,
     y: service.y,
@@ -354,6 +358,12 @@ function toMerchantRenderPlacement(
       ? Math.max(0, Math.floor(Number(service.roamingRadiusOverride)))
       : null,
     tags: Array.isArray(service.tags) ? service.tags.slice() : [],
+    tutorialVisibleFromStep: Number.isFinite(service.tutorialVisibleFromStep)
+      ? Math.max(0, Math.floor(Number(service.tutorialVisibleFromStep)))
+      : null,
+    tutorialVisibleUntilStep: Number.isFinite(service.tutorialVisibleUntilStep)
+      ? Math.max(0, Math.floor(Number(service.tutorialVisibleUntilStep)))
+      : null,
     travelToWorldId: options.includeTravel
       ? (normalizeWorldId(service.travelToWorldId) || null)
       : undefined,
@@ -379,6 +389,7 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     deepWaterCenter: cloneTerrainBox2D(legacy.deepWaterCenter),
     pierConfig: cloneTerrainPier(legacy.pier),
     pathPatches: legacy.pathPatches.map(cloneTerrainPathPatch),
+    landformPatches: legacy.landformPatches.map(cloneTerrainLandformPatch),
     smithingHallApproach: { ...legacy.smithingHallApproach },
     waterBodies: legacy.waterBodies.map(cloneWaterBodyDefinition),
     stampedStructures: legacy.stampedStructures.map(cloneStructurePlacement),
@@ -401,10 +412,7 @@ function getWorldPayload(worldId?: string | null): LegacyWorldPayload {
     fenceLandmarks: legacy.fences.map(cloneFenceLandmark),
     roofLandmarks: legacy.roofs.map(cloneRoofLandmark),
     caveOpeningLandmarks: legacy.caveOpenings.map(cloneCaveOpeningLandmark),
-    decorPropLandmarks: legacy.decorProps.map((prop) => ({
-      ...prop,
-      tags: Array.isArray(prop.tags) ? prop.tags.slice() : []
-    })),
+    decorPropLandmarks: legacy.decorProps.map(cloneDecorPropLandmark),
     showcaseTreeDefs: legacy.showcaseTrees.map(cloneShowcaseTree),
     fishingMerchantSpots: staticMerchantServices
       .filter((service) => Array.isArray(service.tags) && service.tags.includes("fishing") && !service.tags.includes("tutorial"))

@@ -1,16 +1,13 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const modulePath = path.join(root, "src", "game", "codex", "link-contract.ts");
-  const source = fs.readFileSync(modulePath, "utf8");
+  const source = readRepoFile(root, "src/game/codex/link-contract.ts");
 
   assert(!source.includes("localStorage"), "codex link contract should not read localStorage");
   assert(!source.includes("sessionStorage"), "codex link contract should not read sessionStorage");

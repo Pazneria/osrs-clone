@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const { isObject, sortKeysDeep } = require("./runtime-item-catalog");
+const { isObject, sortKeysDeep } = require("./object-utils");
+const { readJsonFile } = require("../lib/json-file-utils");
 
 const ICON_STATUS_FILENAME = "icon-status.json";
 const ICON_STATUS_GENERATED_FROM = "src/js/content/item-catalog.js";
@@ -40,10 +41,10 @@ function inferIconTreatment(assetUsageById, assetId) {
 function readIconStatusManifest(projectRoot) {
   const iconStatusPath = getIconStatusPath(projectRoot);
   if (!fs.existsSync(iconStatusPath)) return null;
-  return JSON.parse(fs.readFileSync(iconStatusPath, "utf8"));
+  return readJsonFile(iconStatusPath);
 }
 
-function buildIconStatusManifest(projectRoot, runtimeItemDefs, existingManifest = null) {
+function buildIconStatusManifest(runtimeItemDefs, existingManifest = null) {
   const existingItems = isObject(existingManifest && existingManifest.items) ? existingManifest.items : {};
   const assetUsageById = getAssetUsageById(runtimeItemDefs);
   const items = {};
@@ -82,6 +83,5 @@ module.exports = {
   getIconStatusPath,
   getRuntimeIconAssetId,
   inferIconTreatment,
-  isNonEmptyString,
   readIconStatusManifest
 };

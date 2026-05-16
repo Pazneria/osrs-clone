@@ -14,7 +14,7 @@ interface LegacyScriptLoadOrderEntry {
   codeVariable: string;
 }
 
-export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = [
+const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = [
   { id: "item-catalog", filename: "src/js/content/item-catalog.js", rawPath: "../../js/content/item-catalog.js?raw", codeVariable: "itemCatalogScript" },
   { id: "icon-review-catalog", filename: "src/js/content/icon-review-catalog.js", rawPath: "../../js/content/icon-review-catalog.js?raw", codeVariable: "iconReviewCatalogScript" },
   { id: "player-appearance-catalog", filename: "src/js/content/player-appearance-catalog.js", rawPath: "../../js/content/player-appearance-catalog.js?raw", codeVariable: "playerAppearanceCatalogScript" },
@@ -105,7 +105,6 @@ export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = 
   { id: "target-interaction-registry", filename: "src/js/interactions/target-interaction-registry.js", rawPath: "../../js/interactions/target-interaction-registry.js?raw", codeVariable: "targetInteractionRegistryScript" },
   { id: "skills-shared-utils", filename: "src/js/skills/shared/utils.js", rawPath: "../../js/skills/shared/utils.js?raw", codeVariable: "skillSharedUtilsScript" },
   { id: "skills-shared-action-resolution", filename: "src/js/skills/shared/action-resolution.js", rawPath: "../../js/skills/shared/action-resolution.js?raw", codeVariable: "skillActionResolutionScript" },
-  { id: "runecrafting-constants", filename: "src/js/skills/runecrafting/constants.js", rawPath: "../../js/skills/runecrafting/constants.js?raw", codeVariable: "runecraftingConstantsScript" },
   { id: "skills-mining", filename: "src/js/skills/mining/index.js", rawPath: "../../js/skills/mining/index.js?raw", codeVariable: "miningSkillScript" },
   { id: "skills-woodcutting", filename: "src/js/skills/woodcutting/index.js", rawPath: "../../js/skills/woodcutting/index.js?raw", codeVariable: "woodcuttingSkillScript" },
   { id: "skills-fishing", filename: "src/js/skills/fishing/index.js", rawPath: "../../js/skills/fishing/index.js?raw", codeVariable: "fishingSkillScript" },
@@ -124,6 +123,7 @@ export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = 
   { id: "player-hitpoints-runtime", filename: "src/js/player-hitpoints-runtime.js", rawPath: "../../js/player-hitpoints-runtime.js?raw", codeVariable: "playerHitpointsRuntimeScript" },
   { id: "humanoid-model-runtime", filename: "src/js/humanoid-model-runtime.js", rawPath: "../../js/humanoid-model-runtime.js?raw", codeVariable: "humanoidModelRuntimeScript" },
   { id: "transient-visual-runtime", filename: "src/js/transient-visual-runtime.js", rawPath: "../../js/transient-visual-runtime.js?raw", codeVariable: "transientVisualRuntimeScript" },
+  { id: "npc-model-gallery-runtime", filename: "src/js/npc-model-gallery-runtime.js", rawPath: "../../js/npc-model-gallery-runtime.js?raw", codeVariable: "npcModelGalleryRuntimeScript" },
   { id: "world", filename: "src/js/world.js", rawPath: "../../js/world.js?raw", codeVariable: "worldScript" },
   { id: "combat", filename: "src/js/combat.js", rawPath: "../../js/combat.js?raw", codeVariable: "combatScript" },
   { id: "input-qa-camera-runtime", filename: "src/js/input-qa-camera-runtime.js", rawPath: "../../js/input-qa-camera-runtime.js?raw", codeVariable: "inputQaCameraRuntimeScript" },

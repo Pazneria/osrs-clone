@@ -47,8 +47,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             25000,
             Math.floor(25000 * Math.pow((MAP_SIZE / LEGACY_PATHFIND_MAP_SIZE), 2))
         );
-        // Keep tooltip range well under the pathfinding iteration budget on large maps.
-        const MAX_PATHFIND_OPEN_AREA_RADIUS_TILES = Math.floor((Math.sqrt(PATHFIND_MAX_ITERATIONS + 1) - 1) / 2);
         const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
         const HOVER_TOOLTIP_REFRESH_INTERVAL_MS = 250;
         const HOVER_TOOLTIP_EDGE_GUARD_PX = 8;
@@ -1204,32 +1202,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
 
         installQaCameraHooks();
 
-        function initMotionDebugPanel() {
-            const panel = document.getElementById('motion-debug-panel');
-            if (!panel) return;
-
-            const bindRange = (id, key) => {
-                const el = document.getElementById(id);
-                if (!el || MOTION_TUNING[key] === undefined) return;
-                el.value = String(MOTION_TUNING[key]);
-                el.addEventListener('input', () => {
-                    const v = Number(el.value);
-                    if (Number.isFinite(v)) MOTION_TUNING[key] = v;
-                });
-            };
-
-            bindRange('motion-step-swing', 'walkLegSwing');
-            bindRange('motion-knee-lift', 'walkKneeLift');
-            bindRange('motion-bounce', 'walkBounce');
-
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'F7') {
-                    e.preventDefault();
-                    motionDebugVisible = !motionDebugVisible;
-                    panel.classList.toggle('hidden', !motionDebugVisible);
-                }
-            });
-        }
         function buildPoseEditorRuntimeOptions(extra = {}) {
             return {
                 documentRef: document,
@@ -1266,12 +1238,6 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             }
         }
 
-        function initPoseEditor() {
-            const runtime = getInputPoseEditorRuntime();
-            if (runtime && typeof runtime.initPoseEditor === 'function') {
-                runtime.initPoseEditor(poseEditor, buildPoseEditorRuntimeOptions());
-            }
-        }
         const SHADOW_FOCUS_TILE_EPSILON = 0.25;
         const SHADOW_FOCUS_HEIGHT_EPSILON = 0.15;
         const SHADOW_FOCUS_UPDATE_INTERVAL_MS = 120;
@@ -1582,126 +1548,5 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             updatePlayerOverheadText();
             updateHoverTooltip(frameNowMs);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        window.initPoseEditor = initPoseEditor;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeVec3(x = 0, y = 0, z = 0) {
   return {
@@ -33,9 +30,9 @@ function makeRigNode() {
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "town-npc-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const runtimeSource = readRepoFile(root, "src/js/world/town-npc-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const townRuntimeIndex = manifestSource.indexOf('id: "world-town-npc-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
 
@@ -200,6 +197,8 @@ function run() {
   assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 4 } }, { tutorialVisibleFromStep: 5 }) === false, "tutorial actor visibility should hide actors before their start step");
   assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 5 } }, { tutorialVisibleFromStep: 5 }) === true, "tutorial actor visibility should show actors on their start step");
   assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 11 } }, { tutorialVisibleUntilStep: 10 }) === false, "tutorial actor visibility should hide actors after their end step");
+  assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 4 } }, { tutorialVisibleFromStep: null, tutorialVisibleUntilStep: null }) === true, "null tutorial visibility bounds should mean always visible");
+  assert(runtime.isTutorialActorVisible({ TutorialRuntime: { getStep: () => 4 } }, {}) === true, "missing tutorial visibility bounds should mean always visible");
 
   {
     runtime.resetStaticNpcBaseTiles();
@@ -362,6 +361,7 @@ function run() {
   assert(qaTargets[1].actorId === "" && qaTargets[1].visualX === 2 && qaTargets[1].visualY === 3, "QA target snapshot should default missing identity and visual positions");
   assert(qaTargets[1].z === 0 && !qaTargets[1].rendered, "QA target snapshot should default missing z and hitbox state");
   assert(qaTargets[0].tutorialVisibilityActive === true && qaTargets[0].tutorialVisibleFromStep === null, "QA target snapshot should expose default tutorial visibility");
+  assert(qaTargets[1].tutorialVisibleFromStep === null && qaTargets[1].tutorialVisibleUntilStep === null, "QA target snapshot should keep null tutorial visibility as unbounded");
 
   {
     let buildContextCalls = 0;

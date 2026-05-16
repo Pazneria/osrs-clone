@@ -10,7 +10,7 @@ This project uses a multi-file structure.
 - `src/js/inventory.js`: inventory, bank, shop, and UI tab systems
 - `src/js/world.js`: world generation, map/chunks, minimap, pathing, and tick engine
 - `src/js/input-render.js`: pointer input, context actions, camera, animation/render loop
-- `run.bat`: starts local server and opens browser
+- `run.bat`: starts Vite on port `5500` and opens the browser
 
 ## Run
 
@@ -20,7 +20,7 @@ From this folder:
 npm.cmd run dev
 ```
 
-Or use `run.bat` for the same Vite-backed flow.
+Or use `npm.cmd run dev:legacy` / `run.bat` for the Vite-backed port `5500` flow.
 
 Then keep the terminal open and use `Ctrl + C` to stop.
 
@@ -36,7 +36,8 @@ npm run build
 ```
 
 Notes:
-- `dev` runs the Vite module shell on port `5500`.
+- `dev` runs the Vite module shell on the configured dev port (`5502` by default).
+- `dev:legacy` runs the same shell through `run.bat`, using port `5500` for older local links.
 - `build` emits a production bundle to `dist/` and copies the runtime PNG/OBJ asset folders the live game still reads by URL.
 - `check` and `test` are backed by `tools/tests/package-suite.js`; update that runner when adding broad repo checks instead of growing `package.json`.
 - `check` and `test` include the incremental TypeScript bridge plus world-content validation.
@@ -91,7 +92,7 @@ npm.cmd run tool:check
 npm.cmd run tool:pixel:build -- --asset iron_axe
 npm.cmd run tool:pixel:build:all
 npm.cmd run tool:sim:loot -- --runs 100000 --table "coins:50,raw_shrimp:30,nothing:20"
-npm.cmd run tool:sim:combat -- --runs 10000 --strLevel 70 --atkLevel 70 --targetHp 60
+npm.cmd run tool:sim:melee -- --runs 10000 --strLevel 70 --atkLevel 70 --targetHp 60
 ```
 
 See `docs/TOOLKIT_SETUP.md` for install/setup details.
@@ -106,8 +107,8 @@ Start here for the custom pixel-icon workflow:
 Editor + build flow:
 
 ```bat
-npm.cmd run dev
-npm.cmd run tool:pixel:build -- --asset logs
+npm.cmd run dev:legacy
+npm.cmd run tool:pixel:build -- --asset regular_logs
 npm.cmd run tool:pixel:build:all
 npm.cmd run tool:items:sync
 npm.cmd run tool:items:validate

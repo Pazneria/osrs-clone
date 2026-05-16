@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "roadProfileId": "cart_road",
+  "label": "Cart Road",
+  "tileId": "DIRT",
+  "defaultPathWidth": 2.8,
+  "previewColor": "#9a7a42",
+  "tags": [
+    "road",
+    "spawn-protected",
+    "cart_width"
+  ],
+  "promotionNotes": [
+    "Use near banks, storehouses, and market approaches.",
+    "Promotion should expand to tile/route metadata rather than visual mesh geometry."
+  ]
+}

@@ -1,3 +1,4 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 
@@ -6,27 +7,14 @@ const {
   exportCodexBundle,
   validateCodexExportBundle
 } = require("../content/codex-export");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function cloneJson(value) {
-  return JSON.parse(JSON.stringify(value));
-}
+const { readJsonFile } = require("../lib/json-file-utils");
+const { cloneJson, expectThrown } = require("./collection-test-utils");
 
 function expectFailure(fn, expectedMessageRegex, label) {
-  let failed = null;
-  try {
-    fn();
-  } catch (error) {
-    failed = error;
-  }
-
-  assert(!!failed, `${label}: expected failure`);
-  if (expectedMessageRegex) {
-    assert(expectedMessageRegex.test(String(failed.message || failed)), `${label}: unexpected error "${failed.message || failed}"`);
-  }
+  expectThrown(fn, expectedMessageRegex, {
+    expectedFailure: `${label}: expected failure`,
+    unexpectedMessage: (message) => `${label}: unexpected error "${message}"`
+  });
 }
 
 function run() {
@@ -43,11 +31,11 @@ function run() {
     assert(fs.existsSync(path.join(outDir, filename)), `${filename} was not written`);
   });
 
-  const manifest = JSON.parse(fs.readFileSync(path.join(outDir, "manifest.json"), "utf8"));
-  const items = JSON.parse(fs.readFileSync(path.join(outDir, "items.json"), "utf8"));
-  const skills = JSON.parse(fs.readFileSync(path.join(outDir, "skills.json"), "utf8"));
-  const worlds = JSON.parse(fs.readFileSync(path.join(outDir, "worlds.json"), "utf8"));
-  const enemies = JSON.parse(fs.readFileSync(path.join(outDir, "enemies.json"), "utf8"));
+  const manifest = readJsonFile(path.join(outDir, "manifest.json"));
+  const items = readJsonFile(path.join(outDir, "items.json"));
+  const skills = readJsonFile(path.join(outDir, "skills.json"));
+  const worlds = readJsonFile(path.join(outDir, "worlds.json"));
+  const enemies = readJsonFile(path.join(outDir, "enemies.json"));
 
   assert(manifest.schemaVersion === CODEX_EXPORT_SCHEMA_VERSION, "codex export schema version mismatch");
   assert(manifest.generatedAt === "2026-03-13T00:00:00.000Z", "codex export generatedAt mismatch");

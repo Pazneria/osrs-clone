@@ -1,33 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function approxEq(actual, expected, epsilon = 1e-9) {
-  return Math.abs(actual - expected) <= epsilon;
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
-
-function createSequenceRng(values) {
-  const queue = Array.isArray(values) ? values.slice() : [];
-  return () => {
-    if (queue.length === 0) return 0;
-    return queue.shift();
-  };
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { approximatelyEqual: approxEq } = require("./collection-test-utils");
+const { createSequenceRng } = require("./rng-test-utils");
 
 function createFishingContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});

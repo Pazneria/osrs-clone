@@ -1,16 +1,13 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "training-location-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const runtimeSource = readRepoFile(root, "src/js/world/training-location-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const trainingRuntimeIndex = manifestSource.indexOf('id: "world-training-location-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
 

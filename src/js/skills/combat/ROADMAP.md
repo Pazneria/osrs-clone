@@ -44,6 +44,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Combat HUD/target feedback pass | Complete |
 | Progression-band contract for enemy difficulty, drops, and placement | Complete |
 | First-pass guarded threshold and camp-threat encounter coverage | Complete |
+| Opt-in ally-assist behavior for authored combat groups | Complete |
+| Authored patrol-route movement for spawn nodes | Complete |
 
 ## Data Contracts
 
@@ -63,14 +65,14 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 
 - Enemy type definitions own reusable melee combat and aggro defaults.
 - Spawn nodes own placed world authoring and respawn timing.
-- Runtime state owns live health, state, locked target, cooldown, resolved home/spawn tiles, chase/aggro radius, and live positioning.
+- Runtime state owns live health, state, locked target, cooldown, resolved home/spawn tiles, optional patrol-route progress, chase/aggro radius, and live positioning.
 
 ### Encounter Authoring
 
 - Combat content is authored into the world through explicit spawn nodes and spawn groups, with the world region layer acting as the source of truth for encounter topology rather than piggybacking on merchant/travel NPC descriptors.
-- The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, respawn ticks, facing yaw, enabled state, and spawn-group id.
-- The roadmap leaves room to extend encounter authoring later with patrol routes, density caps, safe-distance-from-route rules, and local drop overrides where needed.
-- In the first pass, spawn groups are organizational/content-authoring helpers only and do not automatically imply shared aggro, ally assist, shared respawn, or formation logic.
+- The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, optional patrol route, respawn ticks, facing yaw, enabled state, and spawn-group id.
+- The roadmap leaves room to extend encounter authoring later with density caps, safe-distance-from-route rules, and local drop overrides where needed.
+- Spawn groups remain organizational/content-authoring helpers by default. Shared aggro is explicit and opt-in through `assistGroupId` plus `assistRadiusOverride`; this avoids turning every authored spawn group into a dogpile.
 
 ### Loot Tables
 
@@ -249,15 +251,15 @@ Rule: every live enemy template must belong to exactly one progression band, and
 
 ### Current Combat World Coverage
 
-The current authored `starter_town` world now covers every live first-pass progression band. Starter-safe, roadside, resource-outskirts, guarded-threshold, and camp-threat spawns all flow through the same `combatSpawns` source of truth and are locked by the combat content, topology, and world parity guards.
+The current authored `main_overworld` world now covers every live first-pass progression band. Starter-safe, roadside, resource-outskirts, guarded-threshold, and camp-threat spawns all flow through the same `combatSpawns` source of truth and are locked by the combat content, topology, and world parity guards. The southeast camp-threat pocket is the first live opt-in assist group: bear, heavy brute, and fast striker spawns share `assistGroupId: "camp_southeast_ruins"` with bounded assist radius.
 
 | World | Progression Band | Spawn Groups | Spawn Count |
 | --- | --- | --- | --- |
-| Starter Town | Starter Opt-In | `starter_training`, `starter_field`, `starter_outer_rats_southwest`, `starter_outer_chickens_southwest`, `starter_outer_chickens_southeast` | 17 |
-| Starter Town | Starter Roadside | `starter_road`, `starter_east_field_*`, `starter_far_*_goblins` | 12 |
-| Starter Town | Resource Outskirts | `starter_east_far_boar_*`, `starter_outer_boars_*`, `starter_outer_wolf_*` | 18 |
-| Starter Town | Guarded Threshold | `starter_east_outpost_guard_post` | 3 |
-| Starter Town | Camp Threat | `camp_southeast_ruins` | 3 |
+| Main Overworld | Starter Opt-In | `starter_training`, `starter_field`, `starter_outer_rats_southwest`, `starter_outer_chickens_southwest`, `starter_outer_chickens_southeast` | 17 |
+| Main Overworld | Starter Roadside | `starter_road`, `starter_east_field_*`, `starter_far_*_goblins` | 12 |
+| Main Overworld | Resource Outskirts | `starter_east_far_boar_*`, `starter_outer_boars_*`, `starter_outer_wolf_*` | 18 |
+| Main Overworld | Guarded Threshold | `starter_east_outpost_guard_post` | 3 |
+| Main Overworld | Camp Threat | `camp_southeast_ruins` | 3 |
 
 ## Spawn / Respawn Model
 
@@ -312,7 +314,7 @@ The current authored `starter_town` world now covers every live first-pass progr
 - Passive spawns can sit closer to safe paths, but should still avoid cluttering the main readability of town hubs.
 - Multi-enemy pockets need enough separation that one pull does not accidentally become an unreadable dogpile.
 - Home tiles and chase ranges should be authored with the surrounding terrain in mind, not left at arbitrary defaults.
-- Starter-town encounter pockets should stay within the world-authored route buffers and the combat topology/perf guard should catch unsafe spacing before the layout drifts.
+- Starter-town encounter pockets should stay within the world-authored route buffers; content and world parity guards should catch placement drift, with detailed topology/perf automation still a follow-up.
 
 ### Spawn Group Plan
 
@@ -324,7 +326,7 @@ The current authored `starter_town` world now covers every live first-pass progr
 | Route gate | Warns the player that a path is hotter | Strong readability, predictable leash zone |
 | Named anchor | Gives the area a combat landmark | Unique placement and stronger authored intent |
 
-Rule: in first-pass melee-only combat, spawn groups are content grouping only. They do not automatically create ally-assist, shared target selection, or shared respawn behavior.
+Rule: spawn groups are content grouping only unless a spawn also declares an `assistGroupId`. Assist groups can pull nearby idle allies into combat, but do not imply shared respawn, formation movement, or dynamic target switching. Patrol routes are likewise opt-in per spawn node; they shape idle movement only and fall back to the normal leash/return rules during combat.
 
 ### Region Rollout Backlog
 
@@ -365,7 +367,8 @@ The enemy specs explicitly defer richer assist/group logic until the simpler aut
 ### Targeting / Aggro
 
 - Proximity aggro should remain deterministic and easily explainable in authored spaces.
-- Later camps may optionally allow nearby allies to assist, but only once encounter readability rules are in place.
+- Camps may optionally allow nearby allies to assist by declaring a shared `assistGroupId` and bounded `assistRadiusOverride`; the southeast camp-threat pocket is the first live example.
+- Spawn nodes may optionally declare a bounded `patrolRoute`; the southeast camp fast striker is the first live example and patrols the camp edge while idle.
 - Passive enemies can still react when directly attacked, but should not become pseudo-aggressive by accident.
 
 ### Pursuit / Reset
@@ -385,8 +388,8 @@ The enemy specs explicitly defer richer assist/group logic until the simpler aut
 These are worth keeping in the roadmap precisely so we do not accidentally treat them like current-slice requirements.
 
 - advanced spawn randomization or dynamic region-driven spawning
-- advanced roaming behavior beyond the simple current radius model
-- group aggro, ally assist, or formation logic
+- advanced roaming behavior beyond the current authored patrol and simple radius models
+- formation logic and non-opt-in shared target systems
 - safe-spot exception systems
 - ranged or magic enemy packages
 - special attacks, status effects, or multi-phase enemies
@@ -416,7 +419,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - Enemy occupancy and minimap/world updates should only invalidate when combat actors actually move or change state.
 - Every authored combat spawn should validate required fields, resolve to a known enemy type, and stay inside the authored world encounter topology.
 - Starter-town encounter layouts should be manually checked for safe-routing, aggro readability, and pathing edge cases.
-- The encounter topology/perf guard should cover spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, and local path-budget estimates.
+- A rebuilt encounter topology/perf guard should cover spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, and local path-budget estimates.
 - Same-tick combat rules should remain covered by automated tests as the enemy roster expands.
 - Manual-movement lock break, non-enemy interaction lock break, cooldown persistence after break, auto-retaliate choice rules, hit-aggro cooldown = `1`, and temporary-occupancy-vs-hard-no-path behavior should remain explicitly regression-tested.
 - Combat/eating interaction should remain regression-tested against the shared same-tick restriction rules.

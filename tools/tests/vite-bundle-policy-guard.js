@@ -1,13 +1,10 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const configSource = fs.readFileSync(path.join(root, "vite.config.ts"), "utf8");
+  const configSource = readRepoFile(root, "vite.config.ts");
 
   assert(configSource.includes("function getManualChunkName"), "vite config should keep a named manual chunk policy");
   assert(configSource.includes('return "vendor-three";'), "vite config should split three into a named vendor chunk");

@@ -15,7 +15,16 @@
         "timber_longhouse",
         "timber_shack",
         "timber_workshop",
-        "timber_hut"
+        "timber_hut",
+        "bw_frontier_cottage",
+        "bw_quarry_bunkhouse",
+        "bw_quarry_storehouse",
+        "bw_frontier_bank",
+        "bw_stone_townhouse",
+        "bw_painted_gallery",
+        "bw_castle_gatehouse",
+        "bw_burnt_cottage",
+        "bw_stone_manor"
       ],
       "defaultSpawn": {
         "x": 205,

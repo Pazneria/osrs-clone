@@ -77,7 +77,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [ ] Notes/logs/docs updated
 
 ### HIT-002 - NPC world placement pass
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -105,7 +105,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-003 - Service distribution pass (add 8+ banks)
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -133,7 +133,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-004 - Road network pass with protected tiles
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -161,13 +161,13 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-005 - Dock/coastline pass for dark-water fishing access
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `src/js/world.js`, `src/js/input-render.js`, `src/js/skills/fishing/ROADMAP.md`, `src/js/skills/fishing/STATUS.md`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-water-payload-proof.js`, `tools/tests/water-render-guard.js`, `tools/tests/fishing-runtime-tests.js`
+- Links: `content/world/regions/main_overworld.json`, `src/js/world.js`, `src/js/input-render.js`, `src/js/skills/fishing/ROADMAP.md`, `src/js/skills/fishing/STATUS.md`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-water-payload-proof.js`, `tools/tests/water-render-guard.js`, `tools/tests/fishing-runtime-tests.js`
 - Repro:
-  1. Inspect the authored fishing and cooking route anchors in `content/world/regions/starter_town.json`.
+  1. Inspect the authored fishing and cooking route anchors in `content/world/regions/main_overworld.json`.
   2. Follow the active pier and dock access flow in `src/js/world.js` and `src/js/input-render.js`.
   3. Compare the live fishing tracker and focused world/water/fishing guards against this hit card.
 - Expected: Docks are visibly elevated with support pillars, and dark-water rod/harpoon fishing is performed from docks only.
@@ -180,7 +180,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Validate interaction rules from dock tiles.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - `starter_town` now authors the dock loop explicitly through `skillRoutes.fishing` (`castle_pond_bank`, `castle_pond_pier`, `castle_pond_deep_edge`) plus matching dock/deep cooking anchors, so the world data already distinguishes shoreline, pier, and deep-water access points.
+  - `main_overworld` now authors the dock loop explicitly through `skillRoutes.fishing` (`castle_pond_bank`, `castle_pond_pier`, `castle_pond_deep_edge`) plus matching dock/deep cooking anchors, so the world data already distinguishes shoreline, pier, and deep-water access points.
   - `src/js/world.js` consumes the published `pierConfig` to build the raised pier deck, stairs, widened tip, and repeated support-post rows while preserving nearby deep-water coverage for fishing targets.
   - `src/js/input-render.js` already enforces the intended access contract with pier-specific boarding, descend, and fishing-approach helpers, and `src/js/skills/fishing/STATUS.md` already marks `FISHING-012` complete for the training-location/world-placement pass.
 - Plan vNext (if revised):
@@ -191,11 +191,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-006 - Terrain shaping pass for mining depressions/quarries
-- Status: Fixed
+- Status: Closed
 - Severity: S3
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/world.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/freeze-starter-town-parity.js`
+- Links: `src/js/world.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/freeze-main-overworld-parity.js`
 - Repro:
   1. Inspect mining area terrain profiles.
 - Expected: Mining areas generally sit in depressions/quarries.
@@ -214,7 +214,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Added gentle rim lifting and localized smoothing around touched quarry tiles so mining areas read as carved terrain rather than circular bowls or flat patches.
   - Kept gameplay-safe bounds by sculpting only natural land tiles (grass/dirt/rock/stump), excluding town-core and water-adjacent terrain classes, then clamping final quarry floor depths to conservative limits.
   - Rock instances now sample local terrain center height and apply a slight grounding offset so they seat into the quarry floor instead of floating over it.
-  - Verified world bootstrap and starter-town freeze parity guards after the terrain pass.
+  - Verified world bootstrap and main-overworld freeze parity guards after the terrain pass.
 - Plan vNext (if revised):
   1.
 - Verification:
@@ -223,7 +223,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-008 - Player creation menu
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -253,32 +253,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-009 - Account/progress persistence across logins
-- Status: Fixed
+- Status: Closed
 - Severity: S1
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/core.js`, `tools/tests/progress-persistence-guard.js`, `package.json`
+- Links: `src/js/core.js`, `src/js/core-progress-runtime.js`, `src/game/platform/session-bridge.ts`, `src/game/session/progress.ts`, `tools/tests/progress-persistence-guard.js`, `tools/tests/core-progress-runtime-guard.js`, `tools/tests/game-session-guard.js`, `package.json`
 - Repro:
   1. Play, gain progress, restart/login.
 - Expected: Player progress auto-saves and persists across multiple logins.
-- Actual: Persistence flow is incomplete.
+- Actual: Progress now saves through the session runtime, restores on startup before world initialization, and preserves player profile, creator selections, inventory/equipment, skills, quests, world id, and combat/eating state across reloads.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
   1. Define save schema + versioning.
   2. Implement auto-save triggers and load-on-login.
   3. Add migration/error handling and verify with multi-session test.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - Added versioned progress storage (`osrsClone.progress.v2`) with obsolete v1 cleanup and migration delegated through the typed session bridge.
+  - Moved progress serialization/deserialization, profile/appearance/skill sanitization, fresh-session handling, autosave scheduling, and unload/pagehide save hooks into `CoreProgressRuntime`.
+  - Startup now loads progress before world initialization and restores saved quests, world id aliases, player profile, creator selections, inventory, equipment, skills, and combat defaults through the session/runtime adapters.
+  - Stale persisted eat cooldown ticks are bounded on load so an old absolute tick value cannot lock food usage after a restart.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-013 - Shoreline terrain clipping cleanup
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
@@ -306,7 +310,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-014 - Tree spacing pass by tiered reserved areas
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WC
 - Source: Manual
@@ -334,7 +338,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-015 - Unique tree models per type
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WC
 - Source: Manual
@@ -364,7 +368,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-016 - Tree habitat placement rules
-- Status: Fixed
+- Status: Closed
 - Severity: S3
 - Area: WC
 - Source: Manual
@@ -426,9 +430,9 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: RC
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, `src/game/platform/legacy-bridge.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/skills/runecrafting/STATUS.md`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/skill-runtime-parity.js`, `tools/tests/spec-contracts.js`
+- Links: `content/world/regions/main_overworld.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, `src/game/platform/legacy-bridge.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/skills/runecrafting/STATUS.md`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/skill-runtime-parity.js`, `tools/tests/spec-contracts.js`
 - Repro:
-  1. Inspect the canonical runecrafting world content in `content/world/regions/starter_town.json`.
+  1. Inspect the canonical runecrafting world content in `content/world/regions/main_overworld.json`.
   2. Follow the authored altar data through `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, and the legacy bridge adapters.
   3. Compare the live runecrafting status board and focused world/runtime guards against this hit card.
 - Expected: Altars exist at designated intentional world locations.
@@ -441,7 +445,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Validate access paths and progression pacing.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - `starter_town` now authors the elemental altar path explicitly through `skillRoutes.runecrafting` and `landmarks.altars`, with the route order locked to `ember_altar`, `water_altar`, `earth_altar`, and `air_altar`.
+  - `main_overworld` now authors the elemental altar path explicitly through `skillRoutes.runecrafting` and `landmarks.altars`, with the route order locked to `ember_altar`, `water_altar`, `earth_altar`, and `air_altar`.
   - `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/world/runecrafting-runtime.ts`, `src/game/platform/legacy-bridge.ts`, and `src/game/platform/legacy-world-adapter.ts` publish those authored altar placements into both the typed runtime and legacy QA/runtime surfaces instead of deriving them from random world generation.
   - `src/js/skills/runecrafting/STATUS.md` already marks `RUNECRAFTING-011` complete, and the focused world/runecrafting guards already lock authored altar count, route order, and route publication.
 - Plan vNext (if revised):
@@ -657,10 +661,10 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: Other
 - Source: Manual
-- Links: `docs/ASSET_PIPELINE.md`, `index.html`, `src/js/core.js`, `src/js/content/icon-sprite-catalog.js`, `tools/content/validate-items.js`, `tools/tests/icon-sprite-catalog-guard.js`
+- Links: `docs/ASSET_PIPELINE.md`, `index.html`, `src/js/core.js`, `src/js/content/item-catalog.js`, `tools/content/validate-items.js`, `tools/tests/pixel-asset-pipeline-guard.js`
 - Repro:
-  1. Inspect `makeIconSprite` in `src/js/core.js`.
-  2. Observe dozens of inline SVG literals and hard-coded rune fallback sprite mappings.
+  1. Inspect runtime icon resolution through `src/js/core.js`, `src/js/inventory.js`, and `src/js/content/item-catalog.js`.
+  2. Confirm removed sprite-catalog paths stay absent and item icons resolve from pixel asset metadata.
   3. Compare to documented icon pipeline under `assets/pixel/*`.
 - Expected: Icon selection/rendering should primarily come from item/content asset metadata.
 - Actual: Core runtime carries a hand-maintained sprite map with manual fallback logic.
@@ -672,10 +676,10 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Add validation for missing icon references and fallback usage counts.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - Added `src/js/content/icon-sprite-catalog.js` as the canonical runtime sprite icon registry and fallback map, moving sprite key resolution out of `core.js`.
-  - Updated `makeIconSprite` in `src/js/core.js` to resolve markup through `window.IconSpriteCatalog` and keep only a minimal generic placeholder fallback for unresolved sprite keys.
-  - Added sprite-key coverage checks in `tools/content/validate-items.js` (via new `loadIconSpriteCatalog(...)` helper) so missing sprite references fail validation and fallback usage counts are reported.
-  - Added regression guard `tools/tests/icon-sprite-catalog-guard.js` and wired it into `npm test` to prevent re-introducing inline sprite maps in `core.js`.
+  - Promoted pixel-source assets and `src/js/content/item-catalog.js` icon metadata to the active icon source of truth, replacing the removed sprite catalog path.
+  - Removed the `makeIconSprite` / `window.IconSpriteCatalog` flow from `src/js/core.js`; runtime icons now resolve through pixel asset metadata with a small missing-icon placeholder fallback.
+  - `tools/content/validate-items.js` checks runtime icon metadata against available pixel assets so missing generated icon references fail validation.
+  - `tools/tests/pixel-asset-pipeline-guard.js` locks the removed icon-sprite catalog and legacy pixelization tools out of the runtime path.
 - Plan vNext (if revised):
   1.
 - Verification:
@@ -688,9 +692,9 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S1
 - Area: WORLD
 - Source: Manual
-- Links: `content/world/manifest.json`, `content/world/regions/starter_town.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/world.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
+- Links: `content/world/manifest.json`, `content/world/regions/main_overworld.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/world.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
 - Repro:
-  1. Inspect the canonical world files in `content/world/manifest.json` and `content/world/regions/starter_town.json`.
+  1. Inspect the canonical world files in `content/world/manifest.json` and `content/world/regions/main_overworld.json`.
   2. Follow that authored data through `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, and `src/game/platform/legacy-world-adapter.ts`.
   3. Compare the current `worldPayload` flow in `src/js/world.js` against this hit card.
 - Expected: Building layouts, NPC/service spawns, and tile edits should come from structured world data files/manifests.
@@ -703,7 +707,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Implement a loader/applier and validate parity against current map.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - `content/world/manifest.json` plus `content/world/regions/starter_town.json` now own the authored structure kit, service placements, staircases, routes, combat spawns, and other world landmarks instead of leaving those as inline source-of-truth arrays in `initLogicalMap`.
+  - `content/world/manifest.json` plus `content/world/regions/main_overworld.json` now own the authored structure kit, service placements, staircases, routes, combat spawns, and other world landmarks instead of leaving those as inline source-of-truth arrays in `initLogicalMap`.
   - `src/game/world/authoring.ts` and `src/game/world/bootstrap.ts` load that canonical content into typed world definitions, registries, and legacy render/bootstrap payloads.
   - `src/game/platform/legacy-world-adapter.ts` publishes the current `worldPayload`, and `src/js/world.js` consumes that payload to stamp/apply the already-authored data into the legacy tile map rather than owning the world/service layout itself.
 - Plan vNext (if revised):
@@ -718,9 +722,9 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/game/world/authoring.ts`, `src/game/world/placements.ts`, `src/game/platform/legacy-bridge.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/core.js`, `tools/tests/qa-registry-parity.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/legacy-world-runtime-shape.js`
+- Links: `content/world/regions/main_overworld.json`, `src/game/world/authoring.ts`, `src/game/world/placements.ts`, `src/game/platform/legacy-bridge.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/core.js`, `tools/tests/qa-registry-parity.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/legacy-world-runtime-shape.js`
 - Repro:
-  1. Inspect canonical skill-route authoring in `content/world/regions/starter_town.json` and `content/world/regions/north_road_camp.json`.
+  1. Inspect canonical skill-route authoring in `content/world/regions/main_overworld.json`.
   2. Follow the world bootstrap/legacy bridge path through `src/game/world/authoring.ts`, `src/game/world/placements.ts`, `src/game/platform/legacy-bridge.ts`, and `src/game/platform/legacy-world-adapter.ts`.
   3. Compare QA route lookups in `src/js/core.js` against those runtime route registries.
 - Expected: Route/ring/zone progression tuning should be data-driven with centralized authoring.
@@ -999,6 +1003,95 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-075 - Building workbench draft layer for authored mainland towns
+- Status: Fixed
+- Severity: S2
+- Area: WORLD
+- Source: Automation
+- Links: `docs/BUILDING_WORKBENCH.md`, `content/world/building-workbench/`, `tools/content/building-workbench.js`, `tools/tests/building-workbench-guard.js`, `package.json`, `src/game/contracts/world.ts`
+- Repro:
+  1. Review `HIT-001` and the current authored-map direction for mainland world work.
+  2. Try to draft a reusable building, settlement, road profile, damaged-state variant, or NPC-home plan without writing directly into canonical world regions/stamps.
+- Expected: Mainland town/building drafts have a Codex-first authoring layer with validation, preview artifacts, reusable grammar, and a deliberate promotion path into canonical world content.
+- Actual: Building and settlement exploration previously had no dedicated draft layer, increasing pressure to hand-author one-off structures directly in live world files.
+- Frequency: N/A (non-bug task)
+- Owner: Codex
+- Plan v1:
+  1. Add a preview-only building workbench under `content/world/building-workbench/` with reusable archetypes, materials, conditions, road profiles, themes, buildings, and settlements.
+  2. Add validator, preview, and dry-run promotion CLI paths that compile draft stamp JSON, settlement summaries, promotion candidates, and a local Three.js review page without mutating canonical world content.
+  3. Wire focused package scripts and guard coverage so the draft layer stays schema-valid and separate from live stamps/regions.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a seed workbench covering timber frontier, quarry iron, stone market, painted plaster, burnt/broken/abandoned states, castle gatehouse pieces, banks, artisan shops, and four settlement drafts.
+  - Added `npm.cmd run tool:world:buildings`, `npm.cmd run tool:world:buildings:preview`, and `npm.cmd run tool:world:buildings:promote`; preview output writes to `tmp/world-building-workbench`, while promotion dry-runs write copy-ready stamp, manifest, region, road, decor, roof, wall-art, and NPC-home candidates under `tmp/world-building-workbench/promotions/<settlementId>`.
+  - Added `tools/tests/building-workbench-guard.js` and package-suite coverage to enforce draft IDs, no canonical stamp writes, preview artifact shape, workbench grammar, and supported decor kinds.
+  - Promoted the first mainland spread pass into `main_overworld`: north woodwatch, south quarry hamlet, market crossing, and old roadhold, with authored water bodies replacing the legacy north-south river fallback and `tools/tests/mainland-rework-guard.js` covering spread, homes, roads, stairs, roofs, decor, and raw coordinate bounds.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-076 - Combat camp ally-assist group
+- Status: Fixed
+- Severity: S2
+- Area: WORLD
+- Source: Automation
+- Links: `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/combat-engagement-runtime.js`, `src/game/contracts/combat.ts`, `src/game/platform/combat-bridge.ts`, `src/game/combat/content.ts`, `content/world/regions/main_overworld.json`, `tools/tests/combat-engagement-runtime-guard.js`, `tools/tests/combat-engagement-guard.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
+- Repro:
+  1. Review the open `COMBAT-016` tracker item and the combat roadmap's advanced encounter-logic follow-up.
+  2. Attack one enemy in the authored southeast camp-threat pocket.
+- Expected: Dense camp-threat encounters can opt into readable group pressure without making every spawn group share aggro by default.
+- Actual: Spawn groups were previously placement-only and could not express bounded ally-assist behavior.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Extend the combat spawn/runtime contract with explicit assist group and assist radius fields.
+  2. Add engagement runtime logic that pulls nearby idle allies from the same assist group onto the player with a one-tick opening delay.
+  3. Enable the first live assist group on the southeast camp-threat pocket and lock the behavior with focused guards.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `assistGroupId` and `assistRadiusOverride` to combat spawn authoring, bridge normalization, and enemy runtime state resolution.
+  - Added `acquireAssistingEnemyTargets` to the engagement runtime and invoked it after normal aggressive acquisition, keeping assist behavior opt-in and bounded by reachability, chase range, and assist radius.
+  - Enabled `camp_southeast_ruins` assist behavior on the bear, heavy brute, and fast striker camp spawns in `main_overworld`.
+  - Synced combat status, roadmap, and skills index so patrol-route/richer-state work remains open as `COMBAT-016B` instead of overclaiming the whole advanced encounter milestone.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-077 - Combat camp fast-striker patrol route
+- Status: Fixed
+- Severity: S2
+- Area: WORLD
+- Source: Automation
+- Links: `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/combat-enemy-movement-runtime.js`, `src/game/contracts/combat.ts`, `src/game/platform/combat-bridge.ts`, `src/game/combat/content.ts`, `content/world/regions/main_overworld.json`, `tools/content/validate-world.js`, `tools/tests/combat-enemy-movement-runtime-guard.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
+- Repro:
+  1. Review the open `COMBAT-016B` tracker item and the combat roadmap's patrol-route follow-up.
+  2. Inspect authored southeast camp-threat combat spawns.
+- Expected: At least one camp enemy can follow an authored idle patrol route without replacing leash/return combat behavior.
+- Actual: Camp enemies only had random radius roaming or fixed home behavior; patrol-route authoring was not part of the spawn/runtime contract.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Extend the combat spawn/runtime contract with optional `patrolRoute` points.
+  2. Make idle enemy movement prefer authored patrol routes before random roaming.
+  3. Enable the first live patrol route on the southeast camp fast striker and lock it with focused guards.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `patrolRoute` to combat spawn authoring, typed clones, bridge normalization, scaled world authoring, runtime spawn state, and world validation.
+  - Added `updatePatrolEnemyMovement` so idle enemies advance one tile per tick along authored patrol points, pause at patrol stops, and still use the existing leash/return behavior once combat starts.
+  - Enabled the first live patrol on `enemy_spawn_fast_striker_southeast_camp_east` in `main_overworld` and advanced combat tracking to `COMBAT-017`.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-074 - Runecrafting altar labels hid route status
 - Status: Fixed
 - Severity: S3
@@ -1123,10 +1216,10 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: Other
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
+- Links: `content/world/regions/main_overworld.json`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
 - Repro:
   1. Review the live combat progression-band summaries after `COMBAT-014`.
-  2. Compare `Camp Threat` enemies against authored `starter_town` combat spawn nodes.
+  2. Compare `Camp Threat` enemies against authored `main_overworld` combat spawn nodes.
   3. Check whether bear, heavy brute, and fast striker have any live camp placement.
 - Expected: The first-pass melee rollout should include at least one optional camp-threat pocket using the same authored spawn-node model as starter, roadside, resource-outskirts, and guard-threshold coverage.
 - Actual: The camp-threat band mapped bear, heavy brute, and fast striker enemy templates but still had zero live authored spawns.
@@ -1134,12 +1227,12 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Owner: Codex
 - Plan v1:
   1. Add a small optional camp-threat pocket in the authored world content without resurrecting the removed `north_road_camp` region.
-  2. Lock its spawn topology, world parity, and progression-band summary counts with focused guards.
+  2. Lock its authored placement, world parity, and progression-band summary counts with focused guards.
   3. Sync combat status, roadmap, and shared skill index docs to advance the tracker beyond `COMBAT-015`.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - Added the `camp_southeast_ruins` spawn group in `starter_town` with one bear, one heavy brute, and one fast striker placed on the southeast edge away from protected training/resource route anchors.
-  - Extended combat topology coverage to enforce the camp count, route clearance, local spawn budget, and same-group spacing.
+  - Added the `camp_southeast_ruins` spawn group in `main_overworld` with one bear, one heavy brute, and one fast striker placed on the southeast edge away from protected training/resource route anchors.
+  - Extended combat content and world parity coverage so the camp count and authored placement cannot drift silently.
   - Updated combat content/world parity guards so the camp-threat band now reports three live starter-town spawns and the authored spawn order/count cannot drift silently.
 - Plan vNext (if revised):
   1.
@@ -1213,7 +1306,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: WC
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/content/npc-dialogue-catalog.js`, `src/js/content/quest-catalog.js`, `src/js/skills/woodcutting/ROADMAP.md`, `src/js/skills/woodcutting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/quest-tanner-runtime-guard.js`
+- Links: `content/world/regions/main_overworld.json`, `src/js/content/npc-dialogue-catalog.js`, `src/js/content/quest-catalog.js`, `src/js/skills/woodcutting/ROADMAP.md`, `src/js/skills/woodcutting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/quest-tanner-runtime-guard.js`
 - Repro:
   1. Review the open `WOODCUTTING-013` milestone and the merchant/NPC section in the woodcutting roadmap.
   2. Search the authored world and dialogue content for `forester_teacher` or `advanced_woodsman`.
@@ -1421,7 +1514,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: Other
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/core.js`, `tools/content/validate-world.js`, `tools/tests/world-bootstrap-parity.js`, `src/js/skills/firemaking/ROADMAP.md`, `src/js/skills/firemaking/STATUS.md`, `src/js/skills/_index.md`
+- Links: `content/world/regions/main_overworld.json`, `src/js/core.js`, `tools/content/validate-world.js`, `tools/tests/world-bootstrap-parity.js`, `src/js/skills/firemaking/ROADMAP.md`, `src/js/skills/firemaking/STATUS.md`, `src/js/skills/_index.md`
 - Repro:
   1. Review the firemaking roadmap/status docs after the multi-tier log progression pass.
   2. Compare those docs against the authored world route groups and current QA helpers.
@@ -1436,7 +1529,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Extend world/QA parity checks and sync the firemaking docs/status board.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - Added authored firemaking lanes for `starter`, `oak`, `willow`, `maple`, and `yew` in `starter_town`, plus a `pine` proof lane in `north_road_camp`, all on clear east/west-friendly tiles near the matching woodcutting bands.
+  - Added authored firemaking lanes for `starter`, `oak`, `willow`, `maple`, `yew`, and `pine` in `main_overworld`, all on clear east/west-friendly tiles near the matching woodcutting bands.
   - Routed the new `firemaking` group through the typed world contracts, bootstrap bridge, world payload, and QA chat commands so the lanes are reachable in normal tooling instead of living only in docs.
   - Updated the firemaking roadmap/status/index and extended world validation/parity coverage so the new authored lanes stay locked.
 - Plan vNext (if revised):
@@ -1481,10 +1574,10 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S2
 - Area: FLT
 - Source: Manual
-- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/content/npc-dialogue-catalog.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-authoring-domain-tests.js`, `src/js/skills/fletching/ROADMAP.md`, `src/js/skills/fletching/STATUS.md`, `src/js/skills/_index.md`
+- Links: `content/world/regions/main_overworld.json`, `src/js/content/npc-dialogue-catalog.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/world-authoring-domain-tests.js`, `src/js/skills/fletching/ROADMAP.md`, `src/js/skills/fletching/STATUS.md`, `src/js/skills/_index.md`
 - Repro:
-  1. Review the fletching roadmap/status docs and compare their merchant/training-flow notes against the authored world region files.
-  2. Inspect the current merchant services in `starter_town` and `north_road_camp`, or use QA merchant discovery in those worlds.
+  1. Review the fletching roadmap/status docs and compare their merchant/training-flow notes against the authored world region file.
+  2. Inspect the current merchant services in `main_overworld`, or use QA merchant discovery in that world.
   3. Look for reachable `fletching_supplier` and `advanced_fletcher` NPC placements in the playable world.
 - Expected: The bank-adjacent processing loop and the deeper fletching sell path should exist as reachable authored merchants, not just as spec or economy rows.
 - Actual: Fletching merchant IDs and economy rules existed in the skill data, but the authored world had no supplier or advanced-fletcher placements, so the documented training flow was not actually reachable.
@@ -2210,7 +2303,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Severity: S3
 - Area: WORLD
 - Source: Manual
-- Links: `src/game/world/mining-runtime.ts`, `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `tools/tests/mining-layout-guard.js`
+- Links: `src/game/world/mining-runtime.ts`, `content/world/regions/main_overworld.json`, `tools/tests/mining-layout-guard.js`
 - Repro:
   1. Inspect mining node layouts.
 - Expected: Mining spots are more spread out and not arranged in neat straight rows.
@@ -2224,7 +2317,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Plan Outcome: Confirmed
 - Fix Notes:
   - Reworked the authored mining runtime placement in `src/game/world/mining-runtime.ts` from simple radial filling into deterministic clumps plus strays, with explicit line-conflict penalties so starter-town mines no longer freeze into obvious rows/diamond lattices.
-  - Regenerated `starter_town` mining nodes/routes from the new runtime and hand-tuned the small `north_road_camp` outpost quarry cluster so current authored mining content follows the same spread/no-row goal.
+  - Regenerated `main_overworld` mining nodes/routes from the new runtime and hand-tuned the outpost quarry cluster so current authored mining content follows the same spread/no-row goal.
   - Added `tools/tests/mining-layout-guard.js` and wired it into `npm test` to lock in zero straight mining triples, bounded line occupancy, and minimum spacing across current mining routes.
 - Plan vNext (if revised):
   1.

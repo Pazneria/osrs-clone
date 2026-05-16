@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "conditionId": "weathered",
+  "label": "Weathered",
+  "damageLevel": 0.22,
+  "wallHeightScale": 0.95,
+  "roofIntegrity": 0.86,
+  "tint": "#d0c4a6",
+  "tags": [
+    "aged",
+    "usable",
+    "patched"
+  ],
+  "promotionNotes": [
+    "Weathered structures can host services but should bias toward rougher decor and patched roofs.",
+    "Good default for older mainland towns that should not look freshly built."
+  ]
+}

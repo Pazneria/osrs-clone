@@ -1,13 +1,11 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const { encodePng, readPngSize } = require("../pixel/pixel-png");
 const { buildRgbaBuffer } = require("../pixel/pixel-source");
 const { buildObjFromPixelSource } = require("../pixel/pixel-model");
 const { loadPixelSource } = require("../pixel/pixel-project");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function getSolidBounds(source) {
   let xMin = Infinity;
@@ -38,10 +36,6 @@ function getSolidBounds(source) {
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const indexPath = path.join(root, "index.html");
-  const corePath = path.join(root, "src/js/core.js");
-  const itemCatalogPath = path.join(root, "src/js/content/item-catalog.js");
-  const packageJsonPath = path.join(root, "package.json");
   const pixelSourceDir = path.join(root, "assets", "pixel-src");
   const builtIconPath = path.join(root, "assets", "pixel", "iron_axe.png");
   const removedLegacyPaths = [
@@ -55,10 +49,10 @@ function run() {
     path.join(root, "tools", "content", "create-item-from-image.ps1")
   ];
 
-  const indexHtml = fs.readFileSync(indexPath, "utf8");
-  const coreScript = fs.readFileSync(corePath, "utf8");
-  const itemCatalogScript = fs.readFileSync(itemCatalogPath, "utf8");
-  const packageJson = fs.readFileSync(packageJsonPath, "utf8");
+  const indexHtml = readRepoFile(root, "index.html");
+  const coreScript = readRepoFile(root, "src/js/core.js");
+  const itemCatalogScript = readRepoFile(root, "src/js/content/item-catalog.js");
+  const packageJson = readRepoFile(root, "package.json");
 
   assert(!indexHtml.includes("icon-sprite-catalog.js"), "index should not load the legacy icon sprite catalog");
   assert(!coreScript.includes("window.IconSpriteCatalog"), "core should not reference IconSpriteCatalog");

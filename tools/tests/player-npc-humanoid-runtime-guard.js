@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function makeVec() {
   return {
@@ -443,7 +440,7 @@ function assertTutorialCombatInstructorHumanoidAssembly(preset) {
   const rightVambrace = catalogFragment(preset, "rightLowerArm", "right_vambrace");
   const leftGauntlet = catalogFragment(preset, "leftLowerArm", "left_gauntlet_plate");
   const rightGauntlet = catalogFragment(preset, "rightLowerArm", "right_gauntlet_plate");
-  const rightHand = catalogFragment(preset, "rightLowerArm", "hand");
+  catalogFragment(preset, "rightLowerArm", "hand");
   const heldSwordGrip = catalogFragment(preset, "axe", "right_hand_sword_grip");
   const heldSwordBlade = catalogFragment(preset, "axe", "right_hand_sword_blade");
   const heldSwordGuard = catalogFragment(preset, "axe", "right_hand_sword_guard");
@@ -573,6 +570,93 @@ function assertTutorialRunecraftingInstructorHumanoidAssembly(preset) {
   assert(stylusTip.rgbColor === "#f0a04b" && stylusTip.offset[1] > stylus.offset[1], "Runecrafting Instructor stylus should have an ember tip");
 }
 
+function assertMainlandBankerPreset(preset) {
+  assert(preset && preset.label === "Banker", "Mainland Banker preset should keep its role label");
+  assert(preset.archetype === "mainland_bank_clerk", "Mainland Banker should use the bank clerk archetype");
+
+  const capBand = catalogFragment(preset, "head", "banker_clerk_cap_band");
+  const quill = catalogFragment(preset, "head", "banker_quill_stem");
+  const badgeFace = catalogFragment(preset, "torso", "banker_badge_face");
+  const badgeMark = catalogFragment(preset, "torso", "banker_badge_mark");
+  const receiptSlips = catalogFragment(preset, "torso", "banker_receipt_slips");
+  const keyRingTop = catalogFragment(preset, "torso", "banker_key_ring_top");
+  const keyToothA = catalogFragment(preset, "torso", "banker_key_tooth_a");
+  const ledgerStrap = catalogFragment(preset, "leftLowerArm", "banker_ledger_strap");
+  const waxSeal = catalogFragment(preset, "leftLowerArm", "banker_wax_seal");
+  const coinTray = catalogFragment(preset, "rightLowerArm", "banker_coin_tray");
+
+  assert(capBand.rgbColor === "#c9b35c" && capBand.size[0] >= 0.48, "Mainland Banker should have a broad brass clerk-cap band");
+  assert(quill.target === "head" && quill.offset[0] < -0.2, "Mainland Banker should carry a head-attached clerk quill");
+  assert(badgeFace.rgbColor === "#d8c56b" && badgeFace.offset[2] > 0.28, "Mainland Banker should have a prominent front brass badge");
+  assert(badgeMark.offset[2] > badgeFace.offset[2], "Mainland Banker badge should include a small front mark");
+  assert(receiptSlips.rgbColor === "#e7d8aa" && receiptSlips.offset[2] > 0.25, "Mainland Banker should carry readable receipt slips");
+  assert(keyRingTop.size[0] >= 0.1 && keyRingTop.offset[0] < -0.25, "Mainland Banker should have a visible right-hip key ring");
+  assert(keyToothA.offset[1] < keyRingTop.offset[1], "Mainland Banker key teeth should hang below the ring");
+  assert(ledgerStrap.target === "leftLowerArm" && waxSeal.offset[2] > ledgerStrap.offset[2], "Mainland Banker ledger should include strap and wax-seal details");
+  assert(coinTray.target === "rightLowerArm" && coinTray.size[0] <= 0.22, "Mainland Banker coin tray should stay compact in the hand");
+}
+
+function assertMainlandEliraGemhandPreset(preset) {
+  assert(preset && preset.label === "Elira Gemhand", "Elira Gemhand preset should keep its role label");
+  assert(preset.archetype === "market_gem_cutter", "Elira Gemhand should keep the gem-cutter archetype");
+  assert(
+    !preset.fragments.some((fragment) => ["moustache", "short_beard"].includes(String(fragment && fragment.role || ""))),
+    "Elira Gemhand should not inherit masculine smith facial-hair fragments"
+  );
+  assert(
+    !preset.fragments.some((fragment) => String(fragment && fragment.role || "").startsWith("belt_hammer") || String(fragment && fragment.role || "").startsWith("belt_tongs")),
+    "Elira Gemhand should not inherit smith hammer or tongs props"
+  );
+
+  const hairBun = catalogFragment(preset, "head", "elira_hair_bun");
+  const braid = catalogFragment(preset, "head", "elira_braid_drop");
+  const earring = catalogFragment(preset, "head", "elira_left_earring");
+  const apron = catalogFragment(preset, "torso", "gemhand_apron_front");
+  const tray = catalogFragment(preset, "torso", "gemhand_display_tray");
+  const ruby = catalogFragment(preset, "torso", "gemhand_tray_ruby");
+  const sapphire = catalogFragment(preset, "torso", "gemhand_tray_sapphire");
+  const emerald = catalogFragment(preset, "torso", "gemhand_tray_emerald");
+  const diamond = catalogFragment(preset, "torso", "gemhand_tray_diamond");
+  const tiara = catalogFragment(preset, "torso", "gemhand_tiara_example");
+  const dopStick = catalogFragment(preset, "rightLowerArm", "gemhand_dop_stick");
+  const chisel = catalogFragment(preset, "leftLowerArm", "gemhand_chisel_blade");
+
+  assert(hairBun.offset[2] < -0.2 && braid.offset[0] > 0.2, "Elira Gemhand should have distinct tied-back hair and a side braid");
+  assert(earring.rgbColor === "#c8a34a" && earring.offset[0] > 0.25, "Elira Gemhand should have a visible gold earring accent");
+  assert(apron.rgbColor === "#3b303e" && apron.offset[2] > 0.24, "Elira Gemhand should wear a front jeweler apron");
+  assert(tray.size[0] >= 0.34 && tray.offset[2] > 0.32, "Elira Gemhand should present a readable gem display tray");
+  assert(ruby.rgbColor === "#b63d4a" && sapphire.rgbColor === "#3f7fc4" && emerald.rgbColor === "#3fa463" && diamond.rgbColor === "#dcefff", "Elira Gemhand tray should carry the four gem-color reads");
+  assert(tiara.rgbColor === "#c8a34a" && tiara.size[0] >= 0.1, "Elira Gemhand should carry a tiara mould/jewelry cue");
+  assert(dopStick.target === "rightLowerArm" && dopStick.size[1] >= 0.3, "Elira Gemhand should hold a jeweler dop stick");
+  assert(chisel.target === "leftLowerArm" && chisel.rgbColor === "#c7c8c2", "Elira Gemhand should carry a small chisel blade");
+}
+
+function assertTannerRuskPreset(preset) {
+  assert(preset && preset.label === "Tanner Rusk", "Tanner Rusk preset should keep its role label");
+  assert(preset.archetype === "frontier_tannery_owner", "Tanner Rusk should use the tannery-owner archetype");
+
+  const apron = catalogFragment(preset, "torso", "rusk_apron_front");
+  const hideRoll = catalogFragment(preset, "torso", "rusk_hide_roll");
+  const foldedHide = catalogFragment(preset, "leftLowerArm", "rusk_folded_hide_sheet");
+  const normalStrap = catalogFragment(preset, "torso", "rusk_strap_sample_normal");
+  const wolfStrap = catalogFragment(preset, "torso", "rusk_strap_sample_wolf");
+  const bearStrap = catalogFragment(preset, "torso", "rusk_strap_sample_bear");
+  const barkPouch = catalogFragment(preset, "torso", "rusk_bark_pouch");
+  const scraperBlade = catalogFragment(preset, "rightLowerArm", "rusk_scraper_blade");
+  const leftGlove = catalogFragment(preset, "leftLowerArm", "rusk_left_work_glove");
+  const rightGlove = catalogFragment(preset, "rightLowerArm", "rusk_right_work_glove");
+  const wetHem = catalogFragment(preset, "leftLowerLeg", "rusk_left_boot_wet_hem");
+
+  assert(apron.rgbColor === "#7f542f" && apron.size[1] >= 0.45, "Tanner Rusk should have a heavy leather apron front");
+  assert(hideRoll.offset[0] > 0.25 && hideRoll.size[1] >= 0.3, "Tanner Rusk should carry a readable hide roll");
+  assert(foldedHide.target === "leftLowerArm" && foldedHide.rgbColor === "#b07a45", "Tanner Rusk should support a folded hide on one forearm");
+  assert(normalStrap.rgbColor === "#9d6b3c" && wolfStrap.rgbColor === "#6b5a48" && bearStrap.rgbColor === "#3e2a1f", "Tanner Rusk should show normal, wolf, and bear leather strap samples");
+  assert(barkPouch.rgbColor === "#5b3b24" && barkPouch.offset[0] < -0.2, "Tanner Rusk should keep a bark pouch process cue");
+  assert(scraperBlade.rgbColor === "#b8aa8e" && scraperBlade.target === "rightLowerArm", "Tanner Rusk should hold a dull scraper blade");
+  assert(leftGlove.rgbColor === "#5b3a24" && rightGlove.rgbColor === "#5b3a24", "Tanner Rusk should wear dark leather work gloves");
+  assert(wetHem.rgbColor === "#1f1a15" && wetHem.target === "leftLowerLeg", "Tanner Rusk should have water-darkened boot hems");
+}
+
 function assertNpcCatalogPreviewActors(catalog) {
   assert(catalog && catalog.presets && typeof catalog.presets === "object", "NPC appearance catalog should expose presets");
   assert(Array.isArray(catalog.previewActors), "NPC appearance catalog should expose preview actors");
@@ -599,11 +683,11 @@ function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "player-npc-humanoid-runtime.js");
   const catalogPath = path.join(root, "src", "js", "content", "npc-appearance-catalog.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const catalogSource = fs.readFileSync(catalogPath, "utf8");
-  const tutorialIsland = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "regions", "tutorial_island.json"), "utf8"));
-  const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/player-npc-humanoid-runtime.js");
+  const catalogSource = readRepoFile(root, "src/js/content/npc-appearance-catalog.js");
+  const tutorialIsland = JSON.parse(readRepoFile(root, "content/world/regions/tutorial_island.json"));
+  const playerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const visualRuntimeIndex = manifestSource.indexOf('id: "player-model-visual-runtime"');
   const npcCatalogIndex = manifestSource.indexOf('id: "npc-appearance-catalog"');
@@ -682,6 +766,9 @@ function run() {
   assertTutorialMiningSmithingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_mining_smithing_instructor);
   assertTutorialCombatInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_combat_instructor);
   assertTutorialRunecraftingInstructorHumanoidAssembly(sandbox.window.NpcAppearanceCatalog.presets.tutorial_runecrafting_instructor);
+  assertMainlandBankerPreset(sandbox.window.NpcAppearanceCatalog.presets.mainland_banker);
+  assertMainlandEliraGemhandPreset(sandbox.window.NpcAppearanceCatalog.presets.mainland_elira_gemhand);
+  assertTannerRuskPreset(sandbox.window.NpcAppearanceCatalog.presets.tanner_rusk);
   assert(runtime.normalizeNpcHumanoidPresetId("tanner") === "tanner_rusk", "runtime should preserve tanner alias normalization");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_guide") === "tutorial_guide", "runtime should resolve catalog-backed Tutorial Guide preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_woodcutting_instructor") === "tutorial_woodcutting_instructor", "runtime should resolve catalog-backed Woodcutting Instructor preset");
@@ -690,6 +777,9 @@ function run() {
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_mining_smithing_instructor") === "tutorial_mining_smithing_instructor", "runtime should resolve catalog-backed Mining and Smithing Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_combat_instructor") === "tutorial_combat_instructor", "runtime should resolve catalog-backed Combat Instructor preset");
   assert(runtime.normalizeNpcHumanoidPresetId("tutorial_runecrafting_instructor") === "tutorial_runecrafting_instructor", "runtime should resolve catalog-backed Runecrafting Instructor preset");
+  assert(runtime.normalizeNpcHumanoidPresetId("mainland_banker") === "mainland_banker", "runtime should resolve catalog-backed Mainland Banker preset");
+  assert(runtime.normalizeNpcHumanoidPresetId("mainland_elira_gemhand") === "mainland_elira_gemhand", "runtime should resolve catalog-backed Elira Gemhand preset");
+  assert(runtime.normalizeNpcHumanoidPresetId("tanner_rusk") === "tanner_rusk", "runtime should resolve catalog-backed Tanner Rusk preset");
   assert(runtime.createGuardHumanoidFragments({ packJagexHsl: () => 64 }).length > 0, "runtime should build guard fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_guide).length > 0, "runtime should build catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_woodcutting_instructor).length > 0, "runtime should build Woodcutting Instructor catalog fragments");
@@ -698,6 +788,9 @@ function run() {
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_mining_smithing_instructor).length > 0, "runtime should build Mining and Smithing Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_combat_instructor).length > 0, "runtime should build Combat Instructor catalog fragments");
   assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tutorial_runecrafting_instructor).length > 0, "runtime should build Runecrafting Instructor catalog fragments");
+  assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.mainland_banker).length > 0, "runtime should build Mainland Banker catalog fragments");
+  assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.mainland_elira_gemhand).length > 0, "runtime should build Elira Gemhand catalog fragments");
+  assert(runtime.createCatalogHumanoidFragments({ packJagexHsl: () => 64 }, sandbox.window.NpcAppearanceCatalog.presets.tanner_rusk).length > 0, "runtime should build Tanner Rusk catalog fragments");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "guard"), "runtime should list guard preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_guide"), "runtime should list Tutorial Guide preview actor");
   assert(runtime.listAnimationStudioPreviewActors().some((entry) => entry.actorId === "tutorial_woodcutting_instructor"), "runtime should list Woodcutting Instructor preview actor");

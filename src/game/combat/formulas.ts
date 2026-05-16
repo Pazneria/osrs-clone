@@ -5,7 +5,6 @@ import type {
   CombatStatsViewModelShape,
   CombatDamageType,
   EnemyDropEntry,
-  EnemyRuntimeState,
   EnemyTypeDefinition,
   PlayerCombatStyleId
 } from "../contracts/combat";
@@ -524,10 +523,4 @@ export function pickDropEntry(dropTable: EnemyDropEntry[], rng: () => number = M
   }
 
   return { ...dropTable[dropTable.length - 1] };
-}
-
-export function computeRespawnTick(currentTick: number, enemyType: EnemyTypeDefinition, enemyState?: EnemyRuntimeState | null): number {
-  const runtimeOverride = enemyState && Number.isFinite(enemyState.respawnAtTick) ? Number(enemyState.respawnAtTick) : null;
-  if (runtimeOverride !== null) return runtimeOverride;
-  return currentTick + clampFloor(enemyType.respawnTicks, 1, 1);
 }

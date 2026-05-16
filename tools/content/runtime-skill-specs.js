@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { isObject } = require("./object-utils");
 
 const SKILL_SPEC_SCRIPT_PATHS = Object.freeze([
   "src/js/skills/specs/shared.js",
@@ -15,20 +16,6 @@ const SKILL_SPEC_SCRIPT_PATHS = Object.freeze([
   "src/js/skills/specs/smithing.js",
   "src/js/skills/specs/finalize.js"
 ]);
-
-function isObject(value) {
-  return !!value && typeof value === "object" && !Array.isArray(value);
-}
-
-function sortKeysDeep(value) {
-  if (Array.isArray(value)) return value.map(sortKeysDeep);
-  if (!isObject(value)) return value;
-
-  const out = {};
-  const keys = Object.keys(value).sort();
-  for (const key of keys) out[key] = sortKeysDeep(value[key]);
-  return out;
-}
 
 function loadSkillSpecScripts(projectRoot, sandbox) {
   if (!sandbox || !isObject(sandbox)) {
@@ -63,8 +50,6 @@ function loadRuntimeSkillSpecs(projectRoot) {
 
 module.exports = {
   SKILL_SPEC_SCRIPT_PATHS,
-  isObject,
-  sortKeysDeep,
   loadSkillSpecScripts,
   loadRuntimeSkillSpecs
 };

@@ -8,7 +8,7 @@ import type {
   ServiceDescriptor
 } from "../contracts/world";
 
-export interface RunecraftingRuntimeResult {
+interface RunecraftingRuntimeResult {
   runecraftingRoutes: RouteDescriptor[];
   altarRenderPlacements: LegacyAltarRenderPlacement[];
   altarByRouteId: Record<string, { x: number; y: number; z: number }>;

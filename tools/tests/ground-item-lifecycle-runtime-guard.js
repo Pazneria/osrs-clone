@@ -1,18 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const inputArrivalInteractionSource = fs.readFileSync(path.join(root, "src", "js", "input-arrival-interaction-runtime.js"), "utf8");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "ground-item-lifecycle-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const inputArrivalInteractionSource = readRepoFile(root, "src/js/input-arrival-interaction-runtime.js");
+  const runtimeSource = readRepoFile(root, "src/js/world/ground-item-lifecycle-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const renderRuntimeIndex = manifestSource.indexOf('id: "world-ground-item-render-runtime"');
   const lifecycleRuntimeIndex = manifestSource.indexOf('id: "world-ground-item-lifecycle-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');

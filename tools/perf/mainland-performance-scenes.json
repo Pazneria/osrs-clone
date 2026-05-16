@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "defaultUrl": "http://127.0.0.1:5502/",
+  "viewport": {
+    "width": 1240,
+    "height": 941
+  },
+  "defaultWaitMs": 1400,
+  "scenes": [
+    {
+      "id": "mainland-starter-town",
+      "label": "Mainland starter town at normal gameplay camera",
+      "commands": [
+        "/qa gotomainland starter",
+        "/qa camera reset"
+      ],
+      "chunkStreamCommands": [
+        "/qa camera reset"
+      ],
+      "waitMs": 1400
+    },
+    {
+      "id": "mainland-market-crossing",
+      "label": "Mainland market crossing at normal gameplay camera",
+      "commands": [
+        "/qa gotomainland market",
+        "/qa camera reset"
+      ],
+      "chunkStreamCommands": [
+        "/qa camera reset"
+      ],
+      "waitMs": 1400
+    },
+    {
+      "id": "mainland-north-woodwatch",
+      "label": "Mainland north woodwatch at normal gameplay camera",
+      "commands": [
+        "/qa gotomainland woodwatch",
+        "/qa camera reset"
+      ],
+      "chunkStreamCommands": [
+        "/qa camera reset"
+      ],
+      "waitMs": 1400
+    },
+    {
+      "id": "mainland-old-roadhold",
+      "label": "Mainland old roadhold at normal gameplay camera",
+      "commands": [
+        "/qa gotomainland roadhold",
+        "/qa camera reset"
+      ],
+      "chunkStreamCommands": [
+        "/qa camera reset"
+      ],
+      "waitMs": 1400
+    },
+    {
+      "id": "mainland-south-quarry",
+      "label": "Mainland south quarry hamlet at normal gameplay camera",
+      "commands": [
+        "/qa gotomainland quarry",
+        "/qa camera reset"
+      ],
+      "chunkStreamCommands": [
+        "/qa camera reset"
+      ],
+      "waitMs": 1400
+    }
+  ]
+}

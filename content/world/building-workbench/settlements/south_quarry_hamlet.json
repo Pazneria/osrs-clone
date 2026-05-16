@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "settlementId": "south_quarry_hamlet",
+  "worldId": "main_overworld",
+  "label": "South Quarry Hamlet",
+  "kind": "hamlet",
+  "status": "draft",
+  "placementMode": "preview_only",
+  "themeMix": [
+    "quarry_iron",
+    "frontier_timber"
+  ],
+  "intent": {
+    "role": "A mining support hamlet that can hold ore storage, a foreman, and a few rough homes.",
+    "differenceFromStarterTown": "Blockier, sootier, and more work-yard shaped than the cozy timber houses around Starter Town.",
+    "playerRead": "A place to bank, meet mining NPCs, and understand that the mainland has resource settlements with their own visual language."
+  },
+  "anchorBounds": {
+    "xMin": 292,
+    "yMin": 360,
+    "xMax": 360,
+    "yMax": 430
+  },
+  "placements": [
+    {
+      "structureId": "south_quarry_storehouse",
+      "buildingId": "quarry_storehouse",
+      "x": 318,
+      "y": 386,
+      "z": 0,
+      "role": "ore storage and foreman work area"
+    },
+    {
+      "structureId": "south_quarry_cottage_west",
+      "buildingId": "frontier_cottage",
+      "x": 300,
+      "y": 404,
+      "z": 0,
+      "role": "miner housing"
+    },
+    {
+      "structureId": "south_quarry_cottage_east",
+      "buildingId": "frontier_cottage",
+      "x": 344,
+      "y": 404,
+      "z": 0,
+      "role": "supplier housing"
+    }
+  ],
+  "roads": [
+    {
+      "pathId": "south_quarry_hamlet_road",
+      "roadProfileId": "cart_road",
+      "points": [
+        {
+          "x": 318,
+          "y": 420
+        },
+        {
+          "x": 324,
+          "y": 408
+        },
+        {
+          "x": 334,
+          "y": 398
+        },
+        {
+          "x": 340,
+          "y": 394
+        }
+      ],
+      "pathWidth": 2.8,
+      "edgeSoftness": 0.7,
+      "tileId": "DIRT",
+      "tags": [
+        "main-overworld",
+        "road",
+        "spawn-protected",
+        "settlement-draft"
+      ]
+    }
+  ],
+  "npcPlan": [
+    {
+      "serviceId": "merchant:south_quarry_foreman",
+      "home": "south_quarry_storehouse",
+      "role": "mining route intro and ore-sorting flavor"
+    },
+    {
+      "serviceId": "bank:south_quarry",
+      "home": "south_quarry_storehouse",
+      "role": "small settlement bank if the area graduates from draft"
+    }
+  ],
+  "promotionChecklist": [
+    "Preview stamp silhouettes and settlement placement first.",
+    "Check road and combat spawn overlap before touching main_overworld.json.",
+    "Promote buildings as shared stamps, not settlement-only one-offs.",
+    "Add NPC home tags only after the target structures exist in canonical world content."
+  ]
+}

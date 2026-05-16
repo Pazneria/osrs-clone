@@ -1,19 +1,9 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
 const { loadRuntimeSkillSpecs } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function assertRegex(haystack, regex, message) {
-  if (!regex.test(haystack)) throw new Error(message);
-}
-
-function escapeRegex(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+const { assertRegex, escapeRegex } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function toPercent(value) {
   return `${(value * 100).toFixed(1).replace(/\.0$/, "")}%`;
@@ -105,7 +95,7 @@ function computeMiningOutputs(spec, node, options) {
 
 function loadItemDefs(projectRoot) {
   const itemCatalogPath = path.join(projectRoot, "src", "js", "content", "item-catalog.js");
-  const code = fs.readFileSync(itemCatalogPath, "utf8");
+  const code = readRepoFile(projectRoot, "src/js/content/item-catalog.js");
   const sandbox = { window: {} };
   vm.runInNewContext(code, sandbox, { filename: itemCatalogPath });
   const root = sandbox.window && sandbox.window.ItemCatalog;
@@ -121,7 +111,7 @@ function findLine(lines, predicate) {
 }
 
 function readRoadmap(root, skillId) {
-  return fs.readFileSync(path.join(root, "src", "js", "skills", skillId, "ROADMAP.md"), "utf8");
+  return readRepoFile(root, ["src", "js", "skills", skillId, "ROADMAP.md"].join("/"));
 }
 
 function assertCanonicalHeader(skillId, roadmap, version) {
@@ -205,7 +195,6 @@ function runWoodcuttingChecks(roadmap, spec) {
 function runFishingChecks(roadmap, spec, itemDefs) {
   const lines = roadmap.split(/\r?\n/);
   const shallow = spec.nodeTable.shallow_water;
-  const deep = spec.nodeTable.deep_water;
 
   function getFishingMethodFishTable(methodSpec, level) {
     const bands = Array.isArray(methodSpec && methodSpec.fishByLevel) ? methodSpec.fishByLevel : [];
@@ -347,7 +336,7 @@ function runFishingChecks(roadmap, spec, itemDefs) {
   }
 }
 
-function runCookingChecks(roadmap, spec, itemDefs) {
+function runCookingChecks(roadmap, spec) {
   const lines = roadmap.split(/\r?\n/);
   assertRegex(
     roadmap,
@@ -1018,7 +1007,7 @@ function run() {
 
   runWoodcuttingChecks(roadmaps.woodcutting, runtime.skills.woodcutting);
   runFishingChecks(roadmaps.fishing, runtime.skills.fishing, itemDefs);
-  runCookingChecks(roadmaps.cooking, runtime.skills.cooking, itemDefs);
+  runCookingChecks(roadmaps.cooking, runtime.skills.cooking);
   runFiremakingChecks(roadmaps.firemaking, runtime.skills.firemaking, runtime.skills);
   runMiningChecks(roadmaps.mining, runtime.skills.mining);
   runRunecraftingChecks(roadmaps.runecrafting, runtime.skills.runecrafting);

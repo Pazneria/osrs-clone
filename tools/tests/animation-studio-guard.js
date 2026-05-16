@@ -1,23 +1,20 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const mainSource = fs.readFileSync(path.join(root, "src", "main.ts"), "utf8");
-  const platformBootstrapSource = fs.readFileSync(path.join(root, "src", "game", "platform", "bootstrap.ts"), "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const debugPanelSource = fs.readFileSync(path.join(root, "src", "js", "combat-animation-debug-panel-runtime.js"), "utf8");
-  const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
-  const playerNpcHumanoidRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "player-npc-humanoid-runtime.js"), "utf8");
-  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "animation-bridge.ts"), "utf8");
-  const studioSource = fs.readFileSync(path.join(root, "src", "game", "animation", "studio.ts"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const viteSource = fs.readFileSync(path.join(root, "vite.config.ts"), "utf8");
+  const mainSource = readRepoFile(root, "src/main.ts");
+  const platformBootstrapSource = readRepoFile(root, "src/game/platform/bootstrap.ts");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const debugPanelSource = readRepoFile(root, "src/js/combat-animation-debug-panel-runtime.js");
+  const playerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const playerNpcHumanoidRuntimeSource = readRepoFile(root, "src/js/player-npc-humanoid-runtime.js");
+  const bridgeSource = readRepoFile(root, "src/game/platform/animation-bridge.ts");
+  const studioSource = readRepoFile(root, "src/game/animation/studio.ts");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const viteSource = readRepoFile(root, "vite.config.ts");
 
   assert(mainSource.includes("bootstrapGamePlatform"), "main.ts should delegate platform setup to the platform bootstrap");
   assert(platformBootstrapSource.includes("exposeAnimationBridge"), "platform bootstrap should expose the animation bridge");

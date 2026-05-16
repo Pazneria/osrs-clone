@@ -963,10 +963,3 @@
     window.SkillModules = window.SkillModules || {};
     window.SkillModules[SKILL_ID] = smithingModule;
 })();
-
-
-
-
-
-
-

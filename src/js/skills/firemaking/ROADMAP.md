@@ -207,7 +207,7 @@ Ashes are not normally stocked by shops, but if a player sells ashes to a shop, 
 | Maple ridge fire lane | Level-30 maple-fire progression near the higher-tier ridge loop |
 | Yew frontier fire lane | Level-40 yew-fire progression at the late-band frontier |
 
-Current world pass anchors these authored fire lanes in `starter_town`, and QA exposes them through `/qa firespots` plus `/qa gotofire <starter|oak|willow|maple|yew>`.
+Current world pass anchors these authored fire lanes in `main_overworld`, and QA exposes them through `/qa firespots` plus `/qa gotofire <starter|oak|willow|maple|yew>`.
 
 ## Dependencies
 

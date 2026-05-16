@@ -1,21 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { countMessages, expectMessage } = require("./message-test-utils");
 
 function createFiremakingContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});
@@ -138,14 +124,6 @@ function createFiremakingContext(options = {}) {
   return context;
 }
 
-function countMessages(context, expectedText) {
-  return context._messages.filter((entry) => entry && entry.message === expectedText).length;
-}
-
-function expectMessage(context, expectedText, testName) {
-  assert(countMessages(context, expectedText) > 0, testName + ': expected message "' + expectedText + '"');
-}
-
 function run() {
   const root = path.resolve(__dirname, "..", "..");
 
@@ -169,6 +147,40 @@ function run() {
   function test(name, fn) {
     tests.push({ name, fn });
   }
+
+  test("Firemaking item use only starts from an inventory tinderbox/log pair", () => {
+    const groundCtx = createFiremakingContext({
+      counts: { tinderbox: 1, logs: 1 },
+      sourceItemId: "tinderbox",
+      targetObj: "GROUND"
+    });
+    let groundStartAttempts = 0;
+    groundCtx.startSkillById = () => {
+      groundStartAttempts += 1;
+      return true;
+    };
+
+    assert(!firemaking.onUseItem(groundCtx), "tinderbox use on plain ground should not start firemaking");
+    assert(groundStartAttempts === 0, "plain ground firemaking use should not queue a skill start");
+
+    const inventoryCtx = createFiremakingContext({
+      counts: { tinderbox: 1, logs: 1 },
+      sourceItemId: "tinderbox",
+      targetObj: "INVENTORY"
+    });
+    const payloads = [];
+    inventoryCtx.targetUid = { sourceItemId: "tinderbox", targetItemId: "logs" };
+    inventoryCtx.startSkillById = (skillId, payload) => {
+      payloads.push({ skillId, payload });
+      return true;
+    };
+
+    assert(firemaking.onUseItem(inventoryCtx), "tinderbox use directly on inventory logs should start firemaking");
+    assert(payloads.length === 1, "inventory tinderbox/log use should queue one skill start");
+    assert(payloads[0].skillId === "firemaking", "inventory tinderbox/log use should start firemaking");
+    assert(payloads[0].payload.sourceItemId === "logs", "inventory tinderbox/log use should preserve the log item id");
+    assert(payloads[0].payload.targetObj === "GROUND", "firemaking should still light logs on the player's tile after inventory use");
+  });
 
   test("Firemaking chains into the next tile after the success clip", () => {
     const ctx = createFiremakingContext({

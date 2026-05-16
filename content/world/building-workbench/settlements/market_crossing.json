@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "settlementId": "market_crossing",
+  "worldId": "main_overworld",
+  "label": "Market Crossing",
+  "kind": "town",
+  "status": "draft",
+  "placementMode": "preview_only",
+  "themeMix": [
+    "stone_market",
+    "painted_plaster",
+    "frontier_timber"
+  ],
+  "intent": {
+    "role": "A compact road-crossing town that can hold a merchant, an artisan painter, and roadside housing.",
+    "differenceFromStarterTown": "More civic and colorful than Starter Town, but smaller and less permanent than a full city district.",
+    "playerRead": "A mainland stop where trade, art, and travel services start to cluster around a road."
+  },
+  "anchorBounds": {
+    "xMin": 410,
+    "yMin": 360,
+    "xMax": 480,
+    "yMax": 430
+  },
+  "placements": [
+    {
+      "structureId": "market_crossing_bank",
+      "buildingId": "frontier_bank",
+      "x": 416,
+      "y": 376,
+      "z": 0,
+      "role": "small road-town bank and safe stop"
+    },
+    {
+      "structureId": "market_crossing_townhouse",
+      "buildingId": "stone_townhouse",
+      "x": 432,
+      "y": 384,
+      "z": 0,
+      "role": "merchant shop and street-facing home"
+    },
+    {
+      "structureId": "market_crossing_gallery",
+      "buildingId": "painted_gallery",
+      "x": 448,
+      "y": 398,
+      "z": 0,
+      "role": "painting shop and civic notice wall"
+    },
+    {
+      "structureId": "market_crossing_cottage",
+      "buildingId": "frontier_cottage",
+      "x": 414,
+      "y": 404,
+      "z": 0,
+      "role": "road worker housing"
+    },
+    {
+      "structureId": "market_crossing_bunkhouse",
+      "buildingId": "quarry_bunkhouse",
+      "x": 462,
+      "y": 376,
+      "z": 0,
+      "role": "carter and guard lodging"
+    }
+  ],
+  "roads": [
+    {
+      "pathId": "market_crossing_main_road",
+      "roadProfileId": "cart_road",
+      "points": [
+        {
+          "x": 414,
+          "y": 420
+        },
+        {
+          "x": 430,
+          "y": 404
+        },
+        {
+          "x": 446,
+          "y": 392
+        },
+        {
+          "x": 474,
+          "y": 388
+        }
+      ],
+      "pathWidth": 2.6,
+      "edgeSoftness": 0.65,
+      "tileId": "DIRT",
+      "tags": [
+        "main-overworld",
+        "road",
+        "spawn-protected",
+        "settlement-draft"
+      ]
+    },
+    {
+      "pathId": "market_crossing_gallery_lane",
+      "roadProfileId": "dirt_lane",
+      "points": [
+        {
+          "x": 444,
+          "y": 412
+        },
+        {
+          "x": 456,
+          "y": 412
+        },
+        {
+          "x": 468,
+          "y": 404
+        }
+      ],
+      "pathWidth": 1.8,
+      "edgeSoftness": 0.55,
+      "tileId": "DIRT",
+      "tags": [
+        "main-overworld",
+        "road",
+        "spawn-protected",
+        "settlement-draft"
+      ]
+    }
+  ],
+  "npcPlan": [
+    {
+      "serviceId": "bank:market_crossing",
+      "home": "market_crossing_bank",
+      "role": "small bank if the crossing graduates into a true service stop"
+    },
+    {
+      "serviceId": "merchant:market_crossing_trader",
+      "home": "market_crossing_townhouse",
+      "role": "general mainland trade and road rumors"
+    },
+    {
+      "serviceId": "merchant:market_crossing_painter",
+      "home": "market_crossing_gallery",
+      "role": "art, dyes, paintings, and civic posting flavor"
+    }
+  ],
+  "promotionChecklist": [
+    "Preview the mixed stone and painted plaster silhouettes before choosing exact mainland coordinates.",
+    "Keep the bank and gallery reusable so services can appear in multiple towns without bespoke town clutter.",
+    "Promote shared stamps first, then register road and NPC homes in the canonical region.",
+    "Check spawn-protected road coverage and service adjacency before main_overworld promotion."
+  ]
+}

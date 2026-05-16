@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "painted_gallery",
+  "label": "Painted Gallery",
+  "category": "artisan_shop",
+  "archetypeId": "artisan_shop",
+  "themeId": "painted_plaster",
+  "materialProfileId": "painted_plaster_tile",
+  "conditionId": "intact",
+  "variantTags": [
+    "artisan",
+    "paintings",
+    "plaster",
+    "shopfront"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWWC",
+      "WFFFFFFFFW",
+      "WFFFFFFFFW",
+      "WFFVFFFFFW",
+      "WFFFFFFFFW",
+      "WFFFFFFFFW",
+      "CWWWFFFWWC",
+      "   FFFF   "
+    ],
+    "legend": {
+      "C": "painted corner pier",
+      "W": "plaster wall",
+      "F": "painted plank or gallery floor",
+      "V": "shop display counter",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "gallery_front",
+      "x": 5,
+      "y": 6,
+      "facing": "south",
+      "approach": {
+        "x": 5,
+        "y": 7
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 1.32,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "artist_workdesk",
+      "kind": "desk",
+      "x": 2,
+      "y": 2,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "crafting"
+      ]
+    },
+    {
+      "id": "dye_crate",
+      "kind": "crate",
+      "x": 7,
+      "y": 5,
+      "facingYaw": 0.2,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "supplies"
+      ]
+    },
+    {
+      "id": "street_notice",
+      "kind": "notice_board",
+      "x": 8,
+      "y": 7,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "street",
+        "notice"
+      ]
+    },
+    {
+      "id": "gallery_shop_sign",
+      "kind": "shop_sign",
+      "x": 4,
+      "y": 7,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "street",
+        "shopfront",
+        "signage"
+      ]
+    },
+    {
+      "id": "front_awning",
+      "kind": "market_awning",
+      "x": 5,
+      "y": 7,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "street",
+        "market",
+        "plaster"
+      ]
+    },
+    {
+      "id": "display_painting",
+      "kind": "wall_painting",
+      "x": 4,
+      "y": 2,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "painting",
+        "plaster"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "portrait_study",
+      "surface": "north",
+      "x": 3,
+      "y": 1,
+      "motif": "portrait study"
+    },
+    {
+      "id": "town_map",
+      "surface": "east",
+      "x": 8,
+      "y": 3,
+      "motif": "painted town map"
+    },
+    {
+      "id": "river_mural",
+      "surface": "west",
+      "x": 1,
+      "y": 4,
+      "motif": "river crossing mural"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_painted_gallery",
+    "structureLabel": "Painted Gallery"
+  },
+  "notes": [
+    "A reusable art-shop shell for towns that need paintings, posters, or civic color.",
+    "Keep this as a reusable shop archetype; settlement identity should come from theme and placement mix."
+  ]
+}

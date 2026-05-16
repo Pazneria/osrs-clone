@@ -31,11 +31,39 @@ function cloneEnemyTypeDefinition(definition: EnemyTypeDefinition): EnemyTypeDef
   };
 }
 
+function clonePatrolRoute(route?: Point3[] | null): Point3[] | null {
+  if (!Array.isArray(route) || route.length < 2) return null;
+  const clonedRoute = route
+    .filter((point) => point && Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z))
+    .map((point) => clonePoint3({
+      x: Math.floor(Number(point.x)),
+      y: Math.floor(Number(point.y)),
+      z: Math.floor(Number(point.z))
+    }));
+  return clonedRoute.length >= 2 ? clonedRoute : null;
+}
+
+function resolveNearestPatrolRouteIndex(route: Point3[] | null, tile: Point3): number | null {
+  if (!Array.isArray(route) || route.length === 0) return null;
+  let bestIndex = 0;
+  let bestDistance = Number.MAX_SAFE_INTEGER;
+  for (let i = 0; i < route.length; i += 1) {
+    const point = route[i];
+    const distance = Math.max(Math.abs(point.x - tile.x), Math.abs(point.y - tile.y));
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+  return bestIndex;
+}
+
 function cloneSpawnNode(definition: EnemySpawnNodeDefinition): EnemySpawnNodeDefinition {
   return {
     ...definition,
     spawnTile: clonePoint3(definition.spawnTile),
     homeTileOverride: definition.homeTileOverride ? clonePoint3(definition.homeTileOverride) : null,
+    patrolRoute: clonePatrolRoute(definition.patrolRoute),
     roamingRadiusOverride: Number.isFinite(definition.roamingRadiusOverride)
       ? Math.max(0, Math.floor(Number(definition.roamingRadiusOverride)))
       : null
@@ -306,7 +334,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
       kind: "humanoid",
       npcType: 3,
       facingYaw: Math.PI,
-      modelPresetId: "goblin",
+      modelPresetId: "enemy_goblin_grunt",
       animationSetId: "goblin_basic"
     },
     stats: {
@@ -384,7 +412,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Boar",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "boar",
       facingYaw: Math.PI
     },
     stats: {
@@ -442,7 +470,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Wolf",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "wolf",
       facingYaw: Math.PI
     },
     stats: {
@@ -503,7 +531,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
       kind: "humanoid",
       npcType: 2,
       facingYaw: Math.PI,
-      modelPresetId: "guard",
+      modelPresetId: "enemy_guard",
       animationSetId: "guard_basic"
     },
     stats: {
@@ -609,7 +637,7 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     displayName: "Bear",
     combatFamily: "melee",
     appearance: {
-      kind: "rat",
+      kind: "bear",
       facingYaw: Math.PI
     },
     stats: {
@@ -669,7 +697,8 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 1,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "enemy_heavy_brute"
     },
     stats: {
       hitpoints: 22,
@@ -741,7 +770,8 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 3,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "enemy_fast_striker"
     },
     stats: {
       hitpoints: 12,
@@ -813,7 +843,8 @@ const ENEMY_TYPES: Record<string, EnemyTypeDefinition> = {
     appearance: {
       kind: "humanoid",
       npcType: 2,
-      facingYaw: Math.PI
+      facingYaw: Math.PI,
+      modelPresetId: "enemy_training_dummy"
     },
     stats: {
       hitpoints: 250,
@@ -959,6 +990,10 @@ export function createEnemyRuntimeState(
   const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
     ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
     : definition.behavior.roamingRadius;
+  const resolvedAssistRadius = Number.isFinite(spawnNode.assistRadiusOverride)
+    ? Math.max(0, Math.floor(Number(spawnNode.assistRadiusOverride)))
+    : 0;
+  const resolvedPatrolRoute = clonePatrolRoute(spawnNode.patrolRoute);
   return {
     runtimeId: spawnNode.spawnNodeId,
     spawnNodeId: spawnNode.spawnNodeId,
@@ -972,6 +1007,12 @@ export function createEnemyRuntimeState(
     remainingAttackCooldown: 0,
     resolvedHomeTile: homeTile,
     resolvedSpawnTile: spawnTile,
+    spawnGroupId: typeof spawnNode.spawnGroupId === "string" ? spawnNode.spawnGroupId.trim() || null : null,
+    assistGroupId: typeof spawnNode.assistGroupId === "string" ? spawnNode.assistGroupId.trim() || null : null,
+    resolvedAssistRadius,
+    resolvedPatrolRoute,
+    patrolRouteIndex: resolveNearestPatrolRouteIndex(resolvedPatrolRoute, spawnTile),
+    patrolTargetIndex: null,
     resolvedRoamingRadius,
     resolvedChaseRange: Math.max(definition.behavior.chaseRange, resolvedRoamingRadius + 2),
     resolvedAggroRadius: definition.behavior.aggroRadius,

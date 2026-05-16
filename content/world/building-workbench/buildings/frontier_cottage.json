@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "frontier_cottage",
+  "label": "Frontier Cottage",
+  "category": "house",
+  "archetypeId": "house",
+  "themeId": "frontier_timber",
+  "materialProfileId": "timber_thatch",
+  "conditionId": "intact",
+  "variantTags": [
+    "small_home",
+    "timber",
+    "frontier",
+    "porch"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWC",
+      "WTTTTTW",
+      "WTTTTTW",
+      "WTTTTTW",
+      "WTTTTTW",
+      "CWWTWWC",
+      "  TTT  "
+    ],
+    "legend": {
+      "C": "corner post",
+      "W": "wall",
+      "T": "wood floor or porch",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "front",
+      "x": 3,
+      "y": 5,
+      "facing": "south",
+      "approach": {
+        "x": 3,
+        "y": 6
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 1.18,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "supply_barrel",
+      "kind": "barrel",
+      "x": 1,
+      "y": 2,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "storage"
+      ]
+    },
+    {
+      "id": "frontier_chopping_block",
+      "kind": "chopping_block",
+      "x": 5,
+      "y": 6,
+      "facingYaw": -0.35,
+      "blocksMovement": true,
+      "tags": [
+        "yard",
+        "woodcutting"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "hearth_landscape",
+      "surface": "north",
+      "x": 3,
+      "y": 1,
+      "motif": "simple landscape painting"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_frontier_cottage",
+    "structureLabel": "Frontier Cottage"
+  },
+  "notes": [
+    "This is the baseline cozy house, not the default for every settlement.",
+    "Pair it with work sheds or odd angled yards when used outside Starter Town."
+  ]
+}

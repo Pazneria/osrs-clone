@@ -1,6 +1,6 @@
-export type CodexEntityType = "item" | "skill" | "world";
+type CodexEntityType = "item" | "skill" | "world";
 
-export interface BuildCodexLinkOptions {
+interface BuildCodexLinkOptions {
   basePath?: string;
   baseUrl?: string;
   from?: string;
@@ -30,7 +30,7 @@ export function normalizeCodexBasePath(basePath = DEFAULT_CODEX_BASE_PATH): stri
   return normalized;
 }
 
-export function normalizeCodexEntityType(entityType: string): CodexEntityType {
+function normalizeCodexEntityType(entityType: string): CodexEntityType {
   const normalized = String(entityType || "").trim().toLowerCase();
   if (normalized === "item" || normalized === "items") return "item";
   if (normalized === "skill" || normalized === "skills") return "skill";

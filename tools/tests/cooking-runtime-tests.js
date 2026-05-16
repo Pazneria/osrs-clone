@@ -1,21 +1,9 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { cloneJson } = require("./collection-test-utils");
+const { makeClassList } = require("./dom-test-utils");
+const { expectMessage } = require("./message-test-utils");
 
 function createDomShim() {
   return {
@@ -27,11 +15,7 @@ function createDomShim() {
         textContent: "",
         innerHTML: "",
         children: [],
-        classList: {
-          add() {},
-          remove() {},
-          contains() { return false; }
-        },
+        classList: makeClassList(),
         appendChild(child) {
           this.children.push(child);
           return child;
@@ -80,7 +64,7 @@ function createSkillContext(options = {}) {
       z: Number.isFinite(options.z) ? options.z : defaultTargetZ,
       action: options.action || null,
       pendingSkillStart: null,
-      skillSessions: options.skillSessions ? JSON.parse(JSON.stringify(options.skillSessions)) : {}
+      skillSessions: options.skillSessions ? cloneJson(options.skillSessions) : {}
     },
     getRecipeSet: (skillId) => window.SkillSpecRegistry.getRecipeSet(skillId),
     getSkillSpec: (skillId) => window.SkillSpecRegistry.getSkillSpec(skillId),
@@ -148,11 +132,6 @@ function createSkillContext(options = {}) {
   context._xpBySkill = xpBySkill;
   context._queued = queued;
   return context;
-}
-
-function expectMessage(context, expectedText, testName) {
-  const hasMessage = context._messages.some((entry) => entry && entry.message === expectedText);
-  assert(hasMessage, testName + ': expected message "' + expectedText + '"');
 }
 
 function run() {

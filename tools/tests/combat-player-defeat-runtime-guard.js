@@ -1,21 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
+const { readRepoFile } = require("./repo-file-test-utils");
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "combat-player-defeat-runtime.js");
-  const runtimeSource = read(root, "src/js/combat-player-defeat-runtime.js");
-  const combatSource = read(root, "src/js/combat.js");
-  const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
+  const runtimeSource = readRepoFile(root, "src/js/combat-player-defeat-runtime.js");
+  const combatSource = readRepoFile(root, "src/js/combat.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const runtimeIndex = manifestSource.indexOf('id: "combat-player-defeat-runtime"');
   const combatIndex = manifestSource.indexOf('id: "combat"');
 

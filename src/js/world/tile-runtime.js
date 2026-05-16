@@ -24,12 +24,14 @@ const TileId = Object.freeze({
     WATER_DEEP: 22,
     FENCE: 23,
     WOODEN_GATE_CLOSED: 24,
-    WOODEN_GATE_OPEN: 25
+    WOODEN_GATE_OPEN: 25,
+    SAND: 26
 });
 
 const WALKABLE_TILES = [
     TileId.GRASS,
     TileId.DIRT,
+    TileId.SAND,
     TileId.FLOOR_WOOD,
     TileId.FLOOR_STONE,
     TileId.FLOOR_BRICK,
@@ -45,6 +47,7 @@ const WATER_TILE_SET = new Set([TileId.WATER_SHALLOW, TileId.WATER_DEEP]);
 const NATURAL_TILE_SET = new Set([
     TileId.GRASS,
     TileId.DIRT,
+    TileId.SAND,
     TileId.TREE,
     TileId.ROCK,
     TileId.STUMP,

@@ -1,3 +1,4 @@
+const assert = require("assert");
 const path = require("path");
 const { buildWorldGameplayMap } = require("../content/world-map-builder");
 const { collectAdjacencyViolations } = require("../content/world-pathing");
@@ -5,10 +6,6 @@ const {
   loadWorldContent,
   loadWorldManifest
 } = require("../content/world-content");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");

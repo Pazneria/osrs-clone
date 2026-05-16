@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "materialProfileId": "castle_granite_slate",
+  "label": "Castle Granite And Slate",
+  "themeId": "stone_market",
+  "family": "stone",
+  "previewPalette": {
+    "ground": "#dde1cf",
+    "floor": "#858174",
+    "wall": "#6f716c",
+    "corner": "#8a8b84",
+    "roof": "#3f4a55",
+    "roofDark": "#28313a",
+    "accent": "#a88f54"
+  },
+  "roofMaterial": "dark slate cap stones",
+  "wallMaterial": "heavy granite block",
+  "tags": [
+    "castle",
+    "defensive",
+    "stone"
+  ],
+  "promotionNotes": [
+    "Castle gates need explicit walkable passage treatment during promotion.",
+    "Use sparingly so small towns do not read like full cities."
+  ]
+}

@@ -6,11 +6,13 @@ const {
   gridToRows,
   makeSymbolAllocator
 } = require("./pixel-source");
+const { clamp } = require("./pixel-math");
 const {
   getProjectRoot,
   loadPixelSource,
   writePixelSource
 } = require("./pixel-project");
+const { parsePixelAssetArgs } = require("./pixel-cli-args");
 
 const ARMOR_ICON_ITEM_PATTERN = /^(bronze|iron|steel|mithril|adamant|rune)_(boots|helmet|shield|platelegs|platebody)$/;
 const ICON_CANVAS_SIZE = 32;
@@ -55,26 +57,14 @@ const ITEM_ICON_ROTATION_OVERRIDES = Object.freeze({
     rightLowerLeg: Object.freeze([Math.PI / 5, Math.PI / 9, 0])
   })
 });
-
-function parseArgs(argv) {
-  const args = {
-    assetIds: []
-  };
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i];
-    if (token === "--asset" || token === "-AssetId") {
-      const next = argv[i + 1];
-      if (!next) throw new Error(`${token} requires a value`);
-      args.assetIds.push(next);
-      i += 1;
-      continue;
-    }
-    throw new Error(`Unknown argument: ${token}`);
-  }
-
-  return args;
-}
+const ARMOR_ICON_TIER_STYLES = Object.freeze({
+  bronze: Object.freeze({ detailLevel: 0 }),
+  iron: Object.freeze({ detailLevel: 1 }),
+  steel: Object.freeze({ detailLevel: 1 }),
+  mithril: Object.freeze({ detailLevel: 1 }),
+  adamant: Object.freeze({ detailLevel: 2 }),
+  rune: Object.freeze({ detailLevel: 2 })
+});
 
 function loadAppearanceCatalog(projectRoot) {
   const catalogPath = path.join(projectRoot, "src", "js", "content", "player-appearance-catalog.js");
@@ -248,6 +238,15 @@ function suffixFromItemId(itemId) {
   return match ? match[2] : null;
 }
 
+function tierFromItemId(itemId) {
+  const match = ARMOR_ICON_ITEM_PATTERN.exec(itemId);
+  return match ? match[1] : "iron";
+}
+
+function getArmorIconTierStyle(itemId) {
+  return ARMOR_ICON_TIER_STYLES[tierFromItemId(itemId)] || ARMOR_ICON_TIER_STYLES.iron;
+}
+
 function getFamilyLayout(itemId) {
   const suffix = suffixFromItemId(itemId);
   return FAMILY_LAYOUTS[suffix] || FAMILY_LAYOUTS.platebody;
@@ -311,10 +310,6 @@ function createPaletteSymbolMap(layers) {
   return { colorToSymbol, palette };
 }
 
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
 function hexToRgb(hex) {
   if (typeof hex !== "string" || !/^#[0-9a-f]{6}$/i.test(hex)) return null;
   return {
@@ -336,16 +331,6 @@ function setRect(grid, left, top, right, bottom, symbol) {
       grid[y][x] = symbol;
     }
   }
-}
-
-function createIconGrid() {
-  const grid = [];
-  for (let y = 0; y < ICON_CANVAS_SIZE; y += 1) {
-    const row = [];
-    for (let x = 0; x < ICON_CANVAS_SIZE; x += 1) row.push(".");
-    grid.push(row);
-  }
-  return grid;
 }
 
 function buildTonePaletteFromFragments(fragments, includeCutout = false) {
@@ -371,6 +356,7 @@ function buildTonePaletteFromFragments(fragments, includeCutout = false) {
 
 function buildBootIconFromFragments(itemId, fragments, currentSource) {
   const { dark, mid, light } = buildTonePaletteFromFragments(fragments);
+  const style = getArmorIconTierStyle(itemId);
   const palette = {
     ".": "transparent",
     "0": dark,
@@ -398,33 +384,16 @@ function buildBootIconFromFragments(itemId, fragments, currentSource) {
   setRect(grid, 19, 20, 26, 21, "2");
   setRect(grid, 18, 22, 26, 23, "0");
 
-  return {
-    id: itemId,
-    width: ICON_CANVAS_SIZE,
-    height: ICON_CANVAS_SIZE,
-    palette,
-    pixels: gridToRows(grid),
-    model: currentSource && currentSource.model ? currentSource.model : createBlankPixelSource(itemId).model
-  };
-}
-
-function buildRuneBootsIconFromFragments(itemId, fragments, currentSource) {
-  const { palette } = buildTonePaletteFromFragments(fragments);
-  const grid = createIconGrid();
-
-  setRect(grid, 8, 9, 11, 11, "0");
-  setRect(grid, 7, 12, 12, 18, "1");
-  setRect(grid, 8, 13, 11, 14, "2");
-  setRect(grid, 6, 19, 12, 20, "3");
-  setRect(grid, 5, 21, 13, 22, "3");
-  setRect(grid, 5, 23, 13, 24, "0");
-
-  setRect(grid, 20, 9, 23, 11, "0");
-  setRect(grid, 19, 12, 24, 18, "1");
-  setRect(grid, 20, 13, 23, 14, "2");
-  setRect(grid, 19, 19, 25, 20, "3");
-  setRect(grid, 19, 21, 27, 22, "3");
-  setRect(grid, 18, 23, 27, 24, "0");
+  if (style.detailLevel >= 1) {
+    setRect(grid, 8, 13, 11, 14, "2");
+    setRect(grid, 20, 13, 23, 14, "2");
+  }
+  if (style.detailLevel >= 2) {
+    setRect(grid, 6, 18, 12, 19, "0");
+    setRect(grid, 19, 18, 25, 19, "0");
+    setRect(grid, 7, 16, 11, 16, "2");
+    setRect(grid, 20, 16, 24, 16, "2");
+  }
 
   return {
     id: itemId,
@@ -438,6 +407,7 @@ function buildRuneBootsIconFromFragments(itemId, fragments, currentSource) {
 
 function buildPlatelegsIconFromFragments(itemId, fragments, currentSource) {
   const { dark, mid, light } = buildTonePaletteFromFragments(fragments);
+  const style = getArmorIconTierStyle(itemId);
   const palette = {
     ".": "transparent",
     "0": dark,
@@ -469,109 +439,16 @@ function buildPlatelegsIconFromFragments(itemId, fragments, currentSource) {
   setRect(grid, 14, 14, 14, 17, "0");
   setRect(grid, 17, 14, 17, 17, "0");
 
-  return {
-    id: itemId,
-    width: ICON_CANVAS_SIZE,
-    height: ICON_CANVAS_SIZE,
-    palette,
-    pixels: gridToRows(grid),
-    model: currentSource && currentSource.model ? currentSource.model : createBlankPixelSource(itemId).model
-  };
-}
-
-function buildRunePlatelegsIconFromFragments(itemId, fragments, currentSource) {
-  const { palette } = buildTonePaletteFromFragments(fragments);
-  const grid = createIconGrid();
-
-  setRect(grid, 6, 6, 12, 9, "0");
-  setRect(grid, 5, 10, 13, 23, "1");
-  setRect(grid, 6, 13, 12, 15, "3");
-  setRect(grid, 7, 17, 11, 18, "2");
-  setRect(grid, 6, 24, 12, 25, "0");
-
-  setRect(grid, 19, 6, 25, 9, "0");
-  setRect(grid, 18, 10, 26, 23, "1");
-  setRect(grid, 19, 13, 25, 15, "3");
-  setRect(grid, 20, 17, 24, 18, "2");
-  setRect(grid, 19, 24, 25, 25, "0");
-
-  setRect(grid, 13, 10, 14, 14, "1");
-  setRect(grid, 17, 10, 18, 14, "1");
-  setRect(grid, 14, 15, 14, 18, "0");
-  setRect(grid, 17, 15, 17, 18, "0");
-
-  return {
-    id: itemId,
-    width: ICON_CANVAS_SIZE,
-    height: ICON_CANVAS_SIZE,
-    palette,
-    pixels: gridToRows(grid),
-    model: currentSource && currentSource.model ? currentSource.model : createBlankPixelSource(itemId).model
-  };
-}
-
-function buildRuneHelmetIconFromFragments(itemId, fragments, currentSource) {
-  const { palette } = buildTonePaletteFromFragments(fragments, true);
-  const grid = createIconGrid();
-
-  setRect(grid, 11, 4, 20, 5, "2");
-  setRect(grid, 9, 6, 22, 8, "3");
-  setRect(grid, 6, 9, 25, 12, "0");
-  setRect(grid, 4, 10, 7, 12, "1");
-  setRect(grid, 24, 10, 27, 12, "1");
-  setRect(grid, 7, 13, 24, 22, "1");
-  setRect(grid, 9, 14, 22, 20, "0");
-  setRect(grid, 11, 15, 20, 16, "x");
-  setRect(grid, 13, 19, 18, 19, "x");
-  setRect(grid, 7, 7, 9, 10, "3");
-  setRect(grid, 22, 7, 24, 10, "3");
-
-  return {
-    id: itemId,
-    width: ICON_CANVAS_SIZE,
-    height: ICON_CANVAS_SIZE,
-    palette,
-    pixels: gridToRows(grid),
-    model: currentSource && currentSource.model ? currentSource.model : createBlankPixelSource(itemId).model
-  };
-}
-
-function buildRunePlatebodyIconFromFragments(itemId, fragments, currentSource) {
-  const { palette } = buildTonePaletteFromFragments(fragments);
-  const grid = createIconGrid();
-
-  setRect(grid, 4, 8, 10, 11, "0");
-  setRect(grid, 21, 8, 27, 11, "0");
-  setRect(grid, 6, 10, 25, 24, "1");
-  setRect(grid, 8, 11, 23, 14, "0");
-  setRect(grid, 9, 12, 13, 19, "3");
-  setRect(grid, 18, 12, 22, 19, "3");
-  setRect(grid, 14, 10, 17, 21, "2");
-  setRect(grid, 11, 21, 20, 23, "0");
-  setRect(grid, 6, 12, 8, 19, "0");
-  setRect(grid, 23, 12, 25, 19, "0");
-
-  return {
-    id: itemId,
-    width: ICON_CANVAS_SIZE,
-    height: ICON_CANVAS_SIZE,
-    palette,
-    pixels: gridToRows(grid),
-    model: currentSource && currentSource.model ? currentSource.model : createBlankPixelSource(itemId).model
-  };
-}
-
-function buildRuneShieldIconFromFragments(itemId, fragments, currentSource) {
-  const { palette } = buildTonePaletteFromFragments(fragments);
-  const grid = createIconGrid();
-
-  setRect(grid, 7, 5, 24, 24, "0");
-  setRect(grid, 9, 7, 22, 22, "1");
-  setRect(grid, 11, 10, 20, 18, "3");
-  setRect(grid, 15, 8, 16, 21, "0");
-  setRect(grid, 14, 13, 17, 16, "2");
-  setRect(grid, 7, 12, 8, 19, "0");
-  setRect(grid, 23, 9, 24, 13, "0");
+  if (style.detailLevel >= 1) {
+    setRect(grid, 8, 13, 12, 15, "2");
+    setRect(grid, 19, 13, 23, 15, "2");
+  }
+  if (style.detailLevel >= 2) {
+    setRect(grid, 6, 10, 7, 18, "0");
+    setRect(grid, 24, 10, 25, 18, "0");
+    setRect(grid, 8, 18, 12, 19, "2");
+    setRect(grid, 19, 18, 23, 19, "2");
+  }
 
   return {
     id: itemId,
@@ -636,21 +513,6 @@ function buildArmorPixelSource(itemId, itemDef, currentSource) {
   if (!fragments.length) {
     throw new Error(`${itemId}: no appearance fragments available`);
   }
-  if (itemId === "rune_boots") {
-    return buildRuneBootsIconFromFragments(itemId, fragments, currentSource || baseSource);
-  }
-  if (itemId === "rune_platelegs") {
-    return buildRunePlatelegsIconFromFragments(itemId, fragments, currentSource || baseSource);
-  }
-  if (itemId === "rune_helmet") {
-    return buildRuneHelmetIconFromFragments(itemId, fragments, currentSource || baseSource);
-  }
-  if (itemId === "rune_platebody") {
-    return buildRunePlatebodyIconFromFragments(itemId, fragments, currentSource || baseSource);
-  }
-  if (itemId === "rune_shield") {
-    return buildRuneShieldIconFromFragments(itemId, fragments, currentSource || baseSource);
-  }
   if (suffix === "boots") {
     return buildBootIconFromFragments(itemId, fragments, currentSource || baseSource);
   }
@@ -686,7 +548,7 @@ function getArmorItemIds(args, catalog) {
 
 function main() {
   const projectRoot = getProjectRoot();
-  const args = parseArgs(process.argv.slice(2));
+  const args = parsePixelAssetArgs(process.argv.slice(2));
   const catalog = loadAppearanceCatalog(projectRoot);
   const itemIds = getArmorItemIds(args, catalog);
   const written = [];

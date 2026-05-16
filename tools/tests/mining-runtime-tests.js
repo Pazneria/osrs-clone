@@ -1,29 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-const vm = require("vm");
-const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function loadBrowserScript(root, relPath) {
-  const abs = path.join(root, relPath);
-  const code = fs.readFileSync(abs, "utf8");
-  vm.runInThisContext(code, { filename: abs });
-}
-
-function loadSkillSpecScripts(root) {
-  for (const relPath of SKILL_SPEC_SCRIPT_PATHS) loadBrowserScript(root, relPath);
-}
-
-function createSequenceRng(values) {
-  const queue = Array.isArray(values) ? values.slice() : [];
-  return () => {
-    if (queue.length === 0) return 0;
-    return queue.shift();
-  };
-}
+const { loadBrowserScript, loadSkillSpecScripts } = require("./browser-script-test-utils");
+const { createSequenceRng } = require("./rng-test-utils");
 
 function createMiningContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});
@@ -81,7 +59,7 @@ function createMiningContext(options = {}) {
       context.playerState.action = null;
     },
     getRockNodeAt: () => nodeMeta,
-    depleteRockNode: (x, y, z, respawnTicks) => {
+    depleteRockNode: (_x, _y, _z, respawnTicks) => {
       nodeMeta.depletedUntilTick = context.currentTick + Math.max(1, respawnTicks || 1);
       nodeMeta.successfulYields = 0;
       nodeMeta.lastInteractionTick = 0;

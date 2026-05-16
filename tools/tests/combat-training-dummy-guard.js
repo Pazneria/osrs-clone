@@ -1,46 +1,12 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function getFunctionBody(source, functionName) {
-  const startToken = `function ${functionName}(`;
-  const startIndex = source.indexOf(startToken);
-  if (startIndex === -1) return "";
-  const paramsEnd = source.indexOf(")", startIndex);
-  const bodyStart = paramsEnd === -1 ? -1 : source.indexOf("{", paramsEnd);
-  if (bodyStart === -1) return "";
-  let depth = 0;
-  for (let i = bodyStart; i < source.length; i++) {
-    const char = source[i];
-    if (char === "{") depth += 1;
-    else if (char === "}") depth -= 1;
-    if (depth === 0) return source.slice(bodyStart + 1, i);
-  }
-  return "";
-}
-
-function getBlockBody(source, startToken) {
-  const startIndex = source.indexOf(startToken);
-  if (startIndex === -1) return "";
-  const bodyStart = source.indexOf("{", startIndex);
-  if (bodyStart === -1) return "";
-  let depth = 0;
-  for (let i = bodyStart; i < source.length; i++) {
-    const char = source[i];
-    if (char === "{") depth += 1;
-    else if (char === "}") depth -= 1;
-    if (depth === 0) return source.slice(bodyStart + 1, i);
-  }
-  return "";
-}
+const { readRepoFile } = require("./repo-file-test-utils");
+const { getBlockBody, getFunctionBody } = require("./source-block-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
-  const combatEnemyMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-movement-runtime.js"), "utf8");
+  const combatSource = readRepoFile(root, "src/js/combat.js");
+  const combatEnemyMovementRuntimeSource = readRepoFile(root, "src/js/combat-enemy-movement-runtime.js");
 
   assert(
     combatSource.includes("function isTrainingDummyEnemy(enemyStateOrId) {"),

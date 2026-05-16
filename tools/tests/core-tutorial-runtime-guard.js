@@ -1,17 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "core-tutorial-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/core-tutorial-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   assert(runtimeSource.includes("window.CoreTutorialRuntime"), "tutorial runtime should expose a window runtime");
   assert(runtimeSource.includes("function buildNpcDialogueView"), "tutorial runtime should own dynamic tutorial dialogue");
@@ -125,7 +122,7 @@ function run() {
   const firstNpcMarker = runtime.getGuidanceMarker(context);
   assert(firstNpcMarker && firstNpcMarker.markerId === "tutorial:step1:woodcutting_instructor", "step one guidance should point at the next NPC before the task object");
   assert(firstNpcMarker.targetNpcSpawnId === "npc:tutorial_woodcutting_instructor", "NPC guidance markers should carry a live NPC spawn target");
-  const firstWoodcuttingView = runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_woodcutting_instructor", name: "Woodcutting Instructor" }, null);
+  runtime.buildNpcDialogueView(context, { dialogueId: "tutorial_woodcutting_instructor", name: "Woodcutting Instructor" }, null);
   assert(context.playerProfileState.tutorialInstructorVisits["1"] === true, "speaking to the step NPC should mark that instructor visited");
   assert(saves.includes("tutorial_instructor_visit"), "speaking to a step NPC should persist guidance visit state");
   const firstTreeMarker = runtime.getGuidanceMarker(context);

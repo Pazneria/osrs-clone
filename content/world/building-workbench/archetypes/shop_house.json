@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "shop_house",
+  "label": "Shop House",
+  "categories": [
+    "shop_house",
+    "merchant",
+    "townhouse"
+  ],
+  "footprintTags": [
+    "shopfront",
+    "street_step",
+    "counter"
+  ],
+  "typicalRoles": [
+    "merchant home",
+    "market street",
+    "service frontage"
+  ],
+  "promotionHints": [
+    "Keep the shop counter and merchant service in sync during promotion.",
+    "Use this archetype for denser town streets instead of stretching cottages."
+  ]
+}

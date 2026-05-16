@@ -381,7 +381,14 @@ function makeMagicRune(itemId, overrides = {}) {
               spawnNodeId: "qa-bear",
               enemyId: "enemy_bear",
               spawnTile: { x: 12, y: 12, z: 0 },
-              spawnGroupId: "camp_southeast_ruins_alpha"
+              spawnGroupId: "camp_southeast_ruins_alpha",
+              patrolRoute: [
+                { x: 12, y: 12, z: 0 },
+                { x: 14, y: 12, z: 0 },
+                { x: 14, y: 14, z: 0 }
+              ],
+              assistGroupId: "camp_southeast_ruins_alpha",
+              assistRadiusOverride: 6
             }
           ]
         };
@@ -426,6 +433,24 @@ function makeMagicRune(itemId, overrides = {}) {
     ["enemy_bear"],
     "combat bridge camp summaries should keep runtime enemy ids"
   );
+  const runtimeSpawnNodes = window.CombatRuntime.getWorldCombatSpawnNodes("qa_runtime_world");
+  const qaBearSpawn = runtimeSpawnNodes.find((entry) => entry.spawnNodeId === "qa-bear");
+  assert.strictEqual(qaBearSpawn.assistGroupId, "camp_southeast_ruins_alpha", "combat bridge should preserve assist group ids");
+  assert.strictEqual(qaBearSpawn.assistRadiusOverride, 6, "combat bridge should preserve assist radius overrides");
+  assert.deepStrictEqual(
+    qaBearSpawn.patrolRoute,
+    [
+      { x: 12, y: 12, z: 0 },
+      { x: 14, y: 12, z: 0 },
+      { x: 14, y: 14, z: 0 }
+    ],
+    "combat bridge should preserve authored patrol routes"
+  );
+  const qaBearState = window.CombatRuntime.createEnemyRuntimeState(qaBearSpawn, 0);
+  assert.strictEqual(qaBearState.assistGroupId, "camp_southeast_ruins_alpha", "enemy runtime state should carry assist group ids");
+  assert.strictEqual(qaBearState.resolvedAssistRadius, 6, "enemy runtime state should resolve assist radius overrides");
+  assert.deepStrictEqual(qaBearState.resolvedPatrolRoute, qaBearSpawn.patrolRoute, "enemy runtime state should carry resolved patrol routes");
+  assert.strictEqual(qaBearState.patrolRouteIndex, 0, "enemy runtime state should seed patrol progress from the nearest route point");
 }
 
 {

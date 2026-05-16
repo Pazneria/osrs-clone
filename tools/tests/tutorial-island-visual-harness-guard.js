@@ -1,19 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const harnessPath = path.join(root, "tools", "visual", "tutorial-island-visual-harness.js");
   const configPath = path.join(root, "tools", "visual", "tutorial-island-visual-scenes.json");
-  const packagePath = path.join(root, "package.json");
-  const corePath = path.join(root, "src", "js", "core.js");
-  const harnessSource = fs.readFileSync(harnessPath, "utf8");
-  const coreSource = fs.readFileSync(corePath, "utf8");
-  const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  const harnessSource = readRepoFile(root, "tools/visual/tutorial-island-visual-harness.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const packageJson = JSON.parse(readRepoFile(root, "package.json"));
   const harness = require(harnessPath);
   const config = harness.loadSceneConfig(configPath);
 

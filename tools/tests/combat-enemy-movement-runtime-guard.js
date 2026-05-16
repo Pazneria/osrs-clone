@@ -1,11 +1,8 @@
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
 const assert = require("assert");
+const { createRepoFileReader } = require("./repo-file-test-utils");
 
-function read(relPath) {
-  return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
-}
+const read = createRepoFileReader(__dirname);
 
 function makeEnemy(overrides = {}) {
   return Object.assign({
@@ -31,6 +28,7 @@ const packageJson = read("package.json");
 assert.ok(runtimeSource.includes("window.CombatEnemyMovementRuntime"), "movement runtime should expose a window runtime");
 assert.ok(runtimeSource.includes("function updateEnemyMovement(context = {}, attacks = [])"), "movement runtime should own enemy movement orchestration");
 assert.ok(runtimeSource.includes("function updateIdleEnemyMovement(context = {}, enemyState, reservedTiles)"), "movement runtime should own idle enemy movement");
+assert.ok(runtimeSource.includes("function updatePatrolEnemyMovement(context = {}, enemyState, reservedTiles)"), "movement runtime should own authored patrol-route movement");
 assert.ok(runtimeSource.includes("function resolvePlayerChaseAttackOpportunity(context = {}, playerLockState)"), "movement runtime should own player chase attack approach policy");
 assert.ok(runtimeSource.includes("const homeStep = returnPath[0];"), "movement runtime should keep enemy return movement one tile per tick");
 assert.ok(runtimeSource.includes("const nextStep = pursuitPath[0];"), "movement runtime should keep enemy pursuit movement one tile per tick");
@@ -153,5 +151,44 @@ const idleEnemy = makeEnemy({ idleMoveReadyAtTick: 0 });
 movedStep = null;
 runtime.updateIdleEnemyMovement(baseContext, idleEnemy, new Set([`${idleEnemy.x},${idleEnemy.y},${idleEnemy.z}`]));
 assert.ok(movedStep, "idle movement should advance toward its wander destination");
+
+const patrolEnemy = makeEnemy({
+  runtimeId: "enemy-patroller",
+  resolvedRoamingRadius: 0,
+  idleMoveReadyAtTick: 0,
+  resolvedPatrolRoute: [
+    { x: 4, y: 4, z: 0 },
+    { x: 7, y: 4, z: 0 },
+    { x: 7, y: 7, z: 0 }
+  ],
+  patrolRouteIndex: 0
+});
+movedStep = null;
+runtime.updateIdleEnemyMovement(baseContext, patrolEnemy, new Set());
+assert.deepStrictEqual(movedStep, { x: 5, y: 4 }, "patrol movement should advance along the authored route before random roaming");
+assert.strictEqual(patrolEnemy.idleDestination.x, 7, "patrol movement should target the next authored patrol point x");
+assert.strictEqual(patrolEnemy.idleDestination.y, 4, "patrol movement should target the next authored patrol point y");
+assert.strictEqual(patrolEnemy.idleDestination.z, 0, "patrol movement should target the next authored patrol point z");
+
+const patrolArrivalEnemy = makeEnemy({
+  runtimeId: "enemy-patrol-arrival",
+  x: 7,
+  y: 4,
+  prevX: 6,
+  prevY: 4,
+  resolvedRoamingRadius: 0,
+  idleDestination: { x: 7, y: 4, z: 0 },
+  patrolTargetIndex: 1,
+  resolvedPatrolRoute: [
+    { x: 4, y: 4, z: 0 },
+    { x: 7, y: 4, z: 0 },
+    { x: 7, y: 7, z: 0 }
+  ]
+});
+movedStep = null;
+runtime.updateIdleEnemyMovement(baseContext, patrolArrivalEnemy, new Set());
+assert.strictEqual(movedStep, null, "arriving at a patrol point should pause instead of immediately sliding to the next point");
+assert.strictEqual(patrolArrivalEnemy.patrolRouteIndex, 1, "patrol movement should record the reached route index");
+assert.strictEqual(patrolArrivalEnemy.idleDestination, null, "patrol arrival should clear the active destination");
 
 console.log("Combat enemy movement runtime guard passed.");

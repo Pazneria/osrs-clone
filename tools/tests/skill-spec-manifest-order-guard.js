@@ -1,10 +1,7 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const { SKILL_SPEC_SCRIPT_PATHS } = require("../content/runtime-skill-specs");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function parseLegacySkillSpecFilenames(source) {
   const filenames = [];
@@ -19,7 +16,7 @@ function parseLegacySkillSpecFilenames(source) {
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const legacySkillSpecPaths = parseLegacySkillSpecFilenames(manifestSource);
 
   assert(legacySkillSpecPaths.length > 0, "legacy manifest should include skill spec shard entries");

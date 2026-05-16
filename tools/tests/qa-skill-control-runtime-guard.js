@@ -1,14 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
+const { readRepoFile } = require("./repo-file-test-utils");
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function read(root, relPath) {
-  return fs.readFileSync(path.join(root, relPath), "utf8");
-}
 
 function xpForLevelFallback(levelValue) {
   const lvl = Math.max(1, Math.min(99, Math.floor(levelValue)));
@@ -22,10 +16,10 @@ function xpForLevelFallback(levelValue) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const qaToolsPath = path.join(root, "src", "js", "qa-tools-runtime.js");
-  const qaToolsSource = read(root, "src/js/qa-tools-runtime.js");
-  const qaCommandSource = read(root, "src/js/qa-command-runtime.js");
-  const coreSource = read(root, "src/js/core.js");
-  const packageSource = read(root, "package.json");
+  const qaToolsSource = readRepoFile(root, "src/js/qa-tools-runtime.js");
+  const qaCommandSource = readRepoFile(root, "src/js/qa-command-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const packageSource = readRepoFile(root, "package.json");
 
   assert(qaToolsSource.includes("function getQaXpForLevel(context, levelValue)"), "QA tools runtime should own QA XP calculation");
   assert(qaToolsSource.includes("function setQaSkillLevel(context, skillId, levelValue)"), "QA tools runtime should own skill level mutation");

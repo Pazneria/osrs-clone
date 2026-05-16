@@ -34,15 +34,6 @@
         occupancyDirty = true;
     }
 
-    function isEnemyOccupancyDirty() {
-        return occupancyDirty;
-    }
-
-    function resetEnemyOccupancy(context = {}) {
-        clearEnemyOccupancy(context);
-        occupancyDirty = true;
-    }
-
     function shouldOccupyEnemyTile(context = {}, enemyState) {
         if (typeof context.shouldEnemyOccupyTile === 'function') {
             return context.shouldEnemyOccupyTile(enemyState);
@@ -83,8 +74,6 @@
     window.CombatEnemyOccupancyRuntime = {
         clearEnemyOccupancy,
         markEnemyOccupancyDirty,
-        isEnemyOccupancyDirty,
-        resetEnemyOccupancy,
         refreshEnemyOccupancy,
         getEnemyOccupiedBaseTileId
     };

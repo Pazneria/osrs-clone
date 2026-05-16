@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "burnt_cottage",
+  "label": "Burnt Cottage",
+  "category": "house",
+  "archetypeId": "house",
+  "themeId": "frontier_timber",
+  "materialProfileId": "burnt_timber_ash",
+  "conditionId": "burnt",
+  "variantTags": [
+    "small_home",
+    "burnt",
+    "ruin",
+    "frontier"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWC",
+      "WTT T W",
+      "W TTT W",
+      "WTT T W",
+      "W TTT W",
+      "CW T WW",
+      "  TTT  "
+    ],
+    "legend": {
+      "C": "charred corner post",
+      "W": "burnt wall remnant",
+      "T": "scorched timber floor",
+      " ": "collapsed or empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "burnt_front",
+      "x": 3,
+      "y": 5,
+      "facing": "south",
+      "approach": {
+        "x": 3,
+        "y": 6
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 0.82,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "ash_barrel",
+      "kind": "barrel",
+      "x": 1,
+      "y": 2,
+      "facingYaw": 0.3,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "burnt"
+      ]
+    },
+    {
+      "id": "charred_woodpile",
+      "kind": "woodpile",
+      "x": 5,
+      "y": 6,
+      "facingYaw": -0.4,
+      "blocksMovement": true,
+      "tags": [
+        "yard",
+        "burnt"
+      ]
+    },
+    {
+      "id": "collapsed_rubble",
+      "kind": "rubble_pile",
+      "x": 3,
+      "y": 3,
+      "facingYaw": -0.25,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "burnt",
+        "ruin"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "scorched_landscape",
+      "surface": "north",
+      "x": 3,
+      "y": 1,
+      "motif": "scorched landscape painting"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_burnt_cottage",
+    "structureLabel": "Burnt Cottage"
+  },
+  "notes": [
+    "This proves that damage state is authored data, not a new one-off renderer path.",
+    "Promote only when burnt tinting or a dedicated burnt stamp variant is acceptable."
+  ]
+}

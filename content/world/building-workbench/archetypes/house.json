@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "house",
+  "label": "House",
+  "categories": [
+    "house",
+    "work_housing",
+    "home"
+  ],
+  "footprintTags": [
+    "single_room",
+    "front_door",
+    "porch"
+  ],
+  "typicalRoles": [
+    "NPC home",
+    "worker housing",
+    "roadside dwelling"
+  ],
+  "promotionHints": [
+    "Use material and condition changes before cloning a new one-off house.",
+    "Only wire NPC homes after the target structure is promoted into region data."
+  ]
+}

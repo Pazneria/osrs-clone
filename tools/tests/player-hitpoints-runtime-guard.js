@@ -1,18 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "player-hitpoints-runtime.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const formulasSource = fs.readFileSync(path.join(root, "src", "game", "combat", "formulas.ts"), "utf8");
-  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "combat-bridge.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/player-hitpoints-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const formulasSource = readRepoFile(root, "src/game/combat/formulas.ts");
+  const bridgeSource = readRepoFile(root, "src/game/platform/combat-bridge.ts");
   const hitpointsRuntimeIndex = manifestSource.indexOf('id: "player-hitpoints-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
   const combatIndex = manifestSource.indexOf('id: "combat"');

@@ -1,3 +1,4 @@
+const assert = require("assert");
 const path = require("path");
 
 const {
@@ -5,10 +6,6 @@ const {
   buildMainOverworldSkillRuntimeDraft
 } = require("../content/main-overworld-skill-runtime-draft");
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
 
 function sortedMerchantIds(entries) {
   return entries

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "conditionId": "broken",
+  "label": "Broken",
+  "damageLevel": 0.7,
+  "wallHeightScale": 0.62,
+  "roofIntegrity": 0.28,
+  "tint": "#6f6755",
+  "tags": [
+    "collapsed",
+    "broken",
+    "partial_roof"
+  ],
+  "promotionNotes": [
+    "Broken structures need pathing review because missing walls may still be represented by blocking stamp cells.",
+    "Promote collapsed props only after movement blockers are explicit."
+  ]
+}

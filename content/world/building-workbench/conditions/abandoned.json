@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "conditionId": "abandoned",
+  "label": "Abandoned",
+  "damageLevel": 0.45,
+  "wallHeightScale": 0.82,
+  "roofIntegrity": 0.55,
+  "tint": "#8a8068",
+  "tags": [
+    "dusty",
+    "unused",
+    "damaged"
+  ],
+  "promotionNotes": [
+    "Abandoned buildings should not automatically create active services.",
+    "Use sparse decor and blocked-off rooms to avoid implying normal habitation."
+  ]
+}

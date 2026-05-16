@@ -54,7 +54,7 @@ Production note:
 1. Start the local server:
 
 ```bat
-npm.cmd run dev
+npm.cmd run dev:legacy
 ```
 
 2. Open the in-repo editor:
@@ -97,7 +97,7 @@ That copies the accepted `pixels` shape onto the targets, keeps each target asse
 4. Build generated assets:
 
 ```bat
-npm.cmd run tool:pixel:build -- --asset logs
+npm.cmd run tool:pixel:build -- --asset regular_logs
 ```
 
 Or rebuild everything:

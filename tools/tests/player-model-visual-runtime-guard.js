@@ -1,21 +1,15 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function countOccurrences(source, needle) {
-  return source.split(needle).length - 1;
-}
+const { readRepoFile } = require("./repo-file-test-utils");
+const { countOccurrences } = require("./source-block-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const runtimePath = path.join(root, "src", "js", "player-model-visual-runtime.js");
-  const runtimeSource = fs.readFileSync(runtimePath, "utf8");
-  const playerModelSource = fs.readFileSync(path.join(root, "src", "js", "player-model.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const runtimeSource = readRepoFile(root, "src/js/player-model-visual-runtime.js");
+  const playerModelSource = readRepoFile(root, "src/js/player-model.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
 
   const visualRuntimeIndex = manifestSource.indexOf('id: "player-model-visual-runtime"');
   const heldItemRuntimeIndex = manifestSource.indexOf('id: "player-held-item-runtime"');

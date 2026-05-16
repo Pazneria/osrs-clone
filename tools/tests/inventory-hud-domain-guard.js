@@ -1,93 +1,8 @@
-const fs = require("fs");
-const path = require("path");
 const assert = require("assert");
 const vm = require("vm");
+const { createRepoFileReader } = require("./repo-file-test-utils");
 
-function read(relPath) {
-  return fs.readFileSync(path.resolve(__dirname, "..", "..", relPath), "utf8");
-}
-
-function extractBlock(source, startToken) {
-  const start = source.indexOf(startToken);
-  if (start === -1) throw new Error(`Failed to find block start: ${startToken}`);
-
-  const openBrace = source.indexOf("{", start);
-  if (openBrace === -1) throw new Error(`Failed to find opening brace for: ${startToken}`);
-
-  let depth = 0;
-  let inSingle = false;
-  let inDouble = false;
-  let inTemplate = false;
-  let inLineComment = false;
-  let inBlockComment = false;
-
-  for (let i = openBrace; i < source.length; i++) {
-    const ch = source[i];
-    const next = source[i + 1];
-    const prev = source[i - 1];
-
-    if (inLineComment) {
-      if (ch === "\n") inLineComment = false;
-      continue;
-    }
-    if (inBlockComment) {
-      if (ch === "*" && next === "/") {
-        inBlockComment = false;
-        i += 1;
-      }
-      continue;
-    }
-    if (inSingle) {
-      if (ch === "'" && prev !== "\\") inSingle = false;
-      continue;
-    }
-    if (inDouble) {
-      if (ch === "\"" && prev !== "\\") inDouble = false;
-      continue;
-    }
-    if (inTemplate) {
-      if (ch === "`" && prev !== "\\") {
-        inTemplate = false;
-        continue;
-      }
-      if (ch !== "$" || next !== "{") continue;
-    }
-
-    if (ch === "/" && next === "/") {
-      inLineComment = true;
-      i += 1;
-      continue;
-    }
-    if (ch === "/" && next === "*") {
-      inBlockComment = true;
-      i += 1;
-      continue;
-    }
-    if (ch === "'") {
-      inSingle = true;
-      continue;
-    }
-    if (ch === "\"") {
-      inDouble = true;
-      continue;
-    }
-    if (ch === "`") {
-      inTemplate = true;
-      continue;
-    }
-    if (ch === "{") depth += 1;
-    if (ch === "}") {
-      depth -= 1;
-      if (depth === 0) return source.slice(start, i + 1);
-    }
-  }
-
-  throw new Error(`Failed to close block for: ${startToken}`);
-}
-
-function extractFunction(source, name) {
-  return extractBlock(source, `function ${name}(`);
-}
+const read = createRepoFileReader(__dirname);
 
 const bridgeSource = read("src/game/platform/ui-domain-bridge.ts");
 const inventorySource = read("src/js/inventory.js");
@@ -142,6 +57,30 @@ assert.ok(
 assert.ok(
   inventorySource.includes("runtime.buildInventorySlotViewModels"),
   "inventory.js should render inventory from view models"
+);
+assert.ok(
+  inventorySource.includes("function resolveInventoryItemData"),
+  "inventory.js should canonicalize inventory item data before rendering stale slot payloads"
+);
+assert.ok(
+  inventorySource.includes("function resolveInventoryIconHtml"),
+  "inventory.js should normalize inventory icon markup before injecting slots"
+);
+assert.ok(
+  inventorySource.includes("icon.kind === 'pixel'"),
+  "inventory.js should render raw pixel icon specs that leak through old/stale paths"
+);
+assert.ok(
+  inventorySource.includes("resolveInventoryIconHtml(itemDataSlot.itemData"),
+  "inventory slots should render icons through the canonical icon resolver"
+);
+assert.ok(
+  inventorySource.includes("resolveInventoryIconHtml(bItem.itemData"),
+  "bank slots should render icons through the canonical icon resolver"
+);
+assert.ok(
+  inventorySource.includes("resolveInventoryIconHtml(sItem.itemData"),
+  "shop slots should render icons through the canonical icon resolver"
 );
 assert.ok(
   inventorySource.includes("runtime.buildSkillProgressViewModel"),

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "roadProfileId": "ash_track",
+  "label": "Ash Track",
+  "tileId": "DIRT",
+  "defaultPathWidth": 1.8,
+  "previewColor": "#6f5d4a",
+  "tags": [
+    "road",
+    "spawn-protected",
+    "damaged"
+  ],
+  "promotionNotes": [
+    "Use for burnt or abandoned areas where a full cart road would feel too maintained.",
+    "Promote as dirt road/tile data, never as a Three.js cylinder."
+  ]
+}

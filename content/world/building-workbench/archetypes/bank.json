@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "archetypeId": "bank",
+  "label": "Bank",
+  "categories": [
+    "bank",
+    "service"
+  ],
+  "footprintTags": [
+    "counter",
+    "service_queue",
+    "front_step"
+  ],
+  "typicalRoles": [
+    "bank service",
+    "settlement anchor",
+    "safe stop"
+  ],
+  "promotionHints": [
+    "Do not add a bank service until the building placement exists in canonical region data.",
+    "Keep the bank footprint reusable across frontier, stone, and damaged variants."
+  ]
+}

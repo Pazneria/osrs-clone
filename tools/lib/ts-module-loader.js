@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const ts = require("typescript");
+const { readJsonFile } = require("./json-file-utils");
 
 function resolveModulePath(fromFile, specifier) {
   const basePath = path.resolve(path.dirname(fromFile), specifier);
@@ -29,7 +30,7 @@ function loadTsModule(absPath, cache = new Map()) {
   }
 
   if (resolvedPath.endsWith(".json")) {
-    const exportsValue = JSON.parse(fs.readFileSync(resolvedPath, "utf8"));
+    const exportsValue = readJsonFile(resolvedPath);
     cache.set(resolvedPath, { exports: exportsValue });
     return exportsValue;
   }

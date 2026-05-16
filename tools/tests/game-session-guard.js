@@ -1,21 +1,18 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const sessionBridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "session-bridge.ts"), "utf8");
-  const sessionContractSource = fs.readFileSync(path.join(root, "src", "game", "contracts", "session.ts"), "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const skillRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "skills", "runtime.js"), "utf8");
-  const shopEconomySource = fs.readFileSync(path.join(root, "src", "js", "shop-economy.js"), "utf8");
-  const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const questCatalogSource = fs.readFileSync(path.join(root, "src", "js", "content", "quest-catalog.js"), "utf8");
-  const questRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "quest-runtime.js"), "utf8");
+  const sessionBridgeSource = readRepoFile(root, "src/game/platform/session-bridge.ts");
+  const sessionContractSource = readRepoFile(root, "src/game/contracts/session.ts");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const skillRuntimeSource = readRepoFile(root, "src/js/skills/runtime.js");
+  const shopEconomySource = readRepoFile(root, "src/js/shop-economy.js");
+  const legacyManifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const questCatalogSource = readRepoFile(root, "src/js/content/quest-catalog.js");
+  const questRuntimeSource = readRepoFile(root, "src/js/quest-runtime.js");
   const progressRuntime = loadTsModule(path.join(root, "src", "game", "session", "progress.ts"));
   const saveRuntime = loadTsModule(path.join(root, "src", "game", "session", "save.ts"));
 

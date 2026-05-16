@@ -15,7 +15,7 @@ import type {
 } from "../contracts/world";
 
 const LEGACY_COORD_MAP_SIZE = 486;
-const ACTIVE_WORLD_MAP_SIZE = 648;
+const ACTIVE_WORLD_MAP_SIZE = 1296;
 const RIVER_AXIS_SCALE = ACTIVE_WORLD_MAP_SIZE / LEGACY_COORD_MAP_SIZE;
 const RIVER_FREQUENCY_SCALE = LEGACY_COORD_MAP_SIZE / ACTIVE_WORLD_MAP_SIZE;
 const LEGACY_RIVER_ID = "legacy-east-river";
@@ -219,7 +219,7 @@ function createLegacyTerrainWaterBodies(definition: WorldDefinition): WaterBodyD
   return bodies;
 }
 
-export function normalizeWaterBodyDefinition(
+function normalizeWaterBodyDefinition(
   body: WaterBodyDefinition,
   fallbackId: string
 ): WaterBodyDefinition {

@@ -1,42 +1,23 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function getFunctionBody(source, functionName) {
-  const startToken = `function ${functionName}(`;
-  const startIndex = source.indexOf(startToken);
-  if (startIndex === -1) return "";
-  const paramsEnd = source.indexOf(")", startIndex);
-  const bodyStart = paramsEnd === -1 ? -1 : source.indexOf("{", paramsEnd);
-  if (bodyStart === -1) return "";
-  let depth = 0;
-  for (let i = bodyStart; i < source.length; i++) {
-    const char = source[i];
-    if (char === "{") depth += 1;
-    else if (char === "}") depth -= 1;
-    if (depth === 0) return source.slice(bodyStart + 1, i);
-  }
-  return "";
-}
+const { getFunctionBody } = require("./source-block-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const combatSource = fs.readFileSync(path.join(root, "src", "js", "combat.js"), "utf8");
-  const combatEngagementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-engagement-runtime.js"), "utf8");
-  const combatFacingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-facing-runtime.js"), "utf8");
-  const combatEnemyMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-movement-runtime.js"), "utf8");
-  const combatEnemyOverlayRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "combat-enemy-overlay-runtime.js"), "utf8");
-  const combatQaDebugSource = fs.readFileSync(path.join(root, "src", "js", "combat-qa-debug-runtime.js"), "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const inputPathfindingRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-pathfinding-runtime.js"), "utf8");
-  const inputTickMovementRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-tick-movement-runtime.js"), "utf8");
-  const inputActionQueueRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "input-action-queue-runtime.js"), "utf8");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const foodItemRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "food-item-runtime.js"), "utf8");
+  const combatSource = readRepoFile(root, "src/js/combat.js");
+  const combatEngagementRuntimeSource = readRepoFile(root, "src/js/combat-engagement-runtime.js");
+  const combatFacingRuntimeSource = readRepoFile(root, "src/js/combat-facing-runtime.js");
+  const combatEnemyMovementRuntimeSource = readRepoFile(root, "src/js/combat-enemy-movement-runtime.js");
+  const combatEnemyOverlayRuntimeSource = readRepoFile(root, "src/js/combat-enemy-overlay-runtime.js");
+  const combatQaDebugSource = readRepoFile(root, "src/js/combat-qa-debug-runtime.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const inputRenderSource = readRepoFile(root, "src/js/input-render.js");
+  const inputPathfindingRuntimeSource = readRepoFile(root, "src/js/input-pathfinding-runtime.js");
+  const inputTickMovementRuntimeSource = readRepoFile(root, "src/js/input-tick-movement-runtime.js");
+  const inputActionQueueRuntimeSource = readRepoFile(root, "src/js/input-action-queue-runtime.js");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const foodItemRuntimeSource = readRepoFile(root, "src/js/food-item-runtime.js");
 
   const lockTargetBody = getFunctionBody(combatSource, "lockPlayerCombatTarget");
   assert(lockTargetBody, "combat.js should define lockPlayerCombatTarget");
@@ -191,6 +172,18 @@ function run() {
     combatSource.includes("const shouldSetOpeningCooldown = enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID;")
       && combatSource.includes("if (shouldSetOpeningCooldown) enemyState.remainingAttackCooldown = 1;"),
     "hit-aggro should keep setting an enemy's opening cooldown to one tick"
+  );
+  const assistBody = getFunctionBody(combatEngagementRuntimeSource, "acquireAssistingEnemyTargets");
+  assert(assistBody, "combat engagement runtime should define acquireAssistingEnemyTargets");
+  assert(
+    assistBody.includes("const assistAnchors = enemyStates.filter")
+      && assistBody.includes("canEnemyCallForAssist(enemyState, playerTargetId)")
+      && assistBody.includes("canEnemyAssist(context, candidate, anchor, playerTile)")
+      && assistBody.includes("candidate.remainingAttackCooldown = Math.max(")
+      && assistBody.includes("candidate.assistTargetRuntimeId = anchor.runtimeId || null;")
+      && combatSource.includes("function acquireAssistingEnemyTargets()")
+      && combatSource.includes("acquireAssistingEnemyTargets();"),
+    "ally assist should be explicit, opt-in by assist group, and wait at least one tick before an assisting attack"
   );
 
   assert(

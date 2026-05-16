@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "themeId": "stone_market",
+  "label": "Stone Market",
+  "settlementUse": [
+    "city block",
+    "market square",
+    "guild street"
+  ],
+  "materialPalette": {
+    "wall": "pale stone block walls with clean corners",
+    "floor": "worn stone slabs",
+    "roof": "dark slate roof with tidy ridge lines",
+    "trim": "polished wood shutters and sign boards",
+    "accent": "desks, counters, crates, barrels, and framed wall art"
+  },
+  "decorKinds": [
+    "desk",
+    "crate",
+    "notice_board",
+    "barrel",
+    "tool_rack",
+    "shop_sign",
+    "wall_painting",
+    "castle_banner",
+    "market_awning"
+  ],
+  "wallArtMotifs": [
+    "merchant guild painting",
+    "town charter placard",
+    "small landscape triptych"
+  ],
+  "notes": [
+    "Use for denser streets and civic buildings.",
+    "Prefer flatter fronts and repeated facade rhythm, but vary interior service roles."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "materialProfileId": "painted_plaster_tile",
+  "label": "Painted Plaster And Tile",
+  "themeId": "painted_plaster",
+  "family": "plaster",
+  "previewPalette": {
+    "ground": "#dfe4cf",
+    "floor": "#b98b55",
+    "wall": "#d9c99f",
+    "corner": "#806849",
+    "roof": "#b65a3b",
+    "roofDark": "#7c352d",
+    "accent": "#3d7e9a"
+  },
+  "roofMaterial": "red-brown tile and patched slate",
+  "wallMaterial": "limewashed plaster with painted trim",
+  "tags": [
+    "plaster",
+    "painted",
+    "artisan"
+  ],
+  "promotionNotes": [
+    "Use for towns that need color and civic life without becoming a full stone city.",
+    "Wall paintings stay intent-only until wall art promotion exists."
+  ]
+}

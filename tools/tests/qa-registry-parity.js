@@ -1,35 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function extractFunctionSource(source, functionName) {
-  const marker = `function ${functionName}(`;
-  const start = source.indexOf(marker);
-  if (start === -1) throw new Error(`missing ${functionName} definition`);
-  const braceStart = source.indexOf("{", start);
-  if (braceStart === -1) throw new Error(`missing ${functionName} body`);
-  let depth = 0;
-  for (let i = braceStart; i < source.length; i++) {
-    const ch = source[i];
-    if (ch === "{") depth += 1;
-    if (ch === "}") {
-      depth -= 1;
-      if (depth === 0) return source.slice(start, i + 1);
-    }
-  }
-  throw new Error(`unterminated ${functionName} definition`);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
-  const qaCommandSource = fs.readFileSync(path.join(root, "src", "js", "qa-command-runtime.js"), "utf8");
-  const qaToolsSource = fs.readFileSync(path.join(root, "src", "js", "qa-tools-runtime.js"), "utf8");
-  const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const qaCommandSource = readRepoFile(root, "src/js/qa-command-runtime.js");
+  const qaToolsSource = readRepoFile(root, "src/js/qa-tools-runtime.js");
+  const bridgeSource = readRepoFile(root, "src/game/platform/legacy-bridge.ts");
 
   assert(coreSource.includes("function getWorldGameContext()"), "core.js missing world game-context helper");
   assert(qaToolsSource.includes("getWorldRouteGroup(context, 'fishing')"), "QA tools fishing discovery should use world route registry");
@@ -87,6 +66,15 @@ function run() {
     }
   });
   assert(qaCalls.includes("gotofire:yew"), "QA command runtime should dispatch gotofire through core-provided callbacks");
+  qaRuntime.handleQaCommand("gotomainland market", {
+    windowRef: qaCommandSandbox.window,
+    addChatMessage: (message, type) => qaMessages.push({ message, type }),
+    qaGotoMainlandSpot: (target) => {
+      qaCalls.push(`gotomainland:${target}`);
+      return true;
+    }
+  });
+  assert(qaCalls.includes("gotomainland:market"), "QA command runtime should dispatch gotomainland through QA tool callbacks");
   qaRuntime.handleQaCommand("perf", {
     windowRef: qaCommandSandbox.window,
     addChatMessage: (message, type) => qaMessages.push({ message, type }),
@@ -150,6 +138,51 @@ function run() {
   assert(tutorialHarness.playerState.x === 445 && tutorialHarness.playerState.y === 372, "tutorial mining QA station should use expanded live-world coordinates");
   assert(tutorialHandlers.qaGotoTutorialStation("smithing"), "tutorial smithing QA station should resolve from authored services");
   assert(tutorialHarness.playerState.x === 435 && tutorialHarness.playerState.y === 386, "tutorial smithing QA station should use the authored furnace tile");
+
+  const mainlandHarness = {
+    messages: [],
+    completedTutorialForQa: false,
+    travelCall: null,
+    windowRef: {},
+    addChatMessage(message, type) {
+      mainlandHarness.messages.push({ message, type });
+    },
+    completeTutorialForQa() {
+      mainlandHarness.completedTutorialForQa = true;
+    },
+    travelToWorld(worldId, options) {
+      mainlandHarness.travelCall = { worldId, options };
+      return true;
+    }
+  };
+  const mainlandHandlers = qaToolsRuntime.createCommandHandlers(mainlandHarness);
+  assert(mainlandHandlers.qaGotoMainlandSpot("market"), "mainland QA tour should resolve the market alias");
+  assert(mainlandHarness.completedTutorialForQa, "mainland QA tour should unlock tutorial travel for QA sessions");
+  assert(mainlandHarness.travelCall && mainlandHarness.travelCall.worldId === "main_overworld", "mainland QA tour should travel to the real main overworld");
+  assert(mainlandHarness.travelCall.options.spawn.x === 1162 && mainlandHarness.travelCall.options.spawn.y === 1052, "mainland QA market tour should use expanded live-world inspection coordinates");
+
+  const mainlandFallbackHarness = {
+    messages: [],
+    playerState: { x: 0, y: 0, z: 0 },
+    windowRef: {},
+    addChatMessage(message, type) {
+      mainlandFallbackHarness.messages.push({ message, type });
+    },
+    completeTutorialForQa() {
+      mainlandFallbackHarness.completedTutorialForQa = true;
+    },
+    getPlayerState() {
+      return mainlandFallbackHarness.playerState;
+    },
+    getWorldGameContext() {
+      return { worldId: "main_overworld" };
+    }
+  };
+  const mainlandFallbackHandlers = qaToolsRuntime.createCommandHandlers(mainlandFallbackHarness);
+  assert(mainlandFallbackHandlers.qaGotoMainlandSpot("old roadhold"), "mainland QA tour should fall back to teleporting inside the active main world");
+  assert(mainlandFallbackHarness.completedTutorialForQa, "mainland fallback should still unlock tutorial travel for QA sessions");
+  assert(mainlandFallbackHarness.playerState.x === 1158 && mainlandFallbackHarness.playerState.y === 338, "mainland fallback should teleport to the requested inspection coordinates");
+  assert(mainlandFallbackHarness.messages.some((entry) => entry.message === "Teleported to Old Roadhold."), "mainland fallback should report the teleport target");
 
   const firemakingHarness = {
     typedRoutes: [],

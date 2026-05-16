@@ -1,11 +1,8 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
 const { loadTsModule } = require("../lib/ts-module-loader");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 const FILES_TO_SCAN = [
   "src/js/world/tile-runtime.js",
@@ -41,12 +38,12 @@ function hasTileLiteralComparison(line) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const violations = [];
-  const manifestSource = fs.readFileSync(path.join(root, "src/game/platform/legacy-script-manifest.ts"), "utf8");
-  const coreSource = fs.readFileSync(path.join(root, "src/js/core.js"), "utf8");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const coreSource = readRepoFile(root, "src/js/core.js");
   const canonical = loadTsModule(path.join(root, "src/game/world/tile-ids.ts"));
   const toolTileRuntime = require("../content/tile-ids");
   const legacySandbox = { window: {} };
-  const legacySource = fs.readFileSync(path.join(root, "src/js/world/tile-runtime.js"), "utf8");
+  const legacySource = readRepoFile(root, "src/js/world/tile-runtime.js");
   vm.runInNewContext(legacySource, legacySandbox, { filename: "src/js/world/tile-runtime.js" });
 
   assert(
@@ -93,7 +90,7 @@ function run() {
   ];
   for (let i = 0; i < DUPLICATE_SCAN_FILES.length; i++) {
     const relPath = DUPLICATE_SCAN_FILES[i];
-    const source = fs.readFileSync(path.join(root, relPath), "utf8");
+    const source = readRepoFile(root, relPath);
     for (let j = 0; j < duplicatePatterns.length; j++) {
       assert(!source.includes(duplicatePatterns[j]), `${relPath} should import/delegate canonical tile semantics instead of redefining ${duplicatePatterns[j]}`);
     }
@@ -101,8 +98,7 @@ function run() {
 
   for (let i = 0; i < FILES_TO_SCAN.length; i++) {
     const relPath = FILES_TO_SCAN[i];
-    const absPath = path.join(root, relPath);
-    const source = fs.readFileSync(absPath, "utf8");
+    const source = readRepoFile(root, relPath);
     const lines = source.split(/\r?\n/);
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {

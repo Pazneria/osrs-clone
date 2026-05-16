@@ -14,7 +14,10 @@
       "label": "Castle Ground Floor",
       "x": 190,
       "y": 190,
-      "z": 0
+      "z": 0,
+      "themeId": "stone_market",
+      "materialProfileId": "castle_granite_slate",
+      "conditionId": "intact"
     },
     {
       "structureId": "castle_second_floor",
@@ -22,7 +25,10 @@
       "label": "Castle Second Floor",
       "x": 190,
       "y": 190,
-      "z": 1
+      "z": 1,
+      "themeId": "stone_market",
+      "materialProfileId": "castle_granite_slate",
+      "conditionId": "intact"
     },
     {
       "structureId": "general_store",
@@ -30,7 +36,10 @@
       "label": "General Store",
       "x": 177,
       "y": 232,
-      "z": 0
+      "z": 0,
+      "themeId": "painted_plaster",
+      "materialProfileId": "painted_plaster_tile",
+      "conditionId": "intact"
     },
     {
       "structureId": "smithing_hall",
@@ -38,7 +47,10 @@
       "label": "Smithing Hall",
       "x": 221,
       "y": 228,
-      "z": 0
+      "z": 0,
+      "themeId": "quarry_iron",
+      "materialProfileId": "quarry_stone_slate",
+      "conditionId": "intact"
     },
     {
       "structureId": "east_road_outpost",
@@ -46,7 +58,10 @@
       "label": "East Road Outpost",
       "x": 360,
       "y": 250,
-      "z": 0
+      "z": 0,
+      "themeId": "stone_market",
+      "materialProfileId": "castle_granite_slate",
+      "conditionId": "weathered"
     },
     {
       "structureId": "shopkeeper_house",
@@ -54,7 +69,10 @@
       "label": "Shopkeeper's Rowhouse",
       "x": 166,
       "y": 232,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "crafting_teacher_cottage",
@@ -62,7 +80,10 @@
       "label": "Crafting Teacher Cottage",
       "x": 176,
       "y": 243,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "fishing_teacher_shack",
@@ -70,7 +91,10 @@
       "label": "Fishing Teacher Shack",
       "x": 167,
       "y": 216,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "weathered"
     },
     {
       "structureId": "road_guide_hut",
@@ -78,7 +102,10 @@
       "label": "Road Guide Hut",
       "x": 221,
       "y": 216,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "fishing_supplier_shack",
@@ -86,7 +113,10 @@
       "label": "Fishing Supplier Shack",
       "x": 231,
       "y": 216,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "weathered"
     },
     {
       "structureId": "elira_gemhand_cottage",
@@ -94,7 +124,10 @@
       "label": "Elira's Gemcutter Cottage",
       "x": 167,
       "y": 188,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "borin_ironvein_house",
@@ -102,7 +135,10 @@
       "label": "Borin's Forgehouse",
       "x": 242,
       "y": 220,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "tanner_rusk_tannery",
@@ -110,7 +146,10 @@
       "label": "Rusk Tannery",
       "x": 242,
       "y": 230,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "weathered"
     },
     {
       "structureId": "outpost_guide_house",
@@ -118,7 +157,10 @@
       "label": "Outpost Guide Cottage",
       "x": 257,
       "y": 250,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "thrain_deepforge_house",
@@ -126,7 +168,10 @@
       "label": "Deepforge House",
       "x": 268,
       "y": 250,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "rune_tutor_hut",
@@ -134,7 +179,10 @@
       "label": "Rune Tutor Hut",
       "x": 216,
       "y": 176,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
     },
     {
       "structureId": "combination_sage_hut",
@@ -142,7 +190,164 @@
       "label": "Combination Sage Hut",
       "x": 146,
       "y": 176,
-      "z": 0
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "north_woodwatch_lodge",
+      "stampId": "bw_frontier_cottage",
+      "label": "Frontier Cottage",
+      "x": 78,
+      "y": 50,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "north_woodwatch_bunkhouse",
+      "stampId": "bw_quarry_bunkhouse",
+      "label": "Quarry Bunkhouse",
+      "x": 104,
+      "y": 56,
+      "z": 0,
+      "themeId": "quarry_iron",
+      "materialProfileId": "quarry_stone_slate",
+      "conditionId": "weathered"
+    },
+    {
+      "structureId": "north_woodwatch_fletchers_workshop",
+      "stampId": "timber_workshop",
+      "label": "Woodwatch Fletchers Workshop",
+      "x": 86,
+      "y": 66,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "weathered"
+    },
+    {
+      "structureId": "south_quarry_storehouse",
+      "stampId": "bw_quarry_storehouse",
+      "label": "Quarry Storehouse",
+      "x": 318,
+      "y": 386,
+      "z": 0,
+      "themeId": "quarry_iron",
+      "materialProfileId": "quarry_stone_slate",
+      "conditionId": "weathered"
+    },
+    {
+      "structureId": "south_quarry_cottage_west",
+      "stampId": "bw_frontier_cottage",
+      "label": "Frontier Cottage",
+      "x": 300,
+      "y": 404,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "south_quarry_cottage_east",
+      "stampId": "bw_frontier_cottage",
+      "label": "Frontier Cottage",
+      "x": 344,
+      "y": 404,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "market_crossing_bank",
+      "stampId": "bw_frontier_bank",
+      "label": "Frontier Bank",
+      "x": 416,
+      "y": 376,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "market_crossing_townhouse",
+      "stampId": "bw_stone_townhouse",
+      "label": "Stone Townhouse",
+      "x": 432,
+      "y": 384,
+      "z": 0,
+      "themeId": "stone_market",
+      "materialProfileId": "city_stone_slate",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "market_crossing_gallery",
+      "stampId": "bw_painted_gallery",
+      "label": "Painted Gallery",
+      "x": 448,
+      "y": 398,
+      "z": 0,
+      "themeId": "painted_plaster",
+      "materialProfileId": "painted_plaster_tile",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "market_crossing_cottage",
+      "stampId": "bw_frontier_cottage",
+      "label": "Frontier Cottage",
+      "x": 414,
+      "y": 404,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "timber_thatch",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "market_crossing_bunkhouse",
+      "stampId": "bw_quarry_bunkhouse",
+      "label": "Quarry Bunkhouse",
+      "x": 462,
+      "y": 376,
+      "z": 0,
+      "themeId": "quarry_iron",
+      "materialProfileId": "quarry_stone_slate",
+      "conditionId": "weathered"
+    },
+    {
+      "structureId": "old_road_gatehouse",
+      "stampId": "bw_castle_gatehouse",
+      "label": "Castle Gatehouse",
+      "x": 428,
+      "y": 118,
+      "z": 0,
+      "themeId": "stone_market",
+      "materialProfileId": "castle_granite_slate",
+      "conditionId": "intact"
+    },
+    {
+      "structureId": "old_road_burnt_cottage",
+      "stampId": "bw_burnt_cottage",
+      "label": "Burnt Cottage",
+      "x": 400,
+      "y": 150,
+      "z": 0,
+      "themeId": "frontier_timber",
+      "materialProfileId": "burnt_timber_ash",
+      "conditionId": "burnt"
+    },
+    {
+      "structureId": "old_road_manor",
+      "stampId": "bw_stone_manor",
+      "label": "Stone Manor",
+      "x": 448,
+      "y": 146,
+      "z": 0,
+      "themeId": "stone_market",
+      "materialProfileId": "city_stone_slate",
+      "conditionId": "weathered"
     }
   ],
   "terrainPatches": {
@@ -176,6 +381,13 @@
         "cy": 76,
         "rx": 18,
         "ry": 14
+      },
+      {
+        "cx": 392,
+        "cy": 300,
+        "rx": 20,
+        "ry": 10,
+        "rotationRadians": -0.35
       }
     ],
     "castleFrontPond": {
@@ -397,6 +609,489 @@
           "road",
           "spawn-protected"
         ]
+      },
+      {
+        "pathId": "north_woodwatch_track",
+        "points": [
+          {
+            "x": 82,
+            "y": 84
+          },
+          {
+            "x": 88,
+            "y": 70
+          },
+          {
+            "x": 96,
+            "y": 62
+          },
+          {
+            "x": 112,
+            "y": 62
+          }
+        ],
+        "pathWidth": 2,
+        "height": -0.065,
+        "edgeSoftness": 0.55,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "lane"
+        ]
+      },
+      {
+        "pathId": "north_woodwatch_fletchers_lane",
+        "points": [
+          {
+            "x": 88,
+            "y": 70
+          },
+          {
+            "x": 91,
+            "y": 73
+          }
+        ],
+        "pathWidth": 1.6,
+        "edgeSoftness": 0.6,
+        "tileId": "DIRT",
+        "tags": [
+          "road",
+          "spawn-protected",
+          "settlement",
+          "north",
+          "woodcutting"
+        ]
+      },
+      {
+        "pathId": "south_quarry_hamlet_road",
+        "points": [
+          {
+            "x": 318,
+            "y": 420
+          },
+          {
+            "x": 324,
+            "y": 408
+          },
+          {
+            "x": 334,
+            "y": 398
+          },
+          {
+            "x": 340,
+            "y": 394
+          }
+        ],
+        "pathWidth": 2.8,
+        "height": -0.065,
+        "edgeSoftness": 0.7,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "cart_width"
+        ]
+      },
+      {
+        "pathId": "market_crossing_main_road",
+        "points": [
+          {
+            "x": 414,
+            "y": 420
+          },
+          {
+            "x": 430,
+            "y": 404
+          },
+          {
+            "x": 446,
+            "y": 392
+          },
+          {
+            "x": 474,
+            "y": 388
+          }
+        ],
+        "pathWidth": 2.6,
+        "height": -0.065,
+        "edgeSoftness": 0.65,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "cart_width"
+        ]
+      },
+      {
+        "pathId": "market_crossing_gallery_lane",
+        "points": [
+          {
+            "x": 444,
+            "y": 412
+          },
+          {
+            "x": 456,
+            "y": 412
+          },
+          {
+            "x": 468,
+            "y": 404
+          }
+        ],
+        "pathWidth": 1.8,
+        "height": -0.065,
+        "edgeSoftness": 0.55,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "lane"
+        ]
+      },
+      {
+        "pathId": "old_roadhold_gate_road",
+        "points": [
+          {
+            "x": 400,
+            "y": 170
+          },
+          {
+            "x": 420,
+            "y": 150
+          },
+          {
+            "x": 436,
+            "y": 132
+          },
+          {
+            "x": 464,
+            "y": 118
+          }
+        ],
+        "pathWidth": 2.8,
+        "height": -0.065,
+        "edgeSoftness": 0.65,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "cart_width"
+        ]
+      },
+      {
+        "pathId": "old_roadhold_ash_track",
+        "points": [
+          {
+            "x": 392,
+            "y": 166
+          },
+          {
+            "x": 404,
+            "y": 164
+          },
+          {
+            "x": 418,
+            "y": 160
+          }
+        ],
+        "pathWidth": 1.8,
+        "height": -0.065,
+        "edgeSoftness": 0.5,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "damaged"
+        ]
+      },
+      {
+        "pathId": "sunspur_dry_scrub_transition",
+        "points": [
+          {
+            "x": 326,
+            "y": 306
+          },
+          {
+            "x": 360,
+            "y": 324
+          },
+          {
+            "x": 404,
+            "y": 348
+          },
+          {
+            "x": 448,
+            "y": 378
+          },
+          {
+            "x": 474,
+            "y": 396
+          }
+        ],
+        "pathWidth": 24,
+        "height": -0.028,
+        "edgeSoftness": 8,
+        "tileId": "SAND",
+        "tags": [
+          "main-overworld",
+          "ground-texture",
+          "biome-transition",
+          "dry-ground",
+          "desert-edge",
+          "sunspur"
+        ]
+      },
+      {
+        "pathId": "sunspur_low_wash_dip",
+        "points": [
+          {
+            "x": 366,
+            "y": 338
+          },
+          {
+            "x": 394,
+            "y": 352
+          },
+          {
+            "x": 428,
+            "y": 378
+          }
+        ],
+        "pathWidth": 7,
+        "height": -0.108,
+        "edgeSoftness": 3.2,
+        "tileId": "SAND",
+        "tags": [
+          "main-overworld",
+          "ground-texture",
+          "elevation",
+          "dip",
+          "dry-wash",
+          "desert-edge",
+          "sunspur"
+        ]
+      },
+      {
+        "pathId": "sunspur_scrub_ridge",
+        "points": [
+          {
+            "x": 342,
+            "y": 300
+          },
+          {
+            "x": 384,
+            "y": 318
+          },
+          {
+            "x": 432,
+            "y": 350
+          }
+        ],
+        "pathWidth": 5.8,
+        "height": 0.052,
+        "edgeSoftness": 2.6,
+        "tileId": "SAND",
+        "tags": [
+          "main-overworld",
+          "ground-texture",
+          "elevation",
+          "ridge",
+          "dry-scrub",
+          "desert-edge",
+          "sunspur"
+        ]
+      },
+      {
+        "pathId": "starter_to_sunspur_checkpoint_road",
+        "points": [
+          {
+            "x": 318,
+            "y": 270
+          },
+          {
+            "x": 346,
+            "y": 304
+          },
+          {
+            "x": 378,
+            "y": 334
+          },
+          {
+            "x": 410,
+            "y": 354
+          },
+          {
+            "x": 438,
+            "y": 374
+          }
+        ],
+        "pathWidth": 2.8,
+        "height": -0.074,
+        "edgeSoftness": 0.8,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "biome-transition",
+          "desert-edge",
+          "sunspur",
+          "checkpoint"
+        ]
+      },
+      {
+        "pathId": "sunspur_trade_outpost_worn_road",
+        "points": [
+          {
+            "x": 438,
+            "y": 374
+          },
+          {
+            "x": 446,
+            "y": 392
+          },
+          {
+            "x": 460,
+            "y": 398
+          },
+          {
+            "x": 474,
+            "y": 388
+          }
+        ],
+        "pathWidth": 2.5,
+        "height": -0.078,
+        "edgeSoftness": 0.72,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "road",
+          "spawn-protected",
+          "worn-road",
+          "trade-outpost",
+          "desert-edge",
+          "sunspur"
+        ]
+      }
+    ],
+    "landforms": [
+      {
+        "landformId": "east_marsh_lower_bank",
+        "kind": "ellipse",
+        "cx": 392,
+        "cy": 300,
+        "rx": 34,
+        "ry": 20,
+        "rotationRadians": -0.35,
+        "height": -0.135,
+        "mode": "lower",
+        "edgeSoftness": 8,
+        "tileId": "SHORE",
+        "tags": [
+          "main-overworld",
+          "elevation",
+          "riverbank",
+          "lowered-bank",
+          "east-marsh",
+          "vertical-slice"
+        ]
+      },
+      {
+        "landformId": "east_marsh_road_descent",
+        "kind": "path",
+        "points": [
+          {
+            "x": 342,
+            "y": 282
+          },
+          {
+            "x": 366,
+            "y": 292
+          },
+          {
+            "x": 392,
+            "y": 306
+          },
+          {
+            "x": 420,
+            "y": 326
+          }
+        ],
+        "pathWidth": 10,
+        "height": -0.095,
+        "mode": "lower",
+        "edgeSoftness": 5,
+        "tileId": "DIRT",
+        "tags": [
+          "main-overworld",
+          "elevation",
+          "slope",
+          "road-grade",
+          "riverbank",
+          "east-marsh",
+          "vertical-slice"
+        ]
+      },
+      {
+        "landformId": "sunspur_foothill_rise",
+        "kind": "path",
+        "points": [
+          {
+            "x": 404,
+            "y": 348
+          },
+          {
+            "x": 438,
+            "y": 374
+          },
+          {
+            "x": 468,
+            "y": 394
+          }
+        ],
+        "pathWidth": 18,
+        "height": 0.145,
+        "mode": "raise",
+        "edgeSoftness": 10,
+        "tileId": "SAND",
+        "tags": [
+          "main-overworld",
+          "elevation",
+          "slope",
+          "foothill",
+          "desert-edge",
+          "sunspur",
+          "vertical-slice"
+        ]
+      },
+      {
+        "landformId": "sunspur_far_ridge_silhouette",
+        "kind": "ellipse",
+        "cx": 456,
+        "cy": 448,
+        "rx": 44,
+        "ry": 20,
+        "rotationRadians": 0.18,
+        "height": 0.26,
+        "mode": "raise",
+        "edgeSoftness": 10,
+        "tileId": "SAND",
+        "tags": [
+          "main-overworld",
+          "elevation",
+          "ridge",
+          "mountain-silhouette",
+          "desert-edge",
+          "sunspur",
+          "vertical-slice"
+        ]
       }
     ],
     "smithingHallApproach": {
@@ -414,6 +1109,189 @@
       "y": 205
     }
   },
+  "waterBodies": [
+    {
+      "id": "mainland_lake_1",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 92,
+        "cy": 118,
+        "rx": 28,
+        "ry": 20
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "mainland_lake_2",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 312,
+        "cy": 116,
+        "rx": 24,
+        "ry": 18
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "mainland_lake_3",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 100,
+        "cy": 308,
+        "rx": 30,
+        "ry": 22
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "mainland_lake_4",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 308,
+        "cy": 292,
+        "rx": 26,
+        "ry": 20
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "mainland_lake_5",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 204,
+        "cy": 76,
+        "rx": 18,
+        "ry": 14
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "castle_front_pond",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 205,
+        "cy": 233,
+        "rx": 13,
+        "ry": 9
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": [
+          {
+            "shape": {
+              "kind": "box",
+              "xMin": 204,
+              "xMax": 206,
+              "yMin": 232,
+              "yMax": 234
+            },
+            "weight": 1
+          }
+        ]
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "east_marsh_pool",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 392,
+        "cy": 300,
+        "rx": 20,
+        "ry": 10,
+        "rotationRadians": -0.35
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    },
+    {
+      "id": "south_brook_pool",
+      "shape": {
+        "kind": "ellipse",
+        "cx": 176,
+        "cy": 390,
+        "rx": 20,
+        "ry": 9,
+        "rotationRadians": 0.35
+      },
+      "surfaceY": -0.075,
+      "depthProfile": {
+        "mode": "tile_truth",
+        "deepZones": []
+      },
+      "shoreline": {
+        "width": 0.78,
+        "foamWidth": 0.34,
+        "skirtDepth": 0.18
+      },
+      "style": "calm_lake"
+    }
+  ],
   "npcSpawns": [],
   "combatSpawns": [
     {
@@ -1176,6 +2054,8 @@
       },
       "homeTileOverride": null,
       "roamingRadiusOverride": 4,
+      "assistGroupId": "camp_southeast_ruins",
+      "assistRadiusOverride": 14,
       "respawnTicks": 50,
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,
@@ -1191,6 +2071,8 @@
       },
       "homeTileOverride": null,
       "roamingRadiusOverride": 3,
+      "assistGroupId": "camp_southeast_ruins",
+      "assistRadiusOverride": 14,
       "respawnTicks": 50,
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,
@@ -1206,6 +2088,30 @@
       },
       "homeTileOverride": null,
       "roamingRadiusOverride": 3,
+      "patrolRoute": [
+        {
+          "x": 456,
+          "y": 468,
+          "z": 0
+        },
+        {
+          "x": 456,
+          "y": 462,
+          "z": 0
+        },
+        {
+          "x": 462,
+          "y": 462,
+          "z": 0
+        },
+        {
+          "x": 462,
+          "y": 468,
+          "z": 0
+        }
+      ],
+      "assistGroupId": "camp_southeast_ruins",
+      "assistRadiusOverride": 14,
       "respawnTicks": 40,
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,
@@ -1221,6 +2127,7 @@
       "merchantId": "general_store",
       "name": "Shopkeeper",
       "npcType": 2,
+      "appearanceId": "mainland_shopkeeper",
       "x": 170,
       "y": 239,
       "z": 0,
@@ -1241,18 +2148,20 @@
       "merchantId": "fletching_supplier",
       "name": "Fletching Supplier",
       "npcType": 2,
-      "x": 183,
-      "y": 238,
+      "appearanceId": "mainland_fletching_supplier",
+      "x": 91,
+      "y": 72,
       "z": 0,
       "action": "Trade",
       "dialogueId": "fletching_supplier",
       "tags": [
         "merchant",
         "fletching",
-        "starter",
-        "bank",
-        "processing",
-        "home:general_store"
+        "north",
+        "woodcutting",
+        "settlement",
+        "shop",
+        "home:north_woodwatch_fletchers_workshop"
       ]
     },
     {
@@ -1262,6 +2171,7 @@
       "interactionTarget": "NPC",
       "name": "Road Guide",
       "npcType": 3,
+      "appearanceId": "mainland_road_guide",
       "x": 223,
       "y": 221,
       "z": 0,
@@ -1287,6 +2197,7 @@
       "interactionTarget": "NPC",
       "name": "Outpost Guide",
       "npcType": 3,
+      "appearanceId": "mainland_outpost_guide",
       "x": 260,
       "y": 257,
       "z": 0,
@@ -1313,17 +2224,20 @@
       "merchantId": "advanced_fletcher",
       "name": "Advanced Fletcher",
       "npcType": 3,
-      "x": 365,
-      "y": 253,
+      "appearanceId": "mainland_advanced_fletcher",
+      "x": 92,
+      "y": 71,
       "z": 0,
       "action": "Trade",
       "dialogueId": "advanced_fletcher",
       "tags": [
         "merchant",
         "fletching",
-        "east",
+        "advanced",
+        "north",
+        "woodcutting",
         "settlement",
-        "home:east_road_outpost"
+        "home:north_woodwatch_fletchers_workshop"
       ]
     },
     {
@@ -1334,17 +2248,19 @@
       "merchantId": "advanced_woodsman",
       "name": "Advanced Woodsman",
       "npcType": 6,
-      "x": 366,
-      "y": 255,
+      "appearanceId": "mainland_advanced_woodsman",
+      "x": 82,
+      "y": 54,
       "z": 0,
       "action": "Trade",
       "dialogueId": "advanced_woodsman",
       "tags": [
         "merchant",
         "woodcutting",
-        "east",
+        "advanced",
+        "north",
         "settlement",
-        "home:east_road_outpost"
+        "home:north_woodwatch_lodge"
       ]
     },
     {
@@ -1354,6 +2270,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 364,
       "y": 252,
       "z": 0,
@@ -1373,6 +2290,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 244,
       "y": 66,
       "z": 0,
@@ -1393,6 +2311,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 399,
       "y": 205,
       "z": 0,
@@ -1413,6 +2332,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 58,
       "y": 16,
       "z": 0,
@@ -1433,6 +2353,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 256,
       "y": 444,
       "z": 0,
@@ -1452,6 +2373,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 64,
       "y": 456,
       "z": 0,
@@ -1471,6 +2393,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 416,
       "y": 430,
       "z": 0,
@@ -1490,6 +2413,7 @@
       "interactionTarget": "NPC",
       "name": "Banker",
       "npcType": 3,
+      "appearanceId": "mainland_banker",
       "x": 96,
       "y": 31,
       "z": 0,
@@ -1535,12 +2459,12 @@
       ]
     },
     {
-      "serviceId": "station:east_outpost_furnace",
-      "spawnId": "station:east_outpost_furnace",
+      "serviceId": "station:south_quarry_furnace",
+      "spawnId": "station:south_quarry_furnace",
       "type": "FURNACE",
       "interactionTarget": "FURNACE",
-      "x": 374,
-      "y": 254,
+      "x": 331,
+      "y": 393,
       "z": 0,
       "facingYaw": -1.5707963267948966,
       "footprintW": 2,
@@ -1548,22 +2472,24 @@
       "tags": [
         "station",
         "smithing",
-        "east",
+        "mining",
+        "south",
         "settlement"
       ]
     },
     {
-      "serviceId": "station:east_outpost_anvil",
-      "spawnId": "station:east_outpost_anvil",
+      "serviceId": "station:south_quarry_anvil",
+      "spawnId": "station:south_quarry_anvil",
       "type": "ANVIL",
       "interactionTarget": "ANVIL",
-      "x": 374,
-      "y": 257,
+      "x": 334,
+      "y": 393,
       "z": 0,
       "tags": [
         "station",
         "smithing",
-        "east",
+        "mining",
+        "south",
         "settlement"
       ]
     },
@@ -1575,6 +2501,7 @@
       "merchantId": "fishing_teacher",
       "name": "Fishing Teacher",
       "npcType": 3,
+      "appearanceId": "mainland_fishing_teacher",
       "x": 170,
       "y": 221,
       "z": 0,
@@ -1595,6 +2522,7 @@
       "merchantId": "fishing_supplier",
       "name": "Fishing Supplier",
       "npcType": 2,
+      "appearanceId": "mainland_fishing_supplier",
       "x": 234,
       "y": 221,
       "z": 0,
@@ -1615,6 +2543,7 @@
       "merchantId": "forester_teacher",
       "name": "Forester Teacher",
       "npcType": 3,
+      "appearanceId": "mainland_forester_teacher",
       "x": 219,
       "y": 205,
       "z": 0,
@@ -1635,8 +2564,9 @@
       "merchantId": "borin_ironvein",
       "name": "Borin Ironvein",
       "npcType": 2,
-      "x": 246,
-      "y": 227,
+      "appearanceId": "mainland_borin_ironvein",
+      "x": 303,
+      "y": 409,
       "z": 0,
       "facingYaw": -1.5707963267948966,
       "action": "Trade",
@@ -1644,8 +2574,10 @@
       "tags": [
         "merchant",
         "smithing",
-        "starter",
-        "home:borin_ironvein_house"
+        "mining",
+        "south",
+        "settlement",
+        "home:south_quarry_cottage_west"
       ]
     },
     {
@@ -1656,16 +2588,19 @@
       "merchantId": "thrain_deepforge",
       "name": "Thrain Deepforge",
       "npcType": 6,
-      "x": 272,
-      "y": 257,
+      "appearanceId": "mainland_thrain_deepforge",
+      "x": 347,
+      "y": 409,
       "z": 0,
       "action": "Trade",
       "dialogueId": "thrain_deepforge",
       "tags": [
         "merchant",
         "smithing",
-        "starter",
-        "home:thrain_deepforge_house"
+        "mining",
+        "south",
+        "settlement",
+        "home:south_quarry_cottage_east"
       ]
     },
     {
@@ -1676,16 +2611,20 @@
       "merchantId": "elira_gemhand",
       "name": "Elira Gemhand",
       "npcType": 3,
-      "x": 170,
-      "y": 195,
+      "appearanceId": "mainland_elira_gemhand",
+      "x": 322,
+      "y": 392,
       "z": 0,
       "action": "Trade",
       "dialogueId": "elira_gemhand",
       "tags": [
         "merchant",
         "smithing",
-        "starter",
-        "home:elira_gemhand_cottage"
+        "gems",
+        "mining",
+        "south",
+        "settlement",
+        "home:south_quarry_storehouse"
       ]
     },
     {
@@ -1696,8 +2635,9 @@
       "merchantId": "crafting_teacher",
       "name": "Crafting Teacher",
       "npcType": 2,
-      "x": 179,
-      "y": 250,
+      "appearanceId": "mainland_crafting_teacher",
+      "x": 450,
+      "y": 403,
       "z": 0,
       "facingYaw": 1.5707963267948966,
       "action": "Trade",
@@ -1705,8 +2645,10 @@
       "tags": [
         "merchant",
         "crafting",
-        "starter",
-        "home:crafting_teacher_cottage"
+        "art",
+        "market",
+        "settlement",
+        "home:market_crossing_gallery"
       ]
     },
     {
@@ -1717,8 +2659,8 @@
       "merchantId": "tanner_rusk",
       "name": "Tanner Rusk",
       "npcType": 6,
-      "x": 247,
-      "y": 237,
+      "x": 417,
+      "y": 409,
       "z": 0,
       "action": "Trade",
       "dialogueId": "tanner_rusk",
@@ -1726,8 +2668,163 @@
       "tags": [
         "merchant",
         "crafting",
-        "starter",
-        "home:tanner_rusk_tannery"
+        "leather",
+        "market",
+        "settlement",
+        "home:market_crossing_cottage"
+      ]
+    },
+    {
+      "serviceId": "merchant:north_woodwatch_guide",
+      "spawnId": "npc:north_woodwatch_guide",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Woodwatch Guide",
+      "npcType": 3,
+      "appearanceId": "mainland_road_guide",
+      "x": 81,
+      "y": 56,
+      "z": 0,
+      "action": "Talk-to",
+      "dialogueId": "outpost_guide",
+      "roamingRadiusOverride": 2,
+      "tags": [
+        "merchant",
+        "travel",
+        "north",
+        "woodcutting",
+        "settlement",
+        "home:north_woodwatch_lodge"
+      ]
+    },
+    {
+      "serviceId": "merchant:south_quarry_foreman",
+      "spawnId": "npc:south_quarry_foreman",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Quarry Foreman",
+      "npcType": 3,
+      "appearanceId": "mainland_quarry_foreman",
+      "x": 323,
+      "y": 392,
+      "z": 0,
+      "action": "Talk-to",
+      "dialogueId": "outpost_guide",
+      "roamingRadiusOverride": 2,
+      "tags": [
+        "merchant",
+        "mining",
+        "south",
+        "settlement",
+        "home:south_quarry_storehouse"
+      ]
+    },
+    {
+      "serviceId": "bank:south_quarry",
+      "spawnId": "npc:banker_south_quarry",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "appearanceId": "mainland_banker",
+      "x": 324,
+      "y": 393,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "mining",
+        "south",
+        "settlement",
+        "home:south_quarry_storehouse"
+      ]
+    },
+    {
+      "serviceId": "bank:market_crossing",
+      "spawnId": "npc:banker_market_crossing",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Banker",
+      "npcType": 3,
+      "appearanceId": "mainland_banker",
+      "x": 419,
+      "y": 382,
+      "z": 0,
+      "action": "Bank",
+      "dialogueId": "banker",
+      "tags": [
+        "bank",
+        "market",
+        "east",
+        "settlement",
+        "home:market_crossing_bank"
+      ]
+    },
+    {
+      "serviceId": "merchant:market_crossing_trader",
+      "spawnId": "npc:market_crossing_trader",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Crossing Trader",
+      "npcType": 2,
+      "appearanceId": "mainland_market_trader",
+      "x": 436,
+      "y": 391,
+      "z": 0,
+      "action": "Talk-to",
+      "dialogueId": "shopkeeper",
+      "roamingRadiusOverride": 2,
+      "tags": [
+        "merchant",
+        "market",
+        "east",
+        "settlement",
+        "home:market_crossing_townhouse"
+      ]
+    },
+    {
+      "serviceId": "merchant:market_crossing_painter",
+      "spawnId": "npc:market_crossing_painter",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Painter",
+      "npcType": 6,
+      "appearanceId": "mainland_painter",
+      "x": 453,
+      "y": 405,
+      "z": 0,
+      "action": "Talk-to",
+      "dialogueId": "shopkeeper",
+      "roamingRadiusOverride": 2,
+      "tags": [
+        "merchant",
+        "art",
+        "market",
+        "settlement",
+        "home:market_crossing_gallery"
+      ]
+    },
+    {
+      "serviceId": "merchant:old_road_scavenger",
+      "spawnId": "npc:old_road_scavenger",
+      "type": "MERCHANT",
+      "interactionTarget": "NPC",
+      "name": "Road Scavenger",
+      "npcType": 6,
+      "appearanceId": "mainland_road_scavenger",
+      "x": 434,
+      "y": 124,
+      "z": 0,
+      "action": "Talk-to",
+      "dialogueId": "outpost_guide",
+      "roamingRadiusOverride": 2,
+      "tags": [
+        "merchant",
+        "ruin",
+        "northeast",
+        "settlement",
+        "home:old_road_gatehouse"
       ]
     },
     {
@@ -1748,7 +2845,8 @@
         "runecrafting",
         "starter",
         "home:rune_tutor_hut"
-      ]
+      ],
+      "appearanceId": "mainland_rune_tutor"
     },
     {
       "serviceId": "merchant:combination_sage",
@@ -1768,7 +2866,8 @@
         "runecrafting",
         "starter",
         "home:combination_sage_hut"
-      ]
+      ],
+      "appearanceId": "mainland_combination_sage"
     }
   ],
   "resourceNodes": {
@@ -2370,8 +3469,8 @@
       {
         "placementId": "mining:coal_mine:1",
         "routeId": "coal_mine",
-        "x": 432,
-        "y": 339,
+        "x": 430,
+        "y": 334,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2381,8 +3480,8 @@
       {
         "placementId": "mining:coal_mine:2",
         "routeId": "coal_mine",
-        "x": 438,
-        "y": 340,
+        "x": 439,
+        "y": 334,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2392,8 +3491,8 @@
       {
         "placementId": "mining:coal_mine:3",
         "routeId": "coal_mine",
-        "x": 439,
-        "y": 343,
+        "x": 436,
+        "y": 335,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2403,8 +3502,8 @@
       {
         "placementId": "mining:coal_mine:4",
         "routeId": "coal_mine",
-        "x": 431,
-        "y": 344,
+        "x": 428,
+        "y": 336,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2414,10 +3513,10 @@
       {
         "placementId": "mining:coal_mine:5",
         "routeId": "coal_mine",
-        "x": 428,
-        "y": 345,
+        "x": 425,
+        "y": 337,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -2425,8 +3524,8 @@
       {
         "placementId": "mining:coal_mine:6",
         "routeId": "coal_mine",
-        "x": 444,
-        "y": 345,
+        "x": 445,
+        "y": 337,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2436,8 +3535,8 @@
       {
         "placementId": "mining:coal_mine:7",
         "routeId": "coal_mine",
-        "x": 437,
-        "y": 347,
+        "x": 432,
+        "y": 338,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2447,8 +3546,8 @@
       {
         "placementId": "mining:coal_mine:8",
         "routeId": "coal_mine",
-        "x": 440,
-        "y": 348,
+        "x": 441,
+        "y": 338,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2458,8 +3557,8 @@
       {
         "placementId": "mining:coal_mine:9",
         "routeId": "coal_mine",
-        "x": 423,
-        "y": 349,
+        "x": 435,
+        "y": 339,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2469,8 +3568,8 @@
       {
         "placementId": "mining:coal_mine:10",
         "routeId": "coal_mine",
-        "x": 426,
-        "y": 350,
+        "x": 429,
+        "y": 340,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2480,8 +3579,8 @@
       {
         "placementId": "mining:coal_mine:11",
         "routeId": "coal_mine",
-        "x": 429,
-        "y": 351,
+        "x": 443,
+        "y": 341,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2491,10 +3590,10 @@
       {
         "placementId": "mining:coal_mine:12",
         "routeId": "coal_mine",
-        "x": 445,
-        "y": 352,
+        "x": 433,
+        "y": 342,
         "z": 0,
-        "oreType": "coal",
+        "oreType": "iron",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -2502,8 +3601,8 @@
       {
         "placementId": "mining:coal_mine:13",
         "routeId": "coal_mine",
-        "x": 430,
-        "y": 355,
+        "x": 450,
+        "y": 343,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2513,8 +3612,8 @@
       {
         "placementId": "mining:coal_mine:14",
         "routeId": "coal_mine",
-        "x": 439,
-        "y": 355,
+        "x": 442,
+        "y": 344,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2524,10 +3623,10 @@
       {
         "placementId": "mining:coal_mine:15",
         "routeId": "coal_mine",
-        "x": 427,
-        "y": 357,
+        "x": 437,
+        "y": 345,
         "z": 0,
-        "oreType": "coal",
+        "oreType": "iron",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -2535,8 +3634,8 @@
       {
         "placementId": "mining:coal_mine:16",
         "routeId": "coal_mine",
-        "x": 432,
-        "y": 358,
+        "x": 451,
+        "y": 346,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2547,7 +3646,7 @@
         "placementId": "mining:coal_mine:17",
         "routeId": "coal_mine",
         "x": 440,
-        "y": 358,
+        "y": 348,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2557,10 +3656,10 @@
       {
         "placementId": "mining:coal_mine:18",
         "routeId": "coal_mine",
-        "x": 437,
-        "y": 359,
+        "x": 445,
+        "y": 349,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -2568,8 +3667,8 @@
       {
         "placementId": "mining:coal_mine:19",
         "routeId": "coal_mine",
-        "x": 431,
-        "y": 360,
+        "x": 448,
+        "y": 351,
         "z": 0,
         "oreType": "coal",
         "areaGateFlag": null,
@@ -2579,10 +3678,10 @@
       {
         "placementId": "mining:coal_mine:20",
         "routeId": "coal_mine",
-        "x": 434,
-        "y": 361,
+        "x": 451,
+        "y": 354,
         "z": 0,
-        "oreType": "iron",
+        "oreType": "coal",
         "areaGateFlag": null,
         "areaName": null,
         "areaGateMessage": null
@@ -3857,6 +4956,28 @@
       {
         "placementId": "woodcutting:yew_frontier:2",
         "routeId": "yew_frontier",
+        "x": 353,
+        "y": 404,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:3",
+        "routeId": "yew_frontier",
+        "x": 332,
+        "y": 418,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:4",
+        "routeId": "yew_frontier",
         "x": 48,
         "y": 13,
         "z": 0,
@@ -3866,7 +4987,29 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:yew_frontier:3",
+        "placementId": "woodcutting:yew_frontier:5",
+        "routeId": "yew_frontier",
+        "x": 362,
+        "y": 397,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:6",
+        "routeId": "yew_frontier",
+        "x": 290,
+        "y": 438,
+        "z": 0,
+        "nodeId": "yew_tree",
+        "areaGateFlag": null,
+        "areaName": "the yew frontier",
+        "areaGateMessage": null
+      },
+      {
+        "placementId": "woodcutting:yew_frontier:7",
         "routeId": "yew_frontier",
         "x": 41,
         "y": 19,
@@ -3877,54 +5020,10 @@
         "areaGateMessage": null
       },
       {
-        "placementId": "woodcutting:yew_frontier:4",
-        "routeId": "yew_frontier",
-        "x": 63,
-        "y": 3,
-        "z": 0,
-        "nodeId": "yew_tree",
-        "areaGateFlag": null,
-        "areaName": "the yew frontier",
-        "areaGateMessage": null
-      },
-      {
-        "placementId": "woodcutting:yew_frontier:5",
-        "routeId": "yew_frontier",
-        "x": 51,
-        "y": 7,
-        "z": 0,
-        "nodeId": "yew_tree",
-        "areaGateFlag": null,
-        "areaName": "the yew frontier",
-        "areaGateMessage": null
-      },
-      {
-        "placementId": "woodcutting:yew_frontier:6",
-        "routeId": "yew_frontier",
-        "x": 54,
-        "y": 13,
-        "z": 0,
-        "nodeId": "yew_tree",
-        "areaGateFlag": null,
-        "areaName": "the yew frontier",
-        "areaGateMessage": null
-      },
-      {
-        "placementId": "woodcutting:yew_frontier:7",
-        "routeId": "yew_frontier",
-        "x": 40,
-        "y": 25,
-        "z": 0,
-        "nodeId": "yew_tree",
-        "areaGateFlag": null,
-        "areaName": "the yew frontier",
-        "areaGateMessage": null
-      },
-      {
         "placementId": "woodcutting:yew_frontier:8",
         "routeId": "yew_frontier",
-        "x": 42,
-        "y": 13,
+        "x": 391,
+        "y": 369,
         "z": 0,
         "nodeId": "yew_tree",
         "areaGateFlag": null,
@@ -4178,7 +5277,7 @@
         "alias": "coal",
         "label": "Deep Coal Mine",
         "x": 437,
-        "y": 347,
+        "y": 345,
         "z": 0,
         "count": 20,
         "tags": [
@@ -4346,8 +5445,8 @@
         "routeId": "yew_frontier",
         "alias": "yew",
         "label": "Yew Frontier",
-        "x": 51,
-        "y": 7,
+        "x": 362,
+        "y": 397,
         "z": 0,
         "count": 8,
         "tags": [
@@ -4656,6 +5755,174 @@
             "height": 0.05
           }
         ]
+      },
+      {
+        "landmarkId": "north_woodwatch_lodge_stairs",
+        "tiles": [
+          {
+            "x": 81,
+            "y": 56,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "north_woodwatch_bunkhouse_stairs",
+        "tiles": [
+          {
+            "x": 108,
+            "y": 62,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "north_woodwatch_fletchers_workshop_stairs",
+        "tiles": [
+          {
+            "x": 91,
+            "y": 73,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "south_quarry_storehouse_stairs",
+        "tiles": [
+          {
+            "x": 323,
+            "y": 393,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "south_quarry_cottage_west_stairs",
+        "tiles": [
+          {
+            "x": 303,
+            "y": 410,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "south_quarry_cottage_east_stairs",
+        "tiles": [
+          {
+            "x": 347,
+            "y": 410,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "market_crossing_bank_stairs",
+        "tiles": [
+          {
+            "x": 419,
+            "y": 382,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "market_crossing_townhouse_stairs",
+        "tiles": [
+          {
+            "x": 436,
+            "y": 391,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "market_crossing_gallery_stairs",
+        "tiles": [
+          {
+            "x": 453,
+            "y": 405,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "market_crossing_cottage_stairs",
+        "tiles": [
+          {
+            "x": 417,
+            "y": 410,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "market_crossing_bunkhouse_stairs",
+        "tiles": [
+          {
+            "x": 466,
+            "y": 382,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "old_road_gatehouse_stairs",
+        "tiles": [
+          {
+            "x": 434,
+            "y": 124,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "old_road_burnt_cottage_stairs",
+        "tiles": [
+          {
+            "x": 403,
+            "y": 156,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
+      },
+      {
+        "landmarkId": "old_road_manor_stairs",
+        "tiles": [
+          {
+            "x": 454,
+            "y": 155,
+            "z": 0,
+            "tileId": "STAIRS_RAMP",
+            "height": 0.25
+          }
+        ]
       }
     ],
     "doors": [
@@ -4766,6 +6033,1470 @@
         "x": 231,
         "y": 219,
         "clearRadius": 5
+      }
+    ],
+    "fences": [
+      {
+        "landmarkId": "sunspur_checkpoint_north_rail",
+        "z": 0,
+        "height": 0.82,
+        "points": [
+          {
+            "x": 396,
+            "y": 342
+          },
+          {
+            "x": 416,
+            "y": 344
+          },
+          {
+            "x": 436,
+            "y": 352
+          }
+        ]
+      },
+      {
+        "landmarkId": "sunspur_checkpoint_south_rail",
+        "z": 0,
+        "height": 0.82,
+        "points": [
+          {
+            "x": 398,
+            "y": 372
+          },
+          {
+            "x": 418,
+            "y": 386
+          },
+          {
+            "x": 438,
+            "y": 402
+          }
+        ]
+      },
+      {
+        "landmarkId": "saltwind_trade_outpost_paddock_rail",
+        "z": 0,
+        "height": 0.78,
+        "points": [
+          {
+            "x": 470,
+            "y": 420
+          },
+          {
+            "x": 482,
+            "y": 418
+          },
+          {
+            "x": 484,
+            "y": 404
+          }
+        ]
+      }
+    ],
+    "roofs": [
+      {
+        "landmarkId": "north_woodwatch_lodge_roof",
+        "x": 78,
+        "y": 50,
+        "z": 0,
+        "width": 7,
+        "depth": 7,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 78,
+          "yMin": 50,
+          "xMax": 84,
+          "yMax": 56,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "north_woodwatch_bunkhouse_roof",
+        "x": 104,
+        "y": 56,
+        "z": 0,
+        "width": 9,
+        "depth": 7,
+        "height": 1.08,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 104,
+          "yMin": 56,
+          "xMax": 112,
+          "yMax": 62,
+          "z": 0
+        },
+        "themeId": "quarry_iron",
+        "materialProfileId": "quarry_stone_slate",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "south_quarry_storehouse_roof",
+        "x": 318,
+        "y": 386,
+        "z": 0,
+        "width": 11,
+        "depth": 8,
+        "height": 1.34,
+        "ridgeAxis": "y",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 318,
+          "yMin": 386,
+          "xMax": 328,
+          "yMax": 393,
+          "z": 0
+        },
+        "themeId": "quarry_iron",
+        "materialProfileId": "quarry_stone_slate",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "south_quarry_cottage_west_roof",
+        "x": 300,
+        "y": 404,
+        "z": 0,
+        "width": 7,
+        "depth": 7,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 300,
+          "yMin": 404,
+          "xMax": 306,
+          "yMax": 410,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "south_quarry_cottage_east_roof",
+        "x": 344,
+        "y": 404,
+        "z": 0,
+        "width": 7,
+        "depth": 7,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 344,
+          "yMin": 404,
+          "xMax": 350,
+          "yMax": 410,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "market_crossing_bank_roof",
+        "x": 416,
+        "y": 376,
+        "z": 0,
+        "width": 10,
+        "depth": 7,
+        "height": 1.22,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 416,
+          "yMin": 376,
+          "xMax": 425,
+          "yMax": 382,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "market_crossing_townhouse_roof",
+        "x": 432,
+        "y": 384,
+        "z": 0,
+        "width": 9,
+        "depth": 8,
+        "height": 1.45,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 432,
+          "yMin": 384,
+          "xMax": 440,
+          "yMax": 391,
+          "z": 0
+        },
+        "themeId": "stone_market",
+        "materialProfileId": "city_stone_slate",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "market_crossing_gallery_roof",
+        "x": 448,
+        "y": 398,
+        "z": 0,
+        "width": 10,
+        "depth": 8,
+        "height": 1.32,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 448,
+          "yMin": 398,
+          "xMax": 457,
+          "yMax": 405,
+          "z": 0
+        },
+        "themeId": "painted_plaster",
+        "materialProfileId": "painted_plaster_tile",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "market_crossing_cottage_roof",
+        "x": 414,
+        "y": 404,
+        "z": 0,
+        "width": 7,
+        "depth": 7,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 414,
+          "yMin": 404,
+          "xMax": 420,
+          "yMax": 410,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "market_crossing_bunkhouse_roof",
+        "x": 462,
+        "y": 376,
+        "z": 0,
+        "width": 9,
+        "depth": 7,
+        "height": 1.08,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 462,
+          "yMin": 376,
+          "xMax": 470,
+          "yMax": 382,
+          "z": 0
+        },
+        "themeId": "quarry_iron",
+        "materialProfileId": "quarry_stone_slate",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "old_road_gatehouse_roof",
+        "x": 428,
+        "y": 118,
+        "z": 0,
+        "width": 13,
+        "depth": 7,
+        "height": 1.65,
+        "ridgeAxis": "y",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 428,
+          "yMin": 118,
+          "xMax": 440,
+          "yMax": 124,
+          "z": 0
+        },
+        "themeId": "stone_market",
+        "materialProfileId": "castle_granite_slate",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "old_road_burnt_cottage_roof",
+        "x": 400,
+        "y": 150,
+        "z": 0,
+        "width": 7,
+        "depth": 7,
+        "height": 0.82,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 400,
+          "yMin": 150,
+          "xMax": 406,
+          "yMax": 156,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "burnt_timber_ash",
+        "conditionId": "burnt",
+        "roofIntegrity": 0.18
+      },
+      {
+        "landmarkId": "old_road_manor_roof",
+        "x": 448,
+        "y": 146,
+        "z": 0,
+        "width": 13,
+        "depth": 10,
+        "height": 1.72,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 448,
+          "yMin": 146,
+          "xMax": 460,
+          "yMax": 155,
+          "z": 0
+        },
+        "themeId": "stone_market",
+        "materialProfileId": "city_stone_slate",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "general_store_roof",
+        "x": 177,
+        "y": 232,
+        "z": 0,
+        "width": 9,
+        "depth": 9,
+        "height": 1.34,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 177,
+          "yMin": 232,
+          "xMax": 185,
+          "yMax": 240,
+          "z": 0
+        },
+        "themeId": "painted_plaster",
+        "materialProfileId": "painted_plaster_tile",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "smithing_hall_roof",
+        "x": 221,
+        "y": 228,
+        "z": 0,
+        "width": 9,
+        "depth": 13,
+        "height": 1.42,
+        "ridgeAxis": "y",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 221,
+          "yMin": 228,
+          "xMax": 229,
+          "yMax": 240,
+          "z": 0
+        },
+        "themeId": "quarry_iron",
+        "materialProfileId": "quarry_stone_slate",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "east_road_outpost_roof",
+        "x": 360,
+        "y": 250,
+        "z": 0,
+        "width": 9,
+        "depth": 9,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 360,
+          "yMin": 250,
+          "xMax": 368,
+          "yMax": 258,
+          "z": 0
+        },
+        "themeId": "stone_market",
+        "materialProfileId": "castle_granite_slate",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "shopkeeper_house_roof",
+        "x": 166,
+        "y": 232,
+        "z": 0,
+        "width": 9,
+        "depth": 8,
+        "height": 1.24,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 166,
+          "yMin": 232,
+          "xMax": 174,
+          "yMax": 239,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "crafting_teacher_cottage_roof",
+        "x": 176,
+        "y": 243,
+        "z": 0,
+        "width": 7,
+        "depth": 8,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 176,
+          "yMin": 243,
+          "xMax": 182,
+          "yMax": 250,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "fishing_teacher_shack_roof",
+        "x": 167,
+        "y": 216,
+        "z": 0,
+        "width": 7,
+        "depth": 6,
+        "height": 0.92,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 167,
+          "yMin": 216,
+          "xMax": 173,
+          "yMax": 221,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "road_guide_hut_roof",
+        "x": 221,
+        "y": 216,
+        "z": 0,
+        "width": 5,
+        "depth": 6,
+        "height": 0.96,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 221,
+          "yMin": 216,
+          "xMax": 225,
+          "yMax": 221,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "fishing_supplier_shack_roof",
+        "x": 231,
+        "y": 216,
+        "z": 0,
+        "width": 7,
+        "depth": 6,
+        "height": 0.92,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 231,
+          "yMin": 216,
+          "xMax": 237,
+          "yMax": 221,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "elira_gemhand_cottage_roof",
+        "x": 167,
+        "y": 188,
+        "z": 0,
+        "width": 7,
+        "depth": 8,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 167,
+          "yMin": 188,
+          "xMax": 173,
+          "yMax": 195,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "borin_ironvein_house_roof",
+        "x": 242,
+        "y": 220,
+        "z": 0,
+        "width": 9,
+        "depth": 8,
+        "height": 1.24,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 242,
+          "yMin": 220,
+          "xMax": 250,
+          "yMax": 227,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "tanner_rusk_tannery_roof",
+        "x": 242,
+        "y": 230,
+        "z": 0,
+        "width": 11,
+        "depth": 8,
+        "height": 1.16,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 242,
+          "yMin": 230,
+          "xMax": 252,
+          "yMax": 237,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      },
+      {
+        "landmarkId": "outpost_guide_house_roof",
+        "x": 257,
+        "y": 250,
+        "z": 0,
+        "width": 7,
+        "depth": 8,
+        "height": 1.18,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 257,
+          "yMin": 250,
+          "xMax": 263,
+          "yMax": 257,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "thrain_deepforge_house_roof",
+        "x": 268,
+        "y": 250,
+        "z": 0,
+        "width": 9,
+        "depth": 8,
+        "height": 1.24,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 268,
+          "yMin": 250,
+          "xMax": 276,
+          "yMax": 257,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "rune_tutor_hut_roof",
+        "x": 216,
+        "y": 176,
+        "z": 0,
+        "width": 5,
+        "depth": 6,
+        "height": 0.96,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 216,
+          "yMin": 176,
+          "xMax": 220,
+          "yMax": 181,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "combination_sage_hut_roof",
+        "x": 146,
+        "y": 176,
+        "z": 0,
+        "width": 5,
+        "depth": 6,
+        "height": 0.96,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 146,
+          "yMin": 176,
+          "xMax": 150,
+          "yMax": 181,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "intact",
+        "roofIntegrity": 1
+      },
+      {
+        "landmarkId": "north_woodwatch_fletchers_workshop_roof",
+        "x": 86,
+        "y": 66,
+        "z": 0,
+        "width": 11,
+        "depth": 8,
+        "height": 1.16,
+        "ridgeAxis": "x",
+        "hideWhenPlayerInside": true,
+        "hideBounds": {
+          "xMin": 86,
+          "yMin": 66,
+          "xMax": 96,
+          "yMax": 73,
+          "z": 0
+        },
+        "themeId": "frontier_timber",
+        "materialProfileId": "timber_thatch",
+        "conditionId": "weathered",
+        "roofIntegrity": 0.86
+      }
+    ],
+    "decorProps": [
+      {
+        "propId": "general_store_front_shop_sign",
+        "kind": "shop_sign",
+        "label": "General Store Sign",
+        "x": 186,
+        "y": 234,
+        "z": 0,
+        "tags": [
+          "street",
+          "shop",
+          "signage",
+          "structure:general_store",
+          "building:general_store"
+        ],
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_lodge_supply_barrel",
+        "kind": "barrel",
+        "x": 79,
+        "y": 52,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:north_woodwatch_lodge",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_lodge_frontier_chopping_block",
+        "kind": "chopping_block",
+        "x": 83,
+        "y": 56,
+        "z": 0,
+        "tags": [
+          "yard",
+          "woodcutting",
+          "structure:north_woodwatch_lodge",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": -0.35,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_bunkhouse_shift_barrel",
+        "kind": "barrel",
+        "x": 105,
+        "y": 58,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:north_woodwatch_bunkhouse",
+          "building:quarry_bunkhouse"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_bunkhouse_bunkhouse_weapon_rack",
+        "kind": "weapon_rack",
+        "x": 111,
+        "y": 58,
+        "z": 0,
+        "tags": [
+          "interior",
+          "guard",
+          "structure:north_woodwatch_bunkhouse",
+          "building:quarry_bunkhouse"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_fletchers_workshop_tool_rack",
+        "kind": "tool_rack",
+        "x": 94,
+        "y": 68,
+        "z": 0,
+        "tags": [
+          "interior",
+          "fletching",
+          "structure:north_woodwatch_fletchers_workshop",
+          "building:timber_workshop"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_storehouse_ore_sorting_pile",
+        "kind": "ore_pile",
+        "x": 320,
+        "y": 389,
+        "z": 0,
+        "tags": [
+          "interior",
+          "mining",
+          "structure:south_quarry_storehouse",
+          "building:quarry_storehouse"
+        ],
+        "facingYaw": 0.25,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_storehouse_coal_storage_bin",
+        "kind": "coal_bin",
+        "x": 326,
+        "y": 389,
+        "z": 0,
+        "tags": [
+          "interior",
+          "smithing",
+          "structure:south_quarry_storehouse",
+          "building:quarry_storehouse"
+        ],
+        "facingYaw": -0.2,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_storehouse_loading_notice",
+        "kind": "notice_board",
+        "x": 326,
+        "y": 393,
+        "z": 0,
+        "tags": [
+          "yard",
+          "notice",
+          "structure:south_quarry_storehouse",
+          "building:quarry_storehouse"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_cottage_west_supply_barrel",
+        "kind": "barrel",
+        "x": 301,
+        "y": 406,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:south_quarry_cottage_west",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_cottage_west_frontier_chopping_block",
+        "kind": "chopping_block",
+        "x": 305,
+        "y": 410,
+        "z": 0,
+        "tags": [
+          "yard",
+          "woodcutting",
+          "structure:south_quarry_cottage_west",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": -0.35,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_cottage_east_supply_barrel",
+        "kind": "barrel",
+        "x": 345,
+        "y": 406,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:south_quarry_cottage_east",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_cottage_east_frontier_chopping_block",
+        "kind": "chopping_block",
+        "x": 349,
+        "y": 410,
+        "z": 0,
+        "tags": [
+          "yard",
+          "woodcutting",
+          "structure:south_quarry_cottage_east",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": -0.35,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_bank_bank_desk",
+        "kind": "desk",
+        "x": 418,
+        "y": 378,
+        "z": 0,
+        "tags": [
+          "interior",
+          "bank",
+          "structure:market_crossing_bank",
+          "building:frontier_bank"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_bank_deposit_crate",
+        "kind": "crate",
+        "x": 424,
+        "y": 380,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:market_crossing_bank",
+          "building:frontier_bank"
+        ],
+        "facingYaw": 0.2,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_townhouse_merchant_desk",
+        "kind": "desk",
+        "x": 434,
+        "y": 386,
+        "z": 0,
+        "tags": [
+          "interior",
+          "merchant",
+          "structure:market_crossing_townhouse",
+          "building:stone_townhouse"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_townhouse_street_barrel",
+        "kind": "barrel",
+        "x": 439,
+        "y": 391,
+        "z": 0,
+        "tags": [
+          "street",
+          "market",
+          "structure:market_crossing_townhouse",
+          "building:stone_townhouse"
+        ],
+        "facingYaw": 0.4,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_gallery_artist_workdesk",
+        "kind": "desk",
+        "x": 450,
+        "y": 400,
+        "z": 0,
+        "tags": [
+          "interior",
+          "crafting",
+          "structure:market_crossing_gallery",
+          "building:painted_gallery"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_gallery_dye_crate",
+        "kind": "crate",
+        "x": 455,
+        "y": 403,
+        "z": 0,
+        "tags": [
+          "interior",
+          "supplies",
+          "structure:market_crossing_gallery",
+          "building:painted_gallery"
+        ],
+        "facingYaw": 0.2,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_gallery_street_notice",
+        "kind": "notice_board",
+        "x": 456,
+        "y": 405,
+        "z": 0,
+        "tags": [
+          "street",
+          "notice",
+          "structure:market_crossing_gallery",
+          "building:painted_gallery"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_cottage_supply_barrel",
+        "kind": "barrel",
+        "x": 415,
+        "y": 406,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:market_crossing_cottage",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_cottage_frontier_chopping_block",
+        "kind": "chopping_block",
+        "x": 419,
+        "y": 410,
+        "z": 0,
+        "tags": [
+          "yard",
+          "woodcutting",
+          "structure:market_crossing_cottage",
+          "building:frontier_cottage"
+        ],
+        "facingYaw": -0.35,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_bunkhouse_shift_barrel",
+        "kind": "barrel",
+        "x": 463,
+        "y": 378,
+        "z": 0,
+        "tags": [
+          "interior",
+          "storage",
+          "structure:market_crossing_bunkhouse",
+          "building:quarry_bunkhouse"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_bunkhouse_bunkhouse_weapon_rack",
+        "kind": "weapon_rack",
+        "x": 469,
+        "y": 378,
+        "z": 0,
+        "tags": [
+          "interior",
+          "guard",
+          "structure:market_crossing_bunkhouse",
+          "building:quarry_bunkhouse"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_gatehouse_gate_weapon_rack",
+        "kind": "weapon_rack",
+        "x": 430,
+        "y": 120,
+        "z": 0,
+        "tags": [
+          "interior",
+          "guard",
+          "structure:old_road_gatehouse",
+          "building:castle_gatehouse"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_gatehouse_gate_notice",
+        "kind": "notice_board",
+        "x": 438,
+        "y": 120,
+        "z": 0,
+        "tags": [
+          "interior",
+          "notice",
+          "structure:old_road_gatehouse",
+          "building:castle_gatehouse"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_burnt_cottage_ash_barrel",
+        "kind": "barrel",
+        "x": 401,
+        "y": 152,
+        "z": 0,
+        "tags": [
+          "interior",
+          "burnt",
+          "structure:old_road_burnt_cottage",
+          "building:burnt_cottage"
+        ],
+        "facingYaw": 0.3,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_burnt_cottage_charred_woodpile",
+        "kind": "woodpile",
+        "x": 405,
+        "y": 156,
+        "z": 0,
+        "tags": [
+          "yard",
+          "burnt",
+          "structure:old_road_burnt_cottage",
+          "building:burnt_cottage"
+        ],
+        "facingYaw": -0.4,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_manor_estate_desk",
+        "kind": "desk",
+        "x": 451,
+        "y": 149,
+        "z": 0,
+        "tags": [
+          "interior",
+          "estate",
+          "structure:old_road_manor",
+          "building:stone_manor"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_manor_estate_notice",
+        "kind": "notice_board",
+        "x": 458,
+        "y": 151,
+        "z": 0,
+        "tags": [
+          "interior",
+          "quest",
+          "structure:old_road_manor",
+          "building:stone_manor"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_fletchers_workshop_supply_crate",
+        "kind": "crate",
+        "x": 93,
+        "y": 70,
+        "z": 0,
+        "tags": [
+          "interior",
+          "supplies",
+          "structure:north_woodwatch_fletchers_workshop",
+          "building:timber_workshop"
+        ],
+        "facingYaw": 0.2,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_fletchers_workshop_yard_chopping_block",
+        "kind": "chopping_block",
+        "x": 96,
+        "y": 73,
+        "z": 0,
+        "tags": [
+          "yard",
+          "woodcutting",
+          "fletching",
+          "structure:north_woodwatch_fletchers_workshop",
+          "building:timber_workshop"
+        ],
+        "facingYaw": -0.35,
+        "blocksMovement": true
+      },
+      {
+        "propId": "north_woodwatch_fletchers_workshop_thatch_bundle",
+        "kind": "thatch_bundle",
+        "label": "Spare Thatch Bundle",
+        "x": 97,
+        "y": 68,
+        "z": 0,
+        "tags": [
+          "yard",
+          "thatch",
+          "woodcutting",
+          "structure:north_woodwatch_fletchers_workshop",
+          "building:timber_workshop"
+        ],
+        "facingYaw": -0.2,
+        "blocksMovement": true
+      },
+      {
+        "propId": "south_quarry_storehouse_loading_cart",
+        "kind": "quarry_cart",
+        "label": "Ore Loading Cart",
+        "x": 329,
+        "y": 390,
+        "z": 0,
+        "tags": [
+          "yard",
+          "mining",
+          "quarry",
+          "structure:south_quarry_storehouse",
+          "building:quarry_storehouse"
+        ],
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_bank_front_sign",
+        "kind": "bank_sign",
+        "label": "Market Crossing Bank Sign",
+        "x": 425,
+        "y": 381,
+        "z": 0,
+        "tags": [
+          "interior",
+          "bank",
+          "signage",
+          "structure:market_crossing_bank",
+          "building:frontier_bank"
+        ],
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_gallery_shop_sign",
+        "kind": "shop_sign",
+        "label": "Gallery Shop Sign",
+        "x": 451,
+        "y": 405,
+        "z": 0,
+        "tags": [
+          "street",
+          "shop",
+          "signage",
+          "structure:market_crossing_gallery",
+          "building:painted_gallery"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": true
+      },
+      {
+        "propId": "market_crossing_gallery_front_awning",
+        "kind": "market_awning",
+        "label": "Painted Gallery Awning",
+        "x": 454,
+        "y": 406,
+        "z": 0,
+        "tags": [
+          "street",
+          "shop",
+          "market",
+          "plaster",
+          "structure:market_crossing_gallery",
+          "building:painted_gallery"
+        ],
+        "facingYaw": 3.141592653589793,
+        "blocksMovement": false
+      },
+      {
+        "propId": "market_crossing_gallery_display_painting",
+        "kind": "wall_painting",
+        "label": "Gallery Display Painting",
+        "x": 452,
+        "y": 400,
+        "z": 0,
+        "tags": [
+          "interior",
+          "painting",
+          "plaster",
+          "structure:market_crossing_gallery",
+          "building:painted_gallery"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_gatehouse_faded_banner",
+        "kind": "castle_banner",
+        "label": "Faded Gatehouse Banner",
+        "x": 434,
+        "y": 119,
+        "z": 0,
+        "tags": [
+          "interior",
+          "castle",
+          "banner",
+          "structure:old_road_gatehouse",
+          "building:castle_gatehouse"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_burnt_cottage_collapsed_rubble",
+        "kind": "rubble_pile",
+        "label": "Collapsed Cottage Rubble",
+        "x": 404,
+        "y": 153,
+        "z": 0,
+        "tags": [
+          "interior",
+          "burnt",
+          "ruin",
+          "structure:old_road_burnt_cottage",
+          "building:burnt_cottage"
+        ],
+        "facingYaw": -0.25,
+        "blocksMovement": true
+      },
+      {
+        "propId": "old_road_manor_family_painting",
+        "kind": "wall_painting",
+        "label": "Weathered Family Painting",
+        "x": 454,
+        "y": 148,
+        "z": 0,
+        "tags": [
+          "interior",
+          "mansion",
+          "painting",
+          "structure:old_road_manor",
+          "building:stone_manor"
+        ],
+        "facingYaw": 0,
+        "blocksMovement": true
+      },
+      {
+        "propId": "sunspur_checkpoint_notice_board",
+        "kind": "notice_board",
+        "label": "Sunspur Checkpoint Notice",
+        "x": 414,
+        "y": 348,
+        "z": 0,
+        "tags": [
+          "street",
+          "notice",
+          "checkpoint",
+          "desert-edge",
+          "sunspur",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": 0.2,
+        "blocksMovement": true
+      },
+      {
+        "propId": "sunspur_checkpoint_trade_crates",
+        "kind": "crate",
+        "label": "Checkpoint Trade Crates",
+        "x": 420,
+        "y": 379,
+        "z": 0,
+        "tags": [
+          "street",
+          "trade",
+          "checkpoint",
+          "desert-edge",
+          "sunspur",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": -0.35,
+        "blocksMovement": false
+      },
+      {
+        "propId": "sunspur_dry_scrub_stone_rubble",
+        "kind": "rubble_pile",
+        "label": "Dry Scrub Stone Scatter",
+        "x": 384,
+        "y": 342,
+        "z": 0,
+        "tags": [
+          "ground-clutter",
+          "stone",
+          "dry-scrub",
+          "desert-edge",
+          "sunspur",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": 0.4,
+        "blocksMovement": false
+      },
+      {
+        "propId": "sunspur_dry_scrub_thatch_windbreak",
+        "kind": "thatch_bundle",
+        "label": "Dry Scrub Windbreak",
+        "x": 430,
+        "y": 365,
+        "z": 0,
+        "tags": [
+          "ground-clutter",
+          "dry-scrub",
+          "checkpoint",
+          "desert-edge",
+          "sunspur",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": 1.1,
+        "blocksMovement": false
+      },
+      {
+        "propId": "saltwind_outpost_mining_cart",
+        "kind": "quarry_cart",
+        "label": "Saltwind Ore Cart",
+        "x": 468,
+        "y": 400,
+        "z": 0,
+        "tags": [
+          "yard",
+          "mining",
+          "trade-outpost",
+          "desert-edge",
+          "saltwind",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": 1.5707963267948966,
+        "blocksMovement": false
+      },
+      {
+        "propId": "saltwind_outpost_ore_spill",
+        "kind": "ore_pile",
+        "label": "Saltwind Ore Spill",
+        "x": 462,
+        "y": 406,
+        "z": 0,
+        "tags": [
+          "yard",
+          "mining",
+          "trade-outpost",
+          "desert-edge",
+          "saltwind",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": -0.25,
+        "blocksMovement": false
+      },
+      {
+        "propId": "saltwind_outpost_trade_barrels",
+        "kind": "barrel",
+        "label": "Saltwind Trade Barrels",
+        "x": 475,
+        "y": 400,
+        "z": 0,
+        "tags": [
+          "yard",
+          "trade",
+          "trade-outpost",
+          "desert-edge",
+          "saltwind",
+          "worldbuilding-slice"
+        ],
+        "facingYaw": 0.6,
+        "blocksMovement": false
       }
     ]
   }

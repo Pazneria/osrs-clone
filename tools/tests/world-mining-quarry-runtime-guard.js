@@ -1,20 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function makePlane(size, fill) {
-  return Array(size).fill(0).map(() => Array(size).fill(fill));
-}
+const { makeSquareGrid: makePlane } = require("./collection-test-utils");
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "mining-quarry-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const runtimeSource = readRepoFile(root, "src/js/world/mining-quarry-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const miningQuarryRuntimeIndex = manifestSource.indexOf('id: "world-mining-quarry-runtime"');
   const worldIndex = manifestSource.indexOf('id: "world"');
 
@@ -100,10 +94,6 @@ function run() {
     sampleFractalNoise2D: (x, y, seed = 0) => {
       const s = Math.sin((x * 19.19) + (y * 31.31) + seed) * 9999.7;
       return s - Math.floor(s);
-    },
-    smoothstep: (edge0, edge1, value) => {
-      const t = Math.max(0, Math.min(1, (value - edge0) / Math.max(0.000001, edge1 - edge0)));
-      return t * t * (3 - (2 * t));
     },
     tileIds: { DIRT: 3 }
   });

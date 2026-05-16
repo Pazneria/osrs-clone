@@ -2,11 +2,13 @@
         let activeRoofVisuals = [];
         let activeStampedStructures = [];
         let activeStampMap = {};
+        let activeStructureVisualStyleLookup = null;
         let tutorialGuidanceMarkerGroup = null;
         let tutorialGuidanceMarkerId = '';
         let tutorialGuidanceMarkerMaterials = null;
         let tutorialGuidanceMarkerGeometries = null;
         let farChunkBackdropBuilt = false;
+        const FAR_CHUNK_BACKDROP_EAGER_CHUNK_LIMIT = 96;
 
         const worldProceduralRuntime = window.WorldProceduralRuntime || null;
         const worldRenderRuntime = window.WorldRenderRuntime || null;
@@ -53,7 +55,6 @@
 
         const PIER_DECK_TOP_HEIGHT = 0.28;
         const PIER_DECK_THICKNESS = 0.14;
-        const PIER_WATER_SURFACE_HEIGHT = -0.075;
 
         function getWaterMaterialCaches() {
             return worldRenderRuntime.getWaterMaterialCaches(sharedMaterials);
@@ -172,6 +173,7 @@
         function isPreferredFenceTerrainBaseTile(tileId) {
             return tileId === TileId.GRASS
                 || tileId === TileId.DIRT
+                || tileId === TileId.SAND
                 || tileId === TileId.SHORE
                 || tileId === TileId.STUMP
                 || tileId === TileId.ROCK;
@@ -406,10 +408,6 @@
             tutorialGuidanceMarkerGroup.userData.targetNpcActorId = markerPose.targetNpcActorId;
         }
 
-        function spawnMiningPoseReferences() {
-            worldMiningPoseReferenceRuntime.spawnMiningPoseReferences(buildMiningPoseReferenceRuntimeContext());
-        }
-
         function updateMiningPoseReferences(frameNowMs) {
             worldMiningPoseReferenceRuntime.updateMiningPoseReferences(Object.assign(
                 buildMiningPoseReferenceRuntimeContext(),
@@ -581,12 +579,6 @@
         function updateStats() {
             return worldStatusHudRuntime.updateStats(buildStatusHudRuntimeContext());
         }
-
-        function markPlayerCastTick(tick = currentTick) {
-            const resolvedTick = Number.isFinite(tick) ? Math.floor(tick) : currentTick;
-            playerState.lastCastTick = resolvedTick;
-        }
-        window.markPlayerCastTick = markPlayerCastTick;
 
         const MAX_SKILL_LEVEL = skillProgressRuntime.MAX_SKILL_LEVEL;
         const DEFAULT_FIRE_LIFETIME_TICKS = 90;
@@ -851,13 +843,6 @@
             return worldFireLifecycleRuntime.resolveFireTargetFromHit(buildFireLifecycleRuntimeContext(), hitData);
         }
 
-        function debugCookingUse(message) {
-            if (!window.DEBUG_COOKING_USE) return;
-            const text = `[cook-debug] ${message}`;
-            try { console.log(text); } catch (_) {}
-            if (typeof addChatMessage === 'function') addChatMessage(text, 'info');
-        }
-
                 function createRunecraftingPouchContext() {
             return {
                 playerState,
@@ -995,7 +980,6 @@
         }
 
         const getRockDisplayName = worldRockNodeRuntime.getRockDisplayName;
-        const getRockColorHex = worldRockNodeRuntime.getRockColorHex;
 
         const ROCK_VISUAL_ORDER = worldRockRenderRuntime.ROCK_VISUAL_ORDER;
 
@@ -1104,6 +1088,7 @@
             const deepWaterCenter = worldPayload.deepWaterCenter;
             const pierConfig = worldPayload.pierConfig;
             const pathPatches = Array.isArray(worldPayload.pathPatches) ? worldPayload.pathPatches : [];
+            const landformPatches = Array.isArray(worldPayload.landformPatches) ? worldPayload.landformPatches : [];
             const smithingHallApproach = worldPayload.smithingHallApproach;
             const waterRenderPayload = worldPayload.waterRenderPayload;
             const stampedStructures = worldPayload.stampedStructures;
@@ -1148,10 +1133,12 @@
             const terrainSetup = worldTerrainSetupRuntime.applyBaseTerrainSetup({
                 castleFrontPond,
                 deepWaterCenter,
+                disableLegacyRiver: !waterRenderBodies.some((body) => body && body.id === 'legacy-east-river'),
                 heightMap,
                 isPierSideWaterTile,
                 islandWater,
                 lakeDefs,
+                landformPatches,
                 logicalMap,
                 mapSize: MAP_SIZE,
                 pathPatches,
@@ -1162,7 +1149,6 @@
                 tileIds: TileId
             });
             const inTownCore = terrainSetup.inTownCore;
-            const terrainNoise = terrainSetup.terrainNoise;
             const getStampBounds = terrainSetup.getStampBounds;
 
             const fishingMerchantAuthoring = worldLogicalMapAuthoringRuntime.applyFishingMerchantSpots({
@@ -1185,6 +1171,7 @@
                 const tile = row[x];
                 const validBase = tile === TileId.GRASS
                     || tile === TileId.DIRT
+                    || tile === TileId.SAND
                     || tile === TileId.FLOOR_WOOD
                     || tile === TileId.FLOOR_STONE
                     || tile === TileId.FLOOR_BRICK
@@ -1290,6 +1277,10 @@
                 ? stampedStructures.map((structure) => Object.assign({}, structure))
                 : [];
             activeStampMap = stampMap || {};
+            activeStructureVisualStyleLookup = worldStructureRenderRuntime.buildStructureVisualStyleLookup({
+                stampedStructures: activeStampedStructures,
+                stampMap: activeStampMap
+            });
             sharedMaterials.activeStampedStructures = activeStampedStructures;
             sharedMaterials.activeStampMap = activeStampMap;
 
@@ -1348,7 +1339,7 @@
                 const row = logicalMap[0] && logicalMap[0][y];
                 if (!row) return false;
                 const tile = row[x];
-                return tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.ROCK || tile === TileId.STUMP;
+                return tile === TileId.GRASS || tile === TileId.DIRT || tile === TileId.SAND || tile === TileId.ROCK || tile === TileId.STUMP;
             };
             const applyMiningQuarryTerrain = (placements, activePlacements = placements) => {
                 if (!Array.isArray(placements) || placements.length === 0) return;
@@ -1604,7 +1595,6 @@
                 mapSize: MAP_SIZE,
                 miningNodePlacements,
                 sampleFractalNoise2D,
-                smoothstep,
                 tileIds: TileId
             };
             const miningPlacementPlan = worldMiningQuarryRuntime.thinMiningRockPlacements(
@@ -1910,6 +1900,11 @@
             return group;
         }
 
+        function getStructureMaterialProfileIdAt(x, y, z) {
+            const style = worldStructureRenderRuntime.getStructureVisualStyleAt(activeStructureVisualStyleLookup, x, y, z);
+            return style && style.materialProfileId ? style.materialProfileId : 'castle_granite_slate';
+        }
+
         function appendChunkLandmarkVisuals(planeGroup, z, Z_OFFSET, startX, startY, endX, endY) {
             worldStructureRenderRuntime.appendChunkLandmarkVisuals({
                 THREE,
@@ -2147,6 +2142,10 @@
         function ensureFarChunkBackdropBuilt() {
             if (!scene) return;
             if (farChunkBackdropBuilt) return;
+            if ((WORLD_CHUNKS_X * WORLD_CHUNKS_Y) > FAR_CHUNK_BACKDROP_EAGER_CHUNK_LIMIT) {
+                farChunkBackdropBuilt = true;
+                return;
+            }
             for (let cy = 0; cy < WORLD_CHUNKS_Y; cy++) {
                 for (let cx = 0; cx < WORLD_CHUNKS_X; cx++) {
                     ensureFarChunkGroup(cx, cy);
@@ -2169,6 +2168,7 @@
                 startY,
                 logicalMap,
                 heightMap,
+                sharedGeometries,
                 sharedMaterials,
                 waterRenderBodies,
                 islandWater: sharedMaterials.activeIslandWater || null,
@@ -2208,6 +2208,8 @@
                 }
 
                 let wCount = 0, cCount = 0, fenceCount = 0;
+                const wallCountsByStyle = {};
+                const towerCountsByStyle = {};
                 const floorCounts = { stone: 0, wood: 0, brick: 0 };
                 const visualTileRows = [];
                 const resourceCounts = worldChunkResourceRenderRuntime.createEmptyResourceVisualCounts();
@@ -2232,8 +2234,16 @@
                         const tile = getVisualTileId(logicalMap[z][y][x], x, y, z);
                         visualTileRow[x - startX] = tile;
                         worldChunkResourceRenderRuntime.countChunkResourceVisualTile(resourceCounts, resourceCountOptions, tile, x, y, z);
-                        if (tile === TileId.WALL) wCount++;
-                        else if (tile === TileId.TOWER) cCount++;
+                        if (tile === TileId.WALL) {
+                            wCount++;
+                            const materialProfileId = getStructureMaterialProfileIdAt(x, y, z);
+                            wallCountsByStyle[materialProfileId] = (wallCountsByStyle[materialProfileId] || 0) + 1;
+                        }
+                        else if (tile === TileId.TOWER) {
+                            cCount++;
+                            const materialProfileId = getStructureMaterialProfileIdAt(x, y, z);
+                            towerCountsByStyle[materialProfileId] = (towerCountsByStyle[materialProfileId] || 0) + 1;
+                        }
                         else if (tile === TileId.FENCE) fenceCount++;
                         const floorBucket = worldStructureRenderRuntime.getFloorTileRenderBucket({
                             logicalMap,
@@ -2263,7 +2273,9 @@
                     planeGroup,
                     environmentMeshes,
                     wallCount: wCount,
-                    towerCount: cCount
+                    towerCount: cCount,
+                    wallCountsByStyle,
+                    towerCountsByStyle
                 });
                 let fenceData = worldStructureRenderRuntime.createFenceRenderData({
                     THREE,
@@ -2344,7 +2356,8 @@
                                 y,
                                 z,
                                 zOffset: Z_OFFSET,
-                                wallIndex: wIdx
+                                wallIndex: wIdx,
+                                materialProfileId: getStructureMaterialProfileIdAt(x, y, z)
                             });
                         } else if (tile === TileId.TOWER) {
                             cIdx = worldStructureRenderRuntime.setCastleTowerVisualState({
@@ -2354,7 +2367,8 @@
                                 y,
                                 z,
                                 zOffset: Z_OFFSET,
-                                towerIndex: cIdx
+                                towerIndex: cIdx,
+                                materialProfileId: getStructureMaterialProfileIdAt(x, y, z)
                             });
                         } else if (tile === TileId.SHOP_COUNTER) {
                             worldStructureRenderRuntime.appendShopCounterVisual({
@@ -2436,7 +2450,8 @@
                 const activeRoofs = Array.isArray(sharedMaterials.activeRoofLandmarks) ? sharedMaterials.activeRoofLandmarks : [];
                 activeRoofs.forEach((roof) => {
                     if (!chunkIntersectsRoof(roof, startX, startY, endX, endY, z)) return;
-                    planeGroup.add(createRoofVisualGroup(roof, Z_OFFSET));
+                    const roofGroup = createRoofVisualGroup(roof, Z_OFFSET);
+                    if (roofGroup) planeGroup.add(roofGroup);
                 });
 
                 worldNpcRenderRuntime.appendChunkNpcVisuals({
@@ -2544,7 +2559,6 @@
             refreshWorldOceanBackdrop();
             clearPendingNearChunkBuilds();
             farChunkBackdropBuilt = false;
-            ensureFarChunkBackdropBuilt();
             markChunkPolicyDirty();
         }
 
@@ -2743,7 +2757,6 @@
         window.initLogicalMap = initLogicalMap;
         window.initThreeJS = initThreeJS;
         window.build3DEnvironment = build3DEnvironment;
-        window.spawnMiningPoseReferences = spawnMiningPoseReferences;
         window.initMinimap = initMinimap;
         window.initUIPreview = initUIPreview;
         window.manageChunks = manageChunks;
@@ -2759,7 +2772,6 @@
         window.updateGroundItems = updateGroundItems;
         window.takeGroundItemByUid = takeGroundItemByUid;
         window.reportChunkPerformanceSample = reportChunkPerformanceSample;
-        window.markChunkPolicyDirty = markChunkPolicyDirty;
         window.updateMiningPoseReferences = updateMiningPoseReferences;
         window.updateWorldNpcRuntime = updateWorldNpcRuntime;
         window.updateMinimap = updateMinimap;

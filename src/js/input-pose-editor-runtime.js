@@ -37,14 +37,6 @@
         };
     }
 
-    function isPoseEditorEnabled(state) {
-        return !!(state && state.enabled);
-    }
-
-    function isPoseEditorDragging(state) {
-        return !!(state && state.activeHandle);
-    }
-
     function getPoseEditorDefaultValues(options = {}) {
         const playerRig = options.playerRig || null;
         const shoulderPivot = options.playerShoulderPivot || { x: 0.28, y: 1.68, z: 0 };
@@ -360,8 +352,6 @@
 
     window.InputPoseEditorRuntime = {
         createPoseEditorState,
-        isPoseEditorEnabled,
-        isPoseEditorDragging,
         getPoseEditorDefaultValues,
         ensurePoseEditorRotationShape,
         poseEditorNodeForRig,

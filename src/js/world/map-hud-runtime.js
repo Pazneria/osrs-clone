@@ -171,6 +171,7 @@
         const TileId = getTileIds(context);
         if (tile === TileId.GRASS) return '#2d4a22';
         if (tile === TileId.DIRT) return '#5f4c32';
+        if (tile === TileId.SAND) return '#c89f55';
         if (isTreeTileId(context, tile)) return '#1e752d';
         if (tile === TileId.ROCK) return '#6b7280';
         if (tile === TileId.FLOOR_WOOD || tile === TileId.SHOP_COUNTER) return '#654321';
@@ -757,18 +758,6 @@
         if (worldMapOpen || worldMapState.isDragging) updateWorldMapPanel(false, context);
     }
 
-    function resetWorldMapState(context = {}) {
-        worldMapState.zoom = 1;
-        worldMapState.centerX = null;
-        worldMapState.centerY = null;
-        worldMapState.isDragging = false;
-        worldMapState.dragStartSourceSize = getWorldMapBaseSourceSize(context);
-        isMinimapDragging = false;
-        minimapDragStart = { x: 0, y: 0 };
-        minimapDragEnd = { x: 0, y: 0 };
-        lastMinimapRenderFrameMs = 0;
-    }
-
     window.WorldMapHudRuntime = {
         updateMinimapCanvas,
         buildHudRenderSnapshot,
@@ -776,7 +765,6 @@
         updateWorldMapPanel,
         initMinimap,
         updateMinimap,
-        resetWorldMapState,
         getMinimapState,
         setMinimapState,
         resetMinimapState,
@@ -786,8 +774,6 @@
         clearMinimapDestinationIfReached,
         syncLockedMinimapTarget,
         getWorldMapSourceRect,
-        resolveWorldMapViewport,
-        getOffscreenMapCanvas: () => offscreenMapCanvas,
-        isWorldMapDragging: () => !!worldMapState.isDragging
+        resolveWorldMapViewport
     };
 })();

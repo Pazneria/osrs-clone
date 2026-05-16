@@ -223,7 +223,7 @@
         return true;
     }
 
-    function startPreviewLoop(options = {}) {
+    function startPreviewLoop() {
         renderPlayerEntryPreview();
     }
 
@@ -297,7 +297,7 @@
 
         replacePreviewRig(options);
         resizePlayerEntryPreview(options);
-        startPreviewLoop(options);
+        startPreviewLoop();
         return true;
     }
 
@@ -525,7 +525,7 @@
             : (!!playerEntryFlowState.hasLoadedSave && !!profile.creationCompleted);
 
         if (title) title.textContent = profileSummaryViewModel ? profileSummaryViewModel.titleText : (isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer');
-        if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before you arrive on Tutorial Island.';
+        if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before you arrive on the mainland.';
 
         if (nameInput) {
             if (documentRef.activeElement !== nameInput && nameInput.value !== profile.name) {

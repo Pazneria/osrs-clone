@@ -63,9 +63,7 @@
 
     function isValidFiremakingUse(context) {
         if (!context) return false;
-        if (context.targetObj === 'INVENTORY') return !!getInventoryUseLogItemId(context);
-        if (context.targetObj !== 'GROUND') return false;
-        return context.sourceItemId === 'tinderbox' || !!getRecipeBySourceItemId(context, context.sourceItemId);
+        return context.targetObj === 'INVENTORY' && !!getInventoryUseLogItemId(context);
     }
 
     function getAttemptInterval(recipe, skillSpec) {

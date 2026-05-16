@@ -1,9 +1,7 @@
-const fs = require("fs");
 const path = require("path");
-const {
-  sortKeysDeep,
-  loadRuntimeItemCatalog
-} = require("./runtime-item-catalog");
+const { sortKeysDeep } = require("./object-utils");
+const { writeJsonFile } = require("../lib/json-file-utils");
+const { loadRuntimeItemCatalog } = require("./runtime-item-catalog");
 const {
   buildIconStatusManifest,
   getIconStatusPath,
@@ -23,10 +21,10 @@ function main() {
     generatedAt: new Date().toISOString(),
     itemDefs: sortedItemDefs
   };
-  const iconStatusPayload = buildIconStatusManifest(root, runtime.itemDefs, existingIconStatus);
+  const iconStatusPayload = buildIconStatusManifest(runtime.itemDefs, existingIconStatus);
 
-  fs.writeFileSync(outPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
-  fs.writeFileSync(iconStatusPath, JSON.stringify(iconStatusPayload, null, 2) + "\n", "utf8");
+  writeJsonFile(outPath, payload);
+  writeJsonFile(iconStatusPath, iconStatusPayload);
 
   console.log(`Synced runtime item catalog mirror to ${path.relative(root, outPath)} (${Object.keys(sortedItemDefs).length} item definitions).`);
   console.log(

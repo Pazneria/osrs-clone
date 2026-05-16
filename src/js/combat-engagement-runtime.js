@@ -172,6 +172,67 @@
         }
     }
 
+    function getEnemyAssistGroupId(enemyState) {
+        const assistGroupId = enemyState && typeof enemyState.assistGroupId === 'string'
+            ? enemyState.assistGroupId.trim()
+            : '';
+        return assistGroupId || null;
+    }
+
+    function canEnemyCallForAssist(enemyState, playerTargetId) {
+        return !!enemyState
+            && enemyState.currentState === 'aggroed'
+            && enemyState.lockedTargetId === playerTargetId
+            && !!getEnemyAssistGroupId(enemyState);
+    }
+
+    function canEnemyAssist(context = {}, candidate, anchor, playerTile) {
+        if (!candidate || !anchor || candidate === anchor) return false;
+        if (typeof context.isEnemyAlive === 'function' && !context.isEnemyAlive(candidate)) return false;
+        if (candidate.currentState !== 'idle') return false;
+        if (candidate.z !== anchor.z || candidate.z !== playerTile.z) return false;
+        if (getEnemyAssistGroupId(candidate) !== getEnemyAssistGroupId(anchor)) return false;
+        const assistRadius = Number.isFinite(candidate.resolvedAssistRadius)
+            ? Math.max(0, Math.floor(candidate.resolvedAssistRadius))
+            : 0;
+        if (assistRadius <= 0) return false;
+        if (typeof context.getSquareRange !== 'function' || !context.getSquareRange(candidate, anchor, assistRadius)) return false;
+
+        const homeTile = candidate.resolvedHomeTile || candidate.resolvedSpawnTile;
+        if (!homeTile || !context.getSquareRange(homeTile, playerTile, candidate.resolvedChaseRange)) return false;
+        const pursuitPath = typeof context.resolvePathToPlayer === 'function' ? context.resolvePathToPlayer(candidate) : null;
+        return pursuitPath !== null;
+    }
+
+    function acquireAssistingEnemyTargets(context = {}) {
+        if (typeof context.isPlayerAlive === 'function' && !context.isPlayerAlive()) return;
+        const enemyStates = Array.isArray(context.combatEnemyStates) ? context.combatEnemyStates : [];
+        const playerState = context.playerState || {};
+        const playerTargetId = context.playerTargetId || 'player';
+        const playerTile = getPlayerTile(context);
+        const assistAnchors = enemyStates.filter((enemyState) => {
+            if (typeof context.isEnemyAlive === 'function' && !context.isEnemyAlive(enemyState)) return false;
+            return canEnemyCallForAssist(enemyState, playerTargetId);
+        });
+        for (let i = 0; i < assistAnchors.length; i++) {
+            const anchor = assistAnchors[i];
+            for (let j = 0; j < enemyStates.length; j++) {
+                const candidate = enemyStates[j];
+                if (!canEnemyAssist(context, candidate, anchor, playerTile)) continue;
+                candidate.currentState = 'aggroed';
+                candidate.lockedTargetId = playerTargetId;
+                candidate.lastDamagerId = playerTargetId;
+                candidate.remainingAttackCooldown = Math.max(
+                    1,
+                    Number.isFinite(candidate.remainingAttackCooldown) ? Math.floor(candidate.remainingAttackCooldown) : 0
+                );
+                candidate.assistTargetRuntimeId = anchor.runtimeId || null;
+                if (typeof context.faceEnemyTowards === 'function') context.faceEnemyTowards(candidate, playerState);
+                if (typeof context.clearEnemyIdleWanderState === 'function') context.clearEnemyIdleWanderState(candidate);
+            }
+        }
+    }
+
     function movePlayerTowardLockedTarget(context = {}, playerLockState, attackedThisTick) {
         if (!playerLockState || attackedThisTick) return;
         const playerState = context.playerState || {};
@@ -204,6 +265,7 @@
         pickAutoRetaliateTarget,
         validateEnemyTargetLock,
         acquireAggressiveEnemyTargets,
+        acquireAssistingEnemyTargets,
         movePlayerTowardLockedTarget
     };
 })();

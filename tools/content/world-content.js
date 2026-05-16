@@ -1,14 +1,10 @@
-const fs = require("fs");
 const path = require("path");
 
+const { readJsonFile } = require("../lib/json-file-utils");
 const worldIdAliases = require("../../content/world/world-id-aliases.json");
 
-function loadJson(absPath) {
-  return JSON.parse(fs.readFileSync(absPath, "utf8"));
-}
-
 function loadWorldManifest(root) {
-  return loadJson(path.join(root, "content", "world", "manifest.json"));
+  return readJsonFile(path.join(root, "content", "world", "manifest.json"));
 }
 
 function canonicalizeWorldId(worldId) {
@@ -34,26 +30,18 @@ function loadWorldContent(root, worldId) {
   const manifestEntry = getWorldManifestEntry(manifest, worldId);
   const regionPath = path.join(root, "content", "world", "regions", manifestEntry.regionFile);
   const stampsDir = path.join(root, "content", "world", "stamps");
-  const world = loadJson(regionPath);
+  const world = readJsonFile(regionPath);
   const stamps = {};
   const stampIds = Array.isArray(manifestEntry.stampIds) ? manifestEntry.stampIds : [];
   for (let i = 0; i < stampIds.length; i++) {
     const stampId = stampIds[i];
     const stampPath = path.join(stampsDir, `${stampId}.json`);
-    stamps[stampId] = loadJson(stampPath);
+    stamps[stampId] = readJsonFile(stampPath);
   }
   return { manifest, manifestEntry, world, stamps };
 }
 
-function loadMainOverworld(root) {
-  return loadWorldContent(root, "main_overworld");
-}
-
 module.exports = {
-  canonicalizeWorldId,
-  getWorldManifestEntry,
-  loadJson,
-  loadMainOverworld,
   loadWorldContent,
   loadWorldManifest
 };

@@ -8,7 +8,7 @@ This repo now includes a starter toolkit under `tools/` so we can move faster wi
 - `tools/pixel-editor/`: browser-based 64x64 authoring editor with canonical 32x32 export for inventory icons.
 - `tools/pixel/render-pixel-spec.js`: AI-first sprite spec compiler for geometry-driven drafts and review previews.
 - `tools/sim/loot-sim.js`: run weighted drop table simulations.
-- `tools/sim/combat-sim.js`: run quick combat time-to-kill simulations.
+- `tools/sim/melee-sim.js`: run deterministic melee matchup simulations.
 - `tools/check-prereqs.ps1`: verifies required local tooling.
 
 ## Canonical asset workflow
@@ -72,7 +72,7 @@ npm.cmd run tool:sim:loot -- --runs 100000 --table "coins:50,raw_shrimp:30,nothi
 Combat simulator:
 
 ```bat
-npm.cmd run tool:sim:combat -- --runs 10000 --strLevel 70 --atkLevel 70 --targetHp 60 --attackSpeedTicks 4
+npm.cmd run tool:sim:melee -- --enemy enemy_goblin_grunt --weapon bronze_sword --attack 10 --strength 10 --defense 10 --runs 10000
 ```
 
 ## Custom Pixel Icon Workflow
@@ -84,8 +84,8 @@ For icon asset workflows (pixel source -> generated icon + model), use:
 Open the editor after starting the local server:
 
 ```bat
-npm.cmd run dev
-npm.cmd run tool:pixel:build -- --asset logs
+npm.cmd run dev:legacy
+npm.cmd run tool:pixel:build -- --asset regular_logs
 npm.cmd run tool:items:validate
 ```
 

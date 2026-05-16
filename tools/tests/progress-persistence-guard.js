@@ -1,17 +1,13 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const corePath = path.join(root, "src/js/core.js");
-  const coreScript = fs.readFileSync(corePath, "utf8");
-  const coreProgressRuntimeScript = fs.readFileSync(path.join(root, "src", "js", "core-progress-runtime.js"), "utf8");
-  const manifestScript = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
-  const sessionBridgeScript = fs.readFileSync(path.join(root, "src", "game", "platform", "session-bridge.ts"), "utf8");
+  const coreScript = readRepoFile(root, "src/js/core.js");
+  const coreProgressRuntimeScript = readRepoFile(root, "src/js/core-progress-runtime.js");
+  const manifestScript = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
+  const sessionBridgeScript = readRepoFile(root, "src/game/platform/session-bridge.ts");
 
   assert(
     coreScript.includes("const PROGRESS_SAVE_KEY = 'osrsClone.progress.v2';") &&
@@ -27,7 +23,7 @@ function run() {
     "session bridge should include progress-payload migration handling"
   );
   assert(
-    fs.readFileSync(path.join(root, "src", "game", "session", "progress.ts"), "utf8").includes("creatorSelections"),
+    readRepoFile(root, "src/game/session/progress.ts").includes("creatorSelections"),
     "typed progress cloning should preserve saved creator selections"
   );
   assert(

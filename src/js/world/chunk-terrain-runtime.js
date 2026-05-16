@@ -25,20 +25,6 @@
         uvs.needsUpdate = true;
     }
 
-    function applyWorldSpaceLinearTerrainUvs(geometry, startX, startY, segments, chunkSize) {
-        const uvs = geometry && geometry.attributes ? geometry.attributes.uv : null;
-        if (!uvs || !Number.isFinite(segments) || segments <= 0 || !Number.isFinite(chunkSize) || chunkSize <= 0) return;
-        for (let vy = 0; vy <= segments; vy++) {
-            for (let vx = 0; vx <= segments; vx++) {
-                const idx = (vy * (segments + 1)) + vx;
-                const worldX = startX - 0.5 + ((vx / segments) * chunkSize);
-                const worldY = startY - 0.5 + ((vy / segments) * chunkSize);
-                uvs.setXY(idx, worldX / chunkSize, worldY / chunkSize);
-            }
-        }
-        uvs.needsUpdate = true;
-    }
-
     function collapseTerrainGeometryDrawGroups(geometry, indexCount) {
         if (!geometry || typeof geometry.clearGroups !== 'function' || typeof geometry.addGroup !== 'function') return;
         geometry.clearGroups();
@@ -286,13 +272,14 @@
         if (isWaterTileId(tile)) return 'shore';
         if (tile === TileId.WATER_SHALLOW || tile === TileId.WATER_DEEP) return 'shore';
         if (tile === TileId.SHORE) return 'shore';
+        if (tile === TileId.SAND) return 'sand';
         if (tile === TileId.DIRT || tile === TileId.ROCK) return 'dirt';
         return null;
     }
 
     function isTerrainTransitionTarget(tile, TileId, isNaturalTileId, isWaterTileId) {
         if (!isNaturalTileId(tile) || isWaterTileId(tile)) return false;
-        return tile !== TileId.DIRT && tile !== TileId.ROCK && tile !== TileId.SHORE;
+        return tile !== TileId.DIRT && tile !== TileId.ROCK && tile !== TileId.SHORE && tile !== TileId.SAND;
     }
 
     const TERRAIN_BLEND_SUBDIVISIONS = 1;
@@ -459,15 +446,243 @@
         ];
         const blend = blendInfo && Number.isFinite(blendInfo.blend) ? clampValue(blendInfo.blend, 0, 1) : 0;
         if (blend <= 0) return grassColor;
-        const dirtShade = 0.9 + (hash01(worldX * 7.7, worldY * 9.3, blendInfo.kind === 'shore' ? 42.1 : 17.9) * 0.14);
-        const dirtColor = blendInfo.kind === 'shore'
+        const sourceKind = blendInfo.kind || 'dirt';
+        const dirtShade = 0.9 + (hash01(worldX * 7.7, worldY * 9.3, sourceKind === 'shore' ? 42.1 : (sourceKind === 'sand' ? 58.6 : 17.9)) * 0.14);
+        const dirtColor = sourceKind === 'shore'
             ? [clampValue(1.02 * dirtShade, 0, 1), clampValue(0.94 * dirtShade, 0, 1), clampValue(0.74 * dirtShade, 0, 1)]
-            : [clampValue(0.98 * dirtShade, 0, 1), clampValue(0.92 * dirtShade, 0, 1), clampValue(0.84 * dirtShade, 0, 1)];
+            : (sourceKind === 'sand'
+                ? [clampValue(1.06 * dirtShade, 0, 1), clampValue(0.88 * dirtShade, 0, 1), clampValue(0.55 * dirtShade, 0, 1)]
+                : [clampValue(0.98 * dirtShade, 0, 1), clampValue(0.92 * dirtShade, 0, 1), clampValue(0.84 * dirtShade, 0, 1)]);
         return [
             grassColor[0] + ((dirtColor[0] - grassColor[0]) * blend),
             grassColor[1] + ((dirtColor[1] - grassColor[1]) * blend),
             grassColor[2] + ((dirtColor[2] - grassColor[2]) * blend)
         ];
+    }
+
+    const LANDSCAPE_GRASS_PATCH_THRESHOLD = 0.48;
+    const LANDSCAPE_GRASS_TILE_DENSITY = 0.26;
+    const LANDSCAPE_BUSH_TILE_DENSITY = 0.035;
+    const LANDSCAPE_PEBBLE_TILE_DENSITY = 0.07;
+
+    function isLandscapeGrassTile(tile, TileId) {
+        return tile === TileId.GRASS;
+    }
+
+    function isLandscapePebbleTile(tile, TileId) {
+        return tile === TileId.DIRT || tile === TileId.SHORE || tile === TileId.SAND;
+    }
+
+    function getLandscapeEdgePressure(getVisualTileAt, worldTileX, worldTileY, TileId, isWaterTileId) {
+        let pressure = 0;
+        for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+                if (ox === 0 && oy === 0) continue;
+                const tile = getVisualTileAt(worldTileX + ox, worldTileY + oy);
+                if (tile === null || tile === undefined) {
+                    pressure += 1;
+                    continue;
+                }
+                if (isWaterTileId(tile) || tile === TileId.DIRT || tile === TileId.SHORE || tile === TileId.SAND) {
+                    pressure += 1;
+                    continue;
+                }
+                if (tile !== TileId.GRASS && tile !== TileId.TREE && tile !== TileId.STUMP) pressure += 1;
+            }
+        }
+        return pressure;
+    }
+
+    function sampleLandscapeDetailPlan(options = {}, cell) {
+        const TileId = options.TileId || {};
+        const getVisualTileAt = typeof options.getVisualTileAt === 'function' ? options.getVisualTileAt : () => null;
+        const sampleFractalNoise2D = typeof options.sampleFractalNoise2D === 'function'
+            ? options.sampleFractalNoise2D
+            : () => 0.5;
+        const isWaterTileId = typeof options.isWaterTileId === 'function' ? options.isWaterTileId : () => false;
+        const worldTileX = options.startX + cell.tileX;
+        const worldTileY = options.startY + cell.tileY;
+        const tile = getVisualTileAt(worldTileX, worldTileY);
+        const edgePressure = getLandscapeEdgePressure(getVisualTileAt, worldTileX, worldTileY, TileId, isWaterTileId);
+        const meadowNoise = sampleFractalNoise2D(worldTileX * 0.075, worldTileY * 0.075, 512.35, 3, 2.0, 0.55);
+        const grassRoll = hash01(worldTileX, worldTileY, 716.42);
+        const bushRoll = hash01(worldTileX, worldTileY, 982.11);
+        const pebbleRoll = hash01(worldTileX, worldTileY, 118.64);
+        const plan = { grassTufts: 0, bushes: 0, pebbles: 0 };
+
+        if (isLandscapeGrassTile(tile, TileId) && meadowNoise >= LANDSCAPE_GRASS_PATCH_THRESHOLD) {
+            const edgePenalty = Math.min(0.16, edgePressure * 0.025);
+            if (grassRoll < Math.max(0.06, LANDSCAPE_GRASS_TILE_DENSITY - edgePenalty)) {
+                plan.grassTufts = 1 + (hash01(worldTileX, worldTileY, 734.81) > 0.7 ? 1 : 0);
+            }
+            if (edgePressure <= 1 && meadowNoise > 0.58 && bushRoll < LANDSCAPE_BUSH_TILE_DENSITY) {
+                plan.bushes = 1;
+            }
+        } else if (isLandscapePebbleTile(tile, TileId) && pebbleRoll < LANDSCAPE_PEBBLE_TILE_DENSITY) {
+            plan.pebbles = 1;
+        }
+
+        return plan;
+    }
+
+    function collectLandscapeDetailPlans(options = {}, terrainCells = []) {
+        const plans = [];
+        const counts = { grassTufts: 0, bushes: 0, pebbles: 0 };
+        for (let i = 0; i < terrainCells.length; i++) {
+            const cell = terrainCells[i];
+            const plan = sampleLandscapeDetailPlan(options, cell);
+            if (!plan.grassTufts && !plan.bushes && !plan.pebbles) continue;
+            plans.push({ cell, plan });
+            counts.grassTufts += plan.grassTufts;
+            counts.bushes += plan.bushes;
+            counts.pebbles += plan.pebbles;
+        }
+        return { plans, counts };
+    }
+
+    function setLandscapeDetailInstance(options = {}) {
+        const THREE = options.THREE;
+        const mesh = options.mesh;
+        const dummy = options.dummy;
+        if (!THREE || !mesh || !dummy) return;
+        dummy.position.set(options.x, options.groundY, options.y);
+        dummy.rotation.set(0, options.rotationY, 0);
+        dummy.scale.set(options.scaleX, options.scaleY, options.scaleZ);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(options.index, dummy.matrix);
+        if (typeof mesh.setColorAt === 'function' && options.color) {
+            mesh.setColorAt(options.index, options.color);
+        }
+    }
+
+    function buildLandscapeDetailMeshes(options = {}) {
+        const THREE = options.THREE;
+        const sharedGeometries = options.sharedGeometries || {};
+        const sharedMaterials = options.sharedMaterials || {};
+        const terrainCells = Array.isArray(options.terrainCells) ? options.terrainCells : [];
+        const planeGroup = options.planeGroup || null;
+        if (!THREE || !planeGroup || terrainCells.length <= 0) return null;
+        if (!sharedGeometries.grassTuft || !sharedMaterials.grassTuft) return null;
+
+        const detailData = collectLandscapeDetailPlans(options, terrainCells);
+        const counts = detailData.counts;
+        if (counts.grassTufts <= 0 && counts.bushes <= 0 && counts.pebbles <= 0) return null;
+
+        const grassMesh = counts.grassTufts > 0
+            ? new THREE.InstancedMesh(sharedGeometries.grassTuft, sharedMaterials.grassTuft, counts.grassTufts)
+            : null;
+        const bushMesh = counts.bushes > 0 && sharedGeometries.bushClump && sharedMaterials.bushLeaves
+            ? new THREE.InstancedMesh(sharedGeometries.bushClump, sharedMaterials.bushLeaves, counts.bushes)
+            : null;
+        const pebbleMesh = counts.pebbles > 0 && sharedGeometries.groundPebble && sharedMaterials.groundPebble
+            ? new THREE.InstancedMesh(sharedGeometries.groundPebble, sharedMaterials.groundPebble, counts.pebbles)
+            : null;
+
+        const dummy = new THREE.Object3D();
+        const grassColor = new THREE.Color();
+        const bushColor = new THREE.Color();
+        const pebbleColor = new THREE.Color();
+        let grassIndex = 0;
+        let bushIndex = 0;
+        let pebbleIndex = 0;
+
+        for (let i = 0; i < detailData.plans.length; i++) {
+            const entry = detailData.plans[i];
+            const cell = entry.cell;
+            const plan = entry.plan;
+            const worldTileX = options.startX + cell.tileX;
+            const worldTileY = options.startY + cell.tileY;
+
+            for (let tuft = 0; tuft < plan.grassTufts && grassMesh; tuft++) {
+                const offsetSeed = 500.3 + (tuft * 37.9);
+                const px = worldTileX + ((hash01(worldTileX, worldTileY, offsetSeed) - 0.5) * 0.62);
+                const py = worldTileY + ((hash01(worldTileX, worldTileY, offsetSeed + 11.7) - 0.5) * 0.62);
+                const groundY = options.sampleTerrainSurfaceHeight(px, py) + 0.018;
+                const scale = 0.78 + (hash01(worldTileX, worldTileY, offsetSeed + 21.2) * 0.42);
+                const tint = 0.82 + (hash01(worldTileX, worldTileY, offsetSeed + 33.4) * 0.24);
+                grassColor.setRGB(0.44 * tint, 0.66 * tint, 0.28 * tint);
+                setLandscapeDetailInstance({
+                    THREE,
+                    mesh: grassMesh,
+                    dummy,
+                    index: grassIndex,
+                    x: px,
+                    y: py,
+                    groundY,
+                    rotationY: hash01(worldTileX, worldTileY, offsetSeed + 42.5) * Math.PI * 2,
+                    scaleX: scale,
+                    scaleY: scale * (0.88 + (hash01(worldTileX, worldTileY, offsetSeed + 52.8) * 0.34)),
+                    scaleZ: scale,
+                    color: grassColor
+                });
+                grassIndex += 1;
+            }
+
+            if (plan.bushes && bushMesh) {
+                const px = worldTileX + ((hash01(worldTileX, worldTileY, 143.2) - 0.5) * 0.42);
+                const py = worldTileY + ((hash01(worldTileX, worldTileY, 154.8) - 0.5) * 0.42);
+                const groundY = options.sampleTerrainSurfaceHeight(px, py) + 0.02;
+                const scale = 0.72 + (hash01(worldTileX, worldTileY, 164.9) * 0.34);
+                const tint = 0.84 + (hash01(worldTileX, worldTileY, 174.1) * 0.24);
+                bushColor.setRGB(0.23 * tint, 0.42 * tint, 0.19 * tint);
+                setLandscapeDetailInstance({
+                    THREE,
+                    mesh: bushMesh,
+                    dummy,
+                    index: bushIndex,
+                    x: px,
+                    y: py,
+                    groundY,
+                    rotationY: hash01(worldTileX, worldTileY, 184.3) * Math.PI * 2,
+                    scaleX: scale * (0.9 + (hash01(worldTileX, worldTileY, 194.6) * 0.28)),
+                    scaleY: scale,
+                    scaleZ: scale * (0.9 + (hash01(worldTileX, worldTileY, 204.7) * 0.28)),
+                    color: bushColor
+                });
+                bushIndex += 1;
+            }
+
+            if (plan.pebbles && pebbleMesh) {
+                const px = worldTileX + ((hash01(worldTileX, worldTileY, 220.2) - 0.5) * 0.58);
+                const py = worldTileY + ((hash01(worldTileX, worldTileY, 230.9) - 0.5) * 0.58);
+                const groundY = options.sampleTerrainSurfaceHeight(px, py) + 0.012;
+                const scale = 0.74 + (hash01(worldTileX, worldTileY, 240.5) * 0.58);
+                const tint = 0.84 + (hash01(worldTileX, worldTileY, 250.4) * 0.28);
+                pebbleColor.setRGB(0.52 * tint, 0.49 * tint, 0.42 * tint);
+                setLandscapeDetailInstance({
+                    THREE,
+                    mesh: pebbleMesh,
+                    dummy,
+                    index: pebbleIndex,
+                    x: px,
+                    y: py,
+                    groundY,
+                    rotationY: hash01(worldTileX, worldTileY, 260.6) * Math.PI * 2,
+                    scaleX: scale,
+                    scaleY: scale,
+                    scaleZ: scale * (0.75 + (hash01(worldTileX, worldTileY, 270.7) * 0.4)),
+                    color: pebbleColor
+                });
+                pebbleIndex += 1;
+            }
+        }
+
+        const addedMeshes = [];
+        const finalizeMesh = (mesh, detailKind, castShadow) => {
+            if (!mesh || mesh.count <= 0) return;
+            mesh.castShadow = !!castShadow;
+            mesh.receiveShadow = true;
+            mesh.userData = { type: 'LANDSCAPE_DETAIL', detailKind, visualOnly: true, z: 0 };
+            if (mesh.instanceMatrix) mesh.instanceMatrix.needsUpdate = true;
+            if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+            planeGroup.add(mesh);
+            addedMeshes.push(mesh);
+        };
+
+        finalizeMesh(grassMesh, 'grass_tuft', false);
+        finalizeMesh(bushMesh, 'bush', true);
+        finalizeMesh(pebbleMesh, 'ground_pebble', false);
+        return { counts, meshes: addedMeshes };
     }
 
     function buildChunkGroundMeshes(options = {}) {
@@ -479,6 +694,7 @@
         const startY = options.startY;
         const logicalMap = options.logicalMap || [];
         const heightMap = options.heightMap || [];
+        const sharedGeometries = options.sharedGeometries || {};
         const sharedMaterials = options.sharedMaterials || {};
         const waterRenderBodies = Array.isArray(options.waterRenderBodies) ? options.waterRenderBodies : [];
         const islandWater = options.islandWater || null;
@@ -1022,10 +1238,27 @@
             terrainMesh.userData = { type: 'GROUND', z: 0, terrainSubdivisionMultiplier };
             if (planeGroup) planeGroup.add(terrainMesh);
             if (environmentMeshes) environmentMeshes.push(terrainMesh);
+
+            buildLandscapeDetailMeshes({
+                THREE,
+                TileId,
+                startX,
+                startY,
+                sharedGeometries,
+                sharedMaterials,
+                planeGroup,
+                terrainCells,
+                getVisualTileAt,
+                isWaterTileId,
+                sampleFractalNoise2D,
+                sampleTerrainSurfaceHeight: (worldX, worldY) => sampleTerrainSurfaceHeight(sampleTerrainVertexHeight, worldX, worldY)
+            });
         }
     }
 
     window.WorldChunkTerrainRuntime = {
+        buildLandscapeDetailMeshes,
+        collectLandscapeDetailPlans,
         buildChunkGroundMeshes
     };
 })();

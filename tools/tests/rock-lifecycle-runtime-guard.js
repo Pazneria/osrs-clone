@@ -1,17 +1,14 @@
-const fs = require("fs");
+const assert = require("assert");
 const path = require("path");
 const vm = require("vm");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+const { readRepoFile } = require("./repo-file-test-utils");
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
-  const runtimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "rock-lifecycle-runtime.js"), "utf8");
-  const manifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
+  const worldSource = readRepoFile(root, "src/js/world.js");
+  const inputSource = readRepoFile(root, "src/js/input-render.js");
+  const runtimeSource = readRepoFile(root, "src/js/world/rock-lifecycle-runtime.js");
+  const manifestSource = readRepoFile(root, "src/game/platform/legacy-script-manifest.ts");
   const rockNodeRuntimeIndex = manifestSource.indexOf('id: "world-rock-node-runtime"');
   const rockRenderRuntimeIndex = manifestSource.indexOf('id: "world-rock-render-runtime"');
   const rockLifecycleRuntimeIndex = manifestSource.indexOf('id: "world-rock-lifecycle-runtime"');

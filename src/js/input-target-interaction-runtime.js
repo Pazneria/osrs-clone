@@ -24,8 +24,16 @@
         return normalizeContextMenuOptions(context, skillRuntime.getSkillContextMenuOptions(hitData));
     }
 
+    function isDirectSelectedItemUseTarget(hitData) {
+        if (!hitData || typeof hitData.type !== 'string') return false;
+        return hitData.type !== 'GROUND'
+            && hitData.type !== 'WALL'
+            && hitData.type !== 'TOWER';
+    }
+
     function tryUseSelectedInventoryItemOnTarget(context = {}, hitData, selectedItem, selectedUseInvIndex) {
         if (!hitData || !selectedItem || !Number.isInteger(selectedUseInvIndex)) return false;
+        if (!isDirectSelectedItemUseTarget(hitData)) return false;
 
         const skillRuntime = context.skillRuntime || getWindowRef(context).SkillRuntime || null;
         let used = false;
@@ -276,6 +284,7 @@
     window.InputTargetInteractionRuntime = {
         normalizeContextMenuOptions,
         resolveSkillContextMenuOptions,
+        isDirectSelectedItemUseTarget,
         tryUseSelectedInventoryItemOnTarget,
         emitExamineFallback,
         getGroundItemByUid,

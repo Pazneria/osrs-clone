@@ -13,7 +13,7 @@
             interactionRadius: 1,
             nearMode: 'square',
             nearMargin: 0,
-            farMode: 'all',
+            farMode: 'window',
             farRadius: 5
         }),
         balanced: Object.freeze({
@@ -22,7 +22,7 @@
             interactionRadius: 1,
             nearMode: 'square',
             nearMargin: 0,
-            farMode: 'all',
+            farMode: 'window',
             farRadius: 4
         }),
         safe: Object.freeze({
@@ -31,7 +31,7 @@
             interactionRadius: 1,
             nearMode: 'square',
             nearMargin: 0,
-            farMode: 'all',
+            farMode: 'window',
             farRadius: 3
         })
     });
@@ -878,7 +878,9 @@
             return;
         }
 
-        callHook(context, 'ensureFarChunkBackdropBuilt');
+        if (policyState.policy && policyState.policy.farMode === 'all') {
+            callHook(context, 'ensureFarChunkBackdropBuilt');
+        }
         const visiblePlane = policyState.visiblePlane;
         const worldChunksX = Math.max(1, Math.floor(Number.isFinite(context.worldChunksX) ? context.worldChunksX : 1));
         const worldChunksY = Math.max(1, Math.floor(Number.isFinite(context.worldChunksY) ? context.worldChunksY : 1));

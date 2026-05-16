@@ -45,26 +45,12 @@ function buildSearchParams(options = {}) {
   return query ? `?${query}` : "";
 }
 
-function buildCodexHomePath(options = {}) {
-  return `${normalizeCodexBasePath(options.basePath)}${buildSearchParams(options)}`;
-}
-
 function buildCodexEntityPath(entityType, entityId, options = {}) {
   const normalizedType = normalizeCodexEntityType(entityType);
   const normalizedId = normalizeEntityId(entityId, normalizedType);
   const basePath = normalizeCodexBasePath(options.basePath);
   const segment = ENTITY_SEGMENTS[normalizedType];
   return `${basePath}${segment}/${encodeURIComponent(normalizedId)}${buildSearchParams(options)}`;
-}
-
-function buildCodexHomeUrl(options = {}) {
-  if (!options.baseUrl) return buildCodexHomePath(options);
-  return new URL(buildCodexHomePath(options), options.baseUrl).toString();
-}
-
-function buildCodexEntityUrl(entityType, entityId, options = {}) {
-  if (!options.baseUrl) return buildCodexEntityPath(entityType, entityId, options);
-  return new URL(buildCodexEntityPath(entityType, entityId, options), options.baseUrl).toString();
 }
 
 function getCodexRouteTemplates(basePath = DEFAULT_CODEX_BASE_PATH) {
@@ -80,12 +66,6 @@ function getCodexRouteTemplates(basePath = DEFAULT_CODEX_BASE_PATH) {
 
 module.exports = {
   DEFAULT_CODEX_BASE_PATH,
-  ENTITY_SEGMENTS,
-  normalizeCodexBasePath,
-  normalizeCodexEntityType,
-  buildCodexHomePath,
   buildCodexEntityPath,
-  buildCodexHomeUrl,
-  buildCodexEntityUrl,
   getCodexRouteTemplates
 };

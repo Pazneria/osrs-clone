@@ -1119,6 +1119,651 @@
         );
     }
 
+    function buildGuideVariantPreset(label, archetype, theme, extraFragments) {
+        return clonePresetWithTheme(
+            buildTutorialGuidePreset(),
+            label,
+            archetype,
+            Object.assign({
+                coat: '#304a3c',
+                shirt: '#d8c9a5',
+                trim: '#b89545',
+                belt: '#53351f',
+                trouser: '#343a36',
+                boot: '#241c16'
+            }, theme || {}),
+            extraFragments || []
+        );
+    }
+
+    function buildWorkerVariantPreset(label, archetype, theme, extraFragments) {
+        return clonePresetWithTheme(
+            buildTutorialWoodcuttingInstructorPreset(),
+            label,
+            archetype,
+            Object.assign({
+                shirt: '#7a3a28',
+                plaid: '#4d241d',
+                vest: '#43543a',
+                belt: '#563822',
+                glove: '#64472d',
+                trouser: '#494239',
+                boot: '#2b2118',
+                axe: '#8f969b'
+            }, theme || {}),
+            extraFragments || []
+        );
+    }
+
+    function buildFisherVariantPreset(label, archetype, theme, extraFragments) {
+        return clonePresetWithTheme(
+            buildTutorialFishingInstructorPreset(),
+            label,
+            archetype,
+            Object.assign({
+                shirt: '#8f7147',
+                vest: '#3d6655',
+                wader: '#304d4c',
+                hat: '#756940',
+                belt: '#573823',
+                glove: '#61482f',
+                boot: '#2a211a'
+            }, theme || {}),
+            extraFragments || []
+        );
+    }
+
+    function buildSmithVariantPreset(label, archetype, theme, extraFragments) {
+        return clonePresetWithTheme(
+            buildTutorialMiningSmithingInstructorPreset(),
+            label,
+            archetype,
+            Object.assign({
+                apron: '#5c4a39',
+                shirt: '#6a4633',
+                leather: '#4f321f',
+                trouser: '#3d3a35',
+                boot: '#2a2018',
+                metal: '#a9a49a',
+                ore: '#87694f'
+            }, theme || {}),
+            extraFragments || []
+        );
+    }
+
+    function buildRuneVariantPreset(label, archetype, theme, extraFragments) {
+        return clonePresetWithTheme(
+            buildTutorialRunecraftingInstructorPreset(),
+            label,
+            archetype,
+            Object.assign({
+                coat: '#253f5a',
+                shirt: '#ddd0b5',
+                trim: '#b96d3d',
+                belt: '#533420',
+                trouser: '#2f3f49',
+                boot: '#211b17',
+                rune: '#f0a04b',
+                tabard: '#315a6d',
+                pouch: '#6a5847'
+            }, theme || {}),
+            extraFragments || []
+        );
+    }
+
+    function buildMainlandShopkeeperPreset() {
+        return buildGuideVariantPreset(
+            'Shopkeeper',
+            'general_store_shopkeeper',
+            {
+                coat: '#3b4d31',
+                shirt: '#e1d1a5',
+                trim: '#c8a64c',
+                trouser: '#3c382c'
+            },
+            [
+                box('torso', 'shop_apron_front', [0.36, 0.42, 0.06], [0, -0.06, 0.245], '#7a5632'),
+                box('torso', 'shop_apron_pocket', [0.18, 0.12, 0.04], [0.10, -0.12, 0.285], '#5b3b24'),
+                box('leftLowerArm', 'price_ledger', [0.22, 0.15, 0.045], [0.05, -0.28, 0.12], '#6b3c2a', { rotation: [0.1, 0, 0.18] })
+            ]
+        );
+    }
+
+    function buildMainlandBankerPreset() {
+        return clonePresetWithTheme(
+            buildTutorialBankTutorPreset(),
+            'Banker',
+            'mainland_bank_clerk',
+            {
+                coat: '#20384f',
+                shirt: '#e4dac0',
+                trim: '#c9b35c',
+                belt: '#46301f',
+                trouser: '#2f343a',
+                boot: '#1d1814',
+                ledger: '#53312a',
+                bank: '#d1b45a'
+            },
+            [
+                box('head', 'banker_clerk_cap_crown', [0.46, 0.09, 0.40], [0, 0.205, -0.005], '#17283a'),
+                box('head', 'banker_clerk_cap_band', [0.50, 0.055, 0.43], [0, 0.155, 0.015], '#c9b35c'),
+                box('head', 'banker_quill_stem', [0.028, 0.30, 0.028], [-0.23, 0.075, 0.155], '#d8c594', { rotation: [0.10, 0, -0.42] }),
+                box('head', 'banker_quill_feather', [0.085, 0.16, 0.025], [-0.31, 0.175, 0.16], '#f0e6c8', { rotation: [0.10, 0, -0.42] }),
+                box('torso', 'banker_left_lapel_trim', [0.055, 0.40, 0.045], [0.135, 0.015, 0.252], '#b99d4e', { rotation: [0, 0, -0.18] }),
+                box('torso', 'banker_right_lapel_trim', [0.055, 0.40, 0.045], [-0.135, 0.015, 0.252], '#b99d4e', { rotation: [0, 0, 0.18] }),
+                box('torso', 'banker_high_collar_left', [0.12, 0.15, 0.08], [0.12, 0.235, 0.245], '#17283a', { rotation: [0, 0, -0.16] }),
+                box('torso', 'banker_high_collar_right', [0.12, 0.15, 0.08], [-0.12, 0.235, 0.245], '#17283a', { rotation: [0, 0, 0.16] }),
+                box('torso', 'banker_badge_shadow', [0.145, 0.105, 0.032], [0.225, 0.135, 0.268], '#7b642e'),
+                box('torso', 'banker_badge_face', [0.105, 0.075, 0.035], [0.225, 0.145, 0.292], '#d8c56b'),
+                box('torso', 'banker_badge_mark', [0.055, 0.022, 0.02], [0.225, 0.145, 0.315], '#58431f'),
+                box('torso', 'banker_receipt_slips', [0.14, 0.10, 0.035], [-0.195, -0.105, 0.272], '#e7d8aa', { rotation: [0, 0, -0.08] }),
+                box('torso', 'banker_receipt_red_line', [0.11, 0.015, 0.02], [-0.195, -0.08, 0.295], '#8c2f2f', { rotation: [0, 0, -0.08] }),
+                box('torso', 'banker_chain_drop', [0.16, 0.025, 0.03], [-0.25, -0.155, 0.285], '#b99d4e', { rotation: [0, 0, -0.2] }),
+                box('torso', 'banker_key_ring_top', [0.12, 0.025, 0.032], [-0.32, -0.18, 0.292], '#d1b45a'),
+                box('torso', 'banker_key_ring_bottom', [0.12, 0.025, 0.032], [-0.32, -0.255, 0.292], '#a98f43'),
+                box('torso', 'banker_key_ring_left', [0.025, 0.10, 0.032], [-0.37, -0.217, 0.292], '#b99d4e'),
+                box('torso', 'banker_key_ring_right', [0.025, 0.10, 0.032], [-0.27, -0.217, 0.292], '#b99d4e'),
+                box('torso', 'banker_key_tooth_a', [0.035, 0.15, 0.025], [-0.355, -0.31, 0.292], '#d1b45a', { rotation: [0, 0, 0.18] }),
+                box('torso', 'banker_key_tooth_b', [0.035, 0.12, 0.025], [-0.295, -0.305, 0.292], '#c0a24a', { rotation: [0, 0, -0.18] }),
+                box('leftLowerArm', 'banker_ledger_strap', [0.035, 0.17, 0.024], [0.145, -0.278, 0.182], '#46301f', { rotation: [0.15, 0, 0.18] }),
+                box('leftLowerArm', 'banker_ledger_line_1', [0.13, 0.012, 0.018], [0.04, -0.244, 0.182], '#1f2426', { rotation: [0.15, 0, 0.18] }),
+                box('leftLowerArm', 'banker_ledger_line_2', [0.12, 0.012, 0.018], [0.045, -0.282, 0.182], '#1f2426', { rotation: [0.15, 0, 0.18] }),
+                box('leftLowerArm', 'banker_wax_seal', [0.055, 0.055, 0.025], [0.13, -0.215, 0.188], '#8c2f2f', { rotation: [0.15, 0, 0.18] }),
+                box('rightLowerArm', 'banker_coin_tray', [0.20, 0.055, 0.12], [-0.025, -0.305, 0.112], '#5b3b24', { rotation: [0, 0, -0.12] }),
+                box('rightLowerArm', 'banker_coin_stack_left', [0.042, 0.028, 0.04], [0.035, -0.29, 0.185], '#d8c56b', { rotation: [0, 0, -0.12] }),
+                box('rightLowerArm', 'banker_coin_stack_right', [0.035, 0.024, 0.035], [-0.035, -0.292, 0.185], '#c9b35c', { rotation: [0, 0, -0.12] })
+            ]
+        );
+    }
+
+    function buildMainlandFletchingSupplierPreset() {
+        return buildWorkerVariantPreset(
+            'Fletching Supplier',
+            'feather_and_string_vendor',
+            { shirt: '#6f4931', vest: '#4b5a38', plaid: '#8f6d45' },
+            [
+                box('torso', 'fletching_feather_bundle', [0.14, 0.28, 0.05], [0.27, -0.03, 0.28], '#d7d0b8', { rotation: [0, 0, -0.34] }),
+                box('torso', 'fletching_string_spool', [0.16, 0.16, 0.07], [-0.24, -0.18, 0.27], '#d5c28e')
+            ]
+        );
+    }
+
+    function buildMainlandAdvancedFletcherPreset() {
+        return clonePresetWithTheme(
+            buildTutorialRangedInstructorPreset(),
+            'Advanced Fletcher',
+            'seasoned_bowyer',
+            {
+                steel: '#3e553c',
+                mail: '#4e613c',
+                leather: '#5a3a24',
+                bronze: '#9b7a3a',
+                blade: '#7b512b',
+                cape: '#38533d',
+                bow: '#8b5a2d',
+                quiver: '#5b3b27'
+            },
+            [
+                box('torso', 'bowyer_rune_mark', [0.09, 0.09, 0.04], [0.20, 0.12, 0.28], '#d8b65a')
+            ]
+        );
+    }
+
+    function buildMainlandAdvancedWoodsmanPreset() {
+        return buildWorkerVariantPreset(
+            'Advanced Woodsman',
+            'north_lodge_woodsman',
+            { shirt: '#7a3724', vest: '#365438', plaidTan: '#c49a61', hair: '#d0c1a5' },
+            [
+                box('torso', 'woodsman_tree_badge', [0.11, 0.12, 0.04], [0.22, 0.12, 0.28], '#7fb069')
+            ]
+        );
+    }
+
+    function buildMainlandRoadGuidePreset() {
+        return buildGuideVariantPreset(
+            'Road Guide',
+            'starter_route_guide',
+            { coat: '#385048', shirt: '#dfd0aa', trim: '#d19a45' },
+            [
+                box('torso', 'guide_map_roll', [0.10, 0.32, 0.06], [-0.25, -0.10, 0.26], '#d7c28e', { rotation: [0, 0, 0.35] }),
+                box('rightLowerArm', 'guide_marker_staff', [0.045, 0.58, 0.045], [0.04, -0.24, 0.09], '#7a5632', { rotation: [0.14, 0, -0.18] })
+            ]
+        );
+    }
+
+    function buildMainlandOutpostGuidePreset() {
+        return buildGuideVariantPreset(
+            'Outpost Guide',
+            'east_outpost_route_guide',
+            { coat: '#3f4d5d', shirt: '#d8c7a5', trim: '#b9a15a', trouser: '#303942' },
+            [
+                box('torso', 'outpost_badge', [0.12, 0.12, 0.04], [0.22, 0.12, 0.27], '#c3a554'),
+                box('torso', 'travel_satchel', [0.23, 0.20, 0.11], [-0.28, -0.20, 0.20], '#6b4a2f')
+            ]
+        );
+    }
+
+    function buildMainlandFishingTeacherPreset() {
+        return buildFisherVariantPreset(
+            'Fishing Teacher',
+            'riverbank_fishing_teacher',
+            { shirt: '#8b6743', vest: '#406350', hat: '#7a6b45' },
+            [
+                box('rightLowerArm', 'teaching_float', [0.08, 0.10, 0.08], [0.02, -0.28, 0.12], '#b44b3c')
+            ]
+        );
+    }
+
+    function buildMainlandFishingSupplierPreset() {
+        return buildFisherVariantPreset(
+            'Fishing Supplier',
+            'net_and_bait_supplier',
+            { shirt: '#7b6846', vest: '#48654d', wader: '#3f514d' },
+            [
+                box('torso', 'bait_tin', [0.18, 0.12, 0.08], [0.24, -0.18, 0.27], '#7d8a8a'),
+                box('leftLowerArm', 'folded_net', [0.24, 0.16, 0.045], [0.06, -0.28, 0.12], '#c9bb91', { rotation: [0.12, 0, 0.18] })
+            ]
+        );
+    }
+
+    function buildMainlandForesterTeacherPreset() {
+        return buildWorkerVariantPreset(
+            'Forester Teacher',
+            'starter_grove_forester',
+            { shirt: '#79422d', vest: '#405d36', plaidTan: '#b9915e' },
+            [
+                box('torso', 'forester_leaf_pin', [0.11, 0.10, 0.04], [0.22, 0.14, 0.28], '#8fcf74')
+            ]
+        );
+    }
+
+    function buildMainlandBorinIronveinPreset() {
+        return buildSmithVariantPreset(
+            'Borin Ironvein',
+            'ore_buyer_blacksmith',
+            { apron: '#5b4634', shirt: '#6d3e2c', metal: '#b4aaa0', ore: '#8b6b52' },
+            [
+                box('torso', 'ironvein_ore_sample', [0.14, 0.10, 0.10], [0.24, -0.18, 0.30], '#7a6a5d')
+            ]
+        );
+    }
+
+    function buildMainlandThrainDeepforgePreset() {
+        return buildSmithVariantPreset(
+            'Thrain Deepforge',
+            'deepforge_smith',
+            { apron: '#4f3e32', shirt: '#70342a', metal: '#c0b6a8', ore: '#9d7b55' },
+            [
+                box('torso', 'deepforge_hammer_badge', [0.13, 0.10, 0.05], [0.22, 0.13, 0.30], '#c0b6a8')
+            ]
+        );
+    }
+
+    function buildMainlandEliraGemhandPreset() {
+        return buildGuideVariantPreset(
+            'Elira Gemhand',
+            'market_gem_cutter',
+            {
+                coat: '#4c354f',
+                shirt: '#7b6a82',
+                trim: '#c8a34a',
+                belt: '#3a292f',
+                trouser: '#35303a',
+                boot: '#211b1f',
+                hair: '#4a2f2a'
+            },
+            [
+                box('head', 'elira_hair_side_left', [0.08, 0.27, 0.08], [0.225, -0.03, 0.165], '#3a2421'),
+                box('head', 'elira_hair_side_right', [0.08, 0.27, 0.08], [-0.225, -0.03, 0.165], '#3a2421'),
+                box('head', 'elira_hair_bun', [0.22, 0.18, 0.16], [0, 0.035, -0.235], '#3a2421'),
+                box('head', 'elira_braid_drop', [0.09, 0.34, 0.075], [0.25, -0.18, -0.02], '#4a2f2a', { rotation: [0, 0, -0.18] }),
+                box('head', 'elira_braid_tie', [0.11, 0.045, 0.05], [0.275, -0.315, -0.005], '#c8a34a', { rotation: [0, 0, -0.18] }),
+                box('head', 'elira_loupe_headband', [0.54, 0.045, 0.45], [0, 0.105, 0.035], '#c7c8c2'),
+                box('head', 'elira_loupe_lens', [0.11, 0.11, 0.035], [-0.145, 0.065, 0.238], '#9fd5e8'),
+                box('head', 'elira_left_earring', [0.045, 0.08, 0.035], [0.285, -0.055, 0.03], '#c8a34a'),
+                box('head', 'elira_right_earring', [0.045, 0.08, 0.035], [-0.285, -0.055, 0.03], '#c8a34a'),
+                box('torso', 'gemhand_apron_front', [0.38, 0.45, 0.08], [0, -0.04, 0.255], '#3b303e'),
+                box('torso', 'gemhand_apron_pocket', [0.18, 0.12, 0.045], [-0.13, -0.12, 0.305], '#2b242d'),
+                box('torso', 'gemhand_polishing_cloth', [0.15, 0.11, 0.04], [0.16, -0.16, 0.31], '#e6dcc6', { rotation: [0, 0, 0.18] }),
+                box('torso', 'gemhand_display_tray', [0.36, 0.075, 0.16], [0, -0.245, 0.335], '#5a3b2d'),
+                box('torso', 'gemhand_tray_ruby', [0.075, 0.07, 0.055], [0.13, -0.20, 0.43], '#b63d4a', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_tray_sapphire', [0.075, 0.07, 0.055], [0.045, -0.20, 0.43], '#3f7fc4', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_tray_emerald', [0.075, 0.07, 0.055], [-0.045, -0.20, 0.43], '#3fa463', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_tray_diamond', [0.075, 0.07, 0.055], [-0.13, -0.20, 0.43], '#dcefff', { rotation: [0.25, 0, 0.72] }),
+                box('torso', 'gemhand_ring_example', [0.07, 0.07, 0.025], [0.255, -0.11, 0.305], '#c8a34a'),
+                box('torso', 'gemhand_amulet_example', [0.075, 0.095, 0.025], [0.255, -0.205, 0.305], '#c7c8c2'),
+                box('torso', 'gemhand_tiara_example', [0.12, 0.045, 0.025], [0.255, -0.295, 0.305], '#c8a34a'),
+                box('rightLowerArm', 'gemhand_dop_stick', [0.035, 0.34, 0.035], [0.02, -0.26, 0.12], '#8a633a', { rotation: [0.18, 0, -0.45] }),
+                box('rightLowerArm', 'gemhand_dop_gem', [0.09, 0.09, 0.08], [-0.07, -0.39, 0.135], '#9fd5e8', { rotation: [0.18, 0, 0.65] }),
+                box('leftLowerArm', 'gemhand_chisel_handle', [0.045, 0.18, 0.035], [0.03, -0.29, 0.105], '#5b3a24', { rotation: [0.1, 0, 0.28] }),
+                box('leftLowerArm', 'gemhand_chisel_blade', [0.045, 0.14, 0.03], [0.075, -0.37, 0.118], '#c7c8c2', { rotation: [0.1, 0, 0.28] })
+            ]
+        );
+    }
+
+    function buildTannerRuskPreset() {
+        const preset = buildGuideVariantPreset(
+            'Tanner Rusk',
+            'frontier_tannery_owner',
+            {
+                coat: '#596f4a',
+                shirt: '#d2bf92',
+                trim: '#8a633a',
+                belt: '#3e2a1f',
+                trouser: '#53483d',
+                boot: '#2b211a',
+                hair: '#4a2f20'
+            },
+            [
+                box('head', 'rusk_weathered_brow', [0.34, 0.045, 0.035], [0, 0.085, 0.235], '#3a281f'),
+                box('head', 'rusk_square_beard', [0.30, 0.13, 0.06], [0, -0.145, 0.218], '#3f291d'),
+                box('head', 'rusk_moustache', [0.25, 0.045, 0.045], [0, -0.055, 0.24], '#3f291d'),
+                box('torso', 'rusk_apron_front', [0.46, 0.48, 0.095], [0, -0.045, 0.255], '#7f542f'),
+                box('torso', 'rusk_apron_shadow_panel', [0.42, 0.18, 0.10], [0, -0.175, 0.31], '#4e321e'),
+                box('torso', 'rusk_apron_side_tie_left', [0.06, 0.34, 0.05], [0.25, -0.02, 0.285], '#3e2a1f', { rotation: [0, 0, -0.18] }),
+                box('torso', 'rusk_apron_side_tie_right', [0.06, 0.34, 0.05], [-0.25, -0.02, 0.285], '#3e2a1f', { rotation: [0, 0, 0.18] }),
+                box('torso', 'rusk_lime_stain', [0.13, 0.055, 0.035], [-0.11, 0.06, 0.325], '#d8d2bb', { rotation: [0, 0, -0.08] }),
+                box('torso', 'rusk_hide_roll', [0.15, 0.32, 0.15], [0.30, -0.13, 0.235], '#9d6b3c', { rotation: [0, 0, -0.28] }),
+                box('torso', 'rusk_hide_roll_dark_edge', [0.17, 0.05, 0.16], [0.255, -0.255, 0.245], '#6f4726', { rotation: [0, 0, -0.28] }),
+                box('torso', 'rusk_hide_roll_binding', [0.19, 0.035, 0.16], [0.305, -0.14, 0.255], '#3e2a1f', { rotation: [0, 0, -0.28] }),
+                box('torso', 'rusk_strap_sample_normal', [0.06, 0.30, 0.045], [-0.17, -0.11, 0.34], '#9d6b3c'),
+                box('torso', 'rusk_strap_sample_wolf', [0.06, 0.27, 0.045], [-0.08, -0.125, 0.345], '#6b5a48'),
+                box('torso', 'rusk_strap_sample_bear', [0.06, 0.32, 0.045], [0.01, -0.115, 0.345], '#3e2a1f'),
+                box('torso', 'rusk_bark_pouch', [0.17, 0.16, 0.08], [-0.27, -0.20, 0.285], '#5b3b24'),
+                box('torso', 'rusk_thread_spool', [0.12, 0.12, 0.065], [-0.27, -0.055, 0.30], '#d8d2bb'),
+                box('torso', 'rusk_frontier_tally_charm', [0.075, 0.13, 0.035], [0.175, -0.235, 0.33], '#c8bca2', { rotation: [0, 0, 0.18] }),
+                box('leftLowerArm', 'rusk_left_work_glove', [0.19, 0.17, 0.15], [0, -0.26, 0.035], '#5b3a24'),
+                box('leftLowerArm', 'rusk_folded_hide_sheet', [0.27, 0.18, 0.065], [0.06, -0.205, 0.135], '#b07a45', { rotation: [0.08, 0, 0.18] }),
+                box('leftLowerArm', 'rusk_folded_hide_edge', [0.28, 0.035, 0.075], [0.06, -0.29, 0.16], '#6f4726', { rotation: [0.08, 0, 0.18] }),
+                box('rightLowerArm', 'rusk_right_work_glove', [0.19, 0.17, 0.15], [0, -0.26, 0.035], '#5b3a24'),
+                box('rightLowerArm', 'rusk_scraper_handle', [0.045, 0.21, 0.045], [-0.015, -0.295, 0.125], '#5b3a24', { rotation: [0.12, 0, -0.42] }),
+                box('rightLowerArm', 'rusk_scraper_blade', [0.09, 0.15, 0.035], [-0.095, -0.395, 0.145], '#b8aa8e', { rotation: [0.12, 0, -0.42] }),
+                box('leftLowerLeg', 'rusk_left_boot_wet_hem', [0.22, 0.07, 0.25], [0, -0.205, 0.09], '#1f1a15'),
+                box('rightLowerLeg', 'rusk_right_boot_wet_hem', [0.22, 0.07, 0.25], [0, -0.205, 0.09], '#1f1a15')
+            ]
+        );
+        preset.scale = [1.02, 1.0, 1.02];
+        return preset;
+    }
+
+    function buildMainlandCraftingTeacherPreset() {
+        return clonePresetWithTheme(
+            buildTutorialCraftingInstructorPreset(),
+            'Crafting Teacher',
+            'market_crafting_teacher',
+            {
+                apron: '#695545',
+                shirt: '#8a4d39',
+                leather: '#5a3925',
+                trouser: '#3c3933',
+                boot: '#2b2118',
+                metal: '#c2b28d',
+                ore: '#b08a68'
+            },
+            [
+                box('torso', 'crafting_teacher_pin', [0.10, 0.10, 0.04], [0.22, 0.14, 0.31], '#d0b05a')
+            ]
+        );
+    }
+
+    function buildMainlandMarketTraderPreset() {
+        return buildGuideVariantPreset(
+            'Crossing Trader',
+            'market_crossing_trader',
+            { coat: '#5a4632', shirt: '#e2d0a2', trim: '#c09a4a', trouser: '#3a332a' },
+            [
+                box('torso', 'trader_coin_purse', [0.18, 0.16, 0.08], [0.24, -0.18, 0.27], '#8b5d2d'),
+                box('leftLowerArm', 'trade_manifest', [0.22, 0.15, 0.04], [0.06, -0.28, 0.12], '#dbc58e', { rotation: [0.12, 0, 0.16] })
+            ]
+        );
+    }
+
+    function buildMainlandPainterPreset() {
+        return clonePresetWithTheme(
+            buildTutorialCraftingInstructorPreset(),
+            'Painter',
+            'market_crossing_painter',
+            {
+                apron: '#5f5043',
+                shirt: '#6d4c87',
+                leather: '#4f3527',
+                trouser: '#333038',
+                boot: '#2a2018',
+                metal: '#bcae93',
+                ore: '#c28a66'
+            },
+            [
+                box('rightLowerArm', 'paint_brush_handle', [0.035, 0.42, 0.035], [0.02, -0.20, 0.12], '#6b4729', { rotation: [0.15, 0, -0.26] }),
+                box('rightLowerArm', 'paint_brush_tip', [0.08, 0.08, 0.045], [-0.035, 0.02, 0.14], '#d37b45', { rotation: [0.15, 0, -0.26] }),
+                box('torso', 'paint_swatch_blue', [0.08, 0.06, 0.035], [0.18, -0.06, 0.31], '#5d8bb8')
+            ]
+        );
+    }
+
+    function buildMainlandQuarryForemanPreset() {
+        return buildSmithVariantPreset(
+            'Quarry Foreman',
+            'south_quarry_foreman',
+            { apron: '#685741', shirt: '#6d4d31', metal: '#aaa69d', ore: '#8e806d' },
+            [
+                box('torso', 'foreman_slate_badge', [0.12, 0.09, 0.045], [0.22, 0.13, 0.30], '#8e8c88'),
+                box('leftLowerArm', 'foreman_clipboard', [0.24, 0.16, 0.045], [0.05, -0.28, 0.12], '#6d4b31', { rotation: [0.12, 0, 0.18] })
+            ]
+        );
+    }
+
+    function buildMainlandRoadScavengerPreset() {
+        return buildGuideVariantPreset(
+            'Road Scavenger',
+            'old_road_scavenger',
+            { coat: '#41382e', shirt: '#b9a67c', trim: '#8f7542', trouser: '#322d28', boot: '#211a15' },
+            [
+                box('torso', 'scavenger_patch', [0.13, 0.11, 0.04], [0.20, 0.12, 0.27], '#7f5a3a'),
+                box('torso', 'scavenger_satchel', [0.24, 0.20, 0.10], [-0.28, -0.20, 0.20], '#5a3e29')
+            ]
+        );
+    }
+
+    function buildMainlandRuneTutorPreset() {
+        return buildRuneVariantPreset(
+            'Rune Tutor',
+            'mainland_rune_tutor',
+            { coat: '#23455f', tabard: '#2f5f75', trim: '#d27742', rune: '#f0a04b' },
+            [
+                box('torso', 'rune_tutor_air_glyph', [0.08, 0.08, 0.035], [0.13, 0.00, 0.32], '#86c5df')
+            ]
+        );
+    }
+
+    function buildMainlandCombinationSagePreset() {
+        return buildRuneVariantPreset(
+            'Combination Sage',
+            'combination_rune_sage',
+            { coat: '#3a315e', tabard: '#573f74', trim: '#d6a85f', rune: '#e58a44' },
+            [
+                box('torso', 'sage_water_glyph', [0.08, 0.08, 0.035], [0.13, 0.00, 0.32], '#6faed8'),
+                box('torso', 'sage_earth_glyph', [0.08, 0.08, 0.035], [-0.13, 0.00, 0.32], '#8fb86f')
+            ]
+        );
+    }
+
+    function buildEnemyTrainingDummyPreset() {
+        const preset = buildGuideVariantPreset(
+            'Training Dummy',
+            'yard_training_dummy',
+            {
+                head_core: '#9a6a39',
+                left_ear: '#7a4f2a',
+                right_ear: '#7a4f2a',
+                lower_arm: '#8a5a2e',
+                hand: '#8a5a2e',
+                coat: '#8b5a2f',
+                shirt: '#a97843',
+                trim: '#6d4526',
+                trouser: '#6c4727',
+                boot: '#4d321d',
+                hair: '#5b3a21',
+                mouth: '#4a2f1d'
+            },
+            [
+                box('torso', 'dummy_target_outer', [0.30, 0.30, 0.045], [0, 0.03, 0.285], '#efe0aa'),
+                box('torso', 'dummy_target_ring', [0.21, 0.21, 0.05], [0, 0.03, 0.315], '#b85b35'),
+                box('torso', 'dummy_target_core', [0.10, 0.10, 0.055], [0, 0.03, 0.345], '#efe0aa'),
+                box('torso', 'dummy_straw_wrap', [0.62, 0.08, 0.41], [0, -0.20, 0.01], '#c6a05d'),
+                box('leftArm', 'dummy_left_crossbar', [0.42, 0.08, 0.08], [0.08, -0.16, 0.02], '#7a4f2a', { rotation: [0, 0, -0.55] }),
+                box('rightArm', 'dummy_right_crossbar', [0.42, 0.08, 0.08], [-0.08, -0.16, 0.02], '#7a4f2a', { rotation: [0, 0, 0.55] }),
+                box('head', 'dummy_head_straw_band', [0.48, 0.08, 0.40], [0, 0.03, 0.02], '#cfae66'),
+                box('head', 'dummy_face_slash_left', [0.08, 0.22, 0.035], [0.08, -0.04, 0.225], '#5d3a21', { rotation: [0, 0, 0.58] }),
+                box('head', 'dummy_face_slash_right', [0.08, 0.22, 0.035], [-0.08, -0.04, 0.225], '#5d3a21', { rotation: [0, 0, -0.58] }),
+                box('torso', 'dummy_center_stake', [0.16, 0.76, 0.16], [0, -0.08, -0.18], '#6b4526'),
+                box('torso', 'dummy_rope_lashing_top', [0.70, 0.055, 0.44], [0, 0.22, 0.025], '#d7bd78'),
+                box('torso', 'dummy_rope_lashing_bottom', [0.66, 0.055, 0.43], [0, -0.31, 0.025], '#d7bd78'),
+                box('leftLowerLeg', 'dummy_left_ground_peg', [0.16, 0.12, 0.24], [0, -0.23, 0.08], '#5a371f'),
+                box('rightLowerLeg', 'dummy_right_ground_peg', [0.16, 0.12, 0.24], [0, -0.23, 0.08], '#5a371f')
+            ]
+        );
+        preset.scale = [0.96, 0.98, 0.96];
+        return preset;
+    }
+
+    function buildEnemyGoblinGruntPreset() {
+        const preset = buildGuideVariantPreset(
+            'Goblin Grunt',
+            'starter_road_goblin',
+            {
+                head_core: '#6fa74d',
+                left_ear: '#6fa74d',
+                right_ear: '#6fa74d',
+                lower_arm: '#6fa74d',
+                hand: '#6fa74d',
+                coat: '#6b4429',
+                shirt: '#7a4c2d',
+                trim: '#9a7348',
+                trouser: '#5f533b',
+                boot: '#352a1f',
+                hair: '#3f5d2d',
+                mouth: '#3f2b1f'
+            },
+            [
+                box('head', 'goblin_left_long_ear', [0.10, 0.34, 0.08], [0.34, 0.015, -0.035], '#74ad52', { rotation: [0, 0, -0.76] }),
+                box('head', 'goblin_right_long_ear', [0.10, 0.32, 0.08], [-0.335, 0.005, -0.025], '#6fa74d', { rotation: [0, 0, 0.68] }),
+                box('head', 'goblin_brow_left', [0.15, 0.045, 0.045], [0.10, 0.09, 0.238], '#395628'),
+                box('head', 'goblin_brow_right', [0.15, 0.045, 0.045], [-0.10, 0.09, 0.238], '#395628'),
+                box('head', 'goblin_jaw_slab', [0.24, 0.08, 0.055], [0, -0.145, 0.228], '#4f7c36'),
+                box('head', 'goblin_tooth_left', [0.045, 0.06, 0.025], [0.06, -0.18, 0.258], '#d8d0b6'),
+                box('head', 'goblin_tooth_right', [0.045, 0.06, 0.025], [-0.06, -0.18, 0.258], '#d8d0b6'),
+                box('torso', 'goblin_rope_belt', [0.66, 0.07, 0.41], [0, -0.21, 0.035], '#c29a58'),
+                box('torso', 'goblin_torn_tunic_left', [0.16, 0.16, 0.055], [0.18, -0.30, 0.24], '#53311b', { rotation: [0, 0, -0.16] }),
+                box('torso', 'goblin_torn_tunic_right', [0.14, 0.14, 0.055], [-0.19, -0.29, 0.24], '#5b361f', { rotation: [0, 0, 0.18] }),
+                box('leftLowerLeg', 'goblin_left_wrapped_foot', [0.24, 0.08, 0.32], [0.02, -0.30, 0.075], '#352a1f'),
+                box('rightLowerLeg', 'goblin_right_wrapped_foot', [0.24, 0.08, 0.32], [-0.02, -0.30, 0.075], '#352a1f'),
+                box('axe', 'goblin_club_handle', [0.10, 0.58, 0.09], [0.02, -0.22, 0.08], '#6b4729', { rotation: [0.1, 0, -0.24] }),
+                box('axe', 'goblin_club_head', [0.22, 0.20, 0.18], [-0.055, 0.10, 0.10], '#4a3424', { rotation: [0.1, 0, -0.24] }),
+                box('axe', 'goblin_club_worn_edge', [0.10, 0.05, 0.19], [-0.13, 0.16, 0.115], '#6b4b31', { rotation: [0.1, 0, -0.24] })
+            ]
+        );
+        preset.scale = [0.94, 0.88, 0.96];
+        return preset;
+    }
+
+    function buildEnemyGuardPreset() {
+        return clonePresetWithTheme(
+            buildTutorialCombatInstructorPreset(),
+            'Guard',
+            'east_outpost_guard',
+            {
+                steel: '#6f7f8a',
+                mail: '#57636b',
+                leather: '#4a3324',
+                bronze: '#c09a4a',
+                blade: '#c3c8c9',
+                cape: '#28476b',
+                pauldron: '#6f7f8a',
+                breastplate: '#788894',
+                sword: '#c3c8c9',
+                shield: '#2f5279'
+            },
+            [
+                box('head', 'guard_steel_med_helm', [0.52, 0.16, 0.42], [0, 0.19, -0.01], '#7b8992'),
+                box('head', 'guard_steel_brow_band', [0.42, 0.07, 0.08], [0, 0.095, 0.235], '#53616a'),
+                box('head', 'guard_steel_nasal_bar', [0.055, 0.22, 0.045], [0, -0.02, 0.255], '#9aa4aa'),
+                box('head', 'guard_left_cheek_plate', [0.08, 0.18, 0.04], [0.19, -0.015, 0.235], '#64727b', { rotation: [0, 0, -0.16] }),
+                box('head', 'guard_right_cheek_plate', [0.08, 0.18, 0.04], [-0.19, -0.015, 0.235], '#64727b', { rotation: [0, 0, 0.16] }),
+                box('torso', 'guard_blue_tabard', [0.24, 0.48, 0.065], [0, -0.02, 0.325], '#284f7c'),
+                box('torso', 'guard_bronze_tabard_pin', [0.11, 0.11, 0.045], [0, 0.18, 0.37], '#c09a4a'),
+                box('torso', 'guard_blue_crest', [0.15, 0.15, 0.05], [0.22, 0.13, 0.34], '#315f93'),
+                box('leftLowerArm', 'guard_blue_shield_face', [0.31, 0.40, 0.07], [0.275, -0.04, 0.11], '#2f5279', { rotation: [0, 1.5708, 0] }),
+                box('leftLowerArm', 'guard_bronze_shield_rim', [0.36, 0.055, 0.085], [0.29, 0.16, 0.11], '#c09a4a', { rotation: [0, 1.5708, 0] }),
+                box('leftLowerArm', 'guard_bronze_shield_boss', [0.12, 0.12, 0.09], [0.325, -0.04, 0.11], '#c09a4a', { rotation: [0, 1.5708, 0] })
+            ]
+        );
+    }
+
+    function buildEnemyHeavyBrutePreset() {
+        const preset = buildSmithVariantPreset(
+            'Heavy Brute',
+            'camp_heavy_brute',
+            {
+                apron: '#3e342d',
+                shirt: '#653628',
+                leather: '#3d2a20',
+                trouser: '#302d28',
+                boot: '#241c16',
+                metal: '#8e8a82',
+                ore: '#6d5140'
+            },
+            [
+                box('head', 'brute_brow_band', [0.36, 0.08, 0.05], [0, 0.095, 0.23], '#2a211b'),
+                box('head', 'brute_broken_nose', [0.08, 0.14, 0.045], [0, -0.02, 0.245], '#8f5f46'),
+                box('head', 'brute_beard_block', [0.30, 0.12, 0.065], [0, -0.15, 0.215], '#35261e'),
+                box('torso', 'brute_shoulder_pad_left', [0.30, 0.18, 0.24], [0.42, 0.22, 0.05], '#5b4a3e'),
+                box('torso', 'brute_shoulder_pad_right', [0.30, 0.18, 0.24], [-0.42, 0.22, 0.05], '#5b4a3e'),
+                box('torso', 'brute_left_pad_rivet', [0.07, 0.07, 0.055], [0.42, 0.24, 0.205], '#8e8a82'),
+                box('torso', 'brute_right_pad_rivet', [0.07, 0.07, 0.055], [-0.42, 0.24, 0.205], '#8e8a82'),
+                box('torso', 'brute_belly_strap', [0.78, 0.075, 0.44], [0, -0.08, 0.03], '#2b211a', { rotation: [0, 0, -0.08] }),
+                box('leftLowerLeg', 'brute_left_boot_plate', [0.25, 0.09, 0.28], [0, -0.22, 0.12], '#3b332d'),
+                box('rightLowerLeg', 'brute_right_boot_plate', [0.25, 0.09, 0.28], [0, -0.22, 0.12], '#3b332d'),
+                box('axe', 'brute_maul_handle', [0.08, 0.82, 0.08], [0.02, -0.26, 0.08], '#5a3924', { rotation: [0.18, 0, -0.22] }),
+                box('axe', 'brute_maul_head', [0.34, 0.22, 0.22], [-0.08, 0.17, 0.10], '#77736b', { rotation: [0.18, 0, -0.22] }),
+                box('axe', 'brute_maul_iron_band', [0.38, 0.055, 0.24], [-0.08, 0.17, 0.115], '#a39d91', { rotation: [0.18, 0, -0.22] })
+            ]
+        );
+        preset.scale = [1.08, 1.05, 1.08];
+        return preset;
+    }
+
+    function buildEnemyFastStrikerPreset() {
+        const preset = buildGuideVariantPreset(
+            'Fast Striker',
+            'camp_fast_striker',
+            {
+                coat: '#3f3a31',
+                shirt: '#6b5334',
+                trim: '#b38b4a',
+                belt: '#3c261b',
+                trouser: '#2e332f',
+                boot: '#211a15',
+                hair: '#292018'
+            },
+            [
+                box('torso', 'striker_sash', [0.12, 0.70, 0.055], [-0.17, 0.00, 0.25], '#8b2f2b', { rotation: [0, 0, -0.35] }),
+                box('torso', 'striker_sash_tail', [0.13, 0.26, 0.06], [-0.28, -0.27, 0.22], '#782724', { rotation: [0, 0, -0.62] }),
+                box('head', 'striker_mask_wrap', [0.34, 0.075, 0.045], [0, -0.08, 0.225], '#211a15'),
+                box('torso', 'striker_hip_scabbard', [0.08, 0.36, 0.06], [0.26, -0.20, 0.25], '#2a2019', { rotation: [0, 0, 0.52] }),
+                box('leftLowerArm', 'striker_left_wrist_wrap', [0.20, 0.055, 0.17], [0, -0.20, 0.02], '#4a3020'),
+                box('rightLowerArm', 'striker_right_wrist_wrap', [0.20, 0.055, 0.17], [0, -0.20, 0.02], '#4a3020'),
+                box('axe', 'striker_dagger_grip', [0.045, 0.18, 0.045], [0.00, -0.08, 0.08], '#4a3020', { rotation: [0.12, 0, -0.34] }),
+                box('axe', 'striker_dagger_blade', [0.055, 0.34, 0.035], [-0.055, -0.25, 0.10], '#b9bec0', { rotation: [0.12, 0, -0.34] }),
+                box('axe', 'striker_main_blade_tip', [0.07, 0.11, 0.038], [-0.09, -0.46, 0.105], '#d0d5d6', { rotation: [0.12, 0, -0.34] }),
+                box('leftLowerArm', 'striker_offhand_grip', [0.055, 0.13, 0.044], [0.04, -0.16, 0.085], '#4a3020', { rotation: [0.12, 0, 0.28] }),
+                box('leftLowerArm', 'striker_offhand_blade', [0.045, 0.30, 0.032], [0.08, -0.25, 0.10], '#aeb5b8', { rotation: [0.12, 0, 0.28] })
+            ]
+        );
+        preset.scale = [0.95, 1.0, 0.92];
+        return preset;
+    }
+
     const PRESETS = {
         tutorial_guide: buildTutorialGuidePreset(),
         tutorial_woodcutting_instructor: buildTutorialWoodcuttingInstructorPreset(),
@@ -1130,12 +1775,40 @@
         tutorial_magic_instructor: buildTutorialMagicInstructorPreset(),
         tutorial_runecrafting_instructor: buildTutorialRunecraftingInstructorPreset(),
         tutorial_crafting_instructor: buildTutorialCraftingInstructorPreset(),
-        tutorial_bank_tutor: buildTutorialBankTutorPreset()
+        tutorial_bank_tutor: buildTutorialBankTutorPreset(),
+        mainland_shopkeeper: buildMainlandShopkeeperPreset(),
+        mainland_banker: buildMainlandBankerPreset(),
+        mainland_fletching_supplier: buildMainlandFletchingSupplierPreset(),
+        mainland_advanced_fletcher: buildMainlandAdvancedFletcherPreset(),
+        mainland_advanced_woodsman: buildMainlandAdvancedWoodsmanPreset(),
+        mainland_road_guide: buildMainlandRoadGuidePreset(),
+        mainland_outpost_guide: buildMainlandOutpostGuidePreset(),
+        mainland_fishing_teacher: buildMainlandFishingTeacherPreset(),
+        mainland_fishing_supplier: buildMainlandFishingSupplierPreset(),
+        mainland_forester_teacher: buildMainlandForesterTeacherPreset(),
+        mainland_borin_ironvein: buildMainlandBorinIronveinPreset(),
+        mainland_thrain_deepforge: buildMainlandThrainDeepforgePreset(),
+        mainland_elira_gemhand: buildMainlandEliraGemhandPreset(),
+        tanner_rusk: buildTannerRuskPreset(),
+        mainland_crafting_teacher: buildMainlandCraftingTeacherPreset(),
+        mainland_market_trader: buildMainlandMarketTraderPreset(),
+        mainland_painter: buildMainlandPainterPreset(),
+        mainland_quarry_foreman: buildMainlandQuarryForemanPreset(),
+        mainland_road_scavenger: buildMainlandRoadScavengerPreset(),
+        mainland_rune_tutor: buildMainlandRuneTutorPreset(),
+        mainland_combination_sage: buildMainlandCombinationSagePreset(),
+        enemy_training_dummy: buildEnemyTrainingDummyPreset(),
+        enemy_goblin_grunt: buildEnemyGoblinGruntPreset(),
+        enemy_guard: buildEnemyGuardPreset(),
+        enemy_heavy_brute: buildEnemyHeavyBrutePreset(),
+        enemy_fast_striker: buildEnemyFastStrikerPreset()
     };
 
     window.NpcAppearanceCatalog = {
         presets: PRESETS,
-        aliases: {},
+        aliases: {
+            tanner: 'tanner_rusk'
+        },
         previewActors: [
             { actorId: 'tutorial_guide', label: 'Tutorial Guide' },
             { actorId: 'tutorial_woodcutting_instructor', label: 'Woodcutting Instructor' },
@@ -1147,7 +1820,33 @@
             { actorId: 'tutorial_magic_instructor', label: 'Magic Instructor' },
             { actorId: 'tutorial_runecrafting_instructor', label: 'Runecrafting Instructor' },
             { actorId: 'tutorial_crafting_instructor', label: 'Crafting Instructor' },
-            { actorId: 'tutorial_bank_tutor', label: 'Bank Tutor' }
+            { actorId: 'tutorial_bank_tutor', label: 'Bank Tutor' },
+            { actorId: 'mainland_shopkeeper', label: 'Shopkeeper' },
+            { actorId: 'mainland_banker', label: 'Banker' },
+            { actorId: 'mainland_fletching_supplier', label: 'Fletching Supplier' },
+            { actorId: 'mainland_advanced_fletcher', label: 'Advanced Fletcher' },
+            { actorId: 'mainland_advanced_woodsman', label: 'Advanced Woodsman' },
+            { actorId: 'mainland_road_guide', label: 'Road Guide' },
+            { actorId: 'mainland_outpost_guide', label: 'Outpost Guide' },
+            { actorId: 'mainland_fishing_teacher', label: 'Fishing Teacher' },
+            { actorId: 'mainland_fishing_supplier', label: 'Fishing Supplier' },
+            { actorId: 'mainland_forester_teacher', label: 'Forester Teacher' },
+            { actorId: 'mainland_borin_ironvein', label: 'Borin Ironvein' },
+            { actorId: 'mainland_thrain_deepforge', label: 'Thrain Deepforge' },
+            { actorId: 'mainland_elira_gemhand', label: 'Elira Gemhand' },
+            { actorId: 'tanner_rusk', label: 'Tanner Rusk' },
+            { actorId: 'mainland_crafting_teacher', label: 'Crafting Teacher' },
+            { actorId: 'mainland_market_trader', label: 'Crossing Trader' },
+            { actorId: 'mainland_painter', label: 'Painter' },
+            { actorId: 'mainland_quarry_foreman', label: 'Quarry Foreman' },
+            { actorId: 'mainland_road_scavenger', label: 'Road Scavenger' },
+            { actorId: 'mainland_rune_tutor', label: 'Rune Tutor' },
+            { actorId: 'mainland_combination_sage', label: 'Combination Sage' },
+            { actorId: 'enemy_training_dummy', label: 'Training Dummy' },
+            { actorId: 'enemy_goblin_grunt', label: 'Goblin Grunt' },
+            { actorId: 'enemy_guard', label: 'Guard' },
+            { actorId: 'enemy_heavy_brute', label: 'Heavy Brute' },
+            { actorId: 'enemy_fast_striker', label: 'Fast Striker' }
         ]
     };
 })();

@@ -1,4 +1,3 @@
-const fs = require("fs");
 const path = require("path");
 
 const {
@@ -7,12 +6,15 @@ const {
   cloneCookingRoute,
   cloneRoute
 } = require("./main-overworld-skill-runtime-draft");
+const { cloneJson, writeJsonFile } = require("../lib/json-file-utils");
 const { loadTsModule } = require("../lib/ts-module-loader");
 
 function buildFrozenMainOverworld(root) {
   const { materializeSkillWorldRuntime } = loadTsModule(path.join(root, "src", "game", "world", "freeze-runtime.ts"));
   const { world, freezeConfig, draft } = buildMainOverworldSkillRuntimeDraft(root);
   const skillWorldArtifacts = materializeSkillWorldRuntime(draft);
+  const terrainPatches = world.terrainPatches || {};
+  const landmarks = world.landmarks || {};
 
   const frozenServices = [];
   const dynamicMerchantIds = new Set(freezeConfig.runecraftingMerchants.map((entry) => String(entry.merchantId || "").trim().toLowerCase()).filter(Boolean));
@@ -55,10 +57,12 @@ function buildFrozenMainOverworld(root) {
     areas: Array.isArray(world.areas) ? world.areas.map((area) => ({ ...area })) : [],
     structures: Array.isArray(world.structures) ? world.structures.map((structure) => ({ ...structure })) : [],
     terrainPatches: {
-      ...world.terrainPatches,
-      lakes: Array.isArray(world.terrainPatches.lakes) ? world.terrainPatches.lakes.map((lake) => ({ ...lake })) : []
+      ...(cloneJson(terrainPatches) || {}),
+      lakes: Array.isArray(terrainPatches.lakes) ? terrainPatches.lakes.map((lake) => ({ ...lake })) : []
     },
+    waterBodies: Array.isArray(world.waterBodies) ? world.waterBodies.map((body) => cloneJson(body)) : undefined,
     npcSpawns: Array.isArray(world.npcSpawns) ? world.npcSpawns.map((npc) => ({ ...npc, tags: Array.isArray(npc.tags) ? npc.tags.slice() : [] })) : [],
+    combatSpawns: Array.isArray(world.combatSpawns) ? world.combatSpawns.map((spawn) => cloneJson(spawn)) : [],
     services: frozenServices,
     resourceNodes: {
       mining: skillWorldArtifacts.miningRockPlacements.map((placement) => ({ ...placement })),
@@ -67,23 +71,25 @@ function buildFrozenMainOverworld(root) {
     skillRoutes: {
       fishing: Array.isArray(world.skillRoutes.fishing) ? world.skillRoutes.fishing.map(cloneRoute) : [],
       cooking: Array.isArray(world.skillRoutes.cooking) ? world.skillRoutes.cooking.map(cloneCookingRoute) : [],
+      firemaking: Array.isArray(world.skillRoutes.firemaking) ? world.skillRoutes.firemaking.map(cloneRoute) : [],
       mining: skillWorldArtifacts.miningRoutes.map(cloneRoute),
       runecrafting: skillWorldArtifacts.runecraftingRoutes.map(cloneRoute),
       woodcutting: skillWorldArtifacts.woodcuttingRoutes.map(cloneRoute)
     },
     landmarks: {
-      staircases: Array.isArray(world.landmarks.staircases)
-        ? world.landmarks.staircases.map((landmark) => ({
+      ...(cloneJson(landmarks) || {}),
+      staircases: Array.isArray(landmarks.staircases)
+        ? landmarks.staircases.map((landmark) => ({
             landmarkId: landmark.landmarkId,
             tiles: Array.isArray(landmark.tiles) ? landmark.tiles.map((tile) => ({ ...tile })) : []
           }))
         : [],
-      doors: Array.isArray(world.landmarks.doors) ? world.landmarks.doors.map((door) => ({ ...door })) : [],
+      doors: Array.isArray(landmarks.doors) ? landmarks.doors.map((door) => ({ ...door })) : [],
       altars: skillWorldArtifacts.altarRenderPlacements.map((altar) => ({
         ...altar,
         tags: Array.isArray(altar.tags) ? altar.tags.slice() : []
       })),
-      showcaseTrees: Array.isArray(world.landmarks.showcaseTrees) ? world.landmarks.showcaseTrees.map((tree) => ({ ...tree })) : []
+      showcaseTrees: Array.isArray(landmarks.showcaseTrees) ? landmarks.showcaseTrees.map((tree) => ({ ...tree })) : []
     }
   };
 }
@@ -93,7 +99,7 @@ function runCli() {
   const nextWorld = buildFrozenMainOverworld(root);
   if (process.argv.includes("--write")) {
     const targetPath = path.join(root, "content", "world", "regions", "main_overworld.json");
-    fs.writeFileSync(targetPath, `${JSON.stringify(nextWorld, null, 2)}\n`, "utf8");
+    writeJsonFile(targetPath, nextWorld);
     console.log(`Wrote frozen main-overworld world data to ${targetPath}`);
     return;
   }

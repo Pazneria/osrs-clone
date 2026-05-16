@@ -170,7 +170,7 @@
         return (Math.abs(standX - targetX) + Math.abs(standY - targetY)) === 1;
     }
 
-    function buildPierStepDescendPath(context = {}, startX, startY, targetX, targetY, z = getPlayerPlane(context)) {
+    function buildPierStepDescendPath(context = {}, startX, startY, targetX, _targetY, z = getPlayerPlane(context)) {
         const windowRef = getWindowRef(context);
         const mapSize = getMapSize(context);
         const pierConfig = getActivePierConfig(context);

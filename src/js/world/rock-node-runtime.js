@@ -14,19 +14,6 @@
         rune_essence: 'Rune essence'
     };
 
-    const ROCK_COLOR_HEX = {
-        clay: 0xa78668,
-        copper: 0xb06a4c,
-        tin: 0x9aa5ae,
-        iron: 0x6f7985,
-        coal: 0x3f444c,
-        silver: 0xc8ced6,
-        sapphire: 0x3d6ed8,
-        gold: 0xd4a829,
-        emerald: 0x2aa66f,
-        rune_essence: 0x7e848c
-    };
-
     function rockNodeKey(x, y, z = 0) {
         return z + ':' + x + ',' + y;
     }
@@ -61,10 +48,6 @@
 
     function getRockDisplayName(oreType) {
         return ROCK_DISPLAY_NAMES[oreType] || 'Rock';
-    }
-
-    function getRockColorHex(oreType) {
-        return ROCK_COLOR_HEX[oreType] || 0x8f6b58;
     }
 
     function depleteRockNodeRecord(node, currentTick, respawnTicks = 12) {
@@ -105,10 +88,8 @@
 
     window.WorldRockNodeRuntime = {
         GEM_HOTSPOT,
-        ROCK_COLOR_HEX,
         ROCK_DISPLAY_NAMES,
         depleteRockNodeRecord,
-        getRockColorHex,
         getRockDisplayName,
         isGemHotspotCoordinate,
         isRuneEssenceRockCoordinate,

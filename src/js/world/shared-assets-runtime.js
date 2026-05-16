@@ -68,6 +68,54 @@
         return geometry;
     }
 
+    function addWhiteVertexColorAttribute(THREE, geometry) {
+        const positionAttribute = geometry && typeof geometry.getAttribute === 'function'
+            ? geometry.getAttribute('position')
+            : null;
+        if (!positionAttribute || !Number.isFinite(positionAttribute.count)) return geometry;
+        const colors = [];
+        for (let i = 0; i < positionAttribute.count; i++) {
+            colors.push(1, 1, 1);
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        return geometry;
+    }
+
+    function createGrassTuftGeometry(THREE) {
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+
+        const addBlade = (yaw, width, height, offsetX, offsetZ, bend) => {
+            const baseIndex = positions.length / 3;
+            const sideX = Math.cos(yaw) * width * 0.5;
+            const sideZ = Math.sin(yaw) * width * 0.5;
+            const forwardX = -Math.sin(yaw) * bend;
+            const forwardZ = Math.cos(yaw) * bend;
+            positions.push(
+                offsetX - sideX, 0, offsetZ - sideZ,
+                offsetX + sideX, 0, offsetZ + sideZ,
+                offsetX + (sideX * 0.34) + forwardX, height, offsetZ + (sideZ * 0.34) + forwardZ,
+                offsetX - (sideX * 0.34) + forwardX, height, offsetZ - (sideZ * 0.34) + forwardZ
+            );
+            uvs.push(0, 0, 1, 0, 1, 1, 0, 1);
+            indices.push(baseIndex, baseIndex + 1, baseIndex + 2, baseIndex, baseIndex + 2, baseIndex + 3);
+        };
+
+        addBlade(0, 0.08, 0.38, 0, 0, 0.035);
+        addBlade(Math.PI * 0.42, 0.07, 0.32, -0.035, 0.025, 0.025);
+        addBlade(Math.PI * 0.83, 0.06, 0.28, 0.04, -0.02, 0.02);
+        addBlade(Math.PI * 1.22, 0.055, 0.24, -0.02, -0.04, 0.018);
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        geometry.computeBoundingSphere();
+        return addWhiteVertexColorAttribute(THREE, geometry);
+    }
+
     function initSharedAssets(options = {}) {
         const THREE = requireThree(options.THREE);
         const document = requireDocument(options.document);
@@ -92,6 +140,15 @@
             sharedGeometries.ground.rotateX(-Math.PI / 2);
             sharedGeometries.tileColumn = new THREE.BoxGeometry(1, 1, 1);
             sharedGeometries.fishingSpotMarker = new THREE.CylinderGeometry(0.15, 0.15, 0.25, 10);
+            sharedGeometries.grassTuft = createGrassTuftGeometry(THREE);
+            sharedGeometries.bushClump = addWhiteVertexColorAttribute(
+                THREE,
+                new THREE.DodecahedronGeometry(0.34, 0).scale(1.22, 0.66, 1.06).translate(0, 0.28, 0)
+            );
+            sharedGeometries.groundPebble = addWhiteVertexColorAttribute(
+                THREE,
+                new THREE.DodecahedronGeometry(0.1, 0).scale(1.6, 0.42, 1.08).translate(0, 0.04, 0)
+            );
 
             sharedGeometries.treeTrunk = new THREE.CylinderGeometry(0.16, 0.28, 2.0, 6).translate(0, 1.0, 0);
             sharedGeometries.treeRootFlare = new THREE.CylinderGeometry(0.36, 0.62, 0.2, 6).translate(0, 0.1, 0);
@@ -148,6 +205,9 @@
             sharedMaterials.dirtTile = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
             sharedMaterials.terrainUnderlay = new THREE.MeshLambertMaterial({ color: 0xb7c7aa, side: THREE.DoubleSide });
             sharedMaterials.fishingSpot = new THREE.MeshLambertMaterial({ color: 0xa8d4de });
+            sharedMaterials.grassTuft = new THREE.MeshLambertMaterial({ color: 0x7fab4e, flatShading: true, side: THREE.DoubleSide, vertexColors: true });
+            sharedMaterials.bushLeaves = new THREE.MeshLambertMaterial({ color: 0x426f35, flatShading: true, vertexColors: true });
+            sharedMaterials.groundPebble = new THREE.MeshLambertMaterial({ color: 0x8b8271, flatShading: true, vertexColors: true });
             sharedMaterials.rockClay = new THREE.MeshLambertMaterial({ color: 0xa78668, flatShading: true });
             sharedMaterials.rockCopper = new THREE.MeshLambertMaterial({ color: 0xc8754d, flatShading: true });
             sharedMaterials.rockTin = new THREE.MeshLambertMaterial({ color: 0xb8c3c9, flatShading: true });
@@ -352,6 +412,66 @@
             sharedMaterials.castleStone.flatShading = true;
             sharedMaterials.castleStone.needsUpdate = true;
 
+            const makeProfileMaterial = (texture, tintHex = 0xffffff) => {
+                const material = new THREE.MeshLambertMaterial({ color: tintHex, map: texture || null, flatShading: true });
+                material.needsUpdate = true;
+                return material;
+            };
+            const makeProfileTexture = (kind, baseHex, mortarHex) => {
+                if (kind === 'wood') {
+                    const tex = makeWoodGrainTexture(baseHex);
+                    tex.repeat.set(1.2, 2.8);
+                    return tex;
+                }
+                if (kind === 'brick') {
+                    const tex = makeBrickTexture(baseHex, mortarHex || 0x6f675e, 12);
+                    tex.repeat.set(1.35, 1.75);
+                    return tex;
+                }
+                const tex = makeNoiseTexture(baseHex, -18, 18, 620, 54, 8);
+                tex.repeat.set(1.5, 1.5);
+                return tex;
+            };
+
+            const timberWallTex = makeProfileTexture('wood', 0x684526);
+            const quarryWallTex = makeProfileTexture('brick', 0x5c5d58, 0x454743);
+            const cityWallTex = makeProfileTexture('brick', 0x9a9283, 0x776f65);
+            const plasterWallTex = makeProfileTexture('noise', 0xd9c99f);
+            const graniteWallTex = makeProfileTexture('brick', 0x6f716c, 0x565852);
+            const burntWallTex = makeProfileTexture('wood', 0x2e2923);
+            const slateRoofTex = makeProfileTexture('noise', 0x535c66);
+            const citySlateRoofTex = makeProfileTexture('noise', 0x596879);
+            const tileRoofTex = makeProfileTexture('brick', 0xb65a3b, 0x7c352d);
+            const castleSlateRoofTex = makeProfileTexture('noise', 0x3f4a55);
+            const burntRoofTex = makeProfileTexture('noise', 0x3d2b22);
+            const thatchRoofTex = makeProfileTexture('noise', 0xa77f3c);
+            thatchRoofTex.repeat.set(1.2, 2.2);
+
+            sharedMaterials.structureWallMaterials = {
+                timber_thatch: makeProfileMaterial(timberWallTex),
+                quarry_stone_slate: makeProfileMaterial(quarryWallTex),
+                city_stone_slate: makeProfileMaterial(cityWallTex),
+                painted_plaster_tile: makeProfileMaterial(plasterWallTex),
+                castle_granite_slate: makeProfileMaterial(graniteWallTex),
+                burnt_timber_ash: makeProfileMaterial(burntWallTex)
+            };
+            sharedMaterials.structureCornerMaterials = {
+                timber_thatch: makeProfileMaterial(timberWallTex, 0xb8a082),
+                quarry_stone_slate: makeProfileMaterial(quarryWallTex, 0xb4b1a4),
+                city_stone_slate: makeProfileMaterial(cityWallTex, 0xcac3b4),
+                painted_plaster_tile: makeProfileMaterial(plasterWallTex, 0xb79b72),
+                castle_granite_slate: makeProfileMaterial(graniteWallTex, 0xb0b1a9),
+                burnt_timber_ash: makeProfileMaterial(burntWallTex, 0x8f8172)
+            };
+            sharedMaterials.structureRoofMaterials = {
+                timber_thatch: makeProfileMaterial(thatchRoofTex),
+                quarry_stone_slate: makeProfileMaterial(slateRoofTex),
+                city_stone_slate: makeProfileMaterial(citySlateRoofTex),
+                painted_plaster_tile: makeProfileMaterial(tileRoofTex),
+                castle_granite_slate: makeProfileMaterial(castleSlateRoofTex),
+                burnt_timber_ash: makeProfileMaterial(burntRoofTex)
+            };
+
             const floorWoodTex = makeWoodGrainTexture(0x86603a);
             floorWoodTex.repeat.set(1.8, 1.8);
             sharedMaterials.floor6.color.setHex(0xffffff);
@@ -442,6 +562,61 @@
             sharedMaterials.bankTexPlaneMat = new THREE.MeshBasicMaterial({
                 map: applyColorTextureSettings(new THREE.CanvasTexture(bankCanvas))
             });
+
+            const shopCanvas = document.createElement('canvas');
+            shopCanvas.width = 256; shopCanvas.height = 96;
+            const shopCtx = shopCanvas.getContext('2d');
+            shopCtx.fillStyle = '#5a351b';
+            shopCtx.fillRect(0, 0, 256, 96);
+            shopCtx.strokeStyle = '#d9c08a';
+            shopCtx.lineWidth = 7;
+            shopCtx.strokeRect(5, 5, 246, 86);
+            shopCtx.fillStyle = '#f0dfb4';
+            shopCtx.font = 'bold 44px monospace';
+            shopCtx.textAlign = 'center';
+            shopCtx.textBaseline = 'middle';
+            shopCtx.fillText('SHOP', 128, 52);
+            sharedMaterials.shopSignMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(shopCanvas))
+            });
+
+            const paintingCanvas = document.createElement('canvas');
+            paintingCanvas.width = 128; paintingCanvas.height = 128;
+            const paintCtx = paintingCanvas.getContext('2d');
+            paintCtx.fillStyle = '#6b4527';
+            paintCtx.fillRect(0, 0, 128, 128);
+            paintCtx.fillStyle = '#e5d1a0';
+            paintCtx.fillRect(10, 10, 108, 108);
+            paintCtx.fillStyle = '#5d83b8';
+            paintCtx.fillRect(18, 18, 92, 38);
+            paintCtx.fillStyle = '#6d9f58';
+            paintCtx.fillRect(18, 55, 92, 44);
+            paintCtx.fillStyle = '#d9a84f';
+            paintCtx.fillRect(70, 30, 18, 18);
+            paintCtx.fillStyle = 'rgba(78, 49, 29, 0.32)';
+            paintCtx.fillRect(28, 72, 48, 8);
+            sharedMaterials.galleryPaintingMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(paintingCanvas))
+            });
+
+            const bannerCanvas = document.createElement('canvas');
+            bannerCanvas.width = 96; bannerCanvas.height = 160;
+            const bannerCtx = bannerCanvas.getContext('2d');
+            bannerCtx.fillStyle = '#7b2020';
+            bannerCtx.fillRect(0, 0, 96, 160);
+            bannerCtx.fillStyle = '#d7b35d';
+            bannerCtx.fillRect(16, 0, 12, 142);
+            bannerCtx.fillRect(68, 0, 12, 142);
+            bannerCtx.fillRect(32, 42, 32, 14);
+            bannerCtx.fillRect(38, 56, 20, 48);
+            bannerCtx.clearRect(0, 140, 28, 20);
+            bannerCtx.clearRect(68, 140, 28, 20);
+            sharedMaterials.castleBannerMat = new THREE.MeshBasicMaterial({
+                map: applyColorTextureSettings(new THREE.CanvasTexture(bannerCanvas)),
+                side: THREE.DoubleSide,
+                transparent: true
+            });
+            sharedMaterials.awningClothMat = new THREE.MeshLambertMaterial({ color: 0x8f3248, flatShading: true });
         
     }
 

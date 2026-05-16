@@ -1,5 +1,6 @@
 const fs = require("fs");
 const vm = require("vm");
+const { loadNpcDialogueCatalog } = require("./npc-dialogue-catalog-loader");
 const { TileId } = require("./tile-ids");
 const { MAP_SIZE } = require("./world-constants");
 const { buildWorldGameplayMap } = require("./world-map-builder");
@@ -64,14 +65,6 @@ function loadCombatCatalog(root) {
     enemyById.set(enemy.enemyId, enemy);
   }
   return { enemyIds, enemyById };
-}
-
-function loadNpcDialogueCatalog(root) {
-  const absPath = path.join(root, "src", "js", "content", "npc-dialogue-catalog.js");
-  const sandbox = { window: {}, console };
-  const source = fs.readFileSync(absPath, "utf8");
-  vm.runInNewContext(source, sandbox, { filename: absPath });
-  return sandbox.window && sandbox.window.NpcDialogueCatalog ? sandbox.window.NpcDialogueCatalog : null;
 }
 
 function loadNpcAppearancePresetIds(root) {
@@ -418,6 +411,13 @@ function validateMainOverworldProtectedRoads(worldId, world) {
     assertNoProtectedRoadOverlap(worldId, roadTiles, prop, `blocking decor prop ${prop.propId}`);
   }
 
+  const services = Array.isArray(world && world.services) ? world.services : [];
+  for (let i = 0; i < services.length; i++) {
+    const service = services[i];
+    if (!service || service.blocksMovement !== true) continue;
+    assertNoProtectedRoadOverlap(worldId, roadTiles, service, `blocking service ${service.serviceId}`);
+  }
+
   const combatSpawns = Array.isArray(world && world.combatSpawns) ? world.combatSpawns : [];
   for (let i = 0; i < combatSpawns.length; i++) {
     const spawn = combatSpawns[i];
@@ -570,7 +570,7 @@ function isNamedMainOverworldNpcService(worldId, service) {
   return true;
 }
 
-function validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, logicalMap, npcMetadataCatalogs) {
+function validateMainOverworldNamedNpcServices(worldId, world, logicalMap, npcMetadataCatalogs) {
   if (worldId !== "main_overworld") return;
   const dialogueCatalog = npcMetadataCatalogs && npcMetadataCatalogs.dialogueCatalog
     ? npcMetadataCatalogs.dialogueCatalog
@@ -615,7 +615,7 @@ function validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, lo
 
     assertFinitePoint3(servicePoint, `${worldId}: named NPC service ${service.serviceId} has invalid coordinates`);
     assert(
-      servicePoint.x >= 0 && servicePoint.y >= 0 && servicePoint.x < 648 && servicePoint.y < 648,
+      servicePoint.x >= 0 && servicePoint.y >= 0 && servicePoint.x < MAP_SIZE && servicePoint.y < MAP_SIZE,
       `${worldId}: named NPC service ${service.serviceId} is out of bounds`
     );
 
@@ -659,7 +659,7 @@ function validateCombatSpawns(worldId, manifestEntry, world, logicalMap, combatC
     assert(typeof spawn.enemyId === "string" && spawn.enemyId.trim(), `${worldId}: combat spawn ${spawn.spawnNodeId} missing enemyId`);
     assert(enemyIds.has(spawn.enemyId), `${worldId}: combat spawn ${spawn.spawnNodeId} references unknown enemyId ${spawn.enemyId}`);
     assertFinitePoint3(spawn.spawnTile, `${worldId}: combat spawn ${spawn.spawnNodeId} missing valid spawnTile`);
-    assert(spawn.spawnTile.x >= 0 && spawn.spawnTile.y >= 0 && spawn.spawnTile.x < 648 && spawn.spawnTile.y < 648, `${worldId}: combat spawn ${spawn.spawnNodeId} is out of bounds`);
+    assert(spawn.spawnTile.x >= 0 && spawn.spawnTile.y >= 0 && spawn.spawnTile.x < MAP_SIZE && spawn.spawnTile.y < MAP_SIZE, `${worldId}: combat spawn ${spawn.spawnNodeId} is out of bounds`);
     assert(isWalkable(logicalMap, spawn.spawnTile.x, spawn.spawnTile.y, spawn.spawnTile.z), `${worldId}: combat spawn ${spawn.spawnNodeId} is not on a walkable tile`);
 
     const spawnTileKey = `${spawn.spawnTile.x}:${spawn.spawnTile.y}:${spawn.spawnTile.z}`;
@@ -680,6 +680,36 @@ function validateCombatSpawns(worldId, manifestEntry, world, logicalMap, combatC
     const leashPath = findShortestPathLength(logicalMap, spawn.spawnTile, homeTile, { maxDistance: 24, maxVisited: 2048 });
     assert(leashPath !== null, `${worldId}: combat spawn ${spawn.spawnNodeId} home tile is unreachable from spawn`);
 
+    const enemy = enemyById.get(spawn.enemyId);
+    const isAggressive = !!(enemy && enemy.behavior && enemy.behavior.aggroType === "aggressive");
+    if (spawn.patrolRoute !== undefined && spawn.patrolRoute !== null) {
+      const patrolRoute = Array.isArray(spawn.patrolRoute) ? spawn.patrolRoute : [];
+      assert(patrolRoute.length >= 2, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute must have at least two points`);
+      let previousPatrolPoint = spawn.spawnTile;
+      for (let patrolIndex = 0; patrolIndex < patrolRoute.length; patrolIndex++) {
+        const patrolPoint = patrolRoute[patrolIndex];
+        assertFinitePoint3(patrolPoint, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] is invalid`);
+        assert(patrolPoint.z === spawn.spawnTile.z, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] must stay on the spawn plane`);
+        assert(patrolPoint.x >= 0 && patrolPoint.y >= 0 && patrolPoint.x < MAP_SIZE && patrolPoint.y < MAP_SIZE, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] is out of bounds`);
+        assert(isWalkable(logicalMap, patrolPoint.x, patrolPoint.y, patrolPoint.z), `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] is not walkable`);
+        assert(!serviceOccupancy.has(`${patrolPoint.x}:${patrolPoint.y}:${patrolPoint.z}`), `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] overlaps service occupancy`);
+        assert(!miningOccupancy.has(`${patrolPoint.x}:${patrolPoint.y}:${patrolPoint.z}`), `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] overlaps mining occupancy`);
+        const patrolLeashDistance = getChebyshevDistance(homeTile, patrolPoint);
+        assert(patrolLeashDistance !== null && patrolLeashDistance <= 12, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] is too far from home`);
+        const patrolPath = findShortestPathLength(logicalMap, previousPatrolPoint, patrolPoint, { maxDistance: 24, maxVisited: 2048 });
+        assert(patrolPath !== null, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute[${patrolIndex}] is unreachable`);
+        previousPatrolPoint = patrolPoint;
+        if (isAggressive) {
+          for (let j = 0; j < safeRouteAnchors.length; j++) {
+            const anchor = safeRouteAnchors[j];
+            if (!anchor || anchor.z !== patrolPoint.z) continue;
+            const pathDistance = findShortestPathLength(logicalMap, anchor, patrolPoint, { maxDistance: 6, maxVisited: 1024 });
+            assert(pathDistance === null || pathDistance > 5, `${worldId}: aggressive combat patrol ${spawn.spawnNodeId} is too close to safe-route anchor ${anchor.id}`);
+          }
+        }
+      }
+    }
+
     if (spawn.spawnGroupId !== undefined && spawn.spawnGroupId !== null) {
       const groupId = String(spawn.spawnGroupId).trim();
       assert(groupId, `${worldId}: combat spawn ${spawn.spawnNodeId} has an empty spawnGroupId`);
@@ -687,8 +717,6 @@ function validateCombatSpawns(worldId, manifestEntry, world, logicalMap, combatC
       groupMembers.get(groupId).push(spawn);
     }
 
-    const enemy = enemyById.get(spawn.enemyId);
-    const isAggressive = !!(enemy && enemy.behavior && enemy.behavior.aggroType === "aggressive");
     if (isAggressive) {
       for (let j = 0; j < safeRouteAnchors.length; j++) {
         const anchor = safeRouteAnchors[j];
@@ -752,7 +780,15 @@ function validateDecorProps(worldId, world) {
     "barrel",
     "weapon_rack",
     "training_dummy",
-    "archery_target"
+    "archery_target",
+    "bank_sign",
+    "shop_sign",
+    "market_awning",
+    "wall_painting",
+    "castle_banner",
+    "rubble_pile",
+    "quarry_cart",
+    "thatch_bundle"
   ]);
   for (let i = 0; i < props.length; i++) {
     const prop = props[i];
@@ -761,7 +797,7 @@ function validateDecorProps(worldId, world) {
     propIds.add(prop.propId);
     assert(allowedKinds.has(String(prop.kind || "").toLowerCase()), `${worldId}: decor prop ${prop.propId} has invalid kind ${prop.kind}`);
     assertFinitePoint3(prop, `${worldId}: decor prop ${prop.propId} has invalid coordinates`);
-    assert(prop.x >= 0 && prop.y >= 0 && prop.x < 648 && prop.y < 648, `${worldId}: decor prop ${prop.propId} is out of bounds`);
+    assert(prop.x >= 0 && prop.y >= 0 && prop.x < MAP_SIZE && prop.y < MAP_SIZE, `${worldId}: decor prop ${prop.propId} is out of bounds`);
     if (prop.facingYaw !== undefined) {
       assert(Number.isFinite(prop.facingYaw), `${worldId}: decor prop ${prop.propId} has invalid facingYaw`);
     }
@@ -851,6 +887,52 @@ function validateTerrainPathPatches(worldId, world) {
   }
 }
 
+function validateTerrainLandformPatches(worldId, world) {
+  const landforms = world && world.terrainPatches && Array.isArray(world.terrainPatches.landforms)
+    ? world.terrainPatches.landforms
+    : [];
+  const landformIds = new Set();
+  for (let i = 0; i < landforms.length; i++) {
+    const landformPatch = landforms[i];
+    assert(landformPatch && landformPatch.landformId, `${worldId}: terrain landform missing landformId`);
+    assert(!landformIds.has(landformPatch.landformId), `${worldId}: duplicate terrain landform ${landformPatch.landformId}`);
+    landformIds.add(landformPatch.landformId);
+    assert(landformPatch.kind === "ellipse" || landformPatch.kind === "path", `${worldId}: terrain landform ${landformPatch.landformId} has unsupported kind`);
+    assert(Number.isFinite(landformPatch.height), `${worldId}: terrain landform ${landformPatch.landformId} has invalid height`);
+    if (landformPatch.mode !== undefined) {
+      assert(
+        landformPatch.mode === "set" || landformPatch.mode === "raise" || landformPatch.mode === "lower",
+        `${worldId}: terrain landform ${landformPatch.landformId} has unsupported mode`
+      );
+    }
+    if (landformPatch.z !== undefined) {
+      assert(Number.isInteger(landformPatch.z) && landformPatch.z >= 0, `${worldId}: terrain landform ${landformPatch.landformId} has invalid z`);
+    }
+    if (landformPatch.tileId !== undefined) {
+      const tileId = String(landformPatch.tileId || "").trim();
+      assert(tileId && TileId[tileId] !== undefined, `${worldId}: terrain landform ${landformPatch.landformId} has unknown tileId ${tileId}`);
+    }
+    if (landformPatch.edgeSoftness !== undefined) {
+      assert(Number.isFinite(landformPatch.edgeSoftness) && landformPatch.edgeSoftness >= 0, `${worldId}: terrain landform ${landformPatch.landformId} has invalid edgeSoftness`);
+    }
+    if (landformPatch.kind === "ellipse") {
+      assert(Number.isFinite(landformPatch.cx) && Number.isFinite(landformPatch.cy), `${worldId}: terrain landform ${landformPatch.landformId} ellipse missing center`);
+      assert(Number.isFinite(landformPatch.rx) && landformPatch.rx > 0, `${worldId}: terrain landform ${landformPatch.landformId} ellipse has invalid rx`);
+      assert(Number.isFinite(landformPatch.ry) && landformPatch.ry > 0, `${worldId}: terrain landform ${landformPatch.landformId} ellipse has invalid ry`);
+      if (landformPatch.rotationRadians !== undefined) {
+        assert(Number.isFinite(landformPatch.rotationRadians), `${worldId}: terrain landform ${landformPatch.landformId} ellipse has invalid rotationRadians`);
+      }
+      continue;
+    }
+    const points = Array.isArray(landformPatch.points) ? landformPatch.points : [];
+    assert(points.length >= 2, `${worldId}: terrain landform ${landformPatch.landformId} path needs at least two points`);
+    for (let pointIndex = 0; pointIndex < points.length; pointIndex++) {
+      assertFinitePoint2(points[pointIndex], `${worldId}: terrain landform ${landformPatch.landformId} point ${pointIndex} is invalid`);
+    }
+    assert(Number.isFinite(landformPatch.pathWidth) && landformPatch.pathWidth > 0, `${worldId}: terrain landform ${landformPatch.landformId} has invalid pathWidth`);
+  }
+}
+
 function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCatalogs) {
   const { manifestEntry, world, stamps } = loadWorldContent(root, worldId);
   const manifest = loadWorldManifest(root);
@@ -873,6 +955,7 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   assert(!world.skillRoutes.woodcuttingZones, `${worldId} should not define legacy woodcuttingZones`);
   validateIslandWaterPatch(worldId, world);
   validateTerrainPathPatches(worldId, world);
+  validateTerrainLandformPatches(worldId, world);
   validateMainOverworldProtectedRoads(worldId, world);
 
   const waterBodyIds = new Set();
@@ -1022,7 +1105,7 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   validateDecorProps(worldId, world);
   validateCombatSpawns(worldId, manifestEntry, world, logicalMap, resolvedCombatCatalog);
   validateMainOverworldNpcHomeTags(worldId, world);
-  validateMainOverworldNamedNpcServices(worldId, manifestEntry, world, logicalMap, resolvedNpcMetadataCatalogs);
+  validateMainOverworldNamedNpcServices(worldId, world, logicalMap, resolvedNpcMetadataCatalogs);
   const adjacencyViolations = collectAdjacencyViolations(world, logicalMap);
   assert(adjacencyViolations.length === 0, adjacencyViolations.join("\n"));
 
@@ -1066,7 +1149,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  validateWorld,
   run,
   __test: {
     collectProtectedRoadTiles,

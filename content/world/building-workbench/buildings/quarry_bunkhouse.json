@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "buildingId": "quarry_bunkhouse",
+  "label": "Quarry Bunkhouse",
+  "category": "work_housing",
+  "archetypeId": "house",
+  "themeId": "quarry_iron",
+  "materialProfileId": "quarry_stone_slate",
+  "conditionId": "weathered",
+  "variantTags": [
+    "housing",
+    "mining",
+    "bunkhouse",
+    "resource_camp"
+  ],
+  "plan": {
+    "rows": [
+      "CWWWWWWWC",
+      "WLLLLLLLW",
+      "WLLLLLLLW",
+      "WLLLLLLLW",
+      "WLLLLLLLW",
+      "CWWWLWWWC",
+      "    L    "
+    ],
+    "legend": {
+      "C": "stone corner pier",
+      "W": "stone and timber wall",
+      "L": "heavy plank floor",
+      " ": "empty exterior"
+    }
+  },
+  "entrances": [
+    {
+      "id": "front_step",
+      "x": 4,
+      "y": 5,
+      "facing": "south",
+      "approach": {
+        "x": 4,
+        "y": 6
+      }
+    }
+  ],
+  "roof": {
+    "ridgeAxis": "x",
+    "height": 1.08,
+    "hideWhenPlayerInside": true
+  },
+  "decor": [
+    {
+      "id": "shift_barrel",
+      "kind": "barrel",
+      "x": 1,
+      "y": 2,
+      "facingYaw": 0,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "storage"
+      ]
+    },
+    {
+      "id": "bunkhouse_weapon_rack",
+      "kind": "weapon_rack",
+      "x": 7,
+      "y": 2,
+      "facingYaw": 3.141592653589793,
+      "blocksMovement": true,
+      "tags": [
+        "interior",
+        "guard"
+      ]
+    }
+  ],
+  "wallArt": [
+    {
+      "id": "mine_shift_board",
+      "surface": "north",
+      "x": 5,
+      "y": 1,
+      "motif": "mine safety board"
+    }
+  ],
+  "promotion": {
+    "stampId": "bw_quarry_bunkhouse",
+    "structureLabel": "Quarry Bunkhouse"
+  },
+  "notes": [
+    "Use beside mines or road camps where workers need housing without making another cozy cottage.",
+    "Pairs with quarry storehouse to make a resource settlement feel occupied."
+  ]
+}

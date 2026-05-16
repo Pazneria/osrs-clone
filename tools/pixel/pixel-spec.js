@@ -1,17 +1,11 @@
 const { encodePng } = require("./pixel-png");
 const PixelSource = require("./pixel-source");
+const { cloneJson: clone } = require("../lib/json-file-utils");
+const { clamp } = require("./pixel-math");
 const { getProjectRoot, loadPixelSource } = require("./pixel-project");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 
 function createBlankGrid() {
@@ -514,10 +508,6 @@ function compilePixelSpec(spec, options) {
   };
 }
 
-function renderPixelSpec(spec, options) {
-  return compilePixelSpec(spec, options).source;
-}
-
 function analyzePixelSource(source) {
   const coords = PixelSource.getSolidPixelCoords(source);
   if (coords.length === 0) {
@@ -670,7 +660,6 @@ function createReviewPngBuffer(source, options) {
 
 module.exports = {
   compilePixelSpec,
-  renderPixelSpec,
   analyzePixelSource,
   createAsciiPreview,
   createLegend,

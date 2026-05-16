@@ -1,4 +1,4 @@
-import type { AnimationChannelId, AnimationMaskId, AnimationRigSchema } from "../contracts/animation";
+import type { AnimationChannelId, AnimationRigSchema } from "../contracts/animation";
 
 function createNode(
   id: string,
@@ -86,10 +86,4 @@ export function listAnimationRigSchemas(): AnimationRigSchema[] {
 export function getAnimationRigSchema(rigId: string): AnimationRigSchema | null {
   const match = RIG_SCHEMAS.find((schema) => schema.rigId === rigId);
   return match || null;
-}
-
-export function getAnimationMaskNodeIds(rigId: string, maskId: AnimationMaskId): string[] {
-  const schema = getAnimationRigSchema(rigId);
-  if (!schema) return [];
-  return Array.isArray(schema.masks[maskId]) ? schema.masks[maskId].slice() : [];
 }

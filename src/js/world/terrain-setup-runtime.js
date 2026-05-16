@@ -173,9 +173,22 @@
         return tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP;
     }
 
+    function isNaturalTerrainTileId(tileIds, tile) {
+        return tile === tileIds.GRASS
+            || tile === tileIds.DIRT
+            || tile === tileIds.SAND
+            || tile === tileIds.SHORE
+            || tile === tileIds.STUMP;
+    }
+
+    function resolveTerrainTileId(tileIds, tileKey, fallbackTileId = null) {
+        const key = typeof tileKey === 'string' ? tileKey.trim() : '';
+        if (key && Number.isFinite(tileIds[key])) return tileIds[key];
+        return Number.isFinite(fallbackTileId) ? fallbackTileId : null;
+    }
+
     function resolvePathTileId(tileIds, pathPatch) {
-        const key = typeof pathPatch.tileId === 'string' ? pathPatch.tileId.trim() : '';
-        return key && Number.isFinite(tileIds[key]) ? tileIds[key] : tileIds.DIRT;
+        return resolveTerrainTileId(tileIds, pathPatch.tileId, tileIds.DIRT);
     }
 
     function distanceToPath(points, x, y) {
@@ -213,6 +226,155 @@
         };
     }
 
+    function getEllipseBounds(ellipse, padding, mapSize) {
+        if (!ellipse || !Number.isFinite(ellipse.cx) || !Number.isFinite(ellipse.cy) || !Number.isFinite(ellipse.rx) || !Number.isFinite(ellipse.ry)) return null;
+        const rx = Math.max(0.5, Math.abs(Number(ellipse.rx)));
+        const ry = Math.max(0.5, Math.abs(Number(ellipse.ry)));
+        const rotation = Number.isFinite(ellipse.rotationRadians) ? Number(ellipse.rotationRadians) : 0;
+        const cos = Math.cos(rotation);
+        const sin = Math.sin(rotation);
+        const halfWidth = Math.abs(rotation) <= 0.000001
+            ? rx
+            : Math.sqrt((rx * cos) ** 2 + (ry * sin) ** 2);
+        const halfHeight = Math.abs(rotation) <= 0.000001
+            ? ry
+            : Math.sqrt((rx * sin) ** 2 + (ry * cos) ** 2);
+        return {
+            xMin: Math.max(1, Math.floor(ellipse.cx - halfWidth - padding)),
+            xMax: Math.min(mapSize - 2, Math.ceil(ellipse.cx + halfWidth + padding)),
+            yMin: Math.max(1, Math.floor(ellipse.cy - halfHeight - padding)),
+            yMax: Math.min(mapSize - 2, Math.ceil(ellipse.cy + halfHeight + padding))
+        };
+    }
+
+    function getEllipseStrength(ellipse, x, y, edgeSoftness) {
+        const rx = Math.max(0.5, Math.abs(Number(ellipse.rx)));
+        const ry = Math.max(0.5, Math.abs(Number(ellipse.ry)));
+        const rotation = Number.isFinite(ellipse.rotationRadians) ? Number(ellipse.rotationRadians) : 0;
+        const cos = Math.cos(rotation);
+        const sin = Math.sin(rotation);
+        const dx = x - ellipse.cx;
+        const dy = y - ellipse.cy;
+        const localX = (dx * cos) + (dy * sin);
+        const localY = (-dx * sin) + (dy * cos);
+        const nx = localX / rx;
+        const ny = localY / ry;
+        const d = Math.sqrt(nx * nx + ny * ny);
+        if (d <= 1) return 1;
+        if (edgeSoftness <= 0) return 0;
+        const edgeDistance = (d - 1) * Math.min(rx, ry);
+        return Math.max(0, Math.min(1, 1 - (edgeDistance / edgeSoftness)));
+    }
+
+    function blendLandformHeight(currentHeight, targetHeight, strength, mode) {
+        const blend = Math.max(0, Math.min(1, strength));
+        const blended = (currentHeight * (1 - blend)) + (targetHeight * blend);
+        if (mode === 'raise') return Math.max(currentHeight, blended);
+        if (mode === 'lower') return Math.min(currentHeight, blended);
+        return blended;
+    }
+
+    function applyLandformSample(options = {}) {
+        const logicalMap = options.logicalMap;
+        const heightMap = options.heightMap;
+        const tileIds = options.tileIds || {};
+        const x = options.x;
+        const y = options.y;
+        const z = options.z;
+        const strength = Number.isFinite(options.strength) ? Number(options.strength) : 0;
+        if (strength <= 0.04 || !logicalMap[z] || !logicalMap[z][y] || !heightMap[z] || !heightMap[z][y]) return;
+        if (options.protectTownCore && typeof options.inTownCore === 'function' && options.inTownCore(x, y)) return;
+        const tile = logicalMap[z][y][x];
+        if (isWaterTileId(tileIds, tile) || !isNaturalTerrainTileId(tileIds, tile)) return;
+        if (Number.isFinite(options.tileId) && strength >= 0.16) {
+            logicalMap[z][y][x] = options.tileId;
+        }
+        const currentHeight = Number.isFinite(heightMap[z][y][x]) ? heightMap[z][y][x] : 0;
+        heightMap[z][y][x] = blendLandformHeight(currentHeight, options.targetHeight, strength, options.mode);
+    }
+
+    function applyTerrainLandformPatches(options = {}) {
+        const landformPatches = Array.isArray(options.landformPatches) ? options.landformPatches : [];
+        const logicalMap = options.logicalMap;
+        const heightMap = options.heightMap;
+        const mapSize = options.mapSize;
+        const tileIds = options.tileIds || {};
+        const inTownCore = typeof options.inTownCore === 'function' ? options.inTownCore : null;
+        const protectTownCore = options.protectTownCore !== false;
+        if (!logicalMap || !heightMap || !Number.isFinite(mapSize)) return;
+
+        for (let landformIndex = 0; landformIndex < landformPatches.length; landformIndex++) {
+            const landformPatch = landformPatches[landformIndex];
+            if (!landformPatch || !Number.isFinite(landformPatch.height)) continue;
+            const z = Number.isInteger(landformPatch.z) ? landformPatch.z : 0;
+            if (!logicalMap[z] || !heightMap[z]) continue;
+            const targetHeight = Number(landformPatch.height);
+            const mode = landformPatch.mode === 'raise' || landformPatch.mode === 'lower' ? landformPatch.mode : 'set';
+            const landformTileId = resolveTerrainTileId(tileIds, landformPatch.tileId, null);
+            const edgeSoftness = Number.isFinite(landformPatch.edgeSoftness)
+                ? Math.max(0, Number(landformPatch.edgeSoftness))
+                : 3.0;
+
+            if (landformPatch.kind === 'ellipse') {
+                const bounds = getEllipseBounds(landformPatch, edgeSoftness + 1, mapSize);
+                if (!bounds) continue;
+                for (let y = bounds.yMin; y <= bounds.yMax; y++) {
+                    if (!logicalMap[z][y] || !heightMap[z][y]) continue;
+                    for (let x = bounds.xMin; x <= bounds.xMax; x++) {
+                        applyLandformSample({
+                            heightMap,
+                            inTownCore,
+                            logicalMap,
+                            mode,
+                            protectTownCore,
+                            strength: getEllipseStrength(landformPatch, x + 0.5, y + 0.5, edgeSoftness),
+                            targetHeight,
+                            tileId: landformTileId,
+                            tileIds,
+                            x,
+                            y,
+                            z
+                        });
+                    }
+                }
+                continue;
+            }
+
+            if (landformPatch.kind === 'path') {
+                const points = Array.isArray(landformPatch.points) ? landformPatch.points : [];
+                const pathWidth = Number.isFinite(landformPatch.pathWidth) ? Math.max(0.5, Number(landformPatch.pathWidth)) : 6.0;
+                const halfWidth = pathWidth / 2;
+                const pathEdgeSoftness = Number.isFinite(landformPatch.edgeSoftness)
+                    ? Math.max(0, Number(landformPatch.edgeSoftness))
+                    : Math.max(1.0, halfWidth * 0.65);
+                const bounds = getPathBounds(points, halfWidth + pathEdgeSoftness + 1, mapSize);
+                if (!bounds) continue;
+                for (let y = bounds.yMin; y <= bounds.yMax; y++) {
+                    if (!logicalMap[z][y] || !heightMap[z][y]) continue;
+                    for (let x = bounds.xMin; x <= bounds.xMax; x++) {
+                        const dist = distanceToPath(points, x + 0.5, y + 0.5);
+                        if (dist > halfWidth + pathEdgeSoftness) continue;
+                        const edgeT = pathEdgeSoftness <= 0 ? 1 : Math.max(0, Math.min(1, 1 - ((dist - halfWidth) / pathEdgeSoftness)));
+                        applyLandformSample({
+                            heightMap,
+                            inTownCore,
+                            logicalMap,
+                            mode,
+                            protectTownCore,
+                            strength: dist <= halfWidth ? 1 : edgeT,
+                            targetHeight,
+                            tileId: landformTileId,
+                            tileIds,
+                            x,
+                            y,
+                            z
+                        });
+                    }
+                }
+            }
+        }
+    }
+
     function applyTerrainPathPatches(options = {}) {
         const pathPatches = Array.isArray(options.pathPatches) ? options.pathPatches : [];
         const logicalMap = options.logicalMap;
@@ -240,7 +402,7 @@
                 for (let x = bounds.xMin; x <= bounds.xMax; x++) {
                     const tile = logicalMap[z][y][x];
                     if (isWaterTileId(tileIds, tile)) continue;
-                    if (!(tile === tileIds.GRASS || tile === tileIds.DIRT || tile === tileIds.SHORE || tile === tileIds.STUMP)) continue;
+                    if (!isNaturalTerrainTileId(tileIds, tile)) continue;
                     const dist = distanceToPath(points, x + 0.5, y + 0.5);
                     if (dist > halfWidth + edgeSoftness) continue;
                     const edgeT = edgeSoftness <= 0 ? 1 : Math.max(0, Math.min(1, 1 - ((dist - halfWidth) / edgeSoftness)));
@@ -351,6 +513,7 @@
         const townSquareBounds = townBounds.townSquareBounds;
         const riverSampler = createRiverSampler(mapSize);
         const sampleRiverAtY = riverSampler.sampleRiverAtY;
+        const legacyRiverEnabled = options.disableLegacyRiver !== true;
         const pierConfig = isPierConfigEnabled(options.pierConfig) ? options.pierConfig : null;
         const pierDeckTopHeight = Number.isFinite(options.pierDeckTopHeight) ? options.pierDeckTopHeight : 0.28;
         const isPierSideWaterTile = typeof options.isPierSideWaterTile === 'function'
@@ -386,42 +549,44 @@
             }
         };
 
-        for (let y = 1; y < mapSize - 1; y++) {
-            const riverSample = sampleRiverAtY(y);
-            const riverCenter = riverSample.centerX;
-            const riverHalfWidth = riverSample.halfWidth;
-            const carveSpan = Math.ceil(riverHalfWidth + 4);
-            for (let x = Math.max(1, Math.floor(riverCenter - carveSpan)); x <= Math.min(mapSize - 2, Math.ceil(riverCenter + carveSpan)); x++) {
-                const d = Math.abs(x - riverCenter);
-                if (d <= riverHalfWidth) {
-                    carveWaterTile(x, y, Math.max(0, 1 - (d / Math.max(0.1, riverHalfWidth))));
+        if (legacyRiverEnabled) {
+            for (let y = 1; y < mapSize - 1; y++) {
+                const riverSample = sampleRiverAtY(y);
+                const riverCenter = riverSample.centerX;
+                const riverHalfWidth = riverSample.halfWidth;
+                const carveSpan = Math.ceil(riverHalfWidth + 4);
+                for (let x = Math.max(1, Math.floor(riverCenter - carveSpan)); x <= Math.min(mapSize - 2, Math.ceil(riverCenter + carveSpan)); x++) {
+                    const d = Math.abs(x - riverCenter);
+                    if (d <= riverHalfWidth) {
+                        carveWaterTile(x, y, Math.max(0, 1 - (d / Math.max(0.1, riverHalfWidth))));
+                    }
                 }
             }
-        }
 
-        const riverBridgeRows = [
-            Math.floor(mapSize * 0.24),
-            Math.floor(mapSize * 0.49),
-            Math.floor(mapSize * 0.73)
-        ];
-        for (let i = 0; i < riverBridgeRows.length; i++) {
-            const bridgeY = riverBridgeRows[i];
-            if (bridgeY <= 2 || bridgeY >= mapSize - 3) continue;
-            const sample = sampleRiverAtY(bridgeY);
-            const bridgeHalfSpan = Math.ceil(sample.halfWidth + Math.max(3, 2 * riverSampler.riverAxisScale));
-            const bridgeXMin = Math.max(2, Math.floor(sample.centerX - bridgeHalfSpan));
-            const bridgeXMax = Math.min(mapSize - 3, Math.ceil(sample.centerX + bridgeHalfSpan));
-            for (let x = bridgeXMin; x <= bridgeXMax; x++) {
-                logicalMap[0][bridgeY][x] = tileIds.FLOOR_WOOD;
-                heightMap[0][bridgeY][x] = pierDeckTopHeight;
-            }
-            if (bridgeXMin - 1 > 1) {
-                logicalMap[0][bridgeY][bridgeXMin - 1] = tileIds.SHORE;
-                heightMap[0][bridgeY][bridgeXMin - 1] = -0.01;
-            }
-            if (bridgeXMax + 1 < mapSize - 2) {
-                logicalMap[0][bridgeY][bridgeXMax + 1] = tileIds.SHORE;
-                heightMap[0][bridgeY][bridgeXMax + 1] = -0.01;
+            const riverBridgeRows = [
+                Math.floor(mapSize * 0.24),
+                Math.floor(mapSize * 0.49),
+                Math.floor(mapSize * 0.73)
+            ];
+            for (let i = 0; i < riverBridgeRows.length; i++) {
+                const bridgeY = riverBridgeRows[i];
+                if (bridgeY <= 2 || bridgeY >= mapSize - 3) continue;
+                const sample = sampleRiverAtY(bridgeY);
+                const bridgeHalfSpan = Math.ceil(sample.halfWidth + Math.max(3, 2 * riverSampler.riverAxisScale));
+                const bridgeXMin = Math.max(2, Math.floor(sample.centerX - bridgeHalfSpan));
+                const bridgeXMax = Math.min(mapSize - 3, Math.ceil(sample.centerX + bridgeHalfSpan));
+                for (let x = bridgeXMin; x <= bridgeXMax; x++) {
+                    logicalMap[0][bridgeY][x] = tileIds.FLOOR_WOOD;
+                    heightMap[0][bridgeY][x] = pierDeckTopHeight;
+                }
+                if (bridgeXMin - 1 > 1) {
+                    logicalMap[0][bridgeY][bridgeXMin - 1] = tileIds.SHORE;
+                    heightMap[0][bridgeY][bridgeXMin - 1] = -0.01;
+                }
+                if (bridgeXMax + 1 < mapSize - 2) {
+                    logicalMap[0][bridgeY][bridgeXMax + 1] = tileIds.SHORE;
+                    heightMap[0][bridgeY][bridgeXMax + 1] = -0.01;
+                }
             }
         }
 
@@ -446,6 +611,15 @@
                 heightMap[0][y][x] = -0.18;
             }
         }
+
+        applyTerrainLandformPatches({
+            heightMap,
+            inTownCore,
+            landformPatches: options.landformPatches,
+            logicalMap,
+            mapSize,
+            tileIds
+        });
 
         applyTerrainPathPatches({
             heightMap,
@@ -519,6 +693,7 @@
     window.WorldTerrainSetupRuntime = {
         applyBaseTerrainSetup,
         applyIslandWaterPatch,
+        applyTerrainLandformPatches,
         applyTerrainPathPatches,
         liftIslandLandAboveWaterline,
         createRiverSampler,

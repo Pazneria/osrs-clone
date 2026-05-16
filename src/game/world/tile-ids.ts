@@ -23,15 +23,17 @@ export const TileId = Object.freeze({
   WATER_DEEP: 22,
   FENCE: 23,
   WOODEN_GATE_CLOSED: 24,
-  WOODEN_GATE_OPEN: 25
+  WOODEN_GATE_OPEN: 25,
+  SAND: 26
 });
 
-export type TileIdName = keyof typeof TileId;
-export type TileIdValue = (typeof TileId)[TileIdName];
+type TileIdName = keyof typeof TileId;
+type TileIdValue = (typeof TileId)[TileIdName];
 
-export const WALKABLE_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
+const WALKABLE_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
   TileId.GRASS,
   TileId.DIRT,
+  TileId.SAND,
   TileId.FLOOR_WOOD,
   TileId.FLOOR_STONE,
   TileId.FLOOR_BRICK,
@@ -43,14 +45,15 @@ export const WALKABLE_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
   TileId.SHORE
 ]);
 
-export const WATER_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
+const WATER_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
   TileId.WATER_SHALLOW,
   TileId.WATER_DEEP
 ]);
 
-export const NATURAL_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
+const NATURAL_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
   TileId.GRASS,
   TileId.DIRT,
+  TileId.SAND,
   TileId.TREE,
   TileId.ROCK,
   TileId.STUMP,
@@ -59,15 +62,15 @@ export const NATURAL_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
   TileId.WATER_DEEP
 ]);
 
-export const TREE_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
+const TREE_TILES: ReadonlyArray<TileIdValue> = Object.freeze([
   TileId.TREE,
   TileId.STUMP
 ]);
 
-export const WALKABLE_TILE_SET = new Set<TileIdValue>(WALKABLE_TILES);
-export const WATER_TILE_SET = new Set<TileIdValue>(WATER_TILES);
-export const NATURAL_TILE_SET = new Set<TileIdValue>(NATURAL_TILES);
-export const TREE_TILE_SET = new Set<TileIdValue>(TREE_TILES);
+const WALKABLE_TILE_SET = new Set<TileIdValue>(WALKABLE_TILES);
+const WATER_TILE_SET = new Set<TileIdValue>(WATER_TILES);
+const NATURAL_TILE_SET = new Set<TileIdValue>(NATURAL_TILES);
+const TREE_TILE_SET = new Set<TileIdValue>(TREE_TILES);
 
 export function isWaterTileId(tileId: number): boolean {
   return WATER_TILE_SET.has(tileId as TileIdValue);

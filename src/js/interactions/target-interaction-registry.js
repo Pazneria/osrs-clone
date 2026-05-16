@@ -1,6 +1,5 @@
 (function () {
     const DEFAULT_PRIORITY = 100;
-    const DEFAULT_EXAMINE_TEXT = 'Nothing unusual.';
 
     function getEnemyCombatLevel(context) {
         const hitData = context && context.hitData ? context.hitData : null;
@@ -480,7 +479,6 @@
     }
 
     window.TargetInteractionRegistry = {
-        DEFAULT_EXAMINE_TEXT,
         registerTargetInteractionSpec,
         resolveOptions,
         getSpec
