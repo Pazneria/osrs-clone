@@ -197,8 +197,12 @@ function run() {
   assert(boarVisual && boarVisual.kind === "boar", "runtime should create the dedicated boar renderer from appearance kind");
   assert(Array.isArray(boarVisual.bristles) && boarVisual.bristles.length >= 7, "boar renderer should expose a chunky dorsal bristle ridge");
   assert(boarVisual.noseCap, "boar renderer should expose a dark nose cap on the snout");
-  assert(boarVisual.body.geometry.parameters.width >= 0.85 && boarVisual.body.geometry.parameters.height >= 0.49, "boar body should stay compact and heavy");
-  assert(boarVisual.shoulderHump.geometry.parameters.height >= 0.37, "boar shoulder hump should keep a heavy front silhouette");
+  assert(boarVisual.body.geometry.type === "DodecahedronGeometry", "boar body should use a faceted organic mesh instead of a cube");
+  assert(boarVisual.shoulderHump.geometry.type === "DodecahedronGeometry", "boar shoulder hump should use a faceted organic mesh instead of a cube");
+  assert(boarVisual.rump.geometry.type === "DodecahedronGeometry", "boar rump should use a faceted organic mesh instead of a cube");
+  assert(boarVisual.body.userData.boarShape === "faceted-ellipsoid", "boar body should stay rounded and faceted");
+  assert(boarVisual.body.userData.boarSize.width >= 0.85 && boarVisual.body.userData.boarSize.height >= 0.49, "boar body should stay compact and heavy");
+  assert(boarVisual.shoulderHump.userData.boarSize.height >= 0.37, "boar shoulder hump should keep a heavy front silhouette");
   assert(boarVisual.frontLeftLeg.upper.geometry.parameters.radiusTop >= 0.065, "boar front upper legs should stay thick");
   assert(boarVisual.frontLeftLeg.lower.geometry.parameters.radiusBottom >= 0.05, "boar front lower legs should stay stout");
   assert(boarVisual.backLeftLeg.upper.geometry.parameters.radiusBottom >= 0.08, "boar rear upper legs should stay thick");

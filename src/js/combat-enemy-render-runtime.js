@@ -384,11 +384,23 @@
         const noseMaterial = getEnemyLambertMaterial('boar:nose', 0x241812);
 
         const torsoGroup = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.50, 1.04), bodyMaterial);
-        const shoulderHump = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.38, 0.48), backMaterial);
-        const rump = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.34, 0.42), bodyMaterial);
+        const bodyGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        bodyGeometry.scale(0.86, 0.50, 1.04);
+        const shoulderHumpGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        shoulderHumpGeometry.scale(0.82, 0.38, 0.50);
+        const rumpGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+        rumpGeometry.scale(0.66, 0.34, 0.44);
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        const shoulderHump = new THREE.Mesh(shoulderHumpGeometry, backMaterial);
+        const rump = new THREE.Mesh(rumpGeometry, bodyMaterial);
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), bellyMaterial);
         const spine = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.72), backMaterial);
+        body.userData.boarShape = 'faceted-ellipsoid';
+        body.userData.boarSize = { width: 0.86, height: 0.50, depth: 1.04 };
+        shoulderHump.userData.boarShape = 'faceted-ellipsoid';
+        shoulderHump.userData.boarSize = { width: 0.82, height: 0.38, depth: 0.50 };
+        rump.userData.boarShape = 'faceted-ellipsoid';
+        rump.userData.boarSize = { width: 0.66, height: 0.34, depth: 0.44 };
         body.position.set(0, 0.39, 0.03);
         shoulderHump.position.set(0, 0.58, 0.20);
         rump.position.set(0, 0.34, -0.32);
