@@ -1,6 +1,129 @@
 {
   "worldId": "tutorial_island",
   "version": "2026.05.surface_v2",
+  "lore": {
+    "title": "Wayfarer's Skerry",
+    "summary": "A small teaching island maintained as a safe rehearsal for mainland life, where every path, gate, and tutor is arranged to turn basic survival into confidence before the player reaches Hearthmere.",
+    "era": "The current training compact",
+    "tone": [
+      "warm instruction",
+      "controlled danger",
+      "hands-on craft",
+      "the first step toward a larger province"
+    ],
+    "mapThesis": "The island should feel intentionally staged: a living lesson route, not a natural settlement.",
+    "currentTensions": [
+      "The tutors want the island to stay simple, but mainland factions keep asking for lessons that serve their own needs.",
+      "The exit to Hearthmere is a promise that the safe tutorial path will soon become real roads with real disputes."
+    ],
+    "pillars": [
+      {
+        "pillarId": "lesson-path",
+        "label": "Lesson Path",
+        "summary": "The island's geography exists to teach loops in order: gather, process, fight, bank, craft, and leave.",
+        "mapImplications": [
+          "Keep gates, fences, and roads readable as teaching thresholds.",
+          "Make each lesson yard visually own the tools and materials it teaches."
+        ],
+        "questHooks": [
+          "Return later to help a new tutor fix a broken lesson route.",
+          "Discover why one mainland guild keeps changing the supply crates."
+        ]
+      }
+    ]
+  },
+  "areas": [
+    {
+      "areaId": "tutorial_arrival_yard",
+      "label": "Arrival Yard",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 140,
+          "tileY": 174,
+          "tileZ": 0,
+          "note": "Start cabin door, guide, and first path."
+        },
+        "bounds": {
+          "west": 124,
+          "east": 188,
+          "north": 154,
+          "south": 204
+        },
+        "compass": "west-northwest tutorial start"
+      },
+      "summary": "The first controlled space where new players meet the guide and learn that roads, gates, and tools all have rules.",
+      "gameplayRole": "Arrival, first instructions, and tutorial gating.",
+      "environment": [
+        "start cabin",
+        "fenced lesson path",
+        "notice board",
+        "starter supplies and tutor desk"
+      ],
+      "residents": [
+        "tutorial guide",
+        "new arrivals",
+        "maintenance tutors"
+      ],
+      "adjacentAreaIds": [
+        "tutorial_practice_yards"
+      ],
+      "mapImplications": [
+        "The start cabin, desk, crate, notice board, and first path should read as one onboarding room."
+      ],
+      "tags": [
+        "tutorial",
+        "arrival",
+        "guide"
+      ]
+    },
+    {
+      "areaId": "tutorial_practice_yards",
+      "label": "Practice Yards",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 286,
+          "tileY": 300,
+          "tileZ": 0,
+          "note": "Middle of the quarry, combat, bank, crafting, and advanced practice chain."
+        },
+        "bounds": {
+          "west": 190,
+          "east": 370,
+          "north": 188,
+          "south": 352
+        },
+        "compass": "central and southeast tutorial loop"
+      },
+      "summary": "A chain of fenced work yards that compress the mainland's survival, quarry, combat, magic, rune, craft, and banking loops into a safe route.",
+      "gameplayRole": "Linear skill lessons and basic system literacy.",
+      "environment": [
+        "survival grove",
+        "teaching pond",
+        "quarry and furnace yard",
+        "combat yard",
+        "bank, rune, magic, ranged, and crafting stations"
+      ],
+      "residents": [
+        "skill instructors",
+        "bank tutor",
+        "practice-yard handlers",
+        "controlled training enemies"
+      ],
+      "adjacentAreaIds": [
+        "tutorial_arrival_yard"
+      ],
+      "mapImplications": [
+        "Each yard should be close enough for tutorial pace, but distinct enough that the player remembers what happened there."
+      ],
+      "tags": [
+        "tutorial",
+        "skills",
+        "practice"
+      ]
+    }
+  ],
   "structures": [
     {
       "structureId": "tutorial_start_cabin",

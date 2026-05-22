@@ -79,6 +79,62 @@ export interface WorldManifest {
 export interface WorldAreaDefinition {
   areaId: string;
   label: string;
+  loreName?: string;
+  scale?: string;
+  developmentStatus?: string;
+  mapPosition?: {
+    coordinateSpace: "authored_raw_486";
+    anchorTile: {
+      tileX: number;
+      tileY: number;
+      tileZ?: number;
+      note?: string;
+    };
+    bounds: {
+      west: number;
+      east: number;
+      north: number;
+      south: number;
+    };
+    compass?: string;
+  };
+  summary?: string;
+  history?: string;
+  gameplayRole?: string;
+  environment?: string[];
+  residents?: string[];
+  adjacentAreaIds?: string[];
+  containsAreaIds?: string[];
+  resourceAnchors?: Array<{
+    anchorId: string;
+    label: string;
+    tileX: number;
+    tileY: number;
+    tileZ?: number;
+    kind?: string;
+    note?: string;
+  }>;
+  questHooks?: string[];
+  mapImplications?: string[];
+  tags?: string[];
+}
+
+export interface WorldLorePillar {
+  pillarId: string;
+  label: string;
+  summary: string;
+  mapImplications?: string[];
+  questHooks?: string[];
+}
+
+export interface WorldLoreDefinition {
+  title: string;
+  summary: string;
+  era?: string;
+  tone?: string[];
+  mapThesis?: string;
+  currentTensions?: string[];
+  pillars?: WorldLorePillar[];
 }
 
 export interface StructurePlacement extends Point3 {
@@ -407,6 +463,7 @@ export interface ShowcaseTree {
 export interface WorldDefinition {
   worldId: string;
   version: string;
+  lore?: WorldLoreDefinition;
   areas?: WorldAreaDefinition[];
   structures: StructurePlacement[];
   waterBodies?: WaterBodyDefinition[];

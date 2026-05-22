@@ -251,6 +251,8 @@ function buildWorldEntries(root, skillIdSet) {
       manifestVersion: String(manifest.version || ""),
       regionFile: String(manifestEntry.regionFile || ""),
       stampIds: Array.isArray(manifestEntry.stampIds) ? manifestEntry.stampIds.slice() : [],
+      lore: world.lore && typeof world.lore === "object" ? cloneJson(world.lore) : null,
+      areas: Array.isArray(world.areas) ? cloneJson(world.areas) : [],
       serviceCount: services.length,
       structureCount: Array.isArray(world.structures) ? world.structures.length : 0,
       routeCount: countWorldRoutes(world.skillRoutes),

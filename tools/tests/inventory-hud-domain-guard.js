@@ -107,6 +107,44 @@ assert.ok(
     && manifestSource.indexOf('id: "skills-manifest"') < manifestSource.indexOf('id: "inventory"'),
   "legacy manifest should load the skill manifest before inventory.js consumes skill tile metadata"
 );
+
+const skillManifestSandbox = { window: {} };
+vm.runInNewContext(skillManifestSource, skillManifestSandbox, { filename: "skills-manifest.js" });
+const skillTiles = Array.from(skillManifestSandbox.window.SkillManifest.skillTiles || []);
+const skillTileIds = skillTiles.map((tile) => tile.skillId);
+const expectedSkillTileIds = [
+  "attack",
+  "hitpoints",
+  "mining",
+  "strength",
+  "defense",
+  "ranged",
+  "magic",
+  "woodcutting",
+  "firemaking",
+  "fishing",
+  "cooking",
+  "crafting",
+  "fletching",
+  "runecrafting",
+  "smithing"
+];
+
+assert.deepStrictEqual(
+  skillTileIds.slice().sort(),
+  expectedSkillTileIds.slice().sort(),
+  "skills menu tile manifest should include every default player skill"
+);
+assert.strictEqual(
+  new Set(skillTileIds).size,
+  skillTileIds.length,
+  "skills menu tile manifest should not duplicate skills"
+);
+for (const skillId of expectedSkillTileIds) {
+  const tile = skillTiles.find((entry) => entry.skillId === skillId);
+  assert.ok(tile && typeof tile.levelKey === "string" && tile.levelKey, `skill tile ${skillId} should expose a level key`);
+}
+
 assert.ok(
   skillPanelRuntimeSource.includes("window.SkillPanelRuntime"),
   "skill panel runtime should expose window.SkillPanelRuntime"

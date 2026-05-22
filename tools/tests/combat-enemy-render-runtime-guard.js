@@ -218,6 +218,18 @@ function run() {
   assert(boarVisual.backLeftLeg.paw.userData.pawSize.width >= 0.16 && boarVisual.backLeftLeg.paw.userData.pawSize.depth >= 0.18, "boar rear hooves should stay broad");
   assert(Array.isArray(boarVisual.hoofToePairs) && boarVisual.hoofToePairs.length === 4, "boar renderer should expose cloven toe blocks for each hoof");
   assert(boarVisual.hoofToePairs[0].length === 3 && boarVisual.hoofToePairs[0][0].position.z >= 0.08, "boar hoof toe blocks should sit at the front of the hoof");
+  runtime.updateEnemyVisualRenderer({
+    enemyState: { runtimeId: "boar-visual", enemyId: "enemy_boar", attackTriggerAt: 100, hitReactionTriggerAt: 0 },
+    renderer: boarVisual,
+    frameNow: 260,
+    idlePhase: 0.7,
+    visuallyMoving: true,
+    currentVisualX: 1.5,
+    currentVisualY: 2.5
+  });
+  assert(Number.isFinite(boarVisual.torsoGroup.position.y), "boar pose update should move the torso group");
+  assert(Number.isFinite(boarVisual.headGroup.rotation.x), "boar pose update should animate the head group");
+  assert(Number.isFinite(boarVisual.frontLeftLeg.root.position.y), "boar pose update should animate leg rig roots");
 
   const wolfVisual = runtime.createEnemyVisualRenderer({
     enemyState: { runtimeId: "wolf-visual", enemyId: "enemy_wolf", x: 1, y: 2, z: 0, facingYaw: 0 },

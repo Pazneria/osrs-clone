@@ -62,6 +62,15 @@ function run() {
 
   const mainOverworld = worldById.get("main_overworld");
   assert(mainOverworld && Array.isArray(mainOverworld.relatedEnemyIds) && mainOverworld.relatedEnemyIds.includes("enemy_wolf"), "main_overworld should expose authored enemy presence");
+  assert(mainOverworld.lore && mainOverworld.lore.title === "The Hearthmere Marches", "main_overworld should expose canonical world lore");
+  assert(Array.isArray(mainOverworld.areas) && mainOverworld.areas.some((area) => area && area.areaId === "old_roadhold" && area.summary), "main_overworld should expose canonical area lore");
+  const roadholdArea = mainOverworld.areas.find((area) => area && area.areaId === "old_roadhold");
+  assert(roadholdArea.mapPosition && roadholdArea.mapPosition.anchorTile.tileX === 434 && roadholdArea.mapPosition.anchorTile.tileY === 132, "main_overworld should expose canonical raw area coordinates");
+  const westmereFens = mainOverworld.areas.find((area) => area && area.areaId === "westmere_fens");
+  assert(westmereFens && westmereFens.scale === "macro-region" && westmereFens.mapPosition.bounds.west === 0 && westmereFens.mapPosition.bounds.south === 486, "main_overworld should expose full-map macro region bounds");
+
+  const tutorialIsland = worldById.get("tutorial_island");
+  assert(tutorialIsland && tutorialIsland.lore && tutorialIsland.lore.title === "Wayfarer's Skerry", "tutorial island should expose canonical tutorial lore");
 
   const duplicateIdBundle = cloneJson(bundle);
   duplicateIdBundle.items[1].itemId = duplicateIdBundle.items[0].itemId;

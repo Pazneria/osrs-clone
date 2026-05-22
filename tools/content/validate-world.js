@@ -933,6 +933,148 @@ function validateTerrainLandformPatches(worldId, world) {
   }
 }
 
+function assertStringArray(worldId, ownerId, fieldName, values) {
+  if (values === undefined) return;
+  assert(Array.isArray(values), `${worldId}: ${ownerId} ${fieldName} must be an array`);
+  for (let i = 0; i < values.length; i++) {
+    assert(normalizeString(values[i]), `${worldId}: ${ownerId} ${fieldName}[${i}] must be a non-empty string`);
+  }
+}
+
+function assertMapTile(worldId, ownerId, point, fieldName) {
+  assert(point && typeof point === "object", `${worldId}: ${ownerId} missing ${fieldName}`);
+  assert(Number.isInteger(point.tileX) && point.tileX >= 0 && point.tileX < MAP_SIZE, `${worldId}: ${ownerId} ${fieldName}.tileX is outside the authored map`);
+  assert(Number.isInteger(point.tileY) && point.tileY >= 0 && point.tileY < MAP_SIZE, `${worldId}: ${ownerId} ${fieldName}.tileY is outside the authored map`);
+  if (point.tileZ !== undefined) {
+    assert(Number.isInteger(point.tileZ) && point.tileZ >= 0, `${worldId}: ${ownerId} ${fieldName}.tileZ is invalid`);
+  }
+  if (point.note !== undefined) {
+    assert(normalizeString(point.note), `${worldId}: ${ownerId} ${fieldName}.note must be a non-empty string`);
+  }
+}
+
+function assertTileInsideBounds(worldId, ownerId, point, bounds, fieldName) {
+  if (!bounds) return;
+  assert(point.tileX >= bounds.west && point.tileX <= bounds.east, `${worldId}: ${ownerId} ${fieldName}.tileX must sit inside bounds`);
+  assert(point.tileY >= bounds.north && point.tileY <= bounds.south, `${worldId}: ${ownerId} ${fieldName}.tileY must sit inside bounds`);
+}
+
+function validateWorldLoreMetadata(worldId, world) {
+  const lore = world && world.lore;
+  if (lore === undefined) return;
+  assert(lore && typeof lore === "object" && !Array.isArray(lore), `${worldId}: lore must be an object`);
+  ["title", "summary"].forEach((fieldName) => {
+    assert(normalizeString(lore[fieldName]), `${worldId}: lore.${fieldName} must be a non-empty string`);
+  });
+  ["era", "mapThesis"].forEach((fieldName) => {
+    if (lore[fieldName] !== undefined) {
+      assert(normalizeString(lore[fieldName]), `${worldId}: lore.${fieldName} must be a non-empty string`);
+    }
+  });
+  assertStringArray(worldId, "lore", "tone", lore.tone);
+  assertStringArray(worldId, "lore", "currentTensions", lore.currentTensions);
+
+  const pillarIds = new Set();
+  const pillars = Array.isArray(lore.pillars) ? lore.pillars : [];
+  if (lore.pillars !== undefined) {
+    assert(Array.isArray(lore.pillars), `${worldId}: lore.pillars must be an array`);
+  }
+  for (let i = 0; i < pillars.length; i++) {
+    const pillar = pillars[i];
+    const ownerId = `lore pillar ${i}`;
+    assert(pillar && typeof pillar === "object", `${worldId}: ${ownerId} must be an object`);
+    const pillarId = normalizeString(pillar.pillarId);
+    assert(pillarId, `${worldId}: ${ownerId} missing pillarId`);
+    assert(!pillarIds.has(pillarId), `${worldId}: duplicate lore pillar ${pillarId}`);
+    pillarIds.add(pillarId);
+    assert(normalizeString(pillar.label), `${worldId}: lore pillar ${pillarId} missing label`);
+    assert(normalizeString(pillar.summary), `${worldId}: lore pillar ${pillarId} missing summary`);
+    assertStringArray(worldId, `lore pillar ${pillarId}`, "mapImplications", pillar.mapImplications);
+    assertStringArray(worldId, `lore pillar ${pillarId}`, "questHooks", pillar.questHooks);
+  }
+}
+
+function validateWorldAreaMetadata(worldId, world) {
+  const areas = world && world.areas;
+  if (areas === undefined) return;
+  assert(Array.isArray(areas), `${worldId}: areas must be an array`);
+
+  const areaIds = new Set();
+  for (let i = 0; i < areas.length; i++) {
+    const area = areas[i];
+    assert(area && typeof area === "object", `${worldId}: area ${i} must be an object`);
+    const areaId = normalizeString(area.areaId);
+    assert(areaId, `${worldId}: area ${i} missing areaId`);
+    assert(!areaIds.has(areaId), `${worldId}: duplicate areaId ${areaId}`);
+    areaIds.add(areaId);
+    assert(normalizeString(area.label), `${worldId}: area ${areaId} missing label`);
+  }
+
+  for (let i = 0; i < areas.length; i++) {
+    const area = areas[i];
+    const areaId = normalizeString(area.areaId);
+    ["loreName", "scale", "developmentStatus", "summary", "history", "gameplayRole"].forEach((fieldName) => {
+      if (area[fieldName] !== undefined) {
+        assert(normalizeString(area[fieldName]), `${worldId}: area ${areaId} ${fieldName} must be a non-empty string`);
+      }
+    });
+    assertStringArray(worldId, `area ${areaId}`, "environment", area.environment);
+    assertStringArray(worldId, `area ${areaId}`, "residents", area.residents);
+    assertStringArray(worldId, `area ${areaId}`, "questHooks", area.questHooks);
+    assertStringArray(worldId, `area ${areaId}`, "mapImplications", area.mapImplications);
+    assertStringArray(worldId, `area ${areaId}`, "tags", area.tags);
+
+    ["adjacentAreaIds", "containsAreaIds"].forEach((fieldName) => {
+      if (area[fieldName] === undefined) return;
+      assert(Array.isArray(area[fieldName]), `${worldId}: area ${areaId} ${fieldName} must be an array`);
+      for (let j = 0; j < area[fieldName].length; j++) {
+        const linkedAreaId = normalizeString(area[fieldName][j]);
+        assert(linkedAreaId, `${worldId}: area ${areaId} ${fieldName}[${j}] must be a non-empty area id`);
+        assert(linkedAreaId !== areaId, `${worldId}: area ${areaId} ${fieldName}[${j}] must not reference itself`);
+        assert(areaIds.has(linkedAreaId), `${worldId}: area ${areaId} references unknown area ${linkedAreaId}`);
+      }
+    });
+
+    if (area.mapPosition !== undefined) {
+      const mapPosition = area.mapPosition;
+      assert(mapPosition && typeof mapPosition === "object", `${worldId}: area ${areaId} mapPosition must be an object`);
+      assert(mapPosition.coordinateSpace === "authored_raw_486", `${worldId}: area ${areaId} has unsupported mapPosition coordinateSpace`);
+      assertMapTile(worldId, `area ${areaId}`, mapPosition.anchorTile, "anchorTile");
+      const bounds = mapPosition.bounds;
+      assert(bounds && typeof bounds === "object", `${worldId}: area ${areaId} missing mapPosition bounds`);
+      assert(Number.isInteger(bounds.west) && bounds.west >= 0 && bounds.west < MAP_SIZE, `${worldId}: area ${areaId} bounds.west is outside the authored map`);
+      assert(Number.isInteger(bounds.east) && bounds.east >= 0 && bounds.east <= MAP_SIZE, `${worldId}: area ${areaId} bounds.east is outside the authored map`);
+      assert(Number.isInteger(bounds.north) && bounds.north >= 0 && bounds.north < MAP_SIZE, `${worldId}: area ${areaId} bounds.north is outside the authored map`);
+      assert(Number.isInteger(bounds.south) && bounds.south >= 0 && bounds.south <= MAP_SIZE, `${worldId}: area ${areaId} bounds.south is outside the authored map`);
+      assert(bounds.west < bounds.east && bounds.north < bounds.south, `${worldId}: area ${areaId} mapPosition bounds are inverted`);
+      assertTileInsideBounds(worldId, `area ${areaId}`, mapPosition.anchorTile, bounds, "anchorTile");
+      if (mapPosition.compass !== undefined) {
+        assert(normalizeString(mapPosition.compass), `${worldId}: area ${areaId} mapPosition.compass must be a non-empty string`);
+      }
+    }
+
+    const resourceAnchors = area.resourceAnchors;
+    if (resourceAnchors !== undefined) {
+      assert(Array.isArray(resourceAnchors), `${worldId}: area ${areaId} resourceAnchors must be an array`);
+      const anchorIds = new Set();
+      for (let j = 0; j < resourceAnchors.length; j++) {
+        const anchor = resourceAnchors[j];
+        assert(anchor && typeof anchor === "object", `${worldId}: area ${areaId} resource anchor ${j} must be an object`);
+        const anchorId = normalizeString(anchor.anchorId);
+        assert(anchorId, `${worldId}: area ${areaId} resource anchor ${j} missing anchorId`);
+        assert(!anchorIds.has(anchorId), `${worldId}: area ${areaId} duplicate resource anchor ${anchorId}`);
+        anchorIds.add(anchorId);
+        assert(normalizeString(anchor.label), `${worldId}: area ${areaId} resource anchor ${anchorId} missing label`);
+        assertMapTile(worldId, `area ${areaId} resource anchor ${anchorId}`, anchor, "tile");
+        assertTileInsideBounds(worldId, `area ${areaId} resource anchor ${anchorId}`, anchor, area.mapPosition && area.mapPosition.bounds, "tile");
+        if (anchor.kind !== undefined) {
+          assert(normalizeString(anchor.kind), `${worldId}: area ${areaId} resource anchor ${anchorId} kind must be a non-empty string`);
+        }
+      }
+    }
+  }
+}
+
 function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCatalogs) {
   const { manifestEntry, world, stamps } = loadWorldContent(root, worldId);
   const manifest = loadWorldManifest(root);
@@ -956,6 +1098,8 @@ function validateWorld(root, worldId, shopEconomy, combatCatalog, npcMetadataCat
   validateIslandWaterPatch(worldId, world);
   validateTerrainPathPatches(worldId, world);
   validateTerrainLandformPatches(worldId, world);
+  validateWorldLoreMetadata(worldId, world);
+  validateWorldAreaMetadata(worldId, world);
   validateMainOverworldProtectedRoads(worldId, world);
 
   const waterBodyIds = new Set();
@@ -1152,6 +1296,8 @@ module.exports = {
   run,
   __test: {
     collectProtectedRoadTiles,
+    validateWorldAreaMetadata,
+    validateWorldLoreMetadata,
     validateMainOverworldNpcHomeTags,
     validateMainOverworldProtectedRoads
   }

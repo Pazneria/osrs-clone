@@ -745,6 +745,29 @@ function setSparseTile(map, x, y, z, tileId) {
       && starterDefinition.areas.some((area) => area && area.areaId === "starter_town" && area.label === "Starter Town"),
     "main_overworld should preserve Starter Town as an authored area"
   );
+  assert.strictEqual(starterDefinition.lore.title, "The Hearthmere Marches", "main_overworld should preserve authored world lore metadata");
+  assert.deepStrictEqual(starterDefinition.lore, starterTown.lore, "main_overworld lore metadata should survive the authoring clone path unchanged");
+  const oldRoadholdArea = starterDefinition.areas.find((area) => area && area.areaId === "old_roadhold");
+  const rawOldRoadholdArea = starterTown.areas.find((area) => area && area.areaId === "old_roadhold");
+  assert.ok(oldRoadholdArea, "main_overworld should preserve Old Roadhold as an authored area");
+  assert.ok(rawOldRoadholdArea, "raw main_overworld should author Old Roadhold area metadata");
+  assert.deepStrictEqual(
+    {
+      coordinateSpace: oldRoadholdArea.mapPosition.coordinateSpace,
+      tileX: oldRoadholdArea.mapPosition.anchorTile.tileX,
+      tileY: oldRoadholdArea.mapPosition.anchorTile.tileY,
+      west: oldRoadholdArea.mapPosition.bounds.west,
+      south: oldRoadholdArea.mapPosition.bounds.south
+    },
+    {
+      coordinateSpace: rawOldRoadholdArea.mapPosition.coordinateSpace,
+      tileX: rawOldRoadholdArea.mapPosition.anchorTile.tileX,
+      tileY: rawOldRoadholdArea.mapPosition.anchorTile.tileY,
+      west: rawOldRoadholdArea.mapPosition.bounds.west,
+      south: rawOldRoadholdArea.mapPosition.bounds.south
+    },
+    "world definition area map positions should remain in authored raw coordinates"
+  );
 
   assert.deepStrictEqual(
     { x: scaledCastle.x, y: scaledCastle.y },

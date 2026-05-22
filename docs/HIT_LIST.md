@@ -512,34 +512,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-027 - Skills menu icon opens dedicated progression view
-- Status: Fixed
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links: `index.html`, `src/js/inventory.js`
-- Repro:
-  1. Click skill icons in skills menu.
-- Expected: Each icon opens its skill's dedicated progression menu/view.
-- Actual: Dedicated progression view open behavior is missing/incomplete.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Define per-skill view routing contract.
-  2. Wire skill icon click handlers to dedicated views.
-  3. Verify back navigation and state persistence.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Expanded the skills popup into a dedicated progression panel with per-skill focus text and an unlock timeline section.
-  - Added spec-driven milestone extraction from each skill's runtime spec (`nodeTable`, `recipeSet`, `pouchTable`) so each skill tile now resolves to unique progression content.
-  - Hardened panel refresh behavior so only the actively viewed skill updates the panel, preventing cross-skill overwrite noise.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-029 - Fletching cancel-on-click behavior
 - Status: Fixed
 - Severity: S1
@@ -744,37 +716,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1.
 - Verification:
   - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-036 - Context menu behavior is a monolithic hard-coded branch
-- Status: Fixed
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links: `src/js/input-render.js`, `src/js/interactions/target-interaction-registry.js`, `src/js/skills/runtime.js`, `index.html`, `tools/tests/context-menu-registry-guard.js`, `package.json`
-- Repro:
-  1. Inspect `onContextMenu` in `src/js/input-render.js`.
-  2. Observe a long `if/else` chain keyed on `hitData.type` with embedded action labels/messages.
-  3. Observe target-specific exceptions (for example Shopkeeper/general_store) inside UI-layer logic.
-- Expected: Interactions should resolve from a registry/manifest so new target types can be added without expanding a single branch.
-- Actual: UI interaction behavior is centralized in a brittle conditional block with mixed gameplay/UI responsibilities.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Define a target interaction registry contract (`actions`, `examine`, `priority`, `guards`).
-  2. Migrate existing target handlers into per-domain modules.
-  3. Keep `onContextMenu` as a generic renderer over resolved actions.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added a dedicated target interaction registry module (`src/js/interactions/target-interaction-registry.js`) with per-target specs using the `actions`/`examine`/`priority`/`guards` contract and a registration API for new target types.
-  - Refactored `onContextMenu` in `src/js/input-render.js` to stay skill-first (`SkillRuntime.getSkillContextMenuOptions`) and then resolve non-skill world interactions through `TargetInteractionRegistry.resolveOptions(...)`.
-  - Moved hard-coded target interaction behavior (tree, rock, fire, smithing stations, NPCs, doors, ground items, etc.) out of the UI branch chain and into registry-owned handlers while preserving existing option labels/behavior.
-  - Added a context-menu regression guard test (`tools/tests/context-menu-registry-guard.js`) and wired it into `npm test`.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
@@ -1986,11 +1927,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-010 - Minimap destination flag persistence
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/core.js`, `src/js/input-render.js`, `src/js/world.js`
+- Links: `src/js/world/map-hud-runtime.js`, `src/game/render/snapshot.ts`, `tools/tests/render-input-shell-guard.js`
 - Repro:
   1. Click minimap destination.
   2. Observe marker lifecycle.
@@ -2007,24 +1948,25 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Added persistent `minimapDestination` state for walk targets, independent from short-lived click markers.
   - Destination state is now cleared only on arrival, cancellation by non-walk action, or immediate unreachable/no-path outcomes.
   - Minimap rendering now draws a dedicated flag glyph at the destination tile and keeps it visible across zoom/drag/camera updates.
+  - Extended `tools/tests/render-input-shell-guard.js` to lock destination persistence across render snapshots, clear-on-arrival behavior, and minimap flag rendering handoff.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
 ### HIT-012 - Menu input behavior (middle-click outside)
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: WORLD
 - Source: Manual
-- Links: `src/js/inventory.js`, `src/js/skills/smithing/index.js`, `src/js/skills/fletching/index.js`
+- Links: `src/js/inventory.js`, `src/js/skills/smithing/index.js`, `src/js/skills/fletching/index.js`, `tools/tests/main-ui-pointer-guard.js`
 - Repro:
   1. Open menu.
   2. Click scroll wheel/middle mouse outside menu.
 - Expected: Menu remains open on middle-click outside.
-- Actual: Menu closed unexpectedly on non-left clicks.
+- Actual: Skill, smithing, and fletching menu outside-close handlers now ignore non-left clicks before running their close paths.
 - Frequency: Often
 - Owner: Pair
 - Plan v1:
@@ -2035,23 +1977,24 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Fix Notes:
   - Outside-close handlers for skill panel, smithing UI, and fletching UI now ignore non-left clicks.
   - Escape-key and explicit close buttons remain unchanged.
+  - `tools/tests/main-ui-pointer-guard.js` now locks the left-button guard before each outside-close call.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
 ### HIT-019 - Smithing menu remove "no output space" message
-- Status: Fixed
+- Status: Closed
 - Severity: S3
 - Area: SMI
 - Source: Manual
-- Links: `src/js/skills/smithing/index.js`
+- Links: `src/js/skills/smithing/index.js`, `tools/tests/smithing-runtime-tests.js`
 - Repro:
   1. Open smithing menu with constrained inventory.
 - Expected: Message is removed from smithing menus.
-- Actual: `No output space` row issue text was shown in smithing menu.
+- Actual: Smithing menu issue rows no longer show output-capacity text.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
@@ -2062,10 +2005,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 - Fix Notes:
   - Removed `No output space` from smithing menu issue generation only.
   - Start/runtime output-capacity gating and warning chat remain in place.
+  - Added `tools/tests/smithing-runtime-tests.js` to verify the menu stays free of output-capacity issue copy while start gating still warns.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
@@ -2095,34 +2039,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1.
 - Verification:
   - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-026 - Skills menu completeness (all skills present)
-- Status: Fixed
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links: `index.html`, `src/js/world.js`
-- Repro:
-  1. Open skills menu.
-- Expected: All skills are present in skills menu.
-- Actual: Crafting and fletching were missing from skills menu.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Compare skills menu entries against skill manifest.
-  2. Add missing skills/icons.
-  3. Verify menu layout and interactions.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added Crafting and Fletching skill tiles to the stats/skills menu.
-  - Extended `refreshSkillUi` key mapping so both tiles receive live level updates.
-  - Existing tile-click progression panel behavior is reused without additional routing changes.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
@@ -2268,6 +2184,97 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
+
+### HIT-036 - Context menu behavior is a monolithic hard-coded branch
+- Status: Closed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `src/js/input-render.js`, `src/js/input-target-interaction-runtime.js`, `src/js/interactions/target-interaction-registry.js`, `src/js/skills/runtime.js`, `index.html`, `tools/tests/context-menu-registry-guard.js`, `package.json`
+- Repro:
+  1. Inspect `onContextMenu` in `src/js/input-render.js`.
+  2. Observe a long `if/else` chain keyed on `hitData.type` with embedded action labels/messages.
+  3. Observe target-specific exceptions (for example Shopkeeper/general_store) inside UI-layer logic.
+- Expected: Interactions should resolve from a registry/manifest so new target types can be added without expanding a single branch.
+- Actual: `onContextMenu` now resolves skill-owned context options first, then delegates non-skill world targets through `InputTargetInteractionRuntime` and `TargetInteractionRegistry` specs instead of a target-type branch chain.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Define a target interaction registry contract (`actions`, `examine`, `priority`, `guards`).
+  2. Migrate existing target handlers into per-domain modules.
+  3. Keep `onContextMenu` as a generic renderer over resolved actions.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a dedicated target interaction registry module (`src/js/interactions/target-interaction-registry.js`) with per-target specs using the `actions`/`examine`/`priority`/`guards` contract and a registration API for new target types.
+  - Refactored `onContextMenu` in `src/js/input-render.js` to stay skill-first (`SkillRuntime.getSkillContextMenuOptions`) and then resolve non-skill world interactions through `TargetInteractionRegistry.resolveOptions(...)`.
+  - Moved hard-coded target interaction behavior (tree, rock, fire, smithing stations, NPCs, doors, ground items, etc.) out of the UI branch chain and into registry-owned handlers while preserving existing option labels/behavior.
+  - Added a context-menu regression guard test (`tools/tests/context-menu-registry-guard.js`) and wired it into `npm test`.
+  - Verified `tools/tests/context-menu-registry-guard.js` directly on 2026-05-21.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-026 - Skills menu completeness (all skills present)
+- Status: Closed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/world.js`, `src/js/skills/manifest.js`, `src/js/skill-progress-runtime.js`, `tools/tests/inventory-hud-domain-guard.js`
+- Repro:
+  1. Open skills menu.
+- Expected: All skills are present in skills menu.
+- Actual: The skills menu now renders every default player skill from `SkillManifest`, including Crafting and Fletching, with level keys for live UI refresh.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Compare skills menu entries against skill manifest.
+  2. Add missing skills/icons.
+  3. Verify menu layout and interactions.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added Crafting and Fletching skill tiles to the stats/skills menu.
+  - Extended `refreshSkillUi` key mapping so both tiles receive live level updates.
+  - Existing tile-click progression panel behavior is reused without additional routing changes.
+  - Added `tools/tests/inventory-hud-domain-guard.js` coverage that executes `SkillManifest` and locks the default skill-tile set against missing or duplicated entries.
+  - Verified targeted HUD/skill-panel guards and production build on 2026-05-20.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-027 - Skills menu icon opens dedicated progression view
+- Status: Closed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/inventory.js`
+- Repro:
+  1. Click skill icons in skills menu.
+- Expected: Each icon opens its skill's dedicated progression menu/view.
+- Actual: Each skill icon now opens its dedicated progression view with skill-specific summary and unlock timeline content.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Define per-skill view routing contract.
+  2. Wire skill icon click handlers to dedicated views.
+  3. Verify back navigation and state persistence.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Expanded the skills popup into a dedicated progression panel with per-skill focus text and an unlock timeline section.
+  - Added spec-driven milestone extraction from each skill's runtime spec (`nodeTable`, `recipeSet`, `pouchTable`) so each skill tile now resolves to unique progression content.
+  - Hardened panel refresh behavior so only the actively viewed skill updates the panel, preventing cross-skill overwrite noise.
+  - Verified the skill-panel runtime, render runtime, Inventory/HUD domain tests, Inventory/HUD domain guard, and production build on 2026-05-19.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-011 - Ground item stack count indicator (n)
 - Status: Closed

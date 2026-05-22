@@ -2,6 +2,8 @@
 
 This plan uses early/free-to-play OSRS mainland density as reference grammar, not as a layout to clone. Do not reuse RuneScape or Gielinor names, town identities, quest setups, or exact relative placements. The goal is to learn how a compact MMO overworld spends space, then build an original 16x16 mainland around our own regions.
 
+For player-facing canon, quest seeds, and the map-first lore workflow, see `docs/WORLD_CANON.md`. This file stays focused on density, spacing cadence, and world authoring patterns.
+
 ## Reference Notes
 
 Reference sources:

@@ -297,6 +297,7 @@ function run() {
     beginPath: () => canvasOps.push(["beginPath"]),
     arc: (...args) => canvasOps.push(["arc", ...args]),
     fill: () => canvasOps.push(["fill"]),
+    closePath: () => canvasOps.push(["closePath"]),
     moveTo: (...args) => canvasOps.push(["moveTo", ...args]),
     lineTo: (...args) => canvasOps.push(["lineTo", ...args]),
     stroke: () => canvasOps.push(["stroke"]),
@@ -320,11 +321,36 @@ function run() {
     createElement: () => makeCanvas(),
     getElementById: (id) => (id === "minimap" || id === "world-map-canvas" || id === "world-map-panel") ? makeCanvas() : null
   };
+  const minimapRenderSnapshots = [];
   global.window = {
     document: fakeDocument,
     devicePixelRatio: 1,
     RenderRuntime: {
-      buildRenderSnapshot: (options) => Object.assign({ bridged: true }, options)
+      buildRenderSnapshot: (options) => Object.assign({ bridged: true }, options),
+      buildMinimapSnapshot: (options) => {
+        minimapRenderSnapshots.push(options.snapshot);
+        return {
+          canvasCenter: options.canvasSize / 2,
+          pixelsPerTile: (options.canvasSize / 100) * options.zoom,
+          clickMarkers: [],
+          groundItems: [],
+          playerDot: { x: 1.5, y: 1.5, radius: 0.5 },
+          facingLine: { fromX: 1.5, fromY: 1.5, toX: 1.5, toY: 1.1, lineWidth: 0.5 },
+          destinationFlag: options.snapshot.minimapDestination
+            ? {
+                x: options.snapshot.minimapDestination.x + 0.5,
+                y: options.snapshot.minimapDestination.y + 0.5,
+                poleHeight: 1,
+                poleBottomY: options.snapshot.minimapDestination.y + 0.75,
+                poleTopY: options.snapshot.minimapDestination.y + 0.25,
+                flagWidth: 0.4,
+                flagHeight: 0.25,
+                lineWidth: 0.25
+              }
+            : null,
+          dragRect: null
+        };
+      }
     }
   };
   vm.runInThisContext(mapHudSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
@@ -366,6 +392,17 @@ function run() {
   };
   assert(runtime.updateMinimapCanvas(runtimeContext).width === 2, "world map HUD runtime should redraw the offscreen map canvas");
   assert(runtime.buildHudRenderSnapshot(runtimeContext).worldId === "main_overworld", "world map HUD runtime should build a render snapshot through the bridge");
+  assert.deepStrictEqual(runtime.setMinimapDestination(0, 1, 0), { x: 0, y: 1, z: 0 }, "minimap destination should store valid walk targets");
+  assert.deepStrictEqual(runtime.buildHudRenderSnapshot(runtimeContext).minimapDestination, { x: 0, y: 1, z: 0 }, "render snapshots should carry the persistent minimap destination");
+  assert.deepStrictEqual(runtime.buildHudRenderSnapshot(runtimeContext).minimapDestination, { x: 0, y: 1, z: 0 }, "minimap destination should persist across render snapshots");
+  assert.strictEqual(runtime.clearMinimapDestinationIfReached({ x: 1, y: 1, z: 0 }), false, "minimap destination should remain while the player has not reached it");
+  assert.deepStrictEqual(runtime.getMinimapDestination(), { x: 0, y: 1, z: 0 }, "unreached minimap destination should remain available");
+  assert.strictEqual(runtime.clearMinimapDestinationIfReached({ x: 0, y: 1, z: 0 }), true, "minimap destination should clear when the player reaches it");
+  assert.strictEqual(runtime.getMinimapDestination(), null, "reached minimap destination should be cleared");
+  runtime.setMinimapDestination(0, 1, 0);
+  runtime.updateMinimap(1000, true, runtimeContext);
+  assert.deepStrictEqual(minimapRenderSnapshots.at(-1).minimapDestination, { x: 0, y: 1, z: 0 }, "minimap rendering should receive the persistent destination flag target");
+  assert(canvasOps.some((op) => op[0] === "closePath"), "minimap rendering should draw the destination flag glyph");
 
   console.log("Render/input shell guard passed.");
 }

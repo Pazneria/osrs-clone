@@ -1,10 +1,1075 @@
 {
   "worldId": "main_overworld",
   "version": "2026.03.m1",
+  "lore": {
+    "title": "The Hearthmere Marches",
+    "summary": "A road-bound frontier province where old castle law, quarry wealth, forest craft, and dryland trade are all trying to hold together after the eastern road burned and the desert route reopened.",
+    "era": "The years after the Roadhold Fire",
+    "tone": [
+      "grounded frontier",
+      "useful local mysteries",
+      "settlements with work to do",
+      "history visible in roads, ruins, and trade routes"
+    ],
+    "mapThesis": "Every major road should answer a historical question: who built it, who profits from it now, and what broke along it.",
+    "currentTensions": [
+      "The castle wants the roads patrolled, but the outer settlements remember being left alone during the Roadhold Fire.",
+      "South Quarry controls the stone and metal work that every town needs, giving its foremen quiet political power.",
+      "North Woodwatch guards timber rights and bowcraft knowledge while resisting market taxes from the south road.",
+      "Market Crossing is rich enough to buy peace, but not old enough to command respect.",
+      "Sunspur Gate is reopening dryland trade before the old road wounds have healed."
+    ],
+    "pillars": [
+      {
+        "pillarId": "road-memory",
+        "label": "Road Memory",
+        "summary": "Roads are the oldest institutions in the Marches. Gates, bridges, toll stones, and abandoned camps should carry the memory of past promises.",
+        "mapImplications": [
+          "Place history at thresholds: gatehouses, bridges, forks, and worn descents.",
+          "Roadside ruins should imply a route that mattered, not random damage."
+        ],
+        "questHooks": [
+          "Find who abandoned Old Roadhold during the fire.",
+          "Restore a broken road marker to unlock safer travel."
+        ]
+      },
+      {
+        "pillarId": "work-makes-place",
+        "label": "Work Makes Place",
+        "summary": "Each settlement exists because of a labor loop: stone, timber, fish, craft, banking, trade, or training.",
+        "mapImplications": [
+          "Put resource sites near the settlements that depend on them.",
+          "Give shops and NPC homes physical proximity to the work they explain."
+        ],
+        "questHooks": [
+          "Settle a dispute over quarry deliveries.",
+          "Trace poor bow stock back to a protected grove."
+        ]
+      },
+      {
+        "pillarId": "small-law",
+        "label": "Small Law",
+        "summary": "The Marches are governed less by grand kingdoms than by local oaths, toll rights, guild favors, and people who know which road is safe.",
+        "mapImplications": [
+          "Use notice boards, house tags, small guard posts, and toll signs as story objects.",
+          "Let local rules change by district instead of making every town feel centrally managed."
+        ],
+        "questHooks": [
+          "Choose whether to enforce a toll, forgive it, or expose who profits from it.",
+          "Carry witness marks between towns to prove an agreement."
+        ]
+      }
+    ]
+  },
   "areas": [
     {
       "areaId": "starter_town",
-      "label": "Starter Town"
+      "label": "Starter Town",
+      "loreName": "Hearthmere Castle Ward",
+      "scale": "settlement",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 205,
+          "tileY": 210,
+          "tileZ": 0,
+          "note": "Castle pond and default mainland arrival cluster."
+        },
+        "bounds": {
+          "west": 160,
+          "east": 245,
+          "north": 175,
+          "south": 250
+        },
+        "compass": "central-west mainland hub"
+      },
+      "summary": "The player-facing first mainland hub: a castle ward, stores, tutors, pond, and short roads that teach the province's basic economy.",
+      "history": "Hearthmere grew around the castle pond and road ledger. It still calls itself the center of the Marches, even as newer towns control more of the work.",
+      "gameplayRole": "Starter services, first errands, beginner gathering, and the player's first taste of road politics.",
+      "environment": [
+        "small stone castle ward",
+        "managed grass and pond edge",
+        "tidy dirt roads",
+        "starter shops, tutor homes, and road signs"
+      ],
+      "residents": [
+        "castle clerks and household staff",
+        "shopkeepers and bankers",
+        "skill tutors",
+        "road guides",
+        "new arrivals"
+      ],
+      "adjacentAreaIds": [
+        "hearthmere_vale",
+        "north_woodwatch",
+        "south_quarry",
+        "market_crossing",
+        "sunspur_gate"
+      ],
+      "questHooks": [
+        "A missing road ledger page points toward Old Roadhold.",
+        "The castle asks for proof that outer towns still honor old supply duties."
+      ],
+      "mapImplications": [
+        "Keep the castle, store, pond, smithing access, and tutor homes close enough to read as one civic ward.",
+        "Roads leaving town should visibly become political choices: forest, quarry, market, or dry gate."
+      ],
+      "tags": [
+        "starter",
+        "castle",
+        "civic",
+        "road-law"
+      ]
+    },
+    {
+      "areaId": "hearthmere_vale",
+      "label": "Hearthmere Vale",
+      "scale": "macro-region",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 205,
+          "tileY": 255,
+          "tileZ": 0,
+          "note": "The worked green belt around Hearthmere Castle Ward."
+        },
+        "bounds": {
+          "west": 110,
+          "east": 300,
+          "north": 145,
+          "south": 340
+        },
+        "compass": "central lowland surrounding the castle ward"
+      },
+      "summary": "The wider green lowland around the castle ward, marked by managed grass, early farms, ponds, and short safe roads.",
+      "history": "The vale was cleared to feed road crews and castle staff before any of the outer settlements became permanent.",
+      "gameplayRole": "Low-pressure gathering, short delivery quests, and introductory regional navigation.",
+      "environment": [
+        "soft grassland",
+        "ponds and shallow banks",
+        "fenced plots",
+        "beginner groves and resource pockets"
+      ],
+      "residents": [
+        "smallholders",
+        "apprentices",
+        "fishers",
+        "foresters",
+        "road wardens"
+      ],
+      "adjacentAreaIds": [
+        "starter_town",
+        "north_woodwatch",
+        "south_quarry",
+        "market_crossing"
+      ],
+      "containsAreaIds": [
+        "starter_town"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "castle_pond_bank",
+          "label": "Castle Pond Bank",
+          "tileX": 205,
+          "tileY": 223,
+          "tileZ": 0,
+          "kind": "fishing",
+          "note": "Starter pond fishing and cooking loop."
+        },
+        {
+          "anchorId": "starter_grove",
+          "label": "Starter Grove",
+          "tileX": 182,
+          "tileY": 171,
+          "tileZ": 0,
+          "kind": "woodcutting",
+          "note": "First mainland woodcutting pocket."
+        },
+        {
+          "anchorId": "starter_mine",
+          "label": "Starter Mine",
+          "tileX": 117,
+          "tileY": 206,
+          "tileZ": 0,
+          "kind": "mining",
+          "note": "Beginner mine west of the castle ward."
+        },
+        {
+          "anchorId": "oak_path",
+          "label": "Oak Path",
+          "tileX": 205,
+          "tileY": 300,
+          "tileZ": 0,
+          "kind": "woodcutting",
+          "note": "Southern vale progression path."
+        }
+      ],
+      "questHooks": [
+        "Recover boundary stones that define old castle fields.",
+        "Help a tutor prove that a beginner route is still safe enough for new arrivals."
+      ],
+      "mapImplications": [
+        "Use soft terrain, fences, ponds, and starter resources to make the vale feel managed.",
+        "Let roads fray toward risk instead of hiding danger immediately beside spawn."
+      ],
+      "tags": [
+        "vale",
+        "starter",
+        "managed-land"
+      ]
+    },
+    {
+      "areaId": "crownwood_reach",
+      "label": "Crownwood Reach",
+      "scale": "macro-region",
+      "developmentStatus": "planned",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 85,
+          "tileY": 45,
+          "tileZ": 0,
+          "note": "Far-northwest forest reach around Woodwatch, yews, and the air altar."
+        },
+        "bounds": {
+          "west": 0,
+          "east": 165,
+          "north": 0,
+          "south": 150
+        },
+        "compass": "northwest map quarter"
+      },
+      "summary": "The old forest reach that lets the map breathe north and west of Hearthmere instead of stopping at Woodwatch.",
+      "history": "Crownwood was protected for bow staves, road beams, and altar paths long before Woodwatch became a village.",
+      "gameplayRole": "Expanded woodcutting, fletching, forest hazards, old altar routes, and future woodland quests.",
+      "environment": [
+        "dense yew and willow stands",
+        "older forest paths",
+        "misty clearings",
+        "small timber camps and hidden boundary stones"
+      ],
+      "residents": [
+        "Woodwatch families",
+        "timber wardens",
+        "bowyers",
+        "charcoal burners",
+        "quiet shrine keepers"
+      ],
+      "adjacentAreaIds": [
+        "altar_heights",
+        "hearthmere_vale",
+        "westmere_fens",
+        "eastwatch_ridges"
+      ],
+      "containsAreaIds": [
+        "north_woodwatch"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "yew_frontier",
+          "label": "Yew Frontier",
+          "tileX": 51,
+          "tileY": 8,
+          "tileZ": 0,
+          "kind": "woodcutting",
+          "note": "Far-northwest high-tier woodcutting pressure."
+        },
+        {
+          "anchorId": "air_altar",
+          "label": "Air Altar",
+          "tileX": 93,
+          "tileY": 25,
+          "tileZ": 0,
+          "kind": "runecrafting",
+          "note": "A forest-edge altar that makes the northwest more than timber."
+        }
+      ],
+      "questHooks": [
+        "Trace old forest boundary stones to prove which trees can be cut.",
+        "Find why the air altar path is being marked by someone outside Woodwatch."
+      ],
+      "mapImplications": [
+        "Use the whole northwest corner for dense forest, not just a village pocket.",
+        "Let forest density thin toward Hearthmere and grow stranger toward the corner."
+      ],
+      "tags": [
+        "macro-region",
+        "forest",
+        "woodcutting",
+        "fletching",
+        "runecrafting"
+      ]
+    },
+    {
+      "areaId": "altar_heights",
+      "label": "Altar Heights",
+      "scale": "macro-region",
+      "developmentStatus": "planned",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 205,
+          "tileY": 75,
+          "tileZ": 0,
+          "note": "North road altar chain and willow bend plateau."
+        },
+        "bounds": {
+          "west": 165,
+          "east": 300,
+          "north": 0,
+          "south": 160
+        },
+        "compass": "north-central ridge and altar road"
+      },
+      "summary": "A north-running highland of standing stones, water cuts, willow pockets, and rune altars above the central vale.",
+      "history": "The road to the heights was built for altar keepers before it was useful for trade.",
+      "gameplayRole": "Runecrafting progression, north-road travel, willow gathering, and quiet lore discovery.",
+      "environment": [
+        "raised grass and stone shelves",
+        "altar ruins",
+        "willow bends near water cuts",
+        "thin north-road switchbacks"
+      ],
+      "residents": [
+        "rune tutors",
+        "altar caretakers",
+        "willow cutters",
+        "pilgrims",
+        "road guides who know the old steps"
+      ],
+      "adjacentAreaIds": [
+        "crownwood_reach",
+        "hearthmere_vale",
+        "eastwatch_ridges"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "earth_altar",
+          "label": "Earth Altar",
+          "tileX": 205,
+          "tileY": 50,
+          "tileZ": 0,
+          "kind": "runecrafting",
+          "note": "Northern altar endpoint on the authored road."
+        },
+        {
+          "anchorId": "water_altar",
+          "label": "Water Altar",
+          "tileX": 205,
+          "tileY": 98,
+          "tileZ": 0,
+          "kind": "runecrafting",
+          "note": "Middle altar tied to the water-cut upland."
+        },
+        {
+          "anchorId": "ember_altar",
+          "label": "Ember Altar",
+          "tileX": 205,
+          "tileY": 154,
+          "tileZ": 0,
+          "kind": "runecrafting",
+          "note": "Southern altar that links the heights back into the castle road."
+        },
+        {
+          "anchorId": "willow_bend",
+          "label": "Willow Bend",
+          "tileX": 239,
+          "tileY": 62,
+          "tileZ": 0,
+          "kind": "woodcutting",
+          "note": "North-road willow resource and firemaking route."
+        }
+      ],
+      "questHooks": [
+        "Recover missing altar rubbings from the north-road shrines.",
+        "Decide who may maintain the altar road when castle and tutor claims disagree."
+      ],
+      "mapImplications": [
+        "Give the north-center map a climb, not empty grass.",
+        "Use stones, water cuts, and road grades to make the altar chain readable."
+      ],
+      "tags": [
+        "macro-region",
+        "upland",
+        "runecrafting",
+        "willow",
+        "old-road"
+      ]
+    },
+    {
+      "areaId": "eastwatch_ridges",
+      "label": "Eastwatch Ridges",
+      "scale": "macro-region",
+      "developmentStatus": "planned",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 405,
+          "tileY": 150,
+          "tileZ": 0,
+          "note": "Northeast ridges tying Old Roadhold, rune essence, iron, and maple routes together."
+        },
+        "bounds": {
+          "west": 300,
+          "east": 486,
+          "north": 0,
+          "south": 270
+        },
+        "compass": "northeast and east-road highland"
+      },
+      "summary": "A broad ridge country where the old road, iron pockets, maple stands, and rune essence routes give the northeast map real weight.",
+      "history": "Eastwatch once guarded the profitable road north and east; after the fire, the ridges became useful, haunted, and under-patrolled.",
+      "gameplayRole": "Old Roadhold mystery, iron mining, maple progression, rune essence access, and east-road danger.",
+      "environment": [
+        "rocky ridges",
+        "old estate roads",
+        "maple slopes",
+        "abandoned watch points",
+        "rune-stained mine approaches"
+      ],
+      "residents": [
+        "road scavengers",
+        "iron miners",
+        "maple cutters",
+        "rune prospectors",
+        "watch families who never fully left"
+      ],
+      "adjacentAreaIds": [
+        "crownwood_reach",
+        "altar_heights",
+        "hearthmere_vale",
+        "sunspur_drylands"
+      ],
+      "containsAreaIds": [
+        "old_roadhold"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "rune_essence_mine",
+          "label": "Rune Essence Mine",
+          "tileX": 406,
+          "tileY": 54,
+          "tileZ": 0,
+          "kind": "mining",
+          "note": "Far-northeast runecrafting support mine."
+        },
+        {
+          "anchorId": "iron_mine",
+          "label": "Early Iron Mine",
+          "tileX": 404,
+          "tileY": 203,
+          "tileZ": 0,
+          "kind": "mining",
+          "note": "East-road iron pocket."
+        },
+        {
+          "anchorId": "maple_ridge",
+          "label": "Maple Ridge",
+          "tileX": 402,
+          "tileY": 205,
+          "tileZ": 0,
+          "kind": "woodcutting",
+          "note": "Maple progression route beside the east road."
+        }
+      ],
+      "questHooks": [
+        "Map ridge watch posts to learn who could have seen the Roadhold Fire.",
+        "Secure the rune essence path without handing it entirely to castle record keepers."
+      ],
+      "mapImplications": [
+        "The northeast should not be only Old Roadhold; it should be a whole highland that explains Old Roadhold's importance.",
+        "Use ridges, road remains, mine tracks, and maple slopes to fill east-road travel."
+      ],
+      "tags": [
+        "macro-region",
+        "ridge",
+        "old-roadhold",
+        "mining",
+        "woodcutting",
+        "runecrafting"
+      ]
+    },
+    {
+      "areaId": "westmere_fens",
+      "label": "Westmere Fens",
+      "scale": "macro-region",
+      "developmentStatus": "future",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 70,
+          "tileY": 360,
+          "tileZ": 0,
+          "note": "West and southwest wetland band around the precious mine."
+        },
+        "bounds": {
+          "west": 0,
+          "east": 150,
+          "north": 150,
+          "south": 486
+        },
+        "compass": "west and southwest wetland"
+      },
+      "summary": "The wet, low western side of the map: reeds, old banks, hidden ore, fishing edges, and half-forgotten routes.",
+      "history": "Westmere was never fully drained; the castle counts it as land, while the people who live there count it as water with paths through it.",
+      "gameplayRole": "Future wetland, fishing, precious mining, survival travel, and smuggling or ferry quests.",
+      "environment": [
+        "marsh pools",
+        "reed beds",
+        "muddy paths",
+        "low bridges",
+        "silver and gold outcrops on firmer ground"
+      ],
+      "residents": [
+        "fen fishers",
+        "reed cutters",
+        "precious-metal prospectors",
+        "ferry families",
+        "people avoiding road tolls"
+      ],
+      "adjacentAreaIds": [
+        "crownwood_reach",
+        "hearthmere_vale",
+        "south_orefold"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "precious_mine",
+          "label": "Silver and Gold Mine",
+          "tileX": 47,
+          "tileY": 375,
+          "tileZ": 0,
+          "kind": "mining",
+          "note": "Far-southwest mine that justifies using the west side of the map."
+        }
+      ],
+      "questHooks": [
+        "Find the ferry route that bypasses a disputed road toll.",
+        "Learn why precious ore leaves Westmere without appearing in castle ledgers."
+      ],
+      "mapImplications": [
+        "Use the west and southwest map for water, mud, reeds, and alternate travel.",
+        "Give the precious mine a settlement and route context instead of leaving it isolated."
+      ],
+      "tags": [
+        "macro-region",
+        "wetland",
+        "fishing",
+        "precious-mining",
+        "future-route"
+      ]
+    },
+    {
+      "areaId": "south_orefold",
+      "label": "South Orefold",
+      "scale": "macro-region",
+      "developmentStatus": "planned",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 275,
+          "tileY": 420,
+          "tileZ": 0,
+          "note": "Southern quarry hills around South Quarry and the gem mine."
+        },
+        "bounds": {
+          "west": 150,
+          "east": 365,
+          "north": 330,
+          "south": 486
+        },
+        "compass": "southern quarry and hill belt"
+      },
+      "summary": "The southern hard-stone belt that gives South Quarry room to become a whole mining landscape, not a single hamlet.",
+      "history": "The Orefold's old cuts and exposed foundations suggest people worked the south hills before Hearthmere wrote its first ledger.",
+      "gameplayRole": "Mining expansion, gem work, smithing logistics, work camps, and deeper quarry questlines.",
+      "environment": [
+        "stone shelves",
+        "tailings",
+        "cart roads",
+        "dry grass on ridge tops",
+        "gem-bearing pockets"
+      ],
+      "residents": [
+        "quarry families",
+        "ore haulers",
+        "gem cutters",
+        "smithing apprentices",
+        "old foundation diggers"
+      ],
+      "adjacentAreaIds": [
+        "hearthmere_vale",
+        "westmere_fens",
+        "sunspur_drylands"
+      ],
+      "containsAreaIds": [
+        "south_quarry"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "gem_mine",
+          "label": "Gem Mine",
+          "tileX": 263,
+          "tileY": 422,
+          "tileZ": 0,
+          "kind": "mining",
+          "note": "Southern gem route tied to Elira and quarry appraisal."
+        }
+      ],
+      "questHooks": [
+        "Open a second quarry face without collapsing the cart road.",
+        "Trace a gem mark to an older settlement foundation."
+      ],
+      "mapImplications": [
+        "Use the bottom-center map for quarry depth, work roads, and mining progression.",
+        "Let South Quarry become the visible service hub for a larger resource region."
+      ],
+      "tags": [
+        "macro-region",
+        "quarry",
+        "mining",
+        "smithing",
+        "gems"
+      ]
+    },
+    {
+      "areaId": "sunspur_drylands",
+      "label": "Sunspur Drylands",
+      "scale": "macro-region",
+      "developmentStatus": "planned",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 430,
+          "tileY": 395,
+          "tileZ": 0,
+          "note": "Southeast trade, sand, coal, market, checkpoint, and Saltwind edge."
+        },
+        "bounds": {
+          "west": 360,
+          "east": 486,
+          "north": 270,
+          "south": 486
+        },
+        "compass": "southeast dry road and trade belt"
+      },
+      "summary": "The dry southeast that turns Market Crossing, Sunspur Gate, Saltwind Scrub, coal, and desert trade into one readable frontier.",
+      "history": "The drylands became profitable when caravans avoided Old Roadhold and learned that a detour could become a market.",
+      "gameplayRole": "Trade routes, desert preparation, coal mining, checkpoint law, caravan jobs, and future desert expansion.",
+      "environment": [
+        "sand bands",
+        "low scrub",
+        "dry washes",
+        "coal-black work scars",
+        "market road clutter and sparse shade"
+      ],
+      "residents": [
+        "market traders",
+        "checkpoint clerks",
+        "caravan crews",
+        "coal miners",
+        "dryland scouts",
+        "families who live between road and sand"
+      ],
+      "adjacentAreaIds": [
+        "hearthmere_vale",
+        "eastwatch_ridges",
+        "south_orefold"
+      ],
+      "containsAreaIds": [
+        "market_crossing",
+        "sunspur_gate",
+        "saltwind_scrub"
+      ],
+      "resourceAnchors": [
+        {
+          "anchorId": "coal_mine",
+          "label": "Deep Coal Mine",
+          "tileX": 437,
+          "tileY": 345,
+          "tileZ": 0,
+          "kind": "mining",
+          "note": "Coal route feeding quarry, smithing, and dryland trade."
+        },
+        {
+          "anchorId": "yew_frontier_south",
+          "label": "Yew Frontier",
+          "tileX": 362,
+          "tileY": 397,
+          "tileZ": 0,
+          "kind": "woodcutting",
+          "note": "Southern edge of higher-tier woodcutting near dry trade."
+        }
+      ],
+      "questHooks": [
+        "Choose who controls the coal road when quarry and market contracts conflict.",
+        "Prepare a caravan for a deeper desert route by solving water, fuel, and toll problems."
+      ],
+      "mapImplications": [
+        "Use the southeast as a long transition from market order to dryland exposure.",
+        "Let road clutter thin into sand, scrub, and mining scars near the map edge."
+      ],
+      "tags": [
+        "macro-region",
+        "dryland",
+        "trade",
+        "checkpoint",
+        "mining",
+        "future-desert"
+      ]
+    },
+    {
+      "areaId": "north_woodwatch",
+      "label": "North Woodwatch",
+      "scale": "settlement",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 94,
+          "tileY": 62,
+          "tileZ": 0,
+          "note": "Fletchers workshop and timber cottage cluster."
+        },
+        "bounds": {
+          "west": 50,
+          "east": 135,
+          "north": 15,
+          "south": 100
+        },
+        "compass": "northwest forest settlement"
+      },
+      "summary": "A forest settlement built around fletching, timber rights, and practical frontier lodging.",
+      "history": "Woodwatch began as a lookout camp for road timber, then became a village when bowyers and cutters realized the castle needed them more than they needed the castle.",
+      "gameplayRole": "Woodcutting and fletching identity, forest errands, advanced wood material progression.",
+      "environment": [
+        "old forest edge",
+        "worked timber yards",
+        "narrow dirt lanes",
+        "thatch, log stacks, and fletching tools"
+      ],
+      "residents": [
+        "cutters",
+        "bowyers",
+        "fletchers",
+        "timber-right wardens",
+        "families who live by the forest"
+      ],
+      "adjacentAreaIds": [
+        "crownwood_reach",
+        "hearthmere_vale",
+        "starter_town",
+        "old_roadhold"
+      ],
+      "questHooks": [
+        "Mediate a timber-rights dispute between cutters and the castle ward.",
+        "Find why marked trees are being felled before their turn."
+      ],
+      "mapImplications": [
+        "Keep workshops and tree pockets near each other.",
+        "Show older forest edges beyond the worked village line."
+      ],
+      "tags": [
+        "forest",
+        "woodcutting",
+        "fletching",
+        "outer-settlement"
+      ]
+    },
+    {
+      "areaId": "south_quarry",
+      "label": "South Quarry",
+      "scale": "settlement",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 324,
+          "tileY": 393,
+          "tileZ": 0,
+          "note": "Storehouse, bank, furnace, and foreman work cluster."
+        },
+        "bounds": {
+          "west": 288,
+          "east": 365,
+          "north": 370,
+          "south": 430
+        },
+        "compass": "southern work hamlet"
+      },
+      "summary": "A quarry hamlet whose storehouses, bank, furnace, and foremen make it the hard-material engine of the Marches.",
+      "history": "The quarry survived the road fire because stone does not burn and debts do not forget.",
+      "gameplayRole": "Mining, smithing, ore banking, material delivery quests, and working-class town politics.",
+      "environment": [
+        "lowered quarry cuts",
+        "stone dust and cart ruts",
+        "ore piles and storehouses",
+        "furnace heat and ironwork"
+      ],
+      "residents": [
+        "miners",
+        "smiths",
+        "haulers",
+        "foremen",
+        "gem appraisers",
+        "bank clerks who handle worksite pay"
+      ],
+      "adjacentAreaIds": [
+        "south_orefold",
+        "hearthmere_vale",
+        "market_crossing",
+        "saltwind_scrub"
+      ],
+      "questHooks": [
+        "Investigate short ore weights before a shipment reaches Market Crossing.",
+        "Repair a collapsed work face that has exposed an older foundation."
+      ],
+      "mapImplications": [
+        "Quarry terrain should read as carved, lowered, and cart-worn.",
+        "Put service buildings near loading paths and ore storage."
+      ],
+      "tags": [
+        "quarry",
+        "mining",
+        "smithing",
+        "labor"
+      ]
+    },
+    {
+      "areaId": "market_crossing",
+      "label": "Market Crossing",
+      "scale": "settlement",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 432,
+          "tileY": 392,
+          "tileZ": 0,
+          "note": "Bank, gallery, townhouse, and main road convergence."
+        },
+        "bounds": {
+          "west": 405,
+          "east": 480,
+          "north": 360,
+          "south": 425
+        },
+        "compass": "southeast trade junction"
+      },
+      "summary": "A service town where banking, craft trade, galleries, lodging, and road money meet.",
+      "history": "Market Crossing grew after the fire, when caravans avoided Old Roadhold and merchants learned that detours could become fortunes.",
+      "gameplayRole": "Banking, crafting, trade errands, cosmetic/artisan flavor, and social quest branching.",
+      "environment": [
+        "converging roads",
+        "mixed timber and stone buildings",
+        "market awnings and signs",
+        "gallery color and banking counters"
+      ],
+      "residents": [
+        "bankers",
+        "traders",
+        "crafters",
+        "painters",
+        "tanners",
+        "caravan workers"
+      ],
+      "adjacentAreaIds": [
+        "sunspur_drylands",
+        "hearthmere_vale",
+        "south_quarry",
+        "sunspur_gate",
+        "saltwind_scrub"
+      ],
+      "questHooks": [
+        "Track forged trade marks through the gallery and bank.",
+        "Choose which town gets priority when a shared shipment cannot serve everyone."
+      ],
+      "mapImplications": [
+        "Make roads converge visibly around market services.",
+        "Use signage, awnings, notice boards, and mixed building materials to show new money."
+      ],
+      "tags": [
+        "market",
+        "bank",
+        "crafting",
+        "trade"
+      ]
+    },
+    {
+      "areaId": "old_roadhold",
+      "label": "Old Roadhold",
+      "scale": "ruined-settlement",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 434,
+          "tileY": 132,
+          "tileZ": 0,
+          "note": "Burned gatehouse road and manor shell."
+        },
+        "bounds": {
+          "west": 385,
+          "east": 480,
+          "north": 105,
+          "south": 175
+        },
+        "compass": "northeast damaged roadhold"
+      },
+      "summary": "A damaged northern gatehouse and manor shell where the province's road promise failed.",
+      "history": "Old Roadhold burned while the castle debated who had authority to send help. Everyone tells a different version because every version protects someone.",
+      "gameplayRole": "Early mystery, ruins, road danger, first serious questline, and proof that history affects navigation.",
+      "environment": [
+        "burned cottage remains",
+        "weathered manor stone",
+        "ash track",
+        "faded banners and broken road markers"
+      ],
+      "residents": [
+        "scavengers",
+        "stubborn caretakers",
+        "road families with old claims",
+        "people hiding from newer laws"
+      ],
+      "adjacentAreaIds": [
+        "eastwatch_ridges",
+        "north_woodwatch",
+        "starter_town",
+        "sunspur_gate"
+      ],
+      "questHooks": [
+        "Recover witness marks from the burnt cottage, gatehouse, and manor.",
+        "Learn whether the fire was accident, neglect, or cover-up."
+      ],
+      "mapImplications": [
+        "Keep ash tracks, broken props, and old banners readable from the road.",
+        "Make the route feel strategically important even before the player knows why."
+      ],
+      "tags": [
+        "ruin",
+        "road",
+        "mystery",
+        "quest"
+      ]
+    },
+    {
+      "areaId": "sunspur_gate",
+      "label": "Sunspur Gate",
+      "scale": "checkpoint",
+      "developmentStatus": "live",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 414,
+          "tileY": 348,
+          "tileZ": 0,
+          "note": "Checkpoint notice board and grass-to-sand road threshold."
+        },
+        "bounds": {
+          "west": 390,
+          "east": 440,
+          "north": 325,
+          "south": 380
+        },
+        "compass": "east-southeast biome checkpoint"
+      },
+      "summary": "The first dryland checkpoint where green roads turn toward sand, tolls, and hotter trade.",
+      "history": "Sunspur was built to reopen the eastern route without admitting that Old Roadhold had failed.",
+      "gameplayRole": "Biome transition, travel tutorial, toll decisions, and the first hint of dryland economies.",
+      "environment": [
+        "sand bands over worn road",
+        "dry wash dip",
+        "short fence rails",
+        "notice board, crates, and water barrels"
+      ],
+      "residents": [
+        "toll keepers",
+        "road guards",
+        "caravan clerks",
+        "water sellers",
+        "guides who know the dry route"
+      ],
+      "adjacentAreaIds": [
+        "sunspur_drylands",
+        "starter_town",
+        "market_crossing",
+        "saltwind_scrub",
+        "old_roadhold"
+      ],
+      "questHooks": [
+        "Decide what to do with a toll rule no one can prove is still lawful.",
+        "Escort a small shipment through a wind-cut wash."
+      ],
+      "mapImplications": [
+        "Show the biome shift through sand bands, dry washes, rails, and notice boards.",
+        "Let the checkpoint frame the next region without becoming a full town."
+      ],
+      "tags": [
+        "checkpoint",
+        "desert-edge",
+        "trade",
+        "biome-transition"
+      ]
+    },
+    {
+      "areaId": "saltwind_scrub",
+      "label": "Saltwind Scrub",
+      "scale": "district",
+      "developmentStatus": "live-slice",
+      "mapPosition": {
+        "coordinateSpace": "authored_raw_486",
+        "anchorTile": {
+          "tileX": 468,
+          "tileY": 402,
+          "tileZ": 0,
+          "note": "Dry trade outpost props and future deeper-desert route edge."
+        },
+        "bounds": {
+          "west": 445,
+          "east": 485,
+          "north": 385,
+          "south": 430
+        },
+        "compass": "far southeast dryland edge"
+      },
+      "summary": "A dry trade outpost region where ore, barrels, and sand-worn roads point toward a larger desert route.",
+      "history": "Saltwind's people learned to move goods through bad weather and worse paperwork.",
+      "gameplayRole": "Future dryland mining, travel contracts, desert preparation, and outer-route quest expansion.",
+      "environment": [
+        "low scrub",
+        "salt-crusted sand",
+        "wind-worn ridges",
+        "ore carts, barrels, and sparse shade"
+      ],
+      "residents": [
+        "haulers",
+        "prospectors",
+        "dryland scouts",
+        "trade families",
+        "people who prefer distance from castle records"
+      ],
+      "adjacentAreaIds": [
+        "sunspur_drylands",
+        "sunspur_gate",
+        "market_crossing",
+        "south_quarry"
+      ],
+      "questHooks": [
+        "Find who is watering down trade records before they reach Market Crossing.",
+        "Recover a lost route token from a dry wash."
+      ],
+      "mapImplications": [
+        "Use sparse props, ridge silhouettes, cart marks, and low scrub instead of dense town clutter.",
+        "Leave visual room for future deeper desert routes."
+      ],
+      "tags": [
+        "scrub",
+        "dryland",
+        "trade-outpost",
+        "future-route"
+      ]
     }
   ],
   "structures": [

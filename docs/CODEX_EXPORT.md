@@ -7,6 +7,7 @@ This project now provides a versioned codex export bundle built from the canonic
 - item data from `src/js/content/item-catalog.js`
 - skill data from `content/skills/*.json`
 - world data from `content/world/manifest.json` and `content/world/regions/*.json`
+  - world lore and area summaries from each authored region's `lore` and `areas` fields
 
 ## Run
 
@@ -47,6 +48,8 @@ Stable routes in v1:
 - `/osrs-clone-codex/world/:worldId`
 
 The export intentionally uses stable IDs for routing. The codex can own slugs, presentation, and redirects later without changing the game/content IDs.
+
+World entries also expose codex-friendly `lore` and `areas` fields at the top level while preserving the full authored region payload in `data`. The wiki should treat those exported fields as canonical player-facing setting copy, not as local editorial invention.
 
 ## Validation
 

@@ -2,11 +2,28 @@ const assert = require("assert");
 const path = require("path");
 const { readRepoFile } = require("./repo-file-test-utils");
 
+function assertLeftButtonOutsideCloseGuard(source, listenerNeedle, guardNeedle, closeNeedle, label) {
+  const listenerIndex = source.indexOf(listenerNeedle);
+  assert(listenerIndex !== -1, `${label} should bind an outside mousedown listener`);
+
+  const guardIndex = source.indexOf(guardNeedle, listenerIndex);
+  const closeIndex = source.indexOf(closeNeedle, listenerIndex);
+
+  assert(guardIndex !== -1, `${label} outside-close listener should ignore non-left clicks`);
+  assert(closeIndex !== -1, `${label} outside-close listener should still close on left-click outside`);
+  assert(
+    guardIndex < closeIndex,
+    `${label} outside-close listener should check the mouse button before closing`
+  );
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const cssSource = readRepoFile(root, "src/styles/main.css").replace(/\r\n/g, "\n");
   const htmlSource = readRepoFile(root, "index.html");
   const inventorySource = readRepoFile(root, "src/js/inventory.js");
+  const smithingSource = readRepoFile(root, "src/js/skills/smithing/index.js");
+  const fletchingSource = readRepoFile(root, "src/js/skills/fletching/index.js");
   const inputRenderSource = readRepoFile(root, "src/js/input-render.js");
   const worldSource = readRepoFile(root, "src/js/world.js");
 
@@ -124,6 +141,27 @@ function run() {
       inventorySource.includes("mainContainer.style.removeProperty('transform');") &&
       !inventorySource.includes("scale(1)'"),
     "collapsed main UI should remove transform instead of leaving a stale scale(1) hit-test layer"
+  );
+  assertLeftButtonOutsideCloseGuard(
+    inventorySource,
+    "window.addEventListener('mousedown'",
+    "if (e.button !== 0) return;",
+    "closeSkillProgressPanel();",
+    "skill progress panel"
+  );
+  assertLeftButtonOutsideCloseGuard(
+    smithingSource,
+    "document.addEventListener('mousedown'",
+    "if (event.button !== 0) return;",
+    "closeSmithingUi();",
+    "smithing menu"
+  );
+  assertLeftButtonOutsideCloseGuard(
+    fletchingSource,
+    "document.addEventListener('mousedown'",
+    "if (event.button !== 0) return;",
+    "closeFletchingUi();",
+    "fletching menu"
   );
 
   console.log("Main UI pointer guard passed.");
