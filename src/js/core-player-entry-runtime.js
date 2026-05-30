@@ -525,7 +525,7 @@
             : (!!playerEntryFlowState.hasLoadedSave && !!profile.creationCompleted);
 
         if (title) title.textContent = profileSummaryViewModel ? profileSummaryViewModel.titleText : (isContinueFlow ? 'Continue Your Adventure' : 'Create Your Adventurer');
-        if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before you arrive on the mainland.';
+        if (subtitle) subtitle.textContent = profileSummaryViewModel ? profileSummaryViewModel.subtitleText : 'Choose a starter identity before you arrive on Tutorial Island.';
 
         if (nameInput) {
             if (documentRef.activeElement !== nameInput && nameInput.value !== profile.name) {

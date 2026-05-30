@@ -227,7 +227,7 @@ function run() {
       statusText: "Fresh character profile",
       isContinueFlow: false,
       titleText: "Create Your Adventurer",
-      subtitleText: "Choose a starter identity before you arrive on the mainland.",
+      subtitleText: "Choose a starter identity before you arrive on Tutorial Island.",
       primaryActionText: "Start Adventure",
       noteText: "Progress will begin autosaving locally in this browser once you arrive."
     })

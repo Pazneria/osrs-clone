@@ -63,7 +63,7 @@
             return { x: 205, y: 210, z: 0 };
         }
 
-        const DEFAULT_WORLD_SPAWN = resolveDefaultWorldSpawn();
+        const DEFAULT_WORLD_SPAWN = resolveDefaultWorldSpawn(TUTORIAL_WORLD_ID);
         const gameSessionRuntime = window.GameSessionRuntime || null;
         const combatRuntime = window.CombatRuntime || null;
         const coreChatRuntime = window.CoreChatRuntime || null;
@@ -73,9 +73,7 @@
         const coreIconReviewRuntime = window.CoreIconReviewRuntime || null;
         const gameSession = gameSessionRuntime && typeof gameSessionRuntime.createGameSession === 'function'
             ? gameSessionRuntime.createGameSession({
-                currentWorldId: (typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
-                    ? gameSessionRuntime.resolveCurrentWorldId()
-                    : MAIN_OVERWORLD_WORLD_ID,
+                currentWorldId: TUTORIAL_WORLD_ID,
                 defaultSpawn: DEFAULT_WORLD_SPAWN,
                 defaultUnlockFlags: DEFAULT_UNLOCK_FLAGS,
                 inventorySize: 28,
@@ -1075,7 +1073,7 @@
             const rawLoadedWorldId = typeof state.worldId === 'string' && state.worldId
                 ? state.worldId
                 : activeSession.currentWorldId;
-            const loadedWorldId = worldAdapterRuntime && typeof worldAdapterRuntime.resolveKnownWorldId === 'function'
+            let loadedWorldId = worldAdapterRuntime && typeof worldAdapterRuntime.resolveKnownWorldId === 'function'
                 ? worldAdapterRuntime.resolveKnownWorldId(rawLoadedWorldId, MAIN_OVERWORLD_WORLD_ID)
                 : rawLoadedWorldId;
 
@@ -1149,7 +1147,16 @@
                 : {};
             isRunning = !!state.runMode;
             const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');
-            playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: true, savedWorldId: loadedWorldId });
+            playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: !hasSavedProfile, savedWorldId: loadedWorldId });
+            if (
+                hasSavedProfile
+                && loadedWorldId !== TUTORIAL_WORLD_ID
+                && !playerProfileState.tutorialCompletedAt
+            ) {
+                loadedWorldId = TUTORIAL_WORLD_ID;
+                activeSession.currentWorldId = loadedWorldId;
+                activeSession.runtime.currentWorldId = loadedWorldId;
+            }
             if (
                 loadedWorldId === TUTORIAL_WORLD_ID
                 && !playerProfileState.tutorialCompletedAt
@@ -1424,7 +1431,7 @@
                     return Object.assign({}, viewModel, {
                         isContinueFlow: false,
                         titleText: 'Create Your Adventurer',
-                        subtitleText: 'Choose a starter identity before you arrive on the mainland.',
+                        subtitleText: 'Choose a starter identity before you arrive on Tutorial Island.',
                         primaryActionText: 'Start Adventure',
                         noteText: 'Creator reopened for QA. Changes save when you start adventure.'
                     });
@@ -1799,13 +1806,13 @@
             const loadProgressResult = loadProgressFromStorage();
             const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);
             const startupRequestedWorldId = isFreshProfileStartup
-                ? MAIN_OVERWORLD_WORLD_ID
+                ? TUTORIAL_WORLD_ID
                 : (gameSessionRuntime && typeof gameSessionRuntime.resolveCurrentWorldId === 'function')
                 ? gameSessionRuntime.resolveCurrentWorldId()
                 : MAIN_OVERWORLD_WORLD_ID;
             const startupWorldId = (worldAdapterRuntime && typeof worldAdapterRuntime.activateWorldContext === 'function')
                 ? worldAdapterRuntime.activateWorldContext(startupRequestedWorldId, MAIN_OVERWORLD_WORLD_ID)
-                : MAIN_OVERWORLD_WORLD_ID;
+                : startupRequestedWorldId;
             if (startupWorldId !== startupRequestedWorldId || isFreshProfileStartup) {
                 const fallbackSpawn = (worldAdapterRuntime && typeof worldAdapterRuntime.getWorldDefaultSpawn === 'function')
                     ? worldAdapterRuntime.getWorldDefaultSpawn(startupWorldId, {

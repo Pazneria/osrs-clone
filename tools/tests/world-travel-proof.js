@@ -66,9 +66,13 @@ function run() {
   assert(loadCall < activateCall && activateCall < initCall, "startup should activate the current world after loading progress and before initLogicalMap");
   assert(coreSource.includes("const TUTORIAL_WORLD_ID = 'tutorial_island';"), "core should define the tutorial island world id");
   assert(coreSource.includes("const TUTORIAL_EXIT_STEP = 11;"), "core should define the tutorial exit gate step");
+  assert(coreSource.includes("const DEFAULT_WORLD_SPAWN = resolveDefaultWorldSpawn(TUTORIAL_WORLD_ID);"), "default session spawn should start on Tutorial Island");
+  assert(coreSource.includes("currentWorldId: TUTORIAL_WORLD_ID"), "default session world should start on Tutorial Island");
   assert(coreSource.includes("function getEquipmentItemCount"), "core should expose equipped tutorial item counts to the tutorial runtime");
   assert(coreSource.includes("const isFreshProfileStartup = !(loadProgressResult && loadProgressResult.loaded);"), "core should detect fresh profile startup");
-  assert(coreSource.includes("? MAIN_OVERWORLD_WORLD_ID"), "fresh profile startup should route directly to the mainland");
+  assert(coreSource.includes("? TUTORIAL_WORLD_ID"), "fresh profile startup should route to Tutorial Island");
+  assert(coreSource.includes("sanitizePlayerProfile(state.profile, { allowLegacyFallback: !hasSavedProfile, savedWorldId: loadedWorldId })"), "saved player profiles should not be treated as legacy tutorial-complete saves");
+  assert(coreSource.includes("hasSavedProfile") && coreSource.includes("loadedWorldId = TUTORIAL_WORLD_ID;"), "incomplete saved tutorial profiles should recover to Tutorial Island");
   assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for the main overworld");
   assert(coreSource.includes("window.TutorialRuntime = {"), "tutorial progression should be exposed to dialogue runtime");
   assert(coreSource.includes("coreTutorialRuntime.buildNpcDialogueView(buildTutorialRuntimeContext(), npc, baseView)"), "tutorial progression should delegate dynamic dialogue to the tutorial runtime");
