@@ -47,7 +47,7 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             25000,
             Math.floor(25000 * Math.pow((MAP_SIZE / LEGACY_PATHFIND_MAP_SIZE), 2))
         );
-        const MAX_TOOLTIP_WALK_DISTANCE_TILES = 90;
+        const MAX_TOOLTIP_WALK_DISTANCE_TILES = 16;
         const HOVER_TOOLTIP_REFRESH_INTERVAL_MS = 250;
         const HOVER_TOOLTIP_EDGE_GUARD_PX = 8;
         let hoverTooltipDirty = true;

@@ -54,6 +54,24 @@ assert.ok(
   inventorySource.includes("runtime.sellInventoryItem"),
   "inventory.js should delegate shop sell logic to the UI domain bridge"
 );
+const createShopInventoryStart = inventorySource.indexOf("function createShopInventoryForMerchant");
+const createShopInventoryEnd = inventorySource.indexOf("function ensureUnlockedMerchantStock", createShopInventoryStart);
+assert.ok(createShopInventoryStart !== -1 && createShopInventoryEnd > createShopInventoryStart, "inventory.js should keep a shop inventory factory");
+const createShopInventorySource = inventorySource.slice(createShopInventoryStart, createShopInventoryEnd);
+assert.ok(
+  createShopInventorySource.includes("runtime.createShopInventoryForMerchant"),
+  "inventory.js should delegate shop inventory creation to the UI domain bridge"
+);
+assert.ok(
+  createShopInventorySource.includes("economy: getShopEconomy()"),
+  "inventory.js should pass ShopEconomy into delegated shop inventory creation"
+);
+for (const legacyFallbackItemId of ["iron_axe", "tinderbox", "knife", "iron_pickaxe"]) {
+  assert.ok(
+    !createShopInventorySource.includes(legacyFallbackItemId),
+    `inventory.js should not hard-code fallback shop stock item '${legacyFallbackItemId}'`
+  );
+}
 assert.ok(
   inventorySource.includes("runtime.buildInventorySlotViewModels"),
   "inventory.js should render inventory from view models"

@@ -30,6 +30,7 @@ function run() {
   assert(runtimeSource.includes("function positionHoverTooltip"), "hover tooltip runtime should own DOM positioning");
   assert(inputSource.includes("InputHoverTooltipRuntime"), "input-render.js should delegate hover tooltip display");
   assert(inputSource.includes("buildInputHoverTooltipRuntimeContext"), "input-render.js should provide a narrow hover tooltip runtime context");
+  assert(inputSource.includes("const MAX_TOOLTIP_WALK_DISTANCE_TILES = 16;"), "input-render.js should use the documented 16-tile hover tooltip walking gate");
   assert(!inputSource.includes("tooltip.innerHTML = actionText"), "input-render.js should not own hover tooltip DOM writes");
   assert(!inputSource.includes("function resolveTooltipTargetTile"), "input-render.js should not own hover target tile resolution");
   assert(!inputSource.includes("function formatEnemyTooltipDisplayName"), "input-render.js should not own enemy hover display names");
@@ -67,6 +68,48 @@ function run() {
   assert(builtOptions.fireUnderCursor, "hover option shaping should detect active fires under the cursor");
   assert(builtOptions.isAshesGroundItem, "hover option shaping should identify ashes ground items");
   assert(builtOptions.groundDisplayName === "Ashes (2)", "hover option shaping should count ground item stacks");
+  assert(
+    runtime.isHitWithinTooltipWalkDistance(
+      { playerState: { x: 5, y: 5 }, maxTooltipWalkDistanceTiles: 16 },
+      { type: "ROCK", gridX: 21, gridY: 5 }
+    ),
+    "hover tooltip walk gate should include targets exactly 16 tiles away"
+  );
+  assert(
+    !runtime.isHitWithinTooltipWalkDistance(
+      { playerState: { x: 5, y: 5 }, maxTooltipWalkDistanceTiles: 16 },
+      { type: "ROCK", gridX: 22, gridY: 5 }
+    ),
+    "hover tooltip walk gate should suppress targets beyond 16 tiles"
+  );
+  assert(
+    !runtime.isHitWithinTooltipWalkDistance(
+      { playerState: { x: 5, y: 5 } },
+      { type: "ROCK", gridX: 22, gridY: 5 }
+    ),
+    "hover tooltip runtime fallback should also use the 16-tile gate"
+  );
+  const farBuiltOptions = runtime.buildHoverTooltipDisplayOptions({
+    playerState: { x: 5, y: 5 },
+    getSkillTooltip: () => ""
+  }, {
+    hitData: { type: "ROCK", gridX: 22, gridY: 5 }
+  });
+  assert(
+    farBuiltOptions.isWithinWalkDistance === false,
+    "hover tooltip display option shaping should apply the 16-tile fallback gate"
+  );
+  assert(
+    runtime.isHitWithinTooltipWalkDistance(
+      {
+        playerState: { x: 5, y: 5 },
+        maxTooltipWalkDistanceTiles: 16,
+        findNearestFishableWaterEdgeTile: () => ({ x: 21, y: 5 })
+      },
+      { type: "WATER", gridX: 90, gridY: 90 }
+    ),
+    "water hover distance should measure against the nearest fishable edge tile"
+  );
 
   const enemyText = runtime.formatHoverTooltipActionText({
     hitData: { type: "ENEMY", name: "Rat", combatLevel: 2 },
@@ -112,6 +155,13 @@ function run() {
   assert(displayed.includes("Coins (3)"), "hover tooltip display should render formatted item stack name");
   assert(!tooltip.classList.contains("hidden"), "hover tooltip display should show populated tooltip");
   assert(tooltip.style.left === "46px", "hover tooltip should flip left near the viewport edge");
+
+  runtime.updateHoverTooltipDisplay({
+    documentRef,
+    hitData: { type: "GROUND_ITEM", name: "Coins" },
+    isWithinWalkDistance: false
+  });
+  assert(tooltip.classList.contains("hidden"), "hover tooltip should hide populated tooltips when the target is beyond walking distance");
 
   runtime.updateHoverTooltipDisplay({
     documentRef,

@@ -46,7 +46,7 @@
         const playerState = context.playerState || {};
         const maxDistance = Number.isFinite(context.maxTooltipWalkDistanceTiles)
             ? context.maxTooltipWalkDistanceTiles
-            : 90;
+            : 16;
         const dx = Math.abs(target.x - playerState.x);
         const dy = Math.abs(target.y - playerState.y);
         return Math.max(dx, dy) <= maxDistance;

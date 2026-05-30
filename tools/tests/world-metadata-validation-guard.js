@@ -144,6 +144,23 @@ assertRejected(
 );
 
 assertRejected(
+  "resource anchors without map bounds",
+  (world) => {
+    delete world.areas[0].mapPosition;
+  },
+  "area starter_town resourceAnchors require mapPosition bounds"
+);
+
+assertRejected(
+  "empty resource anchors without map bounds",
+  (world) => {
+    world.areas[0].resourceAnchors = [];
+    delete world.areas[0].mapPosition;
+  },
+  "area starter_town resourceAnchors require mapPosition bounds"
+);
+
+assertRejected(
   "resource anchor outside authored map",
   (world) => {
     world.areas[0].resourceAnchors[0].tileX = MAP_SIZE;

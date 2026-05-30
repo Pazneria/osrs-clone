@@ -17,6 +17,14 @@ function assertLeftButtonOutsideCloseGuard(source, listenerNeedle, guardNeedle, 
   );
 }
 
+function extractElementBlock(source, startNeedle, endNeedle, label) {
+  const startIndex = source.indexOf(startNeedle);
+  assert(startIndex !== -1, `${label} markup should exist`);
+  const endIndex = source.indexOf(endNeedle, startIndex);
+  assert(endIndex !== -1, `${label} markup should close`);
+  return source.slice(startIndex, endIndex + endNeedle.length);
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const cssSource = readRepoFile(root, "src/styles/main.css").replace(/\r\n/g, "\n");
@@ -26,6 +34,18 @@ function run() {
   const fletchingSource = readRepoFile(root, "src/js/skills/fletching/index.js");
   const inputRenderSource = readRepoFile(root, "src/js/input-render.js");
   const worldSource = readRepoFile(root, "src/js/world.js");
+  const coreSource = readRepoFile(root, "src/js/core.js");
+  const runToggleBlock = extractElementBlock(
+    htmlSource,
+    '<button id="runToggleBtn"',
+    "</button>",
+    "run toggle"
+  );
+  const runToggleVisibleText = runToggleBlock
+    .replace(/<svg\b[\s\S]*?<\/svg>/g, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
   assert(
     cssSource.includes("#main-ui-container {\n            pointer-events: auto;"),
@@ -79,6 +99,25 @@ function run() {
   assert(
     (htmlSource.match(/id="runToggleBtn"/g) || []).length === 1,
     "run toggle should have a single DOM owner"
+  );
+  assert(
+    runToggleVisibleText === "",
+    "run toggle should render as an icon-only control instead of a visible RUN text label"
+  );
+  assert(
+    runToggleBlock.includes('title="Run Mode: OFF"') &&
+      runToggleBlock.includes('aria-label="Run toggle"'),
+    "run toggle should preserve accessible label and mode tooltip text"
+  );
+  assert(
+    /<svg\b[\s\S]*aria-hidden="true"[\s\S]*<\/svg>/.test(runToggleBlock) &&
+      runToggleBlock.includes("<circle ") &&
+      (runToggleBlock.match(/<path\b/g) || []).length >= 5,
+    "run toggle should keep the stylized running-figure SVG instead of reverting to text"
+  );
+  assert(
+    !/runBtn\.(?:innerText|textContent|innerHTML)\s*=/.test(coreSource),
+    "run toggle runtime sync should not replace the icon-only button with visible text"
   );
   assert(
     !htmlSource.includes('id="main-ui-container" data-active-tab="inv" class="absolute bottom-4 right-4 flex flex-col pointer-events-none'),

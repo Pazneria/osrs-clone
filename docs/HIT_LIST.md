@@ -780,37 +780,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-039 - Shop fallback stock is hard-coded in UI inventory module
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Manual
-- Links: `src/js/inventory.js`, `src/js/shop-economy.js`, `src/js/skills/specs.js`
-- Repro:
-  1. Inspect `createShopInventoryForMerchant` in `src/js/inventory.js`.
-  2. Follow non-configured merchant path and observe fixed fallback items/amounts (`iron_axe`, `tinderbox`, `knife`, `iron_pickaxe`).
-  3. Compare with merchant economy rules in specs/economy modules.
-- Expected: Base shop stock should be configured in economy/content data, not embedded in UI runtime code.
-- Actual: Fallback stock policy is hard-coded in inventory rendering logic.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Move fallback stock policy into economy config (for example `general_store` baseline).
-  2. Keep inventory module read-only against resolved economy stock.
-  3. Add validation for merchants missing both explicit config and fallback policy.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added `generalStoreFallback.defaultStock` economy rows in skill specs for `iron_axe`, `tinderbox`, `knife`, and `iron_pickaxe` so default `general_store` stock is data-driven.
-  - Added `ShopEconomy.getMerchantSeedStockRows(...)` and wired `inventory.js` to consume those rows; removed hard-coded fallback stock items from `createShopInventoryForMerchant`.
-  - Added `ShopEconomy.hasStockPolicy(...)` validation and inventory-side warning when a merchant has neither explicit stock config nor fallback stock policy.
-  - Extended spec contract tests to assert general-store fallback seed rows and stock-policy validation behavior.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-040 - Skills panel tiles are hard-coded in HTML instead of manifest-driven
 - Status: Fixed
 - Severity: S3
@@ -1026,35 +995,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Added `patrolRoute` to combat spawn authoring, typed clones, bridge normalization, scaled world authoring, runtime spawn state, and world validation.
   - Added `updatePatrolEnemyMovement` so idle enemies advance one tile per tick along authored patrol points, pause at patrol stops, and still use the existing leash/return behavior once combat starts.
   - Enabled the first live patrol on `enemy_spawn_fast_striker_southeast_camp_east` in `main_overworld` and advanced combat tracking to `COMBAT-017`.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-074 - Runecrafting altar labels hid route status
-- Status: Fixed
-- Severity: S3
-- Area: Other
-- Source: Automation
-- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
-- Repro:
-  1. Hover or right-click an elemental altar while carrying a secondary rune for a combination route.
-  2. Repeat while missing enough secondary runes for one scaled output, or while a queued altar craft target changes before resolution.
-- Expected: The altar UI should show the selected output route and immediate missing-input/lock hints, and queued altar interruption should explain why crafting stopped.
-- Actual: Altar labels only showed the altar name/output, and some target-change interruption states stopped without player-facing feedback.
-- Frequency: Often
-- Owner: Codex
-- Plan v1:
-  1. Add selected-output and missing-input route hints to altar tooltip/context-menu labels.
-  2. Stop queued altar crafts if the selected target drifts before the craft tick.
-  3. Add focused runecrafting runtime coverage and sync the tracker docs.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Altar hover and context menu labels now include selected output plus route status such as `using air rune`, `need rune essence`, `need 2 air runes`, `need level N`, or `quest locked`.
-  - Queued altar crafts now stop with explicit feedback if the selected altar target/coordinates change before resolution, without consuming essence or granting output.
-  - Extended runecrafting runtime QA coverage for route labels and target-drift interruption.
 - Plan vNext (if revised):
   1.
 - Verification:
@@ -2013,35 +1953,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-047 - Cooking same-fire switch cadence and level gate
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Manual
-- Links: `src/js/skills/cooking/index.js`, `tools/tests/cooking-runtime-tests.js`, `src/js/skills/cooking/STATUS.md`, `src/js/skills/cooking/ROADMAP.md`
-- Repro:
-  1. Try to use a higher-tier raw fish on a fire while below that fish's required cooking level.
-  2. Start cooking one fish type on a fire, then use a different raw fish on that same fire just before the next attempt tick.
-- Expected: Under-level foods cannot begin cooking, and same-fire switching replaces the active cooking recipe without adding a dead tick.
-- Actual: The runtime allowed under-level cooking starts, and same-fire switching re-entered the generic interact/start flow, which could reset the cooking timer.
-- Frequency: Often
-- Owner: Codex
-- Plan v1:
-  1. Add per-recipe cooking level gates to both the use-item and start paths.
-  2. Hot-swap active same-fire cooking sessions directly instead of queueing a fresh interact/start.
-  3. Add targeted runtime regression coverage and sync the cooking docs.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - `src/js/skills/cooking/index.js` now enforces per-fish cooking level requirements before queuing or starting a cooking action.
-  - Same-fire recipe swaps now mutate the live cooking processing session in place and preserve the active `nextTick` cadence instead of restarting from a fresh timer.
-  - Added `tools/tests/cooking-runtime-tests.js` and wired it into `npm test` with level-gate, same-tick swap, blocked swap, and animation-contract coverage.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-022 - HUD running button overlap with minimap
 - Status: Fixed
 - Severity: S2
@@ -2063,33 +1974,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Repositioned `#runToggleBtn` to sit outside the inventory panel on its bottom-left edge, eliminating minimap overlap.
   - Anchored the button to `#main-ui-container` so it follows panel transform/state changes (including UI expand and tab/window context changes).
   - Preserved existing run-toggle behavior and event wiring.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-023 - Run button icon pass (replace RUN text)
-- Status: Fixed
-- Severity: S3
-- Area: HUD
-- Source: Manual
-- Links: `index.html`
-- Repro:
-  1. Inspect run toggle button UI.
-- Expected: Stylized running-figure icon instead of `RUN` text label.
-- Actual: Text label was shown.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Design/select running icon asset.
-  2. Swap button label rendering to icon.
-  3. Verify legibility and active/inactive states.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Replaced `RUN` text with a refined inline running-figure SVG icon for clearer silhouette readability.
-  - Kept `title`/`aria-label` semantics and existing active/inactive color state behavior.
 - Plan vNext (if revised):
   1.
 - Verification:
@@ -2119,33 +2003,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Implemented centered full-map overlay panel with close button, backdrop close, and Escape-to-close handling.
   - Added full-map canvas rendering from the world offscreen map plus player heading/marker overlays.
   - Implemented world-map interaction as view-only navigation controls: mouse-wheel zoom and left-click drag panning when zoomed in.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-025 - Tooltip gating by walking distance
-- Status: Fixed
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links: `src/js/input-render.js`
-- Repro:
-  1. Hover interactable object outside walking distance.
-- Expected: Object tooltips do not show when object is out of walking distance.
-- Actual: Tooltip previously appeared regardless of target distance.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Add distance gate to tooltip display condition.
-  2. Reuse interaction reachability checks if available.
-  3. Validate near/far edge cases and performance.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added tooltip distance gating helper that resolves an actionable target tile (including fishable water edge handling).
-  - Tooltips are now suppressed when hovered targets are beyond a 16-tile walking-distance band from the player.
 - Plan vNext (if revised):
   1.
 - Verification:
@@ -2184,6 +2041,155 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
+
+### HIT-039 - Shop fallback stock is hard-coded in UI inventory module
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/inventory.js`, `src/js/shop-economy.js`, `src/js/skills/specs.js`, `tools/tests/spec-contracts.js`, `tools/tests/inventory-hud-domain-guard.js`
+- Repro:
+  1. Inspect `createShopInventoryForMerchant` in `src/js/inventory.js`.
+  2. Follow non-configured merchant path and observe fixed fallback items/amounts (`iron_axe`, `tinderbox`, `knife`, `iron_pickaxe`).
+  3. Compare with merchant economy rules in specs/economy modules.
+- Expected: Base shop stock should be configured in economy/content data, not embedded in UI runtime code.
+- Actual: `createShopInventoryForMerchant` now delegates shop inventory creation through the UI domain bridge and passes `ShopEconomy`; general-store fallback rows are resolved from skill economy data instead of hard-coded in `inventory.js`.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Move fallback stock policy into economy config (for example `general_store` baseline).
+  2. Keep inventory module read-only against resolved economy stock.
+  3. Add validation for merchants missing both explicit config and fallback policy.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `generalStoreFallback.defaultStock` economy rows in skill specs for `iron_axe`, `tinderbox`, `knife`, and `iron_pickaxe` so default `general_store` stock is data-driven.
+  - Added `ShopEconomy.getMerchantSeedStockRows(...)` and wired `inventory.js` to consume those rows; removed hard-coded fallback stock items from `createShopInventoryForMerchant`.
+  - Added `ShopEconomy.hasStockPolicy(...)` validation and inventory-side warning when a merchant has neither explicit stock config nor fallback stock policy.
+  - Extended spec contract tests to assert general-store fallback seed rows and stock-policy validation behavior.
+  - Added `inventory-hud-domain-guard` coverage that extracts the `createShopInventoryForMerchant` body and rejects the old hard-coded fallback item IDs in `inventory.js`.
+  - Reverified with `node tools\tests\inventory-hud-domain-guard.js`, `node tools\tests\inventory-hud-domain-tests.js`, `node tools\tests\spec-contracts.js`, and `npm.cmd run tool:skills:validate` on 2026-05-29.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-074 - Runecrafting altar labels hid route status
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Hover or right-click an elemental altar while carrying a secondary rune for a combination route.
+  2. Repeat while missing enough secondary runes for one scaled output, or while a queued altar craft target changes before resolution.
+- Expected: The altar UI should show the selected output route and immediate missing-input/lock hints, and queued altar interruption should explain why crafting stopped.
+- Actual: Altar labels now show selected output route and missing-input/lock hints, and queued target drift now stops with explicit feedback before consuming inputs.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Add selected-output and missing-input route hints to altar tooltip/context-menu labels.
+  2. Stop queued altar crafts if the selected target drifts before the craft tick.
+  3. Add focused runecrafting runtime coverage and sync the tracker docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Altar hover and context menu labels now include selected output plus route status such as `using air rune`, `need rune essence`, `need 2 air runes`, `need level N`, or `quest locked`.
+  - Queued altar crafts now stop with explicit feedback if the selected altar target/coordinates change before resolution, without consuming essence or granting output.
+  - Extended runecrafting runtime QA coverage for route labels and target-drift interruption.
+  - Reverified with `npm.cmd run test:qa:runecrafting` on 2026-05-28.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-047 - Cooking same-fire switch cadence and level gate
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `src/js/skills/cooking/index.js`, `tools/tests/cooking-runtime-tests.js`, `src/js/skills/cooking/STATUS.md`, `src/js/skills/cooking/ROADMAP.md`
+- Repro:
+  1. Try to use a higher-tier raw fish on a fire while below that fish's required cooking level.
+  2. Start cooking one fish type on a fire, then use a different raw fish on that same fire just before the next attempt tick.
+- Expected: Under-level foods cannot begin cooking, and same-fire switching replaces the active cooking recipe without adding a dead tick.
+- Actual: Under-level cooking is blocked before queue/start, and same-fire recipe swaps preserve the active cooking tick cadence.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Add per-recipe cooking level gates to both the use-item and start paths.
+  2. Hot-swap active same-fire cooking sessions directly instead of queueing a fresh interact/start.
+  3. Add targeted runtime regression coverage and sync the cooking docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - `src/js/skills/cooking/index.js` now enforces per-fish cooking level requirements before queuing or starting a cooking action.
+  - Same-fire recipe swaps now mutate the live cooking processing session in place and preserve the active `nextTick` cadence instead of restarting from a fresh timer.
+  - Added `tools/tests/cooking-runtime-tests.js` and wired it into `npm test` with level-gate, same-tick swap, blocked swap, and animation-contract coverage.
+  - Reverified with `npm.cmd run test:qa:cooking` on 2026-05-27.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-023 - Run button icon pass (replace RUN text)
+- Status: Closed
+- Severity: S3
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `tools/tests/main-ui-pointer-guard.js`
+- Repro:
+  1. Inspect run toggle button UI.
+- Expected: Stylized running-figure icon instead of `RUN` text label.
+- Actual: The run toggle now renders as an icon-only control with the running-figure SVG while preserving `title` and `aria-label` text for accessibility.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Design/select running icon asset.
+  2. Swap button label rendering to icon.
+  3. Verify legibility and active/inactive states.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Replaced `RUN` text with a refined inline running-figure SVG icon for clearer silhouette readability.
+  - Kept `title`/`aria-label` semantics and existing active/inactive color state behavior.
+  - Added `main-ui-pointer-guard` assertions that the button has no visible text, keeps its accessibility copy, and retains the SVG silhouette.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-025 - Tooltip gating by walking distance
+- Status: Closed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `src/js/input-render.js`, `src/js/input-hover-tooltip-runtime.js`, `tools/tests/input-hover-tooltip-runtime-guard.js`, `tools/tests/render-input-shell-guard.js`
+- Repro:
+  1. Hover interactable object outside walking distance.
+- Expected: Object tooltips do not show when object is out of walking distance.
+- Actual: Hover tooltips now use the documented 16-tile Chebyshev walking-distance band from the player, including fishable-water edge resolution, and hide when the resolved target is outside that band.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Add distance gate to tooltip display condition.
+  2. Reuse interaction reachability checks if available.
+  3. Validate near/far edge cases and performance.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added tooltip distance gating helper that resolves an actionable target tile (including fishable water edge handling).
+  - Aligned the shell-provided tooltip walk-distance limit and runtime fallback with the documented 16-tile walking-distance band.
+  - Added focused guard coverage for exact-boundary targets, beyond-boundary suppression, fishable-water edge resolution, and populated tooltip hiding when the target is out of range.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-036 - Context menu behavior is a monolithic hard-coded branch
 - Status: Closed

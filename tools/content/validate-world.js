@@ -1056,6 +1056,7 @@ function validateWorldAreaMetadata(worldId, world) {
     const resourceAnchors = area.resourceAnchors;
     if (resourceAnchors !== undefined) {
       assert(Array.isArray(resourceAnchors), `${worldId}: area ${areaId} resourceAnchors must be an array`);
+      assert(area.mapPosition && area.mapPosition.bounds, `${worldId}: area ${areaId} resourceAnchors require mapPosition bounds`);
       const anchorIds = new Set();
       for (let j = 0; j < resourceAnchors.length; j++) {
         const anchor = resourceAnchors[j];
