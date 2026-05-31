@@ -187,6 +187,17 @@ function run() {
   assert(legacyProfile.creationCompleted === true, "runtime should mark legacy profiles as created");
   assert(legacyProfile.createdAt === 12345, "runtime should stamp legacy createdAt");
   assert(legacyProfile.tutorialCompletedAt === 12345 && legacyProfile.tutorialStep === 11, "runtime should infer tutorial completion for legacy overworld saves");
+  const incompleteSavedProfile = runtime.sanitizePlayerProfile(context, {
+    name: "Learner",
+    creationCompleted: true,
+    createdAt: 900,
+    lastStartedAt: 950,
+    tutorialStep: 4,
+    tutorialCompletedAt: null
+  }, { allowLegacyFallback: false, savedWorldId: "main_overworld" });
+  assert(incompleteSavedProfile.name === "Learner", "runtime should preserve explicit saved profile names without legacy fallback");
+  assert(incompleteSavedProfile.tutorialCompletedAt === null, "runtime should not infer tutorial completion for explicit incomplete saved profiles");
+  assert(incompleteSavedProfile.tutorialStep === 4, "runtime should preserve incomplete saved tutorial progress");
   const syncedProfile = runtime.syncPlayerProfileState(context, {
     name: "Alice",
     creationCompleted: true,
