@@ -198,6 +198,15 @@ function run() {
   assert(incompleteSavedProfile.name === "Learner", "runtime should preserve explicit saved profile names without legacy fallback");
   assert(incompleteSavedProfile.tutorialCompletedAt === null, "runtime should not infer tutorial completion for explicit incomplete saved profiles");
   assert(incompleteSavedProfile.tutorialStep === 4, "runtime should preserve incomplete saved tutorial progress");
+  const tutorialIslandSavedProfile = runtime.sanitizePlayerProfile(context, {
+    name: "Island Learner",
+    creationCompleted: true,
+    createdAt: 1000,
+    tutorialStep: 6,
+    tutorialCompletedAt: null
+  }, { allowLegacyFallback: false, savedWorldId: "tutorial_island" });
+  assert(tutorialIslandSavedProfile.tutorialCompletedAt === null, "runtime should keep explicit Tutorial Island saves incomplete");
+  assert(tutorialIslandSavedProfile.tutorialStep === 6, "runtime should preserve Tutorial Island saved lesson progress");
   const syncedProfile = runtime.syncPlayerProfileState(context, {
     name: "Alice",
     creationCompleted: true,

@@ -73,6 +73,21 @@ function run() {
   assert(coreSource.includes("? TUTORIAL_WORLD_ID"), "fresh profile startup should route to Tutorial Island");
   assert(coreSource.includes("sanitizePlayerProfile(state.profile, { allowLegacyFallback: !hasSavedProfile, savedWorldId: loadedWorldId })"), "saved player profiles should not be treated as legacy tutorial-complete saves");
   assert(coreSource.includes("hasSavedProfile") && coreSource.includes("loadedWorldId = TUTORIAL_WORLD_ID;"), "incomplete saved tutorial profiles should recover to Tutorial Island");
+  const savedProfileRecoveryIndex = coreSource.indexOf("const hasSavedProfile = !!(state.profile && typeof state.profile === 'object');");
+  const savedProfileSanitizeIndex = coreSource.indexOf("playerProfileState = sanitizePlayerProfile(state.profile, { allowLegacyFallback: !hasSavedProfile, savedWorldId: loadedWorldId });");
+  const incompleteProfileWorldRecoveryIndex = coreSource.indexOf("hasSavedProfile\n                && loadedWorldId !== TUTORIAL_WORLD_ID\n                && !playerProfileState.tutorialCompletedAt");
+  const tutorialSpawnRecoveryIndex = coreSource.indexOf("const recoverySpawn = getTutorialRecoverySpawnForStep(playerProfileState.tutorialStep);");
+  const tutorialRecoveryChatIndex = coreSource.indexOf("addChatMessage('Recovered your tutorial position at the current lesson.', 'info');");
+  assert(
+    savedProfileRecoveryIndex !== -1
+      && savedProfileSanitizeIndex > savedProfileRecoveryIndex
+      && incompleteProfileWorldRecoveryIndex > savedProfileSanitizeIndex
+      && tutorialSpawnRecoveryIndex > incompleteProfileWorldRecoveryIndex
+      && tutorialRecoveryChatIndex > tutorialSpawnRecoveryIndex,
+    "incomplete saved tutorial profiles should sanitize first, reroute to Tutorial Island, then recover to a lesson spawn"
+  );
+  assert(coreSource.includes("activeSession.currentWorldId = loadedWorldId;\n                activeSession.runtime.currentWorldId = loadedWorldId;"), "incomplete profile recovery should update both active session world ids");
+  assert(coreSource.includes("playerState.path = [];\n                addChatMessage('Recovered your tutorial position at the current lesson.', 'info');"), "tutorial position recovery should clear stale loaded paths before resuming");
   assert(coreSource.includes("sourceWorldId === TUTORIAL_WORLD_ID && resolvedWorldId === MAIN_OVERWORLD_WORLD_ID"), "tutorial completion should only trigger when leaving tutorial for the main overworld");
   assert(coreSource.includes("window.TutorialRuntime = {"), "tutorial progression should be exposed to dialogue runtime");
   assert(coreSource.includes("coreTutorialRuntime.buildNpcDialogueView(buildTutorialRuntimeContext(), npc, baseView)"), "tutorial progression should delegate dynamic dialogue to the tutorial runtime");

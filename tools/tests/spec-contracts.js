@@ -1271,6 +1271,33 @@ function run() {
   assert(smithingMetricsById.forge_gold_ring.throughput.valueDeltaPerAction > smithingMetricsById.forge_silver_ring.throughput.valueDeltaPerAction, "gold ring should beat silver ring on value delta");
   assert(smithingMetricsById.forge_rune_sword_blade.throughput.outputSellValuePerAction > smithingMetricsById.forge_rune_arrowheads.throughput.outputSellValuePerAction, "rune sword blade should stay above rune arrowheads on direct sell value");
   assert(smithingMetricsById.forge_rune_platebody.throughput.xpPerTick > smithingMetricsById.forge_rune_sword_blade.throughput.xpPerTick, "rune platebody should remain the top smithing xp/tick lane");
+  const smithingTierBands = Object.freeze({
+    bronze: { min: 1, max: 1 },
+    iron: { min: 1, max: 8 },
+    steel: { min: 10, max: 18 },
+    mithril: { min: 20, max: 28 },
+    adamant: { min: 30, max: 38 },
+    rune: { min: 40, max: 48 }
+  });
+  Object.keys(smithSpec.recipeSet).forEach((recipeId) => {
+    const recipe = smithSpec.recipeSet[recipeId];
+    if (!recipe || !Number.isFinite(recipe.requiredLevel)) return;
+    const outputId = recipe.output && recipe.output.itemId;
+    const tierMatch = typeof outputId === "string" ? outputId.match(/^(bronze|iron|steel|mithril|adamant|rune)_/) : null;
+    if (recipe.recipeFamily === "jewelry_base") {
+      const jewelryBand = outputId && outputId.startsWith("silver_")
+        ? { min: 30, max: 38 }
+        : outputId && outputId.startsWith("gold_")
+          ? { min: 40, max: 48 }
+          : null;
+      assert(!!jewelryBand, "smithing jewelry base should use silver or gold output: " + recipeId);
+      assert(recipe.requiredLevel >= jewelryBand.min && recipe.requiredLevel <= jewelryBand.max, "smithing jewelry level outside band for " + recipeId);
+      return;
+    }
+    if (!tierMatch) return;
+    const band = smithingTierBands[tierMatch[1]];
+    assert(recipe.requiredLevel >= band.min && recipe.requiredLevel <= band.max, "smithing recipe level outside tier band for " + recipeId);
+  });
   const fletchSpec = SkillSpecRegistry.getSkillSpec("fletching");
   const craftingSpec = SkillSpecRegistry.getSkillSpec("crafting");
   assert(!!fletchSpec && !!fletchSpec.recipeSet, "fletching recipe set missing");

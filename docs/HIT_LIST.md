@@ -456,15 +456,15 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-020 - Smithing item level requirement rebalance
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: SMI
 - Source: Manual
-- Links: `src/js/skills/specs.js`, `content/skills/smithing.json`, `tools/tests/fletching-crafting-interactions.js`
+- Links: `src/js/skills/specs/smithing.js`, `content/skills/smithing.json`, `tools/tests/spec-contracts.js`, `tools/tests/fletching-crafting-interactions.js`
 - Repro:
   1. Review smithing item level table by tier.
 - Expected: Requirements range from base tier unlock up to two levels below next tier unlock.
-- Actual: Current requirements fall outside desired range.
+- Actual: Smithing forge and jewelry-base requirements now stay inside their tier bands, with forge items capped at `next tier unlock - 2` and silver/gold jewelry bases assigned to their intended bands.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
@@ -476,12 +476,14 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Rebalanced smithing forge recipe level requirements using per-item offsets inside each tier band, capped to `next tier unlock - 2`.
   - Corrected jewelry-base requirement mismatches by moving silver jewelry to the silver band and spreading gold jewelry inside the gold band.
   - Updated smithing jewelry interaction tests to use the new silver requirement floor.
+  - Added spec-contract coverage that walks the runtime smithing recipe set and rejects forge or jewelry-base requirements outside their tier bands.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
+  - Reverified with `node .\tools\tests\spec-contracts.js`, `npm.cmd run tool:skills:validate`, and `node .\tools\tests\fletching-crafting-interactions.js` on 2026-06-02.
 
 ### HIT-021 - Fire spawn bug after tab inactivity
 - Status: Fixed
@@ -777,37 +779,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   1.
 - Verification:
   - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-040 - Skills panel tiles are hard-coded in HTML instead of manifest-driven
-- Status: Fixed
-- Severity: S3
-- Area: HUD
-- Source: Manual
-- Links: `index.html`, `src/js/skills/manifest.js`, `src/js/inventory.js`
-- Repro:
-  1. Inspect the `#view-stats` block in `index.html`.
-  2. Observe each skill tile is hand-authored markup with duplicated IDs/labels.
-  3. Compare with `SkillManifest.orderedSkillIds` and runtime skill metadata usage.
-- Expected: Skill tile rendering should be generated from a single manifest/data model.
-- Actual: Adding/removing/reordering skills requires manual HTML + JS updates in multiple places.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Expand skill manifest to include icon/label/UI metadata.
-  2. Generate skill tiles at runtime from manifest order.
-  3. Keep DOM IDs/data attributes deterministic for existing hooks/tests.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Expanded `SkillManifest` with canonical `skillTiles` UI metadata (`skillId`, `displayName`, `icon`, `levelKey`) and a generated `skillTileBySkillId` lookup map.
-  - Removed hand-authored skill tiles from `index.html`; `inventory.js` now renders `#view-stats` tiles from manifest data at runtime.
-  - Preserved deterministic IDs and hook compatibility by generating `stat-${levelKey}-level` IDs and the existing `.skill-tile` `data-*` attributes used by skill panel interactions.
-  - Updated `refreshSkillUi` in `world.js` to resolve stat level keys from manifest metadata, with a legacy fallback map for resilience.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
@@ -1810,7 +1781,7 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Notes/logs/docs updated
 
 ### HIT-042 - Tree silhouette refinement follow-up (willow/maple/yew)
-- Status: Fixed
+- Status: Closed
 - Severity: S3
 - Area: WC
 - Source: Manual
@@ -1830,10 +1801,11 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Tightened willow silhouettes around a thinner, taller trunk with smaller canopy masses and longer outer drapes so the hanging profile survives better at mid/far zoom.
   - Broadened maple crowns and branch spread so maples read as the widest, flattest canopy family in the showcase row and mixed-world stands.
   - Narrowed and stacked yew canopy layers around a taller trunk so yews keep a compact spire-like profile instead of blending into the rounder broadleaf silhouettes.
+  - Reverified tree visual profile uniqueness, willow drape coverage, maple broad-crown relationship, yew tight-stack relationship, and starter showcase placement with `npm.cmd run test:world:bootstrap` on 2026-06-01.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
@@ -1953,16 +1925,51 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
+## Closed (Verified)
+<!-- Verified fixed and documented -->
+
+### HIT-040 - Skills panel tiles are hard-coded in HTML instead of manifest-driven
+- Status: Closed
+- Severity: S3
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/skills/manifest.js`, `src/js/inventory.js`, `src/js/world.js`, `tools/tests/inventory-hud-domain-guard.js`, `tools/tests/inventory-hud-domain-tests.js`, `tools/tests/skill-panel-runtime-guard.js`
+- Repro:
+  1. Inspect the `#view-stats` block in `index.html`.
+  2. Observe each skill tile is hand-authored markup with duplicated IDs/labels.
+  3. Compare with `SkillManifest.orderedSkillIds` and runtime skill metadata usage.
+- Expected: Skill tile rendering should be generated from a single manifest/data model.
+- Actual: Skill tiles now render from `SkillManifest.skillTiles`; `#view-stats` no longer carries hand-authored tile markup, and runtime level refresh uses manifest-backed tile metadata.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Expand skill manifest to include icon/label/UI metadata.
+  2. Generate skill tiles at runtime from manifest order.
+  3. Keep DOM IDs/data attributes deterministic for existing hooks/tests.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Expanded `SkillManifest` with canonical `skillTiles` UI metadata (`skillId`, `displayName`, `icon`, `levelKey`) and a generated `skillTileBySkillId` lookup map.
+  - Removed hand-authored skill tiles from `index.html`; `inventory.js` now renders `#view-stats` tiles from manifest data at runtime.
+  - Preserved deterministic IDs and hook compatibility by generating `stat-${levelKey}-level` IDs and the existing `.skill-tile` `data-*` attributes used by skill panel interactions.
+  - Updated `refreshSkillUi` in `world.js` to resolve stat level keys from manifest metadata, with a legacy fallback map for resilience.
+  - Reverified with `node tools\tests\inventory-hud-domain-guard.js`, `node tools\tests\inventory-hud-domain-tests.js`, and `node tools\tests\skill-panel-runtime-guard.js` on 2026-05-31.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-022 - HUD running button overlap with minimap
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: HUD
 - Source: Manual
-- Links: `index.html`
+- Links: `index.html`, `tools/tests/main-ui-pointer-guard.js`
 - Repro:
   1. Open HUD at default and small viewport sizes.
 - Expected: Running button does not overlap minimap.
-- Actual: Run button overlapped minimap edge in the prior anchored layout.
+- Actual: The run button now lives in the top-right HUD controls below the minimap and beside the world-map button, avoiding the minimap frame instead of anchoring against the inventory panel.
 - Frequency: Often
 - Owner: Pair
 - Plan v1:
@@ -1971,26 +1978,27 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Validate desktop + mobile breakpoints.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - Repositioned `#runToggleBtn` to sit outside the inventory panel on its bottom-left edge, eliminating minimap overlap.
-  - Anchored the button to `#main-ui-container` so it follows panel transform/state changes (including UI expand and tab/window context changes).
+  - Moved `#runToggleBtn` out of the inventory panel and into the top-right HUD control row below the minimap, eliminating minimap overlap.
+  - Anchored the button to the top-right HUD control row so it follows minimap/HUD responsive sizing without creating an invisible hitbox.
   - Preserved existing run-toggle behavior and event wiring.
+  - Reverified with `node tools\tests\main-ui-pointer-guard.js` on 2026-05-30.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
 ### HIT-024 - HUD map button for full world map
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: HUD
 - Source: Manual
-- Links: `index.html`, `src/js/core.js`, `src/js/world.js`
+- Links: `index.html`, `src/js/core.js`, `src/js/world.js`, `tools/tests/render-input-shell-guard.js`
 - Repro:
   1. Inspect HUD navigation actions.
 - Expected: Map button opens full world map.
-- Actual: No full-map button/action was available in HUD.
+- Actual: The HUD now exposes a world-map button, opens/closes a centered full-map panel, and keeps map pan/zoom plus minimap destination rendering delegated through the map HUD runtime.
 - Frequency: Always
 - Owner: Pair
 - Plan v1:
@@ -1999,28 +2007,29 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   3. Wire open/close and navigation interactions.
 - Plan Outcome: Confirmed
 - Fix Notes:
-  - Added circular world-map HUD button with pictogram at the minimap's lower-left anchor position.
+  - Added circular world-map HUD button with pictogram at the minimap control anchor.
   - Implemented centered full-map overlay panel with close button, backdrop close, and Escape-to-close handling.
   - Added full-map canvas rendering from the world offscreen map plus player heading/marker overlays.
   - Implemented world-map interaction as view-only navigation controls: mouse-wheel zoom and left-click drag panning when zoomed in.
+  - Reverified with `node tools\tests\render-input-shell-guard.js` on 2026-05-30.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
 ### HIT-028 - Inventory tooltip positioning (avoid swap-left-click block)
-- Status: Fixed
+- Status: Closed
 - Severity: S2
 - Area: HUD
 - Source: Manual
-- Links: `index.html`, `src/js/inventory.js`, `src/js/input-render.js`
+- Links: `index.html`, `src/js/inventory.js`, `src/js/input-render.js`, `src/js/inventory-tooltip-runtime.js`, `src/js/context-menu-runtime.js`, `tools/tests/inventory-tooltip-runtime-guard.js`, `tools/tests/context-menu-runtime-guard.js`
 - Repro:
   1. Trigger item tooltip at bottom of screen.
   2. Attempt to use `swap left click` menu.
 - Expected: Tooltip is raised so it does not block `swap left click` menu access.
-- Actual: Tooltip blocks menu interaction.
+- Actual: Inventory tooltips now use custom positioning with avoid-rect support and context-menu close paths hide the tooltip before swap-left-click interaction.
 - Frequency: Often
 - Owner: Pair
 - Plan v1:
@@ -2032,15 +2041,13 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Replaced inventory slot native `title` tooltips with a custom in-app inventory tooltip layer to avoid browser-tooltip overlap behavior.
   - Tooltip positioning now raises near screen-bottom collisions and performs explicit overlap avoidance against both the context menu and `swap left click` submenu bounds.
   - Context-menu open/close paths now explicitly hide the inventory tooltip so menu interaction remains unobstructed.
+  - Reverified with `node tools\tests\inventory-tooltip-runtime-guard.js` and `node tools\tests\context-menu-runtime-guard.js` on 2026-05-30.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
+  - [x] Repro no longer occurs / requirement met
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
-
-## Closed (Verified)
-<!-- Verified fixed and documented -->
 
 ### HIT-039 - Shop fallback stock is hard-coded in UI inventory module
 - Status: Closed
