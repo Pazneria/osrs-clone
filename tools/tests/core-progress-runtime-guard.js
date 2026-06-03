@@ -187,6 +187,11 @@ function run() {
   assert(legacyProfile.creationCompleted === true, "runtime should mark legacy profiles as created");
   assert(legacyProfile.createdAt === 12345, "runtime should stamp legacy createdAt");
   assert(legacyProfile.tutorialCompletedAt === 12345 && legacyProfile.tutorialStep === 11, "runtime should infer tutorial completion for legacy overworld saves");
+  const legacyTutorialProfile = runtime.sanitizePlayerProfile(context, null, { allowLegacyFallback: true, savedWorldId: "tutorial_island" });
+  assert(legacyTutorialProfile.name === "Adventurer", "runtime should still apply legacy profile defaults on Tutorial Island");
+  assert(legacyTutorialProfile.creationCompleted === true, "runtime should mark legacy Tutorial Island profiles as created");
+  assert(legacyTutorialProfile.tutorialCompletedAt === null, "runtime should not infer tutorial completion for legacy Tutorial Island saves");
+  assert(legacyTutorialProfile.tutorialStep === 0, "runtime should keep legacy Tutorial Island profiles at the first lesson");
   const incompleteSavedProfile = runtime.sanitizePlayerProfile(context, {
     name: "Learner",
     creationCompleted: true,
