@@ -126,6 +126,9 @@ function createSmithingContext(options = {}) {
     quantityMode: options.quantityMode || "all",
     playerState: {
       action: null,
+      x: 10,
+      y: 12,
+      z: 0,
       skillSessions: {}
     },
     getRecipeSet: (skillId) => window.SkillSpecRegistry.getRecipeSet(skillId),
@@ -148,6 +151,13 @@ function createSmithingContext(options = {}) {
       context._started = true;
       context.playerState.action = "SKILLING: FURNACE";
     },
+    stopAction() {
+      context._stopped = true;
+      context.playerState.action = null;
+    },
+    renderInventory() {
+      context._renderedInventory = true;
+    },
     getItemDataById(itemId) {
       const names = {
         copper_ore: "Copper Ore",
@@ -163,6 +173,8 @@ function createSmithingContext(options = {}) {
   context._counts = counts;
   context._messages = messages;
   context._started = false;
+  context._stopped = false;
+  context._renderedInventory = false;
   return context;
 }
 
@@ -185,7 +197,9 @@ function run() {
   global.queueAction = () => {};
   loadSkillSpecScripts(root);
   loadBrowserScript(root, "src/js/skills/spec-registry.js");
+  loadBrowserScript(root, "src/js/skills/shared/action-resolution.js");
   global.SkillSpecRegistry = window.SkillSpecRegistry;
+  global.SkillActionResolution = window.SkillActionResolution;
   loadBrowserScript(root, "src/js/skills/smithing/index.js");
 
   const smithing = window.SkillModules && window.SkillModules.smithing;
@@ -213,6 +227,24 @@ function run() {
   assert(!smithing.onStart(startCtx), "smithing should not start when no output space is available");
   assert(!startCtx._started, "blocked smithing should not enter a skilling action");
   expectMessageContaining(startCtx, "inventory space", "smithing output capacity start gate");
+
+  const runtimeCtx = createSmithingContext({
+    counts: { iron_ore: 1 },
+    canAcceptItemById: () => false
+  });
+  runtimeCtx.playerState.action = "SKILLING: FURNACE";
+  SkillActionResolution.startProcessingSession(runtimeCtx, "smithing", {
+    recipeId: "smelt_iron_bar",
+    stationType: "FURNACE",
+    target: { x: 10, y: 12, z: 0 },
+    intervalTicks: 3,
+    nextTick: 100
+  });
+  smithing.onTick(runtimeCtx);
+  assert(runtimeCtx._stopped, "active smithing should stop when output capacity disappears");
+  assert(!runtimeCtx.playerState.skillSessions.smithing, "active smithing should clear the processing session when inventory fills");
+  assert(runtimeCtx._renderedInventory, "active smithing should refresh inventory after runtime capacity failure");
+  expectMessageContaining(runtimeCtx, "inventory space", "smithing output capacity runtime gate");
 
   console.log("Smithing runtime QA passed.");
 }
