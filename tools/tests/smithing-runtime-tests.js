@@ -112,6 +112,9 @@ function createSmithingContext(options = {}) {
   const counts = Object.assign({}, options.counts || {});
   const messages = [];
   const level = Number.isFinite(options.level) ? options.level : 99;
+  const inventorySlots = Array.isArray(options.inventorySlots)
+    ? options.inventorySlots.map((slot) => slot ? Object.assign({}, slot) : null)
+    : null;
   const canAcceptItemById = typeof options.canAcceptItemById === "function"
     ? options.canAcceptItemById
     : () => true;
@@ -144,12 +147,64 @@ function createSmithingContext(options = {}) {
     hasItem: (itemId) => (counts[itemId] || 0) > 0,
     hasUnlockFlag: () => true,
     canAcceptItemById,
+    getInventorySlotsSnapshot() {
+      if (!inventorySlots) return null;
+      return inventorySlots.map((slot) => slot ? Object.assign({}, slot) : null);
+    },
+    removeItemsById(itemId, amount) {
+      const requested = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+      let remaining = requested;
+      if (inventorySlots) {
+        for (let i = 0; i < inventorySlots.length && remaining > 0; i++) {
+          const slot = inventorySlots[i];
+          if (!slot || slot.itemId !== itemId) continue;
+          const taken = Math.min(slot.amount, remaining);
+          slot.amount -= taken;
+          remaining -= taken;
+          if (slot.amount <= 0) inventorySlots[i] = null;
+        }
+      } else {
+        const available = counts[itemId] || 0;
+        remaining = Math.max(0, requested - available);
+      }
+      const removed = requested - remaining;
+      counts[itemId] = Math.max(0, (counts[itemId] || 0) - removed);
+      return removed;
+    },
+    giveItemById(itemId, amount) {
+      const requested = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+      if (inventorySlots) {
+        const itemData = context.getItemDataById(itemId);
+        if (itemData && itemData.stackable) {
+          const existing = inventorySlots.find((slot) => slot && slot.itemId === itemId);
+          if (existing) {
+            existing.amount += requested;
+            counts[itemId] = (counts[itemId] || 0) + requested;
+            return requested;
+          }
+        }
+        let remaining = requested;
+        for (let i = 0; i < inventorySlots.length && remaining > 0; i++) {
+          if (inventorySlots[i]) continue;
+          inventorySlots[i] = { itemId, amount: 1, stackable: !!(itemData && itemData.stackable) };
+          remaining--;
+        }
+        const given = requested - remaining;
+        counts[itemId] = (counts[itemId] || 0) + given;
+        return given;
+      }
+      counts[itemId] = (counts[itemId] || 0) + requested;
+      return requested;
+    },
+    addSkillXp(skillId, amount) {
+      context._xp.push({ skillId, amount });
+    },
     addChatMessage(message, tone) {
       messages.push({ message, tone });
     },
     startSkillingAction() {
       context._started = true;
-      context.playerState.action = "SKILLING: FURNACE";
+      context.playerState.action = `SKILLING: ${context.targetObj}`;
     },
     stopAction() {
       context._stopped = true;
@@ -164,17 +219,22 @@ function createSmithingContext(options = {}) {
         tin_ore: "Tin Ore",
         bronze_bar: "Bronze Bar",
         iron_ore: "Iron Ore",
-        iron_bar: "Iron Bar"
+        iron_bar: "Iron Bar",
+        hammer: "Hammer",
+        bronze_sword_blade: "Bronze Sword Blade",
+        junk: "Junk"
       };
-      return names[itemId] ? { name: names[itemId] } : null;
+      return names[itemId] ? { name: names[itemId], stackable: false } : null;
     }
   };
 
   context._counts = counts;
+  context._inventorySlots = inventorySlots;
   context._messages = messages;
   context._started = false;
   context._stopped = false;
   context._renderedInventory = false;
+  context._xp = [];
   return context;
 }
 
@@ -245,6 +305,45 @@ function run() {
   assert(!runtimeCtx.playerState.skillSessions.smithing, "active smithing should clear the processing session when inventory fills");
   assert(runtimeCtx._renderedInventory, "active smithing should refresh inventory after runtime capacity failure");
   expectMessageContaining(runtimeCtx, "inventory space", "smithing output capacity runtime gate");
+
+  const fullButFreedStartCtx = createSmithingContext({
+    counts: { iron_ore: 1, junk: 1 },
+    recipeId: "smelt_iron_bar",
+    canAcceptItemById: () => false,
+    inventorySlots: [
+      { itemId: "iron_ore", amount: 1, stackable: false },
+      { itemId: "junk", amount: 1, stackable: false }
+    ]
+  });
+  assert(smithing.onStart(fullButFreedStartCtx), "smithing should start in a full inventory when consumed inputs free the output slot");
+  assert(fullButFreedStartCtx._started, "full-but-freed smithing should enter a skilling action");
+  assert(!fullButFreedStartCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "full-but-freed smithing start should not show inventory-space copy");
+
+  const fullButFreedRuntimeCtx = createSmithingContext({
+    targetObj: "ANVIL",
+    counts: { bronze_bar: 2, hammer: 1, junk: 1 },
+    canAcceptItemById: () => false,
+    inventorySlots: [
+      { itemId: "bronze_bar", amount: 2, stackable: false },
+      { itemId: "hammer", amount: 1, stackable: false },
+      { itemId: "junk", amount: 1, stackable: false }
+    ]
+  });
+  fullButFreedRuntimeCtx.playerState.action = "SKILLING: ANVIL";
+  SkillActionResolution.startProcessingSession(fullButFreedRuntimeCtx, "smithing", {
+    recipeId: "forge_bronze_sword_blade",
+    stationType: "ANVIL",
+    target: { x: 10, y: 12, z: 0 },
+    intervalTicks: 3,
+    nextTick: 100
+  });
+  smithing.onTick(fullButFreedRuntimeCtx);
+  assert(fullButFreedRuntimeCtx._stopped, "active anvil smithing should stop after crafting when no bars remain");
+  assert.strictEqual(fullButFreedRuntimeCtx._counts.bronze_bar, 0, "active anvil smithing should consume bars before granting output");
+  assert.strictEqual(fullButFreedRuntimeCtx._counts.bronze_sword_blade, 1, "active anvil smithing should grant output into the freed slot");
+  assert(fullButFreedRuntimeCtx._renderedInventory, "active anvil smithing should refresh inventory after successful craft");
+  assert(fullButFreedRuntimeCtx._xp.some((entry) => entry.skillId === "smithing" && entry.amount > 0), "active anvil smithing should award XP after successful craft");
+  assert(!fullButFreedRuntimeCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "full-but-freed runtime smithing should not show inventory-space copy");
 
   console.log("Smithing runtime QA passed.");
 }
