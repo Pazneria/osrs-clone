@@ -221,10 +221,11 @@ function createSmithingContext(options = {}) {
         iron_ore: "Iron Ore",
         iron_bar: "Iron Bar",
         hammer: "Hammer",
+        bronze_arrowheads: "Bronze Arrowheads",
         bronze_sword_blade: "Bronze Sword Blade",
         junk: "Junk"
       };
-      return names[itemId] ? { name: names[itemId], stackable: false } : null;
+      return names[itemId] ? { name: names[itemId], stackable: itemId === "bronze_arrowheads" } : null;
     }
   };
 
@@ -319,6 +320,53 @@ function run() {
   assert(fullButFreedStartCtx._started, "full-but-freed smithing should enter a skilling action");
   assert(!fullButFreedStartCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "full-but-freed smithing start should not show inventory-space copy");
 
+  const fullButFreedAnvilStartCtx = createSmithingContext({
+    targetObj: "ANVIL",
+    counts: { bronze_bar: 2, hammer: 1, junk: 1 },
+    recipeId: "forge_bronze_sword_blade",
+    canAcceptItemById: () => false,
+    inventorySlots: [
+      { itemId: "bronze_bar", amount: 2, stackable: false },
+      { itemId: "hammer", amount: 1, stackable: false },
+      { itemId: "junk", amount: 1, stackable: false }
+    ]
+  });
+  assert(smithing.onStart(fullButFreedAnvilStartCtx), "anvil smithing should start in a full inventory when consumed bars free the output slot");
+  assert(fullButFreedAnvilStartCtx._started, "full-but-freed anvil smithing should enter a skilling action");
+  assert(!fullButFreedAnvilStartCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "full-but-freed anvil start should not show inventory-space copy");
+
+  const fullWithOutputStackCtx = createSmithingContext({
+    targetObj: "ANVIL",
+    counts: { bronze_bar: 2, hammer: 1, bronze_arrowheads: 5, junk: 1 },
+    recipeId: "forge_bronze_arrowheads",
+    canAcceptItemById: () => false,
+    inventorySlots: [
+      { itemId: "bronze_bar", amount: 2, stackable: false },
+      { itemId: "hammer", amount: 1, stackable: false },
+      { itemId: "bronze_arrowheads", amount: 5, stackable: true },
+      { itemId: "junk", amount: 1, stackable: false }
+    ]
+  });
+  assert(smithing.onStart(fullWithOutputStackCtx), "stackable smithing output should start in a full inventory when an output stack already exists");
+  assert(fullWithOutputStackCtx._started, "stackable output smithing should enter a skilling action");
+  assert(!fullWithOutputStackCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "stackable output start should not show inventory-space copy");
+
+  const fullWithoutOutputStackCtx = createSmithingContext({
+    targetObj: "ANVIL",
+    counts: { bronze_bar: 2, hammer: 1, junk: 1, second_junk: 1 },
+    recipeId: "forge_bronze_arrowheads",
+    canAcceptItemById: () => false,
+    inventorySlots: [
+      { itemId: "bronze_bar", amount: 2, stackable: false },
+      { itemId: "hammer", amount: 1, stackable: false },
+      { itemId: "junk", amount: 1, stackable: false },
+      { itemId: "second_junk", amount: 1, stackable: false }
+    ]
+  });
+  assert(!smithing.onStart(fullWithoutOutputStackCtx), "stackable smithing output should not start in a full inventory without an output stack or freed slot");
+  assert(!fullWithoutOutputStackCtx._started, "blocked stackable output smithing should not enter a skilling action");
+  expectMessageContaining(fullWithoutOutputStackCtx, "inventory space", "stackable smithing output capacity start gate");
+
   const fullButFreedRuntimeCtx = createSmithingContext({
     targetObj: "ANVIL",
     counts: { bronze_bar: 2, hammer: 1, junk: 1 },
@@ -344,6 +392,30 @@ function run() {
   assert(fullButFreedRuntimeCtx._renderedInventory, "active anvil smithing should refresh inventory after successful craft");
   assert(fullButFreedRuntimeCtx._xp.some((entry) => entry.skillId === "smithing" && entry.amount > 0), "active anvil smithing should award XP after successful craft");
   assert(!fullButFreedRuntimeCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "full-but-freed runtime smithing should not show inventory-space copy");
+
+  const fullButFreedSmeltingRuntimeCtx = createSmithingContext({
+    counts: { iron_ore: 1, junk: 1 },
+    canAcceptItemById: () => false,
+    inventorySlots: [
+      { itemId: "iron_ore", amount: 1, stackable: false },
+      { itemId: "junk", amount: 1, stackable: false }
+    ]
+  });
+  fullButFreedSmeltingRuntimeCtx.playerState.action = "SKILLING: FURNACE";
+  SkillActionResolution.startProcessingSession(fullButFreedSmeltingRuntimeCtx, "smithing", {
+    recipeId: "smelt_iron_bar",
+    stationType: "FURNACE",
+    target: { x: 10, y: 12, z: 0 },
+    intervalTicks: 3,
+    nextTick: 100
+  });
+  smithing.onTick(fullButFreedSmeltingRuntimeCtx);
+  assert(fullButFreedSmeltingRuntimeCtx._stopped, "active furnace smithing should stop after smelting when no ore remains");
+  assert.strictEqual(fullButFreedSmeltingRuntimeCtx._counts.iron_ore, 0, "active furnace smithing should consume ore before granting output");
+  assert.strictEqual(fullButFreedSmeltingRuntimeCtx._counts.iron_bar, 1, "active furnace smithing should grant output into the freed slot");
+  assert(fullButFreedSmeltingRuntimeCtx._renderedInventory, "active furnace smithing should refresh inventory after successful smelt");
+  assert(fullButFreedSmeltingRuntimeCtx._xp.some((entry) => entry.skillId === "smithing" && entry.amount > 0), "active furnace smithing should award XP after successful smelt");
+  assert(!fullButFreedSmeltingRuntimeCtx._messages.some((entry) => /inventory space/i.test(entry.message)), "full-but-freed runtime smelting should not show inventory-space copy");
 
   console.log("Smithing runtime QA passed.");
 }
