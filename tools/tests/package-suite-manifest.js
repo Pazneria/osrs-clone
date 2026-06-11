@@ -203,6 +203,7 @@ const TEST_RUN_FILES = [
   "tools/tests/target-interaction-runtime-tests.js",
   "tools/tests/tile-semantics-guard.js",
   "tools/tests/pixel-asset-pipeline-guard.js",
+  "tools/tests/icon-review-catalog-guard.js",
   "tools/tests/pages-deploy-guard.js",
   "tools/tests/player-appearance-catalog-guard.js",
   "tools/tests/progress-persistence-guard.js",

@@ -55,6 +55,7 @@
     "test:core:tutorial": "node ./tools/tests/core-tutorial-runtime-guard.js",
     "test:core:progress": "node ./tools/tests/core-progress-runtime-guard.js",
     "test:core:icon-review": "node ./tools/tests/core-icon-review-runtime-guard.js",
+    "test:content:icon-review": "node ./tools/tests/icon-review-catalog-guard.js",
     "test:skill-progress:guard": "node ./tools/tests/skill-progress-runtime-guard.js",
     "test:skill-panel:guard": "node ./tools/tests/skill-panel-runtime-guard.js",
     "test:skill-panel-render:guard": "node ./tools/tests/skill-panel-render-runtime-guard.js",
