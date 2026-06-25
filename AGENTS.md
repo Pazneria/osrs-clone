@@ -12,6 +12,12 @@ If the custom OSRS Clone skill pack is installed, prefer these skills for this r
 
 If a skill conflicts with this file, follow `AGENTS.md`.
 
+## Branch Hygiene
+
+- Treat `main` as the source of truth before starting work: sync it, branch from it, and keep the working tree clean.
+- Use one task per branch and one focused PR per branch. Do not grow omnibus cleanup branches.
+- Merge or close a PR as soon as its focused task is decided, then delete the local and remote branch immediately.
+
 ## Inventory Icon Requests
 
 Treat requests like "make", "design", "create", "update", or "redo" an inventory icon as implement-now tasks, not planning or brainstorming, unless the user explicitly asks for brainstorming first.
