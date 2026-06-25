@@ -592,44 +592,105 @@ function run() {
     assert.strictEqual(idleEnemy.remainingAttackCooldown, 1);
   });
 
-  test("Ranged player attacks from bow range and consumes ammo", () => {
-    resetCombatEnvironment({
-      enemyDefs: {
-        ranged_target: createEnemyDefinition("ranged_target", { hitpoints: 6 })
-      },
-      spawnNodes: [
-        createSpawnNode("ranged-target", "ranged_target", 10, 5)
-      ],
-      playerSnapshot: {
-        styleFamily: "ranged",
-        damageType: "ranged",
-        canAttack: true,
-        attackValue: 100,
-        defenseValue: 10,
-        maxHit: 1,
-        attackRange: 7,
-        attackTickCycle: 4,
-        consumesAmmo: true,
-        ammoInventoryIndex: 0,
-        ammoItemId: "bronze_arrows"
-      },
-      inventory: [
-        { itemData: { id: "bronze_arrows", name: "Bronze Arrows x15" }, amount: 2 }
-      ],
-      pathResolver() {
-        return [{ x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }];
-      }
-    });
+  test("Ranged player attacks from bow range, consumes ammo, and trains Ranged", () => {
+    const xpAwards = [];
+    const previousAddSkillXp = global.addSkillXp;
+    global.addSkillXp = (skillId, amount) => {
+      xpAwards.push({ skillId, amount });
+    };
 
-    assert.ok(window.lockPlayerCombatTarget("ranged-target"));
-    window.processCombatTick();
+    try {
+      resetCombatEnvironment({
+        enemyDefs: {
+          ranged_target: createEnemyDefinition("ranged_target", { hitpoints: 6 })
+        },
+        spawnNodes: [
+          createSpawnNode("ranged-target", "ranged_target", 10, 5)
+        ],
+        playerSnapshot: {
+          styleFamily: "ranged",
+          damageType: "ranged",
+          canAttack: true,
+          attackValue: 100,
+          defenseValue: 10,
+          maxHit: 1,
+          attackRange: 7,
+          attackTickCycle: 4,
+          consumesAmmo: true,
+          ammoInventoryIndex: 0,
+          ammoItemId: "bronze_arrows"
+        },
+        inventory: [
+          { itemData: { id: "bronze_arrows", name: "Bronze Arrows x15" }, amount: 2 }
+        ],
+        pathResolver() {
+          return [{ x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }];
+        }
+      });
 
-    const target = getEnemy("ranged-target");
-    assert.strictEqual(target.currentHealth, 5, "ranged attack should damage targets outside melee range");
-    assert.strictEqual(playerState.action, "COMBAT: RANGED", "ranged attacks should mark ranged combat intent");
-    assert.strictEqual(playerState.path.length, 0, "ranged attacks should not step toward an already in-range target");
-    assert.strictEqual(playerState.remainingAttackCooldown, 4, "ranged attack should set bow cooldown");
-    assert.strictEqual(inventory[0].amount, 1, "ranged attack should consume one arrow from the selected stack");
+      assert.ok(window.lockPlayerCombatTarget("ranged-target"));
+      window.processCombatTick();
+
+      const target = getEnemy("ranged-target");
+      assert.strictEqual(target.currentHealth, 5, "ranged attack should damage targets outside melee range");
+      assert.strictEqual(playerState.action, "COMBAT: RANGED", "ranged attacks should mark ranged combat intent");
+      assert.strictEqual(playerState.path.length, 0, "ranged attacks should not step toward an already in-range target");
+      assert.strictEqual(playerState.remainingAttackCooldown, 4, "ranged attack should set bow cooldown");
+      assert.strictEqual(inventory[0].amount, 1, "ranged attack should consume one arrow from the selected stack");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "ranged" && entry.amount === 4), "ranged damage should award Ranged XP");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "hitpoints" && entry.amount === 1), "ranged damage should award Hitpoints XP");
+    } finally {
+      global.addSkillXp = previousAddSkillXp;
+    }
+  });
+
+  test("Ranged player misses consume ammo without awarding combat XP", () => {
+    const xpAwards = [];
+    const previousAddSkillXp = global.addSkillXp;
+    global.addSkillXp = (skillId, amount) => {
+      xpAwards.push({ skillId, amount });
+    };
+
+    try {
+      resetCombatEnvironment({
+        enemyDefs: {
+          ranged_target: createEnemyDefinition("ranged_target", { hitpoints: 6 })
+        },
+        spawnNodes: [
+          createSpawnNode("ranged-target", "ranged_target", 10, 5)
+        ],
+        playerSnapshot: {
+          styleFamily: "ranged",
+          damageType: "ranged",
+          canAttack: true,
+          attackValue: 100,
+          defenseValue: 10,
+          maxHit: 1,
+          attackRange: 7,
+          attackTickCycle: 4,
+          consumesAmmo: true,
+          ammoInventoryIndex: 0,
+          ammoItemId: "bronze_arrows"
+        },
+        inventory: [
+          { itemData: { id: "bronze_arrows", name: "Bronze Arrows x15" }, amount: 2 }
+        ],
+        rollOpposedHitCheck() {
+          return false;
+        }
+      });
+
+      assert.ok(window.lockPlayerCombatTarget("ranged-target"));
+      window.processCombatTick();
+
+      const target = getEnemy("ranged-target");
+      assert.strictEqual(target.currentHealth, 6, "missed ranged attacks should not damage the target");
+      assert.strictEqual(playerState.remainingAttackCooldown, 4, "missed ranged attacks should still set bow cooldown");
+      assert.strictEqual(inventory[0].amount, 1, "missed ranged attacks should still consume one arrow");
+      assert.deepStrictEqual(xpAwards, [], "missed ranged attacks should not award Ranged or Hitpoints XP");
+    } finally {
+      global.addSkillXp = previousAddSkillXp;
+    }
   });
 
   test("Magic player attacks from staff range, consumes runes, and trains Magic", () => {
