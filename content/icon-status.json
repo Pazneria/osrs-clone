@@ -81,7 +81,8 @@
     },
     "air_rune": {
       "assetId": "air_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "air_staff": {
@@ -350,12 +351,14 @@
     },
     "dust_rune": {
       "assetId": "dust_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "earth_rune": {
       "assetId": "earth_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "earth_staff": {
@@ -365,7 +368,8 @@
     },
     "ember_rune": {
       "assetId": "ember_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "emerald_gold_amulet": {
@@ -554,7 +558,8 @@
     },
     "lava_rune": {
       "assetId": "lava_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "logs": {
@@ -616,7 +621,8 @@
     },
     "mist_rune": {
       "assetId": "mist_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "mithril_arrowheads": {
@@ -698,7 +704,8 @@
     },
     "mud_rune": {
       "assetId": "mud_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "needle": {
@@ -1038,7 +1045,8 @@
     },
     "smoke_rune": {
       "assetId": "smoke_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "soft_clay": {
@@ -1048,7 +1056,8 @@
     },
     "steam_rune": {
       "assetId": "steam_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "steel_arrowheads": {
@@ -1166,7 +1175,8 @@
     },
     "water_rune": {
       "assetId": "water_rune",
-      "status": "todo",
+      "notes": "Reviewed dedicated rune icon contact sheet on 2026-06-11.",
+      "status": "done",
       "treatment": "bespoke"
     },
     "water_staff": {
