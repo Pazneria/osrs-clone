@@ -335,6 +335,25 @@ function makeMagicRune(itemId, overrides = {}) {
   });
   assert.strictEqual(activeSnapshot.styleFamily, "magic", "active combat snapshot should switch to magic when a staff is equipped");
 
+  const strongerRuneSnapshot = combatFormulas.computePlayerMagicCombatSnapshot({
+    playerSkills: {
+      magic: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 },
+      hitpoints: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeStaff({ magicAccuracyBonus: 6, magicStrengthBonus: 4 })
+    },
+    inventory: [
+      { itemData: makeMagicRune("ember_rune", { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }), amount: 1 },
+      { itemData: makeMagicRune("dust_rune", { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 }), amount: 1 }
+    ],
+    playerState: {}
+  });
+  assert.strictEqual(strongerRuneSnapshot.ammoInventoryIndex, 1, "magic snapshot should prefer the strongest compatible rune stack");
+  assert.strictEqual(strongerRuneSnapshot.ammoItemId, "dust_rune", "magic snapshot should surface the selected stronger rune");
+  assert.strictEqual(strongerRuneSnapshot.maxHit, 4, "stronger runes should contribute magic max-hit strength");
+
   const noRuneSnapshot = combatFormulas.computePlayerMagicCombatSnapshot({
     playerSkills: {
       magic: { xp: 0, level: 20 },

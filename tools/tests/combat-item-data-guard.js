@@ -68,7 +68,16 @@ const MAGIC_STAFF_ITEMS = [
 ];
 
 const MAGIC_RUNE_ITEMS = [
-  "ember_rune"
+  "ember_rune",
+  "water_rune",
+  "earth_rune",
+  "air_rune",
+  "steam_rune",
+  "smoke_rune",
+  "lava_rune",
+  "mud_rune",
+  "mist_rune",
+  "dust_rune"
 ];
 
 const ARMOR_ITEMS = [

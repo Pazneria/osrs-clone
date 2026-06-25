@@ -24,6 +24,7 @@ function run() {
   assert(typeof catalog.label === "string" && catalog.label.trim().length > 0, "active icon review batch should have a label");
   assert(catalog.replaceInventory === true, "active icon review batches should replace inventory for clean contact-sheet review");
   assert(Array.isArray(catalog.itemIds) && catalog.itemIds.length > 0, "active icon review batch should include item ids");
+  assert(catalog.itemIds.length <= 28, "active icon review batch should fit in one inventory");
 
   const seen = new Set();
   catalog.itemIds.forEach((itemId) => {
@@ -33,7 +34,6 @@ function run() {
 
     const itemDef = itemDefs && itemDefs[itemId];
     assert(itemDef, `review item should exist in item catalog: ${itemId}`);
-    assert(itemDef.stackable === true, `review item should be stackable for contact-sheet review: ${itemId}`);
     assert(itemDef.icon && itemDef.icon.kind === "pixel", `review item should use a pixel icon: ${itemId}`);
     assert(itemDef.icon.assetId === itemId, `review item icon asset should match item id: ${itemId}`);
 

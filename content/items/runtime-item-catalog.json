@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-05-11T18:47:20.689Z",
+  "generatedAt": "2026-06-25T20:47:50.728Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -505,6 +505,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 4,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 7,
+        "magicStrengthBonus": 8
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "air_rune",
@@ -512,6 +521,10 @@
       },
       "name": "Air rune",
       "stackable": true,
+      "stats": {
+        "mag": 7,
+        "mstr": 8
+      },
       "type": "resource",
       "value": 80
     },
@@ -921,6 +934,7 @@
         "Use",
         "Drop"
       ],
+      "asset3d": "bronze_pickaxe",
       "combat": {
         "attackProfile": {
           "ammoUse": false,
@@ -1609,6 +1623,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 11,
+        "magicStrengthBonus": 12
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "dust_rune",
@@ -1616,6 +1639,10 @@
       },
       "name": "Dust rune",
       "stackable": true,
+      "stats": {
+        "mag": 11,
+        "mstr": 12
+      },
       "type": "resource",
       "value": 160
     },
@@ -1623,6 +1650,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 3,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 4,
+        "magicStrengthBonus": 5
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "earth_rune",
@@ -1630,6 +1666,10 @@
       },
       "name": "Earth rune",
       "stackable": true,
+      "stats": {
+        "mag": 4,
+        "mstr": 5
+      },
       "type": "resource",
       "value": 40
     },
@@ -2627,6 +2667,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 11,
+        "magicStrengthBonus": 12
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "lava_rune",
@@ -2634,6 +2683,10 @@
       },
       "name": "Lava rune",
       "stackable": true,
+      "stats": {
+        "mag": 11,
+        "mstr": 12
+      },
       "type": "resource",
       "value": 160
     },
@@ -2878,6 +2931,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 11,
+        "magicStrengthBonus": 12
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "mist_rune",
@@ -2885,6 +2947,10 @@
       },
       "name": "Mist rune",
       "stackable": true,
+      "stats": {
+        "mag": 11,
+        "mstr": 12
+      },
       "type": "resource",
       "value": 160
     },
@@ -3391,6 +3457,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 11,
+        "magicStrengthBonus": 12
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "mud_rune",
@@ -3398,6 +3473,10 @@
       },
       "name": "Mud rune",
       "stackable": true,
+      "stats": {
+        "mag": 11,
+        "mstr": 12
+      },
       "type": "resource",
       "value": 160
     },
@@ -5039,6 +5118,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 11,
+        "magicStrengthBonus": 12
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "smoke_rune",
@@ -5046,6 +5134,10 @@
       },
       "name": "Smoke rune",
       "stackable": true,
+      "stats": {
+        "mag": 11,
+        "mstr": 12
+      },
       "type": "resource",
       "value": 160
     },
@@ -5068,6 +5160,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 5,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 11,
+        "magicStrengthBonus": 12
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "steam_rune",
@@ -5075,6 +5176,10 @@
       },
       "name": "Steam rune",
       "stackable": true,
+      "stats": {
+        "mag": 11,
+        "mstr": 12
+      },
       "type": "resource",
       "value": 160
     },
@@ -5683,6 +5788,15 @@
       "actions": [
         "Drop"
       ],
+      "ammo": {
+        "ammoTier": 2,
+        "compatibleWeaponFamilies": [
+          "staff"
+        ],
+        "damageType": "magic",
+        "magicAccuracyBonus": 2,
+        "magicStrengthBonus": 3
+      },
       "defaultAction": "Drop",
       "icon": {
         "assetId": "water_rune",
@@ -5690,6 +5804,10 @@
       },
       "name": "Water rune",
       "stackable": true,
+      "stats": {
+        "mag": 2,
+        "mstr": 3
+      },
       "type": "resource",
       "value": 20
     },

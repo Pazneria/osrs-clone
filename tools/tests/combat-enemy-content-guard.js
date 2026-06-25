@@ -564,18 +564,28 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-017:/,
-  "combat status should advance COMBAT-017 into the current focus slot"
+  /- \[x\] COMBAT-017: Ranged player combat now runs through the shared combat core with bow range, required Ranged levels, arrow ammo selection, ammo consumption, projectile feedback, ranged XP, and focused domain\/runtime\/item-data coverage\./,
+  "combat status should mark COMBAT-017 complete with the ranged-combat rollout"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-018:/,
+  "combat status should advance COMBAT-018 into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| The southeast camp-threat pocket now uses opt-in ally-assist plus an authored fast-striker patrol route \| Ranged combat on top of the shared combat core \| None \|/,
-  "skills index should reflect the patrol-route rollout and next ranged-combat focus"
+  /\| Combat \| In Progress \| Player ranged combat now runs through the shared combat core with bows, arrows, ammo consumption, projectile feedback, and Ranged XP \| Magic combat, rune\/resource integration, and staff\/spell identity \| None \|/,
+  "skills index should reflect the ranged-combat rollout and next magic-combat focus"
 );
 assertRegex(
   combatRoadmapSource,
   /\| Authored patrol-route movement for spawn nodes \| Complete \|/,
   "combat roadmap should mark authored patrol-route movement complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Player ranged bow\/ammo combat on the shared core \| Complete \|/,
+  "combat roadmap should mark player ranged combat complete"
 );
 
 assertRegex(

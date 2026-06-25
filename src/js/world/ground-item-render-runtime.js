@@ -370,6 +370,10 @@
         const itemData = options && options.itemData;
         if (!group || !itemData) return 'none';
 
+        const asset3dRuntime = typeof window !== 'undefined' ? window.Asset3DRuntime : null;
+        const asset3dMeshes = itemData && typeof itemData.asset3d === 'string' && asset3dRuntime && typeof asset3dRuntime.createGroundItemVisualMeshes === 'function'
+            ? asset3dRuntime.createGroundItemVisualMeshes(itemData.asset3d, { THREERef: THREE, itemId: itemData.id })
+            : [];
         const createEquipmentVisualMeshes = options && options.createEquipmentVisualMeshes;
         const equipmentMeshes = itemData && typeof itemData.id === 'string' && typeof createEquipmentVisualMeshes === 'function'
             ? createEquipmentVisualMeshes(itemData.id, 'axe', [0, 0, 0, 0, 0])
@@ -377,6 +381,10 @@
         const fishGroundVisual = resolveFishGroundVisual(itemData);
         const armorGroundVisual = resolveArmorGroundVisual(itemData);
 
+        if (asset3dMeshes.length > 0) {
+            addEquipmentMeshes(group, asset3dMeshes);
+            return 'asset3d';
+        }
         if (equipmentMeshes.length > 0) {
             addEquipmentMeshes(group, equipmentMeshes);
             return 'equipment';

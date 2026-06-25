@@ -1,6 +1,6 @@
 (function () {
     const HELP_PRESETS = 'QA presets: /qa armor_ladder, /qa armor_<bronze|iron|steel|mithril|adamant|rune>, /qa fish_full, /qa fish_rod, /qa fish_harpoon, /qa fish_rune, /qa wc_full, /qa mining_full, /qa rc_full, /qa rc_combo, /qa rc_routes, /qa fm_full, /qa smith_smelt, /qa smith_forge, /qa smith_jewelry, /qa smith_full, /qa smith_fullinv, /qa ranged, /qa icons, /qa default';
-    const HELP_TOOLS = 'QA tools: /qa worlds, /qa travel <worldId>, /qa creator, /qa npcgallery, /qa perf, /qa setlevel <attack|strength|defense|hitpoints|fishing|firemaking|mining|runecrafting|smithing|ranged> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gotomainland <starter|market|woodwatch|roadhold|quarry>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|ranged|magic|runecrafting|crafting|bank|exit>, /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa camera preset <tutorial_surface|tutorial_late_yard>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]';
+    const HELP_TOOLS = 'QA tools: /qa worlds, /qa travel <worldId>, /qa creator, /qa npcgallery, /qa perf, /qa setlevel <attack|strength|defense|hitpoints|fishing|firemaking|mining|runecrafting|smithing|ranged> <1-99>, /qa diag <fishing|mining|rc|shop>, /qa shopdiag [merchantId], /qa openshop <merchantId>, /qa fishspots, /qa fishshops, /qa cookspots, /qa firespots, /qa gotofish <pond|pier|deep>, /qa gotocook <camp|river|dock|deep>, /qa gotofire <starter|oak|willow|maple|yew>, /qa gotofishshop <teacher|supplier>, /qa gotomerchant <merchantId|alias>, /qa gotomainland <starter|market|woodwatch|roadhold|quarry>, /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|ranged|magic|runecrafting|crafting|bank|exit>, /qa goblinlab [cabin|combat|off], /qa npctargets [query], /qa combattargets, /qa projecttile <x> <y> [z] [height], /qa raycast <screenX> <screenY> [maxHits], /qa camera preset <tutorial_surface|tutorial_late_yard>, /qa unlock <combo|gemmine|mould|moulds|ringmould|amuletmould|tiaramould> <on|off>, /qa altars, /qa gotoaltar <ember|water|earth|air>, /qa rcdebug <on|off>, /qa pierdebug <on|off>, /qa combatdebug [on|off|now|clears|clearreset]';
 
     function getWindowRef(context = {}) {
         return context.windowRef || (typeof window !== 'undefined' ? window : {});
@@ -271,6 +271,11 @@
         if (cmd === 'gototutorial' && parts.length >= 2) {
             const ok = callHook(context, 'qaGotoTutorialStation', String(parts[1] || '').toLowerCase());
             if (!ok) addChat(context, 'Usage: /qa gototutorial <arrival|woodcutting|fishing|firemaking|mining|combat|ranged|magic|runecrafting|crafting|bank|exit>', 'warn');
+            return true;
+        }
+        if (cmd === 'goblinlab') {
+            const ok = callHook(context, 'qaGoblinCombatLab', String(parts[1] || '').toLowerCase());
+            if (!ok) addChat(context, 'Usage: /qa goblinlab [cabin|combat|off]', 'warn');
             return true;
         }
         if (cmd === 'gotoaltar' && parts.length >= 2) {

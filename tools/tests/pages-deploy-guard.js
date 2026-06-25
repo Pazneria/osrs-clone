@@ -17,6 +17,7 @@ function run() {
   const copyScript = readRepoFile(root, "tools/build/copy-runtime-assets.js");
   assert(copyScript.includes('"assets/pixel"'), "copy-runtime-assets.js must copy assets/pixel");
   assert(copyScript.includes('"assets/models"'), "copy-runtime-assets.js must copy assets/models");
+  assert(copyScript.includes('"assets/3d"'), "copy-runtime-assets.js must copy assets/3d");
 
   assert(fs.existsSync(workflowPath), "deploy-pages workflow must exist");
   const workflow = readRepoFile(root, ".github/workflows/deploy-pages.yml");

@@ -41,12 +41,13 @@ assert(
     /- \[x\] COMBAT-014: Combat progression bands/.test(combatStatusSource) &&
     /- \[x\] COMBAT-015:/.test(combatStatusSource) &&
     /- \[x\] COMBAT-016B:/.test(combatStatusSource) &&
-    /## Now\s*- \[ \] COMBAT-017:/.test(combatStatusSource),
-  "combat status should keep COMBAT-013 through COMBAT-016B complete and advance to COMBAT-017"
+    /- \[x\] COMBAT-017: Ranged player combat now runs through the shared combat core/.test(combatStatusSource) &&
+    /## Now\s*- \[ \] COMBAT-018:/.test(combatStatusSource),
+  "combat status should keep COMBAT-013 through COMBAT-017 complete and advance to COMBAT-018"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | The southeast camp-threat pocket now uses opt-in ally-assist plus an authored fast-striker patrol route | Ranged combat on top of the shared combat core | None |"),
-  "skills index should reflect the completed patrol-route encounter coverage"
+  skillsIndexSource.includes("| Combat | In Progress | Player ranged combat now runs through the shared combat core with bows, arrows, ammo consumption, projectile feedback, and Ranged XP | Magic combat, rune/resource integration, and staff/spell identity | None |"),
+  "skills index should reflect the completed ranged-combat rollout"
 );
 
 const summary = runSimulation({

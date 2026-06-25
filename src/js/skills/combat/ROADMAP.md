@@ -19,6 +19,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | --- | --- |
 | Combat Core | Shared tick timing, target validation, cooldown countdown, same-tick batch resolution, damage/heal application, death interruption |
 | Melee | Player melee formulas, item attack profiles, melee style selection, melee equipment requirements |
+| Ranged | Player bow formulas, arrow ammo selection, ranged attack range, projectile feedback, ammo consumption, and Ranged XP awards |
 | Enemy Runtime | Enemy type definitions, world-authored spawn nodes, aggro/chase/reset behavior, drops, respawns, world-instance runtime state |
 | Encounter Content | Enemy placement, spawn-group layout, safe-route spacing, region-by-region combat population, encounter readability |
 | Loot / Drop Authoring | Drop-table structure, drop-rate bands, item/coin value alignment, region-specific progression rewards |
@@ -46,6 +47,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | First-pass guarded threshold and camp-threat encounter coverage | Complete |
 | Opt-in ally-assist behavior for authored combat groups | Complete |
 | Authored patrol-route movement for spawn nodes | Complete |
+| Player ranged bow/ammo combat on the shared core | Complete |
 
 ## Data Contracts
 
@@ -59,6 +61,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 
 - Equippable held items expose explicit melee-ready combat data instead of relying on placeholder `stats.atk/def/str` math.
 - Swords, axes, pickaxes, fishing rods, and harpoons all define attack profile, melee bonuses, and required Attack level.
+- Bows define ranged attack profiles with explicit range, tick cadence, required Ranged level, projectile behavior, and ammo use.
+- Arrows define ranged ammo profiles with ammo tier, ranged accuracy/strength bonuses, and bow-family compatibility.
 - Armor exposes split defense bonuses through combat data, with v1 copying the first-pass melee armor band across melee/ranged/magic defense.
 
 ### Enemies
@@ -106,6 +110,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Auto-retaliate target choice is locked to a deterministic order when multiple valid attackers exist: first attacker, then closest attacker, then weakest-to-strongest, then stable runtime id.
 - Eating interaction remains a combat-core concern, not a melee-only concern.
 - Same-tick eat restrictions from the shared combat/cooking rules should stay aligned as combat content expands.
+- Player ranged attacks use the same target lock, cooldown, hit resolution, hit-aggro, and same-tick eating boundaries as melee, but resolve reach from the active bow snapshot instead of melee adjacency.
+- Ammo-using attacks must consume exactly one selected ammo unit when a player attack result resolves; equipped ammo is preferred over inventory ammo, and inventory ammo is selected by compatible tier/strength/accuracy.
 
 ### Enemy Behavior
 
@@ -392,6 +398,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - formation logic and non-opt-in shared target systems
 - safe-spot exception systems
 - ranged or magic enemy packages
+- player spellbook selection and richer spell identity beyond the current staff/rune combat groundwork
 - special attacks, status effects, or multi-phase enemies
 - multi-tile enemies unless separately specified later
 - nested/global loot-table systems
@@ -420,9 +427,10 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - Every authored combat spawn should validate required fields, resolve to a known enemy type, and stay inside the authored world encounter topology.
 - Starter-town encounter layouts should be manually checked for safe-routing, aggro readability, and pathing edge cases.
 - A rebuilt encounter topology/perf guard should cover spawn spacing, safe-route clearance, aggro overlap, leash/home placement, area density, and local path-budget estimates.
-- Same-tick combat rules should remain covered by automated tests as the enemy roster expands.
+- Same-tick combat rules should remain covered by automated tests as the enemy roster and player combat styles expand.
 - Manual-movement lock break, non-enemy interaction lock break, cooldown persistence after break, auto-retaliate choice rules, hit-aggro cooldown = `1`, and temporary-occupancy-vs-hard-no-path behavior should remain explicitly regression-tested.
 - Combat/eating interaction should remain regression-tested against the shared same-tick restriction rules.
+- Player ranged coverage should keep locking active bow snapshot selection, attack range, compatible ammo selection, ammo consumption, projectile handoff, and Ranged XP awards.
 - Loot tables should validate weights, quantity bands, item ids, and progression-band sanity.
 - Spawn groups should validate spacing, enabled-state consistency, and region ownership.
 - Encounter-heavy scenes should be watched for pathfinding spikes and visible tick hitching.
@@ -430,7 +438,8 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
-2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
-3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
-4. Revisit later-region anchors only after authored region context exists.
+1. Finish the player magic/spell identity pass on top of the shared combat core without expanding enemy magic packages yet.
+2. Expand regional encounter coverage before layering ranged/magic enemy packages or deeper advanced enemy logic on top.
+3. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
+4. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
+5. Revisit later-region anchors only after authored region context exists.

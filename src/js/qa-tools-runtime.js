@@ -1245,6 +1245,97 @@
         return true;
     }
 
+    const QA_GOBLIN_LAB_LEVELS = Object.freeze({
+        attack: 15,
+        strength: 15,
+        defense: 30,
+        hitpoints: 30,
+        ranged: 15
+    });
+
+    function normalizeQaGoblinLabMode(modeLike) {
+        const mode = String(modeLike || 'cabin').trim().toLowerCase();
+        if (mode === 'off' || mode === 'clear' || mode === 'disable') return 'off';
+        if (mode === 'combat' || mode === 'yard' || mode === 'arena') return 'combat';
+        return 'cabin';
+    }
+
+    function applyQaGoblinLabLevels(context) {
+        const skillIds = Object.keys(QA_GOBLIN_LAB_LEVELS);
+        let applied = 0;
+        for (let i = 0; i < skillIds.length; i++) {
+            const skillId = skillIds[i];
+            if (setQaSkillLevel(context, skillId, QA_GOBLIN_LAB_LEVELS[skillId])) applied++;
+        }
+        const playerState = getPlayerState(context);
+        playerState.currentHitpoints = QA_GOBLIN_LAB_LEVELS.hitpoints;
+        return applied;
+    }
+
+    function buildQaGoblinLabPatrol(spawnTile) {
+        return [
+            { x: spawnTile.x, y: spawnTile.y, z: spawnTile.z },
+            { x: spawnTile.x + 1, y: spawnTile.y, z: spawnTile.z },
+            { x: spawnTile.x + 1, y: spawnTile.y + 1, z: spawnTile.z },
+            { x: spawnTile.x, y: spawnTile.y + 1, z: spawnTile.z }
+        ];
+    }
+
+    function qaGoblinCombatLab(context, modeLike) {
+        const windowRef = getWindowRef(context);
+        const mode = normalizeQaGoblinLabMode(modeLike);
+        if (mode === 'off') {
+            const clearResult = typeof windowRef.clearQaGoblinCombatLab === 'function'
+                ? windowRef.clearQaGoblinCombatLab()
+                : null;
+            const removed = clearResult && Number.isFinite(clearResult.removed) ? clearResult.removed : 0;
+            addChat(context, `[QA goblin lab] cleared ${removed} temporary spawn${removed === 1 ? '' : 's'}.`, 'info');
+            return true;
+        }
+
+        const station = resolveQaTutorialStation(context, mode === 'combat' ? 'combat' : 'arrival');
+        if (!station) return false;
+
+        const travel = context.travelToWorld || windowRef.travelToWorld;
+        if (typeof travel === 'function') {
+            const travelled = travel('tutorial_island', {
+                spawn: { x: station.x, y: station.y, z: station.z },
+                label: 'Goblin combat lab'
+            });
+            if (!travelled && !qaTeleportTo(context, station.x, station.y, station.z, station.label)) return false;
+        } else if (!qaTeleportTo(context, station.x, station.y, station.z, station.label)) {
+            return false;
+        }
+
+        const appliedLevels = applyQaGoblinLabLevels(context);
+        const playerState = getPlayerState(context);
+        const spawnTile = {
+            x: Math.floor(Number(playerState.x) || station.x) + 2,
+            y: Math.floor(Number(playerState.y) || station.y),
+            z: Math.floor(Number(playerState.z) || station.z || 0)
+        };
+        if (typeof windowRef.spawnQaGoblinCombatLab !== 'function') {
+            addChat(context, '[QA goblin lab] combat spawn hook unavailable.', 'warn');
+            return false;
+        }
+
+        const spawned = windowRef.spawnQaGoblinCombatLab({
+            mode,
+            spawnTile,
+            homeTile: spawnTile,
+            patrolRoute: buildQaGoblinLabPatrol(spawnTile),
+            roamingRadiusOverride: 2,
+            lockTarget: true
+        });
+        if (!spawned) {
+            addChat(context, '[QA goblin lab] failed to spawn temporary goblin.', 'warn');
+            return false;
+        }
+
+        addChat(context, `[QA goblin lab] temporary ${mode} goblin @ (${spawned.x},${spawned.y},${spawned.z}); boosted ${appliedLevels} combat skills.`, 'info');
+        return true;
+    }
+
     function createCommandHandlers(context = {}) {
         return {
             formatQaOpenShopUsage: () => formatQaOpenShopUsage(context),
@@ -1275,7 +1366,8 @@
             qaDiagRunecrafting: () => qaDiagRunecrafting(context),
             applyQaInventoryPreset: (presetName) => applyQaInventoryPreset(context, presetName),
             setQaSkillLevel: (skillId, levelValue) => setQaSkillLevel(context, skillId, levelValue),
-            setQaUnlockFlag: (flagId, enabled) => setQaUnlockFlag(context, flagId, enabled)
+            setQaUnlockFlag: (flagId, enabled) => setQaUnlockFlag(context, flagId, enabled),
+            qaGoblinCombatLab: (modeLike) => qaGoblinCombatLab(context, modeLike)
         };
     }
 
@@ -1295,6 +1387,7 @@
         applyQaInventoryPreset,
         getQaXpForLevel,
         setQaSkillLevel,
-        setQaUnlockFlag
+        setQaUnlockFlag,
+        qaGoblinCombatLab
     };
 })();

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const RUNTIME_ASSET_DIRS = ["assets/pixel", "assets/models"];
+const RUNTIME_ASSET_DIRS = ["assets/pixel", "assets/models", "assets/3d"];
 
 function copyRuntimeAssetDirs() {
   const projectRoot = path.resolve(__dirname, "..", "..");
@@ -11,8 +11,13 @@ function copyRuntimeAssetDirs() {
     const relativeDir = RUNTIME_ASSET_DIRS[i];
     const sourceDir = path.join(projectRoot, relativeDir);
     if (!fs.existsSync(sourceDir)) continue;
+    const targetDir = path.join(distRoot, relativeDir);
 
-    fs.cpSync(sourceDir, path.join(distRoot, relativeDir), {
+    fs.rmSync(targetDir, {
+      recursive: true,
+      force: true
+    });
+    fs.cpSync(sourceDir, targetDir, {
       recursive: true,
       force: true
     });

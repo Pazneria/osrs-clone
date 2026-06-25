@@ -612,6 +612,97 @@
         lastResolvedCombatWorldId = currentWorldId;
     }
 
+    const QA_GOBLIN_LAB_SPAWN_PREFIX = 'qa_goblin_lab';
+
+    function isQaGoblinLabSpawnNodeId(spawnNodeId) {
+        return String(spawnNodeId || '').startsWith(QA_GOBLIN_LAB_SPAWN_PREFIX);
+    }
+
+    function normalizeQaGoblinLabTile(tileLike, fallbackTile = null) {
+        const fallback = fallbackTile || playerState || {};
+        return {
+            x: Number.isFinite(Number(tileLike && tileLike.x)) ? Math.floor(Number(tileLike.x)) : Math.floor(Number(fallback.x) || 0),
+            y: Number.isFinite(Number(tileLike && tileLike.y)) ? Math.floor(Number(tileLike.y)) : Math.floor(Number(fallback.y) || 0),
+            z: Number.isFinite(Number(tileLike && tileLike.z)) ? Math.floor(Number(tileLike.z)) : Math.floor(Number(fallback.z) || 0)
+        };
+    }
+
+    function clearQaGoblinCombatLab() {
+        let removed = 0;
+        for (let i = combatEnemyStates.length - 1; i >= 0; i--) {
+            const enemyState = combatEnemyStates[i];
+            if (!enemyState || !isQaGoblinLabSpawnNodeId(enemyState.spawnNodeId)) continue;
+            if (playerState.lockedTargetId === enemyState.runtimeId) {
+                clearPlayerCombatTarget({ force: true, reason: 'qa-goblin-lab-clear', resetCooldown: true });
+            }
+            clearEnemyRenderer(enemyState.runtimeId);
+            delete combatEnemyStateById[enemyState.runtimeId];
+            delete combatEnemySpawnNodesById[enemyState.spawnNodeId];
+            combatEnemyStates.splice(i, 1);
+            removed++;
+        }
+        if (removed > 0) {
+            markCombatEnemyOccupancyDirty();
+            refreshCombatEnemyOccupancy();
+        }
+        return { removed };
+    }
+
+    function spawnQaGoblinCombatLab(options = {}) {
+        ensureCombatEnemyWorldReady();
+        if (!combatRuntime || typeof combatRuntime.createEnemyRuntimeState !== 'function') return null;
+        clearQaGoblinCombatLab();
+
+        const mode = String(options.mode || 'cabin').trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_') || 'cabin';
+        const spawnTile = normalizeQaGoblinLabTile(options.spawnTile || options, {
+            x: (Number.isFinite(playerState.x) ? playerState.x : 0) + 2,
+            y: Number.isFinite(playerState.y) ? playerState.y : 0,
+            z: Number.isFinite(playerState.z) ? playerState.z : 0
+        });
+        const homeTile = normalizeQaGoblinLabTile(options.homeTile || options.homeTileOverride || spawnTile, spawnTile);
+        const patrolRoute = clonePatrolRoute(options.patrolRoute);
+        const spawnNodeId = `${QA_GOBLIN_LAB_SPAWN_PREFIX}:${mode}`;
+        const spawnNode = {
+            spawnNodeId,
+            enemyId: 'enemy_goblin_grunt',
+            spawnTile,
+            homeTileOverride: homeTile,
+            roamingRadiusOverride: Number.isFinite(Number(options.roamingRadiusOverride))
+                ? Math.max(0, Math.floor(Number(options.roamingRadiusOverride)))
+                : 2,
+            patrolRoute,
+            assistGroupId: null,
+            assistRadiusOverride: 0,
+            respawnTicks: 8,
+            spawnEnabled: true,
+            facingYaw: Number.isFinite(Number(options.facingYaw)) ? Number(options.facingYaw) : Math.PI,
+            spawnGroupId: 'qa_temporary_goblin_lab'
+        };
+        combatEnemySpawnNodesById[spawnNodeId] = spawnNode;
+
+        const enemyState = combatRuntime.createEnemyRuntimeState(spawnNode, 0);
+        enemyState.prevX = enemyState.x;
+        enemyState.prevY = enemyState.y;
+        enemyState.moveTriggerAt = 0;
+        enemyState.homeReachedAt = 0;
+        enemyState.autoRetaliateAggressorOrder = null;
+        clearEnemyLocomotionIntent(enemyState);
+        scheduleEnemyIdleWanderPause(enemyState, 1, 2);
+        combatEnemyStates.push(enemyState);
+        combatEnemyStateById[enemyState.runtimeId] = enemyState;
+        markCombatEnemyOccupancyDirty();
+        refreshCombatEnemyOccupancy();
+        updateCombatRenderers(Date.now());
+        if (options.lockTarget) lockPlayerCombatTarget(enemyState.runtimeId);
+        return {
+            runtimeId: enemyState.runtimeId,
+            spawnNodeId,
+            x: enemyState.x,
+            y: enemyState.y,
+            z: enemyState.z
+        };
+    }
+
     function getSquareRange(attacker, target, range) {
         if (combatRuntime && typeof combatRuntime.isWithinSquareRange === 'function') {
             return combatRuntime.isWithinSquareRange(attacker, target, range);
@@ -1436,5 +1527,7 @@
     window.getCombatEnemyState = getCombatEnemyState;
     window.getCombatEnemyAnimationDebugState = getCombatEnemyAnimationDebugState;
     window.listQaCombatEnemyStates = listQaCombatEnemyStates;
+    window.spawnQaGoblinCombatLab = spawnQaGoblinCombatLab;
+    window.clearQaGoblinCombatLab = clearQaGoblinCombatLab;
     window.getCombatHudSnapshot = getCombatHudSnapshot;
 })();

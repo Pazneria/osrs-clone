@@ -1,5 +1,11 @@
 # OSRS Asset Workflow (Pixel Source + Generated Runtime Assets)
 
+## 3D-first migration note
+
+This document describes the legacy/current pixel compatibility lane. It remains useful for old inventory icons and generated placeholder OBJ files, but it is no longer the intended final art source for production equipment, armor, tools, weapons, or world props.
+
+For production-quality 3D assets, use `docs/3D_ASSET_PIPELINE.md`. In that lane, the GLB/3D manifest is the presentation source of truth and any inventory icon written to `assets/pixel/<asset_id>.png` is generated for current UI compatibility.
+
 This is the default item-icon pipeline for this project.
 
 ## Canonical pipeline

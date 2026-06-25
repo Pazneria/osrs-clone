@@ -326,7 +326,7 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260513a";
+        const ASSET_VERSION_TAG = "20260624h";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
         function sanitizeIconReviewItemIds(itemIds) {
             return getCoreIconReviewRuntime().sanitizeIconReviewItemIds(buildCoreIconReviewRuntimeContext(), itemIds);
@@ -1653,6 +1653,12 @@
                 '/qa travel tutorial_island',
                 '/qa gototutorial smithing',
                 '/qa camera set 4.25 1.08 15'
+            ]),
+            'goblin-lab': Object.freeze([
+                '/qa goblinlab cabin',
+                '/qa camera set 4.05 1.16 11',
+                '/qa combatdebug on',
+                '/qa combattargets'
             ])
         });
 

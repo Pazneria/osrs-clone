@@ -21,14 +21,14 @@
 - [x] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by content and world parity guards.
 - [x] COMBAT-016A: Opt-in ally-assist/group-aggro behavior now lets authored assist groups pull nearby idle allies into combat, with the southeast camp-threat pocket using the first live assist group.
 - [x] COMBAT-016B: Authored patrol routes now drive idle movement for opt-in spawn nodes, with the southeast camp fast striker using the first live patrol route and guards locking route authoring, bridge, and runtime behavior.
+- [x] COMBAT-017: Ranged player combat now runs through the shared combat core with bow range, required Ranged levels, arrow ammo selection, ammo consumption, projectile feedback, ranged XP, and focused domain/runtime/item-data coverage.
 
 ## Now
-- [ ] COMBAT-017: Add ranged combat on top of the shared combat core.
-
-## Next
 - [ ] COMBAT-018: Add magic combat, rune/resource integration, and staff/spell identity.
 
-## Later
+## Next
 - [ ] COMBAT-019: Add specials, broader balance tooling, and deeper combat build identity.
+
+## Later
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.
 - [ ] COMBAT-021: Add region-scale combat population tooling for later-world expansion, including denser enemy ecosystems and named encounter chains.

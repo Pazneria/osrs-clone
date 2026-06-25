@@ -170,6 +170,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
+            asset3d: 'bronze_pickaxe',
             icon: { kind: 'pixel', assetId: 'bronze_pickaxe' }
         },
         iron_pickaxe: {
@@ -1868,7 +1869,16 @@
         };
 
         const magicRuneRows = {
-            ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }
+            ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 },
+            water_rune: { ammoTier: 2, magicAccuracyBonus: 2, magicStrengthBonus: 3 },
+            earth_rune: { ammoTier: 3, magicAccuracyBonus: 4, magicStrengthBonus: 5 },
+            air_rune: { ammoTier: 4, magicAccuracyBonus: 7, magicStrengthBonus: 8 },
+            steam_rune: { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 },
+            smoke_rune: { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 },
+            lava_rune: { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 },
+            mud_rune: { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 },
+            mist_rune: { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 },
+            dust_rune: { ammoTier: 5, magicAccuracyBonus: 11, magicStrengthBonus: 12 }
         };
 
         const armorRows = {
@@ -2098,6 +2108,7 @@
                 icon: resolveIcon(def, makeMissingIconSprite, makeIconFromImage, assetVersionTag)
             };
 
+            if (typeof def.asset3d === 'string' && def.asset3d) db[id].asset3d = def.asset3d;
             if (def.weaponClass) db[id].weaponClass = def.weaponClass;
             if (Number.isFinite(def.toolTier)) db[id].toolTier = def.toolTier;
             if (Number.isFinite(def.speedBonusTicks)) db[id].speedBonusTicks = def.speedBonusTicks;

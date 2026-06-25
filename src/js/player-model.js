@@ -390,6 +390,7 @@ function resolveSlotFragments(slotEntry, slotName, normalizedAppearance) {
     if (slotEntry.kind === 'item') {
         const item = PLAYER_ITEM_DEFS[slotEntry.id];
         if (!item || item.slot !== slotName) return [];
+        if (typeof item.asset3d === 'string' && item.asset3d) return [];
         const fragments = getItemAppearanceFragments(item, normalizedAppearance.gender);
         if (!fragments.length) return [];
         return [{ fragments, recolors: item.recolors || [] }];
@@ -521,6 +522,31 @@ function buildPlayerRigTemplate(normalizedAppearance) {
     return rigRoot;
 }
 
+function getEquippedAppearanceItemId(normalizedAppearance, slotName) {
+    const slotIndex = PLAYER_APPEARANCE_SLOT_ORDER.indexOf(slotName);
+    const slotEntry = slotIndex >= 0 ? normalizedAppearance.slots[slotIndex] : null;
+    return slotEntry && slotEntry.kind === 'item' && typeof slotEntry.id === 'string' ? slotEntry.id : null;
+}
+
+function createAsset3dEquipmentVisualMeshes(itemId, itemDef, targetName) {
+    const asset3dRuntime = typeof window !== 'undefined' ? window.Asset3DRuntime : null;
+    if (!itemDef || typeof itemDef.asset3d !== 'string' || !itemDef.asset3d) return [];
+    if (!asset3dRuntime || typeof asset3dRuntime.createEquipmentVisualMeshes !== 'function') return [];
+    const assetMeshes = asset3dRuntime.createEquipmentVisualMeshes(itemDef.asset3d, targetName, { THREERef: THREE, itemId });
+    return Array.isArray(assetMeshes) ? assetMeshes : [];
+}
+
+function addAsset3dEquipmentVisuals(rigRoot, normalizedAppearance) {
+    if (!rigRoot || !rigRoot.userData || !rigRoot.userData.rig) return;
+    const weaponItemId = getEquippedAppearanceItemId(normalizedAppearance, 'weapon');
+    const weaponItemDef = weaponItemId ? PLAYER_ITEM_DEFS[weaponItemId] : null;
+    const targetNode = rigRoot.userData.rig.rightTool || rigRoot.userData.rig.axe || null;
+    if (!targetNode || !weaponItemDef || typeof weaponItemDef.asset3d !== 'string') return;
+    const meshes = createAsset3dEquipmentVisualMeshes(weaponItemId, weaponItemDef, 'axe');
+    for (let i = 0; i < meshes.length; i++) targetNode.add(meshes[i]);
+    targetNode.visible = meshes.length > 0;
+}
+
 function bindRigUserData(rigRoot) {
     const nodes = rigNodeMap(rigRoot);
     const armRigDefaults = rigRoot.userData && rigRoot.userData.armRigDefaults ? rigRoot.userData.armRigDefaults : {};
@@ -570,7 +596,9 @@ function createPlayerRigFromAppearance(appearance) {
     }
     const clone = template.clone(true);
     clone.userData.appearanceKey = cacheKey;
-    return bindRigUserData(clone);
+    const rigRoot = bindRigUserData(clone);
+    addAsset3dEquipmentVisuals(rigRoot, normalized);
+    return rigRoot;
 }
 
 function getEquipmentEntryItemData(entry) {
@@ -714,6 +742,8 @@ function setPlayerRigToolVisual(rigRoot, itemId, heldItemSlot = null) {
 
 function createEquipmentVisualMeshes(itemId, targetName = 'axe', bodyColorsOverride = null) {
     const itemDef = PLAYER_ITEM_DEFS[itemId] || null;
+    const assetMeshes = createAsset3dEquipmentVisualMeshes(itemId, itemDef, targetName);
+    if (assetMeshes.length > 0) return assetMeshes;
     const fragments = getItemAppearanceFragments(itemDef, playerAppearanceState && playerAppearanceState.gender === 1 ? 1 : 0);
     if (!itemDef || !fragments.length) return [];
     const bodyColors = Array.isArray(bodyColorsOverride)
