@@ -2527,7 +2527,9 @@
 
     const pickaxeItemDefs = {
         pickaxe_base_reference: createRightHandAppearanceItemDef('iron_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
-        bronze_pickaxe: createRightHandAppearanceItemDef('bronze_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
+        bronze_pickaxe: Object.assign(createRightHandAppearanceItemDef('bronze_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE), {
+            asset3d: 'bronze_pickaxe'
+        }),
         iron_pickaxe: createRightHandAppearanceItemDef('iron_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
         steel_pickaxe: createRightHandAppearanceItemDef('steel_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
         mithril_pickaxe: createRightHandAppearanceItemDef('mithril_pickaxe', pickaxeModelIds, PICKAXE_ICON_PIXELS, PICKAXE_HELD_MODEL, PICKAXE_HANDLE_PALETTE),
