@@ -40,6 +40,7 @@
     "test:qa:firemaking": "node ./tools/tests/firemaking-runtime-tests.js",
     "test:qa:fishing": "node ./tools/tests/fishing-runtime-tests.js",
     "test:qa:mining": "node ./tools/tests/mining-runtime-tests.js",
+    "test:qa:smithing": "node ./tools/tests/smithing-runtime-tests.js",
     "test:qa:runecrafting": "node ./tools/tests/runecrafting-runtime-tests.js",
     "test:qa:inventory-presets": "node ./tools/tests/qa-inventory-preset-runtime-guard.js",
     "test:qa:skill-control": "node ./tools/tests/qa-skill-control-runtime-guard.js",
