@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { exposeAnimationBridge } from "./animation-bridge";
 import { exposeCodexLinkBridge } from "./codex-link-bridge";
@@ -30,6 +31,7 @@ export function exposePlatformBridges(): void {
 
 export async function bootstrapGamePlatform(): Promise<void> {
   window.THREE = THREE;
+  (window as typeof window & { GLTFLoader?: typeof GLTFLoader }).GLTFLoader = GLTFLoader;
   exposePlatformBridges();
   await loadLegacyRuntime(legacyScriptManifest);
 }

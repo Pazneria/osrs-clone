@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "generatedRuntimeMirror": "src/js/content/asset-3d-catalog.js",
+  "assetVersionTag": "20260624h",
+  "assets": {
+    "bronze_pickaxe": {
+      "id": "bronze_pickaxe",
+      "name": "Bronze Pickaxe",
+      "kind": "tool",
+      "family": "pickaxe",
+      "tier": "bronze",
+      "source": {
+        "kind": "ai_image_to_3d_glb",
+        "path": "assets/3d-src/bronze_pickaxe/source.json"
+      },
+      "runtime": {
+        "format": "glb",
+        "path": "assets/3d/bronze_pickaxe.glb"
+      },
+      "inventoryIcon": {
+        "path": "assets/pixel/bronze_pickaxe.png",
+        "generatedFrom": "assets/3d/bronze_pickaxe.glb",
+        "reviewPath": "tmp/3d-icon-review/bronze_pickaxe.png",
+        "camera": "tool_side"
+      },
+      "attachment": {
+        "slot": "rightHand",
+        "target": "axe",
+        "position": [0, 0, 0],
+        "gripPoint": [-0.0674, -0.9984, -0.0197],
+        "rotation": [0.9561333749, -1.5707963268, 0],
+        "scale": 0.36
+      },
+      "groundPose": {
+        "position": [0, 0.08, 0],
+        "rotation": [-1.1, 0.42, -0.58],
+        "scale": 0.28
+      },
+      "bounds": {
+        "footprint": [1, 1],
+        "height": 0.72
+      },
+      "review": {
+        "status": "promoted_ai_candidate",
+        "notes": "Bronze pickaxe now uses the AI-generated, locally material-colorized GLB as runtime art. The inventory-compatible icon is rendered from the runtime GLB side view."
+      }
+    }
+  }
+}

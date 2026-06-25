@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const RUNTIME_ASSET_DIRS = ["assets/pixel", "assets/models"];
+const RUNTIME_ASSET_DIRS = ["assets/pixel", "assets/models", "assets/3d"];
 
 function copyRuntimeAssetDirs() {
   const projectRoot = path.resolve(__dirname, "..", "..");

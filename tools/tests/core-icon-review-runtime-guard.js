@@ -16,13 +16,13 @@ function run() {
   const runtimeSource = read(root, "src/js/core-icon-review-runtime.js");
   const coreSource = read(root, "src/js/core.js");
   const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
-  const packageSource = read(root, "package.json");
+  const packageSuiteManifestSource = read(root, "tools/tests/package-suite-manifest.js");
   const runtimeIndex = manifestSource.indexOf('id: "core-icon-review-runtime"');
   const coreIndex = manifestSource.indexOf('id: "core"');
 
   assert(runtimeIndex !== -1, "legacy manifest should include core icon review runtime");
   assert(coreIndex !== -1 && runtimeIndex < coreIndex, "legacy manifest should load core icon review runtime before core.js");
-  assert(packageSource.includes("--check ./src/js/core-icon-review-runtime.js"), "package checks should syntax-check core icon review runtime");
+  assert(packageSuiteManifestSource.includes('"src/js/core-icon-review-runtime.js"'), "check suite should syntax-check core icon review runtime");
   assert(runtimeSource.includes("window.CoreIconReviewRuntime"), "icon review runtime should expose a window runtime");
   assert(runtimeSource.includes("function sanitizeIconReviewItemIds(context = {}, itemIds)"), "runtime should own icon review item id sanitization");
   assert(runtimeSource.includes("function getActiveIconReviewBatch(context = {})"), "runtime should own active icon review batch resolution");

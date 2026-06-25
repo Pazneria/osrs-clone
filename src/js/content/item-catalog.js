@@ -170,6 +170,7 @@
             stackable: false,
             actions: ['Equip', 'Use', 'Drop'],
             defaultAction: 'Equip',
+            asset3d: 'bronze_pickaxe',
             icon: { kind: 'pixel', assetId: 'bronze_pickaxe' }
         },
         iron_pickaxe: {
@@ -2098,6 +2099,7 @@
                 icon: resolveIcon(def, makeMissingIconSprite, makeIconFromImage, assetVersionTag)
             };
 
+            if (typeof def.asset3d === 'string' && def.asset3d) db[id].asset3d = def.asset3d;
             if (def.weaponClass) db[id].weaponClass = def.weaponClass;
             if (Number.isFinite(def.toolTier)) db[id].toolTier = def.toolTier;
             if (Number.isFinite(def.speedBonusTicks)) db[id].speedBonusTicks = def.speedBonusTicks;

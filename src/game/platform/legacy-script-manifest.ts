@@ -17,6 +17,7 @@ interface LegacyScriptLoadOrderEntry {
 export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = [
   { id: "item-catalog", filename: "src/js/content/item-catalog.js", rawPath: "../../js/content/item-catalog.js?raw", codeVariable: "itemCatalogScript" },
   { id: "icon-review-catalog", filename: "src/js/content/icon-review-catalog.js", rawPath: "../../js/content/icon-review-catalog.js?raw", codeVariable: "iconReviewCatalogScript" },
+  { id: "asset-3d-catalog", filename: "src/js/content/asset-3d-catalog.js", rawPath: "../../js/content/asset-3d-catalog.js?raw", codeVariable: "asset3dCatalogScript" },
   { id: "player-appearance-catalog", filename: "src/js/content/player-appearance-catalog.js", rawPath: "../../js/content/player-appearance-catalog.js?raw", codeVariable: "playerAppearanceCatalogScript" },
   { id: "npc-appearance-catalog", filename: "src/js/content/npc-appearance-catalog.js", rawPath: "../../js/content/npc-appearance-catalog.js?raw", codeVariable: "npcAppearanceCatalogScript" },
   { id: "examine-catalog", filename: "src/js/content/examine-catalog.js", rawPath: "../../js/content/examine-catalog.js?raw", codeVariable: "examineCatalogScript" },
@@ -116,6 +117,7 @@ export const legacyScriptLoadOrder: ReadonlyArray<LegacyScriptLoadOrderEntry> = 
   { id: "skills-runecrafting", filename: "src/js/skills/runecrafting/index.js", rawPath: "../../js/skills/runecrafting/index.js?raw", codeVariable: "runecraftingSkillScript" },
   { id: "skills-smithing", filename: "src/js/skills/smithing/index.js", rawPath: "../../js/skills/smithing/index.js?raw", codeVariable: "smithingSkillScript" },
   { id: "skills-register", filename: "src/js/skills/register.js", rawPath: "../../js/skills/register.js?raw", codeVariable: "skillsRegisterScript" },
+  { id: "asset-3d-runtime", filename: "src/js/asset-3d-runtime.js", rawPath: "../../js/asset-3d-runtime.js?raw", codeVariable: "asset3dRuntimeScript" },
   { id: "player-model-visual-runtime", filename: "src/js/player-model-visual-runtime.js", rawPath: "../../js/player-model-visual-runtime.js?raw", codeVariable: "playerModelVisualRuntimeScript" },
   { id: "player-npc-humanoid-runtime", filename: "src/js/player-npc-humanoid-runtime.js", rawPath: "../../js/player-npc-humanoid-runtime.js?raw", codeVariable: "playerNpcHumanoidRuntimeScript" },
   { id: "player-held-item-runtime", filename: "src/js/player-held-item-runtime.js", rawPath: "../../js/player-held-item-runtime.js?raw", codeVariable: "playerHeldItemRuntimeScript" },

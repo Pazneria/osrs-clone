@@ -343,7 +343,7 @@
             return `<img src="${path}" alt="" class="w-[80%] h-[80%] object-contain pointer-events-none drop-shadow-md" draggable="false" />`;
         }
 
-        const ASSET_VERSION_TAG = "20260317m";
+        const ASSET_VERSION_TAG = "20260624h";
         const ITEM_ACTION_PRIORITY = ['equip', 'eat', 'drink', 'use', 'drop'];
         function sanitizeIconReviewItemIds(itemIds) {
             return getCoreIconReviewRuntime().sanitizeIconReviewItemIds(buildCoreIconReviewRuntimeContext(), itemIds);

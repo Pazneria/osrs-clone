@@ -1,40 +1,11 @@
 (function () {
     window.IconReviewCatalog = {
-        version: '2026.03.m17d',
-        activeBatchId: 'icon_review_20260317_all_armor_sets_a',
-        label: 'All Armor Sets',
+        version: '2026.06.m24a',
+        activeBatchId: 'icon_review_20260624_bronze_pickaxe_3d_icon',
+        label: 'Bronze Pickaxe 3D Icon',
         replaceInventory: true,
         itemIds: [
-            'bronze_boots',
-            'bronze_helmet',
-            'bronze_shield',
-            'bronze_platelegs',
-            'bronze_platebody',
-            'iron_boots',
-            'iron_helmet',
-            'iron_shield',
-            'iron_platelegs',
-            'iron_platebody',
-            'steel_boots',
-            'steel_helmet',
-            'steel_shield',
-            'steel_platelegs',
-            'steel_platebody',
-            'mithril_boots',
-            'mithril_helmet',
-            'mithril_shield',
-            'mithril_platelegs',
-            'mithril_platebody',
-            'adamant_boots',
-            'adamant_helmet',
-            'adamant_shield',
-            'adamant_platelegs',
-            'adamant_platebody',
-            'rune_boots',
-            'rune_helmet',
-            'rune_shield',
-            'rune_platelegs',
-            'rune_platebody'
+            'bronze_pickaxe'
         ]
     };
 })();

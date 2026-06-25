@@ -921,6 +921,7 @@
         "Use",
         "Drop"
       ],
+      "asset3d": "bronze_pickaxe",
       "combat": {
         "attackProfile": {
           "ammoUse": false,

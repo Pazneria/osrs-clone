@@ -1,5 +1,6 @@
 import type { LegacyScriptEntry } from "../legacy-script-entry";
 
+import asset3dRuntimeScript from "../../../js/asset-3d-runtime.js?raw";
 import playerModelVisualRuntimeScript from "../../../js/player-model-visual-runtime.js?raw";
 import playerNpcHumanoidRuntimeScript from "../../../js/player-npc-humanoid-runtime.js?raw";
 import playerHeldItemRuntimeScript from "../../../js/player-held-item-runtime.js?raw";
@@ -10,6 +11,7 @@ import humanoidModelRuntimeScript from "../../../js/humanoid-model-runtime.js?ra
 import transientVisualRuntimeScript from "../../../js/transient-visual-runtime.js?raw";
 
 export const playerLegacyScriptsById: Readonly<Record<string, LegacyScriptEntry>> = {
+  "asset-3d-runtime": { id: "asset-3d-runtime", filename: "src/js/asset-3d-runtime.js", code: asset3dRuntimeScript },
   "player-model-visual-runtime": { id: "player-model-visual-runtime", filename: "src/js/player-model-visual-runtime.js", code: playerModelVisualRuntimeScript },
   "player-npc-humanoid-runtime": { id: "player-npc-humanoid-runtime", filename: "src/js/player-npc-humanoid-runtime.js", code: playerNpcHumanoidRuntimeScript },
   "player-held-item-runtime": { id: "player-held-item-runtime", filename: "src/js/player-held-item-runtime.js", code: playerHeldItemRuntimeScript },
