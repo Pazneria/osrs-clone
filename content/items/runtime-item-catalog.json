@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-05-11T18:47:20.689Z",
+  "generatedAt": "2026-06-30T16:12:26.721Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -1568,7 +1568,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "diamond_gold_amulet",
         "kind": "pixel"
       },
       "name": "Diamond Gold Amulet",
@@ -1583,7 +1583,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "diamond_gold_ring",
         "kind": "pixel"
       },
       "name": "Diamond Gold Ring",
@@ -1598,7 +1598,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "diamond_gold_tiara",
         "kind": "pixel"
       },
       "name": "Diamond Gold Tiara",
@@ -1719,7 +1719,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "emerald_gold_amulet",
         "kind": "pixel"
       },
       "name": "Emerald Gold Amulet",
@@ -1734,7 +1734,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "emerald_gold_ring",
         "kind": "pixel"
       },
       "name": "Emerald Gold Ring",
@@ -1749,7 +1749,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "emerald_gold_tiara",
         "kind": "pixel"
       },
       "name": "Emerald Gold Tiara",
@@ -4198,7 +4198,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "ruby_gold_amulet",
         "kind": "pixel"
       },
       "name": "Ruby Gold Amulet",
@@ -4213,7 +4213,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "ruby_gold_ring",
         "kind": "pixel"
       },
       "name": "Ruby Gold Ring",
@@ -4228,7 +4228,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "ruby_gold_tiara",
         "kind": "pixel"
       },
       "name": "Ruby Gold Tiara",
@@ -4243,7 +4243,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "ruby_silver_amulet",
         "kind": "pixel"
       },
       "name": "Ruby Silver Amulet",
@@ -4258,7 +4258,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "ruby_silver_ring",
         "kind": "pixel"
       },
       "name": "Ruby Silver Ring",
@@ -4273,7 +4273,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "ruby_silver_tiara",
         "kind": "pixel"
       },
       "name": "Ruby Silver Tiara",
@@ -4849,7 +4849,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "sapphire_gold_amulet",
         "kind": "pixel"
       },
       "name": "Sapphire Gold Amulet",
@@ -4864,7 +4864,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "sapphire_gold_ring",
         "kind": "pixel"
       },
       "name": "Sapphire Gold Ring",
@@ -4879,7 +4879,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "sapphire_gold_tiara",
         "kind": "pixel"
       },
       "name": "Sapphire Gold Tiara",
@@ -4894,7 +4894,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "sapphire_silver_amulet",
         "kind": "pixel"
       },
       "name": "Sapphire Silver Amulet",
@@ -4909,7 +4909,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "sapphire_silver_ring",
         "kind": "pixel"
       },
       "name": "Sapphire Silver Ring",
@@ -4924,7 +4924,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "coins",
+        "assetId": "sapphire_silver_tiara",
         "kind": "pixel"
       },
       "name": "Sapphire Silver Tiara",
