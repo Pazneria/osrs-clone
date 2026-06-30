@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-05-11T18:47:20.690Z",
+  "generatedAt": "2026-06-30T16:12:26.722Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "adamant_arrowheads",
@@ -266,7 +266,7 @@
     "coins": {
       "assetId": "coins",
       "status": "todo",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "cooked_boar_meat": {
       "assetId": "cooked_boar_meat",
@@ -335,19 +335,22 @@
       "treatment": "shared"
     },
     "diamond_gold_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "diamond_gold_amulet",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "diamond_gold_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "diamond_gold_ring",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "diamond_gold_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "diamond_gold_tiara",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "dust_rune": {
       "assetId": "dust_rune",
@@ -373,19 +376,22 @@
       "treatment": "bespoke"
     },
     "emerald_gold_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "emerald_gold_amulet",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "emerald_gold_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "emerald_gold_ring",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "emerald_gold_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "emerald_gold_tiara",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "feathers_bundle": {
       "assetId": "feathers_bundle",
@@ -861,34 +867,40 @@
       "treatment": "shared"
     },
     "ruby_gold_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "ruby_gold_amulet",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ruby_gold_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "ruby_gold_ring",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ruby_gold_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "ruby_gold_tiara",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ruby_silver_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "ruby_silver_amulet",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ruby_silver_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "ruby_silver_ring",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "ruby_silver_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "ruby_silver_tiara",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "rune_arrowheads": {
       "assetId": "rune_arrowheads",
@@ -978,34 +990,40 @@
       "treatment": "bespoke"
     },
     "sapphire_gold_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "sapphire_gold_amulet",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "sapphire_gold_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "sapphire_gold_ring",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "sapphire_gold_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "sapphire_gold_tiara",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "sapphire_silver_amulet": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "sapphire_silver_amulet",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "sapphire_silver_ring": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "sapphire_silver_ring",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "sapphire_silver_tiara": {
-      "assetId": "coins",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "sapphire_silver_tiara",
+      "notes": "Reviewed gemmed jewelry icon from the base ring/amulet/tiara silhouette batch on 2026-06-30.",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "silver_amulet": {
       "assetId": "silver_amulet",
