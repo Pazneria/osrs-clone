@@ -52,29 +52,33 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Backlog (Untriaged)
 
 ### HIT-001 - World structure direction (authored map, no procgen)
-- Status: Backlog
+- Status: Fixed
 - Severity: S1
 - Area: WORLD
 - Source: Manual
-- Links:
+- Links: `content/world/manifest.json`, `content/world/regions/main_overworld.json`, `content/world/regions/tutorial_island.json`, `src/game/world/authoring.ts`, `src/game/world/bootstrap.ts`, `src/game/platform/legacy-world-adapter.ts`, `src/js/world.js`, `tools/content/validate-world.js`, `tools/tests/world-registry-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/legacy-world-runtime-shape.js`
 - Repro:
   1. N/A (directional world-design task)
 - Expected: Intentional authored map/world with fixed geography and deliberate region/content placement.
-- Actual: Current world direction includes procedural/random generation behavior.
+- Actual: World structure now loads from manifest-backed authored region JSON and stamp kits. The legacy runtime still applies the published payload into the old tile map and keeps deterministic visual/terrain helpers, but structures, services, resource nodes, roads, combat spawns, altars, tutorial layout, and travel defaults are no longer owned by procedural/random layout generation.
 - Frequency: N/A (non-bug task)
 - Owner: Pair
 - Plan v1:
   1. Audit all procedural world generation entry points.
   2. Define authored region layout schema and migration approach.
   3. Replace generation with fixed map loader and validation checks.
-- Plan Outcome: Pending
+- Plan Outcome: Confirmed
 - Fix Notes:
+  - `content/world/manifest.json` is the complete authored-region inventory for `main_overworld` and `tutorial_island`, and `tools/tests/world-registry-guard.js` now verifies every region file is manifest-owned, exists, has a matching `worldId`, and does not reintroduce legacy dynamic service or skill-zone layout fields.
+  - `src/game/world/authoring.ts` and `src/game/world/bootstrap.ts` load authored regions/stamps, scale coordinates, and publish route/service/NPC/combat/resource payloads through the typed world registry.
+  - `src/game/platform/legacy-world-adapter.ts` and `src/js/world.js` consume the current authored world payload instead of owning starter-town-only layout/config generation.
+  - Existing world validators and parity guards lock authored roads, structures, services, resource nodes, combat spawns, altars, tutorial island topology, and the removal of the frozen skill-world runtime from active `world.js`.
 - Plan vNext (if revised):
   1.
 - Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-002 - NPC world placement pass
 - Status: Fixed

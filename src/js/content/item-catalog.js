@@ -1508,7 +1508,7 @@
                 stackable: false,
                 actions: ['Use', 'Drop'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'coins' }
+                icon: { kind: 'pixel', assetId: def.itemId }
             };
         }
 

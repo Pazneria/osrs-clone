@@ -8,6 +8,7 @@ function assert(condition, message) {
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "content", "world", "manifest.json"), "utf8"));
+  const regionsDir = path.join(root, "content", "world", "regions");
   const authoringSource = fs.readFileSync(path.join(root, "src", "game", "world", "authoring.ts"), "utf8");
   const bootstrapSource = fs.readFileSync(path.join(root, "src", "game", "world", "bootstrap.ts"), "utf8");
   const bridgeSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-bridge.ts"), "utf8");
@@ -20,6 +21,32 @@ function run() {
   assert(manifest.worlds[0] && manifest.worlds[0].worldId === "main_overworld", "main_overworld should remain the canonical authored world");
   assert(manifest.worlds.some((entry) => entry && entry.worldId === "tutorial_island"), "tutorial_island should be registered for fresh-start routing");
   assert(!fs.existsSync(deletedRegionPath), "north_road_camp region file should be deleted");
+
+  const manifestRegionFiles = new Set();
+  manifest.worlds.forEach((entry) => {
+    assert(entry && entry.worldId, "world manifest entries should define worldId");
+    assert(entry.regionFile, `world manifest entry ${entry.worldId} should define regionFile`);
+    assert(!manifestRegionFiles.has(entry.regionFile), `world manifest regionFile ${entry.regionFile} should be unique`);
+    manifestRegionFiles.add(entry.regionFile);
+
+    const regionPath = path.join(regionsDir, entry.regionFile);
+    assert(fs.existsSync(regionPath), `world manifest regionFile ${entry.regionFile} should exist`);
+    const region = JSON.parse(fs.readFileSync(regionPath, "utf8"));
+    assert(region.worldId === entry.worldId, `region ${entry.regionFile} worldId should match manifest entry`);
+    assert(!region.dynamicServices, `region ${entry.regionFile} should not define dynamicServices`);
+    assert(!region.skillRoutes || !region.skillRoutes.miningZones, `region ${entry.regionFile} should not define legacy miningZones`);
+    assert(!region.skillRoutes || !region.skillRoutes.runecraftingBands, `region ${entry.regionFile} should not define legacy runecraftingBands`);
+    assert(!region.skillRoutes || !region.skillRoutes.woodcuttingZones, `region ${entry.regionFile} should not define legacy woodcuttingZones`);
+  });
+  const authoredRegionFiles = fs.readdirSync(regionsDir)
+    .filter((fileName) => fileName.endsWith(".json"))
+    .sort();
+  const manifestRegionFileList = Array.from(manifestRegionFiles).sort();
+  assert(
+    authoredRegionFiles.join(",") === manifestRegionFileList.join(","),
+    "world manifest should own every authored region file"
+  );
+
   assert(authoringSource.includes("worldManifestJson"), "authoring registry should load the manifest");
   assert(authoringSource.includes("getWorldManifestEntry(worldId: string)"), "authoring registry should expose manifest entry lookup by world id");
   assert(authoringSource.includes("listWorldIds(): string[]"), "authoring registry should expose world-id enumeration");
