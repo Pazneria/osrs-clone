@@ -375,6 +375,10 @@ function makeMagicRune(itemId, overrides = {}) {
               spawnNodeId: "qa-guard",
               enemyId: "enemy_guard",
               spawnTile: { x: 10, y: 10, z: 0 },
+              patrolRoute: [
+                { x: 10, y: 10, z: 0 },
+                { x: 14, y: 10, z: 0 }
+              ],
               spawnGroupId: "starter_east_outpost_guard_alpha"
             },
             {
@@ -396,6 +400,16 @@ function makeMagicRune(itemId, overrides = {}) {
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),
     { currentHitpoints: 1, dealt: 5 },
     "combat bridge should expose player hitpoint damage math"
+  );
+  const bridgeSpawns = window.CombatRuntime.getWorldCombatSpawnNodes("qa_runtime_world");
+  const bridgeGuardSpawn = bridgeSpawns.find((spawn) => spawn.spawnNodeId === "qa-guard");
+  assert.deepStrictEqual(
+    bridgeGuardSpawn.patrolRoute,
+    [
+      { x: 10, y: 10, z: 0 },
+      { x: 14, y: 10, z: 0 }
+    ],
+    "combat bridge should preserve bootstrap patrol routes"
   );
   const summaries = new Map(
     window.CombatRuntime.listCombatProgressionBandWorldSummaries("qa_runtime_world").map((summary) => [summary.bandId, summary])

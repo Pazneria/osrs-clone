@@ -137,6 +137,15 @@ function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | nul
       ? spawnNode.spawnGroupId
       : (typeof spawnNode.groupId === "string" ? spawnNode.groupId : null)
   ) || null;
+  const patrolRoute = Array.isArray(spawnNode.patrolRoute)
+    ? spawnNode.patrolRoute
+        .filter(isPoint3Like)
+        .map((point) => clonePoint3({
+          x: Math.floor(Number(point.x)),
+          y: Math.floor(Number(point.y)),
+          z: Math.floor(Number(point.z))
+        }))
+    : [];
 
   return {
     spawnNodeId,
@@ -149,6 +158,7 @@ function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | nul
           z: Math.floor(Number(homeTileOverrideLike.z))
         })
       : null,
+    patrolRoute,
     roamingRadiusOverride,
     respawnTicks,
     spawnEnabled: spawnNode.spawnEnabled !== false && spawnNode.enabled !== false,

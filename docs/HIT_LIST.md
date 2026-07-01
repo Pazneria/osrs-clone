@@ -999,6 +999,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-075 - East outpost guard patrol route
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Automation
+- Links: `content/world/regions/main_overworld.json`, `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `src/game/platform/combat-bridge.ts`, `src/game/world/authoring.ts`, `src/game/world/clone.ts`, `src/js/combat-enemy-movement-runtime.js`, `src/js/combat.js`, `tools/content/validate-world.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-enemy-movement-runtime-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/spec-contracts.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-016` tracker entry for advanced roaming/patrol behavior.
+  2. Inspect the authored east-outpost guard spawns and idle enemy movement runtime.
+  3. Check whether any spawn can own a deterministic patrol route instead of only random radius roaming.
+- Expected: Combat spawn nodes should support a small, validated authored patrol route slice before broader ally-assist or group-aggro logic.
+- Actual: Enemy idle movement only supported random roaming around spawn/home values, and the world authoring/content contracts had no patrol-route field or guards.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add an optional patrol-route field to combat spawn contracts and preserve it through world authoring, clone, content, and respawn paths.
+  2. Author one east-outpost north guard route and make idle enemy movement follow route waypoints before random roaming.
+  3. Lock the slice with validation, topology, content, movement, parity, and tracker-doc coverage.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a five-waypoint patrol loop to the east-outpost north guard and preserved/scaled it through typed world bootstrap, combat bridge, and combat content APIs.
+  - Enemy idle movement now prefers authored patrol waypoints when present, with patrol route state reset on respawn and chase range expanded around the route envelope.
+  - Extended validators and focused guards so patrol routes must remain walkable, same-plane, near home, reachable, clear of protected footprints, cloned on read, and covered by docs.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-074 - Runecrafting altar labels hid route status
 - Status: Fixed
 - Severity: S3

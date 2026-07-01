@@ -60,6 +60,21 @@
         };
     }
 
+    function clonePatrolRoute(route) {
+        return Array.isArray(route) ? route.map((point) => clonePoint(point)) : [];
+    }
+
+    function getMaxRouteDistance(anchor, route) {
+        if (!anchor || !Array.isArray(route)) return 0;
+        let maximum = 0;
+        for (let i = 0; i < route.length; i++) {
+            const point = route[i];
+            if (!point || point.z !== anchor.z) continue;
+            maximum = Math.max(maximum, Math.max(Math.abs(point.x - anchor.x), Math.abs(point.y - anchor.y)));
+        }
+        return maximum;
+    }
+
     function normalizeWorldId(worldId) {
         return String(worldId || '').trim();
     }
@@ -808,6 +823,8 @@
         if (!spawnNode || !enemyType) return;
         const spawnTile = clonePoint(spawnNode.spawnTile);
         const homeTile = spawnNode.homeTileOverride ? clonePoint(spawnNode.homeTileOverride) : clonePoint(spawnTile);
+        const patrolRoute = clonePatrolRoute(spawnNode.patrolRoute);
+        const patrolRouteDistance = getMaxRouteDistance(homeTile, patrolRoute);
         const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
             ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
             : enemyType.behavior.roamingRadius;
@@ -822,8 +839,10 @@
         enemyState.remainingAttackCooldown = 0;
         enemyState.resolvedHomeTile = homeTile;
         enemyState.resolvedSpawnTile = clonePoint(spawnTile);
+        enemyState.resolvedPatrolRoute = patrolRoute;
+        enemyState.patrolRouteIndex = patrolRoute.length > 1 ? 1 : 0;
         enemyState.resolvedRoamingRadius = resolvedRoamingRadius;
-        enemyState.resolvedChaseRange = Math.max(enemyType.behavior.chaseRange, resolvedRoamingRadius + 2);
+        enemyState.resolvedChaseRange = Math.max(enemyType.behavior.chaseRange, resolvedRoamingRadius + 2, patrolRouteDistance + 2);
         enemyState.resolvedAggroRadius = enemyType.behavior.aggroRadius;
         enemyState.defaultMovementSpeed = enemyType.behavior.defaultMovementSpeed;
         enemyState.combatMovementSpeed = enemyType.behavior.combatMovementSpeed;

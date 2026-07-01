@@ -131,7 +131,8 @@ export function cloneCombatSpawnNode(spawnNode: EnemySpawnNodeDefinition): Enemy
   return {
     ...spawnNode,
     spawnTile: clonePoint3(spawnNode.spawnTile),
-    homeTileOverride: spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : null
+    homeTileOverride: spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : null,
+    patrolRoute: Array.isArray(spawnNode.patrolRoute) ? spawnNode.patrolRoute.map(clonePoint3) : []
   };
 }
 

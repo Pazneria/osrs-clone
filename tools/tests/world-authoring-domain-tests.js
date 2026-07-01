@@ -670,6 +670,7 @@ function setSparseTile(map, x, y, z, tileId) {
   const rawBoarWestNorth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_north");
   const rawBoarWestSouth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const rawBoarEastNorth = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
+  const rawGuardPatrol = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_guard_east_outpost_north");
   const rawSoutheastCampAnchor = rawCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
 
   const scaledCastle = scaledStructuresById.castle_ground;
@@ -684,6 +685,7 @@ function setSparseTile(map, x, y, z, tileId) {
   const scaledBoarWestNorth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_north");
   const scaledBoarWestSouth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_west_south");
   const scaledBoarEastNorth = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_boar_outer_east_north");
+  const scaledGuardPatrol = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_guard_east_outpost_north");
   const scaledSoutheastCampAnchor = scaledCombatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_heavy_brute_southeast_camp_anchor");
 
   assert.strictEqual(legacyStarterDefinition.worldId, "main_overworld", "legacy starter_town lookup should return the main overworld definition");
@@ -903,6 +905,26 @@ function setSparseTile(map, x, y, z, tileId) {
       z: rawSoutheastCampAnchor.spawnTile.z
     },
     "world definition combat spawns should keep the southeast camp anchor alignment"
+  );
+  assert.deepStrictEqual(
+    rawGuardPatrol.patrolRoute,
+    [
+      { x: 364, y: 246, z: 0 },
+      { x: 360, y: 246, z: 0 },
+      { x: 360, y: 244, z: 0 },
+      { x: 368, y: 244, z: 0 },
+      { x: 368, y: 246, z: 0 }
+    ],
+    "raw east-outpost north guard should author the first patrol route"
+  );
+  assert.deepStrictEqual(
+    scaledGuardPatrol.patrolRoute,
+    rawGuardPatrol.patrolRoute.map((point) => ({
+      x: scaleAxis(point.x),
+      y: scaleAxis(point.y),
+      z: point.z
+    })),
+    "east-outpost guard patrol route should scale with combat spawn authoring"
   );
 }
 

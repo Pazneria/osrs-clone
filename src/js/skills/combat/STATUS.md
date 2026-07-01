@@ -19,9 +19,10 @@
 - [x] COMBAT-013: Rebuilt the combat simulator around typed combat content, canonical melee formulas, runtime item combat profiles, and deterministic simulator guard coverage.
 - [x] COMBAT-014: Combat progression bands now classify enemy difficulty, loot ceilings, and placement stages across starter, mid-band, and later-region rollout planning.
 - [x] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by topology and world parity guards.
+- [x] COMBAT-016A: Authored patrol routes now have a first guarded slice on the east-outpost north guard, with patrol-aware idle movement, route cloning, chase-envelope coverage, world validation, and parity guards.
 
 ## Now
-- [ ] COMBAT-016: Add advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic once the first-pass melee-only foundation is stable.
+- [ ] COMBAT-016B: Add ally-assist/group-aggro behavior and richer encounter-state logic now that authored patrol routes have a guarded first slice.
 
 ## Next
 - [ ] COMBAT-017: Add ranged combat on top of the shared combat core.

@@ -19,6 +19,20 @@ function clonePoint3(point: Point3): Point3 {
   return { x: point.x, y: point.y, z: point.z };
 }
 
+function clonePatrolRoute(route?: Point3[] | null): Point3[] {
+  return Array.isArray(route) ? route.map(clonePoint3) : [];
+}
+
+function getMaxRouteDistance(anchor: Point3, route: Point3[]): number {
+  let maximum = 0;
+  for (let i = 0; i < route.length; i += 1) {
+    const point = route[i];
+    if (!point || point.z !== anchor.z) continue;
+    maximum = Math.max(maximum, Math.max(Math.abs(point.x - anchor.x), Math.abs(point.y - anchor.y)));
+  }
+  return maximum;
+}
+
 function cloneEnemyTypeDefinition(definition: EnemyTypeDefinition): EnemyTypeDefinition {
   return {
     ...definition,
@@ -36,6 +50,7 @@ function cloneSpawnNode(definition: EnemySpawnNodeDefinition): EnemySpawnNodeDef
     ...definition,
     spawnTile: clonePoint3(definition.spawnTile),
     homeTileOverride: definition.homeTileOverride ? clonePoint3(definition.homeTileOverride) : null,
+    patrolRoute: clonePatrolRoute(definition.patrolRoute),
     roamingRadiusOverride: Number.isFinite(definition.roamingRadiusOverride)
       ? Math.max(0, Math.floor(Number(definition.roamingRadiusOverride)))
       : null
@@ -956,6 +971,8 @@ export function createEnemyRuntimeState(
 
   const spawnTile = clonePoint3(spawnNode.spawnTile);
   const homeTile = spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : clonePoint3(spawnTile);
+  const resolvedPatrolRoute = clonePatrolRoute(spawnNode.patrolRoute);
+  const patrolRouteDistance = getMaxRouteDistance(homeTile, resolvedPatrolRoute);
   const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
     ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
     : definition.behavior.roamingRadius;
@@ -972,8 +989,10 @@ export function createEnemyRuntimeState(
     remainingAttackCooldown: 0,
     resolvedHomeTile: homeTile,
     resolvedSpawnTile: spawnTile,
+    resolvedPatrolRoute,
+    patrolRouteIndex: resolvedPatrolRoute.length > 1 ? 1 : 0,
     resolvedRoamingRadius,
-    resolvedChaseRange: Math.max(definition.behavior.chaseRange, resolvedRoamingRadius + 2),
+    resolvedChaseRange: Math.max(definition.behavior.chaseRange, resolvedRoamingRadius + 2, patrolRouteDistance + 2),
     resolvedAggroRadius: definition.behavior.aggroRadius,
     defaultMovementSpeed: definition.behavior.defaultMovementSpeed,
     combatMovementSpeed: definition.behavior.combatMovementSpeed,

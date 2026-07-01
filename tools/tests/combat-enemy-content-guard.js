@@ -555,13 +555,28 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-016:/,
-  "combat status should advance COMBAT-016 into the current focus slot"
+  /- \[x\] COMBAT-016A: Authored patrol routes now have a first guarded slice on the east-outpost north guard, with patrol-aware idle movement, route cloning, chase-envelope coverage, world validation, and parity guards\./,
+  "combat status should mark COMBAT-016A complete with the authored patrol route slice"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-016B:/,
+  "combat status should advance COMBAT-016B into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear\/brute\/striker spawns \| Advanced roaming, patrols, ally-assist\/group-aggro behavior, and richer encounter-state logic \| None \|/,
-  "skills index should reflect the completed encounter rollout and next advanced-logic focus"
+  /\| Combat \| In Progress \| First authored patrol route is live on the east-outpost north guard with route-aware movement, validation, and parity coverage \| Ally-assist\/group-aggro behavior and richer encounter-state logic \| None \|/,
+  "skills index should reflect the completed patrol-route slice and next advanced-logic focus"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Authored patrol-route movement slice \| Complete \|/,
+  "combat roadmap should mark the authored patrol-route movement slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Authored patrol routes are optional spawn-node waypoint loops; patrol enemies prefer route movement while idle and fall back to random roaming only when no usable route exists\./,
+  "combat roadmap should document authored patrol-route movement behavior"
 );
 
 assertRegex(
@@ -589,6 +604,35 @@ assert.strictEqual(
   typeof combatContent.listEnemySpawnNodesForWorld,
   "function",
   "combat content should continue exporting the spawn lookup API"
+);
+
+const mainOverworldSpawns = combatContent.listEnemySpawnNodesForWorld("main_overworld");
+const guardPatrolSpawn = mainOverworldSpawns.find((spawn) => spawn.spawnNodeId === "enemy_spawn_guard_east_outpost_north");
+assert.ok(guardPatrolSpawn, "north guard patrol spawn should resolve through combat content");
+assert.deepStrictEqual(
+  guardPatrolSpawn.patrolRoute,
+  [
+    { x: 485, y: 328, z: 0 },
+    { x: 480, y: 328, z: 0 },
+    { x: 480, y: 325, z: 0 },
+    { x: 491, y: 325, z: 0 },
+    { x: 491, y: 328, z: 0 }
+  ],
+  "north guard patrol route should flow through scaled combat content"
+);
+const guardPatrolRuntime = combatContent.createEnemyRuntimeState(guardPatrolSpawn);
+assert.deepStrictEqual(
+  guardPatrolRuntime.resolvedPatrolRoute,
+  guardPatrolSpawn.patrolRoute,
+  "guard patrol runtime should clone the authored route"
+);
+assert.strictEqual(guardPatrolRuntime.patrolRouteIndex, 1, "guard patrol runtime should start toward the second waypoint");
+assert.strictEqual(guardPatrolRuntime.resolvedChaseRange, 8, "guard patrol chase range should cover the authored route envelope");
+guardPatrolSpawn.patrolRoute[0].x = 1;
+assert.strictEqual(
+  combatContent.listEnemySpawnNodesForWorld("main_overworld").find((spawn) => spawn.spawnNodeId === "enemy_spawn_guard_east_outpost_north").patrolRoute[0].x,
+  485,
+  "combat spawn patrol routes should be cloned on read"
 );
 
 console.log("Combat enemy content guard passed.");
