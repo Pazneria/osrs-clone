@@ -44,6 +44,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Combat HUD/target feedback pass | Complete |
 | Progression-band contract for enemy difficulty, drops, and placement | Complete |
 | First-pass guarded threshold and camp-threat encounter coverage | Complete |
+| Authored patrol-route movement slice | Complete |
 
 ## Data Contracts
 
@@ -68,8 +69,9 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 ### Encounter Authoring
 
 - Combat content is authored into the world through explicit spawn nodes and spawn groups, with the world region layer acting as the source of truth for encounter topology rather than piggybacking on merchant/travel NPC descriptors.
-- The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, respawn ticks, facing yaw, enabled state, and spawn-group id.
-- The roadmap leaves room to extend encounter authoring later with patrol routes, density caps, safe-distance-from-route rules, and local drop overrides where needed.
+- The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, optional patrol route, respawn ticks, facing yaw, enabled state, and spawn-group id.
+- The first authored patrol route is live on the east-outpost north guard, and it flows through world authoring, the combat bridge, combat content cloning, runtime respawn reset, route-aware idle movement, validation, and parity guards.
+- The roadmap leaves room to extend encounter authoring later with density caps, safe-distance-from-route rules, and local drop overrides where needed.
 - In the first pass, spawn groups are organizational/content-authoring helpers only and do not automatically imply shared aggro, ally assist, shared respawn, or formation logic.
 
 ### Loot Tables
@@ -149,7 +151,7 @@ These are the spec-aligned first-pass melee-only enemy templates that should dri
 | Heavy Brute | Slower heavy-damage melee enemy | Live |
 | Fast Striker | High-pressure accuracy/speed enemy | Live |
 
-Rule: the roadmap should exhaust this first-pass roster before it assumes more advanced behaviors like patrol logic, assist logic, or dynamic spawning.
+Rule: the first-pass roster is live; further advanced behavior beyond authored patrol routes should build on the current combat content contracts instead of adding one-off runtime-only enemy logic.
 
 ## Loot Table Plan
 
@@ -282,6 +284,9 @@ The current authored `starter_town` world now covers every live first-pass progr
 - Roaming Radius is a placement/world-behavior field, not a combat-power field.
 - Roaming is anchored to Spawn Tile, while chase/leash behavior is anchored to Home Tile.
 - Aggro Radius, Chase Range, and Roaming Radius should be authored and reviewed using the same square/Chebyshev tile distance rule as the shared combat specs.
+- Authored patrol routes are optional spawn-node waypoint loops; patrol enemies prefer route movement while idle and fall back to random roaming only when no usable route exists.
+- Patrol waypoints must stay same-plane, in bounds, walkable, near the home tile, clear of protected roads/service/mining footprints, and reachable segment-by-segment.
+- Chase Range must cover the authored patrol envelope so valid patrol movement does not fight leash behavior.
 - Higher-than-1 combat movement speeds stay deferred until movement/collision semantics are explicitly expanded.
 
 ### First-Pass Respawn Bands
@@ -385,7 +390,7 @@ The enemy specs explicitly defer richer assist/group logic until the simpler aut
 These are worth keeping in the roadmap precisely so we do not accidentally treat them like current-slice requirements.
 
 - advanced spawn randomization or dynamic region-driven spawning
-- advanced roaming behavior beyond the simple current radius model
+- advanced roaming behavior beyond the authored patrol-route slice and simple current radius model
 - group aggro, ally assist, or formation logic
 - safe-spot exception systems
 - ranged or magic enemy packages
@@ -422,6 +427,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - Combat/eating interaction should remain regression-tested against the shared same-tick restriction rules.
 - Loot tables should validate weights, quantity bands, item ids, and progression-band sanity.
 - Spawn groups should validate spacing, enabled-state consistency, and region ownership.
+- Patrol routes should validate waypoint walkability, route reachability, protected-road clearance, and route-aware local path budgets.
 - Encounter-heavy scenes should be watched for pathfinding spikes and visible tick hitching.
 - Combat content rollout should keep a manual checklist for "can a brand-new player safely walk through town without accidental death?"
 

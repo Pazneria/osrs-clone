@@ -140,6 +140,7 @@ export interface EnemySpawnNodeDefinition {
   enemyId: string;
   spawnTile: Point3;
   homeTileOverride?: Point3 | null;
+  patrolRoute?: Point3[] | null;
   roamingRadiusOverride?: number | null;
   respawnTicks?: number | null;
   spawnEnabled: boolean;
@@ -157,6 +158,8 @@ export interface EnemyRuntimeState extends Point3 {
   remainingAttackCooldown: number;
   resolvedHomeTile: Point3;
   resolvedSpawnTile: Point3;
+  resolvedPatrolRoute: Point3[];
+  patrolRouteIndex?: number;
   resolvedRoamingRadius: number;
   resolvedChaseRange: number;
   resolvedAggroRadius: number;
