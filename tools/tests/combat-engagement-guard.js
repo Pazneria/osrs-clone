@@ -179,6 +179,18 @@ function run() {
   );
 
   assert(
+    combatEngagementRuntimeSource.includes("function acquireAllyAssistTargets(context = {})")
+      && combatEngagementRuntimeSource.includes("function canEnemyAssistSource(context = {}, sourceEnemy, candidateEnemy)")
+      && combatEngagementRuntimeSource.includes("sourceGroupId !== getEnemySpawnGroupId(candidateEnemy)")
+      && combatEngagementRuntimeSource.includes("candidateType.behavior.aggroType !== 'aggressive'")
+      && combatEngagementRuntimeSource.includes("enemyState.assistSourceRuntimeId = sourceEnemy.runtimeId || null;")
+      && combatEngagementRuntimeSource.includes("enemyState.remainingAttackCooldown = Math.max(")
+      && combatSource.includes("function acquireAllyAssistTargets()")
+      && combatSource.includes("acquireAllyAssistTargets();"),
+    "spawn-group ally assist should live in the engagement runtime, stay limited to aggressive same-group allies, and apply an opening cooldown"
+  );
+
+  assert(
     combatQaDebugSource.includes("pursuit: pursuitDebugState")
       && combatQaDebugSource.includes("autoRetaliate: autoRetaliateDebugState")
       && combatQaDebugSource.includes("[QA combatdbg] pursuit state=")

@@ -560,18 +560,28 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-016B:/,
-  "combat status should advance COMBAT-016B into the current focus slot"
+  /- \[x\] COMBAT-016B: Aggressive same-group ally assist now uses authored spawn-group IDs, local assist radius checks, leash\/path validation, and a one-tick opening cooldown so camps can coordinate without pulling passive critters or distant group members\./,
+  "combat status should mark COMBAT-016B complete with the group-assist contract"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-017:/,
+  "combat status should advance COMBAT-017 into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| First authored patrol route is live on the east-outpost north guard with route-aware movement, validation, and parity coverage \| Ally-assist\/group-aggro behavior and richer encounter-state logic \| None \|/,
-  "skills index should reflect the completed patrol-route slice and next advanced-logic focus"
+  /\| Combat \| In Progress \| Aggressive same-group ally assist is live with authored spawn-group IDs, leash\/path validation, and one-tick opening cooldowns \| Ranged combat on top of the shared combat core \| None \|/,
+  "skills index should reflect the completed group-assist slice and next ranged-combat focus"
 );
 assertRegex(
   combatRoadmapSource,
   /\| Authored patrol-route movement slice \| Complete \|/,
   "combat roadmap should mark the authored patrol-route movement slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Spawn-group ally assist slice \| Complete \|/,
+  "combat roadmap should mark the group-assist slice complete"
 );
 assertRegex(
   combatRoadmapSource,
@@ -586,7 +596,7 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /\| Camp Threat \| Mid \| 20-35 \| Bear, Fast Striker, Heavy Brute \| Clustered optional camps or ruins \| <= 26\.15 gp\/kill \|/,
+  /\| Camp Threat \| Mid \| 20-35 \| Bear, Fast Striker, Heavy Brute \| Clustered optional camps or ruins with local ally assist \| <= 26\.15 gp\/kill \|/,
   "combat roadmap should document the camp-threat progression band"
 );
 assertRegex(

@@ -1278,7 +1278,7 @@
                 stackable: false,
                 actions: ['Use'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'silver_ring' }
+                icon: { kind: 'pixel', assetId: 'borrowed_ring' }
             },
             borrowed_amulet: {
                 name: 'Borrowed Amulet',
@@ -1287,7 +1287,7 @@
                 stackable: false,
                 actions: ['Use'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'silver_amulet' }
+                icon: { kind: 'pixel', assetId: 'borrowed_amulet' }
             },
             borrowed_tiara: {
                 name: 'Borrowed Tiara',
@@ -1296,7 +1296,7 @@
                 stackable: false,
                 actions: ['Use'],
                 defaultAction: 'Use',
-                icon: { kind: 'pixel', assetId: 'silver_tiara' }
+                icon: { kind: 'pixel', assetId: 'borrowed_tiara' }
             },
             imprinted_ring_mould: {
                 name: 'Imprinted Ring Mould',

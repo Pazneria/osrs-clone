@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-05-11T18:47:20.689Z",
+  "generatedAt": "2026-07-03T06:05:07.158Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -645,7 +645,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "silver_amulet",
+        "assetId": "borrowed_amulet",
         "kind": "pixel"
       },
       "name": "Borrowed Amulet",
@@ -659,7 +659,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "silver_ring",
+        "assetId": "borrowed_ring",
         "kind": "pixel"
       },
       "name": "Borrowed Ring",
@@ -673,7 +673,7 @@
       ],
       "defaultAction": "Use",
       "icon": {
-        "assetId": "silver_tiara",
+        "assetId": "borrowed_tiara",
         "kind": "pixel"
       },
       "name": "Borrowed Tiara",

@@ -579,6 +579,9 @@
                 : { ...spawnNode, spawnNodeId };
             combatEnemySpawnNodesById[spawnNodeId] = normalizedSpawnNode;
             const enemyState = combatRuntime.createEnemyRuntimeState(normalizedSpawnNode, 0);
+            enemyState.spawnGroupId = typeof normalizedSpawnNode.spawnGroupId === 'string' && normalizedSpawnNode.spawnGroupId
+                ? normalizedSpawnNode.spawnGroupId
+                : null;
             enemyState.prevX = enemyState.x;
             enemyState.prevY = enemyState.y;
             enemyState.moveTriggerAt = 0;
@@ -749,6 +752,7 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         clearEnemyIdleWanderState(enemyState);
         clearEnemyLocomotionIntent(enemyState);
@@ -764,10 +768,14 @@
         enemyState.y = homeTile.y;
         enemyState.z = homeTile.z;
         enemyState.currentHealth = enemyType.stats.hitpoints;
+        enemyState.spawnGroupId = typeof spawnNode.spawnGroupId === 'string' && spawnNode.spawnGroupId
+            ? spawnNode.spawnGroupId
+            : null;
         enemyState.currentState = 'idle';
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
@@ -802,6 +810,7 @@
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
         enemyState.lastDamagerId = null;
+        enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.pendingDefeatAtTick = null;
         enemyState.pendingDefeatFacingYaw = null;
@@ -853,6 +862,7 @@
         enemyState.pendingDefeatAtTick = null;
         enemyState.pendingDefeatFacingYaw = null;
         enemyState.lastDamagerId = null;
+        enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
@@ -994,6 +1004,10 @@
 
     function acquireAggressiveEnemyTargets() {
         getCombatEngagementRuntime().acquireAggressiveEnemyTargets(buildCombatEngagementRuntimeContext());
+    }
+
+    function acquireAllyAssistTargets() {
+        getCombatEngagementRuntime().acquireAllyAssistTargets(buildCombatEngagementRuntimeContext());
     }
 
     function collectReadyAttacks(playerLockState) {
@@ -1248,10 +1262,12 @@
         }
 
         acquireAggressiveEnemyTargets();
+        acquireAllyAssistTargets();
 
         const playerLockState = validatePlayerTargetLock();
         const attacks = collectReadyAttacks(playerLockState);
         const attackResults = resolveAttackBatch(attacks);
+        acquireAllyAssistTargets();
         const playerAttackResult = attackResults.find((entry) => entry.attackerKind === 'player') || null;
         const playerAttackedThisTick = !!playerAttackResult;
 

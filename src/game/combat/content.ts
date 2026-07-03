@@ -980,6 +980,9 @@ export function createEnemyRuntimeState(
     runtimeId: spawnNode.spawnNodeId,
     spawnNodeId: spawnNode.spawnNodeId,
     enemyId: definition.enemyId,
+    spawnGroupId: typeof spawnNode.spawnGroupId === "string" && spawnNode.spawnGroupId.trim()
+      ? spawnNode.spawnGroupId.trim()
+      : null,
     x: spawnTile.x,
     y: spawnTile.y,
     z: spawnTile.z,

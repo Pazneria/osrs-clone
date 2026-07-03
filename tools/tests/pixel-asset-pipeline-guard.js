@@ -3,7 +3,8 @@ const path = require("path");
 const { encodePng, readPngSize } = require("../pixel/pixel-png");
 const { buildRgbaBuffer } = require("../pixel/pixel-source");
 const { buildObjFromPixelSource } = require("../pixel/pixel-model");
-const { loadPixelSource } = require("../pixel/pixel-project");
+const { getPixelArtifactPaths, loadPixelSource } = require("../pixel/pixel-project");
+const { loadRuntimeItemCatalog } = require("../content/runtime-item-catalog");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -59,6 +60,8 @@ function run() {
   const coreScript = fs.readFileSync(corePath, "utf8");
   const itemCatalogScript = fs.readFileSync(itemCatalogPath, "utf8");
   const packageJson = fs.readFileSync(packageJsonPath, "utf8");
+  const runtimeItems = loadRuntimeItemCatalog(root).itemDefs;
+  const iconStatus = JSON.parse(fs.readFileSync(path.join(root, "content", "icon-status.json"), "utf8"));
 
   assert(!indexHtml.includes("icon-sprite-catalog.js"), "index should not load the legacy icon sprite catalog");
   assert(!coreScript.includes("window.IconSpriteCatalog"), "core should not reference IconSpriteCatalog");
@@ -92,6 +95,29 @@ function run() {
 
   const size = readPngSize(builtIconPath);
   assert(size.width === 32 && size.height === 32, "generated runtime icon must be 32x32");
+
+  ["borrowed_ring", "borrowed_amulet", "borrowed_tiara"].forEach((assetId) => {
+    const borrowedSource = loadPixelSource(root, assetId);
+    const baseAssetId = assetId.replace("borrowed_", "silver_");
+    const baseSource = loadPixelSource(root, baseAssetId);
+    const bounds = getSolidBounds(borrowedSource);
+    const artifacts = getPixelArtifactPaths(root, assetId);
+    const itemDef = runtimeItems[assetId];
+    const statusEntry = iconStatus.items && iconStatus.items[assetId];
+
+    assert(bounds, `${assetId} should contain visible pixels`);
+    assert(
+      JSON.stringify(borrowedSource.pixels) !== JSON.stringify(baseSource.pixels),
+      `${assetId} should not reuse the ${baseAssetId} placeholder silhouette`
+    );
+    assert(fs.existsSync(artifacts.icon), `${assetId} should have a generated PNG icon`);
+    assert(fs.existsSync(artifacts.model), `${assetId} should have a generated OBJ model`);
+    assert(fs.existsSync(artifacts.groundModel), `${assetId} should have a generated ground OBJ model`);
+    assert(itemDef && itemDef.icon && itemDef.icon.assetId === assetId, `${assetId} item should use its dedicated icon asset`);
+    assert(statusEntry && statusEntry.assetId === assetId, `${assetId} icon status should track the dedicated asset`);
+    assert(statusEntry.status === "done", `${assetId} icon status should be done`);
+    assert(statusEntry.treatment === "bespoke", `${assetId} icon status should be bespoke`);
+  });
 
   [
     "normal_shortbow",

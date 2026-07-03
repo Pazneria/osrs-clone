@@ -999,6 +999,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
+### HIT-076 - Combat spawn-group ally assist
+- Status: Fixed
+- Severity: S2
+- Area: Other
+- Source: Roadmap
+- Links: `src/js/combat-engagement-runtime.js`, `src/js/combat.js`, `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-engagement-runtime-guard.js`, `tools/tests/combat-engagement-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`
+- Repro:
+  1. Pull or proximity-aggro one aggressive enemy in an authored spawn group.
+  2. Keep a nearby aggressive same-group ally outside direct proximity aggro but within the local assist radius.
+  3. Compare passive same-group enemies, distant same-group enemies, and nearby different-group enemies.
+- Expected: Only nearby aggressive same-group allies join the pull, with a short opening delay and normal leash/path limits.
+- Actual: Spawn groups previously acted as placement metadata only and did not provide any ally-assist behavior.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Preserve authored `spawnGroupId` on combat runtime enemy state.
+  2. Add engagement-runtime assist acquisition for aggressive same-group allies with local range, leash, and path checks.
+  3. Add focused runtime/guard coverage and update combat roadmap/status docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Enemy runtime state now carries the authored spawn-group ID through typed combat content, runtime init, and respawn.
+  - `CombatEngagementRuntime` now acquires nearby idle aggressive allies from the same spawn group, records the assist source, and applies a one-tick opening cooldown.
+  - Passive same-group critters, distant same-group members, and nearby different-group enemies remain excluded by targeted runtime coverage.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-075 - East outpost guard patrol route
 - Status: Fixed
 - Severity: S2

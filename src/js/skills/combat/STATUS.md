@@ -20,12 +20,12 @@
 - [x] COMBAT-014: Combat progression bands now classify enemy difficulty, loot ceilings, and placement stages across starter, mid-band, and later-region rollout planning.
 - [x] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by topology and world parity guards.
 - [x] COMBAT-016A: Authored patrol routes now have a first guarded slice on the east-outpost north guard, with patrol-aware idle movement, route cloning, chase-envelope coverage, world validation, and parity guards.
+- [x] COMBAT-016B: Aggressive same-group ally assist now uses authored spawn-group IDs, local assist radius checks, leash/path validation, and a one-tick opening cooldown so camps can coordinate without pulling passive critters or distant group members.
 
 ## Now
-- [ ] COMBAT-016B: Add ally-assist/group-aggro behavior and richer encounter-state logic now that authored patrol routes have a guarded first slice.
+- [ ] COMBAT-017: Add ranged combat on top of the shared combat core.
 
 ## Next
-- [ ] COMBAT-017: Add ranged combat on top of the shared combat core.
 
 ## Later
 - [ ] COMBAT-018: Add magic combat, rune/resource integration, and staff/spell identity.

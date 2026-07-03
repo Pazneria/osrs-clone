@@ -35,13 +35,14 @@ function createEnemyDefinition(enemyId, overrides = {}) {
   };
 }
 
-function createSpawnNode(spawnNodeId, enemyId, x, y, z = 0) {
+function createSpawnNode(spawnNodeId, enemyId, x, y, z = 0, spawnGroupId = null) {
   return {
     spawnNodeId,
     enemyId,
     spawnTile: { x, y, z },
     spawnEnabled: true,
-    facingYaw: Math.PI
+    facingYaw: Math.PI,
+    spawnGroupId
   };
 }
 
@@ -138,6 +139,7 @@ function ensureCombatRuntimeLoaded(root) {
         runtimeId: spawnNode.spawnNodeId,
         spawnNodeId: spawnNode.spawnNodeId,
         enemyId: definition.enemyId,
+        spawnGroupId: typeof spawnNode.spawnGroupId === "string" ? spawnNode.spawnGroupId : null,
         x: spawnTile.x,
         y: spawnTile.y,
         z: spawnTile.z,
@@ -590,6 +592,42 @@ function run() {
     assert.strictEqual(idleEnemy.currentState, "aggroed");
     assert.strictEqual(idleEnemy.lockedTargetId, "player");
     assert.strictEqual(idleEnemy.remainingAttackCooldown, 1);
+  });
+
+  test("Aggressive spawn-group allies assist local pulls without chaining passive or distant members", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        camp_anchor: createEnemyDefinition("camp_anchor", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 10 }),
+        camp_ally: createEnemyDefinition("camp_ally", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 10 }),
+        passive_ally: createEnemyDefinition("passive_ally", { aggroType: "passive", aggroRadius: 0, chaseRange: 10 }),
+        distant_ally: createEnemyDefinition("distant_ally", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 12 }),
+        other_group: createEnemyDefinition("other_group", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 10 })
+      },
+      spawnNodes: [
+        createSpawnNode("camp-anchor", "camp_anchor", 8, 5, 0, "camp_test"),
+        createSpawnNode("camp-ally", "camp_ally", 12, 5, 0, "camp_test"),
+        createSpawnNode("passive-ally", "passive_ally", 11, 6, 0, "camp_test"),
+        createSpawnNode("distant-ally", "distant_ally", 18, 5, 0, "camp_test"),
+        createSpawnNode("other-group", "other_group", 12, 6, 0, "other_test")
+      ]
+    });
+
+    window.processCombatTick();
+
+    const anchor = getEnemy("camp-anchor");
+    const ally = getEnemy("camp-ally");
+    const passiveAlly = getEnemy("passive-ally");
+    const distantAlly = getEnemy("distant-ally");
+    const otherGroup = getEnemy("other-group");
+
+    assert.strictEqual(anchor.currentState, "aggroed", "anchor enemy should proximity-aggro the player");
+    assert.strictEqual(ally.currentState, "aggroed", "nearby aggressive group ally should assist the pull");
+    assert.strictEqual(ally.lockedTargetId, "player", "assisting ally should lock the player");
+    assert.strictEqual(ally.assistSourceRuntimeId, "camp-anchor", "assisting ally should record the source group member");
+    assert.strictEqual(ally.remainingAttackCooldown, 1, "assisting ally should get a one-tick warning cooldown");
+    assert.strictEqual(passiveAlly.currentState, "idle", "passive same-group critters should not chain into group assist");
+    assert.strictEqual(distantAlly.currentState, "idle", "distant same-group members should remain single-pullable");
+    assert.strictEqual(otherGroup.currentState, "idle", "nearby enemies from a different spawn group should not assist");
   });
 
   test("Ranged player attacks from bow range, consumes ammo, and trains Ranged", () => {

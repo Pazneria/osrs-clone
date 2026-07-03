@@ -152,6 +152,7 @@ export interface EnemyRuntimeState extends Point3 {
   runtimeId: string;
   spawnNodeId: string;
   enemyId: string;
+  spawnGroupId: string | null;
   currentHealth: number;
   currentState: EnemyRuntimeStateId;
   lockedTargetId: string | null;

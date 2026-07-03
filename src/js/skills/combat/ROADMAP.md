@@ -45,6 +45,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Progression-band contract for enemy difficulty, drops, and placement | Complete |
 | First-pass guarded threshold and camp-threat encounter coverage | Complete |
 | Authored patrol-route movement slice | Complete |
+| Spawn-group ally assist slice | Complete |
 
 ## Data Contracts
 
@@ -72,7 +73,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, optional patrol route, respawn ticks, facing yaw, enabled state, and spawn-group id.
 - The first authored patrol route is live on the east-outpost north guard, and it flows through world authoring, the combat bridge, combat content cloning, runtime respawn reset, route-aware idle movement, validation, and parity guards.
 - The roadmap leaves room to extend encounter authoring later with density caps, safe-distance-from-route rules, and local drop overrides where needed.
-- In the first pass, spawn groups are organizational/content-authoring helpers only and do not automatically imply shared aggro, ally assist, shared respawn, or formation logic.
+- Spawn groups now drive a narrow ally-assist rule for aggressive enemies: nearby idle same-group allies can join an active pull when they are inside the local assist radius, still leashed to the player, and can path to the player.
+- Spawn groups still do not imply shared respawn, formation logic, global target switching, or passive-critter dogpiles.
 
 ### Loot Tables
 
@@ -111,7 +113,9 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 
 - Aggressive enemies proximity-aggro within authored aggro radius.
 - Aggressive enemies that acquire the player while already in valid melee range may attack immediately under the shared combat-core timing rules.
+- Aggressive enemies can call nearby aggressive same-group allies into combat through authored spawn groups. Assisting allies receive a one-tick opening cooldown, must stay inside their leash envelope, and must path to the player before joining.
 - Passive enemies do not auto-aggro by proximity but enter combat when directly engaged.
+- Passive same-group enemies do not join ally-assist pulls.
 - First-pass melee enemies keep a current valid target instead of voluntarily switching to a closer or newer attacker.
 - Chase range is anchored to the enemy home tile.
 - Reset sends enemies back to home, then restores full HP and idle state on arrival.
@@ -244,7 +248,7 @@ It exists to keep enemy difficulty, drop ceilings, and placement guidance aligne
 | Starter Roadside | Starter | 4-10 | Goblin Grunt | Avoidable early humanoid aggro | <= 7.05 gp/kill |
 | Resource Outskirts | Starter | 8-16 | Boar, Wolf | Combat pressure near richer resources | <= 3.40 gp/kill |
 | Guarded Threshold | Mid | 15-25 | Guard | Deliberate gate or outpost pressure | <= 20.20 gp/kill |
-| Camp Threat | Mid | 20-35 | Bear, Fast Striker, Heavy Brute | Clustered optional camps or ruins | <= 26.15 gp/kill |
+| Camp Threat | Mid | 20-35 | Bear, Fast Striker, Heavy Brute | Clustered optional camps or ruins with local ally assist | <= 26.15 gp/kill |
 | Later Region Anchor | Later | 35+ | Deferred | Named anchors and later-region objectives | Deferred |
 
 Rule: every live enemy template must belong to exactly one progression band, and current world summaries should make it clear which bands are placed versus still available for future authored regions.
@@ -329,7 +333,7 @@ The current authored `starter_town` world now covers every live first-pass progr
 | Route gate | Warns the player that a path is hotter | Strong readability, predictable leash zone |
 | Named anchor | Gives the area a combat landmark | Unique placement and stronger authored intent |
 
-Rule: in first-pass melee-only combat, spawn groups are content grouping only. They do not automatically create ally-assist, shared target selection, or shared respawn behavior.
+Rule: in first-pass melee-only combat, spawn groups can create local ally-assist for aggressive enemies only. They do not create shared respawn, formations, global target switching, or passive-enemy chain aggro.
 
 ### Region Rollout Backlog
 
@@ -391,7 +395,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 - advanced spawn randomization or dynamic region-driven spawning
 - advanced roaming behavior beyond the authored patrol-route slice and simple current radius model
-- group aggro, ally assist, or formation logic
+- formation logic or global encounter-wide target switching beyond local same-group ally assist
 - safe-spot exception systems
 - ranged or magic enemy packages
 - special attacks, status effects, or multi-phase enemies
@@ -433,7 +437,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
+1. Expand regional encounter coverage before layering ranged/magic or deeper formation logic on top.
 2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
 3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
 4. Revisit later-region anchors only after authored region context exists.
