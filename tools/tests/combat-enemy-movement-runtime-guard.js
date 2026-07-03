@@ -168,12 +168,51 @@ const patrolEnemy = makeEnemy({
   patrolRouteIndex: 1,
   idleMoveReadyAtTick: 0
 });
+assert.strictEqual(
+  JSON.stringify(runtime.getEnemyPatrolRoute(Object.assign({}, patrolEnemy, {
+    resolvedPatrolRoute: [
+      { x: 4.9, y: 4.1, z: 0 },
+      { x: 6, y: 4, z: 0 },
+      { x: 7, y: 4, z: 1 },
+      { x: Number.NaN, y: 4, z: 0 },
+      null
+    ]
+  }))),
+  JSON.stringify([
+    { x: 4, y: 4, z: 0 },
+    { x: 6, y: 4, z: 0 }
+  ]),
+  "patrol route normalization should floor same-plane waypoints and ignore unusable entries"
+);
 movedStep = null;
 const handledPatrol = runtime.updatePatrolEnemyMovement(baseContext, patrolEnemy, new Set([`${patrolEnemy.x},${patrolEnemy.y},${patrolEnemy.z}`]));
 assert.strictEqual(handledPatrol, true, "authored patrol movement should handle patrolling idle enemies");
 assert.strictEqual(movedStep.x, 5, "patrol movement should advance toward the next authored waypoint x");
 assert.strictEqual(movedStep.y, 4, "patrol movement should advance toward the next authored waypoint y");
 assert.strictEqual(patrolEnemy.x, 5, "patrol movement should update the enemy position even without random roaming");
+
+const reservedPatrolEnemy = makeEnemy({
+  runtimeId: "enemy-patrol-reserved",
+  currentState: "idle",
+  x: 4,
+  y: 4,
+  resolvedRoamingRadius: 4,
+  resolvedPatrolRoute: [
+    { x: 4, y: 4, z: 0 },
+    { x: 6, y: 4, z: 0 }
+  ],
+  patrolRouteIndex: 1,
+  idleMoveReadyAtTick: 0
+});
+movedStep = null;
+const handledReservedPatrol = runtime.updateIdleEnemyMovement(baseContext, reservedPatrolEnemy, new Set(["5,4,0"]));
+assert.strictEqual(handledReservedPatrol, true, "reserved patrol movement should still be handled as patrol movement");
+assert.strictEqual(movedStep, null, "patrol movement should not step onto an already reserved next tile");
+assert.strictEqual(reservedPatrolEnemy.x, 4, "reserved patrol movement should not fall back to random roaming");
+assert.ok(
+  Number.isFinite(reservedPatrolEnemy.locomotionIntentUntilAt) && reservedPatrolEnemy.locomotionIntentUntilAt > 0,
+  "reserved patrol movement should still mark locomotion intent for animation continuity"
+);
 
 const patrolArrivalEnemy = makeEnemy({
   runtimeId: "enemy-patrol-arrival",
