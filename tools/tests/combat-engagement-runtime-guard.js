@@ -218,6 +218,77 @@ assert.strictEqual(assistEnemy.assistSourceRuntimeId, "enemy-source", "assisting
 assert.strictEqual(assistEnemy.remainingAttackCooldown, 1, "assisting ally should receive an opening warning cooldown");
 assert.strictEqual(passiveSameGroup.currentState, "idle", "passive same-group enemy should not assist");
 
+function createAssistFixture(overrides = {}, candidateOverrides = {}) {
+  const fixtureSource = Object.assign({
+    runtimeId: "assist-source",
+    enemyId: "enemy_guard",
+    spawnGroupId: "camp_one",
+    currentState: "aggroed",
+    lockedTargetId: "player",
+    x: 4,
+    y: 4,
+    z: 0,
+    resolvedAggroRadius: 4,
+    resolvedHomeTile: { x: 4, y: 4, z: 0 },
+    resolvedSpawnTile: { x: 4, y: 4, z: 0 },
+    resolvedChaseRange: 8
+  }, overrides.source || {});
+  const fixtureCandidate = Object.assign({
+    runtimeId: "assist-candidate",
+    enemyId: "enemy_guard",
+    spawnGroupId: "camp_one",
+    currentState: "idle",
+    lockedTargetId: null,
+    x: 6,
+    y: 4,
+    z: 0,
+    resolvedAggroRadius: 4,
+    resolvedHomeTile: { x: 6, y: 4, z: 0 },
+    resolvedSpawnTile: { x: 6, y: 4, z: 0 },
+    resolvedChaseRange: 8,
+    remainingAttackCooldown: 0
+  }, candidateOverrides);
+  const rangeCalls = [];
+  const context = Object.assign({
+    combatEnemyStates: [fixtureSource, fixtureCandidate],
+    playerState: { x: 1, y: 4, z: 0 },
+    playerTargetId: "player",
+    isPlayerAlive: () => true,
+    isEnemyAlive: (enemy) => enemy && enemy.currentState !== "dead",
+    getEnemyDefinition: () => ({ behavior: { aggroType: "aggressive" } }),
+    getSquareRange: (left, right, range) => {
+      rangeCalls.push(range);
+      return Math.max(Math.abs(left.x - right.x), Math.abs(left.y - right.y)) <= range;
+    },
+    resolvePathToPlayer: () => [{ x: 5, y: 4 }]
+  }, overrides.context || {});
+  return { fixtureSource, fixtureCandidate, context, rangeCalls };
+}
+
+let fixture = createAssistFixture({}, { z: 1 });
+assert.strictEqual(runtime.acquireAllyAssistTargets(fixture.context).length, 0, "spawn-group assist should reject allies on another plane");
+assert.strictEqual(fixture.fixtureCandidate.currentState, "idle", "off-plane assist candidates should remain idle");
+
+fixture = createAssistFixture({ source: { spawnGroupId: "camp_two" } });
+assert.strictEqual(runtime.acquireAllyAssistTargets(fixture.context).length, 0, "spawn-group assist should require matching source and candidate groups");
+assert.strictEqual(fixture.fixtureCandidate.currentState, "idle", "different-group assist candidates should remain idle");
+
+fixture = createAssistFixture({}, { currentState: "returning" });
+assert.strictEqual(runtime.acquireAllyAssistTargets(fixture.context).length, 0, "spawn-group assist should only recruit idle allies");
+assert.strictEqual(fixture.fixtureCandidate.currentState, "returning", "non-idle assist candidates should keep their current state");
+
+fixture = createAssistFixture({ context: { resolvePathToPlayer: () => null } });
+assert.strictEqual(runtime.acquireAllyAssistTargets(fixture.context).length, 0, "spawn-group assist should require a reachable path to the player");
+assert.strictEqual(fixture.fixtureCandidate.currentState, "idle", "unreachable assist candidates should remain idle");
+
+fixture = createAssistFixture({ context: { playerState: { x: 20, y: 4, z: 0 } } });
+assert.strictEqual(runtime.acquireAllyAssistTargets(fixture.context).length, 0, "spawn-group assist should respect the candidate home chase range");
+assert.strictEqual(fixture.fixtureCandidate.currentState, "idle", "out-of-chase-range assist candidates should remain idle");
+
+fixture = createAssistFixture({ context: { getEnemyAssistRadius: () => 1.8 } });
+assert.strictEqual(runtime.acquireAllyAssistTargets(fixture.context).length, 0, "custom assist radius should be floored before range checks");
+assert.ok(fixture.rangeCalls.includes(1), "custom assist radius should be passed to range checks as an integer");
+
 const pursuitPlayerState = { action: "IDLE", path: [] };
 runtime.movePlayerTowardLockedTarget({
   playerState: pursuitPlayerState,
