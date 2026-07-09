@@ -252,31 +252,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-009 - Account/progress persistence across logins
-- Status: Fixed
-- Severity: S1
-- Area: WORLD
-- Source: Manual
-- Links: `src/js/core.js`, `tools/tests/progress-persistence-guard.js`, `package.json`
-- Repro:
-  1. Play, gain progress, restart/login.
-- Expected: Player progress auto-saves and persists across multiple logins.
-- Actual: Persistence flow is incomplete.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Define save schema + versioning.
-  2. Implement auto-save triggers and load-on-login.
-  3. Add migration/error handling and verify with multi-session test.
-- Plan Outcome: Pending
-- Fix Notes:
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [ ] Regression checks passed
-  - [ ] Notes/logs/docs updated
-
 ### HIT-013 - Shoreline terrain clipping cleanup
 - Status: Fixed
 - Severity: S2
@@ -1952,35 +1927,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-010 - Minimap destination flag persistence
-- Status: Fixed
-- Severity: S2
-- Area: WORLD
-- Source: Manual
-- Links: `src/js/core.js`, `src/js/input-render.js`, `src/js/world.js`
-- Repro:
-  1. Click minimap destination.
-  2. Observe marker lifecycle.
-- Expected: Destination flag remains persistent/visible on minimap.
-- Actual: Destination flag visibility is inconsistent/transient.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Locate minimap marker state lifecycle.
-  2. Persist destination marker until arrival/cancel.
-  3. Validate across camera/movement updates.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added persistent `minimapDestination` state for walk targets, independent from short-lived click markers.
-  - Destination state is now cleared only on arrival, cancellation by non-walk action, or immediate unreachable/no-path outcomes.
-  - Minimap rendering now draws a dedicated flag glyph at the destination tile and keeps it visible across zoom/drag/camera updates.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-012 - Menu input behavior (middle-click outside)
 - Status: Fixed
 - Severity: S2
@@ -2235,6 +2181,64 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
+
+### HIT-009 - Account/progress persistence across logins
+- Status: Closed
+- Severity: S1
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/core.js`, `src/js/core-progress-runtime.js`, `src/game/session/progress.ts`, `src/game/platform/session-bridge.ts`, `tools/tests/progress-persistence-guard.js`, `tools/tests/core-progress-runtime-guard.js`, `tools/tests/game-session-guard.js`, `package.json`
+- Repro:
+  1. Play, gain progress, restart/login.
+- Expected: Player progress auto-saves and persists across multiple logins.
+- Actual: Progress now saves through the v2 session payload, loads before world initialization, restores sanitized profile/appearance/item/skill/quest/world/combat state, and flushes through autosave plus unload/pagehide hooks.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Define save schema + versioning.
+  2. Implement auto-save triggers and load-on-login.
+  3. Add migration/error handling and verify with multi-session test.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - `core.js` delegates progress serialization, storage lifecycle, fresh-session handling, autosave, and unload/pagehide flushes through `CoreProgressRuntime` and the typed session runtime.
+  - Startup loads saved progress before `initLogicalMap`, canonicalizes saved world IDs, and restores profile, creator selections, inventory, bank, equipment, item preferences, content grants, skills, quests, player position, unlocks, merchant progress, and combat state.
+  - Focused persistence/session guards now lock the save key/version, obsolete-key migration, load order, runtime delegation, save payload coverage, quest restore path, and stale eat-cooldown clamp.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-010 - Minimap destination flag persistence
+- Status: Closed
+- Severity: S2
+- Area: WORLD
+- Source: Manual
+- Links: `src/js/core.js`, `src/js/input-render.js`, `src/js/world.js`, `tools/tests/render-input-shell-guard.js`, `tools/tests/input-action-queue-runtime-guard.js`
+- Repro:
+  1. Click minimap destination.
+  2. Observe marker lifecycle.
+- Expected: Destination flag remains persistent/visible on minimap.
+- Actual: Destination flag now persists through the HUD render snapshot, draws as a minimap flag while walking, and clears only on arrival or queued non-walk cancellation.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Locate minimap marker state lifecycle.
+  2. Persist destination marker until arrival/cancel.
+  3. Validate across camera/movement updates.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added persistent `minimapDestination` state for walk targets, independent from short-lived click markers.
+  - Destination state is now cleared only on arrival, cancellation by non-walk action, or immediate unreachable/no-path outcomes.
+  - Minimap rendering now draws a dedicated flag glyph at the destination tile and keeps it visible across zoom/drag/camera updates.
+  - Added focused render/input guard coverage for destination snapshot propagation, flag drawing, pre-arrival persistence, and reached cleanup.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-011 - Ground item stack count indicator (n)
 - Status: Closed
