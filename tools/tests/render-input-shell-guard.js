@@ -1,15 +1,36 @@
 const fs = require("fs");
 const path = require("path");
+const ts = require("typescript");
 const vm = require("vm");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function loadTypescriptModule(source, filename) {
+  const module = { exports: {} };
+  const sandbox = {
+    exports: module.exports,
+    module,
+    require,
+    console
+  };
+  const transpiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020
+    },
+    fileName: filename
+  }).outputText;
+  vm.runInNewContext(transpiled, sandbox, { filename });
+  return module.exports;
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const renderContracts = fs.readFileSync(path.join(root, "src", "game", "contracts", "render.ts"), "utf8");
-  const renderSnapshotSource = fs.readFileSync(path.join(root, "src", "game", "render", "snapshot.ts"), "utf8");
+  const renderSnapshotPath = path.join(root, "src", "game", "render", "snapshot.ts");
+  const renderSnapshotSource = fs.readFileSync(renderSnapshotPath, "utf8");
   const renderInputBridge = fs.readFileSync(path.join(root, "src", "game", "platform", "render-input-bridge.ts"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
@@ -48,6 +69,47 @@ function run() {
   assert(mapHudSource.includes("clearMinimapDestinationIfReached"), "world map HUD runtime should own destination cleanup");
   assert(renderSnapshotSource.includes("destinationFlag = options.snapshot.minimapDestination"), "render snapshot should derive a persistent minimap destination flag");
   assert(renderSnapshotSource.includes("options.snapshot.minimapDestination.z === options.snapshot.player.z"), "minimap destination flags should render only on the player's plane");
+  const renderSnapshotRuntime = loadTypescriptModule(renderSnapshotSource, renderSnapshotPath);
+  const baseRenderSnapshot = renderSnapshotRuntime.buildRenderSnapshot({
+    worldId: "main_overworld",
+    player: { x: 4, y: 5, z: 0, facingYaw: 0 },
+    clickMarkers: [],
+    groundItems: [],
+    minimapDestination: { x: 6, y: 7, z: 0 }
+  });
+  const samePlaneMinimap = renderSnapshotRuntime.buildMinimapSnapshot({
+    snapshot: baseRenderSnapshot,
+    canvasSize: 100,
+    zoom: 1,
+    targetX: 4,
+    targetY: 5,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    dragEnd: { x: 0, y: 0 }
+  });
+  assert(samePlaneMinimap.destinationFlag && samePlaneMinimap.destinationFlag.x === 6.5 && samePlaneMinimap.destinationFlag.y === 7.5, "minimap snapshot should derive a destination flag from a same-plane walk target");
+  const otherPlaneMinimap = renderSnapshotRuntime.buildMinimapSnapshot({
+    snapshot: Object.assign({}, baseRenderSnapshot, { minimapDestination: { x: 6, y: 7, z: 1 } }),
+    canvasSize: 100,
+    zoom: 1,
+    targetX: 4,
+    targetY: 5,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    dragEnd: { x: 0, y: 0 }
+  });
+  assert(otherPlaneMinimap.destinationFlag === null, "minimap snapshot should suppress destination flags from other planes");
+  const invalidDestinationMinimap = renderSnapshotRuntime.buildMinimapSnapshot({
+    snapshot: Object.assign({}, baseRenderSnapshot, { minimapDestination: { x: Infinity, y: 7, z: 0 } }),
+    canvasSize: 100,
+    zoom: 1,
+    targetX: 4,
+    targetY: 5,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    dragEnd: { x: 0, y: 0 }
+  });
+  assert(invalidDestinationMinimap.destinationFlag === null, "minimap snapshot should suppress invalid destination coordinates");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD orchestration through the map HUD runtime");
   assert(worldSource.includes("buildMapHudRuntimeContext"), "world.js should provide map HUD runtime context callbacks");
   assert(worldSource.includes("resolveRenderWorldId() === 'tutorial_island'"), "world.js should center the tutorial world map on the enlarged island");
