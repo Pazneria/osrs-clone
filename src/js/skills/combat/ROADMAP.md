@@ -46,6 +46,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | First-pass guarded threshold and camp-threat encounter coverage | Complete |
 | Authored patrol-route movement slice | Complete |
 | Spawn-group ally assist slice | Complete |
+| Player ranged combat slice | Complete |
+| Player magic combat slice | Complete |
 
 ## Data Contracts
 
@@ -60,6 +62,10 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Equippable held items expose explicit melee-ready combat data instead of relying on placeholder `stats.atk/def/str` math.
 - Swords, axes, pickaxes, fishing rods, and harpoons all define attack profile, melee bonuses, and required Attack level.
 - Armor exposes split defense bonuses through combat data, with v1 copying the first-pass melee armor band across melee/ranged/magic defense.
+- Bows expose explicit ranged attack profiles with level gates, projectile range, bow cadence, and bow-family ammo requirements.
+- Arrow stacks expose ranged ammo profiles with compatible weapon families, tiered accuracy/strength bonuses, stackable quiver equipment, and inventory fallback consumption.
+- Staffs expose explicit magic attack profiles with Magic level gates, projectile range, staff cadence, and staff-family rune requirements.
+- Elemental and combination rune stacks expose magic ammo profiles with compatible staff families plus tiered magic accuracy/strength bonuses.
 
 ### Enemies
 
@@ -108,6 +114,10 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Auto-retaliate target choice is locked to a deterministic order when multiple valid attackers exist: first attacker, then closest attacker, then weakest-to-strongest, then stable runtime id.
 - Eating interaction remains a combat-core concern, not a melee-only concern.
 - Same-tick eat restrictions from the shared combat/cooking rules should stay aligned as combat content expands.
+- Ranged player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active bow snapshot instead of melee adjacency.
+- Ammo-consuming ranged attacks consume one selected arrow on both hits and misses, preferring equipped ammo before compatible inventory stacks.
+- Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency.
+- Ammo-consuming magic attacks consume one selected rune on both hits and misses, choosing the strongest compatible rune stack from inventory.
 
 ### Enemy Behavior
 
@@ -293,6 +303,22 @@ The current authored `starter_town` world now covers every live first-pass progr
 - Chase Range must cover the authored patrol envelope so valid patrol movement does not fight leash behavior.
 - Higher-than-1 combat movement speeds stay deferred until movement/collision semantics are explicitly expanded.
 
+### Player Ranged Slice
+
+- Equipped bows switch the active player combat snapshot to the ranged style family.
+- Bow attacks can resolve from authored bow range without stepping into melee range.
+- Compatible arrows may live in the ammo equipment slot or inventory; equipped ammo is consumed first.
+- Ranged attacks award Ranged XP from dealt damage plus Hitpoints XP through the same combat-core reward path as melee.
+- Ranged projectiles and bow-shot animation hooks are driven by the attack result rather than a separate ranged-only combat path.
+
+### Player Magic Slice
+
+- Equipped staffs switch the active player combat snapshot to the magic style family.
+- Staff attacks resolve from authored staff range and set the player action to `COMBAT: MAGIC` without requiring melee adjacency.
+- Elemental and combination runes act as staff-compatible spell fuel; the snapshot selects the highest-tier compatible inventory stack and consumes one rune per cast.
+- Magic attacks award Magic XP from dealt damage plus Hitpoints XP through the same combat-core reward path as melee and ranged.
+- Magic projectiles are driven by the attack result and use rune-colored visual identity for ember/fire/lava, water/steam, earth/mud, air/mist, and smoke/dust families.
+
 ### First-Pass Respawn Bands
 
 | Enemy Role | Respawn Band |
@@ -397,7 +423,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - advanced roaming behavior beyond the authored patrol-route slice and simple current radius model
 - formation logic or global encounter-wide target switching beyond local same-group ally assist
 - safe-spot exception systems
-- ranged or magic enemy packages
+- ranged enemy packages and magic enemy packages
 - special attacks, status effects, or multi-phase enemies
 - multi-tile enemies unless separately specified later
 - nested/global loot-table systems
@@ -437,7 +463,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Expand regional encounter coverage before layering ranged/magic or deeper formation logic on top.
+1. Expand regional encounter coverage before layering ranged enemies, magic enemy packages, specials, or deeper formation logic on top.
 2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
 3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
 4. Revisit later-region anchors only after authored region context exists.

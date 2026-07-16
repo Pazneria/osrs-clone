@@ -565,13 +565,23 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-017:/,
-  "combat status should advance COMBAT-017 into the current focus slot"
+  /- \[x\] COMBAT-017: Ranged player combat is live on the shared combat core with bow and arrow item contracts, ranged-range attacks, ammo selection and consumption, Ranged XP awards, projectile visuals, and focused runtime\/item guards\./,
+  "combat status should mark COMBAT-017 complete with the ranged player-combat slice"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-018: Magic player combat is live on the shared combat core with staff contracts, elemental\/combination rune fuel selection and consumption, staff-range casting, Magic XP awards, and rune-colored projectile visuals\./,
+  "combat status should mark COMBAT-018 complete with the magic player-combat slice"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-019:/,
+  "combat status should advance COMBAT-019 into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Aggressive same-group ally assist is live with authored spawn-group IDs, leash\/path validation, and one-tick opening cooldowns \| Ranged combat on top of the shared combat core \| None \|/,
-  "skills index should reflect the completed group-assist slice and next ranged-combat focus"
+  /\| Combat \| In Progress \| Magic player combat is live with staff contracts, elemental\/combination rune fuel, staff-range casting, Magic XP, and rune-colored projectiles \| Specials, broader balance tooling, and deeper combat build identity \| None \|/,
+  "skills index should reflect the completed magic player-combat slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,
@@ -582,6 +592,26 @@ assertRegex(
   combatRoadmapSource,
   /\| Spawn-group ally assist slice \| Complete \|/,
   "combat roadmap should mark the group-assist slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Player ranged combat slice \| Complete \|/,
+  "combat roadmap should mark the player ranged combat slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Player magic combat slice \| Complete \|/,
+  "combat roadmap should mark the player magic combat slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Ranged player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active bow snapshot instead of melee adjacency\./,
+  "combat roadmap should document shared-core ranged attack behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency\./,
+  "combat roadmap should document shared-core magic attack behavior"
 );
 assertRegex(
   combatRoadmapSource,

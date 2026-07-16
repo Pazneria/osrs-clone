@@ -1869,7 +1869,16 @@
         };
 
         const magicRuneRows = {
-            ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }
+            ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 },
+            water_rune: { ammoTier: 2, magicAccuracyBonus: 2, magicStrengthBonus: 3 },
+            earth_rune: { ammoTier: 3, magicAccuracyBonus: 4, magicStrengthBonus: 5 },
+            air_rune: { ammoTier: 4, magicAccuracyBonus: 7, magicStrengthBonus: 8 },
+            steam_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            smoke_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            lava_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            mud_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            mist_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            dust_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 }
         };
 
         const armorRows = {

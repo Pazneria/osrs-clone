@@ -483,63 +483,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-027 - Skills menu icon opens dedicated progression view
-- Status: Fixed
-- Severity: S2
-- Area: HUD
-- Source: Manual
-- Links: `index.html`, `src/js/inventory.js`
-- Repro:
-  1. Click skill icons in skills menu.
-- Expected: Each icon opens its skill's dedicated progression menu/view.
-- Actual: Dedicated progression view open behavior is missing/incomplete.
-- Frequency: Often
-- Owner: Pair
-- Plan v1:
-  1. Define per-skill view routing contract.
-  2. Wire skill icon click handlers to dedicated views.
-  3. Verify back navigation and state persistence.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Expanded the skills popup into a dedicated progression panel with per-skill focus text and an unlock timeline section.
-  - Added spec-driven milestone extraction from each skill's runtime spec (`nodeTable`, `recipeSet`, `pouchTable`) so each skill tile now resolves to unique progression content.
-  - Hardened panel refresh behavior so only the actively viewed skill updates the panel, preventing cross-skill overwrite noise.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-029 - Fletching cancel-on-click behavior
-- Status: Fixed
-- Severity: S1
-- Area: FLT
-- Source: Manual
-- Links: `src/js/input-render.js`
-- Repro:
-  1. Start active fletching.
-  2. Click red-X destination.
-- Expected: Fletching cancels only when destination is reached and new action executes.
-- Actual: Fletching cancels immediately on click.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Split click intent from action execution.
-  2. Defer fletching cancel until movement complete + action starts.
-  3. Verify interruptions with blocked paths and alternate targets.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added deferred interact handling for active fletching sessions so interact clicks no longer cancel on click intent alone.
-  - While pathing to the clicked target, fletching remains active; cancellation now occurs only once the destination is reached and interact execution begins.
-  - Unreachable/blocked targets clear the deferred interact and keep fletching active instead of dropping the action.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-030 - Fletching XP progression pass (log-tier multiples)
 - Status: Fixed
 - Severity: S2
@@ -973,125 +916,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
-
-### HIT-076 - Combat spawn-group ally assist
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Roadmap
-- Links: `src/js/combat-engagement-runtime.js`, `src/js/combat.js`, `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-engagement-runtime-guard.js`, `tools/tests/combat-engagement-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`
-- Repro:
-  1. Pull or proximity-aggro one aggressive enemy in an authored spawn group.
-  2. Keep a nearby aggressive same-group ally outside direct proximity aggro but within the local assist radius.
-  3. Compare passive same-group enemies, distant same-group enemies, and nearby different-group enemies.
-- Expected: Only nearby aggressive same-group allies join the pull, with a short opening delay and normal leash/path limits.
-- Actual: Spawn groups previously acted as placement metadata only and did not provide any ally-assist behavior.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Preserve authored `spawnGroupId` on combat runtime enemy state.
-  2. Add engagement-runtime assist acquisition for aggressive same-group allies with local range, leash, and path checks.
-  3. Add focused runtime/guard coverage and update combat roadmap/status docs.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Enemy runtime state now carries the authored spawn-group ID through typed combat content, runtime init, and respawn.
-  - `CombatEngagementRuntime` now acquires nearby idle aggressive allies from the same spawn group, records the assist source, and applies a one-tick opening cooldown.
-  - Passive same-group critters, distant same-group members, and nearby different-group enemies remain excluded by targeted runtime coverage.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-075 - East outpost guard patrol route
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Automation
-- Links: `content/world/regions/main_overworld.json`, `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `src/game/platform/combat-bridge.ts`, `src/game/world/authoring.ts`, `src/game/world/clone.ts`, `src/js/combat-enemy-movement-runtime.js`, `src/js/combat.js`, `tools/content/validate-world.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-enemy-movement-runtime-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/spec-contracts.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
-- Repro:
-  1. Review the open `COMBAT-016` tracker entry for advanced roaming/patrol behavior.
-  2. Inspect the authored east-outpost guard spawns and idle enemy movement runtime.
-  3. Check whether any spawn can own a deterministic patrol route instead of only random radius roaming.
-- Expected: Combat spawn nodes should support a small, validated authored patrol route slice before broader ally-assist or group-aggro logic.
-- Actual: Enemy idle movement only supported random roaming around spawn/home values, and the world authoring/content contracts had no patrol-route field or guards.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Add an optional patrol-route field to combat spawn contracts and preserve it through world authoring, clone, content, and respawn paths.
-  2. Author one east-outpost north guard route and make idle enemy movement follow route waypoints before random roaming.
-  3. Lock the slice with validation, topology, content, movement, parity, and tracker-doc coverage.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added a five-waypoint patrol loop to the east-outpost north guard and preserved/scaled it through typed world bootstrap, combat bridge, and combat content APIs.
-  - Enemy idle movement now prefers authored patrol waypoints when present, with patrol route state reset on respawn and chase range expanded around the route envelope.
-  - Extended validators and focused guards so patrol routes must remain walkable, same-plane, near home, reachable, clear of protected footprints, cloned on read, and covered by docs.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-074 - Runecrafting altar labels hid route status
-- Status: Fixed
-- Severity: S3
-- Area: Other
-- Source: Automation
-- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
-- Repro:
-  1. Hover or right-click an elemental altar while carrying a secondary rune for a combination route.
-  2. Repeat while missing enough secondary runes for one scaled output, or while a queued altar craft target changes before resolution.
-- Expected: The altar UI should show the selected output route and immediate missing-input/lock hints, and queued altar interruption should explain why crafting stopped.
-- Actual: Altar labels only showed the altar name/output, and some target-change interruption states stopped without player-facing feedback.
-- Frequency: Often
-- Owner: Codex
-- Plan v1:
-  1. Add selected-output and missing-input route hints to altar tooltip/context-menu labels.
-  2. Stop queued altar crafts if the selected target drifts before the craft tick.
-  3. Add focused runecrafting runtime coverage and sync the tracker docs.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Altar hover and context menu labels now include selected output plus route status such as `using air rune`, `need rune essence`, `need 2 air runes`, `need level N`, or `quest locked`.
-  - Queued altar crafts now stop with explicit feedback if the selected altar target/coordinates change before resolution, without consuming essence or granting output.
-  - Extended runecrafting runtime QA coverage for route labels and target-drift interruption.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-073 - Runecrafting combination failure lacked secondary-rune feedback
-- Status: Fixed
-- Severity: S3
-- Area: Other
-- Source: Automation
-- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
-- Repro:
-  1. Reach level 50 Runecrafting with combination runecrafting unlocked.
-  2. Carry rune essence and only one matching secondary rune for a combination route, such as one air rune at the Ember Altar.
-  3. Attempt to craft the selected combination rune.
-- Expected: The altar action should explain that the carried secondary runes cannot support even one essence at the current output multiplier.
-- Actual: The selected combination action could start and then silently stop when the craft plan found too few secondary runes.
-- Frequency: Often
-- Owner: Codex
-- Plan v1:
-  1. Validate the selected runecrafting craft plan before starting the altar action.
-  2. Reuse the same explicit failure message if secondary runes disappear before the craft tick.
-  3. Add focused runtime coverage for blocked, interrupted, and valid partial-secondary combination crafts.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added explicit secondary-rune requirement feedback for under-supplied combination routes before start and during tick-time revalidation.
-  - Preserved valid partial-secondary combination crafting when the carried secondary rune count can support at least one essence.
-  - Added `tools/tests/runecrafting-runtime-tests.js`, wired it to `npm.cmd run test:qa:runecrafting`, and included it in the package test suite manifest.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
 
 ### HIT-072 - Runecrafting balance lacked travel-adjusted guardrails
 - Status: Fixed
@@ -2181,6 +2005,249 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
+
+### HIT-078 - Combat tracker still treated magic combat as open
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/combat.js`, `src/game/combat/formulas.ts`, `src/js/content/item-catalog.js`, `src/js/transient-visual-runtime.js`, `content/items/runtime-item-catalog.json`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-item-data-guard.js`, `tools/tests/transient-visual-runtime-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-018` tracker entry in the combat status board.
+  2. Compare the live shared combat runtime, magic snapshot formulas, staff/rune item contracts, magic projectile runtime, and focused combat guards.
+  3. Check whether magic combat still needs to be treated as the current open milestone.
+- Expected: Once magic player combat is live and guarded, the combat tracker should mark `COMBAT-018` complete and advance to the next true milestone.
+- Actual: Magic player combat now resolves through the shared combat core with staff range, elemental and combination rune fuel selection/consumption, Magic XP awards, last-cast tick tracking, staff item contracts, and rune-colored projectile visuals, while the tracker still pointed at `COMBAT-018` as open.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Wire all authored elemental and combination runes into the magic ammo contract instead of leaving only `ember_rune` as spell fuel.
+  2. Lock magic snapshot selection, staff/rune item data, and rune-colored projectile identity with focused guards.
+  3. Sync combat status, roadmap, shared skills index, and the hit board to the completed magic player-combat slice.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added magic ammo profiles for water, earth, air, steam, smoke, lava, mud, mist, and dust runes alongside the existing ember rune profile.
+  - Extended magic snapshot coverage so the combat formulas select the strongest compatible rune stack and surface that selected rune for consumption.
+  - Added rune-family color identity for magic projectiles and extended combat item/content guards to keep the magic tracker state from regressing.
+  - Marked `COMBAT-018` complete in the combat status board and advanced the active focus to `COMBAT-019`.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-077 - Combat tracker still treated ranged combat as open
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Roadmap
+- Links: `src/js/combat.js`, `src/game/combat/formulas.ts`, `src/game/platform/combat-bridge.ts`, `src/js/content/item-catalog.js`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-item-data-guard.js`, `tools/tests/equipment-item-runtime-guard.js`, `tools/tests/transient-visual-runtime-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-017` tracker entry in the combat status board.
+  2. Compare the live shared combat runtime, item contracts, bridge exports, ranged runtime tests, and visual/equipment guards.
+  3. Check whether ranged combat still needs to be treated as the current open milestone.
+- Expected: Once ranged player combat is live and guarded, the combat tracker should mark `COMBAT-017` complete and advance to the next true milestone.
+- Actual: Ranged player combat already resolves through the shared combat core with bow range, arrow ammo selection/consumption, Ranged XP awards, projectile visuals, level-gated item data, quiver equipment, and focused guard coverage, while the tracker still pointed at `COMBAT-017` as open.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Verify the ranged combat runtime and item-contract coverage against the open roadmap item.
+  2. Sync combat status, roadmap, and shared skills index to the shipped ranged slice.
+  3. Extend the combat docs guard so the tracker cannot silently regress to the stale `COMBAT-017` focus.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Marked `COMBAT-017` complete in the combat status board and advanced the active focus to `COMBAT-018`.
+  - Updated the combat roadmap with the completed player ranged combat slice, ranged item/ammo contracts, shared-core runtime behavior, and player-ranged slice notes.
+  - Updated the shared skills index and combat content guard to lock the new tracker state.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-073 - Runecrafting combination failure lacked secondary-rune feedback
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Reach level 50 Runecrafting with combination runecrafting unlocked.
+  2. Carry rune essence and only one matching secondary rune for a combination route, such as one air rune at the Ember Altar.
+  3. Attempt to craft the selected combination rune.
+- Expected: The altar action should explain that the carried secondary runes cannot support even one essence at the current output multiplier.
+- Actual: Under-supplied combination routes now fail before start or at tick-time revalidation with explicit secondary-rune requirement feedback, while valid partial-secondary crafts still resolve.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Validate the selected runecrafting craft plan before starting the altar action.
+  2. Reuse the same explicit failure message if secondary runes disappear before the craft tick.
+  3. Add focused runtime coverage for blocked, interrupted, and valid partial-secondary combination crafts.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added explicit secondary-rune requirement feedback for under-supplied combination routes before start and during tick-time revalidation.
+  - Preserved valid partial-secondary combination crafting when the carried secondary rune count can support at least one essence.
+  - Added `tools/tests/runecrafting-runtime-tests.js`, wired it to `npm.cmd run test:qa:runecrafting`, and included it in the package test suite manifest.
+  - Verified the closure pass with focused runecrafting runtime QA, spec contracts, and spec doc parity checks.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-074 - Runecrafting altar labels hid route status
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/runecrafting/index.js`, `tools/tests/runecrafting-runtime-tests.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Hover or right-click an elemental altar while carrying a secondary rune for a combination route.
+  2. Repeat while missing enough secondary runes for one scaled output, or while a queued altar craft target changes before resolution.
+- Expected: The altar UI should show the selected output route and immediate missing-input/lock hints, and queued altar interruption should explain why crafting stopped.
+- Actual: Altar labels now show selected output and route status, including missing essence, secondary-rune requirements, level gates, quest locks, and selected-target drift feedback before/while queued crafting resolves.
+- Frequency: Often
+- Owner: Codex
+- Plan v1:
+  1. Add selected-output and missing-input route hints to altar tooltip/context-menu labels.
+  2. Stop queued altar crafts if the selected target drifts before the craft tick.
+  3. Add focused runecrafting runtime coverage and sync the tracker docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Altar hover and context menu labels now include selected output plus route status such as `using air rune`, `need rune essence`, `need 2 air runes`, `need level N`, or `quest locked`.
+  - Queued altar crafts now stop with explicit feedback if the selected altar target/coordinates change before resolution, without consuming essence or granting output.
+  - Extended runecrafting runtime QA coverage for route labels and target-drift interruption.
+  - Verified the closure pass with focused runecrafting runtime QA, spec contracts, and spec doc parity checks.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-076 - Combat spawn-group ally assist
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Roadmap
+- Links: `src/js/combat-engagement-runtime.js`, `src/js/combat.js`, `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-engagement-runtime-guard.js`, `tools/tests/combat-engagement-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`
+- Repro:
+  1. Pull or proximity-aggro one aggressive enemy in an authored spawn group.
+  2. Keep a nearby aggressive same-group ally outside direct proximity aggro but within the local assist radius.
+  3. Compare passive same-group enemies, distant same-group enemies, and nearby different-group enemies.
+- Expected: Only nearby aggressive same-group allies join the pull, with a short opening delay and normal leash/path limits.
+- Actual: Aggressive same-group allies now join local pulls through authored spawn-group IDs, while passive same-group enemies, distant same-group enemies, and nearby different-group enemies remain excluded.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Preserve authored `spawnGroupId` on combat runtime enemy state.
+  2. Add engagement-runtime assist acquisition for aggressive same-group allies with local range, leash, and path checks.
+  3. Add focused runtime/guard coverage and update combat roadmap/status docs.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Enemy runtime state now carries the authored spawn-group ID through typed combat content, runtime init, and respawn.
+  - `CombatEngagementRuntime` now acquires nearby idle aggressive allies from the same spawn group, records the assist source, and applies a one-tick opening cooldown.
+  - Passive same-group critters, distant same-group members, and nearby different-group enemies remain excluded by targeted runtime coverage.
+  - Verified the closure pass with focused combat runtime, engagement runtime, engagement source, and combat content guards.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-075 - East outpost guard patrol route
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Automation
+- Links: `content/world/regions/main_overworld.json`, `src/game/contracts/combat.ts`, `src/game/combat/content.ts`, `src/game/platform/combat-bridge.ts`, `src/game/world/authoring.ts`, `src/game/world/clone.ts`, `src/js/combat-enemy-movement-runtime.js`, `src/js/combat.js`, `tools/content/validate-world.js`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-enemy-movement-runtime-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/spec-contracts.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-016` tracker entry for advanced roaming/patrol behavior.
+  2. Inspect the authored east-outpost guard spawns and idle enemy movement runtime.
+  3. Check whether any spawn can own a deterministic patrol route instead of only random radius roaming.
+- Expected: Combat spawn nodes should support a small, validated authored patrol route slice before broader ally-assist or group-aggro logic.
+- Actual: The east-outpost north guard now follows an authored five-waypoint patrol loop through validated combat spawn route data, with runtime idle movement preferring patrol waypoints before random roaming.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add an optional patrol-route field to combat spawn contracts and preserve it through world authoring, clone, content, and respawn paths.
+  2. Author one east-outpost north guard route and make idle enemy movement follow route waypoints before random roaming.
+  3. Lock the slice with validation, topology, content, movement, parity, and tracker-doc coverage.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a five-waypoint patrol loop to the east-outpost north guard and preserved/scaled it through typed world bootstrap, combat bridge, and combat content APIs.
+  - Enemy idle movement now prefers authored patrol waypoints when present, with patrol route state reset on respawn and chase range expanded around the route envelope.
+  - Extended validators and focused guards so patrol routes must remain walkable, same-plane, near home, reachable, clear of protected footprints, cloned on read, and covered by docs.
+  - Verified the closure pass with world validation plus focused combat, topology, world authoring/bootstrap, and spec-contract guards.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-027 - Skills menu icon opens dedicated progression view
+- Status: Closed
+- Severity: S2
+- Area: HUD
+- Source: Manual
+- Links: `index.html`, `src/js/inventory.js`, `src/js/skill-panel-runtime.js`, `src/js/skill-panel-render-runtime.js`, `tools/tests/skill-panel-runtime-guard.js`, `tools/tests/skill-panel-render-runtime-guard.js`, `tools/tests/inventory-hud-domain-tests.js`, `tools/tests/inventory-hud-domain-guard.js`
+- Repro:
+  1. Click skill icons in skills menu.
+- Expected: Each icon opens its skill's dedicated progression menu/view.
+- Actual: Skill tiles now open the dedicated progression panel with per-skill summary text, spec-derived unlock timeline content, and focused refresh behavior for the active skill only.
+- Frequency: Often
+- Owner: Pair
+- Plan v1:
+  1. Define per-skill view routing contract.
+  2. Wire skill icon click handlers to dedicated views.
+  3. Verify back navigation and state persistence.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Expanded the skills popup into a dedicated progression panel with per-skill focus text and an unlock timeline section.
+  - Added spec-driven milestone extraction from each skill's runtime spec (`nodeTable`, `recipeSet`, `pouchTable`) so each skill tile now resolves to unique progression content.
+  - Hardened panel refresh behavior so only the actively viewed skill updates the panel, preventing cross-skill overwrite noise.
+  - Focused skill-panel and inventory/HUD guards verify runtime routing, render delegation, manifest-driven tiles, and domain view-model behavior.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-029 - Fletching cancel-on-click behavior
+- Status: Closed
+- Severity: S1
+- Area: FLT
+- Source: Manual
+- Links: `src/js/input-render.js`, `src/js/input-arrival-interaction-runtime.js`, `tools/tests/input-arrival-interaction-runtime-guard.js`, `tools/tests/input-action-queue-runtime-guard.js`, `tools/tests/fletching-crafting-interactions.js`
+- Repro:
+  1. Start active fletching.
+  2. Click red-X destination.
+- Expected: Fletching cancels only when destination is reached and new action executes.
+- Actual: Fletching now remains active while the deferred target walk is pending, cancels only when arrival resumes the target interaction, and preserves the session when the target cannot be reached.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Split click intent from action execution.
+  2. Defer fletching cancel until movement complete + action starts.
+  3. Verify interruptions with blocked paths and alternate targets.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added deferred interact handling for active fletching sessions so interact clicks no longer cancel on click intent alone.
+  - While pathing to the clicked target, fletching remains active; cancellation now occurs only once the destination is reached and interact execution begins.
+  - Unreachable/blocked targets clear the deferred interact and keep fletching active instead of dropping the action.
+  - Focused arrival/action-queue guards now lock deferred arrival cancellation, queued interact policy, and fletching interaction regressions.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
 
 ### HIT-009 - Account/progress persistence across logins
 - Status: Closed

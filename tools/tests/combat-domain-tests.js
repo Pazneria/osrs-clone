@@ -302,7 +302,8 @@ function makeMagicRune(itemId, overrides = {}) {
       shield: makeWeapon({ meleeDefenseBonus: 5, rangedDefenseBonus: 5, magicDefenseBonus: 5, familyTag: "shield" })
     },
     inventory: [
-      { itemData: makeMagicRune("ember_rune", { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }), amount: 5 }
+      { itemData: makeMagicRune("ember_rune", { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 }), amount: 5 },
+      { itemData: makeMagicRune("air_rune", { ammoTier: 4, magicAccuracyBonus: 7, magicStrengthBonus: 8 }), amount: 3 }
     ],
     playerState: {}
   });
@@ -310,14 +311,14 @@ function makeMagicRune(itemId, overrides = {}) {
   assert.strictEqual(magicSnapshot.styleFamily, "magic", "magic snapshot should identify the active style family");
   assert.strictEqual(magicSnapshot.damageType, "magic", "magic snapshot should identify the active damage type");
   assert.strictEqual(magicSnapshot.canAttack, true, "magic attacks should be allowed when level and rune requirements are met");
-  assert.strictEqual(magicSnapshot.attackValue, 27, "magic attack value should include staff and rune accuracy");
+  assert.strictEqual(magicSnapshot.attackValue, 33, "magic attack value should include staff and selected rune accuracy");
   assert.strictEqual(magicSnapshot.defenseValue, 15, "magic defense value should use magic defense bonuses");
-  assert.strictEqual(magicSnapshot.maxHit, 3, "magic max hit should use Magic level and rune strength");
+  assert.strictEqual(magicSnapshot.maxHit, 4, "magic max hit should use Magic level and selected rune strength");
   assert.strictEqual(magicSnapshot.attackRange, 6, "magic snapshot should expose staff attack range");
   assert.strictEqual(magicSnapshot.attackTickCycle, 4, "magic snapshot should expose staff cadence");
   assert.strictEqual(magicSnapshot.consumesAmmo, true, "magic staff attacks should advertise rune consumption");
-  assert.strictEqual(magicSnapshot.ammoInventoryIndex, 0, "magic snapshot should point at the selected rune stack");
-  assert.strictEqual(magicSnapshot.ammoItemId, "ember_rune", "magic snapshot should surface the selected rune id");
+  assert.strictEqual(magicSnapshot.ammoInventoryIndex, 1, "magic snapshot should pick the strongest compatible rune stack");
+  assert.strictEqual(magicSnapshot.ammoItemId, "air_rune", "magic snapshot should surface the selected rune id");
 
   const activeSnapshot = combatFormulas.computePlayerCombatSnapshot({
     playerSkills: {
