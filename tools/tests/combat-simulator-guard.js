@@ -18,11 +18,12 @@ assert(
   "melee simulator should load the typed combat content and formulas"
 );
 assert(
-  simulatorSource.includes("computePlayerMeleeCombatSnapshot") &&
+  simulatorSource.includes("computePlayerCombatSnapshot") &&
+    simulatorSource.includes("buildCombatLoadout") &&
     simulatorSource.includes("computeEnemyMeleeCombatSnapshot") &&
     simulatorSource.includes("rollOpposedHitCheck") &&
     simulatorSource.includes("rollDamage"),
-  "melee simulator should use canonical combat formula helpers"
+  "combat simulator should use canonical combat formula helpers and runtime-style loadouts"
 );
 assert(
   packageJson.scripts && packageJson.scripts["tool:sim:melee"],
@@ -39,14 +40,15 @@ assert(
 );
 assert(
   /- \[x\] COMBAT-013: Rebuilt the combat simulator/.test(combatStatusSource) &&
-    /- \[x\] COMBAT-014: Combat progression bands/.test(combatStatusSource) &&
-    /- \[x\] COMBAT-015:/.test(combatStatusSource) &&
-    /## Now\s*- \[ \] COMBAT-016:/.test(combatStatusSource),
-  "combat status should keep COMBAT-013 complete and advance beyond COMBAT-015"
+    /- \[x\] COMBAT-017: Ranged player combat/.test(combatStatusSource) &&
+    /- \[x\] COMBAT-018: Magic player combat/.test(combatStatusSource) &&
+    /- \[x\] COMBAT-019A: Broader combat balance tooling/.test(combatStatusSource) &&
+    /## Now\s*- \[ \] COMBAT-019B:/.test(combatStatusSource),
+  "combat status should keep the simulator slice complete and advance within COMBAT-019"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear/brute/striker spawns | Advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic | None |"),
-  "skills index should reflect the completed first-pass encounter coverage"
+  skillsIndexSource.includes("| Combat | In Progress | Combat balance tooling now compares melee, ranged, and magic builds with ammo/rune-aware deterministic simulator summaries | Special attacks, status-effect hooks, and deeper combat build identity | None |"),
+  "skills index should reflect the completed combat build simulator slice"
 );
 
 const summary = runSimulation({
@@ -62,11 +64,12 @@ const summary = runSimulation({
   maxTicks: 600
 });
 
-assert.strictEqual(summary.simulator, "canonical_melee_v1", "simulator ID mismatch");
+assert.strictEqual(summary.simulator, "canonical_combat_build_v1", "simulator ID mismatch");
 assert(/^2026\.03\.c/.test(summary.combatSpecVersion), "combat spec version mismatch");
 assert.strictEqual(summary.runs, 200, "simulator run count mismatch");
 assert.strictEqual(summary.player.weaponId, "bronze_sword", "simulator weapon mismatch");
 assert.strictEqual(summary.player.styleId, "attack", "simulator style mismatch");
+assert.strictEqual(summary.player.styleFamily, "melee", "simulator style family mismatch");
 assert.strictEqual(summary.enemy.enemyId, "enemy_goblin_grunt", "simulator enemy mismatch");
 assert.strictEqual(summary.player.snapshot.attackValue, 15, "player attack snapshot should derive from canonical formula and bronze sword data");
 assert.strictEqual(summary.player.snapshot.maxHit, 2, "player max-hit snapshot should derive from canonical formula and bronze sword data");
@@ -77,5 +80,101 @@ assert(summary.results.averageTicks > 0, "simulator average tick count should be
 assert(summary.results.averageEnemyDamage > 0, "simulator should preserve enemy hit resolution");
 assert(summary.results.averagePlayerSwings > 0, "simulator should count player swings");
 assert(summary.results.averageEnemySwings > 0, "simulator should count enemy swings");
+
+const rangedSummary = runSimulation({
+  enemy: "enemy_goblin_grunt",
+  weapon: "normal_shortbow",
+  ammo: "bronze_arrows",
+  style: "attack",
+  attack: 10,
+  strength: 10,
+  defense: 10,
+  ranged: 10,
+  magic: 10,
+  hitpoints: 10,
+  runs: 200,
+  seed: "combat-sim-ranged-guard",
+  maxTicks: 600
+});
+
+assert.strictEqual(rangedSummary.simulator, "canonical_combat_build_v1", "ranged simulator ID mismatch");
+assert.strictEqual(rangedSummary.player.weaponId, "normal_shortbow", "ranged simulator weapon mismatch");
+assert.strictEqual(rangedSummary.player.ammoId, "bronze_arrows", "ranged simulator ammo mismatch");
+assert.strictEqual(rangedSummary.player.styleId, "ranged", "ranged simulator style mismatch");
+assert.strictEqual(rangedSummary.player.styleFamily, "ranged", "ranged simulator family mismatch");
+assert.strictEqual(rangedSummary.player.snapshot.attackRange, 7, "ranged simulator should honor bow range");
+assert.strictEqual(rangedSummary.player.snapshot.attackTickCycle, 4, "ranged simulator should honor bow cadence");
+assert.strictEqual(rangedSummary.player.snapshot.attackValue, 15, "ranged simulator should include bow and arrow accuracy");
+assert.strictEqual(rangedSummary.player.snapshot.maxHit, 2, "ranged simulator should include arrow strength");
+assert.strictEqual(rangedSummary.player.snapshot.ammoEquipmentSlot, "ammo", "ranged simulator should model equipped ammo");
+assert.strictEqual(rangedSummary.results.playerWins + rangedSummary.results.enemyWins + rangedSummary.results.draws, 200, "ranged simulator outcome count mismatch");
+assert(rangedSummary.results.averagePlayerSwings > 0, "ranged simulator should count player swings");
+
+assert.throws(
+  () => runSimulation({
+    enemy: "enemy_goblin_grunt",
+    weapon: "normal_shortbow",
+    style: "attack",
+    attack: 10,
+    strength: 10,
+    defense: 10,
+    ranged: 10,
+    magic: 10,
+    hitpoints: 10,
+    runs: 1,
+    seed: "combat-sim-ranged-missing-ammo-guard",
+    maxTicks: 20
+  }),
+  /normal_shortbow requires --ammo for ranged simulation/,
+  "ranged simulator should reject bow builds without arrows"
+);
+
+const magicSummary = runSimulation({
+  enemy: "enemy_goblin_grunt",
+  weapon: "plain_staff_wood",
+  ammo: "ember_rune",
+  style: "attack",
+  attack: 10,
+  strength: 10,
+  defense: 10,
+  ranged: 10,
+  magic: 10,
+  hitpoints: 10,
+  runs: 200,
+  seed: "combat-sim-magic-guard",
+  maxTicks: 600
+});
+
+assert.strictEqual(magicSummary.simulator, "canonical_combat_build_v1", "magic simulator ID mismatch");
+assert.strictEqual(magicSummary.player.weaponId, "plain_staff_wood", "magic simulator weapon mismatch");
+assert.strictEqual(magicSummary.player.ammoId, "ember_rune", "magic simulator rune mismatch");
+assert.strictEqual(magicSummary.player.styleId, "magic", "magic simulator style mismatch");
+assert.strictEqual(magicSummary.player.styleFamily, "magic", "magic simulator family mismatch");
+assert.strictEqual(magicSummary.player.snapshot.attackRange, 6, "magic simulator should honor staff range");
+assert.strictEqual(magicSummary.player.snapshot.attackTickCycle, 4, "magic simulator should honor staff cadence");
+assert.strictEqual(magicSummary.player.snapshot.attackValue, 13, "magic simulator should include staff and rune accuracy");
+assert.strictEqual(magicSummary.player.snapshot.maxHit, 2, "magic simulator should include staff and rune strength");
+assert.strictEqual(magicSummary.player.snapshot.ammoInventoryIndex, 0, "magic simulator should model rune inventory selection");
+assert.strictEqual(magicSummary.results.playerWins + magicSummary.results.enemyWins + magicSummary.results.draws, 200, "magic simulator outcome count mismatch");
+assert(magicSummary.results.averagePlayerSwings > 0, "magic simulator should count player swings");
+
+assert.throws(
+  () => runSimulation({
+    enemy: "enemy_goblin_grunt",
+    weapon: "plain_staff_wood",
+    style: "attack",
+    attack: 10,
+    strength: 10,
+    defense: 10,
+    ranged: 10,
+    magic: 10,
+    hitpoints: 10,
+    runs: 1,
+    seed: "combat-sim-magic-missing-rune-guard",
+    maxTicks: 20
+  }),
+  /plain_staff_wood requires --ammo for magic simulation/,
+  "magic simulator should reject staff builds without runes"
+);
 
 console.log("Combat simulator guard passed.");

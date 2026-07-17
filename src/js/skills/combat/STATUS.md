@@ -23,9 +23,10 @@
 - [x] COMBAT-016B: Aggressive same-group ally assist now uses authored spawn-group IDs, local assist radius checks, leash/path validation, and a one-tick opening cooldown so camps can coordinate without pulling passive critters or distant group members.
 - [x] COMBAT-017: Ranged player combat is live on the shared combat core with bow and arrow item contracts, ranged-range attacks, ammo selection and consumption, Ranged XP awards, projectile visuals, and focused runtime/item guards.
 - [x] COMBAT-018: Magic player combat is live on the shared combat core with staff contracts, elemental/combination rune fuel selection and consumption, staff-range casting, Magic XP awards, and rune-colored projectile visuals.
+- [x] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo/rune-aware deterministic simulator summaries.
 
 ## Now
-- [ ] COMBAT-019: Add specials, broader balance tooling, and deeper combat build identity.
+- [ ] COMBAT-019B: Add special-attack/status-effect hooks and deeper combat build identity.
 
 ## Next
 

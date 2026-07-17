@@ -2,7 +2,7 @@
 
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
-| Combat | In Progress | Magic player combat is live with staff contracts, elemental/combination rune fuel, staff-range casting, Magic XP, and rune-colored projectiles | Specials, broader balance tooling, and deeper combat build identity | None |
+| Combat | In Progress | Combat balance tooling now compares melee, ranged, and magic builds with ammo/rune-aware deterministic simulator summaries | Special attacks, status-effect hooks, and deeper combat build identity | None |
 | Mining | In Progress | Current 1-40 ore/gem nodes now have distinct runtime silhouettes and guarded visual-profile coverage | Off-band ore/gem expansion beyond the current route set | None |
 | Woodcutting | In Progress | Starter-town woodcutting merchants are now live, with the deeper woodsman ledger gated behind a late-band log proof set at the east outpost | Next woodcutting milestone pending reprioritization after WOODCUTTING-013 | None |
 | Fishing | In Progress | Route/value tuning after the 1-40 balance lock | Later-band expansion beyond the current 1-40 route | None |

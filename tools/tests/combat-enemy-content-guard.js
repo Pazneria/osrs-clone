@@ -575,13 +575,18 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-019:/,
-  "combat status should advance COMBAT-019 into the current focus slot"
+  /- \[x\] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo\/rune-aware deterministic simulator summaries\./,
+  "combat status should mark COMBAT-019A complete with the style-aware simulator slice"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-019B:/,
+  "combat status should advance COMBAT-019B into the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Magic player combat is live with staff contracts, elemental\/combination rune fuel, staff-range casting, Magic XP, and rune-colored projectiles \| Specials, broader balance tooling, and deeper combat build identity \| None \|/,
-  "skills index should reflect the completed magic player-combat slice and next specials focus"
+  /\| Combat \| In Progress \| Combat balance tooling now compares melee, ranged, and magic builds with ammo\/rune-aware deterministic simulator summaries \| Special attacks, status-effect hooks, and deeper combat build identity \| None \|/,
+  "skills index should reflect the completed combat build simulator slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,

@@ -48,6 +48,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Spawn-group ally assist slice | Complete |
 | Player ranged combat slice | Complete |
 | Player magic combat slice | Complete |
+| Style-aware combat build simulator | Complete |
 
 ## Data Contracts
 
@@ -241,11 +242,11 @@ Expected sell value per kill treats coin entries at their average stack size and
 
 These live benchmarks keep passive/resource enemies below the humanoid payout bands, keep goblins well below the cost of buying a full bronze weapon, and keep the first iron-dropping enemies below the cost of buying a full iron weapon.
 
-### Current Melee Simulator
+### Current Combat Build Simulator
 
-`tools/sim/melee-sim.js` is the canonical first-pass combat simulator. It loads typed enemy data from `src/game/combat/content.ts`, player/enemy formula helpers from `src/game/combat/formulas.ts`, and weapon combat profiles from `src/js/content/item-catalog.js`.
+`tools/sim/melee-sim.js` is the canonical first-pass combat build simulator. It loads typed enemy data from `src/game/combat/content.ts`, player/enemy formula helpers from `src/game/combat/formulas.ts`, and weapon/ammo combat profiles from `src/js/content/item-catalog.js`.
 
-Use `npm.cmd run tool:sim:melee -- --enemy enemy_goblin_grunt --weapon bronze_sword --runs 1000 --seed baseline` to produce deterministic matchup summaries. The simulator reports player/enemy snapshots, win rates, average fight length, damage, and swing counts so combat tuning can compare authored enemies and item profiles without reintroducing the removed dummy simulator path.
+Use `npm.cmd run tool:sim:melee -- --enemy enemy_goblin_grunt --weapon bronze_sword --runs 1000 --seed baseline` for melee, `npm.cmd run tool:sim:melee -- --enemy enemy_guard --weapon normal_shortbow --ammo bronze_arrows --ranged 10 --runs 1000 --seed ranged-baseline` for ranged, or `npm.cmd run tool:sim:melee -- --enemy enemy_guard --weapon plain_staff_wood --ammo ember_rune --magic 10 --runs 1000 --seed magic-baseline` for magic. The simulator reports the active player combat snapshot, selected ammo/rune, enemy snapshot, win rates, average fight length, damage, and swing counts so combat tuning can compare authored enemies and build identities without reintroducing the removed dummy simulator path.
 
 ### Current Combat Progression Bands
 

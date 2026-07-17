@@ -2006,6 +2006,37 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-079 - Combat simulator only covered melee builds
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `tools/sim/melee-sim.js`, `tools/tests/combat-simulator-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the open `COMBAT-019` tracker entry for broader combat balance tooling.
+  2. Run `npm.cmd run tool:sim:melee` against ranged or magic weapons and compare the output against the live ranged/magic combat snapshots.
+  3. Run the focused simulator guard after `COMBAT-017` and `COMBAT-018` tracker closure.
+- Expected: Combat balance tooling should compare melee, ranged, and magic player builds through the same canonical combat snapshot path used by the runtime.
+- Actual: The simulator used only `computePlayerMeleeCombatSnapshot`, the guard still asserted stale pre-ranged/pre-magic tracker docs, and ranged/magic build comparisons had no ammo/rune-aware deterministic tool path.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Upgrade the existing simulator to call the canonical active player combat snapshot helper and accept ammo/rune input.
+  2. Add focused simulator guard coverage for melee, ranged, and magic summaries.
+  3. Sync combat roadmap/status/index docs to record `COMBAT-019A` as the broader balance-tooling slice.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - `tools/sim/melee-sim.js` now builds runtime-shaped weapon/ammo loadouts and calls `computePlayerCombatSnapshot`, so bows and staffs resolve ranged/magic snapshots instead of falling back to melee-only math.
+  - Simulator summaries now report style family, damage type, combat levels, and selected ammo/rune IDs for deterministic build comparisons.
+  - `tools/tests/combat-simulator-guard.js` now validates melee, ranged, and magic build simulations and the tracker docs for the completed `COMBAT-019A` slice.
+  - Combat status, roadmap, and shared skills index now leave `COMBAT-019B` as the next special-attack/status-effect and build-identity focus.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-078 - Combat tracker still treated magic combat as open
 - Status: Closed
 - Severity: S3
