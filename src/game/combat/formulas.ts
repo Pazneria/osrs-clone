@@ -11,6 +11,7 @@ import type {
 } from "../contracts/combat";
 import type { PlayerCombatStateShape } from "../contracts/combat";
 import type { PlayerSkillMap } from "../contracts/session";
+import { cloneCombatOnHitEffectProfile } from "./status-effects";
 
 interface EquipmentCarrier {
   combat?: CombatItemProfile;
@@ -41,6 +42,7 @@ interface PlayerCombatSnapshot {
   ammoInventoryIndex: number | null;
   ammoEquipmentSlot: string | null;
   ammoItemId: string | null;
+  onHitEffect: NonNullable<CombatAmmoProfile["onHitEffect"]> | null;
 }
 
 interface EnemyCombatSnapshot {
@@ -312,7 +314,8 @@ export function computePlayerMeleeCombatSnapshot(options: {
     consumesAmmo: false,
     ammoInventoryIndex: null,
     ammoEquipmentSlot: null,
-    ammoItemId: null
+    ammoItemId: null,
+    onHitEffect: null
   };
 }
 
@@ -363,7 +366,8 @@ export function computePlayerRangedCombatSnapshot(options: {
     consumesAmmo,
     ammoInventoryIndex: inventoryAmmoSelection ? inventoryAmmoSelection.inventoryIndex : null,
     ammoEquipmentSlot: equippedAmmoSelection ? equippedAmmoSelection.equipmentSlot : null,
-    ammoItemId: ammoSelection ? ammoSelection.itemId : null
+    ammoItemId: ammoSelection ? ammoSelection.itemId : null,
+    onHitEffect: ammoSelection ? cloneCombatOnHitEffectProfile(ammoSelection.profile.onHitEffect) : null
   };
 }
 
@@ -410,7 +414,8 @@ export function computePlayerMagicCombatSnapshot(options: {
     consumesAmmo,
     ammoInventoryIndex: runeSelection ? runeSelection.inventoryIndex : null,
     ammoEquipmentSlot: null,
-    ammoItemId: runeSelection ? runeSelection.itemId : null
+    ammoItemId: runeSelection ? runeSelection.itemId : null,
+    onHitEffect: runeSelection ? cloneCombatOnHitEffectProfile(runeSelection.profile.onHitEffect) : null
   };
 }
 

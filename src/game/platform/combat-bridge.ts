@@ -28,6 +28,13 @@ import {
   rollOpposedHitCheck
 } from "../combat/formulas";
 import {
+  applyEnemyStatusEffect,
+  clearEnemyStatusEffects,
+  getEnemyAttackCooldownPenalty,
+  listActiveEnemyStatusEffects,
+  pruneExpiredEnemyStatusEffects
+} from "../combat/status-effects";
+import {
   COMBAT_SPEC_VERSION,
   createDefaultPlayerCombatState,
   createEnemyRuntimeState,
@@ -74,6 +81,11 @@ declare global {
       decrementCooldown: typeof decrementCooldown;
       rollOpposedHitCheck: typeof rollOpposedHitCheck;
       rollDamage: typeof rollDamage;
+      applyEnemyStatusEffect: typeof applyEnemyStatusEffect;
+      clearEnemyStatusEffects: typeof clearEnemyStatusEffects;
+      getEnemyAttackCooldownPenalty: typeof getEnemyAttackCooldownPenalty;
+      listActiveEnemyStatusEffects: typeof listActiveEnemyStatusEffects;
+      pruneExpiredEnemyStatusEffects: typeof pruneExpiredEnemyStatusEffects;
       isWithinSquareRange: typeof isWithinSquareRange;
       isWithinMeleeRange: typeof isWithinMeleeRange;
       pickDropEntry: typeof pickDropEntry;
@@ -282,6 +294,11 @@ export function exposeCombatBridge(): void {
     decrementCooldown,
     rollOpposedHitCheck,
     rollDamage,
+    applyEnemyStatusEffect,
+    clearEnemyStatusEffects,
+    getEnemyAttackCooldownPenalty,
+    listActiveEnemyStatusEffects,
+    pruneExpiredEnemyStatusEffects,
     isWithinSquareRange,
     isWithinMeleeRange,
     pickDropEntry,

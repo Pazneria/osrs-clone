@@ -580,13 +580,18 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-019B:/,
-  "combat status should advance COMBAT-019B into the current focus slot"
+  /- \[x\] COMBAT-019B1: Water-family rune hits now apply the typed `Chilled` status effect, delaying an enemy's next swing by one tick with reset\/respawn-safe runtime state and focused domain\/runtime coverage\./,
+  "combat status should mark the water-rune status-effect slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[ \] COMBAT-019B2:/,
+  "combat status should keep the next intentional-specials slice in the current focus slot"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Combat balance tooling now compares melee, ranged, and magic builds with ammo\/rune-aware deterministic simulator summaries \| Special attacks, status-effect hooks, and deeper combat build identity \| None \|/,
-  "skills index should reflect the completed combat build simulator slice and next specials focus"
+  /\| Combat \| In Progress \| Water-family runes now apply a guarded Chilled effect that delays enemy swings, giving the magic lane a first tactical identity \| Intentional special attacks, broader elemental effects, and player-facing combat feedback \| None \|/,
+  "skills index should reflect the completed water-rune status-effect slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,
@@ -610,8 +615,18 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
+  /\| Water-rune Chilled status-effect slice \| Complete \|/,
+  "combat roadmap should mark the water-rune status-effect slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
   /Ranged player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active bow snapshot instead of melee adjacency\./,
   "combat roadmap should document shared-core ranged attack behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /A damaging hit from a selected water-family rune applies `Chilled` for two ticks\./,
+  "combat roadmap should document the bounded water-rune status-effect behavior"
 );
 assertRegex(
   combatRoadmapSource,

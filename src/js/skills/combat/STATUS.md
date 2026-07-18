@@ -24,9 +24,10 @@
 - [x] COMBAT-017: Ranged player combat is live on the shared combat core with bow and arrow item contracts, ranged-range attacks, ammo selection and consumption, Ranged XP awards, projectile visuals, and focused runtime/item guards.
 - [x] COMBAT-018: Magic player combat is live on the shared combat core with staff contracts, elemental/combination rune fuel selection and consumption, staff-range casting, Magic XP awards, and rune-colored projectile visuals.
 - [x] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo/rune-aware deterministic simulator summaries.
+- [x] COMBAT-019B1: Water-family rune hits now apply the typed `Chilled` status effect, delaying an enemy's next swing by one tick with reset/respawn-safe runtime state and focused domain/runtime coverage.
 
 ## Now
-- [ ] COMBAT-019B: Add special-attack/status-effect hooks and deeper combat build identity.
+- [ ] COMBAT-019B2: Add intentional special attacks, broader elemental status effects, and player-facing combat feedback.
 
 ## Next
 

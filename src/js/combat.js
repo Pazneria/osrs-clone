@@ -174,6 +174,26 @@
         return combatRuntime.computeEnemyMeleeCombatSnapshot(getEnemyDefinition(enemyState.enemyId));
     }
 
+    function applyEnemyOnHitEffect(enemyState, effectProfile) {
+        if (!combatRuntime || typeof combatRuntime.applyEnemyStatusEffect !== 'function') return null;
+        return combatRuntime.applyEnemyStatusEffect(enemyState, effectProfile || null, currentTick);
+    }
+
+    function clearEnemyCombatStatusEffects(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.clearEnemyStatusEffects !== 'function') return;
+        combatRuntime.clearEnemyStatusEffects(enemyState);
+    }
+
+    function getEnemyStatusEffectCooldownPenalty(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.getEnemyAttackCooldownPenalty !== 'function') return 0;
+        return Math.max(0, Math.floor(combatRuntime.getEnemyAttackCooldownPenalty(enemyState, currentTick) || 0));
+    }
+
+    function pruneEnemyCombatStatusEffects(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.pruneExpiredEnemyStatusEffects !== 'function') return;
+        combatRuntime.pruneExpiredEnemyStatusEffects(enemyState, currentTick);
+    }
+
     function isTrainingDummyEnemy(enemyStateOrId) {
         const enemyId = typeof enemyStateOrId === 'string'
             ? enemyStateOrId
@@ -752,6 +772,7 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyCombatStatusEffects(enemyState);
         enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         clearEnemyIdleWanderState(enemyState);
@@ -775,6 +796,7 @@
         enemyState.lockedTargetId = null;
         enemyState.remainingAttackCooldown = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyCombatStatusEffects(enemyState);
         enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.attackTriggerAt = 0;
@@ -810,6 +832,7 @@
         enemyState.attackTriggerAt = 0;
         enemyState.hitReactionTriggerAt = 0;
         enemyState.lastDamagerId = null;
+        clearEnemyCombatStatusEffects(enemyState);
         enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.pendingDefeatAtTick = null;
@@ -862,6 +885,7 @@
         enemyState.pendingDefeatAtTick = null;
         enemyState.pendingDefeatFacingYaw = null;
         enemyState.lastDamagerId = null;
+        clearEnemyCombatStatusEffects(enemyState);
         enemyState.assistSourceRuntimeId = null;
         clearEnemyAutoRetaliateAggressorOrder(enemyState);
         enemyState.attackTriggerAt = 0;
@@ -1088,6 +1112,7 @@
                     ammoInventoryIndex: Number.isFinite(attack.snapshot.ammoInventoryIndex) ? Math.floor(attack.snapshot.ammoInventoryIndex) : null,
                     ammoEquipmentSlot: typeof attack.snapshot.ammoEquipmentSlot === 'string' ? attack.snapshot.ammoEquipmentSlot : null,
                     ammoItemId: typeof attack.snapshot.ammoItemId === 'string' ? attack.snapshot.ammoItemId : null,
+                    onHitEffect: attack.snapshot.onHitEffect || null,
                     approachPath: Array.isArray(attack.approachPath) ? attack.approachPath.map((step) => cloneCombatPathStep(step)) : []
                 });
                 continue;
@@ -1145,6 +1170,7 @@
                 if (result.damage > 0) {
                     enemyState.currentHealth = Math.max(0, enemyState.currentHealth - result.damage);
                     enemyState.hitReactionTriggerAt = Date.now();
+                    applyEnemyOnHitEffect(enemyState, result.onHitEffect);
                     if (typeof addSkillXp === 'function') {
                         addSkillXp(resolvePlayerAttackSkill(result), result.damage * 4);
                         addSkillXp('hitpoints', result.damage);
@@ -1157,7 +1183,9 @@
                     enemyState.lastDamagerId = PLAYER_TARGET_ID;
                     faceEnemyTowards(enemyState, playerState);
                     clearEnemyIdleWanderState(enemyState);
-                    if (shouldSetOpeningCooldown) enemyState.remainingAttackCooldown = 1;
+                    if (shouldSetOpeningCooldown) {
+                        enemyState.remainingAttackCooldown = 1 + getEnemyStatusEffectCooldownPenalty(enemyState);
+                    }
                 } else if (!Number.isFinite(enemyState.pendingDefeatAtTick)) {
                     enemyState.pendingDefeatAtTick = currentTick;
                     enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);
@@ -1170,7 +1198,8 @@
                 const enemyState = getCombatEnemyState(result.attackerId);
                 if (!enemyState || !isEnemyAlive(enemyState)) continue;
                 enemyState.attackTriggerAt = Date.now();
-                enemyState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));
+                enemyState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle))
+                    + getEnemyStatusEffectCooldownPenalty(enemyState);
                 enemyState.currentState = 'aggroed';
                 enemyState.lockedTargetId = PLAYER_TARGET_ID;
                 enemyState.lastDamagerId = PLAYER_TARGET_ID;
@@ -1252,6 +1281,7 @@
                 continue;
             }
             if (isEnemyAlive(enemyState)) {
+                pruneEnemyCombatStatusEffects(enemyState);
                 enemyState.remainingAttackCooldown = combatRuntime.decrementCooldown(enemyState.remainingAttackCooldown || 0);
             }
         }

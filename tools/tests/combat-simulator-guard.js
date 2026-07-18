@@ -43,12 +43,13 @@ assert(
     /- \[x\] COMBAT-017: Ranged player combat/.test(combatStatusSource) &&
     /- \[x\] COMBAT-018: Magic player combat/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019A: Broader combat balance tooling/.test(combatStatusSource) &&
-    /## Now\s*- \[ \] COMBAT-019B:/.test(combatStatusSource),
-  "combat status should keep the simulator slice complete and advance within COMBAT-019"
+    /- \[x\] COMBAT-019B1: Water-family rune hits/.test(combatStatusSource) &&
+    /## Now\s*- \[ \] COMBAT-019B2:/.test(combatStatusSource),
+  "combat status should keep the simulator and first status-effect slices complete before advancing COMBAT-019"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | Combat balance tooling now compares melee, ranged, and magic builds with ammo/rune-aware deterministic simulator summaries | Special attacks, status-effect hooks, and deeper combat build identity | None |"),
-  "skills index should reflect the completed combat build simulator slice"
+  skillsIndexSource.includes("| Combat | In Progress | Water-family runes now apply a guarded Chilled effect that delays enemy swings, giving the magic lane a first tactical identity | Intentional special attacks, broader elemental effects, and player-facing combat feedback | None |"),
+  "skills index should reflect the completed water-rune status-effect slice"
 );
 
 const summary = runSimulation({

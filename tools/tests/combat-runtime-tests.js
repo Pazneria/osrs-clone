@@ -183,6 +183,42 @@ function ensureCombatRuntimeLoaded(root) {
     rollDamage(maxHit) {
       return runtimeState.rollDamage(maxHit);
     },
+    applyEnemyStatusEffect(enemyState, effect, currentTick) {
+      if (!enemyState || !effect || effect.effectId !== "chilled") return null;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      const durationTicks = Number.isFinite(effect.durationTicks) ? Math.max(1, Math.floor(effect.durationTicks)) : 2;
+      const enemyAttackCooldownPenalty = Number.isFinite(effect.enemyAttackCooldownPenalty)
+        ? Math.max(0, Math.floor(effect.enemyAttackCooldownPenalty))
+        : 1;
+      enemyState.statusEffects = enemyState.statusEffects || {};
+      enemyState.statusEffects.chilled = {
+        effectId: "chilled",
+        expiresAtTick: tick + durationTicks,
+        enemyAttackCooldownPenalty
+      };
+      if (enemyState.remainingAttackCooldown > 0) {
+        enemyState.remainingAttackCooldown += enemyAttackCooldownPenalty;
+      }
+      return {
+        effectId: "chilled",
+        remainingTicks: durationTicks,
+        enemyAttackCooldownPenalty
+      };
+    },
+    clearEnemyStatusEffects(enemyState) {
+      if (enemyState) enemyState.statusEffects = {};
+    },
+    getEnemyAttackCooldownPenalty(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects || !enemyState.statusEffects.chilled) return 0;
+      const effect = enemyState.statusEffects.chilled;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return effect.expiresAtTick > tick ? effect.enemyAttackCooldownPenalty : 0;
+    },
+    pruneExpiredEnemyStatusEffects(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects || !enemyState.statusEffects.chilled) return;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      if (enemyState.statusEffects.chilled.expiresAtTick <= tick) delete enemyState.statusEffects.chilled;
+    },
     decrementCooldown(cooldown) {
       const value = Number.isFinite(cooldown) ? Math.floor(cooldown) : 0;
       return Math.max(0, value - 1);
@@ -782,6 +818,91 @@ function run() {
     } finally {
       global.addSkillXp = previousAddSkillXp;
     }
+  });
+
+  test("Water-rune hits chill enemies and delay their next swing", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        chilled_target: createEnemyDefinition("chilled_target", { hitpoints: 8, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("chilled-target", "chilled_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "water_rune",
+        onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+      },
+      inventory: [
+        { itemData: { id: "water_rune", name: "Water rune" }, amount: 2 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("chilled-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("chilled-target");
+    assert.strictEqual(target.remainingAttackCooldown, 5, "chilled should add one tick to the enemy's freshly resolved swing cooldown");
+    assert.deepStrictEqual(
+      target.statusEffects.chilled,
+      { effectId: "chilled", expiresAtTick: 3, enemyAttackCooldownPenalty: 1 },
+      "water-rune damage should attach the bounded chilled runtime state"
+    );
+  });
+
+  test("Chilled effects clear when defeated enemies respawn", () => {
+    global.ITEM_DB = {};
+    resetCombatEnvironment({
+      enemyDefs: {
+        chilled_target: createEnemyDefinition("chilled_target", { hitpoints: 1, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("chilled-target", "chilled_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "water_rune",
+        onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+      },
+      inventory: [
+        { itemData: { id: "water_rune", name: "Water rune" }, amount: 1 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("chilled-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("chilled-target");
+    assert.ok(target.statusEffects.chilled, "a lethal water-rune hit should attach Chilled before defeat resolves");
+
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(target.currentState, "dead", "the pending lethal hit should resolve into enemy defeat");
+    assert.deepStrictEqual(target.statusEffects, {}, "defeat should clear Chilled rather than carry it into respawn");
+
+    currentTick = 7;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 1, "the enemy should restore its full health after the configured respawn delay");
+    assert.strictEqual(target.respawnAtTick, null, "the enemy should leave the defeated lifecycle after respawning");
+    assert.deepStrictEqual(target.statusEffects, {}, "respawned enemies should start without stale Chilled state");
   });
 
   test("Ranged player attacks consume equipped ammo before inventory ammo", () => {

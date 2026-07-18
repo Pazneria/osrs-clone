@@ -5,6 +5,7 @@ const { loadTsModule } = require("../lib/ts-module-loader");
 
 const combatContent = loadTsModule(path.resolve(__dirname, "../../src/game/combat/content.ts"));
 const combatFormulas = loadTsModule(path.resolve(__dirname, "../../src/game/combat/formulas.ts"));
+const statusEffects = loadTsModule(path.resolve(__dirname, "../../src/game/combat/status-effects.ts"));
 const combatBridge = loadTsModule(path.resolve(__dirname, "../../src/game/platform/combat-bridge.ts"));
 
 function makeWeapon(overrides = {}) {
@@ -109,7 +110,7 @@ function makeAmmo(itemId, overrides = {}) {
 }
 
 function makeMagicRune(itemId, overrides = {}) {
-  return {
+  const rune = {
     id: itemId,
     ammo: {
       damageType: "magic",
@@ -119,6 +120,8 @@ function makeMagicRune(itemId, overrides = {}) {
       compatibleWeaponFamilies: ["staff"]
     }
   };
+  if (overrides.onHitEffect) rune.ammo.onHitEffect = { ...overrides.onHitEffect };
+  return rune;
 }
 
 {
@@ -348,6 +351,59 @@ function makeMagicRune(itemId, overrides = {}) {
     playerState: {}
   });
   assert.strictEqual(noRuneSnapshot.canAttack, false, "magic staff attacks should not fire without compatible runes");
+
+  const chilledSnapshot = combatFormulas.computePlayerMagicCombatSnapshot({
+    playerSkills: {
+      magic: { xp: 0, level: 20 },
+      defense: { xp: 0, level: 10 }
+    },
+    equipment: {
+      weapon: makeStaff({ magicAccuracyBonus: 6, magicStrengthBonus: 4 })
+    },
+    inventory: [
+      {
+        itemData: makeMagicRune("water_rune", {
+          ammoTier: 2,
+          magicAccuracyBonus: 2,
+          magicStrengthBonus: 3,
+          onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+        }),
+        amount: 1
+      }
+    ],
+    playerState: {}
+  });
+  assert.deepStrictEqual(
+    chilledSnapshot.onHitEffect,
+    { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
+    "magic snapshots should preserve the selected rune's canonical on-hit effect"
+  );
+}
+
+{
+  const enemyState = {
+    remainingAttackCooldown: 3,
+    statusEffects: statusEffects.createEnemyStatusEffects()
+  };
+  const effect = statusEffects.applyEnemyStatusEffect(
+    enemyState,
+    { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
+    10
+  );
+  assert.deepStrictEqual(
+    effect,
+    { effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1 },
+    "chilled should report its applied duration and next-swing delay"
+  );
+  assert.strictEqual(enemyState.remainingAttackCooldown, 4, "chilled should delay an already-counting enemy swing by one tick");
+  assert.strictEqual(statusEffects.getEnemyAttackCooldownPenalty(enemyState, 10), 1, "chilled should expose one tick of enemy swing penalty");
+  assert.deepStrictEqual(
+    statusEffects.listActiveEnemyStatusEffects(enemyState, 10),
+    [{ effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1 }],
+    "active enemy effects should remain inspectable through the typed combat source"
+  );
+  statusEffects.pruneExpiredEnemyStatusEffects(enemyState, 12);
+  assert.deepStrictEqual(statusEffects.listActiveEnemyStatusEffects(enemyState, 12), [], "expired effects should not linger on enemy runtime state");
 }
 
 {
@@ -397,6 +453,7 @@ function makeMagicRune(itemId, overrides = {}) {
   combatBridge.exposeCombatBridge();
   assert.strictEqual(window.CombatRuntime.computePlayerMaxHitpoints({ hitpoints: { xp: 0, level: 13 } }), 13, "combat bridge should expose player max hitpoints");
   assert.strictEqual(typeof window.CombatRuntime.computePlayerMagicCombatSnapshot, "function", "combat bridge should expose magic player snapshots");
+  assert.strictEqual(typeof window.CombatRuntime.applyEnemyStatusEffect, "function", "combat bridge should expose typed enemy status effects");
   assert.deepStrictEqual(
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),
     { currentHitpoints: 1, dealt: 5 },

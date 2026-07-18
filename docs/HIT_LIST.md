@@ -2006,6 +2006,37 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-080 - Water-family runes had no tactical combat identity
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/game/contracts/combat.ts`, `src/game/combat/status-effects.ts`, `src/game/combat/formulas.ts`, `src/game/platform/combat-bridge.ts`, `src/js/combat.js`, `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-item-data-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Equip a staff and attack with water, steam, mud, or mist runes.
+  2. Compare the resolved combat result with an otherwise equivalent magic attack using a non-water rune.
+  3. Inspect enemy cooldown state after the damaging hit and after the enemy resets or respawns.
+- Expected: Water-family rune choice should carry a bounded tactical effect through the canonical combat contracts, without leaking stale state across enemy reset/death/respawn.
+- Actual: Rune families changed projectile color and numeric power only; combat snapshots and the enemy runtime had no status-effect contract or effect lifecycle.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a typed on-hit effect and enemy-status lifecycle contract, then expose it through the existing combat bridge.
+  2. Give water-family runes a short Chilled effect that delays an enemy swing by one tick.
+  3. Cover snapshot propagation, live tick resolution, item data, tracker docs, and reset/respawn cleanup with focused guards.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added typed `Chilled` effect profiles and enemy status state with validation, expiry, reset, death, and respawn cleanup owned by `src/game/combat/status-effects.ts`.
+  - Water, steam, mud, and mist runes now carry a two-tick Chilled profile; a damaging hit adds one tick to the enemy's currently counting or newly resolved next swing.
+  - The existing `CombatRuntime` bridge now exposes the typed helpers, while `combat.js` only adapts attack results into that surface.
+  - Domain, runtime, item-data, combat-content, typecheck, and legacy-adapter coverage now lock the slice and move combat to `COMBAT-019B2`.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-079 - Combat simulator only covered melee builds
 - Status: Closed
 - Severity: S3

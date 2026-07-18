@@ -1784,13 +1784,21 @@
     }
 
     function createMagicRuneProfile(options) {
-        return {
+        const profile = {
             damageType: 'magic',
             ammoTier: Number.isFinite(options && options.ammoTier) ? Math.max(1, Math.floor(options.ammoTier)) : 1,
             magicAccuracyBonus: Number.isFinite(options && options.magicAccuracyBonus) ? Math.floor(options.magicAccuracyBonus) : 0,
             magicStrengthBonus: Number.isFinite(options && options.magicStrengthBonus) ? Math.floor(options.magicStrengthBonus) : 0,
             compatibleWeaponFamilies: ['staff']
         };
+        if (options && options.onHitEffect && typeof options.onHitEffect === 'object') {
+            profile.onHitEffect = {
+                effectId: options.onHitEffect.effectId,
+                durationTicks: options.onHitEffect.durationTicks,
+                enemyAttackCooldownPenalty: options.onHitEffect.enemyAttackCooldownPenalty
+            };
+        }
+        return profile;
     }
 
     function cloneCombatProfile(profile) {
@@ -1870,14 +1878,14 @@
 
         const magicRuneRows = {
             ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 },
-            water_rune: { ammoTier: 2, magicAccuracyBonus: 2, magicStrengthBonus: 3 },
+            water_rune: { ammoTier: 2, magicAccuracyBonus: 2, magicStrengthBonus: 3, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
             earth_rune: { ammoTier: 3, magicAccuracyBonus: 4, magicStrengthBonus: 5 },
             air_rune: { ammoTier: 4, magicAccuracyBonus: 7, magicStrengthBonus: 8 },
-            steam_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            steam_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
             smoke_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
             lava_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
-            mud_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
-            mist_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            mud_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
+            mist_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
             dust_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 }
         };
 
@@ -2114,7 +2122,10 @@
             if (Number.isFinite(def.speedBonusTicks)) db[id].speedBonusTicks = def.speedBonusTicks;
             if (def.stats) db[id].stats = Object.assign({}, def.stats);
             if (def.combat) db[id].combat = cloneCombatProfile(def.combat);
-            if (def.ammo) db[id].ammo = Object.assign({}, def.ammo);
+            if (def.ammo) {
+                db[id].ammo = Object.assign({}, def.ammo);
+                if (def.ammo.onHitEffect) db[id].ammo.onHitEffect = Object.assign({}, def.ammo.onHitEffect);
+            }
             if (Number.isFinite(def.requiredAttackLevel)) db[id].requiredAttackLevel = Math.max(1, Math.floor(def.requiredAttackLevel));
             if (Number.isFinite(def.requiredRangedLevel)) db[id].requiredRangedLevel = Math.max(1, Math.floor(def.requiredRangedLevel));
             if (Number.isFinite(def.requiredMagicLevel)) db[id].requiredMagicLevel = Math.max(1, Math.floor(def.requiredMagicLevel));

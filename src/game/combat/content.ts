@@ -11,6 +11,7 @@ import type {
 } from "../contracts/combat";
 import { buildWorldBootstrapResult } from "../world/bootstrap";
 import { canonicalizeWorldId } from "../world/ids";
+import { createEnemyStatusEffects } from "./status-effects";
 
 export const COMBAT_SPEC_VERSION = "2026.03.c1";
 export const DEFAULT_MELEE_STYLE: MeleeStyleId = "attack";
@@ -1004,6 +1005,7 @@ export function createEnemyRuntimeState(
       : (Number.isFinite(definition.appearance.facingYaw) ? Number(definition.appearance.facingYaw) : Math.PI),
     respawnAtTick: currentTick > 0 ? currentTick : null,
     lastDamagerId: null,
+    statusEffects: createEnemyStatusEffects(),
     attackTriggerAt: 0,
     hitReactionTriggerAt: 0
   };

@@ -49,6 +49,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Player ranged combat slice | Complete |
 | Player magic combat slice | Complete |
 | Style-aware combat build simulator | Complete |
+| Water-rune Chilled status-effect slice | Complete |
 
 ## Data Contracts
 
@@ -67,6 +68,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Arrow stacks expose ranged ammo profiles with compatible weapon families, tiered accuracy/strength bonuses, stackable quiver equipment, and inventory fallback consumption.
 - Staffs expose explicit magic attack profiles with Magic level gates, projectile range, staff cadence, and staff-family rune requirements.
 - Elemental and combination rune stacks expose magic ammo profiles with compatible staff families plus tiered magic accuracy/strength bonuses.
+- Water, steam, mud, and mist runes also expose a typed `Chilled` on-hit profile so the water element has a first gameplay identity beyond projectile color.
 
 ### Enemies
 
@@ -119,6 +121,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Ammo-consuming ranged attacks consume one selected arrow on both hits and misses, preferring equipped ammo before compatible inventory stacks.
 - Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency.
 - Ammo-consuming magic attacks consume one selected rune on both hits and misses, choosing the strongest compatible rune stack from inventory.
+- A damaging hit from a selected water-family rune applies `Chilled` for two ticks. `Chilled` adds one tick to an already-counting enemy swing, or to the enemy's newly resolved next swing in a same-tick batch; it is cleared when that enemy returns home, dies, or respawns.
 
 ### Enemy Behavior
 
@@ -425,7 +428,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - formation logic or global encounter-wide target switching beyond local same-group ally assist
 - safe-spot exception systems
 - ranged enemy packages and magic enemy packages
-- special attacks, status effects, or multi-phase enemies
+- player-triggered special attacks, additional elemental status effects, or multi-phase enemies
 - multi-tile enemies unless separately specified later
 - nested/global loot-table systems
 - final stack-size or tertiary-drop systems

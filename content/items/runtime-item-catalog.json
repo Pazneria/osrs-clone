@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-07-16T16:36:21.565Z",
+  "generatedAt": "2026-07-18T17:41:37.777Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -2938,7 +2938,12 @@
         ],
         "damageType": "magic",
         "magicAccuracyBonus": 10,
-        "magicStrengthBonus": 12
+        "magicStrengthBonus": 12,
+        "onHitEffect": {
+          "durationTicks": 2,
+          "effectId": "chilled",
+          "enemyAttackCooldownPenalty": 1
+        }
       },
       "defaultAction": "Drop",
       "icon": {
@@ -3464,7 +3469,12 @@
         ],
         "damageType": "magic",
         "magicAccuracyBonus": 10,
-        "magicStrengthBonus": 12
+        "magicStrengthBonus": 12,
+        "onHitEffect": {
+          "durationTicks": 2,
+          "effectId": "chilled",
+          "enemyAttackCooldownPenalty": 1
+        }
       },
       "defaultAction": "Drop",
       "icon": {
@@ -5167,7 +5177,12 @@
         ],
         "damageType": "magic",
         "magicAccuracyBonus": 10,
-        "magicStrengthBonus": 12
+        "magicStrengthBonus": 12,
+        "onHitEffect": {
+          "durationTicks": 2,
+          "effectId": "chilled",
+          "enemyAttackCooldownPenalty": 1
+        }
       },
       "defaultAction": "Drop",
       "icon": {
@@ -5795,7 +5810,12 @@
         ],
         "damageType": "magic",
         "magicAccuracyBonus": 2,
-        "magicStrengthBonus": 3
+        "magicStrengthBonus": 3,
+        "onHitEffect": {
+          "durationTicks": 2,
+          "effectId": "chilled",
+          "enemyAttackCooldownPenalty": 1
+        }
       },
       "defaultAction": "Drop",
       "icon": {
