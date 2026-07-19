@@ -25,9 +25,10 @@
 - [x] COMBAT-018: Magic player combat is live on the shared combat core with staff contracts, elemental/combination rune fuel selection and consumption, staff-range casting, Magic XP awards, and rune-colored projectile visuals.
 - [x] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo/rune-aware deterministic simulator summaries.
 - [x] COMBAT-019B1: Water-family rune hits now apply the typed `Chilled` status effect, delaying an enemy's next swing by one tick with reset/respawn-safe runtime state and focused domain/runtime coverage.
+- [x] COMBAT-019B2A: Active `Chilled` effects now appear above affected combat targets with their remaining duration and a concise tactical explanation.
 
 ## Now
-- [ ] COMBAT-019B2: Add intentional special attacks, broader elemental status effects, and player-facing combat feedback.
+- [ ] COMBAT-019B2B: Add intentional special attacks and broader elemental status effects beyond the completed Chilled feedback slice.
 
 ## Next
 

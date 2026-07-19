@@ -50,6 +50,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Player magic combat slice | Complete |
 | Style-aware combat build simulator | Complete |
 | Water-rune Chilled status-effect slice | Complete |
+| Chilled target-feedback slice | Complete |
 
 ## Data Contracts
 
@@ -122,6 +123,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency.
 - Ammo-consuming magic attacks consume one selected rune on both hits and misses, choosing the strongest compatible rune stack from inventory.
 - A damaging hit from a selected water-family rune applies `Chilled` for two ticks. `Chilled` adds one tick to an already-counting enemy swing, or to the enemy's newly resolved next swing in a same-tick batch; it is cleared when that enemy returns home, dies, or respawns.
+- An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar, including the active duration and a tooltip that explains the delayed next swing. The overlay reads the typed status-effect surface each tick rather than owning duplicate status state.
 
 ### Enemy Behavior
 

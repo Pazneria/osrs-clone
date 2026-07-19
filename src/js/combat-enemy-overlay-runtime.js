@@ -32,10 +32,26 @@
         fill.style.background = '#52d273';
         fill.style.transition = 'width 80ms linear, background-color 80ms linear';
 
+        const statusEffect = documentRef.createElement('div');
+        statusEffect.style.display = 'none';
+        statusEffect.style.marginTop = '2px';
+        statusEffect.style.padding = '1px 4px';
+        statusEffect.style.border = '1px solid rgba(142, 219, 255, 0.8)';
+        statusEffect.style.borderRadius = '999px';
+        statusEffect.style.background = 'rgba(16, 54, 81, 0.92)';
+        statusEffect.style.color = '#c7f0ff';
+        statusEffect.style.fontFamily = 'monospace';
+        statusEffect.style.fontSize = '10px';
+        statusEffect.style.fontWeight = '700';
+        statusEffect.style.lineHeight = '12px';
+        statusEffect.style.textAlign = 'center';
+        statusEffect.style.whiteSpace = 'nowrap';
+
         frame.appendChild(fill);
         el.appendChild(frame);
+        el.appendChild(statusEffect);
         documentRef.body.appendChild(el);
-        return { el, fill };
+        return { el, fill, statusEffect };
     }
 
     function removeEnemyHitpointsBarRenderer(renderer) {
@@ -56,6 +72,32 @@
         if (enemyState.runtimeId === playerState.lockedTargetId) return true;
         if (enemyState.runtimeId === playerState.lastDamagerEnemyId) return true;
         return false;
+    }
+
+    function formatEnemyStatusEffect(effect) {
+        if (!effect || effect.effectId !== 'chilled') return '';
+        const remainingTicks = Number.isFinite(effect.remainingTicks)
+            ? Math.max(1, Math.floor(effect.remainingTicks))
+            : 1;
+        return `Chilled ${remainingTicks}t`;
+    }
+
+    function updateEnemyStatusEffects(options = {}) {
+        const renderer = options.renderer || null;
+        if (!renderer || !renderer.statusEffectEl) return;
+        const getActiveStatusEffects = typeof options.getActiveStatusEffects === 'function'
+            ? options.getActiveStatusEffects
+            : null;
+        const effects = getActiveStatusEffects ? getActiveStatusEffects(options.enemyState) : [];
+        const labels = (Array.isArray(effects) ? effects : [])
+            .map(formatEnemyStatusEffect)
+            .filter(Boolean);
+
+        renderer.statusEffectEl.textContent = labels.join(' · ');
+        renderer.statusEffectEl.title = labels.some((label) => label.startsWith('Chilled '))
+            ? 'Chilled: next enemy attack delayed by 1 tick.'
+            : '';
+        renderer.statusEffectEl.style.display = labels.length > 0 ? 'inline-block' : 'none';
     }
 
     function updateEnemyHitpointsBar(options = {}) {
@@ -84,6 +126,7 @@
         if (ratio > 0.6) renderer.healthBarFillEl.style.background = '#52d273';
         else if (ratio > 0.3) renderer.healthBarFillEl.style.background = '#f1c453';
         else renderer.healthBarFillEl.style.background = '#ef5555';
+        updateEnemyStatusEffects(Object.assign({}, options, { enemyState, renderer }));
 
         const overheadPos = renderer.group.position.clone();
         overheadPos.y += Number.isFinite(renderer.healthBarYOffset) ? renderer.healthBarYOffset : 1.0;
@@ -125,6 +168,8 @@
         createEnemyHitpointsBarRenderer,
         removeEnemyHitpointsBarRenderer,
         shouldShowEnemyHitpointsBar,
+        formatEnemyStatusEffect,
+        updateEnemyStatusEffects,
         updateCombatEnemyOverlays,
         updateEnemyHitpointsBar
     };

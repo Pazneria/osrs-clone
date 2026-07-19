@@ -2,7 +2,7 @@
 
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
-| Combat | In Progress | Water-family runes now apply a guarded Chilled effect that delays enemy swings, giving the magic lane a first tactical identity | Intentional special attacks, broader elemental effects, and player-facing combat feedback | None |
+| Combat | In Progress | Water-family rune hits now surface Chilled duration and its delayed-swing effect directly above the affected target | Intentional special attacks and broader elemental effects beyond the completed feedback slice | None |
 | Mining | In Progress | Current 1-40 ore/gem nodes now have distinct runtime silhouettes and guarded visual-profile coverage | Off-band ore/gem expansion beyond the current route set | None |
 | Woodcutting | In Progress | Starter-town woodcutting merchants are now live, with the deeper woodsman ledger gated behind a late-band log proof set at the east outpost | Next woodcutting milestone pending reprioritization after WOODCUTTING-013 | None |
 | Fishing | In Progress | Route/value tuning after the 1-40 balance lock | Later-band expansion beyond the current 1-40 route | None |

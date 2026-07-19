@@ -55,7 +55,7 @@ function run() {
     createElement: makeElement
   };
   const bar = runtime.createEnemyHitpointsBarRenderer({ documentRef });
-  assert(bar.el && bar.fill, "hitpoint bar renderer should return element and fill handles");
+  assert(bar.el && bar.fill && bar.statusEffect, "hitpoint bar renderer should return element, fill, and status-effect handles");
   assert(body.children.length === 1, "hitpoint bar should be appended to the document body");
   assert(bar.el.style.position === "absolute", "hitpoint bar should be absolutely positioned");
   runtime.removeEnemyHitpointsBarRenderer({ healthBarEl: bar.el });
@@ -94,6 +94,7 @@ function run() {
     maxHealth: 10,
     healthBarEl: makeElement("div"),
     healthBarFillEl: makeElement("div"),
+    statusEffectEl: makeElement("div"),
     group: {
       position: {
         clone: () => Object.assign({}, projected)
@@ -108,12 +109,17 @@ function run() {
     isEnemyPendingDefeat: () => false,
     playerState,
     renderer,
+    getActiveStatusEffects: () => [{ effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1 }],
     windowRef: { innerWidth: 800, innerHeight: 600 }
   });
   assert(renderer.healthBarFillEl.style.width === "40%", "hitpoint bar fill should reflect current health ratio");
   assert(renderer.healthBarFillEl.style.background === "#f1c453", "mid-health hitpoint bar should use warning color");
   assert(renderer.healthBarEl.style.left === "400px" && renderer.healthBarEl.style.top === "300px", "hitpoint bar should be projected to screen center");
   assert(renderer.healthBarEl.style.display === "block", "visible hitpoint bar should be shown");
+  assert(renderer.statusEffectEl.textContent === "Chilled 2t", "overlay should show the active Chilled duration");
+  assert(renderer.statusEffectEl.style.display === "inline-block", "overlay should show active status effects alongside the target health bar");
+  assert(renderer.statusEffectEl.title.includes("delayed by 1 tick"), "Chilled feedback should explain its combat effect");
+  assert(runtime.formatEnemyStatusEffect({ effectId: "unknown", remainingTicks: 2 }) === "", "overlay should ignore unknown effect ids");
 
   let matrixUpdated = false;
   let updateCount = 0;
@@ -127,10 +133,14 @@ function run() {
     },
     isEnemyPendingDefeat: () => false,
     playerState,
+    getActiveStatusEffects: () => [],
     windowRef: { innerWidth: 800, innerHeight: 600 }
   });
   assert(matrixUpdated, "overlay update should refresh camera matrices when available");
   assert(updateCount === 1, "overlay update should visit renderer-backed enemies");
+  assert(renderer.statusEffectEl.textContent === "", "overlay should clear expired status-effect labels");
+  assert(renderer.statusEffectEl.style.display === "none", "overlay should hide cleared status effects");
+  assert(renderer.statusEffectEl.title === "", "overlay should clear stale status-effect explanations");
 
   console.log("Combat enemy overlay runtime guard passed.");
 }

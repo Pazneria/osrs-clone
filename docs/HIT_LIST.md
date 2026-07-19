@@ -2006,6 +2006,35 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-081 - Chilled effect had no player-facing target feedback
+- Status: Closed
+- Severity: S3
+- Area: HUD
+- Source: Automation
+- Links: `src/game/combat/status-effects.ts`, `src/game/platform/combat-bridge.ts`, `src/js/combat.js`, `src/js/combat-enemy-overlay-runtime.js`, `src/js/combat-enemy-render-runtime.js`, `tools/tests/combat-enemy-overlay-runtime-guard.js`, `tools/tests/combat-hud-runtime-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Equip a staff with water, steam, mud, or mist runes and land a damaging cast on an enemy.
+  2. Look at the active target health bar while the two-tick Chilled effect is active.
+- Expected: Players can see that Chilled is active, how long it remains, and that it delays the enemy's next attack.
+- Actual: Chilled modified typed enemy cooldown state but presented no target-side feedback, leaving players to infer the effect from timing.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Reuse the existing target-overlay seam instead of adding a second combat status source.
+  2. Read active effects from `CombatRuntime` and render a bounded badge beside the combat health bar.
+  3. Cover status formatting, visibility, duration, and the legacy adapter seam with focused guards.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Target health bars now show an ice-blue `Chilled <duration>t` badge when the typed effect is active, with a tooltip explaining the one-tick swing delay.
+  - `combat.js` adapts the already-exposed typed `listActiveEnemyStatusEffects` helper into the overlay; no UI-local effect state was introduced.
+  - Focused overlay and combat HUD guards lock the badge lifecycle and bridge wiring, and the combat tracker advances to specials and broader elemental effects.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-080 - Water-family runes had no tactical combat identity
 - Status: Closed
 - Severity: S3

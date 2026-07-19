@@ -194,6 +194,12 @@
         combatRuntime.pruneExpiredEnemyStatusEffects(enemyState, currentTick);
     }
 
+    function listEnemyCombatStatusEffects(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.listActiveEnemyStatusEffects !== 'function') return [];
+        const effects = combatRuntime.listActiveEnemyStatusEffects(enemyState, currentTick);
+        return Array.isArray(effects) ? effects : [];
+    }
+
     function isTrainingDummyEnemy(enemyStateOrId) {
         const enemyId = typeof enemyStateOrId === 'string'
             ? enemyStateOrId
@@ -1335,6 +1341,7 @@
             camera,
             combatEnemyRenderersById,
             combatEnemyStateById,
+            getActiveStatusEffects: listEnemyCombatStatusEffects,
             isEnemyAlive,
             isEnemyPendingDefeat,
             playerState,
