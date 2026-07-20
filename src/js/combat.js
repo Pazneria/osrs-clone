@@ -189,6 +189,11 @@
         return Math.max(0, Math.floor(combatRuntime.getEnemyAttackCooldownPenalty(enemyState, currentTick) || 0));
     }
 
+    function getEnemyStatusEffectDefensePenalty(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.getEnemyDefensePenalty !== 'function') return 0;
+        return Math.max(0, Math.floor(combatRuntime.getEnemyDefensePenalty(enemyState, currentTick) || 0));
+    }
+
     function pruneEnemyCombatStatusEffects(enemyState) {
         if (!combatRuntime || typeof combatRuntime.pruneExpiredEnemyStatusEffects !== 'function') return;
         combatRuntime.pruneExpiredEnemyStatusEffects(enemyState, currentTick);
@@ -1102,7 +1107,8 @@
                 if (!isEnemyAlive(enemyState)) continue;
                 const enemySnapshot = getEnemyCombatSnapshot(enemyState);
                 if (!enemySnapshot) continue;
-                const landed = combatRuntime.rollOpposedHitCheck(attack.snapshot.attackValue, enemySnapshot.defenseValue);
+                const effectiveDefenseValue = Math.max(0, Math.floor(enemySnapshot.defenseValue) - getEnemyStatusEffectDefensePenalty(enemyState));
+                const landed = combatRuntime.rollOpposedHitCheck(attack.snapshot.attackValue, effectiveDefenseValue);
                 const damage = landed ? combatRuntime.rollDamage(attack.snapshot.maxHit) : 0;
                 results.push({
                     attackerKind: 'player',

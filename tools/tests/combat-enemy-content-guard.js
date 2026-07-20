@@ -590,13 +590,18 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-019B2B:/,
-  "combat status should keep intentional specials and broader elemental effects in the current focus slot"
+  /## Now\s*- \[x\] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage\./,
+  "combat status should mark the earth-rune Sundered slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /## Next\s*- \[ \] COMBAT-019B2B2: Add player-triggered special attacks and further elemental status effects beyond Chilled and Sundered\./,
+  "combat status should retain the next specials and elemental-effects focus"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Water-family rune hits now surface Chilled duration and its delayed-swing effect directly above the affected target \| Intentional special attacks and broader elemental effects beyond the completed feedback slice \| None \|/,
-  "skills index should reflect the completed Chilled feedback slice and next specials focus"
+  /\| Combat \| In Progress \| Water-family Chilled and earth-family Sundered now provide visible, typed elemental combat effects \| Player-triggered special attacks and further elemental effects \| None \|/,
+  "skills index should reflect the completed Sundered slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,

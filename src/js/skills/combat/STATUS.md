@@ -28,9 +28,10 @@
 - [x] COMBAT-019B2A: Active `Chilled` effects now appear above affected combat targets with their remaining duration and a concise tactical explanation.
 
 ## Now
-- [ ] COMBAT-019B2B: Add intentional special attacks and broader elemental status effects beyond the completed Chilled feedback slice.
+- [x] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage.
 
 ## Next
+- [ ] COMBAT-019B2B2: Add player-triggered special attacks and further elemental status effects beyond Chilled and Sundered.
 
 ## Later
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.

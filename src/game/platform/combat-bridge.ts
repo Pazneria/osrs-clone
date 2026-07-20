@@ -31,6 +31,7 @@ import {
   applyEnemyStatusEffect,
   clearEnemyStatusEffects,
   getEnemyAttackCooldownPenalty,
+  getEnemyDefensePenalty,
   listActiveEnemyStatusEffects,
   pruneExpiredEnemyStatusEffects
 } from "../combat/status-effects";
@@ -84,6 +85,7 @@ declare global {
       applyEnemyStatusEffect: typeof applyEnemyStatusEffect;
       clearEnemyStatusEffects: typeof clearEnemyStatusEffects;
       getEnemyAttackCooldownPenalty: typeof getEnemyAttackCooldownPenalty;
+      getEnemyDefensePenalty: typeof getEnemyDefensePenalty;
       listActiveEnemyStatusEffects: typeof listActiveEnemyStatusEffects;
       pruneExpiredEnemyStatusEffects: typeof pruneExpiredEnemyStatusEffects;
       isWithinSquareRange: typeof isWithinSquareRange;
@@ -297,6 +299,7 @@ export function exposeCombatBridge(): void {
     applyEnemyStatusEffect,
     clearEnemyStatusEffects,
     getEnemyAttackCooldownPenalty,
+    getEnemyDefensePenalty,
     listActiveEnemyStatusEffects,
     pruneExpiredEnemyStatusEffects,
     isWithinSquareRange,

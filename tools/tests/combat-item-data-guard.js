@@ -94,10 +94,12 @@ const MAGIC_RUNE_EXPECTED_AMMO = {
 };
 
 const MAGIC_RUNE_EXPECTED_ON_HIT_EFFECTS = {
-  water_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
-  steam_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
-  mud_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
-  mist_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+  water_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
+  steam_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
+  mud_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
+  mist_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
+  earth_rune: { effectId: "sundered", durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 },
+  dust_rune: { effectId: "sundered", durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 }
 };
 
 const ARMOR_ITEMS = [
@@ -196,6 +198,11 @@ for (const itemId of MAGIC_RUNE_ITEMS) {
       item.ammo.onHitEffect.enemyAttackCooldownPenalty,
       expectedEffect.enemyAttackCooldownPenalty,
       `${itemId} should keep the authored swing-delay penalty`
+    );
+    assert.strictEqual(
+      item.ammo.onHitEffect.enemyDefensePenalty,
+      expectedEffect.enemyDefensePenalty,
+      `${itemId} should keep the authored defence penalty`
     );
   } else {
     assert.ok(!item.ammo.onHitEffect, `${itemId} should not inherit a water-family effect profile`);

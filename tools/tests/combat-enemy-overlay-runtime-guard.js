@@ -119,6 +119,14 @@ function run() {
   assert(renderer.statusEffectEl.textContent === "Chilled 2t", "overlay should show the active Chilled duration");
   assert(renderer.statusEffectEl.style.display === "inline-block", "overlay should show active status effects alongside the target health bar");
   assert(renderer.statusEffectEl.title.includes("delayed by 1 tick"), "Chilled feedback should explain its combat effect");
+  assert(runtime.formatEnemyStatusEffect({ effectId: "sundered", remainingTicks: 3 }) === "Sundered 3t", "overlay should label active Sundered durations");
+  runtime.updateEnemyStatusEffects({
+    renderer,
+    enemyState,
+    getActiveStatusEffects: () => [{ effectId: "sundered", remainingTicks: 3, enemyDefensePenalty: 3 }]
+  });
+  assert(renderer.statusEffectEl.textContent === "Sundered 3t", "overlay should show the active Sundered duration");
+  assert(renderer.statusEffectEl.title.includes("defence reduced by 3"), "Sundered feedback should explain its defence reduction");
   assert(runtime.formatEnemyStatusEffect({ effectId: "unknown", remainingTicks: 2 }) === "", "overlay should ignore unknown effect ids");
 
   let matrixUpdated = false;

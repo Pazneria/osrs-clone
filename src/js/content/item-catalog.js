@@ -1795,7 +1795,8 @@
             profile.onHitEffect = {
                 effectId: options.onHitEffect.effectId,
                 durationTicks: options.onHitEffect.durationTicks,
-                enemyAttackCooldownPenalty: options.onHitEffect.enemyAttackCooldownPenalty
+                enemyAttackCooldownPenalty: options.onHitEffect.enemyAttackCooldownPenalty,
+                enemyDefensePenalty: options.onHitEffect.enemyDefensePenalty
             };
         }
         return profile;
@@ -1878,15 +1879,15 @@
 
         const magicRuneRows = {
             ember_rune: { ammoTier: 1, magicAccuracyBonus: 1, magicStrengthBonus: 2 },
-            water_rune: { ammoTier: 2, magicAccuracyBonus: 2, magicStrengthBonus: 3, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
-            earth_rune: { ammoTier: 3, magicAccuracyBonus: 4, magicStrengthBonus: 5 },
+            water_rune: { ammoTier: 2, magicAccuracyBonus: 2, magicStrengthBonus: 3, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
+            earth_rune: { ammoTier: 3, magicAccuracyBonus: 4, magicStrengthBonus: 5, onHitEffect: { effectId: 'sundered', durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 } },
             air_rune: { ammoTier: 4, magicAccuracyBonus: 7, magicStrengthBonus: 8 },
-            steam_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
+            steam_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
             smoke_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
             lava_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
-            mud_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
-            mist_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1 } },
-            dust_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 }
+            mud_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
+            mist_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
+            dust_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'sundered', durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 } }
         };
 
         const armorRows = {

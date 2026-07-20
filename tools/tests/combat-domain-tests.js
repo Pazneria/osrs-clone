@@ -366,7 +366,7 @@ function makeMagicRune(itemId, overrides = {}) {
           ammoTier: 2,
           magicAccuracyBonus: 2,
           magicStrengthBonus: 3,
-          onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+          onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 }
         }),
         amount: 1
       }
@@ -375,7 +375,7 @@ function makeMagicRune(itemId, overrides = {}) {
   });
   assert.deepStrictEqual(
     chilledSnapshot.onHitEffect,
-    { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
+    { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
     "magic snapshots should preserve the selected rune's canonical on-hit effect"
   );
 }
@@ -387,23 +387,49 @@ function makeMagicRune(itemId, overrides = {}) {
   };
   const effect = statusEffects.applyEnemyStatusEffect(
     enemyState,
-    { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 },
+    { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
     10
   );
   assert.deepStrictEqual(
     effect,
-    { effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1 },
+    { effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
     "chilled should report its applied duration and next-swing delay"
   );
   assert.strictEqual(enemyState.remainingAttackCooldown, 4, "chilled should delay an already-counting enemy swing by one tick");
   assert.strictEqual(statusEffects.getEnemyAttackCooldownPenalty(enemyState, 10), 1, "chilled should expose one tick of enemy swing penalty");
   assert.deepStrictEqual(
     statusEffects.listActiveEnemyStatusEffects(enemyState, 10),
-    [{ effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1 }],
+    [{ effectId: "chilled", remainingTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 }],
     "active enemy effects should remain inspectable through the typed combat source"
   );
   statusEffects.pruneExpiredEnemyStatusEffects(enemyState, 12);
   assert.deepStrictEqual(statusEffects.listActiveEnemyStatusEffects(enemyState, 12), [], "expired effects should not linger on enemy runtime state");
+}
+
+{
+  const enemyState = {
+    remainingAttackCooldown: 3,
+    statusEffects: statusEffects.createEnemyStatusEffects()
+  };
+  const effect = statusEffects.applyEnemyStatusEffect(
+    enemyState,
+    { effectId: "sundered", durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 },
+    10
+  );
+  assert.deepStrictEqual(
+    effect,
+    { effectId: "sundered", remainingTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 },
+    "Sundered should report its duration and defence penalty"
+  );
+  assert.strictEqual(enemyState.remainingAttackCooldown, 3, "Sundered should not alter enemy swing timing");
+  assert.strictEqual(statusEffects.getEnemyDefensePenalty(enemyState, 10), 3, "Sundered should expose its active enemy defence reduction");
+  assert.deepStrictEqual(
+    statusEffects.listActiveEnemyStatusEffects(enemyState, 10),
+    [{ effectId: "sundered", remainingTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 }],
+    "Sundered should remain inspectable through the typed combat source"
+  );
+  statusEffects.pruneExpiredEnemyStatusEffects(enemyState, 13);
+  assert.strictEqual(statusEffects.getEnemyDefensePenalty(enemyState, 13), 0, "expired Sundered should not reduce defence");
 }
 
 {

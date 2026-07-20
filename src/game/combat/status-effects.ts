@@ -13,6 +13,7 @@ export interface ActiveCombatStatusEffect {
   effectId: CombatStatusEffectId;
   remainingTicks: number;
   enemyAttackCooldownPenalty: number;
+  enemyDefensePenalty: number;
 }
 
 function clampInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {
@@ -24,12 +25,24 @@ function clampInteger(value: unknown, minimum: number, maximum: number, fallback
 export function cloneCombatOnHitEffectProfile(
   effect: CombatOnHitEffectProfile | null | undefined
 ): CombatOnHitEffectProfile | null {
-  if (!effect || effect.effectId !== "chilled") return null;
-  return {
-    effectId: "chilled",
-    durationTicks: clampInteger(effect.durationTicks, 1, 12, 2),
-    enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 1)
-  };
+  if (!effect) return null;
+  if (effect.effectId === "chilled") {
+    return {
+      effectId: "chilled",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 2),
+      enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 1),
+      enemyDefensePenalty: 0
+    };
+  }
+  if (effect.effectId === "sundered") {
+    return {
+      effectId: "sundered",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 3),
+      enemyAttackCooldownPenalty: 0,
+      enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 1, 12, 3)
+    };
+  }
+  return null;
 }
 
 export function createEnemyStatusEffects(): Partial<Record<CombatStatusEffectId, CombatStatusEffectState>> {
@@ -81,6 +94,12 @@ export function applyEnemyStatusEffect(
       existing && Number.isFinite(existing.enemyAttackCooldownPenalty)
         ? Math.max(0, Math.floor(existing.enemyAttackCooldownPenalty))
         : 0
+    ),
+    enemyDefensePenalty: Math.max(
+      normalizedEffect.enemyDefensePenalty,
+      existing && Number.isFinite(existing.enemyDefensePenalty)
+        ? Math.max(0, Math.floor(existing.enemyDefensePenalty))
+        : 0
     )
   };
   statusEffects[effectState.effectId] = effectState;
@@ -94,7 +113,8 @@ export function applyEnemyStatusEffect(
   return {
     effectId: effectState.effectId,
     remainingTicks: Math.max(0, effectState.expiresAtTick - tick),
-    enemyAttackCooldownPenalty: effectState.enemyAttackCooldownPenalty
+    enemyAttackCooldownPenalty: effectState.enemyAttackCooldownPenalty,
+    enemyDefensePenalty: effectState.enemyDefensePenalty
   };
 }
 
@@ -107,6 +127,18 @@ export function getEnemyAttackCooldownPenalty(
   const statusEffects = enemyState.statusEffects || {};
   return Object.values(statusEffects).reduce((total, effect) => (
     total + clampInteger(effect && effect.enemyAttackCooldownPenalty, 0, 4, 0)
+  ), 0);
+}
+
+export function getEnemyDefensePenalty(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): number {
+  if (!enemyState) return 0;
+  pruneExpiredEnemyStatusEffects(enemyState, currentTick);
+  const statusEffects = enemyState.statusEffects || {};
+  return Object.values(statusEffects).reduce((total, effect) => (
+    total + clampInteger(effect && effect.enemyDefensePenalty, 0, 12, 0)
   ), 0);
 }
 
@@ -123,7 +155,8 @@ export function listActiveEnemyStatusEffects(
     .map((effect) => ({
       effectId: effect.effectId,
       remainingTicks: Math.max(0, Math.floor(effect.expiresAtTick) - tick),
-      enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 0)
+      enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 0),
+      enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 0, 12, 0)
     }))
     .sort((left, right) => left.effectId.localeCompare(right.effectId));
 }

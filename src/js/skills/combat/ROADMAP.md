@@ -51,6 +51,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Style-aware combat build simulator | Complete |
 | Water-rune Chilled status-effect slice | Complete |
 | Chilled target-feedback slice | Complete |
+| Earth-rune Sundered status-effect slice | Complete |
 
 ## Data Contracts
 
@@ -70,6 +71,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Staffs expose explicit magic attack profiles with Magic level gates, projectile range, staff cadence, and staff-family rune requirements.
 - Elemental and combination rune stacks expose magic ammo profiles with compatible staff families plus tiered magic accuracy/strength bonuses.
 - Water, steam, mud, and mist runes also expose a typed `Chilled` on-hit profile so the water element has a first gameplay identity beyond projectile color.
+- Earth and dust runes expose a typed `Sundered` on-hit profile, reducing a damaged enemy's effective Defence by 3 for three ticks so later player attacks have a deliberate setup window.
 
 ### Enemies
 
@@ -124,6 +126,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Ammo-consuming magic attacks consume one selected rune on both hits and misses, choosing the strongest compatible rune stack from inventory.
 - A damaging hit from a selected water-family rune applies `Chilled` for two ticks. `Chilled` adds one tick to an already-counting enemy swing, or to the enemy's newly resolved next swing in a same-tick batch; it is cleared when that enemy returns home, dies, or respawns.
 - An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar, including the active duration and a tooltip that explains the delayed next swing. The overlay reads the typed status-effect surface each tick rather than owning duplicate status state.
+- A damaging earth/dust-rune hit applies `Sundered` for three ticks. `Sundered` lowers the enemy's effective Defence by 3 for subsequent player hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
+- An enemy affected by `Sundered` shows a target badge with duration and its Defence reduction, again derived from the typed status-effect surface.
 
 ### Enemy Behavior
 
@@ -469,7 +473,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Expand regional encounter coverage before layering ranged enemies, magic enemy packages, specials, or deeper formation logic on top.
+1. Keep player-triggered special attacks and any further elemental effects as separate, bounded slices on the typed status-effect contract.
 2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
 3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
 4. Revisit later-region anchors only after authored region context exists.

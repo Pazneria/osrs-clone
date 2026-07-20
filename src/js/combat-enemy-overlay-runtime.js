@@ -75,11 +75,23 @@
     }
 
     function formatEnemyStatusEffect(effect) {
-        if (!effect || effect.effectId !== 'chilled') return '';
+        if (!effect || (effect.effectId !== 'chilled' && effect.effectId !== 'sundered')) return '';
         const remainingTicks = Number.isFinite(effect.remainingTicks)
             ? Math.max(1, Math.floor(effect.remainingTicks))
             : 1;
-        return `Chilled ${remainingTicks}t`;
+        if (effect.effectId === 'chilled') return `Chilled ${remainingTicks}t`;
+        return `Sundered ${remainingTicks}t`;
+    }
+
+    function getEnemyStatusEffectTooltip(effect) {
+        if (!effect || effect.effectId === 'chilled') return effect ? 'Chilled: next enemy attack delayed by 1 tick.' : '';
+        if (effect.effectId === 'sundered') {
+            const defensePenalty = Number.isFinite(effect.enemyDefensePenalty)
+                ? Math.max(1, Math.floor(effect.enemyDefensePenalty))
+                : 3;
+            return `Sundered: enemy defence reduced by ${defensePenalty}.`;
+        }
+        return '';
     }
 
     function updateEnemyStatusEffects(options = {}) {
@@ -92,11 +104,12 @@
         const labels = (Array.isArray(effects) ? effects : [])
             .map(formatEnemyStatusEffect)
             .filter(Boolean);
+        const tooltips = (Array.isArray(effects) ? effects : [])
+            .map(getEnemyStatusEffectTooltip)
+            .filter(Boolean);
 
         renderer.statusEffectEl.textContent = labels.join(' · ');
-        renderer.statusEffectEl.title = labels.some((label) => label.startsWith('Chilled '))
-            ? 'Chilled: next enemy attack delayed by 1 tick.'
-            : '';
+        renderer.statusEffectEl.title = tooltips.join(' ');
         renderer.statusEffectEl.style.display = labels.length > 0 ? 'inline-block' : 'none';
     }
 
