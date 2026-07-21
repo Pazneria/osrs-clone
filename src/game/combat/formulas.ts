@@ -437,7 +437,10 @@ export function computePlayerCombatSnapshot(options: {
   return computePlayerMeleeCombatSnapshot(options);
 }
 
-export function computeEnemyMeleeCombatSnapshot(enemyType: EnemyTypeDefinition | null): EnemyCombatSnapshot {
+export function computeEnemyMeleeCombatSnapshot(
+  enemyType: EnemyTypeDefinition | null,
+  modifiers: { enemyAttackPenalty?: number } = {}
+): EnemyCombatSnapshot {
   if (!enemyType) {
     return {
       attackValue: 0,
@@ -448,8 +451,9 @@ export function computeEnemyMeleeCombatSnapshot(enemyType: EnemyTypeDefinition |
     };
   }
 
+  const baseAttackValue = clampFloor(enemyType.stats.attack, 0, 0) + clampFloor(enemyType.bonuses.meleeAccuracyBonus, 0, 0);
   return {
-    attackValue: clampFloor(enemyType.stats.attack, 0, 0) + clampFloor(enemyType.bonuses.meleeAccuracyBonus, 0, 0),
+    attackValue: Math.max(0, baseAttackValue - clampFloor(modifiers.enemyAttackPenalty, 0, 0)),
     defenseValue: clampFloor(enemyType.stats.defense, 0, 0) + clampFloor(enemyType.bonuses.meleeDefenseBonus, 0, 0),
     maxHit: clampFloor(enemyType.bonuses.enemyMaxHit, 0, 0),
     attackRange: clampFloor(enemyType.attackProfile.range, 1, 1),

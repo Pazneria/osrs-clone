@@ -95,6 +95,7 @@ const MAGIC_RUNE_EXPECTED_AMMO = {
 
 const MAGIC_RUNE_EXPECTED_ON_HIT_EFFECTS = {
   water_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
+  air_rune: { effectId: "disoriented", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
   steam_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   mud_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   mist_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
@@ -204,6 +205,13 @@ for (const itemId of MAGIC_RUNE_ITEMS) {
       expectedEffect.enemyDefensePenalty,
       `${itemId} should keep the authored defence penalty`
     );
+    if (Number.isFinite(expectedEffect.enemyAttackPenalty)) {
+      assert.strictEqual(
+        item.ammo.onHitEffect.enemyAttackPenalty,
+        expectedEffect.enemyAttackPenalty,
+        `${itemId} should keep the authored attack penalty`
+      );
+    }
   } else {
     assert.ok(!item.ammo.onHitEffect, `${itemId} should not inherit a water-family effect profile`);
   }

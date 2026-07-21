@@ -171,7 +171,9 @@
 
     function getEnemyCombatSnapshot(enemyState) {
         if (!combatRuntime || typeof combatRuntime.computeEnemyMeleeCombatSnapshot !== 'function') return null;
-        return combatRuntime.computeEnemyMeleeCombatSnapshot(getEnemyDefinition(enemyState.enemyId));
+        return combatRuntime.computeEnemyMeleeCombatSnapshot(getEnemyDefinition(enemyState.enemyId), {
+            enemyAttackPenalty: getEnemyStatusEffectAttackPenalty(enemyState)
+        });
     }
 
     function applyEnemyOnHitEffect(enemyState, effectProfile) {
@@ -192,6 +194,11 @@
     function getEnemyStatusEffectDefensePenalty(enemyState) {
         if (!combatRuntime || typeof combatRuntime.getEnemyDefensePenalty !== 'function') return 0;
         return Math.max(0, Math.floor(combatRuntime.getEnemyDefensePenalty(enemyState, currentTick) || 0));
+    }
+
+    function getEnemyStatusEffectAttackPenalty(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.getEnemyAttackPenalty !== 'function') return 0;
+        return Math.max(0, Math.floor(combatRuntime.getEnemyAttackPenalty(enemyState, currentTick) || 0));
     }
 
     function pruneEnemyCombatStatusEffects(enemyState) {

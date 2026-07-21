@@ -2,7 +2,7 @@ import type { Point3 } from "./world";
 
 export type CombatStyleFamily = "melee" | "ranged" | "magic";
 export type CombatDamageType = "melee" | "ranged" | "magic";
-export type CombatStatusEffectId = "chilled" | "sundered";
+export type CombatStatusEffectId = "chilled" | "sundered" | "disoriented";
 export type MeleeStyleId = "attack" | "strength" | "defense";
 export type PlayerCombatStyleId = MeleeStyleId | "ranged" | "magic";
 export type CombatTargetKind = "enemy";
@@ -67,6 +67,7 @@ export interface CombatOnHitEffectProfile {
   durationTicks: number;
   enemyAttackCooldownPenalty: number;
   enemyDefensePenalty: number;
+  enemyAttackPenalty?: number;
 }
 
 export interface CombatStatusEffectState {
@@ -74,6 +75,7 @@ export interface CombatStatusEffectState {
   expiresAtTick: number;
   enemyAttackCooldownPenalty: number;
   enemyDefensePenalty: number;
+  enemyAttackPenalty?: number;
 }
 
 export interface CombatEnemyAppearance {

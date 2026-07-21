@@ -75,11 +75,12 @@
     }
 
     function formatEnemyStatusEffect(effect) {
-        if (!effect || (effect.effectId !== 'chilled' && effect.effectId !== 'sundered')) return '';
+        if (!effect || (effect.effectId !== 'chilled' && effect.effectId !== 'sundered' && effect.effectId !== 'disoriented')) return '';
         const remainingTicks = Number.isFinite(effect.remainingTicks)
             ? Math.max(1, Math.floor(effect.remainingTicks))
             : 1;
         if (effect.effectId === 'chilled') return `Chilled ${remainingTicks}t`;
+        if (effect.effectId === 'disoriented') return `Disoriented ${remainingTicks}t`;
         return `Sundered ${remainingTicks}t`;
     }
 
@@ -90,6 +91,12 @@
                 ? Math.max(1, Math.floor(effect.enemyDefensePenalty))
                 : 3;
             return `Sundered: enemy defence reduced by ${defensePenalty}.`;
+        }
+        if (effect.effectId === 'disoriented') {
+            const attackPenalty = Number.isFinite(effect.enemyAttackPenalty)
+                ? Math.max(1, Math.floor(effect.enemyAttackPenalty))
+                : 3;
+            return `Disoriented: enemy accuracy reduced by ${attackPenalty}.`;
         }
         return '';
     }

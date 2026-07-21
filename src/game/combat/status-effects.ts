@@ -14,6 +14,7 @@ export interface ActiveCombatStatusEffect {
   remainingTicks: number;
   enemyAttackCooldownPenalty: number;
   enemyDefensePenalty: number;
+  enemyAttackPenalty?: number;
 }
 
 function clampInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {
@@ -40,6 +41,15 @@ export function cloneCombatOnHitEffectProfile(
       durationTicks: clampInteger(effect.durationTicks, 1, 12, 3),
       enemyAttackCooldownPenalty: 0,
       enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 1, 12, 3)
+    };
+  }
+  if (effect.effectId === "disoriented") {
+    return {
+      effectId: "disoriented",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 2),
+      enemyAttackCooldownPenalty: 0,
+      enemyDefensePenalty: 0,
+      enemyAttackPenalty: clampInteger(effect.enemyAttackPenalty, 1, 12, 3)
     };
   }
   return null;
@@ -83,6 +93,12 @@ export function applyEnemyStatusEffect(
   pruneExpiredEnemyStatusEffects(enemyState, tick);
   const statusEffects = enemyState.statusEffects || createEnemyStatusEffects();
   const existing = statusEffects[normalizedEffect.effectId];
+  const enemyAttackPenalty = Math.max(
+    normalizedEffect.enemyAttackPenalty || 0,
+    existing && Number.isFinite(existing.enemyAttackPenalty)
+      ? Math.max(0, Math.floor(existing.enemyAttackPenalty || 0))
+      : 0
+  );
   const effectState: CombatStatusEffectState = {
     effectId: normalizedEffect.effectId,
     expiresAtTick: Math.max(
@@ -102,6 +118,7 @@ export function applyEnemyStatusEffect(
         : 0
     )
   };
+  if (enemyAttackPenalty > 0) effectState.enemyAttackPenalty = enemyAttackPenalty;
   statusEffects[effectState.effectId] = effectState;
   enemyState.statusEffects = statusEffects;
 
@@ -110,12 +127,14 @@ export function applyEnemyStatusEffect(
     enemyState.remainingAttackCooldown = currentCooldown + effectState.enemyAttackCooldownPenalty;
   }
 
-  return {
+  const activeEffect: ActiveCombatStatusEffect = {
     effectId: effectState.effectId,
     remainingTicks: Math.max(0, effectState.expiresAtTick - tick),
     enemyAttackCooldownPenalty: effectState.enemyAttackCooldownPenalty,
     enemyDefensePenalty: effectState.enemyDefensePenalty
   };
+  if (enemyAttackPenalty > 0) activeEffect.enemyAttackPenalty = enemyAttackPenalty;
+  return activeEffect;
 }
 
 export function getEnemyAttackCooldownPenalty(
@@ -142,6 +161,18 @@ export function getEnemyDefensePenalty(
   ), 0);
 }
 
+export function getEnemyAttackPenalty(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): number {
+  if (!enemyState) return 0;
+  pruneExpiredEnemyStatusEffects(enemyState, currentTick);
+  const statusEffects = enemyState.statusEffects || {};
+  return Object.values(statusEffects).reduce((total, effect) => (
+    total + clampInteger(effect && effect.enemyAttackPenalty, 0, 12, 0)
+  ), 0);
+}
+
 export function listActiveEnemyStatusEffects(
   enemyState: StatusEffectCarrier | null | undefined,
   currentTick: number
@@ -152,11 +183,16 @@ export function listActiveEnemyStatusEffects(
   const statusEffects = enemyState.statusEffects || {};
   return Object.values(statusEffects)
     .filter((effect): effect is CombatStatusEffectState => !!effect && effect.expiresAtTick > tick)
-    .map((effect) => ({
-      effectId: effect.effectId,
-      remainingTicks: Math.max(0, Math.floor(effect.expiresAtTick) - tick),
-      enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 0),
-      enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 0, 12, 0)
-    }))
+    .map((effect) => {
+      const enemyAttackPenalty = clampInteger(effect.enemyAttackPenalty, 0, 12, 0);
+      const activeEffect: ActiveCombatStatusEffect = {
+        effectId: effect.effectId,
+        remainingTicks: Math.max(0, Math.floor(effect.expiresAtTick) - tick),
+        enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 0),
+        enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 0, 12, 0)
+      };
+      if (enemyAttackPenalty > 0) activeEffect.enemyAttackPenalty = enemyAttackPenalty;
+      return activeEffect;
+    })
     .sort((left, right) => left.effectId.localeCompare(right.effectId));
 }

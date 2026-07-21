@@ -433,6 +433,32 @@ function makeMagicRune(itemId, overrides = {}) {
 }
 
 {
+  const enemyState = {
+    remainingAttackCooldown: 3,
+    statusEffects: statusEffects.createEnemyStatusEffects()
+  };
+  const effect = statusEffects.applyEnemyStatusEffect(
+    enemyState,
+    { effectId: "disoriented", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
+    10
+  );
+  assert.deepStrictEqual(
+    effect,
+    { effectId: "disoriented", remainingTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
+    "Disoriented should report its duration and enemy accuracy penalty"
+  );
+  assert.strictEqual(enemyState.remainingAttackCooldown, 3, "Disoriented should not alter enemy swing timing");
+  assert.strictEqual(statusEffects.getEnemyAttackPenalty(enemyState, 10), 3, "Disoriented should expose its active enemy accuracy reduction");
+  assert.deepStrictEqual(
+    statusEffects.listActiveEnemyStatusEffects(enemyState, 10),
+    [{ effectId: "disoriented", remainingTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 }],
+    "Disoriented should remain inspectable through the typed combat source"
+  );
+  statusEffects.pruneExpiredEnemyStatusEffects(enemyState, 12);
+  assert.strictEqual(statusEffects.getEnemyAttackPenalty(enemyState, 12), 0, "expired Disoriented should not reduce enemy accuracy");
+}
+
+{
   const enemySnapshot = combatFormulas.computeEnemyMeleeCombatSnapshot(combatContent.getEnemyTypeDefinition("enemy_goblin_grunt"));
   assert.deepStrictEqual(
     enemySnapshot,
@@ -445,6 +471,12 @@ function makeMagicRune(itemId, overrides = {}) {
     },
     "enemy melee snapshots should derive from the authored enemy data"
   );
+  const disorientedSnapshot = combatFormulas.computeEnemyMeleeCombatSnapshot(
+    combatContent.getEnemyTypeDefinition("enemy_goblin_grunt"),
+    { enemyAttackPenalty: 3 }
+  );
+  assert.strictEqual(disorientedSnapshot.attackValue, 3, "enemy snapshots should apply active Disoriented attack penalties");
+  assert.strictEqual(disorientedSnapshot.defenseValue, enemySnapshot.defenseValue, "Disoriented should not reduce enemy defence");
 }
 
 {
@@ -480,6 +512,7 @@ function makeMagicRune(itemId, overrides = {}) {
   assert.strictEqual(window.CombatRuntime.computePlayerMaxHitpoints({ hitpoints: { xp: 0, level: 13 } }), 13, "combat bridge should expose player max hitpoints");
   assert.strictEqual(typeof window.CombatRuntime.computePlayerMagicCombatSnapshot, "function", "combat bridge should expose magic player snapshots");
   assert.strictEqual(typeof window.CombatRuntime.applyEnemyStatusEffect, "function", "combat bridge should expose typed enemy status effects");
+  assert.strictEqual(typeof window.CombatRuntime.getEnemyAttackPenalty, "function", "combat bridge should expose active enemy attack penalties");
   assert.deepStrictEqual(
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),
     { currentHitpoints: 1, dealt: 5 },

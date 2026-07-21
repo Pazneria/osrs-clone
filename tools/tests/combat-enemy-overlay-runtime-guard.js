@@ -127,6 +127,14 @@ function run() {
   });
   assert(renderer.statusEffectEl.textContent === "Sundered 3t", "overlay should show the active Sundered duration");
   assert(renderer.statusEffectEl.title.includes("defence reduced by 3"), "Sundered feedback should explain its defence reduction");
+  assert(runtime.formatEnemyStatusEffect({ effectId: "disoriented", remainingTicks: 2 }) === "Disoriented 2t", "overlay should label active Disoriented durations");
+  runtime.updateEnemyStatusEffects({
+    renderer,
+    enemyState,
+    getActiveStatusEffects: () => [{ effectId: "disoriented", remainingTicks: 2, enemyAttackPenalty: 3 }]
+  });
+  assert(renderer.statusEffectEl.textContent === "Disoriented 2t", "overlay should show the active Disoriented duration");
+  assert(renderer.statusEffectEl.title.includes("accuracy reduced by 3"), "Disoriented feedback should explain its accuracy reduction");
   assert(runtime.formatEnemyStatusEffect({ effectId: "unknown", remainingTicks: 2 }) === "", "overlay should ignore unknown effect ids");
 
   let matrixUpdated = false;
