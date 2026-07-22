@@ -2006,6 +2006,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-082 - Combat tracker omitted air-rune Disoriented effect
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/game/contracts/combat.ts`, `src/game/combat/status-effects.ts`, `src/game/combat/formulas.ts`, `src/game/platform/combat-bridge.ts`, `src/js/combat.js`, `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-item-data-guard.js`, `tools/tests/combat-enemy-overlay-runtime-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Review the active combat tracker and generated runtime item catalog after the air-rune combat effect implementation.
+  2. Equip a staff with air runes and land a damaging cast on an enemy.
+  3. Compare the typed status effect, target badge, item mirror, and combat tracker state.
+- Expected: Air-rune `Disoriented` is published through the generated item mirror and recorded as a completed elemental combat slice, while special attacks remain the next bounded milestone.
+- Actual: Air rune hits now apply typed `Disoriented` for two ticks, lowering enemy Attack by 3 with target feedback, but the generated item mirror and combat tracker still omitted that shipped effect.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Confirm the authored air-rune effect, runtime behavior, target feedback, and focused coverage before changing tracker state.
+  2. Regenerate the runtime item mirror from canonical item definitions rather than patching generated content directly.
+  3. Advance the combat status, roadmap, shared index, and docs guard while retaining player-triggered special attacks as the next bounded slice.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Regenerated `content/items/runtime-item-catalog.json` from `src/js/content/item-catalog.js`, publishing the air-rune `Disoriented` profile and previously unsynced elemental-effect fields.
+  - Updated the combat status, roadmap, and skills index to record the completed air-rune slice and leave player-triggered special attacks plus later elemental effects as the next focus.
+  - Extended the combat content guard so the tracker and roadmap contract cannot omit the shipped air-rune effect again.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-081 - Chilled effect had no player-facing target feedback
 - Status: Closed
 - Severity: S3

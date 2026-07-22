@@ -590,18 +590,23 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[x\] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage\./,
+  /- \[x\] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage\./,
   "combat status should mark the earth-rune Sundered slice complete"
 );
 assertRegex(
   combatStatusSource,
-  /## Next\s*- \[ \] COMBAT-019B2B2: Add player-triggered special attacks and further elemental status effects beyond Chilled and Sundered\./,
+  /## Now\s*- \[x\] COMBAT-019B2B2: Air rune hits now apply typed `Disoriented` for two ticks, reducing enemy attack accuracy by 3 with live target feedback and focused runtime coverage\./,
+  "combat status should mark the air-rune Disoriented slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /## Next\s*- \[ \] COMBAT-019B2B3: Add player-triggered special attacks and later elemental status effects beyond Chilled, Sundered, and Disoriented\./,
   "combat status should retain the next specials and elemental-effects focus"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Water-family Chilled and earth-family Sundered now provide visible, typed elemental combat effects \| Player-triggered special attacks and further elemental effects \| None \|/,
-  "skills index should reflect the completed Sundered slice and next specials focus"
+  /\| Combat \| In Progress \| Water-family Chilled, earth-family Sundered, and air-rune Disoriented now provide visible, typed elemental combat effects \| Player-triggered special attacks and later elemental effects \| None \|/,
+  "skills index should reflect the completed Disoriented slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,
@@ -627,6 +632,21 @@ assertRegex(
   combatRoadmapSource,
   /\| Water-rune Chilled status-effect slice \| Complete \|/,
   "combat roadmap should mark the water-rune status-effect slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Earth-rune Sundered status-effect slice \| Complete \|/,
+  "combat roadmap should mark the earth-rune Sundered slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Air-rune Disoriented status-effect slice \| Complete \|/,
+  "combat roadmap should mark the air-rune Disoriented slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Air runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
+  "combat roadmap should document the air-rune Disoriented contract"
 );
 assertRegex(
   combatRoadmapSource,

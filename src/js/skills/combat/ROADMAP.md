@@ -52,6 +52,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Water-rune Chilled status-effect slice | Complete |
 | Chilled target-feedback slice | Complete |
 | Earth-rune Sundered status-effect slice | Complete |
+| Air-rune Disoriented status-effect slice | Complete |
 
 ## Data Contracts
 
@@ -72,6 +73,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Elemental and combination rune stacks expose magic ammo profiles with compatible staff families plus tiered magic accuracy/strength bonuses.
 - Water, steam, mud, and mist runes also expose a typed `Chilled` on-hit profile so the water element has a first gameplay identity beyond projectile color.
 - Earth and dust runes expose a typed `Sundered` on-hit profile, reducing a damaged enemy's effective Defence by 3 for three ticks so later player attacks have a deliberate setup window.
+- Air runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing.
 
 ### Enemies
 
@@ -128,6 +130,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar, including the active duration and a tooltip that explains the delayed next swing. The overlay reads the typed status-effect surface each tick rather than owning duplicate status state.
 - A damaging earth/dust-rune hit applies `Sundered` for three ticks. `Sundered` lowers the enemy's effective Defence by 3 for subsequent player hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
 - An enemy affected by `Sundered` shows a target badge with duration and its Defence reduction, again derived from the typed status-effect surface.
+- A damaging air-rune hit applies `Disoriented` for two ticks. `Disoriented` lowers the enemy's effective Attack by 3 for subsequent enemy hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
+- An enemy affected by `Disoriented` shows a target badge with duration and its Attack reduction, again derived from the typed status-effect surface.
 
 ### Enemy Behavior
 

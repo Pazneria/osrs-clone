@@ -26,12 +26,13 @@
 - [x] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo/rune-aware deterministic simulator summaries.
 - [x] COMBAT-019B1: Water-family rune hits now apply the typed `Chilled` status effect, delaying an enemy's next swing by one tick with reset/respawn-safe runtime state and focused domain/runtime coverage.
 - [x] COMBAT-019B2A: Active `Chilled` effects now appear above affected combat targets with their remaining duration and a concise tactical explanation.
-
-## Now
 - [x] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage.
 
+## Now
+- [x] COMBAT-019B2B2: Air rune hits now apply typed `Disoriented` for two ticks, reducing enemy attack accuracy by 3 with live target feedback and focused runtime coverage.
+
 ## Next
-- [ ] COMBAT-019B2B2: Add player-triggered special attacks and further elemental status effects beyond Chilled and Sundered.
+- [ ] COMBAT-019B2B3: Add player-triggered special attacks and later elemental status effects beyond Chilled, Sundered, and Disoriented.
 
 ## Later
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.
