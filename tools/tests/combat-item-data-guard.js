@@ -96,6 +96,7 @@ const MAGIC_RUNE_EXPECTED_AMMO = {
 const MAGIC_RUNE_EXPECTED_ON_HIT_EFFECTS = {
   water_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   air_rune: { effectId: "disoriented", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
+  lava_rune: { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 },
   steam_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   mud_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   mist_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
@@ -210,6 +211,13 @@ for (const itemId of MAGIC_RUNE_ITEMS) {
         item.ammo.onHitEffect.enemyAttackPenalty,
         expectedEffect.enemyAttackPenalty,
         `${itemId} should keep the authored attack penalty`
+      );
+    }
+    if (Number.isFinite(expectedEffect.periodicDamage)) {
+      assert.strictEqual(
+        item.ammo.onHitEffect.periodicDamage,
+        expectedEffect.periodicDamage,
+        `${itemId} should keep the authored periodic damage`
       );
     }
   } else {

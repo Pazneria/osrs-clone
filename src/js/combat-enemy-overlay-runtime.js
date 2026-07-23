@@ -75,12 +75,13 @@
     }
 
     function formatEnemyStatusEffect(effect) {
-        if (!effect || (effect.effectId !== 'chilled' && effect.effectId !== 'sundered' && effect.effectId !== 'disoriented')) return '';
+        if (!effect || (effect.effectId !== 'chilled' && effect.effectId !== 'sundered' && effect.effectId !== 'disoriented' && effect.effectId !== 'scorched')) return '';
         const remainingTicks = Number.isFinite(effect.remainingTicks)
             ? Math.max(1, Math.floor(effect.remainingTicks))
             : 1;
         if (effect.effectId === 'chilled') return `Chilled ${remainingTicks}t`;
         if (effect.effectId === 'disoriented') return `Disoriented ${remainingTicks}t`;
+        if (effect.effectId === 'scorched') return `Scorched ${remainingTicks}t`;
         return `Sundered ${remainingTicks}t`;
     }
 
@@ -97,6 +98,12 @@
                 ? Math.max(1, Math.floor(effect.enemyAttackPenalty))
                 : 3;
             return `Disoriented: enemy accuracy reduced by ${attackPenalty}.`;
+        }
+        if (effect.effectId === 'scorched') {
+            const periodicDamage = Number.isFinite(effect.periodicDamage)
+                ? Math.max(1, Math.floor(effect.periodicDamage))
+                : 1;
+            return `Scorched: burns for ${periodicDamage} damage each tick.`;
         }
         return '';
     }
@@ -118,6 +125,10 @@
         renderer.statusEffectEl.textContent = labels.join(' · ');
         renderer.statusEffectEl.title = tooltips.join(' ');
         renderer.statusEffectEl.style.display = labels.length > 0 ? 'inline-block' : 'none';
+        const hasScorched = (Array.isArray(effects) ? effects : []).some((effect) => effect && effect.effectId === 'scorched');
+        renderer.statusEffectEl.style.borderColor = hasScorched ? 'rgba(255, 167, 89, 0.88)' : 'rgba(142, 219, 255, 0.8)';
+        renderer.statusEffectEl.style.background = hasScorched ? 'rgba(91, 37, 18, 0.92)' : 'rgba(16, 54, 81, 0.92)';
+        renderer.statusEffectEl.style.color = hasScorched ? '#ffd0a3' : '#c7f0ff';
     }
 
     function updateEnemyHitpointsBar(options = {}) {

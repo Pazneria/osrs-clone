@@ -181,6 +181,12 @@
         return combatRuntime.applyEnemyStatusEffect(enemyState, effectProfile || null, currentTick);
     }
 
+    function consumeEnemyStatusEffectPeriodicDamage(enemyState) {
+        if (!combatRuntime || typeof combatRuntime.consumeEnemyStatusEffectPeriodicDamage !== 'function') return [];
+        const results = combatRuntime.consumeEnemyStatusEffectPeriodicDamage(enemyState, currentTick);
+        return Array.isArray(results) ? results : [];
+    }
+
     function clearEnemyCombatStatusEffects(enemyState) {
         if (!combatRuntime || typeof combatRuntime.clearEnemyStatusEffects !== 'function') return;
         combatRuntime.clearEnemyStatusEffects(enemyState);
@@ -923,6 +929,34 @@
         return 'attack';
     }
 
+    function scheduleEnemyPendingDefeat(enemyState) {
+        if (!enemyState || Number.isFinite(enemyState.pendingDefeatAtTick)) return;
+        enemyState.pendingDefeatAtTick = currentTick;
+        enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);
+        enemyState.facingYaw = enemyState.pendingDefeatFacingYaw;
+        enemyState.lockedTargetId = null;
+        enemyState.remainingAttackCooldown = 0;
+        enemyState.lastDamagerId = PLAYER_TARGET_ID;
+    }
+
+    function applyEnemyStatusEffectPeriodicDamage(enemyState) {
+        if (!enemyState || !isEnemyAlive(enemyState)) return 0;
+        const effectDamage = consumeEnemyStatusEffectPeriodicDamage(enemyState);
+        const totalDamage = effectDamage.reduce((total, entry) => (
+            total + (Number.isFinite(entry && entry.damage) ? Math.max(0, Math.floor(entry.damage)) : 0)
+        ), 0);
+        if (totalDamage <= 0) return 0;
+        enemyState.currentHealth = Math.max(0, enemyState.currentHealth - totalDamage);
+        enemyState.hitReactionTriggerAt = Date.now();
+        if (typeof spawnHitsplat === 'function') spawnHitsplat(totalDamage, enemyState.x, enemyState.y);
+        if (enemyState.lastDamagerId === PLAYER_TARGET_ID && typeof addSkillXp === 'function') {
+            addSkillXp('magic', totalDamage * 4);
+            addSkillXp('hitpoints', totalDamage);
+        }
+        if (enemyState.currentHealth <= 0) scheduleEnemyPendingDefeat(enemyState);
+        return totalDamage;
+    }
+
     function consumePlayerCombatAmmo(attackResult) {
         if (!attackResult || !attackResult.consumesAmmo) return false;
         if (typeof attackResult.ammoEquipmentSlot === 'string' && attackResult.ammoEquipmentSlot) {
@@ -1205,13 +1239,8 @@
                     if (shouldSetOpeningCooldown) {
                         enemyState.remainingAttackCooldown = 1 + getEnemyStatusEffectCooldownPenalty(enemyState);
                     }
-                } else if (!Number.isFinite(enemyState.pendingDefeatAtTick)) {
-                    enemyState.pendingDefeatAtTick = currentTick;
-                    enemyState.pendingDefeatFacingYaw = captureEnemyPendingDefeatFacing(enemyState);
-                    enemyState.facingYaw = enemyState.pendingDefeatFacingYaw;
-                    enemyState.lockedTargetId = null;
-                    enemyState.remainingAttackCooldown = 0;
-                    enemyState.lastDamagerId = PLAYER_TARGET_ID;
+                } else {
+                    scheduleEnemyPendingDefeat(enemyState);
                 }
             } else {
                 const enemyState = getCombatEnemyState(result.attackerId);
@@ -1300,6 +1329,8 @@
                 continue;
             }
             if (isEnemyAlive(enemyState)) {
+                applyEnemyStatusEffectPeriodicDamage(enemyState);
+                if (isEnemyPendingDefeat(enemyState)) continue;
                 pruneEnemyCombatStatusEffects(enemyState);
                 enemyState.remainingAttackCooldown = combatRuntime.decrementCooldown(enemyState.remainingAttackCooldown || 0);
             }

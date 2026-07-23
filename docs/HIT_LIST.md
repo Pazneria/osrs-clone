@@ -2006,6 +2006,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-083 - Lava runes lacked a gameplay identity beyond projectile color
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/game/contracts/combat.ts`, `src/game/combat/status-effects.ts`, `src/game/platform/combat-bridge.ts`, `src/js/combat.js`, `src/js/combat-enemy-overlay-runtime.js`, `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-runtime-tests.js`, `tools/tests/combat-item-data-guard.js`, `tools/tests/combat-enemy-overlay-runtime-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Equip a staff with lava runes and land a damaging cast on an enemy.
+  2. Advance two combat ticks while keeping the enemy alive.
+  3. Inspect the target health bar, XP awards, and status cleanup on defeat or reset.
+- Expected: A damaging lava-rune cast applies a visible, bounded burn that deals one damage on each of the next two ticks, with no extra rune consumption.
+- Actual: Lava rune attacks only changed projectile color and numeric magic bonuses; there was no typed persistent burn lifecycle or target feedback.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Extend the typed on-hit/status contract with a bounded periodic-damage field instead of adding a lava-only legacy timer.
+  2. Resolve periodic status damage from the existing combat tick and expose only that typed behavior through `CombatRuntime`.
+  3. Author the lava-rune profile canonically, sync its generated mirror, add target feedback, and lock the tracker with focused tests.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Lava runes now apply `Scorched` for two later combat ticks; each tick deals one burn damage before attack resolution and uses the existing player-owned Magic/Hitpoints XP path.
+  - The typed status module owns expiry and same-tick idempotency, while `combat.js` only applies the returned damage to the live enemy lifecycle.
+  - The amber target badge, canonical item profile, generated mirror, guards, and combat tracker all publish the completed bounded slice.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-082 - Combat tracker omitted air-rune Disoriented effect
 - Status: Closed
 - Severity: S3

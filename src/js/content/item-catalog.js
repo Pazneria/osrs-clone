@@ -1797,7 +1797,8 @@
                 durationTicks: options.onHitEffect.durationTicks,
                 enemyAttackCooldownPenalty: options.onHitEffect.enemyAttackCooldownPenalty,
                 enemyDefensePenalty: options.onHitEffect.enemyDefensePenalty,
-                enemyAttackPenalty: options.onHitEffect.enemyAttackPenalty
+                enemyAttackPenalty: options.onHitEffect.enemyAttackPenalty,
+                periodicDamage: options.onHitEffect.periodicDamage
             };
         }
         return profile;
@@ -1885,7 +1886,7 @@
             air_rune: { ammoTier: 4, magicAccuracyBonus: 7, magicStrengthBonus: 8, onHitEffect: { effectId: 'disoriented', durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 } },
             steam_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
             smoke_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
-            lava_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12 },
+            lava_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'scorched', durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 } },
             mud_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
             mist_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'chilled', durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 } },
             dust_rune: { ammoTier: 5, magicAccuracyBonus: 10, magicStrengthBonus: 12, onHitEffect: { effectId: 'sundered', durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 } }

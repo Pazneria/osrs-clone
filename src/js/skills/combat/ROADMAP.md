@@ -53,6 +53,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Chilled target-feedback slice | Complete |
 | Earth-rune Sundered status-effect slice | Complete |
 | Air-rune Disoriented status-effect slice | Complete |
+| Lava-rune Scorched status-effect slice | Complete |
 
 ## Data Contracts
 
@@ -74,6 +75,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Water, steam, mud, and mist runes also expose a typed `Chilled` on-hit profile so the water element has a first gameplay identity beyond projectile color.
 - Earth and dust runes expose a typed `Sundered` on-hit profile, reducing a damaged enemy's effective Defence by 3 for three ticks so later player attacks have a deliberate setup window.
 - Air runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing.
+- Lava runes expose a typed `Scorched` on-hit profile, dealing one burn damage on each of the next two combat ticks without consuming more runes or duplicating the initial hit.
 
 ### Enemies
 
@@ -132,6 +134,8 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - An enemy affected by `Sundered` shows a target badge with duration and its Defence reduction, again derived from the typed status-effect surface.
 - A damaging air-rune hit applies `Disoriented` for two ticks. `Disoriented` lowers the enemy's effective Attack by 3 for subsequent enemy hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
 - An enemy affected by `Disoriented` shows a target badge with duration and its Attack reduction, again derived from the typed status-effect surface.
+- A damaging lava-rune hit applies `Scorched` for two ticks. `Scorched` resolves one damage before combat actions on each later active tick, awards Magic and Hitpoints XP through the same player-owned damage path, and is cleared on home reset, death, or respawn.
+- An enemy affected by `Scorched` shows an amber target badge with duration and its burn-damage tooltip, derived from the typed status-effect surface.
 
 ### Enemy Behavior
 
@@ -438,7 +442,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - formation logic or global encounter-wide target switching beyond local same-group ally assist
 - safe-spot exception systems
 - ranged enemy packages and magic enemy packages
-- player-triggered special attacks, additional elemental status effects, or multi-phase enemies
+- player-triggered special attacks, remaining elemental status effects, or multi-phase enemies
 - multi-tile enemies unless separately specified later
 - nested/global loot-table systems
 - final stack-size or tertiary-drop systems
@@ -477,7 +481,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Keep player-triggered special attacks and any further elemental effects as separate, bounded slices on the typed status-effect contract.
+1. Keep player-triggered special attacks and any further elemental effects as separate, bounded slices on the typed status-effect contract; the current next slice is player-triggered specials.
 2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
 3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
 4. Revisit later-region anchors only after authored region context exists.

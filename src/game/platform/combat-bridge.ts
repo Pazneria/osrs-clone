@@ -30,6 +30,7 @@ import {
 import {
   applyEnemyStatusEffect,
   clearEnemyStatusEffects,
+  consumeEnemyStatusEffectPeriodicDamage,
   getEnemyAttackPenalty,
   getEnemyAttackCooldownPenalty,
   getEnemyDefensePenalty,
@@ -85,6 +86,7 @@ declare global {
       rollDamage: typeof rollDamage;
       applyEnemyStatusEffect: typeof applyEnemyStatusEffect;
       clearEnemyStatusEffects: typeof clearEnemyStatusEffects;
+      consumeEnemyStatusEffectPeriodicDamage: typeof consumeEnemyStatusEffectPeriodicDamage;
       getEnemyAttackPenalty: typeof getEnemyAttackPenalty;
       getEnemyAttackCooldownPenalty: typeof getEnemyAttackCooldownPenalty;
       getEnemyDefensePenalty: typeof getEnemyDefensePenalty;
@@ -300,6 +302,7 @@ export function exposeCombatBridge(): void {
     rollDamage,
     applyEnemyStatusEffect,
     clearEnemyStatusEffects,
+    consumeEnemyStatusEffectPeriodicDamage,
     getEnemyAttackPenalty,
     getEnemyAttackCooldownPenalty,
     getEnemyDefensePenalty,

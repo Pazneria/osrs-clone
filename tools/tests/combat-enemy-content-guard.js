@@ -595,18 +595,18 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[x\] COMBAT-019B2B2: Air rune hits now apply typed `Disoriented` for two ticks, reducing enemy attack accuracy by 3 with live target feedback and focused runtime coverage\./,
-  "combat status should mark the air-rune Disoriented slice complete"
+  /## Now\s*- \[x\] COMBAT-019B2B3A: Lava-rune `Scorched` burn damage now resolves through the typed status-effect lifecycle and the shared combat tick\./,
+  "combat status should mark the lava-rune Scorched slice complete"
 );
 assertRegex(
   combatStatusSource,
-  /## Next\s*- \[ \] COMBAT-019B2B3: Add player-triggered special attacks and later elemental status effects beyond Chilled, Sundered, and Disoriented\./,
+  /## Next\s*- \[ \] COMBAT-019B2B3B: Add player-triggered special attacks and any remaining elemental effects beyond Chilled, Sundered, Disoriented, and Scorched\./,
   "combat status should retain the next specials and elemental-effects focus"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Water-family Chilled, earth-family Sundered, and air-rune Disoriented now provide visible, typed elemental combat effects \| Player-triggered special attacks and later elemental effects \| None \|/,
-  "skills index should reflect the completed Disoriented slice and next specials focus"
+  /\| Combat \| In Progress \| Water-family Chilled, earth-family Sundered, air-rune Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects \| Player-triggered special attacks and remaining elemental effects \| None \|/,
+  "skills index should reflect the completed Scorched slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,
@@ -645,8 +645,18 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
+  /\| Lava-rune Scorched status-effect slice \| Complete \|/,
+  "combat roadmap should mark the lava-rune Scorched slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
   /Air runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
   "combat roadmap should document the air-rune Disoriented contract"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Lava runes expose a typed `Scorched` on-hit profile, dealing one burn damage on each of the next two combat ticks without consuming more runes or duplicating the initial hit\./,
+  "combat roadmap should document the lava-rune Scorched contract"
 );
 assertRegex(
   combatRoadmapSource,
@@ -667,6 +677,11 @@ assertRegex(
   combatRoadmapSource,
   /An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar/,
   "combat roadmap should document typed-status target feedback"
+);
+assertRegex(
+  combatRoadmapSource,
+  /A damaging lava-rune hit applies `Scorched` for two ticks\./,
+  "combat roadmap should document the bounded lava-rune status-effect behavior"
 );
 assertRegex(
   combatRoadmapSource,

@@ -184,18 +184,27 @@ function ensureCombatRuntimeLoaded(root) {
       return runtimeState.rollDamage(maxHit);
     },
     applyEnemyStatusEffect(enemyState, effect, currentTick) {
-      if (!enemyState || !effect || (effect.effectId !== "chilled" && effect.effectId !== "sundered")) return null;
+      if (!enemyState || !effect || !["chilled", "sundered", "disoriented", "scorched"].includes(effect.effectId)) return null;
       const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
       const isChilled = effect.effectId === "chilled";
+      const isSundered = effect.effectId === "sundered";
+      const isDisoriented = effect.effectId === "disoriented";
+      const isScorched = effect.effectId === "scorched";
       const durationTicks = Number.isFinite(effect.durationTicks)
         ? Math.max(1, Math.floor(effect.durationTicks))
-        : (isChilled ? 2 : 3);
+        : (isChilled || isDisoriented || isScorched ? 2 : 3);
       const enemyAttackCooldownPenalty = Number.isFinite(effect.enemyAttackCooldownPenalty)
         ? Math.max(0, Math.floor(effect.enemyAttackCooldownPenalty))
         : (isChilled ? 1 : 0);
       const enemyDefensePenalty = Number.isFinite(effect.enemyDefensePenalty)
         ? Math.max(0, Math.floor(effect.enemyDefensePenalty))
-        : (isChilled ? 0 : 3);
+        : (isSundered ? 3 : 0);
+      const enemyAttackPenalty = Number.isFinite(effect.enemyAttackPenalty)
+        ? Math.max(0, Math.floor(effect.enemyAttackPenalty))
+        : (isDisoriented ? 3 : 0);
+      const periodicDamage = Number.isFinite(effect.periodicDamage)
+        ? Math.max(0, Math.floor(effect.periodicDamage))
+        : (isScorched ? 1 : 0);
       enemyState.statusEffects = enemyState.statusEffects || {};
       enemyState.statusEffects[effect.effectId] = {
         effectId: effect.effectId,
@@ -203,6 +212,11 @@ function ensureCombatRuntimeLoaded(root) {
         enemyAttackCooldownPenalty,
         enemyDefensePenalty
       };
+      if (enemyAttackPenalty > 0) enemyState.statusEffects[effect.effectId].enemyAttackPenalty = enemyAttackPenalty;
+      if (periodicDamage > 0) {
+        enemyState.statusEffects[effect.effectId].periodicDamage = periodicDamage;
+        enemyState.statusEffects[effect.effectId].periodicDamageStartedAtTick = tick;
+      }
       if (enemyState.remainingAttackCooldown > 0 && enemyAttackCooldownPenalty > 0) {
         enemyState.remainingAttackCooldown += enemyAttackCooldownPenalty;
       }
@@ -212,6 +226,18 @@ function ensureCombatRuntimeLoaded(root) {
         enemyAttackCooldownPenalty,
         enemyDefensePenalty
       };
+    },
+    consumeEnemyStatusEffectPeriodicDamage(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return [];
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return Object.values(enemyState.statusEffects).reduce((results, effect) => {
+        if (!effect || effect.expiresAtTick < tick || !Number.isFinite(effect.periodicDamage) || effect.periodicDamage <= 0) return results;
+        if (Number.isFinite(effect.periodicDamageStartedAtTick) && effect.periodicDamageStartedAtTick >= tick) return results;
+        if (effect.lastPeriodicDamageTick === tick) return results;
+        effect.lastPeriodicDamageTick = tick;
+        results.push({ effectId: effect.effectId, damage: Math.floor(effect.periodicDamage) });
+        return results;
+      }, []);
     },
     clearEnemyStatusEffects(enemyState) {
       if (enemyState) enemyState.statusEffects = {};
@@ -875,6 +901,117 @@ function run() {
       { effectId: "chilled", expiresAtTick: 3, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
       "water-rune damage should attach the bounded chilled runtime state"
     );
+  });
+
+  test("Lava-rune hits scorch enemies for two later burn ticks", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        scorched_target: createEnemyDefinition("scorched_target", { hitpoints: 4, aggroType: "passive" })
+      },
+      spawnNodes: [
+        createSpawnNode("scorched-target", "scorched_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "lava_rune",
+        onHitEffect: { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 }
+      },
+      inventory: [
+        { itemData: { id: "lava_rune", name: "Lava rune" }, amount: 2 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("scorched-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("scorched-target");
+    assert.strictEqual(target.currentHealth, 3, "the initial lava-rune hit should deal its normal combat damage");
+    assert.deepStrictEqual(
+      target.statusEffects.scorched,
+      { effectId: "scorched", expiresAtTick: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1, periodicDamageStartedAtTick: 1 },
+      "lava-rune damage should attach bounded Scorched runtime state"
+    );
+
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 2, "Scorched should resolve its first later burn tick before combat actions");
+    assert.strictEqual(target.statusEffects.scorched.lastPeriodicDamageTick, 2, "Scorched should record the consumed burn tick");
+
+    currentTick = 3;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 1, "Scorched should resolve its final burn damage on the expiry tick");
+    assert.strictEqual(target.statusEffects.scorched, undefined, "Scorched should expire after its final burn tick");
+  });
+
+  test("Lethal Scorched burns award Magic XP and clear through respawn", () => {
+    const xpAwards = [];
+    const previousAddSkillXp = global.addSkillXp;
+    global.addSkillXp = (skillId, amount) => {
+      xpAwards.push({ skillId, amount });
+    };
+    try {
+      global.ITEM_DB = {};
+      resetCombatEnvironment({
+        enemyDefs: {
+          scorched_target: createEnemyDefinition("scorched_target", { hitpoints: 2, aggroType: "passive" })
+        },
+        spawnNodes: [
+          createSpawnNode("scorched-target", "scorched_target", 6, 5)
+        ],
+        playerSnapshot: {
+          styleFamily: "magic",
+          damageType: "magic",
+          canAttack: true,
+          attackValue: 100,
+          defenseValue: 10,
+          maxHit: 1,
+          attackRange: 6,
+          attackTickCycle: 4,
+          consumesAmmo: true,
+          ammoInventoryIndex: 0,
+          ammoItemId: "lava_rune",
+          onHitEffect: { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 }
+        },
+        inventory: [
+          { itemData: { id: "lava_rune", name: "Lava rune" }, amount: 1 }
+        ]
+      });
+
+      assert.ok(window.lockPlayerCombatTarget("scorched-target"));
+      window.processCombatTick();
+
+      const target = getEnemy("scorched-target");
+      assert.strictEqual(target.currentHealth, 1, "the initial lava-rune hit should leave the target for Scorched to finish");
+
+      currentTick = 2;
+      window.processCombatTick();
+      assert.strictEqual(target.currentHealth, 0, "Scorched should be able to deal lethal damage");
+      assert.ok(Number.isFinite(target.pendingDefeatAtTick), "lethal Scorched damage should enter the pending-defeat lifecycle");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "magic" && entry.amount === 4), "lethal Scorched damage should award Magic XP to its player source");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "hitpoints" && entry.amount === 1), "lethal Scorched damage should award Hitpoints XP to its player source");
+
+      currentTick = 3;
+      window.processCombatTick();
+      assert.strictEqual(target.currentState, "dead", "a lethally scorched enemy should complete defeat on the following tick");
+      assert.deepStrictEqual(target.statusEffects, {}, "defeat should clear Scorched rather than carry it into respawn");
+
+      currentTick = 8;
+      window.processCombatTick();
+      assert.strictEqual(target.currentHealth, 2, "a scorched enemy should restore full health after respawning");
+      assert.strictEqual(target.respawnAtTick, null, "a respawned enemy should leave the defeated lifecycle");
+      assert.deepStrictEqual(target.statusEffects, {}, "a respawned enemy should not retain stale Scorched state");
+    } finally {
+      global.addSkillXp = previousAddSkillXp;
+    }
   });
 
   test("Earth-rune hits Sunder enemies and reduce later hit-check defence", () => {

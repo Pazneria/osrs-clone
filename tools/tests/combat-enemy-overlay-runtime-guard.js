@@ -135,6 +135,15 @@ function run() {
   });
   assert(renderer.statusEffectEl.textContent === "Disoriented 2t", "overlay should show the active Disoriented duration");
   assert(renderer.statusEffectEl.title.includes("accuracy reduced by 3"), "Disoriented feedback should explain its accuracy reduction");
+  assert(runtime.formatEnemyStatusEffect({ effectId: "scorched", remainingTicks: 2 }) === "Scorched 2t", "overlay should label active Scorched durations");
+  runtime.updateEnemyStatusEffects({
+    renderer,
+    enemyState,
+    getActiveStatusEffects: () => [{ effectId: "scorched", remainingTicks: 2, periodicDamage: 1 }]
+  });
+  assert(renderer.statusEffectEl.textContent === "Scorched 2t", "overlay should show the active Scorched duration");
+  assert(renderer.statusEffectEl.title.includes("burns for 1 damage"), "Scorched feedback should explain its burn damage");
+  assert(renderer.statusEffectEl.style.background === "rgba(91, 37, 18, 0.92)", "Scorched feedback should use an amber burn badge");
   assert(runtime.formatEnemyStatusEffect({ effectId: "unknown", remainingTicks: 2 }) === "", "overlay should ignore unknown effect ids");
 
   let matrixUpdated = false;

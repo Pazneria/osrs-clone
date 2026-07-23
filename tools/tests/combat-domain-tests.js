@@ -459,6 +459,50 @@ function makeMagicRune(itemId, overrides = {}) {
 }
 
 {
+  const enemyState = {
+    remainingAttackCooldown: 3,
+    statusEffects: statusEffects.createEnemyStatusEffects()
+  };
+  const effect = statusEffects.applyEnemyStatusEffect(
+    enemyState,
+    { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 },
+    10
+  );
+  assert.deepStrictEqual(
+    effect,
+    { effectId: "scorched", remainingTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 },
+    "Scorched should report its duration and periodic burn damage"
+  );
+  assert.deepStrictEqual(
+    statusEffects.listActiveEnemyStatusEffects(enemyState, 10),
+    [{ effectId: "scorched", remainingTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 }],
+    "Scorched should remain inspectable through the typed combat source"
+  );
+  assert.deepStrictEqual(
+    statusEffects.consumeEnemyStatusEffectPeriodicDamage(enemyState, 10),
+    [],
+    "Scorched should not burn on the same tick that applied it"
+  );
+  assert.deepStrictEqual(
+    statusEffects.consumeEnemyStatusEffectPeriodicDamage(enemyState, 11),
+    [{ effectId: "scorched", damage: 1 }],
+    "Scorched should resolve one burn damage on its first later tick"
+  );
+  assert.deepStrictEqual(
+    statusEffects.consumeEnemyStatusEffectPeriodicDamage(enemyState, 11),
+    [],
+    "Scorched should not resolve duplicate damage in the same tick"
+  );
+  assert.deepStrictEqual(
+    statusEffects.consumeEnemyStatusEffectPeriodicDamage(enemyState, 12),
+    [{ effectId: "scorched", damage: 1 }],
+    "Scorched should resolve its final burn damage on the expiry tick"
+  );
+  statusEffects.pruneExpiredEnemyStatusEffects(enemyState, 12);
+  assert.deepStrictEqual(statusEffects.listActiveEnemyStatusEffects(enemyState, 12), [], "expired Scorched should not linger on enemy runtime state");
+}
+
+{
   const enemySnapshot = combatFormulas.computeEnemyMeleeCombatSnapshot(combatContent.getEnemyTypeDefinition("enemy_goblin_grunt"));
   assert.deepStrictEqual(
     enemySnapshot,
@@ -512,6 +556,7 @@ function makeMagicRune(itemId, overrides = {}) {
   assert.strictEqual(window.CombatRuntime.computePlayerMaxHitpoints({ hitpoints: { xp: 0, level: 13 } }), 13, "combat bridge should expose player max hitpoints");
   assert.strictEqual(typeof window.CombatRuntime.computePlayerMagicCombatSnapshot, "function", "combat bridge should expose magic player snapshots");
   assert.strictEqual(typeof window.CombatRuntime.applyEnemyStatusEffect, "function", "combat bridge should expose typed enemy status effects");
+  assert.strictEqual(typeof window.CombatRuntime.consumeEnemyStatusEffectPeriodicDamage, "function", "combat bridge should expose typed enemy status-effect damage timing");
   assert.strictEqual(typeof window.CombatRuntime.getEnemyAttackPenalty, "function", "combat bridge should expose active enemy attack penalties");
   assert.deepStrictEqual(
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),

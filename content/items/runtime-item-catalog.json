@@ -2693,7 +2693,14 @@
         ],
         "damageType": "magic",
         "magicAccuracyBonus": 10,
-        "magicStrengthBonus": 12
+        "magicStrengthBonus": 12,
+        "onHitEffect": {
+          "durationTicks": 2,
+          "effectId": "scorched",
+          "enemyAttackCooldownPenalty": 0,
+          "enemyDefensePenalty": 0,
+          "periodicDamage": 1
+        }
       },
       "defaultAction": "Drop",
       "icon": {
