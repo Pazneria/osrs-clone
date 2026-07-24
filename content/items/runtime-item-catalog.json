@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-07-22T16:33:44.096Z",
+  "generatedAt": "2026-07-24T16:35:26.661Z",
   "itemDefs": {
     "adamant_arrowheads": {
       "actions": [
@@ -5163,7 +5163,14 @@
         ],
         "damageType": "magic",
         "magicAccuracyBonus": 10,
-        "magicStrengthBonus": 12
+        "magicStrengthBonus": 12,
+        "onHitEffect": {
+          "durationTicks": 2,
+          "effectId": "disoriented",
+          "enemyAttackCooldownPenalty": 0,
+          "enemyAttackPenalty": 3,
+          "enemyDefensePenalty": 0
+        }
       },
       "defaultAction": "Drop",
       "icon": {

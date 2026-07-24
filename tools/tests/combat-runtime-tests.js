@@ -168,14 +168,17 @@ function ensureCombatRuntimeLoaded(root) {
         attackTickCycle: 4
       };
     },
-    computeEnemyMeleeCombatSnapshot(enemyDefinition) {
-      return runtimeState.enemySnapshots[enemyDefinition.enemyId] || {
+    computeEnemyMeleeCombatSnapshot(enemyDefinition, statusModifiers = {}) {
+      const baseSnapshot = runtimeState.enemySnapshots[enemyDefinition.enemyId] || {
         attackValue: 100,
         defenseValue: 1,
         maxHit: 1,
         attackRange: 1,
         attackTickCycle: 4
       };
+      return Object.assign({}, baseSnapshot, {
+        attackValue: Math.max(0, baseSnapshot.attackValue - (statusModifiers.enemyAttackPenalty || 0))
+      });
     },
     rollOpposedHitCheck(attackValue, defenseValue) {
       return runtimeState.rollOpposedHitCheck(attackValue, defenseValue);
@@ -254,6 +257,13 @@ function ensureCombatRuntimeLoaded(root) {
       const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
       return Object.values(enemyState.statusEffects).reduce((total, effect) => (
         effect && effect.expiresAtTick > tick ? total + (effect.enemyDefensePenalty || 0) : total
+      ), 0);
+    },
+    getEnemyAttackPenalty(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return 0;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return Object.values(enemyState.statusEffects).reduce((total, effect) => (
+        effect && effect.expiresAtTick > tick ? total + (effect.enemyAttackPenalty || 0) : total
       ), 0);
     },
     pruneExpiredEnemyStatusEffects(enemyState, currentTick) {
@@ -901,6 +911,60 @@ function run() {
       { effectId: "chilled", expiresAtTick: 3, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
       "water-rune damage should attach the bounded chilled runtime state"
     );
+  });
+
+  test("Smoke-rune catalog profiles disorient later enemy attack rolls", () => {
+    const runtimeItems = JSON.parse(fs.readFileSync(path.join(root, "content", "items", "runtime-item-catalog.json"), "utf8"));
+    const smokeRuneProfile = runtimeItems.itemDefs.smoke_rune.ammo.onHitEffect;
+    let latestEnemyAttackValue = null;
+    resetCombatEnvironment({
+      enemyDefs: {
+        smoke_target: createEnemyDefinition("smoke_target", { hitpoints: 8, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("smoke-target", "smoke_target", 6, 5)
+      ],
+      enemySnapshots: {
+        smoke_target: { attackValue: 10, defenseValue: 1, maxHit: 1, attackRange: 1, attackTickCycle: 4 }
+      },
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "smoke_rune",
+        onHitEffect: smokeRuneProfile
+      },
+      inventory: [
+        { itemData: { id: "smoke_rune", name: "Smoke rune" }, amount: 2 }
+      ],
+      rollOpposedHitCheck(attackValue) {
+        if (attackValue !== 100) latestEnemyAttackValue = attackValue;
+        return true;
+      }
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("smoke-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("smoke-target");
+    assert.deepStrictEqual(
+      target.statusEffects.disoriented,
+      { effectId: "disoriented", expiresAtTick: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
+      "a smoke-rune catalog profile should attach the shared bounded Disoriented state"
+    );
+
+    playerState.remainingAttackCooldown = 1;
+    target.remainingAttackCooldown = 0;
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(latestEnemyAttackValue, 7, "active smoke-rune Disoriented should reduce the later enemy attack roll by 3");
   });
 
   test("Lava-rune hits scorch enemies for two later burn ticks", () => {

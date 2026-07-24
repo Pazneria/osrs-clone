@@ -45,12 +45,13 @@ assert(
     /- \[x\] COMBAT-019A: Broader combat balance tooling/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019B1: Water-family rune hits/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched`/.test(combatStatusSource) &&
-    /## Now\s*- \[x\] COMBAT-019B2B3A: Lava-rune `Scorched` burn damage/.test(combatStatusSource),
+    /- \[x\] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile/.test(combatStatusSource) &&
+    /## Now\s*- \[x\] COMBAT-019B2B3B1: Smoke-rune `Disoriented`/.test(combatStatusSource),
   "combat status should keep the simulator and completed elemental-effect slices aligned before advancing COMBAT-019"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | Water-family Chilled, earth-family Sundered, air-rune Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects | Player-triggered special attacks and remaining elemental effects | None |"),
-  "skills index should reflect the completed lava-rune status-effect slice"
+  skillsIndexSource.includes("| Combat | In Progress | Water-family Chilled, earth-family Sundered, air/smoke Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects | Player-triggered special attacks | None |"),
+  "skills index should reflect the completed smoke-rune status-effect slice"
 );
 
 const summary = runSimulation({

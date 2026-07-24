@@ -96,6 +96,7 @@ const MAGIC_RUNE_EXPECTED_AMMO = {
 const MAGIC_RUNE_EXPECTED_ON_HIT_EFFECTS = {
   water_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   air_rune: { effectId: "disoriented", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
+  smoke_rune: { effectId: "disoriented", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
   lava_rune: { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 },
   steam_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
   mud_rune: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
@@ -193,7 +194,7 @@ for (const itemId of MAGIC_RUNE_ITEMS) {
   assert.ok(item.ammo.compatibleWeaponFamilies.includes("staff"), `${itemId} should be compatible with staffs`);
   if (MAGIC_RUNE_EXPECTED_ON_HIT_EFFECTS[itemId]) {
     const expectedEffect = MAGIC_RUNE_EXPECTED_ON_HIT_EFFECTS[itemId];
-    assert.ok(item.ammo.onHitEffect, `${itemId} should expose a water-family Chilled effect profile`);
+    assert.ok(item.ammo.onHitEffect, `${itemId} should expose its authored on-hit effect profile`);
     assert.strictEqual(item.ammo.onHitEffect.effectId, expectedEffect.effectId, `${itemId} should keep the authored effect id`);
     assert.strictEqual(item.ammo.onHitEffect.durationTicks, expectedEffect.durationTicks, `${itemId} should keep the authored effect duration`);
     assert.strictEqual(
@@ -221,7 +222,7 @@ for (const itemId of MAGIC_RUNE_ITEMS) {
       );
     }
   } else {
-    assert.ok(!item.ammo.onHitEffect, `${itemId} should not inherit a water-family effect profile`);
+    assert.ok(!item.ammo.onHitEffect, `${itemId} should not inherit an unowned on-hit effect profile`);
   }
 }
 

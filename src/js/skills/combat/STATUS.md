@@ -28,12 +28,13 @@
 - [x] COMBAT-019B2A: Active `Chilled` effects now appear above affected combat targets with their remaining duration and a concise tactical explanation.
 - [x] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage.
 - [x] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched` for two later ticks, dealing one burn damage each tick with live target feedback and reset/respawn-safe cleanup.
+- [x] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile for two ticks, reducing enemy Attack by 3 through the existing status lifecycle and target feedback.
 
 ## Now
-- [x] COMBAT-019B2B3A: Lava-rune `Scorched` burn damage now resolves through the typed status-effect lifecycle and the shared combat tick.
+- [x] COMBAT-019B2B3B1: Smoke-rune `Disoriented` now reuses the typed air-family status contract through the canonical item catalog and generated runtime mirror.
 
 ## Next
-- [ ] COMBAT-019B2B3B: Add player-triggered special attacks and any remaining elemental effects beyond Chilled, Sundered, Disoriented, and Scorched.
+- [ ] COMBAT-019B2B3B2: Add player-triggered special attacks.
 
 ## Later
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.

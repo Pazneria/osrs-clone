@@ -595,18 +595,28 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[x\] COMBAT-019B2B3A: Lava-rune `Scorched` burn damage now resolves through the typed status-effect lifecycle and the shared combat tick\./,
-  "combat status should mark the lava-rune Scorched slice complete"
+  /- \[x\] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched` for two later ticks, dealing one burn damage each tick with live target feedback and reset\/respawn-safe cleanup\./,
+  "combat status should retain the completed lava-rune Scorched slice"
 );
 assertRegex(
   combatStatusSource,
-  /## Next\s*- \[ \] COMBAT-019B2B3B: Add player-triggered special attacks and any remaining elemental effects beyond Chilled, Sundered, Disoriented, and Scorched\./,
-  "combat status should retain the next specials and elemental-effects focus"
+  /- \[x\] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile for two ticks, reducing enemy Attack by 3 through the existing status lifecycle and target feedback\./,
+  "combat status should mark the smoke-rune Disoriented slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[x\] COMBAT-019B2B3B1: Smoke-rune `Disoriented` now reuses the typed air-family status contract through the canonical item catalog and generated runtime mirror\./,
+  "combat status should surface the completed smoke-rune slice as current work"
+);
+assertRegex(
+  combatStatusSource,
+  /## Next\s*- \[ \] COMBAT-019B2B3B2: Add player-triggered special attacks\./,
+  "combat status should advance the next focus to player-triggered specials"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Water-family Chilled, earth-family Sundered, air-rune Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects \| Player-triggered special attacks and remaining elemental effects \| None \|/,
-  "skills index should reflect the completed Scorched slice and next specials focus"
+  /\| Combat \| In Progress \| Water-family Chilled, earth-family Sundered, air\/smoke Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects \| Player-triggered special attacks \| None \|/,
+  "skills index should reflect the completed smoke-rune slice and next specials focus"
 );
 assertRegex(
   combatRoadmapSource,
@@ -650,8 +660,13 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /Air runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
-  "combat roadmap should document the air-rune Disoriented contract"
+  /\| Smoke-rune Disoriented status-effect slice \| Complete \|/,
+  "combat roadmap should mark the smoke-rune Disoriented slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Air and smoke runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
+  "combat roadmap should document the shared air\/smoke Disoriented contract"
 );
 assertRegex(
   combatRoadmapSource,
@@ -680,8 +695,8 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /A damaging lava-rune hit applies `Scorched` for two ticks\./,
-  "combat roadmap should document the bounded lava-rune status-effect behavior"
+  /A damaging air- or smoke-rune hit applies `Disoriented` for two ticks\./,
+  "combat roadmap should document the bounded air\/smoke status-effect behavior"
 );
 assertRegex(
   combatRoadmapSource,

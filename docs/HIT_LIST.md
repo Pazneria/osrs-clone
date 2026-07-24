@@ -2006,6 +2006,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-084 - Smoke runes lacked a tactical combat identity
+- Status: Closed
+- Severity: S3
+- Area: Other
+- Source: Automation
+- Links: `src/js/content/item-catalog.js`, `content/items/runtime-item-catalog.json`, `tools/tests/combat-item-data-guard.js`, `tools/tests/combat-simulator-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Equip a staff with smoke runes and land a damaging cast on an enemy.
+  2. Inspect the active target badge and the enemy's later attack rolls.
+  3. Compare the smoke-rune runtime profile with the air-rune `Disoriented` contract.
+- Expected: Smoke rune casts apply the same bounded `Disoriented` effect as their air-family counterpart, lowering enemy Attack by 3 for two ticks with existing target feedback.
+- Actual: Smoke runes only changed projectile color and numeric magic bonuses; they were the only tier-five combination rune without an on-hit tactical effect.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Reuse the typed `Disoriented` lifecycle rather than add a smoke-only status path.
+  2. Author the smoke-rune profile in the canonical item catalog and regenerate the runtime mirror.
+  3. Lock the item contract and tracker state with focused guards, then advance the combat focus to player specials.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Smoke runes now publish the two-tick `Disoriented` profile used by air runes, lowering enemy Attack by 3 without changing swing timing.
+  - The change stays in canonical item data; the existing typed lifecycle, combat bridge, and target badge continue to own behavior and feedback.
+  - Item, simulator, and combat-content guards now lock the shared air/smoke contract and the tracker advances to player-triggered special attacks.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-083 - Lava runes lacked a gameplay identity beyond projectile color
 - Status: Closed
 - Severity: S3
