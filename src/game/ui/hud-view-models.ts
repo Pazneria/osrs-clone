@@ -8,6 +8,7 @@ import type {
   CombatStatusViewModel,
   CombatTabViewModel,
   CombatStatsViewModel,
+  CombatSpecialAttackViewModel,
   EquipmentSlotViewModel,
   PlayerProfileSummaryViewModel,
   SkillReferencePanelViewModel,
@@ -21,6 +22,7 @@ import type {
 } from "../contracts/ui";
 import type { MeleeStyleId } from "../contracts/combat";
 import type { PlayerProfileState, PlayerSkillMap } from "../contracts/session";
+import { buildPlayerSpecialAttackViewModel } from "../combat/special-attacks";
 
 type UiEquipmentEntry = UiItemData | UiItemSlot | null | undefined;
 
@@ -65,6 +67,8 @@ export function buildCombatTabViewModel(options: {
   inventory?: Array<{ itemData?: UiItemData | null; amount?: number } | UiItemData | null | undefined> | null;
   playerState?: {
     selectedMeleeStyle?: MeleeStyleId;
+    specialAttackCooldown?: number;
+    specialAttackQueued?: boolean;
   } | null;
 }): CombatTabViewModel {
   const playerSkills = options.playerSkills || {};
@@ -82,6 +86,7 @@ export function buildCombatTabViewModel(options: {
   const defenseLevel = getSkillLevel(playerSkills, "defense", 1);
   const hitpointsLevel = getSkillLevel(playerSkills, "hitpoints", 10);
   const combatLevel = computeCombatLevel(playerSkills);
+  const specialAttack: CombatSpecialAttackViewModel = buildPlayerSpecialAttackViewModel(options.playerState);
 
   return {
     combatLevel,
@@ -95,7 +100,8 @@ export function buildCombatTabViewModel(options: {
     defenseLevel,
     hitpointsLevel,
     combatStats,
-    styleOptions
+    styleOptions,
+    specialAttack
   };
 }
 

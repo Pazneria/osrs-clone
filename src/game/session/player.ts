@@ -58,6 +58,8 @@ export function createDefaultPlayerState(
     lastAttackTick: combatDefaults.lastAttackTick,
     lastCastTick: combatDefaults.lastCastTick,
     remainingAttackCooldown: combatDefaults.remainingAttackCooldown,
+    specialAttackCooldown: combatDefaults.specialAttackCooldown,
+    specialAttackQueued: combatDefaults.specialAttackQueued,
     lockedTargetId: combatDefaults.lockedTargetId,
     combatTargetKind: combatDefaults.combatTargetKind,
     selectedMeleeStyle: combatDefaults.selectedMeleeStyle,

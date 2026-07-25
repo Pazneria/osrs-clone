@@ -438,6 +438,9 @@
             !!playerState.lockedTargetId
             || playerState.combatTargetKind === PLAYER_TARGET_KIND
             || playerState.targetObj === 'ENEMY';
+        if (hadEnemyTarget && combatRuntime && typeof combatRuntime.clearQueuedPlayerSpecialAttack === 'function') {
+            combatRuntime.clearQueuedPlayerSpecialAttack(playerState);
+        }
         combatQaDebugRuntime.recordClearResult({ windowRef: window, currentTick }, reason);
         recordCombatClearEvent(combatClearEvent);
         playerState.lockedTargetId = null;
@@ -1097,7 +1100,9 @@
                     attackerId: PLAYER_TARGET_ID,
                     targetKind: 'enemy',
                     targetId: playerLockState.enemyState.runtimeId,
-                    snapshot: playerSnapshot
+                    snapshot: playerSnapshot,
+                    isSpecialAttack: !!(combatRuntime && typeof combatRuntime.hasQueuedPlayerSpecialAttack === 'function'
+                        && combatRuntime.hasQueuedPlayerSpecialAttack(playerState))
                 });
             } else {
                 const chaseAttackOpportunity = resolvePlayerChaseAttackOpportunity(playerLockState);
@@ -1109,6 +1114,8 @@
                         targetKind: 'enemy',
                         targetId: playerLockState.enemyState.runtimeId,
                         snapshot: playerSnapshot,
+                        isSpecialAttack: !!(combatRuntime && typeof combatRuntime.hasQueuedPlayerSpecialAttack === 'function'
+                            && combatRuntime.hasQueuedPlayerSpecialAttack(playerState)),
                         approachPath: chaseAttackOpportunity.approachPath
                     });
                 }
@@ -1148,9 +1155,12 @@
                 if (!isEnemyAlive(enemyState)) continue;
                 const enemySnapshot = getEnemyCombatSnapshot(enemyState);
                 if (!enemySnapshot) continue;
+                const playerAttackSnapshot = attack.isSpecialAttack && typeof combatRuntime.applyPlayerSpecialAttack === 'function'
+                    ? combatRuntime.applyPlayerSpecialAttack(attack.snapshot)
+                    : attack.snapshot;
                 const effectiveDefenseValue = Math.max(0, Math.floor(enemySnapshot.defenseValue) - getEnemyStatusEffectDefensePenalty(enemyState));
-                const landed = combatRuntime.rollOpposedHitCheck(attack.snapshot.attackValue, effectiveDefenseValue);
-                const damage = landed ? combatRuntime.rollDamage(attack.snapshot.maxHit) : 0;
+                const landed = combatRuntime.rollOpposedHitCheck(playerAttackSnapshot.attackValue, effectiveDefenseValue);
+                const damage = landed ? combatRuntime.rollDamage(playerAttackSnapshot.maxHit) : 0;
                 results.push({
                     attackerKind: 'player',
                     attackerId: PLAYER_TARGET_ID,
@@ -1158,6 +1168,7 @@
                     targetId: enemyState.runtimeId,
                     styleFamily: attack.snapshot.styleFamily || 'melee',
                     damageType: attack.snapshot.damageType || 'melee',
+                    isSpecialAttack: !!attack.isSpecialAttack,
                     landed,
                     damage,
                     tickCycle: attack.snapshot.attackTickCycle,
@@ -1210,6 +1221,10 @@
                 if (result.styleFamily === 'magic') playerState.lastCastTick = currentTick;
                 playerState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));
                 playerState.inCombat = true;
+                if (result.isSpecialAttack && combatRuntime && typeof combatRuntime.consumeQueuedPlayerSpecialAttack === 'function') {
+                    combatRuntime.consumeQueuedPlayerSpecialAttack(playerState);
+                    if (typeof addChatMessage === 'function') addChatMessage('Power Strike released.');
+                }
                 consumePlayerCombatAmmo(result);
                 markPlayerRigAttackStyle(result.styleFamily);
                 markPlayerRigAnimationTrigger('attackTick', currentTick);
@@ -1317,6 +1332,10 @@
         }
 
         playerState.remainingAttackCooldown = combatRuntime.decrementCooldown(playerState.remainingAttackCooldown || 0);
+        const previousSpecialAttackCooldown = Number.isFinite(playerState.specialAttackCooldown)
+            ? Math.max(0, Math.floor(playerState.specialAttackCooldown))
+            : 0;
+        playerState.specialAttackCooldown = combatRuntime.decrementCooldown(previousSpecialAttackCooldown);
 
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];
@@ -1367,6 +1386,7 @@
         refreshCombatEnemyOccupancy();
 
         if (!playerState.lockedTargetId && (playerState.action === 'COMBAT: MELEE' || playerState.action === 'COMBAT: RANGED' || playerState.action === 'COMBAT: MAGIC')) playerState.action = 'IDLE';
+        if (previousSpecialAttackCooldown !== playerState.specialAttackCooldown && typeof window.updateStats === 'function') window.updateStats();
     }
 
     function ensureCombatEnemyRenderLayer() {

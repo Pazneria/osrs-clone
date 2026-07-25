@@ -25,7 +25,7 @@ interface InventorySlotCarrier {
   amount?: number;
 }
 
-interface PlayerCombatSnapshot {
+export interface PlayerCombatSnapshot {
   styleId: PlayerCombatStyleId;
   styleFamily: CombatStyleFamily;
   damageType: CombatDamageType;
@@ -254,6 +254,8 @@ export function buildPlayerCombatDefaults(playerSkills: PlayerSkillMap): PlayerC
     lastAttackTick: -1,
     lastCastTick: -1,
     remainingAttackCooldown: 0,
+    specialAttackCooldown: 0,
+    specialAttackQueued: false,
     lockedTargetId: null,
     combatTargetKind: null,
     selectedMeleeStyle: "attack",

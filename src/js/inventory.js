@@ -908,6 +908,33 @@
             });
         }
 
+        function queueCombatSpecialAttack() {
+            const runtime = window.CombatRuntime || null;
+            if (!runtime || typeof runtime.queuePlayerSpecialAttack !== 'function') return null;
+            const snapshot = typeof runtime.computePlayerCombatSnapshot === 'function'
+                ? runtime.computePlayerCombatSnapshot({ playerSkills, equipment, inventory, playerState })
+                : null;
+            const hasTarget = !!(playerState && playerState.lockedTargetId && playerState.combatTargetKind === 'enemy');
+            const result = runtime.queuePlayerSpecialAttack(playerState, {
+                hasTarget,
+                canAttack: !!(snapshot && snapshot.canAttack)
+            });
+            if (typeof addChatMessage === 'function') {
+                if (result && result.accepted) addChatMessage('Power Strike armed for your next hit.');
+                else if (result && result.reason === 'no_target') addChatMessage('Select an enemy before arming Power Strike.');
+                else if (result && result.reason === 'cannot_attack') addChatMessage('Equip a usable weapon and ammunition before arming Power Strike.');
+                else if (result && result.reason === 'cooldown') addChatMessage(`Power Strike recharges in ${result.cooldownTicks} tick${result.cooldownTicks === 1 ? '' : 's'}.`);
+            }
+            if (typeof window.updateStats === 'function') window.updateStats();
+            return result;
+        }
+
+        function bindCombatSpecialAttackButton() {
+            const button = document.getElementById('combat-special-attack');
+            if (!button) return;
+            button.onclick = () => queueCombatSpecialAttack();
+        }
+
         function updatePlayerModel() { syncPlayerAppearanceFromEquipment(); rebuildPlayerRigsFromAppearance(); }
 
         let activeSkillPanelSkill = null;
@@ -1228,6 +1255,7 @@
             }
             renderSkillTilesFromManifest();
             bindCombatStyleButtons();
+            bindCombatSpecialAttackButton();
             const skillTiles = Array.from(document.querySelectorAll('.skill-tile'));
             skillTiles.forEach(tile => {
                 tile.onclick = () => {

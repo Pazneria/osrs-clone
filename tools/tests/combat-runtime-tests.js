@@ -186,6 +186,34 @@ function ensureCombatRuntimeLoaded(root) {
     rollDamage(maxHit) {
       return runtimeState.rollDamage(maxHit);
     },
+    queuePlayerSpecialAttack(playerState, options = {}) {
+      if (!options.hasTarget) return { accepted: false, reason: "no_target", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      if (!options.canAttack) return { accepted: false, reason: "cannot_attack", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      if (playerState.specialAttackQueued) return { accepted: false, reason: "already_queued", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      if (playerState.specialAttackCooldown > 0) return { accepted: false, reason: "cooldown", cooldownTicks: playerState.specialAttackCooldown };
+      playerState.specialAttackQueued = true;
+      playerState.specialAttackCooldown = 8;
+      return { accepted: true, reason: "queued", cooldownTicks: 8 };
+    },
+    consumeQueuedPlayerSpecialAttack(playerState) {
+      const queued = !!playerState.specialAttackQueued;
+      playerState.specialAttackQueued = false;
+      return queued;
+    },
+    clearQueuedPlayerSpecialAttack(playerState) {
+      const queued = !!playerState.specialAttackQueued;
+      playerState.specialAttackQueued = false;
+      return queued;
+    },
+    hasQueuedPlayerSpecialAttack(playerState) {
+      return !!(playerState && playerState.specialAttackQueued);
+    },
+    applyPlayerSpecialAttack(snapshot) {
+      return Object.assign({}, snapshot, {
+        attackValue: Math.max(1, Math.ceil(snapshot.attackValue * 1.25)),
+        maxHit: Math.max(1, Math.ceil(snapshot.maxHit * 1.25))
+      });
+    },
     applyEnemyStatusEffect(enemyState, effect, currentTick) {
       if (!enemyState || !effect || !["chilled", "sundered", "disoriented", "scorched"].includes(effect.effectId)) return null;
       const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
@@ -374,6 +402,8 @@ function resetCombatEnvironment(options = {}) {
     combatTargetKind: null,
     lockedTargetId: null,
     remainingAttackCooldown: 0,
+    specialAttackCooldown: 0,
+    specialAttackQueued: false,
     currentHitpoints: 10,
     inCombat: false,
     selectedMeleeStyle: "attack",
@@ -872,6 +902,57 @@ function run() {
     } finally {
       global.addSkillXp = previousAddSkillXp;
     }
+  });
+
+  test("Power Strike modifies one queued player hit and disarms when the target clears", () => {
+    let attackValue = null;
+    let maxHit = null;
+    resetCombatEnvironment({
+      enemyDefs: {
+        special_target: createEnemyDefinition("special_target", { hitpoints: 8 })
+      },
+      spawnNodes: [
+        createSpawnNode("special-target", "special_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "melee",
+        damageType: "melee",
+        canAttack: true,
+        attackValue: 8,
+        defenseValue: 10,
+        maxHit: 4,
+        attackRange: 1,
+        attackTickCycle: 4,
+        consumesAmmo: false
+      },
+      rollOpposedHitCheck(value) {
+        attackValue = value;
+        return true;
+      },
+      rollDamage(value) {
+        maxHit = value;
+        return value;
+      }
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("special-target"));
+    assert.deepStrictEqual(
+      window.CombatRuntime.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
+      { accepted: true, reason: "queued", cooldownTicks: 8 },
+      "the typed runtime should arm Power Strike against the current target"
+    );
+    window.processCombatTick();
+
+    assert.strictEqual(attackValue, 10, "Power Strike should raise the next hit's accuracy roll by 25%");
+    assert.strictEqual(maxHit, 5, "Power Strike should raise the next hit's max damage by 25%");
+    assert.strictEqual(getEnemy("special-target").currentHealth, 3, "Power Strike should use the modified damage roll exactly once");
+    assert.strictEqual(playerState.specialAttackQueued, false, "the resolved special should not carry into later swings");
+    assert.strictEqual(playerState.specialAttackCooldown, 7, "the special cooldown should begin on arm and tick normally");
+
+    playerState.specialAttackQueued = true;
+    assert.strictEqual(window.clearPlayerCombatTarget({ force: true, reason: "manual-clear" }), true);
+    assert.strictEqual(playerState.specialAttackQueued, false, "clearing a combat target should disarm a pending special without refunding cooldown");
+    assert.strictEqual(playerState.specialAttackCooldown, 7, "clearing a target should not reset the spent special cooldown");
   });
 
   test("Water-rune hits chill enemies and delay their next swing", () => {

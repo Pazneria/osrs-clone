@@ -107,6 +107,8 @@
                 lastAttackTick: -1,
                 lastCastTick: -1,
                 remainingAttackCooldown: 0,
+                specialAttackCooldown: 0,
+                specialAttackQueued: false,
                 lockedTargetId: null,
                 combatTargetKind: null,
                 selectedMeleeStyle: 'attack',
@@ -196,6 +198,8 @@
             lastAttackTick: defaultCombatPlayerState.lastAttackTick,
             lastCastTick: defaultCombatPlayerState.lastCastTick,
             remainingAttackCooldown: defaultCombatPlayerState.remainingAttackCooldown,
+            specialAttackCooldown: defaultCombatPlayerState.specialAttackCooldown,
+            specialAttackQueued: defaultCombatPlayerState.specialAttackQueued,
             lockedTargetId: defaultCombatPlayerState.lockedTargetId,
             combatTargetKind: defaultCombatPlayerState.combatTargetKind,
             selectedMeleeStyle: defaultCombatPlayerState.selectedMeleeStyle,
@@ -1138,6 +1142,8 @@
             playerState.remainingAttackCooldown = Number.isFinite(savedPlayerState.remainingAttackCooldown)
                 ? Math.max(0, Math.floor(savedPlayerState.remainingAttackCooldown))
                 : loadedCombatDefaults.remainingAttackCooldown;
+            playerState.specialAttackCooldown = loadedCombatDefaults.specialAttackCooldown;
+            playerState.specialAttackQueued = false;
             playerState.lockedTargetId = typeof savedPlayerState.lockedTargetId === 'string' ? savedPlayerState.lockedTargetId : null;
             playerState.combatTargetKind = savedPlayerState.combatTargetKind === 'enemy' ? 'enemy' : null;
             playerState.selectedMeleeStyle = savedPlayerState.selectedMeleeStyle === 'strength' || savedPlayerState.selectedMeleeStyle === 'defense'

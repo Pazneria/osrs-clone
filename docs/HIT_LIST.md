@@ -2006,6 +2006,36 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-085 - Player combat had no intentional special attack
+- Status: Closed
+- Severity: S3
+- Area: Combat / HUD
+- Source: Automation
+- Links: `src/game/contracts/combat.ts`, `src/game/combat/special-attacks.ts`, `src/game/combat/formulas.ts`, `src/game/platform/combat-bridge.ts`, `src/game/ui/hud-view-models.ts`, `src/js/combat.js`, `src/js/inventory.js`, `src/js/world/status-hud-runtime.js`, `index.html`, `tools/tests/combat-domain-tests.js`, `tools/tests/combat-runtime-tests.js`, `tools/tests/world-status-hud-runtime-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Lock an enemy target while holding a usable melee weapon, bow with arrows, or staff with runes.
+  2. Open the Combat tab and look for an action that intentionally changes the next player hit.
+  3. Attack through at least one full combat cooldown.
+- Expected: The player can visibly arm one bounded special that applies to exactly the next valid hit, uses the ordinary combat/ammo path, then has a readable recharge window.
+- Actual: Combat only auto-repeated normal attacks; no typed special queue, combat-tab control, or one-hit modifier existed.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Keep special queue/cooldown ownership in a typed combat module and expose it through the existing bridge.
+  2. Reuse the shared player attack path so all styles retain normal target, ammo/rune, XP, and cooldown behavior.
+  3. Add compact combat-tab feedback and focused domain/runtime/HUD regression coverage.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `Power Strike`: a combat-tab action that arms the next valid melee, ranged, or magic hit for +25% accuracy and +25% max hit, then recharges for eight combat ticks.
+  - The typed special module owns queueing, cooldowns, view-model state, and hit modifiers. `combat.js` only adapts the modifier into the existing same-tick attack batch and clears a queued strike if the target lock breaks.
+  - The special consumes the one ordinary arrow or rune for its resolved attack, does not persist an armed target across a session restore, and is guarded across typed domain, live runtime, HUD, and tracker coverage.
+- Plan vNext (if revised):
+  1. Add weapon-specific profiles and an explicit special-resource system as a separate follow-up.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-084 - Smoke runes lacked a tactical combat identity
 - Status: Closed
 - Severity: S3

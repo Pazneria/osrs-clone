@@ -202,6 +202,8 @@ export interface PlayerCombatStateShape {
   lastAttackTick: number;
   lastCastTick: number;
   remainingAttackCooldown: number;
+  specialAttackCooldown: number;
+  specialAttackQueued: boolean;
   lockedTargetId: string | null;
   combatTargetKind: CombatTargetKind | null;
   selectedMeleeStyle: MeleeStyleId;

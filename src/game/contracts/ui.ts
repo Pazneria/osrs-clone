@@ -162,6 +162,15 @@ export interface CombatStyleOptionViewModel {
   active: boolean;
 }
 
+export interface CombatSpecialAttackViewModel {
+  label: string;
+  description: string;
+  cooldownTicks: number;
+  queued: boolean;
+  ready: boolean;
+  statusText: string;
+}
+
 export interface CombatTabViewModel {
   combatLevel: number;
   combatLevelText: string;
@@ -175,6 +184,7 @@ export interface CombatTabViewModel {
   hitpointsLevel: number;
   combatStats: CombatStatsViewModel;
   styleOptions: CombatStyleOptionViewModel[];
+  specialAttack: CombatSpecialAttackViewModel;
 }
 
 export interface CombatStatusTargetSnapshot {

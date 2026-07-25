@@ -877,6 +877,8 @@ export function createDefaultPlayerCombatState(maxHitpoints = 10): PlayerCombatS
     lastAttackTick: -1,
     lastCastTick: -1,
     remainingAttackCooldown: 0,
+    specialAttackCooldown: 0,
+    specialAttackQueued: false,
     lockedTargetId: null,
     combatTargetKind: null,
     selectedMeleeStyle: DEFAULT_MELEE_STYLE,

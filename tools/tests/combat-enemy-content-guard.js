@@ -605,18 +605,23 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[x\] COMBAT-019B2B3B1: Smoke-rune `Disoriented` now reuses the typed air-family status contract through the canonical item catalog and generated runtime mirror\./,
-  "combat status should surface the completed smoke-rune slice as current work"
+  /- \[x\] COMBAT-019B2B3B2A: Player-triggered `Power Strike` now arms one next valid melee\/ranged\/magic hit for \+25% accuracy and max hit, reuses normal ammo\/rune consumption, and recharges for eight ticks through the typed combat bridge\./,
+  "combat status should mark the bounded Power Strike slice complete"
 );
 assertRegex(
   combatStatusSource,
-  /## Next\s*- \[ \] COMBAT-019B2B3B2: Add player-triggered special attacks\./,
-  "combat status should advance the next focus to player-triggered specials"
+  /## Now\s*- \[x\] COMBAT-019B2B3B2A: `Power Strike` is a visible combat-tab control with typed queue\/cooldown state and a one-hit shared-combat modifier\./,
+  "combat status should surface the completed Power Strike slice as current work"
+);
+assertRegex(
+  combatStatusSource,
+  /## Next\s*- \[ \] COMBAT-019B2B3B2B: Add weapon-specific special profiles and resource mechanics\./,
+  "combat status should advance the next focus to weapon-specific specials"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| Water-family Chilled, earth-family Sundered, air\/smoke Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects \| Player-triggered special attacks \| None \|/,
-  "skills index should reflect the completed smoke-rune slice and next specials focus"
+  /\| Combat \| In Progress \| `Power Strike` now gives all player combat styles a typed, visible, bounded next-hit special \| Weapon-specific special profiles and resource mechanics \| None \|/,
+  "skills index should reflect the completed first special-attack slice"
 );
 assertRegex(
   combatRoadmapSource,
@@ -665,6 +670,11 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
+  /\| Player-triggered Power Strike slice \| Complete \|/,
+  "combat roadmap should mark the bounded player special-attack slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
   /Air and smoke runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
   "combat roadmap should document the shared air\/smoke Disoriented contract"
 );
@@ -702,6 +712,11 @@ assertRegex(
   combatRoadmapSource,
   /Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency\./,
   "combat roadmap should document shared-core magic attack behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /`Power Strike` can be armed only while the player has both a live target lock and a usable combat snapshot\./,
+  "combat roadmap should document the typed player-special queue conditions"
 );
 assertRegex(
   combatRoadmapSource,

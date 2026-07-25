@@ -33,6 +33,10 @@ function createFakeDocument() {
     "combat-style-attack",
     "combat-style-strength",
     "combat-style-defense",
+    "combat-special-label",
+    "combat-special-effect",
+    "combat-special-status",
+    "combat-special-attack",
     "inventory-hitpoints-text",
     "inventory-hitpoints-bar-fill",
     "stat-atk",
@@ -97,6 +101,14 @@ function run() {
     defenseLevel: 9,
     hitpointsLevel: 10,
     combatStats: { attack: 11, defense: 12, strength: 13 },
+    specialAttack: {
+      label: "Power Strike",
+      description: "Next hit gains +25% accuracy and max hit. Recharges in 8 ticks.",
+      cooldownTicks: 0,
+      queued: false,
+      ready: true,
+      statusText: "Ready"
+    },
     styleOptions: [
       { styleId: "attack", active: true },
       { styleId: "strength", active: false },
@@ -126,6 +138,22 @@ function run() {
   assert(fakeDocument.nodes["combat-style-current"].innerText === "Accurate", "status HUD should paint selected combat style");
   assert(fakeDocument.nodes["combat-style-attack"].attributes["aria-pressed"] === "true", "status HUD should mark active combat style");
   assert(fakeDocument.nodes["combat-style-strength"].attributes["aria-pressed"] === "false", "status HUD should mark inactive combat style");
+  assert(fakeDocument.nodes["combat-special-label"].innerText === "Power Strike", "status HUD should paint the typed special-attack label");
+  assert(fakeDocument.nodes["combat-special-status"].innerText === "Ready", "status HUD should paint special-attack readiness");
+  assert(fakeDocument.nodes["combat-special-attack"].disabled === false, "status HUD should enable a ready special-attack control");
+
+  combatTabViewModel.specialAttack = {
+    label: "Power Strike",
+    description: "Next hit gains +25% accuracy and max hit. Recharges in 8 ticks.",
+    cooldownTicks: 7,
+    queued: false,
+    ready: false,
+    statusText: "7 ticks to recharge"
+  };
+  runtime.updateCombatTab({ document: fakeDocument }, combatTabViewModel);
+
+  assert(fakeDocument.nodes["combat-special-status"].innerText === "7 ticks to recharge", "status HUD should refresh special-attack cooldown feedback");
+  assert(fakeDocument.nodes["combat-special-attack"].disabled === true, "status HUD should disable a recharging special-attack control");
 
   console.log("World status HUD runtime guard passed.");
 }

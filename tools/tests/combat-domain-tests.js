@@ -6,6 +6,7 @@ const { loadTsModule } = require("../lib/ts-module-loader");
 const combatContent = loadTsModule(path.resolve(__dirname, "../../src/game/combat/content.ts"));
 const combatFormulas = loadTsModule(path.resolve(__dirname, "../../src/game/combat/formulas.ts"));
 const statusEffects = loadTsModule(path.resolve(__dirname, "../../src/game/combat/status-effects.ts"));
+const specialAttacks = loadTsModule(path.resolve(__dirname, "../../src/game/combat/special-attacks.ts"));
 const combatBridge = loadTsModule(path.resolve(__dirname, "../../src/game/platform/combat-bridge.ts"));
 
 function makeWeapon(overrides = {}) {
@@ -381,6 +382,50 @@ function makeMagicRune(itemId, overrides = {}) {
 }
 
 {
+  const playerState = { specialAttackCooldown: 0, specialAttackQueued: false };
+  assert.deepStrictEqual(
+    specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: false, canAttack: true }),
+    { accepted: false, reason: "no_target", cooldownTicks: 0 },
+    "special attacks should require a selected target"
+  );
+  assert.deepStrictEqual(
+    specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
+    { accepted: true, reason: "queued", cooldownTicks: 8 },
+    "special attacks should arm against a valid selected target"
+  );
+  assert.deepStrictEqual(
+    playerState,
+    { specialAttackCooldown: 8, specialAttackQueued: true },
+    "arming a special attack should set one bounded cooldown and queue state"
+  );
+  assert.deepStrictEqual(
+    specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
+    { accepted: false, reason: "already_queued", cooldownTicks: 8 },
+    "special attacks should not stack while one is armed"
+  );
+  assert.deepStrictEqual(
+    specialAttacks.applyPlayerSpecialAttack({ attackValue: 8, maxHit: 4, styleFamily: "melee" }),
+    { attackValue: 10, maxHit: 5, styleFamily: "melee" },
+    "Power Strike should apply its fixed accuracy and max-hit multipliers once"
+  );
+  assert.strictEqual(specialAttacks.consumeQueuedPlayerSpecialAttack(playerState), true, "the next resolved hit should consume the queued special");
+  assert.strictEqual(playerState.specialAttackQueued, false, "resolving a special attack should clear its queue state");
+  assert.strictEqual(playerState.specialAttackCooldown, 8, "resolving a special attack should not refresh its already-spent cooldown");
+  assert.deepStrictEqual(
+    specialAttacks.buildPlayerSpecialAttackViewModel({ specialAttackCooldown: 3, specialAttackQueued: false }),
+    {
+      label: "Power Strike",
+      description: "Next hit gains +25% accuracy and max hit. Recharges in 8 ticks.",
+      cooldownTicks: 3,
+      queued: false,
+      ready: false,
+      statusText: "3 ticks to recharge"
+    },
+    "the typed view model should describe the special cooldown without UI-local state"
+  );
+}
+
+{
   const enemyState = {
     remainingAttackCooldown: 3,
     statusEffects: statusEffects.createEnemyStatusEffects()
@@ -558,6 +603,8 @@ function makeMagicRune(itemId, overrides = {}) {
   assert.strictEqual(typeof window.CombatRuntime.applyEnemyStatusEffect, "function", "combat bridge should expose typed enemy status effects");
   assert.strictEqual(typeof window.CombatRuntime.consumeEnemyStatusEffectPeriodicDamage, "function", "combat bridge should expose typed enemy status-effect damage timing");
   assert.strictEqual(typeof window.CombatRuntime.getEnemyAttackPenalty, "function", "combat bridge should expose active enemy attack penalties");
+  assert.strictEqual(typeof window.CombatRuntime.queuePlayerSpecialAttack, "function", "combat bridge should expose typed special-attack queueing");
+  assert.strictEqual(typeof window.CombatRuntime.applyPlayerSpecialAttack, "function", "combat bridge should expose typed special-attack modifiers");
   assert.deepStrictEqual(
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),
     { currentHitpoints: 1, dealt: 5 },

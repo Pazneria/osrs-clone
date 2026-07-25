@@ -46,12 +46,13 @@ assert(
     /- \[x\] COMBAT-019B1: Water-family rune hits/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched`/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile/.test(combatStatusSource) &&
-    /## Now\s*- \[x\] COMBAT-019B2B3B1: Smoke-rune `Disoriented`/.test(combatStatusSource),
-  "combat status should keep the simulator and completed elemental-effect slices aligned before advancing COMBAT-019"
+    /- \[x\] COMBAT-019B2B3B2A: Player-triggered `Power Strike` now arms one next valid melee\/ranged\/magic hit/.test(combatStatusSource) &&
+    /## Now\s*- \[x\] COMBAT-019B2B3B2A: `Power Strike`/.test(combatStatusSource),
+  "combat status should keep the simulator, elemental effects, and bounded special-attack slice aligned"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | Water-family Chilled, earth-family Sundered, air/smoke Disoriented, and lava-rune Scorched now provide visible, typed elemental combat effects | Player-triggered special attacks | None |"),
-  "skills index should reflect the completed smoke-rune status-effect slice"
+  skillsIndexSource.includes("| Combat | In Progress | `Power Strike` now gives all player combat styles a typed, visible, bounded next-hit special | Weapon-specific special profiles and resource mechanics | None |"),
+  "skills index should reflect the completed first special-attack slice"
 );
 
 const summary = runSimulation({

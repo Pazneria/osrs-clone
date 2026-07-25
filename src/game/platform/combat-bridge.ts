@@ -38,6 +38,15 @@ import {
   pruneExpiredEnemyStatusEffects
 } from "../combat/status-effects";
 import {
+  applyPlayerSpecialAttack,
+  buildPlayerSpecialAttackViewModel,
+  clearQueuedPlayerSpecialAttack,
+  consumeQueuedPlayerSpecialAttack,
+  hasQueuedPlayerSpecialAttack,
+  normalizePlayerSpecialAttackState,
+  queuePlayerSpecialAttack
+} from "../combat/special-attacks";
+import {
   COMBAT_SPEC_VERSION,
   createDefaultPlayerCombatState,
   createEnemyRuntimeState,
@@ -84,6 +93,13 @@ declare global {
       decrementCooldown: typeof decrementCooldown;
       rollOpposedHitCheck: typeof rollOpposedHitCheck;
       rollDamage: typeof rollDamage;
+      normalizePlayerSpecialAttackState: typeof normalizePlayerSpecialAttackState;
+      queuePlayerSpecialAttack: typeof queuePlayerSpecialAttack;
+      consumeQueuedPlayerSpecialAttack: typeof consumeQueuedPlayerSpecialAttack;
+      clearQueuedPlayerSpecialAttack: typeof clearQueuedPlayerSpecialAttack;
+      hasQueuedPlayerSpecialAttack: typeof hasQueuedPlayerSpecialAttack;
+      applyPlayerSpecialAttack: typeof applyPlayerSpecialAttack;
+      buildPlayerSpecialAttackViewModel: typeof buildPlayerSpecialAttackViewModel;
       applyEnemyStatusEffect: typeof applyEnemyStatusEffect;
       clearEnemyStatusEffects: typeof clearEnemyStatusEffects;
       consumeEnemyStatusEffectPeriodicDamage: typeof consumeEnemyStatusEffectPeriodicDamage;
@@ -300,6 +316,13 @@ export function exposeCombatBridge(): void {
     decrementCooldown,
     rollOpposedHitCheck,
     rollDamage,
+    normalizePlayerSpecialAttackState,
+    queuePlayerSpecialAttack,
+    consumeQueuedPlayerSpecialAttack,
+    clearQueuedPlayerSpecialAttack,
+    hasQueuedPlayerSpecialAttack,
+    applyPlayerSpecialAttack,
+    buildPlayerSpecialAttackViewModel,
     applyEnemyStatusEffect,
     clearEnemyStatusEffects,
     consumeEnemyStatusEffectPeriodicDamage,

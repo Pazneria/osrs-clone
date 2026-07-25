@@ -221,6 +221,11 @@ assert.ok(
   "inventory.js should wire combat-style tab controls"
 );
 assert.ok(
+  inventorySource.includes("bindCombatSpecialAttackButton") &&
+    inventorySource.includes("runtime.queuePlayerSpecialAttack"),
+  "inventory.js should wire the typed special-attack tab control"
+);
+assert.ok(
   inventoryTooltipRuntimeSource.includes("function buildItemTooltipHtml"),
   "inventory tooltip runtime should build rich item hover tooltips"
 );
