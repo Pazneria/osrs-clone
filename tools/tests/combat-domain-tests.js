@@ -389,6 +389,16 @@ function makeMagicRune(itemId, overrides = {}) {
     "special attacks should require a selected target"
   );
   assert.deepStrictEqual(
+    specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: false }),
+    { accepted: false, reason: "cannot_attack", cooldownTicks: 0 },
+    "special attacks should not arm or spend cooldown when the current loadout cannot attack"
+  );
+  assert.deepStrictEqual(
+    playerState,
+    { specialAttackCooldown: 0, specialAttackQueued: false },
+    "rejecting an unusable special-attack request should leave its state unchanged"
+  );
+  assert.deepStrictEqual(
     specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
     { accepted: true, reason: "queued", cooldownTicks: 8 },
     "special attacks should arm against a valid selected target"
