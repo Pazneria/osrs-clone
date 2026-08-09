@@ -483,34 +483,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-030 - Fletching XP progression pass (log-tier multiples)
-- Status: Fixed
-- Severity: S2
-- Area: FLT
-- Source: Manual
-- Links: `src/js/skills/specs.js`, `content/skills/fletching.json`
-- Repro:
-  1. Review fletching XP values by recipe/log tier.
-- Expected: Fletching XP scales as multiples of parent log woodcutting XP.
-- Actual: Downstream XP scaling is inconsistent with log tier.
-- Frequency: Always
-- Owner: Pair
-- Plan v1:
-  1. Define XP multiplier table by output type.
-  2. Recalculate recipe XP from parent log XP.
-  3. Validate leveling speed and economic balance.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added explicit fletching XP multipliers by output family and bound finished-arrow multipliers by metal tier.
-  - Recomputed fletching recipe XP from canonical parent-log woodcutting XP values (`logs`, `oak_logs`, `willow_logs`, `maple_logs`, `yew_logs`).
-  - Kept multiplier logic centralized in fletching recipe generation so future tier tuning is table-driven.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [ ] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-031 - Fletching item level requirement rebalance
 - Status: Fixed
 - Severity: S2
@@ -917,96 +889,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Fixed (Pending Verify)
 <!-- Code fix landed, waiting for confirmation pass -->
 
-### HIT-072 - Runecrafting balance lacked travel-adjusted guardrails
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Automation
-- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `content/skills/runecrafting.json`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
-- Repro:
-  1. Review the open `RUNECRAFTING-014` milestone in the runecrafting status board.
-  2. Compare elemental and combination XP/value tables against the 1-tick altar action.
-  3. Check whether route-travel overhead is represented in runtime-backed balance summaries.
-- Expected: Runecrafting should have locked XP/value-per-action and travel-adjusted pacing benchmarks for elemental and combination rune routes.
-- Actual: Economy and integration contracts existed, but there was no runecrafting balance helper, spec guard, or roadmap parity table for route-adjusted pacing.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Add canonical runecrafting level bands, route-travel benchmark assumptions, and monotonic XP tuning in the authored skill spec.
-  2. Expose registry balance metrics for elemental and combination recipes, then guard them in spec contracts.
-  3. Document tier-entry, level-40, and preferred-combination benchmarks and advance the runecrafting tracker.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added `SkillSpecRegistry.computeRunecraftingRecipeMetrics()` and `getRunecraftingBalanceSummary()` with per-action and travel-adjusted XP/value outputs.
-  - Rebalanced elemental XP per essence to climb across water/earth/air and lifted combination XP per essence to keep level-40 routes ahead of elemental entry benchmarks.
-  - Added route-overhead assumptions and benchmark tables to the runecrafting roadmap, then locked them with spec-contract and spec-doc-parity coverage.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-071 - Runecrafting cross-skill integration contract
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Automation
-- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
-- Repro:
-  1. Review the open `RUNECRAFTING-012` milestone in the runecrafting status board.
-  2. Compare the runecrafting roadmap dependency notes against canonical mining essence data and future magic rune-demand assumptions.
-  3. Check whether a runtime/spec guard can prove rune essence supply and crafted rune demand stay aligned.
-- Expected: Runecrafting should explicitly lock mining as the rune-essence source and Magic as the future sink for every craftable elemental and combination rune.
-- Actual: The roadmap described Mining and Magic as dependencies, but the canonical spec had no integration contract or registry summary tying those loops to live mining nodes, rune outputs, item stackability, and economy rows.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Add a runecrafting integration contract in the authored skill spec for mining essence supply and future magic rune demand.
-  2. Expose a registry summary helper and focused contract assertions so drift is caught by spec guards.
-  3. Sync the runecrafting roadmap/status/index docs and generated skill mirror.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added `integration.miningEssenceSource` and `integration.magicRuneDemand` to the canonical runecrafting skill spec.
-  - Added `SkillSpecRegistry.getRunecraftingIntegrationSummary()` plus spec-contract coverage for persistent mining essence, stackable craftable rune outputs, and runecrafting economy coverage.
-  - Documented the cross-skill contract in the runecrafting roadmap and advanced the runecrafting tracker from `RUNECRAFTING-012` to the balance pass.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-070 - Camp-threat combat band had no live authored spawns
-- Status: Fixed
-- Severity: S2
-- Area: Other
-- Source: Manual
-- Links: `content/world/regions/starter_town.json`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`
-- Repro:
-  1. Review the live combat progression-band summaries after `COMBAT-014`.
-  2. Compare `Camp Threat` enemies against authored `starter_town` combat spawn nodes.
-  3. Check whether bear, heavy brute, and fast striker have any live camp placement.
-- Expected: The first-pass melee rollout should include at least one optional camp-threat pocket using the same authored spawn-node model as starter, roadside, resource-outskirts, and guard-threshold coverage.
-- Actual: The camp-threat band mapped bear, heavy brute, and fast striker enemy templates but still had zero live authored spawns.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Add a small optional camp-threat pocket in the authored world content without resurrecting the removed `north_road_camp` region.
-  2. Lock its spawn topology, world parity, and progression-band summary counts with focused guards.
-  3. Sync combat status, roadmap, and shared skill index docs to advance the tracker beyond `COMBAT-015`.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added the `camp_southeast_ruins` spawn group in `starter_town` with one bear, one heavy brute, and one fast striker placed on the southeast edge away from protected training/resource route anchors.
-  - Extended combat topology coverage to enforce the camp count, route clearance, local spawn budget, and same-group spacing.
-  - Updated combat content/world parity guards so the camp-threat band now reports three live starter-town spawns and the authored spawn order/count cannot drift silently.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-069 - Combat progression bands lacked an authored contract
 - Status: Fixed
 - Severity: S2
@@ -1067,36 +949,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-067 - Woodcutting merchant progression still lived only in specs and roadmap notes
-- Status: Fixed
-- Severity: S2
-- Area: WC
-- Source: Manual
-- Links: `content/world/regions/starter_town.json`, `content/world/regions/north_road_camp.json`, `src/js/content/npc-dialogue-catalog.js`, `src/js/content/quest-catalog.js`, `src/js/skills/woodcutting/ROADMAP.md`, `src/js/skills/woodcutting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/quest-tanner-runtime-guard.js`
-- Repro:
-  1. Review the open `WOODCUTTING-013` milestone and the merchant/NPC section in the woodcutting roadmap.
-  2. Search the authored world and dialogue content for `forester_teacher` or `advanced_woodsman`.
-  3. Try to find a live deeper-band woodcutting buyer or open the Advanced Woodsman shop before proving any later log progression.
-- Expected: Woodcutting should expose its documented starter mentor and deeper woodsman in authored world content, and the later axe-and-log ledger should have a concrete progression gate instead of opening only by spec assumption.
-- Actual: The woodcutting skill spec already defined `forester_teacher` and `advanced_woodsman` merchant stock, and QA aliases already anticipated both IDs, but neither NPC existed in authored world/dialogue content and no live quest gate tied the deeper woodsman ledger to late-band log progression.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Add the missing woodcutting merchants to the authored starter-town and north-road world services with real dialogue IDs.
-  2. Reuse the merchant-unlock quest runtime for the Advanced Woodsman instead of inventing a bespoke shop lock.
-  3. Add focused world/quest regression coverage and sync the woodcutting roadmap/status/index once the progression path is live.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Added a live `forester_teacher` merchant in Starter Town plus an `advanced_woodsman` merchant at the north-road outpost, both wired through the existing authored world-service and dialogue surfaces.
-  - Added the authored quest `Proof of the Grain`, which auto-starts from the Advanced Woodsman and unlocks his full ledger after a `willow_logs` + `maple_logs` + `yew_logs` turn-in.
-  - Updated the woodcutting roadmap/status/index and extended the focused world/bootstrap/quest guards so the merchant layer and its progression gate stay locked.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-066 - Combat loot pass lacked a benchmark lock for progression pacing
 - Status: Fixed
 - Severity: S2
@@ -1127,66 +979,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - [x] Regression checks passed
   - [x] Notes/logs/docs updated
 
-### HIT-065 - Smithing balance pass lacked runtime benchmarks and valid rune output values
-- Status: Fixed
-- Severity: S2
-- Area: SMI
-- Source: Manual
-- Links: `src/js/content/item-catalog.js`, `src/js/skills/spec-registry.js`, `src/js/skills/smithing/ROADMAP.md`, `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
-- Repro:
-  1. Review the open `SMITHING-012` roadmap/status milestone and compare it against the live smithing registry helpers and roadmap benchmark tables.
-  2. Inspect late-band smithing outputs such as `rune_sword_blade`, `rune_arrowheads`, or `rune_platebody` in the canonical item catalog.
-  3. Compare their direct-sale values against the intended smithing economy progression.
-- Expected: Smithing should publish runtime-backed throughput/economy benchmarks for smelting, forged outputs, and jewelry bases, and rune-tier forged outputs should keep meaningful sell values instead of collapsing to placeholder numbers.
-- Actual: The smithing roadmap had no locked throughput/value-delta tables, the registry exposed no smithing balance summary, and the canonical rune-tier forged outputs all inherited value `1` because the smithing item factory still used a zeroed rune `gearValue`.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Fix the canonical rune smithing output values in the item catalog.
-  2. Add smithing balance-summary helpers plus contract/parity coverage for output-per-tick, XP-per-tick, and direct-sale value-delta metrics.
-  3. Sync the smithing roadmap/status/index and generated item mirror once the runtime-backed numbers are locked.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Corrected the canonical smithing item factory so rune-tier forged outputs now derive from the same late-band gear-value baseline as the finished rune tools/weapons instead of collapsing to placeholder `1`-value items.
-  - Added smithing balance-summary helpers in `SkillSpecRegistry` that compute output-per-tick, XP-per-tick, output sell value, input sell value, and direct-sale value delta for every smithing recipe using the authored smithing/value sources.
-  - Expanded the smithing roadmap with explicit smelting, forged-output, and jewelry-base benchmark tables, then locked them with spec contract/doc parity tests before marking `SMITHING-012` complete in the status board and skills index.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-064 - Smithing station UX lacked queue-state messaging coverage
-- Status: Fixed
-- Severity: S3
-- Area: SMI
-- Source: Manual
-- Links: `src/js/skills/smithing/index.js`, `tools/tests/fletching-crafting-interactions.js`, `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`
-- Repro:
-  1. Queue repeated smithing work from the furnace or anvil.
-  2. Let the queue stop because the requested quantity completes, the player moves away, a required tool disappears, or the next input set is no longer available.
-  3. Compare the live chat feedback and tracker docs against the intended `SMITHING-011` station UX milestone.
-- Expected: Smithing should announce what batch starts, explain why the queue stops, and have focused runtime coverage for quantity completion plus interruption/failure states before the milestone is treated as complete.
-- Actual: The smithing runtime could already queue repeated work, but the player-facing copy stayed generic (`You begin smithing at the anvil.`, `You stop smithing.`), quantity-complete endings were silent, and the shared interaction QA only covered jewellery unlock/output rollback cases.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Add recipe-aware start/stop/failure messaging around queued smithing sessions.
-  2. Extend focused runtime coverage for exact-count queues, material exhaustion, move-away interruption, and tool-loss stops.
-  3. Sync the smithing tracker docs once the UX milestone is actually landed.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Updated the smithing runtime to announce the queued batch up front, emit explicit completion copy for counted batches, and name the active recipe/station when queues stop because of movement, missing tools/moulds, missing materials, or no output space.
-  - Tightened smithing recipe issue text in the station UI so missing tool, mould, and material requirements surface as specific requirements instead of generic placeholders.
-  - Extended the shared interaction/runtime QA with dedicated smithing coverage for exact-count batches, material-driven queue stops, move-away interruption, tool-loss interruption, and the updated output-space rollback copy.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
 ### HIT-063 - Combat tracker still treated melee style UI as open
 - Status: Fixed
 - Severity: S3
@@ -1209,35 +1001,6 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Marked `COMBAT-011` complete in the combat status board because the combat tab already ships melee style buttons, selection wiring, HUD updates, and saved `selectedMeleeStyle` state.
   - Advanced the shared combat row in the skills index so combat now points at the simulator rebuild as the next milestone after the current loot/drop authoring pass.
   - Left the runtime untouched because the existing implementation and targeted tests already matched the documented milestone.
-- Plan vNext (if revised):
-  1.
-- Verification:
-  - [x] Repro no longer occurs / requirement met
-  - [x] Regression checks passed
-  - [x] Notes/logs/docs updated
-
-### HIT-062 - Smithing tracker still treated Thrain gate as open
-- Status: Fixed
-- Severity: S3
-- Area: DOCS
-- Source: Manual
-- Links: `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`, `src/js/skills/smithing/ROADMAP.md`, `tools/tests/quest-tanner-runtime-guard.js`
-- Repro:
-  1. Review the smithing roadmap and quest coverage after `HIT-048`.
-  2. Compare the live Thrain quest gate against the smithing status board and shared skills index.
-- Expected: Once `Proof of the Deepforge` is live and guarded, smithing tracking docs should mark `SMITHING-010` complete and advance to the next milestone.
-- Actual: The roadmap and runtime tests already described the Thrain quest gate as shipped, but `src/js/skills/smithing/STATUS.md` and `src/js/skills/_index.md` still showed the milestone as open and blocked on quest gating.
-- Frequency: Always
-- Owner: Codex
-- Plan v1:
-  1. Verify the Thrain gate is implemented in canonical quest/spec coverage.
-  2. Sync the smithing status board and shared skills index to the shipped state.
-  3. Run narrow regression coverage to confirm the quest gate remains live.
-- Plan Outcome: Confirmed
-- Fix Notes:
-  - Marked `SMITHING-010` complete in the smithing status board because Thrain's advanced ore access already ships through the shared `Proof of the Deepforge` quest gate.
-  - Advanced the shared smithing row in the skills index to `SMITHING-011` and cleared the stale quest-gating blocker.
-  - Left the smithing roadmap untouched because it was already the accurate source describing the live quest-gated progression.
 - Plan vNext (if revised):
   1.
 - Verification:
@@ -2006,6 +1769,251 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
 ## Closed (Verified)
 <!-- Verified fixed and documented -->
 
+### HIT-062 - Smithing tracker now reflects the live Thrain quest gate
+- Status: Closed
+- Severity: S3
+- Area: DOCS
+- Source: Manual
+- Links: `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`, `src/js/skills/smithing/ROADMAP.md`, `tools/tests/quest-tanner-runtime-guard.js`
+- Repro:
+  1. Review the smithing roadmap and quest coverage after `HIT-048`.
+  2. Compare the live Thrain quest gate against the smithing status board and shared skills index.
+- Expected: Once `Proof of the Deepforge` is live and guarded, smithing tracking docs should mark `SMITHING-010` complete and advance to the next milestone.
+- Actual: `SMITHING-010` is complete across the smithing status board and shared index; the canonical quest, roadmap, and focused runtime guard agree that Thrain unlocks after `Proof of the Deepforge`.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Verify the Thrain gate is implemented in canonical quest/spec coverage.
+  2. Sync the smithing status board and shared skills index to the shipped state.
+  3. Run narrow regression coverage to confirm the quest gate remains live.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Marked `SMITHING-010` complete in the smithing status board because Thrain's advanced ore access already ships through the shared `Proof of the Deepforge` quest gate.
+  - Advanced the shared smithing row in the skills index to `SMITHING-011` and cleared the stale quest-gating blocker.
+  - Left the smithing roadmap untouched because it was already the accurate source describing the live quest-gated progression.
+  - Closure verification on 2026-08-07 passed canonical skill validation, the full Thrain quest lifecycle guard, and skill-roadmap doc parity.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-064 - Smithing station UX now has queue-state coverage
+- Status: Closed
+- Severity: S3
+- Area: SMI
+- Source: Manual
+- Links: `src/js/skills/smithing/index.js`, `tools/tests/fletching-crafting-interactions.js`, `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Queue repeated smithing work from the furnace or anvil.
+  2. Let the queue stop because the requested quantity completes, the player moves away, a required tool disappears, or the next input set is no longer available.
+  3. Compare the live chat feedback and tracker docs against the completed `SMITHING-011` station UX milestone.
+- Expected: Smithing should announce what batch starts, explain why the queue stops, and have focused runtime coverage for quantity completion plus interruption/failure states.
+- Actual: Queued smithing announces the recipe and quantity at start, reports counted-batch completion, and names the active recipe/station for material, tool, mould, movement, station-change, unlock, and output-space stops.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add recipe-aware start/stop/failure messaging around queued smithing sessions.
+  2. Extend focused runtime coverage for exact-count queues, material exhaustion, move-away interruption, and tool-loss stops.
+  3. Sync the smithing tracker docs once the UX milestone is actually landed.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Updated the smithing runtime to announce the queued batch up front, emit explicit completion copy for counted batches, and name the active recipe/station when queues stop because of movement, missing tools/moulds, missing materials, or no output space.
+  - Tightened smithing recipe issue text in the station UI so missing tool, mould, and material requirements surface as specific requirements instead of generic placeholders.
+  - Extended the shared interaction/runtime QA with dedicated smithing coverage for exact-count batches, material-driven queue stops, move-away interruption, tool-loss interruption, and the updated output-space rollback copy.
+  - Closure verification passed all 57 focused fletching/crafting interaction checks, including the nine Smithing queue, interruption, unlock, and rollback cases.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-065 - Smithing balance pass now has runtime benchmarks and valid rune output values
+- Status: Closed
+- Severity: S2
+- Area: SMI
+- Source: Manual
+- Links: `src/js/content/item-catalog.js`, `src/js/skills/spec-registry.js`, `src/js/skills/smithing/ROADMAP.md`, `src/js/skills/smithing/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `tools/content/validate-skills.js`, `tools/tests/fletching-crafting-interactions.js`
+- Repro:
+  1. Review completed `SMITHING-012` against the live smithing registry helpers and roadmap benchmark tables.
+  2. Inspect late-band smithing outputs such as `rune_sword_blade`, `rune_arrowheads`, or `rune_platebody` in the canonical item catalog.
+  3. Compare their direct-sale values against the intended smithing economy progression.
+- Expected: Smithing should publish runtime-backed throughput/economy benchmarks for smelting, forged outputs, and jewelry bases, and rune-tier forged outputs should keep meaningful sell values instead of collapsing to placeholder numbers.
+- Actual: The canonical smithing factory now assigns meaningful late-band value baselines to rune forged outputs, while the registry and roadmap publish matching throughput and direct-sale value-delta benchmarks for all smithing recipes.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Fix the canonical rune smithing output values in the item catalog.
+  2. Add smithing balance-summary helpers plus contract/parity coverage for output-per-tick, XP-per-tick, and direct-sale value-delta metrics.
+  3. Sync the smithing roadmap/status/index and generated item mirror once the runtime-backed numbers are locked.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Corrected the canonical smithing item factory so rune-tier forged outputs now derive from the same late-band gear-value baseline as the finished rune tools/weapons instead of collapsing to placeholder `1`-value items.
+  - Added smithing balance-summary helpers in `SkillSpecRegistry` that compute output-per-tick, XP-per-tick, output sell value, input sell value, and direct-sale value delta for every smithing recipe using the authored smithing/value sources.
+  - Expanded the smithing roadmap with explicit smelting, forged-output, and jewelry-base benchmark tables, then locked them with spec contract/doc parity tests before marking `SMITHING-012` complete in the status board and skills index.
+  - Closure verification passed canonical skill-data validation, spec contracts, roadmap parity, and focused smithing station-interaction coverage.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-067 - Woodcutting merchant progression now has live merchants and a proof gate
+- Status: Closed
+- Severity: S2
+- Area: WC
+- Source: Manual
+- Links: `content/world/regions/main_overworld.json`, `src/js/content/npc-dialogue-catalog.js`, `src/js/content/quest-catalog.js`, `src/js/skills/specs/woodcutting.js`, `src/js/skills/woodcutting/ROADMAP.md`, `src/js/skills/woodcutting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/tests/quest-tanner-runtime-guard.js`, `tools/content/validate-world.js`
+- Repro:
+  1. Review completed `WOODCUTTING-013` and the merchant/NPC section of the woodcutting roadmap.
+  2. Inspect the authored main-overworld services for `forester_teacher` and `advanced_woodsman`.
+  3. Interact with the Advanced Woodsman before and after completing the `willow_logs` + `maple_logs` + `yew_logs` proof turn-in.
+- Expected: Woodcutting should expose its documented starter mentor and deeper woodsman in authored world content, and the later axe-and-log ledger should have a concrete progression gate instead of opening only by spec assumption.
+- Actual: `main_overworld` now authors both woodcutting merchants, with dialogue bindings and stock contracts; `Proof of the Grain` gates the Advanced Woodsman's full ledger until the three-log proof is completed.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add the missing woodcutting merchants to authored world services with real dialogue IDs.
+  2. Reuse the merchant-unlock quest runtime for the Advanced Woodsman instead of inventing a bespoke shop lock.
+  3. Add focused world/quest regression coverage and sync the woodcutting roadmap/status/index once the progression path is live.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added the live `forester_teacher` and `advanced_woodsman` merchant services, wired through the existing authored world-service and dialogue surfaces.
+  - Added the authored quest `Proof of the Grain`, which auto-starts from the Advanced Woodsman and unlocks his full ledger after a `willow_logs` + `maple_logs` + `yew_logs` turn-in.
+  - Updated the woodcutting roadmap/status/index and extended focused world/bootstrap/quest guards so the merchant layer and its progression gate stay locked.
+  - Closure verification passed canonical world validation plus focused world-authoring, bootstrap-parity, and quest-lifecycle guards.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-070 - Camp-threat combat band had no live authored spawns
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Manual
+- Links: `content/world/regions/starter_town.json`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`, `tools/tests/combat-enemy-content-guard.js`, `tools/tests/combat-encounter-topology-guard.js`, `tools/tests/world-authoring-domain-tests.js`, `tools/tests/world-bootstrap-parity.js`, `tools/content/validate-world.js`
+- Repro:
+  1. Review the completed `COMBAT-015` milestone and its progression-band summaries.
+  2. Compare `Camp Threat` enemies against authored `starter_town` combat spawn nodes.
+  3. Confirm the southeast ruins contains the bear, heavy brute, and fast striker pocket without conflicting with protected routes.
+- Expected: The first-pass melee rollout should include at least one optional camp-threat pocket using the same authored spawn-node model as starter, roadside, resource-outskirts, and guard-threshold coverage.
+- Actual: `camp_southeast_ruins` provides one bear, one heavy brute, and one fast striker through the authored `starter_town` spawn model; topology, progression-band counts, and world-bootstrap parity are all locked by focused checks.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a small optional camp-threat pocket in the authored world content without resurrecting the removed `north_road_camp` region.
+  2. Lock its spawn topology, world parity, and progression-band summary counts with focused guards.
+  3. Sync combat status, roadmap, and shared skill index docs to advance the tracker beyond `COMBAT-015`.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added the `camp_southeast_ruins` spawn group in `starter_town` with one bear, one heavy brute, and one fast striker placed on the southeast edge away from protected training/resource route anchors.
+  - Extended combat topology coverage to enforce the camp count, route clearance, local spawn budget, and same-group spacing.
+  - Updated combat content/world parity guards so the camp-threat band now reports three live starter-town spawns and the authored spawn order/count cannot drift silently.
+  - Closure verification passed canonical world validation plus focused combat content, encounter-topology, world-authoring, and world-bootstrap parity checks.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-071 - Runecrafting cross-skill integration contract
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `src/js/skills/_index.md`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `tools/content/validate-skills.js`
+- Repro:
+  1. Review the open `RUNECRAFTING-012` milestone in the runecrafting status board.
+  2. Compare the runecrafting roadmap dependency notes against canonical mining essence data and Magic rune-demand assumptions.
+  3. Check whether a runtime/spec guard can prove rune essence supply and crafted rune demand stay aligned.
+- Expected: Runecrafting should explicitly lock mining as the rune-essence source and Magic as the future sink for every craftable elemental and combination rune.
+- Actual: The canonical spec now locks the mining essence source and Magic demand for every craftable elemental and combination rune, with registry and parity coverage for node persistence, rune outputs, stackability, and economy rows.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a runecrafting integration contract in the authored skill spec for mining essence supply and Magic rune demand.
+  2. Expose a registry summary helper and focused contract assertions so drift is caught by spec guards.
+  3. Sync the runecrafting roadmap/status/index docs and generated skill mirror.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `integration.miningEssenceSource` and `integration.magicRuneDemand` to the canonical runecrafting skill spec.
+  - Added `SkillSpecRegistry.getRunecraftingIntegrationSummary()` plus spec-contract coverage for persistent mining essence, stackable craftable rune outputs, and runecrafting economy coverage.
+  - Documented the cross-skill contract in the runecrafting roadmap and advanced the runecrafting tracker from `RUNECRAFTING-012` to the balance pass.
+  - Closure verification passed `tool:skills:validate`, spec contracts, and spec-doc parity against the current authored sources.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-030 - Fletching XP progression pass (log-tier multiples)
+- Status: Closed
+- Severity: S2
+- Area: FLT
+- Source: Manual
+- Links: `src/js/skills/specs/fletching.js`, `content/skills/fletching.json`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`, `tools/content/validate-skills.js`
+- Repro:
+  1. Review fletching XP values by recipe and parent-log tier.
+  2. Compare every fletching recipe's source/origin log and multiplier with the canonical woodcutting node XP.
+  3. Regenerate and validate the fletching skill mirror.
+- Expected: Fletching XP scales as multiples of parent log woodcutting XP.
+- Actual: Every fletching recipe now declares a source/origin log plus multiplier and resolves XP from the canonical woodcutting node table.
+- Frequency: Always
+- Owner: Pair
+- Plan v1:
+  1. Define XP multiplier table by output type.
+  2. Recalculate recipe XP from parent log XP.
+  3. Validate leveling speed and economic balance.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Kept explicit fletching XP multipliers by output family, including metal-tier finished-arrow multipliers.
+  - Removed the duplicated parent-log XP table from the fletching spec; recipe XP now resolves directly from the authored woodcutting node table.
+  - Added source/origin-log multiplier metadata to every recipe and a contract guard that verifies all 46 recipe XP values against the matching canonical woodcutting XP.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-086 - Power Strike had no explicit resource limit
+- Status: Closed
+- Severity: S3
+- Area: Combat / HUD
+- Source: Automation
+- Links: `src/game/contracts/combat.ts`, `src/game/combat/special-attacks.ts`, `src/game/combat/formulas.ts`, `src/game/platform/combat-bridge.ts`, `src/game/ui/hud-view-models.ts`, `src/game/session/player.ts`, `src/js/core.js`, `src/js/combat.js`, `src/js/inventory.js`, `src/js/world/status-hud-runtime.js`, `index.html`, `tools/tests/combat-domain-tests.js`, `tools/tests/world-status-hud-runtime-guard.js`, `tools/tests/combat-enemy-content-guard.js`, `src/js/skills/combat/STATUS.md`, `src/js/skills/combat/ROADMAP.md`, `src/js/skills/_index.md`
+- Repro:
+  1. Lock an enemy target while holding a usable melee weapon, bow with arrows, or staff with runes.
+  2. Arm and release Power Strike repeatedly as its short cooldown expires.
+  3. Inspect the Combat tab for an explicit long-term special-attack cost or recovery indicator.
+- Expected: Special attacks have a visible, bounded resource cost that persists safely and recovers through a typed combat lifecycle.
+- Actual: Power Strike was limited only by an eight-tick cooldown, with no special-attack resource, persistence rule, or live energy feedback.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add a typed capped energy field to player combat/session state with backward-safe defaults.
+  2. Spend energy when a valid Power Strike is armed and regenerate it through the shared combat tick bridge.
+  3. Surface current energy in the Combat tab and lock the lifecycle with focused domain, HUD, runtime, and tracker coverage.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added a capped 100-point special-energy pool. Power Strike spends 25 energy on arm, restores one point per combat tick, and retains the existing eight-tick cooldown.
+  - The typed special module owns resource normalization, queue gating, regeneration, and view-model state; legacy combat only invokes the bridge in the existing tick loop.
+  - Saves missing the new field default to full energy, armed specials still clear on restore, and the Combat tab now reports live energy alongside readiness.
+- Plan vNext (if revised):
+  1. Attach weapon-specific special profiles to the shared energy contract.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
 ### HIT-085 - Player combat had no intentional special attack
 - Status: Closed
 - Severity: S3
@@ -2302,6 +2310,37 @@ Use this as the execution layer that links to skill docs, playtest notes, and co
   - Preserved valid partial-secondary combination crafting when the carried secondary rune count can support at least one essence.
   - Added `tools/tests/runecrafting-runtime-tests.js`, wired it to `npm.cmd run test:qa:runecrafting`, and included it in the package test suite manifest.
   - Verified the closure pass with focused runecrafting runtime QA, spec contracts, and spec doc parity checks.
+- Plan vNext (if revised):
+  1.
+- Verification:
+  - [x] Repro no longer occurs / requirement met
+  - [x] Regression checks passed
+  - [x] Notes/logs/docs updated
+
+### HIT-072 - Runecrafting balance lacked travel-adjusted guardrails
+- Status: Closed
+- Severity: S2
+- Area: Other
+- Source: Automation
+- Links: `src/js/skills/specs.js`, `src/js/skills/spec-registry.js`, `src/js/skills/runecrafting/ROADMAP.md`, `src/js/skills/runecrafting/STATUS.md`, `content/skills/runecrafting.json`, `tools/tests/runecrafting-runtime-tests.js`, `tools/tests/spec-contracts.js`, `tools/tests/spec-doc-parity.js`
+- Repro:
+  1. Review the completed `RUNECRAFTING-014` milestone in the runecrafting status board.
+  2. Compare elemental and combination XP/value tables against the one-tick altar action.
+  3. Check whether route-travel overhead is represented in runtime-backed balance summaries.
+- Expected: Runecrafting should have locked XP/value-per-action and travel-adjusted pacing benchmarks for elemental and combination rune routes.
+- Actual: The authored balance summary now provides per-action and travel-adjusted XP/value outputs, and the roadmap benchmark tables remain in parity with the canonical runtime spec.
+- Frequency: Always
+- Owner: Codex
+- Plan v1:
+  1. Add canonical runecrafting level bands, route-travel benchmark assumptions, and monotonic XP tuning in the authored skill spec.
+  2. Expose registry balance metrics for elemental and combination recipes, then guard them in spec contracts.
+  3. Document tier-entry, level-40, and preferred-combination benchmarks and advance the runecrafting tracker.
+- Plan Outcome: Confirmed
+- Fix Notes:
+  - Added `SkillSpecRegistry.computeRunecraftingRecipeMetrics()` and `getRunecraftingBalanceSummary()` with per-action and travel-adjusted XP/value outputs.
+  - Rebalanced elemental XP per essence to climb across water/earth/air and lifted combination XP per essence to keep level-40 routes ahead of elemental entry benchmarks.
+  - Added route-overhead assumptions and benchmark tables to the runecrafting roadmap, then locked them with spec-contract and spec-doc-parity coverage.
+  - Closure verification passed focused runecrafting runtime QA, spec contracts, roadmap parity, and canonical skill-data validation.
 - Plan vNext (if revised):
   1.
 - Verification:

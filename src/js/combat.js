@@ -1336,6 +1336,9 @@
             ? Math.max(0, Math.floor(playerState.specialAttackCooldown))
             : 0;
         playerState.specialAttackCooldown = combatRuntime.decrementCooldown(previousSpecialAttackCooldown);
+        const specialAttackEnergyChanged = typeof combatRuntime.regeneratePlayerSpecialAttackEnergy === 'function'
+            ? combatRuntime.regeneratePlayerSpecialAttackEnergy(playerState)
+            : false;
 
         for (let i = 0; i < combatEnemyStates.length; i++) {
             const enemyState = combatEnemyStates[i];
@@ -1386,7 +1389,7 @@
         refreshCombatEnemyOccupancy();
 
         if (!playerState.lockedTargetId && (playerState.action === 'COMBAT: MELEE' || playerState.action === 'COMBAT: RANGED' || playerState.action === 'COMBAT: MAGIC')) playerState.action = 'IDLE';
-        if (previousSpecialAttackCooldown !== playerState.specialAttackCooldown && typeof window.updateStats === 'function') window.updateStats();
+        if ((previousSpecialAttackCooldown !== playerState.specialAttackCooldown || specialAttackEnergyChanged) && typeof window.updateStats === 'function') window.updateStats();
     }
 
     function ensureCombatEnemyRenderLayer() {

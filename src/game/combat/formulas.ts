@@ -255,6 +255,7 @@ export function buildPlayerCombatDefaults(playerSkills: PlayerSkillMap): PlayerC
     lastCastTick: -1,
     remainingAttackCooldown: 0,
     specialAttackCooldown: 0,
+    specialAttackEnergy: 100,
     specialAttackQueued: false,
     lockedTargetId: null,
     combatTargetKind: null,

@@ -226,6 +226,11 @@ assert.ok(
   "inventory.js should wire the typed special-attack tab control"
 );
 assert.ok(
+  inventorySource.includes("result.reason === 'insufficient_energy'") &&
+    inventorySource.includes("Power Strike needs 25 special energy."),
+  "inventory.js should explain why a cooled-down special attack cannot arm without enough energy"
+);
+assert.ok(
   inventoryTooltipRuntimeSource.includes("function buildItemTooltipHtml"),
   "inventory tooltip runtime should build rich item hover tooltips"
 );

@@ -382,7 +382,7 @@ function makeMagicRune(itemId, overrides = {}) {
 }
 
 {
-  const playerState = { specialAttackCooldown: 0, specialAttackQueued: false };
+  const playerState = { specialAttackCooldown: 0, specialAttackEnergy: 100, specialAttackQueued: false };
   assert.deepStrictEqual(
     specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: false, canAttack: true }),
     { accepted: false, reason: "no_target", cooldownTicks: 0 },
@@ -395,7 +395,7 @@ function makeMagicRune(itemId, overrides = {}) {
   );
   assert.deepStrictEqual(
     playerState,
-    { specialAttackCooldown: 0, specialAttackQueued: false },
+    { specialAttackCooldown: 0, specialAttackEnergy: 100, specialAttackQueued: false },
     "rejecting an unusable special-attack request should leave its state unchanged"
   );
   assert.deepStrictEqual(
@@ -405,8 +405,8 @@ function makeMagicRune(itemId, overrides = {}) {
   );
   assert.deepStrictEqual(
     playerState,
-    { specialAttackCooldown: 8, specialAttackQueued: true },
-    "arming a special attack should set one bounded cooldown and queue state"
+    { specialAttackCooldown: 8, specialAttackEnergy: 75, specialAttackQueued: true },
+    "arming a special attack should spend bounded energy alongside its cooldown and queue state"
   );
   assert.deepStrictEqual(
     specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
@@ -421,15 +421,42 @@ function makeMagicRune(itemId, overrides = {}) {
   assert.strictEqual(specialAttacks.consumeQueuedPlayerSpecialAttack(playerState), true, "the next resolved hit should consume the queued special");
   assert.strictEqual(playerState.specialAttackQueued, false, "resolving a special attack should clear its queue state");
   assert.strictEqual(playerState.specialAttackCooldown, 8, "resolving a special attack should not refresh its already-spent cooldown");
+  assert.strictEqual(playerState.specialAttackEnergy, 75, "resolving a special attack should not spend energy twice");
+  playerState.specialAttackCooldown = 0;
+  playerState.specialAttackEnergy = 24;
   assert.deepStrictEqual(
-    specialAttacks.buildPlayerSpecialAttackViewModel({ specialAttackCooldown: 3, specialAttackQueued: false }),
+    specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
+    { accepted: false, reason: "insufficient_energy", cooldownTicks: 0 },
+    "special attacks should reject an armed request until the resource can pay its fixed cost"
+  );
+  assert.strictEqual(specialAttacks.regeneratePlayerSpecialAttackEnergy(playerState), true, "special energy should recover through the typed lifecycle");
+  assert.strictEqual(playerState.specialAttackEnergy, 25, "special energy should recover one point per combat tick");
+  assert.deepStrictEqual(
+    specialAttacks.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
+    { accepted: true, reason: "queued", cooldownTicks: 8 },
+    "special attacks should arm when energy exactly meets their fixed cost"
+  );
+  assert.strictEqual(playerState.specialAttackEnergy, 0, "arming at the energy threshold should spend the entire available cost");
+  playerState.specialAttackEnergy = 100;
+  assert.strictEqual(specialAttacks.regeneratePlayerSpecialAttackEnergy(playerState), false, "full special energy should not report a redundant HUD refresh");
+  assert.strictEqual(playerState.specialAttackEnergy, 100, "special energy regeneration should remain capped at its maximum");
+  assert.deepStrictEqual(
+    specialAttacks.normalizePlayerSpecialAttackState({ specialAttackCooldown: -4, specialAttackEnergy: 120.8, specialAttackQueued: true }),
+    { specialAttackCooldown: 0, specialAttackEnergy: 100, specialAttackQueued: true },
+    "legacy or malformed special-attack state should clamp safely before use"
+  );
+  assert.deepStrictEqual(
+    specialAttacks.buildPlayerSpecialAttackViewModel({ specialAttackCooldown: 3, specialAttackEnergy: 75, specialAttackQueued: false }),
     {
       label: "Power Strike",
-      description: "Next hit gains +25% accuracy and max hit. Recharges in 8 ticks.",
+      description: "Next hit gains +25% accuracy and max hit. Costs 25 special energy; recovers 1 each tick.",
       cooldownTicks: 3,
+      energy: 75,
+      maxEnergy: 100,
+      energyCost: 25,
       queued: false,
       ready: false,
-      statusText: "3 ticks to recharge"
+      statusText: "3 ticks to recharge · 75/100 energy"
     },
     "the typed view model should describe the special cooldown without UI-local state"
   );
@@ -614,6 +641,7 @@ function makeMagicRune(itemId, overrides = {}) {
   assert.strictEqual(typeof window.CombatRuntime.consumeEnemyStatusEffectPeriodicDamage, "function", "combat bridge should expose typed enemy status-effect damage timing");
   assert.strictEqual(typeof window.CombatRuntime.getEnemyAttackPenalty, "function", "combat bridge should expose active enemy attack penalties");
   assert.strictEqual(typeof window.CombatRuntime.queuePlayerSpecialAttack, "function", "combat bridge should expose typed special-attack queueing");
+  assert.strictEqual(typeof window.CombatRuntime.regeneratePlayerSpecialAttackEnergy, "function", "combat bridge should expose typed special-energy regeneration");
   assert.strictEqual(typeof window.CombatRuntime.applyPlayerSpecialAttack, "function", "combat bridge should expose typed special-attack modifiers");
   assert.deepStrictEqual(
     window.CombatRuntime.applyPlayerHitpointDamage(6, 10, 9, 1),

@@ -166,6 +166,9 @@ export interface CombatSpecialAttackViewModel {
   label: string;
   description: string;
   cooldownTicks: number;
+  energy: number;
+  maxEnergy: number;
+  energyCost: number;
   queued: boolean;
   ready: boolean;
   statusText: string;

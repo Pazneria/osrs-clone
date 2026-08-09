@@ -56,12 +56,13 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Lava-rune Scorched status-effect slice | Complete |
 | Smoke-rune Disoriented status-effect slice | Complete |
 | Player-triggered Power Strike slice | Complete |
+| Special-energy resource slice | Complete |
 
 ## Data Contracts
 
 ### Player
 
-- Combat state persists current hitpoints, remaining attack cooldown, locked target id, combat target kind, selected melee style, auto-retaliate flag, and combat-state markers. The live combat state also carries a bounded special-attack cooldown plus an armed-next-hit marker, which is cleared when its target lock clears or a session restores.
+- Combat state persists current hitpoints, remaining attack cooldown, locked target id, combat target kind, selected melee style, auto-retaliate flag, and combat-state markers. The live combat state also carries a bounded special-attack cooldown, a 0-100 special-energy pool, and an armed-next-hit marker, which is cleared when its target lock clears or a session restores.
 - Player melee performance derives from explicit `combat` item data plus combat skills.
 - Required Attack level gates melee use, even when a tool is equipped through another system flow.
 
@@ -130,7 +131,7 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Ammo-consuming ranged attacks consume one selected arrow on both hits and misses, preferring equipped ammo before compatible inventory stacks.
 - Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency.
 - Ammo-consuming magic attacks consume one selected rune on both hits and misses, choosing the strongest compatible rune stack from inventory.
-- `Power Strike` can be armed only while the player has both a live target lock and a usable combat snapshot. It modifies exactly the next valid melee, ranged, or magic attack with +25% accuracy and +25% max hit, consumes the ordinary one arrow/rune for that attack where applicable, then recharges for eight combat ticks. Breaking the target lock disarms a pending strike without refunding its cooldown.
+- `Power Strike` can be armed only while the player has both a live target lock, a usable combat snapshot, and at least 25 special energy. It modifies exactly the next valid melee, ranged, or magic attack with +25% accuracy and +25% max hit, consumes the ordinary one arrow/rune for that attack where applicable, spends 25 special energy on arm, then recharges for eight combat ticks. Special energy is capped at 100 and restores one point per combat tick. Breaking the target lock disarms a pending strike without refunding its cooldown or energy.
 - A damaging hit from a selected water-family rune applies `Chilled` for two ticks. `Chilled` adds one tick to an already-counting enemy swing, or to the enemy's newly resolved next swing in a same-tick batch; it is cleared when that enemy returns home, dies, or respawns.
 - An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar, including the active duration and a tooltip that explains the delayed next swing. The overlay reads the typed status-effect surface each tick rather than owning duplicate status state.
 - A damaging earth/dust-rune hit applies `Sundered` for three ticks. `Sundered` lowers the enemy's effective Defence by 3 for subsequent player hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
@@ -484,7 +485,7 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 
 ## Follow-Up
 
-1. Keep weapon-specific special profiles, resource mechanics, and any further elemental effects as separate, bounded slices on the typed combat contract; the current next slice is weapon-specific specials.
+1. Keep weapon-specific special profiles and any further elemental effects as separate, bounded slices on the typed combat contract; the current next slice is weapon-specific specials on the shared energy pool.
 2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
 3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
 4. Revisit later-region anchors only after authored region context exists.

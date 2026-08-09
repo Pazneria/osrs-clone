@@ -111,6 +111,12 @@ function run() {
     "core should clamp stale persisted eat cooldowns on load so absolute save ticks cannot lock eating after restart"
   );
   assert(
+    coreScript.includes("playerState.specialAttackEnergy = Number.isFinite(savedPlayerState.specialAttackEnergy)")
+      && coreScript.includes("Math.max(0, Math.min(loadedCombatDefaults.specialAttackEnergy, Math.floor(savedPlayerState.specialAttackEnergy)))")
+      && coreScript.includes(": loadedCombatDefaults.specialAttackEnergy;"),
+    "core should restore persisted special energy within its current bounds and default legacy saves to full energy"
+  );
+  assert(
     coreScript.includes("gameSessionRuntime.buildProgressSavePayload"),
     "core should build progress payloads through the session runtime"
   );

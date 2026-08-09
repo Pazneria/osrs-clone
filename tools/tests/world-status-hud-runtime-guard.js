@@ -36,6 +36,7 @@ function createFakeDocument() {
     "combat-special-label",
     "combat-special-effect",
     "combat-special-status",
+    "combat-special-energy",
     "combat-special-attack",
     "inventory-hitpoints-text",
     "inventory-hitpoints-bar-fill",
@@ -103,11 +104,14 @@ function run() {
     combatStats: { attack: 11, defense: 12, strength: 13 },
     specialAttack: {
       label: "Power Strike",
-      description: "Next hit gains +25% accuracy and max hit. Recharges in 8 ticks.",
+      description: "Next hit gains +25% accuracy and max hit. Costs 25 special energy; recovers 1 each tick.",
       cooldownTicks: 0,
+      energy: 100,
+      maxEnergy: 100,
+      energyCost: 25,
       queued: false,
       ready: true,
-      statusText: "Ready"
+      statusText: "100/100 energy · Ready"
     },
     styleOptions: [
       { styleId: "attack", active: true },
@@ -139,21 +143,43 @@ function run() {
   assert(fakeDocument.nodes["combat-style-attack"].attributes["aria-pressed"] === "true", "status HUD should mark active combat style");
   assert(fakeDocument.nodes["combat-style-strength"].attributes["aria-pressed"] === "false", "status HUD should mark inactive combat style");
   assert(fakeDocument.nodes["combat-special-label"].innerText === "Power Strike", "status HUD should paint the typed special-attack label");
-  assert(fakeDocument.nodes["combat-special-status"].innerText === "Ready", "status HUD should paint special-attack readiness");
+  assert(fakeDocument.nodes["combat-special-status"].innerText === "100/100 energy · Ready", "status HUD should paint special-attack readiness");
+  assert(fakeDocument.nodes["combat-special-energy"].innerText === "100/100 energy", "status HUD should paint special-attack energy");
   assert(fakeDocument.nodes["combat-special-attack"].disabled === false, "status HUD should enable a ready special-attack control");
 
   combatTabViewModel.specialAttack = {
     label: "Power Strike",
-    description: "Next hit gains +25% accuracy and max hit. Recharges in 8 ticks.",
+    description: "Next hit gains +25% accuracy and max hit. Costs 25 special energy; recovers 1 each tick.",
     cooldownTicks: 7,
+    energy: 76,
+    maxEnergy: 100,
+    energyCost: 25,
     queued: false,
     ready: false,
-    statusText: "7 ticks to recharge"
+    statusText: "7 ticks to recharge · 76/100 energy"
   };
   runtime.updateCombatTab({ document: fakeDocument }, combatTabViewModel);
 
-  assert(fakeDocument.nodes["combat-special-status"].innerText === "7 ticks to recharge", "status HUD should refresh special-attack cooldown feedback");
+  assert(fakeDocument.nodes["combat-special-status"].innerText === "7 ticks to recharge · 76/100 energy", "status HUD should refresh special-attack cooldown feedback");
+  assert(fakeDocument.nodes["combat-special-energy"].innerText === "76/100 energy", "status HUD should refresh special-attack energy feedback");
   assert(fakeDocument.nodes["combat-special-attack"].disabled === true, "status HUD should disable a recharging special-attack control");
+
+  combatTabViewModel.specialAttack = {
+    label: "Power Strike",
+    description: "Next hit gains +25% accuracy and max hit. Costs 25 special energy; recovers 1 each tick.",
+    cooldownTicks: 0,
+    energy: 24,
+    maxEnergy: 100,
+    energyCost: 25,
+    queued: false,
+    ready: false,
+    statusText: "24/100 energy · Need 25"
+  };
+  runtime.updateCombatTab({ document: fakeDocument }, combatTabViewModel);
+
+  assert(fakeDocument.nodes["combat-special-status"].innerText === "24/100 energy · Need 25", "status HUD should explain when a cooled-down special still lacks energy");
+  assert(fakeDocument.nodes["combat-special-energy"].innerText === "24/100 energy", "status HUD should retain the current insufficient-energy amount");
+  assert(fakeDocument.nodes["combat-special-attack"].disabled === true, "status HUD should disable a special attack until it has enough energy");
 
   console.log("World status HUD runtime guard passed.");
 }

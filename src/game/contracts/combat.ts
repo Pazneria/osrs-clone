@@ -203,6 +203,7 @@ export interface PlayerCombatStateShape {
   lastCastTick: number;
   remainingAttackCooldown: number;
   specialAttackCooldown: number;
+  specialAttackEnergy: number;
   specialAttackQueued: boolean;
   lockedTargetId: string | null;
   combatTargetKind: CombatTargetKind | null;

@@ -44,7 +44,8 @@ import {
   consumeQueuedPlayerSpecialAttack,
   hasQueuedPlayerSpecialAttack,
   normalizePlayerSpecialAttackState,
-  queuePlayerSpecialAttack
+  queuePlayerSpecialAttack,
+  regeneratePlayerSpecialAttackEnergy
 } from "../combat/special-attacks";
 import {
   COMBAT_SPEC_VERSION,
@@ -95,6 +96,7 @@ declare global {
       rollDamage: typeof rollDamage;
       normalizePlayerSpecialAttackState: typeof normalizePlayerSpecialAttackState;
       queuePlayerSpecialAttack: typeof queuePlayerSpecialAttack;
+      regeneratePlayerSpecialAttackEnergy: typeof regeneratePlayerSpecialAttackEnergy;
       consumeQueuedPlayerSpecialAttack: typeof consumeQueuedPlayerSpecialAttack;
       clearQueuedPlayerSpecialAttack: typeof clearQueuedPlayerSpecialAttack;
       hasQueuedPlayerSpecialAttack: typeof hasQueuedPlayerSpecialAttack;
@@ -318,6 +320,7 @@ export function exposeCombatBridge(): void {
     rollDamage,
     normalizePlayerSpecialAttackState,
     queuePlayerSpecialAttack,
+    regeneratePlayerSpecialAttackEnergy,
     consumeQueuedPlayerSpecialAttack,
     clearQueuedPlayerSpecialAttack,
     hasQueuedPlayerSpecialAttack,

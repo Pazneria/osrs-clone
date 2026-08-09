@@ -191,9 +191,20 @@ function ensureCombatRuntimeLoaded(root) {
       if (!options.canAttack) return { accepted: false, reason: "cannot_attack", cooldownTicks: playerState.specialAttackCooldown || 0 };
       if (playerState.specialAttackQueued) return { accepted: false, reason: "already_queued", cooldownTicks: playerState.specialAttackCooldown || 0 };
       if (playerState.specialAttackCooldown > 0) return { accepted: false, reason: "cooldown", cooldownTicks: playerState.specialAttackCooldown };
+      if ((playerState.specialAttackEnergy || 0) < 25) return { accepted: false, reason: "insufficient_energy", cooldownTicks: playerState.specialAttackCooldown || 0 };
       playerState.specialAttackQueued = true;
       playerState.specialAttackCooldown = 8;
+      playerState.specialAttackEnergy -= 25;
       return { accepted: true, reason: "queued", cooldownTicks: 8 };
+    },
+    regeneratePlayerSpecialAttackEnergy(playerState) {
+      const currentEnergy = Number.isFinite(playerState.specialAttackEnergy)
+        ? Math.max(0, Math.min(100, Math.floor(playerState.specialAttackEnergy)))
+        : 100;
+      const nextEnergy = Math.min(100, currentEnergy + 1);
+      const changed = playerState.specialAttackEnergy !== nextEnergy;
+      playerState.specialAttackEnergy = nextEnergy;
+      return changed;
     },
     consumeQueuedPlayerSpecialAttack(playerState) {
       const queued = !!playerState.specialAttackQueued;
@@ -403,6 +414,7 @@ function resetCombatEnvironment(options = {}) {
     lockedTargetId: null,
     remainingAttackCooldown: 0,
     specialAttackCooldown: 0,
+    specialAttackEnergy: 100,
     specialAttackQueued: false,
     currentHitpoints: 10,
     inCombat: false,
@@ -948,11 +960,13 @@ function run() {
     assert.strictEqual(getEnemy("special-target").currentHealth, 3, "Power Strike should use the modified damage roll exactly once");
     assert.strictEqual(playerState.specialAttackQueued, false, "the resolved special should not carry into later swings");
     assert.strictEqual(playerState.specialAttackCooldown, 7, "the special cooldown should begin on arm and tick normally");
+    assert.strictEqual(playerState.specialAttackEnergy, 76, "each combat tick should restore one spent special-energy point after Power Strike is armed");
 
     playerState.specialAttackQueued = true;
     assert.strictEqual(window.clearPlayerCombatTarget({ force: true, reason: "manual-clear" }), true);
     assert.strictEqual(playerState.specialAttackQueued, false, "clearing a combat target should disarm a pending special without refunding cooldown");
     assert.strictEqual(playerState.specialAttackCooldown, 7, "clearing a target should not reset the spent special cooldown");
+    assert.strictEqual(playerState.specialAttackEnergy, 76, "clearing a target should not refund special energy");
   });
 
   test("Water-rune hits chill enemies and delay their next swing", () => {

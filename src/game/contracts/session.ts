@@ -70,6 +70,7 @@ export interface GameSessionPlayerState extends Point3 {
   lastCastTick: number;
   remainingAttackCooldown: number;
   specialAttackCooldown: number;
+  specialAttackEnergy: number;
   specialAttackQueued: boolean;
   lockedTargetId: string | null;
   combatTargetKind: CombatTargetKind | null;

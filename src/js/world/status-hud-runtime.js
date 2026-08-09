@@ -62,6 +62,7 @@
             setText(documentRef, 'combat-special-label', specialAttack.label);
             setText(documentRef, 'combat-special-effect', specialAttack.description);
             setText(documentRef, 'combat-special-status', specialAttack.statusText);
+            setText(documentRef, 'combat-special-energy', `${specialAttack.energy}/${specialAttack.maxEnergy} energy`);
             updateCombatSpecialAttackButtonState(documentRef.getElementById('combat-special-attack'), specialAttack);
         }
 

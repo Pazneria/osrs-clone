@@ -18,13 +18,6 @@
             },
             recipeSet: (function () {
                 const recipes = {};
-                const woodcuttingXpByLog = {
-                    logs: 25,
-                    oak_logs: 38,
-                    willow_logs: 68,
-                    maple_logs: 100,
-                    yew_logs: 150
-                };
                 const xpMultipliers = {
                     handle: 0.24,
                     staff: 0.24,
@@ -41,8 +34,21 @@
                     finishedAdamant: 0.15,
                     finishedRune: 0.15
                 };
+                const woodcuttingNodeTable = authoring.skills.woodcutting && authoring.skills.woodcutting.nodeTable;
+                function getWoodcuttingXpByLog(logItemId) {
+                    const nodeIds = woodcuttingNodeTable && typeof woodcuttingNodeTable === 'object'
+                        ? Object.keys(woodcuttingNodeTable)
+                        : [];
+                    for (let i = 0; i < nodeIds.length; i++) {
+                        const node = woodcuttingNodeTable[nodeIds[i]];
+                        if (node && node.rewardItemId === logItemId && Number.isFinite(node.xpPerSuccess)) {
+                            return node.xpPerSuccess;
+                        }
+                    }
+                    throw new Error(`Missing canonical woodcutting XP for fletching source log: ${logItemId}`);
+                }
                 function scaledXp(logItemId, multiplier) {
-                    const base = Number.isFinite(woodcuttingXpByLog[logItemId]) ? woodcuttingXpByLog[logItemId] : 25;
+                    const base = getWoodcuttingXpByLog(logItemId);
                     const mult = Number.isFinite(multiplier) ? multiplier : 0.1;
                     return Math.max(1, Math.round(base * mult));
                 }
@@ -130,6 +136,7 @@
                         requiredLevel: leveled(def.baseLevel, 0),
                         requiredToolIds: ['knife'],
                         sourceLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.handle,
                         inputs: [{ itemId: def.logItemId, amount: 1 }],
                         output: { itemId: def.handleItemId, amount: 1 },
                         xpPerAction: scaledXp(def.logItemId, xpMultipliers.handle),
@@ -141,6 +148,7 @@
                         requiredLevel: leveled(def.baseLevel, 1),
                         requiredToolIds: ['knife'],
                         sourceLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.staff,
                         inputs: [{ itemId: def.logItemId, amount: 1 }],
                         output: { itemId: def.staffItemId, amount: 1 },
                         xpPerAction: scaledXp(def.logItemId, xpMultipliers.staff),
@@ -152,6 +160,7 @@
                         requiredLevel: leveled(def.baseLevel, 1),
                         requiredToolIds: ['knife'],
                         sourceLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.shafts,
                         inputs: [{ itemId: def.logItemId, amount: 1 }],
                         output: { itemId: def.shaftsItemId, amount: 1 },
                         xpPerAction: scaledXp(def.logItemId, xpMultipliers.shafts),
@@ -163,6 +172,7 @@
                         requiredLevel: leveled(def.baseLevel, 4),
                         requiredToolIds: ['knife'],
                         sourceLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.shortbowUnstrung,
                         inputs: [{ itemId: def.logItemId, amount: 1 }],
                         output: { itemId: def.shortbowUnstrungItemId, amount: 1 },
                         xpPerAction: scaledXp(def.logItemId, xpMultipliers.shortbowUnstrung),
@@ -174,6 +184,7 @@
                         requiredLevel: leveled(def.baseLevel, 2),
                         requiredToolIds: ['knife'],
                         sourceLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.longbowUnstrung,
                         inputs: [{ itemId: def.logItemId, amount: 1 }],
                         output: { itemId: def.longbowUnstrungItemId, amount: 1 },
                         xpPerAction: scaledXp(def.logItemId, xpMultipliers.longbowUnstrung),
@@ -183,6 +194,8 @@
                     recipes[`fletch_${def.shortbowItemId}`] = {
                         recipeFamily: 'bow_strung',
                         requiredLevel: def.tierId === 'wooden' ? def.baseLevel : leveled(def.baseLevel, 4),
+                        originLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.shortbow,
                         inputs: [
                             { itemId: def.shortbowUnstrungItemId, amount: 1 },
                             { itemId: 'bow_string', amount: 1 }
@@ -195,6 +208,8 @@
                     recipes[`fletch_${def.longbowItemId}`] = {
                         recipeFamily: 'bow_strung',
                         requiredLevel: leveled(def.baseLevel, 2),
+                        originLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.longbow,
                         inputs: [
                             { itemId: def.longbowUnstrungItemId, amount: 1 },
                             { itemId: 'bow_string', amount: 1 }
@@ -218,6 +233,8 @@
                     recipes[`fletch_${def.headlessItemId}`] = {
                         recipeFamily: 'headless_arrows',
                         requiredLevel: leveled(def.baseLevel, 2),
+                        originLogItemId: def.logItemId,
+                        xpMultiplier: xpMultipliers.headless,
                         inputs: [
                             { itemId: def.shaftsItemId, amount: 1 },
                             { itemId: 'feathers_bundle', amount: 1 }
@@ -242,6 +259,8 @@
                     recipes[`fletch_${def.arrowItemId}`] = {
                         recipeFamily: 'finished_arrows',
                         requiredLevel: leveled(def.baseLevel, def.levelOffset),
+                        originLogItemId: def.logItemId,
+                        xpMultiplier: def.xpMultiplier,
                         inputs: [
                             { itemId: def.arrowheadsItemId, amount: 1 },
                             { itemId: def.headlessItemId, amount: 1 }

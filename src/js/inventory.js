@@ -920,10 +920,11 @@
                 canAttack: !!(snapshot && snapshot.canAttack)
             });
             if (typeof addChatMessage === 'function') {
-                if (result && result.accepted) addChatMessage('Power Strike armed for your next hit.');
+                if (result && result.accepted) addChatMessage('Power Strike armed for your next hit (25 special energy spent).');
                 else if (result && result.reason === 'no_target') addChatMessage('Select an enemy before arming Power Strike.');
                 else if (result && result.reason === 'cannot_attack') addChatMessage('Equip a usable weapon and ammunition before arming Power Strike.');
                 else if (result && result.reason === 'cooldown') addChatMessage(`Power Strike recharges in ${result.cooldownTicks} tick${result.cooldownTicks === 1 ? '' : 's'}.`);
+                else if (result && result.reason === 'insufficient_energy') addChatMessage('Power Strike needs 25 special energy.');
             }
             if (typeof window.updateStats === 'function') window.updateStats();
             return result;

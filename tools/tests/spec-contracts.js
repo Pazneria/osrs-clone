@@ -386,6 +386,24 @@ function run() {
     assert(approxEq(metrics.throughput.xpPerTick, benchmark.xpPerTick, 1e-4), "fletching xp/tick mismatch for " + benchmark.recipeId);
     assert(approxEq(metrics.throughput.sellValuePerTick, benchmark.sellPerTick, 1e-4), "fletching sell/tick mismatch for " + benchmark.recipeId);
   });
+  const woodcuttingNodesById = SkillSpecRegistry.getNodeTable("woodcutting") || {};
+  const woodcuttingXpByLog = {};
+  Object.values(woodcuttingNodesById).forEach((node) => {
+    if (node && typeof node.rewardItemId === "string" && Number.isFinite(node.xpPerSuccess)) {
+      woodcuttingXpByLog[node.rewardItemId] = node.xpPerSuccess;
+    }
+  });
+  const fletchingRecipeSet = SkillSpecRegistry.getRecipeSet("fletching") || {};
+  const fletchingRecipeEntries = Object.entries(fletchingRecipeSet);
+  assert(fletchingRecipeEntries.length === 46, "fletching recipe count mismatch");
+  fletchingRecipeEntries.forEach(([recipeId, recipe]) => {
+    const sourceLogItemId = recipe && (recipe.sourceLogItemId || recipe.originLogItemId);
+    const sourceLogXp = woodcuttingXpByLog[sourceLogItemId];
+    assert(Number.isFinite(sourceLogXp), "fletching recipe must reference canonical woodcutting XP: " + recipeId);
+    assert(Number.isFinite(recipe.xpMultiplier) && recipe.xpMultiplier > 0, "fletching recipe must expose a positive XP multiplier: " + recipeId);
+    const expectedXp = Math.max(1, Math.round(sourceLogXp * recipe.xpMultiplier));
+    assert(recipe.xpPerAction === expectedXp, "fletching XP must scale from its source log: " + recipeId);
+  });
   assert(fletchingMetricsById["fletch_yew_handle"].throughput.sellValuePerTick > fletchingMetricsById["fletch_maple_handle"].throughput.sellValuePerTick, "yew handle should beat maple handle on sell/tick");
   assert(fletchingMetricsById["fletch_rune_arrows"].throughput.sellValuePerTick > fletchingMetricsById["fletch_adamant_arrows"].throughput.sellValuePerTick, "rune arrows should beat adamant arrows on sell/tick");
   assert(fletchingMetricsById["fletch_yew_shortbow"].throughput.xpPerTick > fletchingMetricsById["fletch_yew_longbow"].throughput.xpPerTick, "yew shortbow should beat yew longbow on xp/tick");

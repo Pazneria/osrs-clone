@@ -68,6 +68,7 @@ export function buildCombatTabViewModel(options: {
   playerState?: {
     selectedMeleeStyle?: MeleeStyleId;
     specialAttackCooldown?: number;
+    specialAttackEnergy?: number;
     specialAttackQueued?: boolean;
   } | null;
 }): CombatTabViewModel {

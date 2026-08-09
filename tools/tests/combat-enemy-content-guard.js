@@ -610,18 +610,18 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[x\] COMBAT-019B2B3B2A: `Power Strike` is a visible combat-tab control with typed queue\/cooldown state and a one-hit shared-combat modifier\./,
-  "combat status should surface the completed Power Strike slice as current work"
+  /## Now\s*- \[x\] COMBAT-019B2B3B2B1: `Power Strike` has a typed, save-safe special-energy pool with visible spending and recharge feedback\./,
+  "combat status should surface the completed special-energy slice as current work"
 );
 assertRegex(
   combatStatusSource,
-  /## Next\s*- \[ \] COMBAT-019B2B3B2B: Add weapon-specific special profiles and resource mechanics\./,
-  "combat status should advance the next focus to weapon-specific specials"
+  /## Next\s*- \[ \] COMBAT-019B2B3B2B2: Add weapon-specific special profiles on the shared special-energy contract\./,
+  "combat status should advance the next focus to weapon-specific profiles"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| `Power Strike` now gives all player combat styles a typed, visible, bounded next-hit special \| Weapon-specific special profiles and resource mechanics \| None \|/,
-  "skills index should reflect the completed first special-attack slice"
+  /\| Combat \| In Progress \| `Power Strike` now spends and regenerates a typed, visible special-energy pool \| Weapon-specific special profiles on the shared energy contract \| None \|/,
+  "skills index should reflect the completed special-energy slice"
 );
 assertRegex(
   combatRoadmapSource,
@@ -675,6 +675,11 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
+  /\| Special-energy resource slice \| Complete \|/,
+  "combat roadmap should mark the bounded special-energy resource slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
   /Air and smoke runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
   "combat roadmap should document the shared air\/smoke Disoriented contract"
 );
@@ -715,8 +720,8 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /`Power Strike` can be armed only while the player has both a live target lock and a usable combat snapshot\./,
-  "combat roadmap should document the typed player-special queue conditions"
+  /`Power Strike` can be armed only while the player has both a live target lock, a usable combat snapshot, and at least 25 special energy\./,
+  "combat roadmap should document the typed player-special resource conditions"
 );
 assertRegex(
   combatRoadmapSource,

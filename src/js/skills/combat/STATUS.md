@@ -30,12 +30,13 @@
 - [x] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched` for two later ticks, dealing one burn damage each tick with live target feedback and reset/respawn-safe cleanup.
 - [x] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile for two ticks, reducing enemy Attack by 3 through the existing status lifecycle and target feedback.
 - [x] COMBAT-019B2B3B2A: Player-triggered `Power Strike` now arms one next valid melee/ranged/magic hit for +25% accuracy and max hit, reuses normal ammo/rune consumption, and recharges for eight ticks through the typed combat bridge.
+- [x] COMBAT-019B2B3B2B1: `Power Strike` now spends 25 of a typed 100-point special-energy pool, restores one point per combat tick, persists safely, and surfaces live energy feedback in the Combat tab.
 
 ## Now
-- [x] COMBAT-019B2B3B2A: `Power Strike` is a visible combat-tab control with typed queue/cooldown state and a one-hit shared-combat modifier.
+- [x] COMBAT-019B2B3B2B1: `Power Strike` has a typed, save-safe special-energy pool with visible spending and recharge feedback.
 
 ## Next
-- [ ] COMBAT-019B2B3B2B: Add weapon-specific special profiles and resource mechanics.
+- [ ] COMBAT-019B2B3B2B2: Add weapon-specific special profiles on the shared special-energy contract.
 
 ## Later
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.
