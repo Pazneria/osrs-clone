@@ -1,256 +1,760 @@
-YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí×¶Ñ:-jZ.¶›­–)Ş³V6öç7Bg2Ò&WV—&R‚&g2"“°Ğ¦6öç7BF‚Ò&WV—&R‚'F‚"“°Ğ¦6öç7BfÒÒ&WV—&R‚'fÒ"“°Ğ¦6öç7BD…$TRÒ&WV—&R‚'F‡&VR"“°Ğ Ğ¦gVæ7F–öâ76W'B†6öæF—F–öâÂÖW76vR’°Ğ¢–b‚6öæF—F–öâ’F‡&÷ræWrW'&÷"†ÖW76vR“°Ğ§ĞĞ Ğ¦gVæ7F–öâ'Vâ‚’°Ğ¢6öç7B&ö÷BÒF‚ç&W6öÇfR…õöF—&æÖRÂ"ââ"Â"ââ"“°Ğ¢6öç7B6÷&U6÷W&6RÒg2ç&VDf–ÆU7–æ2‡F‚æ¦ö–â‡&ö÷BÂ'7&2"Â&§2"Â&6÷&Ræ§2"’Â'WFc‚"“°Ğ¢6öç7Bv÷&ÆE6÷W&6RÒg2ç&VDf–ÆU7–æ2‡F‚æ¦ö–â‡&ö÷BÂ'7&2"Â&§2"Â'v÷&ÆBæ§2"’Â'WFc‚"“°Ğ¢6öç7B6‡Væµ'VçF–ÖU6÷W&6RÒg2ç&VDf–ÆU7–æ2‡F‚æ¦ö–â‡&ö÷BÂ'7&2"Â&§2"Â'v÷&ÆB"Â&6‡Væ²×66VæR×'VçF–ÖRæ§2"’Â'WFc‚"“°Ğ¢6öç7B6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6RÒg2ç&VDf–ÆU7–æ2‡F‚æ¦ö–â‡&ö÷BÂ'7&2"Â&§2"Â'v÷&ÆB"Â&6‡Væ²×F–W"×&VæFW"×'VçF–ÖRæ§2"’Â'WFc‚"’ç&WÆ6R‚õÇ%ÆâörÂ%Æâ"“°¢6öç7B–çWE6÷W&6RÒg2ç&VDf–ÆU7–æ2‡F‚æ¦ö–â‡&ö÷BÂ'7&2"Â&§2"Â&–çWB×&VæFW"æ§2"’Â'WFc‚"“°Ğ¢6öç7BÆVv7”Öæ–fW7E6÷W&6RÒg2ç&VDf–ÆU7–æ2‡F‚æ¦ö–â‡&ö÷BÂ'7&2"Â&vÖR"Â'ÆFf÷&Ò"Â&ÆVv7’×67&—BÖÖæ–fW7BçG2"’Â'WFc‚"“°Ğ Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚$4…Täµõ$TäDU%õôÄ”5•õ$U4UE2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBFVf–æR6‡Væ²&VæFW"öÆ–7’&W6WG2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&Ç”6‡Væµ&VæFW%öÆ–7•&W6WB"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBW‡÷6R6‡Væ²öÆ–7’&W6WB×WFF–öâ"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&vWD6‡Væµ&VæFW%öÆ–7•&Wf—6–öâ"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBW‡÷6R6‡Væ²öÆ–7’&Wf—6–öâG&6¶–ær"“°Ğ¢76W'B‚6÷&U6÷W&6Ræ–æ6ÇVFW2‚$4…Täµõ$TäDU%õôÄ”5•õ$U4UE2"’Â&6÷&Ræ§26†÷VÆBæ÷B÷vâ6‡Væ²&VæFW"öÆ–7’&W6WG2"“°Ğ¢76W'B‚v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&vWD6‡Væµ&VæFW%öÆ–7“¢‚’Óâ"’Â'v÷&ÆBæ§26†÷VÆBæ÷B'&ö¶W"6‡Væ²&VæFW"öÆ–7’F‡&÷Vv‚6öçFW‡B6ÆÆ&6·2"“°Ğ Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&6öÆÆV7DFW6—&VD6‡VæµF–W$76–væÖVçG2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB'V–ÆBF–W"76–væÖVçG2f÷"6‡Væ·2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'öÆ–7’ææV$ÖöFRÓÒvVFvRr"’ÇÂ6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'öÆ–7’ææV$ÖöFRÓÓÒvVFvRr"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB¶VW÷F–öæÂVFvRÖv&RæV"6‡Væ²&öÖ÷F–öâ7W÷'B"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ6†÷VÆE&öÖ÷FTVFvTv&TæV$6‡Væ²"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB¶VWVFvRÖv&RæV"Ö6‡Væ²FV6—6–öç26VçG&Æ—¦VB"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&Vç7W&Tf$6‡Væ´&6¶G&÷'V–ÇB"’Â'v÷&ÆBæ§26†÷VÆB&V'V–ÆBf"6‡Væ²&6¶G&÷2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&Ç”6‡VæµF–W$f÷$¶W’"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBÇ’F–W"G&ç6—F–öç2'’6‡Væ²"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'VæF–ætæV$6‡Væ´'V–ÆG2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBG&6²VæF–æræV"Ö6‡Væ²'V–ÆG2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'VæF–æu6–×Æ–f–VD6‡Væ´'V–ÆG2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBVWVR6–×Æ–f–VBÖ–Böf"'V–ÆG2–ç7FVBöb'V–ÆF–ærF†VÒ–ç6–FRÖævT6‡Væ·2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'VæF–ætæV$6‡VæµVæÆöG2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBFVfW"æV"6‡Væ²VæÆöG27&÷72g&ÖW2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&VçVWVUVæF–ætæV$6‡Væ´'V–ÆB"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBVWVRæV"×F–W"&öÖ÷F–öç2–ç7FVBöb'V–ÆF–ærF†VÒ–æÆ–æR"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&VçVWVUVæF–æu6–×Æ–f–VD6‡Væ´'V–ÆB"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB6VçG&Æ—¦R6–×Æ–f–VB6‡Væ²'V–ÆBVWVV–ær"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&VçVWVUVæF–ætæV$6‡VæµVæÆöB"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB6VçG&Æ—¦RFVfW'&VBæV"6‡Væ²FV&F÷vâ"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚$4…Täµõ5E$TÔ”äuôäT%õTäÄôEôu$4UôÕ2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB&WF–âæV"6‡Væ·2'&–VfÇ’Fòfö–B&÷VæF'’6‡W&â"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚$4…Täµõ5E$TÔ”äuôe$ÔUô%TDtUEôÕ2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB¶VWVWVVB7G&VÖ–ærv÷&²g&ÖRÖ'VFvWBv&R"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚$4…Täµõ5E$TÔ”äuôäT%ô%T”ÄEô”åDU%dÅôÕ2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB6RFWF–ÆVB6‡Væ²&öÖ÷F–öç27&÷72g&ÖW2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&vWD6‡Væµ7G&VÖ–æuVWVU7FG2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBW‡÷6RVWVR7FG2f÷"W&b†&æW76W2"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚%v÷&ÆD6‡Væµ66VæU'VçF–ÖR"’Â'v÷&ÆBæ§26†÷VÆBFVÆVvFR6‡Væ²÷&6†W7G&F–öâF‡&÷Vv‚F†R6‡Væ²66VæR'VçF–ÖR"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'&ö6W75VæF–ætæV$6‡Væ´'V–ÆG2"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB&ö6W72VæF–æræV"Ö6‡Væ²'V–ÆG2÷fW"F–ÖR"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&f$6‡Væ´&6¶G&÷'V–ÇB"’Â'v÷&ÆBæ§26†÷VÆBfö–BvÆ¶–ærWfW'’f"6‡Væ²gFW"F†Rf"&6¶G&÷†2Ç&VG’&VVâ'V–ÇB"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&ÖWFFFæ–çFW&7F–öäÖW6†W2"’Â'v÷&ÆBæ§26†÷VÆBW6R66†VB6‡Væ²–çFW&7F–öâÖW6†W2f÷"6†VW"æV"6‡Væ²VæÆöG2"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&6‡Væ´–çFW&7F–öäÖW6†W2ç6WB†¶W’"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB66†R–çFW&7F–öâÖW6†W2W"æV"6‡Væ²"“°Ğ¢76W'B€Ğ¢6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'F&vWEF–W"ÓÓÒ4…TäµõD”U%ôäT"bböÆ–7•7FFRæFW6—&VD–çFW&7F–öä6‡Væ·2æ†2†¶W’’"’ÀĞ¢&6‡Væ²66VæR'VçF–ÖR6†÷VÆB¶VW–çFW&7F–öâ&Vv—7G&F–öâ6öç7G&–æVBFòæV"×F–W"6‡Væ·2 Ğ¢“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ&W÷'D6‡VæµW&f÷&Öæ6U6×ÆR"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆBFVf–æRWFòVÆ—G’6×Æ–ær"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'7FW6‡Væµ&VæFW%öÆ–7•&W6WB‚Ó"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB7W÷'BVÆ—G’F÷væw&FR"“°Ğ¢76W'B†6‡Væµ'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'7FW6‡Væµ&VæFW%öÆ–7•&W6WBƒ"’Â&6‡Væ²66VæR'VçF–ÖR6†÷VÆB7W÷'BVÆ—G’Ww&FR"“°Ğ¢76W'B‚6÷&U6÷W&6Ræ–æ6ÇVFW2‚&ÆWBÆöFVD6‡Væ·2ÒæWr6WB‚’"’Â&6÷&Ræ§26†÷VÆBæòÆöævW"÷vâÆöFVB6‡Væ²7FFR"“°Ğ¢76W'B‚v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&6öç7BVæF–ætæV$6‡Væ´'V–ÆG2ÒæWrÖ‚’"’Â'v÷&ÆBæ§26†÷VÆBæòÆöævW"÷vâVæF–æræV"Ö6‡Væ²7FFR"“°Ğ¢76W'B‚v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&ÆWB6‡Væ´WFõVÆ—G•7FFR"’Â'v÷&ÆBæ§26†÷VÆBæòÆöævW"÷vâ6‡Væ²WFò×VÆ—G’7FFR"“°Ğ¢76W'B†ÆVv7”Öæ–fW7E6÷W&6Ræ–æ6ÇVFW2‚v–C¢'v÷&ÆBÖ6‡Væ²×F–W"×&VæFW"×'VçF–ÖR"r’Â&ÆVv7’67&—BÖæ–fW7B6†÷VÆB–æ6ÇVFRF†R6‡Væ²F–W"&VæFW"'VçF–ÖR"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚%v÷&ÆD6‡VæµF–W%&VæFW%'VçF–ÖR"’Â'v÷&ÆBæ§26†÷VÆBFVÆVvFR6–×Æ–f–VBF–W"6‡Væ²&VæFW&–ær"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'v–æF÷råv÷&ÆD6‡VæµF–W%&VæFW%'VçF–ÖR"’Â&6‡Væ²F–W"&VæFW"'VçF–ÖR6†÷VÆBW‡÷6Rv–æF÷r'VçF–ÖR"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ7&VFU6–×Æ–f–VD6‡Væ´w&÷W†÷F–öç2Ò·Ò’"’Â&6‡Væ²F–W"&VæFW"'VçF–ÖR6†÷VÆB÷vâ6–×Æ–f–VB6‡Væ²w&÷W6öç7G'V7F–öâ"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ7&VFU6–×Æ–f–VEFW'&–äÖW6‚†÷F–öç2Ò·Ò’"’Â&6‡Væ²F–W"&VæFW"'VçF–ÖR6†÷VÆB÷vâ6–×Æ–f–VBF–W"FW'&–â6öç7G'V7F–öâ"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ7&VFU6–×Æ–f–VEFW'&–å6¶—'DÖW6‚†÷F–öç2Ò·Ò’"’Â&6‡Væ²F–W"&VæFW"'VçF–ÖR6†÷VÆB÷vâ6–×Æ–f–VBFW'&–â6VÒ6¶—'G2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ7&VFU6–×Æ–f–VEvFW$ÖW6†W2†÷F–öç2Ò·Ò’"’Â&6‡Væ²F–W"&VæFW"'VçF–ÖR6†÷VÆB÷vâ6–×Æ–f–VBF–W"vFW"6öç7G'V7F–öâ"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâvWEFW'&–åf—7VÅF–ÆT–B"’Â'v÷&ÆBFW'&–â&VæFW&–ær6†÷VÆB†fRfVæ6RÖv&RF–ÆR&W6öÇfW"6W&FRg&öÒ7G'V7GW&R&VæFW&–ær"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&vWEFW'&–åf—7VÅF–ÆT–BÂ"’Â'v÷&ÆBæ§26†÷VÆB72fVæ6RÖv&RFW'&–âF–ÆR&W6öÇWF–öâ–çFò6‡Væ²FW'&–â&VæFW&W'2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&÷F–öç2ævWEFW'&–åf—7VÅF–ÆT–B"’Â'6–×Æ–f–VBFW'&–â6†÷VÆB66WBFW'&–âÖöæÇ’f—7VÂF–ÆR&W6öÇfW""“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'FW'&–ävVòç6WD–æFW‚†f–ÇFW&VEFW'&–ä–æF–6W2“²"’Â'6–×Æ–f–VBF–W"FW'&–â6†÷VÆBf–ÇFW"vFW"Ö6÷fW&VB6VÆÇ2÷WBöbF†Rw&72ÖW6‚"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'G—S¢tu$õTäEõd•5TÅõ4´•%Br"’Â'6–×Æ–f–VBFW'&–â6¶—'G26†÷VÆB&RÖ&¶VB2f—7VÂÖöæÇ’6VÒ6÷fW'2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&Vç7W&U6–×Æ–f–VEFW'&–å6¶—'DÖFW&–Â"’Â'6–×Æ–f–VBFW'&–â6¶—'G26†÷VÆBW6RFVF–6FVBF÷V&ÆR×6–FVBÖFW&–Â"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&æWrD…$TRäÖW6„&6–4ÖFW&–Â‡µÆâ6öÆ÷#¢f"òƒcƒv6R¢ƒcSsSCB"’Â'6–×Æ–f–VBFW'&–â6VÒ6÷fW'26†÷VÆB7F’VæÆ—B6ò†–FFVâvf–ÆÇ2Fòæ÷BGW&â–çFò&Æ6²Æ–æW2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&–b†ÖFW&–ÂæÖÓÒçVÆÂ’"’Â'6–×Æ–f–VBFW'&–â6VÒ6÷fW'26†÷VÆBfö–B†–v‚Ö6öçG&7BFW‡GW&R—†VÇ2F†B&VB27&6·2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚%4”ÕÄ”d”TEõDU%$”åõ%TåõTäDU$Ä•ôE$õ"’Â&ÖW&vVB6–×Æ–f–VBFW'&–â6†÷VÆB–æ6ÇVFR6ÖRÖÖFW&–ÂVæFW&Æ’6÷fW"f÷"w&¦–ærÖævÆR–æ†öÆW2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚%4”ÕÄ”d”TEõDU%$”åô$4UõTäDU$Ä•ôE$õ"’Â&†öÖövVæV÷W26–×Æ–f–VBFW'&–â6‡Væ·26†÷VÆB–æ6ÇVFRÆ÷r&6RVæFW&Æ’f÷"f"w&¦–ærÖævÆR–æ†öÆW2"“°Ğ¢76W'B€Ğ¢6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚%4”ÕÄ”d”TEõDU%$”åõ4ÕÄTEõTäDU$Ä•ôE$õ"Ğ¢bb6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'FW'&–åfö–E6VÃ¢G'VR"’ÀĞ¢&Ö—†VB6–×Æ–f–VBFW'&–â6‡Væ·26†÷VÆB–æ6ÇVFRâ–âÖÖW6‚6×ÆVBfö–B6VÂ6òVæÆöFVB6‡Væ·2Fòæ÷BFBW‡G&G&r6ÆÇ2 Ğ¢“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ7&VFU6–×Æ–f–VEFW'&–ä&6UVæFW&Æ”ÖW6‚†÷F–öç2Ò·Ò’"’Â&6‡Væ²F–W"&VæFW&W"6†÷VÆB÷vâ†öÖövVæV÷W2FW'&–â&6RVæFW&Æ—2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&&6T6‡VæµVæFW&Æ“¢G'VR"’Â&†öÖövVæV÷W2FW'&–âVæFW&Æ—26†÷VÆB&RFvvVBf÷"'VçF–ÖR–ç7V7F–öâ"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚%4”ÕÄ”d”TEõDU%$”åô„T”t…Eõ4TÕôU4”Äôâ"’Â'6–×Æ–f–VBFW'&–â6¶—'G26†÷VÆBFWFV7BÖVæ–ævgVÂÆæB×FòÖÆæB†V–v‡B6V×2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'6×ÆTÆæDVFvUF÷"’Â'6–×Æ–f–VBFW'&–â6¶—'G26†÷VÆB¶VW6VÒF÷2æ6†÷&VBFòF†RÆæB6–FR"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&VæD†V–v‡E6VÔ–dæVVFVB"’Â'6–×Æ–f–VBFW'&–â6¶—'G26†÷VÆB6÷fW"ÆæB×FòÖÆæBVÆWfF–öâG&÷2–âÖ–BæBf"6‡Væ·2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&6öç7B7&VFU6–×Æ–f–VEFW'&–å'VäÖW6‚Ò‚’Óâ²"’Â&Ö—†VBÆæB÷vFW"6–×Æ–f–VBFW'&–â6†÷VÆB¶VWW†7B6÷fW&vRv—F‚ÖW&vVBÆæB&V7FævÆW2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&†4ÆæD6÷fW&vRbb††5vFW$6÷fW&vRÇÂ†5FW'&–äÖFW&–Åf&–F–öâ’"’Â'6–×Æ–f–VBFW'&–â6†÷VÆBW6RW†7BÖW&vVB'Vç2f÷"6†÷&VÆ–æW2æBWF†÷&VBÖFW&–Âf&–F–öâ"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚''VäÖW&vVC¢G'VR"’Â&ÖW&vVB6–×Æ–f–VBFW'&–âÖW6†W26†÷VÆB&RFvvVBf÷"'VçF–ÖR–ç7V7F–öâ"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâVç7W&U6–×Æ–f–VEFW'&–äÖFW&–Å6WB"’Â'6–×Æ–f–VBF–W"FW'&–â6†÷VÆB÷vâÆ÷rÖFWF–ÂF–ÆRÖFW&–Â6WB"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâvWE6–×Æ–f–VEFW'&–äÖFW&–Ä–æFW‚‡F–ÆRÂF–ÆT–B’"’Â'6–×Æ–f–VBF–W"FW'&–â6†÷VÆB6Æ76–g’WF†÷&VBF–ÆR–G2&Vf÷&RæV"6‡Væ·2ÆöB"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&6öç7B†5FW'&–äÖFW&–Åf&–F–öâÒFW'&–äÖFW&–Ä6÷fW&vRç6—¦Râ"’Â'6–×Æ–f–VBF–W"FW'&–â6†÷VÆBFWFV7BæöâÖw&72F–ÆR6÷fW&vR"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&6öç7BFW'&–ä–æF–6W4'”ÖFW&–ÂÒFW'&–äÖFW&–Ç2æÖ‚‚’ÓâµÒ“²"’Â'6–×Æ–f–VBF–W"FW'&–â6†÷VÆB'V6¶WBvVöÖWG'’'’F–ÆRÖFW&–Â"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'FW'&–ävVòæFDw&÷W†w&÷W7F'BÂ–æF–6W2æÆVæwF‚ÂÖFW&–Ä–æFW‚“²"’Â'6–×Æ–f–VBF–W"FW'&–â6†÷VÆB&VæFW"w&÷WVBÆ÷rÖFWF–ÂF–ÆRÖFW&–Ç2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&†57W&W76VD6ö7EvFW$6÷fW&vR"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆBG&VB7W&W76VB6ö7FÆ–æRvFW"2âW†7B×'Vâ6‡Væ²"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'7W&W76VD6ö7EvFW$&öG”–G2"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆB7W&W72F†Rv†öÆR6V&öG’v—F†–â6ö7FÆ–æR×F÷V6†–ær6‡Væ·2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'7W&W76VD6ö7EvFW$&öF–W2"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆBFB6öçF–çV÷W2Æ÷r6ö7Bf–ÆÂf÷"7W&W76VB6V6‡Væ·2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'6†÷VÆE7W&W756–×Æ–f–VEvFW%F–ÆR"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆB7W&W72F–ÆRvFW"VæFW"6Öö÷F‚—6ÆæB6ö7FÆ–æRf—7VÇ2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&6öç7B—4Ö—†VD6‡Væ²Ò††4ÆæD6÷fW&vRÇÂ†57W&W76VD6ö7EvFW$6÷fW&vR’bb†5vFW$6÷fW&vS²"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆBF—7F–æwV—6‚Ö—†VB6†÷&R6‡Væ·2æB7W&W76VB6ö7B6‡Væ·2g&öÒ÷Vâö6Vâ6‡Væ·2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&VæDÖW&vVE6–×Æ–f–VEvFW%'Vç2"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆBÖW&vRÖF6†–ær&÷r'Vç2–çFòÆ&vW"&V7FævÆW2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚%4”ÕÄ”d”TEõtDU%õ4TÕô$4´d”ÄÅôE$õ"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆB–æ6ÇVFRÆ÷vW&VB6VÒ&6¶f–ÆÂ7W&f6R"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚%4”ÕÄ”d”TEõtDU%õ4TÕô$4´d”ÄÅôõdU$Ä"’Â'6–×Æ–f–VBF–W"vFW"6†÷VÆB÷fW&Æ—G26VÒ&6¶f–ÆÂ&W–öæBW†7BF–ÆRVFvW2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&vWE6–×Æ–f–VEvFW%7G–ÆUFö¶Vç2"’Â&f"6–×Æ–f–VBvFW"6†÷VÆB×WFR'&–v‡B†–v†Æ–v‡BFö¶Vç2F†BÆ–22F—7FçB†öÆW2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâVç7W&U6–×Æ–f–VE7G'V7GW&U&÷‡”76WG2"’Â'6–×Æ–f–VBF–W"6‡Væ·26†÷VÆB÷vâÆ÷rÖFWF–Â7G'V7GW&R&÷‡’76WG2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâvWE7G'V7GW&U7F×&÷VæG2"’Â'6–×Æ–f–VBF–W"6‡Væ·26†÷VÆBFW&—fR'V–ÆF–ær&÷‡’&÷VæG2g&öÒWF†÷&VB7F×2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ6‡Væ´÷vç57G'V7GW&U&÷‡’"’Â'6–×Æ–f–VBF–W"6‡Væ·26†÷VÆB76–vâV6‚'V–ÆF–ær&÷‡’Fò6–ævÆR÷væ–ær6‡Væ²"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ6öÆÆV7E7G'V7GW&U&÷‡”&÷VæG2"’Â'6–×Æ–f–VBF–W"6‡Væ·26†÷VÆB¶æ÷rv†–6‚WF†÷&VB'V–ÆF–ær&V2&R6÷fW&VB'’&÷†–W2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ—57G'V7GW&U&÷‡”6÷fW&VEF–ÆR"’Â'6–×Æ–f–VBF–W"6‡Væ·26†÷VÆB7W&W72GWÆ–6FRvÆÂFWF–Ç2–ç6–FR&÷‡’fö÷G&–çG2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâVæE6–×Æ–f–VE7G'V7GW&U&÷†–W2†÷F–öç2Ò·Ò’"’Â'6–×Æ–f–VBF–W"6‡Væ·26†÷VÆB&VæFW"Æ÷rÖFWF–Â7G'V7GW&R&÷†–W2&Vf÷&RæV"6‡Væ·2ÆöB"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚'G—S¢u5E%T5EU$Uõ$õ…’r"’Â'6–×Æ–f–VB'V–ÆF–ær&÷†–W26†÷VÆB&RFvvVB2f—7VÂ7G'V7GW&R&÷†–W2"“°Ğ¢76W'B†6‡VæµF–W%&VæFW%'VçF–ÖU6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâFE6–×Æ–f–VD6‡Væ´fVGW&W2†÷F–öç2Ò·Ò’"’Â&6‡Væ²F–W"&VæFW"'VçF–ÖR6†÷VÆB÷vâ6–×Æ–f–VBF–W"fVGW&R&VæFW&–ær"“°Ğ¢76W'B‡v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚'6†&VDÖFW&–Ç2æ7F—fU7F×VE7G'V7GW&W2"’Â'v÷&ÆBæ§26†÷VÆB&WF–â7F×VB7G'V7GW&RÖWFFFf÷"6–×Æ–f–VB6‡Væ²&÷†–W2"“°Ğ¢76W'B€Ğ¢v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚'7F×VE7G'V7GW&W3¢'&’æ—4'&’‡6†&VDÖFW&–Ç2æ7F—fU7F×VE7G'V7GW&W2’"’ÀĞ¢'v÷&ÆBæ§26†÷VÆB727F×VB7G'V7GW&W2–çFò6–×Æ–f–VB6‡Væ²&VæFW&–ær Ğ¢“°Ğ¢76W'B€Ğ¢v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚'&öödÆæFÖ&·3¢'&’æ—4'&’‡6†&VDÖFW&–Ç2æ7F—fU&öödÆæFÖ&·2’"’ÀĞ¢'v÷&ÆBæ§26†÷VÆB72&ööbÆæFÖ&·2–çFò6–×Æ–f–VB6‡Væ²&VæFW&–ær Ğ¢“°Ğ¢76W'B‚v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâVç7W&T6‡VæµF–W%&VæFW$76WG2"’Â'v÷&ÆBæ§26†÷VÆBæ÷B÷vâ6‡Væ²F–W"&VæFW"76WB6WGW"“°Ğ¢76W'B‚v÷&ÆE6÷W&6Ræ–æ6ÇVFW2‚&gVæ7F–öâ7&VFU6–×Æ–f–VEFW'&–äÖW6‚"’Â'v÷&ÆBæ§26†÷VÆBæ÷B÷vâ6–×Æ–f–VBF–W"FW'&–â6öç7NzÛKh‘éì¶»§q«^w[YK˜Ü™X]TÚ[\YšYYÚ[šÑÜ›İ\
-ÃBˆ‘QKBˆÒS’×ÔÒV‘NˆBˆPTÔÒV‘NˆBˆS‘TÎˆKBˆÒS’×ÕQT—ÑTˆ™˜\ˆ‹BˆÒS’×ÕQT—ÓRQˆ›ZY‹Bˆ[RYˆ[RYËBˆÚ\™YX]\šX[ÎˆÃBˆÜ˜\ÜÕ[Nˆ™]È‘QK“Y\Ú˜\ÚXÓX]\šX[
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+const THREE = require("three");
 
-KBˆ\[Nˆ™]È‘QK“Y\Ú˜\ÚXÓX]\šX[
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
 
-CBˆKBˆÚ\™YÙ[ÛY]šY\ÎˆßKBˆÙÚXØ[X\ˆÛX\›İÜ×KBˆZYÚX\ˆÚZYÚ›İÜ×KBˆ^Y\”İ]NˆÈˆKBˆØ]\”™[™\›ÙY\Îˆ×KBˆİ[\YİXİ\™\ÎˆŞÈİXİ\™RYˆš]XH‹İ[\Yˆš]‹X™[ˆ•[X™\ˆ]‹ˆKNˆKˆWKBˆİ[\X\ˆÈ]ˆÈÕÕĞÈ‹•ÕÈ‹ÕÕĞÈ—HKBˆ›ÛÙ“[™X\šÜÎˆŞÈ[™X\šÒYˆš]\›ÛÙˆ‹ˆKNˆKˆÚYˆ\ˆËZYÚˆ‹ˆWKBˆÙ]š\İX[[RYˆ
-[JHOˆ[KBˆ\Õ™YU[RYˆ
+function run() {
+  const root = path.resolve(__dirname, "..", "..");
+  const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
+  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
+  const chunkRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-scene-runtime.js"), "utf8");
+  const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8").replace(/\r\n/g, "\n");
+  const inputSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
+  const legacyManifestSource = fs.readFileSync(path.join(root, "src", "game", "platform", "legacy-script-manifest.ts"), "utf8");
 
-HOˆ˜[ÙKBˆ\ÕØ]\•[RYˆ
-[JHOˆ[HOOH[RYË•ĞUT—ÔÒSÕÈ[HOOH[RYË•ĞUT—ÑQTBˆ\ÔY\•š\İX[Ûİ™\˜YÙU[Nˆ
+  assert(chunkRuntimeSource.includes("CHUNK_RENDER_POLICY_PRESETS"), "chunk scene runtime should define chunk render policy presets");
+  assert(chunkRuntimeSource.includes("applyChunkRenderPolicyPreset"), "chunk scene runtime should expose chunk policy preset mutation");
+  assert(chunkRuntimeSource.includes("getChunkRenderPolicyRevision"), "chunk scene runtime should expose chunk policy revision tracking");
+  assert(!coreSource.includes("CHUNK_RENDER_POLICY_PRESETS"), "core.js should not own chunk render policy presets");
+  assert(!worldSource.includes("getChunkRenderPolicy: () =>"), "world.js should not broker chunk render policy through context callbacks");
 
-HOˆ˜[ÙKBˆÙ]Xİ]™TY\ÛÛ™šYÎˆ
+  assert(chunkRuntimeSource.includes("collectDesiredChunkTierAssignments"), "chunk scene runtime should build tier assignments for chunks");
+  assert(chunkRuntimeSource.includes("policy.nearMode !== 'edge'") || chunkRuntimeSource.includes("policy.nearMode === 'edge'"), "chunk scene runtime should keep optional edge-aware near chunk promotion support");
+  assert(chunkRuntimeSource.includes("function shouldPromoteEdgeAwareNearChunk"), "chunk scene runtime should keep edge-aware near-chunk decisions centralized");
+  assert(worldSource.includes("ensureFarChunkBackdropBuilt"), "world.js should prebuild far chunk backdrops");
+  assert(chunkRuntimeSource.includes("applyChunkTierForKey"), "chunk scene runtime should apply tier transitions by chunk");
+  assert(chunkRuntimeSource.includes("pendingNearChunkBuilds"), "chunk scene runtime should track pending near-chunk builds");
+  assert(chunkRuntimeSource.includes("pendingSimplifiedChunkBuilds"), "chunk scene runtime should queue simplified mid/far builds instead of building them inside manageChunks");
+  assert(chunkRuntimeSource.includes("pendingNearChunkUnloads"), "chunk scene runtime should defer near chunk unloads across frames");
+  assert(chunkRuntimeSource.includes("enqueuePendingNearChunkBuild"), "chunk scene runtime should queue near-tier promotions instead of building them inline");
+  assert(chunkRuntimeSource.includes("enqueuePendingSimplifiedChunkBuild"), "chunk scene runtime should centralize simplified chunk build queueing");
+  assert(chunkRuntimeSource.includes("enqueuePendingNearChunkUnload"), "chunk scene runtime should centralize deferred near chunk teardown");
+  assert(chunkRuntimeSource.includes("CHUNK_STREAMING_NEAR_UNLOAD_GRACE_MS"), "chunk scene runtime should retain near chunks briefly to avoid boundary churn");
+  assert(chunkRuntimeSource.includes("CHUNK_STREAMING_FRAME_BUDGET_MS"), "chunk scene runtime should keep queued streaming work frame-budget aware");
+  assert(chunkRuntimeSource.includes("CHUNK_STREAMING_NEAR_BUILD_INTERVAL_MS"), "chunk scene runtime should pace detailed chunk promotions across frames");
+  assert(chunkRuntimeSource.includes("getChunkStreamingQueueStats"), "chunk scene runtime should expose queue stats for perf harnesses");
+  assert(worldSource.includes("WorldChunkSceneRuntime"), "world.js should delegate chunk orchestration through the chunk scene runtime");
+  assert(chunkRuntimeSource.includes("processPendingNearChunkBuilds"), "chunk scene runtime should process pending near-chunk builds over time");
+  assert(worldSource.includes("farChunkBackdropBuilt"), "world.js should avoid walking every far chunk after the far backdrop has already been built");
+  assert(worldSource.includes("metadata.interactionMeshes"), "world.js should use cached chunk interaction meshes for cheaper near chunk unloads");
+  assert(chunkRuntimeSource.includes("chunkInteractionMeshes.set(key"), "chunk scene runtime should cache interaction meshes per near chunk");
+  assert(
+    chunkRuntimeSource.includes("targetTier === CHUNK_TIER_NEAR && policyState.desiredInteractionChunks.has(key)"),
+    "chunk scene runtime should keep interaction registration constrained to near-tier chunks"
+  );
+  assert(chunkRuntimeSource.includes("function reportChunkPerformanceSample"), "chunk scene runtime should define auto quality sampling");
+  assert(chunkRuntimeSource.includes("stepChunkRenderPolicyPreset(-1"), "chunk scene runtime should support quality downgrade");
+  assert(chunkRuntimeSource.includes("stepChunkRenderPolicyPreset(1"), "chunk scene runtime should support quality upgrade");
+  assert(!coreSource.includes("let loadedChunks = new Set()"), "core.js should no longer own loaded chunk state");
+  assert(!worldSource.includes("const pendingNearChunkBuilds = new Map()"), "world.js should no longer own pending near-chunk state");
+  assert(!worldSource.includes("let chunkAutoQualityState"), "world.js should no longer own chunk auto-quality state");
+  assert(legacyManifestSource.includes('id: "world-chunk-tier-render-runtime"'), "legacy script manifest should include the chunk tier render runtime");
+  assert(worldSource.includes("WorldChunkTierRenderRuntime"), "world.js should delegate simplified tier chunk rendering");
+  assert(chunkTierRenderRuntimeSource.includes("window.WorldChunkTierRenderRuntime"), "chunk tier render runtime should expose a window runtime");
+  assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedChunkGroup(options = {})"), "chunk tier render runtime should own simplified chunk group construction");
+  assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedTerrainMesh(options = {})"), "chunk tier render runtime should own simplified tier terrain construction");
+  assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedTerrainSkirtMesh(options = {})"), "chunk tier render runtime should own simplified terrain seam skirts");
+  assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedWaterMeshes(options = {})"), "chunk tier render runtime should own simplified tier water construction");
+  assert(worldSource.includes("function getTerrainVisualTileId"), "world terrain rendering should have a fence-aware tile resolver separate from structure rendering");
+  assert(worldSource.includes("getTerrainVisualTileId,"), "world.js should pass fence-aware terrain tile resolution into chunk terrain renderers");
+  assert(chunkTierRenderRuntimeSource.includes("options.getTerrainVisualTileId"), "simplified terrain should accept a terrain-only visual tile resolver");
+  assert(chunkTierRenderRuntimeSource.includes("terrainGeo.setIndex(filteredTerrainIndices);"), "simplified tier terrain should filter water-covered cells out of the grass mesh");
+  assert(chunkTierRenderRuntimeSource.includes("type: 'GROUND_VISUAL_SKIRT'"), "simplified terrain skirts should be marked as visual-only seam covers");
+  assert(chunkTierRenderRuntimeSource.includes("ensureSimplifiedTerrainSkirtMaterial"), "simplified terrain skirts should use a dedicated double-sided material");
+  assert(chunkTierRenderRuntimeSource.includes("new THREE.MeshBasicMaterial({\n                color: far ? 0x687a3e : 0x657544"), "simplified terrain seam covers should stay unlit so hidden gap fills do not turn into black lines");
+  assert(chunkTierRenderRuntimeSource.includes("if (material.map !== null)"), "simplified terrain seam covers should avoid high-contrast texture pixels that read as cracks");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_TERRAIN_RUN_UNDERLAY_DROP"), "merged simplified terrain should include same-material underlay cover for grazing-angle pinholes");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_TERRAIN_BASE_UNDERLAY_DROP"), "homogeneous simplified terrain chunks should include a low base underlay for far grazing-angle pinholes");
+  assert(
+    chunkTierRenderRuntimeSource.includes("SIMPLIFIED_TERRAIN_SAMPLED_UNDERLAY_DROP")
+      && chunkTierRenderRuntimeSource.includes("terrainVoidSeal: true"),
+    "mixed simplified terrain chunks should include an in-mesh sampled void seal so unloaded chunks do not add extra draw calls"
+  );
+  assert(chunkTierRenderRuntimeSource.includes("function createSimplifiedTerrainBaseUnderlayMesh(options = {})"), "chunk tier renderer should own homogeneous terrain base underlays");
+  assert(chunkTierRenderRuntimeSource.includes("baseChunkUnderlay: true"), "homogeneous terrain underlays should be tagged for runtime inspection");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_TERRAIN_HEIGHT_SEAM_EPSILON"), "simplified terrain skirts should detect meaningful land-to-land height seams");
+  assert(chunkTierRenderRuntimeSource.includes("sampleLandEdgeTop"), "simplified terrain skirts should keep seam tops anchored to the land side");
+  assert(chunkTierRenderRuntimeSource.includes("appendHeightSeamIfNeeded"), "simplified terrain skirts should cover land-to-land elevation drops in mid and far chunks");
+  assert(chunkTierRenderRuntimeSource.includes("const createSimplifiedTerrainRunMesh = () => {"), "mixed land/water simplified terrain should keep exact coverage with merged land rectangles");
+  assert(chunkTierRenderRuntimeSource.includes("hasLandCoverage && (hasWaterCoverage || hasTerrainMaterialVariation)"), "simplified terrain should use exact merged runs for shorelines and authored material variation");
+  assert(chunkTierRenderRuntimeSource.includes("runMerged: true"), "merged simplified terrain meshes should be tagged for runtime inspection");
+  assert(chunkTierRenderRuntimeSource.includes("function ensureSimplifiedTerrainMaterialSet"), "simplified tier terrain should own a low-detail tile material set");
+  assert(chunkTierRenderRuntimeSource.includes("function getSimplifiedTerrainMaterialIndex(tile, TileId)"), "simplified tier terrain should classify authored tile ids before near chunks load");
+  assert(chunkTierRenderRuntimeSource.includes("const hasTerrainMaterialVariation = terrainMaterialCoverage.size > 1"), "simplified tier terrain should detect non-grass tile coverage");
+  assert(chunkTierRenderRuntimeSource.includes("const terrainIndicesByMaterial = terrainMaterials.map(() => []);"), "simplified tier terrain should bucket geometry by tile material");
+  assert(chunkTierRenderRuntimeSource.includes("terrainGeo.addGroup(groupStart, indices.length, materialIndex);"), "simplified tier terrain should render grouped low-detail tile materials");
+  assert(chunkTierRenderRuntimeSource.includes("hasSuppressedCoastWaterCoverage"), "simplified tier water should treat suppressed coastline water as an exact-run chunk");
+  assert(chunkTierRenderRuntimeSource.includes("suppressedCoastWaterBodyIds"), "simplified tier water should suppress the whole sea body within coastline-touching chunks");
+  assert(chunkTierRenderRuntimeSource.includes("suppressedCoastWaterBodies"), "simplified tier water should add a continuous low coast fill for suppressed sea chunks");
+  assert(chunkTierRenderRuntimeSource.includes("shouldSuppressSimplifiedWaterTile"), "simplified tier water should suppress tile water under smooth island coastline visuals");
+  assert(chunkTierRenderRuntimeSource.includes("const isMixedChunk = (hasLandCoverage || hasSuppressedCoastWaterCoverage) && hasWaterCoverage;"), "simplified tier water should distinguish mixed shore chunks and suppressed coast chunks from open ocean chunks");
+  assert(chunkTierRenderRuntimeSource.includes("appendMergedSimplifiedWaterRuns"), "simplified tier water should merge matching row runs into larger rectangles");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_WATER_SEAM_BACKFILL_DROP"), "simplified tier water should include a lowered seam backfill surface");
+  assert(chunkTierRenderRuntimeSource.includes("SIMPLIFIED_WATER_SEAM_BACKFILL_OVERLAP"), "simplified tier water should overlap its seam backfill beyond exact tile edges");
+  assert(chunkTierRenderRuntimeSource.includes("getSimplifiedWaterStyleTokens"), "far simplified water should mute bright highlight tokens that alias as distant holes");
+  assert(chunkTierRenderRuntimeSource.includes("function ensureSimplifiedStructureProxyAssets"), "simplified tier chunks should own low-detail structure proxy assets");
+  assert(chunkTierRenderRuntimeSource.includes("function getStructureStampBounds"), "simplified tier chunks should derive building proxy bounds from authored stamps");
+  assert(chunkTierRenderRuntimeSource.includes("function chunkOwnsStructureProxy"), "simplified tier chunks should assign each building proxy to a single owning chunk");
+  assert(chunkTierRenderRuntimeSource.includes("function collectStructureProxyBounds"), "simplified tier chunks should know which authored building areas are covered by proxies");
+  assert(chunkTierRenderRuntimeSource.includes("function isStructureProxyCoveredTile"), "simplified tier chunks should suppress duplicate wall details inside proxy footprints");
+  assert(chunkTierRenderRuntimeSource.includes("function appendSimplifiedStructureProxies(options = {})"), "simplified tier chunks should render low-detail structure proxies before near chunks load");
+  assert(chunkTierRenderRuntimeSource.includes("type: 'STRUCTURE_PROXY'"), "simplified building proxies should be tagged as visual structure proxies");
+  assert(chunkTierRenderRuntimeSource.includes("function addSimplifiedChunkFeatures(options = {})"), "chunk tier render runtime should own simplified tier feature rendering");
+  assert(worldSource.includes("sharedMaterials.activeStampedStructures"), "world.js should retain stamped structure metadata for simplified chunk proxies");
+  assert(
+    worldSource.includes("stampedStructures: Array.isArray(sharedMaterials.activeStampedStructures)"),
+    "world.js should pass stamped structures into simplified chunk rendering"
+  );
+  assert(
+    worldSource.includes("roofLandmarks: Array.isArray(sharedMaterials.activeRoofLandmarks)"),
+    "world.js should pass roof landmarks into simplified chunk rendering"
+  );
+  assert(!worldSource.includes("function ensureChunkTierRenderAssets"), "world.js should not own chunk tier render asset setup");
+  assert(!worldSource.includes("function createSimplifiedTerrainMesh"), "world.js should not own simplified tier terrain construction");
+  assert(!worldSource.includes("function addSimplifiedChunkFeatures"), "world.js should not own simplified tier feature rendering");
 
-HOˆ[BˆÙ]Ø]\”İ\™˜XÙSX]\šX[ˆ
+  assert(
+    inputSource.includes("window.reportChunkPerformanceSample"),
+    "input-render.js should report fps samples to chunk quality controller"
+  );
+  assert(
+    inputSource.includes("window.processPendingNearChunkBuilds"),
+    "input-render.js should process pending near-chunk builds from the render loop"
+  );
 
-HOˆ™]È‘QK“Y\Ú˜\ÚXÓX]\šX[
+  global.window = {};
+  vm.runInThisContext(chunkTierRenderRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js") });
+  const tierRuntime = window.WorldChunkTierRenderRuntime;
+  assert(tierRuntime, "chunk tier render runtime should expose a window runtime");
+  {
+    const tileIds = {
+      GRASS: 0,
+      WATER_SHALLOW: 21,
+      WATER_DEEP: 22
+    };
+    const heightSeamMap = [[
+      [tileIds.GRASS, tileIds.GRASS],
+      [tileIds.GRASS, tileIds.GRASS]
+    ]];
+    const heightMap = [[
+      [0.18, 0.0],
+      [0.18, 0.0]
+    ]];
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 2,
+      MAP_SIZE: 2,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        dirtTile: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: heightSeamMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: () => null,
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const baseUnderlayMesh = planeGroup.children.find((child) => child.userData && child.userData.baseChunkUnderlay);
+    assert(baseUnderlayMesh, "homogeneous far terrain should render a low base underlay to catch grazing-angle chunk gaps");
+    const terrainSkirtMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND_VISUAL_SKIRT");
+    assert(terrainSkirtMesh, "simplified chunks should render skirts for elevated terrain seams");
+    const terrainMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND");
+    const terrainPositions = terrainMesh ? Array.from(terrainMesh.geometry.attributes.position.array) : [];
+    const terrainYs = [];
+    for (let i = 1; i < terrainPositions.length; i += 3) terrainYs.push(terrainPositions[i]);
+    const flattenedHeightDelta = terrainYs.length > 0 ? Math.max(...terrainYs) - Math.min(...terrainYs) : Infinity;
+    const seamPositions = Array.from(terrainSkirtMesh.geometry.attributes.position.array);
+    let hasInternalHeightSeamCover = false;
+    for (let i = 0; i < seamPositions.length; i += 18) {
+      const xs = [
+        seamPositions[i],
+        seamPositions[i + 3],
+        seamPositions[i + 6],
+        seamPositions[i + 9],
+        seamPositions[i + 12],
+        seamPositions[i + 15]
+      ];
+      const ys = [
+        seamPositions[i + 1],
+        seamPositions[i + 4],
+        seamPositions[i + 7],
+        seamPositions[i + 10],
+        seamPositions[i + 13],
+        seamPositions[i + 16]
+      ];
+      if (xs.every((value) => Math.abs(value) < 0.0001) && Math.min(...ys) < 0.02 && Math.max(...ys) > 0.12) {
+        hasInternalHeightSeamCover = true;
+        break;
+      }
+    }
+    assert(
+      hasInternalHeightSeamCover || flattenedHeightDelta <= 0.08,
+      "simplified far terrain should either flatten unloaded elevation drops or cover their vertical side"
+    );
+  }
+  {
+    const tileIds = { GRASS: 0, WATER_SHALLOW: 21, WATER_DEEP: 22 };
+    const allWaterMap = [[
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP, tileIds.WATER_DEEP]
+    ]];
+    const heightMap = [[
+      [-0.18, -0.18, -0.18, -0.18],
+      [-0.18, -0.18, -0.18, -0.18],
+      [-0.18, -0.18, -0.18, -0.18],
+      [-0.18, -0.18, -0.18, -0.18]
+    ]];
+    const waterBody = {
+      id: "test-sea",
+      surfaceY: -0.075,
+      styleTokens: {
+        shallowColor: 0x78b3c4,
+        deepColor: 0x3f748d,
+        foamColor: 0xe5f6fc,
+        shoreColor: 0xd5c393,
+        rippleColor: 0xa7e0f0,
+        highlightColor: 0xf9ffff,
+        opacity: 0.86,
+        shoreOpacity: 0.52
+      }
+    };
+    const sharedMaterials = {
+      grassTile: new THREE.MeshBasicMaterial(),
+      chunkFarTerrain: new THREE.MeshBasicMaterial(),
+      chunkMidTerrain: new THREE.MeshBasicMaterial()
+    };
+    const sharedGeometries = {};
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 4,
+      MAP_SIZE: 4,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials,
+      sharedGeometries,
+      logicalMap: allWaterMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [waterBody],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: (waterBodies, x, y) => {
+        const tile = allWaterMap[0][y][x];
+        return tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP ? waterBodies[0] : null;
+      },
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    assert(!planeGroup.children.some((child) => child.userData && child.userData.type === "GROUND"), "all-water far chunks should not render a grass terrain plane");
+    assert(!planeGroup.children.some((child) => child.userData && child.userData.type === "GROUND_VISUAL_SKIRT"), "all-water far chunks should not render terrain skirts");
+    const waterMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "WATER");
+    assert(waterMesh, "all-water far chunks should render simplified water");
+    assert(waterMesh.geometry.attributes.position.count === 12, "all-water far chunks should use one cheap water quad plus a lowered seam backfill quad");
+  }
+  {
+    const tileIds = { GRASS: 0, WATER_SHALLOW: 21, WATER_DEEP: 22 };
+    const mixedMap = [[
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.WATER_DEEP, tileIds.WATER_DEEP]
+    ]];
+    const heightMap = [[
+      [0, 0, -0.18, -0.18],
+      [0, 0, -0.18, -0.18],
+      [0, 0, -0.18, -0.18],
+      [0, 0, -0.18, -0.18]
+    ]];
+    const waterBody = {
+      id: "test-sea",
+      surfaceY: -0.075,
+      styleTokens: {
+        shallowColor: 0x78b3c4,
+        deepColor: 0x3f748d,
+        foamColor: 0xe5f6fc,
+        shoreColor: 0xd5c393,
+        rippleColor: 0xa7e0f0,
+        highlightColor: 0xf9ffff,
+        opacity: 0.86,
+        shoreOpacity: 0.52
+      }
+    };
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 4,
+      MAP_SIZE: 4,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        chunkFarTerrain: new THREE.MeshBasicMaterial(),
+        chunkMidTerrain: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: mixedMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [waterBody],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: (waterBodies, x, y) => {
+        const tile = mixedMap[0][y][x];
+        return tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP ? waterBodies[0] : null;
+      },
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const terrainSkirtMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND_VISUAL_SKIRT");
+    assert(terrainSkirtMesh, "mixed shoreline simplified chunks should render visual terrain skirts");
+    assert(terrainSkirtMesh.material.side === THREE.DoubleSide, "simplified terrain skirt material should render both sides");
+    const terrainMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND");
+    assert(terrainMesh && terrainMesh.userData.runMerged, "mixed shoreline simplified terrain should use exact merged land runs");
+    assert(terrainMesh.userData.terrainVoidSeal, "mixed shoreline simplified terrain should carry its void seal inside the terrain mesh");
+    assert(terrainMesh.geometry.attributes.position.count === 108, "mixed shoreline simplified terrain should collapse matching land rows plus one coarse in-mesh void seal");
+    const waterMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "WATER");
+    assert(waterMesh.geometry.attributes.position.count === 12, "mixed shoreline simplified water should merge matching row runs into one cheap rectangle");
+    const waterPositions = Array.from(waterMesh.geometry.attributes.position.array);
+    const waterXs = [];
+    for (let i = 0; i < waterPositions.length; i += 3) {
+      if (waterPositions[i + 1] === -0.075) waterXs.push(waterPositions[i]);
+    }
+    assert(Math.min(...waterXs) >= 0, "mixed shoreline simplified water should not spill into land columns");
+  }
+  {
+    const tileIds = {
+      GRASS: 0,
+      DIRT: 3,
+      FLOOR_WOOD: 6,
+      FLOOR_STONE: 7,
+      FLOOR_BRICK: 8,
+      SHORE: 20,
+      WATER_SHALLOW: 21,
+      WATER_DEEP: 22
+    };
+    const mixedTerrainMap = [[
+      [tileIds.GRASS, tileIds.DIRT, tileIds.DIRT, tileIds.FLOOR_WOOD],
+      [tileIds.SHORE, tileIds.DIRT, tileIds.FLOOR_STONE, tileIds.FLOOR_WOOD],
+      [tileIds.GRASS, tileIds.GRASS, tileIds.FLOOR_BRICK, tileIds.FLOOR_STONE],
+      [tileIds.GRASS, tileIds.DIRT, tileIds.GRASS, tileIds.GRASS]
+    ]];
+    const heightMap = [[
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0]
+    ]];
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 4,
+      MAP_SIZE: 4,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        dirtTile: new THREE.MeshBasicMaterial(),
+        floor6: new THREE.MeshBasicMaterial(),
+        floor7: new THREE.MeshBasicMaterial(),
+        floor8: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: mixedTerrainMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: () => null,
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const terrainMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND");
+    assert(terrainMesh, "mixed non-water far chunks should render simplified terrain");
+    assert(Array.isArray(terrainMesh.material) && terrainMesh.material.length >= 7, "simplified terrain should use a tile-aware material array");
+    assert(terrainMesh.userData.runMerged, "far terrain with authored paths and floors should use exact merged land runs");
+    assert(terrainMesh.geometry.attributes.position.count <= 264, "far terrain with authored paths and floors should avoid dense grid geometry even with an in-mesh void seal");
+    const groupMaterialIndices = new Set(terrainMesh.geometry.groups.map((group) => group.materialIndex));
+    assert(groupMaterialIndices.has(1), "far terrain should keep dirt paths visible before near chunks load");
+    assert(groupMaterialIndices.has(2), "far terrain should keep shore tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(4), "far terrain should keep wood floor tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(5), "far terrain should keep stone floor tiles visible before near chunks load");
+    assert(groupMaterialIndices.has(6), "far terrain should keep brick floor tiles visible before near chunks load");
+  }
+  {
+    const tileIds = {
+      GRASS: 0,
+      DIRT: 3,
+      FLOOR_WOOD: 6,
+      WATER_SHALLOW: 21,
+      WATER_DEEP: 22,
+      FENCE: 23
+    };
+    const fenceTerrainMap = [[
+      [tileIds.FENCE, tileIds.DIRT],
+      [tileIds.GRASS, tileIds.GRASS]
+    ]];
+    const heightMap = [[
+      [0.08, 0.08],
+      [0.08, 0.08]
+    ]];
+    let terrainFenceResolutions = 0;
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 2,
+      MAP_SIZE: 2,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        dirtTile: new THREE.MeshBasicMaterial(),
+        floor6: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: fenceTerrainMap,
+      heightMap,
+      playerState: { z: 0 },
+      waterRenderBodies: [],
+      getVisualTileId: (tile) => tile,
+      getTerrainVisualTileId: (tile) => {
+        if (tile === tileIds.FENCE) {
+          terrainFenceResolutions += 1;
+          return tileIds.GRASS;
+        }
+        return tile;
+      },
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: () => null,
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    assert(terrainFenceResolutions > 0, "simplified terrain should consult the terrain-only resolver for fence tiles");
+    const planeGroup = group.children[0];
+    const terrainMesh = planeGroup.children.find((child) => child.userData && child.userData.type === "GROUND");
+    assert(terrainMesh && Array.isArray(terrainMesh.material), "fence-adjacent dirt should keep simplified terrain on material groups");
+    const materialIndices = new Set(terrainMesh.geometry.groups.map((group) => group.materialIndex));
+    assert(!materialIndices.has(4), "fence collision tiles should not draw a dark wood strip into terrain under the fence");
+    assert(materialIndices.has(0) && materialIndices.has(1), "fence terrain should keep neighboring grass and dirt materials intact");
+  }
+  {
+    const tileIds = {
+      GRASS: 0,
+      WALL: 11,
+      TOWER: 12,
+      WATER_SHALLOW: 21,
+      WATER_DEEP: 22
+    };
+    const mapRows = Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => tileIds.GRASS));
+    mapRows[1][1] = tileIds.TOWER;
+    mapRows[1][2] = tileIds.WALL;
+    mapRows[1][3] = tileIds.WALL;
+    mapRows[1][4] = tileIds.TOWER;
+    mapRows[2][1] = tileIds.WALL;
+    mapRows[2][4] = tileIds.WALL;
+    mapRows[3][1] = tileIds.TOWER;
+    mapRows[3][2] = tileIds.WALL;
+    mapRows[3][3] = tileIds.WALL;
+    mapRows[3][4] = tileIds.TOWER;
+    const heightRows = Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => 0));
+    const group = tierRuntime.createSimplifiedChunkGroup({
+      THREE,
+      CHUNK_SIZE: 8,
+      MAP_SIZE: 8,
+      PLANES: 1,
+      CHUNK_TIER_FAR: "far",
+      CHUNK_TIER_MID: "mid",
+      TileId: tileIds,
+      sharedMaterials: {
+        grassTile: new THREE.MeshBasicMaterial(),
+        dirtTile: new THREE.MeshBasicMaterial()
+      },
+      sharedGeometries: {},
+      logicalMap: [mapRows],
+      heightMap: [heightRows],
+      playerState: { z: 0 },
+      waterRenderBodies: [],
+      stampedStructures: [{ structureId: "hut-a", stampId: "hut", label: "Timber Hut", x: 1, y: 1, z: 0 }],
+      stampMap: { hut: ["CWWC", "WTTW", "CWWC"] },
+      roofLandmarks: [{ landmarkId: "hut-roof", x: 1, y: 1, z: 0, width: 4, depth: 3, height: 2.6 }],
+      getVisualTileId: (tile) => tile,
+      isTreeTileId: () => false,
+      isWaterTileId: (tile) => tile === tileIds.WATER_SHALLOW || tile === tileIds.WATER_DEEP,
+      isPierVisualCoverageTile: () => false,
+      getActivePierConfig: () => null,
+      getWaterSurfaceMaterial: () => new THREE.MeshBasicMaterial(),
+      resolveVisualWaterRenderBodyForTile: () => null,
+      cx: 0,
+      cy: 0,
+      tier: "far"
+    });
+    const planeGroup = group.children[0];
+    const proxies = planeGroup.children.filter((child) => child.userData && child.userData.type === "STRUCTURE_PROXY");
+    assert(proxies.length === 2, "far chunks should include low-detail body and roof building proxies");
+    assert(proxies.some((proxy) => proxy.userData.proxyRole === "body"), "building proxies should include a body silhouette");
+    assert(proxies.some((proxy) => proxy.userData.proxyRole === "roof"), "building proxies should include a roof silhouette when an authored roof matches");
+    assert(
+      !planeGroup.children.some((child) => child.isInstancedMesh),
+      "building proxy footprints should suppress duplicate low-detail wall and tower instances"
+    );
+  }
 
-KBˆ™\ÛÛ™Uš\İX[Ø]\”™[™\›ÙQ›Ü•[Nˆ
+  global.window = {};
+  vm.runInThisContext(chunkRuntimeSource, { filename: path.join(root, "src", "js", "world", "chunk-scene-runtime.js") });
+  const runtime = window.WorldChunkSceneRuntime;
+  assert(runtime, "chunk scene runtime should expose a window runtime");
+  assert(window.getChunkRenderPolicy().preset === "balanced", "chunk scene runtime should expose balanced default policy through legacy window API");
+  assert(window.applyChunkRenderPolicyPreset("high") === true, "chunk scene runtime should mutate policy through legacy window API");
+  assert(window.getChunkRenderPolicy().preset === "high", "chunk scene runtime should report updated active policy");
+  assert(window.getChunkRenderPolicyRevision() === 1, "chunk scene runtime should track policy revisions");
+  assert(window.applyChunkRenderPolicyPreset("safe") === true, "chunk scene runtime should expose the safe policy through legacy window API");
+  assert(window.getChunkRenderPolicy().nearMode === "square", "safe chunk policy should preserve a full 3x3 near chunk bubble");
+  assert(window.getChunkRenderPolicy().nearRadius === 1, "safe chunk policy should keep one detailed chunk in every direction");
+  assert(window.applyChunkRenderPolicyPreset("balanced") === true, "chunk scene runtime should support resetting policy for guard scenarios");
+  assert(window.getChunkRenderPolicy().nearMode === "square" && window.getChunkRenderPolicy().nearRadius === 1, "balanced default policy should preserve a full 3x3 near chunk bubble");
 
-HOˆ[BˆŞˆBˆŞNˆBˆY\ˆ™˜\ˆƒBˆJNÃBˆÛÛœİ[™QÜ›İ\HÜ›İ\˜Ú[™[–ÌNÃBˆÛÛœİ›ŞY\ÈH[™QÜ›İ\˜Ú[™[‹™š[\Š
-Ú[
-HOˆÚ[\Ù\‘]H	‰ˆÚ[\Ù\‘]K\HOOH”Õ•PÕT‘WÔ“ÖHŠNÃBˆ\ÜÙ\
-›ŞY\Ë›[™İOOH‹™˜\ˆÚ[šÜÈÚİ[[˜ÛYHİËY]Z[›ÙH[™›ÛÙˆZ[[™È›ŞY\ÈŠNÃBˆ\ÜÙ\
-›ŞY\ËœÛÛYJ
-›ŞJHOˆ›ŞK\Ù\‘]Kœ›ŞT›ÛHOOH˜›ÙHŠK˜Z[[™È›ŞY\ÈÚİ[[˜ÛYHH›ÙHÚ[İY]HŠNÃBˆ\ÜÙ\
-›ŞY\ËœÛÛYJ
-›ŞJHOˆ›ŞK\Ù\‘]Kœ›ŞT›ÛHOOHœ›ÛÙˆŠK˜Z[[™È›ŞY\ÈÚİ[[˜ÛYHH›ÛÙˆÚ[İY]HÚ[ˆ[ˆ]]Ü™Y›ÛÙˆX]Ú\ÈŠNÃBˆ\ÜÙ\
-Bˆ\[™QÜ›İ\˜Ú[™[‹œÛÛYJ
-Ú[
-HOˆÚ[š\Ò[œİ[˜ÙYY\Ú
-KBˆ˜Z[[™È›ŞH›Ûİš[ÈÚİ[İ\™\ÜÈ\XØ]HİËY]Z[Ø[[™İÙ\ˆ[œİ[˜Ù\ÈƒBˆ
-NÃBˆCBƒBˆÛØ˜[Ú[™İÈHßNÃBˆ›Kœ[’[•\ĞÛÛ^
-Ú[šÔ[[YTÛİ\˜ÙKÈš[[˜[YNˆ]š›Ú[Š›ÛİœÜ˜È‹šœÈ‹ÛÜ›‹˜Ú[šË\ØÙ[™K\[[YKšœÈŠHJNÃBˆÛÛœİ[[YHHÚ[™İË•ÛÜ›Ú[šÔØÙ[™T[[YNÃBˆ\ÜÙ\
-[[YK˜Ú[šÈØÙ[™H[[YHÚİ[^ÜÙHHÚ[™İÈ[[YHŠNÃBˆ\ÜÙ\
-Ú[™İË™Ù]Ú[šÔ™[™\”ÛXŞJ
-Kœ™\Ù]OOH˜˜[[˜ÙY‹˜Ú[šÈØÙ[™H[[YHÚİ[^ÜÙH˜[[˜ÙYY˜][ÛXŞH›İYÚYØXŞHÚ[™İÈTHŠNÃBˆ\ÜÙ\
-Ú[™İË˜\PÚ[šÔ™[™\”ÛXŞT™\Ù]
-šYÚŠHOOHYK˜Ú[šÈØÙ[™H[[YHÚİ[]]]HÛXŞH›İYÚYØXŞHÚ[™İÈTHŠNÃBˆ\ÜÙ\
-Ú[™İË™Ù]Ú[šÔ™[™\”ÛXŞJ
-Kœ™\Ù]OOHšYÚ‹˜Ú[šÈØÙ[™H[[YHÚİ[™\Ü\]YXİ]™HÛXŞHŠNÃBˆ\ÜÙ\
-Ú[™İË™Ù]Ú[šÔ™[™\”ÛXŞT™]š\Ú[ÛŠ
-HOOHK˜Ú[šÈØÙ[™H[[YHÚİ[˜XÚÈÛXŞH™]š\Ú[ÛœÈŠNÃBˆ\ÜÙ\
-Ú[™İË˜\PÚ[šÔ™[™\”ÛXŞT™\Ù]
-œØY™HŠHOOHYK˜Ú[šÈØÙ[™H[[YHÚİ[^ÜÙHHØY™HÛXŞH›İYÚYØXŞHÚ[™İÈTHŠNÃBˆ\ÜÙ\
-Ú[™İË™Ù]Ú[šÔ™[™\”ÛXŞJ
-K›™X\“[ÙHOOHœÜ]X\™H‹œØY™HÚ[šÈÛXŞHÚİ[™\Ù\™HH[ŞÈ™X\ˆÚ[šÈX˜›HŠNÃBˆ\ÜÙ\
-Ú[™İË™Ù]Ú[šÔ™[™\”ÛXŞJ
-K›™X\”˜Y]\ÈOOHKœØY™HÚ[šÈÛXŞHÚİ[ÙY\Û™H]Z[YÚ[šÈ[ˆ]™\H\™Xİ[ÛˆŠNÃBˆ\ÜÙ\
-Ú[™İË˜\PÚ[šÔ™[™\”ÛXŞT™\Ù]
-˜˜[[˜ÙYŠHOOHYK˜Ú[šÈØÙ[™H[[YHÚİ[İ\Ü™\Ù][™ÈÛXŞH›ÜˆİX\™ØÙ[˜\š[ÜÈŠNÃBˆ\ÜÙ\
-Ú[™İË™Ù]Ú[šÔ™[™\”ÛXŞJ
-K›™X\“[ÙHOOHœÜ]X\™Hˆ	‰ˆÚ[™İË™Ù]Ú[šÔ™[™\”ÛXŞJ
-K›™X\”˜Y]\ÈOOHK˜˜[[˜ÙYY˜][ÛXŞHÚİ[™\Ù\™HH[ŞÈ™X\ˆÚ[šÈX˜›HŠNÃBƒBˆÛÛœİ[\˜Xİ[Û‘]™[ÈH×NÃBˆ[[YKœ™YÚ\İ\“™X\Ú[šÊŒ‹ÈYˆ›™X\‹XHˆKÈ[\˜Xİ[Û“Y\Ú\ÎˆÈ›Y\ÚXH—K™YÚ\İ\’[\˜Xİ[ÛˆYHJNÃBˆ\ÜÙ\
-[[YKš\Ó™X\Ú[šÓØYY
-ŒŠK˜Ú[šÈØÙ[™H[[YHÚİ[™YÚ\İ\ˆ™X\ˆÚ[šÈØYÈŠNÃBˆ\ÜÙ\
-[[YK™Ù]™X\Ú[šÑÜ›İ\
-ŒŠKšYOOH›™X\‹XH‹˜Ú[šÈØÙ[™H[[YHÚİ[^ÜÙH™X\ˆÚ[šÈÜ›İ\ÈŠNÃBˆ[[YKœÙ]Ú[šÒ[\˜Xİ[Û”İ]JŒ‹˜[ÙKÃBˆÙ]Ú[šÒ[\˜Xİ[Û“Y\Ú\ĞXİ]™Nˆ
-Y\Ú\ËXİ]™JHOˆ[\˜Xİ[Û‘]™[Ëœ\Ú
-	ÛY\Ú\Ëš›Ú[Š‹Š_N‰ØXİ]™_X
-CBˆJNÃBˆ\ÜÙ\
-[\˜Xİ[Û‘]™[Ëš[˜ÛY\Ê›Y\ÚXN™˜[ÙHŠK˜Ú[šÈØÙ[™H[[YHÚİ[ÙÙÛHØXÚY™X\‹XÚ[šÈ[\˜Xİ[ÛˆY\Ú\ÈŠNÃBˆÛÛœİ[œ™YÚ\İ\‘]™[ÈH×NÃBˆ[[YK[œ™YÚ\İ\“™X\Ú[šÊŒ‹ÃBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-Ù^KÜ›İ\
-HOˆ[œ™YÚ\İ\‘]™[Ëœ\Ú
-	ÚÙ^_N‰ÙÜ›İ\šYX
-CBˆJNÃBˆ\ÜÙ\
-\[[YKš\Ó™X\Ú[šÓØYY
-ŒŠK˜Ú[šÈØÙ[™H[[YHÚİ[[œ™YÚ\İ\ˆ™X\ˆÚ[šÜÈŠNÃBˆ\ÜÙ\
-[œ™YÚ\İ\‘]™[Ëš[˜ÛY\ÊŒ›™X\‹XHŠK˜Ú[šÈØÙ[™H[[YHÚİ[[YØ]H™X\ˆÚ[šÈY\Ú[›ØY[™ÈŠNÃBƒBˆ[[YKœ™YÚ\İ\“™X\Ú[šÊŒ‹ÈYˆ›™X\‹XˆˆKÈ[\˜Xİ[Û“Y\Ú\ÎˆÈ›Y\ÚXˆ—K™YÚ\İ\’[\˜Xİ[ÛˆYHJNÃBˆ[[YKœ™YÚ\İ\“™X\Ú[šÊŒK‹ÈYˆ›™X\‹XÈˆKÈ[\˜Xİ[Û“Y\Ú\ÎˆÈ›Y\ÚXÈ—K™YÚ\İ\’[\˜Xİ[Ûˆ˜[ÙHJNÃBˆ[[YKœÙ]ZYÚ[šÑÜ›İ\
-Œ‹‹ÈYˆ›ZYXHˆJNÃBˆ[[YKœÙ]˜\Ú[šÑÜ›İ\
-Œ‹H‹ÈYˆ™˜\‹XHˆJNÃBˆÛÛœİ™\Ù]]™[ÈH×NÃBˆ[[YKœ™\Ù]›Ü•ÛÜ›™[ØY
-ÃBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-Ù^KÜ›İ\
-HOˆ™\Ù]]™[Ëœ\Ú
-[›ØY‰ÚÙ^_N‰ÙÜ›İ\šYX
-KBˆ™[[İ™PÚ[šÑÜ›İ\œ›ÛTØÙ[™Nˆ
-Ü›İ\
-HOˆ™\Ù]]™[Ëœ\Ú
-™[[İ™N‰ÙÜ›İ\šYX
-KBˆ[\ÚYİÑ›Øİ\Ô™]š\Ú[Ûˆ
+  const interactionEvents = [];
+  runtime.registerNearChunk("0,0", { id: "near-a" }, { interactionMeshes: ["mesh-a"], registerInteraction: true });
+  assert(runtime.isNearChunkLoaded("0,0"), "chunk scene runtime should register near chunk loads");
+  assert(runtime.getNearChunkGroup("0,0").id === "near-a", "chunk scene runtime should expose near chunk groups");
+  runtime.setChunkInteractionState("0,0", false, {
+    setChunkInteractionMeshesActive: (meshes, active) => interactionEvents.push(`${meshes.join(",")}:${active}`)
+  });
+  assert(interactionEvents.includes("mesh-a:false"), "chunk scene runtime should toggle cached near-chunk interaction meshes");
+  const unregisterEvents = [];
+  runtime.unregisterNearChunk("0,0", {
+    unloadNearChunkGroup: (key, group) => unregisterEvents.push(`${key}:${group.id}`)
+  });
+  assert(!runtime.isNearChunkLoaded("0,0"), "chunk scene runtime should unregister near chunks");
+  assert(unregisterEvents.includes("0,0:near-a"), "chunk scene runtime should delegate near chunk mesh unloading");
 
-HOˆ™\Ù]]™[Ëœ\Ú
-˜[\\ÚYİÈŠCBˆJNÃBˆ\ÜÙ\
-™\Ù]]™[Ëš[˜ÛY\Ê[›ØYŒ›™X\‹XˆŠH	‰ˆ™\Ù]]™[Ëš[˜ÛY\Ê[›ØYŒK›™X\‹XÈŠK˜Ú[šÈØÙ[™H[[YH™\Ù]Úİ[[›ØYØYY™X\ˆÚ[šÜÈŠNÃBˆ\ÜÙ\
-™\Ù]]™[Ëš[˜ÛY\Êœ™[[İ™N›ZYXHŠH	‰ˆ™\Ù]]™[Ëš[˜ÛY\Êœ™[[İ™N™˜\‹XHŠK˜Ú[šÈØÙ[™H[[YH™\Ù]Úİ[™[[İ™HZY[™˜\ˆÜ›İ\ÈŠNÃBˆ\ÜÙ\
-™\Ù]]™[Ëš[˜ÛY\Ê˜[\\ÚYİÈŠK˜Ú[šÈØÙ[™H[[YH™\Ù]Úİ[[\ÚYİÈ›Øİ\È™]š\Ú[Ûˆ›İYÚHÜİÛÛ^ŠNÃBƒBˆÛÛœİX[˜YÙQ]™[ÈH×NÃBˆÛÛœİÜ›İ\ÈHßNÃBˆÛÛœİX[˜YÙPÛÛ^HÃBˆÛÜ›Ú[šÜÖˆËBˆÛÜ›Ú[šÜÖNˆËBˆÚ[šÔÚ^™NˆLBˆ\Ô^Y\”šYÎˆ
+  runtime.registerNearChunk("0,0", { id: "near-b" }, { interactionMeshes: ["mesh-b"], registerInteraction: true });
+  runtime.registerNearChunk("1,0", { id: "near-c" }, { interactionMeshes: ["mesh-c"], registerInteraction: false });
+  runtime.setMidChunkGroup("2,0", { id: "mid-a" });
+  runtime.setFarChunkGroup("2,1", { id: "far-a" });
+  const resetEvents = [];
+  runtime.resetForWorldReload({
+    unloadNearChunkGroup: (key, group) => resetEvents.push(`unload:${key}:${group.id}`),
+    removeChunkGroupFromScene: (group) => resetEvents.push(`remove:${group.id}`),
+    bumpShadowFocusRevision: () => resetEvents.push("bump-shadow")
+  });
+  assert(resetEvents.includes("unload:0,0:near-b") && resetEvents.includes("unload:1,0:near-c"), "chunk scene runtime reset should unload loaded near chunks");
+  assert(resetEvents.includes("remove:mid-a") && resetEvents.includes("remove:far-a"), "chunk scene runtime reset should remove mid and far groups");
+  assert(resetEvents.includes("bump-shadow"), "chunk scene runtime reset should bump shadow focus revision through the host context");
 
-HOˆYKBˆÙ]Ú[šĞÙ[\”ÜÚ][Ûˆ
+  const manageEvents = [];
+  const groups = {};
+  const manageContext = {
+    worldChunksX: 3,
+    worldChunksY: 3,
+    chunkSize: 10,
+    hasPlayerRig: () => true,
+    getChunkCenterPosition: () => ({ x: 12, z: 12, visiblePlane: 0 }),
+    getChunkRenderPolicy: () => ({ preset: "balanced", nearRadius: 0, midRadius: 1, interactionRadius: 0, farMode: "all" }),
+    getChunkRenderPolicyRevision: () => 1,
+    ensureFarChunkBackdropBuilt: () => manageEvents.push("backdrop"),
+    ensureFarChunkGroup: (cx, cy) => {
+      const key = `${cx},${cy}`;
+      const group = { id: `far:${key}`, visible: false };
+      groups[key] = group;
+      return runtime.setFarChunkGroup(key, group);
+    },
+    ensureMidChunkGroup: (cx, cy) => {
+      const key = `${cx},${cy}`;
+      const group = { id: `mid:${key}`, visible: false };
+      groups[key] = group;
+      return runtime.setMidChunkGroup(key, group);
+    },
+    setChunkGroupPlaneVisibility: (group, plane) => manageEvents.push(`plane:${group.id}:${plane}`),
+    loadNearChunk: (cx, cy, registerInteraction) => {
+      const key = `${cx},${cy}`;
+      manageEvents.push(`load:${key}:${registerInteraction}`);
+      runtime.registerNearChunk(key, { id: `near:${key}`, visible: false }, { interactionMeshes: [`mesh:${key}`], registerInteraction });
+    },
+    unloadNearChunkGroup: (key, group) => manageEvents.push(`unload:${key}:${group.id}`),
+    setChunkInteractionMeshesActive: (meshes, active) => manageEvents.push(`interaction:${meshes.join(",")}:${active}`)
+  };
+  runtime.manageChunks(Object.assign({ forceRefresh: true }, manageContext));
+  assert(manageEvents.includes("backdrop"), "chunk scene runtime should ask the host to ensure far chunk backdrops");
+  assert(!runtime.isNearChunkLoaded("1,1"), "chunk scene runtime should queue near chunk promotions before processing them");
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 1, context: manageContext });
+  assert(runtime.isNearChunkLoaded("1,1"), "chunk scene runtime should process the nearest pending near chunk first");
+  const eventCountAfterManage = manageEvents.length;
+  runtime.manageChunks(Object.assign({ forceRefresh: false }, manageContext));
+  assert(manageEvents.length === eventCountAfterManage, "chunk scene runtime should skip redundant manage passes when policy state is clean");
 
-HOˆ
-ÈˆL‹ˆL‹š\ÚX›T[™NˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞNˆ
+  runtime.resetForWorldReload({
+    unloadNearChunkGroup: () => {},
+    removeChunkGroupFromScene: () => {},
+    bumpShadowFocusRevision: () => {}
+  });
+  let pacedNow = 1000;
+  const pacedEvents = [];
+  const pacedContext = {
+    worldChunksX: 4,
+    worldChunksY: 4,
+    chunkSize: 10,
+    hasPlayerRig: () => true,
+    getChunkCenterPosition: () => ({ x: 15, z: 15, visiblePlane: 0 }),
+    getChunkRenderPolicy: () => ({ preset: "balanced", nearRadius: 1, midRadius: 1, interactionRadius: 1, nearMode: "square", farMode: "all" }),
+    getChunkRenderPolicyRevision: () => 2,
+    now: () => pacedNow,
+    ensureFarChunkBackdropBuilt: () => {},
+    ensureFarChunkGroup: (cx, cy) => runtime.setFarChunkGroup(`${cx},${cy}`, { id: `far-paced:${cx},${cy}`, visible: false }),
+    ensureMidChunkGroup: (cx, cy) => runtime.setMidChunkGroup(`${cx},${cy}`, { id: `mid-paced:${cx},${cy}`, visible: false }),
+    setChunkGroupPlaneVisibility: () => {},
+    loadNearChunk: (cx, cy, registerInteraction) => {
+      const key = `${cx},${cy}`;
+      pacedEvents.push(`load:${key}:${registerInteraction}`);
+      runtime.registerNearChunk(key, { id: `near-paced:${key}`, visible: false }, { interactionMeshes: [`mesh-paced:${key}`], registerInteraction });
+    },
+    unloadNearChunkGroup: () => {},
+    setChunkInteractionMeshesActive: () => {}
+  };
+  runtime.manageChunks(Object.assign({ forceRefresh: true }, pacedContext));
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 1, context: pacedContext });
+  const pacedLoadCountAfterFirstFrame = pacedEvents.filter((event) => event.startsWith("load:")).length;
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 1, context: pacedContext });
+  assert(
+    pacedEvents.filter((event) => event.startsWith("load:")).length === pacedLoadCountAfterFirstFrame,
+    "chunk scene runtime should not promote multiple detailed chunks inside the near-build cadence window"
+  );
+  pacedNow += 121;
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 1, context: pacedContext });
+  assert(
+    pacedEvents.filter((event) => event.startsWith("load:")).length === pacedLoadCountAfterFirstFrame + 1,
+    "chunk scene runtime should resume detailed chunk promotion after the near-build cadence window"
+  );
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 9, context: pacedContext, useCadence: false });
+  const loadedPacedChunks = ["0,0", "1,0", "2,0", "0,1", "1,1", "2,1", "0,2", "1,2", "2,2"].filter((key) => runtime.isNearChunkLoaded(key));
+  assert(loadedPacedChunks.length === 9, "balanced square policy should eventually load the full 3x3 detailed chunk bubble");
 
-HOˆ
-È™\Ù]ˆ˜˜[[˜ÙY‹™X\”˜Y]\ÎˆZY˜Y]\ÎˆK[\˜Xİ[Û”˜Y]\Îˆ˜\“[ÙNˆ˜[ˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞT™]š\Ú[Ûˆ
+  runtime.resetForWorldReload({
+    unloadNearChunkGroup: () => {},
+    removeChunkGroupFromScene: () => {},
+    bumpShadowFocusRevision: () => {}
+  });
+  let edgePlayer = { x: 15, z: 15 };
+  let edgeRevision = 1;
+  const edgeContext = {
+    worldChunksX: 3,
+    worldChunksY: 3,
+    chunkSize: 10,
+    hasPlayerRig: () => true,
+    getChunkCenterPosition: () => ({ x: edgePlayer.x, z: edgePlayer.z, visiblePlane: 0 }),
+    getChunkRenderPolicy: () => ({ preset: "safe", nearRadius: 1, midRadius: 1, interactionRadius: 1, nearMode: "edge", nearMargin: 2, farMode: "all" }),
+    getChunkRenderPolicyRevision: () => edgeRevision,
+    ensureFarChunkBackdropBuilt: () => {},
+    ensureFarChunkGroup: (cx, cy) => runtime.setFarChunkGroup(`${cx},${cy}`, { id: `far-edge:${cx},${cy}`, visible: false }),
+    ensureMidChunkGroup: (cx, cy) => runtime.setMidChunkGroup(`${cx},${cy}`, { id: `mid-edge:${cx},${cy}`, visible: false }),
+    setChunkGroupPlaneVisibility: () => {},
+    loadNearChunk: (cx, cy, registerInteraction) => {
+      const key = `${cx},${cy}`;
+      runtime.registerNearChunk(key, { id: `near-edge:${key}`, visible: false }, { interactionMeshes: [`mesh-edge:${key}`], registerInteraction });
+    },
+    unloadNearChunkGroup: () => {},
+    setChunkInteractionMeshesActive: () => {}
+  };
+  runtime.manageChunks(Object.assign({ forceRefresh: true }, edgeContext));
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 9, context: edgeContext });
+  assert(runtime.isNearChunkLoaded("1,1"), "edge-aware safe policy should keep the current chunk fully detailed");
+  assert(!runtime.isNearChunkLoaded("0,1") && !runtime.isNearChunkLoaded("2,1"), "edge-aware safe policy should not promote side chunks while the player is away from chunk edges");
+  edgePlayer = { x: 19, z: 15 };
+  runtime.manageChunks(Object.assign({ forceRefresh: false }, edgeContext));
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 9, context: edgeContext });
+  assert(runtime.isNearChunkLoaded("2,1"), "edge-aware policy should re-evaluate near promotion when the player moves inside the same chunk toward an edge");
+  runtime.resetForWorldReload({
+    unloadNearChunkGroup: () => {},
+    removeChunkGroupFromScene: () => {},
+    bumpShadowFocusRevision: () => {}
+  });
+  edgePlayer = { x: 19, z: 15 };
+  edgeRevision += 1;
+  runtime.manageChunks(Object.assign({ forceRefresh: true }, edgeContext));
+  runtime.processPendingNearChunkBuilds({ maxBuilds: 9, context: edgeContext });
+  assert(runtime.isNearChunkLoaded("1,1"), "edge-aware safe policy should keep the current chunk detailed near an edge");
+  assert(runtime.isNearChunkLoaded("2,1"), "edge-aware safe policy should promote the east chunk near the east boundary");
+  assert(!runtime.isNearChunkLoaded("0,1"), "edge-aware safe policy should avoid unrelated opposite-side near chunks");
 
-HOˆKBˆ[œİ\™Q˜\Ú[šĞ˜XÚÙ›ÜZ[ˆ
+  let activePreset = "balanced";
+  const qualityEvents = [];
+  const qualityContext = {
+    getChunkRenderPolicy: () => ({ preset: activePreset, nearRadius: 1, midRadius: 2, interactionRadius: 1, farMode: "all" }),
+    getChunkRenderPolicyPresetOrder: () => ["safe", "balanced", "high"],
+    applyChunkRenderPolicyPreset: (preset) => {
+      activePreset = preset;
+      qualityEvents.push(preset);
+      return true;
+    }
+  };
+  runtime.reportChunkPerformanceSample(30, 20000, qualityContext);
+  runtime.reportChunkPerformanceSample(30, 23001, qualityContext);
+  runtime.reportChunkPerformanceSample(30, 24000, qualityContext);
+  runtime.reportChunkPerformanceSample(30, 27001, qualityContext);
+  assert(qualityEvents.includes("safe"), "chunk scene runtime should downgrade quality after repeated low-fps windows");
+  runtime.reportChunkPerformanceSample(55, 40000, qualityContext);
+  runtime.reportChunkPerformanceSample(55, 43001, qualityContext);
+  runtime.reportChunkPerformanceSample(55, 44000, qualityContext);
+  runtime.reportChunkPerformanceSample(55, 47001, qualityContext);
+  runtime.reportChunkPerformanceSample(55, 48000, qualityContext);
+  runtime.reportChunkPerformanceSample(55, 51001, qualityContext);
+  assert(qualityEvents.includes("balanced"), "chunk scene runtime should upgrade quality after repeated high-fps windows");
 
-HOˆX[˜YÙQ]™[Ëœ\Ú
-˜˜XÚÙ›ÜŠKBˆ[œİ\™Q˜\Ú[šÑÜ›İ\ˆ
-ŞŞJHOˆÃBˆÛÛœİÙ^HH	ØŞK	ØŞ_XÃBˆÛÛœİÜ›İ\HÈYˆ˜\‰ÚÙ^_Xš\ÚX›Nˆ˜[ÙHNÃBˆÜ›İ\ÖÚÙ^WHHÜ›İ\ÃBˆ™]\›ˆ[[YKœÙ]˜\Ú[šÑÜ›İ\
-Ù^KÜ›İ\
-NÃBˆKBˆ[œİ\™SZYÚ[šÑÜ›İ\ˆ
-ŞŞJHOˆÃBˆÛÛœİÙ^HH	ØŞK	ØŞ_XÃBˆÛÛœİÜ›İ\HÈYˆZY‰ÚÙ^_Xš\ÚX›Nˆ˜[ÙHNÃBˆÜ›İ\ÖÚÙ^WHHÜ›İ\ÃBˆ™]\›ˆ[[YKœÙ]ZYÚ[šÑÜ›İ\
-Ù^KÜ›İ\
-NÃBˆKBˆÙ]Ú[šÑÜ›İ\[™Uš\ÚXš[]Nˆ
-Ü›İ\[™JHOˆX[˜YÙQ]™[Ëœ\Ú
-[™N‰ÙÜ›İ\šYN‰Ü[™_X
-KBˆØY™X\Ú[šÎˆ
-ŞŞK™YÚ\İ\’[\˜Xİ[ÛŠHOˆÃBˆÛÛœİÙ^HH	ØŞK	ØŞ_XÃBˆX[˜YÙQ]™[Ëœ\Ú
-ØY‰ÚÙ^_N‰Ü™YÚ\İ\’[\˜Xİ[ÛŸX
-NÃBˆ[[YKœ™YÚ\İ\“™X\Ú[šÊÙ^KÈYˆ™X\‰ÚÙ^_Xš\ÚX›Nˆ˜[ÙHKÈ[\˜Xİ[Û“Y\Ú\ÎˆØY\Ú‰ÚÙ^_XK™YÚ\İ\’[\˜Xİ[ÛˆJNÃBˆKBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-Ù^KÜ›İ\
-HOˆX[˜YÙQ]™[Ëœ\Ú
-[›ØY‰ÚÙ^_N‰ÙÜ›İ\šYX
-KBˆÙ]Ú[šÒ[\˜Xİ[Û“Y\Ú\ĞXİ]™Nˆ
-Y\Ú\ËXİ]™JHOˆX[˜YÙQ]™[Ëœ\Ú
-[\˜Xİ[Û‰ÛY\Ú\Ëš›Ú[Š‹Š_N‰ØXİ]™_X
-CBˆNÃBˆ[[YK›X[˜YÙPÚ[šÜÊØš™Xİ˜\ÜÚYÛŠÈ›Ü˜ÙT™Yœ™\ÚˆYHKX[˜YÙPÛÛ^
-JNÃBˆ\ÜÙ\
-X[˜YÙQ]™[Ëš[˜ÛY\Ê˜˜XÚÙ›ÜŠK˜Ú[šÈØÙ[™H[[YHÚİ[\ÚÈHÜİÈ[œİ\™H˜\ˆÚ[šÈ˜XÚÙ›ÜÈŠNÃBˆ\ÜÙ\
-\[[YKš\Ó™X\Ú[šÓØYY
-ŒKHŠK˜Ú[šÈØÙ[™H[[YHÚİ[]Y]YH™X\ˆÚ[šÈ›Û[İ[ÛœÈ™Y›Ü™H›ØÙ\ÜÚ[™È[HŠNÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆX[˜YÙPÛÛ^JNÃBˆ\ÜÙ\
-[[YKš\Ó™X\Ú[šÓØYY
-ŒKHŠK˜Ú[šÈØÙ[™H[[YHÚİ[›ØÙ\ÜÈH™X\™\İ[™[™È™X\ˆÚ[šÈš\œİŠNÃBˆÛÛœİ]™[Ûİ[Y\“X[˜YÙHHX[˜YÙQ]™[Ë›[™İÃBˆ[[YK›X[˜YÙPÚ[šÜÊØš™Xİ˜\ÜÚYÛŠÈ›Ü˜ÙT™Yœ™\Úˆ˜[ÙHKX[˜YÙPÛÛ^
-JNÃBˆ\ÜÙ\
-X[˜YÙQ]™[Ë›[™İOOH]™[Ûİ[Y\“X[˜YÙK˜Ú[šÈØÙ[™H[[YHÚİ[ÚÚ\™Y[™[X[˜YÙH\ÜÙ\ÈÚ[ˆÛXŞHİ]H\ÈÛX[ˆŠNÃBƒBˆ[[YKœ™\Ù]›Ü•ÛÜ›™[ØY
-ÃBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
+  console.log("Chunk tier runtime guard passed.");
+}
 
-HOˆßKBˆ™[[İ™PÚ[šÑÜ›İ\œ›ÛTØÙ[™Nˆ
-
-HOˆßKBˆ[\ÚYİÑ›Øİ\Ô™]š\Ú[Ûˆ
-
-HOˆßCBˆJNÃBˆ]XÙY›İÈHLÃBˆÛÛœİXÙY]™[ÈH×NÃBˆÛÛœİXÙYÛÛ^HÃBˆÛÜ›Ú[šÜÖˆBˆÛÜ›Ú[šÜÖNˆBˆÚ[šÔÚ^™NˆLBˆ\Ô^Y\”šYÎˆ
-
-HOˆYKBˆÙ]Ú[šĞÙ[\”ÜÚ][Ûˆ
-
-HOˆ
-ÈˆMKˆMKš\ÚX›T[™NˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞNˆ
-
-HOˆ
-È™\Ù]ˆ˜˜[[˜ÙY‹™X\”˜Y]\ÎˆKZY˜Y]\ÎˆK[\˜Xİ[Û”˜Y]\ÎˆK™X\“[ÙNˆœÜ]X\™H‹˜\“[ÙNˆ˜[ˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞT™]š\Ú[Ûˆ
-
-HOˆ‹Bˆ›İÎˆ
-
-HOˆXÙY›İËBˆ[œİ\™Q˜\Ú[šĞ˜XÚÙ›ÜZ[ˆ
-
-HOˆßKBˆ[œİ\™Q˜\Ú[šÑÜ›İ\ˆ
-ŞŞJHOˆ[[YKœÙ]˜\Ú[šÑÜ›İ\
-	ØŞK	ØŞ_XÈYˆ˜\‹\XÙY‰ØŞK	ØŞ_Xš\ÚX›Nˆ˜[ÙHJKBˆ[œİ\™SZYÚ[šÑÜ›İ\ˆ
-ŞŞJHOˆ[[YKœÙ]ZYÚ[šÑÜ›İ\
-	ØŞK	ØŞ_XÈYˆZY\XÙY‰ØŞK	ØŞ_Xš\ÚX›Nˆ˜[ÙHJKBˆÙ]Ú[šÑÜ›İ\[™Uš\ÚXš[]Nˆ
-
-HOˆßKBˆØY™X\Ú[šÎˆ
-ŞŞK™YÚ\İ\’[\˜Xİ[ÛŠHOˆÃBˆÛÛœİÙ^HH	ØŞK	ØŞ_XÃBˆXÙY]™[Ëœ\Ú
-ØY‰ÚÙ^_N‰Ü™YÚ\İ\’[\˜Xİ[ÛŸX
-NÃBˆ[[YKœ™YÚ\İ\“™X\Ú[šÊÙ^KÈYˆ™X\‹\XÙY‰ÚÙ^_Xš\ÚX›Nˆ˜[ÙHKÈ[\˜Xİ[Û“Y\Ú\ÎˆØY\Ú\XÙY‰ÚÙ^_XK™YÚ\İ\’[\˜Xİ[ÛˆJNÃBˆKBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-
-HOˆßKBˆÙ]Ú[šÒ[\˜Xİ[Û“Y\Ú\ĞXİ]™Nˆ
-
-HOˆßCBˆNÃBˆ[[YK›X[˜YÙPÚ[šÜÊØš™Xİ˜\ÜÚYÛŠÈ›Ü˜ÙT™Yœ™\ÚˆYHKXÙYÛÛ^
-JNÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆXÙYÛÛ^JNÃBˆÛÛœİXÙYØYÛİ[Y\‘š\œİœ˜[YHHXÙY]™[Ë™š[\Š
-]™[
-HOˆ]™[œİ\ÕÚ]
-›ØYˆŠJK›[™İÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆXÙYÛÛ^JNÃBˆ\ÜÙ\
-BˆXÙY]™[Ë™š[\Š
-]™[
-HOˆ]™[œİ\ÕÚ]
-›ØYˆŠJK›[™İOOHXÙYØYÛİ[Y\‘š\œİœ˜[YKBˆ˜Ú[šÈØÙ[™H[[YHÚİ[›İ›Û[İH][\H]Z[YÚ[šÜÈ[œÚYHH™X\‹XZ[ØY[˜ÙHÚ[™İÈƒBˆ
-NÃBˆXÙY›İÈ
-ÏHLŒNÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆXÙYÛÛ^JNÃBˆ\ÜÙ\
-BˆXÙY]™[Ë™š[\Š
-]™[
-HOˆ]™[œİ\ÕÚ]
-›ØYˆŠJK›[™İOOHXÙYØYÛİ[Y\‘š\œİœ˜[YH
-ÈKBˆ˜Ú[šÈØÙ[™H[[YHÚİ[™\İ[YH]Z[YÚ[šÈ›Û[İ[ÛˆY\ˆH™X\‹XZ[ØY[˜ÙHÚ[™İÈƒBˆ
-NÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆXÙYÛÛ^\ÙPØY[˜ÙNˆ˜[ÙHJNÃBˆÛÛœİØYYXÙYÚ[šÜÈHÈŒ‹ŒK‹Œ‹‹ŒH‹ŒKH‹Œ‹H‹Œˆ‹ŒKˆ‹Œ‹ˆ—K™š[\Š
-Ù^JHOˆ[[YKš\Ó™X\Ú[šÓØYY
-Ù^JJNÃBˆ\ÜÙ\
-ØYYXÙYÚ[šÜË›[™İOOHK˜˜[[˜ÙYÜ]X\™HÛXŞHÚİ[]™[X[HØYH[ŞÈ]Z[YÚ[šÈX˜›HŠNÃBƒBˆ[[YKœ™\Ù]›Ü•ÛÜ›™[ØY
-ÃBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-
-HOˆßKBˆ™[[İ™PÚ[šÑÜ›İ\œ›ÛTØÙ[™Nˆ
-
-HOˆßKBˆ[\ÚYİÑ›Øİ\Ô™]š\Ú[Ûˆ
-
-HOˆßCBˆJNÃBˆ]YÙT^Y\ˆHÈˆMKˆMHNÃBˆ]YÙT™]š\Ú[ÛˆHNÃBˆÛÛœİYÙPÛÛ^HÃBˆÛÜ›Ú[šÜÖˆËBˆÛÜ›Ú[šÜÖNˆËBˆÚ[šÔÚ^™NˆLBˆ\Ô^Y\”šYÎˆ
-
-HOˆYKBˆÙ]Ú[šĞÙ[\”ÜÚ][Ûˆ
-
-HOˆ
-ÈˆYÙT^Y\‹ˆYÙT^Y\‹‹š\ÚX›T[™NˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞNˆ
-
-HOˆ
-È™\Ù]ˆœØY™H‹™X\”˜Y]\ÎˆKZY˜Y]\ÎˆK[\˜Xİ[Û”˜Y]\ÎˆK™X\“[ÙNˆ™YÙH‹™X\“X\™Ú[ˆ‹˜\“[ÙNˆ˜[ˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞT™]š\Ú[Ûˆ
-
-HOˆYÙT™]š\Ú[Û‹Bˆ[œİ\™Q˜\Ú[šĞ˜XÚÙ›ÜZ[ˆ
-
-HOˆßKBˆ[œİ\™Q˜\Ú[šÑÜ›İ\ˆ
-ŞŞJHOˆ[[YKœÙ]˜\Ú[šÑÜ›İ\
-	ØŞK	ØŞ_XÈYˆ˜\‹YYÙN‰ØŞK	ØŞ_Xš\ÚX›Nˆ˜[ÙHJKBˆ[œİ\™SZYÚ[šÑÜ›İ\ˆ
-ŞŞJHOˆ[[YKœÙ]ZYÚ[šÑÜ›İ\
-	ØŞK	ØŞ_XÈYˆZYYYÙN‰ØŞK	ØŞ_Xš\ÚX›Nˆ˜[ÙHJKBˆÙ]Ú[šÑÜ›İ\[™Uš\ÚXš[]Nˆ
-
-HOˆßKBˆØY™X\Ú[šÎˆ
-ŞŞK™YÚ\İ\’[\˜Xİ[ÛŠHOˆÃBˆÛÛœİÙ^HH	ØŞK	ØŞ_XÃBˆ[[YKœ™YÚ\İ\“™X\Ú[šÊÙ^KÈYˆ™X\‹YYÙN‰ÚÙ^_Xš\ÚX›Nˆ˜[ÙHKÈ[\˜Xİ[Û“Y\Ú\ÎˆØY\ÚYYÙN‰ÚÙ^_XK™YÚ\İ\’[\˜Xİ[ÛˆJNÃBˆKBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-
-HOˆßKBˆÙ]Ú[šÒ[\˜Xİ[Û“Y\Ú\ĞXİ]™Nˆ
-
-HOˆßCBˆNÃBˆ[[YK›X[˜YÙPÚ[šÜÊØš™Xİ˜\ÜÚYÛŠÈ›Ü˜ÙT™Yœ™\ÚˆYHKYÙPÛÛ^
-JNÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆYÙPÛÛ^JNÃBˆ\ÜÙ\
-[[YKš\Ó™X\Ú[šÓØYY
-ŒKHŠK™YÙKX]Ø\™HØY™HÛXŞHÚİ[ÙY\Hİ\œ™[Ú[šÈ[H]Z[YŠNÃBˆ\ÜÙ\
-\[[YKš\Ó™X\Ú[šÓØYY
-ŒHŠH	‰ˆ\[[YKš\Ó™X\Ú[šÓØYY
-Œ‹HŠK™YÙKX]Ø\™HØY™HÛXŞHÚİ[›İ›Û[İHÚYHÚ[šÜÈÚ[HH^Y\ˆ\È]Ø^Hœ›ÛHÚ[šÈYÙ\ÈŠNÃBˆYÙT^Y\ˆHÈˆNKˆMHNÃBˆ[[YK›X[˜YÙPÚ[šÜÊØš™Xİ˜\ÜÚYÛŠÈ›Ü˜ÙT™Yœ™\Úˆ˜[ÙHKYÙPÛÛ^
-JNÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆYÙPÛÛ^JNÃBˆ\ÜÙ\
-[[YKš\Ó™X\Ú[šÓØYY
-Œ‹HŠK™YÙKX]Ø\™HÛXŞHÚİ[™KY]˜[X]H™X\ˆ›Û[İ[ÛˆÚ[ˆH^Y\ˆ[İ™\È[œÚYHHØ[YHÚ[šÈİØ\™[ˆYÙHŠNÃBˆ[[YKœ™\Ù]›Ü•ÛÜ›™[ØY
-ÃBˆ[›ØY™X\Ú[šÑÜ›İ\ˆ
-
-HOˆßKBˆ™[[İ™PÚ[šÑÜ›İ\œ›ÛTØÙ[™Nˆ
-
-HOˆßKBˆ[\ÚYİÑ›Øİ\Ô™]š\Ú[Ûˆ
-
-HOˆßCBˆJNÃBˆYÙT^Y\ˆHÈˆNKˆMHNÃBˆYÙT™]š\Ú[Ûˆ
-ÏHNÃBˆ[[YK›X[˜YÙPÚ[šÜÊØš™Xİ˜\ÜÚYÛŠÈ›Ü˜ÙT™Yœ™\ÚˆYHKYÙPÛÛ^
-JNÃBˆ[[YKœ›ØÙ\ÜÔ[™[™Ó™X\Ú[šĞZ[ÊÈX^Z[ÎˆKÛÛ^ˆYÙPÛÛ^JNÃBˆ\ÜÙ\
-[[YKš\Ó™X\Ú[šÓØYY
-ŒKHŠK™YÙKX]Ø\™HØY™HÛXŞHÚİ[ÙY\Hİ\œ™[Ú[šÈ]Z[Y™X\ˆ[ˆYÙHŠNÃBˆ\ÜÙ\
-[[YKš\Ó™X\Ú[šÓØYY
-Œ‹HŠK™YÙKX]Ø\™HØY™HÛXŞHÚİ[›Û[İHHX\İÚ[šÈ™X\ˆHX\İ›İ[™\HŠNÃBˆ\ÜÙ\
-\[[YKš\Ó™X\Ú[šÓØYY
-ŒHŠK™YÙKX]Ø\™HØY™HÛXŞHÚİ[]›ÚY[œ™[]YÜÜÚ]K\ÚYH™X\ˆÚ[šÜÈŠNÃBƒBˆ]Xİ]™T™\Ù]H˜˜[[˜ÙYÃBˆÛÛœİ]X[]Q]™[ÈH×NÃBˆÛÛœİ]X[]PÛÛ^HÃBˆÙ]Ú[šÔ™[™\”ÛXŞNˆ
-
-HOˆ
-È™\Ù]ˆXİ]™T™\Ù]™X\”˜Y]\ÎˆKZY˜Y]\Îˆ‹[\˜Xİ[Û”˜Y]\ÎˆK˜\“[ÙNˆ˜[ˆJKBˆÙ]Ú[šÔ™[™\”ÛXŞT™\Ù]Ü™\ˆ
-
-HOˆÈœØY™H‹˜˜[[˜ÙY‹šYÚ—KBˆ\PÚ[šÔ™[™\”ÛXŞT™\Ù]ˆ
-™\Ù]
-HOˆÃBˆXİ]™T™\Ù]H™\Ù]ÃBˆ]X[]Q]™[Ëœ\Ú
-™\Ù]
-NÃBˆ™]\›ˆYNÃBˆCBˆNÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JÌŒ]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JÌŒÌK]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JÌ]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JÌÌK]X[]PÛÛ^
-NÃBˆ\ÜÙ\
-]X[]Q]™[Ëš[˜ÛY\ÊœØY™HŠK˜Ú[šÈØÙ[™H[[YHÚİ[İÛ™Ü˜YH]X[]HY\ˆ™\X]YİËYœÈÚ[™İÜÈŠNÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JMK]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JMKÌK]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JMK]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JMKÌK]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JMK]X[]PÛÛ^
-NÃBˆ[[YKœ™\ÜÚ[šÔ\™›Ü›X[˜ÙTØ[\JMKLLK]X[]PÛÛ^
-NÃBˆ\ÜÙ\
-]X[]Q]™[Ëš[˜ÛY\Ê˜˜[[˜ÙYŠK˜Ú[šÈØÙ[™H[[YHÚİ[\Ü˜YH]X[]HY\ˆ™\X]YYÚYœÈÚ[™İÜÈŠNÃBƒBˆÛÛœÛÛK›ÙÊÚ[šÈY\ˆ[[YHİX\™\ÜÙYˆŠNÃBŸCBƒBHÃBˆ[Š
-NÃBŸHØ]Ú
-\œ›ÜŠHÃBˆÛÛœÛÛK™\œ›ÜŠ\œ›Ü‹›Y\ÜØYÙJNÃBˆ›ØÙ\ÜË™^]
-JNÃBŸCB
+try {
+  run();
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
