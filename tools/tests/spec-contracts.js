@@ -40,8 +40,9 @@ function readSkillSpecShardSource(root) {
 }
 
 function replaceOnce(source, from, to, label) {
-  const next = source.replace(from, to);
-  assert(next !== source, "test setup failed (" + label + ")");
+  const normalizedSource = source.replace(/\r\n/g, "\n");
+  const next = normalizedSource.replace(from, to);
+  assert(next !== normalizedSource, "test setup failed (" + label + ")");
   return next;
 }
 

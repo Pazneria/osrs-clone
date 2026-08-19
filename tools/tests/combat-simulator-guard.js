@@ -47,12 +47,12 @@ assert(
     /- \[x\] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched`/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile/.test(combatStatusSource) &&
     /- \[x\] COMBAT-019B2B3B2A: Player-triggered `Power Strike` now arms one next valid melee\/ranged\/magic hit/.test(combatStatusSource) &&
-    /## Now\s*- \[x\] COMBAT-019B2B3B2A: `Power Strike`/.test(combatStatusSource),
+    /## Now\s*- \[x\] COMBAT-019B2B3B2B1: `Power Strike`/.test(combatStatusSource),
   "combat status should keep the simulator, elemental effects, and bounded special-attack slice aligned"
 );
 assert(
-  skillsIndexSource.includes("| Combat | In Progress | `Power Strike` now gives all player combat styles a typed, visible, bounded next-hit special | Weapon-specific special profiles and resource mechanics | None |"),
-  "skills index should reflect the completed first special-attack slice"
+  skillsIndexSource.includes("| Combat | In Progress | `Power Strike` now spends and regenerates a typed, visible special-energy pool | Weapon-specific special profiles on the shared energy contract | None |"),
+  "skills index should reflect the completed special-energy slice"
 );
 
 const summary = runSimulation({

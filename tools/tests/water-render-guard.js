@@ -14,7 +14,7 @@ function run() {
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
   const renderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "render-runtime.js"), "utf8");
   const pierRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "pier-runtime.js"), "utf8");
-  const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8");
+  const waterRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "water-runtime.js"), "utf8").replace(/\r\n/g, "\n");
   const chunkTerrainRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-terrain-runtime.js"), "utf8");
   const chunkTierRenderRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "chunk-tier-render-runtime.js"), "utf8");
   const inputRenderSource = fs.readFileSync(path.join(root, "src", "js", "input-render.js"), "utf8");
