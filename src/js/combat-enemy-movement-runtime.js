@@ -60,6 +60,41 @@
         clearEnemyLocomotionIntent(context, enemyState);
     }
 
+    function normalizeReservedTiles(reservedTiles) {
+        return reservedTiles && typeof reservedTiles.has === 'function'
+            ? reservedTiles
+            : new Set();
+    }
+
+    function getEnemyPatrolRoute(enemyState) {
+        const route = Array.isArray(enemyState && enemyState.resolvedPatrolRoute) ? enemyState.resolvedPatrolRoute : [];
+        return route
+            .filter((point) => point
+                && Number.isFinite(point.x)
+                && Number.isFinite(point.y)
+                && Number.isFinite(point.z)
+                && (!enemyState || Math.floor(point.z) === enemyState.z))
+            .map((point) => ({
+                x: Math.floor(point.x),
+                y: Math.floor(point.y),
+                z: Math.floor(point.z)
+            }));
+    }
+
+    function resolveEnemyPatrolTargetIndex(enemyState, route) {
+        if (!enemyState || !Array.isArray(route) || route.length <= 0) return 0;
+        const index = Number.isFinite(enemyState.patrolRouteIndex) ? Math.floor(enemyState.patrolRouteIndex) : 0;
+        return index >= 0 && index < route.length ? index : 0;
+    }
+
+    function scheduleEnemyPatrolPause(context = {}, enemyState, route, minTicks = null, maxTicks = null) {
+        if (!enemyState || !Array.isArray(route) || route.length <= 0) return;
+        const currentIndex = resolveEnemyPatrolTargetIndex(enemyState, route);
+        enemyState.patrolRouteIndex = (currentIndex + 1) % route.length;
+        enemyState.idleDestination = null;
+        scheduleEnemyIdleWanderPause(context, enemyState, minTicks, maxTicks);
+    }
+
     function resolvePathToTile(context = {}, enemyState, targetTile, allowTargetOccupied = false, targetKind = null) {
         if (!enemyState || !targetTile) return null;
         if (enemyState.z !== targetTile.z) return null;
@@ -183,8 +218,49 @@
         return bestPlan;
     }
 
+    function updatePatrolEnemyMovement(context = {}, enemyState, reservedTiles) {
+        if (!enemyState || enemyState.currentState !== 'idle') return false;
+        const occupiedTiles = normalizeReservedTiles(reservedTiles);
+        const route = getEnemyPatrolRoute(enemyState);
+        if (route.length <= 1) return false;
+
+        let targetIndex = resolveEnemyPatrolTargetIndex(enemyState, route);
+        let target = route[targetIndex];
+        if (enemyState.x === target.x && enemyState.y === target.y) {
+            scheduleEnemyPatrolPause(context, enemyState, route, 1, 2);
+            return true;
+        }
+
+        const readyAtTick = Number.isFinite(enemyState.idleMoveReadyAtTick) ? enemyState.idleMoveReadyAtTick : 0;
+        if (getCurrentTick(context) < readyAtTick) {
+            clearEnemyLocomotionIntent(context, enemyState);
+            return true;
+        }
+
+        const patrolPath = resolvePathToTile(context, enemyState, target, false, null);
+        if (patrolPath === null || patrolPath.length === 0) {
+            scheduleEnemyPatrolPause(context, enemyState, route, 1, 2);
+            return true;
+        }
+
+        markEnemyLocomotionIntent(context, enemyState);
+        const nextStep = patrolPath[0];
+        const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
+        if (!occupiedTiles.has(nextKey) && typeof context.moveEnemyToStep === 'function') context.moveEnemyToStep(enemyState, nextStep);
+
+        targetIndex = resolveEnemyPatrolTargetIndex(enemyState, route);
+        target = route[targetIndex];
+        if (enemyState.x === target.x && enemyState.y === target.y) {
+            scheduleEnemyPatrolPause(context, enemyState, route);
+        }
+
+        return true;
+    }
+
     function updateIdleEnemyMovement(context = {}, enemyState, reservedTiles) {
         if (!enemyState || enemyState.currentState !== 'idle') return false;
+        const occupiedTiles = normalizeReservedTiles(reservedTiles);
+        if (updatePatrolEnemyMovement(context, enemyState, occupiedTiles)) return true;
         const roamingRadius = Number.isFinite(enemyState.resolvedRoamingRadius)
             ? Math.max(0, Math.floor(enemyState.resolvedRoamingRadius))
             : 0;
@@ -204,7 +280,7 @@
                 clearEnemyLocomotionIntent(context, enemyState);
                 return false;
             }
-            const wanderPlan = pickEnemyIdleWanderTarget(context, enemyState, reservedTiles);
+            const wanderPlan = pickEnemyIdleWanderTarget(context, enemyState, occupiedTiles);
             if (!wanderPlan) {
                 scheduleEnemyIdleWanderPause(context, enemyState, 1, 2);
                 return false;
@@ -221,7 +297,7 @@
         markEnemyLocomotionIntent(context, enemyState);
         const nextStep = idlePath[0];
         const nextKey = `${nextStep.x},${nextStep.y},${enemyState.z}`;
-        if (!reservedTiles.has(nextKey) && typeof context.moveEnemyToStep === 'function') context.moveEnemyToStep(enemyState, nextStep);
+        if (!occupiedTiles.has(nextKey) && typeof context.moveEnemyToStep === 'function') context.moveEnemyToStep(enemyState, nextStep);
 
         if (enemyState.idleDestination && enemyState.x === enemyState.idleDestination.x && enemyState.y === enemyState.idleDestination.y) {
             scheduleEnemyIdleWanderPause(context, enemyState);
@@ -329,6 +405,8 @@
         resolvePlayerChaseAttackOpportunity,
         resolvePathToHome,
         pickEnemyIdleWanderTarget,
+        getEnemyPatrolRoute,
+        updatePatrolEnemyMovement,
         updateIdleEnemyMovement,
         updateEnemyMovement
     };

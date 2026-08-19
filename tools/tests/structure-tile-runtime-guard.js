@@ -7,8 +7,8 @@ function assert(condition, message) {
 
 function run() {
   const root = path.resolve(__dirname, "..", "..");
-  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
-  const structureRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "structure-render-runtime.js"), "utf8");
+  const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8").replace(/\r\n/g, "\n");
+  const structureRuntimeSource = fs.readFileSync(path.join(root, "src", "js", "world", "structure-render-runtime.js"), "utf8").replace(/\r\n/g, "\n");
 
   assert(structureRuntimeSource.includes("function createCastleRenderData(options = {})"), "structure runtime should own castle instanced render setup");
   assert(structureRuntimeSource.includes("function setCastleWallVisualState(options = {})"), "structure runtime should own castle wall instance transforms");

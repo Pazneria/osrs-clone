@@ -1,6 +1,6 @@
 {
   "generatedFrom": "src/js/content/item-catalog.js",
-  "generatedAt": "2026-05-11T18:47:20.690Z",
+  "generatedAt": "2026-07-03T06:05:07.159Z",
   "items": {
     "adamant_arrowheads": {
       "assetId": "adamant_arrowheads",
@@ -116,19 +116,19 @@
       "treatment": "bespoke"
     },
     "borrowed_amulet": {
-      "assetId": "silver_amulet",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "borrowed_amulet",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "borrowed_ring": {
-      "assetId": "silver_ring",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "borrowed_ring",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "borrowed_tiara": {
-      "assetId": "silver_tiara",
-      "status": "todo",
-      "treatment": "shared"
+      "assetId": "borrowed_tiara",
+      "status": "done",
+      "treatment": "bespoke"
     },
     "bow_string": {
       "assetId": "bow_string",
@@ -1010,7 +1010,7 @@
     "silver_amulet": {
       "assetId": "silver_amulet",
       "status": "done",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "silver_bar": {
       "assetId": "silver_bar",
@@ -1026,12 +1026,12 @@
     "silver_ring": {
       "assetId": "silver_ring",
       "status": "done",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "silver_tiara": {
       "assetId": "silver_tiara",
       "status": "done",
-      "treatment": "shared"
+      "treatment": "bespoke"
     },
     "small_net": {
       "assetId": "small_net",

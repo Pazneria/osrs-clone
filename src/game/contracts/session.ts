@@ -69,6 +69,9 @@ export interface GameSessionPlayerState extends Point3 {
   lastAttackTick: number;
   lastCastTick: number;
   remainingAttackCooldown: number;
+  specialAttackCooldown: number;
+  specialAttackEnergy: number;
+  specialAttackQueued: boolean;
   lockedTargetId: string | null;
   combatTargetKind: CombatTargetKind | null;
   selectedMeleeStyle: MeleeStyleId;

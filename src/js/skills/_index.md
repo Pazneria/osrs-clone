@@ -2,7 +2,7 @@
 
 | Skill | Status | Now Focus | Next Milestone | Blockers |
 | --- | --- | --- | --- | --- |
-| Combat | In Progress | First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear/brute/striker spawns | Advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic | None |
+| Combat | In Progress | `Power Strike` now spends and regenerates a typed, visible special-energy pool | Weapon-specific special profiles on the shared energy contract | None |
 | Mining | In Progress | Current 1-40 ore/gem nodes now have distinct runtime silhouettes and guarded visual-profile coverage | Off-band ore/gem expansion beyond the current route set | None |
 | Woodcutting | In Progress | Starter-town woodcutting merchants are now live, with the deeper woodsman ledger gated behind a late-band log proof set at the east outpost | Next woodcutting milestone pending reprioritization after WOODCUTTING-013 | None |
 | Fishing | In Progress | Route/value tuning after the 1-40 balance lock | Later-band expansion beyond the current 1-40 route | None |

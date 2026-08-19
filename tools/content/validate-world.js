@@ -426,6 +426,10 @@ function validateMainOverworldProtectedRoads(worldId, world) {
     if (spawn.homeTileOverride) {
       assertNoProtectedRoadOverlap(worldId, roadTiles, spawn.homeTileOverride, `combat spawn ${spawn.spawnNodeId} home tile`);
     }
+    const patrolRoute = Array.isArray(spawn.patrolRoute) ? spawn.patrolRoute : [];
+    for (let routeIndex = 0; routeIndex < patrolRoute.length; routeIndex++) {
+      assertNoProtectedRoadOverlap(worldId, roadTiles, patrolRoute[routeIndex], `combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex}`);
+    }
   }
 
   const altars = world && world.landmarks && Array.isArray(world.landmarks.altars)
@@ -679,6 +683,28 @@ function validateCombatSpawns(worldId, manifestEntry, world, logicalMap, combatC
     assert(leashDistance !== null && leashDistance <= 12, `${worldId}: combat spawn ${spawn.spawnNodeId} home tile is too far from spawn`);
     const leashPath = findShortestPathLength(logicalMap, spawn.spawnTile, homeTile, { maxDistance: 24, maxVisited: 2048 });
     assert(leashPath !== null, `${worldId}: combat spawn ${spawn.spawnNodeId} home tile is unreachable from spawn`);
+
+    if (spawn.patrolRoute !== undefined && spawn.patrolRoute !== null) {
+      assert(Array.isArray(spawn.patrolRoute), `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute must be an array`);
+      assert(spawn.patrolRoute.length >= 2, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute needs at least two points`);
+      let previousPoint = spawn.spawnTile;
+      for (let routeIndex = 0; routeIndex < spawn.patrolRoute.length; routeIndex++) {
+        const point = spawn.patrolRoute[routeIndex];
+        assertFinitePoint3(point, `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} is invalid`);
+        assert(point.z === spawn.spawnTile.z, `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} must stay on the spawn plane`);
+        assert(point.x >= 0 && point.y >= 0 && point.x < 648 && point.y < 648, `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} is out of bounds`);
+        assert(isWalkable(logicalMap, point.x, point.y, point.z), `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} is not walkable`);
+        assert(!serviceOccupancy.has(`${point.x}:${point.y}:${point.z}`), `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} overlaps service occupancy`);
+        assert(!miningOccupancy.has(`${point.x}:${point.y}:${point.z}`), `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} overlaps mining occupancy`);
+        const routeDrift = getChebyshevDistance(homeTile, point);
+        assert(routeDrift !== null && routeDrift <= 12, `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} is too far from home`);
+        const routePath = findShortestPathLength(logicalMap, previousPoint, point, { maxDistance: 24, maxVisited: 2048 });
+        assert(routePath !== null, `${worldId}: combat spawn ${spawn.spawnNodeId} patrol point ${routeIndex} is unreachable`);
+        previousPoint = point;
+      }
+      const returnPath = findShortestPathLength(logicalMap, previousPoint, spawn.patrolRoute[0], { maxDistance: 24, maxVisited: 2048 });
+      assert(returnPath !== null, `${worldId}: combat spawn ${spawn.spawnNodeId} patrolRoute cannot return to its first point`);
+    }
 
     if (spawn.spawnGroupId !== undefined && spawn.spawnGroupId !== null) {
       const groupId = String(spawn.spawnGroupId).trim();

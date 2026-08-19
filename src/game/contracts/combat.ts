@@ -2,6 +2,7 @@ import type { Point3 } from "./world";
 
 export type CombatStyleFamily = "melee" | "ranged" | "magic";
 export type CombatDamageType = "melee" | "ranged" | "magic";
+export type CombatStatusEffectId = "chilled" | "sundered" | "disoriented" | "scorched";
 export type MeleeStyleId = "attack" | "strength" | "defense";
 export type PlayerCombatStyleId = MeleeStyleId | "ranged" | "magic";
 export type CombatTargetKind = "enemy";
@@ -58,6 +59,27 @@ export interface CombatAmmoProfile {
   magicAccuracyBonus?: number;
   magicStrengthBonus?: number;
   compatibleWeaponFamilies?: string[] | null;
+  onHitEffect?: CombatOnHitEffectProfile | null;
+}
+
+export interface CombatOnHitEffectProfile {
+  effectId: CombatStatusEffectId;
+  durationTicks: number;
+  enemyAttackCooldownPenalty: number;
+  enemyDefensePenalty: number;
+  enemyAttackPenalty?: number;
+  periodicDamage?: number;
+}
+
+export interface CombatStatusEffectState {
+  effectId: CombatStatusEffectId;
+  expiresAtTick: number;
+  enemyAttackCooldownPenalty: number;
+  enemyDefensePenalty: number;
+  enemyAttackPenalty?: number;
+  periodicDamage?: number;
+  periodicDamageStartedAtTick?: number;
+  lastPeriodicDamageTick?: number;
 }
 
 export interface CombatEnemyAppearance {
@@ -140,6 +162,7 @@ export interface EnemySpawnNodeDefinition {
   enemyId: string;
   spawnTile: Point3;
   homeTileOverride?: Point3 | null;
+  patrolRoute?: Point3[] | null;
   roamingRadiusOverride?: number | null;
   respawnTicks?: number | null;
   spawnEnabled: boolean;
@@ -151,12 +174,15 @@ export interface EnemyRuntimeState extends Point3 {
   runtimeId: string;
   spawnNodeId: string;
   enemyId: string;
+  spawnGroupId: string | null;
   currentHealth: number;
   currentState: EnemyRuntimeStateId;
   lockedTargetId: string | null;
   remainingAttackCooldown: number;
   resolvedHomeTile: Point3;
   resolvedSpawnTile: Point3;
+  resolvedPatrolRoute: Point3[];
+  patrolRouteIndex?: number;
   resolvedRoamingRadius: number;
   resolvedChaseRange: number;
   resolvedAggroRadius: number;
@@ -165,6 +191,7 @@ export interface EnemyRuntimeState extends Point3 {
   facingYaw: number;
   respawnAtTick: number | null;
   lastDamagerId: string | null;
+  statusEffects: Partial<Record<CombatStatusEffectId, CombatStatusEffectState>>;
   attackTriggerAt: number;
   hitReactionTriggerAt: number;
 }
@@ -175,6 +202,9 @@ export interface PlayerCombatStateShape {
   lastAttackTick: number;
   lastCastTick: number;
   remainingAttackCooldown: number;
+  specialAttackCooldown: number;
+  specialAttackEnergy: number;
+  specialAttackQueued: boolean;
   lockedTargetId: string | null;
   combatTargetKind: CombatTargetKind | null;
   selectedMeleeStyle: MeleeStyleId;

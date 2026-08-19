@@ -1112,6 +1112,7 @@
             const hitpointsBar = options.createHitpointsBarRenderer() || {};
             renderer.healthBarEl = hitpointsBar.el || null;
             renderer.healthBarFillEl = hitpointsBar.fill || null;
+            renderer.statusEffectEl = hitpointsBar.statusEffect || null;
         }
         renderer.maxHealth = Number.isFinite(enemyType.stats && enemyType.stats.hitpoints)
             ? Math.max(1, Math.floor(enemyType.stats.hitpoints))

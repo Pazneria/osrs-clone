@@ -1146,6 +1146,33 @@
       },
       "homeTileOverride": null,
       "roamingRadiusOverride": 5,
+      "patrolRoute": [
+        {
+          "x": 364,
+          "y": 246,
+          "z": 0
+        },
+        {
+          "x": 360,
+          "y": 246,
+          "z": 0
+        },
+        {
+          "x": 360,
+          "y": 244,
+          "z": 0
+        },
+        {
+          "x": 368,
+          "y": 244,
+          "z": 0
+        },
+        {
+          "x": 368,
+          "y": 246,
+          "z": 0
+        }
+      ],
       "respawnTicks": 42,
       "spawnEnabled": true,
       "facingYaw": 3.141592653589793,

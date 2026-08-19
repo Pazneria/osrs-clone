@@ -340,6 +340,36 @@ function run() {
     tests.push({ name, fn });
   }
 
+  test("Fletching specs reject a missing canonical source-log XP mapping", () => {
+    const fletchingSpecSource = fs.readFileSync(path.join(root, "src/js/skills/specs/fletching.js"), "utf8");
+    const isolatedWindow = {
+      __SkillSpecAuthoring: {
+        tables: {},
+        skills: {
+          woodcutting: {
+            nodeTable: {
+              normal_tree: { rewardItemId: "logs", xpPerSuccess: 25 },
+              oak_tree: { rewardItemId: "oak_logs", xpPerSuccess: 38 },
+              willow_tree: { rewardItemId: "willow_logs", xpPerSuccess: 68 },
+              maple_tree: { rewardItemId: "maple_logs", xpPerSuccess: 100 }
+            }
+          }
+        }
+      }
+    };
+
+    let failure = null;
+    try {
+      vm.runInNewContext(fletchingSpecSource, { window: isolatedWindow }, { filename: "fletching.js" });
+    } catch (error) {
+      failure = error;
+    }
+    assert(
+      failure && /Missing canonical woodcutting XP for fletching source log: yew_logs/.test(String(failure.message || failure)),
+      "fletching spec generation should fail instead of silently defaulting an unmapped source log"
+    );
+  });
+
   test("Fletching queues finished arrows on valid pair", () => {
     const starts = [];
     window.SkillRuntime = { tryStartSkillById: (_id, payload) => { starts.push(payload); return true; } };
@@ -426,6 +456,54 @@ function run() {
     assert(heldItems && heldItems.rightHand === "knife", "expected knife in the right hand");
     assert(heldItems && heldItems.leftHand === "willow_logs", "expected active willow logs in the left hand");
     assert(fletching.getAnimationHeldItemSlot(ctx) === "rightHand", "expected the knife to remain the primary fletching hand");
+  });
+
+  test("Fletching animation preserves the origin log tier for finished arrows", () => {
+    const ctx = createSkillContext({
+      recipeId: "fletch_rune_arrows",
+      action: "SKILLING: FLETCHING",
+      counts: { knife: 1, rune_arrowheads: 1, yew_headless_arrows: 1 }
+    });
+    ctx.playerState.skillSessions.fletching = {
+      kind: "processing",
+      recipeId: "fletch_rune_arrows",
+      nextTick: ctx.currentTick + 3
+    };
+
+    const heldItems = fletching.getAnimationHeldItems(ctx);
+    assert(heldItems && heldItems.leftHand === "yew_logs", "expected finished rune arrows to retain their yew-log animation tier");
+  });
+
+  test("Fletching animation preserves the origin log tier for headless arrows", () => {
+    const ctx = createSkillContext({
+      recipeId: "fletch_oak_headless_arrows",
+      action: "SKILLING: FLETCHING",
+      counts: { knife: 1, oak_shafts: 1, feathers_bundle: 1 }
+    });
+    ctx.playerState.skillSessions.fletching = {
+      kind: "processing",
+      recipeId: "fletch_oak_headless_arrows",
+      nextTick: ctx.currentTick + 3
+    };
+
+    const heldItems = fletching.getAnimationHeldItems(ctx);
+    assert(heldItems && heldItems.leftHand === "oak_logs", "expected headless oak arrows to retain their oak-log animation tier");
+  });
+
+  test("Fletching animation preserves the origin log tier for strung bows", () => {
+    const ctx = createSkillContext({
+      recipeId: "fletch_maple_longbow",
+      action: "SKILLING: FLETCHING",
+      counts: { knife: 1, maple_longbow_u: 1, bow_string: 1 }
+    });
+    ctx.playerState.skillSessions.fletching = {
+      kind: "processing",
+      recipeId: "fletch_maple_longbow",
+      nextTick: ctx.currentTick + 3
+    };
+
+    const heldItems = fletching.getAnimationHeldItems(ctx);
+    assert(heldItems && heldItems.leftHand === "maple_logs", "expected strung maple bows to retain their maple-log animation tier");
   });
 
   test("Crafting animation is clip-driven and suppresses equipped visuals for empty hands", () => {

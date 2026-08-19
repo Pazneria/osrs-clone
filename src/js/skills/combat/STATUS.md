@@ -19,15 +19,25 @@
 - [x] COMBAT-013: Rebuilt the combat simulator around typed combat content, canonical melee formulas, runtime item combat profiles, and deterministic simulator guard coverage.
 - [x] COMBAT-014: Combat progression bands now classify enemy difficulty, loot ceilings, and placement stages across starter, mid-band, and later-region rollout planning.
 - [x] COMBAT-015: First-pass encounter coverage now includes an optional southeast camp-threat pocket with bear, heavy brute, and fast striker spawns locked by topology and world parity guards.
+- [x] COMBAT-016A: Authored patrol routes now have a first guarded slice on the east-outpost north guard, with patrol-aware idle movement, route cloning, chase-envelope coverage, world validation, and parity guards.
+- [x] COMBAT-016B: Aggressive same-group ally assist now uses authored spawn-group IDs, local assist radius checks, leash/path validation, and a one-tick opening cooldown so camps can coordinate without pulling passive critters or distant group members.
+- [x] COMBAT-017: Ranged player combat is live on the shared combat core with bow and arrow item contracts, ranged-range attacks, ammo selection and consumption, Ranged XP awards, projectile visuals, and focused runtime/item guards.
+- [x] COMBAT-018: Magic player combat is live on the shared combat core with staff contracts, elemental/combination rune fuel selection and consumption, staff-range casting, Magic XP awards, and rune-colored projectile visuals.
+- [x] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo/rune-aware deterministic simulator summaries.
+- [x] COMBAT-019B1: Water-family rune hits now apply the typed `Chilled` status effect, delaying an enemy's next swing by one tick with reset/respawn-safe runtime state and focused domain/runtime coverage.
+- [x] COMBAT-019B2A: Active `Chilled` effects now appear above affected combat targets with their remaining duration and a concise tactical explanation.
+- [x] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage.
+- [x] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched` for two later ticks, dealing one burn damage each tick with live target feedback and reset/respawn-safe cleanup.
+- [x] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile for two ticks, reducing enemy Attack by 3 through the existing status lifecycle and target feedback.
+- [x] COMBAT-019B2B3B2A: Player-triggered `Power Strike` now arms one next valid melee/ranged/magic hit for +25% accuracy and max hit, reuses normal ammo/rune consumption, and recharges for eight ticks through the typed combat bridge.
+- [x] COMBAT-019B2B3B2B1: `Power Strike` now spends 25 of a typed 100-point special-energy pool, restores one point per combat tick, persists safely, and surfaces live energy feedback in the Combat tab.
 
 ## Now
-- [ ] COMBAT-016: Add advanced roaming, patrols, ally-assist/group-aggro behavior, and richer encounter-state logic once the first-pass melee-only foundation is stable.
+- [x] COMBAT-019B2B3B2B1: `Power Strike` has a typed, save-safe special-energy pool with visible spending and recharge feedback.
 
 ## Next
-- [ ] COMBAT-017: Add ranged combat on top of the shared combat core.
+- [ ] COMBAT-019B2B3B2B2: Add weapon-specific special profiles on the shared special-energy contract.
 
 ## Later
-- [ ] COMBAT-018: Add magic combat, rune/resource integration, and staff/spell identity.
-- [ ] COMBAT-019: Add specials, broader balance tooling, and deeper combat build identity.
 - [ ] COMBAT-020: Add advanced encounter content such as tougher camps, gatekeeper enemies, mini-bosses, and later-region combat objectives.
 - [ ] COMBAT-021: Add region-scale combat population tooling for later-world expansion, including denser enemy ecosystems and named encounter chains.

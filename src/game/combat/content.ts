@@ -11,12 +11,27 @@ import type {
 } from "../contracts/combat";
 import { buildWorldBootstrapResult } from "../world/bootstrap";
 import { canonicalizeWorldId } from "../world/ids";
+import { createEnemyStatusEffects } from "./status-effects";
 
 export const COMBAT_SPEC_VERSION = "2026.03.c1";
 export const DEFAULT_MELEE_STYLE: MeleeStyleId = "attack";
 
 function clonePoint3(point: Point3): Point3 {
   return { x: point.x, y: point.y, z: point.z };
+}
+
+function clonePatrolRoute(route?: Point3[] | null): Point3[] {
+  return Array.isArray(route) ? route.map(clonePoint3) : [];
+}
+
+function getMaxRouteDistance(anchor: Point3, route: Point3[]): number {
+  let maximum = 0;
+  for (let i = 0; i < route.length; i += 1) {
+    const point = route[i];
+    if (!point || point.z !== anchor.z) continue;
+    maximum = Math.max(maximum, Math.max(Math.abs(point.x - anchor.x), Math.abs(point.y - anchor.y)));
+  }
+  return maximum;
 }
 
 function cloneEnemyTypeDefinition(definition: EnemyTypeDefinition): EnemyTypeDefinition {
@@ -36,6 +51,7 @@ function cloneSpawnNode(definition: EnemySpawnNodeDefinition): EnemySpawnNodeDef
     ...definition,
     spawnTile: clonePoint3(definition.spawnTile),
     homeTileOverride: definition.homeTileOverride ? clonePoint3(definition.homeTileOverride) : null,
+    patrolRoute: clonePatrolRoute(definition.patrolRoute),
     roamingRadiusOverride: Number.isFinite(definition.roamingRadiusOverride)
       ? Math.max(0, Math.floor(Number(definition.roamingRadiusOverride)))
       : null
@@ -861,6 +877,9 @@ export function createDefaultPlayerCombatState(maxHitpoints = 10): PlayerCombatS
     lastAttackTick: -1,
     lastCastTick: -1,
     remainingAttackCooldown: 0,
+    specialAttackCooldown: 0,
+    specialAttackEnergy: 100,
+    specialAttackQueued: false,
     lockedTargetId: null,
     combatTargetKind: null,
     selectedMeleeStyle: DEFAULT_MELEE_STYLE,
@@ -956,6 +975,8 @@ export function createEnemyRuntimeState(
 
   const spawnTile = clonePoint3(spawnNode.spawnTile);
   const homeTile = spawnNode.homeTileOverride ? clonePoint3(spawnNode.homeTileOverride) : clonePoint3(spawnTile);
+  const resolvedPatrolRoute = clonePatrolRoute(spawnNode.patrolRoute);
+  const patrolRouteDistance = getMaxRouteDistance(homeTile, resolvedPatrolRoute);
   const resolvedRoamingRadius = Number.isFinite(spawnNode.roamingRadiusOverride)
     ? Math.max(0, Math.floor(Number(spawnNode.roamingRadiusOverride)))
     : definition.behavior.roamingRadius;
@@ -963,6 +984,9 @@ export function createEnemyRuntimeState(
     runtimeId: spawnNode.spawnNodeId,
     spawnNodeId: spawnNode.spawnNodeId,
     enemyId: definition.enemyId,
+    spawnGroupId: typeof spawnNode.spawnGroupId === "string" && spawnNode.spawnGroupId.trim()
+      ? spawnNode.spawnGroupId.trim()
+      : null,
     x: spawnTile.x,
     y: spawnTile.y,
     z: spawnTile.z,
@@ -972,8 +996,10 @@ export function createEnemyRuntimeState(
     remainingAttackCooldown: 0,
     resolvedHomeTile: homeTile,
     resolvedSpawnTile: spawnTile,
+    resolvedPatrolRoute,
+    patrolRouteIndex: resolvedPatrolRoute.length > 1 ? 1 : 0,
     resolvedRoamingRadius,
-    resolvedChaseRange: Math.max(definition.behavior.chaseRange, resolvedRoamingRadius + 2),
+    resolvedChaseRange: Math.max(definition.behavior.chaseRange, resolvedRoamingRadius + 2, patrolRouteDistance + 2),
     resolvedAggroRadius: definition.behavior.aggroRadius,
     defaultMovementSpeed: definition.behavior.defaultMovementSpeed,
     combatMovementSpeed: definition.behavior.combatMovementSpeed,
@@ -982,6 +1008,7 @@ export function createEnemyRuntimeState(
       : (Number.isFinite(definition.appearance.facingYaw) ? Number(definition.appearance.facingYaw) : Math.PI),
     respawnAtTick: currentTick > 0 ? currentTick : null,
     lastDamagerId: null,
+    statusEffects: createEnemyStatusEffects(),
     attackTriggerAt: 0,
     hitReactionTriggerAt: 0
   };
