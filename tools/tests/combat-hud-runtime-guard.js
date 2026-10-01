@@ -24,6 +24,8 @@ assert.ok(
 );
 assert.ok(combatSource.includes("const combatHudRuntime = window.CombatHudRuntime || null;"), "combat.js should resolve the combat HUD runtime");
 assert.ok(combatSource.includes("function buildCombatHudRuntimeContext()"), "combat.js should adapt state into a HUD runtime context");
+assert.ok(combatSource.includes("function listEnemyCombatStatusEffects(enemyState)"), "combat.js should adapt typed active status effects for combat presentation");
+assert.ok(combatSource.includes("getActiveStatusEffects: listEnemyCombatStatusEffects"), "combat.js should pass typed active effects to the target overlay runtime");
 assert.ok(combatSource.includes("return getCombatHudRuntime().resolveCombatHudFocusEnemy(buildCombatHudRuntimeContext());"), "combat.js should delegate HUD focus selection");
 assert.ok(combatSource.includes("return getCombatHudRuntime().buildCombatHudSnapshot(buildCombatHudRuntimeContext());"), "combat.js should delegate HUD snapshot shaping");
 assert.ok(!combatSource.includes("const lockedEnemy = getPlayerLockedEnemy();\r\n        if (lockedEnemy && isEnemyAlive(lockedEnemy))"), "combat.js should not own HUD focus branching inline");

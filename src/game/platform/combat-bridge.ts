@@ -28,6 +28,26 @@ import {
   rollOpposedHitCheck
 } from "../combat/formulas";
 import {
+  applyEnemyStatusEffect,
+  clearEnemyStatusEffects,
+  consumeEnemyStatusEffectPeriodicDamage,
+  getEnemyAttackPenalty,
+  getEnemyAttackCooldownPenalty,
+  getEnemyDefensePenalty,
+  listActiveEnemyStatusEffects,
+  pruneExpiredEnemyStatusEffects
+} from "../combat/status-effects";
+import {
+  applyPlayerSpecialAttack,
+  buildPlayerSpecialAttackViewModel,
+  clearQueuedPlayerSpecialAttack,
+  consumeQueuedPlayerSpecialAttack,
+  hasQueuedPlayerSpecialAttack,
+  normalizePlayerSpecialAttackState,
+  queuePlayerSpecialAttack,
+  regeneratePlayerSpecialAttackEnergy
+} from "../combat/special-attacks";
+import {
   COMBAT_SPEC_VERSION,
   createDefaultPlayerCombatState,
   createEnemyRuntimeState,
@@ -74,6 +94,22 @@ declare global {
       decrementCooldown: typeof decrementCooldown;
       rollOpposedHitCheck: typeof rollOpposedHitCheck;
       rollDamage: typeof rollDamage;
+      normalizePlayerSpecialAttackState: typeof normalizePlayerSpecialAttackState;
+      queuePlayerSpecialAttack: typeof queuePlayerSpecialAttack;
+      regeneratePlayerSpecialAttackEnergy: typeof regeneratePlayerSpecialAttackEnergy;
+      consumeQueuedPlayerSpecialAttack: typeof consumeQueuedPlayerSpecialAttack;
+      clearQueuedPlayerSpecialAttack: typeof clearQueuedPlayerSpecialAttack;
+      hasQueuedPlayerSpecialAttack: typeof hasQueuedPlayerSpecialAttack;
+      applyPlayerSpecialAttack: typeof applyPlayerSpecialAttack;
+      buildPlayerSpecialAttackViewModel: typeof buildPlayerSpecialAttackViewModel;
+      applyEnemyStatusEffect: typeof applyEnemyStatusEffect;
+      clearEnemyStatusEffects: typeof clearEnemyStatusEffects;
+      consumeEnemyStatusEffectPeriodicDamage: typeof consumeEnemyStatusEffectPeriodicDamage;
+      getEnemyAttackPenalty: typeof getEnemyAttackPenalty;
+      getEnemyAttackCooldownPenalty: typeof getEnemyAttackCooldownPenalty;
+      getEnemyDefensePenalty: typeof getEnemyDefensePenalty;
+      listActiveEnemyStatusEffects: typeof listActiveEnemyStatusEffects;
+      pruneExpiredEnemyStatusEffects: typeof pruneExpiredEnemyStatusEffects;
       isWithinSquareRange: typeof isWithinSquareRange;
       isWithinMeleeRange: typeof isWithinMeleeRange;
       pickDropEntry: typeof pickDropEntry;
@@ -137,6 +173,15 @@ function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | nul
       ? spawnNode.spawnGroupId
       : (typeof spawnNode.groupId === "string" ? spawnNode.groupId : null)
   ) || null;
+  const patrolRoute = Array.isArray(spawnNode.patrolRoute)
+    ? spawnNode.patrolRoute
+        .filter(isPoint3Like)
+        .map((point) => clonePoint3({
+          x: Math.floor(Number(point.x)),
+          y: Math.floor(Number(point.y)),
+          z: Math.floor(Number(point.z))
+        }))
+    : [];
 
   return {
     spawnNodeId,
@@ -149,6 +194,7 @@ function normalizeSpawnNode(definition: unknown): EnemySpawnNodeDefinition | nul
           z: Math.floor(Number(homeTileOverrideLike.z))
         })
       : null,
+    patrolRoute,
     roamingRadiusOverride,
     respawnTicks,
     spawnEnabled: spawnNode.spawnEnabled !== false && spawnNode.enabled !== false,
@@ -272,6 +318,22 @@ export function exposeCombatBridge(): void {
     decrementCooldown,
     rollOpposedHitCheck,
     rollDamage,
+    normalizePlayerSpecialAttackState,
+    queuePlayerSpecialAttack,
+    regeneratePlayerSpecialAttackEnergy,
+    consumeQueuedPlayerSpecialAttack,
+    clearQueuedPlayerSpecialAttack,
+    hasQueuedPlayerSpecialAttack,
+    applyPlayerSpecialAttack,
+    buildPlayerSpecialAttackViewModel,
+    applyEnemyStatusEffect,
+    clearEnemyStatusEffects,
+    consumeEnemyStatusEffectPeriodicDamage,
+    getEnemyAttackPenalty,
+    getEnemyAttackCooldownPenalty,
+    getEnemyDefensePenalty,
+    listActiveEnemyStatusEffects,
+    pruneExpiredEnemyStatusEffects,
     isWithinSquareRange,
     isWithinMeleeRange,
     pickDropEntry,

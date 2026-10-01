@@ -23,6 +23,23 @@
         return true;
     }
 
+    function updateCombatSpecialAttackButtonState(button, specialAttack) {
+        if (!button || !specialAttack) return false;
+        const armed = !!specialAttack.queued;
+        const ready = !!specialAttack.ready;
+        button.classList.toggle('bg-[#5a311d]', armed || ready);
+        button.classList.toggle('border-[#ffcf8b]', armed || ready);
+        button.classList.toggle('text-[#ffcf8b]', armed || ready);
+        button.classList.toggle('bg-[#111418]', !armed && !ready);
+        button.classList.toggle('border-[#3a444c]', !armed && !ready);
+        button.classList.toggle('text-[#c8aa6e]', !armed && !ready);
+        button.classList.toggle('opacity-50', !ready);
+        button.classList.toggle('cursor-not-allowed', !ready);
+        button.disabled = !ready;
+        button.setAttribute('aria-pressed', armed ? 'true' : 'false');
+        return true;
+    }
+
     function updateCombatTab(context = {}, combatTabViewModel) {
         const documentRef = getDocument(context);
         if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -40,6 +57,14 @@
         setText(documentRef, 'combat-roll-attack', combatTabViewModel.combatStats.attack);
         setText(documentRef, 'combat-roll-defense', combatTabViewModel.combatStats.defense);
         setText(documentRef, 'combat-max-hit', combatTabViewModel.combatStats.strength);
+        const specialAttack = combatTabViewModel.specialAttack || null;
+        if (specialAttack) {
+            setText(documentRef, 'combat-special-label', specialAttack.label);
+            setText(documentRef, 'combat-special-effect', specialAttack.description);
+            setText(documentRef, 'combat-special-status', specialAttack.statusText);
+            setText(documentRef, 'combat-special-energy', `${specialAttack.energy}/${specialAttack.maxEnergy} energy`);
+            updateCombatSpecialAttackButtonState(documentRef.getElementById('combat-special-attack'), specialAttack);
+        }
 
         const styleOptionsById = {};
         const styleOptions = Array.isArray(combatTabViewModel.styleOptions) ? combatTabViewModel.styleOptions : [];
@@ -98,6 +123,7 @@
 
     window.WorldStatusHudRuntime = {
         updateCombatStyleButtonState,
+        updateCombatSpecialAttackButtonState,
         updateCombatTab,
         updateInventoryHitpointsHud,
         updateStats

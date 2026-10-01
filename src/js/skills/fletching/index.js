@@ -802,7 +802,9 @@
             const recipe = resolveActiveFletchingRecipe(context);
             const heldLogItemId = recipe && typeof recipe.sourceLogItemId === 'string' && recipe.sourceLogItemId
                 ? recipe.sourceLogItemId
-                : 'logs';
+                : (recipe && typeof recipe.originLogItemId === 'string' && recipe.originLogItemId
+                    ? recipe.originLogItemId
+                    : 'logs');
             return {
                 rightHand: 'knife',
                 leftHand: heldLogItemId

@@ -551,6 +551,11 @@ function assertStarterTown(root) {
   assert(combatSpawnsById["enemy_spawn_guard_east_outpost_north"].spawnTile.x === 364 && combatSpawnsById["enemy_spawn_guard_east_outpost_north"].spawnTile.y === 246, "north guard combat spawn mismatch");
   assert(combatSpawnsById["enemy_spawn_guard_east_outpost_northeast"].spawnTile.x === 367 && combatSpawnsById["enemy_spawn_guard_east_outpost_northeast"].spawnTile.y === 248, "northeast guard combat spawn mismatch");
   assert(combatSpawnsById["enemy_spawn_guard_east_outpost_north"].roamingRadiusOverride === 5, "starter guard roaming radius mismatch");
+  assert(
+    Array.isArray(combatSpawnsById["enemy_spawn_guard_east_outpost_north"].patrolRoute)
+      && combatSpawnsById["enemy_spawn_guard_east_outpost_north"].patrolRoute.map((point) => `${point.x}:${point.y}:${point.z}`).join(",") === "364:246:0,360:246:0,360:244:0,368:244:0,368:246:0",
+    "north guard patrol route mismatch"
+  );
   assert(combatSpawnsById["enemy_spawn_bear_southeast_camp_west"].spawnTile.x === 444 && combatSpawnsById["enemy_spawn_bear_southeast_camp_west"].spawnTile.y === 468, "southeast camp bear spawn mismatch");
   assert(combatSpawnsById["enemy_spawn_heavy_brute_southeast_camp_anchor"].spawnTile.x === 450 && combatSpawnsById["enemy_spawn_heavy_brute_southeast_camp_anchor"].spawnTile.y === 456, "southeast camp brute anchor mismatch");
   assert(combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].spawnTile.x === 456 && combatSpawnsById["enemy_spawn_fast_striker_southeast_camp_east"].spawnTile.y === 468, "southeast camp striker spawn mismatch");

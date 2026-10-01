@@ -1,14 +1,36 @@
 const fs = require("fs");
 const path = require("path");
+const ts = require("typescript");
 const vm = require("vm");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function loadTypescriptModule(source, filename) {
+  const module = { exports: {} };
+  const sandbox = {
+    exports: module.exports,
+    module,
+    require,
+    console
+  };
+  const transpiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020
+    },
+    fileName: filename
+  }).outputText;
+  vm.runInNewContext(transpiled, sandbox, { filename });
+  return module.exports;
+}
+
 function run() {
   const root = path.resolve(__dirname, "..", "..");
   const renderContracts = fs.readFileSync(path.join(root, "src", "game", "contracts", "render.ts"), "utf8");
+  const renderSnapshotPath = path.join(root, "src", "game", "render", "snapshot.ts");
+  const renderSnapshotSource = fs.readFileSync(renderSnapshotPath, "utf8");
   const renderInputBridge = fs.readFileSync(path.join(root, "src", "game", "platform", "render-input-bridge.ts"), "utf8");
   const coreSource = fs.readFileSync(path.join(root, "src", "js", "core.js"), "utf8");
   const worldSource = fs.readFileSync(path.join(root, "src", "js", "world.js"), "utf8");
@@ -45,6 +67,49 @@ function run() {
   assert(mapHudSource.includes("syncLockedMinimapTarget"), "world map HUD runtime should own locked-target following");
   assert(mapHudSource.includes("getWorldMapInitialCenter"), "world map HUD runtime should accept an authored initial center for large isolated maps");
   assert(mapHudSource.includes("clearMinimapDestinationIfReached"), "world map HUD runtime should own destination cleanup");
+  assert(renderSnapshotSource.includes("destinationFlag = options.snapshot.minimapDestination"), "render snapshot should derive a persistent minimap destination flag");
+  assert(renderSnapshotSource.includes("options.snapshot.minimapDestination.z === options.snapshot.player.z"), "minimap destination flags should render only on the player's plane");
+  const renderSnapshotRuntime = loadTypescriptModule(renderSnapshotSource, renderSnapshotPath);
+  const baseRenderSnapshot = renderSnapshotRuntime.buildRenderSnapshot({
+    worldId: "main_overworld",
+    player: { x: 4, y: 5, z: 0, facingYaw: 0 },
+    clickMarkers: [],
+    groundItems: [],
+    minimapDestination: { x: 6, y: 7, z: 0 }
+  });
+  const samePlaneMinimap = renderSnapshotRuntime.buildMinimapSnapshot({
+    snapshot: baseRenderSnapshot,
+    canvasSize: 100,
+    zoom: 1,
+    targetX: 4,
+    targetY: 5,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    dragEnd: { x: 0, y: 0 }
+  });
+  assert(samePlaneMinimap.destinationFlag && samePlaneMinimap.destinationFlag.x === 6.5 && samePlaneMinimap.destinationFlag.y === 7.5, "minimap snapshot should derive a destination flag from a same-plane walk target");
+  const otherPlaneMinimap = renderSnapshotRuntime.buildMinimapSnapshot({
+    snapshot: Object.assign({}, baseRenderSnapshot, { minimapDestination: { x: 6, y: 7, z: 1 } }),
+    canvasSize: 100,
+    zoom: 1,
+    targetX: 4,
+    targetY: 5,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    dragEnd: { x: 0, y: 0 }
+  });
+  assert(otherPlaneMinimap.destinationFlag === null, "minimap snapshot should suppress destination flags from other planes");
+  const invalidDestinationMinimap = renderSnapshotRuntime.buildMinimapSnapshot({
+    snapshot: Object.assign({}, baseRenderSnapshot, { minimapDestination: { x: Infinity, y: 7, z: 0 } }),
+    canvasSize: 100,
+    zoom: 1,
+    targetX: 4,
+    targetY: 5,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    dragEnd: { x: 0, y: 0 }
+  });
+  assert(invalidDestinationMinimap.destinationFlag === null, "minimap snapshot should suppress invalid destination coordinates");
   assert(worldSource.includes("WorldMapHudRuntime"), "world.js should delegate map HUD orchestration through the map HUD runtime");
   assert(worldSource.includes("buildMapHudRuntimeContext"), "world.js should provide map HUD runtime context callbacks");
   assert(worldSource.includes("resolveRenderWorldId() === 'tutorial_island'"), "world.js should center the tutorial world map on the enlarged island");
@@ -117,7 +182,17 @@ function run() {
   assert(inputSource.includes("const HOVER_TOOLTIP_EDGE_GUARD_PX = 8;"), "input-render.js should avoid world hover raycasts when the cursor is parked on a screen edge");
   assert(inputSource.includes("currentMouseX <= HOVER_TOOLTIP_EDGE_GUARD_PX"), "hover tooltip should hide on edge pixels instead of raycasting through the world");
   assert(inputSource.includes("if (!isDraggingCamera && !isFreeCam && !(poseEditor.enabled && poseEditor.activeHandle))"), "camera dragging should not dirty hover tooltip work on every pointer move");
-  assert(inputSource.includes("hoverTooltipDirty = true;\n                return;\n            }\n            if (decision && decision.handleInteractionRaycast)"), "starting a camera drag should hide the hover tooltip once before skipping interaction raycasts");
+  const beginCameraDragIndex = inputSource.indexOf("if (decision && decision.beginCameraDrag)");
+  const beginCameraDragDirtyIndex = inputSource.indexOf("hoverTooltipDirty = true;", beginCameraDragIndex);
+  const beginCameraDragReturnIndex = inputSource.indexOf("return;", beginCameraDragDirtyIndex);
+  const interactionRaycastIndex = inputSource.indexOf("if (decision && decision.handleInteractionRaycast)", beginCameraDragReturnIndex);
+  assert(
+    beginCameraDragIndex !== -1
+      && beginCameraDragDirtyIndex > beginCameraDragIndex
+      && beginCameraDragReturnIndex > beginCameraDragDirtyIndex
+      && interactionRaycastIndex > beginCameraDragReturnIndex,
+    "starting a camera drag should hide the hover tooltip once before skipping interaction raycasts"
+  );
   assert(!inputSource.includes("tooltip.innerHTML = actionText"), "input-render.js should not own hover tooltip DOM updates");
   assert(!inputSource.includes("function resolveTooltipTargetTile"), "input-render.js should not own hover target tile resolution");
   assert(!inputSource.includes("const fireUnderCursor ="), "input-render.js should not own active-fire hover detection");
@@ -302,6 +377,7 @@ function run() {
     moveTo: (...args) => canvasOps.push(["moveTo", ...args]),
     lineTo: (...args) => canvasOps.push(["lineTo", ...args]),
     stroke: () => canvasOps.push(["stroke"]),
+    closePath: () => canvasOps.push(["closePath"]),
     save: () => canvasOps.push(["save"]),
     restore: () => canvasOps.push(["restore"]),
     translate: (...args) => canvasOps.push(["translate", ...args]),
@@ -313,7 +389,7 @@ function run() {
     height: 2,
     dataset: {},
     style: {},
-    classList: { contains: () => false },
+    classList: { contains: (name) => name === "hidden" },
     getContext: () => fakeContext,
     getBoundingClientRect: () => ({ width: 2, height: 2, left: 0, top: 0 }),
     addEventListener: () => {}
@@ -326,7 +402,40 @@ function run() {
     document: fakeDocument,
     devicePixelRatio: 1,
     RenderRuntime: {
-      buildRenderSnapshot: (options) => Object.assign({ bridged: true }, options)
+      buildRenderSnapshot: (options) => Object.assign({ bridged: true }, options),
+      buildMinimapSnapshot: ({ snapshot, canvasSize, zoom }) => {
+        const pixelsPerTile = (canvasSize / 100) * zoom;
+        return {
+          canvasCenter: canvasSize / 2,
+          pixelsPerTile,
+          clickMarkers: [],
+          groundItems: [],
+          playerDot: {
+            x: snapshot.player.x + 0.5,
+            y: snapshot.player.y + 0.5,
+            radius: 3 / pixelsPerTile
+          },
+          facingLine: {
+            fromX: snapshot.player.x + 0.5,
+            fromY: snapshot.player.y + 0.5,
+            toX: snapshot.player.x + 0.5,
+            toY: snapshot.player.y + 0.5 + (8 / pixelsPerTile),
+            lineWidth: 2 / pixelsPerTile
+          },
+          destinationFlag: snapshot.minimapDestination
+            ? {
+                x: snapshot.minimapDestination.x + 0.5,
+                y: snapshot.minimapDestination.y + 0.5,
+                poleBottomY: snapshot.minimapDestination.y + 0.5 + (2 / pixelsPerTile),
+                poleTopY: snapshot.minimapDestination.y + 0.5 - (8 / pixelsPerTile),
+                flagWidth: 7 / pixelsPerTile,
+                flagHeight: 4.5 / pixelsPerTile,
+                lineWidth: Math.max(2 / pixelsPerTile, 0.28)
+              }
+            : null,
+          dragRect: null
+        };
+      }
     }
   };
   vm.runInThisContext(mapHudSource, { filename: path.join(root, "src", "js", "world", "map-hud-runtime.js") });
@@ -368,6 +477,18 @@ function run() {
   };
   assert(runtime.updateMinimapCanvas(runtimeContext).width === 2, "world map HUD runtime should redraw the offscreen map canvas");
   assert(runtime.buildHudRenderSnapshot(runtimeContext).worldId === "main_overworld", "world map HUD runtime should build a render snapshot through the bridge");
+  assert(runtime.setMinimapDestination(0, 1, 0).x === 0, "world map HUD runtime should accept minimap walk destinations");
+  const destinationSnapshot = runtime.buildHudRenderSnapshot(runtimeContext);
+  assert(destinationSnapshot.minimapDestination && destinationSnapshot.minimapDestination.x === 0 && destinationSnapshot.minimapDestination.y === 1, "HUD render snapshot should preserve the active minimap destination");
+  canvasOps.length = 0;
+  runtime.updateMinimap(1000, true, runtimeContext);
+  assert(canvasOps.some((op) => op[0] === "closePath"), "minimap render should draw the destination flag glyph while walking");
+  assert(!runtime.clearMinimapDestinationIfReached({ x: 1, y: 1, z: 0 }), "destination should persist before the player reaches the target tile");
+  assert(runtime.getMinimapDestination(), "destination should remain visible until arrival or cancellation");
+  assert(runtime.clearMinimapDestinationIfReached({ x: 0, y: 1, z: 0 }), "destination should clear when the player reaches the target tile");
+  assert(runtime.getMinimapDestination() === null, "destination should be gone after arrival cleanup");
+  assert(runtime.setMinimapDestination(0.5, 1, 0) === null, "invalid minimap destinations should be rejected");
+  assert(runtime.getMinimapDestination() === null, "invalid minimap destinations should clear stale destination state");
 
   console.log("Render/input shell guard passed.");
 }

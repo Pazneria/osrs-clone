@@ -1,0 +1,257 @@
+import type {
+  CombatOnHitEffectProfile,
+  CombatStatusEffectId,
+  CombatStatusEffectState
+} from "../contracts/combat";
+
+type StatusEffectCarrier = {
+  statusEffects?: Partial<Record<CombatStatusEffectId, CombatStatusEffectState>>;
+  remainingAttackCooldown?: number;
+};
+
+export interface ActiveCombatStatusEffect {
+  effectId: CombatStatusEffectId;
+  remainingTicks: number;
+  enemyAttackCooldownPenalty: number;
+  enemyDefensePenalty: number;
+  enemyAttackPenalty?: number;
+  periodicDamage?: number;
+}
+
+export interface EnemyStatusEffectPeriodicDamage {
+  effectId: CombatStatusEffectId;
+  damage: number;
+}
+
+function clampInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.max(minimum, Math.min(maximum, Math.floor(numeric)));
+}
+
+export function cloneCombatOnHitEffectProfile(
+  effect: CombatOnHitEffectProfile | null | undefined
+): CombatOnHitEffectProfile | null {
+  if (!effect) return null;
+  if (effect.effectId === "chilled") {
+    return {
+      effectId: "chilled",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 2),
+      enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 1),
+      enemyDefensePenalty: 0
+    };
+  }
+  if (effect.effectId === "sundered") {
+    return {
+      effectId: "sundered",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 3),
+      enemyAttackCooldownPenalty: 0,
+      enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 1, 12, 3)
+    };
+  }
+  if (effect.effectId === "disoriented") {
+    return {
+      effectId: "disoriented",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 2),
+      enemyAttackCooldownPenalty: 0,
+      enemyDefensePenalty: 0,
+      enemyAttackPenalty: clampInteger(effect.enemyAttackPenalty, 1, 12, 3)
+    };
+  }
+  if (effect.effectId === "scorched") {
+    return {
+      effectId: "scorched",
+      durationTicks: clampInteger(effect.durationTicks, 1, 12, 2),
+      enemyAttackCooldownPenalty: 0,
+      enemyDefensePenalty: 0,
+      periodicDamage: clampInteger(effect.periodicDamage, 1, 12, 1)
+    };
+  }
+  return null;
+}
+
+export function createEnemyStatusEffects(): Partial<Record<CombatStatusEffectId, CombatStatusEffectState>> {
+  return {};
+}
+
+export function clearEnemyStatusEffects(enemyState: StatusEffectCarrier | null | undefined): void {
+  if (!enemyState) return;
+  enemyState.statusEffects = createEnemyStatusEffects();
+}
+
+export function pruneExpiredEnemyStatusEffects(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): void {
+  if (!enemyState || !enemyState.statusEffects) return;
+  const tick = clampInteger(currentTick, 0, Number.MAX_SAFE_INTEGER, 0);
+  const effectIds = Object.keys(enemyState.statusEffects) as CombatStatusEffectId[];
+  for (let index = 0; index < effectIds.length; index += 1) {
+    const effectId = effectIds[index];
+    const effect = enemyState.statusEffects[effectId];
+    if (!effect || !Number.isFinite(effect.expiresAtTick) || effect.expiresAtTick <= tick) {
+      delete enemyState.statusEffects[effectId];
+    }
+  }
+}
+
+export function applyEnemyStatusEffect(
+  enemyState: StatusEffectCarrier | null | undefined,
+  effect: CombatOnHitEffectProfile | null | undefined,
+  currentTick: number
+): ActiveCombatStatusEffect | null {
+  if (!enemyState) return null;
+  const normalizedEffect = cloneCombatOnHitEffectProfile(effect);
+  if (!normalizedEffect) return null;
+
+  const tick = clampInteger(currentTick, 0, Number.MAX_SAFE_INTEGER, 0);
+  pruneExpiredEnemyStatusEffects(enemyState, tick);
+  const statusEffects = enemyState.statusEffects || createEnemyStatusEffects();
+  const existing = statusEffects[normalizedEffect.effectId];
+  const enemyAttackPenalty = Math.max(
+    normalizedEffect.enemyAttackPenalty || 0,
+    existing && Number.isFinite(existing.enemyAttackPenalty)
+      ? Math.max(0, Math.floor(existing.enemyAttackPenalty || 0))
+      : 0
+  );
+  const periodicDamage = Math.max(
+    normalizedEffect.periodicDamage || 0,
+    existing && Number.isFinite(existing.periodicDamage)
+      ? Math.max(0, Math.floor(existing.periodicDamage || 0))
+      : 0
+  );
+  const effectState: CombatStatusEffectState = {
+    effectId: normalizedEffect.effectId,
+    expiresAtTick: Math.max(
+      tick + normalizedEffect.durationTicks,
+      existing && Number.isFinite(existing.expiresAtTick) ? Math.floor(existing.expiresAtTick) : 0
+    ),
+    enemyAttackCooldownPenalty: Math.max(
+      normalizedEffect.enemyAttackCooldownPenalty,
+      existing && Number.isFinite(existing.enemyAttackCooldownPenalty)
+        ? Math.max(0, Math.floor(existing.enemyAttackCooldownPenalty))
+        : 0
+    ),
+    enemyDefensePenalty: Math.max(
+      normalizedEffect.enemyDefensePenalty,
+      existing && Number.isFinite(existing.enemyDefensePenalty)
+        ? Math.max(0, Math.floor(existing.enemyDefensePenalty))
+        : 0
+    )
+  };
+  if (enemyAttackPenalty > 0) effectState.enemyAttackPenalty = enemyAttackPenalty;
+  if (periodicDamage > 0) {
+    effectState.periodicDamage = periodicDamage;
+    const periodicDamageStartedAtTick = existing ? existing.periodicDamageStartedAtTick : null;
+    effectState.periodicDamageStartedAtTick = typeof periodicDamageStartedAtTick === "number" && Number.isFinite(periodicDamageStartedAtTick)
+      ? Math.floor(periodicDamageStartedAtTick)
+      : tick;
+    const lastPeriodicDamageTick = existing ? existing.lastPeriodicDamageTick : null;
+    if (typeof lastPeriodicDamageTick === "number" && Number.isFinite(lastPeriodicDamageTick)) {
+      effectState.lastPeriodicDamageTick = Math.floor(lastPeriodicDamageTick);
+    }
+  }
+  statusEffects[effectState.effectId] = effectState;
+  enemyState.statusEffects = statusEffects;
+
+  const currentCooldown = clampInteger(enemyState.remainingAttackCooldown, 0, Number.MAX_SAFE_INTEGER, 0);
+  if (currentCooldown > 0 && effectState.enemyAttackCooldownPenalty > 0) {
+    enemyState.remainingAttackCooldown = currentCooldown + effectState.enemyAttackCooldownPenalty;
+  }
+
+  const activeEffect: ActiveCombatStatusEffect = {
+    effectId: effectState.effectId,
+    remainingTicks: Math.max(0, effectState.expiresAtTick - tick),
+    enemyAttackCooldownPenalty: effectState.enemyAttackCooldownPenalty,
+    enemyDefensePenalty: effectState.enemyDefensePenalty
+  };
+  if (enemyAttackPenalty > 0) activeEffect.enemyAttackPenalty = enemyAttackPenalty;
+  if (periodicDamage > 0) activeEffect.periodicDamage = periodicDamage;
+  return activeEffect;
+}
+
+export function consumeEnemyStatusEffectPeriodicDamage(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): EnemyStatusEffectPeriodicDamage[] {
+  if (!enemyState || !enemyState.statusEffects) return [];
+  const tick = clampInteger(currentTick, 0, Number.MAX_SAFE_INTEGER, 0);
+  const resolved: EnemyStatusEffectPeriodicDamage[] = [];
+  const effectIds = Object.keys(enemyState.statusEffects) as CombatStatusEffectId[];
+  for (let index = 0; index < effectIds.length; index += 1) {
+    const effectId = effectIds[index];
+    const effect = enemyState.statusEffects[effectId];
+    if (!effect || !Number.isFinite(effect.expiresAtTick) || effect.expiresAtTick < tick) continue;
+    const periodicDamage = clampInteger(effect.periodicDamage, 0, 12, 0);
+    const startedAtTick = typeof effect.periodicDamageStartedAtTick === "number" && Number.isFinite(effect.periodicDamageStartedAtTick)
+      ? Math.floor(effect.periodicDamageStartedAtTick)
+      : (tick - 1);
+    if (startedAtTick >= tick) continue;
+    if (periodicDamage <= 0 || effect.lastPeriodicDamageTick === tick) continue;
+    effect.lastPeriodicDamageTick = tick;
+    resolved.push({ effectId, damage: periodicDamage });
+  }
+  return resolved;
+}
+
+export function getEnemyAttackCooldownPenalty(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): number {
+  if (!enemyState) return 0;
+  pruneExpiredEnemyStatusEffects(enemyState, currentTick);
+  const statusEffects = enemyState.statusEffects || {};
+  return Object.values(statusEffects).reduce((total, effect) => (
+    total + clampInteger(effect && effect.enemyAttackCooldownPenalty, 0, 4, 0)
+  ), 0);
+}
+
+export function getEnemyDefensePenalty(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): number {
+  if (!enemyState) return 0;
+  pruneExpiredEnemyStatusEffects(enemyState, currentTick);
+  const statusEffects = enemyState.statusEffects || {};
+  return Object.values(statusEffects).reduce((total, effect) => (
+    total + clampInteger(effect && effect.enemyDefensePenalty, 0, 12, 0)
+  ), 0);
+}
+
+export function getEnemyAttackPenalty(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): number {
+  if (!enemyState) return 0;
+  pruneExpiredEnemyStatusEffects(enemyState, currentTick);
+  const statusEffects = enemyState.statusEffects || {};
+  return Object.values(statusEffects).reduce((total, effect) => (
+    total + clampInteger(effect && effect.enemyAttackPenalty, 0, 12, 0)
+  ), 0);
+}
+
+export function listActiveEnemyStatusEffects(
+  enemyState: StatusEffectCarrier | null | undefined,
+  currentTick: number
+): ActiveCombatStatusEffect[] {
+  if (!enemyState) return [];
+  const tick = clampInteger(currentTick, 0, Number.MAX_SAFE_INTEGER, 0);
+  pruneExpiredEnemyStatusEffects(enemyState, tick);
+  const statusEffects = enemyState.statusEffects || {};
+  return Object.values(statusEffects)
+    .filter((effect): effect is CombatStatusEffectState => !!effect && effect.expiresAtTick > tick)
+    .map((effect) => {
+      const enemyAttackPenalty = clampInteger(effect.enemyAttackPenalty, 0, 12, 0);
+      const activeEffect: ActiveCombatStatusEffect = {
+        effectId: effect.effectId,
+        remainingTicks: Math.max(0, Math.floor(effect.expiresAtTick) - tick),
+        enemyAttackCooldownPenalty: clampInteger(effect.enemyAttackCooldownPenalty, 0, 4, 0),
+        enemyDefensePenalty: clampInteger(effect.enemyDefensePenalty, 0, 12, 0)
+      };
+      if (enemyAttackPenalty > 0) activeEffect.enemyAttackPenalty = enemyAttackPenalty;
+      const periodicDamage = clampInteger(effect.periodicDamage, 0, 12, 0);
+      if (periodicDamage > 0) activeEffect.periodicDamage = periodicDamage;
+      return activeEffect;
+    })
+    .sort((left, right) => left.effectId.localeCompare(right.effectId));
+}

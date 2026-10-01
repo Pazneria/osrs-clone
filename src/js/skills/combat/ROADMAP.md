@@ -44,12 +44,25 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 | Combat HUD/target feedback pass | Complete |
 | Progression-band contract for enemy difficulty, drops, and placement | Complete |
 | First-pass guarded threshold and camp-threat encounter coverage | Complete |
+| Authored patrol-route movement slice | Complete |
+| Spawn-group ally assist slice | Complete |
+| Player ranged combat slice | Complete |
+| Player magic combat slice | Complete |
+| Style-aware combat build simulator | Complete |
+| Water-rune Chilled status-effect slice | Complete |
+| Chilled target-feedback slice | Complete |
+| Earth-rune Sundered status-effect slice | Complete |
+| Air-rune Disoriented status-effect slice | Complete |
+| Lava-rune Scorched status-effect slice | Complete |
+| Smoke-rune Disoriented status-effect slice | Complete |
+| Player-triggered Power Strike slice | Complete |
+| Special-energy resource slice | Complete |
 
 ## Data Contracts
 
 ### Player
 
-- Combat state persists current hitpoints, remaining attack cooldown, locked target id, combat target kind, selected melee style, auto-retaliate flag, and combat-state markers.
+- Combat state persists current hitpoints, remaining attack cooldown, locked target id, combat target kind, selected melee style, auto-retaliate flag, and combat-state markers. The live combat state also carries a bounded special-attack cooldown, a 0-100 special-energy pool, and an armed-next-hit marker, which is cleared when its target lock clears or a session restores.
 - Player melee performance derives from explicit `combat` item data plus combat skills.
 - Required Attack level gates melee use, even when a tool is equipped through another system flow.
 
@@ -58,6 +71,14 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Equippable held items expose explicit melee-ready combat data instead of relying on placeholder `stats.atk/def/str` math.
 - Swords, axes, pickaxes, fishing rods, and harpoons all define attack profile, melee bonuses, and required Attack level.
 - Armor exposes split defense bonuses through combat data, with v1 copying the first-pass melee armor band across melee/ranged/magic defense.
+- Bows expose explicit ranged attack profiles with level gates, projectile range, bow cadence, and bow-family ammo requirements.
+- Arrow stacks expose ranged ammo profiles with compatible weapon families, tiered accuracy/strength bonuses, stackable quiver equipment, and inventory fallback consumption.
+- Staffs expose explicit magic attack profiles with Magic level gates, projectile range, staff cadence, and staff-family rune requirements.
+- Elemental and combination rune stacks expose magic ammo profiles with compatible staff families plus tiered magic accuracy/strength bonuses.
+- Water, steam, mud, and mist runes also expose a typed `Chilled` on-hit profile so the water element has a first gameplay identity beyond projectile color.
+- Earth and dust runes expose a typed `Sundered` on-hit profile, reducing a damaged enemy's effective Defence by 3 for three ticks so later player attacks have a deliberate setup window.
+- Air and smoke runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing.
+- Lava runes expose a typed `Scorched` on-hit profile, dealing one burn damage on each of the next two combat ticks without consuming more runes or duplicating the initial hit.
 
 ### Enemies
 
@@ -68,9 +89,11 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 ### Encounter Authoring
 
 - Combat content is authored into the world through explicit spawn nodes and spawn groups, with the world region layer acting as the source of truth for encounter topology rather than piggybacking on merchant/travel NPC descriptors.
-- The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, respawn ticks, facing yaw, enabled state, and spawn-group id.
-- The roadmap leaves room to extend encounter authoring later with patrol routes, density caps, safe-distance-from-route rules, and local drop overrides where needed.
-- In the first pass, spawn groups are organizational/content-authoring helpers only and do not automatically imply shared aggro, ally assist, shared respawn, or formation logic.
+- The first-pass spawn contract already covers spawn node id, enemy id, spawn tile, optional home tile override, optional patrol route, respawn ticks, facing yaw, enabled state, and spawn-group id.
+- The first authored patrol route is live on the east-outpost north guard, and it flows through world authoring, the combat bridge, combat content cloning, runtime respawn reset, route-aware idle movement, validation, and parity guards.
+- The roadmap leaves room to extend encounter authoring later with density caps, safe-distance-from-route rules, and local drop overrides where needed.
+- Spawn groups now drive a narrow ally-assist rule for aggressive enemies: nearby idle same-group allies can join an active pull when they are inside the local assist radius, still leashed to the player, and can path to the player.
+- Spawn groups still do not imply shared respawn, formation logic, global target switching, or passive-critter dogpiles.
 
 ### Loot Tables
 
@@ -104,12 +127,27 @@ Melee plugs into that shared core as the first playable slice, and enemy/encount
 - Auto-retaliate target choice is locked to a deterministic order when multiple valid attackers exist: first attacker, then closest attacker, then weakest-to-strongest, then stable runtime id.
 - Eating interaction remains a combat-core concern, not a melee-only concern.
 - Same-tick eat restrictions from the shared combat/cooking rules should stay aligned as combat content expands.
+- Ranged player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active bow snapshot instead of melee adjacency.
+- Ammo-consuming ranged attacks consume one selected arrow on both hits and misses, preferring equipped ammo before compatible inventory stacks.
+- Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency.
+- Ammo-consuming magic attacks consume one selected rune on both hits and misses, choosing the strongest compatible rune stack from inventory.
+- `Power Strike` can be armed only while the player has both a live target lock, a usable combat snapshot, and at least 25 special energy. It modifies exactly the next valid melee, ranged, or magic attack with +25% accuracy and +25% max hit, consumes the ordinary one arrow/rune for that attack where applicable, spends 25 special energy on arm, then recharges for eight combat ticks. Special energy is capped at 100 and restores one point per combat tick. Breaking the target lock disarms a pending strike without refunding its cooldown or energy.
+- A damaging hit from a selected water-family rune applies `Chilled` for two ticks. `Chilled` adds one tick to an already-counting enemy swing, or to the enemy's newly resolved next swing in a same-tick batch; it is cleared when that enemy returns home, dies, or respawns.
+- An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar, including the active duration and a tooltip that explains the delayed next swing. The overlay reads the typed status-effect surface each tick rather than owning duplicate status state.
+- A damaging earth/dust-rune hit applies `Sundered` for three ticks. `Sundered` lowers the enemy's effective Defence by 3 for subsequent player hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
+- An enemy affected by `Sundered` shows a target badge with duration and its Defence reduction, again derived from the typed status-effect surface.
+- A damaging air- or smoke-rune hit applies `Disoriented` for two ticks. `Disoriented` lowers the enemy's effective Attack by 3 for subsequent enemy hit checks; it never changes cooldown timing and is cleared on home reset, death, or respawn.
+- An enemy affected by `Disoriented` shows a target badge with duration and its Attack reduction, again derived from the typed status-effect surface.
+- A damaging lava-rune hit applies `Scorched` for two ticks. `Scorched` resolves one damage before combat actions on each later active tick, awards Magic and Hitpoints XP through the same player-owned damage path, and is cleared on home reset, death, or respawn.
+- An enemy affected by `Scorched` shows an amber target badge with duration and its burn-damage tooltip, derived from the typed status-effect surface.
 
 ### Enemy Behavior
 
 - Aggressive enemies proximity-aggro within authored aggro radius.
 - Aggressive enemies that acquire the player while already in valid melee range may attack immediately under the shared combat-core timing rules.
+- Aggressive enemies can call nearby aggressive same-group allies into combat through authored spawn groups. Assisting allies receive a one-tick opening cooldown, must stay inside their leash envelope, and must path to the player before joining.
 - Passive enemies do not auto-aggro by proximity but enter combat when directly engaged.
+- Passive same-group enemies do not join ally-assist pulls.
 - First-pass melee enemies keep a current valid target instead of voluntarily switching to a closer or newer attacker.
 - Chase range is anchored to the enemy home tile.
 - Reset sends enemies back to home, then restores full HP and idle state on arrival.
@@ -149,7 +187,7 @@ These are the spec-aligned first-pass melee-only enemy templates that should dri
 | Heavy Brute | Slower heavy-damage melee enemy | Live |
 | Fast Striker | High-pressure accuracy/speed enemy | Live |
 
-Rule: the roadmap should exhaust this first-pass roster before it assumes more advanced behaviors like patrol logic, assist logic, or dynamic spawning.
+Rule: the first-pass roster is live; further advanced behavior beyond authored patrol routes should build on the current combat content contracts instead of adding one-off runtime-only enemy logic.
 
 ## Loot Table Plan
 
@@ -225,11 +263,11 @@ Expected sell value per kill treats coin entries at their average stack size and
 
 These live benchmarks keep passive/resource enemies below the humanoid payout bands, keep goblins well below the cost of buying a full bronze weapon, and keep the first iron-dropping enemies below the cost of buying a full iron weapon.
 
-### Current Melee Simulator
+### Current Combat Build Simulator
 
-`tools/sim/melee-sim.js` is the canonical first-pass combat simulator. It loads typed enemy data from `src/game/combat/content.ts`, player/enemy formula helpers from `src/game/combat/formulas.ts`, and weapon combat profiles from `src/js/content/item-catalog.js`.
+`tools/sim/melee-sim.js` is the canonical first-pass combat build simulator. It loads typed enemy data from `src/game/combat/content.ts`, player/enemy formula helpers from `src/game/combat/formulas.ts`, and weapon/ammo combat profiles from `src/js/content/item-catalog.js`.
 
-Use `npm.cmd run tool:sim:melee -- --enemy enemy_goblin_grunt --weapon bronze_sword --runs 1000 --seed baseline` to produce deterministic matchup summaries. The simulator reports player/enemy snapshots, win rates, average fight length, damage, and swing counts so combat tuning can compare authored enemies and item profiles without reintroducing the removed dummy simulator path.
+Use `npm.cmd run tool:sim:melee -- --enemy enemy_goblin_grunt --weapon bronze_sword --runs 1000 --seed baseline` for melee, `npm.cmd run tool:sim:melee -- --enemy enemy_guard --weapon normal_shortbow --ammo bronze_arrows --ranged 10 --runs 1000 --seed ranged-baseline` for ranged, or `npm.cmd run tool:sim:melee -- --enemy enemy_guard --weapon plain_staff_wood --ammo ember_rune --magic 10 --runs 1000 --seed magic-baseline` for magic. The simulator reports the active player combat snapshot, selected ammo/rune, enemy snapshot, win rates, average fight length, damage, and swing counts so combat tuning can compare authored enemies and build identities without reintroducing the removed dummy simulator path.
 
 ### Current Combat Progression Bands
 
@@ -242,7 +280,7 @@ It exists to keep enemy difficulty, drop ceilings, and placement guidance aligne
 | Starter Roadside | Starter | 4-10 | Goblin Grunt | Avoidable early humanoid aggro | <= 7.05 gp/kill |
 | Resource Outskirts | Starter | 8-16 | Boar, Wolf | Combat pressure near richer resources | <= 3.40 gp/kill |
 | Guarded Threshold | Mid | 15-25 | Guard | Deliberate gate or outpost pressure | <= 20.20 gp/kill |
-| Camp Threat | Mid | 20-35 | Bear, Fast Striker, Heavy Brute | Clustered optional camps or ruins | <= 26.15 gp/kill |
+| Camp Threat | Mid | 20-35 | Bear, Fast Striker, Heavy Brute | Clustered optional camps or ruins with local ally assist | <= 26.15 gp/kill |
 | Later Region Anchor | Later | 35+ | Deferred | Named anchors and later-region objectives | Deferred |
 
 Rule: every live enemy template must belong to exactly one progression band, and current world summaries should make it clear which bands are placed versus still available for future authored regions.
@@ -282,7 +320,26 @@ The current authored `starter_town` world now covers every live first-pass progr
 - Roaming Radius is a placement/world-behavior field, not a combat-power field.
 - Roaming is anchored to Spawn Tile, while chase/leash behavior is anchored to Home Tile.
 - Aggro Radius, Chase Range, and Roaming Radius should be authored and reviewed using the same square/Chebyshev tile distance rule as the shared combat specs.
+- Authored patrol routes are optional spawn-node waypoint loops; patrol enemies prefer route movement while idle and fall back to random roaming only when no usable route exists.
+- Patrol waypoints must stay same-plane, in bounds, walkable, near the home tile, clear of protected roads/service/mining footprints, and reachable segment-by-segment.
+- Chase Range must cover the authored patrol envelope so valid patrol movement does not fight leash behavior.
 - Higher-than-1 combat movement speeds stay deferred until movement/collision semantics are explicitly expanded.
+
+### Player Ranged Slice
+
+- Equipped bows switch the active player combat snapshot to the ranged style family.
+- Bow attacks can resolve from authored bow range without stepping into melee range.
+- Compatible arrows may live in the ammo equipment slot or inventory; equipped ammo is consumed first.
+- Ranged attacks award Ranged XP from dealt damage plus Hitpoints XP through the same combat-core reward path as melee.
+- Ranged projectiles and bow-shot animation hooks are driven by the attack result rather than a separate ranged-only combat path.
+
+### Player Magic Slice
+
+- Equipped staffs switch the active player combat snapshot to the magic style family.
+- Staff attacks resolve from authored staff range and set the player action to `COMBAT: MAGIC` without requiring melee adjacency.
+- Elemental and combination runes act as staff-compatible spell fuel; the snapshot selects the highest-tier compatible inventory stack and consumes one rune per cast.
+- Magic attacks award Magic XP from dealt damage plus Hitpoints XP through the same combat-core reward path as melee and ranged.
+- Magic projectiles are driven by the attack result and use rune-colored visual identity for ember/fire/lava, water/steam, earth/mud, air/mist, and smoke/dust families.
 
 ### First-Pass Respawn Bands
 
@@ -324,7 +381,7 @@ The current authored `starter_town` world now covers every live first-pass progr
 | Route gate | Warns the player that a path is hotter | Strong readability, predictable leash zone |
 | Named anchor | Gives the area a combat landmark | Unique placement and stronger authored intent |
 
-Rule: in first-pass melee-only combat, spawn groups are content grouping only. They do not automatically create ally-assist, shared target selection, or shared respawn behavior.
+Rule: in first-pass melee-only combat, spawn groups can create local ally-assist for aggressive enemies only. They do not create shared respawn, formations, global target switching, or passive-enemy chain aggro.
 
 ### Region Rollout Backlog
 
@@ -385,11 +442,11 @@ The enemy specs explicitly defer richer assist/group logic until the simpler aut
 These are worth keeping in the roadmap precisely so we do not accidentally treat them like current-slice requirements.
 
 - advanced spawn randomization or dynamic region-driven spawning
-- advanced roaming behavior beyond the simple current radius model
-- group aggro, ally assist, or formation logic
+- advanced roaming behavior beyond the authored patrol-route slice and simple current radius model
+- formation logic or global encounter-wide target switching beyond local same-group ally assist
 - safe-spot exception systems
-- ranged or magic enemy packages
-- special attacks, status effects, or multi-phase enemies
+- ranged enemy packages and magic enemy packages
+- weapon-specific special profiles, special-resource systems, remaining elemental status effects, or multi-phase enemies
 - multi-tile enemies unless separately specified later
 - nested/global loot-table systems
 - final stack-size or tertiary-drop systems
@@ -422,12 +479,13 @@ These are worth keeping in the roadmap precisely so we do not accidentally treat
 - Combat/eating interaction should remain regression-tested against the shared same-tick restriction rules.
 - Loot tables should validate weights, quantity bands, item ids, and progression-band sanity.
 - Spawn groups should validate spacing, enabled-state consistency, and region ownership.
+- Patrol routes should validate waypoint walkability, route reachability, protected-road clearance, and route-aware local path budgets.
 - Encounter-heavy scenes should be watched for pathfinding spikes and visible tick hitching.
 - Combat content rollout should keep a manual checklist for "can a brand-new player safely walk through town without accidental death?"
 
 ## Follow-Up
 
-1. Expand regional encounter coverage before layering ranged/magic or advanced enemy logic on top.
+1. Keep weapon-specific special profiles and any further elemental effects as separate, bounded slices on the typed combat contract; the current next slice is weapon-specific specials on the shared energy pool.
 2. Use the progression-band summaries to populate outer roads, optional camps, and guarded thresholds without duplicating starter-town encounter pressure.
 3. Keep melee style selection UI, combat HUD state, and simulator coverage aligned as encounter complexity grows.
 4. Revisit later-region anchors only after authored region context exists.

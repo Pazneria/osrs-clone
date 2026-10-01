@@ -40,8 +40,9 @@ function readSkillSpecShardSource(root) {
 }
 
 function replaceOnce(source, from, to, label) {
-  const next = source.replace(from, to);
-  assert(next !== source, "test setup failed (" + label + ")");
+  const normalizedSource = source.replace(/\r\n/g, "\n");
+  const next = normalizedSource.replace(from, to);
+  assert(next !== normalizedSource, "test setup failed (" + label + ")");
   return next;
 }
 
@@ -385,6 +386,24 @@ function run() {
     assert(metrics.output.sellValuePerAction === benchmark.sell, "fletching sell/action mismatch for " + benchmark.recipeId);
     assert(approxEq(metrics.throughput.xpPerTick, benchmark.xpPerTick, 1e-4), "fletching xp/tick mismatch for " + benchmark.recipeId);
     assert(approxEq(metrics.throughput.sellValuePerTick, benchmark.sellPerTick, 1e-4), "fletching sell/tick mismatch for " + benchmark.recipeId);
+  });
+  const woodcuttingNodesById = SkillSpecRegistry.getNodeTable("woodcutting") || {};
+  const woodcuttingXpByLog = {};
+  Object.values(woodcuttingNodesById).forEach((node) => {
+    if (node && typeof node.rewardItemId === "string" && Number.isFinite(node.xpPerSuccess)) {
+      woodcuttingXpByLog[node.rewardItemId] = node.xpPerSuccess;
+    }
+  });
+  const fletchingRecipeSet = SkillSpecRegistry.getRecipeSet("fletching") || {};
+  const fletchingRecipeEntries = Object.entries(fletchingRecipeSet);
+  assert(fletchingRecipeEntries.length === 46, "fletching recipe count mismatch");
+  fletchingRecipeEntries.forEach(([recipeId, recipe]) => {
+    const sourceLogItemId = recipe && (recipe.sourceLogItemId || recipe.originLogItemId);
+    const sourceLogXp = woodcuttingXpByLog[sourceLogItemId];
+    assert(Number.isFinite(sourceLogXp), "fletching recipe must reference canonical woodcutting XP: " + recipeId);
+    assert(Number.isFinite(recipe.xpMultiplier) && recipe.xpMultiplier > 0, "fletching recipe must expose a positive XP multiplier: " + recipeId);
+    const expectedXp = Math.max(1, Math.round(sourceLogXp * recipe.xpMultiplier));
+    assert(recipe.xpPerAction === expectedXp, "fletching XP must scale from its source log: " + recipeId);
   });
   assert(fletchingMetricsById["fletch_yew_handle"].throughput.sellValuePerTick > fletchingMetricsById["fletch_maple_handle"].throughput.sellValuePerTick, "yew handle should beat maple handle on sell/tick");
   assert(fletchingMetricsById["fletch_rune_arrows"].throughput.sellValuePerTick > fletchingMetricsById["fletch_adamant_arrows"].throughput.sellValuePerTick, "rune arrows should beat adamant arrows on sell/tick");
@@ -2113,6 +2132,12 @@ function run() {
   assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_outer_chickens_southwest").length === 5, "outer southwest chicken group missing");
   assert(starterTownWorld.combatSpawns.filter((entry) => entry.spawnGroupId === "starter_outer_chickens_southeast").length === 5, "outer southeast chicken group missing");
   assert(starterTownWorld.combatSpawns.some((entry) => entry.spawnNodeId === "enemy_spawn_guard_east_outpost_north" && entry.spawnGroupId === "starter_east_outpost_guard_post" && entry.roamingRadiusOverride === 5), "guard post combat spawn missing");
+  const guardPatrolSpawn = starterTownWorld.combatSpawns.find((entry) => entry.spawnNodeId === "enemy_spawn_guard_east_outpost_north");
+  assert(
+    guardPatrolSpawn && Array.isArray(guardPatrolSpawn.patrolRoute)
+      && guardPatrolSpawn.patrolRoute.map((point) => `${point.x}:${point.y}:${point.z}`).join(",") === "364:246:0,360:246:0,360:244:0,368:244:0,368:246:0",
+    "guard post patrol route missing"
+  );
   assert(Array.isArray(starterTownWorld.skillRoutes.mining) && starterTownWorld.skillRoutes.mining.length === 6, "authored mining routes missing");
   assert(Array.isArray(starterTownWorld.resourceNodes.mining) && starterTownWorld.resourceNodes.mining.length === 114, "authored mining nodes missing");
   assert(starterTownWorld.resourceNodes.mining.some((entry) => entry.routeId === "gem_mine" && entry.areaGateFlag === "gemMineUnlocked"), "gem mine authored gate flag missing");

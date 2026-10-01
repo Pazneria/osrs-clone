@@ -153,7 +153,10 @@ function run() {
   assert(runtimeSource.includes("function playLevelUpAnimation"), "transient visual runtime should own level-up burst creation");
   assert(runtimeSource.includes("function spawnRangedProjectile"), "transient visual runtime should own ranged projectile creation");
   assert(runtimeSource.includes("function spawnMagicProjectile"), "transient visual runtime should own magic projectile creation");
+  assert(runtimeSource.includes("function resolveMagicProjectileColors"), "transient visual runtime should own rune-colored magic projectile identity");
   assert(runtimeSource.includes("function createMagicProjectileMesh"), "transient visual runtime should own magic projectile mesh creation");
+  assert(runtimeSource.includes("0x77b255"), "magic projectiles should include an earth/mud color identity");
+  assert(runtimeSource.includes("0xd9f8ff"), "magic projectiles should include an air/mist color identity");
   assert(runtimeSource.includes("function updateRangedBowDrawVisual"), "transient visual runtime should own temporary bow draw visuals");
   assert(runtimeSource.includes("const RANGED_BOW_NOCK_MS = 150"), "transient visual runtime should delay the temporary arrow until the nock moment");
   assert(runtimeSource.includes("function resolveRangedDrawHandLocalPoint"), "transient visual runtime should resolve the bow-string draw point from the left hand");

@@ -289,10 +289,14 @@ function applyStructureLocalAlignment(
     const mappedHomeTile = rawSpawn.homeTileOverride
       ? remapPoint3WithStructureShift(structureShiftBounds, rawSpawn.homeTileOverride, 0, transform)
       : scaledSpawn.homeTileOverride;
+    const mappedPatrolRoute = Array.isArray(rawSpawn.patrolRoute)
+      ? rawSpawn.patrolRoute.map((point) => remapPoint3WithStructureShift(structureShiftBounds, point, 0, transform))
+      : scaledSpawn.patrolRoute;
     return {
       ...scaledSpawn,
       spawnTile: mappedSpawnTile,
-      homeTileOverride: mappedHomeTile || null
+      homeTileOverride: mappedHomeTile || null,
+      patrolRoute: mappedPatrolRoute || []
     };
   });
 

@@ -35,13 +35,14 @@ function createEnemyDefinition(enemyId, overrides = {}) {
   };
 }
 
-function createSpawnNode(spawnNodeId, enemyId, x, y, z = 0) {
+function createSpawnNode(spawnNodeId, enemyId, x, y, z = 0, spawnGroupId = null) {
   return {
     spawnNodeId,
     enemyId,
     spawnTile: { x, y, z },
     spawnEnabled: true,
-    facingYaw: Math.PI
+    facingYaw: Math.PI,
+    spawnGroupId
   };
 }
 
@@ -138,6 +139,7 @@ function ensureCombatRuntimeLoaded(root) {
         runtimeId: spawnNode.spawnNodeId,
         spawnNodeId: spawnNode.spawnNodeId,
         enemyId: definition.enemyId,
+        spawnGroupId: typeof spawnNode.spawnGroupId === "string" ? spawnNode.spawnGroupId : null,
         x: spawnTile.x,
         y: spawnTile.y,
         z: spawnTile.z,
@@ -166,20 +168,149 @@ function ensureCombatRuntimeLoaded(root) {
         attackTickCycle: 4
       };
     },
-    computeEnemyMeleeCombatSnapshot(enemyDefinition) {
-      return runtimeState.enemySnapshots[enemyDefinition.enemyId] || {
+    computeEnemyMeleeCombatSnapshot(enemyDefinition, statusModifiers = {}) {
+      const baseSnapshot = runtimeState.enemySnapshots[enemyDefinition.enemyId] || {
         attackValue: 100,
         defenseValue: 1,
         maxHit: 1,
         attackRange: 1,
         attackTickCycle: 4
       };
+      return Object.assign({}, baseSnapshot, {
+        attackValue: Math.max(0, baseSnapshot.attackValue - (statusModifiers.enemyAttackPenalty || 0))
+      });
     },
     rollOpposedHitCheck(attackValue, defenseValue) {
       return runtimeState.rollOpposedHitCheck(attackValue, defenseValue);
     },
     rollDamage(maxHit) {
       return runtimeState.rollDamage(maxHit);
+    },
+    queuePlayerSpecialAttack(playerState, options = {}) {
+      if (!options.hasTarget) return { accepted: false, reason: "no_target", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      if (!options.canAttack) return { accepted: false, reason: "cannot_attack", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      if (playerState.specialAttackQueued) return { accepted: false, reason: "already_queued", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      if (playerState.specialAttackCooldown > 0) return { accepted: false, reason: "cooldown", cooldownTicks: playerState.specialAttackCooldown };
+      if ((playerState.specialAttackEnergy || 0) < 25) return { accepted: false, reason: "insufficient_energy", cooldownTicks: playerState.specialAttackCooldown || 0 };
+      playerState.specialAttackQueued = true;
+      playerState.specialAttackCooldown = 8;
+      playerState.specialAttackEnergy -= 25;
+      return { accepted: true, reason: "queued", cooldownTicks: 8 };
+    },
+    regeneratePlayerSpecialAttackEnergy(playerState) {
+      const currentEnergy = Number.isFinite(playerState.specialAttackEnergy)
+        ? Math.max(0, Math.min(100, Math.floor(playerState.specialAttackEnergy)))
+        : 100;
+      const nextEnergy = Math.min(100, currentEnergy + 1);
+      const changed = playerState.specialAttackEnergy !== nextEnergy;
+      playerState.specialAttackEnergy = nextEnergy;
+      return changed;
+    },
+    consumeQueuedPlayerSpecialAttack(playerState) {
+      const queued = !!playerState.specialAttackQueued;
+      playerState.specialAttackQueued = false;
+      return queued;
+    },
+    clearQueuedPlayerSpecialAttack(playerState) {
+      const queued = !!playerState.specialAttackQueued;
+      playerState.specialAttackQueued = false;
+      return queued;
+    },
+    hasQueuedPlayerSpecialAttack(playerState) {
+      return !!(playerState && playerState.specialAttackQueued);
+    },
+    applyPlayerSpecialAttack(snapshot) {
+      return Object.assign({}, snapshot, {
+        attackValue: Math.max(1, Math.ceil(snapshot.attackValue * 1.25)),
+        maxHit: Math.max(1, Math.ceil(snapshot.maxHit * 1.25))
+      });
+    },
+    applyEnemyStatusEffect(enemyState, effect, currentTick) {
+      if (!enemyState || !effect || !["chilled", "sundered", "disoriented", "scorched"].includes(effect.effectId)) return null;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      const isChilled = effect.effectId === "chilled";
+      const isSundered = effect.effectId === "sundered";
+      const isDisoriented = effect.effectId === "disoriented";
+      const isScorched = effect.effectId === "scorched";
+      const durationTicks = Number.isFinite(effect.durationTicks)
+        ? Math.max(1, Math.floor(effect.durationTicks))
+        : (isChilled || isDisoriented || isScorched ? 2 : 3);
+      const enemyAttackCooldownPenalty = Number.isFinite(effect.enemyAttackCooldownPenalty)
+        ? Math.max(0, Math.floor(effect.enemyAttackCooldownPenalty))
+        : (isChilled ? 1 : 0);
+      const enemyDefensePenalty = Number.isFinite(effect.enemyDefensePenalty)
+        ? Math.max(0, Math.floor(effect.enemyDefensePenalty))
+        : (isSundered ? 3 : 0);
+      const enemyAttackPenalty = Number.isFinite(effect.enemyAttackPenalty)
+        ? Math.max(0, Math.floor(effect.enemyAttackPenalty))
+        : (isDisoriented ? 3 : 0);
+      const periodicDamage = Number.isFinite(effect.periodicDamage)
+        ? Math.max(0, Math.floor(effect.periodicDamage))
+        : (isScorched ? 1 : 0);
+      enemyState.statusEffects = enemyState.statusEffects || {};
+      enemyState.statusEffects[effect.effectId] = {
+        effectId: effect.effectId,
+        expiresAtTick: tick + durationTicks,
+        enemyAttackCooldownPenalty,
+        enemyDefensePenalty
+      };
+      if (enemyAttackPenalty > 0) enemyState.statusEffects[effect.effectId].enemyAttackPenalty = enemyAttackPenalty;
+      if (periodicDamage > 0) {
+        enemyState.statusEffects[effect.effectId].periodicDamage = periodicDamage;
+        enemyState.statusEffects[effect.effectId].periodicDamageStartedAtTick = tick;
+      }
+      if (enemyState.remainingAttackCooldown > 0 && enemyAttackCooldownPenalty > 0) {
+        enemyState.remainingAttackCooldown += enemyAttackCooldownPenalty;
+      }
+      return {
+        effectId: effect.effectId,
+        remainingTicks: durationTicks,
+        enemyAttackCooldownPenalty,
+        enemyDefensePenalty
+      };
+    },
+    consumeEnemyStatusEffectPeriodicDamage(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return [];
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return Object.values(enemyState.statusEffects).reduce((results, effect) => {
+        if (!effect || effect.expiresAtTick < tick || !Number.isFinite(effect.periodicDamage) || effect.periodicDamage <= 0) return results;
+        if (Number.isFinite(effect.periodicDamageStartedAtTick) && effect.periodicDamageStartedAtTick >= tick) return results;
+        if (effect.lastPeriodicDamageTick === tick) return results;
+        effect.lastPeriodicDamageTick = tick;
+        results.push({ effectId: effect.effectId, damage: Math.floor(effect.periodicDamage) });
+        return results;
+      }, []);
+    },
+    clearEnemyStatusEffects(enemyState) {
+      if (enemyState) enemyState.statusEffects = {};
+    },
+    getEnemyAttackCooldownPenalty(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return 0;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return Object.values(enemyState.statusEffects).reduce((total, effect) => (
+        effect && effect.expiresAtTick > tick ? total + (effect.enemyAttackCooldownPenalty || 0) : total
+      ), 0);
+    },
+    getEnemyDefensePenalty(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return 0;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return Object.values(enemyState.statusEffects).reduce((total, effect) => (
+        effect && effect.expiresAtTick > tick ? total + (effect.enemyDefensePenalty || 0) : total
+      ), 0);
+    },
+    getEnemyAttackPenalty(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return 0;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      return Object.values(enemyState.statusEffects).reduce((total, effect) => (
+        effect && effect.expiresAtTick > tick ? total + (effect.enemyAttackPenalty || 0) : total
+      ), 0);
+    },
+    pruneExpiredEnemyStatusEffects(enemyState, currentTick) {
+      if (!enemyState || !enemyState.statusEffects) return;
+      const tick = Number.isFinite(currentTick) ? Math.max(0, Math.floor(currentTick)) : 0;
+      Object.keys(enemyState.statusEffects).forEach((effectId) => {
+        if (enemyState.statusEffects[effectId].expiresAtTick <= tick) delete enemyState.statusEffects[effectId];
+      });
     },
     decrementCooldown(cooldown) {
       const value = Number.isFinite(cooldown) ? Math.floor(cooldown) : 0;
@@ -282,6 +413,9 @@ function resetCombatEnvironment(options = {}) {
     combatTargetKind: null,
     lockedTargetId: null,
     remainingAttackCooldown: 0,
+    specialAttackCooldown: 0,
+    specialAttackEnergy: 100,
+    specialAttackQueued: false,
     currentHitpoints: 10,
     inCombat: false,
     selectedMeleeStyle: "attack",
@@ -592,6 +726,42 @@ function run() {
     assert.strictEqual(idleEnemy.remainingAttackCooldown, 1);
   });
 
+  test("Aggressive spawn-group allies assist local pulls without chaining passive or distant members", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        camp_anchor: createEnemyDefinition("camp_anchor", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 10 }),
+        camp_ally: createEnemyDefinition("camp_ally", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 10 }),
+        passive_ally: createEnemyDefinition("passive_ally", { aggroType: "passive", aggroRadius: 0, chaseRange: 10 }),
+        distant_ally: createEnemyDefinition("distant_ally", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 12 }),
+        other_group: createEnemyDefinition("other_group", { aggroType: "aggressive", aggroRadius: 4, chaseRange: 10 })
+      },
+      spawnNodes: [
+        createSpawnNode("camp-anchor", "camp_anchor", 8, 5, 0, "camp_test"),
+        createSpawnNode("camp-ally", "camp_ally", 12, 5, 0, "camp_test"),
+        createSpawnNode("passive-ally", "passive_ally", 11, 6, 0, "camp_test"),
+        createSpawnNode("distant-ally", "distant_ally", 18, 5, 0, "camp_test"),
+        createSpawnNode("other-group", "other_group", 12, 6, 0, "other_test")
+      ]
+    });
+
+    window.processCombatTick();
+
+    const anchor = getEnemy("camp-anchor");
+    const ally = getEnemy("camp-ally");
+    const passiveAlly = getEnemy("passive-ally");
+    const distantAlly = getEnemy("distant-ally");
+    const otherGroup = getEnemy("other-group");
+
+    assert.strictEqual(anchor.currentState, "aggroed", "anchor enemy should proximity-aggro the player");
+    assert.strictEqual(ally.currentState, "aggroed", "nearby aggressive group ally should assist the pull");
+    assert.strictEqual(ally.lockedTargetId, "player", "assisting ally should lock the player");
+    assert.strictEqual(ally.assistSourceRuntimeId, "camp-anchor", "assisting ally should record the source group member");
+    assert.strictEqual(ally.remainingAttackCooldown, 1, "assisting ally should get a one-tick warning cooldown");
+    assert.strictEqual(passiveAlly.currentState, "idle", "passive same-group critters should not chain into group assist");
+    assert.strictEqual(distantAlly.currentState, "idle", "distant same-group members should remain single-pullable");
+    assert.strictEqual(otherGroup.currentState, "idle", "nearby enemies from a different spawn group should not assist");
+  });
+
   test("Ranged player attacks from bow range, consumes ammo, and trains Ranged", () => {
     const xpAwards = [];
     const previousAddSkillXp = global.addSkillXp;
@@ -744,6 +914,407 @@ function run() {
     } finally {
       global.addSkillXp = previousAddSkillXp;
     }
+  });
+
+  test("Power Strike modifies one queued player hit and disarms when the target clears", () => {
+    let attackValue = null;
+    let maxHit = null;
+    resetCombatEnvironment({
+      enemyDefs: {
+        special_target: createEnemyDefinition("special_target", { hitpoints: 8 })
+      },
+      spawnNodes: [
+        createSpawnNode("special-target", "special_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "melee",
+        damageType: "melee",
+        canAttack: true,
+        attackValue: 8,
+        defenseValue: 10,
+        maxHit: 4,
+        attackRange: 1,
+        attackTickCycle: 4,
+        consumesAmmo: false
+      },
+      rollOpposedHitCheck(value) {
+        attackValue = value;
+        return true;
+      },
+      rollDamage(value) {
+        maxHit = value;
+        return value;
+      }
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("special-target"));
+    assert.deepStrictEqual(
+      window.CombatRuntime.queuePlayerSpecialAttack(playerState, { hasTarget: true, canAttack: true }),
+      { accepted: true, reason: "queued", cooldownTicks: 8 },
+      "the typed runtime should arm Power Strike against the current target"
+    );
+    window.processCombatTick();
+
+    assert.strictEqual(attackValue, 10, "Power Strike should raise the next hit's accuracy roll by 25%");
+    assert.strictEqual(maxHit, 5, "Power Strike should raise the next hit's max damage by 25%");
+    assert.strictEqual(getEnemy("special-target").currentHealth, 3, "Power Strike should use the modified damage roll exactly once");
+    assert.strictEqual(playerState.specialAttackQueued, false, "the resolved special should not carry into later swings");
+    assert.strictEqual(playerState.specialAttackCooldown, 7, "the special cooldown should begin on arm and tick normally");
+    assert.strictEqual(playerState.specialAttackEnergy, 76, "each combat tick should restore one spent special-energy point after Power Strike is armed");
+
+    playerState.specialAttackQueued = true;
+    assert.strictEqual(window.clearPlayerCombatTarget({ force: true, reason: "manual-clear" }), true);
+    assert.strictEqual(playerState.specialAttackQueued, false, "clearing a combat target should disarm a pending special without refunding cooldown");
+    assert.strictEqual(playerState.specialAttackCooldown, 7, "clearing a target should not reset the spent special cooldown");
+    assert.strictEqual(playerState.specialAttackEnergy, 76, "clearing a target should not refund special energy");
+  });
+
+  test("Water-rune hits chill enemies and delay their next swing", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        chilled_target: createEnemyDefinition("chilled_target", { hitpoints: 8, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("chilled-target", "chilled_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "water_rune",
+        onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+      },
+      inventory: [
+        { itemData: { id: "water_rune", name: "Water rune" }, amount: 2 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("chilled-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("chilled-target");
+    assert.strictEqual(target.remainingAttackCooldown, 5, "chilled should add one tick to the enemy's freshly resolved swing cooldown");
+    assert.deepStrictEqual(
+      target.statusEffects.chilled,
+      { effectId: "chilled", expiresAtTick: 3, enemyAttackCooldownPenalty: 1, enemyDefensePenalty: 0 },
+      "water-rune damage should attach the bounded chilled runtime state"
+    );
+  });
+
+  test("Smoke-rune catalog profiles disorient later enemy attack rolls", () => {
+    const runtimeItems = JSON.parse(fs.readFileSync(path.join(root, "content", "items", "runtime-item-catalog.json"), "utf8"));
+    const smokeRuneProfile = runtimeItems.itemDefs.smoke_rune.ammo.onHitEffect;
+    let latestEnemyAttackValue = null;
+    resetCombatEnvironment({
+      enemyDefs: {
+        smoke_target: createEnemyDefinition("smoke_target", { hitpoints: 8, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("smoke-target", "smoke_target", 6, 5)
+      ],
+      enemySnapshots: {
+        smoke_target: { attackValue: 10, defenseValue: 1, maxHit: 1, attackRange: 1, attackTickCycle: 4 }
+      },
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "smoke_rune",
+        onHitEffect: smokeRuneProfile
+      },
+      inventory: [
+        { itemData: { id: "smoke_rune", name: "Smoke rune" }, amount: 2 }
+      ],
+      rollOpposedHitCheck(attackValue) {
+        if (attackValue !== 100) latestEnemyAttackValue = attackValue;
+        return true;
+      }
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("smoke-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("smoke-target");
+    assert.deepStrictEqual(
+      target.statusEffects.disoriented,
+      { effectId: "disoriented", expiresAtTick: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, enemyAttackPenalty: 3 },
+      "a smoke-rune catalog profile should attach the shared bounded Disoriented state"
+    );
+
+    playerState.remainingAttackCooldown = 1;
+    target.remainingAttackCooldown = 0;
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(latestEnemyAttackValue, 7, "active smoke-rune Disoriented should reduce the later enemy attack roll by 3");
+  });
+
+  test("Lava-rune hits scorch enemies for two later burn ticks", () => {
+    resetCombatEnvironment({
+      enemyDefs: {
+        scorched_target: createEnemyDefinition("scorched_target", { hitpoints: 4, aggroType: "passive" })
+      },
+      spawnNodes: [
+        createSpawnNode("scorched-target", "scorched_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "lava_rune",
+        onHitEffect: { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 }
+      },
+      inventory: [
+        { itemData: { id: "lava_rune", name: "Lava rune" }, amount: 2 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("scorched-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("scorched-target");
+    assert.strictEqual(target.currentHealth, 3, "the initial lava-rune hit should deal its normal combat damage");
+    assert.deepStrictEqual(
+      target.statusEffects.scorched,
+      { effectId: "scorched", expiresAtTick: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1, periodicDamageStartedAtTick: 1 },
+      "lava-rune damage should attach bounded Scorched runtime state"
+    );
+
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 2, "Scorched should resolve its first later burn tick before combat actions");
+    assert.strictEqual(target.statusEffects.scorched.lastPeriodicDamageTick, 2, "Scorched should record the consumed burn tick");
+
+    currentTick = 3;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 1, "Scorched should resolve its final burn damage on the expiry tick");
+    assert.strictEqual(target.statusEffects.scorched, undefined, "Scorched should expire after its final burn tick");
+  });
+
+  test("Lethal Scorched burns award Magic XP and clear through respawn", () => {
+    const xpAwards = [];
+    const previousAddSkillXp = global.addSkillXp;
+    global.addSkillXp = (skillId, amount) => {
+      xpAwards.push({ skillId, amount });
+    };
+    try {
+      global.ITEM_DB = {};
+      resetCombatEnvironment({
+        enemyDefs: {
+          scorched_target: createEnemyDefinition("scorched_target", { hitpoints: 2, aggroType: "passive" })
+        },
+        spawnNodes: [
+          createSpawnNode("scorched-target", "scorched_target", 6, 5)
+        ],
+        playerSnapshot: {
+          styleFamily: "magic",
+          damageType: "magic",
+          canAttack: true,
+          attackValue: 100,
+          defenseValue: 10,
+          maxHit: 1,
+          attackRange: 6,
+          attackTickCycle: 4,
+          consumesAmmo: true,
+          ammoInventoryIndex: 0,
+          ammoItemId: "lava_rune",
+          onHitEffect: { effectId: "scorched", durationTicks: 2, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 0, periodicDamage: 1 }
+        },
+        inventory: [
+          { itemData: { id: "lava_rune", name: "Lava rune" }, amount: 1 }
+        ]
+      });
+
+      assert.ok(window.lockPlayerCombatTarget("scorched-target"));
+      window.processCombatTick();
+
+      const target = getEnemy("scorched-target");
+      assert.strictEqual(target.currentHealth, 1, "the initial lava-rune hit should leave the target for Scorched to finish");
+
+      currentTick = 2;
+      window.processCombatTick();
+      assert.strictEqual(target.currentHealth, 0, "Scorched should be able to deal lethal damage");
+      assert.ok(Number.isFinite(target.pendingDefeatAtTick), "lethal Scorched damage should enter the pending-defeat lifecycle");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "magic" && entry.amount === 4), "lethal Scorched damage should award Magic XP to its player source");
+      assert.ok(xpAwards.some((entry) => entry.skillId === "hitpoints" && entry.amount === 1), "lethal Scorched damage should award Hitpoints XP to its player source");
+
+      currentTick = 3;
+      window.processCombatTick();
+      assert.strictEqual(target.currentState, "dead", "a lethally scorched enemy should complete defeat on the following tick");
+      assert.deepStrictEqual(target.statusEffects, {}, "defeat should clear Scorched rather than carry it into respawn");
+
+      currentTick = 8;
+      window.processCombatTick();
+      assert.strictEqual(target.currentHealth, 2, "a scorched enemy should restore full health after respawning");
+      assert.strictEqual(target.respawnAtTick, null, "a respawned enemy should leave the defeated lifecycle");
+      assert.deepStrictEqual(target.statusEffects, {}, "a respawned enemy should not retain stale Scorched state");
+    } finally {
+      global.addSkillXp = previousAddSkillXp;
+    }
+  });
+
+  test("Earth-rune hits Sunder enemies and reduce later hit-check defence", () => {
+    let latestPlayerTargetDefense = null;
+    resetCombatEnvironment({
+      enemyDefs: {
+        sundered_target: createEnemyDefinition("sundered_target", { hitpoints: 10, defense: 5, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("sundered-target", "sundered_target", 6, 5)
+      ],
+      enemySnapshots: {
+        sundered_target: { attackValue: 100, defenseValue: 5, maxHit: 1, attackRange: 1, attackTickCycle: 4 }
+      },
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 99,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "earth_rune",
+        onHitEffect: { effectId: "sundered", durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 }
+      },
+      inventory: [
+        { itemData: { id: "earth_rune", name: "Earth rune" }, amount: 2 }
+      ],
+      rollOpposedHitCheck(attackValue, defenseValue) {
+        if (attackValue === 99) latestPlayerTargetDefense = defenseValue;
+        return true;
+      }
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("sundered-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("sundered-target");
+    assert.deepStrictEqual(
+      target.statusEffects.sundered,
+      { effectId: "sundered", expiresAtTick: 4, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 },
+      "earth-rune damage should attach bounded Sundered state"
+    );
+    assert.strictEqual(target.remainingAttackCooldown, 4, "Sundered should preserve the enemy's normal resolved swing cooldown");
+
+    playerState.remainingAttackCooldown = 0;
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(latestPlayerTargetDefense, 2, "later attacks should use enemy defence reduced by active Sundered");
+  });
+
+  test("Chilled effects clear when defeated enemies respawn", () => {
+    global.ITEM_DB = {};
+    resetCombatEnvironment({
+      enemyDefs: {
+        chilled_target: createEnemyDefinition("chilled_target", { hitpoints: 1, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("chilled-target", "chilled_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "water_rune",
+        onHitEffect: { effectId: "chilled", durationTicks: 2, enemyAttackCooldownPenalty: 1 }
+      },
+      inventory: [
+        { itemData: { id: "water_rune", name: "Water rune" }, amount: 1 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("chilled-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("chilled-target");
+    assert.ok(target.statusEffects.chilled, "a lethal water-rune hit should attach Chilled before defeat resolves");
+
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(target.currentState, "dead", "the pending lethal hit should resolve into enemy defeat");
+    assert.deepStrictEqual(target.statusEffects, {}, "defeat should clear Chilled rather than carry it into respawn");
+
+    currentTick = 7;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 1, "the enemy should restore its full health after the configured respawn delay");
+    assert.strictEqual(target.respawnAtTick, null, "the enemy should leave the defeated lifecycle after respawning");
+    assert.deepStrictEqual(target.statusEffects, {}, "respawned enemies should start without stale Chilled state");
+  });
+
+  test("Sundered effects clear when defeated enemies respawn", () => {
+    global.ITEM_DB = {};
+    resetCombatEnvironment({
+      enemyDefs: {
+        sundered_target: createEnemyDefinition("sundered_target", { hitpoints: 1, aggroType: "aggressive" })
+      },
+      spawnNodes: [
+        createSpawnNode("sundered-target", "sundered_target", 6, 5)
+      ],
+      playerSnapshot: {
+        styleFamily: "magic",
+        damageType: "magic",
+        canAttack: true,
+        attackValue: 100,
+        defenseValue: 10,
+        maxHit: 1,
+        attackRange: 6,
+        attackTickCycle: 4,
+        consumesAmmo: true,
+        ammoInventoryIndex: 0,
+        ammoItemId: "earth_rune",
+        onHitEffect: { effectId: "sundered", durationTicks: 3, enemyAttackCooldownPenalty: 0, enemyDefensePenalty: 3 }
+      },
+      inventory: [
+        { itemData: { id: "earth_rune", name: "Earth rune" }, amount: 1 }
+      ]
+    });
+
+    assert.ok(window.lockPlayerCombatTarget("sundered-target"));
+    window.processCombatTick();
+
+    const target = getEnemy("sundered-target");
+    assert.ok(target.statusEffects.sundered, "a lethal earth-rune hit should attach Sundered before defeat resolves");
+
+    currentTick = 2;
+    window.processCombatTick();
+    assert.strictEqual(target.currentState, "dead", "the pending lethal hit should resolve into enemy defeat");
+    assert.deepStrictEqual(target.statusEffects, {}, "defeat should clear Sundered rather than carry it into respawn");
+
+    currentTick = 7;
+    window.processCombatTick();
+    assert.strictEqual(target.currentHealth, 1, "the enemy should restore its full health after the configured respawn delay");
+    assert.strictEqual(target.respawnAtTick, null, "the enemy should leave the defeated lifecycle after respawning");
+    assert.deepStrictEqual(target.statusEffects, {}, "respawned enemies should start without stale Sundered state");
   });
 
   test("Ranged player attacks consume equipped ammo before inventory ammo", () => {

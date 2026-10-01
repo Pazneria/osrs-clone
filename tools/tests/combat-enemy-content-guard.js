@@ -555,13 +555,178 @@ assertRegex(
 );
 assertRegex(
   combatStatusSource,
-  /## Now\s*- \[ \] COMBAT-016:/,
-  "combat status should advance COMBAT-016 into the current focus slot"
+  /- \[x\] COMBAT-016A: Authored patrol routes now have a first guarded slice on the east-outpost north guard, with patrol-aware idle movement, route cloning, chase-envelope coverage, world validation, and parity guards\./,
+  "combat status should mark COMBAT-016A complete with the authored patrol route slice"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-016B: Aggressive same-group ally assist now uses authored spawn-group IDs, local assist radius checks, leash\/path validation, and a one-tick opening cooldown so camps can coordinate without pulling passive critters or distant group members\./,
+  "combat status should mark COMBAT-016B complete with the group-assist contract"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-017: Ranged player combat is live on the shared combat core with bow and arrow item contracts, ranged-range attacks, ammo selection and consumption, Ranged XP awards, projectile visuals, and focused runtime\/item guards\./,
+  "combat status should mark COMBAT-017 complete with the ranged player-combat slice"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-018: Magic player combat is live on the shared combat core with staff contracts, elemental\/combination rune fuel selection and consumption, staff-range casting, Magic XP awards, and rune-colored projectile visuals\./,
+  "combat status should mark COMBAT-018 complete with the magic player-combat slice"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019A: Broader combat balance tooling now compares melee, ranged, and magic player builds with ammo\/rune-aware deterministic simulator summaries\./,
+  "combat status should mark COMBAT-019A complete with the style-aware simulator slice"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019B1: Water-family rune hits now apply the typed `Chilled` status effect, delaying an enemy's next swing by one tick with reset\/respawn-safe runtime state and focused domain\/runtime coverage\./,
+  "combat status should mark the water-rune status-effect slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019B2A: Active `Chilled` effects now appear above affected combat targets with their remaining duration and a concise tactical explanation\./,
+  "combat status should mark the Chilled target-feedback slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019B2B1: Earth and Dust rune hits now apply typed `Sundered` for three ticks, reducing the target's effective Defence by 3 with live target feedback and focused runtime coverage\./,
+  "combat status should mark the earth-rune Sundered slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019B2B3A: Lava-rune hits now apply typed `Scorched` for two later ticks, dealing one burn damage each tick with live target feedback and reset\/respawn-safe cleanup\./,
+  "combat status should retain the completed lava-rune Scorched slice"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019B2B3B1: Smoke-rune hits now apply the typed `Disoriented` profile for two ticks, reducing enemy Attack by 3 through the existing status lifecycle and target feedback\./,
+  "combat status should mark the smoke-rune Disoriented slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /- \[x\] COMBAT-019B2B3B2A: Player-triggered `Power Strike` now arms one next valid melee\/ranged\/magic hit for \+25% accuracy and max hit, reuses normal ammo\/rune consumption, and recharges for eight ticks through the typed combat bridge\./,
+  "combat status should mark the bounded Power Strike slice complete"
+);
+assertRegex(
+  combatStatusSource,
+  /## Now\s*- \[x\] COMBAT-019B2B3B2B1: `Power Strike` has a typed, save-safe special-energy pool with visible spending and recharge feedback\./,
+  "combat status should surface the completed special-energy slice as current work"
+);
+assertRegex(
+  combatStatusSource,
+  /## Next\s*- \[ \] COMBAT-019B2B3B2B2: Add weapon-specific special profiles on the shared special-energy contract\./,
+  "combat status should advance the next focus to weapon-specific profiles"
 );
 assertRegex(
   skillsIndexSource,
-  /\| Combat \| In Progress \| First-pass encounter coverage now includes a guarded outpost and optional southeast camp-threat pocket with bear\/brute\/striker spawns \| Advanced roaming, patrols, ally-assist\/group-aggro behavior, and richer encounter-state logic \| None \|/,
-  "skills index should reflect the completed encounter rollout and next advanced-logic focus"
+  /\| Combat \| In Progress \| `Power Strike` now spends and regenerates a typed, visible special-energy pool \| Weapon-specific special profiles on the shared energy contract \| None \|/,
+  "skills index should reflect the completed special-energy slice"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Authored patrol-route movement slice \| Complete \|/,
+  "combat roadmap should mark the authored patrol-route movement slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Spawn-group ally assist slice \| Complete \|/,
+  "combat roadmap should mark the group-assist slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Player ranged combat slice \| Complete \|/,
+  "combat roadmap should mark the player ranged combat slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Player magic combat slice \| Complete \|/,
+  "combat roadmap should mark the player magic combat slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Water-rune Chilled status-effect slice \| Complete \|/,
+  "combat roadmap should mark the water-rune status-effect slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Earth-rune Sundered status-effect slice \| Complete \|/,
+  "combat roadmap should mark the earth-rune Sundered slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Air-rune Disoriented status-effect slice \| Complete \|/,
+  "combat roadmap should mark the air-rune Disoriented slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Lava-rune Scorched status-effect slice \| Complete \|/,
+  "combat roadmap should mark the lava-rune Scorched slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Smoke-rune Disoriented status-effect slice \| Complete \|/,
+  "combat roadmap should mark the smoke-rune Disoriented slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Player-triggered Power Strike slice \| Complete \|/,
+  "combat roadmap should mark the bounded player special-attack slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Special-energy resource slice \| Complete \|/,
+  "combat roadmap should mark the bounded special-energy resource slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Air and smoke runes expose a typed `Disoriented` on-hit profile, reducing a damaged enemy's effective Attack by 3 for two ticks without changing its swing timing\./,
+  "combat roadmap should document the shared air\/smoke Disoriented contract"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Lava runes expose a typed `Scorched` on-hit profile, dealing one burn damage on each of the next two combat ticks without consuming more runes or duplicating the initial hit\./,
+  "combat roadmap should document the lava-rune Scorched contract"
+);
+assertRegex(
+  combatRoadmapSource,
+  /\| Chilled target-feedback slice \| Complete \|/,
+  "combat roadmap should mark the Chilled target-feedback slice complete"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Ranged player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active bow snapshot instead of melee adjacency\./,
+  "combat roadmap should document shared-core ranged attack behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /A damaging hit from a selected water-family rune applies `Chilled` for two ticks\./,
+  "combat roadmap should document the bounded water-rune status-effect behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /An enemy affected by `Chilled` shows an ice-blue target badge above its combat health bar/,
+  "combat roadmap should document typed-status target feedback"
+);
+assertRegex(
+  combatRoadmapSource,
+  /A damaging air- or smoke-rune hit applies `Disoriented` for two ticks\./,
+  "combat roadmap should document the bounded air\/smoke status-effect behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Magic player attacks use the same lock, cooldown, hit-roll, damage, aggro, and XP path as melee while resolving range from the active staff snapshot instead of melee adjacency\./,
+  "combat roadmap should document shared-core magic attack behavior"
+);
+assertRegex(
+  combatRoadmapSource,
+  /`Power Strike` can be armed only while the player has both a live target lock, a usable combat snapshot, and at least 25 special energy\./,
+  "combat roadmap should document the typed player-special resource conditions"
+);
+assertRegex(
+  combatRoadmapSource,
+  /Authored patrol routes are optional spawn-node waypoint loops; patrol enemies prefer route movement while idle and fall back to random roaming only when no usable route exists\./,
+  "combat roadmap should document authored patrol-route movement behavior"
 );
 
 assertRegex(
@@ -571,7 +736,7 @@ assertRegex(
 );
 assertRegex(
   combatRoadmapSource,
-  /\| Camp Threat \| Mid \| 20-35 \| Bear, Fast Striker, Heavy Brute \| Clustered optional camps or ruins \| <= 26\.15 gp\/kill \|/,
+  /\| Camp Threat \| Mid \| 20-35 \| Bear, Fast Striker, Heavy Brute \| Clustered optional camps or ruins with local ally assist \| <= 26\.15 gp\/kill \|/,
   "combat roadmap should document the camp-threat progression band"
 );
 assertRegex(
@@ -589,6 +754,35 @@ assert.strictEqual(
   typeof combatContent.listEnemySpawnNodesForWorld,
   "function",
   "combat content should continue exporting the spawn lookup API"
+);
+
+const mainOverworldSpawns = combatContent.listEnemySpawnNodesForWorld("main_overworld");
+const guardPatrolSpawn = mainOverworldSpawns.find((spawn) => spawn.spawnNodeId === "enemy_spawn_guard_east_outpost_north");
+assert.ok(guardPatrolSpawn, "north guard patrol spawn should resolve through combat content");
+assert.deepStrictEqual(
+  guardPatrolSpawn.patrolRoute,
+  [
+    { x: 485, y: 328, z: 0 },
+    { x: 480, y: 328, z: 0 },
+    { x: 480, y: 325, z: 0 },
+    { x: 491, y: 325, z: 0 },
+    { x: 491, y: 328, z: 0 }
+  ],
+  "north guard patrol route should flow through scaled combat content"
+);
+const guardPatrolRuntime = combatContent.createEnemyRuntimeState(guardPatrolSpawn);
+assert.deepStrictEqual(
+  guardPatrolRuntime.resolvedPatrolRoute,
+  guardPatrolSpawn.patrolRoute,
+  "guard patrol runtime should clone the authored route"
+);
+assert.strictEqual(guardPatrolRuntime.patrolRouteIndex, 1, "guard patrol runtime should start toward the second waypoint");
+assert.strictEqual(guardPatrolRuntime.resolvedChaseRange, 8, "guard patrol chase range should cover the authored route envelope");
+guardPatrolSpawn.patrolRoute[0].x = 1;
+assert.strictEqual(
+  combatContent.listEnemySpawnNodesForWorld("main_overworld").find((spawn) => spawn.spawnNodeId === "enemy_spawn_guard_east_outpost_north").patrolRoute[0].x,
+  485,
+  "combat spawn patrol routes should be cloned on read"
 );
 
 console.log("Combat enemy content guard passed.");

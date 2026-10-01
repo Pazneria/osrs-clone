@@ -219,7 +219,7 @@ const WORLD_RULES = {
         expectedCount: 3,
         minSafeRouteClearance: 50,
         maxLocalCount: 3,
-        maxLocalBudget: 33,
+        maxLocalBudget: 34,
         requiresRootedHome: false,
         maxSameGroupDistance: 8
       },
@@ -298,7 +298,15 @@ function countSpawnsWithinRadius(spawns, point, radius) {
 }
 
 function estimatePathBudget(runtimeState) {
-  return 1 + runtimeState.resolvedRoamingRadius + runtimeState.resolvedAggroRadius;
+  const patrolRoute = Array.isArray(runtimeState && runtimeState.resolvedPatrolRoute)
+    ? runtimeState.resolvedPatrolRoute
+    : [];
+  const home = runtimeState && runtimeState.resolvedHomeTile ? runtimeState.resolvedHomeTile : null;
+  const patrolRadius = patrolRoute.reduce((maximum, point) => {
+    if (!home || !point || point.z !== home.z) return maximum;
+    return Math.max(maximum, chebyshevDistance(home, point));
+  }, 0);
+  return 1 + Math.max(runtimeState.resolvedRoamingRadius, patrolRadius) + runtimeState.resolvedAggroRadius;
 }
 
 function runWorld(root, worldId, worldRules) {
@@ -364,6 +372,23 @@ function runWorld(root, worldId, worldRules) {
         runtimeState.resolvedRoamingRadius > 0,
         `${spawn.spawnNodeId} should retain an authored roaming radius`
       );
+    }
+
+    const patrolRoute = Array.isArray(spawn.patrolRoute) ? spawn.patrolRoute : [];
+    if (patrolRoute.length > 0) {
+      assert(patrolRoute.length >= 2, `${spawn.spawnNodeId} patrol route should include at least two waypoints`);
+      assert(
+        Array.isArray(runtimeState.resolvedPatrolRoute) && runtimeState.resolvedPatrolRoute.length === patrolRoute.length,
+        `${spawn.spawnNodeId} runtime state should preserve authored patrol waypoints`
+      );
+      for (let routeIndex = 0; routeIndex < runtimeState.resolvedPatrolRoute.length; routeIndex += 1) {
+        const point = runtimeState.resolvedPatrolRoute[routeIndex];
+        assert(isWalkableTile(map, point), `${spawn.spawnNodeId} patrol waypoint ${routeIndex} should be walkable`);
+        assert(
+          chebyshevDistance(runtimeState.resolvedHomeTile, point) <= 12,
+          `${spawn.spawnNodeId} patrol waypoint ${routeIndex} should stay inside the encounter pocket`
+        );
+      }
     }
 
     if (!groupedSpawns.has(groupId)) groupedSpawns.set(groupId, []);

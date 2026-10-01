@@ -189,12 +189,22 @@
         return group;
     }
 
+    function resolveMagicProjectileColors(runeItemId = null) {
+        const id = String(runeItemId || '').toLowerCase();
+        if (/ember|fire|lava/.test(id)) return { core: 0xff8a3d, halo: 0xffd36a };
+        if (/water|steam/.test(id)) return { core: 0x4aa3ff, halo: 0x9ed9ff };
+        if (/earth|mud/.test(id)) return { core: 0x77b255, halo: 0xc1d37f };
+        if (/air|mist/.test(id)) return { core: 0xd9f8ff, halo: 0xffffff };
+        if (/smoke|dust/.test(id)) return { core: 0x9ca3af, halo: 0xddd6c8 };
+        return { core: 0x8ad7ff, halo: 0xaad7ff };
+    }
+
     function createMagicProjectileMesh(THREERef, runeItemId = null) {
         const group = new THREERef.Group();
         group.name = 'magic-projectile';
-        const isEmber = /ember/.test(String(runeItemId || ''));
-        const coreColor = isEmber ? 0xff8a3d : 0x8ad7ff;
-        const haloColor = isEmber ? 0xffd36a : 0xaad7ff;
+        const projectileColors = resolveMagicProjectileColors(runeItemId);
+        const coreColor = projectileColors.core;
+        const haloColor = projectileColors.halo;
         const core = new THREERef.Mesh(
             new THREERef.SphereGeometry(0.10, 12, 8),
             createBasicMaterial(THREERef, coreColor)

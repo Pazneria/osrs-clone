@@ -4,6 +4,13 @@
         return { x: playerState.x, y: playerState.y, z: playerState.z };
     }
 
+    function getEnemySpawnGroupId(enemyState) {
+        const rawGroupId = enemyState && typeof enemyState.spawnGroupId === 'string'
+            ? enemyState.spawnGroupId
+            : '';
+        return rawGroupId.trim();
+    }
+
     function hasActiveCombatSelection(playerState = {}, playerTargetKind = 'enemy') {
         return !!playerState.lockedTargetId
             || playerState.combatTargetKind === playerTargetKind
@@ -147,11 +154,65 @@
         return enemyState;
     }
 
+    function getEnemyAssistRadius(context = {}, sourceEnemy, candidateEnemy) {
+        if (typeof context.getEnemyAssistRadius === 'function') {
+            const customRadius = context.getEnemyAssistRadius(sourceEnemy, candidateEnemy);
+            if (Number.isFinite(customRadius)) return Math.max(1, Math.floor(customRadius));
+        }
+        const sourceRadius = Number.isFinite(sourceEnemy && sourceEnemy.resolvedAggroRadius)
+            ? Math.max(0, Math.floor(sourceEnemy.resolvedAggroRadius))
+            : 0;
+        const candidateRadius = Number.isFinite(candidateEnemy && candidateEnemy.resolvedAggroRadius)
+            ? Math.max(0, Math.floor(candidateEnemy.resolvedAggroRadius))
+            : 0;
+        return Math.max(2, Math.min(6, Math.max(sourceRadius, candidateRadius)));
+    }
+
+    function canEnemyAssistSource(context = {}, sourceEnemy, candidateEnemy) {
+        if (!sourceEnemy || !candidateEnemy || sourceEnemy === candidateEnemy) return false;
+        if (candidateEnemy.currentState !== 'idle') return false;
+        const sourceGroupId = getEnemySpawnGroupId(sourceEnemy);
+        if (!sourceGroupId || sourceGroupId !== getEnemySpawnGroupId(candidateEnemy)) return false;
+        if (sourceEnemy.z !== candidateEnemy.z) return false;
+        if (typeof context.isEnemyAlive === 'function' && !context.isEnemyAlive(candidateEnemy)) return false;
+        const candidateType = typeof context.getEnemyDefinition === 'function'
+            ? context.getEnemyDefinition(candidateEnemy.enemyId)
+            : null;
+        if (!candidateType || !candidateType.behavior || candidateType.behavior.aggroType !== 'aggressive') return false;
+        if (typeof context.getSquareRange !== 'function') return false;
+        const assistRadius = getEnemyAssistRadius(context, sourceEnemy, candidateEnemy);
+        if (!context.getSquareRange(sourceEnemy, candidateEnemy, assistRadius)) return false;
+        const playerTile = getPlayerTile(context);
+        const homeTile = candidateEnemy.resolvedHomeTile || candidateEnemy.resolvedSpawnTile;
+        if (!homeTile || !context.getSquareRange(homeTile, playerTile, candidateEnemy.resolvedChaseRange)) return false;
+        const pursuitPath = typeof context.resolvePathToPlayer === 'function'
+            ? context.resolvePathToPlayer(candidateEnemy)
+            : null;
+        return pursuitPath !== null;
+    }
+
+    function acquireEnemyPlayerTarget(context = {}, enemyState, sourceEnemy = null) {
+        const playerState = context.playerState || {};
+        const playerTargetId = context.playerTargetId || 'player';
+        enemyState.currentState = 'aggroed';
+        enemyState.lockedTargetId = playerTargetId;
+        enemyState.lastDamagerId = playerTargetId;
+        if (sourceEnemy) {
+            enemyState.assistSourceRuntimeId = sourceEnemy.runtimeId || null;
+            enemyState.remainingAttackCooldown = Math.max(
+                Number.isFinite(enemyState.remainingAttackCooldown) ? Math.floor(enemyState.remainingAttackCooldown) : 0,
+                1
+            );
+        } else {
+            enemyState.assistSourceRuntimeId = null;
+        }
+        if (typeof context.faceEnemyTowards === 'function') context.faceEnemyTowards(enemyState, playerState);
+        if (typeof context.clearEnemyIdleWanderState === 'function') context.clearEnemyIdleWanderState(enemyState);
+    }
+
     function acquireAggressiveEnemyTargets(context = {}) {
         if (typeof context.isPlayerAlive === 'function' && !context.isPlayerAlive()) return;
         const enemyStates = Array.isArray(context.combatEnemyStates) ? context.combatEnemyStates : [];
-        const playerState = context.playerState || {};
-        const playerTargetId = context.playerTargetId || 'player';
         const playerTile = getPlayerTile(context);
         for (let i = 0; i < enemyStates.length; i++) {
             const enemyState = enemyStates[i];
@@ -164,12 +225,33 @@
             if (typeof context.getSquareRange !== 'function' || !context.getSquareRange(enemyState, playerTile, enemyState.resolvedAggroRadius)) continue;
             const pursuitPath = typeof context.resolvePathToPlayer === 'function' ? context.resolvePathToPlayer(enemyState) : null;
             if (pursuitPath === null) continue;
-            enemyState.currentState = 'aggroed';
-            enemyState.lockedTargetId = playerTargetId;
-            enemyState.lastDamagerId = playerTargetId;
-            if (typeof context.faceEnemyTowards === 'function') context.faceEnemyTowards(enemyState, playerState);
-            if (typeof context.clearEnemyIdleWanderState === 'function') context.clearEnemyIdleWanderState(enemyState);
+            acquireEnemyPlayerTarget(context, enemyState);
         }
+    }
+
+    function acquireAllyAssistTargets(context = {}) {
+        if (typeof context.isPlayerAlive === 'function' && !context.isPlayerAlive()) return [];
+        const enemyStates = Array.isArray(context.combatEnemyStates) ? context.combatEnemyStates : [];
+        const playerTargetId = context.playerTargetId || 'player';
+        const activeSources = enemyStates.filter((enemyState) => {
+            return !!enemyState
+                && enemyState.currentState === 'aggroed'
+                && enemyState.lockedTargetId === playerTargetId
+                && getEnemySpawnGroupId(enemyState)
+                && !(typeof context.isEnemyAlive === 'function' && !context.isEnemyAlive(enemyState));
+        });
+        const acquired = [];
+        for (let i = 0; i < enemyStates.length; i++) {
+            const candidate = enemyStates[i];
+            for (let j = 0; j < activeSources.length; j++) {
+                const source = activeSources[j];
+                if (!canEnemyAssistSource(context, source, candidate)) continue;
+                acquireEnemyPlayerTarget(context, candidate, source);
+                acquired.push(candidate);
+                break;
+            }
+        }
+        return acquired;
     }
 
     function movePlayerTowardLockedTarget(context = {}, playerLockState, attackedThisTick) {
@@ -204,6 +286,7 @@
         pickAutoRetaliateTarget,
         validateEnemyTargetLock,
         acquireAggressiveEnemyTargets,
+        acquireAllyAssistTargets,
         movePlayerTowardLockedTarget
     };
 })();

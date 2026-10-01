@@ -10,10 +10,13 @@ function printUsage() {
     "Options:",
     "  --enemy <id>       Enemy type ID from src/game/combat/content.ts",
     "  --weapon <id>      Weapon item ID from src/js/content/item-catalog.js, or unarmed",
-    "  --style <id>       attack, strength, or defense",
+    "  --ammo <id>        Arrow or rune item ID for ranged/magic weapons",
+    "  --style <id>       melee style: attack, strength, or defense",
     "  --attack <level>   Player Attack level",
     "  --strength <level> Player Strength level",
     "  --defense <level>  Player Defense level",
+    "  --ranged <level>   Player Ranged level",
+    "  --magic <level>    Player Magic level",
     "  --hitpoints <lvl>  Player Hitpoints level/current HP",
     "  --runs <count>     Number of fights to simulate",
     "  --seed <value>     Deterministic seed",
@@ -25,10 +28,13 @@ function parseArgs(argv) {
   const options = {
     enemy: "enemy_goblin_grunt",
     weapon: "bronze_sword",
+    ammo: null,
     style: "attack",
     attack: 10,
     strength: 10,
     defense: 10,
+    ranged: 10,
+    magic: 10,
     hitpoints: 10,
     runs: 1000,
     seed: "1",
@@ -57,11 +63,11 @@ function parseArgs(argv) {
     }
     index += 1;
 
-    if (["attack", "strength", "defense", "hitpoints", "runs", "maxTicks"].includes(key)) {
+    if (["attack", "strength", "defense", "ranged", "magic", "hitpoints", "runs", "maxTicks"].includes(key)) {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) throw new Error(`Invalid numeric value for ${arg}: ${value}`);
       options[key] = Math.floor(numeric);
-    } else if (["enemy", "weapon", "style", "seed"].includes(key)) {
+    } else if (["enemy", "weapon", "ammo", "style", "seed"].includes(key)) {
       options[key] = value;
     } else {
       throw new Error(`Unknown option: ${arg}`);
@@ -95,18 +101,75 @@ function buildPlayerSkills(options) {
     attack: { xp: 0, level: normalizePositiveInt(options.attack, 1) },
     strength: { xp: 0, level: normalizePositiveInt(options.strength, 1) },
     defense: { xp: 0, level: normalizePositiveInt(options.defense, 1) },
+    ranged: { xp: 0, level: normalizePositiveInt(options.ranged, 1) },
+    magic: { xp: 0, level: normalizePositiveInt(options.magic, 1) },
     hitpoints: { xp: 0, level: normalizePositiveInt(options.hitpoints, 10) }
   };
 }
 
-function buildEquipment(itemDefs, weaponId) {
-  if (!weaponId || weaponId === "unarmed") return {};
-  const item = itemDefs[weaponId];
-  if (!item) throw new Error(`Unknown weapon item: ${weaponId}`);
-  if (!item.combat || !item.combat.attackProfile) {
-    throw new Error(`Item is not combat-ready: ${weaponId}`);
+function getWeaponStyleFamily(item) {
+  return item && item.combat && item.combat.attackProfile
+    ? item.combat.attackProfile.styleFamily
+    : "melee";
+}
+
+function withRuntimeItemId(item, itemId) {
+  if (!item || typeof item !== "object") return item;
+  return { ...item, id: item.id || itemId };
+}
+
+function buildCombatLoadout(itemDefs, weaponId, ammoId) {
+  const equipment = {};
+  const inventory = [];
+  let weaponItem = null;
+  let ammoItem = null;
+
+  if (weaponId && weaponId !== "unarmed") {
+    const rawWeaponItem = itemDefs[weaponId];
+    if (!rawWeaponItem) throw new Error(`Unknown weapon item: ${weaponId}`);
+    weaponItem = withRuntimeItemId(rawWeaponItem, weaponId);
+    if (!weaponItem.combat || !weaponItem.combat.attackProfile) {
+      throw new Error(`Item is not combat-ready: ${weaponId}`);
+    }
+    equipment.weapon = weaponItem;
   }
-  return { weapon: item };
+
+  if (ammoId) {
+    const rawAmmoItem = itemDefs[ammoId];
+    if (!rawAmmoItem) throw new Error(`Unknown ammo item: ${ammoId}`);
+    ammoItem = withRuntimeItemId(rawAmmoItem, ammoId);
+    if (!ammoItem.ammo) throw new Error(`Item is not combat ammunition: ${ammoId}`);
+
+    if (getWeaponStyleFamily(weaponItem) === "ranged") {
+      equipment.ammo = { itemData: ammoItem, amount: 999999 };
+    } else {
+      inventory.push({ itemData: ammoItem, amount: 999999 });
+    }
+  }
+
+  return {
+    equipment,
+    inventory,
+    weaponItem,
+    ammoItem
+  };
+}
+
+function assertPlayerCanAttack(playerSnapshot, playerSkills, weaponId, weaponItem, ammoId) {
+  const styleFamily = getWeaponStyleFamily(weaponItem);
+  const profile = weaponItem && weaponItem.combat ? weaponItem.combat.attackProfile : null;
+  if (profile && profile.ammoUse && !ammoId) {
+    throw new Error(`${weaponId} requires --ammo for ${styleFamily} simulation`);
+  }
+  if (playerSnapshot.canAttack) return;
+
+  if (styleFamily === "ranged") {
+    throw new Error(`Player Ranged level ${playerSkills.ranged.level} or ammo ${ammoId || "none"} cannot use ${weaponId}`);
+  }
+  if (styleFamily === "magic") {
+    throw new Error(`Player Magic level ${playerSkills.magic.level} or rune ${ammoId || "none"} cannot use ${weaponId}`);
+  }
+  throw new Error(`Player Attack level ${playerSkills.attack.level} cannot use ${weaponId || "unarmed"}`);
 }
 
 function simulateFight(config) {
@@ -236,16 +299,15 @@ function runSimulation(options) {
   const combatFormulas = loadTsModule(path.join(root, "src", "game", "combat", "formulas.ts"));
   const { itemDefs } = loadRuntimeItemCatalog(root);
   const playerSkills = buildPlayerSkills(options);
-  const equipment = buildEquipment(itemDefs, options.weapon);
+  const loadout = buildCombatLoadout(itemDefs, options.weapon, options.ammo);
   const playerState = { selectedMeleeStyle: options.style };
-  const playerSnapshot = combatFormulas.computePlayerMeleeCombatSnapshot({
+  const playerSnapshot = combatFormulas.computePlayerCombatSnapshot({
     playerSkills,
-    equipment,
+    equipment: loadout.equipment,
+    inventory: loadout.inventory,
     playerState
   });
-  if (!playerSnapshot.canAttack) {
-    throw new Error(`Player Attack level ${playerSkills.attack.level} cannot use ${options.weapon}`);
-  }
+  assertPlayerCanAttack(playerSnapshot, playerSkills, options.weapon, loadout.weaponItem, options.ammo);
 
   const enemyType = combatContent.getEnemyTypeDefinition(options.enemy);
   if (!enemyType) throw new Error(`Unknown enemy type: ${options.enemy}`);
@@ -269,7 +331,7 @@ function runSimulation(options) {
   }
 
   return {
-    simulator: "canonical_melee_v1",
+    simulator: "canonical_combat_build_v1",
     combatSpecVersion: combatContent.COMBAT_SPEC_VERSION,
     seed: String(options.seed),
     runs,
@@ -279,10 +341,15 @@ function runSimulation(options) {
         attack: playerSkills.attack.level,
         strength: playerSkills.strength.level,
         defense: playerSkills.defense.level,
+        ranged: playerSkills.ranged.level,
+        magic: playerSkills.magic.level,
         hitpoints: playerSkills.hitpoints.level
       },
       weaponId: options.weapon || "unarmed",
+      ammoId: playerSnapshot.ammoItemId || (loadout.ammoItem && loadout.ammoItem.id) || null,
       styleId: playerSnapshot.styleId,
+      styleFamily: playerSnapshot.styleFamily,
+      damageType: playerSnapshot.damageType,
       snapshot: playerSnapshot
     },
     enemy: {
@@ -296,7 +363,8 @@ function runSimulation(options) {
 
 function printText(summary) {
   console.log(`Combat simulator: ${summary.simulator} (${summary.combatSpecVersion})`);
-  console.log(`Player: ${summary.player.weaponId}, ${summary.player.styleId}, Atk ${summary.player.levels.attack} / Str ${summary.player.levels.strength} / Def ${summary.player.levels.defense} / HP ${summary.player.levels.hitpoints}`);
+  const ammoText = summary.player.ammoId ? `, ammo ${summary.player.ammoId}` : "";
+  console.log(`Player: ${summary.player.weaponId}${ammoText}, ${summary.player.styleFamily}/${summary.player.styleId}, Atk ${summary.player.levels.attack} / Str ${summary.player.levels.strength} / Rng ${summary.player.levels.ranged} / Mag ${summary.player.levels.magic} / Def ${summary.player.levels.defense} / HP ${summary.player.levels.hitpoints}`);
   console.log(`Enemy: ${summary.enemy.displayName} (${summary.enemy.enemyId})`);
   console.log(`Runs: ${summary.runs}, seed: ${summary.seed}, max ticks: ${summary.maxTicks}`);
   console.log(`Win rate: player ${summary.results.playerWinRate}, enemy ${summary.results.enemyWinRate}, draw ${summary.results.drawRate}`);

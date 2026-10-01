@@ -104,7 +104,8 @@ function run() {
     "player attacks should be able to resolve off the same-tick chase approach and keep the approach movement so running can catch moving enemies"
   );
   assert(
-    combatSource.includes("enemyState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle));")
+    combatSource.includes("enemyState.remainingAttackCooldown = Math.max(1, Math.floor(result.tickCycle))")
+      && combatSource.includes("+ getEnemyStatusEffectCooldownPenalty(enemyState);")
       && combatSource.includes("playerState.lastDamagerEnemyId = enemyState.runtimeId;")
       && combatSource.includes("playerState.inCombat = true;"),
     "player combat state should flip in-combat when an enemy attack resolves"
@@ -179,6 +180,18 @@ function run() {
   );
 
   assert(
+    combatEngagementRuntimeSource.includes("function acquireAllyAssistTargets(context = {})")
+      && combatEngagementRuntimeSource.includes("function canEnemyAssistSource(context = {}, sourceEnemy, candidateEnemy)")
+      && combatEngagementRuntimeSource.includes("sourceGroupId !== getEnemySpawnGroupId(candidateEnemy)")
+      && combatEngagementRuntimeSource.includes("candidateType.behavior.aggroType !== 'aggressive'")
+      && combatEngagementRuntimeSource.includes("enemyState.assistSourceRuntimeId = sourceEnemy.runtimeId || null;")
+      && combatEngagementRuntimeSource.includes("enemyState.remainingAttackCooldown = Math.max(")
+      && combatSource.includes("function acquireAllyAssistTargets()")
+      && combatSource.includes("acquireAllyAssistTargets();"),
+    "spawn-group ally assist should live in the engagement runtime, stay limited to aggressive same-group allies, and apply an opening cooldown"
+  );
+
+  assert(
     combatQaDebugSource.includes("pursuit: pursuitDebugState")
       && combatQaDebugSource.includes("autoRetaliate: autoRetaliateDebugState")
       && combatQaDebugSource.includes("[QA combatdbg] pursuit state=")
@@ -189,8 +202,8 @@ function run() {
 
   assert(
     combatSource.includes("const shouldSetOpeningCooldown = enemyState.currentState !== 'aggroed' || enemyState.lockedTargetId !== PLAYER_TARGET_ID;")
-      && combatSource.includes("if (shouldSetOpeningCooldown) enemyState.remainingAttackCooldown = 1;"),
-    "hit-aggro should keep setting an enemy's opening cooldown to one tick"
+      && combatSource.includes("enemyState.remainingAttackCooldown = 1 + getEnemyStatusEffectCooldownPenalty(enemyState);"),
+    "hit-aggro should keep setting an enemy's opening cooldown while honoring active status penalties"
   );
 
   assert(
