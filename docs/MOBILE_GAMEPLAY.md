@@ -64,16 +64,18 @@ simulated WebGL failure. Later combat/skill/bank/shop fixtures use existing QA
 hooks in disposable profiles; this is not an end-to-end tutorial completion.
 
 Typecheck, production build and relevant input/UI, inventory, combat and progress
-guards should accompany the browser run. The existing bank-session guard has a
-stale assertion expecting an inline `--check` script in package.json; the current
-package delegates checks to package-suite.js. That assertion also fails at the
-unchanged base revision. Browser bank quantity/cancel tests exercise the actual
-runtime behavior.
+guards should accompany the browser run. The bank-session guard's former inline
+`--check` assertion failed at the unchanged base revision, f4703d7. The package
+had already moved syntax checks into package-suite.js, and its manifest already
+included the bank runtime. The guard now checks the targeted guard script, the
+check-suite command and the bank runtime's membership in that suite. Its existing
+bank-state, source-normalization and hook-publication assertions remain intact.
+Browser bank quantity/cancel tests exercise the actual runtime behavior too.
 
 No physical phone/tablet, Safari, Android browser, real soft keyboard, OS gesture
 interruption or live CDN outage was tested. Emulated orientation and background
 events cannot establish those results. Desktop inventory reordering was not
-changed. No deployment is included.
+changed. Deployment validation must identify the exact Pages commit separately.
 
 ## Narrow security review
 
