@@ -29,9 +29,13 @@ Bag and Chat open one at a time. Bank/shop and inventory fit together in portrai
 and landscape. Menus stay open until a choice, Cancel or outside tap. Rotation,
 pointer cancellation and a hidden/background tab cancel pending gestures;
 backgrounding also stops active player actions and saves completed progress.
-Desktop mouse and keyboard bindings remain available. Inventory/bank HTML drag
-reordering retains its existing desktop implementation; touch item actions and
-bank transfer choices are available through tap/hold.
+Desktop mouse and keyboard bindings remain available.
+Touch controls also appear when touch is a secondary pointer on a hybrid device,
+or after an observed touch if the browser under-reports capability. Subsequent
+mouse/keyboard use keeps Stop and Home available. Keyboard chat shortcuts open
+the Chat drawer before focusing its input.
+Inventory/bank HTML drag reordering retains its existing desktop implementation;
+touch item actions and bank transfer choices are available through tap/hold.
 
 ## Audit and test scope
 
@@ -44,6 +48,14 @@ render/input bridge; legacy integration calls the existing action runtimes.
 `npm run test:input:touch` covers tap/hold/drag/pinch exclusivity, pointer cancel,
 lost capture, blur, resize, backgrounding, mouse passthrough and Stop preservation
 of combat cooldowns and progression.
+
+`npm run test:input:hybrid` covers secondary coarse capability, observed touch,
+mouse/pen discrimination, capability updates, resize and keyboard Chat requests.
+`npm run test:mobile:hybrid` simulates a fine primary pointer with and without a
+reported secondary coarse pointer, then uses Chromium touch, mouse and keyboard
+events. It also checks a fine-only desktop. Set `HYBRID_QA_URL` for the deployed
+site and `HYBRID_QA_LIVE_HOME=1` to verify the real Arcade return. This is simulated
+hybrid browser testing, not validation on physical touchscreen hardware.
 
 `npm run test:mobile:playtest` is an optional Playwright flow. It uses an already
 running local server (default `http://127.0.0.1:5503/`), disposable browser profiles

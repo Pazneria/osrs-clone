@@ -13,6 +13,8 @@
     "test": "node ./tools/tests/package-suite.js test",
     "test:interactions:runtime": "node ./tools/tests/target-interaction-runtime-tests.js",
     "test:input:touch": "node ./tools/tests/touch-input-runtime-tests.js",
+    "test:input:hybrid": "node ./tools/tests/hybrid-touch-hud-runtime-tests.js",
+    "test:mobile:hybrid": "node ./tools/tests/hybrid-touch-hud-playtest.js",
     "test:mobile:playtest": "node ./tools/tests/mobile-gameplay-playtest.js",
     "tool:check": "powershell -ExecutionPolicy Bypass -File ./tools/check-prereqs.ps1",
     "tool:pixel:build": "node ./tools/pixel/build-pixel-assets.js",

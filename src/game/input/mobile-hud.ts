@@ -6,13 +6,14 @@ export function initMobileHud(options: {
   dismissMenus: () => void;
 }): void {
   const body = document.body;
-  const media = window.matchMedia('(pointer: coarse)');
+  const media = window.matchMedia('(any-pointer: coarse)');
+  let observedTouch = false;
   const setPanel = (panel: 'bag' | 'chat', open: boolean) => {
     body.classList.toggle(`touch-${panel}-open`, open);
     document.getElementById(`mobile-${panel}`)?.setAttribute('aria-expanded', String(open));
   };
   const sync = () => {
-    body.classList.toggle('touch-ui', media.matches);
+    body.classList.toggle('touch-ui', media.matches || observedTouch);
     document.documentElement.style.setProperty('--touch-viewport-height', `${window.visualViewport?.height || window.innerHeight}px`);
   };
   sync();
@@ -24,6 +25,18 @@ export function initMobileHud(options: {
   media.addEventListener('change', sync);
   window.addEventListener('resize', sync);
   window.visualViewport?.addEventListener('resize', sync);
+  // Some hybrid browsers under-report capability. Keep controls available once
+  // touch is actually used, including after switching back to mouse/keyboard.
+  document.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'touch' || observedTouch) return;
+    observedTouch = true;
+    sync();
+  }, true);
+  document.addEventListener('game-open-chat', () => {
+    if (!body.classList.contains('touch-ui')) return;
+    setPanel('chat', true);
+    setPanel('bag', false);
+  });
   for (const panel of ['bag', 'chat'] as const) {
     document.getElementById(`mobile-${panel}`)?.addEventListener('click', () => {
       const open = !body.classList.contains(`touch-${panel}-open`);

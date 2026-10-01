@@ -1723,12 +1723,14 @@
 
                 if (e.key === 'Enter') {
                     e.preventDefault();
+                    document.dispatchEvent(new Event('game-open-chat'));
                     input.focus();
                     return;
                 }
 
                 if (typeof e.key === 'string' && e.key.length === 1) {
                     e.preventDefault();
+                    document.dispatchEvent(new Event('game-open-chat'));
                     input.focus();
                     input.value += e.key;
                 }
