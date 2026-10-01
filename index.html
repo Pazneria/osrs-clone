@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>3D OSRS Tick Engine Prototype</title>
     <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="./src/styles/main.css">
+        <link rel="stylesheet" href="./src/styles/touch.css">
 </head>
 <body>
 
@@ -30,8 +31,10 @@
 
         <div id="runtime-crash-overlay" class="hidden pointer-events-auto absolute inset-0 bg-black/85 z-[1200] p-6">
             <div class="max-w-3xl mx-auto mt-12 bg-[#1b1f24] border border-red-500/80 rounded shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-                <div class="px-4 py-2 border-b border-red-500/60 text-red-300 font-bold">Runtime Error</div>
-                <pre id="runtime-crash-text" class="p-4 text-xs text-red-100 whitespace-pre-wrap break-words"></pre>
+                <div class="px-4 py-2 border-b border-red-500/60 text-red-300 font-bold">The game could not continue</div>
+                <p class="p-4">Try reloading. If this browser cannot run the 3D view, try another browser. Existing saved progress stays on this device and browser.</p>
+                <div class="runtime-recovery"><button type="button" onclick="location.reload()">Reload</button><a data-game-exit href="https://pazneria.github.io/arcade/">Exit to Arcade</a></div>
+                <details class="p-4"><summary>Error details</summary><pre id="runtime-crash-text" class="p-4 text-xs text-red-100 whitespace-pre-wrap break-words"></pre></details>
             </div>
         </div>
 
@@ -67,6 +70,7 @@
                     </div>
                     <div id="player-entry-secondary-note" class="player-entry-secondary-note">Progress will begin autosaving once you arrive.</div>
                     <button id="player-entry-primary" class="player-entry-primary" type="button">Start Adventure</button>
+                    <a class="player-entry-exit" data-game-exit href="https://pazneria.github.io/arcade/">Exit to Arcade</a>
                 </section>
             </div>
         </div>
@@ -143,7 +147,7 @@
             <!-- Footer Stats / Info -->
             <div class="bg-[#3e3529] px-3 py-1 border-t-2 border-[#2b251d] text-center text-xs text-[#ff981f]">
                 <span id="bank-capacity">0 / 200</span>
-                <span class="ml-4 text-gray-400">Drag to move, left-click to withdraw</span>
+                <span class="ml-4 text-gray-400">Hold or right-click for quantities</span>
             </div>
         </div>
 
@@ -159,7 +163,7 @@
                 </div>
             </div>
             <div class="bg-[#3e3529] px-3 py-1 border-t-2 border-[#2b251d] text-center text-xs text-[#ff981f]">
-                <span class="text-gray-400">Right-click items to buy/sell</span>
+                <span class="text-gray-400">Hold or right-click items to buy/sell</span>
             </div>
         </div>
 
@@ -193,6 +197,7 @@
 
         <!-- Bottom Right Container (Tabbed Inventory / Equipment) -->
         <div id="main-ui-container" data-active-tab="inv" class="absolute bottom-4 right-4 flex flex-col pointer-events-auto w-64 bg-[#1e2328] border-2 border-[#c8aa6e] shadow-2xl origin-bottom-right transition-transform duration-200">
+            <div class="mobile-panel-heading"><span>Character</span><button id="mobile-bag-close" type="button" aria-label="Close character panel">Close</button></div>
             <div class="px-3 pt-3 pb-2 bg-[#14191d] border-b border-[#3a444c]">
                 <div class="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] font-bold">
                     <span class="text-[#ff9b9b]">Hitpoints</span>
@@ -309,6 +314,7 @@
         </div>
         <!-- Chat Box -->
         <div id="chat-box" class="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 w-[560px] max-w-[calc(100vw-2rem)] bg-[#1a1511]/95 border-2 border-[#5d5447] rounded shadow-[0_10px_30px_rgba(0,0,0,0.8)] overflow-hidden">
+            <div class="mobile-panel-heading"><span>Messages</span><button id="mobile-chat-close" type="button" aria-label="Close messages">Close</button></div>
             <div class="border-b border-[#3e3529] bg-[#201a15] px-2 py-1 flex items-center justify-between">
                 <span class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">Chat</span>
                 <div class="flex items-center gap-1">
@@ -319,7 +325,8 @@
             <div id="chat-log" class="h-28 px-2 py-1.5 overflow-y-auto custom-scrollbar text-[12px] leading-5"></div>
             <div class="border-t border-[#3e3529] bg-[#14100d] px-2 py-1 flex items-center gap-2">
                 <span class="text-[10px] uppercase tracking-wide text-[#c8aa6e] font-bold">All</span>
-                <input id="chat-input" type="text" class="flex-1 bg-[#0e0b09] border border-[#3e3529] text-gray-400 text-xs px-2 py-1 outline-none" placeholder="Press Enter to chat">
+                <input id="chat-input" type="text" enterkeyhint="send" class="flex-1 bg-[#0e0b09] border border-[#3e3529] text-gray-400 text-xs px-2 py-1 outline-none" placeholder="Message">
+                <button id="chat-send" class="mobile-only" type="button">Send</button>
             </div>
         </div>
         <div id="skill-panel" class="hidden pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-[384px] max-w-[calc(100vw-2rem)] bg-[#1f1a15] border-2 border-[#5d5447] shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[260] flex flex-col">
@@ -346,10 +353,17 @@
                     </div>
                 </div>
                 <div class="px-3 py-2 text-[11px] text-[#c8aa6e] border-t border-[#3e3529]">
-                    Mouse wheel to zoom. Left-drag to pan. Press Escape to close.
+                    Drag to pan. Pinch or use the mouse wheel to zoom. Close with X or Escape.
                 </div>
             </div>
         </div>
+        <nav id="mobile-toolbar" aria-label="Touch controls">
+            <button id="mobile-bag" type="button" aria-controls="main-ui-container" aria-expanded="false">Bag</button>
+            <button id="mobile-chat" type="button" aria-controls="chat-box" aria-expanded="false">Chat</button>
+            <button id="mobile-stop" type="button">Stop</button>
+            <a id="mobile-home" data-game-exit href="https://pazneria.github.io/arcade/" aria-label="Save and exit to Arcade">Home</a>
+        </nav>
+        <p id="mobile-save-status" class="hidden" role="status" aria-live="polite"></p>
         <!-- Right-Click Context Menu -->
     <div id="context-menu" class="hidden pointer-events-auto">
         <div id="context-options-list"></div>

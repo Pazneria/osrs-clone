@@ -58,6 +58,38 @@ function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeig
             return window.InputControllerRuntime || null;
         }
 
+        function initTouchWorldInput(canvas) {
+            const runtime = getInputControllerRuntime();
+            if (!runtime || !runtime.bindTouchSurface) return;
+            runtime.bindTouchSurface(canvas, {
+                onTap: (point) => {
+                    if (isAnimationStudioActive() || isPlayerEntryFlowOpen()) return;
+                    closeContextMenu();
+                    handleInteractionRaycast(point.x, point.y);
+                },
+                onHold: (point) => onContextMenu({ clientX: point.x, clientY: point.y, target: canvas, preventDefault() {} }),
+                onDragStart: (point) => {
+                    closeContextMenu();
+                    isDraggingCamera = true;
+                    previousMousePosition = { x: point.x, y: point.y };
+                },
+                onDrag: (dx, dy, point) => onPointerMove({ clientX: point.x, clientY: point.y }),
+                onPinch: (ratio) => { cameraDist = Math.max(5, Math.min(30, cameraDist / ratio)); },
+                onEnd: () => { isDraggingCamera = false; hoverTooltipDirty = true; }
+            });
+        }
+
+        function stopCurrentPlayerAction() {
+            const runtime = getInputControllerRuntime();
+            if (!runtime || !runtime.stopPlayerAction) return;
+            pendingAction = null;
+            if (typeof window.clearPlayerCombatTarget === 'function') window.clearPlayerCombatTarget({ force: true, reason: 'manual-stop' });
+            runtime.stopPlayerAction(playerState);
+            clearMinimapDestination();
+            clearSelectedUse();
+            closeContextMenu();
+        }
+
         function getAnimationRuntimeBridge() {
             return window.AnimationRuntimeBridge || null;
         }

@@ -24,6 +24,9 @@ import {
   shouldIgnoreContextMenu
 } from "../input/controller";
 import { buildMinimapSnapshot, buildRenderSnapshot, buildWorldMapSnapshot } from "../render/snapshot";
+import { bindTouchSurface, bindTouchItemMenus } from "../input/touch";
+import { stopPlayerAction } from "../input/stop-action";
+import { initMobileHud } from "../input/mobile-hud";
 
 declare global {
   interface Window {
@@ -53,6 +56,10 @@ declare global {
       }) => MinimapSnapshot;
     };
     InputControllerRuntime?: {
+      bindTouchSurface: typeof bindTouchSurface;
+      bindTouchItemMenus: typeof bindTouchItemMenus;
+      stopPlayerAction: typeof stopPlayerAction;
+      initMobileHud: typeof initMobileHud;
       createInputControllerContext: (options: InputControllerContext) => InputControllerContext;
       resolvePointerDown: (context: InputControllerContext, event: { button: number; clientX: number; clientY: number }) => PointerDecision;
       resolvePointerMove: (context: InputControllerContext, event: { clientX: number; clientY: number }) => PointerMoveDecision;
@@ -99,6 +106,10 @@ export function exposeRenderInputBridge(): void {
     buildMinimapSnapshot
   };
   window.InputControllerRuntime = {
+    bindTouchSurface,
+    bindTouchItemMenus,
+    stopPlayerAction,
+    initMobileHud,
     createInputControllerContext,
     resolvePointerDown,
     resolvePointerMove,

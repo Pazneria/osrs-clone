@@ -404,7 +404,7 @@
             setWorldMapZoom(nextZoom, { mouseX, mouseY, viewport }, context);
             updateWorldMapCursor(worldMapCanvas, context);
         });
-        worldMapCanvas.addEventListener('mousedown', (event) => {
+        const startMapDrag = (event) => {
             if (event.button !== 0) return;
             const sourceRect = getWorldMapSourceRect(context);
             if (!canPanWorldMap(sourceRect.sourceSize, context)) return;
@@ -425,8 +425,9 @@
             worldMapState.dragStartSourceSize = sourceRect.sourceSize;
             updateWorldMapCursor(worldMapCanvas, context);
             event.preventDefault();
-        });
-        worldMapCanvas.addEventListener('mousemove', (event) => {
+        };
+        worldMapCanvas.addEventListener('mousedown', startMapDrag);
+        const moveMapDrag = (event) => {
             if (!worldMapState.isDragging) return;
 
             const rect = worldMapCanvas.getBoundingClientRect();
@@ -455,7 +456,8 @@
                 worldMapState.centerY = worldMapState.dragStartCenterY - ((mouseY - worldMapState.dragStartMouseY) * tilesPerPixel);
             }
             getWorldMapSourceRect(context);
-        });
+        };
+        worldMapCanvas.addEventListener('mousemove', moveMapDrag);
 
         const stopDrag = () => {
             if (!worldMapState.isDragging) return;
@@ -466,6 +468,22 @@
             if (event.button === 0) stopDrag();
         });
         worldMapCanvas.addEventListener('mouseleave', stopDrag);
+        const touchRuntime = getInputControllerRuntime(context);
+        if (touchRuntime && touchRuntime.bindTouchSurface) {
+            touchRuntime.bindTouchSurface(worldMapCanvas, {
+                onDragStart: (point) => startMapDrag({ button: 0, clientX: point.x, clientY: point.y, preventDefault() {} }),
+                onDrag: (dx, dy, point) => moveMapDrag({ clientX: point.x, clientY: point.y }),
+                onPinch: (ratio, point) => {
+                    const rect = worldMapCanvas.getBoundingClientRect();
+                    setWorldMapZoom(worldMapState.zoom * ratio, {
+                        mouseX: (point.x - rect.left) * worldMapCanvas.width / rect.width,
+                        mouseY: (point.y - rect.top) * worldMapCanvas.height / rect.height,
+                        viewport: resolveWorldMapViewport(worldMapCanvas)
+                    }, context);
+                },
+                onEnd: stopDrag
+            });
+        }
     }
 
     function updateWorldMapPanel(forceCenterOnPlayer = false, context = {}) {
@@ -578,7 +596,7 @@
                 : Math.max(1.0, Math.min(20.0, state.zoom + (Math.sign(event.deltaY) * -0.2)));
             setMinimapState({ zoom });
         });
-        minimapCanvas.addEventListener('mousedown', (event) => {
+        const minimapPress = (event) => {
             const rect = minimapCanvas.getBoundingClientRect();
             const scaleX = minimapCanvas.width / rect.width;
             const scaleY = minimapCanvas.height / rect.height;
@@ -617,7 +635,16 @@
                     if (walkable && context && typeof context.queueWalk === 'function') context.queueWalk(gridX, gridY);
                 }
             }
-        });
+        };
+        minimapCanvas.addEventListener('mousedown', minimapPress);
+        const touchRuntime = getInputControllerRuntime(context);
+        if (touchRuntime && touchRuntime.bindTouchSurface) {
+            touchRuntime.bindTouchSurface(minimapCanvas, {
+                onTap: (point) => minimapPress({ button: 0, clientX: point.x, clientY: point.y }),
+                onPinch: (ratio) => setMinimapState({ zoom: Math.max(1, Math.min(20, getMinimapState().zoom * ratio)) }),
+                onEnd: () => { isMinimapDragging = false; }
+            });
+        }
         minimapCanvas.addEventListener('mousemove', (event) => {
             if (!isMinimapDragging) return;
             const rect = minimapCanvas.getBoundingClientRect();

@@ -1498,7 +1498,7 @@
 
             const isReturning = !!playerEntryFlowState.hasLoadedSave;
             addChatMessage(isReturning ? `Welcome back, ${playerProfileState.name}.` : `Welcome, ${playerProfileState.name}.`, 'game');
-            addChatMessage('Tip: Left-click to move. Right-click for actions.', 'info');
+            addChatMessage(window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 'Touch: tap to move or act, hold for choices. Drag to rotate, pinch to zoom. Bag opens your items; Stop cancels actions.' : 'Tip: Left-click to move. Right-click for actions.', 'info');
             addChatMessage('QA loadouts: type /qa help in chat.', 'info');
 
             if (isReturning) {
@@ -1681,6 +1681,12 @@
         function initChatInput() {
             const input = document.getElementById('chat-input');
             if (!input) return;
+            const sendButton = document.getElementById('chat-send');
+            if (sendButton) sendButton.addEventListener('click', () => {
+                if (isPlayerEntryFlowOpen()) return;
+                sendChatMessage(input.value);
+                input.value = '';
+            });
 
             input.addEventListener('keydown', (e) => {
                 if (isPlayerEntryFlowOpen()) {
@@ -1895,7 +1901,7 @@
                 worldMapCloseBtn.addEventListener('click', () => setWorldMapOpen(false));
             }
             if (worldMapPanel) {
-                worldMapPanel.addEventListener('mousedown', (e) => {
+                worldMapPanel.addEventListener('pointerdown', (e) => {
                     if (e.button !== 0) return;
                     if (e.target === worldMapPanel) setWorldMapOpen(false);
                 });
@@ -1903,7 +1909,7 @@
 
             // Input Listeners
             window.addEventListener('keydown', (e) => {
-                if (e.target && e.target.id === 'chat-input') return;
+                if (e.target && ((typeof e.target.matches === 'function' && e.target.matches('input, textarea, select')) || e.target.isContentEditable)) return;
                 if (isPlayerEntryFlowOpen()) return;
                 if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.isStudioActive === 'function' && window.AnimationStudioBridge.isStudioActive()) return;
                 const k = e.key.toLowerCase();
@@ -1912,9 +1918,6 @@
                 if (e.key === 'Escape' && isBankOpen) closeBank();
             });
             window.addEventListener('keyup', (e) => {
-                if (e.target && e.target.id === 'chat-input') return;
-                if (isPlayerEntryFlowOpen()) return;
-                if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.isStudioActive === 'function' && window.AnimationStudioBridge.isStudioActive()) return;
                 const k = e.key.toLowerCase();
                 if (keys.hasOwnProperty(k)) keys[k] = false;
             });
@@ -1954,13 +1957,13 @@
             });
 
             // Close UI Menus when clicking outside
-            window.addEventListener('mousedown', (e) => {
+            window.addEventListener('pointerdown', (e) => {
                 if (window.AnimationStudioBridge && typeof window.AnimationStudioBridge.isStudioActive === 'function' && window.AnimationStudioBridge.isStudioActive()) return;
                 // Only close menus if it's a left-click (ignore middle-click/camera drag or right-click)
                 if (e.button !== 0) return;
 
                 // Let context menu and swap submenu handle their own clicks
-                if (e.target.closest('#context-menu') || e.target.closest('.context-submenu') || e.target.closest('#amount-modal')) return; 
+                if (e.target.closest('#context-menu') || e.target.closest('.context-submenu') || e.target.closest('#amount-modal') || e.target.closest('#mobile-toolbar')) return;
                 
                 // If an interface is open and we click OUTSIDE of it and OUTSIDE our inventory, close it
                 if (isBankOpen && !e.target.closest('#bank-interface') && !e.target.closest('#main-ui-container')) {
@@ -1971,13 +1974,26 @@
                 }
             });
 
+            const touchRuntime = window.InputControllerRuntime;
+            if (touchRuntime) {
+                touchRuntime.bindTouchItemMenus();
+                touchRuntime.initMobileHud({
+                    stop: stopCurrentPlayerAction,
+                    save: () => saveProgressToStorage('mobile_exit'),
+                    hasProgress: () => !!playerProfileState.creationCompleted,
+                    dismissMenus: closeContextMenu,
+                    resetInput: () => {
+                        Object.keys(keys).forEach((key) => { keys[key] = false; });
+                        isDraggingCamera = false;
+                        const runtime = getInputPoseEditorRuntime();
+                        if (poseEditor.activeHandle && runtime) runtime.endPoseEditorDrag(poseEditor);
+                    }
+                });
+            }
             setInterval(processTick, TICK_RATE_MS);
             lastTickTime = Date.now();
             frameLimiterPrev = performance.now();
             fpsSampleLast = performance.now();
             animate();
         };
-
-
-
 

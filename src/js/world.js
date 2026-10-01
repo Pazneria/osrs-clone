@@ -473,6 +473,7 @@
             window.addEventListener('mouseup', onPointerUp, false);
             renderer.domElement.addEventListener('wheel', onMouseWheel, { passive: false });
             renderer.domElement.addEventListener('contextmenu', onContextMenu, false);
+            initTouchWorldInput(renderer.domElement);
         }
 
         function initUIPreview() {
@@ -508,6 +509,12 @@
             });
             window.addEventListener('mouseup', (e) => { if (e.button === 1) isDraggingPreview = false; });
             container.addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault(); });
+            if (window.InputControllerRuntime && window.InputControllerRuntime.bindTouchSurface) {
+                window.InputControllerRuntime.bindTouchSurface(container, {
+                    onDrag: (dx) => { if (uiPlayerRig) uiPlayerRig.rotation.y += dx * 0.02; },
+                    onEnd: () => { isDraggingPreview = false; }
+                });
+            }
         }
 
         function showXPDrop(skill, amount) {

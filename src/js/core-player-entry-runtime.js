@@ -178,8 +178,8 @@
     function resizePlayerEntryPreview(options = {}) {
         const windowRef = getWindowRef(options);
         if (!previewState.container || !previewState.renderer || !previewState.camera) return false;
-        const width = Math.max(240, previewState.container.clientWidth || 420);
-        const height = Math.max(260, previewState.container.clientHeight || 520);
+        const width = Math.max(1, previewState.container.clientWidth || 420);
+        const height = Math.max(1, previewState.container.clientHeight || 520);
         previewState.renderer.setSize(width, height, false);
         previewState.camera.aspect = width / height;
         previewState.camera.updateProjectionMatrix();
@@ -247,6 +247,12 @@
             });
             moveTarget.addEventListener('mouseup', () => {
                 previewState.dragging = false;
+            });
+        }
+        if (windowRef.InputControllerRuntime && windowRef.InputControllerRuntime.bindTouchSurface) {
+            windowRef.InputControllerRuntime.bindTouchSurface(previewState.container, {
+                onDrag: (dx) => { previewState.yaw += dx * 0.012; renderPlayerEntryPreview(); },
+                onEnd: () => { previewState.dragging = false; }
             });
         }
     }

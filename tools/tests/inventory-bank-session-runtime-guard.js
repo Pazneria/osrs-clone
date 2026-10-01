@@ -16,7 +16,8 @@ function run() {
   const runtimeSource = read(root, "src/js/inventory-bank-session-runtime.js");
   const inventorySource = read(root, "src/js/inventory.js");
   const manifestSource = read(root, "src/game/platform/legacy-script-manifest.ts");
-  const packageSource = read(root, "package.json");
+  const packageJson = JSON.parse(read(root, "package.json"));
+  const { SUITES } = require("./package-suite-manifest");
 
   const runtimeIndex = manifestSource.indexOf('id: "inventory-bank-session-runtime"');
   const inventoryIndex = manifestSource.indexOf('id: "inventory"');
@@ -29,8 +30,9 @@ function run() {
   assert(runtimeSource.includes("function createBankSession(options = {})"), "bank session runtime should own bank session creation");
   assert(runtimeSource.includes("function normalizeBankSource(sourceKey)"), "bank session runtime should own source normalization");
   assert(runtimeSource.includes("function publishBankSessionHooks(options = {})"), "bank session runtime should own bank hook publication");
-  assert(packageSource.includes('"test:inventory-bank-session:guard"'), "package should expose a targeted inventory bank session guard");
-  assert(packageSource.includes("--check ./src/js/inventory-bank-session-runtime.js"), "package check should syntax-check the inventory bank session runtime");
+  assert(packageJson.scripts["test:inventory-bank-session:guard"] === "node ./tools/tests/inventory-bank-session-runtime-guard.js", "package should expose a targeted inventory bank session guard");
+  assert(packageJson.scripts.check === "node ./tools/tests/package-suite.js check", "package check should invoke the check suite");
+  assert(SUITES.check.syntaxFiles.includes("src/js/inventory-bank-session-runtime.js"), "check suite should syntax-check the inventory bank session runtime");
 
   assert(inventorySource.includes("function getInventoryBankSessionRuntime()"), "inventory.js should resolve the bank session runtime");
   assert(inventorySource.includes("inventoryBankSessionRuntime.createBankSession({"), "inventory.js should create bank session through the runtime");
