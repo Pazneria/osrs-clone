@@ -865,7 +865,7 @@
             slotViewModels.forEach((slotViewModel) => {
                 const slotName = slotViewModel.slotName;
                 const el = document.getElementById(`eq-${slotName}`); if (!el) return;
-                el.className = 'w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl select-none hover:bg-[#1a1f24]';
+                el.className = 'equip-slot w-9 h-9 bg-[#111418] border-b-2 border-r-2 border-[#090b0c] border-t border-l border-[#3a444c] flex items-center justify-center text-xl select-none hover:bg-[#1a1f24]';
                 const entry = equipment[slotName];
                 const item = getEquipmentEntryItemData(entry);
                 const amount = slotViewModel.amount || getEquipmentEntryAmount(entry);
@@ -1239,7 +1239,7 @@
             const closeSkillBtn = document.getElementById('skill-panel-close');
             if (closeSkillBtn) closeSkillBtn.onclick = () => closeSkillProgressPanel();
 
-            window.addEventListener('mousedown', (e) => {
+            window.addEventListener('pointerdown', (e) => {
                 const panel = document.getElementById('skill-panel');
                 if (!panel || panel.classList.contains('hidden')) return;
                 if (e.button !== 0) return;

@@ -250,6 +250,7 @@
 
         if (typeof submenu.addEventListener === 'function') {
             submenu.addEventListener('mouseleave', (event) => {
+                if (windowRef.matchMedia && windowRef.matchMedia('(hover: none)').matches) return;
                 const related = event ? event.relatedTarget : null;
                 if (related && related.closest && (related.closest('#context-menu') || related.closest('.context-submenu'))) return;
                 if (typeof options.closeContextMenu === 'function') options.closeContextMenu();
@@ -264,6 +265,7 @@
         const contextMenuEl = getContextMenuEl(options);
         if (!contextMenuEl || typeof contextMenuEl.addEventListener !== 'function') return;
         contextMenuEl.addEventListener('mouseleave', (event) => {
+            if (options.windowRef && options.windowRef.matchMedia && options.windowRef.matchMedia('(hover: none)').matches) return;
             const related = event ? event.relatedTarget : null;
             if (related && related.closest && related.closest('.context-submenu')) return;
             closeContextMenu(options);

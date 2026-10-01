@@ -32,6 +32,19 @@ body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
             --inv-grid-height: calc((var(--inv-slot-size) * 7) + (var(--inv-gap-y) * 6));
         }
 
+        #canvas-container canvas, #minimap, #world-map-canvas,
+        #player-entry-preview-stage, #player-preview-box { touch-action: none; }
+        button, a, [role="button"] { touch-action: manipulation; }
+        input { user-select: text; -webkit-user-select: text; }
+        .mobile-panel-heading, #mobile-toolbar, .mobile-only { display: none; }
+        #runtime-crash-overlay { color: #f4e6cf; }
+        .runtime-recovery { display: flex; gap: 12px; padding: 16px; }
+        .runtime-recovery button, .runtime-recovery a, .player-entry-exit {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 0 14px; color: #ffe3a6;
+            background: #211912; border: 1px solid #c8aa6e; border-radius: 4px;
+        }
+
         /* UI Overlay */
         #ui-layer { position: fixed; inset: 0; width: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
         .ui-box { pointer-events: auto; background: rgba(31, 41, 55, 0.85); border: 2px solid #374151; border-radius: 0.5rem; backdrop-filter: blur(4px); }
