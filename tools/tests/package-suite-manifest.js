@@ -173,6 +173,7 @@ const TEST_RUN_FILES = [
   "tools/tests/mining-runtime-tests.js",
   "tools/tests/smithing-runtime-tests.js",
   "tools/tests/main-ui-pointer-guard.js",
+  "tools/tests/hybrid-touch-hud-runtime-tests.js",
   "tools/tests/runecrafting-runtime-tests.js",
   "tools/tests/validate-skills-negatives.js",
   "tools/tests/context-menu-registry-guard.js",

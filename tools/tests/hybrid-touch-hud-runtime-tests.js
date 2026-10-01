@@ -1,0 +1,35 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),ts=require('typescript');
+const source=fs.readFileSync(path.join(__dirname,'../../src/game/input/mobile-hud.ts'),'utf8');
+function fixture(anyCoarse=false) {
+ const classes=new Set(),documentRef=new EventTarget(),windowRef=new EventTarget();
+ const classList={contains:name=>classes.has(name),add:name=>classes.add(name),remove:name=>classes.delete(name),toggle:(name,on)=>on?classes.add(name):classes.delete(name)};
+ documentRef.body={classList};documentRef.documentElement={style:{setProperty(){}}};
+ documentRef.getElementById=()=>null;documentRef.querySelectorAll=()=>[];documentRef.closest=()=>null;
+ windowRef.innerHeight=800;
+ const primary=new EventTarget(),anyPointer=new EventTarget();primary.matches=false;anyPointer.matches=anyCoarse;
+ windowRef.matchMedia=query=>query==='(any-pointer: coarse)'?anyPointer:primary;
+ const exports={};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,window:windowRef,document:documentRef,MutationObserver:class{observe(){}}});
+ exports.initMobileHud({stop(){},save:()=>({ok:true}),hasProgress:()=>true,resetInput(){},dismissMenus(){}});
+ const pointer=type=>{const event=new Event('pointerdown');Object.assign(event,{pointerType:type,button:0});documentRef.dispatchEvent(event);};
+ return {classes,documentRef,windowRef,anyPointer,pointer};
+}
+const hybrid=fixture(true);
+assert(hybrid.classes.has('touch-ui'),'secondary coarse pointer must expose the touch HUD with a fine primary pointer');
+hybrid.classes.add('touch-bag-open');hybrid.documentRef.dispatchEvent(new Event('game-open-chat'));
+assert(hybrid.classes.has('touch-chat-open')&&!hybrid.classes.has('touch-bag-open'),'keyboard chat requests open Chat and close Bag');
+const escape=new Event('keydown');Object.assign(escape,{key:'Escape'});hybrid.windowRef.dispatchEvent(escape);
+assert(!hybrid.classes.has('touch-chat-open'),'Escape still closes Chat');
+const fallback=fixture(false);
+assert(!fallback.classes.has('touch-ui'),'fine-only devices retain desktop layout');
+fallback.pointer('mouse');fallback.pointer('pen');
+assert(!fallback.classes.has('touch-ui'),'mouse and pen do not claim observed touch');
+fallback.pointer('touch');
+assert(fallback.classes.has('touch-ui'),'observed touch enables the HUD even when capability queries are false');
+fallback.windowRef.dispatchEvent(new Event('resize'));fallback.anyPointer.dispatchEvent(new Event('change'));fallback.pointer('mouse');
+assert(fallback.classes.has('touch-ui'),'resize, capability updates and mouse use must not hide controls after observed touch');
+const hotplug=fixture(false);
+hotplug.anyPointer.matches=true;hotplug.anyPointer.dispatchEvent(new Event('change'));
+assert(hotplug.classes.has('touch-ui'),'new coarse capability enables controls');
+hotplug.anyPointer.matches=false;hotplug.anyPointer.dispatchEvent(new Event('change'));
+assert(!hotplug.classes.has('touch-ui'),'unused coarse capability can disconnect');
+console.log('Hybrid touch HUD tests passed (secondary pointer, observed touch, fine-only mouse/pen, resize and capability updates).');
