@@ -2,6 +2,8 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { readPngSize } = require("../pixel/pixel-png");
+const { loadPixelSource } = require("../pixel/pixel-project");
 
 function readRepoFile(root, relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -46,6 +48,20 @@ function run() {
     assert(statusEntry.assetId === itemId, `review item status asset should match item id: ${itemId}`);
     assert(statusEntry.treatment === "bespoke", `review item should stay on bespoke treatment: ${itemId}`);
     assert(statusEntry.status === "done", `review item should be marked done before leaving it in the active review batch: ${itemId}`);
+
+    const pixelSource = loadPixelSource(root, itemId);
+    assert(pixelSource.id === itemId, `review pixel source id should match asset id: ${itemId}`);
+    assert(pixelSource.width === 32 && pixelSource.height === 32, `review pixel source should stay 32x32: ${itemId}`);
+
+    const iconPath = path.join(root, "assets", "pixel", `${itemId}.png`);
+    assert(fs.existsSync(iconPath), `review item should have a generated runtime icon: ${itemId}`);
+    const iconSize = readPngSize(iconPath);
+    assert(iconSize.width === 32 && iconSize.height === 32, `review runtime icon should stay 32x32: ${itemId}`);
+
+    const heldModelPath = path.join(root, "assets", "models", `${itemId}.obj`);
+    const groundModelPath = path.join(root, "assets", "models", `${itemId}-ground.obj`);
+    assert(fs.existsSync(heldModelPath), `review item should have a generated held model: ${itemId}`);
+    assert(fs.existsSync(groundModelPath), `review item should have a generated ground model: ${itemId}`);
   });
 
   console.log("Icon review catalog guard passed.");
