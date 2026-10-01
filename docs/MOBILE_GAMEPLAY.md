@@ -52,7 +52,8 @@ and closes its browser in `finally`. It writes screenshots and results to
 `PLAYWRIGHT_NODE_MODULES` if it is installed elsewhere. Other overrides are
 `MOBILE_BROWSER_EXECUTABLE`, `MOBILE_QA_URL`, `MOBILE_QA_OUTPUT` and an optional
 `MOBILE_TAILWIND_SCRIPT` cache of the existing CDN script. The test never clears
-the user's browser saves.
+the user's browser saves. Set `MOBILE_QA_LIVE_HOME=1` for deployed-site validation
+to visit the real Arcade page instead of intercepting that test navigation.
 
 The browser flow uses Chromium touch emulation at 390x844, 390x667 and 844x390,
 plus a 1280x800 mouse/keyboard context. It covers creation/name validation,
@@ -71,6 +72,11 @@ included the bank runtime. The guard now checks the targeted guard script, the
 check-suite command and the bank runtime's membership in that suite. Its existing
 bank-state, source-normalization and hook-publication assertions remain intact.
 Browser bank quantity/cancel tests exercise the actual runtime behavior too.
+
+The broad spec-contracts test uses byte-exact LF mutation fixtures. A CRLF Windows
+checkout fails its runecrafting-strict-buys setup, including at the untouched base.
+The full suite passes in an isolated LF checkout, matching committed source and
+the Linux deployment environment; neither skill content nor those tests changed.
 
 No physical phone/tablet, Safari, Android browser, real soft keyboard, OS gesture
 interruption or live CDN outage was tested. Emulated orientation and background

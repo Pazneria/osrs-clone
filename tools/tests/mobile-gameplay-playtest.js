@@ -226,13 +226,14 @@ async function run() {
     const beforeFailedSave=await page.evaluate(()=>localStorage.getItem('osrsClone.progress.v2'));
     await page.evaluate(()=>{window.__mobileQaSave=GameSessionRuntime.saveProgressPayloadToStorage;GameSessionRuntime.saveProgressPayloadToStorage=()=>({ok:false,reason:'test_storage_full'});});
     await page.locator('#mobile-home').tap();
-    assert((await page.url()).startsWith('http://127.0.0.1'));
+    assert.equal(new URL(page.url()).origin,new URL(process.env.MOBILE_QA_URL||'http://127.0.0.1:5503/').origin);
     assert.equal(await page.locator('#mobile-save-status').isVisible(),true);
     assert.equal(await page.evaluate(()=>localStorage.getItem('osrsClone.progress.v2')),beforeFailedSave);
     await page.evaluate(()=>{GameSessionRuntime.saveProgressPayloadToStorage=window.__mobileQaSave;delete window.__mobileQaSave;});
     check('A failed save blocks Home and preserves the existing save');
-    await page.route('https://pazneria.github.io/arcade/',r=>r.fulfill({contentType:'text/html',body:'<title>Arcade return test</title>Arcade'}));
+    if(!process.env.MOBILE_QA_LIVE_HOME)await page.route('https://pazneria.github.io/arcade/',r=>r.fulfill({contentType:'text/html',body:'<title>Arcade return test</title>Arcade'}));
     await page.locator('#mobile-home').tap(); await page.waitForURL('https://pazneria.github.io/arcade/');
+    if(process.env.MOBILE_QA_LIVE_HOME)assert.match(await page.title(),/arcade/i,'Home reaches the real Arcade page');
     check('Home saves before returning to the fixed Arcade URL');
 
     const desktop=await browser.newContext({viewport:{width:1280,height:800}});
