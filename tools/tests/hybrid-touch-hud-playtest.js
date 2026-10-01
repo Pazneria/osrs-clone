@@ -28,7 +28,16 @@ const results=[];
    assert.equal(await page.evaluate(()=>matchMedia('(pointer: coarse)').matches),false);
    assert.equal(await page.evaluate(()=>matchMedia('(any-pointer: coarse)').matches),anyCoarse);
    if(!process.env.HYBRID_QA_EXPECT_GAP)assert.equal(await page.evaluate(()=>document.body.classList.contains('touch-ui')),anyCoarse);
-   await page.locator('#player-entry-name').fill('Hybrid QA');await page.locator('#player-entry-primary').click();
+   await page.locator('#player-entry-name').fill('Hybrid QA');
+   // Use mouse entry for advertised touch capability, and a native touch entry
+   // for the observed-touch fallback before the welcome instructions are chosen.
+   if(anyCoarse)await page.locator('#player-entry-primary').click();
+   else await page.locator('#player-entry-primary').tap();
+   if(!process.env.HYBRID_QA_EXPECT_GAP){
+    assert.equal(await page.locator('#mobile-toolbar').isVisible(),true);
+    assert.match(await page.locator('#chat-log').innerText(),/Touch: tap to move or act, hold for choices\./,'welcome instructions must match the active touch HUD');
+    assert.doesNotMatch(await page.locator('#chat-log').innerText(),/Tip: Left-click to move\./);
+   }
    const initial=await page.evaluate(()=>[playerState.x,playerState.y]);
    const destination=await page.evaluate(()=>projectWorldTileToScreen(213,251,0,0));
    await page.touchscreen.tap(destination.x,destination.y);
@@ -69,7 +78,7 @@ const results=[];
    assert.equal(await page.locator('#player-entry-overlay').isVisible(),false,'Home retains the existing save');
    assert.deepEqual(errors,[]);
    const label=anyCoarse?'Fine primary + secondary coarse capability':'Fine-only reported capability + observed native touch fallback';
-   results.push(label);console.log('PASS '+label+': movement, Stop/Home, mouse, resize, keyboard chat/shortcuts/Escape, movement keys/blur and saved return');
+   results.push(label);console.log('PASS '+label+': touch onboarding, movement, Stop/Home, mouse, resize, keyboard chat/shortcuts/Escape, movement keys/blur and saved return');
    await context.close();
   }
   if(!process.env.HYBRID_QA_EXPECT_GAP){
@@ -78,10 +87,12 @@ const results=[];
    const page=await desktop.newPage();await page.goto(gameUrl,{waitUntil:'load',timeout:30000});
    await page.locator('#player-entry-name').fill('Mouse Tester');await page.locator('#player-entry-primary').click();
    assert.equal(await page.locator('#mobile-toolbar').isVisible(),false);
+   assert.match(await page.locator('#chat-log').innerText(),/Tip: Left-click to move\. Right-click for actions\./,'mouse-only entry retains its existing instructions');
+   assert.doesNotMatch(await page.locator('#chat-log').innerText(),/Touch: tap to move or act/);
    await page.keyboard.press('Enter');await page.keyboard.type('Desktop keys');await page.keyboard.press('Enter');
    assert.match(await page.locator('#chat-log').innerText(),/Desktop keys/);await page.keyboard.press('Escape');
    assert.equal(await page.locator('#mobile-toolbar').isVisible(),false);
-   results.push('Fine-only desktop retains layout and keyboard chat');console.log('PASS fine-only desktop layout and keyboard chat');
+   results.push('Fine-only desktop retains mouse onboarding, layout and keyboard chat');console.log('PASS fine-only desktop mouse onboarding, layout and keyboard chat');
    await desktop.close();
   }
  }finally{await browser.close();}

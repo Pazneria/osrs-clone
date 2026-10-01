@@ -1498,7 +1498,7 @@
 
             const isReturning = !!playerEntryFlowState.hasLoadedSave;
             addChatMessage(isReturning ? `Welcome back, ${playerProfileState.name}.` : `Welcome, ${playerProfileState.name}.`, 'game');
-            addChatMessage(window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 'Touch: tap to move or act, hold for choices. Drag to rotate, pinch to zoom. Bag opens your items; Stop cancels actions.' : 'Tip: Left-click to move. Right-click for actions.', 'info');
+            addChatMessage(document.body.classList.contains('touch-ui') ? 'Touch: tap to move or act, hold for choices. Drag to rotate, pinch to zoom. Bag opens your items; Stop cancels actions.' : 'Tip: Left-click to move. Right-click for actions.', 'info');
             addChatMessage('QA loadouts: type /qa help in chat.', 'info');
 
             if (isReturning) {
