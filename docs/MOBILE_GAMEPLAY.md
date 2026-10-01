@@ -34,6 +34,8 @@ Touch controls also appear when touch is a secondary pointer on a hybrid device,
 or after an observed touch if the browser under-reports capability. Subsequent
 mouse/keyboard use keeps Stop and Home available. Keyboard chat shortcuts open
 the Chat drawer before focusing its input.
+Welcome instructions read this same active touch state, so secondary touch
+capability or a touch during character creation receives the touch controls tip.
 Inventory/bank HTML drag reordering retains its existing desktop implementation;
 touch item actions and bank transfer choices are available through tap/hold.
 
@@ -53,7 +55,9 @@ of combat cooldowns and progression.
 mouse/pen discrimination, capability updates, resize and keyboard Chat requests.
 `npm run test:mobile:hybrid` simulates a fine primary pointer with and without a
 reported secondary coarse pointer, then uses Chromium touch, mouse and keyboard
-events. It also checks a fine-only desktop. Set `HYBRID_QA_URL` for the deployed
+events. It checks welcome instructions for secondary touch capability and touch
+entry with under-reported capability, plus mouse-only instructions on a fine-only
+desktop. Set `HYBRID_QA_URL` for the deployed
 site and `HYBRID_QA_LIVE_HOME=1` to verify the real Arcade return. This is simulated
 hybrid browser testing, not validation on physical touchscreen hardware.
 
